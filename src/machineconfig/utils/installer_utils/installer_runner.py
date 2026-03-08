@@ -6,7 +6,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData,
 from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
-from machineconfig.utils.io import read_json
+from machineconfig.utils.files.read import read_json
 
 from rich.console import Console
 from rich.panel import Panel

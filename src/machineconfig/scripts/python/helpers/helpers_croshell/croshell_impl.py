@@ -38,7 +38,7 @@ def croshell(
         uv_project_line = ""
         uv_python_line = "--python 3.14"
 
-    from machineconfig.scripts.python.helpers.helpers_croshell.crosh import get_read_python_file_pycode, get_read_data_pycode
+    from machineconfig.scripts.python.helpers.helpers_croshell.crosh import get_read_python_file_pycode
     from machineconfig.utils.meta import lambda_to_python_script
     from machineconfig.utils.accessories import randstr
     from machineconfig.utils.ve import get_ve_path_and_ipython_profile
@@ -62,10 +62,49 @@ def croshell(
             text = f"📄 Selected file: {choice_file.name}"
             console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
         else:
-            program = lambda_to_python_script(
-                lambda: get_read_data_pycode(path=str(choice_file)),
-                in_global=True, import_module=False
-            )
+            # from machineconfig.scripts.python.helpers.helpers_croshell.crosh import get_read_data_pycode
+            # program = lambda_to_python_script(
+            #     lambda: get_read_data_pycode(path=str(choice_file)),
+            #     in_global=True, import_module=False
+            # )
+            from machineconfig.utils.files import read as read_module
+            suffix = Path(path).suffix[1:]
+            if suffix == "":
+                program = "print('No file extension found. Cannot determine how to read the file.')"
+            else:
+                reader = read_module.READERS.get(suffix)
+                if reader is None:
+                    program = f"print('No reader found for files with the .{suffix} extension.')"
+                else:
+                    program = Path(read_module.__file__).read_text(encoding="utf-8")
+                    program += f"""
+# p = {reader.__name__}("{str(choice_file)}")
+from rich.panel import Panel
+from rich.text import Text
+from rich.console import Console
+from pathlib import Path
+console = Console()
+p = Path(f"{choice_file}").absolute()
+try:
+    from machineconfig.utils.files.read import read_file
+    from machineconfig.utils.accessories import pprint
+    dat = read_file(p)
+    if isinstance(dat, dict):
+        panel_title = f"📄 File Data: {{p.name}}"
+        console.print(Panel(Text(str(dat), justify="left"), title=panel_title, expand=False))
+        pprint(dat, p.name)
+    else:
+        panel_title = f"📄 Successfully read the file: {{p.name}}"
+        console.print(Panel(Text(str(dat), justify="left"), title=panel_title, expand=False))
+except Exception as e:
+    error_message = f'''❌ ERROR READING FILE\nFile: {{p.name}}\nError: {{e}}'''
+    console.print(Panel(Text(error_message, justify="left"), title="Error", expand=False, border_style="red"))
+
+"""
+                    # program = lambda_to_python_script(
+                    #     lambda: reader(path=choice_file),
+                    #     in_global=True, import_module=False
+                    # )
             text = f"📄 Reading data from: {choice_file.name}"
             console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
     else:

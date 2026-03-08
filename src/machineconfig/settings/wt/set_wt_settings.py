@@ -2,7 +2,8 @@
 
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.path_extended import PathExtended
-from machineconfig.utils.io import read_json, save_json
+from machineconfig.utils.io import save_json
+from machineconfig.utils.files.read import read_json
 import platform
 
 # from uuid import uuid4

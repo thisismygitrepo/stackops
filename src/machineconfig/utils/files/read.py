@@ -4,21 +4,38 @@
 from pathlib import Path
 from typing import Any, Optional
 from collections.abc import Callable
+import json
 
 
 def read_file(path: 'Path', **kwargs: Any) -> Any:
     if Path(path).is_dir(): raise IsADirectoryError(f"Path is a directory, not a file: {path}")
     suffix = Path(path).suffix[1:]
     if suffix == "": raise ValueError(f"File type could not be inferred from suffix. Suffix is empty. Path: {path}")
-    reader = _READERS.get(suffix)
+    reader = READERS.get(suffix)
     if reader is not None:
         return reader(str(path), **kwargs)
     raise AttributeError(f"Unknown file type. failed to recognize the suffix `{suffix}` of file {path}")
 
 
-# def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
-#     from machineconfig.utils.io import read_json as _read_json
-#     return _read_json(path, r=r, **kwargs)
+def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
+    try:
+        mydict = json.loads(Path(path).read_text(encoding="utf-8"), **kwargs)
+    except Exception:
+        def remove_c_style_comments(text: str) -> str:
+            import re
+            url_pattern = r'https?://[^\s]*'
+            urls = re.findall(url_pattern, text)
+            url_map = {url: f"__URL{index}__" for index, url in enumerate(urls)}
+            for url, placeholder in url_map.items():
+                text = text.replace(url, placeholder)
+            text = re.sub(r'//.*', '', text)
+            text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
+            for url, placeholder in url_map.items():
+                text = text.replace(placeholder, url)
+            return text
+        mydict = json.loads(remove_c_style_comments(Path(path).read_text(encoding="utf-8")), **kwargs)
+    _ = r
+    return mydict
 
 
 def read_jsonl(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
@@ -115,7 +132,7 @@ def read_image(path: 'Path', **kwargs: Any) -> Any:
 _IMAGE_SUFFIXES: list[str] = ['eps', 'jpg', 'jpeg', 'pdf', 'pgf', 'png', 'ps', 'raw', 'rgba', 'svg', 'svgz', 'tif', 'tiff']
 _DBMS_SUFFIXES: list[str] = ['sqlite', 'sqlite3', 'db', 'duckdb']
 
-_READERS: dict[str, Callable[..., Any]] = {
+READERS: dict[str, Callable[..., Any]] = {
     "json": read_json,
     "jsonl": read_jsonl,
     "yaml": read_yaml,

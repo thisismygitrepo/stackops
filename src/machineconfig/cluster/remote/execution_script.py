@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from machineconfig.utils.accessories import pprint
-from machineconfig.utils.io import read_json
+from machineconfig.utils.files.read import read_json
 from machineconfig.cluster.remote.models import WorkloadParams, JOB_STATUS
 from machineconfig.cluster.remote.job_params import JobParams
 from machineconfig.cluster.remote.file_manager import FileManager

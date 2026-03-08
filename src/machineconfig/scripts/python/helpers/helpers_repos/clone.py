@@ -8,7 +8,7 @@ from rich import print as pprint
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from machineconfig.utils.schemas.repos.repos_types import RepoRecordDict, RepoRecordFile, RepoRemote
-from machineconfig.utils.io import read_json
+from machineconfig.utils.files.read import read_json
 
 
 CloneStatus = Literal["cloned", "skipped", "failed"]

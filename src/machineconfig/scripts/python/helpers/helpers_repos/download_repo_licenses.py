@@ -9,7 +9,7 @@ import io
 import sys
 
 import requests
-from machineconfig.utils.io import read_json
+from machineconfig.utils.files.read import read_json
 
 
 def get_gh_token() -> str:

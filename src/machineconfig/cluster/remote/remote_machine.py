@@ -9,7 +9,8 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 
 from machineconfig.utils.accessories import randstr
-from machineconfig.utils.io import save_json, read_json
+from machineconfig.utils.io import save_json
+from machineconfig.utils.files.read import read_json
 from machineconfig.utils.ssh import SSH
 from machineconfig.cluster.remote.models import RemoteMachineConfig, EmailParams, WorkloadParams, LogEntry
 from machineconfig.cluster.remote.job_params import JobParams

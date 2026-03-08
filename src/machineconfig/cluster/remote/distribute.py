@@ -10,7 +10,8 @@ from copy import deepcopy
 from rich.console import Console
 
 from machineconfig.utils.accessories import randstr, pprint
-from machineconfig.utils.io import save_json, read_json
+from machineconfig.utils.io import save_json
+from machineconfig.utils.files.read import read_json
 from machineconfig.utils.ssh import SSH
 from machineconfig.cluster.remote.models import RemoteMachineConfig, WorkloadParams
 from machineconfig.cluster.remote.remote_machine import RemoteMachine

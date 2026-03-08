@@ -10,7 +10,8 @@ from typing import Any
 
 from rich.console import Console
 
-from machineconfig.utils.io import save_json, read_ini, read_json
+from machineconfig.utils.io import save_json, read_ini
+from machineconfig.utils.files.read import read_json
 from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 from machineconfig.cluster.remote.models import JOB_STATUS, LogEntry
 

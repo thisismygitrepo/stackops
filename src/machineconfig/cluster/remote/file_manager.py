@@ -8,7 +8,8 @@ import psutil
 from rich.console import Console
 
 from machineconfig.utils.accessories import pprint
-from machineconfig.utils.io import save_json, read_json
+from machineconfig.utils.io import save_json
+from machineconfig.utils.files.read import read_json
 from machineconfig.cluster.remote.models import JOB_STATUS, MACHINE_TYPE, JobStatus
 
 console = Console()
