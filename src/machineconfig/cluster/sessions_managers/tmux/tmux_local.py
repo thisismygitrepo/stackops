@@ -123,3 +123,15 @@ def run_tmux_layout(layout_config: LayoutConfig) -> None:
     generator = TmuxLayoutGenerator(layout_config=layout_config, session_name=session_name)
     generator.create_layout_file()
     generator.run()
+
+
+if __name__ == "__main__":
+    sample_layout: LayoutConfig = {
+        "layoutName": "sample_layout",
+        "layoutTabs": [
+            {"tabName": "editor", "startDir": "~/projects", "command": "nvim"},
+            {"tabName": "server", "startDir": "~/projects/server", "command": "yazi"},
+            {"tabName": "logs", "startDir": "~/projects/server/logs", "command": "tail -f server.log"},
+        ],
+    }
+    run_tmux_layout(sample_layout)

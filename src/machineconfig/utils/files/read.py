@@ -3,114 +3,135 @@
 
 from pathlib import Path
 from typing import Any, Optional
+from collections.abc import Callable
 
 
-class Read:
-    @staticmethod
-    def read(path: 'Path', **kwargs: Any) -> Any:
-        if Path(path).is_dir(): raise IsADirectoryError(f"Path is a directory, not a file: {path}")
-        suffix = Path(path).suffix[1:]
-        if suffix == "": raise ValueError(f"File type could not be inferred from suffix. Suffix is empty. Path: {path}")
-        if suffix in ("sqlite", "sqlite3", "db", "duckdb"):
-            from machineconfig.utils.files.dbms import DBMS
-            res = DBMS.from_local_db(path=path)
-            try:
-                print(res.describe_db())
-            except Exception:
-                print("💥 Could not describe the database.")
-                pass
-            return res
-        try: return getattr(Read, suffix)(str(path), **kwargs)
-        except AttributeError as err:
-            if "type object 'Read' has no attribute" not in str(err): raise AttributeError(err) from err
-            if suffix in ('eps', 'jpg', 'jpeg', 'pdf', 'pgf', 'png', 'ps', 'raw', 'rgba', 'svg', 'svgz', 'tif', 'tiff'):
-                import matplotlib.pyplot as pyplot
-                return pyplot.imread(str(path), **kwargs)  # from: plt.gcf().canvas.get_supported_filetypes().keys():
-            if suffix == "parquet":
-                import polars as pl
-                return pl.read_parquet(path, **kwargs)
-            elif suffix == "csv":
-                import polars as pl
-                return pl.read_csv(path, infer_schema_length=10000, **kwargs)
-            elif suffix == "npz" or suffix == "npy":
-                import numpy as np
-                return np.load(str(path), **kwargs)
-            try:
-                # guess = install_n_import('magic', 'python-magic').from_file(path)
-                guess = "IDKm"
-                raise AttributeError(f"Unknown file type. failed to recognize the suffix `{suffix}`. According to libmagic1, the file seems to be: {guess}") from err
-            except ImportError as err2:
-                print(f"💥 Unknown file type. failed to recognize the suffix `{suffix}` of file {path} ")
-                raise ImportError(err) from err2
-    @staticmethod
-    def json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:  # return could be list or dict etc
-        from machineconfig.utils.io import read_json
-        return read_json(path, r=r, **kwargs)
-    @staticmethod
-    def jsonl(path: 'Path', r: bool = False, **kwargs: Any) -> Any:  # return could be list or dict etc
-        # from machineconfig.utils.io import read_json
-        # return read_json(path, r=r, **kwargs)
-        raw = Path(path).read_text(encoding="utf-8").splitlines()
-        res = []
-        import json
-        for line in raw:
-            try:
-                res.append(json.loads(line, **kwargs))
-            except json.JSONDecodeError as ex:
-                print(f"💥 Failed to parse line as JSON: {line}\nError: {ex}")
-                raise ex
-        _ = r
-        return res
-    @staticmethod
-    def yaml(path: 'Path', r: bool = False) -> Any:  # return could be list or dict etc
-        import yaml
-        with open(str(path), "r", encoding="utf-8") as file:
-            mydict = yaml.load(file, Loader=yaml.FullLoader)
-        _ = r
-        return mydict
-    @staticmethod
-    def ini(path: 'Path', encoding: Optional[str] = None):
-        if not Path(path).exists() or Path(path).is_dir(): raise FileNotFoundError(f"File not found or is a directory: {path}")
-        import configparser
-        res = configparser.ConfigParser()
-        res.read(filenames=[str(path)], encoding=encoding)
-        return res
-    @staticmethod
-    def toml(path: 'Path'):
-        import tomllib
-        return tomllib.loads(Path(path).read_text(encoding='utf-8'))
-    @staticmethod
-    def npy(path: 'Path', **kwargs: Any):
-        import numpy as np
-        data = np.load(str(path), allow_pickle=True, **kwargs)
-        # data = data.item() if data.dtype == np.object else data
-        return data
-    @staticmethod
-    def pickle(path: 'Path', **kwargs: Any):
-        import pickle
-        try: return pickle.loads(Path(path).read_bytes(), **kwargs)
-        except BaseException as ex:
-            print(f"💥 Failed to load pickle file `{path}` with error:\n{ex}")
+def read_file(path: 'Path', **kwargs: Any) -> Any:
+    if Path(path).is_dir(): raise IsADirectoryError(f"Path is a directory, not a file: {path}")
+    suffix = Path(path).suffix[1:]
+    if suffix == "": raise ValueError(f"File type could not be inferred from suffix. Suffix is empty. Path: {path}")
+    reader = _READERS.get(suffix)
+    if reader is not None:
+        return reader(str(path), **kwargs)
+    raise AttributeError(f"Unknown file type. failed to recognize the suffix `{suffix}` of file {path}")
+
+
+def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
+    from machineconfig.utils.io import read_json as _read_json
+    return _read_json(path, r=r, **kwargs)
+
+
+def read_jsonl(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
+    raw = Path(path).read_text(encoding="utf-8").splitlines()
+    res: list[Any] = []
+    import json
+    for line in raw:
+        try:
+            res.append(json.loads(line, **kwargs))
+        except json.JSONDecodeError as ex:
+            print(f"💥 Failed to parse line as JSON: {line}\nError: {ex}")
             raise ex
-    @staticmethod
-    def pkl(path: 'Path', **kwargs: Any): return Read.pickle(path, **kwargs)
-    # @staticmethod
-    # def dill(path: 'Path', **kwargs: Any) -> Any:
-    #     """handles imports automatically provided that saved object was from an imported class (not in defined in __main__)"""
-    #     import dill
-    #     obj = dill.loads(str=Path(path).read_bytes(), **kwargs)
-    #     return obj
-    @staticmethod
-    def py(path: 'Path', init_globals: Optional[dict[str, Any]] = None, run_name: Optional[str] = None):
-        import runpy
-        return runpy.run_path(str(path), init_globals=init_globals, run_name=run_name)
-    @staticmethod
-    def txt(path: 'Path', encoding: str = 'utf-8') -> str: return Path(path).read_text(encoding=encoding)
-    @staticmethod
-    def parquet(path: 'Path', **kwargs: Any):
-        import polars as pl
-        return pl.read_parquet(path, **kwargs)
+    _ = r
+    return res
 
+
+def read_yaml(path: 'Path', r: bool = False) -> Any:
+    import yaml
+    with open(str(path), "r", encoding="utf-8") as file:
+        mydict = yaml.load(file, Loader=yaml.FullLoader)
+    _ = r
+    return mydict
+
+
+def read_ini(path: 'Path', encoding: Optional[str] = None) -> Any:
+    if not Path(path).exists() or Path(path).is_dir(): raise FileNotFoundError(f"File not found or is a directory: {path}")
+    import configparser
+    res = configparser.ConfigParser()
+    res.read(filenames=[str(path)], encoding=encoding)
+    return res
+
+
+def read_toml(path: 'Path') -> Any:
+    import tomllib
+    return tomllib.loads(Path(path).read_text(encoding='utf-8'))
+
+
+def read_npy(path: 'Path', **kwargs: Any) -> Any:
+    import numpy as np
+    data = np.load(str(path), allow_pickle=True, **kwargs)
+    return data
+
+
+def read_pickle(path: 'Path', **kwargs: Any) -> Any:
+    import pickle
+    try: return pickle.loads(Path(path).read_bytes(), **kwargs)
+    except BaseException as ex:
+        print(f"💥 Failed to load pickle file `{path}` with error:\n{ex}")
+        raise ex
+
+
+def read_pkl(path: 'Path', **kwargs: Any) -> Any: return read_pickle(path, **kwargs)
+
+
+def read_py(path: 'Path', init_globals: Optional[dict[str, Any]] = None, run_name: Optional[str] = None) -> Any:
+    import runpy
+    return runpy.run_path(str(path), init_globals=init_globals, run_name=run_name)
+
+
+def read_txt(path: 'Path', encoding: str = 'utf-8') -> str: return Path(path).read_text(encoding=encoding)
+
+
+def read_parquet(path: 'Path', **kwargs: Any) -> Any:
+    import polars as pl
+    return pl.read_parquet(path, **kwargs)
+
+
+def read_csv(path: 'Path', **kwargs: Any) -> Any:
+    import polars as pl
+    return pl.read_csv(path, infer_schema_length=10000, **kwargs)
+
+
+def read_npz(path: 'Path', **kwargs: Any) -> Any:
+    import numpy as np
+    return np.load(str(path), **kwargs)
+
+
+def read_dbms(path: 'Path', **kwargs: Any) -> Any:
+    from machineconfig.utils.files.dbms import DBMS
+    _ = kwargs
+    res = DBMS.from_local_db(path=Path(path))
+    try:
+        print(res.describe_db())
+    except Exception:
+        print("💥 Could not describe the database.")
+    return res
+
+
+def read_image(path: 'Path', **kwargs: Any) -> Any:
+    import matplotlib.pyplot as pyplot
+    return pyplot.imread(str(path), **kwargs)
+
+
+_IMAGE_SUFFIXES: list[str] = ['eps', 'jpg', 'jpeg', 'pdf', 'pgf', 'png', 'ps', 'raw', 'rgba', 'svg', 'svgz', 'tif', 'tiff']
+_DBMS_SUFFIXES: list[str] = ['sqlite', 'sqlite3', 'db', 'duckdb']
+
+_READERS: dict[str, Callable[..., Any]] = {
+    "json": read_json,
+    "jsonl": read_jsonl,
+    "yaml": read_yaml,
+    "ini": read_ini,
+    "toml": read_toml,
+    "npy": read_npy,
+    "npz": read_npz,
+    "pickle": read_pickle,
+    "pkl": read_pkl,
+    "py": read_py,
+    "txt": read_txt,
+    "parquet": read_parquet,
+    "csv": read_csv,
+    **{s: read_dbms for s in _DBMS_SUFFIXES},
+    **{s: read_image for s in _IMAGE_SUFFIXES},
+}
 
 
 if __name__ == '__main__':

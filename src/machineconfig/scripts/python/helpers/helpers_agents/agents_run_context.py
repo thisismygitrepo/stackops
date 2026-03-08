@@ -211,7 +211,7 @@ def resolve_context(context: Optional[str], context_path: Optional[str], prompts
             raise ValueError(f"--context-path must point to an existing file: {context_file}")
         return context_file.read_text(encoding="utf-8")
 
-    from machineconfig.utils.files.read import Read
+    from machineconfig.utils.files.read import read_yaml
     from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
@@ -228,7 +228,7 @@ def resolve_context(context: Optional[str], context_path: Optional[str], prompts
     if context_name is not None:
         found_context = None
         for _, yaml_path in existing_yaml_locations:
-            yaml_data = Read.yaml(yaml_path)
+            yaml_data = read_yaml(yaml_path)
             try:
                 found_context = _resolve_context_name(raw_data=yaml_data, context_name=context_name)
                 break
@@ -240,7 +240,7 @@ def resolve_context(context: Optional[str], context_path: Optional[str], prompts
         fuzzy_preview_map: dict[str, str] = {}
         fuzzy_context_map: dict[str, str] = {}
         for location_name, yaml_path in existing_yaml_locations:
-            yaml_data = Read.yaml(yaml_path)
+            yaml_data = read_yaml(yaml_path)
             context_candidates = _collect_context_name_candidates(raw_data=yaml_data)
             for candidate_name, candidate_preview in context_candidates.items():
                 label = f"{location_name}.{candidate_name}" if where in ("all", "a") else candidate_name
@@ -268,7 +268,7 @@ def resolve_context(context: Optional[str], context_path: Optional[str], prompts
     preview_map: dict[str, str] = {}
     context_map: dict[str, str] = {}
     for location_name, yaml_path in existing_yaml_locations:
-        yaml_data = Read.yaml(yaml_path)
+        yaml_data = read_yaml(yaml_path)
         file_preview_map, file_context_map = _extract_yaml_options(yaml_data)
         for key, preview in file_preview_map.items():
             label = f"{location_name}.{key}" if where in ("all", "a") else key

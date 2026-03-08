@@ -150,7 +150,10 @@ class DBMS:
         ses = sessionmaker()(bind=self.eng)
         count = ses.query(tbl).count()
         res = dict(name=table, count=count, size_mb=count * len(tbl.exported_columns) * 10 / 1e6)
-        from machineconfig.utils.accessories import pprint
+        # from machineconfig.utils.accessories import pprint
+        def pprint(obj: dict[Any, Any], title: str) -> None:
+            from rich import inspect
+            inspect(type("TempStruct", (object,), obj)(), value=False, title=title, docs=False, dunder=False, sort=False)
         pprint(res, title="TABLE DETAILS")
         dat = self.read_table(table=table, sch=sch, size=2)
         df = dat

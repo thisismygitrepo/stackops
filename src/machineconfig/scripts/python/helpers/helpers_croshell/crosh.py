@@ -24,9 +24,9 @@ def get_read_data_pycode(path: str):
     console = Console()
     p = Path(path).absolute()
     try:
-        from machineconfig.utils.files.read import Read
+        from machineconfig.utils.files.read import read_file
         from machineconfig.utils.accessories import pprint
-        dat = Read.read(p)
+        dat = read_file(p)
         if isinstance(dat, dict):
             panel_title = f"📄 File Data: {p.name}"
             console.print(Panel(Text(str(dat), justify="left"), title=panel_title, expand=False))

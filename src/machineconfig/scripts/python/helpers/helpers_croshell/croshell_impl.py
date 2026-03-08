@@ -11,6 +11,7 @@ def croshell(
     uv_with: Optional[str],
     backend: BACKENDS,
     profile: Optional[str],
+    frozen: bool
 ) -> None:
     """Cross-shell command execution."""
     interactivity = "-i"
@@ -18,15 +19,17 @@ def croshell(
     if uv_with is not None:
         match backend:
             case "ipython":
-                user_uv_with_line = f"--with {uv_with},ipython"
+                user_uv_with_line = f"--with {uv_with},ipython,rich"
             case _:
                 user_uv_with_line = f"--with {uv_with}"
     else:
         match backend:
             case "ipython":
-                user_uv_with_line = "--with ipython"
+                user_uv_with_line = "--with ipython,rich"
             case _:
                 user_uv_with_line = ""
+    if frozen:
+        user_uv_with_line += " --frozen"
 
     if project_path is not None:
         uv_project_line = f'--project {project_path}'

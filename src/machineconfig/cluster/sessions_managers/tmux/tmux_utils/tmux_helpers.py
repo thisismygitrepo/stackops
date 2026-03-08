@@ -49,14 +49,14 @@ def build_tmux_commands(layout_config: LayoutConfig, session_name: str) -> list[
     first_tab = tabs[0]
     first_window = first_tab["tabName"]
     first_cwd = normalize_cwd(first_tab["startDir"])
+    first_target = f"{session_name}:{first_window}"
     commands: list[str] = []
     commands.append(
         f"tmux new-session -d -s {shell_quote(session_name)} -n {shell_quote(first_window)} -c {shell_quote(first_cwd)}"
     )
     if first_tab["command"].strip():
-        target = f"{session_name}:{first_window}"
         commands.append(
-            f"tmux send-keys -t {shell_quote(target)} {shell_quote(first_tab['command'])} C-m"
+            f"tmux send-keys -t {shell_quote(first_target)} {shell_quote(first_tab['command'])} C-m"
         )
     for tab in tabs[1:]:
         window_name = tab["tabName"]
@@ -69,7 +69,7 @@ def build_tmux_commands(layout_config: LayoutConfig, session_name: str) -> list[
             commands.append(
                 f"tmux send-keys -t {shell_quote(target)} {shell_quote(tab['command'])} C-m"
             )
-    commands.append(f"tmux select-window -t {shell_quote(session_name)}:0")
+    commands.append(f"tmux select-window -t {shell_quote(first_target)}")
     return commands
 
 
