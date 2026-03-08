@@ -16,9 +16,9 @@ def read_file(path: 'Path', **kwargs: Any) -> Any:
     raise AttributeError(f"Unknown file type. failed to recognize the suffix `{suffix}` of file {path}")
 
 
-def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
-    from machineconfig.utils.io import read_json as _read_json
-    return _read_json(path, r=r, **kwargs)
+# def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
+#     from machineconfig.utils.io import read_json as _read_json
+#     return _read_json(path, r=r, **kwargs)
 
 
 def read_jsonl(path: 'Path', r: bool = False, **kwargs: Any) -> Any:

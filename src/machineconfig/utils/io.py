@@ -54,34 +54,31 @@ def read_ini(path: "Path", encoding: Optional[str] = None):
     return res
 
 
-def remove_c_style_comments(text: str) -> str:
-    import re
-    # Step 1: Escape URLs (https:// or any URLs you want to protect)
-    url_pattern = r'https?://[^\s]*'
-    urls = re.findall(url_pattern, text)
-    url_map = {url: f"__URL{index}__" for index, url in enumerate(urls)}
-    
-    # Temporarily replace URLs with placeholders
-    for url, placeholder in url_map.items():
-        text = text.replace(url, placeholder)
-    
-    # Step 2: Remove C-style comments
-    # Remove all // single-line comments
-    text = re.sub(r'//.*', '', text)
-    # Remove all /* … */ block comments (non-greedy)
-    text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
-    
-    # Step 3: Restore URLs
-    for url, placeholder in url_map.items():
-        text = text.replace(placeholder, url)
-    
-    return text
-
-
 def read_json(path: "Path", r: bool = False, **kwargs: Any) -> Any:  # return could be list or dict etc
     try:
         mydict = json.loads(Path(path).read_text(encoding="utf-8"), **kwargs)
     except Exception:
+        def remove_c_style_comments(text: str) -> str:
+            import re
+            # Step 1: Escape URLs (https:// or any URLs you want to protect)
+            url_pattern = r'https?://[^\s]*'
+            urls = re.findall(url_pattern, text)
+            url_map = {url: f"__URL{index}__" for index, url in enumerate(urls)}
+            
+            # Temporarily replace URLs with placeholders
+            for url, placeholder in url_map.items():
+                text = text.replace(url, placeholder)
+            
+            # Step 2: Remove C-style comments
+            # Remove all // single-line comments
+            text = re.sub(r'//.*', '', text)
+            # Remove all /* … */ block comments (non-greedy)
+            text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
+            
+            # Step 3: Restore URLs
+            for url, placeholder in url_map.items():
+                text = text.replace(placeholder, url)
+            return text
         mydict = json.loads(remove_c_style_comments(Path(path).read_text(encoding="utf-8")), **kwargs)
     _ = r
     return mydict
