@@ -3011,6 +3011,23 @@
       }
     },
     {
+      "appName": "agent-hand",
+      "repoURL": "https://github.com/weykon/agent-hand",
+      "doc": "Fast tmux-backed terminal session manager for AI coding agents.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "agent-hand-x86_64-unknown-linux-gnu.tar.gz",
+          "macos": "agent-hand-x86_64-apple-darwin.tar.gz",
+          "windows": "agent-hand-x86_64-pc-windows-msvc.tar.gz"
+        },
+        "arm64": {
+          "linux": null,
+          "macos": "agent-hand-aarch64-apple-darwin.tar.gz",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "aoe",
       "repoURL": "https://github.com/njbrake/agent-of-empires",
       "doc": "Agent of Empires terminal session manager for AI coding agents",

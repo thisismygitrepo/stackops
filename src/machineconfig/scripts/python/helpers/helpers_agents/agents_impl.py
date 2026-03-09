@@ -22,6 +22,23 @@ def _split_and_chunk_prompts(raw_material: str, separator: str, tasks_per_prompt
     return grouped
 
 
+def resolve_agents_output_dir(*, repo_root: Path, agents_dir: Optional[str], job_name: Optional[str]) -> tuple[Path, str]:
+    if agents_dir is None:
+        from machineconfig.utils.accessories import randstr
+        if job_name is None:
+            job_name_resolved = randstr(6)
+        else:
+            job_name_resolved = job_name.strip()
+        return Path(repo_root) / ".ai" / "agents" / job_name_resolved, job_name_resolved
+
+    agents_dir_obj = Path(agents_dir).expanduser().resolve().absolute()
+    if job_name is None:
+        job_name_resolved = agents_dir_obj.name
+    else:
+        job_name_resolved = job_name.strip()
+    return agents_dir_obj, job_name_resolved
+
+
 def agents_create(
     agent: AGENTS,
     host: HOST,
@@ -41,7 +58,7 @@ def agents_create(
     """Create agents layout file, ready to run."""
     from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_help_launch import prep_agent_launch, get_agents_launch_layout
     from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_load_balancer import chunk_prompts
-    from machineconfig.utils.accessories import get_repo_root, randstr
+    from machineconfig.utils.accessories import get_repo_root
     import json
 
     repo_root = get_repo_root(Path.cwd())
@@ -56,19 +73,12 @@ def agents_create(
 
     print(f"Operating @ {repo_root}")
 
-    if agents_dir is None:
-        if job_name is None:
-            job_name_resolved = randstr(6)
-        else:
-            job_name_resolved = job_name.strip()
-        agents_dir_obj = Path(repo_root) / ".ai" / "agents" / job_name_resolved
-    else:
-        agents_dir_obj = Path(agents_dir).expanduser().resolve().absolute()
-        if job_name is not None:
-            agents_dir_obj = agents_dir_obj / job_name
-            job_name_resolved = job_name.strip()
-        else:
-            job_name_resolved = agents_dir_obj.name
+    agents_dir_obj, job_name_resolved = resolve_agents_output_dir(
+        repo_root=repo_root,
+        agents_dir=agents_dir,
+        job_name=job_name,
+    )
+    if agents_dir is not None:
         if agents_dir_obj.exists():
             import shutil
             shutil.rmtree(agents_dir_obj)

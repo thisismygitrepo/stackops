@@ -6,6 +6,13 @@ from typing import Optional
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, AGENT_NAME_FORMATTER, HOST, PROVIDER, AI_SPEC, API_SPEC
 
 
+def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -> str:
+    try:
+        return str(prompt_material_path.relative_to(repo_root))
+    except ValueError:
+        return str(prompt_material_path)
+
+
 def _build_generic_agent_command(agent: AGENTS, prompt_path: Path) -> str:
     from machineconfig.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
     return build_agent_command(agent=agent, prompt_file=prompt_path)
@@ -57,7 +64,8 @@ def prep_agent_launch(repo_root: Path, agents_dir: Path, prompts_material: list[
         else:
             prompt_material_path = prompt_root / f"agent_{idx}_material.txt"
             prompt_material_path.write_text(a_prompt_material, encoding="utf-8")
-            prompt_path.write_text(prompt_prefix + f"""\nPlease only look @ {prompt_material_path.relative_to(repo_root)}. You don't need to do any other work beside the content of this material file.""", encoding="utf-8")
+            material_reference = _format_material_reference(prompt_material_path=prompt_material_path, repo_root=repo_root)
+            prompt_path.write_text(prompt_prefix + f"""\nPlease only look @ {material_reference}. You don't need to do any other work beside the content of this material file.""", encoding="utf-8")
 
         agent_cmd_launch_path = prompt_root / AGENT_NAME_FORMATTER.format(idx=idx)  # e.g., agent_0_cmd.sh
         random_sleep_time = random.uniform(0, 3)

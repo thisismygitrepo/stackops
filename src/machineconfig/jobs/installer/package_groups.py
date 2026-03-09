@@ -26,6 +26,7 @@ AGENTS = [
     "kilocode",
     "cline",
     "auggie",
+    "agentofempires", "agent-deck", "agenthand"
     # "codex",
     # "gorilla",
     # "ollama",

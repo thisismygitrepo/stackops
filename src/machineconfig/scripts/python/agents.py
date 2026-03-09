@@ -17,10 +17,10 @@ def agents_create(
     agent_load:   Annotated[int, typer.Option(..., "--agent-load", "-l", help="Number of tasks per prompt")] = 3,
     prompt:       Annotated[Optional[str], typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
     prompt_path:  Annotated[Optional[str], typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
-    job_name:     Annotated[str, typer.Option(..., "--job-name", "-n", help="Job name")] = "AI_Agents",
+    job_name:     Annotated[str, typer.Option(..., "--job-name", "-n", help="Job label. Also used to build the default output directory when --agents-dir is omitted.")] = "AI_Agents",
     join_prompt_and_context:     Annotated[bool, typer.Option(..., "--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
     output_path:  Annotated[Optional[str], typer.Option(..., "--output-path", "-o", help="Path to write the layout.json file")] = None,
-    agents_dir:   Annotated[Optional[str], typer.Option(..., "--agents-dir", "-d", help="Directory to store agent files. If not provided, will be constructed automatically.")] = None,
+    agents_dir:   Annotated[Optional[str], typer.Option(..., "--agents-dir", "-d", help="Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.")] = None,
 ) -> None:
     """Create agents layout file, ready to run."""
     from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl

@@ -9,7 +9,7 @@ from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
 
 
-def _check_shell_profile_status() -> dict[str, Any]:
+def check_shell_profile_status() -> dict[str, Any]:
     """Check shell profile configuration status."""
     from machineconfig.profile.create_shell_profile import get_shell_profile_path
 
@@ -54,7 +54,7 @@ def _check_shell_profile_status() -> dict[str, Any]:
         }
 
 
-def _check_repos_status() -> dict[str, Any]:
+def check_repos_status() -> dict[str, Any]:
     """Check configured repositories status."""
     from machineconfig.utils.io import read_ini
 
@@ -90,7 +90,7 @@ def _check_repos_status() -> dict[str, Any]:
         return {"configured": False, "count": 0, "repos": []}
 
 
-def _check_ssh_status() -> dict[str, Any]:
+def check_ssh_status() -> dict[str, Any]:
     """Check SSH configuration status."""
     ssh_dir = PathExtended.home().joinpath(".ssh")
     if not ssh_dir.exists():
@@ -123,7 +123,7 @@ def _check_ssh_status() -> dict[str, Any]:
     }
 
 
-def _check_config_files_status() -> dict[str, Any]:
+def check_config_files_status() -> dict[str, Any]:
     """Check public and private configuration files status."""
     from machineconfig.profile.create_links import read_mapper
 
@@ -171,7 +171,7 @@ def _check_config_files_status() -> dict[str, Any]:
         }
 
 
-def _check_important_tools() -> dict[str, dict[str, bool]]:
+def check_important_tools() -> dict[str, dict[str, bool]]:
     """Check if important CLI tools are installed, organized by groups."""
     from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
 
@@ -185,7 +185,7 @@ def _check_important_tools() -> dict[str, dict[str, bool]]:
     return group_status
 
 
-def _check_backup_config() -> dict[str, Any]:
+def check_backup_config() -> dict[str, Any]:
     """Check backup configuration status."""
     import tomllib
 

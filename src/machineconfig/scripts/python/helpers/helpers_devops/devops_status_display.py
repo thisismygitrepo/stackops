@@ -13,21 +13,21 @@ from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 console = Console()
 
 
-def _display_report_header() -> None:
+def display_report_header() -> None:
     """Display report header."""
     console.print("\n")
     console.print(Panel(Text("📊 Machine Status Report", justify="center", style="bold white"), style="bold blue", padding=(1, 2)))
     console.print("\n")
 
 
-def _display_report_footer() -> None:
+def display_report_footer() -> None:
     """Display report footer."""
     console.print("\n")
     console.print(Panel(Text("✨ Status report complete!", justify="center", style="bold green"), style="green", padding=(1, 2)))
     console.print("\n")
 
 
-def _display_system_info(info: dict[str, str]) -> None:
+def display_system_info(info: dict[str, str]) -> None:
     """Display system information panel."""
     console.rule("[bold blue]💻 System Information[/bold blue]")
 
@@ -45,7 +45,7 @@ def _display_system_info(info: dict[str, str]) -> None:
     console.print(Panel(table, title="System", border_style="blue", padding=(1, 2), expand=False))
 
 
-def _display_shell_status(status: dict[str, Any]) -> None:
+def display_shell_status(status: dict[str, Any]) -> None:
     """Display shell profile status panel."""
     console.rule("[bold green]🐚 Shell Profile[/bold green]")
 
@@ -83,7 +83,7 @@ def _display_shell_status(status: dict[str, Any]) -> None:
     )
 
 
-def _display_repos_status(status: dict[str, Any]) -> None:
+def display_repos_status(status: dict[str, Any]) -> None:
     """Display configured repositories status."""
     console.rule("[bold cyan]📚 Configured Repositories[/bold cyan]")
 
@@ -114,7 +114,7 @@ def _display_repos_status(status: dict[str, Any]) -> None:
     console.print(Panel(table, title=f"Repositories ({status['count']})", border_style="cyan", padding=(1, 2)))
 
 
-def _display_ssh_status(status: dict[str, Any]) -> None:
+def display_ssh_status(status: dict[str, Any]) -> None:
     """Display SSH configuration status."""
     console.rule("[bold yellow]🔐 SSH Configuration[/bold yellow]")
 
@@ -153,7 +153,7 @@ def _display_ssh_status(status: dict[str, Any]) -> None:
         console.print(config_panel)
 
 
-def _display_config_files_status(status: dict[str, Any]) -> None:
+def display_config_files_status(status: dict[str, Any]) -> None:
     """Display configuration files status."""
     console.rule("[bold bright_blue]⚙️  Configuration Files[/bold bright_blue]")
 
@@ -186,7 +186,7 @@ def _display_config_files_status(status: dict[str, Any]) -> None:
     )
 
 
-def _display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
+def display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
     """Display important tools installation status organized by groups."""
     console.rule("[bold bright_magenta]🛠️  Important Tools[/bold bright_magenta]")
 
@@ -249,7 +249,7 @@ def _display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
     console.print(master_panel)
 
 
-def _display_backup_status(status: dict[str, Any]) -> None:
+def display_backup_status(status: dict[str, Any]) -> None:
     """Display backup configuration status."""
     console.rule("[bold bright_cyan]💾 Backup Configuration[/bold bright_cyan]")
 
