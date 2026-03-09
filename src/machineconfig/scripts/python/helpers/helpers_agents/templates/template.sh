@@ -13,14 +13,14 @@ rm -rfd "$AGENTS_DIR" || true
 
 agents create \
     --agent codex \
-    --host docker \
     --model gpt-5.3-codex \
     --provider openai \
     --agent-load 5 \
     --context-path $CONTEXT_PATH \
     --prompt-path $PROMPT_PATH \
     --job-name $JOB_NAME \
-    --agents-dir $AGENTS_DIR
+    --agents-dir $AGENTS_DIR \
+    --separator $'\n'
 
 sessions balance-load "$AGENTS_DIR/layout.json" \
     --max-threshold 4 \

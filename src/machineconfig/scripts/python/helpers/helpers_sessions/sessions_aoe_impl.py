@@ -31,6 +31,7 @@ class AoeLaunchOptions:
     dry_run: bool
     sleep_inbetween: float
     tab_command_mode: TabCommandMode
+    launch: bool
 
 
 @dataclass(frozen=True)
@@ -254,6 +255,8 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
         printable = shlex.join(command)
         if options.dry_run:
             print(printable)
+            if options.launch:
+                print(shlex.join([options.aoe_bin, "session", "start", title]))
         else:
             result = subprocess.run(command, capture_output=True, text=True, timeout=120, check=False)
             if result.returncode != 0:
@@ -264,5 +267,12 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
                     f"{detail or 'No error output returned.'}"
                 )
             print(f"Added AoE session '{title}' in group '{group}'.")
+            if options.launch:
+                start_result = subprocess.run([options.aoe_bin, "session", "start", title], capture_output=True, text=True, timeout=120, check=False)
+                if start_result.returncode != 0:
+                    detail = (start_result.stderr or start_result.stdout).strip()
+                    print(f"⚠️  Could not auto-start session '{title}': {detail or 'unknown error'}")
+                else:
+                    print(f"Started AoE session '{title}'.")
         if index < len(pending_commands) - 1 and options.sleep_inbetween > 0:
             time.sleep(options.sleep_inbetween)

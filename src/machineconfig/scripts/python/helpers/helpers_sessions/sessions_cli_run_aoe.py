@@ -38,6 +38,7 @@ def run_aoe_cli(
     aoe_bin: str,
     tab_command_mode: Literal["prompt", "cmd", "ignore"],
     subsitute_home: bool,
+    launch: bool,
 ) -> None:
     if layouts_file is not None:
         layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
@@ -163,6 +164,7 @@ def run_aoe_cli(
         dry_run=dry_run,
         sleep_inbetween=sleep_inbetween,
         tab_command_mode=tab_command_mode,
+        launch=launch,
     )
 
     try:

@@ -240,6 +240,7 @@ def run_aoe(
     aoe_bin: Annotated[str, typer.Option("--aoe-bin", help="AoE executable to invoke.")] = "aoe",
     tab_command_mode: Annotated[Literal["prompt", "cmd", "ignore"], typer.Option("--tab-command-mode", help="How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.")] = "prompt",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
+    launch: Annotated[bool, typer.Option("--launch/--no-launch", help="Launch each AoE session immediately after creating it.")] = True,
 ) -> None:
     """Launch selected layout tabs as agent-of-empires sessions.
 
@@ -270,6 +271,7 @@ def run_aoe(
         aoe_bin=aoe_bin,
         tab_command_mode=tab_command_mode,
         subsitute_home=subsitute_home,
+        launch=launch,
     )
 
 
