@@ -17,6 +17,7 @@ sessions [OPTIONS] COMMAND [ARGS]...
 | Command | Shortcut | Description |
 |---------|----------|-------------|
 | `run` | `r` | Launch sessions from layout file |
+| `run-aoe` | - | Launch layout tabs as AoE sessions |
 | `create-template` | `t` | Create a layout template file |
 | `create-from-function` | `c` | Create layout from function |
 | `balance-load` | `b` | Balance load across sessions |
@@ -67,6 +68,49 @@ sessions run layouts.json --on-conflict restart
 
 # Run in parallel
 sessions run layouts.json --parallel
+```
+
+---
+
+## run-aoe
+
+Launch selected layout tabs through [agent-of-empires](https://github.com/njbrake/agent-of-empires).
+
+The mapping is:
+
+- `layoutName` -> `aoe add --group`
+- `tabName` -> `aoe add --title`
+- `startDir` -> `aoe add <path>`
+- `command` -> initial prompt by default
+
+```bash
+sessions run-aoe --layouts-file layout.json [OPTIONS]
+```
+
+**Useful options:**
+
+| Option | Description |
+|--------|-------------|
+| `--model` | Model name forwarded to `aoe add --model` |
+| `--agent` | Agent name forwarded to `aoe add --agent` (defaults to `codex`) |
+| `--provider` | Provider forwarded to `aoe add --provider` |
+| `--sandbox` | Convenience flag that becomes `aoe add --args --sandbox <value>` |
+| `--yolo` | Convenience flag that becomes `aoe add --args --yolo` |
+| `--tab-command-mode` | Interpret `command` as `prompt`, `cmd`, or `ignore` |
+| `--dry-run` | Print the generated `aoe add` commands without executing them |
+| `--force` | Forward `--force` to `aoe add` |
+
+**Examples:**
+
+```bash
+# Treat each tab command as the initial prompt
+sessions run-aoe --layouts-file layout.json --model gpt-5-codex --sandbox workspace-write --yolo
+
+# Use existing tab commands as aoe --cmd overrides instead
+sessions run-aoe --layouts-file layout.json --tab-command-mode cmd
+
+# Preview the generated aoe commands
+sessions run-aoe --layouts-file layout.json --model gpt-5-codex --dry-run
 ```
 
 ---

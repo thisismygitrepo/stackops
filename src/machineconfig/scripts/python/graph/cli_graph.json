@@ -688,7 +688,7 @@
                     "    #     from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time",
                     "    #     analyze_over_time(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.80\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.81\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time",
                     "    analyze_over_time(repo_path=repo_path)"
                   ],
@@ -1658,7 +1658,7 @@
                     "        # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "        # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.80\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.81\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    try:",
                     "        repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
@@ -7840,7 +7840,7 @@
               {
                 "kind": "command",
                 "name": "vscode-share",
-                "help": "🧑‍💻 <v> Share workspace via VS Code Tunnels",
+                "help": "💻 <v> Share workspace via VS Code Tunnels",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
@@ -7849,10 +7849,11 @@
                 "signature": {
                   "raw_lines": [
                     "def vscode_share(",
-                    "    action: Annotated[Literal[\"run\", \"install-service\", \"uninstall-service\", \"share-local\"], typer.Option(..., \"--action\", \"-a\", help=\"Action to perform\", case_sensitive=False, show_choices=True)],",
+                    "    action: Annotated[Literal[\"run\", \"r\", \"install-service\", \"i\", \"uninstall-service\", \"u\", \"share-local\", \"l\"], typer.Argument(..., help=\"Action to perform\", case_sensitive=False, show_choices=True)],",
                     "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Name for tunnel/service actions (run, install-service)\")] = None,",
                     "    path: Annotated[str | None, typer.Option(\"--path\", \"-p\", help=\"Server base path for local web mode (share-local)\")] = None,",
-                    "    host: Annotated[str | None, typer.Option(\"--host\", \"-h\", help=\"Host for local web mode (share-local), e.g. 0.0.0.0\")] = None,",
+                    "    host: Annotated[str, typer.Option(\"--host\", \"-h\", help=\"Host for local web mode (share-local)\")] = \"0.0.0.0\",",
+                    "    directory: Annotated[str | None, typer.Option(\"--dir\", \"-d\", help=\"Folder to open in local web mode (share-local), defaults to the current working directory\")] = None,",
                     "    extra_args: Annotated[str | None, typer.Option(\"--extra-args\", \"-e\", help=\"Extra args to append to the generated VS Code command\")] = None,",
                     ") -> None:",
                     "    \"\"\"🧑‍💻 Share workspace using VS Code CLI (\"code tunnel\" / \"code serve-web\")",
@@ -7863,54 +7864,57 @@
                     "    accept = \"--accept-server-license-terms\"",
                     "    name_part = f\"--name {name}\" if name else \"\"",
                     "    extra = extra_args or \"\"",
-                    "",
-                    "    if action == \"run\":",
-                    "        cmd = f\"code tunnel {name_part} {accept} {extra}\".strip()",
-                    "        desc = \"Run a one-off VS Code tunnel (foreground)\"",
-                    "    elif action == \"install-service\":",
-                    "        cmd = f\"code tunnel service install {accept} {name_part}\".strip()",
-                    "        desc = \"Install code tunnel as a service\"",
-                    "    elif action == \"uninstall-service\":",
-                    "        cmd = \"code tunnel service uninstall\"",
-                    "        desc = \"Uninstall code tunnel service\"",
-                    "    elif action == \"share-local\":",
-                    "        host_part = f\"--host {host}\" if host else \"\"",
-                    "        server_base_path_part = f\"--server-base-path {path}\" if path else \"\"",
-                    "        cmd = f\"code serve-web {accept} {host_part} {server_base_path_part} {extra}\".strip()",
-                    "        desc = \"Run local VS Code web server (serve-web)\"",
-                    "    else:",
-                    "        print(f\"Unknown action: {action}\")",
-                    "        return",
-                    "",
+                    "    action_normalized = {",
+                    "        \"r\": \"run\",",
+                    "        \"i\": \"install-service\",",
+                    "        \"u\": \"uninstall-service\",",
+                    "        \"l\": \"share-local\",",
+                    "    }.get(action, action)",
+                    "    match action_normalized:",
+                    "        case \"run\" | \"r\":",
+                    "            cmd = f\"code tunnel {name_part} {accept} {extra}\".strip()",
+                    "            desc = \"Run a one-off VS Code tunnel (foreground)\"",
+                    "        case \"install-service\" | \"i\":",
+                    "            cmd = f\"code tunnel service install {accept} {name_part}\".strip()",
+                    "            desc = \"Install code tunnel as a service\"",
+                    "        case \"uninstall-service\" | \"u\":",
+                    "            cmd = \"code tunnel service uninstall\"",
+                    "            desc = \"Uninstall code tunnel service\"",
+                    "        case \"share-local\" | \"l\":",
+                    "            from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder",
+                    "            host_part = f\"--host {host}\" if host else \"\"",
+                    "            server_base_path_part = f\"--server-base-path {path}\" if path else \"\"",
+                    "            directory = resolve_share_local_folder(directory)",
+                    "            extra = ensure_without_connection_token(extra)",
+                    "            cmd = f\"code serve-web {accept} {host_part} {server_base_path_part} {extra}\".strip()",
+                    "            desc = \"Run local VS Code web server (serve-web)\"",
+                    "        case _:",
+                    "            print(f\"Unknown action: {action_normalized}\")",
+                    "            return",
                     "    from machineconfig.utils.code import print_code, exit_then_run_shell_script",
                     "    print_code(cmd, lexer=\"bash\", desc=desc)",
+                    "    if action_normalized == \"share-local\":",
+                    "        from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls",
                     "",
-                    "    if typer.confirm(\"Do you want to run the above command now?\", default=False):",
+                    "        print_serve_web_urls(cmd, folder_path=directory)",
                     "        exit_then_run_shell_script(cmd)",
-                    "    else:",
-                    "        print(\"Command not executed. Use the printed command in your terminal when ready.\")"
+                    "        return",
+                    "    exit_then_run_shell_script(cmd)    "
                   ],
                   "name": "vscode_share",
                   "parameters": [
                     {
                       "name": "action",
                       "kind": "positional_or_keyword",
-                      "type": "Literal['run', 'install-service', 'uninstall-service', 'share-local']",
+                      "type": "Literal['run', 'r', 'install-service', 'i', 'uninstall-service', 'u', 'share-local', 'l']",
                       "default": null,
                       "required": true,
-                      "annotation_raw": "Annotated[Literal['run', 'install-service', 'uninstall-service', 'share-local'], typer.Option(..., '--action', '-a', help='Action to perform', case_sensitive=False, show_choices=True)]",
+                      "annotation_raw": "Annotated[Literal['run', 'r', 'install-service', 'i', 'uninstall-service', 'u', 'share-local', 'l'], typer.Argument(..., help='Action to perform', case_sensitive=False, show_choices=True)]",
                       "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--action",
-                          "-a"
-                        ],
-                        "long_flags": [
-                          "--action"
-                        ],
-                        "short_flags": [
-                          "-a"
-                        ],
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
                         "help": "Action to perform",
                         "default": "..."
                       }
@@ -7962,10 +7966,10 @@
                     {
                       "name": "host",
                       "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
+                      "type": "str",
+                      "default": "0.0.0.0",
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--host', '-h', help='Host for local web mode (share-local), e.g. 0.0.0.0')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--host', '-h', help='Host for local web mode (share-local)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -7978,7 +7982,29 @@
                         "short_flags": [
                           "-h"
                         ],
-                        "help": "Host for local web mode (share-local), e.g. 0.0.0.0"
+                        "help": "Host for local web mode (share-local)"
+                      }
+                    },
+                    {
+                      "name": "directory",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--dir', '-d', help='Folder to open in local web mode (share-local), defaults to the current working directory')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--dir",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--dir"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Folder to open in local web mode (share-local), defaults to the current working directory"
                       }
                     },
                     {
@@ -8825,7 +8851,7 @@
                 "    cloud: Annotated[Optional[str], typer.Option(..., \"--cloud\", \"-c\", help=\"cloud to mount.\")] = None,",
                 "    destination: Annotated[Optional[str], typer.Option(..., \"--destination\", \"-d\", help=\"destination to mount\")] = None,",
                 "    network: Annotated[Optional[str], typer.Option(..., \"--network\", \"-n\", help=\"mount network drive\")] = None,",
-                "    backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(\"--backend\", \"-b\", help=\"terminal backend for Linux/macOS\")] = \"auto\",",
+                "    backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(\"--backend\", \"-b\", help=\"terminal backend for Linux/macOS\")] = \"tmux\",",
                 "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose cloud interactively from config.\")] = True,",
                 "",
                 ") -> None:",
@@ -8908,7 +8934,7 @@
                   "name": "backend",
                   "kind": "positional_or_keyword",
                   "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
-                  "default": "auto",
+                  "default": "tmux",
                   "required": false,
                   "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'auto', 'a'], typer.Option('--backend', '-b', help='terminal backend for Linux/macOS')]",
                   "typer": {
@@ -9156,7 +9182,7 @@
           {
             "kind": "command",
             "name": "run",
-            "help": "Launch terminal sessions based on a layout configuration file.\n\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
+            "help": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nskip, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
               "module": "machineconfig.scripts.python.sessions",
@@ -9175,7 +9201,8 @@
                 "    max_tabs: Annotated[int, typer.Option(..., \"--max-tabs-per-layout\", \"-T\", help=\"A Sanity checker that throws an error if any layout exceeds the maximum number of tabs to launch.\")] = 25,",
                 "",
                 "    max_layouts: Annotated[int, typer.Option(..., \"--max-parallel-layouts\", \"-P\", help=\"A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.\")] = 25,",
-                "    backend: Annotated[Literal[\"zellij\", \"z\", \"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"auto\",",
+                "    backend: Annotated[Literal[\"zellij\", \"z\", \"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"tmux\",",
+                "    on_conflict: Annotated[Literal[\"restart\", \"skip\", \"rename\"], typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts.\")] = \"skip\",",
                 "    max_parallel_tabs: Annotated[Optional[int], typer.Option(\"--max-parallel-tabs\", help=\"Enable dynamic tab scheduling and cap active tabs to this value.\")] = None,",
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-seconds\", help=\"Dynamic mode only: polling interval in seconds used to detect finished tabs.\")] = 2.0,",
                 "",
@@ -9188,6 +9215,8 @@
                 ") -> None:",
                 "    \"\"\"Launch terminal sessions based on a layout configuration file.",
                 "",
+                "    Use --on-conflict to choose behavior when a target session already exists:",
+                "    skip, restart, or rename.",
                 "    Pass --max-parallel-tabs to enable dynamic tab scheduling.",
                 "    \"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl",
@@ -9201,6 +9230,7 @@
                 "        max_tabs=max_tabs,",
                 "        max_layouts=max_layouts,",
                 "        backend=backend,",
+                "        on_conflict=on_conflict,",
                 "        max_parallel_tabs=max_parallel_tabs,",
                 "        poll_seconds=poll_seconds,",
                 "        kill_finished_tabs=kill_finished_tabs,",
@@ -9385,7 +9415,7 @@
                   "name": "backend",
                   "kind": "positional_or_keyword",
                   "type": "Literal['zellij', 'z', 'windows-terminal', 'wt', 'tmux', 't', 'auto', 'a']",
-                  "default": "auto",
+                  "default": "tmux",
                   "required": false,
                   "annotation_raw": "Annotated[Literal['zellij', 'z', 'windows-terminal', 'wt', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer or emulator to use')]",
                   "typer": {
@@ -9402,6 +9432,28 @@
                     ],
                     "help": "Backend terminal multiplexer or emulator to use",
                     "default": "..."
+                  }
+                },
+                {
+                  "name": "on_conflict",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['restart', 'skip', 'rename']",
+                  "default": "skip",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['restart', 'skip', 'rename'], typer.Option('--on-conflict', '-o', help='How to handle existing session name conflicts.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--on-conflict",
+                      "-o"
+                    ],
+                    "long_flags": [
+                      "--on-conflict"
+                    ],
+                    "short_flags": [
+                      "-o"
+                    ],
+                    "help": "How to handle existing session name conflicts."
                   }
                 },
                 {
@@ -9556,14 +9608,468 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Launch terminal sessions based on a layout configuration file.\n\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
+            "doc": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nskip, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
             "aliases": [
               {
                 "name": "r",
                 "hidden": true,
-                "help": "Launch terminal sessions based on a layout configuration file.\n\nPass --max-parallel-tabs to enable dynamic tab scheduling."
+                "help": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nskip, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling."
               }
             ]
+          },
+          {
+            "kind": "command",
+            "name": "run-aoe",
+            "help": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default",
+            "source": {
+              "file": "src/machineconfig/scripts/python/sessions.py",
+              "module": "machineconfig.scripts.python.sessions",
+              "callable": "run_aoe"
+            },
+            "signature": {
+              "raw_lines": [
+                "def run_aoe(",
+                "    ctx: typer.Context,",
+                "    layouts_file: Annotated[Optional[str], typer.Option(..., \"--layouts-file\", \"-f\", help=\"Path to the layout.json file\")] = None,",
+                "    choose_layouts: Annotated[Optional[str], typer.Option(..., \"--choose-layouts\", \"-c\", help=\"Comma separated layout names. Pass empty string to select layouts interactively.\")] = None,",
+                "    choose_tabs: Annotated[Optional[str], typer.Option(..., \"--choose-tabs\", \"-t\", help=\"Comma separated tab names. Pass empty string to select tabs interactively from all layouts.\")] = None,",
+                "    sleep_inbetween: Annotated[float, typer.Option(..., \"--sleep-inbetween\", \"-S\", help=\"Sleep time in seconds between AoE session launches\")] = 1.0,",
+                "    max_tabs: Annotated[int, typer.Option(..., \"--max-tabs-per-layout\", \"-T\", help=\"A sanity checker that throws an error if any selected layout exceeds this number of tabs.\")] = 25,",
+                "    agent: Annotated[Optional[str], typer.Option(\"--agent\", help=\"AoE agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.\")] = \"codex\",",
+                "    model: Annotated[Optional[str], typer.Option(\"--model\", \"-m\", help=\"Model forwarded to `aoe add --model`.\")] = None,",
+                "    provider: Annotated[Optional[str], typer.Option(\"--provider\", \"-p\", help=\"Provider forwarded to `aoe add --provider`.\")] = None,",
+                "    sandbox: Annotated[Optional[str], typer.Option(\"--sandbox\", help=\"Convenience flag that becomes `aoe add --args --sandbox <value>`.\")] = None,",
+                "    yolo: Annotated[bool, typer.Option(\"--yolo\", help=\"Convenience flag that becomes `aoe add --args --yolo`.\")] = False,",
+                "    cmd: Annotated[Optional[str], typer.Option(\"--cmd\", help=\"Override the launched agent command via `aoe add --cmd`.\")] = None,",
+                "    args: Annotated[list[str], typer.Option(\"--args\", help=\"Repeatable extra argument forwarded to `aoe add --args`.\")] = [],",
+                "    env: Annotated[list[str], typer.Option(\"--env\", help=\"Repeatable KEY=VALUE pair forwarded to `aoe add --env`.\")] = [],",
+                "    force: Annotated[bool, typer.Option(\"--force\", help=\"Pass `--force` to `aoe add`.\")] = False,",
+                "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Print generated `aoe add` commands instead of executing them.\")] = False,",
+                "    aoe_bin: Annotated[str, typer.Option(\"--aoe-bin\", help=\"AoE executable to invoke.\")] = \"aoe\",",
+                "    tab_command_mode: Annotated[Literal[\"prompt\", \"cmd\", \"ignore\"], typer.Option(\"--tab-command-mode\", help=\"How to use each tab's `command` field: as the initial prompt, as `aoe add --cmd`, or ignore it.\")] = \"prompt\",",
+                "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
+                ") -> None:",
+                "    \"\"\"Launch selected layout tabs as agent-of-empires sessions.",
+                "",
+                "    Mapping:",
+                "    - layoutName -> aoe --group",
+                "    - tabName -> aoe --title",
+                "    - startDir -> aoe add <path>",
+                "    - command -> initial prompt by default",
+                "    \"\"\"",
+                "    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run_aoe import run_aoe_cli as impl",
+                "    impl(",
+                "        ctx=ctx,",
+                "        layouts_file=layouts_file,",
+                "        choose_layouts=choose_layouts,",
+                "        choose_tabs=choose_tabs,",
+                "        sleep_inbetween=sleep_inbetween,",
+                "        max_tabs=max_tabs,",
+                "        agent=agent,",
+                "        model=model,",
+                "        provider=provider,",
+                "        sandbox=sandbox,",
+                "        yolo=yolo,",
+                "        cmd=cmd,",
+                "        args=args,",
+                "        env=env,",
+                "        force=force,",
+                "        dry_run=dry_run,",
+                "        aoe_bin=aoe_bin,",
+                "        tab_command_mode=tab_command_mode,",
+                "        subsitute_home=subsitute_home,",
+                "    )"
+              ],
+              "name": "run_aoe",
+              "parameters": [
+                {
+                  "name": "ctx",
+                  "kind": "positional_or_keyword",
+                  "type": "typer.Context",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "typer.Context"
+                },
+                {
+                  "name": "layouts_file",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option(..., '--layouts-file', '-f', help='Path to the layout.json file')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--layouts-file",
+                      "-f"
+                    ],
+                    "long_flags": [
+                      "--layouts-file"
+                    ],
+                    "short_flags": [
+                      "-f"
+                    ],
+                    "help": "Path to the layout.json file",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "choose_layouts",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option(..., '--choose-layouts', '-c', help='Comma separated layout names. Pass empty string to select layouts interactively.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--choose-layouts",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--choose-layouts"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Comma separated layout names. Pass empty string to select layouts interactively.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "choose_tabs",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option(..., '--choose-tabs', '-t', help='Comma separated tab names. Pass empty string to select tabs interactively from all layouts.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--choose-tabs",
+                      "-t"
+                    ],
+                    "long_flags": [
+                      "--choose-tabs"
+                    ],
+                    "short_flags": [
+                      "-t"
+                    ],
+                    "help": "Comma separated tab names. Pass empty string to select tabs interactively from all layouts.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "sleep_inbetween",
+                  "kind": "positional_or_keyword",
+                  "type": "float",
+                  "default": 1.0,
+                  "required": false,
+                  "annotation_raw": "Annotated[float, typer.Option(..., '--sleep-inbetween', '-S', help='Sleep time in seconds between AoE session launches')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--sleep-inbetween",
+                      "-S"
+                    ],
+                    "long_flags": [
+                      "--sleep-inbetween"
+                    ],
+                    "short_flags": [
+                      "-S"
+                    ],
+                    "help": "Sleep time in seconds between AoE session launches",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "max_tabs",
+                  "kind": "positional_or_keyword",
+                  "type": "int",
+                  "default": 25,
+                  "required": false,
+                  "annotation_raw": "Annotated[int, typer.Option(..., '--max-tabs-per-layout', '-T', help='A sanity checker that throws an error if any selected layout exceeds this number of tabs.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--max-tabs-per-layout",
+                      "-T"
+                    ],
+                    "long_flags": [
+                      "--max-tabs-per-layout"
+                    ],
+                    "short_flags": [
+                      "-T"
+                    ],
+                    "help": "A sanity checker that throws an error if any selected layout exceeds this number of tabs.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": "codex",
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--agent', help='AoE agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [],
+                    "help": "AoE agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful."
+                  }
+                },
+                {
+                  "name": "model",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--model', '-m', help='Model forwarded to `aoe add --model`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--model",
+                      "-m"
+                    ],
+                    "long_flags": [
+                      "--model"
+                    ],
+                    "short_flags": [
+                      "-m"
+                    ],
+                    "help": "Model forwarded to `aoe add --model`."
+                  }
+                },
+                {
+                  "name": "provider",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--provider', '-p', help='Provider forwarded to `aoe add --provider`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--provider",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--provider"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Provider forwarded to `aoe add --provider`."
+                  }
+                },
+                {
+                  "name": "sandbox",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--sandbox', help='Convenience flag that becomes `aoe add --args --sandbox <value>`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--sandbox"
+                    ],
+                    "long_flags": [
+                      "--sandbox"
+                    ],
+                    "short_flags": [],
+                    "help": "Convenience flag that becomes `aoe add --args --sandbox <value>`."
+                  }
+                },
+                {
+                  "name": "yolo",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--yolo', help='Convenience flag that becomes `aoe add --args --yolo`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--yolo"
+                    ],
+                    "long_flags": [
+                      "--yolo"
+                    ],
+                    "short_flags": [],
+                    "help": "Convenience flag that becomes `aoe add --args --yolo`."
+                  }
+                },
+                {
+                  "name": "cmd",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--cmd', help='Override the launched agent command via `aoe add --cmd`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--cmd"
+                    ],
+                    "long_flags": [
+                      "--cmd"
+                    ],
+                    "short_flags": [],
+                    "help": "Override the launched agent command via `aoe add --cmd`."
+                  }
+                },
+                {
+                  "name": "args",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str]",
+                  "default": [],
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str], typer.Option('--args', help='Repeatable extra argument forwarded to `aoe add --args`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--args"
+                    ],
+                    "long_flags": [
+                      "--args"
+                    ],
+                    "short_flags": [],
+                    "help": "Repeatable extra argument forwarded to `aoe add --args`."
+                  }
+                },
+                {
+                  "name": "env",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str]",
+                  "default": [],
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str], typer.Option('--env', help='Repeatable KEY=VALUE pair forwarded to `aoe add --env`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--env"
+                    ],
+                    "long_flags": [
+                      "--env"
+                    ],
+                    "short_flags": [],
+                    "help": "Repeatable KEY=VALUE pair forwarded to `aoe add --env`."
+                  }
+                },
+                {
+                  "name": "force",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--force', help='Pass `--force` to `aoe add`.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--force"
+                    ],
+                    "long_flags": [
+                      "--force"
+                    ],
+                    "short_flags": [],
+                    "help": "Pass `--force` to `aoe add`."
+                  }
+                },
+                {
+                  "name": "dry_run",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--dry-run', help='Print generated `aoe add` commands instead of executing them.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--dry-run"
+                    ],
+                    "long_flags": [
+                      "--dry-run"
+                    ],
+                    "short_flags": [],
+                    "help": "Print generated `aoe add` commands instead of executing them."
+                  }
+                },
+                {
+                  "name": "aoe_bin",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "aoe",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Option('--aoe-bin', help='AoE executable to invoke.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--aoe-bin"
+                    ],
+                    "long_flags": [
+                      "--aoe-bin"
+                    ],
+                    "short_flags": [],
+                    "help": "AoE executable to invoke."
+                  }
+                },
+                {
+                  "name": "tab_command_mode",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['prompt', 'cmd', 'ignore']",
+                  "default": "prompt",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['prompt', 'cmd', 'ignore'], typer.Option('--tab-command-mode', help=\"How to use each tab's `command` field: as the initial prompt, as `aoe add --cmd`, or ignore it.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--tab-command-mode"
+                    ],
+                    "long_flags": [
+                      "--tab-command-mode"
+                    ],
+                    "short_flags": [],
+                    "help": "How to use each tab's `command` field: as the initial prompt, as `aoe add --cmd`, or ignore it."
+                  }
+                },
+                {
+                  "name": "subsitute_home",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--substitute-home', '-H', help='Substitute ~ and $HOME in layout file with actual home directory path')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--substitute-home",
+                      "-H"
+                    ],
+                    "long_flags": [
+                      "--substitute-home"
+                    ],
+                    "short_flags": [
+                      "-H"
+                    ],
+                    "help": "Substitute ~ and $HOME in layout file with actual home directory path",
+                    "default": "..."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<ra> Run selected layout(s) through agent-of-empires",
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default"
           },
           {
             "kind": "command",
@@ -9580,7 +10086,7 @@
                 "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to attach to. If not provided, a list will be shown to choose from.\")] = None,",
                 "        new_session: Annotated[bool, typer.Option(\"--new-session\", \"-n\", help=\"Create a new session instead of attaching to an existing one.\", show_default=True)] = False,",
                 "        kill_all: Annotated[bool, typer.Option(\"--kill-all\", \"-k\", help=\"Kill all existing sessions before creating a new one.\", show_default=True)] = False,",
-                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"auto\",",
+                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose a session to attach to.\"\"\"",
                 "    import platform",
@@ -9678,7 +10184,7 @@
                   "name": "backend",
                   "kind": "positional_or_keyword",
                   "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
-                  "default": "auto",
+                  "default": "tmux",
                   "required": false,
                   "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
                   "typer": {
@@ -11363,14 +11869,14 @@
               ],
               "return": "None"
             },
-            "short_help": "<s> Create symlinks to the current repo in ~/code_copies/",
+            "short_help": "<l> Create symlinks to the current repo in ~/code_copies/",
             "typer": {
               "no_args_is_help": true
             },
             "doc": "Create symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}.",
             "aliases": [
               {
-                "name": "s",
+                "name": "l",
                 "hidden": true
               }
             ]
@@ -11382,11 +11888,11 @@
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
               "module": "machineconfig.scripts.python.agents",
-              "callable": "run"
+              "callable": "run_prompt"
             },
             "signature": {
               "raw_lines": [
-                "def run(",
+                "def run_prompt(",
                 "    prompt: Annotated[Optional[str], typer.Argument(help=\"Prompt text (optional positional argument). If omitted, an empty prompt is used.\")] = None,",
                 "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = \"copilot\",",
                 "    context: Annotated[Optional[str], typer.Option(..., \"--context\", \"-c\", help=\"Context string. Mutually exclusive with --context-path.\")] = None,",
@@ -11404,7 +11910,7 @@
                 "    except ValueError as e:",
                 "        raise typer.BadParameter(str(e)) from e"
               ],
-              "name": "run",
+              "name": "run_prompt",
               "parameters": [
                 {
                   "name": "prompt",
@@ -11616,6 +12122,121 @@
             "aliases": [
               {
                 "name": "r",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "add-skill",
+            "help": "Add a skill to an agent in a directory.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/agents.py",
+              "module": "machineconfig.scripts.python.agents",
+              "callable": "add_skill"
+            },
+            "signature": {
+              "raw_lines": [
+                "def add_skill(",
+                "    skill_name: Annotated[str, typer.Argument(help=\"Name of the skill to add.\")],",
+                "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to add the skill to.\")] = \"copilot\",",
+                "    directory: Annotated[Optional[str], typer.Option(..., \"--directory\", \"-d\", help=\"Directory to add the skill to. If not provided, defaults to current working directory.\")] = None,",
+                "):",
+                "    \"\"\"Add a skill to an agent in a directory.\"\"\"",
+                "    opensource_skills = {",
+                "        \"agent-browser\": \"bunx skills add vercel-labs/agent-browser\",",
+                "    }",
+                "    if directory:",
+                "        agent_dir = Path(directory).expanduser().resolve()",
+                "        if not agent_dir.is_dir():",
+                "            typer.echo(f\"Provided directory '{directory}' does not exist or is not a directory.\")",
+                "            raise typer.Exit(1)",
+                "    else:",
+                "        agent_dir = Path.cwd()",
+                "    if skill_name in opensource_skills:",
+                "        from machineconfig.utils.code import exit_then_run_shell_script",
+                "        command = opensource_skills[skill_name]",
+                "        command = f\"\"\"",
+                "cd {agent_dir}",
+                "{command}",
+                "\"\"\"",
+                "        exit_then_run_shell_script(command, strict=False)",
+                "    else:",
+                "        typer.echo(f\"Skill '{skill_name}' is not recognized. Please provide a valid skill name.\")"
+              ],
+              "name": "add_skill",
+              "parameters": [
+                {
+                  "name": "skill_name",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Name of the skill to add.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Name of the skill to add."
+                  }
+                },
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "AGENTS",
+                  "default": "copilot",
+                  "required": false,
+                  "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent to add the skill to.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Agent to add the skill to.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "directory",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option(..., '--directory', '-d', help='Directory to add the skill to. If not provided, defaults to current working directory.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--directory",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--directory"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Directory to add the skill to. If not provided, defaults to current working directory.",
+                    "default": "..."
+                  }
+                }
+              ]
+            },
+            "short_help": "<s> Add a skill to an agent",
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "Add a skill to an agent in a directory.",
+            "aliases": [
+              {
+                "name": "s",
                 "hidden": true
               }
             ]
