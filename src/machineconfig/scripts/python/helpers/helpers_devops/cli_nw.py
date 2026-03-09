@@ -291,7 +291,7 @@ def get_app():
     nw_apps.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
 
     # VS Code Tunnels helper
-    nw_apps.command(name="vscode-share", no_args_is_help=True, help="🧑‍💻 <v> Share workspace via VS Code Tunnels")(vscode_share)
+    nw_apps.command(name="vscode-share", no_args_is_help=True, help="💻 <v> Share workspace via VS Code Tunnels")(vscode_share)
     nw_apps.command(name="v", no_args_is_help=True, hidden=True, help="Share workspace via VS Code Tunnels")(vscode_share)
 
     return nw_apps
