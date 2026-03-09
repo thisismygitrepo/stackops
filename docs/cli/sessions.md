@@ -26,6 +26,7 @@ sessions [OPTIONS] COMMAND [ARGS]...
 ## run
 
 Launch terminal sessions based on a layout configuration file.
+Use `--on-conflict` to choose behavior when a target session already exists (`skip`, `restart`, `rename`).
 
 ```bash
 sessions run LAYOUT_PATH [OPTIONS]
@@ -40,6 +41,7 @@ sessions run LAYOUT_PATH [OPTIONS]
 | `--sleep-inbetween` | `-si` | Sleep time between layouts (seconds) |
 | `--monitor` | `-m` | Monitor sessions for completion |
 | `--parallel` | `-p` | Launch multiple layouts in parallel |
+| `--on-conflict` | `-o` | Conflict policy for existing sessions: `skip`, `restart`, `rename` |
 | `--kill-upon-completion` | `-k` | Kill sessions when done (requires --monitor) |
 | `--choose` | `-c` | Comma-separated layout names to select |
 | `--choose-interactively` | `-i` | Select layouts interactively |
@@ -59,6 +61,9 @@ sessions run layouts.json -i
 
 # Monitor and kill upon completion
 sessions run layouts.json --monitor --kill-upon-completion
+
+# Restart existing session names and relaunch
+sessions run layouts.json --on-conflict restart
 
 # Run in parallel
 sessions run layouts.json --parallel

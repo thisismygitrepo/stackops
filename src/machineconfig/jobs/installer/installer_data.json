@@ -3011,6 +3011,23 @@
       }
     },
     {
+      "appName": "aoe",
+      "repoURL": "https://github.com/njbrake/agent-of-empires",
+      "doc": "Agent of Empires terminal session manager for AI coding agents",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "aoe-linux-amd64.tar.gz",
+          "macos": "aoe-darwin-amd64.tar.gz",
+          "windows": null
+        },
+        "arm64": {
+          "linux": "aoe-linux-arm64.tar.gz",
+          "macos": "aoe-darwin-arm64.tar.gz",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "cagent",
       "repoURL": "https://github.com/docker/cagent",
       "doc": "Docker terminal coding agent",

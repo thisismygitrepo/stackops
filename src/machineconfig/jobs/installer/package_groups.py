@@ -11,6 +11,7 @@ GUI = [
 # AI/LLM Tools - AI-powered coding and chat assistants
 AGENTS = [
     "aider",
+    "aoe",
     "aichat",
     "copilot",
     "gemini",

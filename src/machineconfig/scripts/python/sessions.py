@@ -28,6 +28,7 @@ def run(
 
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
+    on_conflict: Annotated[Literal["restart", "skip", "rename"], typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts.")] = "skip",
     max_parallel_tabs: Annotated[Optional[int], typer.Option("--max-parallel-tabs", help="Enable dynamic tab scheduling and cap active tabs to this value.")] = None,
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Dynamic mode only: polling interval in seconds used to detect finished tabs.")] = 2.0,
 
@@ -40,6 +41,8 @@ def run(
 ) -> None:
     """Launch terminal sessions based on a layout configuration file.
 
+    Use --on-conflict to choose behavior when a target session already exists:
+    skip, restart, or rename.
     Pass --max-parallel-tabs to enable dynamic tab scheduling.
     """
     from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
@@ -53,6 +56,7 @@ def run(
         max_tabs=max_tabs,
         max_layouts=max_layouts,
         backend=backend,
+        on_conflict=on_conflict,
         max_parallel_tabs=max_parallel_tabs,
         poll_seconds=poll_seconds,
         kill_finished_tabs=kill_finished_tabs,

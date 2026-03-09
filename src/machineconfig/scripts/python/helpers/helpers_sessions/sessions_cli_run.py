@@ -20,6 +20,7 @@ def run_cli(
     max_tabs: int,
     max_layouts: int,
     backend: Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"],
+    on_conflict: Literal["restart", "skip", "rename"],
     max_parallel_tabs: Optional[int],
     poll_seconds: float,
     kill_finished_tabs: bool,
@@ -204,6 +205,7 @@ def run_cli(
                 kill_upon_completion=kill_upon_completion,
                 layouts_selected=layouts_selected,
                 backend=backend_resolved,
+                on_conflict=on_conflict,
             )
     except ValueError as e:
         typer.echo(str(e))

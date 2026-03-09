@@ -1,9 +1,14 @@
 """Pure Python implementations for sessions commands - no typer dependencies."""
 
+import json
 from pathlib import Path
+import subprocess
 from typing import Literal
 
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult
+
+BackendName = Literal["zellij", "windows-terminal", "tmux"]
+OnConflictAction = Literal["restart", "skip", "rename"]
 
 
 def select_layout(layouts_json_file: str, selected_layouts_names: list[str], select_interactively: bool) -> list["LayoutConfig"]:
@@ -66,12 +71,207 @@ def find_layout_file(layout_path: str) -> str:
     return str(choice_file)
 
 
+def _session_name_for_layout(layout_name: str, backend: BackendName) -> str:
+    if backend in {"zellij", "tmux"}:
+        name_core = layout_name.replace(" ", "_")
+    else:
+        name_core = layout_name
+    if backend == "zellij":
+        return f"LocalJobMgr_{name_core}"
+    return name_core
+
+
+def _list_existing_sessions(backend: BackendName) -> set[str]:
+    try:
+        if backend == "tmux":
+            result = subprocess.run(
+                ["tmux", "list-sessions", "-F", "#{session_name}"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            if result.returncode != 0:
+                stderr = (result.stderr or "").lower()
+                if "no server running" in stderr:
+                    return set()
+                return set()
+            return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+        if backend == "zellij":
+            result = subprocess.run(
+                ["zellij", "list-sessions"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            if result.returncode != 0:
+                return set()
+            sessions: set[str] = set()
+            for line in result.stdout.splitlines():
+                cleaned = line.strip()
+                if not cleaned:
+                    continue
+                sessions.add(cleaned.split()[0])
+            return sessions
+
+        if backend == "windows-terminal":
+            from machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import POWERSHELL_CMD
+            ps_script = """
+Get-Process -Name 'WindowsTerminal' -ErrorAction SilentlyContinue |
+Select-Object MainWindowTitle |
+ConvertTo-Json -Depth 2
+"""
+            result = subprocess.run(
+                [POWERSHELL_CMD, "-Command", ps_script],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            if result.returncode != 0:
+                return set()
+            output = result.stdout.strip()
+            if not output:
+                return set()
+            payload = json.loads(output)
+            if not isinstance(payload, list):
+                payload = [payload]
+            titles = {
+                str(item.get("MainWindowTitle", "")).strip()
+                for item in payload
+                if isinstance(item, dict) and str(item.get("MainWindowTitle", "")).strip()
+            }
+            return titles
+    except Exception:
+        return set()
+
+    return set()
+
+
+def _session_exists(session_name: str, existing_sessions: set[str], backend: BackendName) -> bool:
+    if backend != "windows-terminal":
+        return session_name in existing_sessions
+    session_name_lc = session_name.casefold()
+    return any(
+        candidate.casefold() == session_name_lc or session_name_lc in candidate.casefold()
+        for candidate in existing_sessions
+    )
+
+
+def _kill_existing_session(backend: BackendName, session_name: str) -> None:
+    try:
+        if backend == "tmux":
+            subprocess.run(
+                ["tmux", "kill-session", "-t", session_name],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            return
+
+        if backend == "zellij":
+            subprocess.run(
+                ["zellij", "delete-session", "--force", session_name],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            return
+
+        if backend == "windows-terminal":
+            from machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import POWERSHELL_CMD
+            safe_name = session_name.replace("'", "''")
+            ps_script = f"""
+$name = '{safe_name}'
+Get-Process -Name 'WindowsTerminal' -ErrorAction SilentlyContinue |
+Where-Object {{ $_.MainWindowTitle -like "*$name*" }} |
+Stop-Process -Force -ErrorAction SilentlyContinue
+"""
+            subprocess.run(
+                [POWERSHELL_CMD, "-Command", ps_script],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+    except Exception:
+        return
+
+
+def _resolve_conflicts_for_batch(
+    layouts_batch: list["LayoutConfig"],
+    backend: BackendName,
+    on_conflict: OnConflictAction,
+) -> tuple[list["LayoutConfig"], set[str]]:
+    existing_sessions = _list_existing_sessions(backend)
+    reserved_sessions = set(existing_sessions)
+    layouts_to_run: list["LayoutConfig"] = []
+    sessions_to_restart: set[str] = set()
+
+    for layout in layouts_batch:
+        original_layout_name = layout["layoutName"]
+        target_session_name = _session_name_for_layout(original_layout_name, backend)
+        conflict_with_existing = _session_exists(target_session_name, existing_sessions, backend)
+        conflict_with_reserved = _session_exists(target_session_name, reserved_sessions, backend)
+
+        if conflict_with_reserved:
+            if on_conflict == "skip":
+                print(
+                    f"⚠️ Skipping layout '{original_layout_name}' because session "
+                    f"'{target_session_name}' already exists."
+                )
+                continue
+
+            if on_conflict == "restart":
+                if not conflict_with_existing:
+                    raise ValueError(
+                        f"Duplicate target session '{target_session_name}' detected in the selected layouts. "
+                        "Use unique layout names or --on-conflict rename."
+                    )
+                print(
+                    f"♻️ Restarting existing session '{target_session_name}' "
+                    f"for layout '{original_layout_name}'."
+                )
+                sessions_to_restart.add(target_session_name)
+
+            if on_conflict == "rename":
+                suffix = 1
+                renamed_layout_name = original_layout_name
+                while True:
+                    candidate_layout_name = f"{original_layout_name}_{suffix}"
+                    candidate_session_name = _session_name_for_layout(candidate_layout_name, backend)
+                    if not _session_exists(candidate_session_name, reserved_sessions, backend):
+                        renamed_layout_name = candidate_layout_name
+                        target_session_name = candidate_session_name
+                        break
+                    suffix += 1
+                print(
+                    f"📝 Renaming layout '{original_layout_name}' to '{renamed_layout_name}' "
+                    f"to avoid session conflict."
+                )
+                renamed_layout: "LayoutConfig" = {
+                    "layoutName": renamed_layout_name,
+                    "layoutTabs": layout["layoutTabs"],
+                }
+                layout = renamed_layout
+
+        layouts_to_run.append(layout)
+        reserved_sessions.add(target_session_name)
+
+    return layouts_to_run, sessions_to_restart
+
+
 def run_layouts(
     sleep_inbetween: float,
     monitor: bool,
     parallel_layouts: int | None,
     kill_upon_completion: bool,
-    backend: Literal["zellij", "windows-terminal", "tmux"],
+    backend: BackendName,
+    on_conflict: OnConflictAction,
     layouts_selected: list["LayoutConfig"],
 ) -> None:
     """Launch terminal sessions based on a layout configuration file."""
@@ -82,6 +282,8 @@ def run_layouts(
         print("Note: --parallel-layouts implies --monitor; waiting for each batch to finish before launching the next one.")
     if parallel_layouts is not None and parallel_layouts <= 0:
         raise ValueError("parallel_layouts must be a positive integer when provided")
+    if on_conflict not in {"restart", "skip", "rename"}:
+        raise ValueError(f"Unsupported on_conflict policy: {on_conflict}")
 
     if parallel_layouts is None:
         iterable: list[list["LayoutConfig"]] = [layouts_selected]
@@ -97,7 +299,16 @@ def run_layouts(
         case "zellij":
             from machineconfig.cluster.sessions_managers.zellij.zellij_local_manager import ZellijLocalManager
             for i, a_layouts in enumerate(iterable):
-                manager = ZellijLocalManager(session_layouts=a_layouts)
+                layouts_to_run, sessions_to_restart = _resolve_conflicts_for_batch(a_layouts, backend, on_conflict)
+                if on_conflict == "restart":
+                    for session_name in sorted(sessions_to_restart):
+                        _kill_existing_session(backend, session_name)
+                if len(layouts_to_run) == 0:
+                    print("No layouts to launch for this batch after conflict resolution.")
+                    if i < len(iterable) - 1:
+                        time.sleep(sleep_inbetween)
+                    continue
+                manager = ZellijLocalManager(session_layouts=layouts_to_run)
                 start_results = manager.start_all_sessions(poll_interval=2, poll_seconds=10)
                 raise_on_failed_start(start_results, "Zellij")
                 if monitor:
@@ -109,7 +320,16 @@ def run_layouts(
         case "windows-terminal":
             from machineconfig.cluster.sessions_managers.windows_terminal.wt_local_manager import WTLocalManager
             for i, a_layouts in enumerate(iterable):
-                manager = WTLocalManager(session_layouts=a_layouts, session_name_prefix=None)
+                layouts_to_run, sessions_to_restart = _resolve_conflicts_for_batch(a_layouts, backend, on_conflict)
+                if on_conflict == "restart":
+                    for session_name in sorted(sessions_to_restart):
+                        _kill_existing_session(backend, session_name)
+                if len(layouts_to_run) == 0:
+                    print("No layouts to launch for this batch after conflict resolution.")
+                    if i < len(iterable) - 1:
+                        time.sleep(sleep_inbetween)
+                    continue
+                manager = WTLocalManager(session_layouts=layouts_to_run, session_name_prefix=None)
                 start_results = manager.start_all_sessions()
                 raise_on_failed_start(start_results, "Windows Terminal")
                 if monitor:
@@ -121,7 +341,16 @@ def run_layouts(
         case "tmux":
             from machineconfig.cluster.sessions_managers.tmux.tmux_local_manager import TmuxLocalManager
             for i, a_layouts in enumerate(iterable):
-                manager = TmuxLocalManager(session_layouts=a_layouts, session_name_prefix=None)
+                layouts_to_run, sessions_to_restart = _resolve_conflicts_for_batch(a_layouts, backend, on_conflict)
+                if on_conflict == "restart":
+                    for session_name in sorted(sessions_to_restart):
+                        _kill_existing_session(backend, session_name)
+                if len(layouts_to_run) == 0:
+                    print("No layouts to launch for this batch after conflict resolution.")
+                    if i < len(iterable) - 1:
+                        time.sleep(sleep_inbetween)
+                    continue
+                manager = TmuxLocalManager(session_layouts=layouts_to_run, session_name_prefix=None)
                 start_results = manager.start_all_sessions()
                 raise_on_failed_start(start_results, "tmux")
                 if monitor:
