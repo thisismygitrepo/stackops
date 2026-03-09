@@ -75,6 +75,7 @@ sessions run layouts.json --parallel
 ## run-aoe
 
 Launch selected layout tabs through [agent-of-empires](https://github.com/njbrake/agent-of-empires).
+`run-aoe` detects the installed AoE CLI shape and adapts to both the older `--agent/--prompt` flow and newer AoE releases that use `--cmd/--cmd-override/--extra-args`.
 
 The mapping is:
 
@@ -91,14 +92,14 @@ sessions run-aoe --layouts-file layout.json [OPTIONS]
 
 | Option | Description |
 |--------|-------------|
-| `--model` | Model name forwarded to `aoe add --model` |
-| `--agent` | Agent name forwarded to `aoe add --agent` (defaults to `codex`) |
-| `--provider` | Provider forwarded to `aoe add --provider` |
-| `--sandbox` | Convenience flag that becomes `aoe add --args --sandbox <value>` |
-| `--yolo` | Convenience flag that becomes `aoe add --args --yolo` |
+| `--model` | Model name forwarded to the underlying AoE/agent CLI when supported |
+| `--agent` | AoE tool/agent name (defaults to `codex`) |
+| `--provider` | Provider forwarded to the underlying AoE/agent CLI when supported |
+| `--sandbox` | Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported |
+| `--yolo` | Enables AoE/agent YOLO mode when supported |
 | `--tab-command-mode` | Interpret `command` as `prompt`, `cmd`, or `ignore` |
 | `--dry-run` | Print the generated `aoe add` commands without executing them |
-| `--force` | Forward `--force` to `aoe add` |
+| `--force` | Forward force/overwrite to AoE when supported |
 
 **Examples:**
 
@@ -106,7 +107,7 @@ sessions run-aoe --layouts-file layout.json [OPTIONS]
 # Treat each tab command as the initial prompt
 sessions run-aoe --layouts-file layout.json --model gpt-5-codex --sandbox workspace-write --yolo
 
-# Use existing tab commands as aoe --cmd overrides instead
+# Use existing tab commands as agent-command overrides instead
 sessions run-aoe --layouts-file layout.json --tab-command-mode cmd
 
 # Preview the generated aoe commands
