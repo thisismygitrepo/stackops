@@ -135,17 +135,30 @@ def run_prompt(
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
+
 def add_skill(
     skill_name: Annotated[str, typer.Argument(help="Name of the skill to add.")],
-    # description: Annotated[str, typer.Argument(help="Description of the skill.")],
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to add the skill to.")] = "copilot",
+    directory: Annotated[Optional[str], typer.Option(..., "--directory", "-d", help="Directory to add the skill to. If not provided, defaults to current working directory.")] = None,
 ):
+    """Add a skill to an agent in a directory."""
     opensource_skills = {
         "agent-browser": "bunx skills add vercel-labs/agent-browser",
     }
+    if directory:
+        agent_dir = Path(directory).expanduser().resolve()
+        if not agent_dir.is_dir():
+            typer.echo(f"Provided directory '{directory}' does not exist or is not a directory.")
+            raise typer.Exit(1)
+    else:
+        agent_dir = Path.cwd()
     if skill_name in opensource_skills:
         from machineconfig.utils.code import exit_then_run_shell_script
         command = opensource_skills[skill_name]
+        command = f"""
+cd {agent_dir}
+{command}
+"""
         exit_then_run_shell_script(command, strict=False)
     else:
         typer.echo(f"Skill '{skill_name}' is not recognized. Please provide a valid skill name.")
