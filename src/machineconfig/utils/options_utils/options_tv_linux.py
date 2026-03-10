@@ -115,7 +115,13 @@ if [[ -z "${preview_width}" && -n "${COLUMNS:-}" ]]; then
     fi
 fi
 
-if command -v bat >/dev/null 2>&1; then
+if [[ "${preview_ext}" == "md" || "${preview_ext}" == "markdown" ]] && command -v glow >/dev/null 2>&1; then
+    glow_args=(-s dark)
+    if [[ "${preview_width}" =~ ^[0-9]+$ ]]; then
+        glow_args+=(--width "${preview_width}")
+    fi
+    printf '%s' "${preview_content}" | glow "${glow_args[@]}" -
+elif command -v bat >/dev/null 2>&1; then
     bat_args=(--force-colorization --style=plain --paging=never --wrap=character)
     if [[ -n "${preview_ext}" ]]; then
         bat_args+=(--language "${preview_ext}")
@@ -126,10 +132,8 @@ if command -v bat >/dev/null 2>&1; then
     printf '%s' "${preview_content}" | bat "${bat_args[@]}"
 elif command -v glow >/dev/null 2>&1; then
     printf '%s' "${preview_content}" | glow -
-elif command -v fold >/dev/null 2>&1 && [[ "${preview_width}" =~ ^[0-9]+$ ]]; then
-    printf '%s' "${preview_content}" | fold -s -w "${preview_width}"
 else
-    printf '%s' "${preview_content}"
+    cat <<< "${preview_content}"
 fi
 """,
             encoding="utf-8"

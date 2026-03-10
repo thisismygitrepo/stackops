@@ -39,7 +39,7 @@ def interactive_choose_with_preview(msg: str, options_to_preview_mapping: dict[s
         from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
 
         try:
-            chosen = choose_from_dict_with_preview(options_to_preview_mapping=options_to_preview_mapping, extension="txt", multi=False, preview_size_percent=70.0)
+            chosen = choose_from_dict_with_preview(options_to_preview_mapping=options_to_preview_mapping, extension="md", multi=False, preview_size_percent=70.0)
             if isinstance(chosen, str) or chosen is None:
                 return chosen
         except Exception:

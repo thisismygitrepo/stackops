@@ -11,18 +11,35 @@ from machineconfig.scripts.python.helpers.helpers_sessions.attach_impl import (
 )
 
 
+_SHELL_COMMANDS: set[str] = {"bash", "zsh", "fish", "sh", "dash", "ksh", "tcsh", "csh", "nu", "nushell", "pwsh", "powershell", "elvish", "xonsh", "oil"}
+
+
+def _classify_pane_status(pane: dict[str, str]) -> str:
+    if pane["pane_dead"]:
+        exit_code = pane.get("pane_dead_status", "?")
+        return f"exited (code {exit_code})"
+    cmd = pane["pane_command"].lower()
+    if cmd in _SHELL_COMMANDS:
+        return "idle shell"
+    if cmd:
+        return f"running: `{pane['pane_command']}`"
+    return "unknown"
+
+
 def _build_preview(session_name: str) -> str:
-    lines = ["backend: tmux", f"session: {session_name}"]
+    lines: list[str] = [f"# Session: {session_name}", "", "**backend:** tmux"]
     windows_result = run_command(["tmux", "list-windows", "-t", session_name, "-F", "#{window_index}\t#{window_name}\t#{window_panes}\t#{?window_active,active,}"])
     if windows_result.returncode != 0:
         error_text = (windows_result.stderr or windows_result.stdout or "No preview data available").strip()
-        lines.append("")
-        lines.append(error_text)
+        lines += ["", error_text]
         return "\n".join(lines)
 
-    panes_result = run_command(["tmux", "list-panes", "-t", session_name, "-F", "#{window_index}\t#{pane_index}\t#{pane_title}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}"])
+    panes_result = run_command(["tmux", "list-panes", "-s", "-t", session_name, "-F", "#{window_index}\t#{pane_index}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}\t#{pane_dead_status}"])
 
     window_lines = [line for line in windows_result.stdout.splitlines() if line.strip()]
+    lines.append(f"  |  **windows:** {len(window_lines)}")
+    lines.append("")
+
     panes_by_window: dict[str, list[dict[str, str]]] = defaultdict(list)
     if panes_result.returncode == 0:
         for pane_line in panes_result.stdout.splitlines():
@@ -31,37 +48,50 @@ def _build_preview(session_name: str) -> str:
             parts = pane_line.split("\t")
             while len(parts) < 7:
                 parts.append("")
-            window_index, pane_index, pane_title, pane_cwd, pane_command, pane_active, pane_dead = parts[:7]
-            panes_by_window[window_index].append({"pane_index": pane_index, "pane_title": pane_title.strip(), "pane_cwd": pane_cwd.strip(), "pane_command": pane_command.strip(), "pane_active": pane_active.strip(), "pane_dead": pane_dead.strip()})
+            win_idx, pane_idx, pane_cwd, pane_cmd, pane_active, pane_dead, pane_dead_status = parts[:7]
+            panes_by_window[win_idx].append({"pane_index": pane_idx.strip(), "pane_cwd": pane_cwd.strip(), "pane_command": pane_cmd.strip(), "pane_active": pane_active.strip(), "pane_dead": pane_dead.strip(), "pane_dead_status": pane_dead_status.strip()})
 
-    lines.append(f"windows: {len(window_lines)}")
+    # --- Windows summary table ---
+    lines.append("## Windows")
+    lines.append("")
+    lines.append("| # | Name | Panes | Active |")
+    lines.append("|---|------|-------|--------|")
+    for window_line in window_lines:
+        parts = window_line.split("\t")
+        while len(parts) < 4:
+            parts.append("")
+        w_idx, w_name, w_panes, w_active = parts[0].strip(), parts[1].strip(), parts[2].strip(), parts[3].strip()
+        active_mark = "**yes**" if w_active else ""
+        lines.append(f"| {w_idx} | {w_name} | {w_panes} | {active_mark} |")
+    lines.append("")
+
+    # --- Per-window pane details ---
+    lines.append("## Pane Details")
     lines.append("")
     for window_line in window_lines:
         parts = window_line.split("\t")
         while len(parts) < 4:
             parts.append("")
-        window_index, window_name, window_panes, window_active = parts[:4]
-        active_suffix = " (active)" if window_active.strip() else ""
-        lines.append(f"[{window_index}] {window_name} ({window_panes} pane{'s' if window_panes != '1' else ''}){active_suffix}")
-        window_panes_list = sorted(panes_by_window.get(window_index, []), key=lambda pane: int(pane["pane_index"]) if pane["pane_index"].isdigit() else pane["pane_index"])
+        w_idx, w_name = parts[0].strip(), parts[1].strip()
+        lines.append(f"### Window {w_idx}: {w_name}")
+        lines.append("")
+        window_panes_list = sorted(panes_by_window.get(w_idx, []), key=lambda p: int(p["pane_index"]) if p["pane_index"].isdigit() else p["pane_index"])
         if not window_panes_list:
-            lines.append("  - (pane details unavailable)")
+            lines.append("_no pane info_")
+            lines.append("")
             continue
+        lines.append("| Pane | Process | Status | Directory |")
+        lines.append("|------|---------|--------|-----------|")
         for pane in window_panes_list:
-            pane_name = pane["pane_title"] or pane["pane_command"] or f"pane {pane['pane_index']}"
-            detail = pane["pane_command"] or "shell"
-            if pane["pane_cwd"]:
-                detail = f"{detail} [{pane['pane_cwd']}]"
-            status_bits = [bit for bit in (pane["pane_active"], pane["pane_dead"]) if bit]
-            status_suffix = f" ({', '.join(status_bits)})" if status_bits else ""
-            if detail == pane_name:
-                lines.append(f"  - {pane_name}{status_suffix}")
-            else:
-                lines.append(f"  - {pane_name}: {detail}{status_suffix}")
+            status = _classify_pane_status(pane)
+            process_name = pane["pane_command"] or "—"
+            cwd = pane["pane_cwd"] or "—"
+            active_flag = " ⇐" if pane["pane_active"] else ""
+            lines.append(f"| {pane['pane_index']}{active_flag} | {process_name} | {status} | `{cwd}` |")
+        lines.append("")
 
     if panes_result.returncode != 0:
-        lines.append("")
-        lines.append(f"pane query warning: {(panes_result.stderr or panes_result.stdout).strip()}")
+        lines.append(f"> ⚠ pane query warning: {(panes_result.stderr or panes_result.stdout).strip()}")
     return "\n".join(lines)
 
 
