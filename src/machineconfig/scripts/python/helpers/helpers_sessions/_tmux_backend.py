@@ -65,30 +65,27 @@ def _build_preview(session_name: str) -> str:
         lines.append(f"| {w_idx} | {w_name} | {w_panes} | {active_mark} |")
     lines.append("")
 
-    # --- Per-window pane details ---
+    # --- Merged pane details table ---
     lines.append("## Pane Details")
     lines.append("")
+    lines.append("| Window# | WindowName | Pane | Process | Status | Directory |")
+    lines.append("|---------|------------|------|---------|--------|-----------|")
     for window_line in window_lines:
         parts = window_line.split("\t")
         while len(parts) < 4:
             parts.append("")
         w_idx, w_name = parts[0].strip(), parts[1].strip()
-        lines.append(f"### Window {w_idx}: {w_name}")
-        lines.append("")
         window_panes_list = sorted(panes_by_window.get(w_idx, []), key=lambda p: int(p["pane_index"]) if p["pane_index"].isdigit() else p["pane_index"])
         if not window_panes_list:
-            lines.append("_no pane info_")
-            lines.append("")
+            lines.append(f"| {w_idx} | {w_name} | — | — | — | — |")
             continue
-        lines.append("| Pane | Process | Status | Directory |")
-        lines.append("|------|---------|--------|-----------|")
         for pane in window_panes_list:
             status = _classify_pane_status(pane)
             process_name = pane["pane_command"] or "—"
             cwd = pane["pane_cwd"] or "—"
             active_flag = " ⇐" if pane["pane_active"] else ""
-            lines.append(f"| {pane['pane_index']}{active_flag} | {process_name} | {status} | `{cwd}` |")
-        lines.append("")
+            lines.append(f"| {w_idx} | {w_name} | {pane['pane_index']}{active_flag} | {process_name} | {status} | `{cwd}` |")
+    lines.append("")
 
     if panes_result.returncode != 0:
         lines.append(f"> ⚠ pane query warning: {(panes_result.stderr or panes_result.stdout).strip()}")
