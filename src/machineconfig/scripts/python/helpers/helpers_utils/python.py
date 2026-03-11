@@ -1,12 +1,111 @@
-import typer
+import os
+from pathlib import Path
 from typing import Optional, Annotated, Literal, TypedDict, cast
+
+import typer
+
 from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
 
 
-def tui_env(which: Annotated[Literal["PATH", "p", "ENV", "e"], typer.Argument(help="Which environment variable to display.")] = "ENV") -> None:
-    """📚 NAVIGATE PATH variable with TUI"""
+ENV_SUMMARY_LIMIT = 96
+
+
+def _truncate_text(text: str, limit: int) -> tuple[str, int]:
+    length = len(text)
+    if length <= limit:
+        return text, 0
+    return text[:limit], length - limit
+
+
+def _format_env_label(env_key: str, env_value: str) -> str:
+    sanitized_value = env_value.replace("\n", "\\n").replace("\t", "\\t")
+    preview, remainder = _truncate_text(sanitized_value, ENV_SUMMARY_LIMIT)
+    summary = preview if preview else "<empty>"
+    if remainder > 0:
+        summary = f"{summary}... (+{remainder} chars)"
+    return f"{env_key} = {summary}"
+
+
+def _format_env_preview(env_key: str, env_value: str) -> str:
+    value_text = env_value if env_value else "<empty>"
+    return f"{env_key}\n\n{value_text}"
+
+
+def _format_path_preview(path_entry: str) -> str:
+    from machineconfig.scripts.python.helpers.helper_env.path_manager_backend import get_directory_contents
+
+    path_obj = Path(path_entry)
+    if path_obj.exists():
+        entry_type = "directory" if path_obj.is_dir() else "file"
+    else:
+        entry_type = "missing"
+    content_lines = get_directory_contents(path_entry, max_items=30)
+    contents = "\n".join(content_lines)
+    return (
+        f"{path_entry}\n\n"
+        f"Exists: {path_obj.exists()}\n"
+        f"Type: {entry_type}\n\n"
+        f"{contents}"
+    )
+
+
+def _build_env_selection_data() -> tuple[dict[str, str], dict[str, str]]:
+    options_to_preview: dict[str, str] = {}
+    options_to_output: dict[str, str] = {}
+    for env_key, env_value in sorted(os.environ.items(), key=lambda pair: pair[0].lower()):
+        label = _format_env_label(env_key, env_value)
+        options_to_preview[label] = _format_env_preview(env_key, env_value)
+        options_to_output[label] = env_value
+    return options_to_preview, options_to_output
+
+
+def _build_path_selection_data() -> tuple[dict[str, str], dict[str, str]]:
+    from machineconfig.scripts.python.helpers.helper_env.path_manager_backend import get_path_entries
+
+    options_to_preview: dict[str, str] = {}
+    options_to_output: dict[str, str] = {}
+    for idx, path_entry in enumerate(get_path_entries(), start=1):
+        path_obj = Path(path_entry)
+        status = "OK" if path_obj.exists() else "MISSING"
+        label = f"{idx:03d} [{status}] {path_entry}"
+        options_to_preview[label] = _format_path_preview(path_entry)
+        options_to_output[label] = path_entry
+    return options_to_preview, options_to_output
+
+
+def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str | None]:
+    from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
+
+    if not check_tool_exists("tv"):
+        return False, None
+
+    from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
+
+    try:
+        match which:
+            case "PATH" | "p":
+                options_to_preview, options_to_output = _build_path_selection_data()
+                preview_size_percent = 60.0
+            case "ENV" | "e":
+                options_to_preview, options_to_output = _build_env_selection_data()
+                preview_size_percent = 50.0
+
+        selected_label = choose_from_dict_with_preview(
+            options_to_preview_mapping=options_to_preview,
+            extension="txt",
+            multi=False,
+            preview_size_percent=preview_size_percent,
+        )
+    except Exception:
+        return False, None
+
+    if selected_label is None:
+        return True, None
+    return True, options_to_output.get(selected_label)
+
+
+def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
     from machineconfig.scripts.python.helpers import helper_env as navigator
-    from pathlib import Path
 
     match which:
         case "PATH" | "p":
@@ -26,6 +125,23 @@ def tui_env(which: Annotated[Literal["PATH", "p", "ENV", "e"], typer.Argument(he
         display_script=True,
         clean_env=False,
     )
+
+
+def tui_env(which: Annotated[Literal["PATH", "p", "ENV", "e"], typer.Argument(help="Which environment variable to display.")] = "ENV", tui: bool = False) -> None:
+    """📚 Navigate PATH and environment variables."""
+    if tui:
+        _run_textual_env(which=which)
+        return
+
+    used_tv, selected_value = _choose_with_tv(which=which)
+    if selected_value is not None:
+        typer.echo(selected_value)
+        return
+    if used_tv:
+        return
+
+    typer.echo("tv picker unavailable. Falling back to the Textual TUI.", err=True)
+    _run_textual_env(which=which)
 
 
 def init_project(

@@ -9182,7 +9182,7 @@
           {
             "kind": "command",
             "name": "run",
-            "help": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nskip, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
+            "help": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
               "module": "machineconfig.scripts.python.sessions",
@@ -9202,7 +9202,7 @@
                 "",
                 "    max_layouts: Annotated[int, typer.Option(..., \"--max-parallel-layouts\", \"-P\", help=\"A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.\")] = 25,",
                 "    backend: Annotated[Literal[\"zellij\", \"z\", \"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"tmux\",",
-                "    on_conflict: Annotated[Literal[\"restart\", \"skip\", \"rename\"], typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts.\")] = \"skip\",",
+                "    on_conflict: Annotated[Literal[\"restart\", \"error\", \"rename\"], typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts.\")] = \"error\",",
                 "    max_parallel_tabs: Annotated[Optional[int], typer.Option(\"--max-parallel-tabs\", help=\"Enable dynamic tab scheduling and cap active tabs to this value.\")] = None,",
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-seconds\", help=\"Dynamic mode only: polling interval in seconds used to detect finished tabs.\")] = 2.0,",
                 "",
@@ -9216,7 +9216,7 @@
                 "    \"\"\"Launch terminal sessions based on a layout configuration file.",
                 "",
                 "    Use --on-conflict to choose behavior when a target session already exists:",
-                "    skip, restart, or rename.",
+                "    error, restart, or rename.",
                 "    Pass --max-parallel-tabs to enable dynamic tab scheduling.",
                 "    \"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl",
@@ -9437,10 +9437,10 @@
                 {
                   "name": "on_conflict",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['restart', 'skip', 'rename']",
-                  "default": "skip",
+                  "type": "Literal['restart', 'error', 'rename']",
+                  "default": "error",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['restart', 'skip', 'rename'], typer.Option('--on-conflict', '-o', help='How to handle existing session name conflicts.')]",
+                  "annotation_raw": "Annotated[Literal['restart', 'error', 'rename'], typer.Option('--on-conflict', '-o', help='How to handle existing session name conflicts.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9608,12 +9608,12 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nskip, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
+            "doc": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling.",
             "aliases": [
               {
                 "name": "r",
                 "hidden": true,
-                "help": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nskip, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling."
+                "help": "Launch terminal sessions based on a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, or rename.\nPass --max-parallel-tabs to enable dynamic tab scheduling."
               }
             ]
           },
@@ -9635,19 +9635,20 @@
                 "    choose_tabs: Annotated[Optional[str], typer.Option(..., \"--choose-tabs\", \"-t\", help=\"Comma separated tab names. Pass empty string to select tabs interactively from all layouts.\")] = None,",
                 "    sleep_inbetween: Annotated[float, typer.Option(..., \"--sleep-inbetween\", \"-S\", help=\"Sleep time in seconds between AoE session launches\")] = 1.0,",
                 "    max_tabs: Annotated[int, typer.Option(..., \"--max-tabs-per-layout\", \"-T\", help=\"A sanity checker that throws an error if any selected layout exceeds this number of tabs.\")] = 25,",
-                "    agent: Annotated[Optional[str], typer.Option(\"--agent\", help=\"AoE agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.\")] = \"codex\",",
-                "    model: Annotated[Optional[str], typer.Option(\"--model\", \"-m\", help=\"Model forwarded to `aoe add --model`.\")] = None,",
-                "    provider: Annotated[Optional[str], typer.Option(\"--provider\", \"-p\", help=\"Provider forwarded to `aoe add --provider`.\")] = None,",
-                "    sandbox: Annotated[Optional[str], typer.Option(\"--sandbox\", help=\"Convenience flag that becomes `aoe add --args --sandbox <value>`.\")] = None,",
-                "    yolo: Annotated[bool, typer.Option(\"--yolo\", help=\"Convenience flag that becomes `aoe add --args --yolo`.\")] = False,",
-                "    cmd: Annotated[Optional[str], typer.Option(\"--cmd\", help=\"Override the launched agent command via `aoe add --cmd`.\")] = None,",
-                "    args: Annotated[list[str], typer.Option(\"--args\", help=\"Repeatable extra argument forwarded to `aoe add --args`.\")] = [],",
-                "    env: Annotated[list[str], typer.Option(\"--env\", help=\"Repeatable KEY=VALUE pair forwarded to `aoe add --env`.\")] = [],",
-                "    force: Annotated[bool, typer.Option(\"--force\", help=\"Pass `--force` to `aoe add`.\")] = False,",
+                "    agent: Annotated[Optional[str], typer.Option(\"--agent\", help=\"AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.\")] = \"codex\",",
+                "    model: Annotated[Optional[str], typer.Option(\"--model\", \"-m\", help=\"Model forwarded to the underlying AoE/agent CLI when supported.\")] = None,",
+                "    provider: Annotated[Optional[str], typer.Option(\"--provider\", \"-p\", help=\"Provider forwarded to the underlying AoE/agent CLI when supported.\")] = None,",
+                "    sandbox: Annotated[Optional[str], typer.Option(\"--sandbox\", help=\"Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.\")] = None,",
+                "    yolo: Annotated[bool, typer.Option(\"--yolo\", help=\"Enable AoE/agent YOLO mode when supported.\")] = False,",
+                "    cmd: Annotated[Optional[str], typer.Option(\"--cmd\", help=\"Override the launched agent binary/command.\")] = None,",
+                "    args: Annotated[list[str], typer.Option(\"--args\", help=\"Repeatable extra argument forwarded to the launched agent CLI.\")] = [],",
+                "    env: Annotated[list[str], typer.Option(\"--env\", help=\"Repeatable KEY=VALUE pair forwarded to AoE when supported.\")] = [],",
+                "    force: Annotated[bool, typer.Option(\"--force\", help=\"Pass force/overwrite to AoE when supported.\")] = False,",
                 "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Print generated `aoe add` commands instead of executing them.\")] = False,",
                 "    aoe_bin: Annotated[str, typer.Option(\"--aoe-bin\", help=\"AoE executable to invoke.\")] = \"aoe\",",
-                "    tab_command_mode: Annotated[Literal[\"prompt\", \"cmd\", \"ignore\"], typer.Option(\"--tab-command-mode\", help=\"How to use each tab's `command` field: as the initial prompt, as `aoe add --cmd`, or ignore it.\")] = \"prompt\",",
+                "    tab_command_mode: Annotated[Literal[\"prompt\", \"cmd\", \"ignore\"], typer.Option(\"--tab-command-mode\", help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")] = \"prompt\",",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
+                "    launch: Annotated[bool, typer.Option(\"--launch/--no-launch\", help=\"Launch each AoE session immediately after creating it.\")] = True,",
                 ") -> None:",
                 "    \"\"\"Launch selected layout tabs as agent-of-empires sessions.",
                 "",
@@ -9678,6 +9679,7 @@
                 "        aoe_bin=aoe_bin,",
                 "        tab_command_mode=tab_command_mode,",
                 "        subsitute_home=subsitute_home,",
+                "        launch=launch,",
                 "    )"
               ],
               "name": "run_aoe",
@@ -9811,7 +9813,7 @@
                   "type": "Optional[str]",
                   "default": "codex",
                   "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option('--agent', help='AoE agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.')]",
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--agent', help='AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9821,7 +9823,7 @@
                       "--agent"
                     ],
                     "short_flags": [],
-                    "help": "AoE agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful."
+                    "help": "AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful."
                   }
                 },
                 {
@@ -9830,7 +9832,7 @@
                   "type": "Optional[str]",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option('--model', '-m', help='Model forwarded to `aoe add --model`.')]",
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--model', '-m', help='Model forwarded to the underlying AoE/agent CLI when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9843,7 +9845,7 @@
                     "short_flags": [
                       "-m"
                     ],
-                    "help": "Model forwarded to `aoe add --model`."
+                    "help": "Model forwarded to the underlying AoE/agent CLI when supported."
                   }
                 },
                 {
@@ -9852,7 +9854,7 @@
                   "type": "Optional[str]",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option('--provider', '-p', help='Provider forwarded to `aoe add --provider`.')]",
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--provider', '-p', help='Provider forwarded to the underlying AoE/agent CLI when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9865,7 +9867,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Provider forwarded to `aoe add --provider`."
+                    "help": "Provider forwarded to the underlying AoE/agent CLI when supported."
                   }
                 },
                 {
@@ -9874,7 +9876,7 @@
                   "type": "Optional[str]",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option('--sandbox', help='Convenience flag that becomes `aoe add --args --sandbox <value>`.')]",
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--sandbox', help='Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9884,7 +9886,7 @@
                       "--sandbox"
                     ],
                     "short_flags": [],
-                    "help": "Convenience flag that becomes `aoe add --args --sandbox <value>`."
+                    "help": "Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported."
                   }
                 },
                 {
@@ -9893,7 +9895,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--yolo', help='Convenience flag that becomes `aoe add --args --yolo`.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--yolo', help='Enable AoE/agent YOLO mode when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9903,7 +9905,7 @@
                       "--yolo"
                     ],
                     "short_flags": [],
-                    "help": "Convenience flag that becomes `aoe add --args --yolo`."
+                    "help": "Enable AoE/agent YOLO mode when supported."
                   }
                 },
                 {
@@ -9912,7 +9914,7 @@
                   "type": "Optional[str]",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option('--cmd', help='Override the launched agent command via `aoe add --cmd`.')]",
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--cmd', help='Override the launched agent binary/command.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9922,7 +9924,7 @@
                       "--cmd"
                     ],
                     "short_flags": [],
-                    "help": "Override the launched agent command via `aoe add --cmd`."
+                    "help": "Override the launched agent binary/command."
                   }
                 },
                 {
@@ -9931,7 +9933,7 @@
                   "type": "list[str]",
                   "default": [],
                   "required": false,
-                  "annotation_raw": "Annotated[list[str], typer.Option('--args', help='Repeatable extra argument forwarded to `aoe add --args`.')]",
+                  "annotation_raw": "Annotated[list[str], typer.Option('--args', help='Repeatable extra argument forwarded to the launched agent CLI.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9941,7 +9943,7 @@
                       "--args"
                     ],
                     "short_flags": [],
-                    "help": "Repeatable extra argument forwarded to `aoe add --args`."
+                    "help": "Repeatable extra argument forwarded to the launched agent CLI."
                   }
                 },
                 {
@@ -9950,7 +9952,7 @@
                   "type": "list[str]",
                   "default": [],
                   "required": false,
-                  "annotation_raw": "Annotated[list[str], typer.Option('--env', help='Repeatable KEY=VALUE pair forwarded to `aoe add --env`.')]",
+                  "annotation_raw": "Annotated[list[str], typer.Option('--env', help='Repeatable KEY=VALUE pair forwarded to AoE when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9960,7 +9962,7 @@
                       "--env"
                     ],
                     "short_flags": [],
-                    "help": "Repeatable KEY=VALUE pair forwarded to `aoe add --env`."
+                    "help": "Repeatable KEY=VALUE pair forwarded to AoE when supported."
                   }
                 },
                 {
@@ -9969,7 +9971,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--force', help='Pass `--force` to `aoe add`.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--force', help='Pass force/overwrite to AoE when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9979,7 +9981,7 @@
                       "--force"
                     ],
                     "short_flags": [],
-                    "help": "Pass `--force` to `aoe add`."
+                    "help": "Pass force/overwrite to AoE when supported."
                   }
                 },
                 {
@@ -10026,7 +10028,7 @@
                   "type": "Literal['prompt', 'cmd', 'ignore']",
                   "default": "prompt",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['prompt', 'cmd', 'ignore'], typer.Option('--tab-command-mode', help=\"How to use each tab's `command` field: as the initial prompt, as `aoe add --cmd`, or ignore it.\")]",
+                  "annotation_raw": "Annotated[Literal['prompt', 'cmd', 'ignore'], typer.Option('--tab-command-mode', help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -10036,7 +10038,7 @@
                       "--tab-command-mode"
                     ],
                     "short_flags": [],
-                    "help": "How to use each tab's `command` field: as the initial prompt, as `aoe add --cmd`, or ignore it."
+                    "help": "How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it."
                   }
                 },
                 {
@@ -10061,15 +10063,42 @@
                     "help": "Substitute ~ and $HOME in layout file with actual home directory path",
                     "default": "..."
                   }
+                },
+                {
+                  "name": "launch",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": true,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--launch/--no-launch', help='Launch each AoE session immediately after creating it.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--launch/--no-launch"
+                    ],
+                    "long_flags": [
+                      "--launch",
+                      "--no-launch"
+                    ],
+                    "short_flags": [],
+                    "help": "Launch each AoE session immediately after creating it."
+                  }
                 }
               ],
               "return": "None"
             },
-            "short_help": "<ra> Run selected layout(s) through agent-of-empires",
+            "short_help": "<e> Run selected layout(s) through agent-of-empires",
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default"
+            "doc": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default",
+            "aliases": [
+              {
+                "name": "e",
+                "hidden": true,
+                "help": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default"
+              }
+            ]
           },
           {
             "kind": "command",
@@ -10737,10 +10766,10 @@
                 "    agent_load:   Annotated[int, typer.Option(..., \"--agent-load\", \"-l\", help=\"Number of tasks per prompt\")] = 3,",
                 "    prompt:       Annotated[Optional[str], typer.Option(..., \"--prompt\", \"-p\", help=\"Prompt prefix as string\")] = None,",
                 "    prompt_path:  Annotated[Optional[str], typer.Option(..., \"--prompt-path\", \"-P\", help=\"Path to prompt file\")] = None,",
-                "    job_name:     Annotated[str, typer.Option(..., \"--job-name\", \"-n\", help=\"Job name\")] = \"AI_Agents\",",
+                "    job_name:     Annotated[str, typer.Option(..., \"--job-name\", \"-n\", help=\"Job label. Also used to build the default output directory when --agents-dir is omitted.\")] = \"AI_Agents\",",
                 "    join_prompt_and_context:     Annotated[bool, typer.Option(..., \"--joined-prompt-context\", \"-j\", help=\"Join prompt file to the context.\")] = False,",
                 "    output_path:  Annotated[Optional[str], typer.Option(..., \"--output-path\", \"-o\", help=\"Path to write the layout.json file\")] = None,",
-                "    agents_dir:   Annotated[Optional[str], typer.Option(..., \"--agents-dir\", \"-d\", help=\"Directory to store agent files. If not provided, will be constructed automatically.\")] = None,",
+                "    agents_dir:   Annotated[Optional[str], typer.Option(..., \"--agents-dir\", \"-d\", help=\"Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.\")] = None,",
                 ") -> None:",
                 "    \"\"\"Create agents layout file, ready to run.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl",
@@ -10829,7 +10858,7 @@
                   "type": "HOST",
                   "default": "local",
                   "required": false,
-                  "annotation_raw": "Annotated[HOST, typer.Option(..., '--host', '-h', help=f'Machine to run agents on. One of {', '.join(get_args(HOST))}')]",
+                  "annotation_raw": "Annotated[HOST, typer.Option(..., '--host', '-h', help=f\"Machine to run agents on. One of {', '.join(get_args(HOST))}\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -10989,7 +11018,7 @@
                   "type": "str",
                   "default": "AI_Agents",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option(..., '--job-name', '-n', help='Job name')]",
+                  "annotation_raw": "Annotated[str, typer.Option(..., '--job-name', '-n', help='Job label. Also used to build the default output directory when --agents-dir is omitted.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -11002,7 +11031,7 @@
                     "short_flags": [
                       "-n"
                     ],
-                    "help": "Job name",
+                    "help": "Job label. Also used to build the default output directory when --agents-dir is omitted.",
                     "default": "..."
                   }
                 },
@@ -11058,7 +11087,7 @@
                   "type": "Optional[str]",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option(..., '--agents-dir', '-d', help='Directory to store agent files. If not provided, will be constructed automatically.')]",
+                  "annotation_raw": "Annotated[Optional[str], typer.Option(..., '--agents-dir', '-d', help='Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -11071,7 +11100,7 @@
                     "short_flags": [
                       "-d"
                     ],
-                    "help": "Directory to store agent files. If not provided, will be constructed automatically.",
+                    "help": "Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.",
                     "default": "..."
                   }
                 }
@@ -11463,7 +11492,7 @@
                   "type": "str",
                   "default": "",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f'AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}')]",
+                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -12267,7 +12296,7 @@
           "callable": "utils"
         },
         "app": {
-          "help": "🔧 utilities operations",
+          "help": "⚙ utilities operations",
           "no_args_is_help": true,
           "add_help_option": true,
           "add_completion": false
@@ -12291,7 +12320,7 @@
                 "        typer.Option(..., \"--filter-by\", \"-f\", help=\"Field used to search/filter processes in interactive mode.\"),",
                 "    ] = \"command\",",
                 ") -> None:",
-                "    \"\"\"⚔️ Choose a process to kill.\"\"\"",
+                "    \"\"\"⚔ Choose a process to kill.\"\"\"",
                 "    from machineconfig.utils.procs import ProcessManager",
                 "    if interactive:",
                 "        proc = ProcessManager()",
@@ -12373,7 +12402,7 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "⚔️ Choose a process to kill.",
+            "doc": "⚔ Choose a process to kill.",
             "aliases": [
               {
                 "name": "k",
@@ -12384,7 +12413,7 @@
           {
             "kind": "command",
             "name": "environment",
-            "help": "📚 <v> NAVIGATE ENV/PATH variable with TUI",
+            "help": "⌘ <v> Navigate ENV/PATH variables. Default: fuzzy picker with preview; use --tui for Textual.",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
               "module": "machineconfig.scripts.python.utils",
@@ -12392,10 +12421,13 @@
             },
             "signature": {
               "raw_lines": [
-                "def tui_env(which: Annotated[Literal[\"PATH\", \"p\", \"ENV\", \"e\"], typer.Argument(help=\"Which environment variable to display.\")] = \"ENV\") -> None:",
-                "    \"\"\"📚 NAVIGATE ENV/PATH variable with TUI.\"\"\"",
+                "def tui_env(",
+                "    which: Annotated[Literal[\"PATH\", \"p\", \"ENV\", \"e\"], typer.Argument(help=\"Which environment variable to display.\")] = \"ENV\",",
+                "    tui: Annotated[bool, typer.Option(\"--tui\", \"-t\", help=\"Use the full-screen Textual TUI instead of the default fuzzy picker.\")] = False,",
+                ") -> None:",
+                "    \"\"\"⌘ Navigate ENV/PATH variables.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_utils.python import tui_env as impl",
-                "    impl(which=which)"
+                "    impl(which=which, tui=tui)"
               ],
               "name": "tui_env",
               "parameters": [
@@ -12413,6 +12445,28 @@
                     "short_flags": [],
                     "help": "Which environment variable to display."
                   }
+                },
+                {
+                  "name": "tui",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--tui', '-t', help='Use the full-screen Textual TUI instead of the default fuzzy picker.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--tui",
+                      "-t"
+                    ],
+                    "long_flags": [
+                      "--tui"
+                    ],
+                    "short_flags": [
+                      "-t"
+                    ],
+                    "help": "Use the full-screen Textual TUI instead of the default fuzzy picker."
+                  }
                 }
               ],
               "return": "None"
@@ -12420,7 +12474,7 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "📚 NAVIGATE ENV/PATH variable with TUI.",
+            "doc": "⌘ Navigate ENV/PATH variables.",
             "aliases": [
               {
                 "name": "v",
@@ -12430,174 +12484,8 @@
           },
           {
             "kind": "command",
-            "name": "upgrade-packages",
-            "help": "↑ [up] Upgrade project dependencies.",
-            "source": {
-              "file": "src/machineconfig/scripts/python/utils.py",
-              "module": "machineconfig.scripts.python.utils",
-              "callable": "upgrade_packages"
-            },
-            "signature": {
-              "raw_lines": [
-                "def upgrade_packages(root: Annotated[str, typer.Argument(help=\"Root directory of the project\")] = \".\") -> None:",
-                "    \"\"\"⬆️ Upgrade project dependencies.\"\"\"",
-                "    from machineconfig.utils.upgrade_packages import generate_uv_add_commands",
-                "    from pathlib import Path",
-                "    root_resolved = Path(root).expanduser().absolute().resolve()",
-                "    generate_uv_add_commands(pyproject_path=root_resolved / \"pyproject.toml\", output_path=root_resolved / \"pyproject_init.sh\")"
-              ],
-              "name": "upgrade_packages",
-              "parameters": [
-                {
-                  "name": "root",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": ".",
-                  "required": false,
-                  "annotation_raw": "Annotated[str, typer.Argument(help='Root directory of the project')]",
-                  "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Root directory of the project"
-                  }
-                }
-              ],
-              "return": "None"
-            },
-            "typer": {
-              "no_args_is_help": false
-            },
-            "doc": "⬆️ Upgrade project dependencies.",
-            "aliases": [
-              {
-                "name": "up",
-                "hidden": true
-              }
-            ]
-          },
-          {
-            "kind": "command",
-            "name": "download",
-            "help": "↓ <d> Download a file from a URL and optionally decompress it.",
-            "source": {
-              "file": "src/machineconfig/scripts/python/utils.py",
-              "module": "machineconfig.scripts.python.utils",
-              "callable": "download"
-            },
-            "signature": {
-              "raw_lines": [
-                "def download(",
-                "    url: Annotated[Optional[str], typer.Argument(..., help=\"The URL to download the file from.\")] = None,",
-                "    decompress: Annotated[bool, typer.Option(..., \"--decompress\", \"-d\", help=\"Decompress the file if it's an archive.\")] = False,",
-                "    output: Annotated[Optional[str], typer.Option(\"--output\", \"-o\", help=\"The output file path.\")] = None,",
-                "    output_dir: Annotated[Optional[str], typer.Option(\"--output-dir\", help=\"Directory to place the downloaded file in.\")] = None,",
-                ") -> None:",
-                "    \"\"\"⬇️ Download a file from a URL and optionally decompress it.\"\"\"",
-                "    from machineconfig.scripts.python.helpers.helpers_utils.download import download as impl",
-                "    impl(url=url, decompress=decompress, output=output, output_dir=output_dir)"
-              ],
-              "name": "download",
-              "parameters": [
-                {
-                  "name": "url",
-                  "kind": "positional_or_keyword",
-                  "type": "Optional[str]",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Argument(..., help='The URL to download the file from.')]",
-                  "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "The URL to download the file from.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "decompress",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--decompress', '-d', help=\"Decompress the file if it's an archive.\")]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--decompress",
-                      "-d"
-                    ],
-                    "long_flags": [
-                      "--decompress"
-                    ],
-                    "short_flags": [
-                      "-d"
-                    ],
-                    "help": "Decompress the file if it's an archive.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "output",
-                  "kind": "positional_or_keyword",
-                  "type": "Optional[str]",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option('--output', '-o', help='The output file path.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--output",
-                      "-o"
-                    ],
-                    "long_flags": [
-                      "--output"
-                    ],
-                    "short_flags": [
-                      "-o"
-                    ],
-                    "help": "The output file path."
-                  }
-                },
-                {
-                  "name": "output_dir",
-                  "kind": "positional_or_keyword",
-                  "type": "Optional[str]",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[Optional[str], typer.Option('--output-dir', help='Directory to place the downloaded file in.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--output-dir"
-                    ],
-                    "long_flags": [
-                      "--output-dir"
-                    ],
-                    "short_flags": [],
-                    "help": "Directory to place the downloaded file in."
-                  }
-                }
-              ],
-              "return": "None"
-            },
-            "typer": {
-              "no_args_is_help": true
-            },
-            "doc": "⬇️ Download a file from a URL and optionally decompress it.",
-            "aliases": [
-              {
-                "name": "d",
-                "hidden": true
-              }
-            ]
-          },
-          {
-            "kind": "command",
             "name": "get-machine-specs",
-            "help": "💻 <g> Get machine specifications.",
+            "help": "🖥 <g> Get machine specifications.",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
               "module": "machineconfig.scripts.python.utils",
@@ -12606,7 +12494,7 @@
             "signature": {
               "raw_lines": [
                 "def get_machine_specs(hardware: Annotated[bool, typer.Option(..., \"--hardware\", \"-h\", help=\"Show compute capability\")] = False) -> None:",
-                "    \"\"\"💻 Get machine specifications.\"\"\"",
+                "    \"\"\"🖥 Get machine specifications.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_utils.python import get_machine_specs as impl",
                 "    impl(hardware=hardware)"
               ],
@@ -12641,7 +12529,7 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "💻 Get machine specifications.",
+            "doc": "🖥 Get machine specifications.",
             "aliases": [
               {
                 "name": "g",
@@ -12652,7 +12540,7 @@
           {
             "kind": "command",
             "name": "init-project",
-            "help": "🚀 <i> Initialize a project with a uv virtual environment and install dev packages.",
+            "help": "✦ <i> Initialize a project with a uv virtual environment and install dev packages.",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
               "module": "machineconfig.scripts.python.utils",
@@ -12667,7 +12555,7 @@
                 "    libraries: Annotated[Optional[str], typer.Option(\"--libraries\", \"-l\", help=\"Additional packages to include in the uv virtual environment (space separated).\")] = None,",
                 "    group: Annotated[Optional[str], typer.Option(\"--group\", \"-g\", help=\"group of packages names (no separation) p:plot, t:types, l:linting, i:interactive, d:data\")] = \"p,t,l,i,d\",",
                 ") -> None:",
-                "    \"\"\"🚀 Initialize a project with a uv virtual environment and install dev packages.\"\"\"",
+                "    \"\"\"✦ Initialize a project with a uv virtual environment and install dev packages.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_utils.python import init_project as impl",
                 "    impl(name=name, tmp_dir=tmp_dir, python=python, libraries=libraries, group=group)"
               ],
@@ -12789,10 +12677,153 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "🚀 Initialize a project with a uv virtual environment and install dev packages.",
+            "doc": "✦ Initialize a project with a uv virtual environment and install dev packages.",
             "aliases": [
               {
                 "name": "i",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "upgrade-packages",
+            "help": "↑ <a> Upgrade project dependencies.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/utils.py",
+              "module": "machineconfig.scripts.python.utils",
+              "callable": "upgrade_packages"
+            },
+            "signature": {
+              "raw_lines": [
+                "def upgrade_packages(root: Annotated[str, typer.Argument(help=\"Root directory of the project\")] = \".\") -> None:",
+                "    \"\"\"↑ Upgrade project dependencies.\"\"\"",
+                "    from machineconfig.utils.upgrade_packages import generate_uv_add_commands",
+                "    from pathlib import Path",
+                "    root_resolved = Path(root).expanduser().absolute().resolve()",
+                "    generate_uv_add_commands(pyproject_path=root_resolved / \"pyproject.toml\", output_path=root_resolved / \"pyproject_init.sh\")"
+              ],
+              "name": "upgrade_packages",
+              "parameters": [
+                {
+                  "name": "root",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": ".",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Root directory of the project')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Root directory of the project"
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "↑ Upgrade project dependencies.",
+            "aliases": [
+              {
+                "name": "a",
+                "hidden": true
+              },
+              {
+                "name": "up",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "type-hint",
+            "help": "✐ <t> Type hint a file or project directory.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/utils.py",
+              "module": "machineconfig.scripts.python.utils",
+              "callable": "type_hint"
+            },
+            "signature": {
+              "raw_lines": [
+                "def type_hint(path: Annotated[str, typer.Argument(..., help=\"Path to file/project dir to type hint.\")] = \".\",",
+                "              dependency: Annotated[Literal[\"self-contained\", \"import\"], typer.Option(..., \"--dependency\", \"-d\", help=\"Generated file is self contained or performs imports\")] = \"self-contained\"",
+                "              ) -> None:",
+                "    \"\"\"✐ Type hint a file or project directory.\"\"\"",
+                "    from machineconfig.type_hinting.typedict.generators import generate_names_file",
+                "    from pathlib import Path",
+                "    path_resolved = Path(path).resolve()",
+                "    if not path_resolved.exists():",
+                "        typer.echo(f\"Err or: The provided path '{path}' does not exist.\", err=True)",
+                "        raise typer.Exit(code=1)",
+                "    if path_resolved.is_file():",
+                "        modules = [path_resolved]",
+                "    else:",
+                "        if not (path_resolved / \"pyproject.toml\").exists():",
+                "            typer.echo(\"Error: Provided directory path is not a project root (missing pyproject.toml).\", err=True)",
+                "            raise typer.Exit(code=1)",
+                "        else:",
+                "            modules = [file for file in path_resolved.rglob(\"dtypes.py\") if \".venv\" not in str(file)]",
+                "    for input_file in modules:",
+                "        print(f\"Worked on: {input_file}\")",
+                "        output_file = input_file.parent.joinpath(f\"{input_file.stem}_names.py\")",
+                "        generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)",
+                "        print(f\"Generated: {generated_file}\")"
+              ],
+              "name": "type_hint",
+              "parameters": [
+                {
+                  "name": "path",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": ".",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to file/project dir to type hint.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Path to file/project dir to type hint.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "dependency",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['self-contained', 'import']",
+                  "default": "self-contained",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['self-contained', 'import'], typer.Option(..., '--dependency', '-d', help='Generated file is self contained or performs imports')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--dependency",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--dependency"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Generated file is self contained or performs imports",
+                    "default": "..."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "✐ Type hint a file or project directory.",
+            "aliases": [
+              {
+                "name": "t",
                 "hidden": true
               }
             ]
@@ -12809,7 +12840,7 @@
             "signature": {
               "raw_lines": [
                 "def edit_file_with_hx(path: Annotated[Optional[str], typer.Argument(..., help=\"The root directory of the project to edit, or a file path.\")] = None) -> None:",
-                "    \"\"\"✏️ Open a file in the default editor.\"\"\"",
+                "    \"\"\"✏ Open a file in the default editor.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_utils.python import edit_file_with_hx as impl",
                 "    impl(path=path)"
               ],
@@ -12837,7 +12868,7 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "✏️ Open a file in the default editor.",
+            "doc": "✏ Open a file in the default editor.",
             "aliases": [
               {
                 "name": "e",
@@ -12847,8 +12878,125 @@
           },
           {
             "kind": "command",
+            "name": "download",
+            "help": "↓ <d> Download a file from a URL and optionally decompress it.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/utils.py",
+              "module": "machineconfig.scripts.python.utils",
+              "callable": "download"
+            },
+            "signature": {
+              "raw_lines": [
+                "def download(",
+                "    url: Annotated[Optional[str], typer.Argument(..., help=\"The URL to download the file from.\")] = None,",
+                "    decompress: Annotated[bool, typer.Option(..., \"--decompress\", \"-d\", help=\"Decompress the file if it's an archive.\")] = False,",
+                "    output: Annotated[Optional[str], typer.Option(\"--output\", \"-o\", help=\"The output file path.\")] = None,",
+                "    output_dir: Annotated[Optional[str], typer.Option(\"--output-dir\", help=\"Directory to place the downloaded file in.\")] = None,",
+                ") -> None:",
+                "    \"\"\"↓ Download a file from a URL and optionally decompress it.\"\"\"",
+                "    from machineconfig.scripts.python.helpers.helpers_utils.download import download as impl",
+                "    impl(url=url, decompress=decompress, output=output, output_dir=output_dir)"
+              ],
+              "name": "download",
+              "parameters": [
+                {
+                  "name": "url",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Argument(..., help='The URL to download the file from.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "The URL to download the file from.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "decompress",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--decompress', '-d', help=\"Decompress the file if it's an archive.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--decompress",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--decompress"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Decompress the file if it's an archive.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "output",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--output', '-o', help='The output file path.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--output",
+                      "-o"
+                    ],
+                    "long_flags": [
+                      "--output"
+                    ],
+                    "short_flags": [
+                      "-o"
+                    ],
+                    "help": "The output file path."
+                  }
+                },
+                {
+                  "name": "output_dir",
+                  "kind": "positional_or_keyword",
+                  "type": "Optional[str]",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Optional[str], typer.Option('--output-dir', help='Directory to place the downloaded file in.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--output-dir"
+                    ],
+                    "long_flags": [
+                      "--output-dir"
+                    ],
+                    "short_flags": [],
+                    "help": "Directory to place the downloaded file in."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "↓ Download a file from a URL and optionally decompress it.",
+            "aliases": [
+              {
+                "name": "d",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
             "name": "pdf-merge",
-            "help": "📄 [pm] Merge two PDF files into one.",
+            "help": "◫ <m> Merge two PDF files into one.",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
               "module": "machineconfig.scripts.python.utils",
@@ -12861,7 +13009,7 @@
                 "    output: Annotated[Optional[str], typer.Option(\"--output\", \"-o\", help=\"Output merged PDF file path.\")] = None,",
                 "    compress: Annotated[bool, typer.Option(\"--compress\", \"-c\", help=\"Compress the output PDF.\")] = False,",
                 ") -> None:",
-                "    \"\"\"📄 Merge two PDF files into one.\"\"\"",
+                "    \"\"\"◫ Merge two PDF files into one.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_utils.pdf import merge_pdfs as impl",
                 "    impl(pdfs=pdfs, output=output, compress=compress)"
               ],
@@ -12933,8 +13081,12 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "📄 Merge two PDF files into one.",
+            "doc": "◫ Merge two PDF files into one.",
             "aliases": [
+              {
+                "name": "m",
+                "hidden": true
+              },
               {
                 "name": "pm",
                 "hidden": true
@@ -12944,7 +13096,7 @@
           {
             "kind": "command",
             "name": "pdf-compress",
-            "help": "📦 [pc] Compress a PDF file.",
+            "help": "↧ <c> Compress a PDF file.",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
               "module": "machineconfig.scripts.python.utils",
@@ -12960,7 +13112,7 @@
                 "    compress_streams: Annotated[bool, typer.Option(\"--compress-streams\", \"-c\", help=\"Compress uncompressed streams.\")] = True,",
                 "    use_objstms: Annotated[bool, typer.Option(\"--object-streams\", \"-s\", help=\"Use object streams for additional compression.\")] = True,",
                 ") -> None:",
-                "    \"\"\"📦 Compress a PDF file.\"\"\"",
+                "    \"\"\"↧ Compress a PDF file.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_utils.pdf import compress_pdf as impl",
                 "    impl(pdf_input=pdf_input, output=output, quality=quality, image_dpi=image_dpi, compress_streams=compress_streams, use_objstms=use_objstms)"
               ],
@@ -13098,8 +13250,12 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "📦 Compress a PDF file.",
+            "doc": "↧ Compress a PDF file.",
             "aliases": [
+              {
+                "name": "c",
+                "hidden": true
+              },
               {
                 "name": "pc",
                 "hidden": true
@@ -13108,96 +13264,8 @@
           },
           {
             "kind": "command",
-            "name": "type-hint",
-            "help": "📝 <t> Type hint a file or project directory.",
-            "source": {
-              "file": "src/machineconfig/scripts/python/utils.py",
-              "module": "machineconfig.scripts.python.utils",
-              "callable": "type_hint"
-            },
-            "signature": {
-              "raw_lines": [
-                "def type_hint(path: Annotated[str, typer.Argument(..., help=\"Path to file/project dir to type hint.\")] = \".\",",
-                "              dependency: Annotated[Literal[\"self-contained\", \"import\"], typer.Option(..., \"--dependency\", \"-d\", help=\"Generated file is self contained or performs imports\")] = \"self-contained\"",
-                "              ) -> None:",
-                "    from machineconfig.type_hinting.typedict.generators import generate_names_file",
-                "    from pathlib import Path",
-                "    path_resolved = Path(path).resolve()",
-                "    if not path_resolved.exists():",
-                "        typer.echo(f\"Err or: The provided path '{path}' does not exist.\", err=True)",
-                "        raise typer.Exit(code=1)",
-                "    if path_resolved.is_file():",
-                "        modules = [path_resolved]",
-                "    else:",
-                "        if not (path_resolved / \"pyproject.toml\").exists():",
-                "            typer.echo(\"Error: Provided directory path is not a project root (missing pyproject.toml).\", err=True)",
-                "            raise typer.Exit(code=1)",
-                "        else:",
-                "            modules = [file for file in path_resolved.rglob(\"dtypes.py\") if \".venv\" not in str(file)]",
-                "    for input_file in modules:",
-                "        print(f\"Worked on: {input_file}\")",
-                "        output_file = input_file.parent.joinpath(f\"{input_file.stem}_names.py\")",
-                "        generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)",
-                "        print(f\"Generated: {generated_file}\")"
-              ],
-              "name": "type_hint",
-              "parameters": [
-                {
-                  "name": "path",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": ".",
-                  "required": false,
-                  "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to file/project dir to type hint.')]",
-                  "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Path to file/project dir to type hint.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "dependency",
-                  "kind": "positional_or_keyword",
-                  "type": "Literal['self-contained', 'import']",
-                  "default": "self-contained",
-                  "required": false,
-                  "annotation_raw": "Annotated[Literal['self-contained', 'import'], typer.Option(..., '--dependency', '-d', help='Generated file is self contained or performs imports')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--dependency",
-                      "-d"
-                    ],
-                    "long_flags": [
-                      "--dependency"
-                    ],
-                    "short_flags": [
-                      "-d"
-                    ],
-                    "help": "Generated file is self contained or performs imports",
-                    "default": "..."
-                  }
-                }
-              ],
-              "return": "None"
-            },
-            "typer": {
-              "no_args_is_help": true
-            },
-            "aliases": [
-              {
-                "name": "t",
-                "hidden": true
-              }
-            ]
-          },
-          {
-            "kind": "command",
             "name": "read-db",
-            "help": "🗃 [db] TUI DB Visualizer.",
+            "help": "🗃 <r> TUI DB Visualizer.",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
               "module": "machineconfig.scripts.python.utils",
@@ -13212,7 +13280,7 @@
                 "    theme: Annotated[Optional[str], typer.Option(\"--theme\", \"-t\", help=\"Theme to use (if supported by backend).\")] = None,",
                 "    limit: Annotated[Optional[int], typer.Option(\"--limit\", \"-l\", help=\"Maximum number of rows to load (if supported by backend).\")] = None,",
                 ") -> None:",
-                "    \"\"\"🗃️ TUI DB Visualizer.\"\"\"",
+                "    \"\"\"🗃 TUI DB Visualizer.\"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_utils.read_db_cli_tui import app as impl",
                 "    impl(path=path, backend=backend, read_only=read_only, theme=theme, limit=limit)"
               ],
@@ -13328,8 +13396,12 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "🗃️ TUI DB Visualizer.",
+            "doc": "🗃 TUI DB Visualizer.",
             "aliases": [
+              {
+                "name": "r",
+                "hidden": true
+              },
               {
                 "name": "db",
                 "hidden": true
