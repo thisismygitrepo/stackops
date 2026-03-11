@@ -3,6 +3,7 @@ from typing import Optional
 from pathlib import Path
 import logging
 
+from machineconfig.cluster.sessions_managers.session_conflict import SessionConflictAction
 from rich.console import Console
 
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
@@ -169,16 +170,26 @@ class ZellijLayoutGenerator:
         """
         return restart_tab_process(tab_name=tab_name, layout_config=self.layout_config, session_name=self.session_name)
 
-    def run(self):
+    def run(self, on_conflict: SessionConflictAction) -> None:
         from machineconfig.cluster.sessions_managers.helpers.enhanced_command_runner import enhanced_zellij_session_start
-        enhanced_zellij_session_start(session_name=self.session_name, layout_path=str(self.layout_path))
+        result = enhanced_zellij_session_start(
+            session_name=self.session_name,
+            layout_path=str(self.layout_path),
+            on_conflict=on_conflict,
+        )
+        actual_session_name = result.get("session_name")
+        if isinstance(actual_session_name, str) and actual_session_name:
+            self.session_name = actual_session_name
+        if not result.get("success", False):
+            detail = result.get("stderr") or result.get("error") or "Unknown error"
+            raise RuntimeError(f"Failed to start zellij layout: {detail}")
 
 
-def run_zellij_layout(layout_config: LayoutConfig) -> None:
+def run_zellij_layout(layout_config: LayoutConfig, on_conflict: SessionConflictAction) -> None:
     session_name = layout_config["layoutName"]
     generator = ZellijLayoutGenerator(layout_config, session_name)
     generator.create_layout_file()
-    generator.run()
+    generator.run(on_conflict=on_conflict)
 
 
 def run_command_in_zellij_tab(command: str, tab_name: str, cwd: Optional[str]) -> str:
@@ -213,7 +224,7 @@ if __name__ == "__main__":
         generator = ZellijLayoutGenerator(layout_config=sample_layout, session_name="test_session")
         generator.create_layout_file()
 
-        generator.run()
+        generator.run(on_conflict="error")
         # Demonstrate status checking
         print("\n🔍 Checking command status (this is just a demo - commands aren't actually running):")
         generator.print_status_report()

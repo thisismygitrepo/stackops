@@ -3,6 +3,12 @@ from datetime import datetime
 import subprocess
 from typing import Any, Optional, TypedDict, cast
 
+from machineconfig.cluster.sessions_managers.session_conflict import (
+    SessionConflictAction,
+    build_session_launch_plan,
+    kill_existing_session,
+    validate_session_conflict_action,
+)
 from machineconfig.logger import get_logger
 from machineconfig.utils.scheduler import Scheduler
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
@@ -40,11 +46,30 @@ class TmuxLocalManager:
     def get_all_session_names(self) -> list[str]:
         return [manager.session_name for manager in self.managers]
 
-    def start_all_sessions(self) -> dict[str, StartResult]:
+    def start_all_sessions(self, on_conflict: SessionConflictAction) -> dict[str, StartResult]:
+        validate_session_conflict_action(on_conflict)
         results: dict[str, StartResult] = {}
-        for manager in self.managers:
-            session_name = manager.session_name or "unknown"
+        launch_plan = build_session_launch_plan(
+            requested_session_names=[manager.session_name for manager in self.managers],
+            backend="tmux",
+            on_conflict=on_conflict,
+        )
+        for manager, plan in zip(self.managers, launch_plan, strict=True):
+            original_session_name = manager.session_name or "unknown"
+            if plan["session_name"] != original_session_name:
+                logger.info(
+                    "Renaming tmux session '%s' to '%s' to avoid session conflict.",
+                    original_session_name,
+                    plan["session_name"],
+                )
+                manager.session_name = plan["session_name"]
+                manager.create_layout_file()
+
+            session_name = manager.session_name or original_session_name
             try:
+                if plan["restart_required"]:
+                    logger.info("Restarting existing tmux session '%s'.", session_name)
+                    kill_existing_session("tmux", session_name)
                 script_path = manager.script_path
                 if script_path is None:
                     results[session_name] = {"success": False, "error": "No script file path available"}

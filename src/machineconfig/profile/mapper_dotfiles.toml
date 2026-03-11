@@ -208,7 +208,7 @@ config = {original = '~/mprocs.yaml', self_managed = 'CONFIG_ROOT/settings/mproc
 # [tmux_linux]
 # config = {original = '~/.tmux.conf', self_managed = 'CONFIG_ROOT/settings/tmux/.tmux.conf'}
 # tmate = {original = '~/.tmate.conf', self_managed = 'CONFIG_ROOT/settings/tmux/.tmate.conf'}
-
+tmux_local_conf = {original = '~/.config/tmux/tmux.conf.local', self_managed = 'CONFIG_ROOT/settings/tmux/tmux.conf.local'}
 
 [zellij_linux]
 config = { original = '~/.config/zellij', self_managed = 'CONFIG_ROOT/settings/zellij', os = 'linux,darwin'}

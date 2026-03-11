@@ -3,9 +3,17 @@
 Enhanced command execution utilities with Rich formatting for better user experience.
 """
 
-import subprocess
 import re
+import shlex
+import subprocess
 from typing import Optional, Dict, Any
+
+from machineconfig.cluster.sessions_managers.session_conflict import (
+    SessionConflictAction,
+    build_session_launch_plan,
+    kill_existing_session,
+    validate_session_conflict_action,
+)
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -78,32 +86,46 @@ def run_enhanced_command(command: str, description: Optional[str], show_progress
         return {"success": False, "error": str(e)}
 
 
-def enhanced_zellij_session_start(session_name: str, layout_path: str) -> Dict[str, Any]:
+def enhanced_zellij_session_start(
+    session_name: str,
+    layout_path: str,
+    on_conflict: SessionConflictAction,
+) -> Dict[str, Any]:
     """
     Start a Zellij session with enhanced visual feedback.
     """
+    validate_session_conflict_action(on_conflict)
+    launch_plan = build_session_launch_plan([session_name], backend="zellij", on_conflict=on_conflict)[0]
+    actual_session_name = launch_plan["session_name"]
+
     console.print()
-    console.print(Panel.fit(f"🚀 Starting Zellij Session: [bold cyan]{session_name}[/bold cyan]", style="green", box=box.ROUNDED))
-    # Delete existing session first (suppress normal output)
-    delete_cmd = f"zellij delete-session --force {session_name}"
-    run_enhanced_command(
-        delete_cmd,
-        f"Cleaning up existing session '{session_name}'",
-        False,
-        5,  # Quick timeout for cleanup
-    )
+    if actual_session_name != session_name:
+        console.print(
+            f"[bold yellow]📝 Renaming session[/bold yellow] [yellow]'{session_name}'[/yellow] "
+            f"[yellow]to[/yellow] [yellow]'{actual_session_name}'[/yellow] [yellow]to avoid session conflict.[/yellow]"
+        )
+    console.print(Panel.fit(f"🚀 Starting Zellij Session: [bold cyan]{actual_session_name}[/bold cyan]", style="green", box=box.ROUNDED))
+    if launch_plan["restart_required"]:
+        kill_existing_session("zellij", actual_session_name)
+        console.print(
+            f"[bold yellow]♻️ Restarting existing session[/bold yellow] [yellow]'{actual_session_name}'[/yellow]"
+        )
     # Start new session (use -b for background to avoid hanging)
-    start_cmd = f"zellij --layout {layout_path} a -b {session_name}"
+    start_cmd = (
+        f"zellij --layout {shlex.quote(layout_path)} "
+        f"a -b {shlex.quote(actual_session_name)}"
+    )
     start_result = run_enhanced_command(
-        command=start_cmd, description=f"Starting session '{session_name}' with layout", show_progress=False,
+        command=start_cmd, description=f"Starting session '{actual_session_name}' with layout", show_progress=False,
         timeout=10,  # Add timeout to prevent hanging
     )
     if start_result["success"]:
-        console.print(Panel(f"[bold green]✅ Session '{session_name}' is now running![/bold green]\n[dim]Layout: {layout_path}[/dim]", style="green", title="🎉 Success"))
+        console.print(Panel(f"[bold green]✅ Session '{actual_session_name}' is now running![/bold green]\n[dim]Layout: {layout_path}[/dim]", style="green", title="🎉 Success"))
     else:
-        console.print(Panel(f"[bold red]❌ Failed to start session '{session_name}'[/bold red]\n[red]{start_result.get('stderr', 'Unknown error')}[/red]", style="red", title="💥 Error"))
+        console.print(Panel(f"[bold red]❌ Failed to start session '{actual_session_name}'[/bold red]\n[red]{start_result.get('stderr', 'Unknown error')}[/red]", style="red", title="💥 Error"))
     # print("Sleeping for 3 seconds to allow zellij to initialize...")
     # time.sleep(3)  # Brief pause for readability
+    start_result["session_name"] = actual_session_name
     return start_result
 
 

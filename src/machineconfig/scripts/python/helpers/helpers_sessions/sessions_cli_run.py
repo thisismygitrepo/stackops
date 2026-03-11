@@ -20,7 +20,7 @@ def run_cli(
     max_tabs: int,
     max_layouts: int,
     backend: Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"],
-    on_conflict: Literal["restart", "skip", "rename"],
+    on_conflict: Literal["restart", "error", "rename"],
     max_parallel_tabs: Optional[int],
     poll_seconds: float,
     kill_finished_tabs: bool,
@@ -185,6 +185,7 @@ def run_cli(
                 max_parallel_tabs=max_parallel_tabs,
                 kill_finished_tabs=kill_finished_tabs,
                 backend=dynamic_backend,
+                on_conflict=on_conflict,
                 poll_seconds=poll_seconds,
             )
         else:

@@ -63,5 +63,4 @@ def create_from_function(
             "command": f"uv run python -m fire {choice_file} {choice_function} --idx={an_arg} --idx_max={num_process}"
             })
     print(layout)
-    run_zellij_layout(layout_config=layout)
-
+    run_zellij_layout(layout_config=layout, on_conflict="error")

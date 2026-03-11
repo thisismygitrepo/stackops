@@ -7,6 +7,11 @@ import tempfile
 import time
 from typing import Literal, TypedDict
 
+from machineconfig.cluster.sessions_managers.session_conflict import (
+    SessionConflictAction,
+    build_session_launch_plan,
+    kill_existing_session,
+)
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper import parse_command, format_args_for_kdl
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper import check_command_status
 from machineconfig.cluster.sessions_managers.zellij.zellij_local_manager import ZellijLocalManager
@@ -97,18 +102,30 @@ def _close_tab_tmux(session_name: str, runtime_tab_name: str) -> None:
     _run_tmux_command(args=["kill-window", "-t", f"{session_name}:{runtime_tab_name}"])
 
 
-def _start_tmux_initial_session(session_name: str, initial_tasks: list[DynamicTabTask]) -> None:
+def _start_tmux_initial_session(
+    session_name: str,
+    initial_tasks: list[DynamicTabTask],
+    on_conflict: SessionConflictAction,
+) -> str:
     if len(initial_tasks) == 0:
         raise ValueError("No initial tasks provided for tmux startup.")
-    subprocess.run(["tmux", "kill-session", "-t", session_name], capture_output=True, text=True, timeout=10, check=False)
+    launch_plan = build_session_launch_plan([session_name], backend="tmux", on_conflict=on_conflict)[0]
+    actual_session_name = launch_plan["session_name"]
+    if actual_session_name != session_name:
+        print(f"📝 Renaming tmux session '{session_name}' to '{actual_session_name}' to avoid session conflict.")
+    if launch_plan["restart_required"]:
+        print(f"♻️ Restarting existing tmux session '{actual_session_name}'.")
+        kill_existing_session("tmux", actual_session_name)
 
     first_task = initial_tasks[0]
     first_tab = first_task["tab"]
-    _run_tmux_command(args=["new-session", "-d", "-s", session_name, "-n", first_task["runtime_tab_name"], "-c", first_tab["startDir"]])
-    _run_tmux_command(args=["send-keys", "-t", f"{session_name}:{first_task['runtime_tab_name']}", first_tab["command"], "C-m"])
+    _run_tmux_command(args=["new-session", "-d", "-s", actual_session_name, "-n", first_task["runtime_tab_name"], "-c", first_tab["startDir"]])
+    _run_tmux_command(args=["send-keys", "-t", f"{actual_session_name}:{first_task['runtime_tab_name']}", first_tab["command"], "C-m"])
 
     for task in initial_tasks[1:]:
-        _spawn_tab_tmux(session_name=session_name, task=task)
+        _spawn_tab_tmux(session_name=actual_session_name, task=task)
+
+    return actual_session_name
 
 
 def _is_task_running(task: DynamicTabTask) -> bool:
@@ -142,6 +159,7 @@ def run_dynamic(
     max_parallel_tabs: int,
     kill_finished_tabs: bool,
     backend: Literal["zellij", "z", "tmux", "t", "auto", "a"],
+    on_conflict: SessionConflictAction,
     poll_seconds: float,
 ) -> None:
     backend_resolved = _validate_backend(backend=backend)
@@ -162,19 +180,25 @@ def run_dynamic(
     initial_tasks = all_tasks[:first_count]
     pending_tasks: deque[DynamicTabTask] = deque(all_tasks[first_count:])
     initial_layout: LayoutConfig = {"layoutName": layout["layoutName"], "layoutTabs": [task["tab"] for task in initial_tasks]}
+    session_names: list[str] = []
 
     if backend_resolved == "zellij":
         manager_zellij = ZellijLocalManager(session_layouts=[initial_layout])
-        start_results = manager_zellij.start_all_sessions(poll_interval=1.0, poll_seconds=12.0)
+        start_results = manager_zellij.start_all_sessions(on_conflict=on_conflict, poll_interval=1.0, poll_seconds=12.0)
         session_names = manager_zellij.get_all_session_names()
     else:
         session_name_for_tmux = layout["layoutName"].replace(" ", "_")
         try:
-            _start_tmux_initial_session(session_name=session_name_for_tmux, initial_tasks=initial_tasks)
-            start_results = {session_name_for_tmux: {"success": True, "message": "tmux dynamic session started"}}
+            actual_session_name = _start_tmux_initial_session(
+                session_name=session_name_for_tmux,
+                initial_tasks=initial_tasks,
+                on_conflict=on_conflict,
+            )
+            start_results = {actual_session_name: {"success": True, "message": "tmux dynamic session started"}}
         except Exception as exc:
             start_results = {session_name_for_tmux: {"success": False, "error": str(exc)}}
-        session_names = [session_name_for_tmux]
+        else:
+            session_names = [actual_session_name]
 
     failures = {name: result for name, result in start_results.items() if not result.get("success", False)}
     if len(failures) > 0:

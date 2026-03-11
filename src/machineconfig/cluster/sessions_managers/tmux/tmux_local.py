@@ -3,6 +3,12 @@ from pathlib import Path
 import subprocess
 from typing import Optional, TypedDict
 
+from machineconfig.cluster.sessions_managers.session_conflict import (
+    SessionConflictAction,
+    build_session_launch_plan,
+    kill_existing_session,
+    validate_session_conflict_action,
+)
 from rich.console import Console
 
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
@@ -109,7 +115,19 @@ class TmuxLayoutGenerator:
             f"[yellow]Session healthy:[/yellow] {'✅' if summary['session_healthy'] else '❌'}"
         )
 
-    def run(self) -> dict[str, str | int]:
+    def run(self, on_conflict: SessionConflictAction) -> dict[str, str | int]:
+        validate_session_conflict_action(on_conflict)
+        launch_plan = build_session_launch_plan([self.session_name], backend="tmux", on_conflict=on_conflict)[0]
+        if launch_plan["session_name"] != self.session_name:
+            console.print(
+                f"[bold yellow]📝 Renaming tmux session[/bold yellow] [yellow]'{self.session_name}'[/yellow] "
+                f"[yellow]to[/yellow] [yellow]'{launch_plan['session_name']}'[/yellow] [yellow]to avoid session conflict.[/yellow]"
+            )
+            self.session_name = launch_plan["session_name"]
+            self.create_layout_file()
+        if launch_plan["restart_required"]:
+            console.print(f"[bold yellow]♻️ Restarting existing tmux session[/bold yellow] [yellow]'{self.session_name}'[/yellow]")
+            kill_existing_session("tmux", self.session_name)
         if self.script_path is None:
             raise RuntimeError("Script path was not set after creating layout file")
         result = subprocess.run(["bash", self.script_path], capture_output=True, text=True)
@@ -118,11 +136,11 @@ class TmuxLayoutGenerator:
         return {"returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
 
 
-def run_tmux_layout(layout_config: LayoutConfig) -> None:
+def run_tmux_layout(layout_config: LayoutConfig, on_conflict: SessionConflictAction) -> None:
     session_name = layout_config["layoutName"]
     generator = TmuxLayoutGenerator(layout_config=layout_config, session_name=session_name)
     generator.create_layout_file()
-    generator.run()
+    generator.run(on_conflict=on_conflict)
 
 
 if __name__ == "__main__":
@@ -134,4 +152,4 @@ if __name__ == "__main__":
             {"tabName": "logs", "startDir": "~/projects/server/logs", "command": "tail -f server.log"},
         ],
     }
-    run_tmux_layout(sample_layout)
+    run_tmux_layout(sample_layout, on_conflict="error")

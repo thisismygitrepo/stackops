@@ -225,4 +225,4 @@ if __name__ == "__main__":
     print(f"✅ Layout created: {layout_path_3}")
 
     from machineconfig.cluster.sessions_managers.helpers.enhanced_command_runner import enhanced_zellij_session_start
-    enhanced_zellij_session_start(session_name="tmp", layout_path=layout_path_3)
+    enhanced_zellij_session_start(session_name="tmp", layout_path=layout_path_3, on_conflict="error")

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from datetime import datetime
 import logging
+import shlex
 import subprocess
 import time
 from typing import Optional, TypedDict
@@ -9,6 +10,12 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
+from machineconfig.cluster.sessions_managers.session_conflict import (
+    SessionConflictAction,
+    build_session_launch_plan,
+    kill_existing_session,
+    validate_session_conflict_action,
+)
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import SessionReport, GlobalSummary, StartResult, ActiveSessionInfo
 from machineconfig.utils.scheduler import Scheduler
 from machineconfig.cluster.sessions_managers.zellij.zellij_local import ZellijLayoutGenerator
@@ -94,7 +101,12 @@ class ZellijLocalManager:
         """Get all managed session names."""
         return helper.get_all_session_names(self.managers)
 
-    def start_all_sessions(self, poll_seconds: float, poll_interval: float) -> dict[str, StartResult]:
+    def start_all_sessions(
+        self,
+        on_conflict: SessionConflictAction,
+        poll_seconds: float,
+        poll_interval: float,
+    ) -> dict[str, StartResult]:
         """Start all zellij sessions with their layouts without blocking on the interactive TUI.
 
         Rationale:
@@ -110,8 +122,22 @@ class ZellijLocalManager:
         Returns:
             Dict mapping session name to success metadata.
         """
+        validate_session_conflict_action(on_conflict)
         results: dict[str, StartResult] = {}
-        for manager in self.managers:
+        launch_plan = build_session_launch_plan(
+            requested_session_names=[manager.session_name for manager in self.managers],
+            backend="zellij",
+            on_conflict=on_conflict,
+        )
+        for manager, plan in zip(self.managers, launch_plan, strict=True):
+            original_session_name = manager.session_name
+            if plan["session_name"] != original_session_name:
+                console.print(
+                    f"[bold yellow]📝 Renaming session[/bold yellow] [yellow]'{original_session_name}'[/yellow] "
+                    f"[yellow]to[/yellow] [yellow]'{plan['session_name']}'[/yellow] [yellow]to avoid session conflict.[/yellow]"
+                )
+                manager.session_name = plan["session_name"]
+
             session_name = manager.session_name
             try:
                 layout_path = manager.layout_path
@@ -119,20 +145,25 @@ class ZellijLocalManager:
                     results[session_name] = {"success": False, "error": "No layout file path available"}
                     continue
 
-                # 1. Best-effort delete existing session
-                delete_cmd = ["zellij", "delete-session", "--force", session_name]
-                try:
-                    subprocess.run(delete_cmd, capture_output=True, text=True, timeout=5)
-                except subprocess.TimeoutExpired:
-                    logger.warning(f"Timeout deleting session {session_name}; continuing")
-                except FileNotFoundError:
-                    results[session_name] = {"success": False, "error": "'zellij' executable not found in PATH"}
-                    continue
+                if plan["restart_required"]:
+                    console.print(
+                        f"[bold yellow]♻️ Restarting existing session[/bold yellow] [yellow]'{session_name}'[/yellow]"
+                    )
+                    try:
+                        kill_existing_session("zellij", session_name)
+                    except FileNotFoundError:
+                        results[session_name] = {"success": False, "error": "'zellij' executable not found in PATH"}
+                        continue
 
                 # 2. Launch new session. We intentionally do NOT wait for completion.
                 # Using the same pattern as before (attach --create) but detached via env var.
                 # ZELLIJ_AUTO_ATTACH=0 prevents auto-attach if compiled with that feature; harmless otherwise.
-                start_cmd = ["bash", "-lc", f"ZELLIJ_AUTO_ATTACH=0 zellij --layout {layout_path} attach {session_name} --create >/dev/null 2>&1 &"]
+                start_cmd = [
+                    "bash",
+                    "-lc",
+                    "ZELLIJ_AUTO_ATTACH=0 "
+                    f"zellij --layout {shlex.quote(layout_path)} attach {shlex.quote(session_name)} --create >/dev/null 2>&1 &",
+                ]
                 console.print(f"[bold cyan]🚀 Starting session[/bold cyan] [yellow]'{session_name}'[/yellow] with layout [blue]{layout_path}[/blue] (non-blocking)...")
                 console.print(f"[dim]   Command: {' '.join(start_cmd)}[/dim]")
                 subprocess.Popen(start_cmd)
