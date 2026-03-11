@@ -205,7 +205,7 @@ config = {original = '~/.wslconfig', self_managed = 'CONFIG_ROOT/settings/wsl/.w
 [mprocs_windows]
 config = {original = '~/mprocs.yaml', self_managed = 'CONFIG_ROOT/settings/mprocs/windows/mprocs.yaml', os = 'windows'}
 
-# [tmux_linux]
+[tmux_linux]
 # config = {original = '~/.tmux.conf', self_managed = 'CONFIG_ROOT/settings/tmux/.tmux.conf'}
 # tmate = {original = '~/.tmate.conf', self_managed = 'CONFIG_ROOT/settings/tmux/.tmate.conf'}
 tmux_local_conf = {original = '~/.config/tmux/tmux.conf.local', self_managed = 'CONFIG_ROOT/settings/tmux/tmux.conf.local', os = 'linux,darwin'}
