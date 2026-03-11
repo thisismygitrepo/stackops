@@ -94,7 +94,7 @@ def _run_tmux_command(args: list[str]) -> None:
 def _spawn_tab_tmux(session_name: str, task: DynamicTabTask) -> None:
     tab = task["tab"]
     runtime_tab_name = task["runtime_tab_name"]
-    _run_tmux_command(args=["new-window", "-t", session_name, "-n", runtime_tab_name, "-c", tab["startDir"]])
+    _run_tmux_command(args=["new-window", "-t", f"{session_name}:", "-n", runtime_tab_name, "-c", tab["startDir"]])
     _run_tmux_command(args=["send-keys", "-t", f"{session_name}:{runtime_tab_name}", tab["command"], "C-m"])
 
 

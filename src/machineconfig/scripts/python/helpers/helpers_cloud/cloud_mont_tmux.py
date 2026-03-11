@@ -3,6 +3,7 @@ import shlex
 
 def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: dict[str, str], session_name: str) -> str:
     commands: list[str] = [f"tmux new-session -d -s {shlex.quote(session_name)}"]
+    session_target = f"{session_name}:"
 
     first_window = True
     for cloud_name, mount_cmd in mount_commands.items():
@@ -16,11 +17,11 @@ def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: d
         shell_pane_cmd = f"bash -lc {shlex.quote(f'cd {shlex.quote(mount_loc)}; exec bash')}"
 
         if first_window:
-            commands.append(f"tmux rename-window -t {shlex.quote(session_name)}:0 {shlex.quote(cloud_name)}")
+            commands.append(f"tmux rename-window -t {shlex.quote(session_target)} {shlex.quote(cloud_name)}")
             commands.append(f"tmux send-keys -t {shlex.quote(session_name)}:{shlex.quote(cloud_name)} {shlex.quote(mount_pane_cmd)} Enter")
             first_window = False
         else:
-            commands.append(f"tmux new-window -t {shlex.quote(session_name)} -n {shlex.quote(cloud_name)} {shlex.quote(mount_pane_cmd)}")
+            commands.append(f"tmux new-window -t {shlex.quote(session_target)} -n {shlex.quote(cloud_name)} {shlex.quote(mount_pane_cmd)}")
 
         commands.append(f"tmux split-window -h -t {shlex.quote(window_target)} {shlex.quote(about_pane_cmd)}")
         commands.append(f"tmux select-pane -t {shlex.quote(window_target)}.0")

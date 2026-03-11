@@ -51,6 +51,7 @@ def build_tmux_commands(layout_config: LayoutConfig, session_name: str) -> list[
     first_cwd = normalize_cwd(first_tab["startDir"])
     first_target = f"{session_name}:{first_window}"
     commands: list[str] = []
+    session_target = f"{session_name}:"
     commands.append(
         f"tmux new-session -d -s {shell_quote(session_name)} -n {shell_quote(first_window)} -c {shell_quote(first_cwd)}"
     )
@@ -62,7 +63,7 @@ def build_tmux_commands(layout_config: LayoutConfig, session_name: str) -> list[
         window_name = tab["tabName"]
         cwd = normalize_cwd(tab["startDir"])
         commands.append(
-            f"tmux new-window -t {shell_quote(session_name)} -n {shell_quote(window_name)} -c {shell_quote(cwd)}"
+            f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(window_name)} -c {shell_quote(cwd)}"
         )
         if tab["command"].strip():
             target = f"{session_name}:{window_name}"
