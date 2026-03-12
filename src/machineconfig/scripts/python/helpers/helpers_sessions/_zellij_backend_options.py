@@ -1,11 +1,14 @@
 from pathlib import Path
-from typing import Callable
+from typing import Callable, TypeAlias, cast
 
 from machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend_focus import (
     focus_path_to_pane,
     selectable_panes_for_tab,
 )
 from machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend_metadata import pane_title
+
+_SessionMetadata: TypeAlias = tuple[list[dict[str, object]], list[dict[str, object]]]
+_ReadSessionMetadataFn: TypeAlias = Callable[[str], _SessionMetadata | None]
 
 
 def new_session_script(standard_layout: Path, quote_fn: Callable[[str | Path], str], kill_all: bool) -> str:
@@ -59,7 +62,7 @@ def _build_tab_preview(
     panes: list[dict[str, object]],
 ) -> str:
     tab_name = str(tab.get("name") or "Tab")
-    tab_position = int(tab.get("position", 0)) + 1
+    tab_position = cast(int, tab.get("position", 0)) + 1
     lines = [
         "backend: zellij",
         f"session: {session_name}",
@@ -89,11 +92,11 @@ def _build_pane_preview(
     focus_path: list[str] | None,
 ) -> str:
     tab_name = str(tab.get("name") or "Tab")
-    tab_position = int(tab.get("position", 0)) + 1
-    pane_x = int(pane.get("pane_x", 0))
-    pane_y = int(pane.get("pane_y", 0))
-    pane_columns = int(pane.get("pane_columns", 0))
-    pane_rows = int(pane.get("pane_rows", 0))
+    tab_position = cast(int, tab.get("position", 0)) + 1
+    pane_x = cast(int, pane.get("pane_x", 0))
+    pane_y = cast(int, pane.get("pane_y", 0))
+    pane_columns = cast(int, pane.get("pane_columns", 0))
+    pane_rows = cast(int, pane.get("pane_rows", 0))
     if focus_path is None:
         focus_text = "tab focus only"
     elif not focus_path:
@@ -114,7 +117,7 @@ def _build_pane_preview(
 
 def build_window_target_options(
     active_sessions: list[str],
-    read_session_metadata_fn,
+    read_session_metadata_fn: _ReadSessionMetadataFn,
     get_live_tab_names_fn: Callable[[str], list[str]],
     quote_fn: Callable[[str | Path], str],
 ) -> tuple[dict[str, str], dict[str, str]]:
@@ -127,7 +130,7 @@ def build_window_target_options(
             tabs, panes = metadata
             for tab in tabs:
                 tab_name = str(tab.get("name") or "Tab")
-                tab_position = int(tab.get("position", 0))
+                tab_position = cast(int, tab.get("position", 0))
                 display_prefix = f"[{session_name}] {tab_position + 1}:{tab_name}"
                 if tab.get("active"):
                     display_prefix += " *"
@@ -183,7 +186,7 @@ def build_window_target_options(
 
 def build_kill_target_options(
     active_sessions: list[str],
-    read_session_metadata_fn,
+    read_session_metadata_fn: _ReadSessionMetadataFn,
     get_live_tab_names_fn: Callable[[str], list[str]],
     quote_fn: Callable[[str | Path], str],
 ) -> tuple[dict[str, str], dict[str, str]]:
@@ -196,7 +199,7 @@ def build_kill_target_options(
             tabs, panes = metadata
             for tab in tabs:
                 tab_name = str(tab.get("name") or "Tab")
-                tab_position = int(tab.get("position", 0))
+                tab_position = cast(int, tab.get("position", 0))
                 display_prefix = f"[{session_name}] {tab_position + 1}:{tab_name}"
                 if tab.get("active"):
                     display_prefix += " *"

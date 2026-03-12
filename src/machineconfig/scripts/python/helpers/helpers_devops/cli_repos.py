@@ -136,13 +136,13 @@ def print_python_files_by_size(repo_path: Annotated[str, typer.Argument(..., hel
 
 
 def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]):
-    # def func(repo_path: str):
-    #     from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
-    #     analyze_over_time(repo_path=repo_path)
-    # from machineconfig.utils.code import run_lambda_function
-    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["machineconfig[plot]>=8.82"])
-    from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
-    analyze_over_time(repo_path=repo_path)
+    def func(repo_path: str):
+        from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
+        analyze_over_time(repo_path=repo_path)
+    from machineconfig.utils.code import run_lambda_function
+    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["machineconfig[plot]>=8.82", "polars"])
+    # from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
+    # analyze_over_time(repo_path=repo_path)
 
 
 def gource_viz(

@@ -1,3 +1,4 @@
+from subprocess import CompletedProcess
 from typing import Callable
 
 from machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
@@ -62,7 +63,7 @@ def attach_script_from_name(name: str, quote_fn: Callable[[str], str]) -> str:
 
 def _build_target_options(
     sessions: list[str],
-    run_command_fn,
+    run_command_fn: Callable[[list[str]], CompletedProcess[str]],
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
     quote_fn: Callable[[str], str],
     script_builder_fn: Callable[[str, Callable[[str], str], str | None, str | None], str],
@@ -81,11 +82,7 @@ def _build_target_options(
             if window["window_active"]:
                 window_label += " *"
             window_panes = panes_by_window.get(window["window_index"], [])
-            options_to_scripts[window_label] = script_builder_fn(
-                session_name=session_name,
-                quote_fn=quote_fn,
-                window_target=window["window_index"],
-            )
+            options_to_scripts[window_label] = script_builder_fn(session_name, quote_fn, window["window_index"], None)
             options_to_previews[window_label] = build_window_preview(
                 session_name=session_name,
                 window=window,
@@ -98,12 +95,7 @@ def _build_target_options(
                 pane_label = f"[{session_name}] {window['window_index']}:{window['window_name']}.{pane['pane_index']} {process_name}"
                 if pane["pane_active"]:
                     pane_label += " *"
-                options_to_scripts[pane_label] = script_builder_fn(
-                    session_name=session_name,
-                    quote_fn=quote_fn,
-                    window_target=window["window_index"],
-                    pane_index=pane["pane_index"],
-                )
+                options_to_scripts[pane_label] = script_builder_fn(session_name, quote_fn, window["window_index"], pane["pane_index"])
                 options_to_previews[pane_label] = build_pane_preview(
                     session_name=session_name,
                     window=window,
@@ -115,7 +107,7 @@ def _build_target_options(
 
 def build_window_target_options(
     sessions: list[str],
-    run_command_fn,
+    run_command_fn: Callable[[list[str]], CompletedProcess[str]],
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
     quote_fn: Callable[[str], str],
 ) -> tuple[dict[str, str], dict[str, str]]:
@@ -130,7 +122,7 @@ def build_window_target_options(
 
 def build_kill_target_options(
     sessions: list[str],
-    run_command_fn,
+    run_command_fn: Callable[[list[str]], CompletedProcess[str]],
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
     quote_fn: Callable[[str], str],
 ) -> tuple[dict[str, str], dict[str, str]]:

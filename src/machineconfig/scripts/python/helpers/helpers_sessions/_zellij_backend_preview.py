@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import Callable
+from typing import Callable, TypeAlias
 
 
 def session_sort_key(
@@ -26,13 +26,16 @@ def session_is_current(raw_line: str, strip_ansi_codes_fn: Callable[[str], str])
     return "(current)" in strip_ansi_codes_fn(raw_line).casefold()
 
 
+_SessionMetadata: TypeAlias = tuple[list[dict[str, object]], list[dict[str, object]]]
+
+
 def build_preview(
     raw_line: str,
     run_command_fn: Callable[..., CompletedProcess[str]],
     strip_ansi_codes_fn: Callable[[str], str],
     summarize_layout_fn: Callable[[str], str | None],
     find_latest_session_file_fn: Callable[[str], Path | None],
-    read_session_metadata_fn,
+    read_session_metadata_fn: Callable[[str], _SessionMetadata | None],
     build_metadata_summary_fn: Callable[[list[dict[str, object]], list[dict[str, object]]], str | None],
     get_live_tab_names_fn: Callable[[str], list[str]],
 ) -> str:

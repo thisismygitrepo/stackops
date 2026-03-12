@@ -23,7 +23,7 @@ def _pane_sort_key(pane: dict[str, str]) -> int | str:
 
 def collect_session_snapshot(
     session_name: str,
-    run_command_fn: Callable[[list[str], float], CompletedProcess[str]],
+    run_command_fn: Callable[[list[str]], CompletedProcess[str]],
 ) -> tuple[list[dict[str, str]] | None, dict[str, list[dict[str, str]]], str | None]:
     windows_result = run_command_fn(
         [
@@ -136,7 +136,7 @@ def _render_pane_details_table(
 
 def build_preview(
     session_name: str,
-    run_command_fn: Callable[[list[str], float], CompletedProcess[str]],
+    run_command_fn: Callable[[list[str]], CompletedProcess[str]],
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
 ) -> str:
     lines: list[str] = [f"# Session: {session_name}", "", "**backend:** tmux"]
