@@ -1,6 +1,24 @@
 from collections import deque
 
 
+def _maybe_int(value: object) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
+def _pane_int(pane: dict[str, object], key: str) -> int:
+    value = _maybe_int(pane.get(key))
+    return value if value is not None else 0
+
+
 def selectable_panes_for_tab(
     panes: list[dict[str, object]],
     tab_position: int,
@@ -19,15 +37,11 @@ def selectable_panes_for_tab(
 
 
 def _pane_sort_key(pane: dict[str, object]) -> tuple[int, int, int, int]:
-    tab_position = pane.get("tab_position", 0)
-    pane_y = pane.get("pane_y", 0)
-    pane_x = pane.get("pane_x", 0)
-    pane_id = pane.get("id", 0)
     return (
-        int(tab_position) if isinstance(tab_position, int) else 0,
-        int(pane_y) if isinstance(pane_y, int) else 0,
-        int(pane_x) if isinstance(pane_x, int) else 0,
-        int(pane_id) if isinstance(pane_id, int) else 0,
+        _pane_int(pane, "tab_position"),
+        _pane_int(pane, "pane_y"),
+        _pane_int(pane, "pane_x"),
+        _pane_int(pane, "id"),
     )
 
 
@@ -40,23 +54,24 @@ def _pane_neighbor(
     panes: list[dict[str, object]],
     direction: str,
 ) -> int | None:
-    source_x = int(source_pane.get("pane_x", 0))
-    source_y = int(source_pane.get("pane_y", 0))
-    source_cols = int(source_pane.get("pane_columns", 0))
-    source_rows = int(source_pane.get("pane_rows", 0))
+    source_id = _maybe_int(source_pane.get("id"))
+    source_x = _pane_int(source_pane, "pane_x")
+    source_y = _pane_int(source_pane, "pane_y")
+    source_cols = _pane_int(source_pane, "pane_columns")
+    source_rows = _pane_int(source_pane, "pane_rows")
     source_right = source_x + source_cols
     source_bottom = source_y + source_rows
 
     best_id: int | None = None
     best_key: tuple[int, int, int] | None = None
     for candidate in panes:
-        candidate_id = candidate.get("id")
-        if not isinstance(candidate_id, int) or candidate_id == source_pane.get("id"):
+        candidate_id = _maybe_int(candidate.get("id"))
+        if candidate_id is None or candidate_id == source_id:
             continue
-        candidate_x = int(candidate.get("pane_x", 0))
-        candidate_y = int(candidate.get("pane_y", 0))
-        candidate_cols = int(candidate.get("pane_columns", 0))
-        candidate_rows = int(candidate.get("pane_rows", 0))
+        candidate_x = _pane_int(candidate, "pane_x")
+        candidate_y = _pane_int(candidate, "pane_y")
+        candidate_cols = _pane_int(candidate, "pane_columns")
+        candidate_rows = _pane_int(candidate, "pane_rows")
         candidate_right = candidate_x + candidate_cols
         candidate_bottom = candidate_y + candidate_rows
 
@@ -94,20 +109,20 @@ def focus_path_to_pane(
     panes: list[dict[str, object]],
     target_pane: dict[str, object],
 ) -> list[str] | None:
-    target_id = target_pane.get("id")
-    if not isinstance(target_id, int):
+    target_id = _maybe_int(target_pane.get("id"))
+    if target_id is None:
         return None
     focused_pane = next((pane for pane in panes if pane.get("is_focused")), None)
-    focused_id = focused_pane.get("id") if focused_pane is not None else None
-    if not isinstance(focused_id, int):
+    focused_id = _maybe_int(focused_pane.get("id")) if focused_pane is not None else None
+    if focused_id is None:
         return None
     if focused_id == target_id:
         return []
 
     panes_by_id = {
-        pane["id"]: pane
+        pane_id: pane
         for pane in panes
-        if isinstance(pane.get("id"), int)
+        if (pane_id := _maybe_int(pane.get("id"))) is not None
     }
     queue: deque[tuple[int, list[str]]] = deque([(focused_id, [])])
     visited = {focused_id}

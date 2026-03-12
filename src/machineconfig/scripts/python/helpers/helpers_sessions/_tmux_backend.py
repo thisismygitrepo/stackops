@@ -1,6 +1,8 @@
 from machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend_options import (
     attach_script_from_name,
+    build_kill_target_options,
     build_window_target_options,
+    kill_script_for_target,
     new_session_script,
 )
 from machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
@@ -118,3 +120,73 @@ def choose_session(
     if session_name == KILL_ALL_AND_NEW_LABEL:
         return ("run_script", "tmux kill-server\ntmux new-session")
     return ("run_script", f"tmux attach -t {quote(session_name)}")
+
+
+def choose_kill_target(
+    name: str | None,
+    window: bool = False,
+) -> tuple[str, str | None]:
+    if name is not None:
+        return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote))
+
+    result = run_command(["tmux", "list-sessions", "-F", "#S"])
+    sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
+    sessions = [s for s in sessions if s.strip()]
+    sessions.sort(
+        key=lambda session_name: session_sort_key(
+            session_name=session_name,
+            natural_sort_key_fn=natural_sort_key,
+            strip_ansi_codes_fn=strip_ansi_codes,
+        )
+    )
+
+    if len(sessions) == 0:
+        return ("error", "No tmux sessions are available to kill.")
+
+    options_to_script: dict[str, str] = {}
+    options_to_preview_mapping: dict[str, str] = {}
+
+    if window:
+        for session_name in sessions:
+            session_label = f"[{session_name}] SESSION"
+            options_to_script[session_label] = kill_script_for_target(
+                session_name=session_name,
+                quote_fn=quote,
+            )
+            options_to_preview_mapping[session_label] = _build_preview(session_name)
+            window_scripts, window_previews = build_kill_target_options(
+                sessions=[session_name],
+                run_command_fn=run_command,
+                classify_pane_status_fn=_classify_pane_status,
+                quote_fn=quote,
+            )
+            options_to_script.update(window_scripts)
+            options_to_preview_mapping.update(window_previews)
+        msg = "Choose a tmux session, window, or pane to kill:"
+    else:
+        for session_name in sessions:
+            options_to_script[session_name] = kill_script_for_target(
+                session_name=session_name,
+                quote_fn=quote,
+            )
+            options_to_preview_mapping[session_name] = _build_preview(session_name)
+        msg = "Choose a tmux session to kill:"
+
+    selections = interactive_choose_with_preview(
+        msg=msg,
+        options_to_preview_mapping=options_to_preview_mapping,
+        multi=True,
+    )
+    if len(selections) == 0:
+        return ("error", "No tmux target selected.")
+    scripts: list[str] = []
+    seen: set[str] = set()
+    for selection in selections:
+        if selection in seen:
+            continue
+        seen.add(selection)
+        script = options_to_script.get(selection)
+        if script is None:
+            return ("error", f"Unknown tmux target selected: {selection}")
+        scripts.append(script)
+    return ("run_script", "\n".join(scripts))

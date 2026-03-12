@@ -30,6 +30,21 @@ def attach_script_for_target(
     return "\n".join(commands)
 
 
+def kill_script_for_target(
+    session_name: str,
+    quote_fn: Callable[[str], str],
+    window_target: str | None = None,
+    pane_index: str | None = None,
+) -> str:
+    if window_target is None:
+        return f"tmux kill-session -t {quote_fn(session_name)}"
+
+    target = f"{session_name}:{window_target}"
+    if pane_index:
+        return f"tmux kill-pane -t {quote_fn(f'{target}.{pane_index}')}"
+    return f"tmux kill-window -t {quote_fn(target)}"
+
+
 def attach_script_from_name(name: str, quote_fn: Callable[[str], str]) -> str:
     session_name, separator, target = name.partition(":")
     if not separator or not session_name or not target:
@@ -45,11 +60,12 @@ def attach_script_from_name(name: str, quote_fn: Callable[[str], str]) -> str:
     return attach_script_for_target(session_name=session_name, quote_fn=quote_fn, window_target=target)
 
 
-def build_window_target_options(
+def _build_target_options(
     sessions: list[str],
     run_command_fn,
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
     quote_fn: Callable[[str], str],
+    script_builder_fn: Callable[[str, Callable[[str], str], str | None, str | None], str],
 ) -> tuple[dict[str, str], dict[str, str]]:
     options_to_scripts: dict[str, str] = {}
     options_to_previews: dict[str, str] = {}
@@ -65,7 +81,7 @@ def build_window_target_options(
             if window["window_active"]:
                 window_label += " *"
             window_panes = panes_by_window.get(window["window_index"], [])
-            options_to_scripts[window_label] = attach_script_for_target(
+            options_to_scripts[window_label] = script_builder_fn(
                 session_name=session_name,
                 quote_fn=quote_fn,
                 window_target=window["window_index"],
@@ -82,7 +98,7 @@ def build_window_target_options(
                 pane_label = f"[{session_name}] {window['window_index']}:{window['window_name']}.{pane['pane_index']} {process_name}"
                 if pane["pane_active"]:
                     pane_label += " *"
-                options_to_scripts[pane_label] = attach_script_for_target(
+                options_to_scripts[pane_label] = script_builder_fn(
                     session_name=session_name,
                     quote_fn=quote_fn,
                     window_target=window["window_index"],
@@ -95,3 +111,33 @@ def build_window_target_options(
                     classify_pane_status_fn=classify_pane_status_fn,
                 )
     return (options_to_scripts, options_to_previews)
+
+
+def build_window_target_options(
+    sessions: list[str],
+    run_command_fn,
+    classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
+    quote_fn: Callable[[str], str],
+) -> tuple[dict[str, str], dict[str, str]]:
+    return _build_target_options(
+        sessions=sessions,
+        run_command_fn=run_command_fn,
+        classify_pane_status_fn=classify_pane_status_fn,
+        quote_fn=quote_fn,
+        script_builder_fn=attach_script_for_target,
+    )
+
+
+def build_kill_target_options(
+    sessions: list[str],
+    run_command_fn,
+    classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
+    quote_fn: Callable[[str], str],
+) -> tuple[dict[str, str], dict[str, str]]:
+    return _build_target_options(
+        sessions=sessions,
+        run_command_fn=run_command_fn,
+        classify_pane_status_fn=classify_pane_status_fn,
+        quote_fn=quote_fn,
+        script_builder_fn=kill_script_for_target,
+    )

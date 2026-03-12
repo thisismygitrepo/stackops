@@ -4,6 +4,33 @@ from typing import Optional, Literal, Annotated
 import typer
 
 
+def _resolve_session_backend(
+    backend: Literal["zellij", "z", "tmux", "t", "auto", "a"],
+) -> Literal["zellij", "tmux"]:
+    import platform
+
+    system = platform.system().lower()
+    match backend:
+        case "zellij" | "z":
+            if system == "windows":
+                typer.echo("Error: Zellij is not supported on Windows.", err=True, color=True)
+                raise typer.Exit()
+            return "zellij"
+        case "tmux" | "t":
+            if system == "windows":
+                typer.echo("Error: tmux is not supported on Windows.", err=True, color=True)
+                raise typer.Exit()
+            return "tmux"
+        case "auto" | "a":
+            if system == "windows":
+                typer.echo("Error: tmux/zellij are not supported on Windows.", err=True, color=True)
+                raise typer.Exit()
+            return "zellij"
+        case _:
+            typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
+            raise typer.Exit()
+
+
 def balance_load(
     layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
     max_thresh: Annotated[int, typer.Option(..., "--max-threshold", "-m", help="Maximum tabs per layout")],
@@ -75,27 +102,7 @@ def attach_to_session(
         backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
     """Choose a session or deeper target to attach to."""
-    import platform
-    backend_resolved: Literal["zellij", "tmux"]
-    match backend:
-        case "zellij" | "z":
-            if platform.system().lower() == "windows":
-                typer.echo("Error: Zellij is not supported on Windows.", err=True, color=True)
-                raise typer.Exit()
-            backend_resolved = "zellij"
-        case "tmux" | "t":
-            if platform.system().lower() == "windows":
-                typer.echo("Error: tmux is not supported on Windows.", err=True, color=True)
-                raise typer.Exit()
-            backend_resolved = "tmux"
-        case "auto" | "a":
-            if platform.system().lower() == "windows":
-                typer.echo("Error: tmux/zellij are not supported on Windows.", err=True, color=True)
-                raise typer.Exit()
-            backend_resolved = "zellij"
-        case _:
-            typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
-            raise typer.Exit()
+    backend_resolved = _resolve_session_backend(backend)
     from machineconfig.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl
     action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)
     if action == "error":
@@ -104,6 +111,25 @@ def attach_to_session(
     if action == "run_script" and payload:
         from machineconfig.utils.code import exit_then_run_shell_script
         exit_then_run_shell_script(script= payload, strict=True)
+
+
+def kill_session_target(
+        name: Annotated[str | None, typer.Argument(help="Name of the session to kill. If not provided, a list will be shown to choose from.")] = None,
+        window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser.", show_default=True)] = False,
+        backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
+        ) -> None:
+    """Choose one or more session targets to kill."""
+    backend_resolved = _resolve_session_backend(backend)
+    from machineconfig.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl
+
+    action, payload = impl(backend=backend_resolved, name=name, window=window)
+    if action == "error":
+        typer.echo(payload, err=True, color=True)
+        raise typer.Exit()
+    if action == "run_script" and payload:
+        from machineconfig.utils.code import exit_then_run_shell_script
+
+        exit_then_run_shell_script(script=payload, strict=True)
 
 
 
@@ -287,6 +313,9 @@ def get_app() -> typer.Typer:
 
     layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="<a> Attach to a session target")(attach_to_session)
     layouts_app.command("a", no_args_is_help=False, help=attach_to_session.__doc__, hidden=True)(attach_to_session)
+
+    layouts_app.command("kill", no_args_is_help=False, help=kill_session_target.__doc__, short_help="<k> Kill a session target")(kill_session_target)
+    layouts_app.command("k", no_args_is_help=False, help=kill_session_target.__doc__, hidden=True)(kill_session_target)
 
     layouts_app.command("create-from-function", no_args_is_help=True, short_help="<c> Create a layout from a function")(create_from_function)
     layouts_app.command("c", no_args_is_help=True, hidden=True)(create_from_function)

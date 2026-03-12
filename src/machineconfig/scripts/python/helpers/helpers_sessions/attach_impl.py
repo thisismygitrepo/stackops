@@ -2,7 +2,7 @@ import re
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Literal
+from typing import Literal, overload
 
 from machineconfig.settings.zellij import layouts
 from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
@@ -34,18 +34,61 @@ def quote(value: str | Path) -> str:
     return shlex.quote(str(value))
 
 
-def interactive_choose_with_preview(msg: str, options_to_preview_mapping: dict[str, str]) -> str | None:
+@overload
+def interactive_choose_with_preview(
+    msg: str,
+    options_to_preview_mapping: dict[str, str],
+    multi: Literal[False] = False,
+) -> str | None: ...
+
+
+@overload
+def interactive_choose_with_preview(
+    msg: str,
+    options_to_preview_mapping: dict[str, str],
+    multi: Literal[True] = True,
+) -> list[str]: ...
+
+
+def interactive_choose_with_preview(
+    msg: str,
+    options_to_preview_mapping: dict[str, str],
+    multi: bool = False,
+) -> str | list[str] | None:
     if options_to_preview_mapping and check_tool_exists("tv"):
         from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
 
         try:
-            chosen = choose_from_dict_with_preview(options_to_preview_mapping=options_to_preview_mapping, extension="md", multi=False, preview_size_percent=70.0)
+            chosen = choose_from_dict_with_preview(
+                options_to_preview_mapping=options_to_preview_mapping,
+                extension="md",
+                multi=multi,
+                preview_size_percent=70.0,
+            )
+            if multi:
+                if isinstance(chosen, list):
+                    return chosen
+                if isinstance(chosen, str):
+                    return [chosen]
+                return []
             if isinstance(chosen, str) or chosen is None:
                 return chosen
         except Exception:
             pass
 
-    chosen = choose_from_options(msg=msg, multi=False, options=list(options_to_preview_mapping.keys()), tv=True, custom_input=False)
+    chosen = choose_from_options(
+        msg=msg,
+        multi=multi,
+        options=list(options_to_preview_mapping.keys()),
+        tv=True,
+        custom_input=False,
+    )
+    if multi:
+        if isinstance(chosen, list):
+            return chosen
+        if isinstance(chosen, str):
+            return [chosen]
+        return []
     return chosen if isinstance(chosen, str) or chosen is None else None
 
 

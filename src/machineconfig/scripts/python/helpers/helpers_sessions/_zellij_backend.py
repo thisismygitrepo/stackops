@@ -6,7 +6,9 @@ from machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend_metad
     read_session_metadata as _read_session_metadata_impl,
 )
 from machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend_options import (
+    build_kill_target_options,
     build_window_target_options,
+    kill_script_for_target,
     new_session_script,
 )
 from machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend_preview import (
@@ -172,3 +174,94 @@ def get_session_tabs() -> list[tuple[str, str]]:
         for tab in tab_names:
             tabs.append((session_name, tab))
     return tabs
+
+
+def choose_kill_target(
+    name: str | None,
+    window: bool = False,
+) -> tuple[str, str | None]:
+    if name is not None:
+        return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote))
+
+    result = run_command(["zellij", "list-sessions"])
+    sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
+    sessions = [s for s in sessions if s.strip()]
+    sessions.sort(key=_session_sort_key)
+
+    if len(sessions) == 0:
+        return ("error", "No Zellij sessions are available to kill.")
+
+    if window:
+        options_to_script: dict[str, str] = {}
+        options_to_preview_mapping: dict[str, str] = {}
+        for raw_session in sessions:
+            session_name = _session_name(raw_session)
+            session_label = f"[{session_name}] SESSION"
+            if _session_is_current(raw_session):
+                session_label += " (current)"
+            elif _session_is_exited(raw_session):
+                session_label += " (exited)"
+            options_to_script[session_label] = kill_script_for_target(
+                session_name=session_name,
+                quote_fn=quote,
+            )
+            options_to_preview_mapping[session_label] = _build_preview(raw_session)
+            if _session_is_exited(raw_session):
+                continue
+            kill_scripts, kill_previews = build_kill_target_options(
+                active_sessions=[session_name],
+                read_session_metadata_fn=_read_session_metadata,
+                get_live_tab_names_fn=_get_live_tab_names,
+                quote_fn=quote,
+            )
+            options_to_script.update(kill_scripts)
+            options_to_preview_mapping.update(kill_previews)
+        selections = interactive_choose_with_preview(
+            msg="Choose a Zellij session, tab, or pane to kill:",
+            options_to_preview_mapping=options_to_preview_mapping,
+            multi=True,
+        )
+        if len(selections) == 0:
+            return ("error", "No Zellij target selected.")
+        scripts: list[str] = []
+        seen: set[str] = set()
+        for selection in selections:
+            if selection in seen:
+                continue
+            seen.add(selection)
+            script = options_to_script.get(selection)
+            if script is None:
+                return ("error", f"Unknown Zellij target selected: {selection}")
+            scripts.append(script)
+        return ("run_script", "\n".join(scripts))
+
+    display_to_raw_session = {strip_ansi_codes(session): session for session in sessions}
+    options_to_script = {
+        display: kill_script_for_target(
+            session_name=_session_name(raw_session),
+            quote_fn=quote,
+        )
+        for display, raw_session in display_to_raw_session.items()
+    }
+    options_to_preview_mapping = {
+        display: _build_preview(raw_session)
+        for display, raw_session in display_to_raw_session.items()
+    }
+    session_labels = interactive_choose_with_preview(
+        msg="Choose a Zellij session to kill:",
+        options_to_preview_mapping=options_to_preview_mapping,
+        multi=True,
+    )
+    if len(session_labels) == 0:
+        return ("error", "No Zellij session selected.")
+    scripts: list[str] = []
+    seen: set[str] = set()
+    for session_label in session_labels:
+        if session_label in seen:
+            continue
+        seen.add(session_label)
+        script = options_to_script.get(session_label)
+        if script is None:
+            return ("error", f"Unknown Zellij session selected: {session_label}")
+        scripts.append(script)
+    return ("run_script", "\n".join(scripts))
