@@ -49,16 +49,16 @@ def interactive_choose_with_preview(msg: str, options_to_preview_mapping: dict[s
     return chosen if isinstance(chosen, str) or chosen is None else None
 
 
-def choose_session(backend: Literal["zellij", "tmux"], name: str | None, new_session: bool, kill_all: bool) -> tuple[str, str | None]:
+def choose_session(backend: Literal["zellij", "tmux"], name: str | None, new_session: bool, kill_all: bool, window: bool = False) -> tuple[str, str | None]:
     match backend:
         case "zellij":
             from machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend import choose_session as _zellij
 
-            return _zellij(name=name, new_session=new_session, kill_all=kill_all)
+            return _zellij(name=name, new_session=new_session, kill_all=kill_all, window=window)
         case "tmux":
             from machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend import choose_session as _tmux
 
-            return _tmux(name=name, new_session=new_session, kill_all=kill_all)
+            return _tmux(name=name, new_session=new_session, kill_all=kill_all, window=window)
     raise ValueError(f"Unsupported backend: {backend}")
 
 

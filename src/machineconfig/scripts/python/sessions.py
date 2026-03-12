@@ -71,9 +71,10 @@ def attach_to_session(
         name: Annotated[str | None, typer.Argument(help="Name of the session to attach to. If not provided, a list will be shown to choose from.")] = None,
         new_session: Annotated[bool, typer.Option("--new-session", "-n", help="Create a new session instead of attaching to an existing one.", show_default=True)] = False,
         kill_all: Annotated[bool, typer.Option("--kill-all", "-k", help="Kill all existing sessions before creating a new one.", show_default=True)] = False,
+        window: Annotated[bool, typer.Option("--window", "-w", help="Choose a window/tab or pane target instead of only choosing from sessions.", show_default=True)] = False,
         backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
-    """Choose a session to attach to."""
+    """Choose a session or deeper target to attach to."""
     import platform
     backend_resolved: Literal["zellij", "tmux"]
     match backend:
@@ -96,7 +97,7 @@ def attach_to_session(
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
             raise typer.Exit()
     from machineconfig.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl
-    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all)
+    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit()
@@ -284,7 +285,7 @@ def get_app() -> typer.Typer:
     layouts_app.command("run-aoe", no_args_is_help=True, help=run_aoe.__doc__, short_help="<e> Run selected layout(s) through agent-of-empires")(run_aoe)
     layouts_app.command("e", no_args_is_help=True, help=run_aoe.__doc__, hidden=True)(run_aoe)
 
-    layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="<a> Attach to a Zellij session")(attach_to_session)
+    layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="<a> Attach to a session target")(attach_to_session)
     layouts_app.command("a", no_args_is_help=False, help=attach_to_session.__doc__, hidden=True)(attach_to_session)
 
     layouts_app.command("create-from-function", no_args_is_help=True, short_help="<c> Create a layout from a function")(create_from_function)
