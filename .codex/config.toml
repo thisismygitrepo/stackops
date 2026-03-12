@@ -1,0 +1,30 @@
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+allow_login_shell = false
+web_search = "live"
+project_doc_max_bytes = 32768
+project_doc_fallback_filenames = []
+mcp_oauth_credentials_store = "auto"
+
+[sandbox_workspace_write]
+network_access = true
+
+[features]
+multi_agent = true
+remote_models = true
+
+[analytics]
+enabled = false
+
+[history]
+persistence = "none"
+
+[feedback]
+enabled = false
+
+[otel]
+log_user_prompt = false
+exporter = "none"
+trace_exporter = "none"
+
+[mcp_servers]

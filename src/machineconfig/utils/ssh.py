@@ -332,10 +332,14 @@ print("SSH key added successfully")
     ) -> Response:
         raw = self.ssh.exec_command(command)
         res = Response(stdin=raw[0], stdout=raw[1], stderr=raw[2], cmd=command, desc=description)  # type: ignore
+        res.capture()
+        stdout_channel = getattr(raw[1], "channel", None)
+        if stdout_channel is not None:
+            res.output.returncode = stdout_channel.recv_exit_status()
         if verbose_output:
-            res.print()
+            res.print(capture=False)
         else:
-            res.capture().print_if_unsuccessful(
+            res.print_if_unsuccessful(
                 desc=description, strict_err=strict_stderr, strict_returncode=strict_return_code, assert_success=False
             )
         # self.terminal_responses.append(res)

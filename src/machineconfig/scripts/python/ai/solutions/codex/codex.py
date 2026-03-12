@@ -10,7 +10,7 @@ def _build_private_config() -> str:
         approval_policy = "never"
         sandbox_mode = "workspace-write"
         allow_login_shell = false
-        web_search = "enabled"
+        web_search = "live"
         project_doc_max_bytes = 32768
         project_doc_fallback_filenames = []
         mcp_oauth_credentials_store = "auto"
