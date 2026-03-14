@@ -225,6 +225,22 @@ def write_start_failure(
     )
 
 
+def format_command(command: tuple[str, ...]) -> str:
+    return " ".join(command)
+
+
+def build_command_preview() -> RenderableType:
+    command_table = Table(box=box.SIMPLE_HEAVY, expand=True)
+    command_table.add_column("Phase", style="bold")
+    command_table.add_column("Tool", style="bold cyan")
+    command_table.add_column("Command", overflow="fold")
+    for index, command in enumerate(CLEANUP_COMMANDS, start=1):
+        command_table.add_row("cleanup", f"step {index}", format_command(command))
+    for spec in CHECKER_SPECS:
+        command_table.add_row("checker", spec.title, format_command(spec.command))
+    return Panel(command_table, title="Commands To Execute", border_style="blue")
+
+
 def build_progress(total_checkers: int, completed_checkers: int) -> Progress:
     progress = Progress(
         SpinnerColumn(style="cyan"),
@@ -617,6 +633,7 @@ def main() -> int:
             border_style="cyan",
         )
     )
+    console.print(build_command_preview())
     cleanup_result = run_cleanup(console=console)
     running_tools, completed_tools = start_checker_processes()
     try:
