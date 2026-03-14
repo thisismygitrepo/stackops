@@ -21,6 +21,7 @@ if (Test-Path "$HOME\.bun\bin\bun.exe") {
 
 Add-ToPathIfNotAlready -Directories @(
     "$HOME\.local\bin",
+    "$HOME\.local\share\poppler\Library\bin",
     "$HOME\.bun\bin",
     "$CONFIG_ROOT\scripts",
     "$HOME\dotfiles\scripts\windows",

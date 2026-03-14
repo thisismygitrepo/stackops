@@ -46,7 +46,7 @@ def interactive_choose_with_preview(
 def interactive_choose_with_preview(
     msg: str,
     options_to_preview_mapping: dict[str, str],
-    multi: Literal[True] = True,
+    multi: Literal[True],
 ) -> list[str]: ...
 
 

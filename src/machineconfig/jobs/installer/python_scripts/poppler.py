@@ -7,7 +7,7 @@ from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
-popler_installer: InstallerData = {
+poppler_installer: InstallerData = {
     "appName": "poppler",
     "repoURL": "https://github.com/oschwartz10612/poppler-windows",
     "doc": "PDF rendering library - Windows builds.",
@@ -23,7 +23,7 @@ popler_installer: InstallerData = {
             "macos": None,
         }
     }
-}  # OR: winget install oschwartz10612.Poppler
+}
 
 
 def _select_extracted_root(extracted_path: PathExtended) -> PathExtended:
@@ -40,7 +40,7 @@ def main(installer_data: InstallerData, version: Optional[str]) -> None:
     if platform.system() != "Windows":
         raise NotImplementedError("Poppler Windows installer is only supported on Windows.")
 
-    installer = Installer(installer_data=popler_installer)
+    installer = Installer(installer_data=poppler_installer)
     extracted_path, _version_to_be_installed = installer.binary_download(version=version)
     _ = _version_to_be_installed
 

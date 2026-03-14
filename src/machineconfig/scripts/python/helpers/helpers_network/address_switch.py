@@ -1,6 +1,5 @@
 import subprocess
 import time
-from typing import Optional
 
 from machineconfig.scripts.python.helpers.helpers_network.address import get_public_ip_address
 
@@ -15,7 +14,7 @@ def _ip_is_acceptable(ip: str, current_ip: str | None, target_ip_addresses: list
     return False
 
 
-def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_addresses: Optional[list[str]]) -> tuple[bool, str]:
+def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_addresses: list[str] | None) -> tuple[bool, str]:
     print("🔁 Switching IP ... ")
     from machineconfig.utils.installer_utils.installer_cli import install_if_missing
     install_if_missing("warp-cli")
@@ -33,6 +32,7 @@ def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_add
         print(f"✅ Current IP {current_ip} is already in target list. No switch needed.")
         return True, current_ip
 
+    latest_ip: str | None = current_ip
     for attempt in range(1, max_trials + 1):
         print(f"\n--- Attempt {attempt}/{max_trials} ---")
 
@@ -69,6 +69,7 @@ def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_add
                 print(f"⚠️ Error checking new IP (attempt {ip_check_attempt+1}/5): {e}")
                 time.sleep(wait_seconds)
 
+        latest_ip = new_ip or latest_ip
         if new_ip:
             print(f"New IP: {new_ip}")
             if _ip_is_acceptable(new_ip, current_ip, target_ip_addresses):
@@ -79,7 +80,7 @@ def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_add
         else:
             print("⚠️ Could not retrieve new IP after multiple attempts.")
 
-    latest_ip = new_ip or current_ip or ""
+    latest_ip = latest_ip or ""
     print("❌ Failed to switch IP after max trials.")
     return False, latest_ip
 
