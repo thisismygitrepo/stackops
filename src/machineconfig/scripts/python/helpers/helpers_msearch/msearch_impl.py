@@ -173,11 +173,12 @@ def _run_file_search(no_dotfiles: bool, edit: bool, search_term: str) -> None:
 
     platform_name = platform.system()
     query_argument = _get_fzf_query_argument(search_term=search_term, platform_name=platform_name)
+    source_command = _get_file_search_source_command(no_dotfiles=no_dotfiles)
 
     if not edit:
         script = """fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT}"""
-        if no_dotfiles:
-            script = "fd | " + script
+        if source_command != "":
+            script = source_command + script
         script = script.replace("{QUERY_ARGUMENT}", query_argument)
         from machineconfig.utils.code import run_shell_script
 
@@ -199,8 +200,7 @@ if [ -n "$selected" ]; then
     fi
 fi
 """
-        source_cmd = "" if not no_dotfiles else "fd | "
-        script = script.replace("{SOURCE_CMD}", source_cmd)
+        script = script.replace("{SOURCE_CMD}", source_command)
         script = script.replace("{QUERY_ARGUMENT}", query_argument)
     elif platform_name == "Windows":
         script = r"""
@@ -224,8 +224,7 @@ if ($selected) {
     }
 }
 """
-        source_cmd = "" if not no_dotfiles else "fd | "
-        script = script.replace("{SOURCE_CMD}", source_cmd)
+        script = script.replace("{SOURCE_CMD}", source_command)
         script = script.replace("{QUERY_ARGUMENT}", query_argument)
     else:
         raise RuntimeError("Unsupported platform")
@@ -233,6 +232,13 @@ if ($selected) {
     from machineconfig.utils.code import run_shell_script
 
     run_shell_script(script=script, display_script=True, clean_env=False)
+
+
+def _get_file_search_source_command(no_dotfiles: bool) -> str:
+    """Return the shell source used for file search candidates."""
+    if not no_dotfiles:
+        return ""
+    return "fd --type file | "
 
 
 def _run_text_search(rga: bool, directory: Optional[str], search_term: str) -> None:

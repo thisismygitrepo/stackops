@@ -1,7 +1,9 @@
 
-from typing import Any, Literal, Optional, Callable, cast
-from machineconfig.utils.accessories import randstr
 from pathlib import Path
+import subprocess
+from typing import Any, Literal, Optional, Callable, cast
+
+from machineconfig.utils.accessories import randstr
 
 
 def get_uv_command(platform: str) -> str:
@@ -103,19 +105,19 @@ uv run  {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
     exit_then_run_shell_script(fire_line)
 
 
-def run_shell_file(script_path: str, clean_env: bool):
+def run_shell_file(script_path: str, clean_env: bool) -> subprocess.CompletedProcess[str]:
     import platform
     env = {} if clean_env else None
     if platform.system() == "Windows":
-        import subprocess
-        proc = subprocess.run(f'powershell -ExecutionPolicy Bypass -File "{script_path}"', check=True, shell=True, env=env)
+        proc = subprocess.run(f'powershell -ExecutionPolicy Bypass -File "{script_path}"', check=False, shell=True, env=env)
     elif platform.system() == "Linux" or platform.system() == "Darwin":
-        import subprocess
-        proc = subprocess.run(f"bash {str(script_path)}", check=True, shell=True, env=env)
+        proc = subprocess.run(f"bash {str(script_path)}", check=False, shell=True, env=env)
     else:
         raise NotImplementedError(f"Platform {platform.system()} not supported.")
     return proc
-def run_shell_script(script: str, display_script: bool, clean_env: bool):
+
+
+def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subprocess.CompletedProcess[str]:
     import platform
     if platform.system() == "Windows":
         suffix = ".ps1"
@@ -135,7 +137,9 @@ def run_shell_script(script: str, display_script: bool, clean_env: bool):
         console.print(Panel(Syntax(code=script, lexer=lexer), title=f"📄 shell script @ {temp_shell_script_path}", subtitle="shell script being executed"), style="bold red")
     proc = run_shell_file(script_path=str(temp_shell_script_path), clean_env=clean_env)
     # console.print(f"✅  [green]Script executed successfully:[/green] [blue]{temp_script_path}[/blue]")
-    if proc.returncode != 0:
+    if proc.returncode == 130:
+        console.print(f"❓  [yellow]Script execution cancelled:[/yellow] [blue]{temp_shell_script_path}[/blue]")
+    elif proc.returncode != 0:
         console.print(f"❌  [red]Script execution failed with return code {proc.returncode}:[/red] [blue]{temp_shell_script_path}[/blue]")
     elif proc.returncode == 0:
         console.print(f"✅  [green]Script executed successfully:[/green] [blue]{temp_shell_script_path}[/blue]")
