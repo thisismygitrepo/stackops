@@ -5,10 +5,9 @@ from typing import Optional
 
 
 def machineconfig_search(
-    path: str, ast: bool, symantic: bool, extension: str, file: bool, no_dotfiles: bool, rga: bool, edit: bool, install_dependencies: bool
+    path: str, search_term: str, ast: bool, symantic: bool, extension: str, file: bool, no_dotfiles: bool, rga: bool, edit: bool, install_dependencies: bool
 ) -> None:
     """Machineconfig search helper."""
-    
 
     if install_dependencies:
         _install_dependencies()
@@ -20,7 +19,7 @@ def machineconfig_search(
         _run_ast_search(directory=path)
         return
     if file:
-        _run_file_search(no_dotfiles=no_dotfiles, edit=edit)
+        _run_file_search(no_dotfiles=no_dotfiles, edit=edit, search_term=search_term)
         return
 
     from pathlib import Path
@@ -48,7 +47,7 @@ def machineconfig_search(
         exit_then_run_shell_script(script=code, strict=False)
         return
 
-    _run_text_search(rga=rga, directory=path)
+    _run_text_search(rga=rga, directory=path, search_term=search_term)
 
 
 def _install_dependencies() -> None:
@@ -61,8 +60,6 @@ def _install_dependencies() -> None:
     install_if_missing("fd")
     install_if_missing("rg")
     install_if_missing("rga")
-
-
 
 def search_file_with_context(path: str, is_temp_file: bool, edit: bool) -> str:
     import platform
@@ -170,22 +167,26 @@ def _run_ast_search(directory: str) -> None:
         print(f"❌ Error during selection: {e}")
 
 
-def _run_file_search(no_dotfiles: bool, edit: bool) -> None:
+def _run_file_search(no_dotfiles: bool, edit: bool, search_term: str) -> None:
     """Run file search."""
     import platform
 
+    platform_name = platform.system()
+    query_argument = _get_fzf_query_argument(search_term=search_term, platform_name=platform_name)
+
     if not edit:
-        script = """fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' """
+        script = """fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT}"""
         if no_dotfiles:
             script = "fd | " + script
+        script = script.replace("{QUERY_ARGUMENT}", query_argument)
         from machineconfig.utils.code import run_shell_script
 
         run_shell_script(script=script, display_script=True, clean_env=False)
         return
 
-    if platform.system() == "Linux" or platform.system() == "Darwin":
+    if platform_name == "Linux" or platform_name == "Darwin":
         script = """
-selected=$({SOURCE_CMD} fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}')
+selected=$({SOURCE_CMD} fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT})
 if [ -n "$selected" ]; then
     res=$(nl -ba -w1 -s' ' "$selected" | tv \
     --preview-command "bat --color=always --style=numbers --highlight-line {split: :0} $selected" \
@@ -200,9 +201,10 @@ fi
 """
         source_cmd = "" if not no_dotfiles else "fd | "
         script = script.replace("{SOURCE_CMD}", source_cmd)
-    elif platform.system() == "Windows":
+        script = script.replace("{QUERY_ARGUMENT}", query_argument)
+    elif platform_name == "Windows":
         script = r"""
-$selected = {SOURCE_CMD} fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}'
+$selected = {SOURCE_CMD} fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT}
 if ($selected) {
     $choicesPath = Join-Path $env:TEMP ("msearch_choices_" + [guid]::NewGuid().ToString() + ".txt")
     $i = 0
@@ -224,6 +226,7 @@ if ($selected) {
 """
         source_cmd = "" if not no_dotfiles else "fd | "
         script = script.replace("{SOURCE_CMD}", source_cmd)
+        script = script.replace("{QUERY_ARGUMENT}", query_argument)
     else:
         raise RuntimeError("Unsupported platform")
 
@@ -232,22 +235,57 @@ if ($selected) {
     run_shell_script(script=script, display_script=True, clean_env=False)
 
 
-def _run_text_search(rga: bool, directory: Optional[str]) -> None:
+def _run_text_search(rga: bool, directory: Optional[str], search_term: str) -> None:
     """Run text search using fzf with ripgrep."""
     from machineconfig.scripts.python.helpers.helpers_msearch import FZFG_LINUX_PATH, FZFG_WINDOWS_PATH, FZFG_MACOS_PATH
     import platform
 
-    if platform.system() == "Linux":
+    platform_name = platform.system()
+
+    if platform_name == "Linux":
         script = FZFG_LINUX_PATH.read_text(encoding="utf-8")
-    elif platform.system() == "Windows":
+    elif platform_name == "Windows":
         script = FZFG_WINDOWS_PATH.read_text(encoding="utf-8")
-    elif platform.system() == "Darwin":
+    elif platform_name == "Darwin":
         script = FZFG_MACOS_PATH.read_text(encoding="utf-8")
     else:
         raise RuntimeError("Unsupported platform")
     if rga:
         script = script.replace("rg ", "rga ").replace("ripgrep", "ripgrep-all")
+    script = _set_initial_query(script=script, search_term=search_term, platform_name=platform_name)
     from machineconfig.utils.code import exit_then_run_shell_script
     if directory:
         script = "cd " + directory + "\n" + script
     exit_then_run_shell_script(script=script, strict=False)
+
+
+def _set_initial_query(script: str, search_term: str, platform_name: str) -> str:
+    """Inject the initial search term into a platform-specific search script."""
+    if platform_name == "Windows":
+        return script.replace("$initialQuery = ''", f"$initialQuery = {_to_powershell_single_quoted(search_term)}", 1)
+    if platform_name == "Linux" or platform_name == "Darwin":
+        return script.replace('INITIAL_QUERY=""', f"INITIAL_QUERY={_to_shell_quoted(search_term)}", 1)
+    raise RuntimeError(f"Unsupported platform: {platform_name}")
+
+
+def _to_shell_quoted(value: str) -> str:
+    """Return a bash-safe single argument literal."""
+    import shlex
+
+    return shlex.quote(value)
+
+
+def _to_powershell_single_quoted(value: str) -> str:
+    """Return a PowerShell single-quoted string literal."""
+    return "'" + value.replace("'", "''") + "'"
+
+
+def _get_fzf_query_argument(search_term: str, platform_name: str) -> str:
+    """Build a platform-appropriate --query argument for fzf."""
+    if search_term == "":
+        return ""
+    if platform_name == "Windows":
+        return f"--query {_to_powershell_single_quoted(search_term)}"
+    if platform_name == "Linux" or platform_name == "Darwin":
+        return f"--query {_to_shell_quoted(search_term)}"
+    raise RuntimeError(f"Unsupported platform: {platform_name}")
