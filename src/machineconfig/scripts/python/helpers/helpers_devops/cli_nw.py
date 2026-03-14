@@ -5,16 +5,17 @@ import machineconfig.scripts.python.helpers.helpers_devops.cli_share_server as c
 import machineconfig.scripts.python.helpers.helpers_devops.cli_ssh as cli_ssh
 import machineconfig.scripts.python.helpers.helpers_devops.cli_share_temp as cli_share_temp
 import typer
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 
 def switch_public_ip_address(
     wait_seconds: Annotated[float, typer.Option(..., "--wait", "-w", help="Seconds to wait between steps")] = 2.0,
     max_trials: Annotated[int, typer.Option(..., "--max-trials", "-m", help="Max number of switch attempts")] = 10,
+    target_ip: Annotated[Optional[list[str]], typer.Option(..., "--target-ip", "-t", help="Acceptable target IPs, if current IP matches any, no switch needed")] = None,
 ) -> None:
     """🔁 Switch public IP address (Cloudflare WARP)"""
     import machineconfig.scripts.python.helpers.helpers_network.address_switch as helper
-    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds)
+    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)
 
 
 def show_address() -> None:

@@ -45,6 +45,12 @@
 * https://github.com/ag-ui-protocol/ag-ui 
 * https://github.com/bmad-code-org/BMAD-METHOD
 * https://github.com/github/spec-kit
+* https://github.com/msitarzewski/agency-agents
+* https://github.com/github/awesome-copilot
+* https://github.com/promptfoo/promptfoo
+* beta fish and meta fish
+* https://github.com/pbakaus/impeccable
+* https://github.com/volcengine/OpenViking
 
 # Parsing Text-like docs
 * https://github.com/yobix-ai/extractous `parse formats to simple txt files | Rust based software`
@@ -120,6 +126,7 @@
 * https://github.com/f/awesome-chatgpt-prompts
 * https://github.com/erikbern/ann-benchmarks
 * https://debarghyadas.com/writes/github
+* 
 
 
 # Other

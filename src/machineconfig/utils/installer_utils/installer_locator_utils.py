@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 import subprocess
 import platform
+import shutil
 
 
 def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: Optional[str], delete: bool, rename_to: Optional[str]):
@@ -133,12 +134,22 @@ def find_move_delete_linux(downloaded: PathExtended, tool_name: Optional[str], d
 def check_tool_exists(tool_name: str) -> bool:
     if platform.system() == "Windows":
         tool_name_exe = tool_name.replace(".exe", "") + ".exe"
-        res1 = any([Path(WINDOWS_INSTALL_PATH).joinpath(tool_name_exe).is_file(), Path.home().joinpath("AppData/Roaming/npm").joinpath(tool_name_exe).is_file()])
-        if res1:
+        windows_install_path = Path(WINDOWS_INSTALL_PATH)
+        npm_path = Path.home().joinpath("AppData", "Roaming", "npm")
+        direct_checks = [
+            windows_install_path.joinpath(tool_name_exe).is_file(),
+            npm_path.joinpath(tool_name_exe).is_file(),
+        ]
+        if any(direct_checks):
             return True
         tool_name_no_exe = tool_name.replace(".exe", "")
-        res2 = any([Path(WINDOWS_INSTALL_PATH).joinpath(tool_name_no_exe).is_file(), Path.home().joinpath("AppData/Roaming/npm").joinpath(tool_name_no_exe).is_file()])
-        return res2
+        secondary_checks = [
+            windows_install_path.joinpath(tool_name_no_exe).is_file(),
+            npm_path.joinpath(tool_name_no_exe).is_file(),
+            shutil.which(tool_name_no_exe) is not None,
+            shutil.which(tool_name_exe) is not None,
+        ]
+        return any(secondary_checks)
     elif platform.system() in ["Linux", "Darwin"]:
         root_path = Path(LINUX_INSTALL_PATH)
         standard_checks = [
@@ -156,7 +167,8 @@ def is_executable_in_path(name: str) -> bool:
     path_dirs = os.environ['PATH'].split(os.pathsep)
     for path_dir in path_dirs:
         path_to_executable = os.path.join(path_dir, name)
-        if os.path.isfile(path_to_executable) and os.access(path_to_executable, os.X_OK): return True
+        if os.path.isfile(path_to_executable) and os.access(path_to_executable, os.X_OK):
+            return True
     return False
 
 
@@ -198,5 +210,3 @@ def check_if_installed_already(exe_name: str, version: Optional[str], use_cache:
 
     print(f"{'=' * 80}")
     return ("⚠️ NotInstalled", "None", version or "unknown")
-
-
