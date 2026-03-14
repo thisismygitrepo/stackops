@@ -1,5 +1,13 @@
 -- DuckDB plugin configuration
-require("duckdb"):setup()
+local duckdb_ok, duckdb = pcall(require, "duckdb")
+if duckdb_ok and duckdb and duckdb.setup then
+	local setup_ok, setup_err = pcall(function() duckdb:setup() end)
+	if not setup_ok then
+		ya.err("duckdb.yazi setup failed: " .. tostring(setup_err))
+	end
+else
+	ya.err("duckdb.yazi unavailable: " .. tostring(duckdb))
+end
 
 -- https://yazi-rs.github.io/docs/tips#symlink-in-status
 -- https://yazi-rs.github.io/docs/tips#user-group-in-status

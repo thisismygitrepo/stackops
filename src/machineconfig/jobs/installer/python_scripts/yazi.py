@@ -95,6 +95,7 @@ ya pkg add 'Tyarel8/goto-drives'
 ya pkg add 'uhs-robert/sshfs'
 ya pkg add 'boydaihungst/file-extra-metadata'
 ya pkg add 'wylie102/duckdb'
+ya pkg install
 """
     from machineconfig.utils.code import run_shell_script
     run_shell_script(script, display_script=True, clean_env=False)
