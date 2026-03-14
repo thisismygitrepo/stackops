@@ -80,7 +80,7 @@ echo -e "${GREEN}✅ Results saved to ${UNDERLINE}./.ai/linters/issues_mypy.md${
 draw_progress $CURRENT_STEP $TOTAL_STEPS "Pylint Code Analysis"
 echo -e "${BLUE}📋 Analyzing code quality with Pylint...${NC}"
 rm -f ./.ai/linters/issues_pylint.md || true
-uv run --frozen --with pylint pylint --recursive=y . > ./.ai/linters/issues_pylint.md
+uv run --frozen --with pylint pylint --recursive=y --ignore=.venv . > ./.ai/linters/issues_pylint.md
 echo -e "${GREEN}✅ Results saved to ${UNDERLINE}./.ai/linters/issues_pylint.md${NC}"
 
 ((CURRENT_STEP++))

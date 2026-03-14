@@ -11,7 +11,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Literal, TextIO
+from typing import Final, Literal, TextIO, TypeAlias
 
 from rich import box
 from rich.console import Console, Group, RenderableType
@@ -32,9 +32,18 @@ REPO_MARKER: Final[Path] = Path("pyproject.toml")
 REPORTS_DIR: Final[Path] = Path(".ai/linters")
 SUMMARY_PATH: Final[Path] = REPORTS_DIR / "timing_summary.md"
 CHECKER_REFRESH_SECONDS: Final[float] = 0.15
-SUCCESS_LABEL: Final[str] = "PASS"
-FAILURE_LABEL: Final[str] = "FAIL"
-RUNNING_LABEL: Final[str] = "RUNNING"
+CleanupStatus: TypeAlias = Literal["PASS", "FAIL"]
+ToolRunState: TypeAlias = Literal["RUNNING", "DONE", "ERROR"]
+ToolOutcome: TypeAlias = Literal["PASS", "ISSUES", "FAIL"]
+ToolResultKind: TypeAlias = Literal["completed", "start_failed"]
+SUCCESS_LABEL: Final[Literal["PASS"]] = "PASS"
+FAILURE_LABEL: Final[Literal["FAIL"]] = "FAIL"
+ISSUES_LABEL: Final[Literal["ISSUES"]] = "ISSUES"
+RUNNING_LABEL: Final[Literal["RUNNING"]] = "RUNNING"
+DONE_LABEL: Final[Literal["DONE"]] = "DONE"
+ERROR_LABEL: Final[Literal["ERROR"]] = "ERROR"
+COMPLETED_KIND: Final[Literal["completed"]] = "completed"
+START_FAILED_KIND: Final[Literal["start_failed"]] = "start_failed"
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,8 +73,10 @@ class CleanupResult:
         return self.finished_at - self.started_at
 
     @property
-    def status(self) -> Literal["PASS", "FAIL"]:
-        return SUCCESS_LABEL if self.exit_code == 0 else FAILURE_LABEL
+    def status(self) -> CleanupStatus:
+        if self.exit_code == 0:
+            return SUCCESS_LABEL
+        return FAILURE_LABEL
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,14 +86,25 @@ class ToolResult:
     started_at: float
     finished_at: float
     report_stats: ReportStats
+    result_kind: ToolResultKind
 
     @property
     def duration_seconds(self) -> float:
         return self.finished_at - self.started_at
 
     @property
-    def status(self) -> Literal["PASS", "FAIL"]:
-        return SUCCESS_LABEL if self.exit_code == 0 else FAILURE_LABEL
+    def run_state(self) -> ToolRunState:
+        if self.result_kind == START_FAILED_KIND:
+            return ERROR_LABEL
+        return DONE_LABEL
+
+    @property
+    def status(self) -> ToolOutcome:
+        if self.result_kind == START_FAILED_KIND:
+            return FAILURE_LABEL
+        if self.exit_code == 0:
+            return SUCCESS_LABEL
+        return ISSUES_LABEL
 
 
 @dataclass(slots=True)
@@ -124,6 +146,7 @@ CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = (
             "pylint",
             "pylint",
             "--recursive=y",
+            "--ignore=.venv",
             ".",
         ),
     ),
@@ -219,11 +242,21 @@ def build_progress(total_checkers: int, completed_checkers: int) -> Progress:
     return progress
 
 
-def checker_status_text(result: ToolResult | None) -> Text:
+def checker_state_text(result: ToolResult | None) -> Text:
     if result is None:
         return Text(RUNNING_LABEL, style="yellow")
-    if result.exit_code == 0:
+    if result.run_state == ERROR_LABEL:
+        return Text(ERROR_LABEL, style="red")
+    return Text(DONE_LABEL, style="cyan")
+
+
+def checker_status_text(result: ToolResult | None) -> Text:
+    if result is None:
+        return Text("-", style="dim")
+    if result.status == SUCCESS_LABEL:
         return Text(SUCCESS_LABEL, style="green")
+    if result.status == ISSUES_LABEL:
+        return Text(ISSUES_LABEL, style="yellow")
     return Text(FAILURE_LABEL, style="red")
 
 
@@ -236,8 +269,14 @@ def build_live_renderable(
 ) -> RenderableType:
     finished_count = len(completed_tools)
     total_checkers = len(CHECKER_SPECS)
-    failed_count = sum(
-        1 for result in completed_tools.values() if result.exit_code != 0
+    passed_count = sum(
+        1 for result in completed_tools.values() if result.status == SUCCESS_LABEL
+    )
+    issue_count = sum(
+        1 for result in completed_tools.values() if result.status == ISSUES_LABEL
+    )
+    error_count = sum(
+        1 for result in completed_tools.values() if result.status == FAILURE_LABEL
     )
     running_count = len(running_tools)
 
@@ -263,14 +302,15 @@ def build_live_renderable(
     stats_grid.add_column(justify="right")
     stats_grid.add_row(
         Text(f"running {running_count}", style="yellow"),
-        Text(f"passed {finished_count - failed_count}", style="green"),
-        Text(f"failed {failed_count}", style="red" if failed_count > 0 else "green"),
-        Text(f"reports {relative_path(REPORTS_DIR)}", style="cyan"),
+        Text(f"passed {passed_count}", style="green"),
+        Text(f"issues {issue_count}", style="yellow"),
+        Text(f"errors {error_count}", style="red" if error_count > 0 else "green"),
     )
 
     checker_table = Table(box=box.SIMPLE_HEAVY, expand=True)
     checker_table.add_column("Tool", style="bold")
     checker_table.add_column("State", justify="center")
+    checker_table.add_column("Outcome", justify="center")
     checker_table.add_column("Elapsed", justify="right")
     checker_table.add_column("Exit", justify="right")
     checker_table.add_column("Report", overflow="fold")
@@ -288,6 +328,7 @@ def build_live_renderable(
         report_size = read_report_stats(spec.report_path).byte_count
         checker_table.add_row(
             spec.title,
+            checker_state_text(result),
             checker_status_text(result),
             format_duration(elapsed_seconds),
             exit_text,
@@ -320,7 +361,9 @@ def build_final_summary(
     )
     total_duration = time.monotonic() - wall_started_at
     slowest_result = max(checker_results, key=lambda result: result.duration_seconds)
-    failed_count = sum(1 for result in checker_results if result.exit_code != 0)
+    passed_count = sum(1 for result in checker_results if result.status == SUCCESS_LABEL)
+    issue_count = sum(1 for result in checker_results if result.status == ISSUES_LABEL)
+    error_count = sum(1 for result in checker_results if result.status == FAILURE_LABEL)
 
     summary_grid = Table.grid(expand=True)
     summary_grid.add_column(ratio=1)
@@ -340,13 +383,18 @@ def build_final_summary(
         f"slowest: {slowest_result.spec.title} ({format_duration(slowest_result.duration_seconds)})",
     )
     summary_grid.add_row(
-        f"failed tools: {failed_count}/{len(checker_results)}",
+        f"passed tools: {passed_count}/{len(checker_results)}",
+        f"tools with issues: {issue_count}/{len(checker_results)}",
+    )
+    summary_grid.add_row(
+        f"tool errors: {error_count}/{len(checker_results)}",
         f"summary file: {relative_path(SUMMARY_PATH)}",
     )
 
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Tool", style="bold")
-    table.add_column("Status", justify="center")
+    table.add_column("State", justify="center")
+    table.add_column("Outcome", justify="center")
     table.add_column("Exit", justify="right")
     table.add_column("Duration", justify="right")
     table.add_column("Share", justify="right")
@@ -358,6 +406,7 @@ def build_final_summary(
     ):
         table.add_row(
             result.spec.title,
+            result.run_state,
             checker_status_text(result),
             str(result.exit_code),
             format_duration(result.duration_seconds),
@@ -367,9 +416,11 @@ def build_final_summary(
             relative_path(result.spec.report_path),
         )
 
-    border_style = (
-        "red" if failed_count > 0 or cleanup_result.exit_code != 0 else "green"
-    )
+    border_style = "green"
+    if cleanup_result.exit_code != 0 or error_count > 0:
+        border_style = "red"
+    elif issue_count > 0:
+        border_style = "yellow"
     return Group(
         Panel(summary_grid, title="Summary", border_style=border_style),
         Panel(table, title="Timings", border_style=border_style),
@@ -439,6 +490,7 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
                 started_at=started_at,
                 finished_at=finished_at,
                 report_stats=read_report_stats(spec.report_path),
+                result_kind=START_FAILED_KIND,
             )
             continue
         running_tools[spec.slug] = RunningTool(
@@ -467,6 +519,7 @@ def finish_ready_processes(
             started_at=running_tool.started_at,
             finished_at=finished_at,
             report_stats=read_report_stats(running_tool.spec.report_path),
+            result_kind=COMPLETED_KIND,
         )
         finished_slugs.append(slug)
     for slug in finished_slugs:
@@ -500,7 +553,9 @@ def write_summary(
     checker_wall = checker_wall_end - checker_wall_start
     total_duration = time.monotonic() - wall_started_at
     slowest_result = max(checker_results, key=lambda result: result.duration_seconds)
-    failed_count = sum(1 for result in checker_results if result.exit_code != 0)
+    passed_count = sum(1 for result in checker_results if result.status == SUCCESS_LABEL)
+    issue_count = sum(1 for result in checker_results if result.status == ISSUES_LABEL)
+    error_count = sum(1 for result in checker_results if result.status == FAILURE_LABEL)
     lines = [
         "# Lint And Type Check Timing Summary",
         "",
@@ -513,17 +568,19 @@ def write_summary(
         if checker_wall > 0
         else "- Parallel speedup: 0.00x",
         f"- End-to-end runtime: {format_duration(total_duration)}",
-        f"- Failed tools: {failed_count}/{len(checker_results)}",
+        f"- Passed tools: {passed_count}/{len(checker_results)}",
+        f"- Tools with issues: {issue_count}/{len(checker_results)}",
+        f"- Tool errors: {error_count}/{len(checker_results)}",
         f"- Slowest tool: {slowest_result.spec.title} ({format_duration(slowest_result.duration_seconds)})",
         "",
-        "| Tool | Status | Exit | Duration | Share | Lines | Size | Report |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
+        "| Tool | State | Outcome | Exit | Duration | Share | Lines | Size | Report |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for result in sorted(
         checker_results, key=lambda item: item.duration_seconds, reverse=True
     ):
         lines.append(
-            f"| {result.spec.title} | {result.status} | {result.exit_code} | {format_duration(result.duration_seconds)} | "
+            f"| {result.spec.title} | {result.run_state} | {result.status} | {result.exit_code} | {format_duration(result.duration_seconds)} | "
             f"{format_share(result.duration_seconds, checker_sum)} | {result.report_stats.line_count} | "
             f"{format_bytes(result.report_stats.byte_count)} | `{relative_path(result.spec.report_path)}` |"
         )
