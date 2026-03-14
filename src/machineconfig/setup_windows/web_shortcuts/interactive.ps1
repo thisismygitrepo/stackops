@@ -12,7 +12,7 @@ function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "machineco
 function croshell { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "machineconfig>=8.83" croshell $args }
 function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "machineconfig>=8.83" utils $args }
 function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "machineconfig>=8.83" terminal $args }
-function msearch  { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "machineconfig>=8.83" msearch $args }
+function msearch  { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "machineconfig>=8.83" msearch @args }
 
 function d { wrap_in_shell_script devops @args }
 function c { wrap_in_shell_script cloud @args }

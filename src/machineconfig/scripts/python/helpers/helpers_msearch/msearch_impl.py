@@ -19,7 +19,7 @@ def machineconfig_search(
         _run_ast_search(directory=path)
         return
     if file:
-        _run_file_search(no_dotfiles=no_dotfiles, edit=edit, search_term=search_term)
+        _run_file_search(directory=path, no_dotfiles=no_dotfiles, edit=edit, search_term=search_term)
         return
 
     from pathlib import Path
@@ -111,7 +111,7 @@ nl -ba -w1 -s' ' "$TEMP_FILE" | tv \
 $sourceCmd = '{source_cmd_ps_literal}'
 $res = tv `
 --source-command $sourceCmd `
---preview-command 'bat --color=always --style=numbers --highlight-line {{split: :0}} {abs_path}' `
+--preview-command 'bat --color=always --style=numbers --highlight-line {{split: :0}} "{abs_path}"' `
 --preview-size 80 `
 --preview-offset "{{split: :0}}" `
 --source-output "{{}}"
@@ -125,7 +125,7 @@ if ($res) {{
 $sourceCmd = '{source_cmd_ps_literal}'
 tv `
 --source-command $sourceCmd `
---preview-command 'bat --color=always --style=numbers --highlight-line {{split: :0}} {abs_path}' `
+--preview-command 'bat --color=always --style=numbers --highlight-line {{split: :0}} "{abs_path}"' `
 --preview-size 80 `
 --preview-offset "{{split: :0}}" `
 --source-output "{{}}" | ForEach-Object {{ $_ -replace '^\\d+\\s+', '' }}
@@ -167,7 +167,7 @@ def _run_ast_search(directory: str) -> None:
         print(f"❌ Error during selection: {e}")
 
 
-def _run_file_search(no_dotfiles: bool, edit: bool, search_term: str) -> None:
+def _run_file_search(directory: Optional[str], no_dotfiles: bool, edit: bool, search_term: str) -> None:
     """Run file search."""
     import platform
 
@@ -180,6 +180,7 @@ def _run_file_search(no_dotfiles: bool, edit: bool, search_term: str) -> None:
         if source_command != "":
             script = source_command + script
         script = script.replace("{QUERY_ARGUMENT}", query_argument)
+        script = _prepend_directory_change(script=script, directory=directory, platform_name=platform_name)
         from machineconfig.utils.code import run_shell_script
 
         run_shell_script(script=script, display_script=True, clean_env=False)
@@ -229,6 +230,7 @@ if ($selected) {
     else:
         raise RuntimeError("Unsupported platform")
 
+    script = _prepend_directory_change(script=script, directory=directory, platform_name=platform_name)
     from machineconfig.utils.code import run_shell_script
 
     run_shell_script(script=script, display_script=True, clean_env=False)
@@ -259,10 +261,20 @@ def _run_text_search(rga: bool, directory: Optional[str], search_term: str) -> N
     if rga:
         script = script.replace("rg ", "rga ").replace("ripgrep", "ripgrep-all")
     script = _set_initial_query(script=script, search_term=search_term, platform_name=platform_name)
+    script = _prepend_directory_change(script=script, directory=directory, platform_name=platform_name)
     from machineconfig.utils.code import exit_then_run_shell_script
-    if directory:
-        script = "cd " + directory + "\n" + script
     exit_then_run_shell_script(script=script, strict=False)
+
+
+def _prepend_directory_change(script: str, directory: Optional[str], platform_name: str) -> str:
+    """Prefix a working-directory change command using platform-appropriate quoting."""
+    if directory is None or directory == "":
+        return script
+    if platform_name == "Windows":
+        return f"Set-Location -LiteralPath {_to_powershell_single_quoted(directory)}\n{script}"
+    if platform_name == "Linux" or platform_name == "Darwin":
+        return f"cd {_to_shell_quoted(directory)}\n{script}"
+    raise RuntimeError(f"Unsupported platform: {platform_name}")
 
 
 def _set_initial_query(script: str, search_term: str, platform_name: str) -> str:
