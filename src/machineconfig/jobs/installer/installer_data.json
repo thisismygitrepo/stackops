@@ -3878,6 +3878,23 @@
       }
     },
     {
+      "appName": "texlive",
+      "repoURL": "CMD",
+      "doc": "📝 TeX Live LaTeX distribution",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "sudo nala install texlive -y",
+          "windows": "texlive.ps1",
+          "macos": "brew install texlive"
+        },
+        "arm64": {
+          "linux": "sudo nala install texlive -y",
+          "windows": "texlive.ps1",
+          "macos": "brew install texlive"
+        }
+      }
+    },
+    {
       "appName": "texmaker",
       "repoURL": "CMD",
       "doc": "📄 LaTeX editor",
