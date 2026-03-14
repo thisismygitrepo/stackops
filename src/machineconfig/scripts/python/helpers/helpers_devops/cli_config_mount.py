@@ -3,13 +3,53 @@ import platform
 from typing import Annotated
 
 import typer
+from rich import box
+from rich.console import Console
+from rich.table import Table
 
+from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.devices import list_devices as list_devices_internal
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.linux import mount_linux, select_linux_partition
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.selection import pick_device, resolve_device
-from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.utils import format_device
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.windows import mount_windows
+
+
+console = Console()
+
+
+def _display_value(value: str | None) -> str:
+	if value is None or value == "":
+		return "-"
+	return value
+
+
+def _build_devices_table(entries: list[DeviceEntry]) -> Table:
+	table = Table(
+		title="Available devices for mounting",
+		box=box.SIMPLE_HEAVY,
+		header_style="bold cyan",
+		show_lines=False,
+	)
+	table.add_column("Device", style="bold white", no_wrap=True)
+	table.add_column("Path", style="cyan", no_wrap=True)
+	table.add_column("FS", style="green", no_wrap=True)
+	table.add_column("Size", style="yellow", justify="right", no_wrap=True)
+	table.add_column("Mount", style="blue")
+	table.add_column("Label", style="white")
+	table.add_column("Details", style="dim", overflow="fold")
+	for entry in entries:
+		table.add_row(
+			entry.key,
+			entry.device_path,
+			_display_value(entry.fs_type),
+			_display_value(entry.size),
+			_display_value(entry.mount_point),
+			_display_value(entry.label),
+			_display_value(entry.extra),
+			style="bold" if entry.device_type == "disk" else None,
+		)
+	return table
 
 
 def list_devices() -> None:
@@ -17,8 +57,7 @@ def list_devices() -> None:
 	if not entries:
 		typer.echo("No devices found")
 		return
-	for entry in entries:
-		typer.echo(format_device(entry))
+	console.print(_build_devices_table(entries))
 
 
 def mount_device(
@@ -74,4 +113,3 @@ def mount_interactive() -> None:
 	except RuntimeError as exc:
 		typer.echo(f"Mount failed: {exc}")
 		raise typer.Exit(1)
-

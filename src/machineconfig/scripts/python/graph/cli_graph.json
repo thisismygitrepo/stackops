@@ -684,13 +684,11 @@
                 "signature": {
                   "raw_lines": [
                     "def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help=\"Path to the git repository\")]):",
-                    "    # def func(repo_path: str):",
-                    "    #     from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time",
-                    "    #     analyze_over_time(repo_path=repo_path)",
-                    "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.81\"])",
-                    "    from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time",
-                    "    analyze_over_time(repo_path=repo_path)"
+                    "    def func(repo_path: str):",
+                    "        from machineconfig.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time",
+                    "        analyze_over_time(repo_path=repo_path)",
+                    "    from machineconfig.utils.code import run_lambda_function",
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.83\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1658,7 +1656,7 @@
                     "        # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "        # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.81\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.83\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    try:",
                     "        repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
@@ -1927,7 +1925,7 @@
               "callable": "config"
             },
             "app": {
-              "help": "🔧 <c> configuration subcommands",
+              "help": "🧰 <c> configuration subcommands",
               "no_args_is_help": true,
               "add_help_option": true,
               "add_completion": false
@@ -1936,7 +1934,7 @@
               {
                 "kind": "command",
                 "name": "sync",
-                "help": "🔗 <s> Sync dotfiles.",
+                "help": "🔄 <s> Sync dotfiles.",
                 "source": {
                   "file": "src/machineconfig/profile/create_links_export.py",
                   "module": "machineconfig.profile.create_links_export",
@@ -2125,7 +2123,7 @@
               {
                 "kind": "command",
                 "name": "register",
-                "help": "🔗 <r> Register dotfiles agains user mapper.toml",
+                "help": "📇 <r> Register dotfiles agains user mapper.toml",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile",
@@ -2388,7 +2386,7 @@
               {
                 "kind": "command",
                 "name": "edit",
-                "help": "✏️ <E> Open dotfiles mapper.toml in nano, hx, or code.",
+                "help": "📝 <E> Open dotfiles mapper.toml in nano, hx, or code.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile",
@@ -2497,7 +2495,7 @@
               {
                 "kind": "command",
                 "name": "export-dotfiles",
-                "help": "🔗 <e> Export dotfiles for migration to new machine.",
+                "help": "📤 <e> Export dotfiles for migration to new machine.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile",
@@ -2641,7 +2639,7 @@
               {
                 "kind": "command",
                 "name": "import-dotfiles",
-                "help": "🔗 <i> Import dotfiles from exported archive.",
+                "help": "📥 <i> Import dotfiles from exported archive.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile",
@@ -2785,7 +2783,7 @@
               {
                 "kind": "command",
                 "name": "shell",
-                "help": "🔗 <S> Configure your shell profile.",
+                "help": "🐚 <S> Configure your shell profile.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -2848,7 +2846,7 @@
               {
                 "kind": "command",
                 "name": "starship-theme",
-                "help": "🔗 <t> Select starship prompt theme.",
+                "help": "⭐ <t> Select starship prompt theme.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -2894,7 +2892,7 @@
               {
                 "kind": "command",
                 "name": "pwsh-theme",
-                "help": "🔗 <T> Select powershell prompt theme.",
+                "help": "⚡ <T> Select powershell prompt theme.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -2933,7 +2931,7 @@
               {
                 "kind": "command",
                 "name": "wezterm-theme",
-                "help": "🔗 <W> Select WezTerm terminal theme.",
+                "help": "💻 <W> Select WezTerm terminal theme.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -2965,7 +2963,7 @@
               {
                 "kind": "command",
                 "name": "ghostty-theme",
-                "help": "🔗 <g> Select Ghostty terminal theme.",
+                "help": "👻 <g> Select Ghostty terminal theme.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -3015,7 +3013,7 @@
               {
                 "kind": "command",
                 "name": "windows-terminal-theme",
-                "help": "🔗 <x> Select Windows Terminal color scheme.",
+                "help": "🪟 <x> Select Windows Terminal color scheme.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -3061,7 +3059,7 @@
               {
                 "kind": "command",
                 "name": "copy-assets",
-                "help": "🔗 <c> Copy asset files from library to machine.",
+                "help": "📋 <c> Copy asset files from library to machine.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -3121,7 +3119,7 @@
               {
                 "kind": "command",
                 "name": "dump",
-                "help": "🔗 <d> Dump example configuration files.",
+                "help": "📦 <d> Dump example configuration files.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -3180,7 +3178,7 @@
               {
                 "kind": "command",
                 "name": "list-devices",
-                "help": "🔗 <l> List available devices for mounting.",
+                "help": "💽 <l> List available devices for mounting.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -3212,7 +3210,7 @@
               {
                 "kind": "command",
                 "name": "mount",
-                "help": "🔗 <m> Mount a device to a mount point.",
+                "help": "🔌 <m> Mount a device to a mount point.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
@@ -7298,10 +7296,11 @@
                     "def switch_public_ip_address(",
                     "    wait_seconds: Annotated[float, typer.Option(..., \"--wait\", \"-w\", help=\"Seconds to wait between steps\")] = 2.0,",
                     "    max_trials: Annotated[int, typer.Option(..., \"--max-trials\", \"-m\", help=\"Max number of switch attempts\")] = 10,",
+                    "    target_ip: Annotated[Optional[list[str]], typer.Option(..., \"--target-ip\", \"-t\", help=\"Acceptable target IPs, if current IP matches any, no switch needed\")] = None,",
                     ") -> None:",
                     "    \"\"\"🔁 Switch public IP address (Cloudflare WARP)\"\"\"",
                     "    import machineconfig.scripts.python.helpers.helpers_network.address_switch as helper",
-                    "    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds)"
+                    "    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)"
                   ],
                   "name": "switch_public_ip_address",
                   "parameters": [
@@ -7348,6 +7347,29 @@
                           "-m"
                         ],
                         "help": "Max number of switch attempts",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "target_ip",
+                      "kind": "positional_or_keyword",
+                      "type": "Optional[list[str]]",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Optional[list[str]], typer.Option(..., '--target-ip', '-t', help='Acceptable target IPs, if current IP matches any, no switch needed')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--target-ip",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--target-ip"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Acceptable target IPs, if current IP matches any, no switch needed",
                         "default": "..."
                       }
                     }
@@ -10103,7 +10125,7 @@
           {
             "kind": "command",
             "name": "attach",
-            "help": "Choose a session to attach to.",
+            "help": "Choose a session or deeper target to attach to.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
               "module": "machineconfig.scripts.python.sessions",
@@ -10115,32 +10137,13 @@
                 "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to attach to. If not provided, a list will be shown to choose from.\")] = None,",
                 "        new_session: Annotated[bool, typer.Option(\"--new-session\", \"-n\", help=\"Create a new session instead of attaching to an existing one.\", show_default=True)] = False,",
                 "        kill_all: Annotated[bool, typer.Option(\"--kill-all\", \"-k\", help=\"Kill all existing sessions before creating a new one.\", show_default=True)] = False,",
+                "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Choose a window/tab or pane target instead of only choosing from sessions.\", show_default=True)] = False,",
                 "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
-                "    \"\"\"Choose a session to attach to.\"\"\"",
-                "    import platform",
-                "    backend_resolved: Literal[\"zellij\", \"tmux\"]",
-                "    match backend:",
-                "        case \"zellij\" | \"z\":",
-                "            if platform.system().lower() == \"windows\":",
-                "                typer.echo(\"Error: Zellij is not supported on Windows.\", err=True, color=True)",
-                "                raise typer.Exit()",
-                "            backend_resolved = \"zellij\"",
-                "        case \"tmux\" | \"t\":",
-                "            if platform.system().lower() == \"windows\":",
-                "                typer.echo(\"Error: tmux is not supported on Windows.\", err=True, color=True)",
-                "                raise typer.Exit()",
-                "            backend_resolved = \"tmux\"",
-                "        case \"auto\" | \"a\":",
-                "            if platform.system().lower() == \"windows\":",
-                "                typer.echo(\"Error: tmux/zellij are not supported on Windows.\", err=True, color=True)",
-                "                raise typer.Exit()",
-                "            backend_resolved = \"zellij\"",
-                "        case _:",
-                "            typer.echo(f\"Error: Unsupported backend '{backend}'.\", err=True, color=True)",
-                "            raise typer.Exit()",
+                "    \"\"\"Choose a session or deeper target to attach to.\"\"\"",
+                "    backend_resolved = _resolve_session_backend(backend)",
                 "    from machineconfig.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl",
-                "    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all)",
+                "    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)",
                 "    if action == \"error\":",
                 "        typer.echo(payload, err=True, color=True)",
                 "        raise typer.Exit()",
@@ -10210,6 +10213,28 @@
                   }
                 },
                 {
+                  "name": "window",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--window', '-w', help='Choose a window/tab or pane target instead of only choosing from sessions.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--window",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--window"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Choose a window/tab or pane target instead of only choosing from sessions."
+                  }
+                },
+                {
                   "name": "backend",
                   "kind": "positional_or_keyword",
                   "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
@@ -10235,16 +10260,123 @@
               ],
               "return": "None"
             },
-            "short_help": "<a> Attach to a Zellij session",
+            "short_help": "<a> Attach to a session target",
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "Choose a session to attach to.",
+            "doc": "Choose a session or deeper target to attach to.",
             "aliases": [
               {
                 "name": "a",
                 "hidden": true,
-                "help": "Choose a session to attach to."
+                "help": "Choose a session or deeper target to attach to."
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "kill",
+            "help": "Choose one or more session targets to kill.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/sessions.py",
+              "module": "machineconfig.scripts.python.sessions",
+              "callable": "kill_session_target"
+            },
+            "signature": {
+              "raw_lines": [
+                "def kill_session_target(",
+                "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to kill. If not provided, a list will be shown to choose from.\")] = None,",
+                "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser.\", show_default=True)] = False,",
+                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
+                "        ) -> None:",
+                "    \"\"\"Choose one or more session targets to kill.\"\"\"",
+                "    backend_resolved = _resolve_session_backend(backend)",
+                "    from machineconfig.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl",
+                "",
+                "    action, payload = impl(backend=backend_resolved, name=name, window=window)",
+                "    if action == \"error\":",
+                "        typer.echo(payload, err=True, color=True)",
+                "        raise typer.Exit()",
+                "    if action == \"run_script\" and payload:",
+                "        from machineconfig.utils.code import exit_then_run_shell_script",
+                "",
+                "        exit_then_run_shell_script(script=payload, strict=True)"
+              ],
+              "name": "kill_session_target",
+              "parameters": [
+                {
+                  "name": "name",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the session to kill. If not provided, a list will be shown to choose from.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Name of the session to kill. If not provided, a list will be shown to choose from."
+                  }
+                },
+                {
+                  "name": "window",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--window', '-w', help='Include session, window/tab, and pane targets in the interactive chooser.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--window",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--window"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Include session, window/tab, and pane targets in the interactive chooser."
+                  }
+                },
+                {
+                  "name": "backend",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
+                  "default": "tmux",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--backend",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--backend"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Backend multiplexer to use",
+                    "default": "..."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<k> Kill a session target",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Choose one or more session targets to kill.",
+            "aliases": [
+              {
+                "name": "k",
+                "hidden": true,
+                "help": "Choose one or more session targets to kill."
               }
             ]
           },
