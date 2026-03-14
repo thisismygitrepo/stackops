@@ -126,7 +126,7 @@ CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = (
         slug="pyright",
         title="Pyright Type Checker",
         report_path=REPORTS_DIR / "issues_pyright.md",
-        command=("uv", "run", "--frozen", "--with", "pyright", "pyright", "."),
+        command=("uv", "run", "--frozen", "--with", "pyright", "pyright", "--threads", "10", "."),
     ),
     ToolSpec(
         slug="mypy",
@@ -146,6 +146,7 @@ CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = (
             "pylint",
             "pylint",
             "--recursive=y",
+            "--jobs=5",
             "--ignore=.venv",
             ".",
         ),

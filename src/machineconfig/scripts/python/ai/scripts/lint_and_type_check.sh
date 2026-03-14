@@ -66,7 +66,7 @@ draw_box "🔍 TYPE CHECKERS & LINTERS 🔍" "${BOLD}${PURPLE}"
 draw_progress $CURRENT_STEP $TOTAL_STEPS "Pyright Type Checker"
 echo -e "${BLUE}📋 Analyzing types with Pyright...${NC}"
 rm -f ./.ai/linters/issues_pyright.md || true
-uv run --frozen --with pyright pyright . > ./.ai/linters/issues_pyright.md
+uv run --frozen --with pyright pyright --threads 10 . > ./.ai/linters/issues_pyright.md
 echo -e "${GREEN}✅ Results saved to ${UNDERLINE}./.ai/linters/issues_pyright.md${NC}"
 
 ((CURRENT_STEP++))
@@ -80,7 +80,7 @@ echo -e "${GREEN}✅ Results saved to ${UNDERLINE}./.ai/linters/issues_mypy.md${
 draw_progress $CURRENT_STEP $TOTAL_STEPS "Pylint Code Analysis"
 echo -e "${BLUE}📋 Analyzing code quality with Pylint...${NC}"
 rm -f ./.ai/linters/issues_pylint.md || true
-uv run --frozen --with pylint pylint --recursive=y --ignore=.venv . > ./.ai/linters/issues_pylint.md
+uv run --frozen --with pylint pylint --recursive=y --jobs=5 --ignore=.venv . > ./.ai/linters/issues_pylint.md
 echo -e "${GREEN}✅ Results saved to ${UNDERLINE}./.ai/linters/issues_pylint.md${NC}"
 
 ((CURRENT_STEP++))
