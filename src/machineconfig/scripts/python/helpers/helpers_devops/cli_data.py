@@ -40,7 +40,7 @@ def register_data(
 
     try:
         backup_path, entry_name, replaced = register_backup_entry(
-            path_local=path_local, group=group, entry_name=name, path_cloud=path_cloud, zip=zip_, encrypt=encrypt, rel2home=rel2home, os=os
+            path_local=path_local, group=group, entry_name=name, path_cloud=path_cloud, zip_=zip_, encrypt=encrypt, rel2home=rel2home, os=os
         )
     except ValueError as exc:
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)
