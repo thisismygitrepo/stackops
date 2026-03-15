@@ -1,6 +1,8 @@
 
-
+import inspect
+from types import FunctionType
 from typing import Callable
+from typing import cast
 from pathlib import Path
 from datetime import datetime
 
@@ -23,12 +25,16 @@ console = Console()
 
 
 class RemoteMachine:
-    def __init__(self, func: str | Callable[..., object], config: RemoteMachineConfig, func_kwargs: dict[str, object] | None, data: list[str] | None) -> None:
+    def __init__(self, func: str | Path | Callable[..., object], config: RemoteMachineConfig, func_kwargs: dict[str, object] | None, data: list[str] | None) -> None:
         self.config = config
-        if callable(func) and not isinstance(func, (str, Path)):
-            self.job_params = JobParams.from_callable(func)
-        else:
+        if isinstance(func, str | Path):
             self.job_params = JobParams.from_script(str(func))
+        elif inspect.isfunction(func):
+            self.job_params = JobParams.from_callable(func)
+        elif inspect.ismethod(func):
+            self.job_params = JobParams.from_callable(cast(FunctionType, func.__func__))
+        else:
+            raise TypeError("func must be a script path, function, or bound method.")
         if config.workload_params is not None and func_kwargs is not None:
             if "workload_params" in func_kwargs:
                 raise ValueError("workload_params provided in both config and func_kwargs")
