@@ -126,35 +126,38 @@ def share_terminal(
         else:
             start_command = "bash"
 
+    import contextlib
     import subprocess
     import time
 
     ttyd_cmd = f"ttyd --writable -t enableSixel=true {ssl_args} --port {port} --credential \"{username}:{password}\" -t 'theme={{\"background\": \"black\"}}' {start_command}"
-    ttyd_process = subprocess.Popen(ttyd_cmd, shell=True)
-    processes = [ttyd_process]
-    
-    if over_internet:
-        ngrok_process = subprocess.Popen(f"ngrok http {port}", shell=True)
-        processes.append(ngrok_process)
-        time.sleep(3)
+    with contextlib.ExitStack() as exit_stack:
+        ttyd_process = exit_stack.enter_context(subprocess.Popen(ttyd_cmd, shell=True))
+        processes = [ttyd_process]
+
+        if over_internet:
+            ngrok_process = exit_stack.enter_context(subprocess.Popen(f"ngrok http {port}", shell=True))
+            processes.append(ngrok_process)
+            time.sleep(3)
+            try:
+                import requests
+
+                response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
+                data = response.json()
+                public_url = data["tunnels"][0]["public_url"]
+                print(f"🌐 Ngrok tunnel ready: {public_url}")
+            except Exception as e:
+                print(f"Could not retrieve ngrok URL: {e}")
+
         try:
-            import requests
-            response = requests.get("http://localhost:4040/api/tunnels")
-            data = response.json()
-            public_url = data['tunnels'][0]['public_url']
-            print(f"🌐 Ngrok tunnel ready: {public_url}")
-        except Exception as e:
-            print(f"Could not retrieve ngrok URL: {e}")
-    
-    try:
-        while True:
-            print("Terminal server is running. Press Ctrl+C to stop.")
-            time.sleep(2)
-    except KeyboardInterrupt:
-        print("\nTerminating processes...")
-        for p in processes:
-            p.terminate()
-            p.wait()
+            while True:
+                print("Terminal server is running. Press Ctrl+C to stop.")
+                time.sleep(2)
+        except KeyboardInterrupt:
+            print("\nTerminating processes...")
+            for p in processes:
+                p.terminate()
+                p.wait()
 
 
 def main_with_parser():

@@ -12,6 +12,7 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     """Route execution based on args configuration."""
     from machineconfig.utils.path_helper import get_choice_file
     from machineconfig.utils.accessories import get_repo_root, randstr
+
     choice_file = get_choice_file(args.path, suffixes=None)
     repo_root = get_repo_root(choice_file)
     print(f"💾 Selected file: {choice_file}.\nRepo root: {repo_root}")
@@ -25,10 +26,19 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     if isinstance(choice_function, tuple):
         choice_function, choice_file, kwargs_dict = choice_function
 
-    command = _build_command(args=args, choice_file=choice_file, choice_function=choice_function, kwargs_dict=kwargs_dict, repo_root=repo_root, fire_args=fire_args, randstr_func=randstr)
+    command = _build_command(
+        args=args,
+        choice_file=choice_file,
+        choice_function=choice_function,
+        kwargs_dict=kwargs_dict,
+        repo_root=repo_root,
+        fire_args=fire_args,
+        randstr_func=randstr,
+    )
     command = _apply_command_modifiers(args=args, command=command, choice_file=choice_file, repo_root=repo_root, randstr_func=randstr)
 
     from machineconfig.utils.code import exit_then_run_shell_script
+
     exit_then_run_shell_script(script=command, strict=False)
 
 
@@ -62,6 +72,7 @@ uv run {project_segment} --with marimo --with pydantic-ai-slim marimo edit --hos
 # pydantic-ai-slim is added to allow ai functionality to work, if needed.
 """
     from machineconfig.utils.code import exit_then_run_shell_script
+
     print(f"🚀 Launching Marimo notebook for `{choice_file}`...")
     exit_then_run_shell_script(script)
 
@@ -70,37 +81,72 @@ def _prepare_kwargs(args: FireJobArgs, choice_file: Path) -> dict[str, object]:
     """Prepare kwargs dict from args."""
     if choice_file.suffix == ".py":
         from machineconfig.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper import extract_kwargs
+
         return extract_kwargs(args)
     return {}
 
 
-def _choose_function(choose_function: bool, function: str | None, choice_file: Path, kwargs_dict: dict[str, object]) -> str | None | tuple[str | None, Path, dict[str, object]]:
+def _choose_function(
+    choose_function: bool, function: str | None, choice_file: Path, kwargs_dict: dict[str, object]
+) -> str | None | tuple[str | None, Path, dict[str, object]]:
     """Choose function to run, possibly interactively."""
     if choose_function:
         from machineconfig.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper import choose_function_or_lines
+
         choice_function, choice_file, kwargs_dict = choose_function_or_lines(choice_file, kwargs_dict)
         return (choice_function, choice_file, kwargs_dict)
     return function
 
 
-def _build_command(args: FireJobArgs, choice_file: Path, choice_function: str | None, kwargs_dict: dict[str, object], repo_root: Path | None, fire_args: str, randstr_func: RandStrFunc) -> str:
+def _build_command(
+    args: FireJobArgs,
+    choice_file: Path,
+    choice_function: str | None,
+    kwargs_dict: dict[str, object],
+    repo_root: Path | None,
+    fire_args: str,
+    randstr_func: RandStrFunc,
+) -> str:
     """Build the execution command."""
     if choice_file.suffix == ".py":
-        exe_line = _build_python_exe_line(module=args.module, interactive=args.interactive, frozen=args.frozen, streamlit=args.streamlit, environment=args.environment, jupyter=args.jupyter, choice_file=choice_file, repo_root=repo_root)
+        exe_line = _build_python_exe_line(
+            module=args.module,
+            interactive=args.interactive,
+            frozen=args.frozen,
+            streamlit=args.streamlit,
+            environment=args.environment,
+            jupyter=args.jupyter,
+            choice_file=choice_file,
+            repo_root=repo_root,
+        )
         choice_file_adjusted = _adjust_choice_file(module=args.module, choice_file=choice_file, repo_root=repo_root)
         if args.script or (args.debug and args.choose_function):
-            choice_file = _create_import_script(choice_file=choice_file, choice_function=choice_function, kwargs_dict=kwargs_dict, repo_root=repo_root, randstr_func=randstr_func)
+            choice_file = _create_import_script(
+                choice_file=choice_file, choice_function=choice_function, kwargs_dict=kwargs_dict, repo_root=repo_root, randstr_func=randstr_func
+            )
             choice_file_adjusted = str(choice_file)
-        return _build_final_command(debug=args.debug, module=args.module, streamlit=args.streamlit, hold_directory=args.holdDirectory, cmd=args.cmd, exe_line=exe_line, choice_file=choice_file, choice_file_adjusted=choice_file_adjusted, choice_function=choice_function, fire_args=fire_args)
-    elif choice_file.suffix in (".ps1", ".sh"):
+        return _build_final_command(
+            debug=args.debug,
+            module=args.module,
+            streamlit=args.streamlit,
+            hold_directory=args.holdDirectory,
+            cmd=args.cmd,
+            exe_line=exe_line,
+            choice_file=choice_file,
+            choice_file_adjusted=choice_file_adjusted,
+            choice_function=choice_function,
+            fire_args=fire_args,
+        )
+    if choice_file.suffix in (".ps1", ".sh"):
         return f". {choice_file}"
-    elif choice_file.suffix == "":
+    if choice_file.suffix == "":
         return str(choice_file)
-    else:
-        raise NotImplementedError(f"File type {choice_file.suffix} not supported, in the sense that I don't know how to fire it.")
+    raise NotImplementedError(f"File type {choice_file.suffix} not supported, in the sense that I don't know how to fire it.")
 
 
-def _build_python_exe_line(module: bool, interactive: bool, frozen: bool, streamlit: bool, environment: str, jupyter: bool, choice_file: Path, repo_root: Path | None) -> str:
+def _build_python_exe_line(
+    module: bool, interactive: bool, frozen: bool, streamlit: bool, environment: str, jupyter: bool, choice_file: Path, repo_root: Path | None
+) -> str:
     """Build Python execution line."""
     module_line = "-m" if module else ""
     with_project = f"--project {repo_root} " if repo_root is not None else ""
@@ -108,6 +154,7 @@ def _build_python_exe_line(module: bool, interactive: bool, frozen: bool, stream
     frozen_line = "--frozen" if frozen else ""
     if interactive:
         from machineconfig.utils.ve import get_ve_path_and_ipython_profile
+
         _ve_root_from_file, ipy_profile = get_ve_path_and_ipython_profile(init_path=choice_file)
         if ipy_profile is None:
             ipy_profile = "default"
@@ -117,6 +164,7 @@ def _build_python_exe_line(module: bool, interactive: bool, frozen: bool, stream
 
     if streamlit:
         from machineconfig.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper import get_command_streamlit
+
         interpreter_line = get_command_streamlit(choice_file=choice_file, environment=environment, repo_root=repo_root)
     elif jupyter:
         interpreter_line = "jupyter-lab"
@@ -131,12 +179,13 @@ def _adjust_choice_file(module: bool, choice_file: Path, repo_root: Path | None)
     if module and choice_file.suffix == ".py":
         if repo_root is not None:
             return ".".join(Path(choice_file).relative_to(repo_root).parts).replace(".py", "")
-        else:
-            return ".".join(Path(choice_file).relative_to(Path.cwd()).parts).replace(".py", "")
+        return ".".join(Path(choice_file).relative_to(Path.cwd()).parts).replace(".py", "")
     return str(choice_file)
 
 
-def _create_import_script(choice_file: Path, choice_function: str | None, kwargs_dict: dict[str, object], repo_root: Path | None, randstr_func: RandStrFunc) -> Path:
+def _create_import_script(
+    choice_file: Path, choice_function: str | None, kwargs_dict: dict[str, object], repo_root: Path | None, randstr_func: RandStrFunc
+) -> Path:
     """Create a script that imports the module and calls the function."""
     from machineconfig.scripts.python.helpers.helpers_fire_command.file_wrangler import get_import_module_code, wrap_import_in_try_except
     from machineconfig.utils.meta import lambda_to_python_script
@@ -151,45 +200,55 @@ def _create_import_script(choice_file: Path, choice_function: str | None, kwargs
         import_module=False,
     )
     code_printing = lambda_to_python_script(
-        lambda: print_code(code=import_code_robust, lexer="python", desc="import as module code"),
-        in_global=True, import_module=False
+        lambda: print_code(code=import_code_robust, lexer="python", desc="import as module code"), in_global=True, import_module=False
     )
     print(f"🧩 Preparing import code for module import:\n{import_code}")
     if choice_function is not None:
         calling = f"""res = {choice_function}({("**" + str(kwargs_dict)) if kwargs_dict else ""})"""
     else:
         calling = """# No function selected to call. You can add your code here."""
-    new_choice_file = Path.home().joinpath(f"tmp_results/tmp_scripts/python/{Path(choice_file).parent.name}_{Path(choice_file).stem}_{randstr_func(10)}.py")
+    new_choice_file = Path.home().joinpath(
+        f"tmp_results/tmp_scripts/python/{Path(choice_file).parent.name}_{Path(choice_file).stem}_{randstr_func(10)}.py"
+    )
     new_choice_file.parent.mkdir(parents=True, exist_ok=True)
     new_choice_file.write_text(import_code_robust + "\n" + code_printing + "\n" + calling, encoding="utf-8")
     return new_choice_file
 
 
-def _build_final_command(debug: bool, module: bool, streamlit: bool, hold_directory: bool, cmd: bool, exe_line: str, choice_file: Path, choice_file_adjusted: str, choice_function: str | None, fire_args: str) -> str:
+def _build_final_command(
+    debug: bool,
+    module: bool,
+    streamlit: bool,
+    hold_directory: bool,
+    cmd: bool,
+    exe_line: str,
+    choice_file: Path,
+    choice_file_adjusted: str,
+    choice_function: str | None,
+    fire_args: str,
+) -> str:
     """Build the final command string."""
     if debug:
         import platform
+
         if platform.system() == "Windows":
             return f"{exe_line} -m ipdb {choice_file_adjusted} "
-        elif platform.system() in ["Linux", "Darwin"]:
+        if platform.system() in ["Linux", "Darwin"]:
             return f"{exe_line} -m pudb {choice_file_adjusted} "
-        else:
-            raise NotImplementedError(f"Platform {platform.system()} not supported.")
-    elif module:
+        raise NotImplementedError(f"Platform {platform.system()} not supported.")
+    if module:
         return f"{exe_line} {choice_file_adjusted} "
-    elif choice_function is not None and choice_file.suffix == ".py":
+    if choice_function is not None and choice_file.suffix == ".py":
         return f"{exe_line} -m fire {choice_file_adjusted} {choice_function} {fire_args}"
-    elif streamlit:
+    if streamlit:
         if hold_directory:
             return f"{exe_line} {choice_file}"
-        else:
-            return f"cd {choice_file.parent}\n{exe_line} {choice_file.name}\ncd {Path.cwd()}"
-    elif cmd:
+        return f"cd {choice_file.parent}\n{exe_line} {choice_file.name}\ncd {Path.cwd()}"
+    if cmd:
         return rf""" cd /d {choice_file.parent} & {exe_line} {choice_file.name} """
-    elif choice_file.suffix == "":
+    if choice_file.suffix == "":
         return f"{exe_line} {choice_file} {fire_args}"
-    else:
-        return f"{exe_line} {choice_file} "
+    return f"{exe_line} {choice_file} "
 
 
 def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc) -> str:
@@ -217,7 +276,6 @@ def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path,
         comman_path__.parent.mkdir(parents=True, exist_ok=True)
         comman_path__.write_text(command, encoding="utf-8")
         console.print(Panel(Syntax(command, lexer="shell"), title=f"🔥 fire command @ {comman_path__}: "), style="bold red")
-        import subprocess
 
         existing_tab_names = subprocess.run(["zellij", "action", "query-tab-names"], capture_output=True, text=True, check=True).stdout.splitlines()
         if args.zellij_tab in existing_tab_names:
@@ -235,11 +293,13 @@ def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path,
 
     if args.PathExport:
         from machineconfig.scripts.python.helpers.helpers_fire_command.file_wrangler import add_to_path
+
         export_line = add_to_path(path_variable="PYTHONPATH", directory=str(repo_root))
         command = export_line + "\n" + command
 
     if args.loop:
         import platform
+
         if platform.system() in ["Linux", "Darwin"]:
             command = command + "\nsleep 0.5"
         elif platform.system() == "Windows":

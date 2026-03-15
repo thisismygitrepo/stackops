@@ -1,11 +1,13 @@
-
 import typer
-from typing import Annotated, Literal
-from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
 from pathlib import Path
+from typing import Annotated, Literal
 
-def copy_both_assets():
-    import machineconfig.profile.create_helper as create_helper
+from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
+
+
+def copy_both_assets() -> None:
+    from machineconfig.profile import create_helper
+
     create_helper.copy_assets_to_machine(which="scripts")
     create_helper.copy_assets_to_machine(which="settings")
 
@@ -80,8 +82,11 @@ uv tool install --no-cache --upgrade machineconfig
     if platform.system() == "Windows":
         from machineconfig.utils.code import exit_then_run_shell_script, get_uv_command_executing_python_script
         from machineconfig.utils.meta import lambda_to_python_script
-        python_script = lambda_to_python_script(lambda: copy_both_assets(),  # type: ignore
-                                                in_global=True, import_module=False)
+        python_script = lambda_to_python_script(
+            lambda: copy_both_assets(),  # pylint: disable=unnecessary-lambda
+            in_global=True,
+            import_module=False,
+        )
         uv_command, _py_file = get_uv_command_executing_python_script(python_script=python_script, uv_with=["machineconfig"], uv_project_dir=None)
         exit_then_run_shell_script(shell_script + "\n" + uv_command, strict=True)
     else:
@@ -90,7 +95,8 @@ uv tool install --no-cache --upgrade machineconfig
         if copy_assets:
             copy_both_assets()
         if link_public_configs:
-            import machineconfig.profile.create_links_export as create_links_export
+            from machineconfig.profile import create_links_export
+
             create_links_export.main_from_parser(sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
 
 
@@ -120,11 +126,15 @@ def install(copy_assets: Annotated[bool, typer.Option("--copy-assets/--no-assets
 
     uv_command = get_uv_command(platform=platform.system())
     if copy_assets:
-        def func():
+        def func() -> None:
             from machineconfig.profile.create_shell_profile import create_default_shell_profile
+
             create_default_shell_profile()   # involves copying assets too
-        uv_command2, _script_path = get_shell_script_running_lambda_function(lambda: func(),
-                                                          uv_with=["machineconfig"], uv_project_dir=None)
+        uv_command2, _script_path = get_shell_script_running_lambda_function(
+            lambda: func(),  # pylint: disable=unnecessary-lambda
+            uv_with=["machineconfig"],
+            uv_project_dir=None,
+        )
     else:
         uv_command2 = ""
     if mcfg_path.exists():
@@ -142,18 +152,18 @@ cd {str(mcfg_path)}
 
 
 
-def interactive():
+def interactive() -> None:
     """🤖 INTERACTIVE configuration of machine."""
     from machineconfig.scripts.python.helpers.helpers_devops.interactive import main
     main()
 
-def status():
+def status() -> None:
     """📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc."""
     import machineconfig.scripts.python.helpers.helpers_devops.devops_status as helper
     helper.main()
 
 
-def readme():
+def readme() -> None:
     from rich.console import Console
     from rich.markdown import Markdown
     import requests
@@ -196,7 +206,8 @@ bash "{str(script_path)}"
 
 def explore(ctx: typer.Context) -> None:
     """🧭 <x> Explore the MachineConfig CLI graph."""
-    import machineconfig.scripts.python.graph.visualize.cli_graph_app as cli_graph_app
+    from machineconfig.scripts.python.graph.visualize import cli_graph_app
+
     cli_graph_app.get_app()(ctx.args, standalone_mode=False)
 
 
@@ -208,7 +219,7 @@ def security(ctx: typer.Context) -> None:
 
 
 
-def get_app():
+def get_app() -> typer.Typer:
     cli_app = typer.Typer(help="🔄 <s> self operations subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     ctx_settings: dict[str, object] = {"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True, "help_option_names": []}
     cli_app.command(name= "update",      no_args_is_help=False, help="🔄 <u> UPDATE machineconfig")(update)

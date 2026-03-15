@@ -95,17 +95,22 @@ def get_import_module_code(module_path: str):
 
 
 def wrap_import_in_try_except(import_line: str, pyfile: str, repo_root: str | None = None) -> None:
+    import importlib
+    import sys
+
+    module_name = import_line.removeprefix("from ").removesuffix(" import *")
+
     try:
-        exec(import_line)  # type: ignore
+        module = importlib.import_module(module_name)
+        globals().update(module.__dict__)
     except (ImportError, ModuleNotFoundError) as ex:
         print(fr"❌ Failed to import `{pyfile}` as a module: {ex} ")
         print("⚠️ Attempting import with ad-hoc `$PATH` manipulation. DO NOT pickle any objects in this session as correct deserialization cannot be guaranteed.")
-        import sys
-        from pathlib import Path
         sys.path.append(str(Path(pyfile).parent))
         if repo_root is not None:
             sys.path.append(repo_root)
-        exec(f"from {Path(pyfile).stem} import *")
+        fallback_module = importlib.import_module(Path(pyfile).stem)
+        globals().update(fallback_module.__dict__)
         print(fr"✅ Successfully imported `{pyfile}`")
 
 
@@ -132,8 +137,7 @@ if (Test-Path env:{path_variable}) {{
 }}
 Write-Host "{path_variable} is now: $env:{path_variable}\""""
         return script
-    else:
-        script = f"""#!/bin/bash
+    script = f"""#!/bin/bash
 # Check if {path_variable} is defined and not empty
 if [ -z "${{{path_variable}}}" ]; then
     echo "Creating new {path_variable} variable"
@@ -144,5 +148,4 @@ else
 fi
 echo "{path_variable} is now: ${{{path_variable}}}"
 """
-        return script
-
+    return script

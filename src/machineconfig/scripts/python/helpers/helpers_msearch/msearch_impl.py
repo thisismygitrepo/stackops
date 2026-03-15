@@ -32,10 +32,9 @@ def machineconfig_search(
         else:
             content = sys.stdin.read()
         if content:
-            tf = tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False, prefix="msearch_stdin_")
-            tf.write(content)
-            tf.close()
-            path = tf.name
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, prefix="msearch_stdin_") as temp_file:
+                temp_file.write(content)
+                path = temp_file.name
             is_temp_file = True
 
     if Path(path).absolute().resolve().is_file():
@@ -63,7 +62,7 @@ def search_file_with_context(path: str, is_temp_file: bool, edit: bool) -> str:
     import base64
     from pathlib import Path
     abs_path = str(Path(path).absolute())
-    if platform.system() == "Linux" or platform.system() == "Darwin":
+    if platform.system() in {"Linux", "Darwin"}:
         if edit:
             code = """
 res=$(nl -ba -w1 -s' ' "$TEMP_FILE" | tv \
@@ -183,7 +182,7 @@ def _run_file_search(directory: str | None, no_dotfiles: bool, edit: bool, searc
         run_shell_script(script=script, display_script=True, clean_env=False)
         return
 
-    if platform_name == "Linux" or platform_name == "Darwin":
+    if platform_name in {"Linux", "Darwin"}:
         script = """
 selected=$({SOURCE_CMD} fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT})
 if [ -n "$selected" ]; then
@@ -269,7 +268,7 @@ def _prepend_directory_change(script: str, directory: str | None, platform_name:
         return script
     if platform_name == "Windows":
         return f"Set-Location -LiteralPath {_to_powershell_single_quoted(directory)}\n{script}"
-    if platform_name == "Linux" or platform_name == "Darwin":
+    if platform_name in {"Linux", "Darwin"}:
         return f"cd {_to_shell_quoted(directory)}\n{script}"
     raise RuntimeError(f"Unsupported platform: {platform_name}")
 
@@ -278,7 +277,7 @@ def _set_initial_query(script: str, search_term: str, platform_name: str) -> str
     """Inject the initial search term into a platform-specific search script."""
     if platform_name == "Windows":
         return script.replace("$initialQuery = ''", f"$initialQuery = {_to_powershell_single_quoted(search_term)}", 1)
-    if platform_name == "Linux" or platform_name == "Darwin":
+    if platform_name in {"Linux", "Darwin"}:
         return script.replace('INITIAL_QUERY=""', f"INITIAL_QUERY={_to_shell_quoted(search_term)}", 1)
     raise RuntimeError(f"Unsupported platform: {platform_name}")
 
@@ -301,6 +300,6 @@ def _get_fzf_query_argument(search_term: str, platform_name: str) -> str:
         return ""
     if platform_name == "Windows":
         return f"--query {_to_powershell_single_quoted(search_term)}"
-    if platform_name == "Linux" or platform_name == "Darwin":
+    if platform_name in {"Linux", "Darwin"}:
         return f"--query {_to_shell_quoted(search_term)}"
     raise RuntimeError(f"Unsupported platform: {platform_name}")

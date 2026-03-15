@@ -1,8 +1,14 @@
-
 import random
 import shlex
 from pathlib import Path
-from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, AGENT_NAME_FORMATTER, HOST, PROVIDER, AI_SPEC, API_SPEC
+from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import (
+    AGENTS,
+    AGENT_NAME_FORMATTER,
+    HOST,
+    PROVIDER,
+    AI_SPEC,
+    API_SPEC,
+)
 
 
 def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -> str:
@@ -14,11 +20,13 @@ def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -
 
 def _build_generic_agent_command(agent: AGENTS, prompt_path: Path) -> str:
     from machineconfig.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
+
     return build_agent_command(agent=agent, prompt_file=prompt_path)
 
 
 def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list[API_SPEC]:
     from machineconfig.utils.io import read_ini
+
     api_key_path = Path.home().joinpath(f"dotfiles/creds/llm/{provider}/api_keys.ini")
     res: list[API_SPEC] = []
     if not api_key_path.exists() or not api_key_path.is_file():
@@ -31,18 +39,28 @@ def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list
         if "api_key" in a_section:
             api_key = a_section["api_key"].strip()
             if api_key:
-                res.append(API_SPEC(
-                    api_key=api_key,
-                    api_name=a_section.get("api_name", ""),
-                    api_label=a_section_name,
-                    api_account=a_section.get("email", "")
-                ))
+                res.append(
+                    API_SPEC(
+                        api_key=api_key, api_name=a_section.get("api_name", ""), api_label=a_section_name, api_account=a_section.get("email", "")
+                    )
+                )
     print(f"Found {len(res)} {provider} API keys configured.")
     return res
 
 
-def prep_agent_launch(repo_root: Path, agents_dir: Path, prompts_material: list[str], prompt_prefix: str, join_prompt_and_context: bool,
-                      machine: HOST, model: str | None, provider: PROVIDER | None, agent: AGENTS, *, job_name: str) -> None:
+def prep_agent_launch(
+    repo_root: Path,
+    agents_dir: Path,
+    prompts_material: list[str],
+    prompt_prefix: str,
+    join_prompt_and_context: bool,
+    machine: HOST,
+    model: str | None,
+    provider: PROVIDER | None,
+    agent: AGENTS,
+    *,
+    job_name: str,
+) -> None:
     if agent == "codex":
         if provider is None:
             provider = "openai"
@@ -64,7 +82,11 @@ def prep_agent_launch(repo_root: Path, agents_dir: Path, prompts_material: list[
             prompt_material_path = prompt_root / f"agent_{idx}_material.txt"
             prompt_material_path.write_text(a_prompt_material, encoding="utf-8")
             material_reference = _format_material_reference(prompt_material_path=prompt_material_path, repo_root=repo_root)
-            prompt_path.write_text(prompt_prefix + f"""\nPlease only look @ {material_reference}. You don't need to do any other work beside the content of this material file.""", encoding="utf-8")
+            prompt_path.write_text(
+                prompt_prefix
+                + f"""\nPlease only look @ {material_reference}. You don't need to do any other work beside the content of this material file.""",
+                encoding="utf-8",
+            )
 
         agent_cmd_launch_path = prompt_root / AGENT_NAME_FORMATTER.format(idx=idx)  # e.g., agent_0_cmd.sh
         random_sleep_time = random.uniform(0, 3)
@@ -97,6 +119,7 @@ sleep 0.1
                     raise ValueError("No API keys found for Google Gemini. Please configure them in dotfiles/creds/llm/google/api_keys.ini")
                 ai_spec: AI_SPEC = AI_SPEC(provider=provider, model="gemini-2.5-pro", agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_gemini import fire_gemini
+
                 cmd = fire_gemini(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "cursor-agent":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
@@ -110,44 +133,48 @@ sleep 0.1
                     raise ValueError("No API keys found for Crush. Please configure them in dotfiles/creds/llm/crush/api_keys.ini")
                 ai_spec: AI_SPEC = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_crush import fire_crush
+
                 cmd = fire_crush(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "copilot":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec: AI_SPEC = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_copilot import fire_copilot
+
                 cmd = fire_copilot(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "codex":
                 api_keys = get_api_keys(provider="openai", silent_if_missing=True)
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec: AI_SPEC = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex import fire_codex
+
                 cmd = fire_codex(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case _:
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 cmd = _build_generic_agent_command(agent=agent, prompt_path=prompt_path)
         cmd_prefix += f"""
-echo "Running with api label:   {ai_spec['api_spec']['api_label']}"
-echo "Running with api acount:  {ai_spec['api_spec']['api_account']}"
-echo "Running with api name:    {ai_spec['api_spec']['api_name']}"
-echo "Running with api key:     {ai_spec['api_spec']['api_key']}"
+echo "Running with api label:   {ai_spec["api_spec"]["api_label"]}"
+echo "Running with api acount:  {ai_spec["api_spec"]["api_account"]}"
+echo "Running with api name:    {ai_spec["api_spec"]["api_name"]}"
+echo "Running with api key:     {ai_spec["api_spec"]["api_key"]}"
 """
         cmd_postfix = """
 sleep 0.1
 echo "---------END OF AGENT OUTPUT---------"
 """
         agent_cmd_launch_path.write_text(cmd_prefix + cmd + cmd_postfix, encoding="utf-8")
-    return None
-
-
 def get_agents_launch_layout(session_root: Path):
     from machineconfig.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig, LayoutsFile
+
     tab_config: list[TabConfig] = []
     prompt_root = session_root / "prompts"
     all_dirs_under_prompts = [d for d in prompt_root.iterdir() if d.is_dir()]
 
     import re
-    all_dirs_under_prompts = sorted(all_dirs_under_prompts, key=lambda path: [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', path.name)])
+
+    all_dirs_under_prompts = sorted(
+        all_dirs_under_prompts, key=lambda path: [int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", path.name)]
+    )
     print(all_dirs_under_prompts)
     for a_prompt_dir in all_dirs_under_prompts:
         idx = a_prompt_dir.name.split("_")[-1]  # e.g., agent_0 -> 0

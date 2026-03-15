@@ -2,9 +2,22 @@ import re
 import shlex
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TypedDict
 
 
 _KDL_ATTR_RE = re.compile(r'(\w+)=(?:"((?:\\.|[^"])*)"|([^\s{}]+))')
+
+
+class LayoutPane(TypedDict):
+    name: str | None
+    command: str | None
+    cwd: str | None
+    args: list[str]
+
+
+class LayoutTab(TypedDict):
+    name: str
+    panes: list[LayoutPane]
 
 
 def parse_kdl_attrs(line: str) -> dict[str, str]:
@@ -33,9 +46,9 @@ def _short_command(command: str | None, args: Sequence[str]) -> str:
 
 
 def summarize_layout(layout_text: str) -> str | None:
-    tabs: list[dict[str, object]] = []
-    current_tab: dict[str, object] | None = None
-    last_pane: dict[str, object] | None = None
+    tabs: list[LayoutTab] = []
+    current_tab: LayoutTab | None = None
+    last_pane: LayoutPane | None = None
 
     for raw_line in layout_text.splitlines():
         line = raw_line.strip()
@@ -58,14 +71,13 @@ def summarize_layout(layout_text: str) -> str | None:
             if not is_actual_pane:
                 last_pane = None
                 continue
-            pane: dict[str, object] = {
+            pane: LayoutPane = {
                 "name": attrs.get("name"),
                 "command": attrs.get("command"),
                 "cwd": attrs.get("cwd"),
                 "args": [],
             }
             panes = current_tab["panes"]
-            assert isinstance(panes, list)
             panes.append(pane)
             last_pane = pane
             continue
@@ -82,20 +94,15 @@ def summarize_layout(layout_text: str) -> str | None:
     for index, tab in enumerate(tabs, start=1):
         tab_name = str(tab["name"])
         panes = tab["panes"]
-        assert isinstance(panes, list)
         lines.append(f"[{index}] {tab_name}")
         if not panes:
             lines.append("  - shell")
             continue
         for pane_item in panes:
-            assert isinstance(pane_item, dict)
             pane_name = str(pane_item.get("name") or pane_item.get("command") or "shell")
             pane_command = pane_item.get("command")
             pane_args = pane_item.get("args")
             pane_cwd = pane_item.get("cwd")
-            assert pane_command is None or isinstance(pane_command, str)
-            assert pane_args is None or isinstance(pane_args, list)
-            assert pane_cwd is None or isinstance(pane_cwd, str)
             detail = _short_command(pane_command, pane_args or [])
             if not detail:
                 detail = "shell"

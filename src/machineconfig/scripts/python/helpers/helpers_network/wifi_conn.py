@@ -73,7 +73,12 @@ def get_available_networks() -> List[Dict[str, str]]:
             if platform.system() == "Linux":
                 result = subprocess.run(["nmcli", "-t", "-f", "SSID,SIGNAL", "device", "wifi", "list"], capture_output=True, text=True, check=True)
             else:  # Darwin/macOS - using airport command
-                result = subprocess.run(["/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport", "-s"], capture_output=True, text=True, check=True)
+                result = subprocess.run(
+                    ["/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport", "-s"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
 
             for line in result.stdout.strip().split("\n"):
                 if line and ":" in line:
@@ -129,9 +134,8 @@ def display_and_select_network() -> Dict[str, str] | None:
         index = int(choice) - 1
         if 0 <= index < len(networks):
             return networks[index]
-        else:
-            console.print(f"[red]❌ Invalid selection. Please choose 1-{len(networks)}[/red]")
-            return None
+        console.print(f"[red]❌ Invalid selection. Please choose 1-{len(networks)}[/red]")
+        return None
 
     except ValueError:
         console.print("[red]❌ Invalid input. Please enter a number.[/red]")
@@ -144,7 +148,9 @@ def connect(name: str, ssid: str):
 
     try:
         if platform.system() == "Windows":
-            subprocess.run(["netsh", "wlan", "connect", f"name={name}", f"ssid={ssid}", "interface=Wi-Fi"], capture_output=True, text=True, check=True)
+            subprocess.run(
+                ["netsh", "wlan", "connect", f"name={name}", f"ssid={ssid}", "interface=Wi-Fi"], capture_output=True, text=True, check=True
+            )
         elif platform.system() == "Linux":
             subprocess.run(f"nmcli connection up '{name}'", shell=True, check=True)
 
@@ -277,17 +283,15 @@ def get_current_wifi_name() -> str:
 
             console.print("[yellow]⚠️  Not connected to WiFi[/yellow]\n")
             return "Not connected to WiFi"
-
-        elif platform.system() == "Linux":
+        if platform.system() == "Linux":
             result = subprocess.run(["iwgetid", "-r"], capture_output=True, text=True, check=True)
 
             wifi_name = result.stdout.strip()
             if wifi_name:
                 console.print(f"[green]✅ Connected to: {wifi_name}[/green]\n")
                 return wifi_name
-            else:
-                console.print("[yellow]⚠️  Not connected to WiFi[/yellow]\n")
-                return "Not connected to WiFi"
+            console.print("[yellow]⚠️  Not connected to WiFi[/yellow]\n")
+            return "Not connected to WiFi"
 
     except subprocess.CalledProcessError:
         console.print("[yellow]⚠️  Not connected to WiFi or unable to detect[/yellow]\n")
@@ -336,7 +340,9 @@ def create_new_connection(name: str, ssid: str, password: str):
             profile_path = f"{name}.xml"
             Path(profile_path).write_text(xml_config, encoding="utf-8")
 
-            subprocess.run(["netsh", "wlan", "add", "profile", f"filename={profile_path}", "interface=Wi-Fi"], capture_output=True, text=True, check=True)
+            subprocess.run(
+                ["netsh", "wlan", "add", "profile", f"filename={profile_path}", "interface=Wi-Fi"], capture_output=True, text=True, check=True
+            )
 
             # Clean up the XML file
             try:
@@ -347,7 +353,7 @@ def create_new_connection(name: str, ssid: str, password: str):
         elif platform.system() == "Linux":
             # Check if connection already exists
             check_cmd = f"nmcli connection show '{name}'"
-            check_result = subprocess.run(check_cmd, shell=True, capture_output=True)
+            check_result = subprocess.run(check_cmd, shell=True, capture_output=True, check=False)
 
             if check_result.returncode == 0:
                 console.print(f"[yellow]⚠️  Connection '{name}' already exists, deleting old one...[/yellow]")

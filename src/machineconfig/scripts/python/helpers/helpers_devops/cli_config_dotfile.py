@@ -1,15 +1,16 @@
-
 """Like yadm and dotter."""
 
-from typing import Annotated, Literal
-from machineconfig.profile.create_links_export import ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER, METHOD_LOOSE, METHOD_MAP
 from pathlib import Path
 import shutil
 import subprocess
+from typing import Annotated, Literal
+
 import typer
 
+from machineconfig.profile.create_links_export import METHOD_LOOSE, METHOD_MAP, ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER
 from machineconfig.utils.source_of_truth import CONFIG_ROOT
 from machineconfig.utils.path_extended import PathExtended
+
 BACKUP_ROOT_PRIVATE = Path.home().joinpath("dotfiles/machineconfig/mapper/files")
 BACKUP_ROOT_PUBLIC = Path(CONFIG_ROOT).joinpath("dotfiles/mapper")
 DEFAULT_DOTFILE_MAPPER_HEADER = "# User-defined config file mappings\n# Created by `d c` CLI tool\n\n"
@@ -149,16 +150,14 @@ def register_dotfile(
             except Exception as e:
                 msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
                 typer.echo(msg)
-                typer.Exit(code=1)
-                return
+                raise typer.Exit(code=1) from e
         case "symlink" | "s":
             try:
                 symlink_map(config_file_default_path=orig_path_extended, self_managed_config_file_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])
             except Exception as e:
                 msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
                 typer.echo(msg)
-                typer.Exit(code=1)
-                return
+                raise typer.Exit(code=1) from e
         case _:
             raise ValueError(f"Unknown method: {method}")
     console.print(Panel("\n".join(["✅ Symbolic link created successfully!", "🔄 Add the following snippet to mapper.toml to persist this mapping:",]), title="Symlink Created", border_style="green", padding=(1, 2),))
@@ -226,7 +225,6 @@ def export_dotfiles(
     dotfiles_zip = Path.home().joinpath("dotfiles.zip")
     if dotfiles_zip.exists():
         dotfiles_zip.unlink()
-    import shutil
     zipfile = shutil.make_archive(base_name=str(dotfiles_zip)[:-4], format="zip", root_dir=str(dotfiles_dir), base_dir=".", verbose=False)
     from machineconfig.utils.io import encrypt
     zipfile_enc_bytes = encrypt(
@@ -244,23 +242,24 @@ def export_dotfiles(
         # ouch c ~/dotfiles dotfiles.zip
         # # INSECURE OVER INTERNET: uvx wormhole-magic send ~/dotfiles.zip
         raise NotImplementedError("Internet-based transfer not yet implemented.")
-    else:
-        # devops network share-server --no-auth ./dotfiles.zip
-        import machineconfig.scripts.python.helpers.helpers_devops.cli_share_server as cli_share_server
-        from  machineconfig.scripts.python.helpers.helpers_network.address import select_lan_ipv4
-        localipv4 = select_lan_ipv4(prefer_vpn=False)
-        port = 8888
-        msg = f"""On the remote machine, run the following:
+    # devops network share-server --no-auth ./dotfiles.zip
+    from machineconfig.scripts.python.helpers.helpers_devops import cli_share_server
+    from machineconfig.scripts.python.helpers.helpers_network.address import select_lan_ipv4
+
+    localipv4 = select_lan_ipv4(prefer_vpn=False)
+    port = 8888
+    msg = f"""On the remote machine, run the following:
 d c i -u http://{localipv4}:{port} -p {pwd}
 """
-        from machineconfig.utils.accessories import display_with_flashy_style
-        display_with_flashy_style(msg=msg, title="Remote Machine Instructions",)
-        cli_share_server.web_file_explorer(
-            path=str(zipfile_enc_path),
-            no_auth=True,
-            port=port,
-            # bind_address="
-        )
+    from machineconfig.utils.accessories import display_with_flashy_style
+
+    display_with_flashy_style(msg=msg, title="Remote Machine Instructions")
+    cli_share_server.web_file_explorer(
+        path=str(zipfile_enc_path),
+        no_auth=True,
+        port=port,
+        # bind_address="
+    )
 
 
 def import_dotfiles(
@@ -306,7 +305,6 @@ def import_dotfiles(
     import zipfile
     if Path.home().joinpath("dotfiles").exists():
         print(f"⚠️  WARNING: Overwriting existing directory: {Path.home().joinpath('dotfiles')}")
-        import shutil
         shutil.rmtree(Path.home().joinpath("dotfiles"))
     with zipfile.ZipFile(zipfile_path, 'r') as zip_ref:
         zip_ref.extractall(Path.home().joinpath("dotfiles"))

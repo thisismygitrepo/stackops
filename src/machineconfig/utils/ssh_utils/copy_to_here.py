@@ -16,6 +16,7 @@ def copy_to_here(
 ) -> None:
     if self.sftp is None:
         raise RuntimeError(f"SFTP connection not available for {self.hostname}. Cannot transfer files.")
+    sftp = self.sftp
 
     if not internal_call:
         print(f"{'⬇️' * 5} SFTP DOWNLOADING FROM `{source}` TO `{target}`")
@@ -253,9 +254,7 @@ def copy_to_here(
     print(f"""📥 [DOWNLOAD] Receiving: {expanded_source}  ==>  Local Path: {target_obj}""")
     try:
         with self.tqdm_wrap(ascii=True, unit="b", unit_scale=True) as pbar:
-            if self.sftp is None:  # type: ignore[unreachable]
-                raise RuntimeError(f"SFTP connection lost for {self.hostname}")
-            self.sftp.get(remotepath=expanded_source, localpath=str(target_obj), callback=pbar.view_bar)  # type: ignore
+            sftp.get(remotepath=expanded_source, localpath=str(target_obj), callback=pbar.view_bar)
     except Exception:
         if target_obj.exists():
             target_obj.unlink()

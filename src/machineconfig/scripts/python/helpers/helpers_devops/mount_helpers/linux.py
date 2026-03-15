@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import cast
 
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.commands import ensure_ok, run_command, run_command_sudo
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
@@ -20,7 +21,7 @@ def _flatten_lsblk_devices(devices: list[dict[str, object]]) -> list[dict[str, o
         if isinstance(children, list):
             for child in children:
                 if isinstance(child, dict):
-                    stack.append(child)
+                    stack.append(cast(dict[str, object], child))
     return result
 
 
@@ -64,7 +65,7 @@ def list_linux_devices() -> list[DeviceEntry]:
             )
     return entries
 
-def is_admin():
+def is_admin() -> bool:
     try:
         return os.geteuid() == 0
     except AttributeError:

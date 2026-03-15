@@ -106,8 +106,7 @@ def type_hint(path: Annotated[str, typer.Argument(..., help="Path to file/projec
         if not (path_resolved / "pyproject.toml").exists():
             typer.echo("Error: Provided directory path is not a project root (missing pyproject.toml).", err=True)
             raise typer.Exit(code=1)
-        else:
-            modules = [file for file in path_resolved.rglob("dtypes.py") if ".venv" not in str(file)]
+        modules = [file for file in path_resolved.rglob("dtypes.py") if ".venv" not in str(file)]
     for input_file in modules:
         print(f"Worked on: {input_file}")
         output_file = input_file.parent.joinpath(f"{input_file.stem}_names.py")

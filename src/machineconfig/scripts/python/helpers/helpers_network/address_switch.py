@@ -75,16 +75,13 @@ def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_add
             if _ip_is_acceptable(new_ip, current_ip, target_ip_addresses):
                 print("✅ Done ... IP switched successfully.")
                 return True, new_ip
-            else:
-                print("❌ IP not acceptable, retrying...")
+            print("❌ IP not acceptable, retrying...")
         else:
             print("⚠️ Could not retrieve new IP after multiple attempts.")
 
     latest_ip = latest_ip or ""
     print("❌ Failed to switch IP after max trials.")
     return False, latest_ip
-
-
 
 if __name__ == "__main__":
     switch_public_ip_address(max_trials=10, wait_seconds=4.0, target_ip_addresses=None)

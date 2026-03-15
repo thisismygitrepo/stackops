@@ -8,13 +8,13 @@ from rich.panel import Panel
 from rich.console import Group, RenderableType
 from rich.table import Table
 from rich import box
-from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import CommandInfo
+from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import ArgumentInfo, CommandInfo
 
 
 class CommandDetail(Static):
     """Widget for displaying command details."""
 
-    def __init__(self, *, id: str) -> None:  # type: ignore
+    def __init__(self, *, id: str) -> None:
         super().__init__(id=id)
         self.command_info: CommandInfo | None = None
 
@@ -91,7 +91,7 @@ class CommandDetail(Static):
         usage = " ".join(parts).strip()
         return usage or command_info.help_text or command_info.name
 
-    def _build_arguments_table(self, arguments) -> Table:  # type: ignore
+    def _build_arguments_table(self, arguments: list[ArgumentInfo]) -> Table:
         table = Table(box=box.MINIMAL, show_header=False, pad_edge=False)
         table.add_column("Argument", style="bold cyan", no_wrap=True)
         table.add_column("Description", style="white")
@@ -105,7 +105,7 @@ class CommandDetail(Static):
         table.title_style = "bold green"
         return table
 
-    def _build_options_table(self, options) -> Table:  # type: ignore
+    def _build_options_table(self, options: list[ArgumentInfo]) -> Table:
         table = Table(box=box.MINIMAL, show_header=False, pad_edge=False)
         table.add_column("Option", style="bold cyan", no_wrap=True)
         table.add_column("Description", style="white")
@@ -122,8 +122,8 @@ class CommandDetail(Static):
         table.title_style = "bold magenta"
         return table
 
-    def _format_option_flags(self, arg) -> str:  # type: ignore
-        parts = []
+    def _format_option_flags(self, arg: ArgumentInfo) -> str:
+        parts: list[str] = []
         if arg.long_flags:
             parts.append(self._combine_flags(arg.long_flags))
         if arg.short_flags:
@@ -139,7 +139,7 @@ class CommandDetail(Static):
 
         return ", ".join(parts)
 
-    def _combine_flags(self, flags) -> str:  # type: ignore
+    def _combine_flags(self, flags: list[str]) -> str:
         if len(flags) == 2 and self._is_negative_flag(flags[1]) and not self._is_negative_flag(flags[0]):
             return f"{flags[0]} / {flags[1]}"
         return ", ".join(flags)
@@ -148,5 +148,5 @@ class CommandDetail(Static):
         token = flag.lstrip("-")
         return token.startswith("no-")
 
-    def _placeholder(self, arg) -> str:  # type: ignore
+    def _placeholder(self, arg: ArgumentInfo) -> str:
         return (arg.placeholder or arg.name).upper()

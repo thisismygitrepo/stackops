@@ -3,14 +3,18 @@ Main TUI application for navigating machineconfig commands.
 """
 
 import subprocess
+from collections.abc import Iterator
+
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Input, Tree
 from textual.binding import Binding
+from textual.widgets import Header, Footer, Input, Tree
+from textual.widgets.tree import TreeNode
+
 from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_builder import CommandBuilderScreen
-from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_tree import CommandTree
 from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_detail import CommandDetail
-from machineconfig.scripts.python.graph.visualize.helpers_navigator.search_bar import SearchBar
+from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_tree import CommandTree
 from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import CommandInfo
+from machineconfig.scripts.python.graph.visualize.helpers_navigator.search_bar import SearchBar
 
 
 class CommandNavigatorApp(App[None]):
@@ -154,27 +158,24 @@ class CommandNavigatorApp(App[None]):
             return
 
         # Filter nodes based on search term
-        def filter_tree(node):  # type: ignore
-            if node.data and not node.data.is_group:
-                match = (search_term in node.data.name.lower() or
-                        search_term in node.data.description.lower() or
-                        search_term in node.data.command.lower())
+        def filter_tree(node: TreeNode[CommandInfo]) -> bool:
+            if node.data is not None and not node.data.is_group:
+                match = search_term in node.data.name.lower() or search_term in node.data.description.lower() or search_term in node.data.command.lower()
                 return match
             return False
 
         # Expand parents of matching nodes by walking through all nodes
-        def walk_nodes(node):  # type: ignore
-            """Recursively walk through tree nodes."""
+        def walk_nodes(node: TreeNode[CommandInfo]) -> Iterator[TreeNode[CommandInfo]]:
             yield node
             for child in node.children:
                 yield from walk_nodes(child)
 
         for node in walk_nodes(tree.root):
             if filter_tree(node):
-                parent = node.parent
-                while parent and parent != tree.root:
+                parent: TreeNode[CommandInfo] | None = node.parent
+                while parent is not None and parent != tree.root:
                     parent.expand()
-                    parent = parent.parent  # type: ignore
+                    parent = parent.parent
 
     def action_copy_command(self) -> None:
         """Copy the selected command to clipboard."""

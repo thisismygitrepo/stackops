@@ -118,7 +118,7 @@ def looks_like_binary_asset(asset_name: str) -> bool:
 def to_placeholder_pattern(asset_name: str, tag_name: str) -> str:
     tag_no_v: str = normalize_version_for_placeholder(tag_name)
     variants: list[str] = [tag_name, tag_no_v, f"v{tag_no_v}"]
-    variants_sorted: list[str] = sorted(set(variants), key=len, reverse=True)
+    variants_sorted: list[str] = sorted(set(variants), key=lambda variant: len(variant), reverse=True)
     result: str = asset_name
     for variant in variants_sorted:
         if len(variant) == 0:

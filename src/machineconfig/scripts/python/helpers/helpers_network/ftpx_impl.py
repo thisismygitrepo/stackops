@@ -1,6 +1,15 @@
 """Pure Python implementation for ftpx command - no typer dependencies."""
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from rich.console import Console
+
+    from machineconfig.utils.path_extended import PathExtended
+    from machineconfig.utils.ssh import SSH
 
 
 def ftpx(source: str, target: str, recursive: bool, zipFirst: bool, cloud: bool, overwrite_existing: bool) -> None:
@@ -8,7 +17,7 @@ def ftpx(source: str, target: str, recursive: bool, zipFirst: bool, cloud: bool,
     if target == "wsl" or source == "wsl":
         _handle_wsl_transfer(source=source, target=target, overwrite_existing=overwrite_existing)
         return
-    elif source == "win" or target == "win":
+    if source == "win" or target == "win":
         _handle_win_transfer(source=source, target=target, overwrite_existing=overwrite_existing, windows_username=None)
         return
 
@@ -107,8 +116,7 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
 ┃    Cannot use expand symbol `{ES}` in both source and target
 ┃    This creates a cyclical inference dependency
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━""")
-            else:
-                target_path_obj = PathExtended(target).expanduser().absolute()
+            target_path_obj = PathExtended(target).expanduser().absolute()
             resolved_source = target_path_obj.collapseuser().as_posix()
             resolved_target = target
         else:
@@ -130,8 +138,7 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
 ┃    Cannot use expand symbol `{ES}` in both source and target
 ┃    This creates a cyclical inference dependency
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━""")
-            else:
-                resolved_source = source
+            resolved_source = source
             resolved_target = None
         else:
             resolved_target = ":".join(target.split(":")[1:])
@@ -150,10 +157,10 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
     return resolved_source, resolved_target, machine, source_is_remote
 
 
-def _create_ssh_connection(machine: str, console: "Console") -> "SSH":  # type: ignore[name-defined]
+def _create_ssh_connection(machine: str, console: Console) -> SSH:
     """Create SSH connection, handling authentication."""
     from machineconfig.utils.ssh import SSH
-    from paramiko.ssh_exception import AuthenticationException  # type: ignore
+    from paramiko.ssh_exception import AuthenticationException
     from rich.panel import Panel
 
     try:
@@ -181,11 +188,14 @@ def _create_ssh_connection(machine: str, console: "Console") -> "SSH":  # type: 
 
 
 def _handle_cloud_transfer(
-    ssh: "SSH", resolved_source: str | None, resolved_target: str | None, console: "Console"
-) -> "PathExtended | None":  # type: ignore[name-defined]
+    ssh: SSH, resolved_source: str | None, resolved_target: str | None, console: Console
+) -> PathExtended | None:
     """Handle cloud transfer mode."""
     from machineconfig.utils.path_extended import PathExtended
     from rich.panel import Panel
+
+    if resolved_source is None or resolved_target is None:
+        raise ValueError("Cloud transfer mode requires both source and target paths.")
 
     console.print(Panel.fit("☁️  Cloud transfer mode — uploading from remote to cloud...", title="Cloud Upload", border_style="cyan"))
     ssh.run_shell_cmd_on_remote(
@@ -197,19 +207,19 @@ def _handle_cloud_transfer(
     )
     console.print(Panel.fit("⬇️  Cloud transfer mode — downloading from cloud to local...", title="Cloud Download", border_style="cyan"))
     ssh.run_shell_cmd_on_local(command=f"cloud copy :^ {resolved_target}")
-    return PathExtended(resolved_target)  # type: ignore
+    return PathExtended(resolved_target)
 
 
 def _handle_direct_transfer(
-    ssh: "SSH",
+    ssh: SSH,
     resolved_source: str | None,
     resolved_target: str | None,
     source_is_remote: bool,
     zipFirst: bool,
     recursive: bool,
     overwrite_existing: bool,
-    console: "Console",
-) -> "PathExtended | None":  # type: ignore[name-defined]
+    console: Console,
+) -> PathExtended | None:
     """Handle direct SSH transfer."""
     from rich.panel import Panel
 
@@ -261,15 +271,3 @@ def _handle_direct_transfer(
         )
 
     return received_file
-
-
-if __name__ == "__main__":
-    from machineconfig.utils.ssh import SSH
-
-    _ = SSH
-    from machineconfig.utils.path_extended import PathExtended
-
-    _ = PathExtended
-    from rich.console import Console
-
-    _ = Console

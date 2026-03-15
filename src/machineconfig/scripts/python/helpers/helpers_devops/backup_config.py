@@ -97,7 +97,7 @@ def _parse_bool(value: object, field: str, item_name: str) -> bool:
 def _require_mapping(value: object, item_name: str) -> Mapping[str, object]:
     if not isinstance(value, Mapping):
         raise ValueError(f"Backup entry '{item_name}' must be a table.")
-    return value
+    return {str(key): item for key, item in value.items()}
 
 
 def _require_str_field(raw: Mapping[str, object], field: str, item_name: str) -> str:

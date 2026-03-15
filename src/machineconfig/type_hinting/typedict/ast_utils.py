@@ -73,7 +73,7 @@ def load_target_class_fields(source_file_path: Path, search_paths: list[Path] | 
                 return context.classes[base.id], context
             if base.id in context.imports:
                 module_name, original_name = context.imports[base.id]
-                return _resolve_imported_class(module_name, original_name, search_paths)  # type: ignore
+                return _resolve_imported_class(module_name, original_name, search_paths)
         return None
 
     def collect_fields(class_node: ast.ClassDef, context: FileContext, visited: set[str]) -> list[FieldInfo]:

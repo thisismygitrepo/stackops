@@ -20,6 +20,7 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.visual import VisualType
 from textual.widgets import Footer, Header, Label, ListItem, ListView, Static
 
 
@@ -60,8 +61,19 @@ class EnvListItem(ListItem):
 
 
 class EnvValuePreview(Static):
-    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        content: VisualType = "",
+        *,
+        expand: bool = False,
+        shrink: bool = False,
+        markup: bool = True,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ) -> None:
+        super().__init__(content=content, expand=expand, shrink=shrink, markup=markup, name=name, id=id, classes=classes, disabled=disabled)
         self.border_title = "Environment Value"
 
     def show_value(self, env_key: str, env_value: str) -> None:
@@ -78,8 +90,19 @@ class EnvValuePreview(Static):
 
 
 class StatusBar(Static):
-    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        content: VisualType = "",
+        *,
+        expand: bool = False,
+        shrink: bool = False,
+        markup: bool = True,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ) -> None:
+        super().__init__(content=content, expand=expand, shrink=shrink, markup=markup, name=name, id=id, classes=classes, disabled=disabled)
         self.border_title = "Status"
 
     def show_message(self, message: str, level: str) -> None:

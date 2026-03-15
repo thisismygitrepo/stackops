@@ -159,7 +159,7 @@ encryption = ssl
             #     raise KeyError(msggg) from ke
 
             # _resend = install_n_import("resend")
-            # import resend  # type: ignore
+            # import resend
             # resend.api_key = api_key
             # r = resend.Emails.send({
             # "from": "onboarding@resend.dev",

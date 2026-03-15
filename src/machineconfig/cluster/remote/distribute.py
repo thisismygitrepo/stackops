@@ -38,7 +38,7 @@ class MachineSpecs:
     product_norm: float
 
     @staticmethod
-    def from_local() -> MachineSpecs:
+    def from_local() -> "MachineSpecs":
         import psutil
         cpu = psutil.cpu_count() or 1
         ram = psutil.virtual_memory().total / 2**30
@@ -52,7 +52,7 @@ class ThreadLoadCalculator:
     reference_specs: MachineSpecs
 
     @staticmethod
-    def default() -> ThreadLoadCalculator:
+    def default() -> "ThreadLoadCalculator":
         return ThreadLoadCalculator(num_jobs=None, load_criterion=LoadCriterion.cpu, reference_specs=MachineSpecs.from_local())
 
     def get_num_threads(self, machine_specs: MachineSpecs) -> int:
@@ -88,6 +88,50 @@ class MachineLoadCalculator:
             idx_so_far = idx2
             result.append(WorkloadParams(idx_start=idx1, idx_end=idx2, idx_max=self.max_num, jobs=threads, idx=machine_idx, idx_min=0, job_id=""))
         return result
+
+
+def _require_object_dict(value: object, field_name: str) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise TypeError(f"{field_name} must be a dictionary.")
+    return {str(key): item for key, item in value.items()}
+
+
+def _require_object_list(value: object, field_name: str) -> list[object]:
+    if not isinstance(value, list):
+        raise TypeError(f"{field_name} must be a list.")
+    return [item for item in value]
+
+
+def _require_float(value: object, field_name: str) -> float:
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        return float(value)
+    raise TypeError(f"{field_name} must be numeric.")
+
+
+def _require_int(value: object, field_name: str) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float | str):
+        return int(value)
+    raise TypeError(f"{field_name} must be an integer.")
+
+
+def _require_machine_specs(value: object, field_name: str) -> MachineSpecs:
+    raw = _require_object_dict(value, field_name=field_name)
+    return MachineSpecs(
+        cpu=_require_float(raw["cpu"], field_name=f"{field_name}.cpu"),
+        ram=_require_float(raw["ram"], field_name=f"{field_name}.ram"),
+        product=_require_float(raw["product"], field_name=f"{field_name}.product"),
+        cpu_norm=_require_float(raw["cpu_norm"], field_name=f"{field_name}.cpu_norm"),
+        ram_norm=_require_float(raw["ram_norm"], field_name=f"{field_name}.ram_norm"),
+        product_norm=_require_float(raw["product_norm"], field_name=f"{field_name}.product_norm"),
+    )
 
 
 class Cluster:
@@ -225,25 +269,26 @@ class Cluster:
         cluster.root_dir = Path(str(state["root_dir"]))
         cluster.results_downloaded = bool(state.get("results_downloaded", False))
         cluster.description = str(state.get("description", ""))
-        cluster.func_kwargs = dict(state.get("func_kwargs") or {})  # type: ignore[arg-type]
-        cluster.func = None  # type: ignore[assignment]
+        func_kwargs_raw = state.get("func_kwargs")
+        cluster.func_kwargs = {} if func_kwargs_raw is None else _require_object_dict(func_kwargs_raw, field_name="func_kwargs")
+        cluster.func = None
         cluster.ssh_connections = []
-        cluster.config = RemoteMachineConfig.from_dict(state["config"])  # type: ignore[arg-type]
-        cluster.workload_params = [WorkloadParams.from_dict(d) for d in state.get("workload_params", [])]  # type: ignore[union-attr]
-        cluster.machines_specs = [MachineSpecs(**d) for d in state.get("machines_specs", [])]  # type: ignore[arg-type]
-        cluster.threads_per_machine = list(state.get("threads_per_machine", []))  # type: ignore[arg-type]
-        cluster.machines = [RemoteMachine.from_dict(d) for d in state.get("machines", [])]  # type: ignore[union-attr]
+        cluster.config = RemoteMachineConfig.from_dict(_require_object_dict(state["config"], field_name="config"))
+        cluster.workload_params = [WorkloadParams.from_dict(_require_object_dict(item, field_name="workload_params[]")) for item in _require_object_list(state.get("workload_params", []), field_name="workload_params")]
+        cluster.machines_specs = [_require_machine_specs(item, field_name="machines_specs[]") for item in _require_object_list(state.get("machines_specs", []), field_name="machines_specs")]
+        cluster.threads_per_machine = [_require_int(item, field_name="threads_per_machine[]") for item in _require_object_list(state.get("threads_per_machine", []), field_name="threads_per_machine")]
+        cluster.machines = [RemoteMachine.from_dict(_require_object_dict(item, field_name="machines[]")) for item in _require_object_list(state.get("machines", []), field_name="machines")]
         tlc_raw = state.get("thread_load_calc", {})
         if isinstance(tlc_raw, dict) and tlc_raw:
             ref_raw = tlc_raw.get("reference_specs", {})
-            ref_specs = MachineSpecs(**ref_raw) if isinstance(ref_raw, dict) else MachineSpecs.from_local()
-            cluster.thread_load_calc = ThreadLoadCalculator(num_jobs=tlc_raw.get("num_jobs"), load_criterion=LoadCriterion[str(tlc_raw.get("load_criterion", "cpu"))], reference_specs=ref_specs)  # type: ignore[arg-type]
+            ref_specs = _require_machine_specs(ref_raw, field_name="thread_load_calc.reference_specs") if isinstance(ref_raw, dict) else MachineSpecs.from_local()
+            cluster.thread_load_calc = ThreadLoadCalculator(num_jobs=tlc_raw.get("num_jobs"), load_criterion=LoadCriterion[str(tlc_raw.get("load_criterion", "cpu"))], reference_specs=ref_specs)
         else:
             cluster.thread_load_calc = ThreadLoadCalculator.default()
         mlc_raw = state.get("machine_load_calc", {})
         if isinstance(mlc_raw, dict) and mlc_raw:
-            cluster.machine_load_calc = MachineLoadCalculator(max_num=int(mlc_raw.get("max_num", 1000)), load_criterion=LoadCriterion[str(mlc_raw.get("load_criterion", "cpu"))])  # type: ignore[arg-type]
-            cluster.machine_load_calc.load_ratios = list(mlc_raw.get("load_ratios", []))  # type: ignore[arg-type]
+            cluster.machine_load_calc = MachineLoadCalculator(max_num=int(mlc_raw.get("max_num", 1000)), load_criterion=LoadCriterion[str(mlc_raw.get("load_criterion", "cpu"))])
+            cluster.machine_load_calc.load_ratios = list(mlc_raw.get("load_ratios", []))
         else:
             cluster.machine_load_calc = MachineLoadCalculator(max_num=1000, load_criterion=LoadCriterion.cpu)
         return cluster

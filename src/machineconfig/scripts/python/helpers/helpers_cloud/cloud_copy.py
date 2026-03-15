@@ -101,7 +101,8 @@ def main(
             else:
                 console.print(Panel("❌ Invalid Google Drive link format", title="[bold red]Error[/bold red]", border_style="red"))
                 raise SystemExit(1)
-        return get_securely_shared_file(url=source, folder=target)
+        get_securely_shared_file(url=source, folder=target)
+        return
 
     console.print(Panel("🔍 Parsing source and target paths...", title="[bold blue]Info[/bold blue]", border_style="blue"))
     cloud, source, target = parse_cloud_source_target(

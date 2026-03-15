@@ -44,7 +44,7 @@
 #         except ImportError:
 #             __import__("os").system(f'beep -f {frequency} -l {1000 * duration}')
 #         else:
-#             winsound.Beep(frequency, 1000 * duration)  # type: ignore
+#             winsound.Beep(frequency, 1000 * duration)
 
 #     _ = beep
 

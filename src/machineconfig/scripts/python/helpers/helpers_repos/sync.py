@@ -33,7 +33,7 @@ def delete_remote_repo_copy_and_push_local(remote_repo: str, local_repo: str, cl
         Remote.remove(Repo(repo_root_path), "originEnc")
         console.print(Panel("🔗 Removed originEnc remote reference", border_style="blue"))
     except Exception:
-        pass  # type: ignore
+        pass
     console.print(Panel("📈 Deleting remote repository copy and pushing local changes", width=150, border_style="blue"))
 
     repo_root_path.to_cloud(cloud=cloud, zip=True, encrypt=True, rel2home=True, os_specific=False)

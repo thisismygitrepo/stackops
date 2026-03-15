@@ -16,6 +16,7 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.visual import VisualType
 from textual.widgets import Footer, Header, Label, ListItem, ListView, Static
 
 from machineconfig.scripts.python.helpers.helper_env.path_manager_backend import get_directory_contents, get_path_entries, get_platform
@@ -24,8 +25,19 @@ from machineconfig.scripts.python.helpers.helper_env.path_manager_backend import
 class DirectoryPreview(Static):
     """Widget to display directory contents."""
 
-    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        content: VisualType = "",
+        *,
+        expand: bool = False,
+        shrink: bool = False,
+        markup: bool = True,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ) -> None:
+        super().__init__(content, expand=expand, shrink=shrink, markup=markup, name=name, id=id, classes=classes, disabled=disabled)
         self.border_title = "📂 Directory Preview"
 
     def update_preview(self, directory: str) -> None:
@@ -43,8 +55,19 @@ class DirectoryPreview(Static):
 class StatusBar(Static):
     """Status bar to show messages."""
 
-    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        content: VisualType = "",
+        *,
+        expand: bool = False,
+        shrink: bool = False,
+        markup: bool = True,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ) -> None:
+        super().__init__(content, expand=expand, shrink=shrink, markup=markup, name=name, id=id, classes=classes, disabled=disabled)
         self.border_title = "ℹ️  Status"
 
     def show_message(self, message: str, message_type: str = "info") -> None:

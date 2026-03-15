@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import shlex
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AI_SPEC
@@ -12,24 +11,20 @@ def fire_gemini(ai_spec: AI_SPEC, prompt_path: Path, repo_root: Path) -> str:
     #     model_arg = ""
     # else:
     if ai_spec["model"] is not None:
-      # --model {shlex.quote(ai_spec['model'])} 
-      model_arg = f"--model {shlex.quote(ai_spec['model'])}"
+        # --model {shlex.quote(ai_spec['model'])}
+        model_arg = f"--model {shlex.quote(ai_spec['model'])}"
     else:
-      model_arg = ""
+        model_arg = ""
     # Need a real shell for the pipeline; otherwise '| gemini ...' is passed as args to 'cat'
     safe_path = shlex.quote(str(prompt_path))
-    settings_dot_json = {
-   "security": {
-    "auth": {
-      "selectedType": "gemini-api-key"
-    }
-  }
-}
+    settings_dot_json = {"security": {"auth": {"selectedType": "gemini-api-key"}}}
     # settings_path = Path.home().joinpath(".gemini", "settings.json")
     from machineconfig.utils.accessories import randstr
+
     settings_tmp_path = Path.home().joinpath("tmp_results", "tmp_files", "agents", f"gemini_settings_{randstr()}.json")
     settings_tmp_path.parent.mkdir(parents=True, exist_ok=True)
     import json
+
     settings_tmp_path.write_text(json.dumps(settings_dot_json, indent=2), encoding="utf-8")
     api_key = ai_spec["api_spec"]["api_key"]
     if ai_spec["machine"] == "local":

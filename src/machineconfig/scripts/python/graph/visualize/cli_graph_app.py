@@ -1,9 +1,17 @@
 
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 import typer
+
+
+def _as_string_keyed_dict(value: object) -> dict[str, object] | None:
+    if not isinstance(value, dict):
+        return None
+    if not all(isinstance(key, str) for key in value):
+        return None
+    return cast(dict[str, object], value)
 
 
 def tree(
@@ -287,8 +295,8 @@ def search(
             node_name = node.get("name")
             node_name_str = node_name if isinstance(node_name, str) else ""
             tokens = parent_tokens + ([node_name_str] if node_name_str else [])
-            source = node.get("source")
-            if node.get("kind") == "command" and isinstance(source, dict):
+            source = _as_string_keyed_dict(node.get("source"))
+            if node.get("kind") == "command" and source is not None:
                 source_file = source.get("file")
                 if isinstance(source_file, str) and source_file.endswith(".py"):
                     command_path = " ".join(tokens).strip() or source_file
@@ -296,8 +304,9 @@ def search(
             children = node.get("children")
             if isinstance(children, list):
                 for child in children:
-                    if isinstance(child, dict):
-                        walk(child, tokens)
+                    child_node = _as_string_keyed_dict(child)
+                    if child_node is not None:
+                        walk(child_node, tokens)
 
         walk(root, [])
         if not entries:

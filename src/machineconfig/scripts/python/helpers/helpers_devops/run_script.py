@@ -30,7 +30,9 @@ def run_py_script(ctx: typer.Context,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
                 ) -> None:
     if command:
-        exec(name)  # type: ignore
+        from machineconfig.utils.code import exit_then_run_shell_script
+
+        exit_then_run_shell_script(script=name, strict=False)
         return
     from pathlib import Path
     if list_scripts:
@@ -52,7 +54,7 @@ def run_py_script(ctx: typer.Context,
             try:
                 print(f"Fetching temporary script from {a_url} ...")
                 import requests
-                response = requests.get(a_url)
+                response = requests.get(a_url, timeout=30)
                 if response.status_code != 200:
                     print(f"❌ ERROR: Could not fetch script '{name}.py' from repository. Status Code: {response.status_code}")
                     raise RuntimeError(f"Could not fetch script '{name}.py' from repository.")
@@ -71,12 +73,11 @@ def run_py_script(ctx: typer.Context,
             import sys
             subprocess.run([sys.executable, name], cwd=machineconfig.__path__[0], check=True)
             return
+        if Path(name).suffix in [".sh", ".ps1", ".bat", ".cmd", ""]:
+            target_file = Path(name)
         else:
-            if Path(name).suffix in [".sh", ".ps1", ".bat", ".cmd", ""]:
-                target_file = Path(name)
-            else:
-                print(f"❌ Error: File '{name}' is not a recognized script type. Supported types are {'.py', '.sh', '.ps1', '.bat', '.cmd', ''}.")
-                raise typer.Exit(code=1)
+            print(f"❌ Error: File '{name}' is not a recognized script type. Supported types are {'.py', '.sh', '.ps1', '.bat', '.cmd', ''}.")
+            raise typer.Exit(code=1)
 
     from machineconfig.utils.source_of_truth import DEFAULTS_PATH, PRIVATE_SCRIPTS_ROOT, PUBLIC_SCRIPTS_ROOT, LIBRARY_SCRIPTS_ROOT
 
@@ -171,7 +172,7 @@ def copy_script_to_local(ctx: typer.Context,
     """
     url = f"""https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/src/machineconfig/scripts/python/helpers/tmp_py_scripts/{name}.py"""
     import requests
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     if response.status_code != 200:
         typer.echo(ctx.get_help())
         typer.echo()
@@ -180,7 +181,7 @@ def copy_script_to_local(ctx: typer.Context,
     script_content = response.text
     from machineconfig.utils.source_of_truth import CONFIG_ROOT
     local_path = CONFIG_ROOT.joinpath(f"scripts_python/{alias or name}.py")
-    with open(local_path, "w") as f:
+    with open(local_path, "w", encoding="utf-8") as f:
         f.write(script_content)
     typer.echo(typer.style(f"✅ Script '{name}.py' has been copied to '{local_path}'.", fg=typer.colors.GREEN))
 

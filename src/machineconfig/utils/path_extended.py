@@ -96,7 +96,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             print(f"🗑️ ❌ DELETED {repr(self)}.")
         return self
 
-    def move(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, rel2it: bool = False, overwrite: bool = False, verbose: bool = True, parents: bool = True, content: bool = False) -> "PathExtended":  # type: ignore
+    def move(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, rel2it: bool = False, overwrite: bool = False, verbose: bool = True, parents: bool = True, content: bool = False) -> "PathExtended":  # pyright: ignore[reportIncompatibleMethodOverride]
         path = self._resolve_path(folder=folder, name=name, path=path, default_name=self.absolute().name, rel2it=rel2it)
         if parents:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -122,7 +122,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             print(f"🚚 MOVED {repr(self)} ==> {repr(path)}`")
         return path
 
-    def copy(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, content: bool = False, verbose: bool = True, append: str | None = None, overwrite: bool = False, orig: bool = False) -> "PathExtended":  # type: ignore
+    def copy(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, content: bool = False, verbose: bool = True, append: str | None = None, overwrite: bool = False, orig: bool = False) -> "PathExtended":  # pyright: ignore[reportIncompatibleMethodOverride]
         dest = self._resolve_path(folder=folder, name=name, path=path, default_name=self.name, rel2it=False)
         dest = dest.expanduser().resolve()
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -342,7 +342,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             return "👻NotExist"
         return "📍Relative"
 
-    def symlink_to(self, target: PLike, verbose: bool = True, overwrite: bool = False, orig: bool = False, strict: bool = True):  # type: ignore[override]  # pylint: disable=W0237
+    def symlink_to(self, target: PLike, verbose: bool = True, overwrite: bool = False, orig: bool = False, strict: bool = True) -> "PathExtended":  # pyright: ignore[reportIncompatibleMethodOverride]  # pylint: disable=W0237
         self.parent.mkdir(parents=True, exist_ok=True)
         target_obj = PathExtended(target).expanduser().resolve()
         if strict:
@@ -385,11 +385,11 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         win_order: bool = False,
     ) -> list["PathExtended"]:
         if isinstance(not_in, list):
-            filters_notin = [lambda x: all([str(a_not_in) not in str(x) for a_not_in in not_in])]  # type: ignore
+            filters_notin = [lambda x: all([str(a_not_in) not in str(x) for a_not_in in not_in])]
         else:
             filters_notin = []
         if isinstance(exts, list):
-            filters_extension = [lambda x: any([ext in x.name for ext in exts])]  # type: ignore
+            filters_extension = [lambda x: any([ext in x.name for ext in exts])]
         else:
             filters_extension = []
         filters_total = (filters_total or []) + filters_notin + filters_extension
@@ -407,12 +407,12 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 raw = list(root.iterdir())
             else:
                 raw = [root.joinpath(item) for item in zipfile.ZipFile(str(slf)).namelist()]
-            # res1 = raw.filter(lambda zip_path: fnmatch.fnmatch(zip_path.at, pattern))  # type: ignore
+            # res1 = raw.filter(lambda zip_path: fnmatch.fnmatch(zip_path.at, pattern))
             res1 = [item for item in raw if fnmatch.fnmatch(item.at, pattern)]
             # return res1.filter(lambda x: (folders or x.is_file()) and (files or x.is_dir()))
-            return [item for item in res1 if (folders or item.is_file()) and (files or item.is_dir())]  # type: ignore
+            return [item for item in res1 if (folders or item.is_file()) and (files or item.is_dir())]  # pyright: ignore[reportReturnType]
         elif dotfiles:
-            raw = slf.glob(pattern) if not r else self.rglob(pattern)
+            raw = list(slf.glob(pattern)) if not r else list(self.rglob(pattern))
         else:
             from glob import glob
 
@@ -420,6 +420,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 raw = glob(str(slf / "**" / pattern), recursive=r)
             else:
                 raw = glob(str(slf.joinpath(pattern)))  # glob ignroes dot and hidden files
+        raw = [PathExtended(item) for item in raw]
         if ".zip" not in str(slf) and compressed:
             filters_notin = [
                 PathExtended(comp_file).search(pattern=pattern, r=r, files=files, folders=folders, compressed=True, dotfiles=dotfiles, filters_total=filters_total, not_in=not_in, win_order=win_order) for comp_file in self.search("*.zip", r=r)
@@ -428,7 +429,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
 
             # haha = List(filters_notin).reduce(func=lambda x, y: x + y)
             haha = reduce(lambda x, y: x + y, filters_notin) if len(filters_notin) else []
-            raw = raw + haha  # type: ignore
+            raw = raw + haha
         processed = []
         for item in raw:
             item_ = PathExtended(item)
@@ -880,7 +881,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         cloud: str,
         remotepath: OPLike = None,
         decrypt: bool = False,
-        unzip: bool = False,  # type: ignore  # pylint: disable=W0621
+        unzip: bool = False,  # pylint: disable=W0621
         key: bytes | None = None,
         pwd: str | None = None,
         rel2home: bool = False,

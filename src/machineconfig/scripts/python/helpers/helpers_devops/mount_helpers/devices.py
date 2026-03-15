@@ -7,11 +7,11 @@ from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.windows i
 
 
 def list_devices() -> list[DeviceEntry]:
-	platform_name = platform.system()
-	if platform_name == "Linux":
-		return list_linux_devices()
-	if platform_name == "Darwin":
-		return list_macos_devices()
-	if platform_name == "Windows":
-		return list_windows_devices()
-	return []
+    platform_name = platform.system()
+    if platform_name == "Linux":
+        return list_linux_devices()
+    if platform_name == "Darwin":
+        return list_macos_devices()
+    if platform_name == "Windows":
+        return list_windows_devices()
+    return []

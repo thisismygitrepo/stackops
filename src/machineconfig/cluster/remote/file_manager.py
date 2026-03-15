@@ -3,6 +3,7 @@ import time
 import platform
 from pathlib import Path
 from datetime import datetime
+from typing import cast
 
 import psutil
 from rich.console import Console
@@ -38,7 +39,10 @@ class FileManager:
     @staticmethod
     def from_dict(d: dict[str, object]) -> "FileManager":
         fm = FileManager.__new__(FileManager)
-        fm.remote_machine_type = str(d["remote_machine_type"])  # type: ignore[assignment]
+        remote_machine_type = d["remote_machine_type"]
+        if remote_machine_type not in {"Linux", "Windows"}:
+            raise ValueError(f"Unsupported remote machine type: {remote_machine_type}")
+        fm.remote_machine_type = cast(MACHINE_TYPE, remote_machine_type)
         fm.job_id = str(d["job_id"])
         fm.max_simultaneous_jobs = int(d["max_simultaneous_jobs"])  # type: ignore[arg-type]
         fm.lock_resources = bool(d["lock_resources"])
@@ -213,7 +217,7 @@ def _save_job_list(jobs: list[JobStatus], path: Path) -> None:
 
 def _load_json_or_default[T](path: Path, default: T) -> T:
     if path.exists():
-        return read_json(path)  # type: ignore[return-value]
+        return cast(T, read_json(path))
     return default
 
 

@@ -13,11 +13,8 @@ console = Console()
 
 
 def parse_cloud_source_target(
-         cloud_config_explicit: CLOUD,
-         cloud_config_defaults: CLOUD,
-         cloud_config_name: str | None,
-         source: str, target: str
-         ) -> tuple[str, str, str]:
+    cloud_config_explicit: CLOUD, cloud_config_defaults: CLOUD, cloud_config_name: str | None, source: str, target: str
+) -> tuple[str, str, str]:
     print("Source:", source)
     print("Target:", target)
 
@@ -67,7 +64,7 @@ def parse_cloud_source_target(
             target = default_cloud + ":" + target[1:]
             print("target mutated to:", target, f"because of default cloud being {default_cloud}")
         else:
-            target = cloud_config_from_name['cloud'] + ":" + target[1:]
+            target = cloud_config_from_name["cloud"] + ":" + target[1:]
 
     cloud_config_final: CLOUD
     if cloud_config_from_name is None:
@@ -75,7 +72,10 @@ def parse_cloud_source_target(
     else:
         cloud_config_final = cloud_config_from_name
         override_keys = {
-            k: (cloud_config_explicit[k], cloud_config_defaults[k]) for k in cloud_config_explicit.keys() & cloud_config_defaults.keys() if cloud_config_explicit[k] != cloud_config_defaults[k]}  # type: ignore
+            k: (cloud_config_explicit[k], cloud_config_defaults[k])
+            for k in cloud_config_explicit.keys() & cloud_config_defaults.keys()
+            if cloud_config_explicit[k] != cloud_config_defaults[k]
+        }  # type: ignore
         tmp = dict(cloud_config_final)
         tmp.update(override_keys)
         cloud_config_final = cast(CLOUD, tmp)
@@ -87,13 +87,15 @@ def parse_cloud_source_target(
             assert ES not in target, f"You can't use expand symbol `{ES}` in both source and target. Cyclical inference dependency arised."
             target_obj = my_abs(target)
             from machineconfig.utils.path_extended import PathExtended
-            remote_path = PathExtended(target_obj).get_remote_path(os_specific=cloud_config_final["os_specific"], root=cloud_config_final["root"], rel2home=cloud_config_final["rel2home"], strict=False)
+
+            remote_path = PathExtended(target_obj).get_remote_path(
+                os_specific=cloud_config_final["os_specific"], root=cloud_config_final["root"], rel2home=cloud_config_final["rel2home"], strict=False
+            )
             source = f"{cloud}:{remote_path.as_posix()}"
+        elif target == ES:  # target path is to be inferred from source.
+            raise NotImplementedError("There is no .get_local_path method yet")
         else:  # source path is mentioned, target? maybe.
-            if target == ES:  # target path is to be inferred from source.
-                raise NotImplementedError("There is no .get_local_path method yet")
-            else:
-                target_obj = my_abs(target)
+            target_obj = my_abs(target)
         if cloud_config_final["zip"] and ".zip" not in source:
             source += ".zip"
         if cloud_config_final["encrypt"] and ".enc" not in source:
@@ -105,20 +107,28 @@ def parse_cloud_source_target(
             assert ES not in source, "You can't use $ in both source and target. Cyclical inference dependency arised."
             source_obj = my_abs(source)
             from machineconfig.utils.path_extended import PathExtended
-            remote_path = PathExtended(source_obj).get_remote_path(os_specific=cloud_config_final["os_specific"], root=cloud_config_final["root"], rel2home=cloud_config_final["rel2home"], strict=False)
+
+            remote_path = PathExtended(source_obj).get_remote_path(
+                os_specific=cloud_config_final["os_specific"], root=cloud_config_final["root"], rel2home=cloud_config_final["rel2home"], strict=False
+            )
             target = f"{cloud}:{remote_path.as_posix()}"
+        elif source == ES:
+            raise NotImplementedError("There is no .get_local_path method yet")
         else:  # target path is mentioned, source? maybe.
             target = str(target)
-            if source == ES:
-                raise NotImplementedError("There is no .get_local_path method yet")
-            else:
-                source_obj = my_abs(source)
+            source_obj = my_abs(source)
         if cloud_config_final["zip"] and ".zip" not in target:
             target += ".zip"
         if cloud_config_final["encrypt"] and ".enc" not in target:
             target += ".enc"
     else:
-        console.print(Panel("❌ ERROR: Invalid path configuration\nEither source or target must be a remote path (i.e. machine:path)", title="[bold red]Error[/bold red]", border_style="red"))
+        console.print(
+            Panel(
+                "❌ ERROR: Invalid path configuration\nEither source or target must be a remote path (i.e. machine:path)",
+                title="[bold red]Error[/bold red]",
+                border_style="red",
+            )
+        )
         raise ValueError(f"Either source or target must be a remote path (i.e. machine:path)\nGot: source: `{source}`, target: `{target}`")
     console.print(Panel("🔍 Path resolution complete", title="[bold blue]Resolution[/bold blue]", border_style="blue"))
     pprint({"cloud": cloud, "source": str(source), "target": str(target)}, "CLI Resolution")

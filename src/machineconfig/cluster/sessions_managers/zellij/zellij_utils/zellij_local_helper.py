@@ -120,7 +120,7 @@ def check_command_status(tab_name: str, layout_config: LayoutConfig) -> CommandS
         for proc in psutil.process_iter(["pid", "name", "cmdline", "status", "ppid", "create_time", "memory_info"]):
             try:
                 info = proc.info
-                proc_cmdline: list[str] | None = info.get("cmdline")  # type: ignore[assignment]
+                proc_cmdline: list[str] | None = info.get("cmdline")
                 if not proc_cmdline:
                     continue
                 if info.get("status") in ["zombie", "dead", "stopped"]:
@@ -194,7 +194,7 @@ def check_command_status(tab_name: str, layout_config: LayoutConfig) -> CommandS
                 if not is_match:
                     continue
                 try:
-                    proc_obj = psutil.Process(info["pid"])  # type: ignore[index]
+                    proc_obj = psutil.Process(info["pid"])
                     if proc_obj.status() not in ["running", "sleeping"]:
                         continue
                     mem_info = None
@@ -205,7 +205,7 @@ def check_command_status(tab_name: str, layout_config: LayoutConfig) -> CommandS
                         pass
                     matching_processes.append(
                         {
-                            "pid": info["pid"],  # type: ignore[index]
+                            "pid": info["pid"],
                             "name": proc_name,
                             "cmdline": normalized_proc_cmdline,
                             "status": info.get("status", "unknown"),
@@ -223,7 +223,7 @@ def check_command_status(tab_name: str, layout_config: LayoutConfig) -> CommandS
         filtered_active = []
         for proc_info in matching_processes:
             try:
-                proc_obj = psutil.Process(proc_info["pid"])  # type: ignore[index]
+                proc_obj = psutil.Process(proc_info["pid"])
                 if not proc_obj.is_running():
                     continue
                 status_val = proc_obj.status()
@@ -263,7 +263,7 @@ def check_command_status(tab_name: str, layout_config: LayoutConfig) -> CommandS
                     shell_only = True
                     stale_script_overall = False
                     for p in filtered_active:
-                        proc_shell = psutil.Process(p["pid"])  # type: ignore[index]
+                        proc_shell = psutil.Process(p["pid"])
                         create_time = getattr(proc_shell, "create_time", lambda: None)()
                         cmdline_joined = " ".join(p.get("cmdline", []))
                         stale_script = False

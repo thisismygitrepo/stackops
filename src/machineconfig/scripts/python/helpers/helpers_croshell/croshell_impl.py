@@ -75,9 +75,10 @@ def croshell(
                 if reader is None:
                     program = f"print('No reader found for files with the .{suffix} extension.')"
                 else:
+                    reader_name = getattr(reader, "__name__", type(reader).__name__)
                     program = Path(read_module.__file__).read_text(encoding="utf-8")
                     program += f"""
-# p = {reader.__name__}("{str(choice_file)}")
+# p = {reader_name}("{str(choice_file)}")
 from rich.panel import Panel
 from rich.text import Text
 from rich.console import Console
@@ -182,9 +183,6 @@ def _build_preprogram() -> str:
         except ImportError:
             print("Croshell: machineconfig is not installed in the current environment.")
             print("Skipping logo printing and some utilities. Some features may not work as expected.")
-            pass
-        from pathlib import Path  # type: ignore
-        _ = Path
     preprogram += get_body_simple_function_no_args(preprogram_func)
     return preprogram
 

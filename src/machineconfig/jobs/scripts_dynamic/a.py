@@ -14,6 +14,7 @@
 import platform
 import time
 from dataclasses import dataclass, field
+from typing import Protocol, cast
 
 import psutil
 from rich import box
@@ -43,6 +44,11 @@ TIER_CONFIG: list[tuple[int, str, str]] = [
     (4000, "HIGH-PERFORMANCE", "magenta"),
     (999999, "SERVER GRADE", "bold red"),
 ]
+
+
+class CpuFrequencyInfo(Protocol):
+    current: float
+    max: float
 
 # Visual theme
 THEME = {
@@ -124,10 +130,13 @@ class SystemScanner:
         max_freq = DEFAULT_FREQ_MHZ
         current_freq = DEFAULT_FREQ_MHZ
         try:
-            freq = psutil.cpu_freq()
-            if freq:  # Can be None on some systems
-                max_freq = freq.max if freq.max > 0 else freq.current
-                current_freq = freq.current
+            cpu_freq = getattr(psutil, "cpu_freq", None)
+            if callable(cpu_freq):
+                freq = cpu_freq()
+                if freq is not None:  # Can be None on some systems
+                    freq_info = cast(CpuFrequencyInfo, freq)
+                    max_freq = freq_info.max if freq_info.max > 0 else freq_info.current
+                    current_freq = freq_info.current
         except (AttributeError, FileNotFoundError, PermissionError, RuntimeError):
             pass  # Use defaults
 

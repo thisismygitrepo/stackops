@@ -1,6 +1,6 @@
-from typing import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from types import FunctionType
 
 from machineconfig.cluster.remote.models import WorkloadParams
 
@@ -39,11 +39,14 @@ class JobParams:
         return JobParams(repo_path_rh="", file_path_rh="", file_path_r="", func_module="", func_class=None, func_name=None, description="", ssh_repr="", ssh_repr_remote="", error_message="", session_name="", tab_name="", file_manager_path="")
 
     @staticmethod
-    def from_callable(func: Callable[..., object]) -> "JobParams":
+    def from_callable(func: FunctionType) -> "JobParams":
         func_name = func.__name__
         func_module = func.__module__
         if func_module == "<run_path>":
-            func_module = Path(func.__globals__["__file__"]).name
+            func_file_raw = func.__globals__.get("__file__")
+            if not isinstance(func_file_raw, str):
+                raise ValueError(f"Function `{func_name}` is missing a source file in __globals__.")
+            func_module = Path(func_file_raw).name
         if func_module == "__main__":
             raise ValueError(f"Function must be defined in a module, not __main__. Import `{func_name}` from its module.")
         func_file = Path(func.__code__.co_filename)

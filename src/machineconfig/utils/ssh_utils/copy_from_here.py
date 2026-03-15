@@ -27,6 +27,7 @@ def copy_from_here(
         raise RuntimeError(
             f"SFTP connection not available for {self.hostname}. Cannot transfer files."
         )
+    sftp = self.sftp
     source_obj = Path(source_path).expanduser().absolute()
     if not source_obj.exists():
         raise RuntimeError(f"SSH Error: source `{source_obj}` does not exist!")
@@ -88,10 +89,8 @@ def copy_from_here(
     )
     try:
         with self.tqdm_wrap(ascii=True, unit="b", unit_scale=True) as pbar:
-            if self.sftp is None:  # type: ignore[unreachable]
-                raise RuntimeError(f"SFTP connection lost for {self.hostname}")
             print(f"Uploading {source_obj} to\n{remote_target_full}")
-            self.sftp.put(
+            sftp.put(
                 localpath=str(source_obj),
                 remotepath=remote_target_full,
                 callback=pbar.view_bar,

@@ -1,4 +1,3 @@
-
 r"""
 
 On windows:
@@ -24,7 +23,7 @@ Automatic order of identity (private key) files used by ssh:
 ~/.ssh/id_rsa
 ~/.ssh/id_dsa (deprecated, usually disabled)
 
-Common pitfalls: 
+Common pitfalls:
 🚫 Wrong line endings (LF/CRLF) in config files
 🌐 Network port conflicts (try 2222 -> 2223) between WSL and Windows
 sudo service ssh restart
@@ -46,12 +45,13 @@ from machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_deploy_key_rem
 
 
 console = Console()
+POSIX_SYSTEMS: tuple[str, str] = ("Linux", "Darwin")
 
 
 def get_add_ssh_key_script(path_to_key: Path) -> tuple[str, str]:
     """Returns (program_script, status_message) tuple. For Windows, program_script is empty because we handle it in Python."""
     os_name = system()
-    if os_name == "Linux" or os_name == "Darwin":
+    if os_name in POSIX_SYSTEMS:
         authorized_keys = Path.home().joinpath(".ssh/authorized_keys")
         os_icon, os_label = "🐧", "Linux/macOS"
     elif os_name == "Windows":
@@ -71,7 +71,7 @@ def get_add_ssh_key_script(path_to_key: Path) -> tuple[str, str]:
             status_lines.append(f"⚠️  Key [yellow]{path_to_key.name}[/yellow] already authorized, skipping")
         else:
             status_lines.append(f"➕ Adding: [green]{path_to_key.name}[/green]")
-            if os_name == "Linux" or os_name == "Darwin":
+            if os_name in POSIX_SYSTEMS:
                 program = f"cat {path_to_key} >> ~/.ssh/authorized_keys"
             elif os_name == "Windows":
                 add_ssh_key_windows(path_to_key)
@@ -79,12 +79,12 @@ def get_add_ssh_key_script(path_to_key: Path) -> tuple[str, str]:
                 raise NotImplementedError
     else:
         status_lines.append(f"📝 Creating auth file with: [green]{path_to_key.name}[/green]")
-        if os_name == "Linux" or os_name == "Darwin":
+        if os_name in POSIX_SYSTEMS:
             program = f"cat {path_to_key} > ~/.ssh/authorized_keys"
         else:
             add_ssh_key_windows(path_to_key)
 
-    if os_name == "Linux" or os_name == "Darwin":
+    if os_name in POSIX_SYSTEMS:
         override_files, auth_overrides = check_cloud_init_overrides()
         if override_files:
             status_lines.append("\n⚠️  [yellow]Cloud-init override files detected:[/yellow]")
@@ -111,7 +111,6 @@ sudo service ssh --full-restart
     return program, "\n".join(status_lines)
 
 
-
 def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str | None) -> None:
     info_lines: list[str] = []
     program = ""
@@ -135,6 +134,7 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
             return
         info_lines.append(f"📄 Source: Local ~/.ssh │ Found {len(pub_keys_all)} key(s)")
         from machineconfig.utils.options import choose_from_options
+
         options_str = choose_from_options(options=[str(x) for x in pub_keys_all], msg="Select public key(s) to authorize", multi=True, tv=True)
         if options_str is None or len(options_str) == 0:
             console.print(Panel("❓ Key selection cancelled.", title="[bold yellow]Cancelled[/bold yellow]", border_style="yellow"))
@@ -151,13 +151,22 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
 
     elif from_github:
         import requests
+
         response = requests.get(f"https://api.github.com/users/{from_github}/keys", timeout=10)
         if response.status_code != 200:
-            console.print(Panel(f"❌ GitHub API error for user '{from_github}' │ Status: {response.status_code}", title="[bold red]Error[/bold red]", border_style="red"))
+            console.print(
+                Panel(
+                    f"❌ GitHub API error for user '{from_github}' │ Status: {response.status_code}",
+                    title="[bold red]Error[/bold red]",
+                    border_style="red",
+                )
+            )
             sys.exit(1)
         keys = response.json()
         if not keys:
-            console.print(Panel(f"⚠️  No public keys found for GitHub user: {from_github}", title="[bold yellow]Warning[/bold yellow]", border_style="yellow"))
+            console.print(
+                Panel(f"⚠️  No public keys found for GitHub user: {from_github}", title="[bold yellow]Warning[/bold yellow]", border_style="yellow")
+            )
             return
         key_path = Path.home().joinpath(f".ssh/{from_github}_github_keys.pub")
         key_path.parent.mkdir(parents=True, exist_ok=True)
@@ -196,15 +205,24 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
 
     if program.strip():
         from machineconfig.utils.code import run_shell_script
+
         run_shell_script(script=program, display_script=True, clean_env=False)
 
     import machineconfig.scripts.python.helpers.helpers_network.address as helper
+
     res = helper.select_lan_ipv4(prefer_vpn=False)
     if res is None:
         console.print(Panel("❌ Could not determine local LAN IPv4 address", title="[bold red]Error[/bold red]", border_style="red"))
         sys.exit(1)
 
-    console.print(Panel(f"✅ Complete │ This machine accessible at: [green]{res}[/green]", title="[bold green]SSH Key Authorization[/bold green]", border_style="green", box=box.DOUBLE_EDGE))
+    console.print(
+        Panel(
+            f"✅ Complete │ This machine accessible at: [green]{res}[/green]",
+            title="[bold green]SSH Key Authorization[/bold green]",
+            border_style="green",
+            box=box.DOUBLE_EDGE,
+        )
+    )
 
 
 if __name__ == "__main__":

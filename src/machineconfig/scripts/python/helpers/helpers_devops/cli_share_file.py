@@ -62,7 +62,7 @@ Usage examples:
     if not secret_code:
         for i, token in enumerate(tokens):
             if '-' in token and not token.startswith('-') and token != relay_server:
-                if relay_idx >= 0 and (i == relay_idx or i == relay_idx + 1):
+                if relay_idx >= 0 and i in (relay_idx, relay_idx + 1):
                     continue  # Skip relay server parts
                 secret_code = token
                 break

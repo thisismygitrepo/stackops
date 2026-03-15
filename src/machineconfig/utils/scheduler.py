@@ -145,6 +145,13 @@ def to_pickle(obj: Any, path: Path) -> None:
     path.write_bytes(pickle.dumps(obj))
 
 
+def _callable_name(func: Callable[..., object]) -> str:
+    name = getattr(func, "__name__", None)
+    if isinstance(name, str):
+        return name
+    return func.__class__.__name__
+
+
 class CacheMemory[T]():
     def __init__(
         self, source_func: Callable[[], T], expire: timedelta, logger: LoggerTemplate, name: str | None = None
@@ -154,7 +161,7 @@ class CacheMemory[T]():
         self.time_produced = datetime.now()
         self.logger = logger
         self.expire = expire
-        self.name = name if isinstance(name, str) else self.source_func.__name__
+        self.name = name if isinstance(name, str) else _callable_name(self.source_func)
     def __call__(self, fresh: bool, tolerance_seconds: float | int) -> T:
         if fresh or not hasattr(self, "cache"):
             why = "There was an explicit fresh order." if fresh else "Previous cache never existed."
@@ -198,7 +205,7 @@ class Cache[T]():  # This class helps to accelrate access to latest data coming 
         self.reader = reader
         self.logger = logger
         self.expire = expire
-        self.name = name if isinstance(name, str) else str(self.source_func.__name__)
+        self.name = name if isinstance(name, str) else _callable_name(self.source_func)
     def __call__(self, fresh: bool, tolerance_seconds: float | int) -> T:
         if not hasattr(self, "cache"):  # populate cache for the first time: we have two options, populate from disk or from source func.
             if self.path.exists():  # prefer to read from disk over source func as a default source of cache.

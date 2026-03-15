@@ -13,6 +13,13 @@ from machineconfig.utils.ssh_utils.abc import DEFAULT_PICKLE_SUBDIR
 
 class SSH:
     @staticmethod
+    def _callable_name(func: Callable[..., Any]) -> str:
+        func_name = getattr(func, "__name__", None)
+        if isinstance(func_name, str):
+            return func_name
+        return func.__class__.__name__
+
+    @staticmethod
     def from_config_file(host: str) -> "SSH":
         return SSH(host=host, username=None, hostname=None, ssh_key_path=None, password=None, port=22, enable_compression=False)
 
@@ -103,7 +110,7 @@ class SSH:
                 sock=sock,
                 allow_agent=allow_agent,
                 look_for_keys=look_for_keys,
-            )  # type: ignore
+            )
         except Exception as _err:
             # Print exception without pager to avoid terminal mode issues
             console = rich.console.Console()
@@ -143,7 +150,7 @@ class SSH:
                     sock=sock,
                     allow_agent=False,
                     look_for_keys=False,
-                )  # type: ignore
+                )
             except Exception:
                 # If password auth also fails, restore terminal before re-raising
                 if old_settings is not None:
@@ -408,7 +415,7 @@ print("SSH key added successfully")
         return self.run_shell_cmd_on_remote(
             command=uv_cmd_modified,
             verbose_output=True,
-            description=f"run_py_func {func.__name__} on {self.get_remote_repr(add_machine=False)}",
+            description=f"run_py_func {self._callable_name(func)} on {self.get_remote_repr(add_machine=False)}",
             strict_stderr=True,
             strict_return_code=True,
         )
