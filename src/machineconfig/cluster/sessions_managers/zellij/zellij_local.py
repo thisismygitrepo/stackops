@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from typing import Optional
 from pathlib import Path
 import logging
 
@@ -54,7 +53,7 @@ class ZellijLayoutGenerator:
     def __init__(self, layout_config: LayoutConfig, session_name: str):
         self.session_name: str = session_name
         self.layout_config: LayoutConfig = layout_config.copy()
-        self.layout_path: Optional[str] = None
+        self.layout_path: str | None = None
     def create_layout_file(self) -> bool:
         """Create zellij layout file and return the path."""
         layout_content = create_zellij_layout(self.layout_config, layout_template=DEFAULT_LAYOUT_TEMPLATE)
@@ -192,7 +191,7 @@ def run_zellij_layout(layout_config: LayoutConfig, on_conflict: SessionConflictA
     generator.run(on_conflict=on_conflict)
 
 
-def run_command_in_zellij_tab(command: str, tab_name: str, cwd: Optional[str]) -> str:
+def run_command_in_zellij_tab(command: str, tab_name: str, cwd: str | None) -> str:
     maybe_cwd = f"--cwd {cwd}" if cwd is not None else ""
     return f"""
 echo "Sleep 1 seconds to allow zellij to create a new tab"

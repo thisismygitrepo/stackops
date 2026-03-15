@@ -1,7 +1,7 @@
+import shlex
 from pathlib import Path
 from platform import system
-from typing import Optional, cast
-import shlex
+from typing import cast
 from machineconfig.utils.accessories import randstr
 
 from machineconfig.scripts.python.helpers.helpers_agents.agents_run_context import (
@@ -93,12 +93,12 @@ def build_agent_command(agent: AGENTS, prompt_file: Path) -> str:
 
 
 def run(
-    prompt: Optional[str],
+    prompt: str | None,
     agent: AGENTS,
-    context: Optional[str],
-    context_path: Optional[str],
-    prompts_yaml_path: Optional[str],
-    context_name: Optional[str],
+    context: str | None,
+    context_path: str | None,
+    prompts_yaml_path: str | None,
+    context_name: str | None,
     where: PROMPTS_WHERE,
     edit: bool,
     show_prompts_yaml_format: bool,

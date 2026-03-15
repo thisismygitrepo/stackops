@@ -2,7 +2,6 @@ from datetime import datetime
 import json
 import uuid
 from pathlib import Path
-from typing import Optional
 from machineconfig.utils.scheduler import Scheduler
 from machineconfig.cluster.sessions_managers.zellij.zellij_local import run_command_in_zellij_tab
 from machineconfig.cluster.sessions_managers.zellij.zellij_remote import ZellijRemoteLayoutGenerator
@@ -93,7 +92,7 @@ class ZellijSessionManager:
         sched = Scheduler(routine=routine, wait_ms=60_000, logger=cast(LoggerTemplate, logger))
         sched.run()
 
-    def save(self, session_id: Optional[str]) -> str:
+    def save(self, session_id: str | None) -> str:
         if session_id is None:
             session_id = str(uuid.uuid4())[:8]
 

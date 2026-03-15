@@ -5,7 +5,7 @@ import subprocess
 from git import Repo
 from collections import defaultdict
 from datetime import datetime, date
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 from pathlib import Path
 
 
@@ -90,7 +90,7 @@ def get_default_branch(repo: Repo) -> str:
 
 
 
-def gitcs_viz(repo_path: Union[str, Path], email: Optional[str] = None, pull_full_history: bool = False) -> None:
+def gitcs_viz(repo_path: Union[str, Path], email: str | None = None, pull_full_history: bool = False) -> None:
     """Invoke the gitcs CLI across 6-month windows covering the repo history.
     
     Args:
@@ -155,6 +155,5 @@ def gitcs_viz(repo_path: Union[str, Path], email: Optional[str] = None, pull_ful
                 print(f"⚠️ gitcs exited with code {completed.returncode} for this range.")
 
             chunk_idx += 1
-
 
 

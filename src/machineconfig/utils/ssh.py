@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Any, cast, Union, Literal
+from typing import Callable, Any, cast, Union, Literal
 import subprocess
 from pathlib import Path
 import platform
@@ -18,22 +18,22 @@ class SSH:
 
     def __init__(
         self,
-        host: Optional[str],
-        username: Optional[str],
-        hostname: Optional[str],
-        ssh_key_path: Optional[str],
-        password: Optional[str],
+        host: str | None,
+        username: str | None,
+        hostname: str | None,
+        ssh_key_path: str | None,
+        password: str | None,
         port: int,
         enable_compression: bool,
     ):
         self.password = password
         self.enable_compression = enable_compression
 
-        self.host: Optional[str] = None
+        self.host: str | None = None
         self.hostname: str
         self.username: str
         self.port: int = port
-        self.proxycommand: Optional[str] = None
+        self.proxycommand: str | None = None
         import paramiko
         import getpass
         if isinstance(host, str):
@@ -165,7 +165,7 @@ class SSH:
                     sys.stdout.write("\033[?1049l")  # Exit alternate screen if entered
                     sys.stdout.flush()
         try:
-            self.sftp: Optional[paramiko.SFTPClient] = self.ssh.open_sftp()
+            self.sftp: paramiko.SFTPClient | None = self.ssh.open_sftp()
         except Exception as err:
             self.sftp = None
             print(f"""⚠️  WARNING: Failed to open SFTP connection to {self.hostname}. Error Details: {err}\nData transfer may be affected!""")
@@ -174,8 +174,8 @@ class SSH:
         class RichProgressWrapper:
             def __init__(self, **kwargs: Any):
                 self.kwargs = kwargs
-                self.progress: Optional[Progress] = None
-                self.task: Optional[Any] = None
+                self.progress: Progress | None = None
+                self.task: Any | None = None
 
             def __enter__(self) -> "RichProgressWrapper":
                 self.progress = Progress(
@@ -345,7 +345,7 @@ print("SSH key added successfully")
         # self.terminal_responses.append(res)
         return res
 
-    def _run_py_prep(self, python_code: str, uv_with: Optional[list[str]], uv_project_dir: Optional[str], on: Literal["local", "remote"]) -> str:
+    def _run_py_prep(self, python_code: str, uv_with: list[str] | None, uv_project_dir: str | None, on: Literal["local", "remote"]) -> str:
         py_path = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/runpy_{randstr()}.py")
         py_path.parent.mkdir(parents=True, exist_ok=True)
         py_path.write_text(python_code, encoding="utf-8")
@@ -373,8 +373,8 @@ print("SSH key added successfully")
     def run_py_remotely(
         self,
         python_code: str,
-        uv_with: Optional[list[str]],
-        uv_project_dir: Optional[str],
+        uv_with: list[str] | None,
+        uv_project_dir: str | None,
         description: str,
         verbose_output: bool,
         strict_stderr: bool,
@@ -389,7 +389,7 @@ print("SSH key added successfully")
             strict_return_code=strict_return_code,
         )
 
-    def run_lambda_function(self, func: Callable[..., Any], import_module: bool, uv_with: Optional[list[str]], uv_project_dir: Optional[str]):
+    def run_lambda_function(self, func: Callable[..., Any], import_module: bool, uv_with: list[str] | None, uv_project_dir: str | None):
         command = lambda_to_python_script(func, in_global=True, import_module=import_module)
         # turns ou that the code below for some reason runs but zellij doesn't start, looks like things are assigned to different user.
         # return self.run_py(python_code=command, uv_with=uv_with, uv_project_dir=uv_project_dir,
@@ -436,7 +436,7 @@ print("SSH key added successfully")
         return expand_remote_path(self, source_path=source_path)
 
     def copy_from_here(
-        self, source_path: str, target_rel2home: Optional[str], compress_with_zip: bool, recursive: bool, overwrite_existing: bool
+        self, source_path: str, target_rel2home: str | None, compress_with_zip: bool, recursive: bool, overwrite_existing: bool
     ) -> None:
         from machineconfig.utils.ssh_utils.copy_from_here import copy_from_here
 
@@ -450,7 +450,7 @@ print("SSH key added successfully")
         )
 
     def copy_to_here(
-        self, source: Union[str, Path], target: Optional[Union[str, Path]], compress_with_zip: bool, recursive: bool, internal_call: bool = False
+        self, source: Union[str, Path], target: Union[str, Path] | None, compress_with_zip: bool, recursive: bool, internal_call: bool = False
     ) -> None:
         from machineconfig.utils.ssh_utils.copy_to_here import copy_to_here
 

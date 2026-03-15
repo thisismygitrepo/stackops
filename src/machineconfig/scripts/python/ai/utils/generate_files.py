@@ -2,7 +2,7 @@
 """Script to generate a markdown table with checkboxes for all Python and shell files in the repo."""
 
 from pathlib import Path
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal
 from rich.console import Console
 from rich.panel import Panel
 import typer
@@ -201,7 +201,7 @@ def generate_markdown_table(python_files: list[str], shell_files: list[str], rep
     return header + content
 
 
-def split_files_into_chunks(all_files: list[str], split_every: Optional[int] = None, split_to: Optional[int] = None) -> list[list[str]]:
+def split_files_into_chunks(all_files: list[str], split_every: int | None = None, split_to: int | None = None) -> list[list[str]]:
     """Split files into chunks based on split_every or split_to."""
     if split_every is not None:
         # Split into chunks of split_every files each
@@ -255,8 +255,8 @@ def make_todo_files(
     include_line_count: Annotated[bool, typer.Option("-l", "--line-count", help="Include line count column in the output")] = False,
     output_path: Annotated[str, typer.Option("-o", "--output-path", help="Base path for output files relative to repo root")] = ".ai/todo/files",
     format_type: Annotated[Literal["csv", "md", "txt"], typer.Option("-f", "--format", help="Output format: csv, md (markdown), or txt")] = "md",
-    split_every: Annotated[Optional[int], typer.Option("--split-every", "-e", help="Split output into multiple files, each containing at most this many results")] = None,
-    split_to: Annotated[Optional[int], typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
+    split_every: Annotated[int | None, typer.Option("--split-every", "-e", help="Split output into multiple files, each containing at most this many results")] = None,
+    split_to: Annotated[int | None, typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
 ) -> None:
     """Generate checklist with Python and shell script files in the repository filtered by pattern."""
     repo_path = Path(repo).expanduser().absolute()

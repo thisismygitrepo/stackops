@@ -5,12 +5,12 @@ import smtplib
 import imaplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional, Any, Union
+from typing import Any, Union
 from rich.console import Console
 from rich.markdown import Markdown
 
 
-def download_to_memory(path: Path, allow_redirects: bool = True, timeout: Optional[float] = None, params: Any = None) -> "Any":
+def download_to_memory(path: Path, allow_redirects: bool = True, timeout: float | None = None, params: Any = None) -> "Any":
     import requests
 
     return requests.get(
@@ -108,7 +108,7 @@ encryption = ssl
             self.server = smtplib.SMTP(host=self.config["smtp_host"], port=self.config["smtp_port"])
         self.server.login(self.config["email_add"], password=self.config["password"])
 
-    def send_message(self, to: str, subject: str, body: str, txt_to_html: bool = True, attachments: Optional[list[Any]] = None):
+    def send_message(self, to: str, subject: str, body: str, txt_to_html: bool = True, attachments: list[Any] | None = None):
         _ = attachments
         body += "\n\nThis is an automated email sent via machineconfig.comms script."
         # msg = message.EmailMessage()
@@ -144,7 +144,7 @@ encryption = ssl
         self.server.quit()  # Closing is vital as many servers do not allow mutiple connections.
 
     @staticmethod
-    def send_and_close(config_name: Optional[str], to: str, subject: str, body: str) -> Any:
+    def send_and_close(config_name: str | None, to: str, subject: str, body: str) -> Any:
         """If config_name is None, it sends from a generic email address."""
         if config_name is None:
             raise NotImplementedError(
@@ -176,7 +176,7 @@ encryption = ssl
             tmp.close()
 
     # @staticmethod
-    # def send_m365(to: list[str], subject: str, body: Optional[str], body_file: Optional[str], body_content_type: Literal["HTML", "Text"], attachments: Optional[list[Path]] = None) -> None:
+    # def send_m365(to: list[str], subject: str, body: str | None, body_file: str | None, body_content_type: Literal["HTML", "Text"], attachments: list[Path] | None = None) -> None:
     #     if body_file is not None:
     #         assert body is None, "You cannot pass both body and body_file."
     #         body_file_path = Path(body_file)
@@ -198,7 +198,7 @@ encryption = ssl
 
 
 # class PhoneNotification:  # security concerns: avoid using this.
-#     def __init__(self, token: Optional[str]):
+#     def __init__(self, token: str | None):
 #         if token is None:
 #             path = P.home().joinpath("dotfiles/machineconfig/phone_notification.ini")
 #             ini = Read.ini(path)

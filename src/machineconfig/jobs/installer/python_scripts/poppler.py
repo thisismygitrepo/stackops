@@ -1,6 +1,5 @@
 import platform
 from pathlib import Path
-from typing import Optional
 
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.path_extended import PathExtended
@@ -35,7 +34,7 @@ def _select_extracted_root(extracted_path: PathExtended) -> PathExtended:
     return extracted_path
 
 
-def main(installer_data: InstallerData, version: Optional[str]) -> None:
+def main(installer_data: InstallerData, version: str | None) -> None:
     _ = installer_data
     if platform.system() != "Windows":
         raise NotImplementedError("Poppler Windows installer is only supported on Windows.")

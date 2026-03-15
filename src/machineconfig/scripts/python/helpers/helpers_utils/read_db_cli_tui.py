@@ -1,5 +1,5 @@
 
-from typing import Optional, Literal, TypeAlias
+from typing import Literal, TypeAlias
 from pathlib import Path
 import glob as glob_module
 
@@ -72,14 +72,14 @@ def _validate_backend(backend: BACKEND, resolved: list[Path]) -> None:
 
 
 def app(
-    path: Optional[str] = None,
-    find: Optional[str] = None,
-    find_root: Optional[str] = None,
+    path: str | None = None,
+    find: str | None = None,
+    find_root: str | None = None,
     recursive: bool = False,
     backend: BACKEND_LOOSE = "harlequin",
     read_only: bool = False,
-    theme: Optional[str] = None,
-    limit: Optional[int] = None,
+    theme: str | None = None,
+    limit: int | None = None,
 ) -> None:
     """🗃️ TUI DB Visualizer.
 

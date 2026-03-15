@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.auggie.auggie_privacy import secure_auggie_config
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.chatgpt.chatgpt_privacy import secure_chatgpt_cli
@@ -13,7 +12,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.q.q_pri
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.qwen.qwen_privacy import secure_qwen_config
 
 
-def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root: Optional[str]) -> None:
+def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root: str | None) -> None:
     from machineconfig.utils.source_of_truth import LIBRARY_ROOT
 
     root = LIBRARY_ROOT / "scripts/python/helpers_agents/privacy/configs"
@@ -132,4 +131,3 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
         secure_codex_configs()
     except Exception:
         pass
-

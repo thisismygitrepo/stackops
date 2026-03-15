@@ -6,7 +6,7 @@ This module provides functionality to generate reports for installed application
 """
 
 from pathlib import Path
-from typing import Optional, TypedDict
+from typing import TypedDict
 from rich.console import Console
 from rich.panel import Panel
 
@@ -14,8 +14,8 @@ console = Console()
 
 class AppData(TypedDict):
     app_name: str
-    version: Optional[str]
-    positive_pct: Optional[float]
+    version: str | None
+    positive_pct: float | None
     scan_time: str
     app_path: str
     app_url: str

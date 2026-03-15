@@ -2,7 +2,7 @@
 
 import re
 from platform import system
-from typing import Literal, Optional
+from typing import Literal
 from pathlib import Path
 
 from rich.console import Console
@@ -87,11 +87,11 @@ def _upsert_backup_entry(content: str, group_name: str, entry_name: str, entry_l
 def register_backup_entry(
     path_local: str,
     group: str,
-    entry_name: Optional[str] = None,
-    path_cloud: Optional[str] = None,
+    entry_name: str | None = None,
+    path_cloud: str | None = None,
     zip: bool = True,
     encrypt: bool = True,
-    rel2home: Optional[bool] = None,
+    rel2home: bool | None = None,
     os: str = "any",
 ) -> tuple[Path, str, bool]:
     local_path = Path(path_local).expanduser().absolute()
@@ -146,7 +146,7 @@ def register_backup_entry(
     return USER_BACKUP_PATH, entry_name, replaced
 
 
-def main_backup_retrieve(direction: DIRECTION, which: Optional[str], cloud: Optional[str], repo: REPO_LOOSE) -> None:
+def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | None, repo: REPO_LOOSE) -> None:
     console = Console()
     if cloud is None or not cloud.strip():
         try:

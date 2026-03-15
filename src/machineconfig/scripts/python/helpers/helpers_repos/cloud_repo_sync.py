@@ -1,6 +1,6 @@
 
 
-from typing import Optional, Literal, Annotated
+from typing import Literal, Annotated
 import typer
 from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
 
@@ -21,15 +21,15 @@ def get_tmp_file():
 
 def main(
     repo: Annotated[str, typer.Argument(..., help="Path to the local repository. Defaults to current working directory.")],
-    cloud: Annotated[Optional[str], typer.Option(..., "--cloud", "-c", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
-    message: Annotated[Optional[str], typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
+    cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
+    message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
     on_conflict: Annotated[Literal["ask", "a",
                                    "push-local-merge", "p",
                                    "overwrite-local", "o",
                                    "stop-on-conflict", "s",
                                    "remove-rclone-conflict", "r"
                                    ], typer.Option(..., "--on-conflict", "-o", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
-    pwd: Annotated[Optional[str], typer.Option(..., "--password", help="Password for encryption/decryption of the remote repository.")] = None,
+    pwd: Annotated[str | None, typer.Option(..., "--password", help="Password for encryption/decryption of the remote repository.")] = None,
 ):
     on_conflict_mapper: dict[str, Literal["ask", "push-local-merge", "overwrite-local", "stop-on-conflict", "remove-rclone-conflict"]] = {
         "a": "ask",
@@ -298,4 +298,3 @@ git commit -am "finished merging"
         from machineconfig.utils.code import run_shell_script
         run_shell_script(script=program_content, display_script=True, clean_env=False)
     return program_content
-

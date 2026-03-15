@@ -1,4 +1,3 @@
-from typing import Optional
 import os
 from pathlib import Path
 import platform
@@ -8,7 +7,7 @@ def parse_pyfile(file_path: str):
     print(f"🔍 Loading {file_path} ...")
     from typing import NamedTuple
 
-    args_spec = NamedTuple("args_spec", [("name", str), ("type", str), ("default", Optional[str])])
+    args_spec = NamedTuple("args_spec", [("name", str), ("type", str), ("default", str | None)])
     func_args: list[list[args_spec]] = [[]]  # this firt prepopulated dict is for the option 'RUN AS MAIN' which has no args
     import ast
 
@@ -54,7 +53,7 @@ def parse_pyfile(file_path: str):
 
 
 
-def find_repo_root_path(start_path: str) -> Optional[str]:
+def find_repo_root_path(start_path: str) -> str | None:
     root_files = ["setup.py", "pyproject.toml", ".git"]
     path: str = start_path
     trials = 0
@@ -95,7 +94,7 @@ def get_import_module_code(module_path: str):
     return f"from {module_name} import *"
 
 
-def wrap_import_in_try_except(import_line: str, pyfile: str, repo_root: Optional[str] = None) -> None:
+def wrap_import_in_try_except(import_line: str, pyfile: str, repo_root: str | None = None) -> None:
     try:
         exec(import_line)  # type: ignore
     except (ImportError, ModuleNotFoundError) as ex:

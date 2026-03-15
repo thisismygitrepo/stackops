@@ -6,7 +6,7 @@ from machineconfig.utils.source_of_truth import CONFIG_ROOT
 from machineconfig.utils.code import print_code
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.terminal import Response
-from typing import Annotated, Optional
+from typing import Annotated
 import typer
 import subprocess
 import platform
@@ -60,8 +60,8 @@ def jupyter_to_markdown(file: PathExtended):
 
 
 def main(
-    directory: Annotated[Optional[str], typer.Option("-d", "--directory", help="📁 Directory of the report.")] = None,
-    jupyter_file: Annotated[Optional[str], typer.Option("-j", "--jupyter-file", help="📓 Jupyter notebook file to convert to slides. If not provided, slides.md is used.")] = None,
+    directory: Annotated[str | None, typer.Option("-d", "--directory", help="📁 Directory of the report.")] = None,
+    jupyter_file: Annotated[str | None, typer.Option("-j", "--jupyter-file", help="📓 Jupyter notebook file to convert to slides. If not provided, slides.md is used.")] = None,
 ) -> None:
     print("\n" + "=" * 50)
     print("🎥 Welcome to the Slidev Presentation Tool")

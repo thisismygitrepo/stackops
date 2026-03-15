@@ -1,6 +1,6 @@
 from machineconfig.utils.path_extended import PathExtended
 import subprocess
-from typing import Any, BinaryIO, Optional, Union
+from typing import Any, BinaryIO, Union
 from typing import Literal, TypeAlias
 from dataclasses import dataclass
 
@@ -27,13 +27,13 @@ class Response:
         resp.output.returncode = cp.returncode
         return resp
 
-    def __init__(self, stdin: Optional[BinaryIO] = None, stdout: Optional[BinaryIO] = None, stderr: Optional[BinaryIO] = None, cmd: Optional[str] = None, desc: str = ""):
+    def __init__(self, stdin: BinaryIO | None = None, stdout: BinaryIO | None = None, stderr: BinaryIO | None = None, cmd: str | None = None, desc: str = ""):
         self.std = dict(stdin=stdin, stdout=stdout, stderr=stderr)
         self.output = STD(stdin="", stdout="", stderr="", returncode=0)
         self.input = cmd
         self.desc = desc  # input command
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Optional[str]:
+    def __call__(self, *args: Any, **kwargs: Any) -> str | None:
         _ = args, kwargs
         return self.op.rstrip() if type(self.op) is str else None
     def __repr__(self) -> str:
@@ -59,7 +59,7 @@ class Response:
             return PathExtended(self.op.rstrip())
         return None
 
-    def op_if_successfull_or_default(self, strict_returcode: bool = True, strict_err: bool = False) -> Optional[str]:
+    def op_if_successfull_or_default(self, strict_returcode: bool = True, strict_err: bool = False) -> str | None:
         return self.op if self.is_successful(strict_returcode=strict_returcode, strict_err=strict_err) else None
 
     def is_successful(self, strict_returcode: bool = True, strict_err: bool = False) -> bool:
@@ -67,7 +67,7 @@ class Response:
 
     def capture(self):
         for key in ["stdin", "stdout", "stderr"]:
-            val: Optional[BinaryIO] = self.std[key]
+            val: BinaryIO | None = self.std[key]
             if val is not None and val.readable():
                 self.output.__dict__[key] = val.read().decode().rstrip()
         return self

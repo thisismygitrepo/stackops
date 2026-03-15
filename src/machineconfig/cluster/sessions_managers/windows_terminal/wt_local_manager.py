@@ -4,7 +4,7 @@ import logging
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional, Any, TypedDict, cast
+from typing import Any, TypedDict, cast
 
 from rich.console import Console
 from machineconfig.utils.scheduler import Scheduler, LoggerTemplate
@@ -39,7 +39,7 @@ class _LoadedManagerData(TypedDict):
 class WTLocalManager:
     """Manages multiple local Windows Terminal sessions and monitors their tabs and processes."""
 
-    def __init__(self, session_layouts: list[LayoutConfig], session_name_prefix: Optional[str]):
+    def __init__(self, session_layouts: list[LayoutConfig], session_name_prefix: str | None):
         """
         Initialize the local Windows Terminal manager.
 
@@ -119,7 +119,7 @@ class WTLocalManager:
 
         return results
 
-    def attach_to_session(self, session_name: Optional[str] = None) -> str:
+    def attach_to_session(self, session_name: str | None = None) -> str:
         """
         Generate command to attach to a specific session or list attachment commands for all.
 
@@ -211,7 +211,7 @@ class WTLocalManager:
         sched = Scheduler(routine=routine, wait_ms=wait_ms, logger=cast(LoggerTemplate, self.logger))
         sched.run(max_cycles=None)
 
-    def save(self, session_id: Optional[str] = None) -> str:
+    def save(self, session_id: str | None = None) -> str:
         if session_id is None:
             session_id = generate_session_id()
         session_dir = TMP_SERIALIZATION_DIR / session_id

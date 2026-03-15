@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Any
 
 
 @dataclass
@@ -7,7 +7,7 @@ class FireJobArgs:
     """Type-safe dataclass for fire_jobs command line arguments."""
 
     path: str = "."
-    function: Optional[str] = None
+    function: str | None = None
     frozen: bool = False
     ve: str = ""
     cmd: bool = False
@@ -27,7 +27,7 @@ class FireJobArgs:
     PathExport: bool = False
     git_pull: bool = False
     optimized: bool = False
-    zellij_tab: Optional[str] = None
+    zellij_tab: str | None = None
     watch: bool = False
 
 

@@ -1,12 +1,12 @@
 
 
 import typer
-from typing import Annotated, Optional
+from typing import Annotated
 
 
 def merge_pdfs(
         pdfs: Annotated[list[str], typer.Argument(..., help="Paths to the PDF files to merge.")],
-        output: Annotated[Optional[str], typer.Option("--output", "-o", help="Output merged PDF file path.")] = None,
+        output: Annotated[str | None, typer.Option("--output", "-o", help="Output merged PDF file path.")] = None,
         compress: Annotated[bool, typer.Option("--compress", "-c", help="Compress the output PDF.")] = False,
     ) -> None:
     def merge_pdfs_internal(pdfs: list[str], output: str | None, compress: bool) -> None:
@@ -45,7 +45,7 @@ def merge_pdfs(
 
 def compress_pdf(
         pdf_input: Annotated[str, typer.Argument(..., help="Path to the input PDF file to compress.")],
-        output: Annotated[Optional[str], typer.Option("--output", "-o", help="Output compressed PDF file path.")] = None,
+        output: Annotated[str | None, typer.Option("--output", "-o", help="Output compressed PDF file path.")] = None,
         quality: Annotated[int, typer.Option("--quality", "-q", help="JPEG quality for image compression (0-100, 0=no change, 100=best).")] = 85,
         image_dpi: Annotated[int, typer.Option("--image-dpi", "-d", help="Target DPI for image resampling. If set, images above this DPI will be downsampled.")] = 0,
         # remove_images: Annotated[bool, typer.Option("--remove-images", "-r", help="Remove all images from the PDF.")] = False,
@@ -93,4 +93,3 @@ def compress_pdf(
     from machineconfig.utils.code import run_shell_script, get_uv_command_executing_python_script
     uv_command, _py_file = get_uv_command_executing_python_script(python_script=code, uv_with=["pymupdf"], uv_project_dir=None)
     run_shell_script(uv_command, display_script=True, clean_env=False)
-

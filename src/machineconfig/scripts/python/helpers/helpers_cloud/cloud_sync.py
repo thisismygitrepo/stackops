@@ -1,4 +1,3 @@
-from typing import Optional
 from machineconfig.utils.ve import CLOUD, read_default_cloud_config
 
 
@@ -7,11 +6,11 @@ defaults = read_default_cloud_config()
 def main(
     source: str,
     target: str,
-    config: Optional[str],
+    config: str | None,
     transfers: int,
     root: str,
-    key: Optional[str],
-    pwd: Optional[str],
+    key: str | None,
+    pwd: str | None,
     encrypt: bool,
     zip_: bool,
     bisync: bool,
@@ -81,4 +80,3 @@ def main(
     # subprocess.run(txt, shell=True, check=True)
     from machineconfig.utils.code import run_shell_script
     run_shell_script(txt, display_script=True, clean_env=False)
-

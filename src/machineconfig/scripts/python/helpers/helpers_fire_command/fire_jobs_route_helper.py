@@ -1,14 +1,13 @@
 
 
 import platform
-from typing import Optional
 import tomllib
 from pathlib import Path
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.options import choose_from_options
 
 
-def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) -> tuple[Optional[str], Path, dict[str, object]]:
+def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) -> tuple[str | None, Path, dict[str, object]]:
     """
     Choose a function to run from a Python file or lines from a shell script.
     
@@ -18,7 +17,7 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
         - choice_file: The file path (potentially modified for shell scripts)
         - kwargs_dict: Updated kwargs dictionary with user-provided arguments
     """
-    choice_function: Optional[str] = None
+    choice_function: str | None = None
     
     if choice_file.suffix == ".py":
         from machineconfig.scripts.python.helpers.helpers_fire_command.file_wrangler import parse_pyfile
@@ -57,7 +56,7 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
     return choice_function, choice_file, kwargs_dict
 
 
-def get_command_streamlit(choice_file: Path, environment: str, repo_root: Optional[Path]) -> str:
+def get_command_streamlit(choice_file: Path, environment: str, repo_root: Path | None) -> str:
     # from machineconfig.scripts.python.helpers.helpers_utils.path import get_machine_specs
     from machineconfig.scripts.python.helpers.helpers_network.address import select_lan_ipv4
     res = select_lan_ipv4(prefer_vpn=False)
@@ -67,7 +66,7 @@ def get_command_streamlit(choice_file: Path, environment: str, repo_root: Option
 
     computer_name = platform.node()
     port = 8501
-    toml_path: Optional[Path] = None
+    toml_path: Path | None = None
     toml_path_maybe = choice_file.parent.joinpath(".streamlit/config.toml")
     if toml_path_maybe.exists():
         toml_path = toml_path_maybe

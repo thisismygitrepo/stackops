@@ -6,7 +6,7 @@ Enhanced command execution utilities with Rich formatting for better user experi
 import re
 import shlex
 import subprocess
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
@@ -22,7 +22,7 @@ from rich import box
 console = Console()
 
 
-def run_enhanced_command(command: str, description: Optional[str], show_progress: bool, timeout: Optional[int]) -> Dict[str, Any]:
+def run_enhanced_command(command: str, description: str | None, show_progress: bool, timeout: int | None) -> Dict[str, Any]:
     """
     Run a command with enhanced Rich formatting and user feedback.
 

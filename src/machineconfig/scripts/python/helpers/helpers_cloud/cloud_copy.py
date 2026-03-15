@@ -2,7 +2,6 @@
 CC
 """
 
-from typing import Optional
 from machineconfig.utils.ve import CLOUD, read_default_cloud_config
 
 from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
@@ -12,7 +11,7 @@ defaults = read_default_cloud_config()
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_chain(wait_fixed(1), wait_fixed(4), wait_fixed(9)))
-def get_securely_shared_file(url: Optional[str], folder: Optional[str]) -> None:
+def get_securely_shared_file(url: str | None, folder: str | None) -> None:
     from rich.console import Console
     from rich.panel import Panel
     from rich.progress import Progress
@@ -65,12 +64,12 @@ def main(
     share: bool,
     rel2home: bool,
     root: str,
-    key: Optional[str],
-    pwd: Optional[str],
+    key: str | None,
+    pwd: str | None,
     encrypt: bool,
     zip_: bool,
     os_specific: bool,
-    config: Optional[str],
+    config: str | None,
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console

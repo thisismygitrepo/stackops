@@ -1,7 +1,7 @@
 """Cloud mount script"""
 
 import typer
-from typing import Optional, Annotated, Literal
+from typing import Annotated, Literal
 
 
 def get_rclone_config():
@@ -49,10 +49,10 @@ mprocs "echo 'see {DEFAULT_MOUNT}/{cloud} for the mounted cloud'; rclone about {
 
 
 def mount(
-    cloud: Annotated[Optional[str], typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
-    destination: Annotated[Optional[str], typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
-    network: Annotated[Optional[str], typer.Option(..., "--network", "-n", help="mount network drive")] = None,
-    zellij_session: Annotated[Optional[str], typer.Option(None, "--zellij-session", "-z", help="zellij session name for Linux/macOS")] = None,
+    cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
+    destination: Annotated[str | None, typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
+    network: Annotated[str | None, typer.Option(..., "--network", "-n", help="mount network drive")] = None,
+    zellij_session: Annotated[str | None, typer.Option(None, "--zellij-session", "-z", help="zellij session name for Linux/macOS")] = None,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose cloud interactively from config.")] = True,
 ) -> None:

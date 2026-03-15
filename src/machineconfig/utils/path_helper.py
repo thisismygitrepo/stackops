@@ -4,7 +4,6 @@ from rich.panel import Panel
 import platform
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 console = Console()
 
@@ -153,7 +152,7 @@ def search_for_files_of_interest(path_obj: Path, suffixes: set[str]) -> list[Pat
     return files
 
 
-def get_choice_file(path: str, suffixes: Optional[set[str]]):
+def get_choice_file(path: str, suffixes: set[str] | None):
     path_obj = sanitize_path(path)
     print(f"🔍 Resolving path `{path}` to `{path_obj}`")
     if suffixes is None:

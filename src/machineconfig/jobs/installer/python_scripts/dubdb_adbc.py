@@ -2,7 +2,6 @@
 
 
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
-from typing import Optional
 
 installer_data: InstallerData = {
       "appName": "libduckdb.so",
@@ -23,7 +22,7 @@ installer_data: InstallerData = {
     }
 
 
-def main(installer_data: InstallerData, version: Optional[str]) -> None:
+def main(installer_data: InstallerData, version: str | None) -> None:
     _ = version
     from machineconfig.utils.installer_utils.installer_runner import Installer
     installer = Installer(installer_data)

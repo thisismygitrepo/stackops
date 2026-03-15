@@ -35,7 +35,7 @@ Environment Variables (for OAuth2):
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any
 import requests
 from urllib.parse import quote
 import json
@@ -153,7 +153,7 @@ def is_token_valid() -> bool:
         return False
 
 
-def get_access_token() -> Optional[str]:
+def get_access_token() -> str | None:
     """
     Get access token, automatically refreshing if expired.
 
@@ -464,7 +464,7 @@ def create_remote_directory(remote_path: str) -> bool:
         return False
 
 
-def refresh_access_token() -> Optional[dict[str, Any]]:
+def refresh_access_token() -> dict[str, Any] | None:
     """
     Refresh the access token using the refresh token.
 
@@ -531,7 +531,7 @@ def refresh_access_token() -> Optional[dict[str, Any]]:
         return None
 
 
-def save_token_to_file(token_data: dict[str, Any], file_path: Optional[str] = None) -> bool:
+def save_token_to_file(token_data: dict[str, Any], file_path: str | None = None) -> bool:
     """
     Save token data to a file for persistence.
 
@@ -564,7 +564,7 @@ def save_token_to_file(token_data: dict[str, Any], file_path: Optional[str] = No
         return False
 
 
-def load_token_from_file(file_path: Optional[str] = None) -> Optional[dict[str, Any]]:
+def load_token_from_file(file_path: str | None = None) -> dict[str, Any] | None:
     """
     Load token data from a file.
 
@@ -616,7 +616,7 @@ def get_authorization_url() -> str:
     return auth_url
 
 
-def exchange_authorization_code(authorization_code: str) -> Optional[dict[str, Any]]:
+def exchange_authorization_code(authorization_code: str) -> dict[str, Any] | None:
     """
     Exchange authorization code for initial tokens.
     This is used during the first-time OAuth setup.

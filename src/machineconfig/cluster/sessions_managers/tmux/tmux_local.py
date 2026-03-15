@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import subprocess
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
@@ -42,7 +42,7 @@ class TmuxLayoutGenerator:
     def __init__(self, layout_config: LayoutConfig, session_name: str) -> None:
         self.session_name: str = session_name
         self.layout_config: LayoutConfig = layout_config.copy()
-        self.script_path: Optional[str] = None
+        self.script_path: str | None = None
 
     def create_layout_file(self) -> bool:
         validate_layout_config(self.layout_config)

@@ -2,15 +2,17 @@
 
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Callable
 import json
 
 
 def read_file(path: 'Path', **kwargs: Any) -> Any:
-    if Path(path).is_dir(): raise IsADirectoryError(f"Path is a directory, not a file: {path}")
+    if Path(path).is_dir():
+        raise IsADirectoryError(f"Path is a directory, not a file: {path}")
     suffix = Path(path).suffix[1:]
-    if suffix == "": raise ValueError(f"File type could not be inferred from suffix. Suffix is empty. Path: {path}")
+    if suffix == "":
+        raise ValueError(f"File type could not be inferred from suffix. Suffix is empty. Path: {path}")
     reader = READERS.get(suffix)
     if reader is not None:
         return reader(str(path), **kwargs)
@@ -60,8 +62,9 @@ def read_yaml(path: 'Path', r: bool = False) -> Any:
     return mydict
 
 
-def read_ini(path: 'Path', encoding: Optional[str] = None) -> Any:
-    if not Path(path).exists() or Path(path).is_dir(): raise FileNotFoundError(f"File not found or is a directory: {path}")
+def read_ini(path: 'Path', encoding: str | None = None) -> Any:
+    if not Path(path).exists() or Path(path).is_dir():
+        raise FileNotFoundError(f"File not found or is a directory: {path}")
     import configparser
     res = configparser.ConfigParser()
     res.read(filenames=[str(path)], encoding=encoding)
@@ -81,7 +84,8 @@ def read_npy(path: 'Path', **kwargs: Any) -> Any:
 
 def read_pickle(path: 'Path', **kwargs: Any) -> Any:
     import pickle
-    try: return pickle.loads(Path(path).read_bytes(), **kwargs)
+    try:
+        return pickle.loads(Path(path).read_bytes(), **kwargs)
     except BaseException as ex:
         print(f"💥 Failed to load pickle file `{path}` with error:\n{ex}")
         raise ex
@@ -90,7 +94,7 @@ def read_pickle(path: 'Path', **kwargs: Any) -> Any:
 def read_pkl(path: 'Path', **kwargs: Any) -> Any: return read_pickle(path, **kwargs)
 
 
-def read_py(path: 'Path', init_globals: Optional[dict[str, Any]] = None, run_name: Optional[str] = None) -> Any:
+def read_py(path: 'Path', init_globals: dict[str, Any] | None = None, run_name: str | None = None) -> Any:
     import runpy
     return runpy.run_path(str(path), init_globals=init_globals, run_name=run_name)
 

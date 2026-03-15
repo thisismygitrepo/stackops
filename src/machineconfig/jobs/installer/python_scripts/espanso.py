@@ -3,7 +3,6 @@
 https://github.com/espanso/espanso
 """
 
-from typing import Optional
 import subprocess
 from rich import box
 from rich.console import Console
@@ -16,7 +15,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 #     "doc": "A text expander.",
 # }
 
-def main(installer_data: InstallerData, version: Optional[str]) -> None:
+def main(installer_data: InstallerData, version: str | None) -> None:
     console = Console()
     _ = installer_data
     console.print(

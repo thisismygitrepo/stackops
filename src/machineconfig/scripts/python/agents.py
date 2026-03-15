@@ -1,26 +1,26 @@
 """Agents management commands - lazy loading subcommands."""
 
 from pathlib import Path
-from typing import Optional, get_args, Annotated, Literal
+from typing import get_args, Annotated, Literal
 import typer
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, DEFAULT_SEAPRATOR
 
 
 def agents_create(
     agent:        Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")],
-    model:        Annotated[Optional[str], typer.Option(..., "--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
-    provider:     Annotated[Optional[PROVIDER], typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
+    model:        Annotated[str | None, typer.Option(..., "--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
+    provider:     Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
     host:         Annotated[HOST, typer.Option(..., "--host", "-h", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
-    context:      Annotated[Optional[str], typer.Option(..., "--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path.")] = None,
-    context_path: Annotated[Optional[str], typer.Option(..., "--context-path", "-C", help="Path to the context file/folder, defaults to .ai/todo/")] = None,
+    context:      Annotated[str | None, typer.Option(..., "--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path.")] = None,
+    context_path: Annotated[str | None, typer.Option(..., "--context-path", "-C", help="Path to the context file/folder, defaults to .ai/todo/")] = None,
     separator:    Annotated[str, typer.Option(..., "--separator", "-s", help="Separator for context")] = DEFAULT_SEAPRATOR,
     agent_load:   Annotated[int, typer.Option(..., "--agent-load", "-l", help="Number of tasks per prompt")] = 3,
-    prompt:       Annotated[Optional[str], typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
-    prompt_path:  Annotated[Optional[str], typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
+    prompt:       Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
+    prompt_path:  Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
     job_name:     Annotated[str, typer.Option(..., "--job-name", "-n", help="Job label. Also used to build the default output directory when --agents-dir is omitted.")] = "AI_Agents",
     join_prompt_and_context:     Annotated[bool, typer.Option(..., "--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
-    output_path:  Annotated[Optional[str], typer.Option(..., "--output-path", "-o", help="Path to write the layout.json file")] = None,
-    agents_dir:   Annotated[Optional[str], typer.Option(..., "--agents-dir", "-d", help="Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.")] = None,
+    output_path:  Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Path to write the layout.json file")] = None,
+    agents_dir:   Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.")] = None,
 ) -> None:
     """Create agents layout file, ready to run."""
     from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
@@ -37,7 +37,7 @@ def collect(
     agent_dir: Annotated[str, typer.Argument(..., help="Path to the agent directory containing the prompts folder")],
     output_path: Annotated[str, typer.Argument(..., help="Path to write the concatenated material files")],
     separator: Annotated[str, typer.Option(..., help="Separator to use when concatenating material files")] = "\n",
-    pattern: Annotated[Optional[str], typer.Option(..., help="Pattern to match material files (e.g., 'res.txt')")] = None,
+    pattern: Annotated[str | None, typer.Option(..., help="Pattern to match material files (e.g., 'res.txt')")] = None,
 ) -> None:
     """Collect all material files from an agent directory and concatenate them."""
     from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import collect as impl
@@ -101,8 +101,8 @@ def make_todo_files(
     include_line_count: Annotated[bool, typer.Option("-l", "--line-count", help="Include line count column in the output")] = False,
     output_path: Annotated[str, typer.Option("-o", "--output-path", help="Base path for output files relative to repo root")] = ".ai/todo/files",
     format_type: Annotated[Literal["csv", "md", "txt"], typer.Option("-f", "--format", help="Output format: csv, md (markdown), or txt")] = "md",
-    split_every: Annotated[Optional[int], typer.Option("--split-every", "-e", help="Split output into multiple files, each containing at most this many results")] = None,
-    split_to: Annotated[Optional[int], typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
+    split_every: Annotated[int | None, typer.Option("--split-every", "-e", help="Split output into multiple files, each containing at most this many results")] = None,
+    split_to: Annotated[int | None, typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
 ) -> None:
     """Generate checklist with Python and shell script files in the repository filtered by pattern."""
     from machineconfig.scripts.python.ai.utils.generate_files import make_todo_files as impl
@@ -118,12 +118,12 @@ def create_symlink_command(
 
 
 def run_prompt(
-    prompt: Annotated[Optional[str], typer.Argument(help="Prompt text (optional positional argument). If omitted, an empty prompt is used.")] = None,
+    prompt: Annotated[str | None, typer.Argument(help="Prompt text (optional positional argument). If omitted, an empty prompt is used.")] = None,
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
-    context: Annotated[Optional[str], typer.Option(..., "--context", "-c", help="Context string. Mutually exclusive with --context-path.")] = None,
-    context_path: Annotated[Optional[str], typer.Option(..., "--context-path", "-C", help="Path to a context file. Mutually exclusive with --context.")] = None,
-    context_yaml_path: Annotated[Optional[str], typer.Option(..., "--context-yaml-path", "-y", help="YAML file used for interactive context selection fallback. Auto-created with commented template if missing.")] = None,
-    context_name: Annotated[Optional[str], typer.Option(..., "--context-name", "-n", help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.")] = None,
+    context: Annotated[str | None, typer.Option(..., "--context", "-c", help="Context string. Mutually exclusive with --context-path.")] = None,
+    context_path: Annotated[str | None, typer.Option(..., "--context-path", "-C", help="Path to a context file. Mutually exclusive with --context.")] = None,
+    context_yaml_path: Annotated[str | None, typer.Option(..., "--context-yaml-path", "-y", help="YAML file used for interactive context selection fallback. Auto-created with commented template if missing.")] = None,
+    context_name: Annotated[str | None, typer.Option(..., "--context-name", "-n", help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.")] = None,
     where: Annotated[Literal["all", "a", "private", "p", "public", "b", "library", "l", "custom", "c"], typer.Option(..., "--where", "-w", help="Where to look for context YAML files when --context-yaml-path is not provided.")] = "all",
     show_prompts_yaml_format: Annotated[bool, typer.Option(..., "--show-format", "-Y", help="Show prompts YAML format guidance and resolved file path. If no prompt/context input is provided, exits after showing it.")] = False,
     edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open prompts YAML in an editor (hx preferred, nano fallback). If no prompt/context input is provided, exits after editing.")] = False,
@@ -139,7 +139,7 @@ def run_prompt(
 def add_skill(
     skill_name: Annotated[str, typer.Argument(help="Name of the skill to add.")],
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to add the skill to.")] = "copilot",
-    directory: Annotated[Optional[str], typer.Option(..., "--directory", "-d", help="Directory to add the skill to. If not provided, defaults to current working directory.")] = None,
+    directory: Annotated[str | None, typer.Option(..., "--directory", "-d", help="Directory to add the skill to. If not provided, defaults to current working directory.")] = None,
 ):
     """Add a skill to an agent in a directory."""
     opensource_skills = {

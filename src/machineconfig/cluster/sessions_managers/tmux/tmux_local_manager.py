@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from datetime import datetime
 import subprocess
-from typing import Any, Optional, TypedDict, cast
+from typing import Any, TypedDict, cast
 
 from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
@@ -28,8 +28,8 @@ class TmuxSessionReport(TypedDict):
 
 
 class TmuxLocalManager:
-    def __init__(self, session_layouts: list[LayoutConfig], session_name_prefix: Optional[str]) -> None:
-        self.session_name_prefix: Optional[str] = session_name_prefix
+    def __init__(self, session_layouts: list[LayoutConfig], session_name_prefix: str | None) -> None:
+        self.session_name_prefix: str | None = session_name_prefix
         self.session_layouts = session_layouts
         self.managers: list[TmuxLayoutGenerator] = []
         for layout_config in session_layouts:
@@ -97,7 +97,7 @@ class TmuxLocalManager:
                 results[session_name] = {"success": False, "error": str(exc)}
         return results
 
-    def attach_to_session(self, session_name: Optional[str]) -> str:
+    def attach_to_session(self, session_name: str | None) -> str:
         if session_name is None:
             commands = []
             for manager in self.managers:

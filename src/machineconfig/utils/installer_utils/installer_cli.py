@@ -3,11 +3,11 @@
 """
 
 import typer
-from typing import Annotated, Optional
+from typing import Annotated
 
 
 def main_installer_cli(
-    which: Annotated[Optional[str], typer.Argument(..., help="Comma-separated list of program/groups names to install (if --group flag is set).")] = None,
+    which: Annotated[str | None, typer.Argument(..., help="Comma-separated list of program/groups names to install (if --group flag is set).")] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
 ) -> None:
@@ -145,7 +145,7 @@ def install_clis(clis_names: list[str]):
         for a_message in total_messages:
             console.print(f"[blue]• {a_message}[/blue]")
     return None
-def install_if_missing(which: str, binary_name: Optional[str] = None) -> bool:
+def install_if_missing(which: str, binary_name: str | None = None) -> bool:
     from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
     if binary_name is None:
         binary_name = which

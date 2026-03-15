@@ -2,7 +2,7 @@
 
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -21,7 +21,7 @@ def _parse_apps_csv(apps_csv: str) -> list[str]:
     return [name.strip() for name in apps_csv.split(",") if name.strip()]
 
 
-def _parse_positive_pct(value: Optional[str]) -> Optional[float]:
+def _parse_positive_pct(value: str | None) -> float | None:
     if value is None:
         return None
     cleaned = value.strip()

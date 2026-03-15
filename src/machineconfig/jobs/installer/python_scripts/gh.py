@@ -2,7 +2,6 @@
 
 import platform
 import subprocess
-from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -34,7 +33,7 @@ config_dict: InstallerData = {
 console = Console()
 
 
-def main(version: Optional[str]):
+def main(version: str | None):
     console.print(
         Panel.fit(
             "\n".join(

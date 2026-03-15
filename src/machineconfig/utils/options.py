@@ -3,7 +3,7 @@ from rich.text import Text
 from rich.panel import Panel
 from rich.console import Console
 import subprocess
-from typing import Optional, Union, Iterable, overload, Literal, cast
+from typing import Union, Iterable, overload, Literal, cast
 
 
 @overload
@@ -15,10 +15,10 @@ def choose_from_options[T](
     header: str = "",
     tail: str = "",
     prompt: str = "",
-    default: Optional[T] = None,
+    default: T | None = None,
     tv: bool = False,
-    preview: Optional[Literal["bat"]] = None,
-) -> Optional[T]: ...
+    preview: Literal["bat"] | None = None,
+) -> T | None: ...
 @overload
 def choose_from_options[T](
     options: Iterable[T],
@@ -28,10 +28,10 @@ def choose_from_options[T](
     header: str = "",
     tail: str = "",
     prompt: str = "",
-    default: Optional[T] = None,
+    default: T | None = None,
     tv: bool = False,
-    preview: Optional[Literal["bat"]] = None,
-) -> Optional[list[T]]: ...
+    preview: Literal["bat"] | None = None,
+) -> list[T] | None: ...
 def choose_from_options[T](
     options: Iterable[T],
     msg: str,
@@ -40,10 +40,10 @@ def choose_from_options[T](
     header: str = "",
     tail: str = "",
     prompt: str = "",
-    default: Optional[T] = None,
+    default: T | None = None,
     tv: bool = False,
-    preview: Optional[Literal["bat"]] = None,
-) -> Optional[Union[T, list[T]]]:
+    preview: Literal["bat"] | None = None,
+) -> Union[T, list[T]] | None:
     # TODO: replace with https://github.com/tmbo/questionary
     # # also see https://github.com/charmbracelet/gum
     options_list: list[T] = list(options)
@@ -268,7 +268,7 @@ tv  {preview_line} --no-sort --ansi --input-position top{input_header_arg} --sou
     return choice_one
 
 
-def choose_cloud_interactively() -> Optional[str]:
+def choose_cloud_interactively() -> str | None:
     console = Console()
     console.print(
         Panel(
@@ -314,8 +314,8 @@ def get_ssh_hosts() -> list[str]:
 
 
 @overload
-def choose_ssh_host(multi: Literal[False]) -> Optional[str]: ...
+def choose_ssh_host(multi: Literal[False]) -> str | None: ...
 @overload
-def choose_ssh_host(multi: Literal[True]) -> Optional[list[str]]: ...
+def choose_ssh_host(multi: Literal[True]) -> list[str] | None: ...
 def choose_ssh_host(multi: bool):
     return choose_from_options(msg="", options=get_ssh_hosts(), multi=multi, tv=True)

@@ -2,17 +2,17 @@
 
 """croshell - Cross-shell command execution."""
 
-from typing import Annotated, Optional
+from typing import Annotated
 import typer
 from machineconfig.scripts.python.enums import BACKENDS_LOOSE, BACKENDS_MAP
 
 
 def croshell(
-    path: Annotated[Optional[str], typer.Argument(help="path of file to read.")] = None,
-    project_path: Annotated[Optional[str], typer.Option("--project", "-p", help="specify uv project to use")] = None,
-    uv_with: Annotated[Optional[str], typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
+    path: Annotated[str | None, typer.Argument(help="path of file to read.")] = None,
+    project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
+    uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
     backend: Annotated[BACKENDS_LOOSE, typer.Option("--backend", "-b", help="specify the backend to use")] = "ipython",
-    profile: Annotated[Optional[str], typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
+    profile: Annotated[str | None, typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
     machineconfig_project: Annotated[bool, typer.Option("--self", "-s", help="specify machineconfig project to use.")] = False,
     frozen: Annotated[bool, typer.Option("--frozen", "-f", help="freeze the environment (no package changes allowed)")] = False
 ) -> None:

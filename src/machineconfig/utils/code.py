@@ -1,7 +1,7 @@
 
 from pathlib import Path
 import subprocess
-from typing import Any, Literal, Optional, Callable, cast
+from typing import Any, Literal, Callable, cast
 
 from machineconfig.utils.accessories import randstr
 
@@ -37,12 +37,13 @@ def print_code(code: str, lexer: str, desc: str, subtitle: str = ""):
         print(f"--- End of {desc} ---")
 
 
-def get_uv_command_executing_python_file(python_file: str, uv_with: Optional[list[str]],
-                                         uv_project_dir: Optional[str],
+def get_uv_command_executing_python_file(python_file: str, uv_with: list[str] | None,
+                                         uv_project_dir: str | None,
                                         prepend_print: bool = True, ) -> str:
     # shell script
     if uv_with is not None and len(uv_with) > 0:
-        if prepend_print: uv_with.append("rich")
+        if prepend_print:
+            uv_with.append("rich")
         uv_with_arg = "--with " + '"' + ",".join(uv_with) + '"'
     else:
         if prepend_print:
@@ -60,7 +61,7 @@ def get_uv_command_executing_python_file(python_file: str, uv_with: Optional[lis
     return shell_script
 
 
-def get_uv_command_executing_python_script(python_script: str, uv_with: Optional[list[str]], uv_project_dir: Optional[str],
+def get_uv_command_executing_python_script(python_script: str, uv_with: list[str] | None, uv_project_dir: str | None,
                                            prepend_print: bool = True, ) -> tuple[str, Path]:
     python_file = Path.home().joinpath("tmp_results", "tmp_scripts", "python", randstr() + ".py")
     python_file.parent.mkdir(parents=True, exist_ok=True)
@@ -75,18 +76,18 @@ def get_uv_command_executing_python_script(python_script: str, uv_with: Optional
     return shell_script, python_file
 
 
-def get_shell_script_running_lambda_function(lmb: Callable[[], Any], uv_with: Optional[list[str]], uv_project_dir: Optional[str]) -> tuple[str, Path]:
+def get_shell_script_running_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None) -> tuple[str, Path]:
     from machineconfig.utils.meta import lambda_to_python_script
     code = lambda_to_python_script(lmb,
                                             in_global=True, import_module=False)
     uv_command, py_file = get_uv_command_executing_python_script(python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir)
     return uv_command, py_file
-def run_lambda_function(lmb: Callable[[], Any], uv_with: Optional[list[str]], uv_project_dir: Optional[str]) -> None:
+def run_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None) -> None:
     uv_command, _py_file = get_shell_script_running_lambda_function(lmb=lmb, uv_with=uv_with, uv_project_dir=uv_project_dir)
     run_shell_script(uv_command, display_script=True, clean_env=False)
 
 
-def run_python_script_in_marimo(py_script: str, uv_project_with: Optional[str]):
+def run_python_script_in_marimo(py_script: str, uv_project_with: str | None):
     tmp_dir = Path.home().joinpath("tmp_results", "tmp_scripts", "marimo", randstr())
     tmp_dir.mkdir(parents=True, exist_ok=True)
     pyfile = tmp_dir / "marimo_db_explore.py"
@@ -105,7 +106,7 @@ uv run  {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
     exit_then_run_shell_script(fire_line)
 
 
-def run_shell_file(script_path: str, clean_env: bool) -> subprocess.CompletedProcess[str]:
+def run_shell_file(script_path: str, clean_env: bool) -> subprocess.CompletedProcess[bytes]:
     import platform
     env = {} if clean_env else None
     if platform.system() == "Windows":
@@ -117,7 +118,7 @@ def run_shell_file(script_path: str, clean_env: bool) -> subprocess.CompletedPro
     return proc
 
 
-def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subprocess.CompletedProcess[str]:
+def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subprocess.CompletedProcess[bytes]:
     import platform
     if platform.system() == "Windows":
         suffix = ".ps1"

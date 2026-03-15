@@ -7,7 +7,7 @@ Extracts GitHub repository URLs and fetches latest release data with rate limiti
 import json
 import requests
 from pathlib import Path
-from typing import Any, Dict, Optional, Set, TypedDict
+from typing import Any, Dict, Set, TypedDict
 from urllib.parse import urlparse
 
 from machineconfig.utils.installer_utils.github_release_scraper import scrape_github_release_page
@@ -38,7 +38,7 @@ class OutputData(TypedDict):
     generated_at: str
     total_repositories: int
     successful_fetches: int
-    releases: Dict[str, Optional[ReleaseInfo]]
+    releases: Dict[str, ReleaseInfo | None]
 
 
 def is_github_repo(url: str) -> bool:
@@ -61,7 +61,7 @@ def extract_github_repos_from_json(json_file_path: Path) -> Set[str]:
     except (json.JSONDecodeError, FileNotFoundError) as e:
         print(f"Error reading {json_file_path}: {e}")
     return github_repos
-def get_repo_name_from_url(repo_url: str) -> Optional[tuple[str, str]]:
+def get_repo_name_from_url(repo_url: str) -> tuple[str, str] | None:
     """Extract owner/repo from GitHub URL as a tuple (username, repo_name)."""
     try:
         parsed = urlparse(repo_url)
@@ -74,8 +74,8 @@ def get_repo_name_from_url(repo_url: str) -> Optional[tuple[str, str]]:
 def fetch_github_release_data(
     username: str,
     repo_name: str,
-    version: Optional[str] = None,
-) -> Optional[Dict[str, Any]]:
+    version: str | None = None,
+) -> Dict[str, Any] | None:
     """Fetch GitHub release data for the latest or a specific tag. Falls back to HTML scraping if API fails."""
 
     try:
@@ -110,8 +110,8 @@ def fetch_github_release_data(
 def get_release_info(
     username: str,
     repo_name: str,
-    version: Optional[str] = None,
-) -> Optional[ReleaseInfo]:
+    version: str | None = None,
+) -> ReleaseInfo | None:
     """Return sanitized release information for the requested repository."""
     release_data = fetch_github_release_data(username, repo_name, version)
     if not release_data:
@@ -119,7 +119,7 @@ def get_release_info(
     return extract_release_info(release_data)
 
 
-def extract_release_info(release_data: Dict[str, Any]) -> Optional[ReleaseInfo]:
+def extract_release_info(release_data: Dict[str, Any]) -> ReleaseInfo | None:
     """Extract relevant information from GitHub release data."""
     if not release_data:
         return None
@@ -142,4 +142,3 @@ def extract_release_info(release_data: Dict[str, Any]) -> Optional[ReleaseInfo]:
         "assets": assets,
         "assets_count": len(assets)
     }
-

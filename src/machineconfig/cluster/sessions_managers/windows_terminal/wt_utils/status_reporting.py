@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 from rich.console import Console
 
 console = Console()
@@ -19,7 +19,7 @@ def print_global_summary(global_summary: dict[str, Any], title: str) -> None:
     print()
 
 
-def print_session_health_status(wt_status: dict[str, Any], remote_name: Optional[str] = None) -> None:
+def print_session_health_status(wt_status: dict[str, Any], remote_name: str | None = None) -> None:
     location_str = f" on {remote_name}" if remote_name else ""
     if wt_status.get("wt_running", False):
         if wt_status.get("session_exists", False):

@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict, cast, NotRequired, TYPE_CHECKING
+from typing import TypedDict, cast, NotRequired, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -9,8 +9,8 @@ class CLOUD(TypedDict, total=True):
     root: str
     rel2home: bool
 
-    pwd: Optional[str]
-    key: Optional[str]
+    pwd: str | None
+    key: str | None
     encrypt: bool
 
     os_specific: bool
@@ -33,16 +33,16 @@ def read_default_cloud_config() -> CLOUD:
 
 class VE_SPECS(TypedDict):
     ve_path: str
-    ipy_profile: Optional[str]
+    ipy_profile: str | None
 class VE_YAML(TypedDict):
     specs: NotRequired[VE_SPECS]
     cloud: NotRequired[CLOUD]
 
 
-def get_ve_path_and_ipython_profile(init_path: "Path") -> tuple[Optional[str], Optional[str]]:
+def get_ve_path_and_ipython_profile(init_path: "Path") -> tuple[str | None, str | None]:
     """Works with {FILE_NAME} .venv"""
-    ve_path: Optional[str] = None
-    ipy_profile: Optional[str] = None
+    ve_path: str | None = None
+    ipy_profile: str | None = None
     tmp = init_path
     # from machineconfig.utils.io import read_ini
     for _ in init_path.parents:
@@ -56,16 +56,20 @@ def get_ve_path_and_ipython_profile(init_path: "Path") -> tuple[Optional[str], O
                     if "ve_path" in specs:
                         ve_path = specs["ve_path"]
                         print(f"🐍 Using Virtual Environment: {ve_path}. This is based on this file {tmp.joinpath(FILE_NAME)}")
-                    else: print(f"⚠️  {tmp}/{FILE_NAME} [specs] has no ve_path key.")
-                else: print(f"⚠️ {tmp}/{FILE_NAME} has no [specs] section.")
+                    else:
+                        print(f"⚠️  {tmp}/{FILE_NAME} [specs] has no ve_path key.")
+                else:
+                    print(f"⚠️ {tmp}/{FILE_NAME} has no [specs] section.")
             if ipy_profile is None:
                 if "specs" in ini:
                     specs = ini["specs"]
                     if "ipy_profile" in specs:
                         ipy_profile = specs["ipy_profile"]
                         print(f"✨ Using IPython profile: {ipy_profile}")
-                    else: print(f"⚠️ {tmp}/{FILE_NAME} [specs] has no ipy_profile key.")
-                else: print(f"⚠️ {tmp}/{FILE_NAME} has no [specs] section.")
+                    else:
+                        print(f"⚠️ {tmp}/{FILE_NAME} [specs] has no ipy_profile key.")
+                else:
+                    print(f"⚠️ {tmp}/{FILE_NAME} has no [specs] section.")
         if ve_path is None and tmp.joinpath(".venv").exists():
             print(f"🔮 Using Virtual Environment found @ {tmp}/.venv")
             ve_path = tmp.joinpath(".venv").resolve().__str__()

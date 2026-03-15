@@ -1,13 +1,13 @@
 
 
-from typing import Optional, Annotated
+from typing import Annotated
 import typer
 
 
 def create_from_function(
         num_process: Annotated[int, typer.Option(..., "--num-process", "-n", help="Number of parallel processes to run")],
         path: Annotated[str, typer.Option(..., "--path", "-p", help="Path to a Python or Shell script file or a directory containing such files")] = ".",
-        function: Annotated[Optional[str], typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
+        function: Annotated[str | None, typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
 ):
     from machineconfig.utils.ve import get_ve_path_and_ipython_profile
     from machineconfig.utils.options import choose_from_options

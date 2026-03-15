@@ -7,7 +7,7 @@ This module provides functionality to interact with VirusTotal API.
 
 import time
 from pathlib import Path
-from typing import Any, Optional, TypedDict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypedDict
 from rich.progress import Progress, TaskID
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 # Constants
 
 class ScanResult(TypedDict):
-    result: Optional[str]
+    result: str | None
     category: str
 
 def get_vt_client() -> "vt.Client":
@@ -29,7 +29,7 @@ def get_vt_client() -> "vt.Client":
     import vt
     return vt.Client(token)
 
-def scan_file(path: Path, client: "vt.Client", progress: Optional[Progress] = None, task_id: Optional[TaskID] = None) -> tuple[Optional[float], list[Any]]:
+def scan_file(path: Path, client: "vt.Client", progress: Progress | None = None, task_id: TaskID | None = None) -> tuple[float | None, list[Any]]:
     """
     Scans a file using VirusTotal.
     

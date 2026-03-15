@@ -1,7 +1,7 @@
 """Cloud management commands - lazy loading subcommands."""
 
 import typer
-from typing import Optional, Annotated, Literal
+from typing import Annotated, Literal
 from machineconfig.utils.ve import read_default_cloud_config
 
 
@@ -11,11 +11,11 @@ defaults = read_default_cloud_config()
 def sync(
     source: Annotated[str, typer.Argument(help="source")],
     target: Annotated[str, typer.Argument(help="target")],
-    config: Annotated[Optional[str], typer.Option("--config", "-c", help="path to .ve.yaml file.")] = None,
+    config: Annotated[str | None, typer.Option("--config", "-c", help="path to .ve.yaml file.")] = None,
     transfers: Annotated[int, typer.Option("--transfers", "-t", help="Number of threads in syncing.")] = 10,
     root: Annotated[str, typer.Option("--root", "-R", help="Remote root.")] = defaults["root"],
-    key: Annotated[Optional[str], typer.Option("--key", "-k", help="Key for encryption")] = defaults["key"],
-    pwd: Annotated[Optional[str], typer.Option("--pwd", "-P", help="Password for encryption")] = defaults["pwd"],
+    key: Annotated[str | None, typer.Option("--key", "-k", help="Key for encryption")] = defaults["key"],
+    pwd: Annotated[str | None, typer.Option("--pwd", "-P", help="Password for encryption")] = defaults["pwd"],
     encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="Decrypt after receiving.")] = defaults["encrypt"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="unzip after receiving.")] = defaults["zip"],
     bisync: Annotated[bool, typer.Option("--bisync", "-b", help="Bidirectional sync.")] = False,
@@ -34,12 +34,12 @@ def copy(
     share: Annotated[bool, typer.Option("--share", "-s", help="🔗 Share file / directory")] = defaults["share"],
     rel2home: Annotated[bool, typer.Option("--relative2home", "-r", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
-    key: Annotated[Optional[str], typer.Option("--key", "-k", help="🔑 Key for encryption")] = defaults["key"],
-    pwd: Annotated[Optional[str], typer.Option("--password", "-p", help="🔒 Password for encryption")] = defaults["pwd"],
+    key: Annotated[str | None, typer.Option("--key", "-k", help="🔑 Key for encryption")] = defaults["key"],
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Password for encryption")] = defaults["pwd"],
     encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="🔐 Encrypt before sending.")] = defaults["encrypt"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
-    config: Annotated[Optional[str], typer.Option("--config", "-c", help="🔧 path to .ve.yaml file.")] = None,
+    config: Annotated[str | None, typer.Option("--config", "-c", help="🔧 path to .ve.yaml file.")] = None,
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services."""
     from machineconfig.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main
@@ -47,9 +47,9 @@ def copy(
 
 
 def mount(
-    cloud: Annotated[Optional[str], typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
-    destination: Annotated[Optional[str], typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
-    network: Annotated[Optional[str], typer.Option(..., "--network", "-n", help="mount network drive")] = None,
+    cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
+    destination: Annotated[str | None, typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
+    network: Annotated[str | None, typer.Option(..., "--network", "-n", help="mount network drive")] = None,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose cloud interactively from config.")] = True,
 

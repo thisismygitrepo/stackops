@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable
 from urllib.parse import urlparse
 
 import csv
@@ -35,7 +35,7 @@ class LicenseCandidate:
 
 @dataclass(frozen=True)
 class LicenseFetchResult:
-    candidate: Optional[LicenseCandidate]
+    candidate: LicenseCandidate | None
     status: str
     detail: str
     license_name: str
@@ -139,7 +139,7 @@ def _resolve_output_dir(repo_root: Path, repo_name: str) -> Path:
     return repo_root / ".ai" / "repos" / repo_name
 
 
-def _select_license_candidate(candidates: list[LicenseCandidate]) -> Optional[LicenseCandidate]:
+def _select_license_candidate(candidates: list[LicenseCandidate]) -> LicenseCandidate | None:
     if not candidates:
         return None
     if len(candidates) == 1:

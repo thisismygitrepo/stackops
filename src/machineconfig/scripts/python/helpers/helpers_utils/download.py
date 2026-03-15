@@ -1,16 +1,16 @@
 
 
-from typing import Annotated, Optional
+from typing import Annotated
 import typer
 from pathlib import Path
 
 
 def download(
-    url: Annotated[Optional[str], typer.Argument(..., help="The URL to download the file from.")] = None,
+    url: Annotated[str | None, typer.Argument(..., help="The URL to download the file from.")] = None,
     decompress: Annotated[bool, typer.Option(..., "--decompress", "-d", help="Decompress the file if it's an archive.")] = False,
-    output: Annotated[Optional[str], typer.Option("--output", "-o", help="The output file path.")] = None,
-    output_dir: Annotated[Optional[str], typer.Option("--output-dir", help="Directory to place the downloaded file in.")] = None,
-) -> Optional["Path"]:
+    output: Annotated[str | None, typer.Option("--output", "-o", help="The output file path.")] = None,
+    output_dir: Annotated[str | None, typer.Option("--output-dir", help="Directory to place the downloaded file in.")] = None,
+) -> Path | None:
     import subprocess
     from urllib.parse import parse_qs, unquote, urlparse
     from requests import Response
@@ -24,13 +24,13 @@ def download(
         return None
     typer.echo(f"    {url}")
 
-    def _sanitize_candidate_filename(name: str) -> Optional[str]:
+    def _sanitize_candidate_filename(name: str) -> str | None:
         candidate = Path(name).name.strip()
         if not candidate or candidate in {".", ".."}:
             return None
         return candidate
 
-    def _filename_from_content_disposition(header_value: Optional[str]) -> Optional[str]:
+    def _filename_from_content_disposition(header_value: str | None) -> str | None:
         if header_value is None:
             return None
         parts = [segment.strip() for segment in header_value.split(";")]
@@ -53,7 +53,7 @@ def download(
                     return sanitized
         return None
 
-    def _filename_from_url(source_url: str) -> Optional[str]:
+    def _filename_from_url(source_url: str) -> str | None:
         parsed = urlparse(source_url)
         url_candidate = _sanitize_candidate_filename(unquote(Path(parsed.path).name))
         if url_candidate is not None:
@@ -68,7 +68,7 @@ def download(
                         return sanitized
         return None
 
-    def _resolve_download_path(request_url: str, response: Response, requested_output: Optional[str], requested_output_dir: Optional[str]) -> Path:
+    def _resolve_download_path(request_url: str, response: Response, requested_output: str | None, requested_output_dir: str | None) -> Path:
         if requested_output is not None:
             return Path(requested_output)
         header_candidate = _filename_from_content_disposition(response.headers.get("content-disposition"))

@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import ActiveSessionInfo, StartResult
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
@@ -49,7 +49,7 @@ def get_all_session_names(managers: list["ZellijLayoutGenerator"]) -> list[str]:
     return [manager.session_name for manager in managers]
 
 
-def attach_to_session(managers: list["ZellijLayoutGenerator"], session_name: Optional[str]) -> str:
+def attach_to_session(managers: list["ZellijLayoutGenerator"], session_name: str | None) -> str:
     """
     Generate command to attach to a specific session or list attachment commands for all.
 
@@ -95,7 +95,7 @@ def list_active_sessions(managers: list["ZellijLayoutGenerator"]) -> list[Active
     return active_sessions
 
 
-def save_manager(session_layouts: list[LayoutConfig], managers: list["ZellijLayoutGenerator"], session_name_prefix: str, session_id: Optional[str]) -> str:
+def save_manager(session_layouts: list[LayoutConfig], managers: list["ZellijLayoutGenerator"], session_name_prefix: str, session_id: str | None) -> str:
     """Save the manager state to disk."""
     if session_id is None:
         import uuid

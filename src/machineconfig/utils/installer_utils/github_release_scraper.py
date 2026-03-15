@@ -2,7 +2,7 @@
 """HTML scraper for GitHub release pages as fallback when API rate limit is exceeded."""
 
 import re
-from typing import Any, Optional
+from typing import Any
 import requests
 
 
@@ -71,7 +71,7 @@ def fetch_expanded_assets(username: str, repo_name: str, tag_name: str, headers:
     return assets
 
 
-def scrape_github_release_page(username: str, repo_name: str, version: Optional[str] = None) -> Optional[dict[str, Any]]:
+def scrape_github_release_page(username: str, repo_name: str, version: str | None = None) -> dict[str, Any] | None:
     """Scrape GitHub release page HTML to extract release information. Falls back to this when API rate limit is hit."""
     try:
         requested_version = (version or "").strip()

@@ -6,7 +6,7 @@ Adapted from zellij remote executor but focused on Windows Terminal commands.
 
 import subprocess
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class WTRemoteExecutor:
             logger.error(f"Failed to list Windows Terminal processes: {e}")
             return {"success": False, "error": str(e), "remote": self.remote_name}
 
-    def kill_wt_processes(self, process_ids: Optional[List[Any]] = None) -> Dict[str, Any]:
+    def kill_wt_processes(self, process_ids: List[Any] | None = None) -> Dict[str, Any]:
         """Kill Windows Terminal processes on the remote machine."""
         try:
             if process_ids:

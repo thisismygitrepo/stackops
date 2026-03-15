@@ -9,7 +9,7 @@ https://github.com/ruby9455/app_management/tree/main/app_management
 
 import subprocess
 import platform
-from typing import Optional, Any
+from typing import Any
 from pathlib import Path
 import logging
 
@@ -41,7 +41,7 @@ class WTLayoutGenerator:
     def __init__(self, layout_config: LayoutConfig, session_name: str):
         self.session_name: str = session_name
         self.layout_config: LayoutConfig = layout_config.copy()
-        self.script_path: Optional[str] = None
+        self.script_path: str | None = None
 
     def create_layout_file(self) -> bool:
         """Create Windows Terminal layout file and return success status."""
@@ -193,7 +193,7 @@ def run_wt_layout(layout_config: LayoutConfig) -> None:
         raise RuntimeError(f"Failed to run layout: {result.stderr}")
 
 
-def run_command_in_wt_tab(command: str, tab_name: str, cwd: Optional[str]) -> str:
+def run_command_in_wt_tab(command: str, tab_name: str, cwd: str | None) -> str:
     """Create a command to run in a new Windows Terminal tab."""
     cwd_part = f'-d "{cwd}"' if cwd else ""
     return f"""

@@ -1,15 +1,15 @@
 import typer
 import shutil
 import subprocess
-from typing import Annotated, Optional, Literal
+from typing import Annotated, Literal
 from machineconfig.profile.create_links_export import REPO_LOOSE
 
 
 def sync(
     direction: Annotated[Literal["up", "u", "down", "d"], typer.Argument(..., help="Direction of sync: backup or retrieve")],
-    cloud: Annotated[Optional[str], typer.Option("--cloud", "-c", help="☁ Cloud configuration name (rclone config name)")] = None,
+    cloud: Annotated[str | None, typer.Option("--cloud", "-c", help="☁ Cloud configuration name (rclone config name)")] = None,
     which: Annotated[
-        Optional[str], typer.Option("--which", "-w", help="📝 Comma-separated list of items to BACKUP (from backup.toml), or 'all' for all items")
+        str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to BACKUP (from backup.toml), or 'all' for all items")
     ] = None,
     repo: Annotated[REPO_LOOSE, typer.Option("--repo", "-r", help="📁 Which backup configuration to use: 'library' or 'user'")] = "all",
     # interactive: Annotated[bool, typer.Option("--interactive", "-i", help="🤔 Prompt the selection of which items to process")] = False,
@@ -29,11 +29,11 @@ def sync(
 def register_data(
     path_local: Annotated[str, typer.Argument(..., help="Local file/folder path to back up.")],
     group: Annotated[str, typer.Option("--group", "-g", help="Group section name in backup.toml.")] = "default",
-    name: Annotated[Optional[str], typer.Option("--name", "-n", help="Entry name inside the group in backup.toml.")] = None,
-    path_cloud: Annotated[Optional[str], typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
+    name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in backup.toml.")] = None,
+    path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
     zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z/-nz", help="Zip before uploading.")] = False,
     encrypt: Annotated[bool, typer.Option("--encrypt/--no-encrypt", "-e/-ne", help="Encrypt before uploading.")] = False,
-    rel2home: Annotated[Optional[bool], typer.Option("--rel2home/--no-rel2home", "-r/-nr", help="Treat the local path as relative to home.")] = None,
+    rel2home: Annotated[bool | None, typer.Option("--rel2home/--no-rel2home", "-r/-nr", help="Treat the local path as relative to home.")] = None,
     os: Annotated[str, typer.Option("--os", "-o", help="OS filter for this backup entry (comma-separated, or 'any').")] = "any",
 ) -> None:
     from machineconfig.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry

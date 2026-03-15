@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional, Annotated, Literal, TypedDict, cast
+from typing import Annotated, Literal, TypedDict, cast
 
 import typer
 
@@ -145,16 +145,16 @@ def tui_env(which: Annotated[Literal["PATH", "p", "ENV", "e"], typer.Argument(he
 
 
 def init_project(
-    name: Annotated[Optional[str], typer.Option("--name", "-n", help="Name of the project.")] = None,
+    name: Annotated[str | None, typer.Option("--name", "-n", help="Name of the project.")] = None,
     tmp_dir: Annotated[bool, typer.Option("--tmp-dir", "-t", help="Use a temporary directory for the project initialization.")] = False,
     python: Annotated[
         Literal["3.11", "3.12", "3.13", "3.14"], typer.Option("--python", "-p", help="Python sub version for the uv virtual environment.")
     ] = "3.13",
     libraries: Annotated[
-        Optional[str], typer.Option("--libraries", "-l", help="Additional packages to include in the uv virtual environment (space separated).")
+        str | None, typer.Option("--libraries", "-l", help="Additional packages to include in the uv virtual environment (space separated).")
     ] = None,
     group: Annotated[
-        Optional[str], typer.Option("--group", "-g", help="group of packages names (no separation) p:plot, t:types, l:linting, i:interactive, d:data")
+        str | None, typer.Option("--group", "-g", help="group of packages names (no separation) p:plot, t:types, l:linting, i:interactive, d:data")
     ] = "p,t,l,i,d",
 ) -> None:
     if libraries is not None:
@@ -234,7 +234,7 @@ ls
 
 
 def edit_file_with_hx(
-    path: Annotated[Optional[str], typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None,
+    path: Annotated[str | None, typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None,
 ) -> None:
     from pathlib import Path
 

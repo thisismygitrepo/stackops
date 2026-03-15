@@ -1,7 +1,7 @@
 
 """Like yadm and dotter."""
 
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal
 from machineconfig.profile.create_links_export import ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER, METHOD_LOOSE, METHOD_MAP
 from pathlib import Path
 import shutil
@@ -72,7 +72,7 @@ def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, sectio
     console.print(Panel(f"📝 Mapping recorded in: [cyan]{mapper_file}[/cyan]\n[{section}]\n{entry_name} = {{ original = '{orig_display}', self_managed = '{new_display}', os = '{os_filter}' }}", title="Mapper Entry Saved", border_style="cyan", padding=(1, 2),))
 
 
-def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: Optional[str], shared: bool) -> Path:
+def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool) -> Path:
     match sensitivity:
         case "private" | "v":
             backup_root = BACKUP_ROOT_PRIVATE
@@ -95,7 +95,7 @@ def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "publi
     return new_path
 
 
-def get_original_path_from_backup_path(backup_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: Optional[str], shared: bool) -> Path:
+def get_original_path_from_backup_path(backup_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool) -> Path:
     match sensitivity:
         case "private" | "v":
             backup_root = BACKUP_ROOT_PRIVATE
@@ -124,7 +124,7 @@ def register_dotfile(
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "copy",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-o", help="Action to take on conflict")] = "throw-error",
     sensitivity: Annotated[Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the config file.")] = "private",
-    destination: Annotated[Optional[str], typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")] = None,
+    destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")] = None,
     section: Annotated[str, typer.Option("--section", "-se", help="Section name in mapper_dotfiles.toml to record this mapping.")] = "default",
     os_filter: Annotated[str, typer.Option("--os", help="Comma-separated OS list or 'any' to apply everywhere.")] = "any",
     shared: Annotated[bool, typer.Option("--shared", "-sh", help="Whether the config file is shared across destinations directory.")] = False,
@@ -264,8 +264,8 @@ d c i -u http://{localipv4}:{port} -p {pwd}
 
 
 def import_dotfiles(
-        url: Annotated[Optional[str], typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles zip")] = None,
-        pwd: Annotated[Optional[str], typer.Option(..., "--pwd", "-p", help="Password for zip decryption")] = None,
+        url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles zip")] = None,
+        pwd: Annotated[str | None, typer.Option(..., "--pwd", "-p", help="Password for zip decryption")] = None,
         use_ssh: Annotated[bool, typer.Option("--use-ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles.")]=False,
         ):  
     # # INSECURE cd $HOME; uvx wormhole-magic receive dotfiles.zip.enc --accept-file

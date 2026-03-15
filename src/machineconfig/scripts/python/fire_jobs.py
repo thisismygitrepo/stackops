@@ -1,13 +1,13 @@
 """fire - Fire and manage jobs."""
 
-from typing import Optional, Annotated
+from typing import Annotated
 import typer
 
 
 def fire(
     ctx: typer.Context,
     path: Annotated[str, typer.Argument(help="Path to the Python file to run")] = ".",
-    function: Annotated[Optional[str], typer.Argument(help="Function to run")] = None,
+    function: Annotated[str | None, typer.Argument(help="Function to run")] = None,
     frozen: Annotated[bool, typer.Option("--frozen", "-F", help="Run in frozen mode (no auto-reload)")] = False,
     ve: Annotated[str, typer.Option("--ve", "-v", help="Virtual environment name")] = "",
     cmd: Annotated[bool, typer.Option("--cmd", "-B", help="Create a cmd fire command to launch the job asynchronously")] = False,
@@ -20,7 +20,7 @@ def fire(
     module: Annotated[bool, typer.Option("--module", "-m", help="Launch the main file")] = False,
     script: Annotated[bool, typer.Option("--script", "-s", help="Launch as a script without fire")] = False,
     optimized: Annotated[bool, typer.Option("--optimized", "-O", help="Run the optimized version of the function")] = False,
-    zellij_tab: Annotated[Optional[str], typer.Option("--zellij-tab", "-z", help="Open in a new zellij tab")] = None,
+    zellij_tab: Annotated[str | None, typer.Option("--zellij-tab", "-z", help="Open in a new zellij tab")] = None,
     submit_to_cloud: Annotated[bool, typer.Option("--submit-to-cloud", "-C", help="Submit to cloud compute")] = False,
     remote: Annotated[bool, typer.Option("--remote", "-r", help="Launch on a remote machine")] = False,
     streamlit: Annotated[bool, typer.Option("--streamlit", "-S", help="Run as streamlit app")] = False,

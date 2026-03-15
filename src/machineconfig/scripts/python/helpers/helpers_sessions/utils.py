@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 
 def balance_load(
@@ -7,7 +7,7 @@ def balance_load(
     max_thresh: int,
     thresh_type: Literal["number", "n", "weight", "w"],
     breaking_method: Literal["moreLayouts", "ml", "combineTabs", "ct"],
-    output_path: Optional[str],
+    output_path: str | None,
 ) -> None:
     """Adjust layout file to limit max tabs per layout, etc."""
     thresh_type_resolved: dict[str, Literal["number", "weight"]] = {"number": "number", "n": "number", "weight": "weight", "w": "weight"}
@@ -28,7 +28,7 @@ def balance_load(
     print(f"Adjusted layout saved to {target_file}")
 
 
-def create_template(name: Optional[str], num_tabs: int) -> None:
+def create_template(name: str | None, num_tabs: int) -> None:
     """Create a layout template file."""
     from machineconfig.utils.schemas.layouts.layout_types import LayoutsFile, TabConfig, LayoutConfig
     tabs: list[TabConfig] = []

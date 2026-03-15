@@ -4,7 +4,7 @@ Zellij session management utilities for remote operations.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pathlib import Path
 
 from rich.console import Console
@@ -57,7 +57,7 @@ class SessionManager:
         except Exception as e:
             return {"zellij_running": False, "error": str(e), "session_name": self.session_name, "remote": self.remote_executor.remote_name}
 
-    def start_zellij_session(self, layout_file_path: Optional[str]) -> Dict[str, Any]:
+    def start_zellij_session(self, layout_file_path: str | None) -> Dict[str, Any]:
         """Start a Zellij session on the remote machine with the generated layout."""
         try:
             if layout_file_path:

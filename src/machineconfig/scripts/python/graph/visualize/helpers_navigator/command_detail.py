@@ -2,7 +2,6 @@
 Command detail widget for displaying command information.
 """
 
-from typing import Optional
 from textual.widgets import Static
 from rich.text import Text
 from rich.panel import Panel
@@ -17,9 +16,9 @@ class CommandDetail(Static):
 
     def __init__(self, *, id: str) -> None:  # type: ignore
         super().__init__(id=id)
-        self.command_info: Optional[CommandInfo] = None
+        self.command_info: CommandInfo | None = None
 
-    def update_command(self, command_info: Optional[CommandInfo]) -> None:
+    def update_command(self, command_info: CommandInfo | None) -> None:
         """Update displayed command information."""
         self.command_info = command_info
         if command_info is None:

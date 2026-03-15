@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 import tempfile
 import platform
-from typing import Optional, Literal
+from typing import Literal
 
 # https://github.com/sepandhaghighi/art
 
@@ -49,7 +49,7 @@ FIGJS_FONTS = ['3D Diagonal', '3D-ASCII', '4Max', '5 Line Oblique', 'Acrobatic',
                ]  # too large  Crazy 'Sweet', 'Electronic', 'Swamp Land', Crawford, Alligator
 
 
-def get_art(comment: Optional[str] = None, artlib: Optional[BOX_OR_CHAR] = None, style: Optional[str] = None, super_style: str = 'scene', prefix: str = ' ', file: Optional[str] = None, verbose: bool = True):
+def get_art(comment: str | None = None, artlib: BOX_OR_CHAR | None = None, style: str | None = None, super_style: str = 'scene', prefix: str = ' ', file: str | None = None, verbose: bool = True):
     """ takes in a comment and does the following wrangling:
     * text => figlet font => boxes => lolcatjs
     * text => cowsay => lolcatjs
@@ -59,14 +59,17 @@ def get_art(comment: Optional[str] = None, artlib: Optional[BOX_OR_CHAR] = None,
             comment = subprocess.run("fortune", shell=True, capture_output=True, text=True, check=True).stdout
         except Exception:
             comment = "machineconfig"
-    if artlib is None: artlib = random.choice(['boxes', 'cowsay'])
+    if artlib is None:
+        artlib = random.choice(['boxes', 'cowsay'])
     to_file = '' if not file else f'> {file}'
     if artlib == 'boxes':
-        if style is None: style = random.choice(BoxStyles.__dict__[super_style or random.choice(['language', 'scene', 'character'])])
+        if style is None:
+            style = random.choice(BoxStyles.__dict__[super_style or random.choice(['language', 'scene', 'character'])])
         fonting = f'figlet -f {random.choice(FIGLET_FONTS)}'
         cmd = f"""{fonting} "{comment}" | boxes -d {style} {to_file}"""
     else:
-        if style is None: style = random.choice(CowStyles.figures)
+        if style is None:
+            style = random.choice(CowStyles.figures)
         cmd = f"""cowsay -c {style} -t "{comment}" {to_file}"""
     try:
         res = subprocess.run(cmd, text=True, capture_output=True, shell=True, check=True).stdout

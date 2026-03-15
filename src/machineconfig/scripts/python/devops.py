@@ -1,7 +1,7 @@
 """devops with emojis - lazy loading subcommands."""
 
 import typer
-from typing import Optional, Annotated, Literal, TypedDict, Callable
+from typing import Annotated, Literal, TypedDict, Callable
 
 
 class EmojiDisplayDiagnostic(TypedDict):
@@ -41,7 +41,7 @@ def inspect_devops_help_emojis() -> list[EmojiDisplayDiagnostic]:
     return emoji_display_diagnostics(emojis=["🔧", "📁", "🔩", "💾", "🔧", "🌐", "🚀"])
 
 
-def install(which: Annotated[Optional[str], typer.Argument(..., help="Comma-separated list of program names to install, or group name if --group flag is set.")] = None,
+def install(which: Annotated[str | None, typer.Argument(..., help="Comma-separated list of program names to install, or group name if --group flag is set.")] = None,
         group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
         interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
     ) -> None:
@@ -85,7 +85,7 @@ def execute(
     name: Annotated[str, typer.Argument(help="Name of script to run, e.g., 'a' for a.py, or command to execute")] = "",
     where: Annotated[Literal["all", "a", "private", "p", "public", "b", "library", "l", "dynamic", "d", "custom", "c"], typer.Option("--where", "-w", help="Where to look for the script")] = "all",
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
-    command: Annotated[Optional[bool], typer.Option(..., "--command", "-c", help="Run as command")] = False,
+    command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
     list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
 ) -> None:
     """🚀 Execute python/shell scripts from pre-defined directories or as command."""

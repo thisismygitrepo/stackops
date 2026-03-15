@@ -1,16 +1,15 @@
 """Pure Python implementation for croshell command - no typer dependencies."""
 
-from typing import Optional
 from pathlib import Path
 from machineconfig.scripts.python.enums import BACKENDS
 
 
 def croshell(
-    path: Optional[str],
-    project_path: Optional[str],
-    uv_with: Optional[str],
+    path: str | None,
+    project_path: str | None,
+    uv_with: str | None,
     backend: BACKENDS,
-    profile: Optional[str],
+    profile: str | None,
     frozen: bool
 ) -> None:
     """Cross-shell command execution."""
@@ -47,7 +46,7 @@ def croshell(
     from rich.panel import Panel
     console = Console()
 
-    ipython_profile: Optional[str] = profile
+    ipython_profile: str | None = profile
     if path is not None:
         from machineconfig.utils.path_helper import get_choice_file
         choice_file = get_choice_file(path=path, suffixes={".*"})
@@ -200,7 +199,7 @@ def _build_fire_line(
     uv_python_line: str,
     uv_project_line: str,
     user_uv_with_line: str,
-    uv_with: Optional[str],
+    uv_with: str | None,
 ) -> str:
     """Build the fire line command for croshell."""
     match backend:

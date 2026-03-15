@@ -1,5 +1,5 @@
 
-from typing import Optional, Annotated
+from typing import Annotated
 import typer
 
 """
@@ -43,15 +43,15 @@ def display_terminal_url(local_ip_v4: str, port: int, protocol: str = "http") ->
 
 
 def share_terminal(
-    port: Annotated[Optional[int], typer.Option("--port", "-p", help="Port to run the terminal server on (default: 7681)")] = None,
-    username: Annotated[Optional[str], typer.Option("--username", "-u", help="Username for terminal access (default: current user)")] = None,
-    password: Annotated[Optional[str], typer.Option("--password", "-w", help="Password for terminal access (default: from ~/dotfiles/creds/passwords/quick_password)")] = None,
+    port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the terminal server on (default: 7681)")] = None,
+    username: Annotated[str | None, typer.Option("--username", "-u", help="Username for terminal access (default: current user)")] = None,
+    password: Annotated[str | None, typer.Option("--password", "-w", help="Password for terminal access (default: from ~/dotfiles/creds/passwords/quick_password)")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-n", help="Disable authentication (not recommended)")] = False,
-    start_command: Annotated[Optional[str], typer.Option("--start-command", "-s", help="Command to run on terminal start (default: bash/powershell)")] = None,
+    start_command: Annotated[str | None, typer.Option("--start-command", "-s", help="Command to run on terminal start (default: bash/powershell)")] = None,
     ssl: Annotated[bool, typer.Option("--ssl", "-S", help="Enable SSL")] = False,
-    ssl_cert: Annotated[Optional[str], typer.Option("--ssl-cert", "-C", help="SSL certificate file path")] = None,
-    ssl_key: Annotated[Optional[str], typer.Option("--ssl-key", "-K", help="SSL key file path")] = None,
-    ssl_ca: Annotated[Optional[str], typer.Option("--ssl-ca", "-A", help="SSL CA file path for client certificate verification")] = None,
+    ssl_cert: Annotated[str | None, typer.Option("--ssl-cert", "-C", help="SSL certificate file path")] = None,
+    ssl_key: Annotated[str | None, typer.Option("--ssl-key", "-K", help="SSL key file path")] = None,
+    ssl_ca: Annotated[str | None, typer.Option("--ssl-ca", "-A", help="SSL CA file path for client certificate verification")] = None,
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the terminal over the internet using ngrok")] = False,
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
 

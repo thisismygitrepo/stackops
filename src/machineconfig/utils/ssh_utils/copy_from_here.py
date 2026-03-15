@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.meta import lambda_to_python_script
@@ -18,7 +18,7 @@ def _build_remote_path(self: "SSH", home_dir: str, rel_path: str) -> str:
 def copy_from_here(
     self: "SSH",
     source_path: str,
-    target_rel2home: Optional[str],
+    target_rel2home: str | None,
     compress_with_zip: bool,
     recursive: bool,
     overwrite_existing: bool,

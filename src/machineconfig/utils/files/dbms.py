@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Any, Callable
+from typing import Any, Callable
 
 import polars as pl
 
@@ -9,7 +9,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.sql.schema import MetaData
 from pathlib import Path as P
 
-OPLike = Optional[P] | str | None
+OPLike = P | str | None
 
 
 class DBMS:
@@ -26,7 +26,7 @@ class DBMS:
         self.eng.dispose()
         time.sleep(sleep)
     @staticmethod
-    def _get_table_identifier(engine: Engine, table: str, sch: Optional[str]):
+    def _get_table_identifier(engine: Engine, table: str, sch: str | None):
         if sch is not None:
             # Handle DuckDB schema names that contain dots (e.g., "klines.main")
             if engine.url.drivername == 'duckdb' and '.' in sch and sch.endswith('.main'):
@@ -65,10 +65,11 @@ class DBMS:
     # ========================== TABLES =====================================
     def insert_dicts(self, table: str, *mydicts: dict[str, Any]) -> None:
         cmd = f"""INSERT INTO {table} VALUES """
-        for mydict in mydicts: cmd += f"""({tuple(mydict)}), """
+        for mydict in mydicts:
+            cmd += f"""({tuple(mydict)}), """
         self.execute_begin_once(cmd)
 
-    def refresh(self, sch: Optional[str] = None) -> dict[str, Any]:
+    def refresh(self, sch: str | None = None) -> dict[str, Any]:
         con = self.eng.connect()
         ses = sessionmaker()(bind=self.eng)
         meta = MetaData()
@@ -79,12 +80,12 @@ class DBMS:
         sch_vws = {k: v for k, v in zip(schema, [insp.get_view_names(schema=x) for x in schema])}
         return {'con': con, 'ses': ses, 'meta': meta, 'insp': insp, 'schema': schema, 'sch_tab': sch_tab, 'sch_vws': sch_vws}
 
-    def get_columns(self, table: str, sch: Optional[str] = None) -> list[str]:
+    def get_columns(self, table: str, sch: str | None = None) -> list[str]:
         meta = MetaData()
         meta.reflect(bind=self.eng, schema=sch)
         return list(meta.tables[self._get_table_identifier(self.eng, table, sch)].exported_columns.keys())
 
-    def read_table(self, table: Optional[str] = None, sch: Optional[str] = None, size: int = 5) -> pl.DataFrame:
+    def read_table(self, table: str | None = None, sch: str | None = None, size: int = 5) -> pl.DataFrame:
         insp = inspect__(self.eng)
         schema = insp.get_schema_names()
         sch_tab = {k: v for k, v in zip(schema, [insp.get_table_names(schema=x) for x in schema])}
@@ -123,7 +124,7 @@ class DBMS:
                 print(f"Available schemas and tables: {sch_tab}")
                 raise
 
-    def describe_db(self, sch: Optional[str] = None) -> pl.DataFrame:
+    def describe_db(self, sch: str | None = None) -> pl.DataFrame:
         meta = MetaData()
         meta.reflect(bind=self.eng, schema=sch)
         ses = sessionmaker()(bind=self.eng)
@@ -142,7 +143,7 @@ class DBMS:
                 progress.update(task, advance=1)
         return pl.DataFrame(res_all)
 
-    def describe_table(self, table: str, sch: Optional[str] = None, dtype: bool = True) -> None:
+    def describe_table(self, table: str, sch: str | None = None, dtype: bool = True) -> None:
         print(table.center(100, "="))
         meta = MetaData()
         meta.reflect(bind=self.eng, schema=sch)
@@ -159,7 +160,8 @@ class DBMS:
         df = dat
         print("SAMPLE:\n", df)
         insp = inspect__(self.eng)
-        if dtype: print("\nDETAILED COLUMNS:\n", pl.DataFrame(insp.get_columns(self._get_table_identifier(self.eng, table, sch))))
+        if dtype:
+            print("\nDETAILED COLUMNS:\n", pl.DataFrame(insp.get_columns(self._get_table_identifier(self.eng, table, sch))))
         print("\n" * 3)
 
     @staticmethod

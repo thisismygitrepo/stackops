@@ -5,7 +5,7 @@ from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 from machineconfig.utils.ve import VE_YAML, CLOUD
 
 
-from typing import Optional, cast
+from typing import cast
 import os
 from pathlib import Path
 from rich.console import Console
@@ -43,7 +43,7 @@ def my_abs(path: str) -> Path:
     return obj.absolute()
 
 
-def get_secure_share_cloud_config(interactive: bool, cloud: Optional[str]) -> CLOUD:
+def get_secure_share_cloud_config(interactive: bool, cloud: str | None) -> CLOUD:
     console.print(Panel("🔐 Secure Share Cloud Configuration", expand=False))
     if cloud is None:
         if os.environ.get("CLOUD_CONFIG_NAME") is not None:

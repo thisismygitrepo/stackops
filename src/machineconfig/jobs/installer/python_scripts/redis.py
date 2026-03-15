@@ -2,7 +2,6 @@
 
 import platform
 import subprocess
-from typing import Optional
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -11,7 +10,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 # config_dict: InstallerData = {"appName": "Redis", "repoURL": "CMD", "doc": "submillisecond fast key-value db"}
 
 
-def main(installer_data: InstallerData, version: Optional[str]) -> None:
+def main(installer_data: InstallerData, version: str | None) -> None:
     console = Console()
     _ = installer_data
     console.print(

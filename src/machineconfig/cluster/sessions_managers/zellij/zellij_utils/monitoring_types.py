@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict, Optional
+from typing import NotRequired, TypedDict
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 
 
@@ -67,9 +67,9 @@ class SessionMetadata(TypedDict):
 
 
 class ManagerData(TypedDict):
-    session_name: Optional[str]
-    layout_config: Optional[LayoutConfig]  # Will be LayoutConfig from layout_types
-    layout_path: Optional[str]
+    session_name: str | None
+    layout_config: LayoutConfig | None  # Will be LayoutConfig from layout_types
+    layout_path: str | None
 
 
 class ActiveSessionInfo(TypedDict):

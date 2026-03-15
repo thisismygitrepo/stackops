@@ -2,7 +2,6 @@
 import logging
 import os
 import sys
-from typing import Optional
 
 
 def _configure_root_logger() -> logging.Logger:
@@ -31,7 +30,7 @@ def _configure_root_logger() -> logging.Logger:
 _ROOT_LOGGER = _configure_root_logger()
 
 
-def get_logger(name: Optional[str] = None) -> logging.Logger:
+def get_logger(name: str | None = None) -> logging.Logger:
     """Return a child logger of the package root.
 
     Inputs:

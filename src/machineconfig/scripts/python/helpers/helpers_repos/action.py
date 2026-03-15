@@ -3,14 +3,14 @@ from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.accessories import randstr
 from machineconfig.scripts.python.helpers.helpers_repos.update import update_repository
 
-from typing import Optional, Dict, Any, List, cast
+from typing import Dict, Any, List, cast
 import concurrent.futures
 import os
 
 from rich import print as pprint
 
 
-def git_action(path: PathExtended, action: GitAction, mess: Optional[str], r: bool, auto_uv_sync: bool) -> GitOperationResult:
+def git_action(path: PathExtended, action: GitAction, mess: str | None, r: bool, auto_uv_sync: bool) -> GitOperationResult:
     """Perform git actions using Python instead of shell scripts. Returns detailed operation result."""
     from git.exc import InvalidGitRepositoryError
     from git.repo import Repo

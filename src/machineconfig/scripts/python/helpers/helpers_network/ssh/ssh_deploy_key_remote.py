@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
 from rich import box
@@ -11,7 +10,7 @@ from machineconfig.utils.ssh import SSH
 console = Console()
 
 
-def deploy_key_to_remote(remote_target: str, pubkey_path: Path, password: Optional[str]) -> bool:
+def deploy_key_to_remote(remote_target: str, pubkey_path: Path, password: str | None) -> bool:
     """Deploy a public key to a remote machine's authorized_keys.
     
     Works for any combination of local/remote OS (Linux, macOS, Windows).
@@ -206,7 +205,7 @@ def _attempt_sshd_restart_windows(ssh: SSH) -> None:
          console.print(f"⚠️  Restart command sent but connection likely dropped: {e}")
 
 
-def deploy_multiple_keys_to_remote(remote_target: str, pubkey_paths: list[Path], password: Optional[str]) -> bool:
+def deploy_multiple_keys_to_remote(remote_target: str, pubkey_paths: list[Path], password: str | None) -> bool:
     """Deploy multiple public keys to a remote machine. Opens connection once."""
     console.print(Panel(f"🔐 Deploying {len(pubkey_paths)} key(s) to remote: [cyan]{remote_target}[/cyan]", title="[bold blue]Remote SSH Key Deployment[/bold blue]", border_style="blue"))
     

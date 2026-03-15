@@ -19,14 +19,14 @@ Recursively Searched Predefined Directories:
 
 
 import typer
-from typing import Annotated, Optional, Literal
+from typing import Annotated, Literal
 
 
 def run_py_script(ctx: typer.Context,
                   name: Annotated[str, typer.Argument(help="Name of script to run, e.g., 'a' for a.py, or command to execute")] = "",
                   where: Annotated[Literal["all", "a", "private", "p", "public", "b", "library", "l", "dynamic", "d", "custom", "c"], typer.Option("--where", "-w", help="Where to look for the script")] = "all",
                   interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
-                  command: Annotated[Optional[bool], typer.Option(..., "--command", "-c", help="Run as command")] = False,
+                  command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
                 ) -> None:
     if command:
@@ -40,11 +40,13 @@ def run_py_script(ctx: typer.Context,
     if not interactive and not name:
         typer.echo("❌ ERROR: You must provide a script name or use --interactive option to select a script.")
         raise typer.Exit(code=1)
-    target_file: Optional[Path] = None
+    target_file: Path | None = None
     if where in ["dynamic", "d"]:
         # src/machineconfig/jobs/scripts/python_scripts/a.py
-        if "." in name: resolved_names: list[str] = [name]
-        else: resolved_names = [f"{name}{a_suffix}" for a_suffix in [".py", ".sh", "", ".ps1", ".bat", ".cmd"]]
+        if "." in name:
+            resolved_names: list[str] = [name]
+        else:
+            resolved_names = [f"{name}{a_suffix}" for a_suffix in [".py", ".sh", "", ".ps1", ".bat", ".cmd"]]
         urls = [f"""https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/src/machineconfig/jobs/scripts_dynamic/{a_resolved_name}""" for a_resolved_name in resolved_names]
         for a_url in urls:
             try:
@@ -162,7 +164,7 @@ def run_py_script(ctx: typer.Context,
 
 def copy_script_to_local(ctx: typer.Context,
                          name: Annotated[str, typer.Argument(help="Name of the temporary python script to copy, e.g., 'a' for a.py")],
-                         alias: Annotated[Optional[str], typer.Option("--alias", "-a", help="Whether to create call it a different name locally")] = None
+                         alias: Annotated[str | None, typer.Option("--alias", "-a", help="Whether to create call it a different name locally")] = None
                          ) -> None:
     """
     Copy a temporary python script stored in machineconfig/scripts/python/helpers/tmp_py_scripts to the local machine.

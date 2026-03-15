@@ -5,13 +5,13 @@ import machineconfig.scripts.python.helpers.helpers_devops.cli_share_server as c
 import machineconfig.scripts.python.helpers.helpers_devops.cli_ssh as cli_ssh
 import machineconfig.scripts.python.helpers.helpers_devops.cli_share_temp as cli_share_temp
 import typer
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal
 
 
 def switch_public_ip_address(
     wait_seconds: Annotated[float, typer.Option(..., "--wait", "-w", help="Seconds to wait between steps")] = 2.0,
     max_trials: Annotated[int, typer.Option(..., "--max-trials", "-m", help="Max number of switch attempts")] = 10,
-    target_ip: Annotated[Optional[list[str]], typer.Option(..., "--target-ip", "-t", help="Acceptable target IPs, if current IP matches any, no switch needed")] = None,
+    target_ip: Annotated[list[str] | None, typer.Option(..., "--target-ip", "-t", help="Acceptable target IPs, if current IP matches any, no switch needed")] = None,
 ) -> None:
     """🔁 Switch public IP address (Cloudflare WARP)"""
     import machineconfig.scripts.python.helpers.helpers_network.address_switch as helper
@@ -135,10 +135,12 @@ def reset_cloudflare_tunnel(task: Annotated[Literal["oneoff-shell-process", "one
 """
     match task:
         case "oneoff-shell-process":
-            if tunnel_name is None: tunnel_name = ""
+            if tunnel_name is None:
+                tunnel_name = ""
             code = f"""cloudflared tunnel run {tunnel_name}  #  This is running like a normal command """
         case "oneoff-background-process":
-            if tunnel_name is None: tunnel_name = ""
+            if tunnel_name is None:
+                tunnel_name = ""
             import getpass
             user_name = getpass.getuser()
             code = f"""

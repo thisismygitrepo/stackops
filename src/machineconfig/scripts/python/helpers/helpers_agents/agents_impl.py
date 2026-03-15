@@ -1,6 +1,6 @@
 """Pure Python implementations for agents commands - no typer dependencies."""
 
-from typing import Optional, cast
+from typing import cast
 from pathlib import Path
 from time import perf_counter
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
@@ -22,7 +22,7 @@ def _split_and_chunk_prompts(raw_material: str, separator: str, tasks_per_prompt
     return grouped
 
 
-def resolve_agents_output_dir(*, repo_root: Path, agents_dir: Optional[str], job_name: Optional[str]) -> tuple[Path, str]:
+def resolve_agents_output_dir(*, repo_root: Path, agents_dir: str | None, job_name: str | None) -> tuple[Path, str]:
     if agents_dir is None:
         from machineconfig.utils.accessories import randstr
         if job_name is None:
@@ -42,18 +42,18 @@ def resolve_agents_output_dir(*, repo_root: Path, agents_dir: Optional[str], job
 def agents_create(
     agent: AGENTS,
     host: HOST,
-    model: Optional[str],
-    provider: Optional[PROVIDER],
-    context: Optional[str],
-    context_path: Optional[str],
+    model: str | None,
+    provider: PROVIDER | None,
+    context: str | None,
+    context_path: str | None,
     separator: str,
     agent_load: int,
-    prompt: Optional[str],
-    prompt_path: Optional[str],
-    job_name: Optional[str],
+    prompt: str | None,
+    prompt_path: str | None,
+    job_name: str | None,
     join_prompt_and_context: bool,
-    output_path: Optional[str],
-    agents_dir: Optional[str],
+    output_path: str | None,
+    agents_dir: str | None,
 ) -> None:
     """Create agents layout file, ready to run."""
     from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_help_launch import prep_agent_launch, get_agents_launch_layout
@@ -163,7 +163,7 @@ def agents_create(
     print(f"Created layout in {layout_output_path}")
 
 
-def collect(agent_dir: str, output_path: str, separator: str, pattern: Optional[str]) -> None:
+def collect(agent_dir: str, output_path: str, separator: str, pattern: str | None) -> None:
     """Collect all material files from an agent directory and concatenate them."""
     if not Path(agent_dir).exists() or not Path(agent_dir).is_dir():
         raise ValueError(f"Agent directory does not exist or is not a directory: {agent_dir}")
@@ -236,7 +236,7 @@ def make_agents_command_template() -> None:
 
 
 def init_config(
-    root: Optional[str],
+    root: str | None,
     frameworks: tuple[AGENTS, ...],
     include_common: bool,
     add_all_configs_to_gitignore: bool,

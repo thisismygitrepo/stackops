@@ -38,7 +38,6 @@ from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 from rich import box
-from typing import Optional
 import sys
 
 from machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_add_key_windows import add_ssh_key_windows
@@ -113,7 +112,7 @@ sudo service ssh --full-restart
 
 
 
-def main(pub_path: Optional[str], pub_choose: bool, pub_val: bool, from_github: Optional[str], remote: Optional[str]) -> None:
+def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str | None) -> None:
     info_lines: list[str] = []
     program = ""
     status_msg = ""

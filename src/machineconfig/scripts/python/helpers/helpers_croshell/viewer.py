@@ -3,7 +3,7 @@
 # from machineconfig.utils.io_save import save_pickle
 # from plotly import graph_objects as go
 # import plotly.express as px
-# from typing import Callable, Iterable, Any, Optional
+# from typing import Any, Callable, Iterable
 
 # def default_get_figure(data: Any) -> go.Figure:
 #     print("📊 Generating default figure using Plotly...")
@@ -17,8 +17,8 @@
 
 # """
 
-# def run(data: Optional[Iterable[Any]], data_path: Optional[str],
-#         get_figure: Optional[Callable[[Any], go.Figure]]):
+# def run(data: Iterable[Any] | None, data_path: str | None,
+#         get_figure: Callable[[Any], go.Figure] | None):
 #     print("\n" + "=" * 50)
 #     print("👁️  Welcome to the Data Viewer Tool")
 #     print("=" * 50 + "\n")

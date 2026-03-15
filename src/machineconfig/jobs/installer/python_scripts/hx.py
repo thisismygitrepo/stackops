@@ -4,7 +4,6 @@ Installers do not add runtime files to the machine, hence this script.
 
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.installer_utils.installer_locator_utils import WINDOWS_INSTALL_PATH
-from typing import Optional
 import platform
 
 from machineconfig.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH
@@ -36,7 +35,7 @@ config_dict: InstallerData = {
 }
 
 
-def main(installer_data: InstallerData, version: Optional[str], install_lib: bool = True):
+def main(installer_data: InstallerData, version: str | None, install_lib: bool = True):
     _ = installer_data
     console = Console()
 

@@ -1,7 +1,7 @@
 """Gource visualization tool for git repositories."""
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 import subprocess
 import platform
 import zipfile
@@ -38,7 +38,7 @@ def get_default_version() -> str:
     return "0.53"
 
 
-def install_gource_windows(version: Optional[str] = None) -> None:
+def install_gource_windows(version: str | None = None) -> None:
     """Install portable Gource on Windows by downloading and extracting the zip archive."""
     if platform.system() != "Windows":
         raise OSError(f"This installer is for Windows only. Current OS: {platform.system()}")
@@ -101,18 +101,18 @@ def install_gource_windows(version: Optional[str] = None) -> None:
 
 def visualize(
     repo: Annotated[str, typer.Option("--repo", "-r", help="Path to git repository to visualize")] = ".",
-    output_file: Annotated[Optional[Path], typer.Option("--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")] = None,
+    output_file: Annotated[Path | None, typer.Option("--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")] = None,
     resolution: Annotated[str, typer.Option("--resolution", "-res", help="Video resolution (e.g., 1920x1080, 1280x720)")] = "1920x1080",
     seconds_per_day: Annotated[float, typer.Option("--seconds-per-day", "-spd", help="Speed of simulation (lower = faster)")] = 0.1,
     auto_skip_seconds: Annotated[float, typer.Option("--auto-skip-seconds", "-as", help="Skip to next entry if nothing happens for X seconds")] = 1.0,
-    title: Annotated[Optional[str], typer.Option("--title", "-t", help="Title for the visualization")] = None,
-    hide_items: Annotated[Optional[list[str]], typer.Option("--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames")] = None,
+    title: Annotated[str | None, typer.Option("--title", "-t", help="Title for the visualization")] = None,
+    hide_items: Annotated[list[str] | None, typer.Option("--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames")] = None,
     key_items: Annotated[bool, typer.Option("--key", "-k", help="Show file extension key")] = False,
     fullscreen: Annotated[bool, typer.Option("--fullscreen", "-f", help="Run in fullscreen mode")] = False,
-    viewport: Annotated[Optional[str], typer.Option("--viewport", "-v", help="Camera viewport (e.g., '1000x1000')")] = None,
-    start_date: Annotated[Optional[str], typer.Option("--start-date", help="Start date (YYYY-MM-DD)")] = None,
-    stop_date: Annotated[Optional[str], typer.Option("--stop-date", help="Stop date (YYYY-MM-DD)")] = None,
-    user_image_dir: Annotated[Optional[Path], typer.Option("--user-image-dir", help="Directory with user avatar images")] = None,
+    viewport: Annotated[str | None, typer.Option("--viewport", "-v", help="Camera viewport (e.g., '1000x1000')")] = None,
+    start_date: Annotated[str | None, typer.Option("--start-date", help="Start date (YYYY-MM-DD)")] = None,
+    stop_date: Annotated[str | None, typer.Option("--stop-date", help="Stop date (YYYY-MM-DD)")] = None,
+    user_image_dir: Annotated[Path | None, typer.Option("--user-image-dir", help="Directory with user avatar images")] = None,
     max_files: Annotated[int, typer.Option("--max-files", help="Maximum number of files to show (0 = no limit)")] = 0,
     max_file_lag: Annotated[float, typer.Option("--max-file-lag", help="Max time files remain on screen after last change")] = 5.0,
     file_idle_time: Annotated[int, typer.Option("--file-idle-time", help="Time in seconds files remain idle before being removed")] = 0,
@@ -320,7 +320,7 @@ def visualize(
 
 
 def install(
-    version: Annotated[Optional[str], typer.Option(..., "--version", "-v", help="Gource version to install")] = "0.53",
+    version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Gource version to install")] = "0.53",
 ) -> None:
     """Install portable Gource on Windows (no admin privileges required)."""
     if platform.system() == "Windows":

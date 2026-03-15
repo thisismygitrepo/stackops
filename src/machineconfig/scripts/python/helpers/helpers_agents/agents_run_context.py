@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 import json
 import shutil
 import subprocess
@@ -141,7 +141,7 @@ def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str,
             return custom_prompts
 
 
-def resolve_prompts_yaml_paths(prompts_yaml_path: Optional[str], where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
+def resolve_prompts_yaml_paths(prompts_yaml_path: str | None, where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
     if prompts_yaml_path is not None:
         return [("explicit", Path(prompts_yaml_path).expanduser().resolve())]
     return _get_default_prompts_yaml_locations(where=where)
@@ -194,7 +194,9 @@ def edit_prompts_yaml(yaml_path: Path) -> None:
         raise RuntimeError(f"Editor exited with status code {result.returncode}")
 
 
-def resolve_context(context: Optional[str], context_path: Optional[str], prompts_yaml_path: Optional[str], context_name: Optional[str], where: PROMPTS_WHERE) -> str:
+def resolve_context(
+    context: str | None, context_path: str | None, prompts_yaml_path: str | None, context_name: str | None, where: PROMPTS_WHERE
+) -> str:
     if context is not None and context_path is not None:
         raise ValueError("Provide only one of --context or --context-path")
     if context_name is not None and context_path is not None:

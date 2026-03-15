@@ -1,9 +1,6 @@
 """Pure Python implementation for msearch command - no typer dependencies."""
 
 
-from typing import Optional
-
-
 def machineconfig_search(
     path: str, search_term: str, ast: bool, symantic: bool, extension: str, file: bool, no_dotfiles: bool, rga: bool, edit: bool, install_dependencies: bool
 ) -> None:
@@ -167,7 +164,7 @@ def _run_ast_search(directory: str) -> None:
         print(f"❌ Error during selection: {e}")
 
 
-def _run_file_search(directory: Optional[str], no_dotfiles: bool, edit: bool, search_term: str) -> None:
+def _run_file_search(directory: str | None, no_dotfiles: bool, edit: bool, search_term: str) -> None:
     """Run file search."""
     import platform
 
@@ -243,7 +240,7 @@ def _get_file_search_source_command(no_dotfiles: bool) -> str:
     return "fd --type file | "
 
 
-def _run_text_search(rga: bool, directory: Optional[str], search_term: str) -> None:
+def _run_text_search(rga: bool, directory: str | None, search_term: str) -> None:
     """Run text search using fzf with ripgrep."""
     from machineconfig.scripts.python.helpers.helpers_msearch import FZFG_LINUX_PATH, FZFG_WINDOWS_PATH, FZFG_MACOS_PATH
     import platform
@@ -266,7 +263,7 @@ def _run_text_search(rga: bool, directory: Optional[str], search_term: str) -> N
     exit_then_run_shell_script(script=script, strict=False)
 
 
-def _prepend_directory_change(script: str, directory: Optional[str], platform_name: str) -> str:
+def _prepend_directory_change(script: str, directory: str | None, platform_name: str) -> str:
     """Prefix a working-directory change command using platform-appropriate quoting."""
     if directory is None or directory == "":
         return script

@@ -1,7 +1,7 @@
 
 
 import platform
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from machineconfig.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
 from machineconfig.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
@@ -32,7 +32,7 @@ def _format_size(size_bytes: int) -> str:
     return f"{value:.1f} {units[index]}"
 
 
-def _derive_tool_name(repo_name: str, asset_name: Optional[str]) -> Optional[str]:
+def _derive_tool_name(repo_name: str, asset_name: str | None) -> str | None:
     repo_segment = repo_name.split("/", maxsplit=1)[-1]
     repo_clean = repo_segment.replace(".git", "").lower()
     repo_filtered = "".join(char for char in repo_clean if char.isalnum())
@@ -47,7 +47,7 @@ def _derive_tool_name(repo_name: str, asset_name: Optional[str]) -> Optional[str
     return None
 
 
-def _finalize_install(repo_name: str, asset_name: Optional[str], version: str, extracted_path: PathExtended, console: "Console") -> None:
+def _finalize_install(repo_name: str, asset_name: str | None, version: str, extracted_path: PathExtended, console: "Console") -> None:
     from rich.panel import Panel
     if extracted_path.suffix == ".deb":
         install_deb_package(extracted_path)

@@ -3,7 +3,7 @@ from machineconfig.utils.ve import CLOUD
 from machineconfig.utils.io import read_ini
 from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 from machineconfig.utils.accessories import pprint
-from typing import Optional, cast
+from typing import cast
 from rich.console import Console
 from rich.panel import Panel
 
@@ -15,18 +15,19 @@ console = Console()
 def parse_cloud_source_target(
          cloud_config_explicit: CLOUD,
          cloud_config_defaults: CLOUD,
-         cloud_config_name: Optional[str],
+         cloud_config_name: str | None,
          source: str, target: str
          ) -> tuple[str, str, str]:
     print("Source:", source)
     print("Target:", target)
 
     # Step 1: find the third config if any
-    cloud_config_from_name: Optional[CLOUD] = None
+    cloud_config_from_name: CLOUD | None = None
     if cloud_config_name is not None:
         if cloud_config_name == "ss":
-            cloud_maybe: Optional[str] = target.split(":")[0]
-            if cloud_maybe == "": cloud_maybe = None
+            cloud_maybe: str | None = target.split(":")[0]
+            if cloud_maybe == "":
+                cloud_maybe = None
             print("cloud_maybe:", cloud_maybe)
             cloud_config_from_name = get_secure_share_cloud_config(interactive=True, cloud=cloud_maybe)
         else:
@@ -58,7 +59,8 @@ def parse_cloud_source_target(
         if ES in source:
             raise NotImplementedError("Not Implemented here yet.")
         source_local_path = my_abs(source)
-        if cloud_config_from_name is None: cloud_config_from_name = find_cloud_config(source_local_path)
+        if cloud_config_from_name is None:
+            cloud_config_from_name = find_cloud_config(source_local_path)
         if cloud_config_from_name is None:
             default_cloud = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"]
             console.print(Panel(f"⚠️  No cloud config found. Using default cloud: {default_cloud}", width=150, border_style="yellow"))

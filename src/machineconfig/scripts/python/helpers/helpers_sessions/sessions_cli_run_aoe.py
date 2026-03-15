@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import typer
 
@@ -20,17 +20,17 @@ from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, TabCo
 
 def run_aoe_cli(
     ctx: typer.Context,
-    layouts_file: Optional[str],
-    choose_layouts: Optional[str],
-    choose_tabs: Optional[str],
+    layouts_file: str | None,
+    choose_layouts: str | None,
+    choose_tabs: str | None,
     sleep_inbetween: float,
     max_tabs: int,
-    agent: Optional[str],
-    model: Optional[str],
-    provider: Optional[str],
-    sandbox: Optional[str],
+    agent: str | None,
+    model: str | None,
+    provider: str | None,
+    sandbox: str | None,
     yolo: bool,
-    cmd: Optional[str],
+    cmd: str | None,
     args: list[str],
     env: list[str],
     force: bool,

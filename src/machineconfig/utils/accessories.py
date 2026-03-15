@@ -1,4 +1,5 @@
-from typing import Optional, Any
+from pathlib import Path
+from typing import Any
 
 from datetime import datetime, timezone, timedelta
 
@@ -19,7 +20,7 @@ def randstr(length: int = 10, lower: bool = True, upper: bool = True, digits: bo
     return "".join(random.choices(population, k=length))
 
 
-def split_timeframe(start_dt: str, end_dt: str, resolution_ms: int, to: Optional[int]=None, every_ms: Optional[int]=None) -> list[tuple[datetime, datetime]]:
+def split_timeframe(start_dt: str, end_dt: str, resolution_ms: int, to: int | None=None, every_ms: int | None=None) -> list[tuple[datetime, datetime]]:
     if (to is None) == (every_ms is None):
         raise ValueError("Exactly one of 'to' or 'every_ms' must be provided, not both or neither")    
     start_dt_obj = datetime.fromisoformat(start_dt).replace(tzinfo=timezone.utc)
@@ -50,7 +51,7 @@ def split_timeframe(start_dt: str, end_dt: str, resolution_ms: int, to: Optional
             res.append((current_start, current_end))
             current_start += split_size
     return res
-def split_list[T](sequence: list[T], every: Optional[int]=None, to: Optional[int]=None) -> list[list[T]]:
+def split_list[T](sequence: list[T], every: int | None=None, to: int | None=None) -> list[list[T]]:
     if (every is None) == (to is None):
         raise ValueError("Exactly one of 'every' or 'to' must be provided, not both or neither")
     if len(sequence) == 0:
@@ -95,13 +96,12 @@ def human_friendly_dict(d: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def get_repo_root(path: "Path") -> Optional["Path"]:
+def get_repo_root(path: Path) -> Path | None:
     from git import Repo, InvalidGitRepositoryError
     try:
         repo = Repo(path, search_parent_directories=True)
         root = repo.working_tree_dir
         if root is not None:
-            from pathlib import Path
             return Path(root)
     except InvalidGitRepositoryError:
         pass

@@ -4,7 +4,7 @@ import logging
 import shlex
 import subprocess
 import time
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from rich import box
 from rich.console import Console
@@ -194,7 +194,7 @@ class ZellijLocalManager:
         """Kill all managed zellij sessions."""
         return helper.kill_all_sessions(self.managers)
 
-    def attach_to_session(self, session_name: Optional[str]) -> str:
+    def attach_to_session(self, session_name: str | None) -> str:
         """
         Generate command to attach to a specific session or list attachment commands for all.
 
@@ -353,7 +353,7 @@ class ZellijLocalManager:
         sched = Scheduler(routine=routine, wait_ms=wait_ms, logger=cast(LoggerTemplate, logger))
         sched.run()
 
-    def save(self, session_id: Optional[str]) -> str:
+    def save(self, session_id: str | None) -> str:
         """Save the manager state to disk."""
         return helper.save_manager(self.session_layouts, self.managers, self.session_name_prefix, session_id)
 

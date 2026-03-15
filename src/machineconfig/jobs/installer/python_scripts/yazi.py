@@ -1,5 +1,5 @@
 
-from typing import Optional, Any, Callable
+from typing import Any, Callable
 import platform
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
@@ -23,7 +23,7 @@ installer_standard: InstallerData =    {
       }
     }
 
-def main(installer_data: InstallerData, version: Optional[str]):
+def main(installer_data: InstallerData, version: str | None):
     _ = installer_data
     inst = Installer(installer_data=installer_standard)
     inst.install(version=version)

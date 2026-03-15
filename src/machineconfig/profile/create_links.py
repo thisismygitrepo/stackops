@@ -19,7 +19,7 @@ from machineconfig.utils.source_of_truth import LIBRARY_ROOT, CONFIG_ROOT
 import platform
 import subprocess
 import tomllib
-from typing import Optional, Any, TypedDict, Literal, TypeAlias
+from typing import Any, TypedDict, Literal, TypeAlias
 from pathlib import Path
 
 
@@ -72,16 +72,16 @@ def _parse_os_field(os_field: Any) -> set[str]:
 class Base(TypedDict):
     original: str
     self_managed: str
-    contents: Optional[bool]
-    copy: Optional[bool]
-    os: Optional[str]
+    contents: bool | None
+    copy: bool | None
+    os: str | None
 class ConfigMapper(TypedDict):
     file_name: str
     config_file_default_path: str
     self_managed_config_file_path: str
-    contents: Optional[bool]
-    copy: Optional[bool]
-    os: Optional[str]
+    contents: bool | None
+    copy: bool | None
+    os: str | None
 class MapperFileData(TypedDict):
     public: dict[str, list[ConfigMapper]]
     private: dict[str, list[ConfigMapper]]

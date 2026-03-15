@@ -7,7 +7,6 @@
 
 # import requests
 # import base64
-# from typing import Optional
 
 # def encrypt(key: str, pwd: str):
 #     print("\n🔒 Encrypting the secret...")
@@ -25,7 +24,7 @@
 #     print("✅ Encryption completed successfully!\n")
 #     return base64.b64encode(encrypted_password).decode("utf-8")
 
-# def share(secret: str, password: Optional[str]):
+# def share(secret: str, password: str | None):
 #     print("\n🚀 Initiating the sharing process...")
 #     if password is not None:
 #         print("🔑 Password provided. Encrypting the secret...")

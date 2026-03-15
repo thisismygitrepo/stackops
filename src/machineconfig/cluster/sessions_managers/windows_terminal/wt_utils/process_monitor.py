@@ -7,7 +7,7 @@ Adapted from zellij process monitor but focused on Windows processes.
 import json
 import logging
 import subprocess
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from machineconfig.utils.schemas.layouts.layout_types import TabConfig
 from machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.remote_executor import WTRemoteExecutor
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class WTProcessMonitor:
     """Handles process status checking and verification on local and remote Windows machines."""
 
-    def __init__(self, remote_executor: Optional[WTRemoteExecutor] = None):
+    def __init__(self, remote_executor: WTRemoteExecutor | None = None):
         self.remote_executor = remote_executor
         self.is_local = remote_executor is None
 

@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict, cast
+from typing import TypedDict, cast
 
 
 class CountryFlag(TypedDict, total=False):
@@ -56,7 +56,7 @@ def get_all_ipv4_addresses() -> list[tuple[str, str]]:
     return result
 
 
-def select_lan_ipv4(prefer_vpn: bool) -> Optional[str]:
+def select_lan_ipv4(prefer_vpn: bool) -> str | None:
     """
     Choose the best 'real LAN' IPv4:
       - Excludes loopback/link-local and (by default) VPN/tunnel/container ifaces

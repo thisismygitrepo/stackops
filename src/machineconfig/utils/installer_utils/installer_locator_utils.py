@@ -2,13 +2,12 @@ from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import WINDOWS_INSTALL_PATH, LINUX_INSTALL_PATH, INSTALL_VERSION_ROOT
 
 from pathlib import Path
-from typing import Optional
 import subprocess
 import platform
 import shutil
 
 
-def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: Optional[str], delete: bool, rename_to: Optional[str]):
+def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: str | None, delete: bool, rename_to: str | None):
     # print("🔍 PROCESSING WINDOWS EXECUTABLE 🔍")
     # if exe_name is not None and len(exe_name.split("+")) > 1:
     #     last_result = None
@@ -58,7 +57,7 @@ def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: Opti
     return exe_new_location
 
 
-def find_move_delete_linux(downloaded: PathExtended, tool_name: Optional[str], delete: bool, rename_to: Optional[str]):
+def find_move_delete_linux(downloaded: PathExtended, tool_name: str | None, delete: bool, rename_to: str | None):
     # if len(tool_name.split("+")) > 1:
     #     last_result = None
     #     for a_binary in [x.strip() for x in tool_name.split("+") if x.strip() != ""]:
@@ -172,7 +171,7 @@ def is_executable_in_path(name: str) -> bool:
     return False
 
 
-def check_if_installed_already(exe_name: str, version: Optional[str], use_cache: bool) -> tuple[str, str, str]:
+def check_if_installed_already(exe_name: str, version: str | None, use_cache: bool) -> tuple[str, str, str]:
     print(f"🔍 CHECKING INSTALLATION STATUS: {exe_name} 🔍")
     INSTALL_VERSION_ROOT.joinpath(exe_name).parent.mkdir(parents=True, exist_ok=True)
     tmp_path = INSTALL_VERSION_ROOT.joinpath(exe_name)

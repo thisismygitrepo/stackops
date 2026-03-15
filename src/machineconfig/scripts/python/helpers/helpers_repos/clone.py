@@ -1,6 +1,6 @@
 
 from pathlib import Path
-from typing import Literal, Optional, cast
+from typing import Literal, cast
 
 from git import Repo as GitRepo
 from git.exc import GitCommandError
@@ -14,7 +14,7 @@ from machineconfig.utils.files.read import read_json
 CloneStatus = Literal["cloned", "skipped", "failed"]
 
 
-def choose_remote(remotes: list[RepoRemote], preferred_remote: Optional[str]) -> Optional[RepoRemote]:
+def choose_remote(remotes: list[RepoRemote], preferred_remote: str | None) -> RepoRemote | None:
     if preferred_remote is not None:
         for remote in remotes:
             if remote["name"] == preferred_remote:
@@ -51,7 +51,7 @@ def checkout_commit(repo: GitRepo, commit: str) -> bool:
     return True
 
 
-def clone_single_repo(repo_spec: RepoRecordDict, preferred_remote: Optional[str], checkout_branch_flag: bool, checkout_commit_flag: bool) -> tuple[CloneStatus, str]:
+def clone_single_repo(repo_spec: RepoRecordDict, preferred_remote: str | None, checkout_branch_flag: bool, checkout_commit_flag: bool) -> tuple[CloneStatus, str]:
     destination = ensure_destination(parent_dir=repo_spec["parentDir"], name=repo_spec["name"])
     repo_path = destination.joinpath(".git")
     remotes = repo_spec["remotes"]
@@ -93,7 +93,7 @@ def clone_single_repo(repo_spec: RepoRecordDict, preferred_remote: Optional[str]
     return (status, message)
 
 
-def clone_repos(spec_path: Path, preferred_remote: Optional[str], checkout_branch_flag: bool, checkout_commit_flag: bool) -> list[tuple[CloneStatus, str]]:
+def clone_repos(spec_path: Path, preferred_remote: str | None, checkout_branch_flag: bool, checkout_commit_flag: bool) -> list[tuple[CloneStatus, str]]:
     spec_file = cast(RepoRecordFile, read_json(path=spec_path))
     repos = spec_file["repos"]
     results: list[tuple[CloneStatus, str]] = []

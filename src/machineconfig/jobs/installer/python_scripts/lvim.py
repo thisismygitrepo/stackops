@@ -5,14 +5,13 @@ from rich.console import Console
 from rich.panel import Panel
 import subprocess
 import platform
-from typing import Optional
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
 # as per https://www.lunarvim.org/docs/installation
 
 
-def main(installer_data: InstallerData, version: Optional[str]) -> None:
+def main(installer_data: InstallerData, version: str | None) -> None:
     console = Console()
     _ = installer_data
     console.print(

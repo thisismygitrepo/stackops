@@ -1,7 +1,6 @@
 # import matplotlib.pyplot as plt
 
 # from platform import system
-from typing import Optional
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -16,7 +15,7 @@ from machineconfig.utils.path_extended import PathExtended
 # }
 
 
-def main(installer_data: InstallerData, version: Optional[str] = None) -> str:
+def main(installer_data: InstallerData, version: str | None = None) -> str:
     console = Console()
     _ = installer_data
     console.print(

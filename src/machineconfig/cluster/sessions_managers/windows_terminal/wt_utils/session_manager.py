@@ -5,7 +5,7 @@ Windows Terminal session management utilities for local and remote operations.
 
 import logging
 import subprocess
-from typing import Optional, TypedDict, NotRequired
+from typing import TypedDict, NotRequired
 from pathlib import Path
 from machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.remote_executor import WTRemoteExecutor
 
@@ -64,7 +64,7 @@ class GetWTVersionResult(TypedDict):
 class WTSessionManager:
     """Handles Windows Terminal session operations on local and remote machines."""
 
-    def __init__(self, remote_executor: Optional[WTRemoteExecutor] = None, session_name: str = "default", tmp_layout_dir: Path | None = None):
+    def __init__(self, remote_executor: WTRemoteExecutor | None = None, session_name: str = "default", tmp_layout_dir: Path | None = None):
         self.remote_executor = remote_executor
         self.session_name = session_name
         self.tmp_layout_dir = tmp_layout_dir or Path.home() / "tmp_results" / "wt_layouts" / "layout_manager"
@@ -148,7 +148,7 @@ ConvertTo-Json -Depth 2
         except Exception as e:
             return {"wt_running": False, "session_exists": False, "error": str(e), "session_name": self.session_name, "location": self.location_name}
 
-    def start_wt_session(self, script_file_path: Optional[str] = None, wt_command: Optional[str] = None) -> StartWTSessionResult:
+    def start_wt_session(self, script_file_path: str | None = None, wt_command: str | None = None) -> StartWTSessionResult:
         """Start a Windows Terminal session with the generated layout."""
         try:
             if script_file_path:
@@ -188,7 +188,7 @@ ConvertTo-Json -Depth 2
             logger.error(f"Failed to start Windows Terminal session {error_location}: {e}")
             return {"success": False, "error": str(e), "session_name": self.session_name, "location": self.location_name}
 
-    def attach_to_session(self, window_name: Optional[str] = None) -> None:
+    def attach_to_session(self, window_name: str | None = None) -> None:
         """Attach to a Windows Terminal session/window."""
         try:
             if self.is_local:
@@ -234,7 +234,7 @@ ConvertTo-Json -Depth 2
             logger.error(f"Failed to kill Windows Terminal session: {e}")
             return {"success": False, "error": str(e), "session_name": self.session_name, "location": self.location_name}
 
-    def create_new_tab(self, tab_name: str, cwd: str, command: str, window_name: Optional[str] = None) -> CreateNewTabResult:
+    def create_new_tab(self, tab_name: str, cwd: str, command: str, window_name: str | None = None) -> CreateNewTabResult:
         """Create a new tab in the Windows Terminal session."""
         try:
             # Build the new-tab command

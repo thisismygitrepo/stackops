@@ -8,7 +8,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
@@ -19,12 +19,12 @@ AoeAddStyle = Literal["legacy", "modern"]
 @dataclass(frozen=True)
 class AoeLaunchOptions:
     aoe_bin: str
-    agent: Optional[str]
-    model: Optional[str]
-    provider: Optional[str]
-    sandbox: Optional[str]
+    agent: str | None
+    model: str | None
+    provider: str | None
+    sandbox: str | None
     yolo: bool
-    cmd: Optional[str]
+    cmd: str | None
     extra_agent_args: tuple[str, ...]
     env_vars: tuple[str, ...]
     force: bool
@@ -72,7 +72,7 @@ def _resolve_unique_title(title: str, used_titles: dict[str, int]) -> str:
 def _resolve_tab_payload(
     tab: TabConfig,
     options: AoeLaunchOptions,
-) -> tuple[Optional[str], Optional[str]]:
+) -> tuple[str | None, str | None]:
     tab_command = tab.get("command", "").strip()
     if options.tab_command_mode == "ignore" or tab_command == "":
         return None, options.cmd
@@ -109,7 +109,7 @@ def _inspect_aoe_add_interface(aoe_bin: str) -> AoeAddInterface:
 
 def _resolved_modern_extra_args(
     *,
-    prompt: Optional[str],
+    prompt: str | None,
     options: AoeLaunchOptions,
 ) -> list[str]:
     result: list[str] = []

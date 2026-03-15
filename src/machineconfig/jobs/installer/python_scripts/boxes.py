@@ -1,7 +1,6 @@
 
 
 import platform
-from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -28,7 +27,7 @@ installer_data_modified: InstallerData = {
       }
     }
 
-def main(installer_data: InstallerData, version: Optional[str] = None) -> None:
+def main(installer_data: InstallerData, version: str | None = None) -> None:
     console = Console()
     _ = installer_data
     console.print(

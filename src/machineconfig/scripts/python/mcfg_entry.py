@@ -3,7 +3,7 @@
 Submodules are only imported when their commands are actually invoked, not at startup.
 This makes `mcfg --help` much faster by avoiding loading heavy dependencies.
 """
-from typing import Optional, Annotated
+from typing import Annotated
 import typer
 from machineconfig.scripts.python.enums import BACKENDS_LOOSE, BACKENDS_MAP
 
@@ -11,7 +11,7 @@ from machineconfig.scripts.python.enums import BACKENDS_LOOSE, BACKENDS_MAP
 def fire(
     ctx: typer.Context,
     path: Annotated[str, typer.Argument(help="Path to the Python file to run")] = ".",
-    function: Annotated[Optional[str], typer.Argument(help="Function to run")] = None,
+    function: Annotated[str | None, typer.Argument(help="Function to run")] = None,
     ve: Annotated[str, typer.Option("--ve", "-v", help="Virtual environment name")] = "",
     cmd: Annotated[bool, typer.Option("--cmd", "-B", help="Create a cmd fire command to launch the job asynchronously")] = False,
     debug: Annotated[bool, typer.Option("--debug", "-d", help="Enable debug mode")] = False,
@@ -26,7 +26,7 @@ def fire(
     module: Annotated[bool, typer.Option("--module", "-m", help="Launch the main file")] = False,
     script: Annotated[bool, typer.Option("--script", "-s", help="Launch as a script without fire")] = False,
     optimized: Annotated[bool, typer.Option("--optimized", "-O", help="Run the optimized version of the function")] = False,
-    zellij_tab: Annotated[Optional[str], typer.Option("--zellij-tab", "-z", help="Open in a new zellij tab")] = None,
+    zellij_tab: Annotated[str | None, typer.Option("--zellij-tab", "-z", help="Open in a new zellij tab")] = None,
     submit_to_cloud: Annotated[bool, typer.Option("--submit-to-cloud", "-C", help="Submit to cloud compute")] = False,
     remote: Annotated[bool, typer.Option("--remote", "-r", help="Launch on a remote machine")] = False,
     environment: Annotated[str, typer.Option("--environment", "-E", help="Choose ip, localhost, hostname or arbitrary url")] = "",
@@ -45,11 +45,11 @@ def fire(
 
 
 def croshell(
-    path: Annotated[Optional[str], typer.Argument(help="path of file to read.")] = None,
-    project_path: Annotated[Optional[str], typer.Option("--project", "-p", help="specify uv project to use")] = None,
-    uv_with: Annotated[Optional[str], typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
+    path: Annotated[str | None, typer.Argument(help="path of file to read.")] = None,
+    project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
+    uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
     backend: Annotated[BACKENDS_LOOSE, typer.Option("--backend", "-b", help="specify the backend to use")] = "ipython",
-    profile: Annotated[Optional[str], typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
+    profile: Annotated[str | None, typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
 ) -> None:
     """Cross-shell command execution."""
     from machineconfig.scripts.python.croshell import croshell as croshell_impl

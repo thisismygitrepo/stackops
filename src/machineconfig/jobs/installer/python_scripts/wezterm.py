@@ -2,7 +2,6 @@
 
 import platform
 import subprocess
-from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -12,7 +11,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 console = Console()
 
 
-def main(installer_data: InstallerData, version: Optional[str]):
+def main(installer_data: InstallerData, version: str | None):
     _ = installer_data
     console.print(
         Panel.fit(

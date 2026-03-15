@@ -1,6 +1,6 @@
 """Sessions management commands - lazy loading subcommands."""
 
-from typing import Optional, Literal, Annotated
+from typing import Literal, Annotated
 import typer
 
 
@@ -36,7 +36,7 @@ def balance_load(
     max_thresh: Annotated[int, typer.Option(..., "--max-threshold", "-m", help="Maximum tabs per layout")],
     thresh_type: Annotated[Literal["number", "n", "weight", "w"], typer.Option(..., "--threshold-type", "-t", help="Threshold type")] = "number",
     breaking_method: Annotated[Literal["moreLayouts", "ml", "combineTabs", "ct"], typer.Option(..., "--breaking-method", "-b", help="Breaking method")] = "moreLayouts",
-    output_path: Annotated[Optional[str], typer.Option(..., "--output-path", "-o", help="Path to write the adjusted layout.json file")] = None,
+    output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Path to write the adjusted layout.json file")] = None,
 ) -> None:
     """Adjust layout file to limit max tabs per layout, etc."""
     from machineconfig.scripts.python.helpers.helpers_sessions.utils import balance_load as impl
@@ -45,18 +45,18 @@ def balance_load(
 
 def run(
     ctx: typer.Context,
-    layouts_file: Annotated[Optional[str], typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    choose_layouts: Annotated[Optional[str], typer.Option(..., "--choose-layouts", "-c", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
-    choose_tabs: Annotated[Optional[str], typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
+    layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
+    choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-c", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
+    choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
     sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between launching layouts")] = 1.0,
 
-    parallel_layouts: Annotated[Optional[int], typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
+    parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
     max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A Sanity checker that throws an error if any layout exceeds the maximum number of tabs to launch.")] = 25,
 
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
     on_conflict: Annotated[Literal["restart", "error", "rename"], typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts.")] = "error",
-    max_parallel_tabs: Annotated[Optional[int], typer.Option("--max-parallel-tabs", help="Enable dynamic tab scheduling and cap active tabs to this value.")] = None,
+    max_parallel_tabs: Annotated[int | None, typer.Option("--max-parallel-tabs", help="Enable dynamic tab scheduling and cap active tabs to this value.")] = None,
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Dynamic mode only: polling interval in seconds used to detect finished tabs.")] = 2.0,
 
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", help="Dynamic mode only: close each tab once its command is finished.")] = False,
@@ -140,7 +140,7 @@ def get_session_tabs() -> list[tuple[str, str]]:
     print(result)
     return result
 def create_template(
-    name: Annotated[Optional[str], typer.Argument(..., help="Name of the layout template to create")] = None,
+    name: Annotated[str | None, typer.Argument(..., help="Name of the layout template to create")] = None,
     num_tabs: Annotated[int, typer.Option(..., "--num-tabs", "-t", help="Number of tabs to include in the template")] = 3,
 ) -> None:
     """Create a layout template file."""
@@ -150,7 +150,7 @@ def create_template(
 def create_from_function(
     num_process: Annotated[int, typer.Option(..., "--num-process", "-n", help="Number of parallel processes to run")],
     path: Annotated[str, typer.Option(..., "--path", "-p", help="Path to a Python or Shell script file or a directory containing such files")] = ".",
-    function: Annotated[Optional[str], typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
+    function: Annotated[str | None, typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
 ) -> None:
     """Create a layout from a function to run in multiple processes."""
     from machineconfig.scripts.python.helpers.helpers_sessions.sessions_multiprocess import create_from_function as impl
@@ -249,17 +249,17 @@ def summarize(
 
 def run_aoe(
     ctx: typer.Context,
-    layouts_file: Annotated[Optional[str], typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    choose_layouts: Annotated[Optional[str], typer.Option(..., "--choose-layouts", "-c", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
-    choose_tabs: Annotated[Optional[str], typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
+    layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
+    choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-c", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
+    choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
     sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between AoE session launches")] = 1.0,
     max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A sanity checker that throws an error if any selected layout exceeds this number of tabs.")] = 25,
-    agent: Annotated[Optional[str], typer.Option("--agent", help="AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.")] = "codex",
-    model: Annotated[Optional[str], typer.Option("--model", "-m", help="Model forwarded to the underlying AoE/agent CLI when supported.")] = None,
-    provider: Annotated[Optional[str], typer.Option("--provider", "-p", help="Provider forwarded to the underlying AoE/agent CLI when supported.")] = None,
-    sandbox: Annotated[Optional[str], typer.Option("--sandbox", help="Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.")] = None,
+    agent: Annotated[str | None, typer.Option("--agent", help="AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.")] = "codex",
+    model: Annotated[str | None, typer.Option("--model", "-m", help="Model forwarded to the underlying AoE/agent CLI when supported.")] = None,
+    provider: Annotated[str | None, typer.Option("--provider", "-p", help="Provider forwarded to the underlying AoE/agent CLI when supported.")] = None,
+    sandbox: Annotated[str | None, typer.Option("--sandbox", help="Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.")] = None,
     yolo: Annotated[bool, typer.Option("--yolo", help="Enable AoE/agent YOLO mode when supported.")] = False,
-    cmd: Annotated[Optional[str], typer.Option("--cmd", help="Override the launched agent binary/command.")] = None,
+    cmd: Annotated[str | None, typer.Option("--cmd", help="Override the launched agent binary/command.")] = None,
     args: Annotated[list[str], typer.Option("--args", help="Repeatable extra argument forwarded to the launched agent CLI.")] = [],
     env: Annotated[list[str], typer.Option("--env", help="Repeatable KEY=VALUE pair forwarded to AoE when supported.")] = [],
     force: Annotated[bool, typer.Option("--force", help="Pass force/overwrite to AoE when supported.")] = False,

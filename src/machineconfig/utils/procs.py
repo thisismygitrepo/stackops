@@ -2,7 +2,7 @@
 
 import psutil
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from typing import Literal, Optional, TypedDict, List
+from typing import Literal, TypedDict, List
 from rich.console import Console
 from rich.panel import Panel
 from datetime import datetime
@@ -201,7 +201,7 @@ class ProcessManager:
             _ = self.kill(pids=[p["pid"] for p in target_processes]) if input("\n⚠️  Confirm termination? y/[n] ").lower() == "y" else None
         console.print(Panel("🔔 No processes were terminated.", title="[bold blue]Process Info[/bold blue]", border_style="blue"))
 
-    def filter_and_kill(self, name: Optional[str] = None):
+    def filter_and_kill(self, name: str | None = None):
         # header for filtering processes by name
         title = "🔍  FILTERING AND TERMINATING PROCESSES BY NAME"
         console.print(Panel(title, title="[bold blue]Process Info[/bold blue]", border_style="blue"))
@@ -213,7 +213,7 @@ class ProcessManager:
         self.kill(pids=[p["pid"] for p in filtered_processes])
         console.print(Panel("", title="[bold blue]Process Info[/bold blue]", border_style="blue"))
 
-    def kill(self, names: Optional[list[str]] = None, pids: Optional[list[int]] = None, commands: Optional[list[str]] = None):
+    def kill(self, names: list[str] | None = None, pids: list[int] | None = None, commands: list[str] | None = None):
         title = "💀  PROCESS TERMINATION"
         console.print(Panel(title, title="[bold blue]Process Info[/bold blue]", border_style="blue"))
         if names is None and pids is None and commands is None:

@@ -2,7 +2,6 @@
 import random
 import shlex
 from pathlib import Path
-from typing import Optional
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, AGENT_NAME_FORMATTER, HOST, PROVIDER, AI_SPEC, API_SPEC
 
 
@@ -43,7 +42,7 @@ def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list
 
 
 def prep_agent_launch(repo_root: Path, agents_dir: Path, prompts_material: list[str], prompt_prefix: str, join_prompt_and_context: bool,
-                      machine: HOST, model: Optional[str], provider: Optional[PROVIDER], agent: AGENTS, *, job_name: str) -> None:
+                      machine: HOST, model: str | None, provider: PROVIDER | None, agent: AGENTS, *, job_name: str) -> None:
     if agent == "codex":
         if provider is None:
             provider = "openai"

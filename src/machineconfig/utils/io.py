@@ -1,5 +1,5 @@
 
-from typing import Any, Union, Optional, Mapping
+from typing import Any, Union, Mapping
 from pathlib import Path
 import json
 import pickle
@@ -24,7 +24,7 @@ def save_pickle(obj: Any, path: PathLike, verbose: bool = False) -> Path:
     return Path(path_obj)
 
 
-def save_json(obj: Any, path: PathLike, indent: Optional[int] = None, verbose: bool = False) -> Path:
+def save_json(obj: Any, path: PathLike, indent: int | None = None, verbose: bool = False) -> Path:
     path_obj = _ensure_parent(path)
     with open(path_obj, "w", encoding="utf-8") as fh:
         json.dump(obj, fh, indent=indent, ensure_ascii=False)
@@ -46,7 +46,7 @@ def save_ini(path: PathLike, obj: Mapping[str, Mapping[str, Any]], verbose: bool
     return Path(path_obj)
 
 
-def read_ini(path: "Path", encoding: Optional[str] = None):
+def read_ini(path: "Path", encoding: str | None = None):
     if not Path(path).exists() or Path(path).is_dir():
         raise FileNotFoundError(f"File not found or is a directory: {path}")
     res = configparser.ConfigParser()
@@ -77,7 +77,7 @@ def from_pickle(path: Path) -> Any:
     return pickle.loads(path.read_bytes())
 
 
-def pwd2key(password: str, salt: Optional[bytes] = None, iterations: int = 10) -> bytes:  # Derive a secret key from a given password and salt"""
+def pwd2key(password: str, salt: bytes | None = None, iterations: int = 10) -> bytes:  # Derive a secret key from a given password and salt"""
     import base64
     if salt is None:
         import hashlib
@@ -89,7 +89,7 @@ def pwd2key(password: str, salt: Optional[bytes] = None, iterations: int = 10) -
     return base64.urlsafe_b64encode(PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=iterations, backend=None).derive(password.encode()))
 
 
-def encrypt(msg: bytes, key: Optional[bytes] = None, pwd: Optional[str] = None, salted: bool = True, iteration: Optional[int] = None, gen_key: bool = False) -> bytes:
+def encrypt(msg: bytes, key: bytes | None = None, pwd: str | None = None, salted: bool = True, iteration: int | None = None, gen_key: bool = False) -> bytes:
     import base64
     from cryptography.fernet import Fernet
 
@@ -123,7 +123,7 @@ def encrypt(msg: bytes, key: Optional[bytes] = None, pwd: Optional[str] = None, 
     return code
 
 
-def decrypt(token: bytes, key: Optional[bytes] = None, pwd: Optional[str] = None, salted: bool = True) -> bytes:
+def decrypt(token: bytes, key: bytes | None = None, pwd: str | None = None, salted: bool = True) -> bytes:
     import base64
     if pwd is not None:
         assert key is None, "❌ You can either pass key or pwd, or none of them, but not both."

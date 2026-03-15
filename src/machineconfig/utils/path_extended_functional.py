@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Any, Callable, Literal, Optional, TypeAlias
+from typing import Any, Callable, Literal, TypeAlias
 
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.io import decrypt as io_decrypt
@@ -54,9 +54,9 @@ def _run_shell_command(
     command: str,
     shell_name: str,
     *,
-    stdout: Optional[int] = subprocess.PIPE,
-    stderr: Optional[int] = subprocess.PIPE,
-    stdin: Optional[int] = None,
+    stdout: int | None = subprocess.PIPE,
+    stderr: int | None = subprocess.PIPE,
+    stdin: int | None = None,
     check: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     if shell_name in {"powershell", "pwsh"} and sys.platform == "win32":
@@ -84,7 +84,7 @@ def _path_from_parts(parts: tuple[str, ...] | list[str]) -> Path:
     return Path(*tuple(parts))
 
 
-def _resolve_path(path: Path, folder: PathLike, name: Optional[str], target_path: PathLike, default_name: str, rel2it: bool = False) -> Path:
+def _resolve_path(path: Path, folder: PathLike, name: str | None, target_path: PathLike, default_name: str, rel2it: bool = False) -> Path:
     if target_path is not None:
         resolved = _to_path(target_path)
         if rel2it:
@@ -174,9 +174,9 @@ def delete(path: Path | str | os.PathLike[str], sure: bool = False, verbose: boo
 
 def move(
     path: Path | str | os.PathLike[str],
-    folder: Optional[Path | str | os.PathLike[str]] = None,
-    name: Optional[str] = None,
-    target_path: Optional[Path | str | os.PathLike[str]] = None,
+    folder: Path | str | os.PathLike[str] | None = None,
+    name: str | None = None,
+    target_path: Path | str | os.PathLike[str] | None = None,
     rel2it: bool = False,
     overwrite: bool = False,
     verbose: bool = True,
@@ -216,16 +216,16 @@ def move(
 def copy(
     source: Path | str | os.PathLike[str],
     folder: PathLike = None,
-    name: Optional[str] = None,
+    name: str | None = None,
     target_path: PathLike = None,
     content: bool = False,
     verbose: bool = True,
-    append_name: Optional[str] = None,
+    append_name: str | None = None,
     overwrite: bool = False,
     orig: bool = False,
     *,
     path: PathLike = None,
-    append: Optional[str] = None,
+    append: str | None = None,
 ) -> Path:
     if path is not None and target_path is not None:
         raise AssertionError("If `path` is passed, `target_path` cannot be passed.")
@@ -260,9 +260,9 @@ def copy(
 def download(
     path: PathLike = None,
     folder: PathLike = None,
-    name: Optional[str] = None,
+    name: str | None = None,
     allow_redirects: bool = True,
-    timeout: Optional[int] = None,
+    timeout: int | None = None,
     params: Any = None,
     *,
     url_path: PathLike = None,
@@ -295,7 +295,7 @@ def append(
     path: Path,
     name: str = "",
     index: bool = False,
-    suffix: Optional[str] = None,
+    suffix: str | None = None,
     verbose: bool = True,
     inplace: bool = False,
     overwrite: bool = False,
@@ -384,8 +384,8 @@ def collapseuser(path: Path, strict: bool = True, placeholder: str = "~") -> Pat
 
 def split(
     path: Path,
-    at: Optional[str] = None,
-    index: Optional[int] = None,
+    at: str | None = None,
+    index: int | None = None,
     sep: Literal[-1, 0, 1] = 1,
     strict: bool = True,
 ) -> tuple[Path, Path]:
@@ -476,9 +476,9 @@ def search(
     folders: bool = True,
     compressed: bool = False,
     dotfiles: bool = False,
-    filters_total: Optional[list[PathPredicate]] = None,
-    not_in: Optional[list[str]] = None,
-    exts: Optional[list[str]] = None,
+    filters_total: list[PathPredicate] | None = None,
+    not_in: list[str] | None = None,
+    exts: list[str] | None = None,
     win_order: bool = False,
 ) -> list[Any]:
     if isinstance(not_in, list):
@@ -552,14 +552,14 @@ def tmpdir(prefix: str = "") -> Path:
     return tmp(folder=Path("tmp_dirs") / folder_name)
 
 
-def tmpfile(name: Optional[str] = None, suffix: str = "", folder: PathLike = None, tstamp: bool = False, noun: bool = False) -> Path:
+def tmpfile(name: str | None = None, suffix: str = "", folder: PathLike = None, tstamp: bool = False, noun: bool = False) -> Path:
     concrete_name = name or randstr(noun=noun)
     suffix_part = ("_" + str(timestamp())) if tstamp else ""
     folder_path = Path(folder or "tmp_files")
     return tmp(file=f"{concrete_name}_{randstr()}{suffix_part}{suffix}", folder=folder_path)
 
 
-def tmp(folder: PathLike = None, file: Optional[str] = None, root: str = "~/tmp_results") -> Path:
+def tmp(folder: PathLike = None, file: str | None = None, root: str = "~/tmp_results") -> Path:
     base = Path(root).expanduser()
     if folder is not None:
         base = base / Path(folder)
@@ -574,8 +574,8 @@ def zip_path(
     path: Path | str,
     target_path: PathLike = None,
     folder: PathLike = None,
-    name: Optional[str] = None,
-    arcname: Optional[str] = None,
+    name: str | None = None,
+    arcname: str | None = None,
     inplace: bool = False,
     verbose: bool = True,
     content: bool = False,
@@ -612,8 +612,8 @@ def zip(
     source: Path | str,
     path: PathLike = None,
     folder: PathLike = None,
-    name: Optional[str] = None,
-    arcname: Optional[str] = None,
+    name: str | None = None,
+    arcname: str | None = None,
     inplace: bool = False,
     verbose: bool = True,
     content: bool = False,
@@ -638,17 +638,17 @@ def zip(
 
 def _unzip_archive(
     path: Path | str | os.PathLike[str],
-    folder: Optional[Path] = None,
-    target_path: Optional[Path] = None,
-    name: Optional[str] = None,
+    folder: Path | None = None,
+    target_path: Path | None = None,
+    name: str | None = None,
     verbose: bool = True,
     content: bool = False,
     inplace: bool = False,
     overwrite: bool = False,
     orig: bool = False,
-    pwd: Optional[str] = None,
+    pwd: str | None = None,
     tmp: bool = False,
-    pattern: Optional[str] = None,
+    pattern: str | None = None,
     merge: bool = False,
 ) -> Path:
     _ = pwd, pattern
@@ -696,17 +696,17 @@ def _unzip_archive(
 
 def unzip(
     path: Path,
-    folder: Optional[Path] = None,
-    target_path: Optional[Path] = None,
-    name: Optional[str] = None,
+    folder: Path | None = None,
+    target_path: Path | None = None,
+    name: str | None = None,
     verbose: bool = True,
     content: bool = False,
     inplace: bool = False,
     overwrite: bool = False,
     orig: bool = False,
-    pwd: Optional[str] = None,
+    pwd: str | None = None,
     tmp: bool = False,
-    pattern: Optional[str] = None,
+    pattern: str | None = None,
     merge: bool = False,
 ) -> Path:
     return _unzip_archive(
@@ -726,7 +726,7 @@ def unzip(
     )
 
 
-def untar(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, target_path: Optional[Path] = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
+def untar(path: Path, folder: Path | None = None, name: str | None = None, target_path: Path | None = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
     output_path = _safe_resolve(_expand(_resolve_path(_to_path(path), folder, name, target_path, _to_path(path).name.replace(".tar", ""))), strict=False)
     import tarfile
 
@@ -736,7 +736,7 @@ def untar(path: Path, folder: Optional[Path] = None, name: Optional[str] = None,
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
-def ungz(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, target_path: Optional[Path] = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
+def ungz(path: Path, folder: Path | None = None, name: str | None = None, target_path: Path | None = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
     output_path = _safe_resolve(_expand(_resolve_path(_to_path(path), folder, name, target_path, _to_path(path).name.replace(".gz", ""))), strict=False)
     import gzip
 
@@ -745,7 +745,7 @@ def ungz(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, 
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
-def unxz(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, target_path: Optional[Path] = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
+def unxz(path: Path, folder: Path | None = None, name: str | None = None, target_path: Path | None = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
     output_path = _safe_resolve(_expand(_resolve_path(_to_path(path), folder, name, target_path, _to_path(path).name.replace(".xz", ""))), strict=False)
     import lzma
 
@@ -754,7 +754,7 @@ def unxz(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, 
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
-def unbz(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, target_path: Optional[Path] = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
+def unbz(path: Path, folder: Path | None = None, name: str | None = None, target_path: Path | None = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
     default_name = _to_path(path).name.replace(".bz", "").replace(".tbz", ".tar")
     output_path = _safe_resolve(_expand(_resolve_path(_to_path(path), folder, name, target_path, default_name)), strict=False)
     import bz2
@@ -764,7 +764,7 @@ def unbz(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, 
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
-def decompress(path: Path, folder: Optional[Path] = None, name: Optional[str] = None, target_path: Optional[Path] = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
+def decompress(path: Path, folder: Path | None = None, name: str | None = None, target_path: Path | None = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> Path:
     path_obj = _to_path(path)
     path_str = str(path_obj)
     if path_str.endswith(".tar.gz") or path_str.endswith(".tgz"):
@@ -796,11 +796,11 @@ def decompress(path: Path, folder: Optional[Path] = None, name: Optional[str] = 
 
 def _encrypt_path(
     path: Path,
-    key: Optional[bytes] = None,
-    pwd: Optional[str] = None,
-    folder: Optional[Path] = None,
-    name: Optional[str] = None,
-    target_path: Optional[Path] = None,
+    key: bytes | None = None,
+    pwd: str | None = None,
+    folder: Path | None = None,
+    name: str | None = None,
+    target_path: Path | None = None,
     verbose: bool = True,
     suffix: str = ".enc",
     inplace: bool = False,
@@ -817,11 +817,11 @@ def _encrypt_path(
 
 def encrypt(
     path: Path,
-    key: Optional[bytes] = None,
-    pwd: Optional[str] = None,
-    folder: Optional[Path] = None,
-    name: Optional[str] = None,
-    target_path: Optional[Path] = None,
+    key: bytes | None = None,
+    pwd: str | None = None,
+    folder: Path | None = None,
+    name: str | None = None,
+    target_path: Path | None = None,
     verbose: bool = True,
     suffix: str = ".enc",
     inplace: bool = False,
@@ -832,11 +832,11 @@ def encrypt(
 
 def _decrypt_path(
     path: Path,
-    key: Optional[bytes] = None,
-    pwd: Optional[str] = None,
-    target_path: Optional[Path] = None,
-    folder: Optional[Path] = None,
-    name: Optional[str] = None,
+    key: bytes | None = None,
+    pwd: str | None = None,
+    target_path: Path | None = None,
+    folder: Path | None = None,
+    name: str | None = None,
     verbose: bool = True,
     suffix: str = ".enc",
     inplace: bool = False,
@@ -860,11 +860,11 @@ def _decrypt_path(
 
 def decrypt(
     path: Path,
-    key: Optional[bytes] = None,
-    pwd: Optional[str] = None,
-    target_path: Optional[Path] = None,
-    folder: Optional[Path] = None,
-    name: Optional[str] = None,
+    key: bytes | None = None,
+    pwd: str | None = None,
+    target_path: Path | None = None,
+    folder: Path | None = None,
+    name: str | None = None,
     verbose: bool = True,
     suffix: str = ".enc",
     inplace: bool = False,
@@ -872,17 +872,17 @@ def decrypt(
     return _decrypt_path(path=path, key=key, pwd=pwd, target_path=target_path, folder=folder, name=name, verbose=verbose, suffix=suffix, inplace=inplace)
 
 
-def zip_n_encrypt(path: Path, key: Optional[bytes] = None, pwd: Optional[str] = None, inplace: bool = False, verbose: bool = True, orig: bool = False, content: bool = False) -> Path:
+def zip_n_encrypt(path: Path, key: bytes | None = None, pwd: str | None = None, inplace: bool = False, verbose: bool = True, orig: bool = False, content: bool = False) -> Path:
     path_obj = _to_path(path)
     return _encrypt_path(zip_path(path_obj, inplace=inplace, verbose=verbose, content=content), key=key, pwd=pwd, verbose=verbose, inplace=True) if not orig else path_obj
 
 
-def decrypt_n_unzip(path: Path, key: Optional[bytes] = None, pwd: Optional[str] = None, inplace: bool = False, verbose: bool = True, orig: bool = False) -> Path:
+def decrypt_n_unzip(path: Path, key: bytes | None = None, pwd: str | None = None, inplace: bool = False, verbose: bool = True, orig: bool = False) -> Path:
     path_obj = _to_path(path)
     return _unzip_archive(_decrypt_path(path_obj, key=key, pwd=pwd, verbose=verbose, inplace=inplace), folder=None, inplace=True, content=False) if not orig else path_obj
 
 
-def get_remote_path(path: Path, root: Optional[str], os_specific: bool = False, rel2home: bool = True, strict: bool = True) -> Path:
+def get_remote_path(path: Path, root: str | None, os_specific: bool = False, rel2home: bool = True, strict: bool = True) -> Path:
     import platform
 
     os_part = platform.system().lower() if os_specific else "generic_os"
@@ -909,18 +909,18 @@ def get_remote_path(path: Path, root: Optional[str], os_specific: bool = False, 
 def to_cloud(
     path: Path,
     cloud: str,
-    remotepath: Optional[Path] = None,
+    remotepath: Path | None = None,
     zip: bool = False,
     encrypt: bool = False,
-    key: Optional[bytes] = None,
-    pwd: Optional[str] = None,
+    key: bytes | None = None,
+    pwd: str | None = None,
     rel2home: bool = False,
     strict: bool = True,
     share: bool = False,
     verbose: bool = True,
     os_specific: bool = False,
     transfers: int = 10,
-    root: Optional[str] = "myhome",
+    root: str | None = "myhome",
 ) -> Path:
     _ = transfers
     source_path = _to_path(path)
@@ -966,16 +966,16 @@ def to_cloud(
 def from_cloud(
     path: Path,
     cloud: str,
-    remotepath: Optional[Path] = None,
+    remotepath: Path | None = None,
     decrypt: bool = False,
     unzip: bool = False,
-    key: Optional[bytes] = None,
-    pwd: Optional[str] = None,
+    key: bytes | None = None,
+    pwd: str | None = None,
     rel2home: bool = False,
     os_specific: bool = False,
     strict: bool = True,
     transfers: int = 10,
-    root: Optional[str] = "myhome",
+    root: str | None = "myhome",
     verbose: bool = True,
     overwrite: bool = True,
     merge: bool = False,
@@ -1014,7 +1014,7 @@ def sync_to_cloud(
     rel2home: bool = True,
     transfers: int = 10,
     delete: bool = False,
-    root: Optional[str] = "myhome",
+    root: str | None = "myhome",
     verbose: bool = True,
 ) -> Path | None:
     source_path = _to_path(path)
@@ -1036,8 +1036,8 @@ def sync_to_cloud(
     rclone_cmd += " --delete-during" if delete else ""
     if verbose:
         _print_message(rclone_cmd)
-    stdout_target: Optional[int] = None if verbose else subprocess.PIPE
-    stderr_target: Optional[int] = None if verbose else subprocess.PIPE
+    stdout_target: int | None = None if verbose else subprocess.PIPE
+    stderr_target: int | None = None if verbose else subprocess.PIPE
     shell_to_use = "powershell" if sys.platform == "win32" else "bash"
     completed = _run_shell_command(rclone_cmd, shell_to_use, stdout=stdout_target, stderr=stderr_target)
     from machineconfig.utils.terminal import Response

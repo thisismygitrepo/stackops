@@ -34,7 +34,7 @@ import os
 import platform
 import subprocess
 import getpass
-from typing import List, Dict, Optional
+from typing import List, Dict
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
@@ -98,7 +98,7 @@ def get_available_networks() -> List[Dict[str, str]]:
     return unique_networks
 
 
-def display_and_select_network() -> Optional[Dict[str, str]]:
+def display_and_select_network() -> Dict[str, str] | None:
     """Display available networks and let user select one"""
     console.print("\n[blue]📡 Scanning for available WiFi networks...[/blue]")
 

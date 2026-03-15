@@ -2,7 +2,6 @@
 Data models for the command navigator.
 """
 
-from typing import Optional
 from dataclasses import dataclass, field
 
 
@@ -27,9 +26,9 @@ class CommandInfo:
     name: str
     description: str
     command: str
-    parent: Optional[str] = None
+    parent: str | None = None
     is_group: bool = False
     help_text: str = ""
     module_path: str = ""
-    arguments: Optional[list[ArgumentInfo]] = None
+    arguments: list[ArgumentInfo] | None = None
     long_description: str = ""

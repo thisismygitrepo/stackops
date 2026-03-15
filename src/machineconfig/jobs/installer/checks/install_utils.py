@@ -9,7 +9,7 @@ import csv
 import platform
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -22,7 +22,7 @@ CLOUD_STORAGE_NAME = "gdw"  # Default cloud storage name for rclone
 
 console = Console()
 
-def upload_app(path: PathExtended) -> Optional[str]:
+def upload_app(path: PathExtended) -> str | None:
     """Uploads the app to cloud storage and returns the shareable link."""
     try:
         # Using PathExtended.to_cloud

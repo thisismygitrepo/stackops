@@ -1,10 +1,10 @@
 
 from types import FunctionType
-from typing import Optional, Literal
+from typing import Literal
 from machineconfig.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig
 from pathlib import Path
 
-def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bool, uv_with: Optional[list[str]], uv_project_dir: Optional[str], start_dir: str) -> tuple[TabConfig, Path]:
+def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bool, uv_with: list[str] | None, uv_project_dir: str | None, start_dir: str) -> tuple[TabConfig, Path]:
     from machineconfig.utils.meta import lambda_to_python_script
     if func.__name__ == "<lambda>":
         py_script =  lambda_to_python_script(func,
@@ -45,10 +45,10 @@ def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str)
 
 
 
-def make_layout_from_functions(functions: list[FunctionType], functions_weights: Optional[list[int]],
+def make_layout_from_functions(functions: list[FunctionType], functions_weights: list[int] | None,
                                import_module: bool, tab_configs: list[TabConfig],
                                layout_name: str, method: Literal["script", "fire"],
-                               uv_with: Optional[list[str]], uv_project_dir: Optional[str],
+                               uv_with: list[str] | None, uv_project_dir: str | None,
                                start_dir: str
                                ) -> LayoutConfig:
     tabs2artifacts: list[tuple[TabConfig, list[Path]]] = []

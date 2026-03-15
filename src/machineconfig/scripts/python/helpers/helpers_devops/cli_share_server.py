@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Annotated
+from typing import Annotated
 from machineconfig.scripts.python.helpers.helpers_devops.cli_share_file import share_file_receive, share_file_send
 from machineconfig.utils.accessories import display_with_flashy_style
 import typer
@@ -7,10 +7,10 @@ import typer
 
 def web_file_explorer(
     path: Annotated[str, typer.Argument(help="Path to the file or directory to share")],
-    port: Annotated[Optional[int], typer.Option("--port", "-p", help="Port to run the share server on (default: 8080)")] = None,
-    username: Annotated[Optional[str], typer.Option("--username", "-u", help="Username for share access (default: current user)")] = None,
+    port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the share server on (default: 8080)")] = None,
+    username: Annotated[str | None, typer.Option("--username", "-u", help="Username for share access (default: current user)")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-na", help="Disable authentication for share access")] = False,
-    password: Annotated[Optional[str], typer.Option("--password", "-w", help="Password for share access (default: from ~/dotfiles/creds/passwords/quick_password)")] = None,
+    password: Annotated[str | None, typer.Option("--password", "-w", help="Password for share access (default: from ~/dotfiles/creds/passwords/quick_password)")] = None,
     bind_address: Annotated[str, typer.Option("--bind", "-a", help="Address to bind the server to")] = "0.0.0.0",
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the share server over the internet using ngrok")] = False,
     backend: Annotated[str, typer.Option("--backend", "-b", help="Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing")] = "miniserve",

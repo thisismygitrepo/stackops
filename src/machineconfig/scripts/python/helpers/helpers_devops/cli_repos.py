@@ -6,12 +6,12 @@ in the event that username@github.com is not mentioned in the remote url.
 """
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 import typer
 from machineconfig.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
 
 
-def _resolve_directory(directory: Optional[str]) -> Path:
+def _resolve_directory(directory: str | None) -> Path:
     if directory is None:
         directory = Path.cwd().as_posix()
         typer.echo(f"📁 Using directory: {directory}")
@@ -19,7 +19,7 @@ def _resolve_directory(directory: Optional[str]) -> Path:
 
 
 def action(
-    directory: Annotated[Optional[str], typer.Argument(help="📁 Directory containing repo(s).")]=None,
+    directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")]=None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
     auto_uv_sync: Annotated[bool, typer.Option("--uv-sync/--no-uv-sync", "-u/-ns", help="Automatic uv sync after pulls.")] = False,
     pull: Annotated[bool, typer.Option("--pull", "-P", help="↓ Pull changes across repositories.")] = False,
@@ -36,7 +36,7 @@ def action(
     perform_git_operations(repos_root=PathExtended(repos_root), pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
 
 
-def capture(directory: Annotated[Optional[str], typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+def capture(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
     """📝 Record repositories into a repos.json specification."""
     from machineconfig.scripts.python.helpers.helpers_repos.record import main_record as record_repos
     save_path = record_repos(repos_root_str=directory)
@@ -44,7 +44,7 @@ def capture(directory: Annotated[Optional[str], typer.Argument(help="📁 Direct
 
 
 def clone(directory: Annotated[str, typer.Argument(help="📁 Directory containing repo(s).")] = ".",
-          specs_path: Annotated[Optional[str], typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
+          specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
           interactive: Annotated[bool, typer.Option("--interactive/--no-interactive", "-i/-ni", help="Select interactively.")]=False,
           checkout_to_commit: Annotated[bool, typer.Option("--checkout-to-commit", "-ctc", help="Check out specific commits listed in the specification.")] = False,
           checkout_to_branch: Annotated[bool, typer.Option("--checkout-to-branch", "-ctb", help="Check out to the main branch defined in the specification.")] = False,
@@ -102,12 +102,12 @@ def clone(directory: Annotated[str, typer.Argument(help="📁 Directory containi
     clone_repos(spec_path=spec_path_self_managed, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag)
 
 
-def checkout_command(directory: Annotated[Optional[str], typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+def checkout_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
     """🔀 Check out specific commits listed in the specification."""
     clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=True, checkout_to_branch=False)
 
 
-def checkout_to_branch_command(directory: Annotated[Optional[str], typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+def checkout_to_branch_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
     """🔀 Check out to the main branch defined in the specification."""
     clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True)
 
@@ -147,18 +147,18 @@ def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help=
 
 def gource_viz(
     repo: Annotated[str, typer.Option(..., "--repo", "-r", help="Path to git repository to visualize")] = ".",
-    output_file: Annotated[Optional[Path], typer.Option(..., "--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")] = None,
+    output_file: Annotated[Path | None, typer.Option(..., "--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")] = None,
     resolution: Annotated[str, typer.Option(..., "--resolution", "-res", help="Video resolution (e.g., 1920x1080, 1280x720)")] = "1920x1080",
     seconds_per_day: Annotated[float, typer.Option(..., "--seconds-per-day", "-spd", help="Speed of simulation (lower = faster)")] = 0.1,
     auto_skip_seconds: Annotated[float, typer.Option(..., "--auto-skip-seconds", "-as", help="Skip to next entry if nothing happens for X seconds")] = 1.0,
-    title: Annotated[Optional[str], typer.Option(..., "--title", "-t", help="Title for the visualization")] = None,
-    hide_items: Annotated[Optional[list[str]], typer.Option(..., "--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames")] = None,
+    title: Annotated[str | None, typer.Option(..., "--title", "-t", help="Title for the visualization")] = None,
+    hide_items: Annotated[list[str] | None, typer.Option(..., "--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames")] = None,
     key_items: Annotated[bool, typer.Option(..., "--key", "-k", help="Show file extension key")] = False,
     fullscreen: Annotated[bool, typer.Option(..., "--fullscreen", "-f", help="Run in fullscreen mode")] = False,
-    viewport: Annotated[Optional[str], typer.Option(..., "--viewport", "-v", help="Camera viewport (e.g., '1000x1000')")] = None,
-    start_date: Annotated[Optional[str], typer.Option(..., "--start-date", help="Start date (YYYY-MM-DD)")] = None,
-    stop_date: Annotated[Optional[str], typer.Option(..., "--stop-date", help="Stop date (YYYY-MM-DD)")] = None,
-    user_image_dir: Annotated[Optional[Path], typer.Option(..., "--user-image-dir", help="Directory with user avatar images")] = None,
+    viewport: Annotated[str | None, typer.Option(..., "--viewport", "-v", help="Camera viewport (e.g., '1000x1000')")] = None,
+    start_date: Annotated[str | None, typer.Option(..., "--start-date", help="Start date (YYYY-MM-DD)")] = None,
+    stop_date: Annotated[str | None, typer.Option(..., "--stop-date", help="Stop date (YYYY-MM-DD)")] = None,
+    user_image_dir: Annotated[Path | None, typer.Option(..., "--user-image-dir", help="Directory with user avatar images")] = None,
     max_files: Annotated[int, typer.Option(..., "--max-files", help="Maximum number of files to show (0 = no limit)")] = 0,
     max_file_lag: Annotated[float, typer.Option(..., "--max-file-lag", help="Max time files remain on screen after last change")] = 5.0,
     file_idle_time: Annotated[int, typer.Option(..., "--file-idle-time", help="Time in seconds files remain idle before being removed")] = 0,
@@ -185,7 +185,7 @@ def gource_viz(
               font_size=font_size, camera_mode=camera_mode)
 
 
-def cleanup(repo: Annotated[Optional[str], typer.Argument(help="📁 Directory containing repo(s).")] = None, recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False) -> None:
+def cleanup(repo: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None, recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False) -> None:
     """🧹 Clean repository directories from cache files."""
     if repo is None:
         repo = Path.cwd().as_posix()
@@ -223,7 +223,7 @@ uv run --with cleanpy cleanpy .
 
 def config_linters(
     directory: Annotated[str, typer.Argument(help="📁 Git repository directory to configure.")] = ".",
-    linter: Annotated[Optional[str], typer.Option("--linter", "-t", help="Linter to configure: ruff, mypy, pylint, flake8, ty.")] = None,
+    linter: Annotated[str | None, typer.Option("--linter", "-t", help="Linter to configure: ruff, mypy, pylint, flake8, ty.")] = None,
 ) -> None:
     """🧰 Add linter config files to a git repository."""
     target_dir = Path(directory).expanduser().absolute().resolve()

@@ -5,8 +5,6 @@ from machineconfig.utils.schemas.repos.repos_types import GitVersionInfo, RepoRe
 from machineconfig.utils.schemas.repos.repos_types import RepoRecordFile
 from machineconfig.utils.io import save_json
 
-from typing import Optional
-
 from rich import print as pprint
 from rich.progress import Progress, TaskID, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, MofNCompleteColumn
 
@@ -82,7 +80,7 @@ def build_tree_structure(repos: list[RepoRecordDict], repos_root: Path) -> str:
     return "\n".join(tree_lines)
 
 
-def record_a_repo(path: PathExtended, search_parent_directories: bool, preferred_remote: Optional[str]) -> RepoRecordDict:
+def record_a_repo(path: PathExtended, search_parent_directories: bool, preferred_remote: str | None) -> RepoRecordDict:
     from git.repo import Repo
 
     repo = Repo(path, search_parent_directories=search_parent_directories)  # get list of remotes using git python
@@ -185,7 +183,7 @@ def record_repos_recursively(repos_root: str, r: bool, progress: Progress | None
     return res
 
 
-def _resolve_directory(directory: Optional[str]) -> Path:
+def _resolve_directory(directory: str | None) -> Path:
     import typer
     if directory is None:
         directory = Path.cwd().as_posix()
@@ -193,7 +191,7 @@ def _resolve_directory(directory: Optional[str]) -> Path:
     return Path(directory).expanduser().absolute().resolve()
 
 
-def main_record(repos_root_str: Optional[str]) -> Path:
+def main_record(repos_root_str: str | None) -> Path:
     print("\n📝 Recording repositories...")
     repos_root = _resolve_directory(directory=repos_root_str)
     

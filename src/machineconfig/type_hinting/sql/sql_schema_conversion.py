@@ -3,7 +3,6 @@ from polars._typing import PolarsDataType
 from sqlalchemy import Table
 from sqlalchemy.sql.sqltypes import BigInteger, Boolean, Date, DateTime, Enum as SAEnum, Float, Integer, Interval, JSON, LargeBinary, Numeric, SmallInteger, String, Text, Time
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
-from typing import Optional
 
 
 def sqlalchemy_type_to_polars(sa_type: object, map_decimal_to_closest_arithmetic_type: bool) -> PolarsDataType:
@@ -28,7 +27,7 @@ def sqlalchemy_type_to_polars(sa_type: object, map_decimal_to_closest_arithmetic
         #   - p <= 7 decimal digits: Float32 is sufficient
         #   - p <= 15 decimal digits: Float64 is sufficient
         # We use bit-based thresholds as primary (SQLAlchemy default), with fallback heuristics.
-        p: Optional[int] = getattr(sa_type, "precision", None)
+        p: int | None = getattr(sa_type, "precision", None)
         if p is None:
             return pl.Float64  # default to Float64 for maximum safety when precision unspecified
         if p <= 7:  # p interpreted as decimal digits, Float32 has ~7 decimal digits precision
@@ -39,7 +38,7 @@ def sqlalchemy_type_to_polars(sa_type: object, map_decimal_to_closest_arithmetic
             return pl.Float64
         return pl.Float64  # p > 53, Float64 is the best we have in Polars
     if isinstance(sa_type, Numeric):
-        p: Optional[int] = getattr(sa_type, "precision", None)
+        p: int | None = getattr(sa_type, "precision", None)
         s: int = getattr(sa_type, "scale", None) or 0
         if map_decimal_to_closest_arithmetic_type:
             if s == 0:

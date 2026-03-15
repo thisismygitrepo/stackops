@@ -1,4 +1,4 @@
-from typing import Literal, TypeAlias, TypedDict, Optional
+from typing import Literal, TypeAlias, TypedDict
 
 
 # Vscode extensions for AI-assisted coding.
@@ -46,8 +46,8 @@ class API_SPEC(TypedDict):
 
 
 class AI_SPEC(TypedDict):
-    provider: Optional[PROVIDER]
-    model: Optional[str]
+    provider: PROVIDER | None
+    model: str | None
     agent: AGENTS
     machine: HOST
     api_spec: API_SPEC

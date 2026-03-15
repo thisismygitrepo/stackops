@@ -10,8 +10,6 @@ import csv
 import platform
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
 from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
@@ -41,21 +39,21 @@ def _build_version_lookup() -> dict[str, str]:
     return versions
 
 
-def collect_apps_to_scan(app_names: list[str] | None) -> list[tuple[PathExtended, Optional[str]]]:
+def collect_apps_to_scan(app_names: list[str] | None) -> list[tuple[PathExtended, str | None]]:
     with console.status("[bold green]Gathering installed applications...[/bold green]"):
         apps_paths = get_installed_cli_apps()
         if app_names is not None:
             normalized = set(_normalize_app_names(app_names))
             apps_paths = [app_path for app_path in apps_paths if app_path.stem.lower() in normalized]
         versions = _build_version_lookup()
-        apps_to_scan: list[tuple[PathExtended, Optional[str]]] = []
+        apps_to_scan: list[tuple[PathExtended, str | None]] = []
         for app_path in apps_paths:
             version = versions.get(app_path.stem)
             apps_to_scan.append((app_path, version))
     return apps_to_scan
 
 
-def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, Optional[str]]]) -> list[AppData]:
+def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> list[AppData]:
     app_data_list: list[AppData] = []
     if not apps_to_scan:
         return app_data_list

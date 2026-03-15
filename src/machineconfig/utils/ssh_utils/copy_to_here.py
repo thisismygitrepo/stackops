@@ -1,6 +1,5 @@
 
-
-from typing import Optional, Union
+from typing import Union
 from pathlib import Path
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.meta import lambda_to_python_script
@@ -10,7 +9,7 @@ from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION, DEFAULT_PIC
 def copy_to_here(
     self: "SSH",
     source: Union[str, Path],
-    target: Optional[Union[str, Path]],
+    target: Union[str, Path] | None,
     compress_with_zip: bool = False,
     recursive: bool = False,
     internal_call: bool = False,
@@ -300,4 +299,3 @@ def copy_to_here(
 
 if __name__ == "__main__":
     from machineconfig.utils.ssh import SSH
-

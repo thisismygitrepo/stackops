@@ -1,7 +1,7 @@
 """Utility commands - lazy loading subcommands."""
 
 import typer
-from typing import Annotated, Optional, Literal
+from typing import Annotated, Literal
 
 
 UTILS_HELP_GLYPHS: list[str] = [
@@ -74,10 +74,10 @@ def tui_env(
 
 
 def download(
-    url: Annotated[Optional[str], typer.Argument(..., help="The URL to download the file from.")] = None,
+    url: Annotated[str | None, typer.Argument(..., help="The URL to download the file from.")] = None,
     decompress: Annotated[bool, typer.Option(..., "--decompress", "-d", help="Decompress the file if it's an archive.")] = False,
-    output: Annotated[Optional[str], typer.Option("--output", "-o", help="The output file path.")] = None,
-    output_dir: Annotated[Optional[str], typer.Option("--output-dir", help="Directory to place the downloaded file in.")] = None,
+    output: Annotated[str | None, typer.Option("--output", "-o", help="The output file path.")] = None,
+    output_dir: Annotated[str | None, typer.Option("--output-dir", help="Directory to place the downloaded file in.")] = None,
 ) -> None:
     """↓ Download a file from a URL and optionally decompress it."""
     from machineconfig.scripts.python.helpers.helpers_utils.download import download as impl
@@ -116,18 +116,18 @@ def type_hint(path: Annotated[str, typer.Argument(..., help="Path to file/projec
 
 
 def init_project(
-    name: Annotated[Optional[str], typer.Option("--name", "-n", help="Name of the project.")] = None,
+    name: Annotated[str | None, typer.Option("--name", "-n", help="Name of the project.")] = None,
     tmp_dir: Annotated[bool, typer.Option("--tmp-dir", "-t", help="Use a temporary directory for the project initialization.")] = False,
     python: Annotated[Literal["3.11", "3.12", "3.13", "3.14"], typer.Option("--python", "-p", help="Python sub version for the uv virtual environment.")] = "3.13",
-    libraries: Annotated[Optional[str], typer.Option("--libraries", "-l", help="Additional packages to include in the uv virtual environment (space separated).")] = None,
-    group: Annotated[Optional[str], typer.Option("--group", "-g", help="group of packages names (no separation) p:plot, t:types, l:linting, i:interactive, d:data")] = "p,t,l,i,d",
+    libraries: Annotated[str | None, typer.Option("--libraries", "-l", help="Additional packages to include in the uv virtual environment (space separated).")] = None,
+    group: Annotated[str | None, typer.Option("--group", "-g", help="group of packages names (no separation) p:plot, t:types, l:linting, i:interactive, d:data")] = "p,t,l,i,d",
 ) -> None:
     """✦ Initialize a project with a uv virtual environment and install dev packages."""
     from machineconfig.scripts.python.helpers.helpers_utils.python import init_project as impl
     impl(name=name, tmp_dir=tmp_dir, python=python, libraries=libraries, group=group)
 
 
-def edit_file_with_hx(path: Annotated[Optional[str], typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None) -> None:
+def edit_file_with_hx(path: Annotated[str | None, typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None) -> None:
     """✏ Open a file in the default editor."""
     from machineconfig.scripts.python.helpers.helpers_utils.python import edit_file_with_hx as impl
     impl(path=path)
@@ -135,7 +135,7 @@ def edit_file_with_hx(path: Annotated[Optional[str], typer.Argument(..., help="T
 
 def merge_pdfs(
     pdfs: Annotated[list[str], typer.Argument(..., help="Paths to the PDF files to merge.")],
-    output: Annotated[Optional[str], typer.Option("--output", "-o", help="Output merged PDF file path.")] = None,
+    output: Annotated[str | None, typer.Option("--output", "-o", help="Output merged PDF file path.")] = None,
     compress: Annotated[bool, typer.Option("--compress", "-c", help="Compress the output PDF.")] = False,
 ) -> None:
     """◫ Merge two PDF files into one."""
@@ -145,7 +145,7 @@ def merge_pdfs(
 
 def compress_pdf(
     pdf_input: Annotated[str, typer.Argument(..., help="Path to the input PDF file to compress.")],
-    output: Annotated[Optional[str], typer.Option("--output", "-o", help="Output compressed PDF file path.")] = None,
+    output: Annotated[str | None, typer.Option("--output", "-o", help="Output compressed PDF file path.")] = None,
     quality: Annotated[int, typer.Option("--quality", "-q", help="JPEG quality for image compression (0-100, 0=no change, 100=best).")] = 85,
     image_dpi: Annotated[int, typer.Option("--image-dpi", "-d", help="Target DPI for image resampling.")] = 0,
     compress_streams: Annotated[bool, typer.Option("--compress-streams", "-c", help="Compress uncompressed streams.")] = True,
@@ -157,11 +157,11 @@ def compress_pdf(
 
 
 def read_db_cli_tui(
-    path: Annotated[Optional[str], typer.Argument(..., help="The path to the file-based db")] = None,
+    path: Annotated[str | None, typer.Argument(..., help="The path to the file-based db")] = None,
     backend: Annotated[Literal["rainfrog", "r", "lazysql", "l", "dblab", "d", "usql", "u", "harlequin", "h", "sqlit", "s"], typer.Option("--backend", "-b", help="The TUI database client to use.")] = "rainfrog",
     read_only: Annotated[bool, typer.Option("--read-only", "-r", help="Open the database in read-only mode (if supported by backend).")] = False,
-    theme: Annotated[Optional[str], typer.Option("--theme", "-t", help="Theme to use (if supported by backend).")] = None,
-    limit: Annotated[Optional[int], typer.Option("--limit", "-l", help="Maximum number of rows to load (if supported by backend).")] = None,
+    theme: Annotated[str | None, typer.Option("--theme", "-t", help="Theme to use (if supported by backend).")] = None,
+    limit: Annotated[int | None, typer.Option("--limit", "-l", help="Maximum number of rows to load (if supported by backend).")] = None,
 ) -> None:
     """🗃 TUI DB Visualizer."""
     from machineconfig.scripts.python.helpers.helpers_utils.read_db_cli_tui import app as impl

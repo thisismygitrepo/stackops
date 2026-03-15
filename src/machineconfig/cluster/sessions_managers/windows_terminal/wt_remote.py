@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import Optional, Any
+from typing import Any
 from pathlib import Path
 import logging
 import json
@@ -23,7 +23,7 @@ class WTRemoteLayoutGenerator:
         self.remote_name: str = remote_name
         self.session_name: str = session_name
         self.layout_config: LayoutConfig = layout_config.copy()
-        self.script_path: Optional[str] = None
+        self.script_path: str | None = None
 
         # Initialize modular components
         self.remote_executor = WTRemoteExecutor(remote_name)
@@ -57,7 +57,7 @@ class WTRemoteLayoutGenerator:
     def to_dict(self) -> dict[str, Any]:
         return {"remote_name": self.remote_name, "session_name": self.session_name, "layout_config": self.layout_config, "script_path": self.script_path, "created_at": datetime.now().isoformat(), "class_name": self.__class__.__name__}
 
-    def to_json(self, file_path: Optional[str]) -> str:
+    def to_json(self, file_path: str | None) -> str:
         # Generate file path if not provided
         if file_path is None:
             random_id = str(uuid.uuid4())[:8]
@@ -114,7 +114,7 @@ class WTRemoteLayoutGenerator:
         return instance
 
     @staticmethod
-    def list_saved_sessions(directory_path: Optional[str]) -> list[str]:
+    def list_saved_sessions(directory_path: str | None) -> list[str]:
         if directory_path is None:
             dir_path = Path.home() / "tmp_results" / "wt_sessions" / "serialized"
         else:

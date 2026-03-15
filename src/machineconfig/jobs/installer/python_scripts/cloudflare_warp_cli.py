@@ -1,10 +1,9 @@
 
-from typing import Optional
 import platform
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
-def main(installer_data: InstallerData, version: Optional[str]):
+def main(installer_data: InstallerData, version: str | None) -> str:
     _ = installer_data, version
     system = platform.system()
     if system == "Windows":
@@ -20,4 +19,3 @@ def main(installer_data: InstallerData, version: Optional[str]):
     import subprocess
     subprocess.run(program, shell=True, check=True)
     return f"Cloudflare WARP CLI installed successfully on {system}."
-

@@ -1,6 +1,6 @@
 
 from pathlib import Path
-from typing import Callable, Optional, Union, Any, Protocol, List, TypeVar
+from typing import Callable, Union, Any, Protocol, List, TypeVar
 # import logging
 import time
 from datetime import datetime, timezone, timedelta
@@ -30,10 +30,10 @@ class Scheduler:
         routine: Callable[["Scheduler"], Any],
         wait_ms: int,
         logger: LoggerTemplate,
-        sess_stats: Optional[Callable[["Scheduler"], dict[str, Any]]] = None,
-        exception_handler: Optional[Callable[[Union[Exception, KeyboardInterrupt], str, "Scheduler"], Any]] = None,
+        sess_stats: Callable[["Scheduler"], dict[str, Any]] | None = None,
+        exception_handler: Callable[[Union[Exception, KeyboardInterrupt], str, "Scheduler"], Any] | None = None,
         max_cycles: int = 1_000_000_000,
-        records: Optional[list[list[Any]]] = None,
+        records: list[list[Any]] | None = None,
     ):
         self.routine = routine  # main routine to be repeated every `wait` time period
         self.logger = logger
@@ -48,7 +48,7 @@ class Scheduler:
     def __repr__(self):
         return f"Scheduler with {self.cycle} cycles ran so far. Last cycle was at {self.sess_start_utc_ms}."
 
-    def run(self, max_cycles: Optional[int] = None, until_ms: Optional[int] = None):
+    def run(self, max_cycles: int | None = None, until_ms: int | None = None):
         if max_cycles is not None:
             self.max_cycles = max_cycles
         if until_ms is None:
@@ -147,7 +147,7 @@ def to_pickle(obj: Any, path: Path) -> None:
 
 class CacheMemory[T]():
     def __init__(
-        self, source_func: Callable[[], T], expire: timedelta, logger: LoggerTemplate, name: Optional[str] = None
+        self, source_func: Callable[[], T], expire: timedelta, logger: LoggerTemplate, name: str | None = None
     ) -> None:
         self.cache: T
         self.source_func = source_func
@@ -179,7 +179,7 @@ class CacheMemory[T]():
         return self.cache
 
     @staticmethod
-    def as_decorator(expire: timedelta, logger: LoggerTemplate, name: Optional[str] = None):
+    def as_decorator(expire: timedelta, logger: LoggerTemplate, name: str | None = None):
         def decorator(source_func: Callable[[], T2]) -> CacheMemory["T2"]:
             res = CacheMemory(source_func=source_func, expire=expire, logger=logger, name=name)
             return res
@@ -188,7 +188,7 @@ class CacheMemory[T]():
 
 class Cache[T]():  # This class helps to accelrate access to latest data coming from expensive function. The class has two flavours, memory-based and disk-based variants."""
     def __init__(
-        self, source_func: Callable[[], T], expire: timedelta, logger: LoggerTemplate, path: Path, saver: Callable[[T, Path], Any] = to_pickle, reader: Callable[[Path], T] = from_pickle, name: Optional[str] = None
+        self, source_func: Callable[[], T], expire: timedelta, logger: LoggerTemplate, path: Path, saver: Callable[[T, Path], Any] = to_pickle, reader: Callable[[Path], T] = from_pickle, name: str | None = None
     ) -> None:
         self.cache: T
         self.source_func = source_func  # function which when called returns a fresh object to be frozen.
@@ -252,7 +252,7 @@ class Cache[T]():  # This class helps to accelrate access to latest data coming 
 
     @staticmethod
     def as_decorator(
-        expire: timedelta, logger: LoggerTemplate, path: Path, saver: Callable[[T2, Path], Any] = to_pickle, reader: Callable[[Path], T2] = from_pickle, name: Optional[str] = None
+        expire: timedelta, logger: LoggerTemplate, path: Path, saver: Callable[[T2, Path], Any] = to_pickle, reader: Callable[[Path], T2] = from_pickle, name: str | None = None
     ):  # -> Callable[..., 'Cache[T2]']:
         def decorator(source_func: Callable[[], T2]) -> Cache["T2"]:
             res = Cache(source_func=source_func, expire=expire, logger=logger, path=path, name=name, reader=reader, saver=saver)

@@ -2,7 +2,6 @@ import subprocess
 import requests
 import tempfile
 from pathlib import Path
-from typing import Optional
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
@@ -28,12 +27,12 @@ def is_winget_available() -> bool:
         return False
 
 
-def get_latest_winget_release_url() -> Optional[str]:
+def get_latest_winget_release_url() -> str | None:
     """
     Get the download URL for the latest winget .msixbundle file from GitHub releases.
 
     Returns:
-        Optional[str]: URL to the latest .msixbundle file, or None if not found
+        str | None: URL to the latest .msixbundle file, or None if not found
     """
     try:
         # Get the latest release information from GitHub API
@@ -115,7 +114,7 @@ def install_msix_package(package_path: Path) -> bool:
         return False
 
 
-def main(installer_data: InstallerData, version: Optional[str]) -> bool:
+def main(installer_data: InstallerData, version: str | None) -> bool:
     """
     Ensure winget is available on the system. If not available, download and install it.
 

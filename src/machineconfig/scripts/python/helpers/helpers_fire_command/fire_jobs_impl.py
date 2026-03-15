@@ -1,7 +1,7 @@
 """Pure Python implementation for fire_jobs route command - no typer dependencies."""
 
 import subprocess
-from typing import Optional, Callable
+from typing import Callable
 from pathlib import Path
 from machineconfig.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper import FireJobArgs
 
@@ -32,7 +32,7 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     exit_then_run_shell_script(script=command, strict=False)
 
 
-def _handle_marimo(choice_file: Path, repo_root: Optional[Path], randstr_func: RandStrFunc) -> None:
+def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc) -> None:
     """Handle marimo notebook launch."""
     print(f"🧽 Preparing to launch Marimo notebook for `{choice_file}`...")
     project_segment = f"--project {repo_root} " if repo_root is not None else ""
@@ -74,7 +74,7 @@ def _prepare_kwargs(args: FireJobArgs, choice_file: Path) -> dict[str, object]:
     return {}
 
 
-def _choose_function(choose_function: bool, function: Optional[str], choice_file: Path, kwargs_dict: dict[str, object]) -> Optional[str] | tuple[Optional[str], Path, dict[str, object]]:
+def _choose_function(choose_function: bool, function: str | None, choice_file: Path, kwargs_dict: dict[str, object]) -> str | None | tuple[str | None, Path, dict[str, object]]:
     """Choose function to run, possibly interactively."""
     if choose_function:
         from machineconfig.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper import choose_function_or_lines
@@ -83,7 +83,7 @@ def _choose_function(choose_function: bool, function: Optional[str], choice_file
     return function
 
 
-def _build_command(args: FireJobArgs, choice_file: Path, choice_function: Optional[str], kwargs_dict: dict[str, object], repo_root: Optional[Path], fire_args: str, randstr_func: RandStrFunc) -> str:
+def _build_command(args: FireJobArgs, choice_file: Path, choice_function: str | None, kwargs_dict: dict[str, object], repo_root: Path | None, fire_args: str, randstr_func: RandStrFunc) -> str:
     """Build the execution command."""
     if choice_file.suffix == ".py":
         exe_line = _build_python_exe_line(module=args.module, interactive=args.interactive, frozen=args.frozen, streamlit=args.streamlit, environment=args.environment, jupyter=args.jupyter, choice_file=choice_file, repo_root=repo_root)
@@ -100,7 +100,7 @@ def _build_command(args: FireJobArgs, choice_file: Path, choice_function: Option
         raise NotImplementedError(f"File type {choice_file.suffix} not supported, in the sense that I don't know how to fire it.")
 
 
-def _build_python_exe_line(module: bool, interactive: bool, frozen: bool, streamlit: bool, environment: str, jupyter: bool, choice_file: Path, repo_root: Optional[Path]) -> str:
+def _build_python_exe_line(module: bool, interactive: bool, frozen: bool, streamlit: bool, environment: str, jupyter: bool, choice_file: Path, repo_root: Path | None) -> str:
     """Build Python execution line."""
     module_line = "-m" if module else ""
     with_project = f"--project {repo_root} " if repo_root is not None else ""
@@ -126,7 +126,7 @@ def _build_python_exe_line(module: bool, interactive: bool, frozen: bool, stream
     return f"uv run {frozen_line} {with_project} {interpreter_line} {interactive_line} {module_line} {ipython_line}"
 
 
-def _adjust_choice_file(module: bool, choice_file: Path, repo_root: Optional[Path]) -> str:
+def _adjust_choice_file(module: bool, choice_file: Path, repo_root: Path | None) -> str:
     """Adjust choice file path for module mode."""
     if module and choice_file.suffix == ".py":
         if repo_root is not None:
@@ -136,7 +136,7 @@ def _adjust_choice_file(module: bool, choice_file: Path, repo_root: Optional[Pat
     return str(choice_file)
 
 
-def _create_import_script(choice_file: Path, choice_function: Optional[str], kwargs_dict: dict[str, object], repo_root: Optional[Path], randstr_func: RandStrFunc) -> Path:
+def _create_import_script(choice_file: Path, choice_function: str | None, kwargs_dict: dict[str, object], repo_root: Path | None, randstr_func: RandStrFunc) -> Path:
     """Create a script that imports the module and calls the function."""
     from machineconfig.scripts.python.helpers.helpers_fire_command.file_wrangler import get_import_module_code, wrap_import_in_try_except
     from machineconfig.utils.meta import lambda_to_python_script
@@ -165,7 +165,7 @@ def _create_import_script(choice_file: Path, choice_function: Optional[str], kwa
     return new_choice_file
 
 
-def _build_final_command(debug: bool, module: bool, streamlit: bool, hold_directory: bool, cmd: bool, exe_line: str, choice_file: Path, choice_file_adjusted: str, choice_function: Optional[str], fire_args: str) -> str:
+def _build_final_command(debug: bool, module: bool, streamlit: bool, hold_directory: bool, cmd: bool, exe_line: str, choice_file: Path, choice_file_adjusted: str, choice_function: str | None, fire_args: str) -> str:
     """Build the final command string."""
     if debug:
         import platform
@@ -192,7 +192,7 @@ def _build_final_command(debug: bool, module: bool, streamlit: bool, hold_direct
         return f"{exe_line} {choice_file} "
 
 
-def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path, repo_root: Optional[Path], randstr_func: RandStrFunc) -> str:
+def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc) -> str:
     """Apply various command modifiers based on args."""
     from rich.panel import Panel
     from rich.console import Console

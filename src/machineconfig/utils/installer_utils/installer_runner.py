@@ -10,7 +10,7 @@ from machineconfig.utils.files.read import read_json
 
 from rich.console import Console
 from rich.panel import Panel
-from typing import Any, Optional
+from typing import Any
 import platform
 from joblib import Parallel, delayed
 
@@ -95,7 +95,7 @@ def get_installed_cli_apps():
     return apps
 
 
-def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: Optional[list[PACKAGE_NAME]]) -> list[InstallerData]:
+def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
     import machineconfig.jobs.installer as module
     from pathlib import Path
     res_raw: InstallerDataFiles = read_json(Path(module.__file__).parent.joinpath("installer_data.json"))

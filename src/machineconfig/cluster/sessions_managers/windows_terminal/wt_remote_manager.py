@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any
 from rich.console import Console
 from machineconfig.utils.scheduler import Scheduler
 from machineconfig.cluster.sessions_managers.windows_terminal.wt_local import run_command_in_wt_tab
@@ -26,8 +26,8 @@ TMP_SERIALIZATION_DIR = Path.home() / "tmp_results" / "wt_sessions" / "serialize
 
 
 class WTSessionManager:
-    def __init__(self, machine2wt_tabs: dict[str, dict[str, tuple[str, str]]], session_name_prefix: Optional[str] = "WTJobMgr"):
-        self.session_name_prefix: Optional[str] = session_name_prefix
+    def __init__(self, machine2wt_tabs: dict[str, dict[str, tuple[str, str]]], session_name_prefix: str | None = "WTJobMgr"):
+        self.session_name_prefix: str | None = session_name_prefix
         self.machine2wt_tabs = machine2wt_tabs  # Store the original config
         self.managers: list[WTRemoteLayoutGenerator] = []
         for machine, tab_config in machine2wt_tabs.items():
@@ -81,7 +81,7 @@ class WTSessionManager:
         sched = Scheduler(routine=routine, wait_ms=wait_ms, logger=cast(LoggerTemplate, logger))
         sched.run()
 
-    def save(self, session_id: Optional[str] = None) -> str:
+    def save(self, session_id: str | None = None) -> str:
         if session_id is None:
             session_id = generate_session_id()
         session_dir = TMP_SERIALIZATION_DIR / session_id

@@ -10,7 +10,6 @@ from machineconfig.utils.installer_utils.github_release_bulk import (
 
 import platform
 import subprocess
-from typing import Optional
 
 
 PACAKGE_MANAGERS = ["bun", "npm", "pip", "uv", "winget", "powershell", "irm", "brew", "curl", "sudo", "cargo"]
@@ -37,7 +36,7 @@ class Installer:
         """Derive executable name from app name by converting to lowercase and removing spaces."""
         return self.installer_data["appName"].lower().replace(" ", "")  # .replace("-", "")
 
-    def install_robust(self, version: Optional[str]) -> str:
+    def install_robust(self, version: str | None) -> str:
         try:
             exe_name = self._get_exe_name()
             result_old = subprocess.run(f"{exe_name} --version", shell=True, capture_output=True, text=True, check=False)
@@ -56,7 +55,7 @@ class Installer:
             print(f"❌ ERROR: Installation failed for {exe_name}: {ex}")
             return f"""📦️ ❌ Failed to install `{app_name}` with error: {ex}"""
 
-    def install(self, version: Optional[str]) -> None:
+    def install(self, version: str | None) -> None:
         exe_name = self._get_exe_name()
         repo_url = self.installer_data["repoURL"]
         os_name = get_os_name()
@@ -147,7 +146,8 @@ class Installer:
         else:
             assert repo_url.startswith("https://github.com/"), f"repoURL must be a GitHub URL, got {repo_url}"
             downloaded, version_to_be_installed = self.binary_download(version=version)
-            if str(downloaded).endswith(".deb"): install_deb_package(downloaded)
+            if str(downloaded).endswith(".deb"):
+                install_deb_package(downloaded)
             else:
                 if platform.system() == "Windows":
                     exe = find_move_delete_windows(downloaded_file_path=downloaded, tool_name=exe_name, delete=True, rename_to=exe_name.replace(".exe", "") + ".exe")
@@ -170,12 +170,12 @@ class Installer:
                     exe.with_name(name=new_exe_name, inplace=True, overwrite=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).parent.mkdir(parents=True, exist_ok=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).write_text(version_to_be_installed or "unknown", encoding="utf-8")
-    def binary_download(self, version: Optional[str]) -> tuple[PathExtended, str]:
+    def binary_download(self, version: str | None) -> tuple[PathExtended, str]:
         exe_name = self._get_exe_name()
         repo_url = self.installer_data["repoURL"]
         # app_name = self.installer_data["appName"]
-        download_link: Optional[str] = None
-        version_to_be_installed: Optional[str] = None
+        download_link: str | None = None
+        version_to_be_installed: str | None = None
         if "github" not in repo_url:
             # Direct download URL
             download_link = repo_url
@@ -201,7 +201,7 @@ class Installer:
         downloaded = download_and_prepare(download_link)
         return downloaded, version_to_be_installed
 
-    def get_github_release(self, repo_url: str, version: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    def get_github_release(self, repo_url: str, version: str | None) -> tuple[str | None, str | None]:
         """
         Get download link and version from GitHub release based on fileNamePattern.
         Returns (download_url, actual_version)

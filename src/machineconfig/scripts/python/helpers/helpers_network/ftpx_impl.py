@@ -1,7 +1,6 @@
 """Pure Python implementation for ftpx command - no typer dependencies."""
 
 from pathlib import Path
-from typing import Optional
 
 
 def ftpx(source: str, target: str, recursive: bool, zipFirst: bool, cloud: bool, overwrite_existing: bool) -> None:
@@ -86,13 +85,13 @@ def _handle_win_transfer(source: str, target: str, overwrite_existing: bool, win
     copy_when_inside_wsl(source_obj, target_obj, overwrite_existing, windows_username=windows_username)
 
 
-def _resolve_paths(source: str, target: str) -> tuple[Optional[str], Optional[str], str, bool]:
+def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, str, bool]:
     """Resolve source and target paths, determine machine and direction."""
     from machineconfig.utils.path_extended import PathExtended
     from machineconfig.scripts.python.helpers.helpers_cloud.helpers2 import ES
 
-    resolved_source: Optional[str] = None
-    resolved_target: Optional[str] = None
+    resolved_source: str | None = None
+    resolved_target: str | None = None
     machine: str = ""
     source_is_remote: bool = False
 
@@ -182,8 +181,8 @@ def _create_ssh_connection(machine: str, console: "Console") -> "SSH":  # type: 
 
 
 def _handle_cloud_transfer(
-    ssh: "SSH", resolved_source: Optional[str], resolved_target: Optional[str], console: "Console"
-) -> Optional["PathExtended"]:  # type: ignore[name-defined]
+    ssh: "SSH", resolved_source: str | None, resolved_target: str | None, console: "Console"
+) -> "PathExtended | None":  # type: ignore[name-defined]
     """Handle cloud transfer mode."""
     from machineconfig.utils.path_extended import PathExtended
     from rich.panel import Panel
@@ -203,14 +202,14 @@ def _handle_cloud_transfer(
 
 def _handle_direct_transfer(
     ssh: "SSH",
-    resolved_source: Optional[str],
-    resolved_target: Optional[str],
+    resolved_source: str | None,
+    resolved_target: str | None,
     source_is_remote: bool,
     zipFirst: bool,
     recursive: bool,
     overwrite_existing: bool,
     console: "Console",
-) -> Optional["PathExtended"]:  # type: ignore[name-defined]
+) -> "PathExtended | None":  # type: ignore[name-defined]
     """Handle direct SSH transfer."""
     from rich.panel import Panel
 

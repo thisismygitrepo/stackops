@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import platform
-from typing import Optional, Literal, cast
+from typing import Literal, cast
 
 import typer
 
@@ -12,16 +12,16 @@ from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, TabCo
 
 def run_cli(
     ctx: typer.Context,
-    layouts_file: Optional[str],
-    choose_layouts: Optional[str],
-    choose_tabs: Optional[str],
+    layouts_file: str | None,
+    choose_layouts: str | None,
+    choose_tabs: str | None,
     sleep_inbetween: float,
-    parallel_layouts: Optional[int],
+    parallel_layouts: int | None,
     max_tabs: int,
     max_layouts: int,
     backend: Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"],
     on_conflict: Literal["restart", "error", "rename"],
-    max_parallel_tabs: Optional[int],
+    max_parallel_tabs: int | None,
     poll_seconds: float,
     kill_finished_tabs: bool,
     all_file: bool,
