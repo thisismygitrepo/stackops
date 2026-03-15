@@ -31,6 +31,17 @@ def shell_quote(value: str) -> str:
     return shlex.quote(value)
 
 
+def build_tmux_attach_or_switch_command(session_name: str) -> str:
+    quoted_session_name = shell_quote(session_name)
+    return (
+        'if [ -n "${TMUX:-}" ]; then '
+        f"tmux switch-client -t {quoted_session_name}; "
+        "else "
+        f"tmux attach -t {quoted_session_name}; "
+        "fi"
+    )
+
+
 def validate_layout_config(layout_config: LayoutConfig) -> None:
     if not layout_config["layoutTabs"]:
         raise ValueError("Layout must contain at least one tab")

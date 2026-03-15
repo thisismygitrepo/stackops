@@ -1,5 +1,7 @@
 import shlex
 
+from machineconfig.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import build_tmux_attach_or_switch_command
+
 
 def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: dict[str, str], session_name: str) -> str:
     commands: list[str] = [f"tmux new-session -d -s {shlex.quote(session_name)}"]
@@ -33,5 +35,5 @@ def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: d
         commands.append(f"tmux select-pane -t {shlex.quote(window_target)}.4")
         commands.append(f"tmux select-layout -t {shlex.quote(window_target)} tiled")
 
-    commands.append(f"tmux attach-session -t {shlex.quote(session_name)}")
+    commands.append(build_tmux_attach_or_switch_command(session_name=session_name))
     return " ; ".join(commands)

@@ -1,6 +1,7 @@
 from subprocess import CompletedProcess
 from typing import Callable
 
+from machineconfig.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import build_tmux_attach_or_switch_command
 from machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
     build_pane_preview,
     build_window_preview,
@@ -27,7 +28,7 @@ def attach_script_for_target(
         commands.append(f"tmux select-window -t {quote_fn(target)}")
         if pane_index:
             commands.append(f"tmux select-pane -t {quote_fn(f'{target}.{pane_index}')}")
-    commands.append(f"tmux attach -t {quote_fn(session_name)}")
+    commands.append(build_tmux_attach_or_switch_command(session_name=session_name))
     return "\n".join(commands)
 
 
@@ -49,7 +50,7 @@ def kill_script_for_target(
 def attach_script_from_name(name: str, quote_fn: Callable[[str], str]) -> str:
     session_name, separator, target = name.partition(":")
     if not separator or not session_name or not target:
-        return f"tmux attach -t {quote_fn(name)}"
+        return build_tmux_attach_or_switch_command(session_name=name)
     window_target, pane_separator, pane_index = target.rpartition(".")
     if pane_separator:
         return attach_script_for_target(

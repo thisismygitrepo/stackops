@@ -5,6 +5,7 @@ from machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend_options
     kill_script_for_target,
     new_session_script,
 )
+from machineconfig.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import build_tmux_attach_or_switch_command
 from machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
     build_preview as _build_preview_impl,
     session_sort_key,
@@ -52,7 +53,7 @@ def choose_session(
     if name is not None:
         if window:
             return ("run_script", attach_script_from_name(name=name, quote_fn=quote))
-        return ("run_script", f"tmux attach -t {quote(name)}")
+        return ("run_script", build_tmux_attach_or_switch_command(session_name=name))
     if new_session:
         return ("run_script", new_session_script(kill_all=kill_all))
 
@@ -70,7 +71,7 @@ def choose_session(
     if len(sessions) == 0:
         return ("run_script", "tmux new-session")
     if not window and len(sessions) == 1:
-        return ("run_script", f"tmux attach -t {quote(sessions[0])}")
+        return ("run_script", build_tmux_attach_or_switch_command(session_name=sessions[0]))
 
     if window:
         option_to_script, options_to_preview_mapping = build_window_target_options(
@@ -119,7 +120,7 @@ def choose_session(
         return ("run_script", new_session_script(kill_all=kill_all))
     if session_name == KILL_ALL_AND_NEW_LABEL:
         return ("run_script", "tmux kill-server\ntmux new-session")
-    return ("run_script", f"tmux attach -t {quote(session_name)}")
+    return ("run_script", build_tmux_attach_or_switch_command(session_name=session_name))
 
 
 def choose_kill_target(

@@ -13,7 +13,12 @@ from machineconfig.logger import get_logger
 from machineconfig.utils.scheduler import Scheduler
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 from machineconfig.cluster.sessions_managers.tmux.tmux_local import TmuxLayoutGenerator, TmuxLayoutSummary
-from machineconfig.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import check_tmux_session_status, build_unknown_command_status, TmuxSessionStatus
+from machineconfig.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import (
+    TmuxSessionStatus,
+    build_tmux_attach_or_switch_command,
+    build_unknown_command_status,
+    check_tmux_session_status,
+)
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult, CommandStatus
 from machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting import calculate_global_summary_from_status
 
@@ -102,12 +107,12 @@ class TmuxLocalManager:
             commands = []
             for manager in self.managers:
                 commands.append(f"# Attach to session '{manager.session_name}':")
-                commands.append(f"tmux attach -t {manager.session_name}")
+                commands.append(build_tmux_attach_or_switch_command(session_name=manager.session_name))
                 commands.append("")
             return "\n".join(commands)
         for manager in self.managers:
             if manager.session_name == session_name:
-                return f"tmux attach -t {session_name}"
+                return build_tmux_attach_or_switch_command(session_name=session_name)
         raise ValueError(f"Session '{session_name}' not found")
 
     def check_all_sessions_status(self) -> dict[str, TmuxSessionReport]:
