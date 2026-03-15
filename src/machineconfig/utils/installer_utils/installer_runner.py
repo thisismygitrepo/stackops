@@ -10,7 +10,6 @@ from machineconfig.utils.files.read import read_json
 
 from rich.console import Console
 from rich.panel import Panel
-from typing import Any
 import platform
 from joblib import Parallel, delayed
 
@@ -19,7 +18,7 @@ def check_latest():
     console = Console()  # Added console initialization
     console.print(Panel("🔍  CHECKING FOR LATEST VERSIONS", title="Status", expand=False))  # Replaced print with Panel
     installers = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=["termabc"])
-    installers_github = []
+    installers_github: list[InstallerData] = []
     for inst__ in installers:
         app_name = inst__["appName"]
         repo_url = inst__["repoURL"]
@@ -33,9 +32,10 @@ def check_latest():
 
     print(f"\n🔍 Checking {len(installers_github)} GitHub-based installers...\n")
 
-    def func(inst: Installer):
-        exe_name = inst.installer_data.get("exeName", "unknown")
-        repo_url = inst.installer_data.get("repoURL", "")
+    def func(installer_data: InstallerData) -> tuple[str, str, str, str]:
+        inst = Installer(installer_data=installer_data)
+        exe_name = inst.installer_data["appName"].lower().replace(" ", "")
+        repo_url = inst.installer_data["repoURL"]
         print(f"🔎 Checking {exe_name}...")
         _release_url, version_to_be_installed = inst.get_github_release(repo_url=repo_url, version=None)
         verdict, current_ver, new_ver = check_if_installed_already(exe_name=exe_name, version=version_to_be_installed, use_cache=False)
@@ -47,12 +47,12 @@ def check_latest():
     print("\n📊 Generating results table...\n")
 
     # Convert to list of dictionaries and group by status
-    result_data = []
+    result_data: list[dict[str, str]] = []
     for tool, status, current_ver, new_ver in res:
         result_data.append({"Tool": tool, "Status": status, "Current Version": current_ver, "New Version": new_ver})
 
     # Group by status
-    grouped_data: dict[str, list[dict[str, Any]]] = {}
+    grouped_data: dict[str, list[dict[str, str]]] = {}
     for item in result_data:
         status = item["Status"]
         if status not in grouped_data:

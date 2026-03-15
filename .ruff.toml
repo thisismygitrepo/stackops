@@ -1,0 +1,1 @@
+extend = "src/machineconfig/settings/linters/.ruff.toml"

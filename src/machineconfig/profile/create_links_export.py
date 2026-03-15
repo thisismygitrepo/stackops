@@ -71,13 +71,13 @@ def main_from_parser(
     from machineconfig.profile.create_links import ConfigMapper, read_mapper
     repo_key = REPO_MAP[repo]
     mapper_full_obj = read_mapper(repo=repo_key)
-    match sensitivity:
-        case "private" | "p":
-            mapper_full = mapper_full_obj["private"]
-        case "public" | "b":
-            mapper_full = mapper_full_obj["public"]
-        case "all" | "a":
-            mapper_full = {**mapper_full_obj["private"], **mapper_full_obj["public"]}
+    mapper_full: dict[str, list[ConfigMapper]]
+    if sensitivity in {"private", "p"}:
+        mapper_full = mapper_full_obj["private"]
+    elif sensitivity in {"public", "b"}:
+        mapper_full = mapper_full_obj["public"]
+    else:
+        mapper_full = {**mapper_full_obj["private"], **mapper_full_obj["public"]}
             
     if which is None:
         from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview

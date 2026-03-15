@@ -416,16 +416,7 @@ def split(
 def size(path: Path, units: Literal["b", "kb", "mb", "gb"] = "mb") -> float:
     path_obj = _to_path(path)
     total_size = path_obj.stat().st_size if path_obj.is_file() else sum([item.stat().st_size for item in path_obj.rglob("*") if item.is_file()])
-    scale: int
-    match units:
-        case "b":
-            scale = 1024**0
-        case "kb":
-            scale = 1024**1
-        case "mb":
-            scale = 1024**2
-        case "gb":
-            scale = 1024**3
+    scale = {"b": 1024**0, "kb": 1024**1, "mb": 1024**2, "gb": 1024**3}[units]
     return round(number=total_size / scale, ndigits=1)
 
 

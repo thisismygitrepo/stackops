@@ -26,7 +26,7 @@ class DBMS:
         self.eng.dispose()
         time.sleep(sleep)
     @staticmethod
-    def _get_table_identifier(engine: Engine, table: str, sch: str | None):
+    def _get_table_identifier(engine: Engine, table: str, sch: str | None) -> str:
         if sch is not None:
             # Handle DuckDB schema names that contain dots (e.g., "klines.main")
             if engine.url.drivername == 'duckdb' and '.' in sch and sch.endswith('.main'):
@@ -115,6 +115,7 @@ class DBMS:
             import random
             table = random.choice(tables)
             print(f"Reading table `{table}` from schema `{sch}`")
+        assert table is not None
         with self.eng.connect() as conn:
             try:
                 res = conn.execute(text(f'''SELECT * FROM {self._get_table_identifier(self.eng, table, sch)} '''))

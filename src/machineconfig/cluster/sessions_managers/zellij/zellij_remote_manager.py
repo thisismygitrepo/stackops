@@ -1,16 +1,23 @@
+from pathlib import Path
+from typing import TypedDict
 from datetime import datetime
 import json
 import uuid
-from pathlib import Path
 from machineconfig.utils.scheduler import Scheduler
 from machineconfig.cluster.sessions_managers.zellij.zellij_local import run_command_in_zellij_tab
 from machineconfig.cluster.sessions_managers.zellij.zellij_remote import ZellijRemoteLayoutGenerator
+from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 from machineconfig.logger import get_logger
 
 
 logger = get_logger("cluster.sessions_managers.zellij_remote_manager")
 TMP_SERIALIAZATION_DIR = Path.home() / "tmp_results" / "zellij_sessions" / "serialized"
+
+
+class StatusDataRow(TypedDict):
+    tabName: str
+    status: CommandStatus
 
 
 class ZellijSessionManager:
@@ -65,13 +72,13 @@ class ZellijSessionManager:
                 for item in statuses:
                     values.extend(item.values())
                 # Create list of dictionaries instead of DataFrame
-                status_data = []
+                status_data: list[StatusDataRow] = []
                 for i, key in enumerate(keys):
                     if i < len(values):
                         status_data.append({"tabName": key, "status": values[i]})
 
                 # Check if all stopped
-                running_count = sum(1 for item in status_data if item.get("status", {}).get("running", False))
+                running_count = sum(1 for item in status_data if item["status"].get("running", False))
                 if running_count == 0:  # they all stopped
                     scheduler.max_cycles = scheduler.cycle  # stop the scheduler from calling this routine again
 

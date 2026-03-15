@@ -37,37 +37,34 @@ def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
     else:
         raise NotImplementedError(f"System {system_name} not supported")
 
-    match which:
-        case "scripts":
-            source = LIBRARY_ROOT.joinpath("scripts", system)
-            target = CONFIG_ROOT.joinpath("scripts")
+    if which == "scripts":
+        source = LIBRARY_ROOT.joinpath("scripts", system)
+        target = CONFIG_ROOT.joinpath("scripts")
 
-            # _copy_path(source=source, target=target, overwrite=True)
+        for a_path in source.rglob("*"):
+            if not a_path.is_file():
+                continue
+            relative_path = a_path.relative_to(source)
+            target_path = target.joinpath(relative_path)
+            _copy_path(source=a_path, target=target_path, overwrite=True)
 
-            for a_path in source.rglob("*"):
-                if not a_path.is_file():
-                    continue
-                relative_path = a_path.relative_to(source)
-                target_path = target.joinpath(relative_path)
-                _copy_path(source=a_path, target=target_path, overwrite=True)
+        wrap_mcfg_source = LIBRARY_ROOT.joinpath("scripts", "nu", "wrap_mcfg.nu")
+        wrap_mcfg_target = CONFIG_ROOT.joinpath("scripts", "wrap_mcfg.nu")
 
-            wrap_mcfg_source = LIBRARY_ROOT.joinpath("scripts", "nu", "wrap_mcfg.nu")
-            wrap_mcfg_target = CONFIG_ROOT.joinpath("scripts", "wrap_mcfg.nu")
+        wrap_mcfg_target.parent.mkdir(parents=True, exist_ok=True)
+        _copy_path(source=wrap_mcfg_source, target=wrap_mcfg_target, overwrite=True)
 
-            wrap_mcfg_target.parent.mkdir(parents=True, exist_ok=True)
-            _copy_path(source=wrap_mcfg_source, target=wrap_mcfg_target, overwrite=True)
+        if system_name == "linux":
+            from rich.console import Console
+            console = Console()
+            console.print("\n[bold]📜 Setting executable permissions for scripts...[/bold]")
+            scripts_path = CONFIG_ROOT.joinpath("scripts")
+            subprocess.run(f"chmod +x {scripts_path} -R", shell=True, capture_output=True, text=True, check=False)
+            console.print("[green]✅ Script permissions updated[/green]")
+        return
 
-            if system_name == "linux":
-                from rich.console import Console
-                console = Console()
-                console.print("\n[bold]📜 Setting executable permissions for scripts...[/bold]")
-                scripts_path = CONFIG_ROOT.joinpath("scripts")
-                subprocess.run(f"chmod +x {scripts_path} -R", shell=True, capture_output=True, text=True, check=False)
-                console.print("[green]✅ Script permissions updated[/green]")
-            return
-        case "settings":
-            source = LIBRARY_ROOT.joinpath("settings")
-            target = CONFIG_ROOT.joinpath("settings")
+    source = LIBRARY_ROOT.joinpath("settings")
+    target = CONFIG_ROOT.joinpath("settings")
 
     _copy_path(source=source, target=target, overwrite=True)
     

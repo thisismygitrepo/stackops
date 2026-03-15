@@ -175,12 +175,12 @@ def check_important_tools() -> dict[str, dict[str, bool]]:
     """Check if important CLI tools are installed, organized by groups."""
     from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
 
-    group_status = {}
+    group_status: dict[str, dict[str, bool]] = {}
     for group_name, tools in PACKAGE_GROUP2NAMES.items():
-        tool_status = {}
+        tool_status: dict[str, bool] = {}
         for tool in tools:
             tool_status[tool] = shutil.which(tool) is not None
-        group_status[group_name] = tool_status
+        group_status[str(group_name)] = tool_status
 
     return group_status
 

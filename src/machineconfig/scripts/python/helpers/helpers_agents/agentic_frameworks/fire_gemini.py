@@ -31,24 +31,19 @@ def fire_gemini(ai_spec: AI_SPEC, prompt_path: Path, repo_root: Path) -> str:
     settings_tmp_path.parent.mkdir(parents=True, exist_ok=True)
     import json
     settings_tmp_path.write_text(json.dumps(settings_dot_json, indent=2), encoding="utf-8")
-    match ai_spec["machine"]:
-        case "local":
-            # Export the environment variable so it's available to subshells
-            api_key = ai_spec["api_spec"]["api_key"]
-            if api_key is not None:
-                define_api_key = f"""export GEMINI_API_KEY="{shlex.quote(api_key)}" """
-            else:
-                define_api_key = "echo 'Warning: No GEMINI_API_KEY provided, hoping it is set in the environment.'"
-            cmd = f"""
+    api_key = ai_spec["api_spec"]["api_key"]
+    if ai_spec["machine"] == "local":
+        if api_key is not None:
+            define_api_key = f"""export GEMINI_API_KEY="{shlex.quote(api_key)}" """
+        else:
+            define_api_key = "echo 'Warning: No GEMINI_API_KEY provided, hoping it is set in the environment.'"
+        return f"""
 {define_api_key}
 echo "Using Gemini API key $GEMINI_API_KEY"
 gemini {model_arg} --yolo --prompt {safe_path}
 """
-
-        case "docker":
-            api_key = ai_spec["api_spec"]["api_key"]
-            assert api_key is not None, "When using docker, api_key must be provided."
-            cmd = f"""
+    assert api_key is not None, "When using docker, api_key must be provided."
+    return f"""
 docker run -it --rm \
   -v {settings_tmp_path}:/root/.gemini/settings.json \
   -v "{repo_root}:/workspace/{repo_root.name}" \
@@ -56,4 +51,3 @@ docker run -it --rm \
   statistician/machineconfig-ai:latest  \
   bash -c '. ~/.bashrc; export GEMINI_API_KEY="{api_key}"; gemini {model_arg} --yolo {prompt_path.relative_to(repo_root)}'
   """
-    return cmd

@@ -5,7 +5,7 @@ Command detail widget for displaying command information.
 from textual.widgets import Static
 from rich.text import Text
 from rich.panel import Panel
-from rich.console import Group
+from rich.console import Group, RenderableType
 from rich.table import Table
 from rich import box
 from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import CommandInfo
@@ -49,7 +49,7 @@ class CommandDetail(Static):
         return Panel(content, title=f"[bold]{command_info.name}[/bold]", border_style="blue")
 
     def _render_command(self, command_info: CommandInfo) -> Panel:
-        renderables = []
+        renderables: list[RenderableType] = []
         usage_text = Text()
         usage_text.append("Usage: ", style="bold cyan")
         usage_text.append(self._format_usage(command_info), style="white")

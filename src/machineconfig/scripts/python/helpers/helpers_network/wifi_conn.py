@@ -58,7 +58,7 @@ def get_available_networks() -> List[Dict[str, str]]:
             # Also get available networks
             result = subprocess.run(["netsh", "wlan", "show", "networks"], capture_output=True, text=True, check=True)
 
-            current_ssid = None
+            current_ssid: str | None = None
             for line in result.stdout.split("\n"):
                 if "SSID" in line and "BSSID" not in line:
                     current_ssid = line.split(":")[1].strip()

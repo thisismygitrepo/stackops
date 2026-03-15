@@ -82,13 +82,15 @@ def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str 
     from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     try:
-        match which:
-            case "PATH" | "p":
-                options_to_preview, options_to_output = _build_path_selection_data()
-                preview_size_percent = 60.0
-            case "ENV" | "e":
-                options_to_preview, options_to_output = _build_env_selection_data()
-                preview_size_percent = 50.0
+        options_to_preview: dict[str, str]
+        options_to_output: dict[str, str]
+        preview_size_percent: float
+        if which in {"PATH", "p"}:
+            options_to_preview, options_to_output = _build_path_selection_data()
+            preview_size_percent = 60.0
+        else:
+            options_to_preview, options_to_output = _build_env_selection_data()
+            preview_size_percent = 50.0
 
         selected_label = choose_from_dict_with_preview(
             options_to_preview_mapping=options_to_preview,
@@ -107,11 +109,10 @@ def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str 
 def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
     from machineconfig.scripts.python.helpers import helper_env as navigator
 
-    match which:
-        case "PATH" | "p":
-            path = Path(navigator.__file__).resolve().parent.joinpath("path_manager_tui.py")
-        case "ENV" | "e":
-            path = Path(navigator.__file__).resolve().parent.joinpath("env_manager_tui.py")
+    if which in {"PATH", "p"}:
+        path = Path(navigator.__file__).resolve().parent.joinpath("path_manager_tui.py")
+    else:
+        path = Path(navigator.__file__).resolve().parent.joinpath("env_manager_tui.py")
     from machineconfig.utils.code import run_shell_script, get_uv_command_executing_python_script
 
     uv_with = ["textual"]

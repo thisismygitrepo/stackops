@@ -94,12 +94,13 @@ def install_group(package_group: str):
     from rich.console import Console
     from rich.panel import Panel
     # from rich.table import Table
-    from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
+    from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
     if package_group in PACKAGE_GROUP2NAMES:
         panel = Panel(f"[bold yellow]Installing programs from category: [green]{package_group}[/green][/bold yellow]", title="[bold blue]📦 Category Installation[/bold blue]", border_style="blue", padding=(1, 2))
         console = Console()
         console.print(panel)
-        installers_ = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=[package_group])
+        package_group_typed: PACKAGE_NAME = next(group_name for group_name in PACKAGE_GROUP2NAMES if group_name == package_group)
+        installers_ = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=[package_group_typed])
         install_bulk(installers_data=installers_)
         return
     console = Console()

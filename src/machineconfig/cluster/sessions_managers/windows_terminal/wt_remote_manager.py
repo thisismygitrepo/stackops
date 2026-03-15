@@ -146,7 +146,11 @@ class WTSessionManager:
                     logger.error(f"❌ Failed to start session '{session_name}' on {remote_name}: {start_result.get('error')}")
 
             except Exception as e:
-                results[f"{manager.remote_name}:{manager.session_name}"] = {"success": False, "error": str(e),
+                results[f"{manager.remote_name}:{manager.session_name}"] = {
+                    "success": False,
+                    "error": str(e),
+                    "session_name": manager.session_name,
+                    "location": manager.remote_name,
                 }
                 logger.error(f"❌ Exception starting session on {manager.remote_name}: {e}")
     

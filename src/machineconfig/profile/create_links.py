@@ -148,7 +148,8 @@ def apply_mapper(mapper_data: dict[str, list[ConfigMapper]],
     if os.name == "nt":
         import ctypes
         try:
-            is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+            windll = getattr(ctypes, "windll", None)
+            is_admin = bool(windll.shell32.IsUserAnAdmin()) if windll is not None else False
         except Exception:
             is_admin = False
         total_length = sum(len(item) for item in mapper_data.values())

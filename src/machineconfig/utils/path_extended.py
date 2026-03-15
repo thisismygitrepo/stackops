@@ -174,7 +174,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             appended_name = f"""{name}_{len(self.parent.search(f"*{self.name.split('.')[0]}*"))}"""
             return self.append(name=appended_name, index=False, verbose=verbose, suffix=suffix, **kwargs)
         full_name = name or ("_" + str(timestamp()))
-        whatever = ("bruh" + self)
+        whatever = PathExtended(f"bruh{self}")
         full_suffix = suffix or "".join(whatever.suffixes)
         subpath = self.name.split(".")[0] + full_name + full_suffix
         dest = self.parent.joinpath(subpath)
@@ -304,16 +304,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
     # def to_str(self) -> str: return str(self)
     def size(self, units: Literal["b", "kb", "mb", "gb"] = "mb") -> float:  # ===================================== File Specs ==========================================================================================
         total_size = self.stat().st_size if self.is_file() else sum([item.stat().st_size for item in self.rglob("*") if item.is_file()])
-        tmp: int
-        match units:
-            case "b":
-                tmp = 1024**0
-            case "kb":
-                tmp = 1024**1
-            case "mb":
-                tmp = 1024**2
-            case "gb":
-                tmp = 1024**3
+        tmp = {"b": 1024**0, "kb": 1024**1, "mb": 1024**2, "gb": 1024**3}[units]
         return round(number=total_size / tmp, ndigits=1)
 
     # ================================ String Nature management ====================================

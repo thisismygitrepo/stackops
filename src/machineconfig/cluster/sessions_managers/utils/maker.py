@@ -53,15 +53,19 @@ def make_layout_from_functions(functions: list[FunctionType], functions_weights:
                                ) -> LayoutConfig:
     tabs2artifacts: list[tuple[TabConfig, list[Path]]] = []
     for a_func, tab_weight in zip(functions, functions_weights or [1]*len(functions)):
-        match method:
-            case "script":
-                tab_config, artifact_files_1 = get_fire_tab_using_uv(a_func, tab_weight=tab_weight, import_module=import_module,
-                                                                     uv_with=uv_with, uv_project_dir=uv_project_dir, start_dir=start_dir
-                                                                     )
-                artifact_files = [artifact_files_1]
-            case "fire":
-                tab_config = get_fire_tab_using_fire(a_func, tab_weight=tab_weight, start_dir=start_dir)
-                artifact_files = []
+        if method == "script":
+            tab_config, artifact_file = get_fire_tab_using_uv(
+                a_func,
+                tab_weight=tab_weight,
+                import_module=import_module,
+                uv_with=uv_with,
+                uv_project_dir=uv_project_dir,
+                start_dir=start_dir,
+            )
+            artifact_files = [artifact_file]
+        else:
+            tab_config = get_fire_tab_using_fire(a_func, tab_weight=tab_weight, start_dir=start_dir)
+            artifact_files = []
         tabs2artifacts.append((tab_config, artifact_files))
     list_of_tabs = [tab for tab, _ in tabs2artifacts] + tab_configs
     layout_config: LayoutConfig = {

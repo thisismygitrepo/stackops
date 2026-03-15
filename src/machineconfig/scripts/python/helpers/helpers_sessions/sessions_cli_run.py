@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import platform
-from typing import Literal, cast
+from typing import Literal
 
 import typer
 
@@ -179,7 +179,11 @@ def run_cli(
             if kill_upon_completion:
                 print("Note: --kill-upon-completion is ignored in dynamic mode; use --kill-finished-tabs instead.")
 
-            dynamic_backend = cast(Literal["zellij", "z", "tmux", "t", "auto", "a"], backend)
+            match backend:
+                case "zellij" | "z" | "tmux" | "t" | "auto" | "a":
+                    dynamic_backend = backend
+                case _:
+                    raise ValueError(f"Dynamic mode does not support backend '{backend}'.")
             run_dynamic_impl(
                 layout=layouts_selected[0],
                 max_parallel_tabs=max_parallel_tabs,
