@@ -250,7 +250,7 @@ def edit_file_with_hx(
     if repo_root is not None and repo_root.joinpath("pyproject.toml").exists():
         code = f"""
 cd {repo_root}
-uv add --dev pylsp-mypy python-lsp-server[all] pyright ruff-lsp  # for helix editor.
+uv add --dev pylsp-mypy python-lsp-server[mypy] pyright ruff-lsp  # for helix editor.
 source ./.venv/bin/activate
 """
     else:
