@@ -23,17 +23,14 @@ selected_output="$(
 )"
 fzf_status=$?
 
-# Cancel exits (Esc/Ctrl-C) should succeed quietly.
-if [ "$fzf_status" -ne 0 ] || [ -z "$selected_output" ]; then
-  exit 0
+# Cancel exits (Esc/Ctrl-C) should succeed quietly. This script can be sourced
+# by the shell wrapper, so it must fall through instead of calling exit.
+if [ "$fzf_status" -eq 0 ] && [ -n "$selected_output" ]; then
+  # Work with the first selected match.
+  IFS=$'\n' read -r first_line _ <<<"$selected_output"
+  IFS=: read -r file line column _ <<<"$first_line"
+
+  if [ -n "$file" ] && [ -n "$line" ]; then
+    hx "${file}:${line}:${column}"
+  fi
 fi
-
-# Work with the first selected match.
-IFS=$'\n' read -r first_line _ <<<"$selected_output"
-IFS=: read -r file line column _ <<<"$first_line"
-
-if [ -n "$file" ] && [ -n "$line" ]; then
-  hx "${file}:${line}:${column}"
-fi
-
-exit 0
