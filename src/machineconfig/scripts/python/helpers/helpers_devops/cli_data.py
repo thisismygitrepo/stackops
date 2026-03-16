@@ -13,11 +13,11 @@ def sync(
     ] = None,
     repo: Annotated[REPO_LOOSE, typer.Option("--repo", "-r", help="📁 Which backup configuration to use: 'library' or 'user'")] = "all",
     # interactive: Annotated[bool, typer.Option("--interactive", "-i", help="🤔 Prompt the selection of which items to process")] = False,
-):
+)-> None:
     from machineconfig.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve
     match direction:
         case "up" | "u":
-            direction_resolved = "BACKUP"
+            direction_resolved: Literal["BACKUP", "RETRIEVE"] = "BACKUP"
         case "down" | "d":
             direction_resolved = "RETRIEVE"
         case _:

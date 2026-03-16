@@ -97,7 +97,7 @@ def select_lan_ipv4(prefer_vpn: bool) -> str | None:
 
     stats = psutil.net_if_stats()
     best = None
-    best_score = -(10**9)
+    best_score = float(-(10**9))
     import socket
 
     for iface, addrs in psutil.net_if_addrs().items():
@@ -128,7 +128,7 @@ def select_lan_ipv4(prefer_vpn: bool) -> str | None:
                 continue
 
             # Base score
-            score = 0
+            score: float = 0.0
 
             # Prefer physical-looking names
             if PHYSICAL_IFACE_PAT.match(iface):

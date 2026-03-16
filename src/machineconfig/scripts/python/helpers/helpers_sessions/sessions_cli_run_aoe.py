@@ -50,7 +50,7 @@ def run_aoe_cli(
         raise typer.Exit(code=1)
 
     if choose_layouts is None:
-        layouts_names_resolved = []
+        layouts_names_resolved: list[str] = []
         choose_layouts_interactively = False
     elif choose_layouts == "":
         layouts_names_resolved = []

@@ -59,37 +59,43 @@ def interactive_choose_with_preview(
         from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
 
         try:
-            chosen = choose_from_dict_with_preview(
-                options_to_preview_mapping=options_to_preview_mapping,
-                extension="md",
-                multi=multi,
-                preview_size_percent=70.0,
-            )
             if multi:
-                if isinstance(chosen, list):
-                    return chosen
-                if isinstance(chosen, str):
-                    return [chosen]
-                return []
-            if isinstance(chosen, str) or chosen is None:
-                return chosen
+                chosen_multi = choose_from_dict_with_preview(
+                    options_to_preview_mapping=options_to_preview_mapping,
+                    extension="md",
+                    multi=True,
+                    preview_size_percent=70.0,
+                )
+                return chosen_multi
+            else:
+                chosen_single = choose_from_dict_with_preview(
+                    options_to_preview_mapping=options_to_preview_mapping,
+                    extension="md",
+                    multi=False,
+                    preview_size_percent=70.0,
+                )
+                return chosen_single
         except Exception:
             pass
 
-    chosen = choose_from_options(
-        msg=msg,
-        multi=multi,
-        options=list(options_to_preview_mapping.keys()),
-        tv=True,
-        custom_input=False,
-    )
     if multi:
-        if isinstance(chosen, list):
-            return chosen
-        if isinstance(chosen, str):
-            return [chosen]
-        return []
-    return chosen if isinstance(chosen, str) or chosen is None else None
+        chosen_multi_options = choose_from_options(
+            msg=msg,
+            multi=True,
+            options=list(options_to_preview_mapping.keys()),
+            tv=True,
+            custom_input=False,
+        )
+        return chosen_multi_options or []
+    else:
+        chosen_single = choose_from_options(
+            msg=msg,
+            multi=False,
+            options=list(options_to_preview_mapping.keys()),
+            tv=True,
+            custom_input=False,
+        )
+        return chosen_single
 
 
 def choose_session(backend: Literal["zellij", "tmux"], name: str | None, new_session: bool, kill_all: bool, window: bool = False) -> tuple[str, str | None]:

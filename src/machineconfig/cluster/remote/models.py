@@ -1,4 +1,4 @@
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, cast
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 
@@ -11,6 +11,26 @@ JOB_STATUS: TypeAlias = Literal["queued", "running", "completed", "failed"]
 TRANSFER_METHOD: TypeAlias = Literal["sftp", "cloud"]
 LAUNCH_METHOD: TypeAlias = Literal["remotely", "cloud_manager"]
 MACHINE_TYPE: TypeAlias = Literal["Linux", "Windows"]
+
+
+def _coerce_string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value]
+
+
+def _coerce_transfer_method(value: object) -> TRANSFER_METHOD:
+    candidate = str(value)
+    if candidate in {"sftp", "cloud"}:
+        return cast(TRANSFER_METHOD, candidate)
+    raise ValueError(f"Unsupported transfer method: {candidate}")
+
+
+def _coerce_launch_method(value: object) -> LAUNCH_METHOD:
+    candidate = str(value)
+    if candidate in {"remotely", "cloud_manager"}:
+        return cast(LAUNCH_METHOD, candidate)
+    raise ValueError(f"Unsupported launch method: {candidate}")
 
 
 @dataclass
@@ -28,7 +48,15 @@ class WorkloadParams:
 
     @staticmethod
     def from_dict(d: dict[str, object]) -> "WorkloadParams":
-        return WorkloadParams(idx_min=int(d["idx_min"]), idx_max=int(d["idx_max"]), idx_start=int(d["idx_start"]), idx_end=int(d["idx_end"]), idx=int(d["idx"]), jobs=int(d["jobs"]), job_id=str(d["job_id"]))  # type: ignore[arg-type]
+        return WorkloadParams(
+            idx_min=int(str(d["idx_min"])),
+            idx_max=int(str(d["idx_max"])),
+            idx_start=int(str(d["idx_start"])),
+            idx_end=int(str(d["idx_end"])),
+            idx=int(str(d["idx"])),
+            jobs=int(str(d["jobs"])),
+            job_id=str(d["job_id"]),
+        )
 
     @property
     def save_suffix(self) -> str:
@@ -78,7 +106,16 @@ class JobStatus:
 
     @staticmethod
     def from_dict(d: dict[str, object]) -> "JobStatus":
-        return JobStatus(pid=int(d["pid"]), job_id=str(d["job_id"]), status=str(d["status"]), submission_time=datetime.fromisoformat(str(d["submission_time"])), start_time=datetime.fromisoformat(str(d["start_time"])) if d.get("start_time") else None)  # type: ignore[arg-type]
+        status_value = str(d["status"])
+        if status_value not in {"locked", "unlocked"}:
+            raise ValueError(f"Unsupported job status: {status_value}")
+        return JobStatus(
+            pid=int(str(d["pid"])),
+            job_id=str(d["job_id"]),
+            status=cast(Literal["locked", "unlocked"], status_value),
+            submission_time=datetime.fromisoformat(str(d["submission_time"])),
+            start_time=datetime.fromisoformat(str(d["start_time"])) if d.get("start_time") else None,
+        )
 
 
 @dataclass
@@ -115,7 +152,7 @@ class LogEntry:
             run_machine=str(a_dict["run_machine"]) if a_dict.get("run_machine") else None,
             source_machine=str(a_dict.get("source_machine", "")),
             note=str(a_dict.get("note", "")),
-            pid=int(a_dict["pid"]) if a_dict.get("pid") is not None else None,  # type: ignore[arg-type]
+            pid=int(str(a_dict["pid"])) if a_dict.get("pid") is not None else None,
             cmd=str(a_dict["cmd"]) if a_dict.get("cmd") else None,
             session_name=str(a_dict["session_name"]) if a_dict.get("session_name") else None,
         )
@@ -166,15 +203,15 @@ class RemoteMachineConfig:
     @staticmethod
     def from_dict(d: dict[str, object]) -> "RemoteMachineConfig":
         wl_raw = d.get("workload_params")
-        wl = WorkloadParams.from_dict(wl_raw) if isinstance(wl_raw, dict) else None  # type: ignore[arg-type]
+        wl = WorkloadParams.from_dict(wl_raw) if isinstance(wl_raw, dict) else None
         return RemoteMachineConfig(
             job_id=str(d.get("job_id", "")), base_dir=str(d.get("base_dir", "~/tmp_results/remote_machines/jobs")), description=str(d.get("description", "")), ssh_host=str(d["ssh_host"]) if d.get("ssh_host") else None,
-            copy_repo=bool(d.get("copy_repo", False)), update_repo=bool(d.get("update_repo", False)), install_repo=bool(d.get("install_repo", False)), data=list(d.get("data", [])),  # type: ignore[arg-type]
-            transfer_method=str(d.get("transfer_method", "sftp")), cloud_name=str(d["cloud_name"]) if d.get("cloud_name") else None,  # type: ignore[assignment]
-            allowed_remotes=list(d["allowed_remotes"]) if d.get("allowed_remotes") else None,  # type: ignore[arg-type]
+            copy_repo=bool(d.get("copy_repo", False)), update_repo=bool(d.get("update_repo", False)), install_repo=bool(d.get("install_repo", False)), data=_coerce_string_list(d.get("data", [])),
+            transfer_method=_coerce_transfer_method(d.get("transfer_method", "sftp")), cloud_name=str(d["cloud_name"]) if d.get("cloud_name") else None,
+            allowed_remotes=_coerce_string_list(d["allowed_remotes"]) if d.get("allowed_remotes") else None,
             notify_upon_completion=bool(d.get("notify_upon_completion", False)), to_email=str(d["to_email"]) if d.get("to_email") else None, email_config_name=str(d["email_config_name"]) if d.get("email_config_name") else None,
-            launch_method=str(d.get("launch_method", "remotely")), kill_on_completion=bool(d.get("kill_on_completion", False)), interactive=bool(d.get("interactive", False)),  # type: ignore[assignment]
-            wrap_in_try_except=bool(d.get("wrap_in_try_except", False)), parallelize=bool(d.get("parallelize", False)), lock_resources=bool(d.get("lock_resources", True)), max_simultaneous_jobs=int(d.get("max_simultaneous_jobs", 1)),  # type: ignore[arg-type]
+            launch_method=_coerce_launch_method(d.get("launch_method", "remotely")), kill_on_completion=bool(d.get("kill_on_completion", False)), interactive=bool(d.get("interactive", False)),
+            wrap_in_try_except=bool(d.get("wrap_in_try_except", False)), parallelize=bool(d.get("parallelize", False)), lock_resources=bool(d.get("lock_resources", True)), max_simultaneous_jobs=int(str(d.get("max_simultaneous_jobs", 1))),
             workload_params=wl,
         )
 

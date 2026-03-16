@@ -27,24 +27,24 @@ def list_windows_devices() -> list[DeviceEntry]:
     partitions = _normalize_ps_json(partitions_text)
     volumes = _normalize_ps_json(volumes_text)
     volume_map: dict[str, dict[str, object]] = {}
-    for volume in volumes:
-        drive_letter = as_str(volume.get("DriveLetter"))
+    for volume_data in volumes:
+        drive_letter = as_str(volume_data.get("DriveLetter"))
         if isinstance(drive_letter, str):
-            volume_map[drive_letter.upper()] = volume
+            volume_map[drive_letter.upper()] = volume_data
     entries: list[DeviceEntry] = []
     for partition in partitions:
         disk_number = partition.get("DiskNumber")
         partition_number = partition.get("PartitionNumber")
         drive_letter = as_str(partition.get("DriveLetter"))
-        volume = volume_map.get(drive_letter.upper()) if isinstance(drive_letter, str) else None
+        volume_info: dict[str, object] | None = volume_map.get(drive_letter.upper()) if isinstance(drive_letter, str) else None
         label = None
         fs_type = None
         mount_point = None
         extra = as_str(partition.get("Type"))
-        if isinstance(volume, dict):
-            label = as_str(volume.get("FileSystemLabel"))
-            fs_type = as_str(volume.get("FileSystem"))
-            mount_point = as_str(volume.get("Path"))
+        if volume_info is not None:
+            label = as_str(volume_info.get("FileSystemLabel"))
+            fs_type = as_str(volume_info.get("FileSystem"))
+            mount_point = as_str(volume_info.get("Path"))
             if mount_point is None and isinstance(drive_letter, str) and drive_letter != "":
                 mount_point = f"{drive_letter}:\\"
         size_value = partition.get("Size")

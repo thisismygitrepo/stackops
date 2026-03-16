@@ -83,9 +83,9 @@ def main(
 
     md_file = report_dir.joinpath("slides.md")
     if not md_file.exists():
-        res = list(report_dir.glob("*.md"))
-        if len(res) == 1:
-            md_file = res[0]
+        markdown_files = list(report_dir.glob("*.md"))
+        if len(markdown_files) == 1:
+            md_file = markdown_files[0]
         else:
             print(f"❌ Error: slides.md not found in {report_dir}")
             raise typer.Exit(code=1)
@@ -97,11 +97,10 @@ def main(
         SLIDEV_REPO.joinpath(md_file.name).with_name(name="slides.md", inplace=True, overwrite=True)
 
     import machineconfig.scripts.python.helpers.helpers_network.address as helper
-    res = helper.select_lan_ipv4(prefer_vpn=False)
-    if res is None:
+    local_ip_v4 = helper.select_lan_ipv4(prefer_vpn=False)
+    if local_ip_v4 is None:
         print("❌ Error: Could not determine local LAN IPv4 address for presentation.")
         raise typer.Exit(code=1)
-    local_ip_v4 = res
 
     print("🌐 Presentation will be served at:")
     print(f"   - http://{platform.node()}:{port}")

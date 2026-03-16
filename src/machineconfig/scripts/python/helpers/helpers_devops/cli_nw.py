@@ -18,18 +18,19 @@ def show_address() -> None:
     """📌 Show this computer addresses on network"""
     import machineconfig.scripts.python.helpers.helpers_network.address as helper
 
+    public_ip_address = "N/A"
     try:
         loaded_json = helper.get_public_ip_address()
         from rich import print_json
         print_json(data=loaded_json)
+        public_ip_address = loaded_json["ip"]
     except Exception as e:
         print(f"⚠️  Could not fetch public IP address: {e}")
-        loaded_json = {}
 
     from rich.table import Table
     from rich.console import Console
-    res = helper.get_all_ipv4_addresses()
-    res.append( ("Public IP", loaded_json.get("ip", "N/A")))
+    addresses = helper.get_all_ipv4_addresses()
+    addresses.append(("Public IP", public_ip_address))
     
     # loc = loaded_json["loc"]
     # cmd = f"""curl "https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=300&center=lonlat:{loc}&zoom=6&marker=lonlat:{loc};color:%23ff0000;size:medium&apiKey=$GEOAPIFY_API_KEY" -o map.png && chafa map.png"""
@@ -40,17 +41,17 @@ def show_address() -> None:
     table.add_column("Interface", style="cyan")
     table.add_column("IP Address", style="green")
     
-    for iface, ip in res:
+    for iface, ip in addresses:
         table.add_row(iface, ip)
     
     console = Console()
     console.print(table)
     
-    res = helper.select_lan_ipv4(prefer_vpn=False)
-    if res is not None:
+    selected_lan_ip = helper.select_lan_ipv4(prefer_vpn=False)
+    if selected_lan_ip is not None:
         # ip, iface = res
         # print(f"Selected IP: {ip} on interface: {iface}")
-        print(f"LAN IPv4: {res}")
+        print(f"LAN IPv4: {selected_lan_ip}")
     else:
         print("No network interfaces found.")
 

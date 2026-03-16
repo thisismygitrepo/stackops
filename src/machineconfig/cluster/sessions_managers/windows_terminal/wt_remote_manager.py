@@ -41,7 +41,7 @@ class WTSessionManager:
                 layout_config: LayoutConfig = {"layoutName": f"{session_name_prefix}_{machine}", "layoutTabs": tabs}
                 session_name = f"{session_name_prefix}_{generate_random_suffix(8)}"
             else:
-                layout_config: LayoutConfig = {"layoutName": f"{machine}", "layoutTabs": tabs}
+                layout_config = {"layoutName": f"{machine}", "layoutTabs": tabs}
                 session_name = machine
             an_m = WTRemoteLayoutGenerator(layout_config=layout_config, remote_name=machine, session_name=session_name)
             an_m.create_layout_file()

@@ -14,8 +14,8 @@ def collect_status_data_from_managers(managers: list[Any]) -> list[dict[str, Any
 
 
 def flatten_status_data(statuses: list[dict[str, dict[str, Any]]]) -> list[dict[str, Any]]:
-    keys = []
-    values = []
+    keys: list[str] = []
+    values: list[dict[str, Any]] = []
     for item in statuses:
         keys.extend(item.keys())
         values.extend(item.values())

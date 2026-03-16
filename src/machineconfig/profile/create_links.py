@@ -99,7 +99,7 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
         case "all":
             # Merge both mappers
             if not USER_MAPPER_PATH.exists():
-                user_mapper = {"public": {}, "private": {}}
+                user_mapper: MapperFileData = {"public": {}, "private": {}}
             else:
                 user_mapper = read_mapper(repo="user")
             library_mapper = read_mapper(repo="library")

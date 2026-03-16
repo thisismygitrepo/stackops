@@ -5,7 +5,7 @@ from machineconfig.utils import code
 
 
 def test_run_shell_file_returns_cancelled_process_without_raising() -> None:
-    cancelled_process = subprocess.CompletedProcess(args="bash /tmp/test.sh", returncode=130)
+    cancelled_process: subprocess.CompletedProcess[bytes] = subprocess.CompletedProcess(args="bash /tmp/test.sh", returncode=130)
 
     with (
         patch("platform.system", return_value="Linux"),

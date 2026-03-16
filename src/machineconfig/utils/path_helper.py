@@ -152,7 +152,7 @@ def search_for_files_of_interest(path_obj: Path, suffixes: set[str]) -> list[Pat
     return files
 
 
-def get_choice_file(path: str, suffixes: set[str] | None):
+def get_choice_file(path: str, suffixes: set[str] | None) -> Path:
     path_obj = sanitize_path(path)
     print(f"🔍 Resolving path `{path}` to `{path_obj}`")
     if suffixes is None:
@@ -170,10 +170,10 @@ def get_choice_file(path: str, suffixes: set[str] | None):
         files = search_for_files_of_interest(path_obj, suffixes=suffixes)
         print(f"🔍 Got #{len(files)} results.")
         from machineconfig.utils.options import choose_from_options
-        choice_file = choose_from_options(multi=False, options=files, tv=True, msg="Choose one option")
-        if choice_file is None:
+        selected_file = choose_from_options(multi=False, options=files, tv=True, msg="Choose one option")
+        if selected_file is None:
             raise FileNotFoundError("No file selected.")
-        choice_file = Path(choice_file)
+        choice_file = Path(selected_file)
     else:
         choice_file = path_obj
     return choice_file

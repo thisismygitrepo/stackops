@@ -16,10 +16,7 @@ crush run {prompt_path}
     json_filled = json_template.replace("{api_key}", api_key)
     if ai_spec["model"] is not None:
         json_filled = json_filled.replace("{model}", ai_spec["model"])
-    if ai_spec["provider"] == "google":
-        provider = "gemini"  # weird crush way of naming.
-    else:
-        provider = ai_spec["provider"]
+    provider: str | None = "gemini" if ai_spec["provider"] == "google" else ai_spec["provider"]
     if provider is None:
         raise ValueError("Provider must be specified for Crush agent.")
     json_filled = json_filled.replace("{provider}", provider)

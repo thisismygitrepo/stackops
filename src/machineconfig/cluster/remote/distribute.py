@@ -167,7 +167,7 @@ class Cluster:
         self.config = config
         self.workload_params: list[WorkloadParams] = []
         self.description = description
-        self.func = func
+        self.func: Callable[..., object] | None = func
         self.func_kwargs = func_kwargs
 
     def __repr__(self) -> str:
@@ -200,6 +200,8 @@ class Cluster:
     def submit(self) -> None:
         if not self.workload_params:
             raise RuntimeError("Generate standard kwargs first.")
+        if self.func is None:
+            raise RuntimeError("Cluster function is unavailable in the loaded state.")
         for idx, (wl, ssh) in enumerate(zip(self.workload_params, self.ssh_connections)):
             cfg = deepcopy(self.config)
             cfg.description = self.description

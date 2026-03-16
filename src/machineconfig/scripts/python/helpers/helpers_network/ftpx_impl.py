@@ -243,7 +243,13 @@ def _handle_direct_transfer(
                 padding=(1, 2),
             )
         )
-        received_file = ssh.copy_to_here(source=resolved_source, target=resolved_target, compress_with_zip=zipFirst, recursive=recursive)
+        ssh.copy_to_here(source=resolved_source, target=resolved_target, compress_with_zip=zipFirst, recursive=recursive)
+        if resolved_target is None:
+            received_file = None
+        else:
+            from machineconfig.utils.path_extended import PathExtended
+
+            received_file = PathExtended(resolved_target).expanduser().absolute()
     else:
         assert resolved_source is not None, "❌ Path Error: Target must be a remote path (machine:path)"
         target_display = resolved_target or "<auto>"
@@ -262,12 +268,13 @@ def _handle_direct_transfer(
                 padding=(1, 2),
             )
         )
-        received_file = ssh.copy_from_here(
+        ssh.copy_from_here(
             source_path=resolved_source,
             target_rel2home=resolved_target,
             compress_with_zip=zipFirst,
             recursive=recursive,
             overwrite_existing=overwrite_existing,
         )
+        received_file = None
 
     return received_file

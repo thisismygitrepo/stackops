@@ -6,7 +6,7 @@ import random
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from rich.console import Console
 
@@ -231,7 +231,7 @@ class CloudManager:
                 entry.session_name = None
                 entry.note += f"| Interrupted on `{machine}`"
                 dirt.append(entry.name)
-                target = "queued" if return_to_queue else "failed"
+                target: Literal["queued", "failed"] = "queued" if return_to_queue else "failed"
                 log[target].append(entry.__dict__)
                 print(f"Job `{entry.name}` moved to {target}.")
         log["running"] = [j for j in log["running"] if j.get("name") not in dirt]

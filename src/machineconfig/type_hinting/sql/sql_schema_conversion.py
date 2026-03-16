@@ -38,21 +38,21 @@ def sqlalchemy_type_to_polars(sa_type: object, map_decimal_to_closest_arithmetic
             return pl.Float64
         return pl.Float64  # p > 53, Float64 is the best we have in Polars
     if isinstance(sa_type, Numeric):
-        p: int | None = getattr(sa_type, "precision", None)
+        precision: int | None = getattr(sa_type, "precision", None)
         s: int = getattr(sa_type, "scale", None) or 0
         if map_decimal_to_closest_arithmetic_type:
             if s == 0:
                 # scale=0 means integer-like; pick smallest int type that fits
                 # precision = max decimal digits: Int16 ~4, Int32 ~9, Int64 ~18, Int128 ~38
-                if p is None or p > 38:
-                    return pl.Decimal(precision=p, scale=0)
-                if p <= 4:  # means range of -(10^4)-1 to (10^4)-1, which easily fits in Int16 that has range -2^15 to 2^15-1
+                if precision is None or precision > 38:
+                    return pl.Decimal(precision=precision, scale=0)
+                if precision <= 4:  # means range of -(10^4)-1 to (10^4)-1, which easily fits in Int16 that has range -2^15 to 2^15-1
                     return pl.Int16  # prefer this because it has smaller memory footprint and is faster, and fixed in size (2 bytes)
-                if p <= 9:  # means range of -(10^9)-1 to (10^9)-1, which easily fits in Int32 that has range -2^31 to 2^31-1
+                if precision <= 9:  # means range of -(10^9)-1 to (10^9)-1, which easily fits in Int32 that has range -2^31 to 2^31-1
                     return pl.Int32  # prefer this because it has smaller memory footprint and is faster, and fixed in size (4 bytes)
-                if p <= 18:  # means range of -(10^18)-1 to (10^18)-1, which easily fits in Int64 that has range -2^63 to 2^63-1
+                if precision <= 18:  # means range of -(10^18)-1 to (10^18)-1, which easily fits in Int64 that has range -2^63 to 2^63-1
                     return pl.Int64  # prefer this because it has smaller memory footprint and is faster, and fixed in size (8 bytes)
-                return pl.Decimal(precision=p, scale=0)  # p <= 38, use Decimal as Int128 proxy
+                return pl.Decimal(precision=precision, scale=0)  # precision <= 38, use Decimal as Int128 proxy
             else:
                 # scale > 0 means fractional; map to float based on precision and scale
                 # IEEE 754 significant decimal digits:
@@ -65,17 +65,17 @@ def sqlalchemy_type_to_polars(sa_type: object, map_decimal_to_closest_arithmetic
                 # The float must satisfy: precision >= p AND precision >= s
                 # So we take the maximum of both requirements.
                 # If required precision exceeds Float64 capability, fall back to Decimal.
-                if p is None:
+                if precision is None:
                     return pl.Float64  # default to Float64 for safety when precision unspecified
-                required_precision = max(p, s)
+                required_precision = max(precision, s)
                 if required_precision <= 3:
                     return pl.Float16  # ~3-4 decimal digits, suitable for very low precision decimals
                 if required_precision <= 7:
                     return pl.Float32  # ~7 decimal digits, suitable for moderate precision decimals
                 if required_precision <= 15:
                     return pl.Float64  # ~15-16 decimal digits, for high precision decimals
-                return pl.Decimal(precision=p, scale=s)  # precision exceeds Float64, preserve with Decimal
-        return pl.Decimal(precision=p, scale=s)
+                return pl.Decimal(precision=precision, scale=s)  # precision exceeds Float64, preserve with Decimal
+        return pl.Decimal(precision=precision, scale=s)
     if isinstance(sa_type, SAEnum):
         return pl.Categorical
     if isinstance(sa_type, (String, Text)):

@@ -44,7 +44,7 @@ def list_available_scripts(where: WHERE) -> None:
         case "custom" | "c":
             for idx, custom in enumerate(get_custom_roots("scripts")): locations[f"custom_{idx}"] = custom
 
-    def _print_files_by_type(files: list[str]) -> None:
+    def _print_files_by_type(files: list[str] | list[Path]) -> None:
         categories: dict[str, list[str]] = {".py": [], ".sh": [], ".ps1": [], ".cmd": [], ".bat": [], "other": []}
         for f in files:
             ext = Path(f).suffix.lower() if "." in str(f) else ""

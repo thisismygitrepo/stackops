@@ -106,8 +106,8 @@ def generate_names_file(source_file_path: Path, output_file_path: Path, search_p
         lines.append("")
 
     # Runtime imports: types used in _Types classes (TypeAlias assignments) need to be available at runtime
-    for module, type_names in sorted(grouped_imports.items()):
-        lines.append(f"from {module} import {', '.join(sorted(type_names))}")
+    for module, imported_names in sorted(grouped_imports.items()):
+        lines.append(f"from {module} import {', '.join(sorted(imported_names))}")
     
     # Check if numpy (np) is used in type aliases - look through all annotations
     needs_numpy = False
@@ -196,8 +196,8 @@ def generate_types_file(source_file_path: Path, output_file_path: Path, search_p
             needed_local_classes.append(type_name)
 
     lines: list[str] = ["from typing import TypeAlias"]
-    for module, type_names in sorted(grouped_imports.items()):
-        lines.append(f"from {module} import {', '.join(sorted(type_names))}")
+    for module, imported_names in sorted(grouped_imports.items()):
+        lines.append(f"from {module} import {', '.join(sorted(imported_names))}")
     if needed_local_classes:
         source_module = _get_module_name_from_path(source_file_path)
         lines.append(f"from {source_module} import {', '.join(sorted(needed_local_classes))}")

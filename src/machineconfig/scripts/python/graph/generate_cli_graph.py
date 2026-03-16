@@ -629,16 +629,16 @@ def extract_app_model(
 
         for statement in statements:
             if isinstance(statement, ast.Assign):
-                value = statement.value
+                assign_value = statement.value
                 for target in statement.targets:
                     if isinstance(target, ast.Name):
-                        if is_typer_ctor(value):
+                        if is_typer_ctor(assign_value):
                             app_configs[target.id] = evaluate_typer_config(
-                                value, module_info, env, function_docs
+                                assign_value, module_info, env, function_docs
                             )
                         else:
                             env[target.id] = evaluate_expr(
-                                value, module_info, env, function_docs
+                                assign_value, module_info, env, function_docs
                             )
                     elif (
                         isinstance(target, ast.Attribute)
@@ -646,24 +646,24 @@ def extract_app_model(
                         and isinstance(target.value, ast.Name)
                     ):
                         function_docs[target.value.id] = value_to_string(
-                            evaluate_expr(value, module_info, env, function_docs),
-                            fallback=ast.unparse(value),
+                            evaluate_expr(assign_value, module_info, env, function_docs),
+                            fallback=ast.unparse(assign_value),
                         )
                 continue
 
             if isinstance(statement, ast.AnnAssign) and isinstance(
                 statement.target, ast.Name
             ):
-                value = statement.value
-                if value is None:
+                ann_value = statement.value
+                if ann_value is None:
                     continue
-                if is_typer_ctor(value):
+                if is_typer_ctor(ann_value):
                     app_configs[statement.target.id] = evaluate_typer_config(
-                        value, module_info, env, function_docs
+                        ann_value, module_info, env, function_docs
                     )
                 else:
                     env[statement.target.id] = evaluate_expr(
-                        value, module_info, env, function_docs
+                        ann_value, module_info, env, function_docs
                     )
                 continue
 

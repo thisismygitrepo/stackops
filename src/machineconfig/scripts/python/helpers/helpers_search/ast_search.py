@@ -25,21 +25,21 @@ def _extract_symbols(tree: ast.AST, module_path: str, source: str) -> list[Symbo
     
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            symbol: SymbolInfo = {
+            function_symbol: SymbolInfo = {
                 "type": "function",
                 "name": node.name,
                 "path": f"{module_path}.{node.name}",
                 "docstring": _get_docstring(node),
             }
-            symbols.append(symbol)
+            symbols.append(function_symbol)
         elif isinstance(node, ast.ClassDef):
-            symbol: SymbolInfo = {
+            class_symbol: SymbolInfo = {
                 "type": "class",
                 "name": node.name,
                 "path": f"{module_path}.{node.name}",
                 "docstring": _get_docstring(node),
             }
-            symbols.append(symbol)
+            symbols.append(class_symbol)
     
     return symbols
 

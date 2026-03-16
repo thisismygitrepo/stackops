@@ -193,9 +193,9 @@ size = {preview_panel_size}
         for line in selected_lines:
             try:
                 index = int(line)
-                key = index_map.get(index)
-                if key is not None:
-                    selected_keys.append(key)
+                selected_key: str | None = index_map.get(index)
+                if selected_key is not None:
+                    selected_keys.append(selected_key)
             except ValueError:
                 continue
         if multi:

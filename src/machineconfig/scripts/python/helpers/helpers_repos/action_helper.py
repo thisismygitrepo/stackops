@@ -115,7 +115,7 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
         failed_table.add_column("Problem", style="red")
 
         # Group failed operations by type for better organization
-        failed_by_action = {}
+        failed_by_action: dict[str, list[GitOperationResult]] = {}
         for failed_op in summary.failed_operations:
             if failed_op.action not in failed_by_action:
                 failed_by_action[failed_op.action] = []

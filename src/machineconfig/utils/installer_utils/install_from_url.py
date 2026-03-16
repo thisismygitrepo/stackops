@@ -1,7 +1,7 @@
 
 
 import platform
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from machineconfig.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
 from machineconfig.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
@@ -18,6 +18,14 @@ if TYPE_CHECKING:
     from rich.console import Console
 
 SUPPORTED_GITHUB_HOSTS = {"github.com", "www.github.com"}
+
+
+class AssetDisplayRow(TypedDict):
+    name: str
+    size_str: str
+    downloads_str: str
+    date_str: str
+    asset: AssetInfo
 
 
 def _format_size(size_bytes: int) -> str:
@@ -115,7 +123,7 @@ def install_from_github_url(github_url: str) -> None:
         return None
     
     # First pass: collect all formatted data and calculate column widths
-    asset_data = []
+    asset_data: list[AssetDisplayRow] = []
     for asset in selection_pool:
         name = asset["name"]
         download_url = asset["browser_download_url"]

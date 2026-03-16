@@ -120,8 +120,8 @@ def symlink_map(config_file_default_path: Path, self_managed_config_file_path: P
     if config_file_default_path.resolve() == self_managed_config_file_path.resolve():
         raise ValueError(f"config_file_default_path and self_managed_config_file_path resolve to the same location: {config_file_default_path.resolve()}")
     
-    action_taken = ""
-    details = ""
+    action_taken: ActionType = "linking"
+    details = "Creating symlink"
     
     # Handle broken symlinks first - they exist as symlinks but point to non-existent targets
     if config_file_default_path.is_symlink() and not config_file_default_path.exists():
@@ -233,10 +233,6 @@ def symlink_map(config_file_default_path: Path, self_managed_config_file_path: P
     
     # Create the symlink
     try:
-        if not action_taken:
-            action_taken = "linking"
-            details = "Creating symlink"
-            console.print(Panel(f"🔗 LINKING | Creating symlink from {config_file_default_path} ➡️  {self_managed_config_file_path}", title="Linking", expand=False))
         PathExtended(config_file_default_path).symlink_to(target=self_managed_config_file_path, verbose=True, overwrite=False)
         return {"action": action_taken, "details": details}
     except Exception as ex:
@@ -253,8 +249,8 @@ def copy_map(config_file_default_path: PathExtended, self_managed_config_file_pa
     if config_file_default_path.resolve() == self_managed_config_file_path.resolve():
         raise ValueError(f"config_file_default_path and self_managed_config_file_path resolve to the same location: {config_file_default_path.resolve()}")
     
-    action_taken = ""
-    details = ""
+    action_taken: ActionType = "copying"
+    details = "Copying file"
     
     # Handle broken symlinks first - they exist as symlinks but point to non-existent targets
     if config_file_default_path.is_symlink() and not config_file_default_path.exists():
@@ -356,10 +352,6 @@ def copy_map(config_file_default_path: PathExtended, self_managed_config_file_pa
             self_managed_config_file_path.touch()
     
     try:
-        if not action_taken:
-            action_taken = "copying"
-            details = "Copying file"
-            console.print(Panel(f"📋 COPYING | Copying {self_managed_config_file_path} to {config_file_default_path}", title="Copying", expand=False))
         self_managed_config_file_path.copy(path=config_file_default_path, overwrite=True, verbose=True)
         return {"action": action_taken, "details": details}
     except Exception as ex:
@@ -367,5 +359,3 @@ def copy_map(config_file_default_path: PathExtended, self_managed_config_file_pa
         details = f"Failed to copy file: {str(ex)}"
         console.print(Panel(f"❌ ERROR | Failed at copying {self_managed_config_file_path} to {config_file_default_path}. Reason: {ex}", title="Error", expand=False))
         return {"action": action_taken, "details": details}
-
-

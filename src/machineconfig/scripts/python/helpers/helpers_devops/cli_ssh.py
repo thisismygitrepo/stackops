@@ -137,11 +137,13 @@ def debug_ssh() -> None:
     """🐛 Debug SSH connection"""
     from platform import system
     if system() == "Linux" or system() == "Darwin":
-        import machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as helper
-        helper.ssh_debug_linux()
+        import machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux
+
+        ssh_debug_linux.ssh_debug_linux()
     elif system() == "Windows":
-        import machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows as helper
-        helper.ssh_debug_windows()
+        from machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows import ssh_debug_windows
+
+        ssh_debug_windows()
     else:
         print(f"❌ Error: Platform {system()} is not supported.")
         raise typer.Exit(code=1)

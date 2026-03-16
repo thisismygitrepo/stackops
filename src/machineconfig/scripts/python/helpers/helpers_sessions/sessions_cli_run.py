@@ -44,7 +44,7 @@ def run_cli(
             print("Note: --choose-layouts is ignored when --all-file is set in dynamic mode.")
         if choose_tabs is not None:
             print("Note: --choose-tabs is ignored when --all-file is set in dynamic mode.")
-        layouts_names_resolved = []
+        layouts_names_resolved: list[str] = []
         choose_layouts_interactively = False
     elif choose_layouts is None:
         layouts_names_resolved = []

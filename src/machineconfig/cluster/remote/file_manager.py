@@ -44,7 +44,7 @@ class FileManager:
             raise ValueError(f"Unsupported remote machine type: {remote_machine_type}")
         fm.remote_machine_type = cast(MACHINE_TYPE, remote_machine_type)
         fm.job_id = str(d["job_id"])
-        fm.max_simultaneous_jobs = int(d["max_simultaneous_jobs"])  # type: ignore[arg-type]
+        fm.max_simultaneous_jobs = int(str(d["max_simultaneous_jobs"]))
         fm.lock_resources = bool(d["lock_resources"])
         fm.submission_time = datetime.fromisoformat(str(d["submission_time"]))
         fm.base_dir = Path(str(d["base_dir"]))

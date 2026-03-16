@@ -127,6 +127,7 @@ def _generate_png(
     from PIL import Image, ImageDraw, ImageFont
     img = Image.new("RGB", (total_width, total_height), color="white")
     draw = ImageDraw.Draw(img)
+    font: ImageFont.FreeTypeFont | ImageFont.ImageFont
 
     try:
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 12)

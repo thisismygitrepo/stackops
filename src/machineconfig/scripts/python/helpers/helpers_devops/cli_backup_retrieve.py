@@ -228,11 +228,13 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             flags += "r" if item["rel2home"] else ""
             flags += "o" if "any" not in item["os"] else ""
             local_path = Path(item["path_local"]).as_posix()
-            if item["path_cloud"] in (None, ES):
+            path_cloud = item["path_cloud"]
+            if path_cloud in (None, ES):
                 remote_path = ES
                 remote_display = f"{ES} (deduced)"
             else:
-                remote_path = Path(item["path_cloud"]).as_posix()
+                assert path_cloud is not None
+                remote_path = Path(path_cloud).as_posix()
                 remote_display = remote_path
             remote_spec = f"{cloud}:{remote_path}"
             console.print(Panel(

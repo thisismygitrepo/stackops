@@ -109,7 +109,8 @@ sleep {random_sleep_time:.2f}
 echo "--------START OF AGENT OUTPUT--------"
 sleep 0.1
 
-"""
+        """
+        ai_spec: AI_SPEC
         match agent:
             case "gemini":
                 assert provider == "google", "Gemini agent only works with google provider."
@@ -117,13 +118,13 @@ sleep 0.1
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else None
                 if api_spec is None:
                     raise ValueError("No API keys found for Google Gemini. Please configure them in dotfiles/creds/llm/google/api_keys.ini")
-                ai_spec: AI_SPEC = AI_SPEC(provider=provider, model="gemini-2.5-pro", agent=agent, machine=machine, api_spec=api_spec)
+                ai_spec = AI_SPEC(provider=provider, model="gemini-2.5-pro", agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_gemini import fire_gemini
 
                 cmd = fire_gemini(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "cursor-agent":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec: AI_SPEC = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 cmd = _build_generic_agent_command(agent=agent, prompt_path=prompt_path)
             case "crush":
                 assert provider is not None, "Provider must be specified for Crush agent."
@@ -131,20 +132,20 @@ sleep 0.1
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else None
                 if api_spec is None:
                     raise ValueError("No API keys found for Crush. Please configure them in dotfiles/creds/llm/crush/api_keys.ini")
-                ai_spec: AI_SPEC = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_crush import fire_crush
 
                 cmd = fire_crush(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "copilot":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec: AI_SPEC = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_copilot import fire_copilot
 
                 cmd = fire_copilot(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "codex":
                 api_keys = get_api_keys(provider="openai", silent_if_missing=True)
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec: AI_SPEC = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec)
                 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex import fire_codex
 
                 cmd = fire_codex(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)

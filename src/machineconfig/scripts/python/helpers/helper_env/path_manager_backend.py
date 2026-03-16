@@ -30,7 +30,7 @@ def get_directory_contents(directory: str, max_items: int = 50) -> list[str]:
         if not path.is_dir():
             return ["⚠️  Not a directory"]
         
-        items = []
+        items: list[str] = []
         for item in sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
             if len(items) >= max_items:
                 items.append(f"... and {sum(1 for _ in path.iterdir()) - max_items} more items")

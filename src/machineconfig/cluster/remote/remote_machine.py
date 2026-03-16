@@ -57,11 +57,22 @@ class RemoteMachine:
     @staticmethod
     def from_dict(d: dict[str, object]) -> "RemoteMachine":
         rm = RemoteMachine.__new__(RemoteMachine)
-        rm.config = RemoteMachineConfig.from_dict(d["config"])  # type: ignore[arg-type]
-        rm.job_params = JobParams.from_dict(d["job_params"])  # type: ignore[arg-type]
-        rm.file_manager = FileManager.from_dict(d["file_manager"])  # type: ignore[arg-type]
-        rm.kwargs = dict(d.get("kwargs") or {})  # type: ignore[arg-type]
-        rm.data = list(d.get("data") or [])  # type: ignore[arg-type]
+        config_data = d["config"]
+        if not isinstance(config_data, dict):
+            raise TypeError("config must be a dict")
+        job_params_data = d["job_params"]
+        if not isinstance(job_params_data, dict):
+            raise TypeError("job_params must be a dict")
+        file_manager_data = d["file_manager"]
+        if not isinstance(file_manager_data, dict):
+            raise TypeError("file_manager must be a dict")
+        rm.config = RemoteMachineConfig.from_dict(config_data)
+        rm.job_params = JobParams.from_dict(job_params_data)
+        rm.file_manager = FileManager.from_dict(file_manager_data)
+        kwargs_raw = d.get("kwargs")
+        rm.kwargs = dict(kwargs_raw) if isinstance(kwargs_raw, dict) else {}
+        data_raw = d.get("data")
+        rm.data = [str(item) for item in data_raw] if isinstance(data_raw, list) else []
         rm.submitted = bool(d.get("submitted", False))
         rm.scripts_generated = bool(d.get("scripts_generated", False))
         rm.results_downloaded = bool(d.get("results_downloaded", False))

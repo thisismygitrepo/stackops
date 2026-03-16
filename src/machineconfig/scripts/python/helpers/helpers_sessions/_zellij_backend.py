@@ -156,10 +156,10 @@ def choose_session(
         return ("run_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
     if session_label == KILL_ALL_AND_NEW_LABEL:
         return ("run_script", f"zellij kill-all-sessions --yes\nzellij --layout {quote(STANDARD)}")
-    session_name = display_to_session.get(session_label)
-    if session_name is None:
+    selected_session_name: str | None = display_to_session.get(session_label)
+    if selected_session_name is None:
         return ("error", f"Unknown Zellij session selected: {session_label}")
-    return ("run_script", f"zellij attach {quote(session_name)}")
+    return ("run_script", f"zellij attach {quote(selected_session_name)}")
 
 
 def get_session_tabs() -> list[tuple[str, str]]:
@@ -254,14 +254,14 @@ def choose_kill_target(
     )
     if len(session_labels) == 0:
         return ("error", "No Zellij session selected.")
-    scripts: list[str] = []
-    seen: set[str] = set()
+    session_scripts: list[str] = []
+    seen_session_labels: set[str] = set()
     for session_label in session_labels:
-        if session_label in seen:
+        if session_label in seen_session_labels:
             continue
-        seen.add(session_label)
+        seen_session_labels.add(session_label)
         script = options_to_script.get(session_label)
         if script is None:
             return ("error", f"Unknown Zellij session selected: {session_label}")
-        scripts.append(script)
-    return ("run_script", "\n".join(scripts))
+        session_scripts.append(script)
+    return ("run_script", "\n".join(session_scripts))

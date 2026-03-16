@@ -9,7 +9,7 @@ import os
 from typing import List
 from pathlib import Path
 
-from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus, ZellijSessionStatus
+from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus, ProcessInfo, ZellijSessionStatus
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
 
@@ -116,7 +116,7 @@ def check_command_status(tab_name: str, layout_config: LayoutConfig) -> CommandS
             for arg in normalized_args
             if len(arg) > 4 and arg not in generic_args and not arg.startswith("--") and not arg.startswith("-")
         ]
-        matching_processes = []
+        matching_processes: list[ProcessInfo] = []
         for proc in psutil.process_iter(["pid", "name", "cmdline", "status", "ppid", "create_time", "memory_info"]):
             try:
                 info = proc.info
@@ -203,24 +203,24 @@ def check_command_status(tab_name: str, layout_config: LayoutConfig) -> CommandS
                         mem_info = mem.rss / (1024 * 1024)
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         pass
-                    matching_processes.append(
-                        {
-                            "pid": info["pid"],
-                            "name": proc_name,
-                            "cmdline": normalized_proc_cmdline,
-                            "status": info.get("status", "unknown"),
-                            "cmdline_str": joined_cmdline,
-                            "create_time": info.get("create_time", 0.0),
-                            **({"memory_mb": float(mem_info)} if mem_info is not None else {}),
-                        }
-                    )
+                    proc_info: ProcessInfo = {
+                        "pid": info["pid"],
+                        "name": proc_name,
+                        "cmdline": normalized_proc_cmdline,
+                        "status": info.get("status", "unknown"),
+                        "cmdline_str": joined_cmdline,
+                        "create_time": info.get("create_time", 0.0),
+                    }
+                    if mem_info is not None:
+                        proc_info["memory_mb"] = float(mem_info)
+                    matching_processes.append(proc_info)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
 
         # Second-pass filtering: remove idle wrapper shells that have no meaningful (non-shell) descendants
-        filtered_active = []
+        filtered_active: list[ProcessInfo] = []
         for proc_info in matching_processes:
             try:
                 proc_obj = psutil.Process(proc_info["pid"])

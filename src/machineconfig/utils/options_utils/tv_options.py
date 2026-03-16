@@ -11,11 +11,17 @@ def choose_from_dict_with_preview(options_to_preview_mapping: dict[str, Any], ex
         return [] if multi else None
     system = platform.system()
     if system == "Windows":
-        from machineconfig.utils.options_utils.options_tv_windows import select_from_options
-        return select_from_options(options_to_preview_mapping, extension=extension, multi=multi, preview_size_percent=preview_size_percent)
-    else:
-        from machineconfig.utils.options_utils.options_tv_linux import select_from_options
-        return select_from_options(options_to_preview_mapping= options_to_preview_mapping, extension=extension, multi=multi, preview_size_percent=preview_size_percent)
+        from machineconfig.utils.options_utils.options_tv_windows import select_from_options as select_windows_options
+
+        if multi:
+            return select_windows_options(options_to_preview_mapping, extension=extension, multi=True, preview_size_percent=preview_size_percent)
+        return select_windows_options(options_to_preview_mapping, extension=extension, multi=False, preview_size_percent=preview_size_percent)
+
+    from machineconfig.utils.options_utils.options_tv_linux import select_from_options as select_linux_options
+
+    if multi:
+        return select_linux_options(options_to_preview_mapping=options_to_preview_mapping, extension=extension, multi=True, preview_size_percent=preview_size_percent)
+    return select_linux_options(options_to_preview_mapping=options_to_preview_mapping, extension=extension, multi=False, preview_size_percent=preview_size_percent)
 
 
 if __name__ == "__main__":

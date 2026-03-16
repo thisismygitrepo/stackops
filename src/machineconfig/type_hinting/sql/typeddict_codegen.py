@@ -4,8 +4,6 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -73,7 +71,7 @@ def _union_with_none(type_expr: str, is_nullable: bool) -> str:
     return f"{type_expr} | None" if is_nullable else type_expr
 
 
-def _type_expr_for_sqla_type(*, column_type: TypeEngine[Any], table_name: str, column_name: str) -> tuple[_TypeExpr, dict[str, str]]:
+def _type_expr_for_sqla_type(*, column_type: TypeEngine, table_name: str, column_name: str) -> tuple[_TypeExpr, dict[str, str]]:
     enum_aliases: dict[str, str] = {}
 
     if isinstance(column_type, (Integer, SmallInteger, BigInteger)):

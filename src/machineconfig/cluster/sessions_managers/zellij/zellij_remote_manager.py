@@ -65,12 +65,12 @@ class ZellijSessionManager:
                 for _idx, an_m in enumerate(self.managers):
                     a_status = an_m.process_monitor.check_all_commands_status(an_m.layout_config)
                     statuses.append(a_status)
-                keys = []
-                for item in statuses:
-                    keys.extend(item.keys())
-                values = []
-                for item in statuses:
-                    values.extend(item.values())
+                keys: list[str] = []
+                for status_map in statuses:
+                    keys.extend(status_map.keys())
+                values: list[CommandStatus] = []
+                for status_map in statuses:
+                    values.extend(status_map.values())
                 # Create list of dictionaries instead of DataFrame
                 status_data: list[StatusDataRow] = []
                 for i, key in enumerate(keys):
@@ -83,8 +83,8 @@ class ZellijSessionManager:
                     scheduler.max_cycles = scheduler.cycle  # stop the scheduler from calling this routine again
 
                 # Print status
-                for item in status_data:
-                    print(f"Tab: {item['tabName']}, Status: {item['status']}")
+                for status_row in status_data:
+                    print(f"Tab: {status_row['tabName']}, Status: {status_row['status']}")
             else:
                 statuses = []
                 for _idx, an_m in enumerate(self.managers):

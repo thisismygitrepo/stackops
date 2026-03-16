@@ -164,9 +164,9 @@ def _build_preprogram() -> str:
     """Build the preprogram code for croshell."""
     import inspect
     import textwrap
-    from types import FunctionType
+    from typing import Callable
 
-    def get_body_simple_function_no_args(f: FunctionType) -> str:
+    def get_body_simple_function_no_args(f: Callable[[], None]) -> str:
         return textwrap.dedent("\n".join(inspect.getsource(f).splitlines()[1:]))
 
     preprogram = """

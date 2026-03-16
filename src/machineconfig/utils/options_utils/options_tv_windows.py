@@ -68,9 +68,9 @@ tv --ansi --source-command '{source_cmd}' --source-display '{{split:|:1}}' --sou
             return [] if multi else None
         selected_keys: list[str] = []
         for line in selected_lines:
-            key = index_map.get(line)
-            if key is not None:
-                selected_keys.append(key)
+            selected_key: str | None = index_map.get(line)
+            if selected_key is not None:
+                selected_keys.append(selected_key)
         if multi:
             return selected_keys
         return selected_keys[0] if selected_keys else None

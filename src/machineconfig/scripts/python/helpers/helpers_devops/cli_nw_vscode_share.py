@@ -68,7 +68,7 @@ def _build_http_url(host: str, port: int, server_base_path: str, folder_path: st
 
 def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
     from rich import box
-    from rich.console import Console, Group
+    from rich.console import Console, ConsoleRenderable, Group
     from rich.panel import Panel
     from rich.table import Table
     from rich.text import Text
@@ -143,7 +143,7 @@ def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
         else "Bound to 0.0.0.0, so localhost and each non-loopback IPv4 can be used from this machine or your LAN."
     )
     note = Text(f"Base path: {base_path_note}    Port: {port}", style="dim")
-    body = [Text(binding_note, style="bold green"), table]
+    body: list[ConsoleRenderable] = [Text(binding_note, style="bold green"), table]
     if address_warning is not None:
         body.append(address_warning)
     if folder_path is not None:

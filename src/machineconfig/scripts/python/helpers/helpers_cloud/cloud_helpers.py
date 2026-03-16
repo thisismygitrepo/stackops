@@ -22,9 +22,9 @@ def find_cloud_config(path: Path) -> CLOUD | None:
             cloud_section = "cloud"
             display_success(f"Found cloud config at: {path.joinpath('.ve.yaml')}")
             if cloud_section in res:
-                res = res["cloud"]
-                pprint(dict(res), "Cloud Config")
-                return res
+                cloud_config = res["cloud"]
+                pprint(dict(cloud_config), "Cloud Config")
+                return cloud_config
             display_error(f".ve.yaml @ {path}/.ve.yaml has no [cloud] section.")
         path = path.parent
     display_error("No cloud configuration file found")

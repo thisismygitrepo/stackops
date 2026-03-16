@@ -317,5 +317,8 @@ def get_ssh_hosts() -> list[str]:
 def choose_ssh_host(multi: Literal[False]) -> str | None: ...
 @overload
 def choose_ssh_host(multi: Literal[True]) -> list[str] | None: ...
-def choose_ssh_host(multi: bool):
-    return choose_from_options(msg="", options=get_ssh_hosts(), multi=multi, tv=True)
+def choose_ssh_host(multi: bool) -> str | list[str] | None:
+    hosts = get_ssh_hosts()
+    if multi:
+        return choose_from_options(msg="", options=hosts, multi=True, tv=True)
+    return choose_from_options(msg="", options=hosts, multi=False, tv=True)

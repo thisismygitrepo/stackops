@@ -392,8 +392,10 @@ def split(
     path_obj = _to_path(path)
     if index is None and at is not None:
         if not strict:
-            one, two = (items := str(path_obj).split(sep=str(at)))[0], items[1]
-            one, two = Path(one[:-1]) if one.endswith("/") else Path(one), Path(two[1:]) if two.startswith("/") else Path(two)
+            items = str(path_obj).split(sep=str(at))
+            one_raw, two_raw = items[0], items[1]
+            one = Path(one_raw[:-1]) if one_raw.endswith("/") else Path(one_raw)
+            two = Path(two_raw[1:]) if two_raw.startswith("/") else Path(two_raw)
         else:
             index = path_obj.parts.index(str(at))
             one, two = Path(*path_obj.parts[0:index]), Path(*path_obj.parts[index + 1 :])

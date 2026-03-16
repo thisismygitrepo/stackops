@@ -16,7 +16,7 @@ def get_uv_command(platform: str) -> str:
         case _:
             return '"$HOME/.local/bin/uv" '
 
-def print_code(code: str, lexer: str, desc: str, subtitle: str = ""):
+def print_code(code: str, lexer: str, desc: str, subtitle: str = "") -> None:
     import platform
     try:
         from rich.console import Console
@@ -87,7 +87,7 @@ def run_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_pr
     run_shell_script(uv_command, display_script=True, clean_env=False)
 
 
-def run_python_script_in_marimo(py_script: str, uv_project_with: str | None):
+def run_python_script_in_marimo(py_script: str, uv_project_with: str | None) -> None:
     tmp_dir = Path.home().joinpath("tmp_results", "tmp_scripts", "marimo", randstr())
     tmp_dir.mkdir(parents=True, exist_ok=True)
     pyfile = tmp_dir / "marimo_db_explore.py"
@@ -108,7 +108,7 @@ uv run  {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
 
 def run_shell_file(script_path: str, clean_env: bool) -> subprocess.CompletedProcess[bytes]:
     import platform
-    env = {} if clean_env else None
+    env: dict[str, str] | None = {} if clean_env else None
     if platform.system() == "Windows":
         proc = subprocess.run(f'powershell -ExecutionPolicy Bypass -File "{script_path}"', check=False, shell=True, env=env)
     elif platform.system() == "Linux" or platform.system() == "Darwin":
@@ -151,19 +151,19 @@ def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subp
     return proc
 
 
-def exit_then_run_shell_script(script: str, strict: bool = False):
+def exit_then_run_shell_script(script: str, strict: bool = False) -> None:
     import os
     from rich.console import Console
     console = Console()
-    op_program_path = os.environ.get("OP_PROGRAM_PATH", None)
-    if op_program_path is not None:
-        exists = Path(op_program_path).exists()
+    op_program_path_raw = os.environ.get("OP_PROGRAM_PATH", None)
+    if op_program_path_raw is not None:
+        exists = Path(op_program_path_raw).exists()
     else:
         exists = False
     # three cases: (op_program_path is None, exists=False), (op_program_path is set, exists=False), (op_program_path is set, exists=True)
 
     if strict:  # we want to assert op_program_path is set and is not an already existing file
-        if (op_program_path is None or exists):
+        if op_program_path_raw is None or exists:
             import platform
             if platform.system() == "Windows":
                 suffix = ".ps1"
@@ -171,42 +171,42 @@ def exit_then_run_shell_script(script: str, strict: bool = False):
             else:
                 suffix = ".sh"
                 lexer = "bash"
-            op_program_path = Path.home().joinpath("tmp_results", "tmp_scripts", "manual_run", f"manual_script_{randstr()}{suffix}")
-            op_program_path.parent.mkdir(parents=True, exist_ok=True)
-            op_program_path.write_text(script, encoding="utf-8")
+            manual_script_path = Path.home().joinpath("tmp_results", "tmp_scripts", "manual_run", f"manual_script_{randstr()}{suffix}")
+            manual_script_path.parent.mkdir(parents=True, exist_ok=True)
+            manual_script_path.write_text(script, encoding="utf-8")
             print_code(code=script, lexer=lexer, desc="script to run manually")
             console.print("[bold yellow]⚠️  STRICT MODE:[/bold yellow] [cyan]Please run the script manually via your shell by executing:[/cyan]")
-            console.print(f"[green]{str(op_program_path)}[/green]")
+            console.print(f"[green]{str(manual_script_path)}[/green]")
             console.print("[red]❌ OP_PROGRAM_PATH environment variable is not set in strict mode.[/red]")
             import sys
             sys.exit(1)
 
-    if op_program_path is not None and not exists:
-        op_program_path = Path(op_program_path)
+    if op_program_path_raw is not None and not exists:
+        op_program_path = Path(op_program_path_raw)
         op_program_path.parent.mkdir(parents=True, exist_ok=True)
         op_program_path.write_text(script, encoding="utf-8")
         console.print("[cyan]🚀 Handing over to shell script runner via OP_PROGRAM_PATH:[/cyan]")
         console.print(f"[bold green]{str(op_program_path)}[/bold green]")
         print_code(code=script, lexer="shell", desc="script to run via OP_PROGRAM_PATH")
     else:
-        if op_program_path is not None and exists:
-            console.print(f"[yellow]⚠️  OP_PROGRAM_PATH @ {str(op_program_path)} already exists.[/yellow] [cyan]Falling back to direct execution.[/cyan]")
-        elif op_program_path is None:
+        if op_program_path_raw is not None and exists:
+            console.print(f"[yellow]⚠️  OP_PROGRAM_PATH @ {op_program_path_raw} already exists.[/yellow] [cyan]Falling back to direct execution.[/cyan]")
+        elif op_program_path_raw is None:
             console.print("[cyan]ℹ️  OP_PROGRAM_PATH is not set.[/cyan] [yellow]Falling back to direct execution.[/yellow]")
         run_shell_script(script, display_script=True, clean_env=False)
     import sys
     sys.exit(0)
-def exit_then_run_shell_file(script_path: str, strict: bool):
+def exit_then_run_shell_file(script_path: str, strict: bool) -> None:
     import os
     from rich.console import Console
     console = Console()
-    op_program_path = os.environ.get("OP_PROGRAM_PATH", None)
-    if op_program_path is None or Path(op_program_path).exists():
+    op_program_path_raw = os.environ.get("OP_PROGRAM_PATH", None)
+    if op_program_path_raw is None or Path(op_program_path_raw).exists():
         if strict:
             console.print("[red]❌ OP_PROGRAM_PATH environment variable is not set or the file already exists in strict mode.[/red]")
             import sys
             sys.exit(1)
-    if op_program_path is None or Path(op_program_path).exists():
+    if op_program_path_raw is None or Path(op_program_path_raw).exists():
         console.print("[cyan]ℹ️  OP_PROGRAM_PATH is not set.[/cyan] [yellow]Falling back to direct execution.[/yellow]")
         run_shell_file(script_path=script_path, clean_env=False)
         return
@@ -221,7 +221,7 @@ def exit_then_run_shell_file(script_path: str, strict: bool):
         script = f"source {str(script_path)}"
     else:
         raise NotImplementedError(f"Platform {platform.system()} not supported.")
-    op_program_path = Path(op_program_path)
+    op_program_path = Path(op_program_path_raw)
     op_program_path.parent.mkdir(parents=True, exist_ok=True)
     op_program_path.write_text(script, encoding="utf-8")
     _ = suffix, lexer
