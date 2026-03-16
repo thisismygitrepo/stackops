@@ -1,21 +1,20 @@
 {
-  "$schema": "https://opencode.ai/config.json",
+  "$schema": "./opencode.schema.json",
   "share": "disabled",
   "autoupdate": false,
   "instructions": [
-    "AGENTS.md",
-    ".github/instructions/*.md"
+    "AGENTS.md"
   ],
   "permission": {
     "*": "ask",
-    "external_directory": "ask",
-    "edit": "ask",
-    "task": "ask",
-    "webfetch": "deny",
-    "websearch": "deny",
-    "codesearch": "deny",
+    "external_directory": "allow",
+    "edit": "allow",
+    "task": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "codesearch": "allow",
     "bash": {
-      "*": "ask",
+      "*": "allow",
       "git *": "allow"
     },
     "read": {
@@ -34,7 +33,7 @@
     "mcp_everything": {
       "type": "local",
       "command": [
-        "npx",
+        "bunx",
         "-y",
         "@modelcontextprotocol/server-everything"
       ],
