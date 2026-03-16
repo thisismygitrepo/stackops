@@ -24,13 +24,12 @@ def secure_kilocode_config() -> None:
         try:
             with open(config_file, "r", encoding="utf-8") as f:
                 current_config = json.load(f)
-        except:
+        except Exception:
             pass
     current_config.update(secure_settings)
     with open(config_file, "w", encoding="utf-8") as f:
         json.dump(current_config, f, indent=4)
     try:
         os.chmod(config_file, 0o600)
-    except:
+    except Exception:
         pass
-

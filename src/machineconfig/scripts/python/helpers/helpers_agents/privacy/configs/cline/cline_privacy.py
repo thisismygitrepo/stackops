@@ -36,12 +36,11 @@ def secure_cline_config() -> None:
                 try:
                     with open(path, "r", encoding="utf-8") as f:
                         config_data = json.load(f)
-                except:
+                except Exception:
                     pass
             config_data.update(privacy_settings)
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=4)
             os.chmod(path, 0o600)
-        except:
+        except Exception:
             pass
-

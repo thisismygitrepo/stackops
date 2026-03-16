@@ -12,7 +12,7 @@ def secure_droid_cli() -> None:
         try:
             with open(config_file, "r", encoding="utf-8") as f:
                 settings = json.load(f)
-        except:
+        except Exception:
             pass
     settings.update(
         {
@@ -27,4 +27,3 @@ def secure_droid_cli() -> None:
     )
     with open(config_file, "w", encoding="utf-8") as f:
         json.dump(settings, f, indent=2)
-

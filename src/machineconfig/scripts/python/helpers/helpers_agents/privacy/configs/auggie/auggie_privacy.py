@@ -10,7 +10,7 @@ def secure_auggie_config() -> None:
     if settings_file.exists():
         try:
             settings = json.loads(settings_file.read_text())
-        except:
+        except Exception:
             pass
     settings["indexingAllowDirs"] = []
     settings["indexingDenyDirs"] = ["/"]
@@ -34,6 +34,5 @@ def secure_auggie_config() -> None:
     settings_file.write_text(json.dumps(settings, indent=2))
     try:
         settings_file.chmod(0o600)
-    except:
+    except Exception:
         pass
-

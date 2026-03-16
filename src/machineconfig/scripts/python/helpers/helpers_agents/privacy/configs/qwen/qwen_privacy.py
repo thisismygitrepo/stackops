@@ -12,7 +12,7 @@ def secure_qwen_config() -> None:
         try:
             with open(config_file, "r", encoding="utf-8") as f:
                 config = json.load(f)
-        except:
+        except Exception:
             pass
     config.setdefault("privacy", {})["usageStatisticsEnabled"] = False
     config.setdefault("telemetry", {})["enabled"] = False
@@ -23,4 +23,3 @@ def secure_qwen_config() -> None:
 
     with open(config_file, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
-

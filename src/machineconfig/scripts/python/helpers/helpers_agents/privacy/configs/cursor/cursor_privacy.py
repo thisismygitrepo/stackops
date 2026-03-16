@@ -49,6 +49,5 @@ def secure_cursor_cli() -> None:
         current_settings.update(privacy_settings)
         with open(settings_file, "w", encoding="utf-8") as f:
             json.dump(current_settings, f, indent=4)
-    except:
+    except Exception:
         pass
-

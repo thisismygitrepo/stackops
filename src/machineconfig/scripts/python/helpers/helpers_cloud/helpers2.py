@@ -3,13 +3,48 @@ from machineconfig.utils.ve import CLOUD
 from machineconfig.utils.io import read_ini
 from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 from machineconfig.utils.accessories import pprint
-from typing import cast
 from rich.console import Console
 from rich.panel import Panel
 
 
 ES = "^"  # chosen carefully to not mean anything on any shell. `$` was a bad choice.
 console = Console()
+
+
+def merge_cloud_config(cloud_config_base: CLOUD, cloud_config_explicit: CLOUD, cloud_config_defaults: CLOUD) -> CLOUD:
+    merged: CLOUD = {
+        "cloud": cloud_config_base["cloud"],
+        "root": cloud_config_base["root"],
+        "rel2home": cloud_config_base["rel2home"],
+        "pwd": cloud_config_base["pwd"],
+        "key": cloud_config_base["key"],
+        "encrypt": cloud_config_base["encrypt"],
+        "os_specific": cloud_config_base["os_specific"],
+        "zip": cloud_config_base["zip"],
+        "share": cloud_config_base["share"],
+        "overwrite": cloud_config_base["overwrite"],
+    }
+    if cloud_config_explicit["cloud"] != cloud_config_defaults["cloud"]:
+        merged["cloud"] = cloud_config_explicit["cloud"]
+    if cloud_config_explicit["root"] != cloud_config_defaults["root"]:
+        merged["root"] = cloud_config_explicit["root"]
+    if cloud_config_explicit["rel2home"] != cloud_config_defaults["rel2home"]:
+        merged["rel2home"] = cloud_config_explicit["rel2home"]
+    if cloud_config_explicit["pwd"] != cloud_config_defaults["pwd"]:
+        merged["pwd"] = cloud_config_explicit["pwd"]
+    if cloud_config_explicit["key"] != cloud_config_defaults["key"]:
+        merged["key"] = cloud_config_explicit["key"]
+    if cloud_config_explicit["encrypt"] != cloud_config_defaults["encrypt"]:
+        merged["encrypt"] = cloud_config_explicit["encrypt"]
+    if cloud_config_explicit["os_specific"] != cloud_config_defaults["os_specific"]:
+        merged["os_specific"] = cloud_config_explicit["os_specific"]
+    if cloud_config_explicit["zip"] != cloud_config_defaults["zip"]:
+        merged["zip"] = cloud_config_explicit["zip"]
+    if cloud_config_explicit["share"] != cloud_config_defaults["share"]:
+        merged["share"] = cloud_config_explicit["share"]
+    if cloud_config_explicit["overwrite"] != cloud_config_defaults["overwrite"]:
+        merged["overwrite"] = cloud_config_explicit["overwrite"]
+    return merged
 
 
 def parse_cloud_source_target(
@@ -70,15 +105,11 @@ def parse_cloud_source_target(
     if cloud_config_from_name is None:
         cloud_config_final = cloud_config_explicit
     else:
-        cloud_config_final = cloud_config_from_name
-        override_keys = {
-            k: (cloud_config_explicit[k], cloud_config_defaults[k])
-            for k in cloud_config_explicit.keys() & cloud_config_defaults.keys()
-            if cloud_config_explicit[k] != cloud_config_defaults[k]
-        }  # type: ignore
-        tmp = dict(cloud_config_final)
-        tmp.update(override_keys)
-        cloud_config_final = cast(CLOUD, tmp)
+        cloud_config_final = merge_cloud_config(
+            cloud_config_base=cloud_config_from_name,
+            cloud_config_explicit=cloud_config_explicit,
+            cloud_config_defaults=cloud_config_defaults,
+        )
 
     if ":" in source and (source[1] != ":" if len(source) > 1 else True):  # avoid the deceptive case of "C:/"
         source_parts: list[str] = source.split(":")

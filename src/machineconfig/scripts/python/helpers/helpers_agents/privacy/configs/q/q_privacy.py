@@ -32,14 +32,14 @@ def secure_q_cli() -> None:
                 try:
                     with open(config_file, "r", encoding="utf-8") as f:
                         current_settings = json.load(f)
-                except:
+                except Exception:
                     pass
             current_settings.update(privacy_settings)
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(current_settings, f, indent=2)
             if os.name != "nt":
                 config_file.chmod(0o600)
-        except:
+        except Exception:
             pass
     for exe in ["q", "kiro"]:
         if shutil.which(exe):
@@ -52,6 +52,5 @@ def secure_q_cli() -> None:
                         stderr=subprocess.DEVNULL,
                         check=False,
                     )
-                except:
+                except Exception:
                     pass
-

@@ -29,5 +29,5 @@ def secure_codex_configs() -> None:
             config_path.write_text(config_content, encoding="utf-8")
             try:
                 os.chmod(config_path, 0o600)
-            except:
+            except Exception:
                 pass

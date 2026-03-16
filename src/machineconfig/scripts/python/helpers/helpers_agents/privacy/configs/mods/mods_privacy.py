@@ -32,6 +32,5 @@ def secure_mods_config() -> None:
         f.write(content.strip() + "\n")
     try:
         os.chmod(config_file, 0o600)
-    except:
+    except Exception:
         pass
-
