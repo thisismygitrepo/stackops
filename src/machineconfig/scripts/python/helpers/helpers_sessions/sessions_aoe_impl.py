@@ -1,6 +1,6 @@
 """Pure Python implementations for sessions run-aoe command."""
 
-from __future__ import annotations
+
 
 import shlex
 import shutil

@@ -1,20 +1,23 @@
 
 
-
+from functools import cache
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
-from rich.console import Console
-from rich.table import Table
 
-from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH, collect_apps_to_scan, scan_and_write_reports
-from machineconfig.jobs.installer.checks.install_utils import download_google_drive_file, download_safe_apps, load_summary_report, upload_app
-from machineconfig.jobs.installer.checks.report_utils import AppData, generate_markdown_report
-from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file
-from machineconfig.utils.path_extended import PathExtended
+if TYPE_CHECKING:
+    from rich.console import Console
+    from rich.table import Table
 
-console = Console()
+    from machineconfig.jobs.installer.checks.report_utils import AppData
+    from machineconfig.utils.path_extended import PathExtended
+
+
+@cache
+def _console() -> Console:
+    from rich.console import Console
+    return Console()
 
 
 def _parse_apps_csv(apps_csv: str) -> list[str]:
@@ -57,85 +60,112 @@ def _to_app_data_list(rows: list[dict[str, object]]) -> list[AppData]:
 
 
 def scan_all() -> None:
-    scan_and_write_reports(None)
+    def func() -> None:
+        from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports
+        scan_and_write_reports(None)
+    from machineconfig.utils.code import run_lambda_function
+    run_lambda_function(lambda: func(), uv_with=["vt-py"], uv_project_dir=None)
 
 
 def scan_apps(apps: Annotated[str, typer.Argument(..., help="Comma-separated app names to scan")]) -> None:
-    app_names = _parse_apps_csv(apps)
-    scan_and_write_reports(app_names)
+    def func() -> None:
+        from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports
+        app_names = _parse_apps_csv(apps)
+        scan_and_write_reports(app_names)
+    from machineconfig.utils.code import run_lambda_function
+    run_lambda_function(lambda: func(), uv_with=["vt-py"], uv_project_dir=None)
+
+
+def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Table:
+    from rich.table import Table
+    table = Table(title="Installed CLI Apps", show_lines=False)
+    table.add_column("Name")
+    table.add_column("Version", justify="right")
+    table.add_column("Path")
+    for app_path, version in apps_to_scan:
+        table.add_row(app_path.stem, version or "", app_path.collapseuser(strict=False).as_posix())
+    return table
 
 
 def list_all() -> None:
+    from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan
     apps_to_scan = collect_apps_to_scan(None)
-    table = Table(title="Installed CLI Apps", show_lines=False)
-    table.add_column("Name")
-    table.add_column("Version", justify="right")
-    table.add_column("Path")
-    for app_path, version in apps_to_scan:
-        table.add_row(app_path.stem, version or "", app_path.collapseuser(strict=False).as_posix())
-    console.print(table)
+    _console().print(_build_apps_table(apps_to_scan))
 
 
 def list_apps(apps: Annotated[str, typer.Argument(..., help="Comma-separated app names to list")]) -> None:
+    from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan
+
     app_names = _parse_apps_csv(apps)
     apps_to_scan = collect_apps_to_scan(app_names)
-    table = Table(title="Installed CLI Apps", show_lines=False)
-    table.add_column("Name")
-    table.add_column("Version", justify="right")
-    table.add_column("Path")
-    for app_path, version in apps_to_scan:
-        table.add_row(app_path.stem, version or "", app_path.collapseuser(strict=False).as_posix())
-    console.print(table)
+    _console().print(_build_apps_table(apps_to_scan))
 
 
 def upload(path: Annotated[Path, typer.Argument(..., help="Path to a local file to upload")]) -> None:
+    from machineconfig.jobs.installer.checks.install_utils import upload_app
+    from machineconfig.utils.path_extended import PathExtended
+
     link = upload_app(PathExtended(path))
     if not link:
         raise typer.Exit(code=1)
-    console.print(link)
+    _console().print(link)
 
 
 def download(url: Annotated[str, typer.Argument(..., help="Google Drive URL or file id")]) -> None:
+    from machineconfig.jobs.installer.checks.install_utils import download_google_drive_file
+
     path = download_google_drive_file(url)
-    console.print(path.as_posix())
+    _console().print(path.as_posix())
 
 
 def install(name: Annotated[str, typer.Argument(..., help="App name from summary report or 'essentials'")]) -> None:
+    from machineconfig.jobs.installer.checks.install_utils import download_safe_apps
+
     download_safe_apps(name)
 
 
 def summary() -> None:
+    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH
+    from machineconfig.jobs.installer.checks.install_utils import load_summary_report
+
     rows = load_summary_report()
     if not rows:
         raise typer.Exit(code=1)
     app_data_list = _to_app_data_list(rows)
     scanned = [row for row in app_data_list if row.get("positive_pct") is not None]
     clean = [row for row in scanned if row.get("positive_pct") == 0.0]
-    console.print(f"Apps in report: {len(app_data_list)}")
-    console.print(f"Scanned: {len(scanned)}")
-    console.print(f"Clean (0%): {len(clean)}")
-    console.print(f"Report CSV: {APP_SUMMARY_PATH.with_suffix('.csv')}")
-    console.print(f"Report MD: {APP_SUMMARY_PATH.with_suffix('.md')}")
+    _console().print(f"Apps in report: {len(app_data_list)}")
+    _console().print(f"Scanned: {len(scanned)}")
+    _console().print(f"Clean (0%): {len(clean)}")
+    _console().print(f"Report CSV: {APP_SUMMARY_PATH.with_suffix('.csv')}")
+    _console().print(f"Report MD: {APP_SUMMARY_PATH.with_suffix('.md')}")
 
 
 def report() -> None:
+    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH
+    from machineconfig.jobs.installer.checks.install_utils import load_summary_report
+    from machineconfig.jobs.installer.checks.report_utils import generate_markdown_report
+
     rows = load_summary_report()
     if not rows:
         raise typer.Exit(code=1)
     app_data_list = _to_app_data_list(rows)
     md_path = APP_SUMMARY_PATH.with_suffix(".md")
     generate_markdown_report(app_data_list, md_path)
-    console.print(f"Markdown report saved to: {md_path}")
+    _console().print(f"Markdown report saved to: {md_path}")
 
 
 def scan_path(path: Annotated[Path, typer.Argument(..., help="Path to a file to scan")]) -> None:
+    from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file
+    from machineconfig.utils.path_extended import PathExtended
+
     try:
         client = get_vt_client()
     except FileNotFoundError as e:
-        console.print(f"[bold red]{e}[/bold red]")
+        _console().print(f"[bold red]{e}[/bold red]")
         raise typer.Exit(code=1)
     positive_pct, _ = scan_file(PathExtended(path), client)
-    console.print(f"{path.name}: {positive_pct}% positives")
+    _console().print(f"{path.name}: {positive_pct}% positives")
 
 
 def get_app() -> typer.Typer:

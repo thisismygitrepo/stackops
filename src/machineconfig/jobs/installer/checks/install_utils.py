@@ -18,15 +18,13 @@ from machineconfig.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH,
 
 # Constants
 APP_SUMMARY_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_summary_report.csv")
-CLOUD_STORAGE_NAME = "gdw"  # Default cloud storage name for rclone
+CLOUD_STORAGE_NAME = "gdp"  # Default cloud storage name for rclone
 
 console = Console()
 
 def upload_app(path: PathExtended) -> str | None:
     """Uploads the app to cloud storage and returns the shareable link."""
     try:
-        # Using PathExtended.to_cloud
-        # Assuming 'gdw' is the configured remote in rclone
         link_path = path.to_cloud(CLOUD_STORAGE_NAME, rel2home=True, share=True, os_specific=True, verbose=False)
         if link_path:
              return str(link_path)
