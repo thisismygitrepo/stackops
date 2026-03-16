@@ -3436,11 +3436,11 @@
                     "    ] = None,",
                     "    repo: Annotated[REPO_LOOSE, typer.Option(\"--repo\", \"-r\", help=\"📁 Which backup configuration to use: 'library' or 'user'\")] = \"all\",",
                     "    # interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"🤔 Prompt the selection of which items to process\")] = False,",
-                    "):",
+                    ")-> None:",
                     "    from machineconfig.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve",
                     "    match direction:",
                     "        case \"up\" | \"u\":",
-                    "            direction_resolved = \"BACKUP\"",
+                    "            direction_resolved: Literal[\"BACKUP\", \"RETRIEVE\"] = \"BACKUP\"",
                     "        case \"down\" | \"d\":",
                     "            direction_resolved = \"RETRIEVE\"",
                     "        case _:",
@@ -3532,7 +3532,8 @@
                         "help": "📁 Which backup configuration to use: 'library' or 'user'"
                       }
                     }
-                  ]
+                  ],
+                  "return": "None"
                 },
                 "typer": {
                   "no_args_is_help": true
@@ -5446,27 +5447,8 @@
                 "children": [
                   {
                     "kind": "command",
-                    "name": "scan-all",
-                    "help": "Scan all installed apps and generate reports",
-                    "source": {
-                      "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
-                      "module": "machineconfig.jobs.installer.checks.security_cli",
-                      "callable": "scan_all"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def scan_all() -> None:",
-                        "    scan_and_write_reports(None)"
-                      ],
-                      "name": "scan_all",
-                      "parameters": [],
-                      "return": "None"
-                    }
-                  },
-                  {
-                    "kind": "command",
                     "name": "scan",
-                    "help": "Scan comma-separated app names and generate reports",
+                    "help": "Scan installed apps, optionally filtered by comma-separated app names",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
                       "module": "machineconfig.jobs.installer.checks.security_cli",
@@ -5474,26 +5456,31 @@
                     },
                     "signature": {
                       "raw_lines": [
-                        "def scan_apps(apps: Annotated[str, typer.Argument(..., help=\"Comma-separated app names to scan\")]) -> None:",
-                        "    app_names = _parse_apps_csv(apps)",
-                        "    scan_and_write_reports(app_names)"
+                        "def scan_apps(",
+                        "    apps: Annotated[str | None, typer.Argument(help=\"Optional comma-separated app names to scan\")] = None,",
+                        ") -> None:",
+                        "    def func(apps__: str | None) -> None:",
+                        "        from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports",
+                        "        app_names = _parse_apps_csv(apps__)",
+                        "        scan_and_write_reports(app_names)",
+                        "    from machineconfig.utils.code import run_lambda_function",
+                        "    run_lambda_function(lambda: func(apps__=apps), uv_with=[\"vt-py\"], uv_project_dir=None)"
                       ],
                       "name": "scan_apps",
                       "parameters": [
                         {
                           "name": "apps",
                           "kind": "positional_or_keyword",
-                          "type": "str",
+                          "type": "str | None",
                           "default": null,
-                          "required": true,
-                          "annotation_raw": "Annotated[str, typer.Argument(..., help='Comma-separated app names to scan')]",
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Argument(help='Optional comma-separated app names to scan')]",
                           "typer": {
                             "kind": "argument",
                             "param_decls": [],
                             "long_flags": [],
                             "short_flags": [],
-                            "help": "Comma-separated app names to scan",
-                            "default": "..."
+                            "help": "Optional comma-separated app names to scan"
                           }
                         }
                       ],
@@ -5502,34 +5489,8 @@
                   },
                   {
                     "kind": "command",
-                    "name": "list-all",
-                    "help": "List all installed apps",
-                    "source": {
-                      "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
-                      "module": "machineconfig.jobs.installer.checks.security_cli",
-                      "callable": "list_all"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def list_all() -> None:",
-                        "    apps_to_scan = collect_apps_to_scan(None)",
-                        "    table = Table(title=\"Installed CLI Apps\", show_lines=False)",
-                        "    table.add_column(\"Name\")",
-                        "    table.add_column(\"Version\", justify=\"right\")",
-                        "    table.add_column(\"Path\")",
-                        "    for app_path, version in apps_to_scan:",
-                        "        table.add_row(app_path.stem, version or \"\", app_path.collapseuser(strict=False).as_posix())",
-                        "    console.print(table)"
-                      ],
-                      "name": "list_all",
-                      "parameters": [],
-                      "return": "None"
-                    }
-                  },
-                  {
-                    "kind": "command",
                     "name": "list",
-                    "help": "List comma-separated app names",
+                    "help": "List installed apps, optionally filtered by comma-separated app names",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
                       "module": "machineconfig.jobs.installer.checks.security_cli",
@@ -5537,33 +5498,30 @@
                     },
                     "signature": {
                       "raw_lines": [
-                        "def list_apps(apps: Annotated[str, typer.Argument(..., help=\"Comma-separated app names to list\")]) -> None:",
+                        "def list_apps(",
+                        "    apps: Annotated[str | None, typer.Argument(help=\"Optional comma-separated app names to list\")] = None,",
+                        ") -> None:",
+                        "    from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan",
+                        "",
                         "    app_names = _parse_apps_csv(apps)",
                         "    apps_to_scan = collect_apps_to_scan(app_names)",
-                        "    table = Table(title=\"Installed CLI Apps\", show_lines=False)",
-                        "    table.add_column(\"Name\")",
-                        "    table.add_column(\"Version\", justify=\"right\")",
-                        "    table.add_column(\"Path\")",
-                        "    for app_path, version in apps_to_scan:",
-                        "        table.add_row(app_path.stem, version or \"\", app_path.collapseuser(strict=False).as_posix())",
-                        "    console.print(table)"
+                        "    _console().print(_build_apps_table(apps_to_scan))"
                       ],
                       "name": "list_apps",
                       "parameters": [
                         {
                           "name": "apps",
                           "kind": "positional_or_keyword",
-                          "type": "str",
+                          "type": "str | None",
                           "default": null,
-                          "required": true,
-                          "annotation_raw": "Annotated[str, typer.Argument(..., help='Comma-separated app names to list')]",
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Argument(help='Optional comma-separated app names to list')]",
                           "typer": {
                             "kind": "argument",
                             "param_decls": [],
                             "long_flags": [],
                             "short_flags": [],
-                            "help": "Comma-separated app names to list",
-                            "default": "..."
+                            "help": "Optional comma-separated app names to list"
                           }
                         }
                       ],
@@ -5582,10 +5540,13 @@
                     "signature": {
                       "raw_lines": [
                         "def upload(path: Annotated[Path, typer.Argument(..., help=\"Path to a local file to upload\")]) -> None:",
+                        "    from machineconfig.jobs.installer.checks.install_utils import upload_app",
+                        "    from machineconfig.utils.path_extended import PathExtended",
+                        "",
                         "    link = upload_app(PathExtended(path))",
                         "    if not link:",
                         "        raise typer.Exit(code=1)",
-                        "    console.print(link)"
+                        "    _console().print(link)"
                       ],
                       "name": "upload",
                       "parameters": [
@@ -5621,8 +5582,10 @@
                     "signature": {
                       "raw_lines": [
                         "def download(url: Annotated[str, typer.Argument(..., help=\"Google Drive URL or file id\")]) -> None:",
+                        "    from machineconfig.jobs.installer.checks.install_utils import download_google_drive_file",
+                        "",
                         "    path = download_google_drive_file(url)",
-                        "    console.print(path.as_posix())"
+                        "    _console().print(path.as_posix())"
                       ],
                       "name": "download",
                       "parameters": [
@@ -5658,6 +5621,8 @@
                     "signature": {
                       "raw_lines": [
                         "def install(name: Annotated[str, typer.Argument(..., help=\"App name from summary report or 'essentials'\")]) -> None:",
+                        "    from machineconfig.jobs.installer.checks.install_utils import download_safe_apps",
+                        "",
                         "    download_safe_apps(name)"
                       ],
                       "name": "install",
@@ -5694,17 +5659,20 @@
                     "signature": {
                       "raw_lines": [
                         "def summary() -> None:",
+                        "    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH",
+                        "    from machineconfig.jobs.installer.checks.install_utils import load_summary_report",
+                        "",
                         "    rows = load_summary_report()",
                         "    if not rows:",
                         "        raise typer.Exit(code=1)",
                         "    app_data_list = _to_app_data_list(rows)",
                         "    scanned = [row for row in app_data_list if row.get(\"positive_pct\") is not None]",
                         "    clean = [row for row in scanned if row.get(\"positive_pct\") == 0.0]",
-                        "    console.print(f\"Apps in report: {len(app_data_list)}\")",
-                        "    console.print(f\"Scanned: {len(scanned)}\")",
-                        "    console.print(f\"Clean (0%): {len(clean)}\")",
-                        "    console.print(f\"Report CSV: {APP_SUMMARY_PATH.with_suffix('.csv')}\")",
-                        "    console.print(f\"Report MD: {APP_SUMMARY_PATH.with_suffix('.md')}\")"
+                        "    _console().print(f\"Apps in report: {len(app_data_list)}\")",
+                        "    _console().print(f\"Scanned: {len(scanned)}\")",
+                        "    _console().print(f\"Clean (0%): {len(clean)}\")",
+                        "    _console().print(f\"Report CSV: {APP_SUMMARY_PATH.with_suffix('.csv')}\")",
+                        "    _console().print(f\"Report MD: {APP_SUMMARY_PATH.with_suffix('.md')}\")"
                       ],
                       "name": "summary",
                       "parameters": [],
@@ -5723,13 +5691,17 @@
                     "signature": {
                       "raw_lines": [
                         "def report() -> None:",
+                        "    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH",
+                        "    from machineconfig.jobs.installer.checks.install_utils import load_summary_report",
+                        "    from machineconfig.jobs.installer.checks.report_utils import generate_markdown_report",
+                        "",
                         "    rows = load_summary_report()",
                         "    if not rows:",
                         "        raise typer.Exit(code=1)",
                         "    app_data_list = _to_app_data_list(rows)",
                         "    md_path = APP_SUMMARY_PATH.with_suffix(\".md\")",
                         "    generate_markdown_report(app_data_list, md_path)",
-                        "    console.print(f\"Markdown report saved to: {md_path}\")"
+                        "    _console().print(f\"Markdown report saved to: {md_path}\")"
                       ],
                       "name": "report",
                       "parameters": [],
@@ -5748,13 +5720,16 @@
                     "signature": {
                       "raw_lines": [
                         "def scan_path(path: Annotated[Path, typer.Argument(..., help=\"Path to a file to scan\")]) -> None:",
+                        "    from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file",
+                        "    from machineconfig.utils.path_extended import PathExtended",
+                        "",
                         "    try:",
                         "        client = get_vt_client()",
                         "    except FileNotFoundError as e:",
-                        "        console.print(f\"[bold red]{e}[/bold red]\")",
+                        "        _console().print(f\"[bold red]{e}[/bold red]\")",
                         "        raise typer.Exit(code=1)",
                         "    positive_pct, _ = scan_file(PathExtended(path), client)",
-                        "    console.print(f\"{path.name}: {positive_pct}% positives\")"
+                        "    _console().print(f\"{path.name}: {positive_pct}% positives\")"
                       ],
                       "name": "scan_path",
                       "parameters": [
@@ -7266,11 +7241,13 @@
                         "    \"\"\"🐛 Debug SSH connection\"\"\"",
                         "    from platform import system",
                         "    if system() == \"Linux\" or system() == \"Darwin\":",
-                        "        import machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as helper",
-                        "        helper.ssh_debug_linux()",
+                        "        import machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux",
+                        "",
+                        "        ssh_debug_linux.ssh_debug_linux()",
                         "    elif system() == \"Windows\":",
-                        "        import machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows as helper",
-                        "        helper.ssh_debug_windows()",
+                        "        from machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows import ssh_debug_windows",
+                        "",
+                        "        ssh_debug_windows()",
                         "    else:",
                         "        print(f\"❌ Error: Platform {system()} is not supported.\")",
                         "        raise typer.Exit(code=1)"
@@ -7312,18 +7289,19 @@
                     "    \"\"\"📌 Show this computer addresses on network\"\"\"",
                     "    import machineconfig.scripts.python.helpers.helpers_network.address as helper",
                     "",
+                    "    public_ip_address = \"N/A\"",
                     "    try:",
                     "        loaded_json = helper.get_public_ip_address()",
                     "        from rich import print_json",
                     "        print_json(data=loaded_json)",
+                    "        public_ip_address = loaded_json[\"ip\"]",
                     "    except Exception as e:",
                     "        print(f\"⚠️  Could not fetch public IP address: {e}\")",
-                    "        loaded_json = {}",
                     "",
                     "    from rich.table import Table",
                     "    from rich.console import Console",
-                    "    res = helper.get_all_ipv4_addresses()",
-                    "    res.append( (\"Public IP\", loaded_json.get(\"ip\", \"N/A\")))",
+                    "    addresses = helper.get_all_ipv4_addresses()",
+                    "    addresses.append((\"Public IP\", public_ip_address))",
                     "    ",
                     "    # loc = loaded_json[\"loc\"]",
                     "    # cmd = f\"\"\"curl \"https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=300&center=lonlat:{loc}&zoom=6&marker=lonlat:{loc};color:%23ff0000;size:medium&apiKey=$GEOAPIFY_API_KEY\" -o map.png && chafa map.png\"\"\"",
@@ -7334,17 +7312,17 @@
                     "    table.add_column(\"Interface\", style=\"cyan\")",
                     "    table.add_column(\"IP Address\", style=\"green\")",
                     "    ",
-                    "    for iface, ip in res:",
+                    "    for iface, ip in addresses:",
                     "        table.add_row(iface, ip)",
                     "    ",
                     "    console = Console()",
                     "    console.print(table)",
                     "    ",
-                    "    res = helper.select_lan_ipv4(prefer_vpn=False)",
-                    "    if res is not None:",
+                    "    selected_lan_ip = helper.select_lan_ipv4(prefer_vpn=False)",
+                    "    if selected_lan_ip is not None:",
                     "        # ip, iface = res",
                     "        # print(f\"Selected IP: {ip} on interface: {iface}\")",
-                    "        print(f\"LAN IPv4: {res}\")",
+                    "        print(f\"LAN IPv4: {selected_lan_ip}\")",
                     "    else:",
                     "        print(\"No network interfaces found.\")"
                   ],

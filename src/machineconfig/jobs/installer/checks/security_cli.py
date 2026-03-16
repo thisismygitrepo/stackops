@@ -20,8 +20,11 @@ def _console() -> Console:
     return Console()
 
 
-def _parse_apps_csv(apps_csv: str) -> list[str]:
-    return [name.strip() for name in apps_csv.split(",") if name.strip()]
+# def _parse_apps_csv(apps_csv: str | None) -> list[str] | None:
+#     if apps_csv is None:
+#         return None
+#     app_names = [name.strip() for name in apps_csv.split(",") if name.strip()]
+#     return app_names or None
 
 
 def _parse_positive_pct(value: str | None) -> float | None:
@@ -59,21 +62,16 @@ def _to_app_data_list(rows: list[dict[str, object]]) -> list[AppData]:
     return app_data_list
 
 
-def scan_all() -> None:
-    def func() -> None:
+def scan_apps(
+    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to scan")] = None,
+) -> None:
+    def func(apps__: str | None) -> None:
         from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports
-        scan_and_write_reports(None)
-    from machineconfig.utils.code import run_lambda_function
-    run_lambda_function(lambda: func(), uv_with=["vt-py"], uv_project_dir=None)
-
-
-def scan_apps(apps: Annotated[str, typer.Argument(..., help="Comma-separated app names to scan")]) -> None:
-    def func() -> None:
-        from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports
-        app_names = _parse_apps_csv(apps)
+        # app_names = _parse_apps_csv(apps__)
+        app_names = [name.strip() for name in apps__.split(",")] if apps__ else None
         scan_and_write_reports(app_names)
     from machineconfig.utils.code import run_lambda_function
-    run_lambda_function(lambda: func(), uv_with=["vt-py"], uv_project_dir=None)
+    run_lambda_function(lambda: func(apps__=apps), uv_with=["vt-py"], uv_project_dir=None)
 
 
 def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Table:
@@ -87,16 +85,13 @@ def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Ta
     return table
 
 
-def list_all() -> None:
-    from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan
-    apps_to_scan = collect_apps_to_scan(None)
-    _console().print(_build_apps_table(apps_to_scan))
-
-
-def list_apps(apps: Annotated[str, typer.Argument(..., help="Comma-separated app names to list")]) -> None:
+def list_apps(
+    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None,
+) -> None:
     from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan
 
-    app_names = _parse_apps_csv(apps)
+    # app_names = _parse_apps_csv(apps)
+    app_names = [name.strip() for name in apps.split(",")] if apps else None
     apps_to_scan = collect_apps_to_scan(app_names)
     _console().print(_build_apps_table(apps_to_scan))
 
@@ -177,10 +172,8 @@ def get_app() -> typer.Typer:
         add_completion=False,
     )
 
-    app.command(name="scan-all", help="Scan all installed apps and generate reports")(scan_all)
-    app.command(name="scan", help="Scan comma-separated app names and generate reports")(scan_apps)
-    app.command(name="list-all", help="List all installed apps")(list_all)
-    app.command(name="list", help="List comma-separated app names")(list_apps)
+    app.command(name="scan", help="Scan installed apps, optionally filtered by comma-separated app names")(scan_apps)
+    app.command(name="list", help="List installed apps, optionally filtered by comma-separated app names")(list_apps)
     app.command(name="upload", help="Upload a local file to cloud storage")(upload)
     app.command(name="download", help="Download a file from Google Drive")(download)
     app.command(name="install", help="Install safe apps from summary report")(install)

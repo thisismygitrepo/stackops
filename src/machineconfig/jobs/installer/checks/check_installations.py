@@ -10,11 +10,12 @@ import csv
 import platform
 from datetime import datetime
 from pathlib import Path
-from rich.console import Console
+from rich.console import Console, Group, RenderableType
+from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
 from machineconfig.jobs.installer.checks.install_utils import upload_app
-from machineconfig.jobs.installer.checks.report_utils import AppData, generate_markdown_report
+from machineconfig.jobs.installer.checks.report_utils import AppData, build_latest_scan_panel, generate_markdown_report
 from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file
 from machineconfig.utils.installer_utils.installer_runner import get_installed_cli_apps
 from machineconfig.utils.path_extended import PathExtended
@@ -53,27 +54,36 @@ def collect_apps_to_scan(app_names: list[str] | None) -> list[tuple[PathExtended
     return apps_to_scan
 
 
+def _build_scan_progress_renderable(progress: Progress, last_scanned: AppData | None, completed_count: int, total_count: int) -> RenderableType:
+    return Group(progress, build_latest_scan_panel(last_scanned, completed_count, total_count))
+
+
 def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> list[AppData]:
     app_data_list: list[AppData] = []
     if not apps_to_scan:
         return app_data_list
     try:
         client = get_vt_client()
-        with Progress(
+        progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             console=console,
-        ) as progress:
-            scan_task = progress.add_task("[cyan]Scanning apps...", total=len(apps_to_scan))
-            for app_path, version in apps_to_scan:
-                progress.update(scan_task, description=f"Scanning {app_path.name}...")
-                positive_pct, _ = scan_file(app_path, client, progress, scan_task)
-                progress.update(scan_task, description=f"Uploading {app_path.name}...")
-                app_url = upload_app(app_path) or ""
-                app_data_list.append(
-                    {
+        )
+        scan_task = progress.add_task("[cyan]Scanning apps...", total=len(apps_to_scan))
+        last_scanned: AppData | None = None
+        with Live(_build_scan_progress_renderable(progress, last_scanned, 0, len(apps_to_scan)), console=console, refresh_per_second=8) as live:
+            progress.start()
+            try:
+                for app_path, version in apps_to_scan:
+                    progress.update(scan_task, description=f"Scanning {app_path.name}...")
+                    live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+                    positive_pct, _ = scan_file(app_path, client, progress, scan_task)
+                    progress.update(scan_task, description=f"Uploading {app_path.name}...")
+                    live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+                    app_url = upload_app(app_path) or ""
+                    last_scanned = {
                         "app_name": app_path.stem,
                         "version": version,
                         "positive_pct": positive_pct,
@@ -81,8 +91,11 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> li
                         "app_path": app_path.collapseuser(strict=False).as_posix(),
                         "app_url": app_url,
                     }
-                )
-                progress.advance(scan_task)
+                    app_data_list.append(last_scanned)
+                    progress.advance(scan_task)
+                    live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+            finally:
+                progress.stop()
     except FileNotFoundError as e:
         console.print(f"[bold red]{e}[/bold red]")
         console.print("[yellow]Skipping scanning due to missing credentials.[/yellow]")

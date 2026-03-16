@@ -11,6 +11,7 @@ from typing import TypedDict
 from rich.console import Console
 from rich import box
 from rich.style import Style
+from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
@@ -59,6 +60,44 @@ def _build_safety_cell(positive_pct: float | None) -> Text:
     if positive_pct < 5.0:
         return Text(f"Review {positive_pct:.1f}%", style="bold yellow")
     return Text(f"Flagged {positive_pct:.1f}%", style="bold red")
+
+
+def _build_latest_scan_border_style(positive_pct: float | None) -> str:
+    if positive_pct is None:
+        return "yellow"
+    if positive_pct == 0.0:
+        return "green"
+    if positive_pct < 5.0:
+        return "yellow"
+    return "red"
+
+
+def build_latest_scan_panel(last_scanned: AppData | None, completed_count: int, total_count: int) -> Panel:
+    subtitle = f"{completed_count}/{total_count} complete"
+    if last_scanned is None:
+        return Panel(Text("Waiting for the first completed scan...", style="dim"), title="Latest Scan Result", subtitle=subtitle, border_style="blue", expand=False)
+
+    details = Table.grid(padding=(0, 1), expand=False)
+    details.add_column(style="bold cyan", justify="right", no_wrap=True)
+    details.add_column(overflow="ellipsis", max_width=96)
+    details.add_row("App", _build_app_name_cell(last_scanned["app_name"], last_scanned["app_url"]))
+    details.add_row("Version", Text(last_scanned["version"] or "-"))
+    details.add_row("Safety", _build_safety_cell(last_scanned["positive_pct"]))
+    details.add_row("Scanned", Text(last_scanned["scan_time"], style="dim"))
+    if last_scanned["app_url"]:
+        upload_state = Text("Open uploaded copy", style=Style(color="cyan", underline=True, link=last_scanned["app_url"]))
+    else:
+        upload_state = Text("Upload unavailable", style="bold red")
+    details.add_row("Upload", upload_state)
+    details.add_row("Path", Text(last_scanned["app_path"], style="dim"))
+
+    return Panel(
+        details,
+        title="Latest Scan Result",
+        subtitle=subtitle,
+        border_style=_build_latest_scan_border_style(last_scanned["positive_pct"]),
+        expand=False,
+    )
 
 
 def _build_rich_table(data: list[AppData]) -> Table:
