@@ -1,7 +1,12 @@
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 from unittest.mock import patch
 
 from machineconfig.jobs.installer.checks import check_installations, security_cli, vt_utils
 from machineconfig.utils.path_extended import PathExtended
+
+if TYPE_CHECKING:
+    import vt
 
 
 def test_summarize_scan_results_uses_only_flagging_categories_for_positive_pct() -> None:
@@ -20,6 +25,39 @@ def test_summarize_scan_results_uses_only_flagging_categories_for_positive_pct()
     assert summary["total_engines"] == 5
     assert summary["positive_pct"] == 33.3
     assert summary["notes"] == "Excluded from percentage: 1 timed out, 1 unsupported"
+
+
+def test_scan_file_supports_mapping_results(tmp_path: Path) -> None:
+    class FakeAnalysis:
+        id = "analysis-1"
+
+    class FakeAnalysisResult:
+        status = "completed"
+        results = {
+            "engine-a": {"category": "undetected", "result": None},
+            "engine-b": {"category": "suspicious", "result": "heuristic"},
+        }
+
+    class FakeClient:
+        def scan_file(self, _file_handle: object) -> FakeAnalysis:
+            return FakeAnalysis()
+
+        def get_object(self, _path: str, _analysis_id: str) -> FakeAnalysisResult:
+            return FakeAnalysisResult()
+
+    sample_path = tmp_path / "sample.bin"
+    sample_path.write_bytes(b"test")
+
+    summary, results = vt_utils.scan_file(sample_path, cast("vt.Client", FakeClient()))
+
+    assert summary is not None
+    assert results == [
+        {"category": "undetected", "result": None},
+        {"category": "suspicious", "result": "heuristic"},
+    ]
+    assert summary["flagged_engines"] == 1
+    assert summary["verdict_engines"] == 2
+    assert summary["other_engines"] == 0
 
 
 def test_scan_apps_with_vt_closes_vt_client_session() -> None:

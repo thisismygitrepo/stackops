@@ -6,6 +6,7 @@ This module provides functionality to interact with VirusTotal API.
 """
 
 import time
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
@@ -69,10 +70,16 @@ def _build_empty_scan_summary(notes: str) -> ScanSummary:
 
 
 def _normalize_scan_result(result_item: object) -> ScanResult:
-    category_raw = getattr(result_item, "category", "unknown")
-    result_raw = getattr(result_item, "result", None)
-    category = str(category_raw or "unknown")
-    result = None if result_raw is None else str(result_raw)
+    if isinstance(result_item, Mapping):
+        category_raw = result_item.get("category", "unknown")
+        result_raw = result_item.get("result")
+    else:
+        category_raw = getattr(result_item, "category", "unknown")
+        result_raw = getattr(result_item, "result", None)
+    category_value = getattr(category_raw, "value", category_raw)
+    result_value = getattr(result_raw, "value", result_raw)
+    category = str(category_value or "unknown")
+    result = None if result_value is None else str(result_value)
     return {"category": category, "result": result}
 
 
