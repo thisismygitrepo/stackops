@@ -1,0 +1,43 @@
+{
+  "$schema": "./opencode.schema.json",
+  "share": "disabled",
+  "autoupdate": false,
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "permission": {
+    "*": "ask",
+    "external_directory": "allow",
+    "edit": "allow",
+    "task": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "codesearch": "allow",
+    "bash": {
+      "*": "allow",
+      "git *": "allow"
+    },
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": false
+    },
+    "mcp_everything": {
+      "type": "local",
+      "command": [
+        "bunx",
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "enabled": false
+    }
+  }
+}

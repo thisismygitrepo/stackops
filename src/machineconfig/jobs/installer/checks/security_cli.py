@@ -39,7 +39,19 @@ def _parse_positive_pct(value: str | None) -> float | None:
         return None
 
 
-def _to_app_data_list(rows: list[dict[str, object]]) -> list[AppData]:
+def _parse_int(value: str | None) -> int:
+    if value is None:
+        return 0
+    cleaned = value.strip()
+    if not cleaned:
+        return 0
+    try:
+        return int(cleaned)
+    except ValueError:
+        return 0
+
+
+def to_app_data_list(rows: list[dict[str, object]]) -> list[AppData]:
     app_data_list: list[AppData] = []
     for row in rows:
         app_name = str(row.get("app_name", ""))
@@ -49,11 +61,35 @@ def _to_app_data_list(rows: list[dict[str, object]]) -> list[AppData]:
         scan_time = str(row.get("scan_time", ""))
         app_path = str(row.get("app_path", ""))
         app_url = str(row.get("app_url", ""))
+        flagged_engines = _parse_int(str(row.get("flagged_engines", "")))
+        verdict_engines = _parse_int(str(row.get("verdict_engines", "")))
+        total_engines = _parse_int(str(row.get("total_engines", "")))
+        malicious_engines = _parse_int(str(row.get("malicious_engines", "")))
+        suspicious_engines = _parse_int(str(row.get("suspicious_engines", "")))
+        harmless_engines = _parse_int(str(row.get("harmless_engines", "")))
+        undetected_engines = _parse_int(str(row.get("undetected_engines", "")))
+        unsupported_engines = _parse_int(str(row.get("unsupported_engines", "")))
+        timeout_engines = _parse_int(str(row.get("timeout_engines", "")))
+        failure_engines = _parse_int(str(row.get("failure_engines", "")))
+        other_engines = _parse_int(str(row.get("other_engines", "")))
+        notes = str(row.get("notes", ""))
         app_data_list.append(
             {
                 "app_name": app_name,
                 "version": version,
                 "positive_pct": positive_pct,
+                "flagged_engines": flagged_engines,
+                "verdict_engines": verdict_engines,
+                "total_engines": total_engines,
+                "malicious_engines": malicious_engines,
+                "suspicious_engines": suspicious_engines,
+                "harmless_engines": harmless_engines,
+                "undetected_engines": undetected_engines,
+                "unsupported_engines": unsupported_engines,
+                "timeout_engines": timeout_engines,
+                "failure_engines": failure_engines,
+                "other_engines": other_engines,
+                "notes": notes,
                 "scan_time": scan_time,
                 "app_path": app_path,
                 "app_url": app_url,
@@ -126,12 +162,38 @@ def summary() -> None:
     rows = load_summary_report()
     if not rows:
         raise typer.Exit(code=1)
-    app_data_list = _to_app_data_list(rows)
-    scanned = [row for row in app_data_list if row.get("positive_pct") is not None]
-    clean = [row for row in scanned if row.get("positive_pct") == 0.0]
+    app_data_list = to_app_data_list(rows)
+    scanned: list[AppData] = []
+    clean: list[AppData] = []
+    review: list[AppData] = []
+    flagged: list[AppData] = []
+    no_verdict: list[AppData] = []
+    for row in app_data_list:
+        positive_pct = row["positive_pct"]
+        if positive_pct is None:
+            continue
+        scanned.append(row)
+        if row["verdict_engines"] == 0:
+            no_verdict.append(row)
+            continue
+        if positive_pct == 0.0:
+            clean.append(row)
+        elif positive_pct < 5.0:
+            review.append(row)
+        else:
+            flagged.append(row)
+    total_engines = sum(row.get("total_engines", 0) for row in app_data_list)
+    verdict_engines = sum(row.get("verdict_engines", 0) for row in app_data_list)
+    flagged_engines = sum(row.get("flagged_engines", 0) for row in app_data_list)
     _console().print(f"Apps in report: {len(app_data_list)}")
     _console().print(f"Scanned: {len(scanned)}")
-    _console().print(f"Clean (0%): {len(clean)}")
+    _console().print(f"Clean: {len(clean)}")
+    _console().print(f"Review (<5%): {len(review)}")
+    _console().print(f"Flagged (>=5%): {len(flagged)}")
+    _console().print(f"No verdicts: {len(no_verdict)}")
+    _console().print(f"Engines: {total_engines}")
+    _console().print(f"Verdict engines: {verdict_engines}")
+    _console().print(f"Flagged engines: {flagged_engines}")
     _console().print(f"Report CSV: {APP_SUMMARY_PATH.with_suffix('.csv')}")
     _console().print(f"Report MD: {APP_SUMMARY_PATH.with_suffix('.md')}")
 
@@ -144,7 +206,7 @@ def report() -> None:
     rows = load_summary_report()
     if not rows:
         raise typer.Exit(code=1)
-    app_data_list = _to_app_data_list(rows)
+    app_data_list = to_app_data_list(rows)
     md_path = APP_SUMMARY_PATH.with_suffix(".md")
     generate_markdown_report(app_data_list, md_path)
     _console().print(f"Markdown report saved to: {md_path}")
@@ -155,12 +217,21 @@ def scan_path(path: Annotated[Path, typer.Argument(..., help="Path to a file to 
     from machineconfig.utils.path_extended import PathExtended
 
     try:
-        client = get_vt_client()
+        with get_vt_client() as client:
+            scan_summary, _ = scan_file(PathExtended(path), client)
     except FileNotFoundError as e:
         _console().print(f"[bold red]{e}[/bold red]")
         raise typer.Exit(code=1)
-    positive_pct, _ = scan_file(PathExtended(path), client)
-    _console().print(f"{path.name}: {positive_pct}% positives")
+    if scan_summary is None:
+        raise typer.Exit(code=1)
+    _console().print(
+        f"{path.name}: {scan_summary['flagged_engines']}/{scan_summary['verdict_engines']} flagged "
+        f"({scan_summary['positive_pct']:.1f}%) | "
+        f"M:{scan_summary['malicious_engines']} S:{scan_summary['suspicious_engines']} "
+        f"H:{scan_summary['harmless_engines']} U:{scan_summary['undetected_engines']}"
+    )
+    if scan_summary["notes"]:
+        _console().print(f"Notes: {scan_summary['notes']}")
 
 
 def get_app() -> typer.Typer:

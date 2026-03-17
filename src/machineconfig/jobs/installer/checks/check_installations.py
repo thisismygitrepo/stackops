@@ -16,7 +16,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
 from machineconfig.jobs.installer.checks.install_utils import upload_app
 from machineconfig.jobs.installer.checks.report_utils import AppData, build_latest_scan_panel, generate_markdown_report
-from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file
+from machineconfig.jobs.installer.checks.vt_utils import ScanSummary, get_vt_client, scan_file
 from machineconfig.utils.installer_utils.installer_runner import get_installed_cli_apps
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, INSTALL_VERSION_ROOT
@@ -58,12 +58,56 @@ def _build_scan_progress_renderable(progress: Progress, last_scanned: AppData | 
     return Group(progress, build_latest_scan_panel(last_scanned, completed_count, total_count))
 
 
+def _build_app_data(
+    app_path: PathExtended,
+    version: str | None,
+    scan_time: str,
+    app_url: str,
+    scan_summary: ScanSummary | None,
+    fallback_notes: str,
+) -> AppData:
+    app_data: AppData = {
+        "app_name": app_path.stem,
+        "version": version,
+        "positive_pct": None,
+        "flagged_engines": 0,
+        "verdict_engines": 0,
+        "total_engines": 0,
+        "malicious_engines": 0,
+        "suspicious_engines": 0,
+        "harmless_engines": 0,
+        "undetected_engines": 0,
+        "unsupported_engines": 0,
+        "timeout_engines": 0,
+        "failure_engines": 0,
+        "other_engines": 0,
+        "notes": fallback_notes,
+        "scan_time": scan_time,
+        "app_path": app_path.collapseuser(strict=False).as_posix(),
+        "app_url": app_url,
+    }
+    if scan_summary is not None:
+        app_data["positive_pct"] = scan_summary["positive_pct"]
+        app_data["flagged_engines"] = scan_summary["flagged_engines"]
+        app_data["verdict_engines"] = scan_summary["verdict_engines"]
+        app_data["total_engines"] = scan_summary["total_engines"]
+        app_data["malicious_engines"] = scan_summary["malicious_engines"]
+        app_data["suspicious_engines"] = scan_summary["suspicious_engines"]
+        app_data["harmless_engines"] = scan_summary["harmless_engines"]
+        app_data["undetected_engines"] = scan_summary["undetected_engines"]
+        app_data["unsupported_engines"] = scan_summary["unsupported_engines"]
+        app_data["timeout_engines"] = scan_summary["timeout_engines"]
+        app_data["failure_engines"] = scan_summary["failure_engines"]
+        app_data["other_engines"] = scan_summary["other_engines"]
+        app_data["notes"] = scan_summary["notes"]
+    return app_data
+
+
 def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> list[AppData]:
     app_data_list: list[AppData] = []
     if not apps_to_scan:
         return app_data_list
     try:
-        client = get_vt_client()
         progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -76,24 +120,26 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> li
         with Live(_build_scan_progress_renderable(progress, last_scanned, 0, len(apps_to_scan)), console=console, refresh_per_second=8) as live:
             progress.start()
             try:
-                for app_path, version in apps_to_scan:
-                    progress.update(scan_task, description=f"Scanning {app_path.name}...")
-                    live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
-                    positive_pct, _ = scan_file(app_path, client, progress, scan_task)
-                    progress.update(scan_task, description=f"Uploading {app_path.name}...")
-                    live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
-                    app_url = upload_app(app_path) or ""
-                    last_scanned = {
-                        "app_name": app_path.stem,
-                        "version": version,
-                        "positive_pct": positive_pct,
-                        "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        "app_path": app_path.collapseuser(strict=False).as_posix(),
-                        "app_url": app_url,
-                    }
-                    app_data_list.append(last_scanned)
-                    progress.advance(scan_task)
-                    live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+                with get_vt_client() as client:
+                    for app_path, version in apps_to_scan:
+                        progress.update(scan_task, description=f"Scanning {app_path.name}...")
+                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+                        scan_summary, _ = scan_file(app_path, client, progress, scan_task)
+                        progress.update(scan_task, description=f"Uploading {app_path.name}...")
+                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+                        app_url = upload_app(app_path) or ""
+                        scan_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+                        last_scanned = _build_app_data(
+                            app_path=app_path,
+                            version=version,
+                            scan_time=scan_time,
+                            app_url=app_url,
+                            scan_summary=scan_summary,
+                            fallback_notes="VirusTotal scan failed or returned no summary.",
+                        )
+                        app_data_list.append(last_scanned)
+                        progress.advance(scan_task)
+                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
             finally:
                 progress.stop()
     except FileNotFoundError as e:
@@ -101,14 +147,14 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> li
         console.print("[yellow]Skipping scanning due to missing credentials.[/yellow]")
         for app_path, version in apps_to_scan:
             app_data_list.append(
-                {
-                    "app_name": app_path.stem,
-                    "version": version,
-                    "positive_pct": None,
-                    "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    "app_path": app_path.collapseuser(strict=False).as_posix(),
-                    "app_url": "",
-                }
+                _build_app_data(
+                    app_path=app_path,
+                    version=version,
+                    scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    app_url="",
+                    scan_summary=None,
+                    fallback_notes="VirusTotal credentials missing.",
+                )
             )
     except Exception as e:
         console.print(f"[bold red]An unexpected error occurred during scanning: {e}[/bold red]")
