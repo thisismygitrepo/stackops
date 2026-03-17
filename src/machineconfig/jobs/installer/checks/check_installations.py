@@ -108,7 +108,7 @@ def _build_app_data(
     return app_data
 
 
-def _build_scan_record(
+def build_scan_record(
     app_path: PathExtended,
     version: str | None,
     scan_time: str,
@@ -158,7 +158,7 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> li
                         live.update(_build_scan_progress_renderable(progress, last_scanned, len(scan_records), len(apps_to_scan)))
                         app_url = upload_app(app_path) or ""
                         scan_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-                        scan_record = _build_scan_record(
+                        scan_record = build_scan_record(
                             app_path=app_path,
                             version=version,
                             scan_time=scan_time,
@@ -178,7 +178,7 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> li
         console.print("[yellow]Skipping scanning due to missing credentials.[/yellow]")
         for app_path, version in apps_to_scan:
             scan_records.append(
-                _build_scan_record(
+                build_scan_record(
                     app_path=app_path,
                     version=version,
                     scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -210,18 +210,25 @@ def write_reports(scan_records: list[ScannedAppRecord]) -> tuple[Path, Path]:
     return APP_METADATA_PATH, ENGINE_RESULTS_PATH
 
 
-def scan_and_write_reports(app_names: list[str] | None) -> list[AppData]:
+def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool) -> list[AppData]:
     console.rule("[bold blue]MachineConfig Installation Checker[/bold blue]")
     apps_to_scan = collect_apps_to_scan(app_names)
     console.print(f"[green]Found {len(apps_to_scan)} applications to check.[/green]")
     scan_records = scan_apps_with_vt(apps_to_scan)
     app_data_list = _extract_app_data(scan_records)
     if app_data_list:
-        app_metadata_csv_path, engine_csv_path = write_reports(scan_records)
         console.print(build_summary_group(app_data_list))
-        console.print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
-        console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
+        if write_reports_to_repo:
+            app_metadata_csv_path, engine_csv_path = write_reports(scan_records)
+            console.print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
+            console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
+        else:
+            console.print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
     return app_data_list
+
+
+def scan_and_write_reports(app_names: list[str] | None) -> list[AppData]:
+    return scan_installed_apps(app_names, write_reports_to_repo=True)
 
 
 def main() -> None:

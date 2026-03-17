@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 from functools import cache
 from io import StringIO
 from pathlib import Path
@@ -6,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
-from machineconfig.jobs.installer.checks.vt_utils import summarize_scan_results
+from machineconfig.jobs.installer.checks.vt_utils import ScanSummary, summarize_scan_results
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -296,15 +297,93 @@ def _resolve_report_view(view: ReportView | None, summarize: bool) -> ReportView
     return "app-summary" if summarize else "engines"
 
 
-def scan_apps(
+def _resolve_record_results(record: bool | None, path: Path | None) -> bool:
+    if record is not None:
+        return record
+    return path is None
+
+
+def _print_scan_summary(path: Path, scan_summary: ScanSummary) -> None:
+    _console().print(
+        f"{path.name}: {scan_summary['flagged_engines']}/{scan_summary['verdict_engines']} flagged "
+        f"({scan_summary['positive_pct']:.1f}%) | "
+        f"M:{scan_summary['malicious_engines']} S:{scan_summary['suspicious_engines']} "
+        f"H:{scan_summary['harmless_engines']} U:{scan_summary['undetected_engines']}"
+    )
+    notes = str(scan_summary["notes"])
+    if notes:
+        _console().print(f"Notes: {notes}")
+
+
+def _scan_installed_apps(apps: str | None, record: bool) -> None:
+    from machineconfig.jobs.installer.checks.check_installations import scan_installed_apps
+
+    app_names = _parse_apps_argument(apps)
+    scan_installed_apps(app_names, write_reports_to_repo=record)
+
+
+def _scan_single_path(path: Path, record: bool) -> None:
+    from machineconfig.jobs.installer.checks.check_installations import build_scan_record, write_reports
+    from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file
+    from machineconfig.utils.path_extended import PathExtended
+
+    path_extended = PathExtended(path)
+    try:
+        with get_vt_client() as client:
+            scan_summary, scan_results = scan_file(path_extended, client)
+    except FileNotFoundError as e:
+        _console().print(f"[bold red]{e}[/bold red]")
+        raise typer.Exit(code=1) from e
+    if scan_summary is None:
+        raise typer.Exit(code=1)
+
+    _print_scan_summary(path_extended, scan_summary)
+    if not record:
+        _console().print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
+        return
+
+    scan_record = build_scan_record(
+        app_path=path_extended,
+        version=None,
+        scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        app_url="",
+        scan_summary=scan_summary,
+        scan_results=scan_results,
+        fallback_notes="VirusTotal scan failed or returned no summary.",
+    )
+    app_metadata_csv_path, engine_csv_path = write_reports([scan_record])
+    _console().print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
+    _console().print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
+
+
+def run_scan(apps: str | None, path: Path | None, record: bool | None) -> None:
+    if apps is not None and path is not None:
+        raise typer.BadParameter("Use either APPS or --path, not both.")
+    resolved_record = _resolve_record_results(record, path)
+    if path is not None:
+        _scan_single_path(path, resolved_record)
+        return
+    _scan_installed_apps(apps, resolved_record)
+
+
+def scan(
     apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to scan")] = None,
+    path: Annotated[
+        Path | None,
+        typer.Option("--path", help="Optional file path to scan instead of installed apps", exists=True, file_okay=True, dir_okay=False, resolve_path=True),
+    ] = None,
+    record: Annotated[
+        bool | None,
+        typer.Option(
+            "--record/--no-record",
+            help="Write scan results to the saved repo reports. Defaults to enabled for installed-app scans and disabled for --path scans.",
+        ),
+    ] = None,
 ) -> None:
-    def func(apps__: str | None) -> None:
-        from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports
-        apps_names = _parse_apps_argument(apps__)
-        scan_and_write_reports(apps_names)
+    def func(apps__: str | None, path__: Path | None, record__: bool | None) -> None:
+        run_scan(apps=apps__, path=path__, record=record__)
     from machineconfig.utils.code import run_lambda_function
-    run_lambda_function(lambda: func(apps__=apps), uv_with=["vt-py"], uv_project_dir=None)
+    run_lambda_function(lambda: func(apps__=apps, path__=path, record__=record), uv_with=["vt-py"], uv_project_dir=None)
 
 
 def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Table:
@@ -406,30 +485,6 @@ def report(
         _console().print(_render_csv_text(engine_rows, ENGINE_REPORT_KEYS))
         return
     _console().print(build_engine_results_table(hydrated_engine_rows))
-
-
-def scan_path(path: Annotated[Path, typer.Argument(..., help="Path to a file to scan")]) -> None:
-    from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file
-    from machineconfig.utils.path_extended import PathExtended
-
-    try:
-        with get_vt_client() as client:
-            scan_summary, _ = scan_file(PathExtended(path), client)
-    except FileNotFoundError as e:
-        _console().print(f"[bold red]{e}[/bold red]")
-        raise typer.Exit(code=1)
-    if scan_summary is None:
-        raise typer.Exit(code=1)
-    _console().print(
-        f"{path.name}: {scan_summary['flagged_engines']}/{scan_summary['verdict_engines']} flagged "
-        f"({scan_summary['positive_pct']:.1f}%) | "
-        f"M:{scan_summary['malicious_engines']} S:{scan_summary['suspicious_engines']} "
-        f"H:{scan_summary['harmless_engines']} U:{scan_summary['undetected_engines']}"
-    )
-    if scan_summary["notes"]:
-        _console().print(f"Notes: {scan_summary['notes']}")
-
-
 def get_app() -> typer.Typer:
     app = typer.Typer(
         name="security-cli",
@@ -439,13 +494,12 @@ def get_app() -> typer.Typer:
         add_completion=False,
     )
 
-    app.command(name="scan", help="Scan installed apps, optionally filtered by comma-separated app names")(scan_apps)
+    app.command(name="scan", help="Scan installed apps or a single file path with VirusTotal")(scan)
     app.command(name="list", help="List installed apps, optionally filtered by comma-separated app names")(list_apps)
     app.command(name="upload", help="Upload a local file to cloud storage")(upload)
     app.command(name="download", help="Download a file from Google Drive")(download)
     app.command(name="install", help="Install safe apps from app metadata report")(install)
     app.command(name="summary", hidden=True)(summary)
     app.command(name="report", help="Show saved scan results, CSV rows, or summary stats")(report)
-    app.command(name="scan-path", help="Scan a single file path with VirusTotal")(scan_path)
 
     return app

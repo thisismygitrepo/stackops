@@ -83,8 +83,7 @@ devops
 │     ├─ download
 │     ├─ install
 │     ├─ summary
-│     ├─ report
-│     └─ scan-path
+│     └─ report
 ├─ network
 │  ├─ share-terminal
 │  ├─ share-server

@@ -328,6 +328,8 @@ def test_security_cli_help_shows_report_and_hides_legacy_summary_command() -> No
 
     assert result.exit_code == 0
     assert "Show saved scan results, CSV rows, or summary stats" in result.stdout
+    assert "Scan installed apps or a single file path with VirusTotal" in result.stdout
+    assert "scan-path" not in result.stdout
     assert "Show summary statistics for the last report" not in result.stdout
 
 
@@ -342,3 +344,147 @@ def test_security_cli_report_help_shows_view_choices() -> None:
     assert "apps" in result.stdout
     assert "engines" in result.stdout
     assert "stats" in result.stdout
+
+
+def test_security_cli_scan_help_shows_path_and_record_options() -> None:
+    runner = CliRunner()
+    result = runner.invoke(security_cli.get_app(), ["scan", "--help"])
+
+    assert result.exit_code == 0
+    assert "--path" in result.stdout
+    assert "--record" in result.stdout
+    assert "--no-record" in result.stdout
+    assert "installed-app scans" in result.stdout
+    assert "disabled for --path" in result.stdout
+
+
+def test_scan_impl_rejects_apps_and_path_together(tmp_path: Path) -> None:
+    sample_path = tmp_path / "sample.bin"
+    sample_path.write_bytes(b"test")
+
+    try:
+        security_cli.run_scan(apps="zellij", path=sample_path, record=None)
+    except Exception as exc:
+        assert isinstance(exc, security_cli.typer.BadParameter)
+        assert "Use either APPS or --path, not both." in str(exc)
+    else:
+        raise AssertionError("Expected BadParameter when APPS and --path are both provided.")
+
+
+def test_scan_impl_path_defaults_to_not_writing_reports(tmp_path: Path) -> None:
+    fake_console = FakeConsole()
+
+    class FakeClientContext:
+        def __enter__(self) -> object:
+            return object()
+
+        def __exit__(self, _exc_type: object, _exc: object, _tb: object) -> None:
+            return None
+
+    sample_path = tmp_path / "sample.bin"
+    sample_path.write_bytes(b"test")
+    scan_summary: vt_utils.ScanSummary = {
+        "positive_pct": 0.0,
+        "total_engines": 2,
+        "verdict_engines": 2,
+        "flagged_engines": 0,
+        "malicious_engines": 0,
+        "suspicious_engines": 0,
+        "harmless_engines": 1,
+        "undetected_engines": 1,
+        "unsupported_engines": 0,
+        "timeout_engines": 0,
+        "failure_engines": 0,
+        "other_engines": 0,
+        "notes": "All reporting engines returned a verdict.",
+    }
+
+    with (
+        patch.object(security_cli, "_console", return_value=fake_console),
+        patch("machineconfig.jobs.installer.checks.vt_utils.get_vt_client", return_value=FakeClientContext()),
+        patch("machineconfig.jobs.installer.checks.vt_utils.scan_file", return_value=(scan_summary, [])),
+        patch("machineconfig.jobs.installer.checks.check_installations.write_reports") as write_reports_mock,
+    ):
+        security_cli.run_scan(apps=None, path=sample_path, record=None)
+
+    write_reports_mock.assert_not_called()
+    output = "\n".join(str(renderable) for renderable in fake_console.renderables)
+    assert "sample.bin: 0/2 flagged (0.0%)" in output
+    assert "Scan results were not saved to the repo reports." in output
+
+
+def test_scan_impl_path_records_results_when_requested(tmp_path: Path) -> None:
+    fake_console = FakeConsole()
+
+    class FakeClientContext:
+        def __enter__(self) -> object:
+            return object()
+
+        def __exit__(self, _exc_type: object, _exc: object, _tb: object) -> None:
+            return None
+
+    sample_path = tmp_path / "sample.bin"
+    sample_path.write_bytes(b"test")
+    scan_summary: vt_utils.ScanSummary = {
+        "positive_pct": 50.0,
+        "total_engines": 2,
+        "verdict_engines": 2,
+        "flagged_engines": 1,
+        "malicious_engines": 1,
+        "suspicious_engines": 0,
+        "harmless_engines": 1,
+        "undetected_engines": 0,
+        "unsupported_engines": 0,
+        "timeout_engines": 0,
+        "failure_engines": 0,
+        "other_engines": 0,
+        "notes": "All reporting engines returned a verdict.",
+    }
+    scan_record: ScannedAppRecord = {
+        "app_data": {
+            "app_name": "sample",
+            "version": None,
+            "positive_pct": 50.0,
+            "flagged_engines": 1,
+            "verdict_engines": 2,
+            "total_engines": 2,
+            "malicious_engines": 1,
+            "suspicious_engines": 0,
+            "harmless_engines": 1,
+            "undetected_engines": 0,
+            "unsupported_engines": 0,
+            "timeout_engines": 0,
+            "failure_engines": 0,
+            "other_engines": 0,
+            "notes": "All reporting engines returned a verdict.",
+            "scan_time": "2026-03-17 07:35",
+            "app_path": str(sample_path),
+            "app_url": "",
+        },
+        "engine_results": [{"app_name": "sample", "engine_name": "engine-a", "engine_category": "malicious", "engine_result": "test"}],
+    }
+
+    with (
+        patch.object(security_cli, "_console", return_value=fake_console),
+        patch("machineconfig.jobs.installer.checks.vt_utils.get_vt_client", return_value=FakeClientContext()),
+        patch("machineconfig.jobs.installer.checks.vt_utils.scan_file", return_value=(scan_summary, [])),
+        patch("machineconfig.jobs.installer.checks.check_installations.build_scan_record", return_value=scan_record) as build_scan_record_mock,
+        patch(
+            "machineconfig.jobs.installer.checks.check_installations.write_reports",
+            return_value=(Path("/tmp/apps_metadata_report.csv"), Path("/tmp/apps_engine_results_report.csv")),
+        ) as write_reports_mock,
+    ):
+        security_cli.run_scan(apps=None, path=sample_path, record=True)
+
+    build_scan_record_mock.assert_called_once()
+    write_reports_mock.assert_called_once_with([scan_record])
+    output = "\n".join(str(renderable) for renderable in fake_console.renderables)
+    assert "App metadata CSV report saved to: /tmp/apps_metadata_report.csv" in output
+    assert "Engine CSV report saved to: /tmp/apps_engine_results_report.csv" in output
+
+
+def test_scan_impl_routes_installed_app_record_flag() -> None:
+    with patch("machineconfig.jobs.installer.checks.check_installations.scan_installed_apps") as scan_installed_apps_mock:
+        security_cli.run_scan(apps="zellij,bat", path=None, record=False)
+
+    scan_installed_apps_mock.assert_called_once_with(["zellij", "bat"], write_reports_to_repo=False)
