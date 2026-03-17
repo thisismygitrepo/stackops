@@ -83,15 +83,6 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
                 crush_settings_target_repo.write_text(crush_settings_source.read_text())
 
     try:
-        from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.opencode.opencode_privacy import apply_opencode_privacy
-
-        apply_opencode_privacy(scope="global")
-        if repo_root:
-            apply_opencode_privacy(scope="repo", repo_path=repo_root)
-    except Exception as e:
-        print(f"Failed to apply opencode privacy settings: {e}")
-
-    try:
         secure_mods_config()
     except Exception:
         pass
