@@ -1,6 +1,8 @@
 # mcfg
 
-The main entry point for Machineconfig operations.
+`mcfg` is the compatibility and umbrella entrypoint for Machineconfig. It is not the old monolithic command tree documented in earlier versions.
+
+`machineconfig` points to the same dispatcher.
 
 ---
 
@@ -10,113 +12,53 @@ The main entry point for Machineconfig operations.
 mcfg [OPTIONS] COMMAND [ARGS]...
 ```
 
----
-
-## Commands
-
-### shell
-
-Configure shell profile with aliases and integrations.
-
-```bash
-mcfg shell [OPTIONS]
-```
-
-**Options:**
-
-| Option | Description |
-|--------|-------------|
-| `--shell` | Target shell (bash, zsh, fish, nu, pwsh) |
-| `--backup` | Backup existing config first |
+The current help surface is intentionally shallow: `mcfg` routes you into the main app families, and those families own the detailed subcommands.
 
 ---
 
-### config
+## Available commands
 
-Apply configuration for various tools.
+Current `mcfg --help` exposes:
 
-```bash
-mcfg config [TOOL] [OPTIONS]
-```
+| Command | Purpose |
+|---------|---------|
+| `devops` | DevOps-related commands |
+| `cloud` | Cloud management commands |
+| `sessions` | Session and layout management |
+| `agents` | AI agent management commands |
+| `utils` | Utility commands |
+| `fire` | Fire and manage jobs |
+| `croshell` | Cross-shell command execution |
 
-**Supported Tools:**
-
-- `helix` - Helix editor
-- `alacritty` - Alacritty terminal
-- `wezterm` - WezTerm terminal
-- `vscode` - Visual Studio Code
-- `lvim` - LunarVim
-
-**Example:**
-
-```bash
-mcfg config helix
-```
+`msearch` remains available as a direct entrypoint, but it is invoked separately as `msearch`, not through `mcfg --help`.
 
 ---
 
-### dotfiles
+## How to use it
 
-Manage dotfiles synchronization.
+Use `mcfg` when you want a single compatibility command:
 
 ```bash
-mcfg dotfiles [SUBCOMMAND]
+mcfg devops --help
+mcfg devops config shell --help
+mcfg cloud --help
+mcfg sessions --help
 ```
 
-**Subcommands:**
+Or call the direct entrypoints instead:
 
-| Subcommand | Description |
-|------------|-------------|
-| `init` | Initialize dotfiles repository |
-| `sync` | Sync dotfiles from repository |
-| `push` | Push local changes to repository |
-| `backup` | Backup current dotfiles |
-| `restore` | Restore from backup |
+```bash
+devops --help
+cloud --help
+sessions --help
+```
+
+Both `mcfg ...` and `machineconfig ...` dispatch to the same current app surface.
 
 ---
 
-### define
+## Notes
 
-Generate installation scripts for new machines.
-
-```bash
-mcfg define [OPTIONS]
-```
-
-Outputs a script that can bootstrap machineconfig on a new machine.
-
----
-
-### links
-
-Manage symbolic links for configuration files.
-
-```bash
-mcfg links [SUBCOMMAND]
-```
-
-**Subcommands:**
-
-| Subcommand | Description |
-|------------|-------------|
-| `create` | Create symbolic links |
-| `remove` | Remove symbolic links |
-| `list` | List managed links |
-
----
-
-## Examples
-
-```bash
-# Setup shell with all integrations
-mcfg shell
-
-# Apply helix editor configuration
-mcfg config helix
-
-# Sync dotfiles from repository
-mcfg dotfiles sync
-
-# Create symlinks for configs
-mcfg links create
-```
+- `mcfg` does not currently expose old standalone sections such as `shell`, `config`, `dotfiles`, `define`, or `links`.
+- Configuration and dotfiles workflows now live primarily under `devops config ...`.
+- Data backup and retrieval workflows now live under `devops data ...`.

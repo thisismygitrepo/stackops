@@ -1,82 +1,94 @@
 # User Guide Overview
 
-Welcome to the Machineconfig User Guide. This guide covers all the features and functionality of machineconfig.
+Machineconfig is organized around several direct CLI entrypoints rather than a single giant command tree.
 
 ---
 
-## What is Machineconfig?
+## What Machineconfig covers
 
-Machineconfig is a comprehensive CLI-based stack manager that helps you:
+Machineconfig helps you work with:
 
-- **Manage packages** across different operating systems
-- **Configure systems** with consistent settings
-- **Sync dotfiles** between machines
-- **Automate tasks** and workflows
-- **Handle data** backup and synchronization
-
----
-
-## Core Concepts
-
-### 1. Cross-Platform Consistency
-
-Machineconfig provides a unified interface across Windows, macOS, and Linux. Write your configuration once and deploy it anywhere.
-
-### 2. Stack-Based Approach
-
-Your "stack" includes:
-
-- CLI tools and packages
-- Configuration files (dotfiles)
-- Secrets and credentials
-- Data and backups
-- Code repositories
-
-### 3. Modular Architecture
-
-Each component of machineconfig can be used independently:
-
-- Use just the package manager
-- Use just the dotfiles sync
-- Or use everything together
+- package installation and machine bootstrap
+- shell and tool configuration
+- dotfiles synchronization
+- data backup and retrieval
+- cloud workflows
+- session and automation helpers
 
 ---
 
-## Guide Sections
+## Current command surface
+
+The main commands you will see today are:
+
+- `devops`
+- `cloud`
+- `sessions`
+- `agents`
+- `utils`
+- `fire`
+- `croshell`
+- `msearch`
+
+`mcfg` and `machineconfig` still exist as compatibility entrypoints that dispatch into the main command families.
+
+---
+
+## Core concepts
+
+### 1. Direct entrypoints first
+
+Use the command that matches the workflow you want:
+
+- `devops` for install, config, data, repos, and machine-oriented operations
+- `cloud` for cloud storage workflows
+- `sessions` for layout and session management
+- `msearch` for search workflows
+
+### 2. Shared stack management
+
+Machineconfig treats your working environment as a stack of related assets:
+
+- packages and CLI tools
+- configuration files
+- dotfiles mappings
+- backed-up data
+- repositories and automation helpers
+
+### 3. High-level wrappers still exist
+
+If you already use `mcfg` or `machineconfig`, they still work as umbrella commands, but the detailed command trees now live under direct entrypoints.
+
+---
+
+## Guide sections
 
 | Section | Description |
 |---------|-------------|
-| [Package Management](packages.md) | Install and manage software |
-| [Configuration](configuration.md) | System configuration |
-| [Dotfiles](dotfiles.md) | Manage dotfiles |
-| [Data Sync](data-sync.md) | Backup and sync data |
-| [Automation](automation.md) | Automate workflows |
+| [Package Management](packages.md) | Install software with the current `devops install` workflow |
+| [Configuration](configuration.md) | Manage shell and tool configuration under `devops config` |
+| [Dotfiles](dotfiles.md) | Sync and move dotfiles with current config-oriented workflows |
+| [Data Sync](data-sync.md) | Back up and retrieve data with current data workflows |
+| [Automation](automation.md) | Use sessions, jobs, and helpers |
 
 ---
 
-## Architecture
+## Getting help
 
-```mermaid
-graph TB
-    subgraph "Machineconfig"
-        A[CLI Interface] --> B[Package Manager]
-        A --> C[Config Manager]
-        A --> D[Dotfiles Manager]
-        A --> E[Data Manager]
-        A --> F[Automation]
-    end
-    
-    B --> G[apt/brew/winget/nix]
-    C --> H[System Settings]
-    D --> I[Git/Rclone]
-    E --> J[Cloud Storage]
-    F --> K[Task Scheduler]
+Start with the command family you need:
+
+```bash
+devops --help
+cloud --help
+sessions --help
+msearch --help
 ```
 
----
+If you want the compatibility wrapper instead:
 
-## Getting Help
+```bash
+mcfg --help
+machineconfig --help
+```
 
-- Run `mcfg --help` for command help
-- Check [CLI Reference](../cli/index.md) for detailed command docs
-- Visit [GitHub Issues](https://github.com/thisismygitrepo/machineconfig/issues) for support
+For the current command map, see [CLI Reference](../cli/index.md).

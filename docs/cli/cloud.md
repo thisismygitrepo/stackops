@@ -1,6 +1,6 @@
 # cloud
 
-Cloud provider management and data synchronization.
+`cloud` is the direct entrypoint for cloud sync, copy, mount, and SSH file transfer workflows.
 
 ---
 
@@ -10,174 +10,132 @@ Cloud provider management and data synchronization.
 cloud [OPTIONS] COMMAND [ARGS]...
 ```
 
----
+Current top-level commands:
 
-## Configuration
-
-### config
-
-Configure cloud storage providers.
-
-```bash
-cloud config [PROVIDER]
-```
-
-**Supported Providers:**
-
-- `onedrive` - Microsoft OneDrive
-- `gdrive` - Google Drive
-- `dropbox` - Dropbox
-- `s3` - Amazon S3
-- `azure` - Azure Blob Storage
-- `sftp` - SFTP server
+| Command | Purpose |
+|---------|---------|
+| `sync` | Synchronize files or folders between local and cloud storage |
+| `copy` | Upload or download files and folders |
+| `mount` | Mount configured cloud storage locally |
+| `ftpx` | Transfer files through SSH |
 
 ---
 
-### setup-encrypted
+## sync
 
-Create an encrypted remote for sensitive data.
+Synchronize files or folders between a source and target path.
 
 ```bash
-cloud setup-encrypted NAME [OPTIONS]
+cloud sync [OPTIONS] SOURCE TARGET
 ```
 
-**Options:**
+Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--backend` | Backend remote to encrypt |
-| `--password` | Encryption password |
+| `--config`, `-c` | Path to `.ve.yaml` |
+| `--transfers`, `-t` | Number of transfer threads |
+| `--root`, `-R` | Remote root |
+| `--key`, `-k` | Encryption key |
+| `--pwd`, `-P` | Encryption password |
+| `--encrypt`, `-e` | Decrypt after receiving |
+| `--zip`, `-z` | Unzip after receiving |
+| `--bisync`, `-b` | Bidirectional sync |
+| `--delete`, `-D` | Delete files in remote that are not in local |
+| `--verbose`, `-v` | Show verbose sync details |
+
+Example:
+
+```bash
+cloud sync ~/documents remote:documents --bisync
+```
 
 ---
 
-## Sync Operations
+## copy
 
-### sync
-
-Synchronize files between locations.
+Upload or download files and folders between local and cloud paths.
 
 ```bash
-cloud sync SOURCE DESTINATION [OPTIONS]
+cloud copy [OPTIONS] SOURCE TARGET
 ```
 
-**Options:**
+Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--dry-run` | Preview without changes |
-| `--mirror` | Make destination identical |
-| `--bidirectional` | Two-way sync |
-| `--delete` | Delete extra files in destination |
+| `--overwrite`, `-o` | Overwrite existing file |
+| `--share`, `-s` | Share file or directory |
+| `--relative2home`, `-r` | Treat paths as relative to `myhome` |
+| `--root`, `-R` | Remote root |
+| `--key`, `-k` | Encryption key |
+| `--password`, `-p` | Encryption password |
+| `--encrypt`, `-e` | Encrypt before sending |
+| `--zip`, `-z` | Unzip after receiving |
+| `--os-specific`, `-O` | Choose a path specific to the current OS |
+| `--config`, `-c` | Path to `.ve.yaml` |
 
-**Examples:**
+Example:
 
 ```bash
-# Sync to cloud
-cloud sync ~/documents gdrive:documents
-
-# Mirror a directory
-cloud sync --mirror ~/data backup:data
-
-# Preview sync
-cloud sync --dry-run ~/important remote:backup
+cloud copy ./report.pdf remote:reports/report.pdf
 ```
 
 ---
 
-### backup
+## mount
 
-Create a backup of local data.
+Mount a configured cloud storage target locally.
 
 ```bash
-cloud backup PATH [OPTIONS]
+cloud mount [OPTIONS]
 ```
 
-**Options:**
+Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--destination` | Backup destination |
-| `--compress` | Compress backup |
-| `--encrypt` | Encrypt backup |
+| `--cloud`, `-c` | Cloud to mount |
+| `--destination`, `-d` | Mount destination |
+| `--network`, `-n` | Network mount target |
+| `--backend`, `-b` | Terminal backend on Linux or macOS |
+| `--interactive`, `-i` | Choose the cloud interactively |
 
 ---
 
-### restore
+## ftpx
 
-Restore data from backup.
-
-```bash
-cloud restore SOURCE DESTINATION [OPTIONS]
-```
-
----
-
-## Management
-
-### list
-
-List files in remote storage.
+Transfer files through SSH.
 
 ```bash
-cloud list REMOTE:PATH
+cloud ftpx [OPTIONS] SOURCE TARGET
 ```
 
----
-
-### list-backups
-
-List available backups.
-
-```bash
-cloud list-backups [REMOTE]
-```
-
----
-
-### info
-
-Show information about remote storage.
-
-```bash
-cloud info [REMOTE]
-```
-
----
-
-## Scheduling
-
-### schedule-backup
-
-Set up automatic backups.
-
-```bash
-cloud schedule-backup PATH [OPTIONS]
-```
-
-**Options:**
+Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--interval` | hourly, daily, weekly |
-| `--destination` | Backup destination |
+| `--recursive`, `-r` | Send recursively |
+| `--zipFirst`, `-z` | Zip before sending |
+| `--cloud`, `-c` | Transfer through the cloud |
+| `--overwrite-existing`, `-o` | Overwrite existing remote files when sending local to remote |
+
+Example:
+
+```bash
+cloud ftpx localmachine:/tmp/archive remotehost:/tmp/archive --recursive
+```
 
 ---
 
-## Examples
+## Getting help
+
+Use live help to inspect the exact options available in your installed version:
 
 ```bash
-# Configure OneDrive
-cloud config onedrive
-
-# Sync documents
-cloud sync ~/documents onedrive:documents
-
-# Create encrypted backup
-cloud backup ~/secrets --encrypt --destination encrypted:backup
-
-# Restore from backup
-cloud restore onedrive:backup/2024-01-15 ~/restored
-
-# Schedule daily backup
-cloud schedule-backup ~/important --interval daily
+cloud --help
+cloud sync --help
+cloud copy --help
+cloud mount --help
+cloud ftpx --help
 ```

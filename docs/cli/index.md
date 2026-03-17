@@ -1,106 +1,87 @@
 # CLI Reference
 
-Machineconfig provides several command-line tools for different purposes.
+Machineconfig currently exposes a set of direct CLI entrypoints. For day-to-day use and scripting, prefer those direct commands over older all-in-one command trees.
 
 ---
 
-## Available Commands
+## Direct entrypoints
 
-| Command | Description |
-|---------|-------------|
-| [`mcfg`](mcfg.md) | Main entry point - configuration and setup |
-| [`devops`](devops.md) | DevOps operations and package management |
-| [`cloud`](cloud.md) | Cloud provider and data sync operations |
-| [`sessions`](sessions.md) | Terminal session management |
-| [`fire`](fire.md) | Fire-based job execution |
+These commands are defined in `pyproject.toml` and reflected in the current CLI map:
 
----
-
-## Additional Commands
-
-| Command | Description |
-|---------|-------------|
-| `agents` | AI agent utilities |
-| `croshell` | Cross-shell utilities |
-| `terminal` | Terminal configuration |
-| `msearch` | Search utilities |
-| `utils` | General utilities |
+| Command | Purpose |
+|---------|---------|
+| `devops` | Package installation, configuration, data, repo, network, and self-management workflows |
+| [`cloud`](cloud.md) | Cloud sync, copy, mount, and FTP-over-SSH helpers |
+| [`sessions`](sessions.md) | Session and layout management |
+| [`agents`](agents.md) | AI agent utilities |
+| [`utils`](utils.md) | General-purpose utilities |
+| [`fire`](fire.md) | Fire job runner |
+| `croshell` | Cross-shell execution helper |
+| `msearch` | Search helper entrypoint |
 
 ---
 
-## Getting Help
+## Compatibility entrypoints
 
-Every command supports `--help`:
+`mcfg` and `machineconfig` still exist, but they act as umbrella dispatch commands rather than a full standalone command tree.
+
+| Command | Notes |
+|---------|-------|
+| [`mcfg`](mcfg.md) | Compatibility wrapper that dispatches to the main app families |
+| `machineconfig` | Same dispatcher as `mcfg` |
+
+Today, `mcfg --help` and `machineconfig --help` expose these top-level command groups:
+
+- `devops`
+- `cloud`
+- `sessions`
+- `agents`
+- `utils`
+- `fire`
+- `croshell`
+
+`msearch` is a separate direct entrypoint and is not listed by `mcfg --help`.
+
+---
+
+## Getting help
+
+Use `--help` on the direct command you want to explore:
 
 ```bash
-mcfg --help
 devops --help
-cloud sync --help
+devops install --help
+devops config shell --help
+devops config sync --help
+devops data sync --help
+cloud --help
+sessions --help
+agents --help
+utils --help
+msearch --help
 ```
 
----
-
-## Command Structure
-
-Most commands follow this pattern:
+If you prefer the compatibility wrapper, these routes are equivalent:
 
 ```bash
-command [subcommand] [options] [arguments]
+mcfg devops --help
+machineconfig sessions --help
 ```
 
-### Examples
+---
+
+## Command model
+
+The current docs follow this model:
+
+1. Start from a direct entrypoint such as `devops` or `sessions`.
+2. Drill into nested apps with `--help`.
+3. Use `mcfg` or `machineconfig` only when you specifically want the umbrella dispatcher.
+
+For example:
 
 ```bash
-# Main command with subcommand
-devops install ripgrep
-
-# Command with options
-cloud sync --dry-run ~/data remote:backup
-
-# Command with flags
-sessions list --all
+devops config --help
+devops data --help
+sessions --help
 ```
-
----
-
-## Global Options
-
-These options are available for most commands:
-
-| Option | Description |
-|--------|-------------|
-| `--help` | Show help message |
-| `--version` | Show version |
-| `--verbose` | Enable verbose output |
-| `--quiet` | Suppress output |
-| `--dry-run` | Preview without making changes |
-
----
-
-## Shell Completion
-
-Enable shell completion for better CLI experience:
-
-=== "Bash"
-
-    ```bash
-    eval "$(mcfg --install-completion bash)"
-    ```
-
-=== "Zsh"
-
-    ```bash
-    eval "$(mcfg --install-completion zsh)"
-    ```
-
-=== "Fish"
-
-    ```fish
-    mcfg --install-completion fish | source
-    ```
-
-=== "PowerShell"
-
-    ```powershell
-    mcfg --install-completion powershell | Out-String | Invoke-Expression
-    ```

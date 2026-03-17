@@ -1,19 +1,10 @@
 # Installation
 
-Machineconfig can be installed on Windows, macOS, and Linux. We recommend using [UV](https://docs.astral.sh/uv/) for the best experience.
+Machineconfig supports Python 3.13+ and is easiest to install with [uv](https://docs.astral.sh/uv/).
 
-## Requirements
+## Install with uv
 
-- **Python 3.13+** (automatically managed by UV)
-- **UV** (recommended) or pip
-
----
-
-## Install with UV (Recommended)
-
-[UV](https://docs.astral.sh/uv/) is a fast Python package installer that handles everything for you.
-
-### Step 1: Install UV
+### 1. Install uv
 
 === "Linux / macOS"
 
@@ -27,113 +18,66 @@ Machineconfig can be installed on Windows, macOS, and Linux. We recommend using 
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
     ```
 
-### Step 2: Install Machineconfig
+### 2. Install Machineconfig
 
 ```bash
-uv tool install --upgrade --python 3.14 machineconfig
+uv tool install --upgrade --python 3.13 machineconfig
 ```
 
-This installs `machineconfig` as a global CLI tool with all its commands available immediately.
+## Verify the CLI surface
 
----
-
-## Install with pip
-
-If you prefer using pip:
-
-```bash
-pip install machineconfig
-```
-
-!!! warning "Python Version"
-    Machineconfig requires Python 3.13 or higher. Make sure your Python installation meets this requirement.
-
----
-
-## Verify Installation
-
-After installation, verify that machineconfig is working:
+Check the umbrella entrypoint:
 
 ```bash
 mcfg --help
+machineconfig --help
 ```
 
-You should see the help output listing all available commands.
-
----
-
-## Optional Dependencies
-
-Machineconfig has optional dependencies for specific platforms and features:
-
-### Windows-specific
+Then check a direct command family:
 
 ```bash
-pip install machineconfig[windows]
+devops --help
 ```
 
-This includes `pywin32` for Windows-specific functionality.
+## Understand the entrypoint model
 
-### Plotting and Data Analysis
+Machineconfig installs multiple commands:
+
+- Umbrella entrypoints: `mcfg`, `machineconfig`
+- Direct entrypoints: `devops`, `cloud`, `sessions`, `agents`, `utils`, `fire`, `croshell`, `msearch`
+
+Use the direct entrypoints for day-to-day work. The umbrella commands dispatch to the top-level apps and are useful when you want a single starting point, but they are not the old monolithic `mcfg shell/config/dotfiles/...` interface.
+
+## Recommended follow-up checks
 
 ```bash
-pip install machineconfig[plot]
+devops config --help
+devops data --help
+cloud --help
+sessions --help
+agents --help
+utils --help
 ```
 
-This includes:
+## Run from a repository checkout
 
-- `matplotlib`, `plotly` for visualization
-- `polars`, `numpy` for data processing
-- `jupyterlab`, `ipython` for interactive computing
-
----
-
-## Development Installation
-
-For contributing to machineconfig:
+If you are working from source instead of installing globally:
 
 ```bash
-git clone https://github.com/thisismygitrepo/machineconfig.git
-cd machineconfig
-uv sync --group dev
+UV_CACHE_DIR=/tmp/uv-cache uv run mcfg --help
+UV_CACHE_DIR=/tmp/uv-cache uv run devops --help
 ```
 
-This installs all development dependencies including:
+The same pattern works for the direct entrypoints:
 
-- Testing: `pytest`
-- Linting: `ruff`, `mypy`, `pyright`
-- Documentation: `mkdocs`, `mkdocs-material`, `mkdocstrings`
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run cloud --help
+UV_CACHE_DIR=/tmp/uv-cache uv run sessions --help
+```
 
----
+## Upgrade or remove
 
-## Upgrading
-
-To upgrade to the latest version:
-
-=== "UV"
-
-    ```bash
-    uv tool upgrade machineconfig
-    ```
-
-=== "pip"
-
-    ```bash
-    pip install --upgrade machineconfig
-    ```
-
----
-
-## Uninstalling
-
-=== "UV"
-
-    ```bash
-    uv tool uninstall machineconfig
-    ```
-
-=== "pip"
-
-    ```bash
-    pip uninstall machineconfig
-    ```
+```bash
+uv tool upgrade machineconfig
+uv tool uninstall machineconfig
+```

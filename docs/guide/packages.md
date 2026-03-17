@@ -1,99 +1,66 @@
 # Package Management
 
-Machineconfig provides unified package management across all platforms.
+The current package installation workflow is centered on `devops install`.
 
 ---
 
 ## Overview
 
-Instead of learning different package managers for each OS, machineconfig provides a consistent interface:
+Machineconfig keeps package installation behind one command surface:
 
-| Platform | Underlying Package Manager |
-|----------|---------------------------|
-| Linux (Debian/Ubuntu) | `apt` |
-| Linux (Arch) | `pacman` |
-| Linux (Fedora) | `dnf` |
-| macOS | `brew` |
-| Windows | `winget`, `scoop` |
+```bash
+devops install --help
+```
+
+The live help currently describes `devops install [WHICH]` as the supported package entrypoint.
 
 ---
 
-## Installing Packages
+## Installation modes
 
-### Single Package
+Current help shows three main ways to use `devops install`:
+
+### Install named programs
+
+Pass `WHICH` as a comma-separated list of program names:
 
 ```bash
-devops install <package-name>
+devops install --help
 ```
 
-### Multiple Packages
+### Install a group
+
+Use the `--group` flag when `WHICH` refers to a group name:
 
 ```bash
-devops install package1 package2 package3
+devops install --help
 ```
 
-### From a List
+### Choose interactively
+
+Use the interactive picker:
 
 ```bash
-devops install-from-list packages.txt
-```
-
----
-
-## Essential Packages
-
-Machineconfig comes with a curated list of modern CLI tools:
-
-```bash
-devops install-essentials
-```
-
-This installs tools like:
-
-- **fd** - Modern `find` alternative
-- **ripgrep** - Modern `grep` alternative  
-- **bat** - Modern `cat` alternative
-- **exa/eza** - Modern `ls` alternative
-- **fzf** - Fuzzy finder
-- **zoxide** - Smarter `cd`
-- **starship** - Cross-shell prompt
-- And many more...
-
----
-
-## Package Groups
-
-Install predefined groups of packages:
-
-```bash
-# Development essentials
-devops install-group dev
-
-# System utilities
-devops install-group sysadmin
-
-# Data science tools
-devops install-group datascience
+devops install --interactive --help
 ```
 
 ---
 
-## Checking Installations
+## What changed
 
-Verify what's installed:
+Older documentation referred to commands such as:
 
-```bash
-devops check-installations
-```
+- `devops install-essentials`
+- `devops install-group`
+- `devops check-installations`
+- `devops update-all`
 
-This provides a comprehensive report of installed tools and their versions.
+Those are not part of the current verified command surface for this guide. For package installation, prefer `devops install` and inspect its live help output.
 
 ---
 
-## Updating Packages
+## Practical guidance
 
-Keep your tools up to date:
-
-```bash
-devops update-all
-```
+- Use `devops install --help` to see the current argument and option shape.
+- Use `devops --help` to discover adjacent machine-management workflows.
+- Treat group names as environment-specific until you confirm them in your own setup.

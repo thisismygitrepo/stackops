@@ -12,97 +12,72 @@ hide:
 
 # **Machineconfig**
 
-### Your Cross-Platform Stack Manager
+### Cross-platform CLI for machine setup and maintenance
 
 [![PyPI version](https://img.shields.io/pypi/v/machineconfig.svg)](https://pypi.org/project/machineconfig/)
 [![Python versions](https://img.shields.io/pypi/pyversions/machineconfig.svg)](https://pypi.org/project/machineconfig/)
 [![License](https://img.shields.io/github/license/thisismygitrepo/machineconfig.svg)](https://github.com/thisismygitrepo/machineconfig/blob/main/LICENSE)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thisismygitrepo/machineconfig)](https://github.com/thisismygitrepo/machineconfig/commits)
 
----
+Machineconfig installs as both umbrella commands (`mcfg`, `machineconfig`) and direct entrypoints for each command family.
 
-**Machineconfig** is a swiss-army knife CLI tool — a *Package Manager*, *Configuration Manager*, *Automation Tool*, *Dotfiles Manager*, *Data Solution*, and *Code Manager*, all rolled into one seamless cross-platform experience.
-
-[Get Started](installation.md){ .md-button .md-button--primary }
+[Install with uv](installation.md){ .md-button .md-button--primary }
+[Quickstart](quickstart.md){ .md-button }
 [View on GitHub](https://github.com/thisismygitrepo/machineconfig){ .md-button }
 
 </div>
 
 ---
 
-## Why Machineconfig?
+## What you get
 
-Setting up a new machine, VM, or Docker container often involves navigating complex dependency chains:
+Machineconfig is organized around direct CLI families:
 
-```mermaid
-flowchart TD
-    A["Need to setup my dev environment"] --> B["Need tool X (e.g., yadm)"]
-    B --> C["Requires git"]
-    C --> D["Requires package manager (e.g., brew)"]
-    D --> E["Requires curl"]
-    E --> F["Requires network setup / system update"]
-    F --> G["Requires system configuration access"]
-    G --> H["Finally ready to start!"]
-```
+| Command | What it covers |
+| --- | --- |
+| `devops` | Package installs, repos, config, data, self-management, networking, scripted execution |
+| `cloud` | Syncing, copying, mounting, and SSH file transfer workflows |
+| `sessions` | Launching, attaching to, killing, templating, and summarizing session layouts |
+| `agents` | Generating agent configs, templates, prompts, symlinks, and skills |
+| `utils` | Process, environment, project, file, PDF, and database helpers |
+| `fire`, `croshell`, `msearch` | Standalone helper entrypoints |
 
-**Machineconfig** eliminates this complexity by providing a unified tool that:
-
-- :material-package-variant: **Manages packages** across all platforms
-- :material-cog: **Configures systems** automatically
-- :material-sync: **Syncs dotfiles** seamlessly
-- :material-cloud-sync: **Handles data** backup and sync
-- :material-robot: **Automates** repetitive tasks
+The umbrella commands dispatch into the current top-level apps. Treat the direct entrypoints as the primary interface; do not expect the old `mcfg shell/config/dotfiles/...` layout.
 
 ---
 
-## Quick Install
+## Install and verify
 
 === "Linux / macOS"
 
     ```bash
-    curl -LsSf https://astral.sh/uv/install.sh | sh  # Skip if UV installed
-    uv tool install --upgrade --python 3.14 machineconfig
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    uv tool install --upgrade --python 3.13 machineconfig
+    mcfg --help
+    devops --help
     ```
 
 === "Windows"
 
     ```powershell
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-    uv tool install --upgrade --python 3.14 machineconfig
+    uv tool install --upgrade --python 3.13 machineconfig
+    mcfg --help
+    devops --help
     ```
 
 ---
 
-## Feature Overview
+## Good first commands
 
-| Category | Comparable Tools | Description |
-|----------|-----------------|-------------|
-| **Package Manager** | `winget`, `apt`, `brew`, `nix` | Installs and manages software packages |
-| **Configuration Manager** | `Ansible`, `Chef`, `Puppet` | Configures system-level preferences |
-| **Automation Tool** | `Airflow`, `Prefect`, `Dagster` | Automates pipelines and orchestration |
-| **Dotfiles Manager** | `chezmoi`, `yadm`, `GNU Stow` | Synchronizes personal configs |
-| **Data Solution** | `rclone`, `rsync` | Handles backups and file sync |
-| **Code Manager** | `Vault`, `strong-box` | Manages secrets and credentials |
-
----
-
-## One-Line Setup
-
-Get your entire development environment configured with a single command:
-
-=== "Linux / macOS"
-
-    ```bash
-    . <(curl -L bit.ly/cfglinux)
-    ```
-
-=== "Windows"
-
-    ```powershell
-    irm bit.ly/cfgwindows | iex
-    ```
-
-This interactive installer guides you through setting up your complete stack in minutes.
+```bash
+mcfg --help
+devops --help
+devops config shell
+devops install --interactive
+devops config sync --help
+devops data sync --help
+```
 
 ---
 
@@ -112,23 +87,23 @@ This interactive installer guides you through setting up your complete stack in 
 
     ---
 
-    Install machineconfig and set up your first configuration
+    Install Machineconfig and verify the active command surface.
 
     [:octicons-arrow-right-24: Installation](installation.md)
 
--   :material-book-open-variant:{ .lg .middle } **User Guide**
+-   :material-run-fast:{ .lg .middle } **Quickstart**
 
     ---
 
-    Learn how to use all of machineconfig's features
+    Follow a short path through help, shell setup, install, and sync commands.
 
-    [:octicons-arrow-right-24: User Guide](guide/overview.md)
+    [:octicons-arrow-right-24: Quickstart](quickstart.md)
 
 -   :material-console:{ .lg .middle } **CLI Reference**
 
     ---
 
-    Complete reference for all CLI commands
+    Browse the full command reference.
 
     [:octicons-arrow-right-24: CLI Reference](cli/index.md)
 
@@ -136,7 +111,7 @@ This interactive installer guides you through setting up your complete stack in 
 
     ---
 
-    Detailed API documentation for developers
+    Explore the Python API and internals.
 
     [:octicons-arrow-right-24: API Reference](api/index.md)
 

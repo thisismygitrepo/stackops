@@ -1,118 +1,83 @@
 # Configuration Management
 
-Manage system-level configuration across platforms.
+Configuration workflows now live under `devops config ...`.
 
 ---
 
 ## Overview
 
-Machineconfig handles configuration for:
+Use the `devops config` command group for machine-facing configuration tasks such as:
 
-- Shell profiles (bash, zsh, fish, nushell, PowerShell)
-- Editor settings (VSCode, Vim, Helix, etc.)
-- Terminal emulators (Alacritty, WezTerm, Windows Terminal)
-- Various CLI tools
+- shell profile setup
+- dotfiles registration and synchronization
+- theme selection for supported tools
+- exporting or importing dotfiles during migration
+- copying packaged assets to the local machine
 
----
-
-## Shell Configuration
-
-### Setup Shell Profile
+Start here:
 
 ```bash
-mcfg shell
-```
-
-This configures your shell with:
-
-- Useful aliases
-- Environment variables
-- Path configuration
-- Tool integrations
-
-### Supported Shells
-
-| Shell | Configuration File |
-|-------|-------------------|
-| Bash | `~/.bashrc` |
-| Zsh | `~/.zshrc` |
-| Fish | `~/.config/fish/config.fish` |
-| Nushell | `~/.config/nushell/config.nu` |
-| PowerShell | `$PROFILE` |
-
----
-
-## Editor Configuration
-
-Machineconfig includes optimized configurations for popular editors:
-
-### Helix
-
-```bash
-mcfg config helix
-```
-
-### VSCode
-
-```bash
-mcfg config vscode
-```
-
-### LunarVim
-
-```bash
-mcfg config lvim
+devops config --help
 ```
 
 ---
 
-## Terminal Configuration
+## Shell configuration
 
-### Alacritty
-
-```bash
-mcfg config alacritty
-```
-
-### WezTerm
+The current shell entrypoint is:
 
 ```bash
-mcfg config wezterm
+devops config shell --help
 ```
 
-### Windows Terminal
-
-```bash
-mcfg config wt
-```
+The live help shows a `--which` option for selecting the shell profile variant to configure.
 
 ---
 
-## Configuration Files Location
+## Syncing configuration
 
-Machineconfig stores its configuration templates in:
+The current sync workflow is:
 
+```bash
+devops config sync --help
 ```
-machineconfig/settings/
-├── shells/
-│   ├── alacritty/
-│   ├── bash/
-│   ├── fish/
-│   └── ...
-├── helix/
-├── lvim/
-├── yazi/
-└── ...
-```
+
+Current help shows these key concepts:
+
+- `--sensitivity` selects whether you are managing `public`, `private`, or `all` configuration files
+- `--method` selects `symlink` or `copy`
+- `--repo` chooses which mapper source to use
+- `--which` narrows the operation to specific items
+
+That makes `devops config sync` the main high-level replacement for older global `mcfg config ...`, `mcfg dotfiles ...`, and `mcfg links ...` documentation.
 
 ---
 
-## Custom Configuration
+## Other configuration subcommands
 
-You can extend or override default configurations:
+Current `devops config --help` also lists subcommands for:
 
-1. Fork the settings you want to modify
-2. Place them in your dotfiles repository
-3. Use machineconfig to symlink them
+- `register`
+- `edit`
+- `export-dotfiles`
+- `import-dotfiles`
+- `shell`
+- `starship-theme`
+- `pwsh-theme`
+- `wezterm-theme`
+- `ghostty-theme`
+- `windows-terminal-theme`
+- `copy-assets`
+- `dump`
+- `list-devices`
+- `mount`
 
-See [Dotfiles](dotfiles.md) for more details.
+Use `devops config --help` as the entrypoint, then drill down with `--help` on the specific subcommand you need.
+
+---
+
+## Related workflows
+
+- For data backup and retrieval, use `devops data --help`.
+- For cloud storage actions, use `cloud --help`.
+- For the umbrella compatibility wrapper, use `mcfg devops config --help`.

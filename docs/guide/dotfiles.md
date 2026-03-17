@@ -1,132 +1,73 @@
 # Dotfiles Management
 
-Synchronize your configuration files across machines.
+Dotfiles workflows are now documented through `devops config ...` rather than older `mcfg dotfiles ...` commands.
 
 ---
 
 ## Overview
 
-Dotfiles are configuration files (usually starting with a dot, like `.bashrc`) that customize your environment. Machineconfig helps you:
+Machineconfig treats dotfiles as part of the configuration management flow:
 
-- Track dotfiles in version control
-- Sync them across machines
-- Handle platform-specific variations
+- register the files you want managed
+- sync them onto a machine
+- choose whether to copy or symlink
+- separate public and private material
+- export or import them during migration
 
----
-
-## Quick Start
-
-### Initialize Dotfiles
+Start with:
 
 ```bash
-mcfg dotfiles init
-```
-
-### Sync Dotfiles
-
-```bash
-mcfg dotfiles sync
-```
-
-### Push Changes
-
-```bash
-mcfg dotfiles push
+devops config --help
+devops config sync --help
 ```
 
 ---
 
-## Dotfiles Strategy
+## Sync model
 
-Machineconfig uses a flexible approach:
+Current `devops config sync --help` exposes the main dotfiles concepts:
 
-```mermaid
-flowchart LR
-    A[Git Repository] --> B[Machineconfig]
-    B --> C[Symlinks]
-    C --> D[~/.config/*]
-    C --> E[~/.bashrc]
-    C --> F[Other locations]
-```
+- `--sensitivity` for `public`, `private`, or `all`
+- `--method` for `symlink` or `copy`
+- `--repo` for mapper source selection
+- `--which` to target one item or all items
 
-### Benefits
-
-- **Version controlled**: Track all changes
-- **Portable**: Works on any machine
-- **Secure**: Separate public and private configs
-- **Flexible**: Override per-machine as needed
+This is the current replacement for older top-level `mcfg dotfiles sync` examples.
 
 ---
 
-## Public vs Private Dotfiles
+## Registering and editing mappings
 
-### Public Dotfiles
+The current configuration command group includes:
 
-Configuration that can be shared publicly:
+- `devops config register`
+- `devops config edit`
 
-- Shell aliases
-- Editor settings
-- Tool configurations
+Those are the relevant entrypoints when you need to add new managed dotfiles or inspect the active mapping configuration.
 
-### Private Dotfiles
-
-Sensitive configuration that should stay private:
-
-- API keys
-- SSH configurations
-- Credentials
+Use:
 
 ```bash
-# Sync only public
-mcfg dotfiles sync --public
-
-# Sync with private
-mcfg dotfiles sync --private
+devops config --help
 ```
+
+to discover the current subcommand surface before making changes.
 
 ---
 
-## Platform-Specific Configuration
+## Exporting and importing dotfiles
 
-Machineconfig handles platform differences automatically:
+For machine migration or archive-style workflows, `devops config --help` currently lists:
 
-```
-dotfiles/
-├── common/           # Shared across all platforms
-├── linux/            # Linux-specific
-├── macos/            # macOS-specific
-└── windows/          # Windows-specific
-```
+- `export-dotfiles`
+- `import-dotfiles`
+
+These commands are the current source-backed path for packaging or restoring dotfiles, instead of the older init/push/backup/restore guide flow.
 
 ---
 
-## Integration with Cloud Storage
+## Dotfiles versus data
 
-Sync private dotfiles via encrypted cloud storage:
+Use `devops config ...` for managed configuration files and shell/editor/tool settings.
 
-```bash
-mcfg dotfiles sync --cloud
-```
-
-Supports:
-
-- OneDrive
-- Google Drive
-- Dropbox
-- Any rclone-supported backend
-
----
-
-## Backup
-
-Create a backup of current dotfiles:
-
-```bash
-mcfg dotfiles backup
-```
-
-Restore from backup:
-
-```bash
-mcfg dotfiles restore
-```
+Use `devops data sync --help` when you want backup-style synchronization of data directories and files to or from cloud storage.

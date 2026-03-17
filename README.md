@@ -1,97 +1,86 @@
+# 🗜 Machineconfig
 
-<p align="center">
+Machineconfig is a cross-platform CLI for bootstrapping and maintaining a development machine. It groups package installation, config syncing, data syncing, session automation, and helper utilities into one install.
 
-<a href="https://github.com/thisismygitrepo/machineconfig/commits">
-<img src="https://img.shields.io/github/commit-activity/m/thisismygitrepo/machineconfig" />
-</a>
+## Install with uv
 
-</p>
-
-
-# 🗜 Welcome to **Machineconfig**
-
-Your stack is awesome, but you need a stack manager, to have a tight grip over it, put it together and maintain it.
-Entering,  **Machineconfig**, a cli-based cross-platform **Stack Manager** — It is a swiss-army knife; a *Package Manager*, *Configuration Manager*, *Automation Tool*, *Dotfiles Manager*, *Data Solution*, and *Code Manager*, among other functionalities covered, all rolled into one seamless experience, that is consistent across different platforms.
-
-
-## Workflow:
-What is your stack? Say you have a new computer/ VM, how do you go about setting it up with your stack?
-Surely, you have:
-* A bunch of CLI tools.
-* [Optional] A bunch of softwares (GUIs for desktop environment).
-* [Public] A bunch of configuration files for your tools.
-* [Private] A bunch of secrets, passowords, tokens, credentials etc, etc.
-* Data (Both highly sensitive and encrypted less serious unencrypted data)
-* Code (your repositories).
-
-Wouldn't be nice if you can set it all up in 2 minutes? This is a hackable tool to get it done.
-
-Consider this concrete scenario: When setting up a new machine, VM, or Docker container, you often face dependency chains like this:
-
-```mermaid
-flowchart TD
-    A["Need to setup my [dev] environment"] --> B["need my tool x, e.g.: yadm"]
-    B --> C["Requires git"]
-    C --> D["Requires package manager, e.g. brew"]
-    D --> E["Requires curl"]
-    E --> F["Requires network setup / system update"]
-    F --> G["Requires system configuration access"]
-    G --> H["Finally ready to start setup the tool x."]
-```
-
-Machineconfig builds on shoulder of giants. A suite of best-in-class stack of projects on github are used, the most starred, active and written in Rust tools are used when possible. The goal is to provide a seamless experience that abstracts away the complexity of setting up and maintaining your digital environment. The goal of machineconfig is to replicate your setup, config, code, data and secrets on any machine, any os, in 5 minutes, using minimal user input. Then, from that point, machineconfig will help you maintain, update, backup and sync your digital life across all your devices, automatically.
-
-
-## ⚙️ Functional Overview
-
-| Category               | Comparable Tools                              | Description                                               |
-|------------------------|----------------------------------------------|-----------------------------------------------------------|
-| **Package Manager**     | `winget`, `apt`, `brew`, `nix`               | Installs and manages software packages across systems.    |
-| **Configuration Manager** | `Ansible`, `Chef`, `Puppet`                | Configures and maintains system‐level preferences.        |
-| **Automation Tool**     | `Airflow`, `Prefect`, `Dagster`, `Celery`    | Automates repetitive tasks, pipelines, orchestration.     |
-| **Dotfiles Manager**    | `chezmoi`, `yadm`, `rcm`, `GNU Stow`        | Synchronises dotfiles & personal configs across systems.  |
-| **Data Solution**       | `rclone`, `rsync`                            | Handles backups, mirroring and secure file sync.          |
-| **Code Manager**        | `strong‐box`, `Vault`                        | Manages and protects code snippets, secrets and creds.    |
-
----
-
-
-# Install On Windows:
-
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"  # Skip if UV is already installed
-uv tool install --upgrade --python 3.14 machineconfig
-```
-
-
-# Install On Linux and MacOS
+### Linux / macOS
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh  # Skip if UV is already installed
-uv tool install --upgrade --python 3.14 machineconfig
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install --upgrade --python 3.13 machineconfig
 ```
 
+### Windows
 
-# Quickies ...
 ```powershell
-# interactive install of machineconfig and following on to run it and make basic machine configuration (RECOMMENDED):
-irm bit.ly/cfgwindows | iex  # Or, if UV is installed: iex (uvx machineconfig define)
-# Quick install and configure (optionals are accepted by default):
-irm bit.ly/cfgwq | iex
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+uv tool install --upgrade --python 3.13 machineconfig
 ```
+
+## Verify the install
 
 ```bash
-# interactive install of machineconfig and following on to run it and make basic machine configuration (RECOMMENDED):
-. <(curl -L bit.ly/cfglinux) # Or, if UV is installed: . <(uvx machineconfig define)
+mcfg --help
+devops --help
 ```
 
+`machineconfig` is also installed as an alias-style umbrella entrypoint alongside `mcfg`.
 
-# Author
+## Command model
+
+Machineconfig now exposes direct command families instead of a single old `mcfg shell/config/dotfiles/...` tree.
+
+- Umbrella entrypoints: `mcfg`, `machineconfig`
+- Direct entrypoints: `devops`, `cloud`, `sessions`, `agents`, `utils`, `fire`, `croshell`, `msearch`
+
+### Current command families
+
+| Command | What it covers |
+| --- | --- |
+| `devops` | `install`, `repos`, `config`, `data`, `self`, `network`, `execute` |
+| `cloud` | `sync`, `copy`, `mount`, `ftpx` |
+| `sessions` | `run`, `run-aoe`, `attach`, `kill`, `create-from-function`, `balance-load`, `create-template`, `summarize` |
+| `agents` | `create`, `create-context`, `collect`, `make-template`, `make-config`, `make-todo`, `make-symlinks`, `run-prompt`, `add-skill` |
+| `utils` | `kill-process`, `environment`, `get-machine-specs`, `init-project`, `upgrade-packages`, `type-hint`, `edit`, `download`, `pdf-merge`, `pdf-compress`, `read-db` |
+| `fire`, `croshell`, `msearch` | Standalone helper tools |
+
+## First steps
+
+```bash
+mcfg --help
+devops --help
+devops config shell
+devops install --interactive
+devops config sync --help
+devops data sync --help
+```
+
+If you already know the package bundle you want, use:
+
+```bash
+devops install --group <group-name>
+```
+
+## Repo-local usage
+
+From a checkout of this repository, you can run the current CLI surface without installing globally:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run mcfg --help
+UV_CACHE_DIR=/tmp/uv-cache uv run devops --help
+```
+
+## Links
+
+- Docs homepage: `docs/index.md`
+- Installation guide: `docs/installation.md`
+- Quickstart: `docs/quickstart.md`
+
+## Author
+
 Alex Al-Saffar. [email](mailto:programmer@usa.com)
 
-# Contributor
+## Contributor
+
 Ruby Chan. [email](mailto:ruby.chan@sa.gov.au)
-
-
-[![Alex's github activity graph](https://github-readme-activity-graph.vercel.app/graph?username=thisismygitrepo)](https://github.com/ashutosh00710/github-readme-activity-graph)
-

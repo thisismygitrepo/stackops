@@ -1,115 +1,90 @@
 # Quickstart
 
-Get up and running with Machineconfig in minutes.
+This quickstart assumes Machineconfig is already installed with `uv tool install machineconfig`.
 
----
-
-## Interactive Setup (Recommended)
-
-The easiest way to get started is with our interactive installer:
-
-=== "Linux / macOS"
-
-    ```bash
-    . <(curl -L bit.ly/cfglinux)
-    ```
-
-=== "Windows"
-
-    ```powershell
-    irm bit.ly/cfgwindows | iex
-    ```
-
-This will guide you through:
-
-1. Installing machineconfig
-2. Selecting your preferred tools
-3. Configuring your environment
-4. Setting up dotfiles
-
----
-
-## Quick Setup (Accept Defaults)
-
-For a quick setup that accepts all recommended defaults:
-
-=== "Windows"
-
-    ```powershell
-    irm bit.ly/cfgwq | iex
-    ```
-
----
-
-## Manual First Steps
-
-After installing machineconfig, here are the essential commands to know:
-
-### 1. Check Available Commands
+## 1. See the current command families
 
 ```bash
 mcfg --help
+devops --help
 ```
 
-### 2. Configure Your Shell
+Use `mcfg` or `machineconfig` as umbrella entrypoints, then prefer the direct commands for routine work.
+
+## 2. Configure your shell profile
 
 ```bash
-mcfg shell
+devops config shell
 ```
 
-This sets up your shell profile with useful aliases and functions.
-
-### 3. Install Essential Tools
+For available options:
 
 ```bash
-devops install-essentials
+devops config shell --help
 ```
 
-Installs a curated set of modern CLI tools.
+## 3. Install tools
 
-### 4. Sync Your Dotfiles
+Interactive flow:
 
 ```bash
-mcfg dotfiles sync
+devops install --interactive
 ```
 
----
+If you already know the bundle you want:
 
-## Available CLI Tools
+```bash
+devops install --group <group-name>
+```
 
-After installation, you have access to these commands:
+Check the live help before choosing names:
 
-| Command | Description |
-|---------|-------------|
-| `mcfg` | Main entry point for machineconfig |
-| `devops` | DevOps and system administration tasks |
-| `cloud` | Cloud provider management |
-| `sessions` | Terminal session management |
-| `fire` | Fire-based job execution |
-| `agents` | AI agent utilities |
-| `croshell` | Cross-shell utilities |
-| `terminal` | Terminal configuration |
-| `msearch` | Search utilities |
+```bash
+devops install --help
+```
 
----
+## 4. Inspect config and data sync workflows
 
-## Next Steps
+```bash
+devops config sync --help
+devops data sync --help
+```
+
+These help screens show the current required arguments and options for dotfiles/config sync and backup sync.
+
+## 5. Explore the rest of the CLI
+
+```bash
+cloud --help
+sessions --help
+agents --help
+utils --help
+```
+
+Highlights from the current surface:
+
+- `cloud`: `sync`, `copy`, `mount`, `ftpx`
+- `sessions`: `run`, `run-aoe`, `attach`, `kill`, `create-from-function`, `balance-load`, `create-template`, `summarize`
+- `agents`: `create`, `create-context`, `collect`, `make-template`, `make-config`, `make-todo`, `make-symlinks`, `run-prompt`, `add-skill`
+- `utils`: `kill-process`, `environment`, `get-machine-specs`, `init-project`, `upgrade-packages`, `type-hint`, `edit`, `download`, `pdf-merge`, `pdf-compress`, `read-db`
+
+## Next steps
 
 <div class="grid cards" markdown>
 
--   :material-book-open-variant:{ .lg .middle } **Read the User Guide**
+-   :material-book-open-variant:{ .lg .middle } **User Guide**
 
     ---
 
-    Learn about all features in depth
+    Continue to the broader documentation.
 
     [:octicons-arrow-right-24: User Guide](guide/overview.md)
 
--   :material-console:{ .lg .middle } **Explore CLI Commands**
+-   :material-console:{ .lg .middle } **CLI Reference**
 
     ---
 
-    Full reference for all commands
+    Browse the full command reference.
 
     [:octicons-arrow-right-24: CLI Reference](cli/index.md)
 
