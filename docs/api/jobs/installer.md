@@ -626,8 +626,8 @@ from machineconfig.jobs.installer.checks.check_installations import main
 # Run full scan
 main()
 # Outputs:
-#   - ~/.config/machineconfig/profile/records/{platform}/apps_summary_report.csv
-#   - ~/.config/machineconfig/profile/records/{platform}/apps_summary_report.md
+#   - ~/.config/machineconfig/profile/records/{platform}/apps_metadata_report.csv
+#   - ~/.config/machineconfig/profile/records/{platform}/apps_engine_results_report.csv
 ```
 
 ### Configuration
@@ -639,10 +639,12 @@ VirusTotal API token must be stored at:
 
 ### Report Format
 
-```markdown
-| App Name | Version | Positive Pct | Scan Time | App Path | App URL |
-|----------|---------|--------------|-----------|----------|---------|
-| fd       | 9.0.0   | 0.0          | 2024-01-15 | ~/.local/bin/fd | ... |
+```text
+apps_metadata_report.csv
+app_name,version,scan_time,app_path,app_url,scan_summary_available,notes
+
+apps_engine_results_report.csv
+app_name,engine_name,engine_category,engine_result
 ```
 
 ---

@@ -5,7 +5,6 @@ Report Utilities
 This module provides functionality to generate reports for installed applications.
 """
 
-from pathlib import Path
 from typing import Literal, TypedDict
 
 from rich import box
@@ -15,48 +14,35 @@ from rich.style import Style
 from rich.table import Table
 from rich.text import Text
 
+from machineconfig.jobs.installer.checks.vt_utils import ScanResult
+
 console = Console()
 
-REPORT_KEYS: tuple[str, ...] = (
+APP_METADATA_KEYS: tuple[str, ...] = (
     "app_name",
     "version",
-    "positive_pct",
-    "flagged_engines",
-    "verdict_engines",
-    "total_engines",
-    "malicious_engines",
-    "suspicious_engines",
-    "harmless_engines",
-    "undetected_engines",
-    "unsupported_engines",
-    "timeout_engines",
-    "failure_engines",
-    "other_engines",
-    "notes",
     "scan_time",
     "app_path",
     "app_url",
+    "scan_summary_available",
+    "notes",
 )
-REPORT_HEADERS: dict[str, str] = {
-    "app_name": "App",
-    "version": "Version",
-    "positive_pct": "Flagged %",
-    "flagged_engines": "Flagged Engines",
-    "verdict_engines": "Verdict Engines",
-    "total_engines": "Total Engines",
-    "malicious_engines": "Malicious",
-    "suspicious_engines": "Suspicious",
-    "harmless_engines": "Harmless",
-    "undetected_engines": "Undetected",
-    "unsupported_engines": "Unsupported",
-    "timeout_engines": "Timeout",
-    "failure_engines": "Failure",
-    "other_engines": "Other",
-    "notes": "Notes",
-    "scan_time": "Scanned",
-    "app_path": "Path",
-    "app_url": "Upload",
-}
+ENGINE_REPORT_KEYS: tuple[str, ...] = (
+    "app_name",
+    "engine_name",
+    "engine_category",
+    "engine_result",
+)
+
+
+class AppMetadataRow(TypedDict):
+    app_name: str
+    version: str | None
+    scan_time: str
+    app_path: str
+    app_url: str
+    scan_summary_available: bool
+    notes: str
 
 
 class AppData(TypedDict):
@@ -80,6 +66,29 @@ class AppData(TypedDict):
     app_url: str
 
 
+class EngineReportRow(TypedDict):
+    app_name: str
+    version: str | None
+    scan_time: str
+    app_path: str
+    app_url: str
+    engine_name: str
+    engine_category: str
+    engine_result: str | None
+
+
+class StoredEngineReportRow(TypedDict):
+    app_name: str
+    engine_name: str
+    engine_category: str
+    engine_result: str | None
+
+
+class ScannedAppRecord(TypedDict):
+    app_data: AppData
+    engine_results: list[StoredEngineReportRow]
+
+
 class ReportSummary(TypedDict):
     total_apps: int
     clean_apps: int
@@ -92,15 +101,28 @@ class ReportSummary(TypedDict):
     flagged_engines: int
 
 
-def _format_markdown_value(row: AppData, key: str) -> str:
-    value = row[key]
-    if value is None:
-        return ""
-    if key == "positive_pct":
-        if isinstance(value, int | float):
-            return f"{float(value):.1f}%"
-        return ""
-    return str(value)
+def build_app_metadata_row(app_data: AppData) -> AppMetadataRow:
+    return {
+        "app_name": app_data["app_name"],
+        "version": app_data["version"],
+        "scan_time": app_data["scan_time"],
+        "app_path": app_data["app_path"],
+        "app_url": app_data["app_url"],
+        "scan_summary_available": app_data["positive_pct"] is not None,
+        "notes": app_data["notes"],
+    }
+
+
+def build_engine_report_rows(app_data: AppData, scan_results: list[ScanResult]) -> list[StoredEngineReportRow]:
+    return [
+        {
+            "app_name": app_data["app_name"],
+            "engine_name": scan_result["engine_name"],
+            "engine_category": scan_result["category"],
+            "engine_result": scan_result["result"],
+        }
+        for scan_result in scan_results
+    ]
 
 
 def _build_app_name_cell(app_name: str, app_url: str) -> Text:
@@ -193,6 +215,30 @@ def _build_notes_cell(notes: str) -> Text:
     return Text(notes, style="yellow")
 
 
+def _build_engine_category_cell(category: str) -> Text:
+    match category:
+        case "malicious":
+            return Text(category, style="bold red")
+        case "suspicious":
+            return Text(category, style="bold yellow")
+        case "harmless":
+            return Text(category, style="bold green")
+        case "undetected":
+            return Text(category, style="dim")
+        case "timeout" | "confirmed-timeout" | "type-unsupported":
+            return Text(category, style="yellow")
+        case "failure":
+            return Text(category, style="red")
+        case _:
+            return Text(category, style="dim")
+
+
+def _build_engine_result_cell(result: str | None) -> Text:
+    if result is None:
+        return Text("-", style="dim")
+    return Text(result, overflow="ellipsis")
+
+
 def _summarize_report(data: list[AppData]) -> ReportSummary:
     summary: ReportSummary = {
         "total_apps": len(data),
@@ -276,7 +322,6 @@ def _build_report_overview_panel(data: list[AppData]) -> Panel:
 def _build_rich_table(data: list[AppData]) -> Table:
     table = Table(
         title="Safety Report Summary",
-        caption="Safety % = flagged verdict engines / verdict engines",
         box=box.ROUNDED,
         header_style="bold cyan",
         row_styles=["", "dim"],
@@ -303,17 +348,34 @@ def _build_rich_table(data: list[AppData]) -> Table:
     return table
 
 
-def generate_markdown_report(data: list[AppData], output_path: Path) -> None:
-    if not data:
-        return
+def build_summary_group(data: list[AppData]) -> Group:
+    return Group(_build_report_overview_panel(data), _build_rich_table(data))
 
-    header = "| " + " | ".join(REPORT_HEADERS[key] for key in REPORT_KEYS) + " |"
-    separator = "| " + " | ".join("---" for _ in REPORT_KEYS) + " |"
-    rows = []
+
+def build_engine_results_table(data: list[EngineReportRow]) -> Table:
+    table = Table(
+        title="Engine Results",
+        box=box.ROUNDED,
+        header_style="bold cyan",
+        row_styles=["", "dim"],
+        expand=False,
+    )
+    table.add_column("App", no_wrap=True)
+    table.add_column("Ver", style="cyan", no_wrap=True)
+    table.add_column("Engine", no_wrap=True)
+    table.add_column("Category", no_wrap=True)
+    table.add_column("Result", overflow="ellipsis", max_width=44)
+    table.add_column("Scanned", no_wrap=True)
+    table.add_column("Path", overflow="ellipsis", max_width=36)
+
     for row in data:
-        row_values = [_format_markdown_value(row, key) for key in REPORT_KEYS]
-        rows.append("| " + " | ".join(row_values) + " |")
-
-    content = "\n".join([header, separator] + rows)
-    output_path.write_text(content, encoding="utf-8")
-    console.print(Group(_build_report_overview_panel(data), _build_rich_table(data)))
+        table.add_row(
+            _build_app_name_cell(row["app_name"], row["app_url"]),
+            row["version"] or "-",
+            row["engine_name"],
+            _build_engine_category_cell(row["engine_category"]),
+            _build_engine_result_cell(row["engine_result"]),
+            Text(row["scan_time"], style="dim"),
+            row["app_path"],
+        )
+    return table

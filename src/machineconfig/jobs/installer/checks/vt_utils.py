@@ -6,7 +6,7 @@ This module provides functionality to interact with VirusTotal API.
 """
 
 import time
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 class ScanResult(TypedDict):
+    engine_name: str
     category: str
     result: str | None
 
@@ -69,7 +70,7 @@ def _build_empty_scan_summary(notes: str) -> ScanSummary:
     }
 
 
-def _normalize_scan_result(result_item: object) -> ScanResult:
+def _normalize_scan_result(engine_name: str, result_item: object) -> ScanResult:
     if isinstance(result_item, Mapping):
         category_raw = result_item.get("category", "unknown")
         result_raw = result_item.get("result")
@@ -80,7 +81,15 @@ def _normalize_scan_result(result_item: object) -> ScanResult:
     result_value = getattr(result_raw, "value", result_raw)
     category = str(category_value or "unknown")
     result = None if result_value is None else str(result_value)
-    return {"category": category, "result": result}
+    return {"engine_name": engine_name, "category": category, "result": result}
+
+
+def _normalize_scan_results(raw_results: object) -> list[ScanResult]:
+    if isinstance(raw_results, Mapping):
+        return [_normalize_scan_result(str(engine_name), result_item) for engine_name, result_item in raw_results.items()]
+    if isinstance(raw_results, Iterable) and not isinstance(raw_results, (str, bytes, bytearray)):
+        return [_normalize_scan_result(f"engine_{index:03d}", result_item) for index, result_item in enumerate(raw_results, start=1)]
+    return []
 
 
 def _build_scan_notes(summary: ScanSummary) -> str:
@@ -163,8 +172,7 @@ def scan_file(
 
             time.sleep(10)
 
-        raw_results = list(anal.results.values())
-        results_data = [_normalize_scan_result(result_item) for result_item in raw_results]
+        results_data = _normalize_scan_results(getattr(anal, "results", {}))
         return summarize_scan_results(results_data), results_data
     except Exception as exc:
         if progress is not None and task_id is not None:

@@ -9,7 +9,6 @@ import csv
 import platform
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any
 
 from rich.console import Console
 
@@ -17,7 +16,8 @@ from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 # Constants
-APP_SUMMARY_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_summary_report.csv")
+APP_METADATA_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_metadata_report.csv")
+ENGINE_RESULTS_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_engine_results_report.csv")
 CLOUD_STORAGE_NAME = "gdp"  # Default cloud storage name for rclone
 
 console = Console()
@@ -92,19 +92,28 @@ def install_cli_app(app_url: str) -> bool:
         console.print(f"[red]Failed to install app from {app_url}: {e}[/red]")
         return False
 
-def load_summary_report() -> list[dict[str, Any]]:
-    """Loads the summary report from CSV."""
-    if APP_SUMMARY_PATH.exists():
-        with open(APP_SUMMARY_PATH, 'r', encoding='utf-8') as csvfile:
+def load_app_metadata_report() -> list[dict[str, str]]:
+    """Loads the app metadata report from CSV."""
+    if APP_METADATA_PATH.exists():
+        with open(APP_METADATA_PATH, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             return list(reader)
-    else:
-        console.print(f"[yellow]Warning: Summary report not found at {APP_SUMMARY_PATH}[/yellow]")
-        return []
+    console.print(f"[yellow]Warning: App metadata report not found at {APP_METADATA_PATH}[/yellow]")
+    return []
+
+
+def load_engine_results_report() -> list[dict[str, str]]:
+    """Loads the engine results report from CSV."""
+    if ENGINE_RESULTS_PATH.exists():
+        with open(ENGINE_RESULTS_PATH, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            return list(reader)
+    console.print(f"[yellow]Warning: Engine results report not found at {ENGINE_RESULTS_PATH}[/yellow]")
+    return []
 
 def download_safe_apps(name: str = "essentials") -> None:
     """Downloads and installs safe apps."""
-    data = load_summary_report()
+    data = load_app_metadata_report()
     if not data:
         console.print("[red]No app data available to install.[/red]")
         return

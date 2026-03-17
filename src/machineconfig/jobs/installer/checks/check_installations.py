@@ -7,22 +7,27 @@ It also provides functionality to download and install pre-checked applications.
 """
 
 import csv
-import platform
 from datetime import datetime
 from pathlib import Path
 from rich.console import Console, Group, RenderableType
 from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
-from machineconfig.jobs.installer.checks.install_utils import upload_app
-from machineconfig.jobs.installer.checks.report_utils import AppData, build_latest_scan_panel, generate_markdown_report
-from machineconfig.jobs.installer.checks.vt_utils import ScanSummary, get_vt_client, scan_file
+from machineconfig.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH, upload_app
+from machineconfig.jobs.installer.checks.report_utils import (
+    APP_METADATA_KEYS,
+    ENGINE_REPORT_KEYS,
+    AppData,
+    ScannedAppRecord,
+    build_app_metadata_row,
+    build_engine_report_rows,
+    build_latest_scan_panel,
+    build_summary_group,
+)
+from machineconfig.jobs.installer.checks.vt_utils import ScanResult, ScanSummary, get_vt_client, scan_file
 from machineconfig.utils.installer_utils.installer_runner import get_installed_cli_apps
 from machineconfig.utils.path_extended import PathExtended
-from machineconfig.utils.source_of_truth import CONFIG_ROOT, INSTALL_VERSION_ROOT
-
-# Constants
-APP_SUMMARY_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_summary_report.csv")
+from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT
 
 console = Console()
 
@@ -103,10 +108,34 @@ def _build_app_data(
     return app_data
 
 
-def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> list[AppData]:
-    app_data_list: list[AppData] = []
+def _build_scan_record(
+    app_path: PathExtended,
+    version: str | None,
+    scan_time: str,
+    app_url: str,
+    scan_summary: ScanSummary | None,
+    scan_results: list[ScanResult],
+    fallback_notes: str,
+) -> ScannedAppRecord:
+    app_data = _build_app_data(
+        app_path=app_path,
+        version=version,
+        scan_time=scan_time,
+        app_url=app_url,
+        scan_summary=scan_summary,
+        fallback_notes=fallback_notes,
+    )
+    return {"app_data": app_data, "engine_results": build_engine_report_rows(app_data, scan_results)}
+
+
+def _extract_app_data(scan_records: list[ScannedAppRecord]) -> list[AppData]:
+    return [scan_record["app_data"] for scan_record in scan_records]
+
+
+def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> list[ScannedAppRecord]:
+    scan_records: list[ScannedAppRecord] = []
     if not apps_to_scan:
-        return app_data_list
+        return scan_records
     try:
         progress = Progress(
             SpinnerColumn(),
@@ -123,68 +152,75 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> li
                 with get_vt_client() as client:
                     for app_path, version in apps_to_scan:
                         progress.update(scan_task, description=f"Scanning {app_path.name}...")
-                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
-                        scan_summary, _ = scan_file(app_path, client, progress, scan_task)
+                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(scan_records), len(apps_to_scan)))
+                        scan_summary, scan_results = scan_file(app_path, client, progress, scan_task)
                         progress.update(scan_task, description=f"Uploading {app_path.name}...")
-                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(scan_records), len(apps_to_scan)))
                         app_url = upload_app(app_path) or ""
                         scan_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-                        last_scanned = _build_app_data(
+                        scan_record = _build_scan_record(
                             app_path=app_path,
                             version=version,
                             scan_time=scan_time,
                             app_url=app_url,
                             scan_summary=scan_summary,
+                            scan_results=scan_results,
                             fallback_notes="VirusTotal scan failed or returned no summary.",
                         )
-                        app_data_list.append(last_scanned)
+                        last_scanned = scan_record["app_data"]
+                        scan_records.append(scan_record)
                         progress.advance(scan_task)
-                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(app_data_list), len(apps_to_scan)))
+                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(scan_records), len(apps_to_scan)))
             finally:
                 progress.stop()
     except FileNotFoundError as e:
         console.print(f"[bold red]{e}[/bold red]")
         console.print("[yellow]Skipping scanning due to missing credentials.[/yellow]")
         for app_path, version in apps_to_scan:
-            app_data_list.append(
-                _build_app_data(
+            scan_records.append(
+                _build_scan_record(
                     app_path=app_path,
                     version=version,
                     scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
                     app_url="",
                     scan_summary=None,
+                    scan_results=[],
                     fallback_notes="VirusTotal credentials missing.",
                 )
             )
     except Exception as e:
         console.print(f"[bold red]An unexpected error occurred during scanning: {e}[/bold red]")
-    return app_data_list
+    return scan_records
 
 
-def write_reports(app_data_list: list[AppData]) -> tuple[Path, Path]:
+def write_reports(scan_records: list[ScannedAppRecord]) -> tuple[Path, Path]:
+    app_data_list = _extract_app_data(scan_records)
     if not app_data_list:
         raise ValueError("No app data available to write reports.")
-    APP_SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    csv_path = APP_SUMMARY_PATH.with_suffix(".csv")
-    with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
-        fieldnames = list(app_data_list[0].keys())
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    APP_METADATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(APP_METADATA_PATH, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=list(APP_METADATA_KEYS))
         writer.writeheader()
-        writer.writerows(app_data_list)
-    md_path = APP_SUMMARY_PATH.with_suffix(".md")
-    generate_markdown_report(app_data_list, md_path)
-    return csv_path, md_path
+        writer.writerows([build_app_metadata_row(scan_record["app_data"]) for scan_record in scan_records])
+    engine_results = [engine_row for scan_record in scan_records for engine_row in scan_record["engine_results"]]
+    with open(ENGINE_RESULTS_PATH, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=list(ENGINE_REPORT_KEYS))
+        writer.writeheader()
+        writer.writerows(engine_results)
+    return APP_METADATA_PATH, ENGINE_RESULTS_PATH
 
 
 def scan_and_write_reports(app_names: list[str] | None) -> list[AppData]:
     console.rule("[bold blue]MachineConfig Installation Checker[/bold blue]")
     apps_to_scan = collect_apps_to_scan(app_names)
     console.print(f"[green]Found {len(apps_to_scan)} applications to check.[/green]")
-    app_data_list = scan_apps_with_vt(apps_to_scan)
+    scan_records = scan_apps_with_vt(apps_to_scan)
+    app_data_list = _extract_app_data(scan_records)
     if app_data_list:
-        csv_path, md_path = write_reports(app_data_list)
-        console.print(f"[green]CSV report saved to: {csv_path}[/green]")
-        console.print(f"[green]Markdown report saved to: {md_path}[/green]")
+        app_metadata_csv_path, engine_csv_path = write_reports(scan_records)
+        console.print(build_summary_group(app_data_list))
+        console.print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
+        console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
     return app_data_list
 
 

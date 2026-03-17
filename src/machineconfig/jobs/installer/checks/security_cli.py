@@ -1,30 +1,29 @@
-
-
+import csv
 from functools import cache
+from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
+from machineconfig.jobs.installer.checks.vt_utils import summarize_scan_results
 
 if TYPE_CHECKING:
     from rich.console import Console
     from rich.table import Table
 
-    from machineconfig.jobs.installer.checks.report_utils import AppData
+    from machineconfig.jobs.installer.checks.report_utils import AppData, AppMetadataRow, EngineReportRow, StoredEngineReportRow
     from machineconfig.utils.path_extended import PathExtended
+
+
+ReportFormat = Literal["table", "csv"]
+ReportView = Literal["app-summary", "apps", "engines", "options", "stats"]
 
 
 @cache
 def _console() -> Console:
     from rich.console import Console
     return Console()
-
-
-# def _parse_apps_csv(apps_csv: str | None) -> list[str] | None:
-#     if apps_csv is None:
-#         return None
-#     app_names = [name.strip() for name in apps_csv.split(",") if name.strip()]
-#     return app_names or None
 
 
 def _parse_positive_pct(value: str | None) -> float | None:
@@ -39,130 +38,199 @@ def _parse_positive_pct(value: str | None) -> float | None:
         return None
 
 
-def _parse_int(value: str | None) -> int:
-    if value is None:
-        return 0
-    cleaned = value.strip()
-    if not cleaned:
-        return 0
-    try:
-        return int(cleaned)
-    except ValueError:
-        return 0
+def _parse_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    cleaned = str(value).strip().lower()
+    return cleaned in {"1", "true", "yes", "y"}
 
 
-def to_app_data_list(rows: list[dict[str, object]]) -> list[AppData]:
-    app_data_list: list[AppData] = []
+def _normalize_app_names(app_names: list[str] | None) -> set[str] | None:
+    if app_names is None:
+        return None
+    return {app_name.strip().lower() for app_name in app_names if app_name.strip()}
+
+
+def _parse_apps_argument(apps: str | None) -> list[str] | None:
+    if apps is None:
+        return None
+    app_names = [name.strip() for name in apps.split(",") if name.strip()]
+    return app_names or None
+
+
+def to_app_metadata_list(rows: Sequence[Mapping[str, object]]) -> list[AppMetadataRow]:
+    app_data_list: list[AppMetadataRow] = []
     for row in rows:
         app_name = str(row.get("app_name", ""))
         version_raw = row.get("version")
         version = str(version_raw) if version_raw not in {None, ""} else None
-        positive_pct = _parse_positive_pct(str(row.get("positive_pct", "")))
         scan_time = str(row.get("scan_time", ""))
         app_path = str(row.get("app_path", ""))
         app_url = str(row.get("app_url", ""))
-        flagged_engines = _parse_int(str(row.get("flagged_engines", "")))
-        verdict_engines = _parse_int(str(row.get("verdict_engines", "")))
-        total_engines = _parse_int(str(row.get("total_engines", "")))
-        malicious_engines = _parse_int(str(row.get("malicious_engines", "")))
-        suspicious_engines = _parse_int(str(row.get("suspicious_engines", "")))
-        harmless_engines = _parse_int(str(row.get("harmless_engines", "")))
-        undetected_engines = _parse_int(str(row.get("undetected_engines", "")))
-        unsupported_engines = _parse_int(str(row.get("unsupported_engines", "")))
-        timeout_engines = _parse_int(str(row.get("timeout_engines", "")))
-        failure_engines = _parse_int(str(row.get("failure_engines", "")))
-        other_engines = _parse_int(str(row.get("other_engines", "")))
         notes = str(row.get("notes", ""))
+        scan_summary_available_raw = row.get("scan_summary_available")
+        scan_summary_available = _parse_bool(scan_summary_available_raw) if scan_summary_available_raw is not None else _parse_positive_pct(str(row.get("positive_pct", ""))) is not None
         app_data_list.append(
             {
                 "app_name": app_name,
                 "version": version,
-                "positive_pct": positive_pct,
-                "flagged_engines": flagged_engines,
-                "verdict_engines": verdict_engines,
-                "total_engines": total_engines,
-                "malicious_engines": malicious_engines,
-                "suspicious_engines": suspicious_engines,
-                "harmless_engines": harmless_engines,
-                "undetected_engines": undetected_engines,
-                "unsupported_engines": unsupported_engines,
-                "timeout_engines": timeout_engines,
-                "failure_engines": failure_engines,
-                "other_engines": other_engines,
-                "notes": notes,
                 "scan_time": scan_time,
                 "app_path": app_path,
                 "app_url": app_url,
+                "scan_summary_available": scan_summary_available,
+                "notes": notes,
             }
         )
     return app_data_list
 
 
-def scan_apps(
-    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to scan")] = None,
-) -> None:
-    def func(apps__: str | None) -> None:
-        from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports
-        # app_names = _parse_apps_csv(apps__)
-        app_names = [name.strip() for name in apps__.split(",")] if apps__ else None
-        scan_and_write_reports(app_names)
-    from machineconfig.utils.code import run_lambda_function
-    run_lambda_function(lambda: func(apps__=apps), uv_with=["vt-py"], uv_project_dir=None)
+def to_engine_report_rows(rows: Sequence[Mapping[str, object]]) -> list[StoredEngineReportRow]:
+    engine_rows: list[StoredEngineReportRow] = []
+    for row in rows:
+        engine_result_raw = row.get("engine_result")
+        engine_result = None if engine_result_raw in {None, ""} else str(engine_result_raw)
+        engine_rows.append(
+            {
+                "app_name": str(row.get("app_name", "")),
+                "engine_name": str(row.get("engine_name", "")),
+                "engine_category": str(row.get("engine_category", "")),
+                "engine_result": engine_result,
+            }
+        )
+    return engine_rows
 
 
-def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Table:
+def _build_empty_app_data(app_row: AppMetadataRow) -> AppData:
+    return {
+        "app_name": app_row["app_name"],
+        "version": app_row["version"],
+        "positive_pct": None,
+        "flagged_engines": 0,
+        "verdict_engines": 0,
+        "total_engines": 0,
+        "malicious_engines": 0,
+        "suspicious_engines": 0,
+        "harmless_engines": 0,
+        "undetected_engines": 0,
+        "unsupported_engines": 0,
+        "timeout_engines": 0,
+        "failure_engines": 0,
+        "other_engines": 0,
+        "notes": app_row["notes"],
+        "scan_time": app_row["scan_time"],
+        "app_path": app_row["app_path"],
+        "app_url": app_row["app_url"],
+    }
+
+
+def build_app_data_list(app_rows: Sequence[AppMetadataRow], engine_rows: Sequence[StoredEngineReportRow]) -> list[AppData]:
+    engine_rows_by_app: dict[str, list[StoredEngineReportRow]] = {}
+    for engine_row in engine_rows:
+        engine_rows_by_app.setdefault(engine_row["app_name"], []).append(engine_row)
+
+    app_data_list: list[AppData] = []
+    for app_row in app_rows:
+        app_data = _build_empty_app_data(app_row)
+        if app_row["scan_summary_available"]:
+            scan_summary = summarize_scan_results(
+                [
+                    {
+                        "engine_name": engine_row["engine_name"],
+                        "category": engine_row["engine_category"],
+                        "result": engine_row["engine_result"],
+                    }
+                    for engine_row in engine_rows_by_app.get(app_row["app_name"], [])
+                ]
+            )
+            app_data["positive_pct"] = scan_summary["positive_pct"]
+            app_data["flagged_engines"] = scan_summary["flagged_engines"]
+            app_data["verdict_engines"] = scan_summary["verdict_engines"]
+            app_data["total_engines"] = scan_summary["total_engines"]
+            app_data["malicious_engines"] = scan_summary["malicious_engines"]
+            app_data["suspicious_engines"] = scan_summary["suspicious_engines"]
+            app_data["harmless_engines"] = scan_summary["harmless_engines"]
+            app_data["undetected_engines"] = scan_summary["undetected_engines"]
+            app_data["unsupported_engines"] = scan_summary["unsupported_engines"]
+            app_data["timeout_engines"] = scan_summary["timeout_engines"]
+            app_data["failure_engines"] = scan_summary["failure_engines"]
+            app_data["other_engines"] = scan_summary["other_engines"]
+            app_data["notes"] = scan_summary["notes"]
+        app_data_list.append(app_data)
+    return app_data_list
+
+
+def hydrate_engine_report_rows(app_rows: Sequence[AppMetadataRow], engine_rows: Sequence[StoredEngineReportRow]) -> list[EngineReportRow]:
+    app_rows_by_name = {app_row["app_name"]: app_row for app_row in app_rows}
+    hydrated_engine_rows: list[EngineReportRow] = []
+    for engine_row in engine_rows:
+        app_row = app_rows_by_name.get(engine_row["app_name"])
+        hydrated_engine_rows.append(
+            {
+                "app_name": engine_row["app_name"],
+                "version": app_row["version"] if app_row is not None else None,
+                "scan_time": app_row["scan_time"] if app_row is not None else "",
+                "app_path": app_row["app_path"] if app_row is not None else "",
+                "app_url": app_row["app_url"] if app_row is not None else "",
+                "engine_name": engine_row["engine_name"],
+                "engine_category": engine_row["engine_category"],
+                "engine_result": engine_row["engine_result"],
+            }
+        )
+    return hydrated_engine_rows
+
+
+def _filter_app_metadata_rows(app_rows: list[AppMetadataRow], app_names: set[str] | None) -> list[AppMetadataRow]:
+    if app_names is None:
+        return app_rows
+    return [row for row in app_rows if row["app_name"].lower() in app_names]
+
+
+def _filter_stored_engine_rows(engine_rows: list[StoredEngineReportRow], app_names: set[str] | None) -> list[StoredEngineReportRow]:
+    if app_names is None:
+        return engine_rows
+    return [row for row in engine_rows if row["app_name"].lower() in app_names]
+
+
+def _stringify_report_value(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value)
+
+
+def _render_csv_text(rows: Sequence[Mapping[str, object]], columns: Sequence[str]) -> str:
+    buffer = StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=list(columns))
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({column: _stringify_report_value(row.get(column)) for column in columns})
+    return buffer.getvalue().rstrip()
+
+
+def _build_raw_csv_table(title: str, rows: Sequence[Mapping[str, object]], columns: Sequence[str]) -> Table:
+    from rich import box
     from rich.table import Table
-    table = Table(title="Installed CLI Apps", show_lines=False)
-    table.add_column("Name")
-    table.add_column("Version", justify="right")
-    table.add_column("Path")
-    for app_path, version in apps_to_scan:
-        table.add_row(app_path.stem, version or "", app_path.collapseuser(strict=False).as_posix())
+
+    table = Table(title=title, box=box.ROUNDED, header_style="bold cyan", row_styles=["", "dim"], expand=False)
+    for column in columns:
+        table.add_column(column, overflow="ellipsis", max_width=44)
+    for row in rows:
+        table.add_row(*[_stringify_report_value(row.get(column)) for column in columns])
     return table
 
 
-def list_apps(
-    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None,
-) -> None:
-    from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan
+def _load_filtered_report_rows(
+    normalized_app_names: set[str] | None,
+) -> tuple[list[AppMetadataRow], list[StoredEngineReportRow], list[AppData], list[EngineReportRow]]:
+    from machineconfig.jobs.installer.checks.install_utils import load_app_metadata_report, load_engine_results_report
 
-    # app_names = _parse_apps_csv(apps)
-    app_names = [name.strip() for name in apps.split(",")] if apps else None
-    apps_to_scan = collect_apps_to_scan(app_names)
-    _console().print(_build_apps_table(apps_to_scan))
-
-
-def upload(path: Annotated[Path, typer.Argument(..., help="Path to a local file to upload")]) -> None:
-    from machineconfig.jobs.installer.checks.install_utils import upload_app
-    from machineconfig.utils.path_extended import PathExtended
-
-    link = upload_app(PathExtended(path))
-    if not link:
-        raise typer.Exit(code=1)
-    _console().print(link)
+    app_rows = _filter_app_metadata_rows(to_app_metadata_list(load_app_metadata_report()), normalized_app_names)
+    engine_rows = _filter_stored_engine_rows(to_engine_report_rows(load_engine_results_report()), normalized_app_names)
+    app_data_list = build_app_data_list(app_rows, engine_rows)
+    hydrated_engine_rows = hydrate_engine_report_rows(app_rows, engine_rows)
+    return app_rows, engine_rows, app_data_list, hydrated_engine_rows
 
 
-def download(url: Annotated[str, typer.Argument(..., help="Google Drive URL or file id")]) -> None:
-    from machineconfig.jobs.installer.checks.install_utils import download_google_drive_file
-
-    path = download_google_drive_file(url)
-    _console().print(path.as_posix())
-
-
-def install(name: Annotated[str, typer.Argument(..., help="App name from summary report or 'essentials'")]) -> None:
-    from machineconfig.jobs.installer.checks.install_utils import download_safe_apps
-
-    download_safe_apps(name)
-
-
-def summary() -> None:
-    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH
-    from machineconfig.jobs.installer.checks.install_utils import load_summary_report
-
-    rows = load_summary_report()
-    if not rows:
-        raise typer.Exit(code=1)
-    app_data_list = to_app_data_list(rows)
+def _build_report_stats_lines(app_data_list: Sequence[AppData], app_metadata_path: Path, engine_results_path: Path) -> list[str]:
     scanned: list[AppData] = []
     clean: list[AppData] = []
     review: list[AppData] = []
@@ -185,31 +253,159 @@ def summary() -> None:
     total_engines = sum(row.get("total_engines", 0) for row in app_data_list)
     verdict_engines = sum(row.get("verdict_engines", 0) for row in app_data_list)
     flagged_engines = sum(row.get("flagged_engines", 0) for row in app_data_list)
-    _console().print(f"Apps in report: {len(app_data_list)}")
-    _console().print(f"Scanned: {len(scanned)}")
-    _console().print(f"Clean: {len(clean)}")
-    _console().print(f"Review (<5%): {len(review)}")
-    _console().print(f"Flagged (>=5%): {len(flagged)}")
-    _console().print(f"No verdicts: {len(no_verdict)}")
-    _console().print(f"Engines: {total_engines}")
-    _console().print(f"Verdict engines: {verdict_engines}")
-    _console().print(f"Flagged engines: {flagged_engines}")
-    _console().print(f"Report CSV: {APP_SUMMARY_PATH.with_suffix('.csv')}")
-    _console().print(f"Report MD: {APP_SUMMARY_PATH.with_suffix('.md')}")
+    return [
+        f"Apps in report: {len(app_data_list)}",
+        f"Scanned: {len(scanned)}",
+        f"Clean: {len(clean)}",
+        f"Review (<5%): {len(review)}",
+        f"Flagged (>=5%): {len(flagged)}",
+        f"No verdicts: {len(no_verdict)}",
+        f"Engines: {total_engines}",
+        f"Verdict engines: {verdict_engines}",
+        f"Flagged engines: {flagged_engines}",
+        f"App metadata CSV: {app_metadata_path}",
+        f"Engine CSV: {engine_results_path}",
+    ]
 
 
-def report() -> None:
-    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH
-    from machineconfig.jobs.installer.checks.install_utils import load_summary_report
-    from machineconfig.jobs.installer.checks.report_utils import generate_markdown_report
+def _build_report_options_text() -> str:
+    from machineconfig.jobs.installer.checks.report_utils import APP_METADATA_KEYS, ENGINE_REPORT_KEYS
 
-    rows = load_summary_report()
-    if not rows:
+    return "\n".join(
+        [
+            "Views:",
+            "  app-summary: derived app safety summary table",
+            "  apps: app metadata CSV rows",
+            "  engines: engine results table or raw engine CSV",
+            "  stats: summary statistics for the selected apps",
+            "  options: available views, formats, and CSV columns",
+            "Formats:",
+            "  table: rich table output for apps or engines",
+            "  csv: raw CSV output for apps or engines",
+            "Filter:",
+            "  APPS accepts comma-separated app names",
+            f"App CSV columns: {', '.join(APP_METADATA_KEYS)}",
+            f"Engine CSV columns: {', '.join(ENGINE_REPORT_KEYS)}",
+        ]
+    )
+
+
+def _resolve_report_view(view: ReportView | None, summarize: bool) -> ReportView:
+    if view is not None:
+        return view
+    return "app-summary" if summarize else "engines"
+
+
+def scan_apps(
+    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to scan")] = None,
+) -> None:
+    def func(apps__: str | None) -> None:
+        from machineconfig.jobs.installer.checks.check_installations import scan_and_write_reports
+        apps_names = _parse_apps_argument(apps__)
+        scan_and_write_reports(apps_names)
+    from machineconfig.utils.code import run_lambda_function
+    run_lambda_function(lambda: func(apps__=apps), uv_with=["vt-py"], uv_project_dir=None)
+
+
+def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Table:
+    from rich.table import Table
+    table = Table(title="Installed CLI Apps", show_lines=False)
+    table.add_column("Name")
+    table.add_column("Version", justify="right")
+    table.add_column("Path")
+    for app_path, version in apps_to_scan:
+        table.add_row(app_path.stem, version or "", app_path.collapseuser(strict=False).as_posix())
+    return table
+
+
+def list_apps(
+    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None,
+) -> None:
+    from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan
+
+    apps_names = _parse_apps_argument(apps)
+    apps_to_scan = collect_apps_to_scan(apps_names)
+    _console().print(_build_apps_table(apps_to_scan))
+
+
+def upload(path: Annotated[Path, typer.Argument(..., help="Path to a local file to upload")]) -> None:
+    from machineconfig.jobs.installer.checks.install_utils import upload_app
+    from machineconfig.utils.path_extended import PathExtended
+
+    link = upload_app(PathExtended(path))
+    if not link:
         raise typer.Exit(code=1)
-    app_data_list = to_app_data_list(rows)
-    md_path = APP_SUMMARY_PATH.with_suffix(".md")
-    generate_markdown_report(app_data_list, md_path)
-    _console().print(f"Markdown report saved to: {md_path}")
+    _console().print(link)
+
+
+def download(url: Annotated[str, typer.Argument(..., help="Google Drive URL or file id")]) -> None:
+    from machineconfig.jobs.installer.checks.install_utils import download_google_drive_file
+
+    path = download_google_drive_file(url)
+    _console().print(path.as_posix())
+
+
+def install(name: Annotated[str, typer.Argument(..., help="App name from app metadata report or 'essentials'")]) -> None:
+    from machineconfig.jobs.installer.checks.install_utils import download_safe_apps
+
+    download_safe_apps(name)
+
+
+def summary() -> None:
+    report(view="stats")
+
+
+def report(
+    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to show")] = None,
+    view: Annotated[
+        ReportView | None,
+        typer.Option("--view", "-v", help="Which report view to show", case_sensitive=False, show_choices=True),
+    ] = None,
+    format_type: Annotated[
+        ReportFormat,
+        typer.Option("--format", "-f", help="Output format for apps or engines views", case_sensitive=False, show_choices=True),
+    ] = "table",
+    summarize: Annotated[bool, typer.Option("--summarize/--full", hidden=True)] = True,
+) -> None:
+    from machineconfig.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH
+    from machineconfig.jobs.installer.checks.report_utils import APP_METADATA_KEYS, ENGINE_REPORT_KEYS, build_engine_results_table, build_summary_group
+
+    resolved_view = _resolve_report_view(view, summarize)
+    if resolved_view == "options":
+        _console().print(_build_report_options_text())
+        return
+    if resolved_view not in {"apps", "engines"} and format_type != "table":
+        raise typer.BadParameter("--format csv is only supported with --view apps or --view engines.")
+
+    apps_names = _parse_apps_argument(apps)
+    normalized_app_names = _normalize_app_names(apps_names)
+    app_rows, engine_rows, app_data_list, hydrated_engine_rows = _load_filtered_report_rows(normalized_app_names)
+
+    if resolved_view == "stats":
+        if not app_data_list:
+            raise typer.Exit(code=1)
+        for line in _build_report_stats_lines(app_data_list, APP_METADATA_PATH, ENGINE_RESULTS_PATH):
+            _console().print(line)
+        return
+    if resolved_view == "app-summary":
+        if not app_data_list:
+            raise typer.Exit(code=1)
+        _console().print(build_summary_group(app_data_list))
+        return
+    if resolved_view == "apps":
+        if not app_rows:
+            raise typer.Exit(code=1)
+        if format_type == "csv":
+            _console().print(_render_csv_text(app_rows, APP_METADATA_KEYS))
+            return
+        _console().print(_build_raw_csv_table("App Metadata CSV", app_rows, APP_METADATA_KEYS))
+        return
+    if not engine_rows:
+        raise typer.Exit(code=1)
+    if format_type == "csv":
+        _console().print(_render_csv_text(engine_rows, ENGINE_REPORT_KEYS))
+        return
+    _console().print(build_engine_results_table(hydrated_engine_rows))
 
 
 def scan_path(path: Annotated[Path, typer.Argument(..., help="Path to a file to scan")]) -> None:
@@ -247,9 +443,9 @@ def get_app() -> typer.Typer:
     app.command(name="list", help="List installed apps, optionally filtered by comma-separated app names")(list_apps)
     app.command(name="upload", help="Upload a local file to cloud storage")(upload)
     app.command(name="download", help="Download a file from Google Drive")(download)
-    app.command(name="install", help="Install safe apps from summary report")(install)
-    app.command(name="summary", help="Show summary statistics for the last report")(summary)
-    app.command(name="report", help="Regenerate Markdown report from CSV summary")(report)
+    app.command(name="install", help="Install safe apps from app metadata report")(install)
+    app.command(name="summary", hidden=True)(summary)
+    app.command(name="report", help="Show saved scan results, CSV rows, or summary stats")(report)
     app.command(name="scan-path", help="Scan a single file path with VirusTotal")(scan_path)
 
     return app

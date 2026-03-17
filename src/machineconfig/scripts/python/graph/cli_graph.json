@@ -5659,20 +5659,45 @@
                     "signature": {
                       "raw_lines": [
                         "def summary() -> None:",
-                        "    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH",
-                        "    from machineconfig.jobs.installer.checks.install_utils import load_summary_report",
+                        "    from machineconfig.jobs.installer.checks.install_utils import APP_SUMMARY_PATH, ENGINE_RESULTS_PATH, load_summary_report",
                         "",
                         "    rows = load_summary_report()",
                         "    if not rows:",
                         "        raise typer.Exit(code=1)",
-                        "    app_data_list = _to_app_data_list(rows)",
-                        "    scanned = [row for row in app_data_list if row.get(\"positive_pct\") is not None]",
-                        "    clean = [row for row in scanned if row.get(\"positive_pct\") == 0.0]",
+                        "    app_data_list = to_app_data_list(rows)",
+                        "    scanned: list[AppData] = []",
+                        "    clean: list[AppData] = []",
+                        "    review: list[AppData] = []",
+                        "    flagged: list[AppData] = []",
+                        "    no_verdict: list[AppData] = []",
+                        "    for row in app_data_list:",
+                        "        positive_pct = row[\"positive_pct\"]",
+                        "        if positive_pct is None:",
+                        "            continue",
+                        "        scanned.append(row)",
+                        "        if row[\"verdict_engines\"] == 0:",
+                        "            no_verdict.append(row)",
+                        "            continue",
+                        "        if positive_pct == 0.0:",
+                        "            clean.append(row)",
+                        "        elif positive_pct < 5.0:",
+                        "            review.append(row)",
+                        "        else:",
+                        "            flagged.append(row)",
+                        "    total_engines = sum(row.get(\"total_engines\", 0) for row in app_data_list)",
+                        "    verdict_engines = sum(row.get(\"verdict_engines\", 0) for row in app_data_list)",
+                        "    flagged_engines = sum(row.get(\"flagged_engines\", 0) for row in app_data_list)",
                         "    _console().print(f\"Apps in report: {len(app_data_list)}\")",
                         "    _console().print(f\"Scanned: {len(scanned)}\")",
-                        "    _console().print(f\"Clean (0%): {len(clean)}\")",
-                        "    _console().print(f\"Report CSV: {APP_SUMMARY_PATH.with_suffix('.csv')}\")",
-                        "    _console().print(f\"Report MD: {APP_SUMMARY_PATH.with_suffix('.md')}\")"
+                        "    _console().print(f\"Clean: {len(clean)}\")",
+                        "    _console().print(f\"Review (<5%): {len(review)}\")",
+                        "    _console().print(f\"Flagged (>=5%): {len(flagged)}\")",
+                        "    _console().print(f\"No verdicts: {len(no_verdict)}\")",
+                        "    _console().print(f\"Engines: {total_engines}\")",
+                        "    _console().print(f\"Verdict engines: {verdict_engines}\")",
+                        "    _console().print(f\"Flagged engines: {flagged_engines}\")",
+                        "    _console().print(f\"Summary CSV: {APP_SUMMARY_PATH}\")",
+                        "    _console().print(f\"Engine CSV: {ENGINE_RESULTS_PATH}\")"
                       ],
                       "name": "summary",
                       "parameters": [],
@@ -5682,7 +5707,7 @@
                   {
                     "kind": "command",
                     "name": "report",
-                    "help": "Regenerate Markdown report from CSV summary",
+                    "help": "Show saved scan results from CSV",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
                       "module": "machineconfig.jobs.installer.checks.security_cli",
@@ -5690,21 +5715,63 @@
                     },
                     "signature": {
                       "raw_lines": [
-                        "def report() -> None:",
-                        "    from machineconfig.jobs.installer.checks.check_installations import APP_SUMMARY_PATH",
-                        "    from machineconfig.jobs.installer.checks.install_utils import load_summary_report",
-                        "    from machineconfig.jobs.installer.checks.report_utils import generate_markdown_report",
+                        "def report(",
+                        "    apps: Annotated[str | None, typer.Argument(help=\"Optional comma-separated app names to show\")] = None,",
+                        "    summarize: Annotated[bool, typer.Option(\"--summarize/--full\", help=\"Show app summary or full engine rows\")] = True,",
+                        ") -> None:",
+                        "    from machineconfig.jobs.installer.checks.install_utils import load_engine_results_report, load_summary_report",
+                        "    from machineconfig.jobs.installer.checks.report_utils import build_engine_results_table, build_summary_group",
                         "",
-                        "    rows = load_summary_report()",
-                        "    if not rows:",
+                        "    normalized_app_names = _normalize_app_names(_parse_apps_csv(apps))",
+                        "    app_data_list = _filter_app_data(to_app_data_list(load_summary_report()), normalized_app_names)",
+                        "    if summarize:",
+                        "        if not app_data_list:",
+                        "            raise typer.Exit(code=1)",
+                        "        _console().print(build_summary_group(app_data_list))",
+                        "        return",
+                        "    engine_rows = _filter_engine_report_rows(to_engine_report_rows(load_engine_results_report()), normalized_app_names)",
+                        "    if not engine_rows:",
                         "        raise typer.Exit(code=1)",
-                        "    app_data_list = _to_app_data_list(rows)",
-                        "    md_path = APP_SUMMARY_PATH.with_suffix(\".md\")",
-                        "    generate_markdown_report(app_data_list, md_path)",
-                        "    _console().print(f\"Markdown report saved to: {md_path}\")"
+                        "    _console().print(build_engine_results_table(engine_rows))"
                       ],
                       "name": "report",
-                      "parameters": [],
+                      "parameters": [
+                        {
+                          "name": "apps",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Argument(help='Optional comma-separated app names to show')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Optional comma-separated app names to show"
+                          }
+                        },
+                        {
+                          "name": "summarize",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": true,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--summarize/--full', help='Show app summary or full engine rows')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--summarize/--full"
+                            ],
+                            "long_flags": [
+                              "--summarize",
+                              "--full"
+                            ],
+                            "short_flags": [],
+                            "help": "Show app summary or full engine rows"
+                          }
+                        }
+                      ],
                       "return": "None"
                     }
                   },
@@ -5724,12 +5791,21 @@
                         "    from machineconfig.utils.path_extended import PathExtended",
                         "",
                         "    try:",
-                        "        client = get_vt_client()",
+                        "        with get_vt_client() as client:",
+                        "            scan_summary, _ = scan_file(PathExtended(path), client)",
                         "    except FileNotFoundError as e:",
                         "        _console().print(f\"[bold red]{e}[/bold red]\")",
                         "        raise typer.Exit(code=1)",
-                        "    positive_pct, _ = scan_file(PathExtended(path), client)",
-                        "    _console().print(f\"{path.name}: {positive_pct}% positives\")"
+                        "    if scan_summary is None:",
+                        "        raise typer.Exit(code=1)",
+                        "    _console().print(",
+                        "        f\"{path.name}: {scan_summary['flagged_engines']}/{scan_summary['verdict_engines']} flagged \"",
+                        "        f\"({scan_summary['positive_pct']:.1f}%) | \"",
+                        "        f\"M:{scan_summary['malicious_engines']} S:{scan_summary['suspicious_engines']} \"",
+                        "        f\"H:{scan_summary['harmless_engines']} U:{scan_summary['undetected_engines']}\"",
+                        "    )",
+                        "    if scan_summary[\"notes\"]:",
+                        "        _console().print(f\"Notes: {scan_summary['notes']}\")"
                       ],
                       "name": "scan_path",
                       "parameters": [

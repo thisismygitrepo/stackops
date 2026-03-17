@@ -1,21 +1,51 @@
+import csv
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from unittest.mock import patch
 
 from machineconfig.jobs.installer.checks import check_installations, security_cli, vt_utils
+from machineconfig.jobs.installer.checks.report_utils import ScannedAppRecord
 from machineconfig.utils.path_extended import PathExtended
+from typer.testing import CliRunner
 
 if TYPE_CHECKING:
     import vt
 
 
+class FakeConsole:
+    def __init__(self) -> None:
+        self.renderables: list[object] = []
+
+    def print(self, renderable: object) -> None:
+        self.renderables.append(renderable)
+
+
+def _build_sample_report_rows() -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    app_rows: list[dict[str, object]] = [
+        {
+            "app_name": "zellij",
+            "version": "v0.43.1",
+            "scan_time": "2026-03-17 06:05",
+            "app_path": "~/.local/bin/zellij",
+            "app_url": "https://example.test/zellij",
+            "scan_summary_available": "True",
+            "notes": "All reporting engines returned a verdict.",
+        }
+    ]
+    engine_rows: list[dict[str, object]] = [
+        {"app_name": "zellij", "engine_name": "engine-a", "engine_category": "harmless", "engine_result": "clean"},
+        {"app_name": "zellij", "engine_name": "engine-b", "engine_category": "undetected", "engine_result": None},
+    ]
+    return app_rows, engine_rows
+
+
 def test_summarize_scan_results_uses_only_flagging_categories_for_positive_pct() -> None:
     results: list[vt_utils.ScanResult] = [
-        {"category": "undetected", "result": None},
-        {"category": "harmless", "result": "clean"},
-        {"category": "suspicious", "result": "heuristic match"},
-        {"category": "timeout", "result": None},
-        {"category": "type-unsupported", "result": None},
+        {"engine_name": "engine-a", "category": "undetected", "result": None},
+        {"engine_name": "engine-b", "category": "harmless", "result": "clean"},
+        {"engine_name": "engine-c", "category": "suspicious", "result": "heuristic match"},
+        {"engine_name": "engine-d", "category": "timeout", "result": None},
+        {"engine_name": "engine-e", "category": "type-unsupported", "result": None},
     ]
 
     summary = vt_utils.summarize_scan_results(results)
@@ -52,8 +82,8 @@ def test_scan_file_supports_mapping_results(tmp_path: Path) -> None:
 
     assert summary is not None
     assert results == [
-        {"category": "undetected", "result": None},
-        {"category": "suspicious", "result": "heuristic"},
+        {"engine_name": "engine-a", "category": "undetected", "result": None},
+        {"engine_name": "engine-b", "category": "suspicious", "result": "heuristic"},
     ]
     assert summary["flagged_engines"] == 1
     assert summary["verdict_engines"] == 2
@@ -109,32 +139,206 @@ def test_scan_apps_with_vt_closes_vt_client_session() -> None:
         patch.object(check_installations, "scan_file", return_value=(scan_summary, [])),
         patch.object(check_installations, "upload_app", return_value="https://example.test/zellij"),
     ):
-        app_data_list = check_installations.scan_apps_with_vt([(PathExtended("/tmp/zellij"), "v0.43.1")])
+        scan_records = check_installations.scan_apps_with_vt([(PathExtended("/tmp/zellij"), "v0.43.1")])
 
     assert fake_client.closed is True
-    assert len(app_data_list) == 1
-    assert app_data_list[0]["positive_pct"] == 1.4
-    assert app_data_list[0]["flagged_engines"] == 1
-    assert app_data_list[0]["verdict_engines"] == 72
-    assert app_data_list[0]["notes"] == "All reporting engines returned a verdict."
+    assert len(scan_records) == 1
+    assert scan_records[0]["app_data"]["positive_pct"] == 1.4
+    assert scan_records[0]["app_data"]["flagged_engines"] == 1
+    assert scan_records[0]["app_data"]["verdict_engines"] == 72
+    assert scan_records[0]["app_data"]["notes"] == "All reporting engines returned a verdict."
+    assert scan_records[0]["engine_results"] == []
 
 
-def test_to_app_data_list_backfills_legacy_report_fields() -> None:
-    rows: list[dict[str, object]] = [
+def test_build_app_data_list_derives_summary_from_joined_rows() -> None:
+    app_rows: list[dict[str, object]] = [
         {
             "app_name": "zellij",
             "version": "v0.43.1",
-            "positive_pct": "0.0",
             "scan_time": "2026-03-17 06:05",
             "app_path": "~/.local/bin/zellij",
             "app_url": "https://example.test/zellij",
+            "scan_summary_available": "true",
+            "notes": "",
         }
     ]
+    engine_rows: list[dict[str, object]] = [
+        {"app_name": "zellij", "engine_name": "engine-a", "engine_category": "harmless", "engine_result": "clean"},
+        {"app_name": "zellij", "engine_name": "engine-b", "engine_category": "undetected", "engine_result": None},
+    ]
 
-    app_data_list = security_cli.to_app_data_list(rows)
+    app_data_list = security_cli.build_app_data_list(
+        security_cli.to_app_metadata_list(app_rows),
+        security_cli.to_engine_report_rows(engine_rows),
+    )
 
     assert len(app_data_list) == 1
     assert app_data_list[0]["flagged_engines"] == 0
-    assert app_data_list[0]["verdict_engines"] == 0
-    assert app_data_list[0]["total_engines"] == 0
-    assert app_data_list[0]["notes"] == ""
+    assert app_data_list[0]["verdict_engines"] == 2
+    assert app_data_list[0]["total_engines"] == 2
+    assert app_data_list[0]["notes"] == "All reporting engines returned a verdict."
+
+
+def test_build_app_data_list_preserves_pending_rows() -> None:
+    app_data_list = security_cli.build_app_data_list(
+        security_cli.to_app_metadata_list(
+            [
+                {
+                    "app_name": "zellij",
+                    "version": "v0.43.1",
+                    "scan_time": "2026-03-17 06:05",
+                    "app_path": "~/.local/bin/zellij",
+                    "app_url": "https://example.test/zellij",
+                    "scan_summary_available": "false",
+                    "notes": "VirusTotal credentials missing.",
+                }
+            ]
+        ),
+        [],
+    )
+
+    assert len(app_data_list) == 1
+    assert app_data_list[0]["positive_pct"] is None
+    assert app_data_list[0]["notes"] == "VirusTotal credentials missing."
+
+
+def test_write_reports_creates_app_metadata_and_engine_csv(tmp_path: Path) -> None:
+    app_metadata_path = tmp_path / "apps_metadata_report.csv"
+    engine_path = tmp_path / "apps_engine_results_report.csv"
+    scan_records: list[ScannedAppRecord] = [
+        {
+            "app_data": {
+                "app_name": "zellij",
+                "version": "v0.43.1",
+                "positive_pct": 0.0,
+                "flagged_engines": 0,
+                "verdict_engines": 2,
+                "total_engines": 2,
+                "malicious_engines": 0,
+                "suspicious_engines": 0,
+                "harmless_engines": 1,
+                "undetected_engines": 1,
+                "unsupported_engines": 0,
+                "timeout_engines": 0,
+                "failure_engines": 0,
+                "other_engines": 0,
+                "notes": "All reporting engines returned a verdict.",
+                "scan_time": "2026-03-17 07:35",
+                "app_path": "~/.local/bin/zellij",
+                "app_url": "https://example.test/zellij",
+            },
+            "engine_results": [
+                {
+                    "app_name": "zellij",
+                    "engine_name": "engine-a",
+                    "engine_category": "harmless",
+                    "engine_result": "clean",
+                },
+                {
+                    "app_name": "zellij",
+                    "engine_name": "engine-b",
+                    "engine_category": "undetected",
+                    "engine_result": None,
+                },
+            ],
+        }
+    ]
+
+    with (
+        patch.object(check_installations, "APP_METADATA_PATH", app_metadata_path),
+        patch.object(check_installations, "ENGINE_RESULTS_PATH", engine_path),
+    ):
+        written_app_metadata_path, written_engine_path = check_installations.write_reports(scan_records)
+
+    assert written_app_metadata_path == app_metadata_path
+    assert written_engine_path == engine_path
+    assert app_metadata_path.exists()
+    assert engine_path.exists()
+
+    with app_metadata_path.open("r", encoding="utf-8") as file_handle:
+        app_rows = list(csv.DictReader(file_handle))
+    with engine_path.open("r", encoding="utf-8") as file_handle:
+        engine_rows = list(csv.DictReader(file_handle))
+
+    assert len(app_rows) == 1
+    assert app_rows[0]["app_name"] == "zellij"
+    assert app_rows[0]["scan_summary_available"] == "True"
+    assert len(engine_rows) == 2
+    assert engine_rows[0]["engine_name"] == "engine-a"
+    assert engine_rows[1]["engine_category"] == "undetected"
+    assert "app_path" not in engine_rows[0]
+    assert "app_url" not in engine_rows[0]
+    assert "version" not in engine_rows[0]
+
+
+def test_report_options_view_lists_current_views_and_columns() -> None:
+    fake_console = FakeConsole()
+
+    with patch.object(security_cli, "_console", return_value=fake_console):
+        security_cli.report(view="options")
+
+    assert len(fake_console.renderables) == 1
+    output = str(fake_console.renderables[0])
+    assert "app-summary" in output
+    assert "apps" in output
+    assert "engines" in output
+    assert "stats" in output
+    assert "scan_summary_available" in output
+    assert "engine_category" in output
+
+
+def test_report_apps_csv_prints_raw_app_metadata_csv() -> None:
+    fake_console = FakeConsole()
+    app_rows, engine_rows = _build_sample_report_rows()
+
+    with (
+        patch.object(security_cli, "_console", return_value=fake_console),
+        patch("machineconfig.jobs.installer.checks.install_utils.load_app_metadata_report", return_value=app_rows),
+        patch("machineconfig.jobs.installer.checks.install_utils.load_engine_results_report", return_value=engine_rows),
+    ):
+        security_cli.report(view="apps", format_type="csv")
+
+    assert len(fake_console.renderables) == 1
+    output = str(fake_console.renderables[0])
+    assert "app_name,version,scan_time,app_path,app_url,scan_summary_available,notes" in output
+    assert "zellij,v0.43.1,2026-03-17 06:05,~/.local/bin/zellij,https://example.test/zellij,True,All reporting engines returned a verdict." in output
+
+
+def test_report_engines_csv_prints_raw_engine_csv() -> None:
+    fake_console = FakeConsole()
+    app_rows, engine_rows = _build_sample_report_rows()
+
+    with (
+        patch.object(security_cli, "_console", return_value=fake_console),
+        patch("machineconfig.jobs.installer.checks.install_utils.load_app_metadata_report", return_value=app_rows),
+        patch("machineconfig.jobs.installer.checks.install_utils.load_engine_results_report", return_value=engine_rows),
+    ):
+        security_cli.report(view="engines", format_type="csv")
+
+    assert len(fake_console.renderables) == 1
+    output = str(fake_console.renderables[0])
+    assert "app_name,engine_name,engine_category,engine_result" in output
+    assert "zellij,engine-a,harmless,clean" in output
+    assert "zellij,engine-b,undetected," in output
+
+
+def test_security_cli_help_shows_report_and_hides_legacy_summary_command() -> None:
+    runner = CliRunner()
+    result = runner.invoke(security_cli.get_app(), ["--help"])
+
+    assert result.exit_code == 0
+    assert "Show saved scan results, CSV rows, or summary stats" in result.stdout
+    assert "Show summary statistics for the last report" not in result.stdout
+
+
+def test_security_cli_report_help_shows_view_choices() -> None:
+    runner = CliRunner()
+    result = runner.invoke(security_cli.get_app(), ["report", "--help"])
+
+    assert result.exit_code == 0
+    assert "--view" in result.stdout
+    assert "--format" in result.stdout
+    assert "app-summary" in result.stdout
+    assert "apps" in result.stdout
+    assert "engines" in result.stdout
+    assert "stats" in result.stdout
