@@ -1,6 +1,9 @@
 # Hosting Your Documentation
 
-This guide covers all options for hosting MkDocs documentation, from local development to free global hosting.
+This guide covers local preview and hosting options for the repository's Zensical-powered documentation site.
+
+!!! note
+    Machineconfig now uses `zensical` for local builds and deployment, while keeping `mkdocs.yml` as the transition-friendly config format. If you install docs tooling manually instead of running `uv sync --group dev`, install `zensical` and `mkdocstrings-python`.
 
 ---
 
@@ -9,32 +12,34 @@ This guide covers all options for hosting MkDocs documentation, from local devel
 ### Quick Serve
 
 ```bash
-uv run mkdocs serve
+uv run zensical serve
 ```
 
-Opens at `http://127.0.0.1:8000`
+Open `http://127.0.0.1:8000/machineconfig/`. The site root redirects there because `site_url` includes `/machineconfig/`.
 
 ### Custom Port
 
 ```bash
-uv run mkdocs serve --dev-addr=0.0.0.0:8080
+uv run zensical serve --dev-addr=0.0.0.0:8080
 ```
 
-### Live Reload (default)
+### Open in Browser
 
-MkDocs automatically reloads when you edit files. To disable:
+Open the preview automatically in your default browser:
 
 ```bash
-uv run mkdocs serve --no-livereload
+uv run zensical serve --open
 ```
 
 ### Build Static Files
 
 ```bash
-uv run mkdocs build
+uv run zensical build
 ```
 
 Creates a `site/` directory with static HTML files.
+
+If you removed or renamed pages, delete `site/` before rebuilding so stale files don't linger from older outputs.
 
 ---
 
@@ -48,17 +53,17 @@ Creates a `site/` directory with static HTML files.
 - Completely free
 - Automatic HTTPS
 - Custom domain support
-- Direct integration with MkDocs
+- Native deployment target for GitHub Actions
 
 **Setup**:
 
-=== "One Command Deploy"
+=== "Build locally"
 
     ```bash
-    uv run mkdocs gh-deploy
+    uv run zensical build
     ```
 
-    This builds and pushes to the `gh-pages` branch automatically.
+    This generates `site/`, which you can publish with GitHub Pages or any other static host.
 
 === "GitHub Actions (Automated)"
 
@@ -69,38 +74,69 @@ Creates a `site/` directory with static HTML files.
     on:
       push:
         branches: [main]
+        paths:
+          - 'docs/**'
+          - 'docs_fragments/**'
+          - 'mkdocs.yml'
+          - 'pyproject.toml'
+          - 'uv.lock'
+          - 'src/**'
+          - '.github/workflows/docs.yml'
       workflow_dispatch:
 
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
+
+    concurrency:
+      group: pages
+      cancel-in-progress: true
 
     jobs:
-      deploy:
+      build:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          
+
           - name: Setup Python
             uses: actions/setup-python@v5
             with:
               python-version: '3.13'
-              
+
           - name: Install uv
             uses: astral-sh/setup-uv@v4
-            
+
+          - name: Configure GitHub Pages
+            uses: actions/configure-pages@v5
+
           - name: Install dependencies
             run: uv sync --group dev
-            
-          - name: Deploy to GitHub Pages
-            run: uv run mkdocs gh-deploy --force
+
+          - name: Build site
+            run: rm -rf site && uv run zensical build
+
+          - name: Upload Pages artifact
+            uses: actions/upload-pages-artifact@v3
+            with:
+              path: site
+
+      deploy:
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+          name: github-pages
+          url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+          - id: deployment
+            uses: actions/deploy-pages@v4
     ```
 
 **Enable GitHub Pages**:
 
 1. Go to repository **Settings** → **Pages**
-2. Source: **Deploy from a branch**
-3. Branch: **gh-pages** / **(root)**
-4. Save
+2. Source: **GitHub Actions**
+3. Save
 
 **Your docs will be at**: `https://thisismygitrepo.github.io/machineconfig/`
 
@@ -125,7 +161,7 @@ Creates a `site/` directory with static HTML files.
 
 | Setting | Value |
 |---------|-------|
-| Build command | `pip install mkdocs-material mkdocstrings[python] && mkdocs build` |
+| Build command | `pip install . zensical mkdocstrings-python && zensical build` |
 | Build output directory | `site` |
 | Root directory | `/` |
 
@@ -135,7 +171,7 @@ Creates a `site/` directory with static HTML files.
 #!/bin/bash
 pip install uv
 uv sync --group dev
-uv run mkdocs build
+uv run zensical build
 ```
 
 Then set build command to: `bash build_docs.sh`
@@ -161,14 +197,14 @@ Then set build command to: `bash build_docs.sh`
 
 | Setting | Value |
 |---------|-------|
-| Build command | `pip install mkdocs-material mkdocstrings[python] && mkdocs build` |
+| Build command | `pip install . zensical mkdocstrings-python && zensical build` |
 | Publish directory | `site` |
 
 **Or create `netlify.toml`**:
 
 ```toml
 [build]
-  command = "pip install mkdocs-material mkdocstrings[python] mkdocs-autorefs && mkdocs build"
+  command = "pip install . zensical mkdocstrings-python && zensical build"
   publish = "site"
 
 [build.environment]
@@ -195,9 +231,9 @@ Then set build command to: `bash build_docs.sh`
 
 ```json
 {
-  "buildCommand": "pip install mkdocs-material mkdocstrings[python] && mkdocs build",
+  "buildCommand": "zensical build",
   "outputDirectory": "site",
-  "installCommand": "pip install mkdocs"
+  "installCommand": "pip install . zensical mkdocstrings-python"
 }
 ```
 
@@ -220,8 +256,9 @@ image: python:3.11
 pages:
   stage: deploy
   script:
-    - pip install mkdocs-material mkdocstrings[python]
-    - mkdocs build --site-dir public
+    - pip install . zensical mkdocstrings-python
+    - zensical build
+    - mv site public
   artifacts:
     paths:
       - public
@@ -233,7 +270,7 @@ pages:
 
 ### 6. Read the Docs
 
-**Best for**: Python projects, versioned docs
+**Best for**: Python projects that want hosted docs and version management
 
 **Pros**:
 - Free for open source
@@ -251,26 +288,20 @@ pages:
 version: 2
 
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
-    python: "3.11"
-
-mkdocs:
-  configuration: mkdocs.yml
-
-python:
-  install:
-    - requirements: docs/requirements.txt
+    python: "3.13"
+  jobs:
+    install:
+      - pip install . zensical mkdocstrings-python
+    build:
+      html:
+        - mkdir -p $READTHEDOCS_OUTPUT/html
+        - zensical build
+        - cp -r site/. $READTHEDOCS_OUTPUT/html/
 ```
 
-Create `docs/requirements.txt`:
-
-```
-mkdocs>=1.6.0
-mkdocs-material>=9.7.0
-mkdocstrings[python]>=1.0.0
-mkdocs-autorefs>=1.0.0
-```
+Read the Docs is still oriented around MkDocs and Sphinx, so with Zensical you provide an explicit build job that writes HTML into `$READTHEDOCS_OUTPUT/html/`.
 
 ---
 
@@ -292,7 +323,7 @@ mkdocs-autorefs>=1.0.0
 
 | Setting | Value |
 |---------|-------|
-| Build Command | `pip install mkdocs-material mkdocstrings[python] && mkdocs build` |
+| Build Command | `pip install . zensical mkdocstrings-python && zensical build` |
 | Publish Directory | `site` |
 
 ---
@@ -313,7 +344,7 @@ mkdocs-autorefs>=1.0.0
 npm install -g surge
 
 # Build docs
-uv run mkdocs build
+uv run zensical build
 
 # Deploy
 cd site && surge
@@ -351,7 +382,7 @@ firebase login
 firebase init hosting
 
 # Build docs
-uv run mkdocs build
+uv run zensical build
 
 # Deploy
 firebase deploy --only hosting
@@ -425,8 +456,11 @@ For **machineconfig**, I recommend **GitHub Pages** with GitHub Actions:
 ### Quick Start
 
 ```bash
-# Deploy now
-uv run mkdocs gh-deploy
+# Preview locally
+uv run zensical serve
+
+# Deploy after pushing to main
+git push origin main
 
 # Your docs are live at:
 # https://thisismygitrepo.github.io/machineconfig/
@@ -443,10 +477,10 @@ Share docs on your local network:
 ip addr | grep "inet " | grep -v 127.0.0.1
 
 # Serve on all interfaces
-uv run mkdocs serve --dev-addr=0.0.0.0:8000
+uv run zensical serve --dev-addr=0.0.0.0:8000
 ```
 
-Others on your network can access at `http://YOUR_IP:8000`
+Others on your network can access at `http://YOUR_IP:8000/machineconfig/`
 
 ---
 
@@ -460,8 +494,8 @@ FROM python:3.13-slim
 WORKDIR /docs
 COPY . .
 
-RUN pip install mkdocs-material mkdocstrings[python] mkdocs-autorefs
-RUN mkdocs build
+RUN pip install . zensical mkdocstrings-python
+RUN zensical build
 
 FROM nginx:alpine
 COPY --from=0 /docs/site /usr/share/nginx/html

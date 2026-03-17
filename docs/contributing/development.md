@@ -63,10 +63,12 @@ uv run ruff format src/
 ### Building Documentation
 
 ```bash
-uv run mkdocs serve
+uv run zensical serve
 ```
 
-Visit `http://127.0.0.1:8000` to preview docs.
+Visit `http://127.0.0.1:8000/machineconfig/` to preview docs.
+
+This repo builds docs with `zensical` while keeping `mkdocs.yml` as the compatibility config format. `uv sync --group dev` installs everything you need; if you set up docs tooling manually, install `zensical` and `mkdocstrings-python`.
 
 ---
 

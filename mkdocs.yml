@@ -126,7 +126,7 @@ markdown_extensions:
   - pymdownx.smartsymbols
   - pymdownx.snippets:
       auto_append:
-        - docs/includes/abbreviations.md
+        - docs_fragments/abbreviations.txt
       check_paths: true
   - pymdownx.superfences:
       custom_fences:
@@ -144,8 +144,6 @@ markdown_extensions:
   - pymdownx.tilde
 
 extra:
-  version:
-    provider: mike
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/thisismygitrepo/machineconfig
