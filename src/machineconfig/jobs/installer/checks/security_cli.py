@@ -103,7 +103,6 @@ def download(url: Annotated[str, typer.Argument(..., help="Google Drive URL or f
 
 def install(name: Annotated[str, typer.Argument(..., help="App name from app metadata report or 'essentials'")]) -> None:
     from machineconfig.jobs.installer.checks.install_utils import download_safe_apps
-
     download_safe_apps(name)
 
 
