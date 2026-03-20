@@ -36,6 +36,7 @@ applyTo: "**/*.py"
 * Rust-inspired style, e.g.
 
 ```python
+
 from typing import Literal, Optional, TypeAlias
 class Success:
   def __init__(self, value: int):
@@ -66,9 +67,12 @@ def example_usage() -> None:
 ```
 
 # General Programming Ethos:
-* Please don't be psychophantic, don't just try to please the user by doing exactly what they say, e.g. there is a typo in their request and you follow the typo! Also, if request is unreasonable from design perspective, try to push back and explain and suggest.
+* Please be obsessed about one thing: how to write the code in a way, so that if there is any change that can make something else break, then the static analsyis tools will catch it and point to all the places that need to be changed, so that there is no chance of human error of forgetting to change something somewhere. Every other consideration is subserviant to this overriding requirement.
+* Don't write toleratnt code, e.g. try this, no worries, lets try something else, unless user asked for it explicitly.
+* I hate "legacy code", "backward compatilbity", "fallback position", never do this nonsense, when you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.
+* Please don't be psychophantic, don't just try to please the user by doing exactly what they say, e.g. there is a typo in their request and you follow the typo! Also, if request is unreasonable from design perspective, push back and explain and suggest.
 * Make sure all the code is rigorous, no lazy stuff.
-* Always avoid default values in arguments of functions. Those are evil and cause confusion. Always be explicit in parameter passing.
+* Always avoid default values in arguments of functions. Those are evil and cause confusion. Always be explicit in parameter passing. I only accept them in cli apps and when interacting with user in general, otherwise, deep in codebase, no.
 * Your code is minimal, no unrequested features, no bloat.
 * Please avoid writing README files and avoid docstring and comments in code unless absolutely necessary. Use clear naming conventions instead of documenting.
 * Always prefer to functional style of programming over OOP.

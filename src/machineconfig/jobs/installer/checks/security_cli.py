@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 @cache
 def _console() -> Console:
     from rich.console import Console
+
     return Console()
 
 
@@ -52,6 +53,7 @@ def scan(
 ) -> None:
     def run_scan(apps: str | None, path: Path | None, record: bool | None) -> None:
         from machineconfig.jobs.installer.checks.security_helper import parse_apps_argument, scan_single_path
+
         if apps is not None and path is not None:
             raise typer.BadParameter("Use either APPS or --path, not both.")
         resolved_record = record if record is not None else path is None
@@ -59,9 +61,12 @@ def scan(
             scan_single_path(path, resolved_record)
         else:
             from machineconfig.jobs.installer.checks.check_installations import scan_installed_apps
+
             app_names = parse_apps_argument(apps)
             scan_installed_apps(app_names, write_reports_to_repo=resolved_record)
+
     from machineconfig.utils.code import run_lambda_function
+
     run_lambda_function(lambda: run_scan(apps=apps, path=path, record=record), uv_with=["vt-py"], uv_project_dir=None)
 
 
@@ -79,6 +84,7 @@ def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Ta
 
 def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None) -> None:
     from machineconfig.jobs.installer.checks.check_installations import collect_apps_to_scan
+
     apps_names = parse_apps_argument(apps)
     apps_to_scan = collect_apps_to_scan(apps_names)
     _console().print(_build_apps_table(apps_to_scan))
@@ -103,6 +109,7 @@ def download(url: Annotated[str, typer.Argument(..., help="Google Drive URL or f
 
 def install(name: Annotated[str, typer.Argument(..., help="App name from app metadata report or 'essentials'")]) -> None:
     from machineconfig.jobs.installer.checks.install_utils import download_safe_apps
+
     download_safe_apps(name)
 
 
@@ -169,12 +176,17 @@ def report(
 def get_app() -> typer.Typer:
     app = typer.Typer(name="security-cli", help="Security related CLI tools.", no_args_is_help=True, add_help_option=True, add_completion=False)
 
-    app.command(name="scan", help="Scan installed apps or a single file path with VirusTotal")(scan)
-    app.command(name="list", help="List installed apps, optionally filtered by comma-separated app names")(list_apps)
-    app.command(name="upload", help="Upload a local file to cloud storage")(upload)
-    app.command(name="download", help="Download a file from Google Drive")(download)
-    app.command(name="install", help="Install safe apps from app metadata report")(install)
-    app.command(name="summary", hidden=True)(summary)
-    app.command(name="report", help="Show saved scan results, CSV rows, or summary stats")(report)
+    app.command(name="scan", help="<s> Scan installed apps or a single file path with VirusTotal")(scan)
+    app.command(name="s", help="<s> Scan installed apps or a single file path with VirusTotal", hidden=True)(scan)
+    app.command(name="list", help="<l> List installed apps, optionally filtered by comma-separated app names")(list_apps)
+    app.command(name="l", help="<l> List installed apps, optionally filtered by comma-separated app names", hidden=True)(list_apps)
+    app.command(name="upload", help="<u> Upload a local file to cloud storage")(upload)
+    app.command(name="u", help="<u> Upload a local file to cloud storage", hidden=True)(upload)
+    app.command(name="download", help="<d> Download a file from Google Drive")(download)
+    app.command(name="d", help="<d> Download a file from Google Drive", hidden=True)(download)
+    app.command(name="install", help="<i> Install safe apps from app metadata report")(install)
+    app.command(name="i", help="<i> Install safe apps from app metadata report", hidden=True)(install)
+    app.command(name="report", help="<r> Show saved scan results, CSV rows, or summary stats")(report)
+    app.command(name="r", help="<r> Show saved scan results, CSV rows, or summary stats", hidden=True)(report)
 
     return app
