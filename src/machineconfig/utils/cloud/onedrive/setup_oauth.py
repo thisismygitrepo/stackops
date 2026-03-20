@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # from transaction import setup_oauth_authentication, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI
-from machineconfig.utils.cloud.onedrive.transaction import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, setup_oauth_authentication
+from machineconfig.utils.cloud.onedrive.auth import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, setup_oauth_authentication
 
 
 def main():

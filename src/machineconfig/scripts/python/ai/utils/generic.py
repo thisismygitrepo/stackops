@@ -12,7 +12,7 @@ def create_dot_scripts(repo_root: Path) -> None:
     shutil.rmtree(target_dir, ignore_errors=True)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    script_names: list[str] = ["lint_and_type_check.py"]
+    script_names: list[str] = ["lint_and_type_check.py", "lint_and_type_check_models.py", "lint_and_type_check_dashboard.py"]
     if platform.system() == "Windows":
         script_names.append("lint_and_type_check.ps1")
     elif platform.system() in ["Linux", "Darwin"]:

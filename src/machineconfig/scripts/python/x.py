@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 import subprocess
-import tempfile
+# import tempfile
 from typing import Annotated, Literal, TypeAlias
 
 import typer
