@@ -22,6 +22,7 @@ Current top-level commands:
 | `make-todo` | Generate a markdown file listing Python files in the repo |
 | `make-symlinks` | Create symlinks to the current repo in `~/code_copies/` |
 | `run-prompt` | Run one prompt via a selected agent |
+| `ask` | Ask codex directly via `codex exec` |
 | `add-skill` | Add a skill to an agent |
 
 ---
@@ -35,6 +36,7 @@ agents --help
 agents create --help
 agents make-config --help
 agents run-prompt --help
+agents ask --help
 ```
 
 If you prefer to start from the umbrella command, the same surface is reachable through:
