@@ -3,25 +3,18 @@
 from collections.abc import Sequence
 from pathlib import Path
 import subprocess
-from typing import Annotated, Literal, TextIO, TypeAlias, get_args
+from typing import Annotated, Literal, TextIO, get_args
 
 import typer
 
-from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, DEFAULT_SEAPRATOR
-
-
-ReasoningShortcut: TypeAlias = Literal["n", "l", "h", "x"]
-ReasoningEffort: TypeAlias = Literal["none", "low", "high", "xhigh"]
-
-
-def _resolve_reasoning(shortcut: ReasoningShortcut) -> ReasoningEffort:
-    reasoning_map: dict[ReasoningShortcut, ReasoningEffort] = {
-        "n": "none",
-        "l": "low",
-        "h": "high",
-        "x": "xhigh",
-    }
-    return reasoning_map[shortcut]
+from machineconfig.scripts.python.agents_parallel import get_app as get_parallel_app
+from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
+    ReasoningEffort,
+    ReasoningShortcut,
+    reasoning_help,
+    resolve_reasoning,
+)
 
 
 def _join_prompt_parts(prompt_parts: Sequence[str]) -> str:
@@ -79,88 +72,6 @@ def run_command_with_prompt_file(command: Sequence[str], prompt_path: Path) -> i
         strerror = error.strerror or "unknown error"
         typer.echo(f"""Failed to read prompt file {str(prompt_path)!r}: {strerror}""", err=True)
         return 1
-
-
-def agents_create(
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")],
-    model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
-    provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
-    host: Annotated[HOST, typer.Option(..., "--host", "-h", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
-    context: Annotated[
-        str | None, typer.Option(..., "--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path.")
-    ] = None,
-    context_path: Annotated[
-        str | None, typer.Option(..., "--context-path", "-C", help="Path to the context file/folder, defaults to .ai/todo/")
-    ] = None,
-    separator: Annotated[str, typer.Option(..., "--separator", "-s", help="Separator for context")] = DEFAULT_SEAPRATOR,
-    agent_load: Annotated[int, typer.Option(..., "--agent-load", "-l", help="Number of tasks per prompt")] = 3,
-    prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
-    prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
-    job_name: Annotated[
-        str, typer.Option(..., "--job-name", "-n", help="Job label. Also used to build the default output directory when --agents-dir is omitted.")
-    ] = "AI_Agents",
-    join_prompt_and_context: Annotated[bool, typer.Option(..., "--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
-    output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Path to write the layout.json file")] = None,
-    agents_dir: Annotated[
-        str | None,
-        typer.Option(
-            ..., "--agents-dir", "-d", help="Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>."
-        ),
-    ] = None,
-) -> None:
-    """Create agents layout file, ready to run."""
-    from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
-
-    try:
-        impl(
-            agent=agent,
-            host=host,
-            model=model,
-            provider=provider,
-            context=context,
-            context_path=context_path,
-            separator=separator,
-            agent_load=agent_load,
-            prompt=prompt,
-            prompt_path=prompt_path,
-            job_name=job_name,
-            join_prompt_and_context=join_prompt_and_context,
-            output_path=output_path,
-            agents_dir=agents_dir,
-        )
-    except ValueError as e:
-        raise typer.BadParameter(str(e)) from e
-    except RuntimeError as e:
-        typer.echo(str(e))
-        raise typer.Exit(1) from e
-
-
-def collect(
-    agent_dir: Annotated[str, typer.Argument(..., help="Path to the agent directory containing the prompts folder")],
-    output_path: Annotated[str, typer.Argument(..., help="Path to write the concatenated material files")],
-    separator: Annotated[str, typer.Option(..., help="Separator to use when concatenating material files")] = "\n",
-    pattern: Annotated[str | None, typer.Option(..., help="Pattern to match material files (e.g., 'res.txt')")] = None,
-) -> None:
-    """Collect all material files from an agent directory and concatenate them."""
-    from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import collect as impl
-
-    try:
-        impl(agent_dir=agent_dir, output_path=output_path, separator=separator, pattern=pattern)
-    except ValueError as e:
-        raise typer.BadParameter(str(e)) from e
-
-
-def make_agents_command_template() -> None:
-    """Create a template for fire agents."""
-    from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import make_agents_command_template as impl
-
-    try:
-        impl()
-    except ValueError as e:
-        raise typer.BadParameter(str(e)) from e
-    except RuntimeError as e:
-        typer.echo(str(e))
-        raise typer.Exit(1) from e
 
 
 def init_config(
@@ -245,6 +156,10 @@ def create_symlink_command(num: Annotated[int, typer.Argument(help="Number of sy
 def run_prompt(
     prompt: Annotated[str | None, typer.Argument(help="Prompt text (optional positional argument). If omitted, an empty prompt is used.")] = None,
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
+    reasoning_effort: Annotated[
+        ReasoningEffort | None,
+        typer.Option(..., "--reasoning-effort", "-r", help="Reasoning effort for codex agents. When omitted, codex uses its default."),
+    ] = None,
     context: Annotated[str | None, typer.Option(..., "--context", "-c", help="Context string. Mutually exclusive with --context-path.")] = None,
     context_path: Annotated[
         str | None, typer.Option(..., "--context-path", "-C", help="Path to a context file. Mutually exclusive with --context.")
@@ -297,6 +212,7 @@ def run_prompt(
         impl(
             prompt=prompt,
             agent=agent,
+            reasoning_effort=reasoning_effort,
             context=context,
             context_path=context_path,
             prompts_yaml_path=context_yaml_path,
@@ -310,7 +226,7 @@ def run_prompt(
 
 
 def ask(
-    reasoning: Annotated[ReasoningShortcut, typer.Argument(help="n=none, l=low, h=high, x=xhigh")],
+    reasoning: Annotated[ReasoningShortcut, typer.Argument(help=reasoning_help(agent="codex"))],
     prompt: Annotated[
         list[str],
         typer.Argument(help="Prompt text to pass to codex, or a prompt file path when --file-prompt is set"),
@@ -321,7 +237,7 @@ def ask(
     ] = False,
 ) -> None:
     """Ask codex directly via codex exec."""
-    reasoning_effort = _resolve_reasoning(shortcut=reasoning)
+    reasoning_effort = resolve_reasoning(shortcut=reasoning, agent="codex")
     if file_prompt:
         prompt_path = _resolve_prompt_path(prompt_parts=prompt)
         return_code = run_command_with_prompt_file(
@@ -367,81 +283,15 @@ cd {agent_dir}
         typer.echo(f"Skill '{skill_name}' is not recognized. Please provide a valid skill name.")
 
 
-def _decode_separator(separator: str) -> str:
-    try:
-        return bytes(separator, "utf-8").decode("unicode_escape")
-    except UnicodeDecodeError:
-        return separator
-
-
-def create_context(
-    prompt: Annotated[str, typer.Argument(help="Prompt text to send to the selected agent.")],
-    job_name: Annotated[str, typer.Option(..., "--job-name", "-n", help="Job name used in ./.ai/agents/<jobName>/context.md output path.")],
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
-    separator: Annotated[
-        str, typer.Option(..., "--separator", "-s", help="Separator between individual results in context.md. Supports escaped values like '\\n'.")
-    ] = DEFAULT_SEAPRATOR,
-) -> None:
-    """Run one prompt and ask the selected agent to persist a context file for the job."""
-    from machineconfig.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
-
-    normalized_separator = _decode_separator(separator=separator)
-    separator_for_prompt = normalized_separator.encode("unicode_escape").decode("ascii")
-    appended_instruction = (
-        f"Please store the results in ./.ai/agents/{job_name}/context.md (overwrite) and "
-        f'within that file make sure to use "{separator_for_prompt}" to separate the individual results.'
-    )
-    full_prompt = f"{prompt}\n\n{appended_instruction}"
-
-    try:
-        impl(
-            prompt=full_prompt,
-            agent=agent,
-            context="",
-            context_path=None,
-            prompts_yaml_path=None,
-            context_name=None,
-            where="all",
-            edit=False,
-            show_prompts_yaml_format=False,
-        )
-    except SystemExit as e:
-        exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1
-        if exit_code != 0:
-            raise
-    except ValueError as e:
-        raise typer.BadParameter(str(e)) from e
-
-    separator_path = Path(".ai") / "agents" / job_name / "separator.txt"
-    separator_path.parent.mkdir(parents=True, exist_ok=True)
-    separator_path.write_text(separator, encoding="utf-8")
-
-
 def get_app() -> typer.Typer:
     agents_app = typer.Typer(help="🤖 AI Agents management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
-    sep = "\n"
-    agents_full_help = f"""
-<c> Create agents layout file, ready to run.
-{sep}
-PROVIDER options: {", ".join(get_args(PROVIDER))}
-{sep}
-AGENT options: {", ".join(get_args(AGENTS))}
-"""
-    agents_create.__doc__ = agents_full_help
-    agents_app.command("create", no_args_is_help=True, help=agents_create.__doc__, short_help="<c> Create agents layout file, ready to run.")(
-        agents_create
+    agents_app.add_typer(
+        get_parallel_app(),
+        name="parallel",
+        help="🧵 <p> Parallel agent workflow commands",
+        short_help="<p> Parallel agent workflow commands",
     )
-    agents_app.command("c", no_args_is_help=True, help=agents_create.__doc__, hidden=True)(agents_create)
-    agents_app.command(name="create-context", no_args_is_help=True, short_help="<x> Run prompt and ask agent to persist context")(create_context)
-    agents_app.command(name="x", no_args_is_help=True, hidden=True)(create_context)
-    agents_app.command("collect", no_args_is_help=True, help=collect.__doc__, short_help="<T> Collect all agent materials into a single file.")(
-        collect
-    )
-    agents_app.command("T", no_args_is_help=True, help=collect.__doc__, hidden=True)(collect)
-    agents_app.command(
-        "make-template", no_args_is_help=False, help=make_agents_command_template.__doc__, short_help="<t> Create a template for fire agents"
-    )(make_agents_command_template)
-    agents_app.command("t", no_args_is_help=False, help=make_agents_command_template.__doc__, hidden=True)(make_agents_command_template)
+    agents_app.add_typer(get_parallel_app(), name="p", help="Parallel agent workflow commands", hidden=True)
     agents_app.command(
         "make-config", no_args_is_help=True, help=init_config.__doc__, short_help="<g> Initialize AI configurations in the current repository"
     )(init_config)

@@ -8,8 +8,14 @@ def fire_codex(ai_spec: AI_SPEC, prompt_path: Path, repo_root: Path) -> str:
     prompt_rel = prompt_path.relative_to(repo_root)
     safe_prompt_path = shlex.quote(str(prompt_rel))
     model_value = ai_spec["model"]
-    model_arg = f"--model {shlex.quote(model_value)}" if model_value else ""
-    base_cmd = f"codex exec {model_arg} - < {safe_prompt_path}".strip()
+    reasoning_effort = ai_spec["reasoning_effort"]
+    command_parts: list[str] = ["codex", "exec"]
+    if model_value is not None:
+        command_parts.extend(["--model", shlex.quote(model_value)])
+    if reasoning_effort is not None:
+        command_parts.extend(["-c", shlex.quote(f'model_reasoning_effort="{reasoning_effort}"')])
+    command_parts.extend(["-", "<", safe_prompt_path])
+    base_cmd = " ".join(command_parts)
 
     api_key = ai_spec["api_spec"]["api_key"]
     if api_key is not None:

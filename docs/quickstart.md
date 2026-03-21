@@ -65,7 +65,7 @@ Highlights from the current surface:
 
 - `cloud`: `sync`, `copy`, `mount`, `ftpx`
 - `sessions`: `run`, `run-aoe`, `attach`, `kill`, `create-from-function`, `balance-load`, `create-template`, `summarize`
-- `agents`: `create`, `create-context`, `collect`, `make-template`, `make-config`, `make-todo`, `make-symlinks`, `run-prompt`, `ask`, `add-skill`
+- `agents`: `parallel.{create, create-context, collect, make-template}`, `make-config`, `make-todo`, `make-symlinks`, `run-prompt`, `ask`, `add-skill`
 - `utils`: `kill-process`, `environment`, `get-machine-specs`, `init-project`, `upgrade-packages`, `type-hint`, `edit`, `download`, `pdf-merge`, `pdf-compress`, `read-db`
 
 ## Next steps

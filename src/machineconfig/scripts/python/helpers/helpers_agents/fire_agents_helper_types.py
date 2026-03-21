@@ -35,6 +35,7 @@ HOST: TypeAlias = Literal["local", "docker"]
 PROVIDER: TypeAlias = Literal[
     "azure", "google", "aws", "openai", "anthropic", "openrouter", "xai"
 ]
+ReasoningEffort: TypeAlias = Literal["none", "low", "medium", "high", "xhigh"]
 DEFAULT_SEAPRATOR = "\n@-@\n"
 
 
@@ -51,6 +52,7 @@ class AI_SPEC(TypedDict):
     agent: AGENTS
     machine: HOST
     api_spec: API_SPEC
+    reasoning_effort: ReasoningEffort | None
 
 
 AGENT_NAME_FORMATTER = "agent_{idx}_cmd.sh"  # e.g., agent_0_cmd.sh

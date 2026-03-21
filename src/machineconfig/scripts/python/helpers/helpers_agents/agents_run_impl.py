@@ -2,6 +2,7 @@ import shlex
 from pathlib import Path
 from platform import system
 from typing import cast
+
 from machineconfig.utils.accessories import randstr
 
 from machineconfig.scripts.python.helpers.helpers_agents.agents_run_context import (
@@ -13,6 +14,8 @@ from machineconfig.scripts.python.helpers.helpers_agents.agents_run_context impo
     resolve_prompts_yaml_paths,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+
 
 def _quote_for_shell(value: str, is_windows: bool) -> str:
     if is_windows:
@@ -49,10 +52,19 @@ def _print_prompt_file_preview(prompt_file: Path) -> None:
     )
 
 
-def build_agent_command(agent: AGENTS, prompt_file: Path) -> str:
+def _build_codex_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_windows: bool) -> str:
+    if reasoning_effort is None:
+        return ""
+    config_value = _quote_for_shell(f'model_reasoning_effort="{reasoning_effort}"', is_windows=is_windows)
+    return f" -c {config_value}"
+
+
+def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
     is_windows = system() == "Windows"
     prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
     agent_cli = cast(str, agent)
+    if reasoning_effort is not None and agent != "codex":
+        raise ValueError("--reasoning-effort is only supported for --agent codex")
 
     if is_windows:
         prompt_content_expr = f"(Get-Content -Raw {prompt_file_q})"
@@ -63,9 +75,10 @@ def build_agent_command(agent: AGENTS, prompt_file: Path) -> str:
         case "copilot":
             return f"{agent_cli} -p {prompt_content_expr} --yolo"
         case "codex":
+            reasoning_arg = _build_codex_reasoning_arg(reasoning_effort=reasoning_effort, is_windows=is_windows)
             if is_windows:
-                return f"Get-Content -Raw {prompt_file_q} | {agent_cli} exec -"
-            return f"{agent_cli} exec - < {prompt_file_q}"
+                return f"Get-Content -Raw {prompt_file_q} | {agent_cli} exec{reasoning_arg} -"
+            return f"{agent_cli} exec{reasoning_arg} - < {prompt_file_q}"
         case "gemini":
             return f"{agent_cli} --yolo --prompt {prompt_file_q}"
         case "crush":
@@ -95,6 +108,7 @@ def build_agent_command(agent: AGENTS, prompt_file: Path) -> str:
 def run(
     prompt: str | None,
     agent: AGENTS,
+    reasoning_effort: ReasoningEffort | None,
     context: str | None,
     context_path: str | None,
     prompts_yaml_path: str | None,
@@ -128,7 +142,7 @@ def run(
     prompt_text = prompt if prompt is not None else ""
     prompt_file = _make_prompt_file(prompt=prompt_text, context=resolved_context)
     _print_prompt_file_preview(prompt_file=prompt_file)
-    command_line = build_agent_command(agent=agent, prompt_file=prompt_file)
+    command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
 
     from machineconfig.utils.code import exit_then_run_shell_script
     exit_then_run_shell_script(script=command_line, strict=False)

@@ -11,7 +11,7 @@ PROMPT_PATH="$REPO_ROOT/.ai/agents/prompt.txt"
 AGENTS_DIR="$REPO_ROOT/.ai/agents/$JOB_NAME"
 rm -rfd "$AGENTS_DIR" || true
 
-agents create \
+agents parallel create \
     --agent codex \
     --model gpt-5.3-codex \
     --provider openai \
@@ -29,4 +29,4 @@ sessions balance-load "$AGENTS_DIR/layout.json" \
     --output-path "$AGENTS_DIR/layout_balanced.json"
 
 echo """Please run like this `sessions run --layouts-file "$AGENTS_DIR/layout_balanced.json" --kill-upon-completion`"""
-echo """Then, do this `agents collect $AGENTS_DIR "$REPO_ROOT/.ai/agents/$JOB_NAME/collected.txt"` """
+echo """Then, do this `agents parallel collect $AGENTS_DIR "$REPO_ROOT/.ai/agents/$JOB_NAME/collected.txt"` """

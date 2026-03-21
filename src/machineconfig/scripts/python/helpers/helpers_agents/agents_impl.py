@@ -4,6 +4,7 @@ from typing import cast
 from pathlib import Path
 from time import perf_counter
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
+from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
 def _split_and_chunk_prompts(raw_material: str, separator: str, tasks_per_prompt: int) -> list[str]:
@@ -43,6 +44,7 @@ def agents_create(
     agent: AGENTS,
     host: HOST,
     model: str | None,
+    reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
     context: str | None,
     context_path: str | None,
@@ -60,6 +62,9 @@ def agents_create(
     from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_load_balancer import chunk_prompts
     from machineconfig.utils.accessories import get_repo_root
     import json
+
+    if agent != "codex" and reasoning_effort is not None:
+        raise ValueError("--reasoning-effort is only supported for --agent codex")
 
     repo_root = get_repo_root(Path.cwd())
     if repo_root is None:
@@ -151,6 +156,7 @@ def agents_create(
         machine=host,
         agent=agent_selected,
         model=model,
+        reasoning_effort=reasoning_effort,
         provider=provider,
         job_name=job_name_resolved,
     )
