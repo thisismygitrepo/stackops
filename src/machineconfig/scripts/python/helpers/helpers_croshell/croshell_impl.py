@@ -49,7 +49,7 @@ def croshell(
     ipython_profile: str | None = profile
     if path is not None:
         from machineconfig.utils.path_helper import get_choice_file
-        choice_file = get_choice_file(path=path, suffixes={".*"})
+        choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
         if project_path is None:
             ve_path, _ = get_ve_path_and_ipython_profile(choice_file)
             if ve_path is not None:

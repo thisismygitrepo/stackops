@@ -9,7 +9,7 @@ def _build_private_config() -> str:
         """\
         approval_policy = "never"
         sandbox_mode = "workspace-write"
-        allow_login_shell = false
+        allow_login_shell = true
         web_search = "live"
         project_doc_max_bytes = 32768
         project_doc_fallback_filenames = []

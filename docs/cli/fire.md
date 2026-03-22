@@ -81,7 +81,7 @@ fire script.py -c
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--remote` | `-r` | Launch on a remote machine |
+| `--remote` | `-R` | Launch on a remote machine |
 | `--submit-to-cloud` | `-C` | Submit job to cloud compute |
 | `--zellij-tab` | `-z` | Run in a new Zellij tab with given name |
 | `--cmd` | `-B` | Create a cmd fire command for async launch (Windows) |
@@ -98,6 +98,7 @@ fire script.py -c
 
 | Option | Short | Description |
 |--------|-------|-------------|
+| `--root-repo` | `-r` | Resolve relative paths and recursive search from the git repository root |
 | `--holdDirectory` | `-D` | Stay in current directory (don't cd to script location) |
 | `--PathExport` | `-P` | Add repository root to `PYTHONPATH` |
 
@@ -236,6 +237,9 @@ fire deploy.py release -g
 
 # Export repo root to PYTHONPATH for imports
 fire nested/deep/script.py -P
+
+# Resolve from the repository root even when launched from a subdirectory
+fire scripts/task.py -r
 ```
 
 ### Module Mode
@@ -378,7 +382,7 @@ fire analysis.py -c  # Shows "RUN AS MAIN" option plus all functions
 
 ## How It Works
 
-1. **Path Resolution**: Resolves the given path and detects the repository root
+1. **Path Resolution**: Resolves the given path, optionally from the repository root with `--root-repo`, and detects the repository root
 2. **Command Building**: Constructs the appropriate `uv run` command based on options
 3. **Execution**: Launches the script via shell with all modifiers applied
 

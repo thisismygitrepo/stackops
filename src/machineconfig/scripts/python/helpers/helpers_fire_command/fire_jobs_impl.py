@@ -13,7 +13,8 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     from machineconfig.utils.path_helper import get_choice_file
     from machineconfig.utils.accessories import get_repo_root, randstr
 
-    choice_file = get_choice_file(args.path, suffixes=None)
+    search_root = _get_search_root(root_repo=args.root_repo)
+    choice_file = get_choice_file(args.path, suffixes=None, search_root=search_root)
     repo_root = get_repo_root(choice_file)
     print(f"💾 Selected file: {choice_file}.\nRepo root: {repo_root}")
 
@@ -40,6 +41,19 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     from machineconfig.utils.code import exit_then_run_shell_script
 
     exit_then_run_shell_script(script=command, strict=False)
+
+
+def _get_search_root(root_repo: bool) -> Path | None:
+    """Return the search root for fire path resolution."""
+    if not root_repo:
+        return None
+
+    from machineconfig.utils.accessories import get_repo_root
+
+    repo_root = get_repo_root(Path.cwd())
+    if repo_root is None:
+        raise ValueError("--root-repo requires the current directory to be inside a git repository.")
+    return repo_root
 
 
 def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc) -> None:

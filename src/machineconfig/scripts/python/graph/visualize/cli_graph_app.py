@@ -1,17 +1,9 @@
 
 
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated
 
 import typer
-
-
-def _as_string_keyed_dict(value: object) -> dict[str, object] | None:
-    if not isinstance(value, dict):
-        return None
-    if not all(isinstance(key, str) for key in value):
-        return None
-    return cast(dict[str, object], value)
 
 
 def tree(
@@ -288,6 +280,14 @@ def search(
         root = graph_data.get("root")
         if not isinstance(root, dict):
             raise ValueError(f"Invalid graph root in {graph_file}")
+
+        from typing import cast
+        def _as_string_keyed_dict(value: object) -> dict[str, object] | None:
+            if not isinstance(value, dict):
+                return None
+            if not all(isinstance(key, str) for key in value):
+                return None
+            return cast(dict[str, object], value)
 
         entries: list[tuple[str, str, dict[str, object]]] = []
 

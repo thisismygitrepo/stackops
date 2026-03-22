@@ -18,6 +18,7 @@ class FireJobArgs:
     jupyter: bool = False
     marimo: bool = False
     submit_to_cloud: bool = False
+    root_repo: bool = False
     remote: bool = False
     module: bool = False
     script: bool = False

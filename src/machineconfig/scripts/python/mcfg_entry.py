@@ -28,7 +28,8 @@ def fire(
     optimized: Annotated[bool, typer.Option("--optimized", "-O", help="Run the optimized version of the function")] = False,
     zellij_tab: Annotated[str | None, typer.Option("--zellij-tab", "-z", help="Open in a new zellij tab")] = None,
     submit_to_cloud: Annotated[bool, typer.Option("--submit-to-cloud", "-C", help="Submit to cloud compute")] = False,
-    remote: Annotated[bool, typer.Option("--remote", "-r", help="Launch on a remote machine")] = False,
+    root_repo: Annotated[bool, typer.Option("--root-repo", "-r", help="Resolve and search from the repository root")] = False,
+    remote: Annotated[bool, typer.Option("--remote", "-R", help="Launch on a remote machine")] = False,
     environment: Annotated[str, typer.Option("--environment", "-E", help="Choose ip, localhost, hostname or arbitrary url")] = "",
     holdDirectory: Annotated[bool, typer.Option("--holdDirectory", "-D", help="Hold current directory and avoid cd'ing to the script directory")] = False,
     PathExport: Annotated[bool, typer.Option("--PathExport", "-P", help="Augment the PYTHONPATH with repo root")] = False,
@@ -39,7 +40,7 @@ def fire(
     from machineconfig.scripts.python.fire_jobs import fire as fire_impl
     fire_impl(ctx=ctx, path=path, function=function, ve=ve, cmd=cmd, interactive=interactive, debug=debug,
               choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,
-              script=script, optimized=optimized, zellij_tab=zellij_tab, submit_to_cloud=submit_to_cloud,
+              script=script, optimized=optimized, zellij_tab=zellij_tab, submit_to_cloud=submit_to_cloud, root_repo=root_repo,
               remote=remote, streamlit=streamlit, environment=environment, holdDirectory=holdDirectory,
               PathExport=PathExport, git_pull=git_pull, watch=watch)
 

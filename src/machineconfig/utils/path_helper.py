@@ -152,8 +152,21 @@ def search_for_files_of_interest(path_obj: Path, suffixes: set[str]) -> list[Pat
     return files
 
 
-def get_choice_file(path: str, suffixes: set[str] | None) -> Path:
-    path_obj = sanitize_path(path)
+def _is_explicit_absolute_path(path: str) -> bool:
+    return Path(path).is_absolute() or path.startswith("~") or (len(path) >= 2 and path[1] == ":")
+
+
+def _resolve_choice_path(path: str, search_root: Path | None) -> Path:
+    if _is_explicit_absolute_path(path):
+        return sanitize_path(path)
+    if search_root is None:
+        return sanitize_path(path)
+    return search_root.joinpath(Path(path).expanduser()).absolute()
+
+
+def get_choice_file(path: str, suffixes: set[str] | None, search_root: Path | None) -> Path:
+    resolved_search_root = Path.cwd() if search_root is None else search_root.absolute()
+    path_obj = _resolve_choice_path(path=path, search_root=search_root)
     print(f"🔍 Resolving path `{path}` to `{path_obj}`")
     if suffixes is None:
         if platform.system() == "Windows":
@@ -163,8 +176,8 @@ def get_choice_file(path: str, suffixes: set[str] | None) -> Path:
         else:
             suffixes = {".py"}
     if not path_obj.exists():
-        print(f"🔍 Searching for file matching `{path}` under `{Path.cwd()}`, but only if suffix matches {suffixes}")
-        choice_file = match_file_name(sub_string=path, search_root=Path.cwd(), suffixes=suffixes)
+        print(f"🔍 Searching for file matching `{path}` under `{resolved_search_root}`, but only if suffix matches {suffixes}")
+        choice_file = match_file_name(sub_string=path, search_root=resolved_search_root, suffixes=suffixes)
     elif path_obj.is_dir():
         print(f"🔍 Searching recursively for Python, PowerShell and Shell scripts in directory `{path_obj}`")
         files = search_for_files_of_interest(path_obj, suffixes=suffixes)
