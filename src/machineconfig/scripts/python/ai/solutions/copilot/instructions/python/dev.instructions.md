@@ -25,7 +25,11 @@ applyTo: "**/*.py"
 * Please use `# type: ignore blah blah`, to silence any warning from pyright or other linters and type checkers, but only when necessary. Otherwise, listen to them and adjust accordingly, or use cast from typing.
 * Use typeddict, dataclasses and literals when necessary to avoid blackbox str or dict[str, str] etc.
 * ALL functions / methods etc must clearly indicate the return type in signature, even if its None.
-* Do not leave dangling imports or variables unused, prefix their name with underscore if necessary to undicate they are unused.
+* Don't make file name `types.py` it conflicts with built-in modules.
+* Avoid `from futures import annotations` and the like, we are using python 3.13+ so no need for that.
+* Avoid writing code in __init__.py files, I hate black magic, avoid shims, and export files.
+* Avoid writing short functions with one or two lines, in-line instead.
+* Do not leave dangling imports or variables unused, prefix their name with underscore if necessary to indicate they are unused.
 * Please prefer to use absolute imports, avoid relatives when possible.
 * Use triple quotes and triple double quotes f-strings for string formatting and avoid when possible all goofy escaping when interpolation.
 * If needed, opt for polars not pandas, whenever possible.
@@ -67,12 +71,14 @@ def example_usage() -> None:
 ```
 
 # General Programming Ethos:
-* Please be obsessed about one thing: how to write the code in a way, so that if there is any change that can make something else break, then the static analsyis tools will catch it and point to all the places that need to be changed, so that there is no chance of human error of forgetting to change something somewhere. Every other consideration is subserviant to this overriding requirement.
+
+* Please be obsessed about one thing: how to write the code in a way, so that if there is any change anywhere that can make something else break, then the static analsyis tools will catch it and point to all the places that need to be changed, so that there is no chance of human error of forgetting to change something somewhere. Every other consideration is subserviant to this overriding requirement.
 * Don't write toleratnt code, e.g. try this, no worries, lets try something else, unless user asked for it explicitly.
 * I hate "legacy code", "backward compatilbity", "fallback position", never do this nonsense, when you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.
 * Please don't be psychophantic, don't just try to please the user by doing exactly what they say, e.g. there is a typo in their request and you follow the typo! Also, if request is unreasonable from design perspective, push back and explain and suggest.
 * Make sure all the code is rigorous, no lazy stuff.
 * Always avoid default values in arguments of functions. Those are evil and cause confusion. Always be explicit in parameter passing. I only accept them in cli apps and when interacting with user in general, otherwise, deep in codebase, no.
+* If you absolutely have to set a value, then make `constants.py` file and put it there and import it.
 * Your code is minimal, no unrequested features, no bloat.
 * Please avoid writing README files and avoid docstring and comments in code unless absolutely necessary. Use clear naming conventions instead of documenting.
 * Always prefer to functional style of programming over OOP.

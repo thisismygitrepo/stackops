@@ -1,0 +1,81 @@
+flowchart TD
+    Start([User calls RemoteMachine / Cluster / CloudManager])
+
+    Start --> EntryChoice{Entry Point}
+
+    %% ── Single-machine path (main flow) ──
+    EntryChoice -->|"RemoteMachine(func, config, kwargs)"| RM_Run["RemoteMachine.run()"]
+
+    RM_Run --> GenScripts["generate_scripts()
+    ─────────────────
+    • JobParams extracts func metadata
+    • Renders Python wrapper from template
+    • Renders shell launcher script
+    • Embeds notification block
+    • Saves configs to JSON"]
+
+    GenScripts --> Submit["submit()"]
+    Submit --> TransferMethod{config.transfer_method}
+
+    TransferMethod -->|sftp| SFTP["transfer_sftp()
+    SSH copies repo + data + scripts
+    to remote machine"]
+    TransferMethod -->|cloud| Cloud["transfer_cloud()
+    Prepend rclone download
+    commands to shell script"]
+
+    SFTP --> Fire
+    Cloud --> Fire
+
+    Fire["fire()
+    Execute shell script
+    on remote machine via SSH"]
+
+    Fire --> RemoteExec["Remote Execution
+    ─────────────────
+    1. secure_resources() — wait for lock
+    2. Record start time
+    3. Execute user function
+    4. Record end time & status
+    5. unlock_resources()
+    6. Send email notification"]
+
+    RemoteExec --> Monitor["check_job_status()
+    Poll logs: queued → running → completed/failed"]
+
+    Monitor --> StatusCheck{Status?}
+    StatusCheck -->|completed| Download["download_results()
+    SSH copy results back to local"]
+    StatusCheck -->|failed| Failed([Job Failed])
+    StatusCheck -->|running / queued| Monitor
+
+    Download --> Done([Done])
+
+    %% ── Multi-machine path (simplified) ──
+    EntryChoice -->|"Cluster(func, hosts)"| ClusterFlow["Cluster.run()
+    ─────────────────
+    • Query each host's CPU/RAM
+    • Split workload proportionally
+    • Create RemoteMachine per host"]
+    ClusterFlow --> RM_Run
+
+    %% ── Cloud-managed path (simplified) ──
+    EntryChoice -->|"CloudManager.serve()"| CMFlow["CloudManager
+    ─────────────────
+    • Lock-based job coordination
+    • Periodic scheduler dequeues jobs
+    • Monitors running jobs via rclone"]
+    CMFlow --> RM_Run
+
+    %% ── Styling ──
+    classDef entryNode fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    classDef processNode fill:#f0f4f8,stroke:#7b8d9e,color:#1a1a1a
+    classDef decisionNode fill:#ffeaa7,stroke:#d4a817,color:#1a1a1a
+    classDef terminalNode fill:#55efc4,stroke:#00b894,color:#1a1a1a
+    classDef failNode fill:#ff7675,stroke:#d63031,color:#fff
+
+    class Start entryNode
+    class RM_Run,GenScripts,Submit,SFTP,Cloud,Fire,RemoteExec,Monitor,ClusterFlow,CMFlow processNode
+    class EntryChoice,TransferMethod,StatusCheck decisionNode
+    class Done,Download terminalNode
+    class Failed failNode
