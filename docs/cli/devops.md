@@ -222,6 +222,151 @@ devops self [SUBCOMMAND] [ARGS]...
 
 Manage machineconfig itself - updates, configuration, etc.
 
+### explore
+
+Current self-management commands also expose the CLI graph explorer through `devops self explore`.
+
+=== "Overview"
+
+    ```bash
+    devops self explore --help
+
+    Usage: devops [OPTIONS] COMMAND [ARGS]...
+
+    🧭 <g> Visualize the MachineConfig CLI graph in multiple formats.
+
+    Commands:
+      search    🔎 <s> Search all cli_graph.json command entries.
+      tree      🌳 <t> Render a rich tree view in the terminal.
+      dot       🧩 <d> Export the graph as Graphviz DOT.
+      sunburst  ☀ <b> Render a Plotly sunburst view.
+      treemap   🧱 <m> Render a Plotly treemap view.
+      icicle    🧊 <i> Render a Plotly icicle view.
+      tui       📚 <u> NAVIGATE command structure with TUI
+    ```
+
+=== "Hierarchy"
+
+    `devops self explore` dispatches to a nested Typer app. The nested help screens render `Usage: devops ...`, but the entrypoint remains `devops self explore ...`.
+
+    ```text
+    devops self explore
+    ├── search
+    ├── tree
+    ├── dot
+    ├── sunburst
+    ├── treemap
+    ├── icicle
+    └── tui
+    ```
+
+    #### `search`
+
+    ```bash
+    devops self explore search
+    ```
+
+    Interactive fuzzy-search over `src/machineconfig/scripts/python/graph/cli_graph.json`, followed by the full selected entry. Representative result excerpt:
+
+    ```json
+    {
+      "kind": "command",
+      "name": "tree",
+      "help": "🌳 <t> Render a rich tree view in the terminal.",
+      "source": {
+        "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
+        "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
+        "callable": "tree"
+      }
+    }
+    ```
+
+    #### `tree`
+
+    ```bash
+    devops self explore tree --max-depth 2
+    ```
+
+    Representative output:
+
+    ```text
+    mcfg - MachineConfig CLI - Manage your machine configurations and workflows
+    ├── devops - 🔧 DevOps operations
+    │   ├── install - 🔧 <i> Install essential packages
+    │   ├── repos - 📁 <r> Manage development repositories
+    │   ├── config - 🧰 <c> configuration subcommands
+    │   ├── data - 🗄 <d> Backup and retrieve configuration files and directories to/from cloud storage using rclone.
+    │   ├── self - 🔄 <s> self operations subcommands
+    │   ├── network - 🔐 <n> Network subcommands
+    │   └── execute - 🚀 <e> Execute python/shell scripts from pre-defined directories or as command
+    ├── cloud - ☁ Cloud management commands
+    ├── sessions - Layouts management subcommands
+    ├── agents - 🤖 AI Agents management subcommands
+    ├── utils - ⚙ utilities operations
+    ├── fire - <f> Fire and manage jobs
+    └── croshell - <r> Cross-shell command execution
+    ```
+
+    #### `dot`
+
+    ```bash
+    devops self explore dot --max-depth 2
+    ```
+
+    Representative output:
+
+    ```dot
+    digraph cli_graph {
+      graph [rankdir=LR, splines=true, bgcolor="white"];
+      node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, color="#333333"];
+      edge [color="#999999"];
+      "mcfg" [label="mcfg\nMachineConfig CLI - Manage your machine configurations and workflows", shape="doubleoctagon", fillcolor="#f1f1f1", color="#555555"];
+      "mcfg devops" [label="devops\n🔧 DevOps operations", shape="box", fillcolor="#dbeafe", color="#2563eb"];
+      "mcfg" -> "mcfg devops";
+      "mcfg devops self" [label="self\n🔄 <s> self operations subcommands", shape="box", fillcolor="#dbeafe", color="#2563eb"];
+      "mcfg devops" -> "mcfg devops self";
+    }
+    ```
+
+    #### `sunburst`
+
+    ```bash
+    devops self explore sunburst --output ./sunburst.html --max-depth 3
+    ```
+
+    Interactive HTML result: [sunburst.htm](../assets/devops-self-explore/sunburst.htm)
+
+    #### `treemap`
+
+    ```bash
+    devops self explore treemap --output ./treemap.html --max-depth 3
+    ```
+
+    Interactive HTML result: [treemap.htm](../assets/devops-self-explore/treemap.htm)
+
+    #### `icicle`
+
+    ```bash
+    devops self explore icicle --output ./icicle.html --max-depth 3
+    ```
+
+    Interactive HTML result: [icicle.htm](../assets/devops-self-explore/icicle.htm)
+
+    #### `tui`
+
+    ```bash
+    devops self explore tui
+    ```
+
+    Launches the full-screen Textual navigator with:
+
+    - `/` to focus search
+    - `c` to copy the selected command
+    - `r` to run the selected command
+    - `b` to build a command with arguments
+    - `?` to open the in-app help
+    - `q` to quit
+
 ---
 
 ## network
