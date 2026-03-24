@@ -1,24 +1,31 @@
-
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Iterable
-from urllib.parse import urlparse
-
 import csv
 import io
+import os
 import sys
+from dataclasses import dataclass
+from collections.abc import Iterable
+from pathlib import Path
+from typing import NotRequired, TypedDict
+from urllib.parse import urlparse
 
 import requests
 from machineconfig.utils.files.read import read_json
 
 
-def get_gh_token() -> str:
-    from machineconfig.utils.io import read_ini
-    ini = read_ini(Path.home().joinpath("dotfiles/creds/git/git_host_tokens.ini"))
-    token = ini.get("thisismygitrepo", "newLongterm", fallback=None)
-    if token is None:
-        raise RuntimeError("GitHub token not found in creds.")
-    return token
+class InstallerRecord(TypedDict):
+    repoURL: NotRequired[str]
+
+
+def resolve_github_token(*, github_token: str | None) -> str:
+    if github_token is not None and github_token.strip():
+        return github_token.strip()
+    for env_name in ("MACHINECONFIG_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"):
+        env_value = os.environ.get(env_name)
+        if env_value is not None and env_value.strip():
+            return env_value.strip()
+    raise RuntimeError(
+        "GitHub token is required. Set MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN, or pass --github-token."
+    )
 
 
 @dataclass(frozen=True)
@@ -53,15 +60,24 @@ class RepoResult:
     detail: str
 
 
-def _load_installers(installer_data_path: Path) -> list[dict[str, Any]]:
+def _load_installers(installer_data_path: Path) -> list[InstallerRecord]:
     data = read_json(path=installer_data_path)
     installers = data.get("installers")
     if not isinstance(installers, list):
         raise ValueError(f"installers list missing in {installer_data_path}")
-    return installers
+    records: list[InstallerRecord] = []
+    for installer in installers:
+        if not isinstance(installer, dict):
+            continue
+        repo_url = installer.get("repoURL")
+        if isinstance(repo_url, str):
+            records.append({"repoURL": repo_url})
+        else:
+            records.append({})
+    return records
 
 
-def _extract_github_specs(installers: Iterable[dict[str, Any]]) -> list[RepoSpec]:
+def _extract_github_specs(installers: Iterable[InstallerRecord]) -> list[RepoSpec]:
     specs: list[RepoSpec] = []
     for installer in installers:
         repo_url = installer.get("repoURL")
@@ -200,85 +216,85 @@ def _fetch_license_candidate(owner: str, name: str, session: requests.Session, t
     return LicenseFetchResult(candidate=selected, status="ok", detail="", license_name=license_name_value)
 
 
-def run_download() -> None:
+def run_download(*, github_token: str | None) -> None:
     repo_root = _resolve_repo_root()
     installer_path = _resolve_installer_data_path(repo_root)
     csv_path = installer_path.with_name(f"{installer_path.stem}_licenses.csv")
     installers = _load_installers(installer_path)
     specs = _extract_github_specs(installers)
-    session = requests.Session()
-    token = get_gh_token()
-    session.headers.update(_default_headers(token=token))
-    timeout = 20.0
     results: list[RepoResult] = []
     total = len(specs)
     print(f"Starting license fetch for {total} repositories.", file=sys.stderr, flush=True)
-    for idx, spec in enumerate(specs, start=1):
-        print(f"[{idx}/{total}] Fetching license metadata for {spec.owner}/{spec.name}", file=sys.stderr, flush=True)
-        fetch_result = _fetch_license_candidate(owner=spec.owner, name=spec.name, session=session, timeout=timeout)
-        if fetch_result.candidate is None:
+    token = resolve_github_token(github_token=github_token)
+    timeout = 20.0
+    with requests.Session() as session:
+        session.headers.update(_default_headers(token=token))
+        for idx, spec in enumerate(specs, start=1):
+            print(f"[{idx}/{total}] Fetching license metadata for {spec.owner}/{spec.name}", file=sys.stderr, flush=True)
+            fetch_result = _fetch_license_candidate(owner=spec.owner, name=spec.name, session=session, timeout=timeout)
+            if fetch_result.candidate is None:
+                print(
+                    f"[{idx}/{total}] {spec.owner}/{spec.name} -> {fetch_result.status}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                results.append(
+                    RepoResult(
+                        owner=spec.owner,
+                        name=spec.name,
+                        status=fetch_result.status,
+                        license_path="",
+                        license_name=fetch_result.license_name,
+                        download_url="",
+                        saved_path="",
+                        detail=fetch_result.detail,
+                    )
+                )
+                continue
+            candidate = fetch_result.candidate
+            target_dir = _resolve_output_dir(repo_root, spec.name)
+            target_file = target_dir / Path(candidate.path).name
             print(
-                f"[{idx}/{total}] {spec.owner}/{spec.name} -> {fetch_result.status}",
+                f"[{idx}/{total}] Downloading license file {candidate.path} for {spec.owner}/{spec.name}",
                 file=sys.stderr,
                 flush=True,
             )
-            results.append(
-                RepoResult(
-                    owner=spec.owner,
-                    name=spec.name,
-                    status=fetch_result.status,
-                    license_path="",
-                    license_name=fetch_result.license_name,
-                    download_url="",
-                    saved_path="",
-                    detail=fetch_result.detail,
+            if _download_license(candidate=candidate, session=session, timeout=timeout, target_path=target_file):
+                print(
+                    f"[{idx}/{total}] Saved -> {target_file}",
+                    file=sys.stderr,
+                    flush=True,
                 )
-            )
-            continue
-        candidate = fetch_result.candidate
-        target_dir = _resolve_output_dir(repo_root, spec.name)
-        target_file = target_dir / Path(candidate.path).name
-        print(
-            f"[{idx}/{total}] Downloading license file {candidate.path} for {spec.owner}/{spec.name}",
-            file=sys.stderr,
-            flush=True,
-        )
-        if _download_license(candidate=candidate, session=session, timeout=timeout, target_path=target_file):
-            print(
-                f"[{idx}/{total}] Saved -> {target_file}",
-                file=sys.stderr,
-                flush=True,
-            )
-            results.append(
-                RepoResult(
-                    owner=spec.owner,
-                    name=spec.name,
-                    status="saved",
-                    license_path=candidate.path,
-                    license_name=fetch_result.license_name,
-                    download_url=candidate.url,
-                    saved_path=str(target_file),
-                    detail="",
+                results.append(
+                    RepoResult(
+                        owner=spec.owner,
+                        name=spec.name,
+                        status="saved",
+                        license_path=candidate.path,
+                        license_name=fetch_result.license_name,
+                        download_url=candidate.url,
+                        saved_path=str(target_file),
+                        detail="",
+                    )
                 )
-            )
-        else:
-            print(
-                f"[{idx}/{total}] Download failed for {spec.owner}/{spec.name}",
-                file=sys.stderr,
-                flush=True,
-            )
-            results.append(
-                RepoResult(
-                    owner=spec.owner,
-                    name=spec.name,
-                    status="download_failed",
-                    license_path=candidate.path,
-                    license_name=fetch_result.license_name,
-                    download_url=candidate.url,
-                    saved_path=str(target_file),
-                    detail="download_error",
+            else:
+                print(
+                    f"[{idx}/{total}] Download failed for {spec.owner}/{spec.name}",
+                    file=sys.stderr,
+                    flush=True,
                 )
-            )
+                results.append(
+                    RepoResult(
+                        owner=spec.owner,
+                        name=spec.name,
+                        status="download_failed",
+                        license_path=candidate.path,
+                        license_name=fetch_result.license_name,
+                        download_url=candidate.url,
+                        saved_path=str(target_file),
+                        detail="download_error",
+                    )
+                )
     print("Building CSV summary.", file=sys.stderr, flush=True)
     csv_output = io.StringIO()
     writer = csv.writer(csv_output)
@@ -301,4 +317,4 @@ def run_download() -> None:
 
 
 if __name__ == "__main__":
-    run_download()
+    run_download(github_token=None)
