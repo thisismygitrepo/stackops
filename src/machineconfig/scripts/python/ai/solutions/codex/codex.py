@@ -1,44 +1,13 @@
 from pathlib import Path
-import textwrap
 
 from machineconfig.scripts.python.ai.utils.shared import get_generic_instructions_path
 
 
-def _build_private_config() -> str:
-    return textwrap.dedent(
-        """\
-        approval_policy = "never"
-        sandbox_mode = "workspace-write"
-        allow_login_shell = true
-        web_search = "live"
-        project_doc_max_bytes = 32768
-        project_doc_fallback_filenames = []
-        mcp_oauth_credentials_store = "auto"
+PRIVATE_CONFIG_TEMPLATE_PATH = Path(__file__).with_name("config.toml")
 
-        [sandbox_workspace_write]
-        network_access = true
 
-        [features]
-        multi_agent = true
-        remote_models = true
-
-        [analytics]
-        enabled = false
-
-        [history]
-        persistence = "none"
-
-        [feedback]
-        enabled = false
-
-        [otel]
-        log_user_prompt = false
-        exporter = "none"
-        trace_exporter = "none"
-
-        [mcp_servers]
-        """
-    )
+def _read_private_config_template() -> str:
+    return PRIVATE_CONFIG_TEMPLATE_PATH.read_text(encoding="utf-8")
 
 
 def _ensure_private_config(repo_root: Path) -> None:
@@ -47,7 +16,7 @@ def _ensure_private_config(repo_root: Path) -> None:
     config_path = codex_dir.joinpath("config.toml")
     if config_path.exists():
         return
-    config_path.write_text(data=_build_private_config(), encoding="utf-8")
+    config_path.write_text(data=_read_private_config_template(), encoding="utf-8")
 
 
 def build_configuration(repo_root: Path, add_private_config: bool, add_instructions: bool) -> None:
