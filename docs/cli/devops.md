@@ -334,7 +334,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     devops self explore sunburst --output ./sunburst.html --max-depth 3
     ```
 
-    Interactive HTML result: [sunburst.htm](../assets/devops-self-explore/sunburst.htm)
+    Interactive HTML result: [sunburst.xhtml](../assets/devops-self-explore/sunburst.xhtml)
 
     #### `treemap`
 
@@ -342,7 +342,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     devops self explore treemap --output ./treemap.html --max-depth 3
     ```
 
-    Interactive HTML result: [treemap.htm](../assets/devops-self-explore/treemap.htm)
+    Interactive HTML result: [treemap.xhtml](../assets/devops-self-explore/treemap.xhtml)
 
     #### `icicle`
 
@@ -350,7 +350,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     devops self explore icicle --output ./icicle.html --max-depth 3
     ```
 
-    Interactive HTML result: [icicle.htm](../assets/devops-self-explore/icicle.htm)
+    Interactive HTML result: [icicle.xhtml](../assets/devops-self-explore/icicle.xhtml)
 
     #### `tui`
 
