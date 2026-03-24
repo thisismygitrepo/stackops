@@ -1,10 +1,12 @@
 from pathlib import Path
-from typing import Annotated, Literal
 import os
 import platform
 import subprocess
+from typing import Annotated, Literal
 
 import typer
+
+
 def configure_shell_profile(
     which: Annotated[
         Literal["default", "d", "nushell", "n"],
@@ -89,22 +91,19 @@ def configure_windows_terminal_theme() -> None:
         subprocess.run(["powershell", "-File", str(script_path)], check=True)
 
 
-def shell_group(
-    ctx: typer.Context,
-    which: Annotated[
-        Literal["default", "d", "nushell", "n"],
-        typer.Option("--which", "-w", help="Which shell profile to create/configure"),
-    ] = "default",
-) -> None:
+def shell_group(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand is not None:
         return
-    configure_shell_profile(which=which)
+    typer.echo(ctx.get_help())
+    raise typer.Exit(code=0)
 
 
 def get_app() -> typer.Typer:
     shell_app = typer.Typer(help="🐚 <S> Configure your shell profile.", no_args_is_help=False, add_help_option=True, add_completion=False)
     shell_app.callback(invoke_without_command=True)(shell_group)
 
+    shell_app.command("config-shell", no_args_is_help=False, help="🐚 <s> Create or configure a shell profile.")(configure_shell_profile)
+    shell_app.command("s", no_args_is_help=False, help="Create or configure a shell profile.", hidden=True)(configure_shell_profile)
     shell_app.command("starship-theme", no_args_is_help=False, help="⭐ <t> Select starship prompt theme.")(starship_theme)
     shell_app.command("t", no_args_is_help=False, help="Select starship prompt theme.", hidden=True)(starship_theme)
     shell_app.command("pwsh-theme", no_args_is_help=False, help="⚡ <T> Select powershell prompt theme.")(pwsh_theme)

@@ -30,7 +30,7 @@ Shell-specific commands now live under a dedicated subgroup:
 devops config shell --help
 ```
 
-The shell group keeps the profile setup flow on the group entrypoint itself, so `devops config shell` still configures the default shell profile and `--which` selects the variant to create.
+Running `devops config shell` shows the shell subgroup help. Use `devops config shell config-shell --which default` or `devops config shell config-shell --which nushell` if you want to invoke the shell-profile setup action directly.
 
 ---
 
@@ -65,7 +65,9 @@ Current `devops config --help` lists subcommands for:
 - `copy-assets`
 - `dump`
 
-Inside `devops config shell --help`, the current shell theme commands are:
+Inside `devops config shell --help`, the current shell commands are:
+
+- `config-shell`
 
 - `starship-theme`
 - `pwsh-theme`

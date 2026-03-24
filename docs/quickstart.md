@@ -11,13 +11,19 @@ devops --help
 
 Use `mcfg` or `machineconfig` as umbrella entrypoints, then prefer the direct commands for routine work.
 
-## 2. Configure your shell profile
+## 2. Explore shell configuration
 
 ```bash
 devops config shell
 ```
 
-For available options:
+To configure a shell profile directly, use the dedicated subcommand:
+
+```bash
+devops config shell config-shell --which default
+```
+
+For the subgroup help and theme commands:
 
 ```bash
 devops config shell --help

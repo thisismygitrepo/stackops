@@ -2853,6 +2853,73 @@
                 "children": [
                   {
                     "kind": "command",
+                    "name": "config-shell",
+                    "help": "🐚 <s> Create or configure a shell profile.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "callable": "configure_shell_profile"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def configure_shell_profile(",
+                        "    which: Annotated[",
+                        "        Literal[\"default\", \"d\", \"nushell\", \"n\"],",
+                        "        typer.Option(\"--which\", \"-w\", help=\"Which shell profile to create/configure\"),",
+                        "    ] = \"default\",",
+                        ") -> None:",
+                        "    from machineconfig.profile.create_shell_profile import create_default_shell_profile, create_nu_shell_profile",
+                        "",
+                        "    match which:",
+                        "        case \"nushell\" | \"n\":",
+                        "            create_nu_shell_profile()",
+                        "            return",
+                        "        case \"default\" | \"d\":",
+                        "            create_default_shell_profile()",
+                        "            return",
+                        "    msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Unknown shell profile type: {which}\"",
+                        "    typer.echo(msg)"
+                      ],
+                      "name": "configure_shell_profile",
+                      "parameters": [
+                        {
+                          "name": "which",
+                          "kind": "positional_or_keyword",
+                          "type": "Literal['default', 'd', 'nushell', 'n']",
+                          "default": "default",
+                          "required": false,
+                          "annotation_raw": "Annotated[Literal['default', 'd', 'nushell', 'n'], typer.Option('--which', '-w', help='Which shell profile to create/configure')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--which",
+                              "-w"
+                            ],
+                            "long_flags": [
+                              "--which"
+                            ],
+                            "short_flags": [
+                              "-w"
+                            ],
+                            "help": "Which shell profile to create/configure"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "s",
+                        "hidden": true,
+                        "help": "Create or configure a shell profile."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
                     "name": "starship-theme",
                     "help": "⭐ <t> Select starship prompt theme.",
                     "source": {
