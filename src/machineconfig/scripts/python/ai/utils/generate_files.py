@@ -71,8 +71,7 @@ def get_shell_files(repo_root: Path) -> list[str]:
 def count_lines(file_path: Path) -> int:
     """Count the number of lines in a file."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return sum(1 for _ in f)
+        return len(file_path.read_text(encoding="utf-8").splitlines())
     except (IOError, UnicodeDecodeError):
         return 0
 
@@ -103,10 +102,9 @@ def filter_files_by_content(repo_root: Path, files: list[str], keyword: str) -> 
     for file_path in files:
         full_path = repo_root / file_path
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                if keyword in content:
-                    filtered_files.append(file_path)
+            content = full_path.read_text(encoding="utf-8")
+            if keyword in content:
+                filtered_files.append(file_path)
         except (IOError, UnicodeDecodeError):
             # Skip files that can't be read
             continue

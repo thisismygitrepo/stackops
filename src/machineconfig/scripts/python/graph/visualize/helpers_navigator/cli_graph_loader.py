@@ -24,8 +24,7 @@ class CommandNode:
 def load_cli_graph(path: Path | None = None) -> dict[str, Any]:
     """Load the CLI graph JSON file."""
     graph_path = path or DEFAULT_GRAPH_PATH
-    with graph_path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+    return json.loads(graph_path.read_text(encoding="utf-8"))
 
 
 def build_command_nodes(graph: dict[str, Any], *, include_root: bool = False) -> list[CommandNode]:

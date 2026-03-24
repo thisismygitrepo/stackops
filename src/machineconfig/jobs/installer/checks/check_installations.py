@@ -8,6 +8,7 @@ It also provides functionality to download and install pre-checked applications.
 
 import csv
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 from rich.console import Console, Group, RenderableType
 from rich.live import Live
@@ -198,15 +199,17 @@ def write_reports(scan_records: list[ScannedAppRecord]) -> tuple[Path, Path]:
     if not app_data_list:
         raise ValueError("No app data available to write reports.")
     APP_METADATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(APP_METADATA_PATH, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=list(APP_METADATA_KEYS))
-        writer.writeheader()
-        writer.writerows([build_app_metadata_row(scan_record["app_data"]) for scan_record in scan_records])
+    app_metadata_buffer = StringIO(newline="")
+    app_metadata_writer = csv.DictWriter(app_metadata_buffer, fieldnames=list(APP_METADATA_KEYS))
+    app_metadata_writer.writeheader()
+    app_metadata_writer.writerows([build_app_metadata_row(scan_record["app_data"]) for scan_record in scan_records])
+    APP_METADATA_PATH.write_text(app_metadata_buffer.getvalue(), encoding="utf-8")
     engine_results = [engine_row for scan_record in scan_records for engine_row in scan_record["engine_results"]]
-    with open(ENGINE_RESULTS_PATH, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=list(ENGINE_REPORT_KEYS))
-        writer.writeheader()
-        writer.writerows(engine_results)
+    engine_results_buffer = StringIO(newline="")
+    engine_results_writer = csv.DictWriter(engine_results_buffer, fieldnames=list(ENGINE_REPORT_KEYS))
+    engine_results_writer.writeheader()
+    engine_results_writer.writerows(engine_results)
+    ENGINE_RESULTS_PATH.write_text(engine_results_buffer.getvalue(), encoding="utf-8")
     return APP_METADATA_PATH, ENGINE_RESULTS_PATH
 
 

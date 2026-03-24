@@ -34,13 +34,11 @@ def secure_cline_config() -> None:
             config_data = {}
             if path.exists():
                 try:
-                    with open(path, "r", encoding="utf-8") as f:
-                        config_data = json.load(f)
+                    config_data = json.loads(path.read_text(encoding="utf-8"))
                 except Exception:
                     pass
             config_data.update(privacy_settings)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(config_data, f, indent=4)
+            path.write_text(json.dumps(config_data, indent=4), encoding="utf-8")
             os.chmod(path, 0o600)
         except Exception:
             pass

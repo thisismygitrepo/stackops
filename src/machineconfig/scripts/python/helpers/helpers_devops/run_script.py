@@ -181,8 +181,7 @@ def copy_script_to_local(ctx: typer.Context,
     script_content = response.text
     from machineconfig.utils.source_of_truth import CONFIG_ROOT
     local_path = CONFIG_ROOT.joinpath(f"scripts_python/{alias or name}.py")
-    with open(local_path, "w", encoding="utf-8") as f:
-        f.write(script_content)
+    local_path.write_text(script_content, encoding="utf-8")
     typer.echo(typer.style(f"✅ Script '{name}.py' has been copied to '{local_path}'.", fg=typer.colors.GREEN))
 
 

@@ -56,8 +56,7 @@ def read_jsonl(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
 
 def read_yaml(path: 'Path', r: bool = False) -> Any:
     import yaml
-    with open(str(path), "r", encoding="utf-8") as file:
-        mydict = yaml.load(file, Loader=yaml.FullLoader)
+    mydict = yaml.load(Path(path).read_text(encoding="utf-8"), Loader=yaml.FullLoader)
     _ = r
     return mydict
 

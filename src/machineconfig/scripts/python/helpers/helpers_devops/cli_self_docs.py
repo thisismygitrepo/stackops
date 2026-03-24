@@ -6,18 +6,19 @@ import typer
 DOCS_BIND_ADDRESS = "0.0.0.0"
 DOCS_PORT = 8000
 DOCS_SITE_PATH = "/machineconfig/"
+DOCS_CONFIG_FILE_NAME = "zensical.toml"
 
 
 def _build_docs_url(host: str) -> str:
     return f"http://{host}:{DOCS_PORT}{DOCS_SITE_PATH}"
 
 
-def _get_docs_repo_root() -> Path:
+def get_docs_repo_root() -> Path:
     from machineconfig.utils.source_of_truth import REPO_ROOT
 
     docs_dir = REPO_ROOT.joinpath("docs")
-    mkdocs_config_path = REPO_ROOT.joinpath("mkdocs.yml")
-    if not docs_dir.exists() or not mkdocs_config_path.exists():
+    docs_config_path = REPO_ROOT.joinpath(DOCS_CONFIG_FILE_NAME)
+    if not docs_dir.exists() or not docs_config_path.exists():
         typer.echo(f"""❌ ERROR: Could not find docs sources under "{REPO_ROOT}".""", err=True)
         raise typer.Exit(code=1)
     return REPO_ROOT
@@ -60,7 +61,7 @@ def serve_docs(rebuild: bool) -> None:
 
     from machineconfig.utils.code import exit_then_run_shell_script, get_uv_command
 
-    repo_root = _get_docs_repo_root()
+    repo_root = get_docs_repo_root()
     _print_docs_urls()
     uv_command = get_uv_command(platform=platform.system()).strip()
     rebuild_command = ""

@@ -1,5 +1,7 @@
 """package manager"""
 
+from pathlib import Path
+
 from machineconfig.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.schemas.installer.installer_types import InstallerData, InstallerDataFiles, get_normalized_arch, get_os_name, OPERATING_SYSTEMS, CPU_ARCHITECTURES
@@ -11,6 +13,7 @@ from machineconfig.utils.files.read import read_json
 from rich.console import Console
 from rich.panel import Panel
 import platform
+import tomllib
 from joblib import Parallel, delayed
 
 
@@ -172,8 +175,6 @@ def install_bulk(installers_data: list[InstallerData], safe: bool = False, jobs:
 
 def get_machineconfig_version() -> str:
     from importlib.metadata import PackageNotFoundError, version as _pkg_version
-    from pathlib import Path
-    import tomllib
     name: str = "machineconfig"
     try:
         return _pkg_version(name)
@@ -182,8 +183,7 @@ def get_machineconfig_version() -> str:
     root: Path = Path(__file__).resolve().parents[2]
     pyproject: Path = root / "pyproject.toml"
     if pyproject.is_file():
-        with pyproject.open("rb") as f:
-            data: dict[str, object] = tomllib.load(f)
+        data: dict[str, object] = tomllib.loads(pyproject.read_text(encoding="utf-8"))
         project = data.get("project")
         if isinstance(project, dict):
             version = project.get("version")

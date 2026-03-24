@@ -131,12 +131,7 @@ def _delete_tree(path: Path) -> None:
 
 def _copy_file_bytes(source: Path, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with source.open("rb") as src, destination.open("wb") as dst:
-        while True:
-            chunk = src.read(1024 * 1024)
-            if not chunk:
-                break
-            dst.write(chunk)
+    destination.write_bytes(source.read_bytes())
 
 
 def _copy_tree(source: Path, destination: Path, *, allow_existing: bool = False) -> None:

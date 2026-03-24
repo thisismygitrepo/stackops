@@ -10,8 +10,7 @@ def secure_droid_cli() -> None:
     settings = {}
     if config_file.exists():
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
-                settings = json.load(f)
+            settings = json.loads(config_file.read_text(encoding="utf-8"))
         except Exception:
             pass
     settings.update(
@@ -25,5 +24,4 @@ def secure_droid_cli() -> None:
             "dataUsage": False,
         }
     )
-    with open(config_file, "w", encoding="utf-8") as f:
-        json.dump(settings, f, indent=2)
+    config_file.write_text(json.dumps(settings, indent=2), encoding="utf-8")

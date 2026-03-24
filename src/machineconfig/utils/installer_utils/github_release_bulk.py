@@ -52,8 +52,7 @@ def extract_github_repos_from_json(json_file_path: Path) -> Set[str]:
     """Extract GitHub repository URLs from installer JSON file."""
     github_repos: Set[str] = set()
     try:
-        with open(json_file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
+        data = json.loads(json_file_path.read_text(encoding="utf-8"))
         for installer in data.get("installers", []):
             repo_url = installer.get("repoURL", "")
             if is_github_repo(repo_url):

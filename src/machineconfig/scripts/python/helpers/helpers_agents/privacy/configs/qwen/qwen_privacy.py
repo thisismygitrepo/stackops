@@ -1,17 +1,16 @@
 import json
-import os
+from pathlib import Path
 
 
 def secure_qwen_config() -> None:
-    config_dir = os.path.expanduser("~/.qwen")
-    config_file = os.path.join(config_dir, "settings.json")
-    os.makedirs(config_dir, exist_ok=True)
+    config_dir = Path.home() / ".qwen"
+    config_file = config_dir / "settings.json"
+    config_dir.mkdir(parents=True, exist_ok=True)
 
     config = {}
-    if os.path.exists(config_file):
+    if config_file.exists():
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
-                config = json.load(f)
+            config = json.loads(config_file.read_text(encoding="utf-8"))
         except Exception:
             pass
     config.setdefault("privacy", {})["usageStatisticsEnabled"] = False
@@ -21,5 +20,4 @@ def secure_qwen_config() -> None:
     config.setdefault("general", {})["disableAutoUpdate"] = True
     config["general"].setdefault("checkpointing", {})["enabled"] = False
 
-    with open(config_file, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2)
+    config_file.write_text(json.dumps(config, indent=2), encoding="utf-8")

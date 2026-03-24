@@ -93,19 +93,19 @@ def download(
             except (TypeError, ValueError):
                 total_size = 0
             if total_size <= 0:
-                with open(download_path, "wb") as file_handle:
-                    file_handle.write(response.content)
+                download_path.write_bytes(response.content)
             else:
                 downloaded = 0
                 chunk_size = 8192 * 40
-                with open(download_path, "wb") as file_handle:
-                    for chunk in response.iter_content(chunk_size=chunk_size):
-                        if not chunk:
-                            continue
-                        file_handle.write(chunk)
-                        downloaded += len(chunk)
-                        progress = (downloaded / total_size) * 100
-                        typer.echo(f"\r⏬ Progress: {progress:.1f}% ({downloaded}/{total_size} bytes)", nl=False)
+                download_buffer = bytearray()
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    if not chunk:
+                        continue
+                    download_buffer.extend(chunk)
+                    downloaded += len(chunk)
+                    progress = (downloaded / total_size) * 100
+                    typer.echo(f"\r⏬ Progress: {progress:.1f}% ({downloaded}/{total_size} bytes)", nl=False)
+                download_path.write_bytes(bytes(download_buffer))
                 typer.echo()
     except requests.exceptions.RequestException as exception:
         typer.echo(f"❌ Download failed: {exception}", err=True)

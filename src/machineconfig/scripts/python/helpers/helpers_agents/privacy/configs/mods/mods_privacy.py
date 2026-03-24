@@ -1,17 +1,17 @@
 import os
 import re
+from pathlib import Path
 
 
 def secure_mods_config() -> None:
-    config_dir = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
-    mods_dir = os.path.join(config_dir, "mods")
-    config_file = os.path.join(mods_dir, "mods.yml")
-    os.makedirs(mods_dir, exist_ok=True)
+    config_dir = Path(os.getenv("XDG_CONFIG_HOME", str(Path.home() / ".config")))
+    mods_dir = config_dir / "mods"
+    config_file = mods_dir / "mods.yml"
+    mods_dir.mkdir(parents=True, exist_ok=True)
 
     content = ""
-    if os.path.exists(config_file):
-        with open(config_file, "r", encoding="utf-8") as f:
-            content = f.read()
+    if config_file.exists():
+        content = config_file.read_text(encoding="utf-8")
 
     privacy_settings = {
         "no-cache": "true",
@@ -28,8 +28,7 @@ def secure_mods_config() -> None:
                 content += "\n"
             content += f"{key}: {value}\n"
 
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write(content.strip() + "\n")
+    config_file.write_text(content.strip() + "\n", encoding="utf-8")
     try:
         os.chmod(config_file, 0o600)
     except Exception:

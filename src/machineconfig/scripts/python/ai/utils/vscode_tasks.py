@@ -36,5 +36,4 @@ def add_lint_and_type_check_task(repo_root: Path) -> None:
     else:
         tasks_config = {"version": "2.0.0", "tasks": [task_to_add]}
 
-    with tasks_json_path.open("w") as f:
-        json.dump(tasks_config, f, indent="\t")
+    tasks_json_path.write_text(json.dumps(tasks_config, indent="\t"), encoding="utf-8")

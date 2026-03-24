@@ -33,8 +33,7 @@ def push_to_onedrive(local_path: str, remote_path: str, section: str) -> bool:
 
 def simple_upload(local_file: Path, remote_path: str, section: str) -> bool:
     try:
-        with open(local_file, "rb") as f:
-            file_content = f.read()
+        file_content = local_file.read_bytes()
         encoded_path = quote(remote_path, safe="/")
         drive_id = get_drive_id(section)
         endpoint = f"drives/{drive_id}/root:{encoded_path}:/content"
@@ -61,24 +60,24 @@ def resumable_upload(local_file: Path, remote_path: str, section: str) -> bool:
             print(f"Failed to create upload session: {response.status_code} - {response.text}")
             return False
         upload_url = response.json()["uploadUrl"]
+        file_content = local_file.read_bytes()
         file_size = local_file.stat().st_size
         chunk_size = 320 * 1024  # 320KB chunks
-        with open(local_file, "rb") as f:
-            bytes_uploaded = 0
-            while bytes_uploaded < file_size:
-                chunk_data = f.read(chunk_size)
-                if not chunk_data:
-                    break
-                chunk_end = min(bytes_uploaded + len(chunk_data) - 1, file_size - 1)
-                headers = {"Content-Range": f"bytes {bytes_uploaded}-{chunk_end}/{file_size}", "Content-Length": str(len(chunk_data))}
-                chunk_response = requests.put(upload_url, data=chunk_data, headers=headers)
-                if chunk_response.status_code in [202, 200, 201]:
-                    bytes_uploaded += len(chunk_data)
-                    progress = (bytes_uploaded / file_size) * 100
-                    print(f"Upload progress: {progress:.1f}%")
-                else:
-                    print(f"Chunk upload failed: {chunk_response.status_code} - {chunk_response.text}")
-                    return False
+        bytes_uploaded = 0
+        while bytes_uploaded < file_size:
+            chunk_data = file_content[bytes_uploaded:bytes_uploaded + chunk_size]
+            if not chunk_data:
+                break
+            chunk_end = min(bytes_uploaded + len(chunk_data) - 1, file_size - 1)
+            headers = {"Content-Range": f"bytes {bytes_uploaded}-{chunk_end}/{file_size}", "Content-Length": str(len(chunk_data))}
+            chunk_response = requests.put(upload_url, data=chunk_data, headers=headers)
+            if chunk_response.status_code in [202, 200, 201]:
+                bytes_uploaded += len(chunk_data)
+                progress = (bytes_uploaded / file_size) * 100
+                print(f"Upload progress: {progress:.1f}%")
+            else:
+                print(f"Chunk upload failed: {chunk_response.status_code} - {chunk_response.text}")
+                return False
         print(f"Successfully uploaded: {local_file} -> {remote_path}")
         return True
     except Exception as e:
@@ -114,14 +113,15 @@ def pull_from_onedrive(remote_path: str, local_path: str, section: str) -> bool:
         download_response.raise_for_status()
         file_size = int(file_info.get("size", 0))
         bytes_downloaded = 0
-        with open(local_file, "wb") as f:
-            for chunk in download_response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-                    bytes_downloaded += len(chunk)
-                    if file_size > 0:
-                        progress = (bytes_downloaded / file_size) * 100
-                        print(f"Download progress: {progress:.1f}%")
+        download_buffer = bytearray()
+        for chunk in download_response.iter_content(chunk_size=8192):
+            if chunk:
+                download_buffer.extend(chunk)
+                bytes_downloaded += len(chunk)
+                if file_size > 0:
+                    progress = (bytes_downloaded / file_size) * 100
+                    print(f"Download progress: {progress:.1f}%")
+        local_file.write_bytes(bytes(download_buffer))
         print(f"Successfully downloaded: {remote_path} -> {local_path}")
         return True
     except Exception as e:

@@ -157,8 +157,7 @@ def generate_names_file(source_file_path: Path, output_file_path: Path, search_p
     lines.append("")
 
     output_content = "\n".join(lines)
-    with target_path.open(mode="w", encoding="utf-8") as f:
-        f.write(output_content)
+    target_path.write_text(output_content, encoding="utf-8")
     return target_path
 
 
@@ -226,6 +225,5 @@ def generate_types_file(source_file_path: Path, output_file_path: Path, search_p
         lines.append("")
 
     output_content = "\n".join(lines)
-    with target_path.open(mode="w", encoding="utf-8") as f:
-        f.write(output_content)
+    target_path.write_text(output_content, encoding="utf-8")
     return target_path

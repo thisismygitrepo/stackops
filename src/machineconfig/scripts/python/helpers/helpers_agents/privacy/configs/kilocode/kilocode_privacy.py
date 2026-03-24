@@ -1,10 +1,10 @@
 import json
 import os
-import pathlib
+from pathlib import Path
 
 
 def secure_kilocode_config() -> None:
-    config_dir = pathlib.Path.home() / ".config" / "kilocode"
+    config_dir = Path.home() / ".config" / "kilocode"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "config.json"
     secure_settings = {
@@ -22,13 +22,11 @@ def secure_kilocode_config() -> None:
     current_config = {}
     if config_file.exists():
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
-                current_config = json.load(f)
+            current_config = json.loads(config_file.read_text(encoding="utf-8"))
         except Exception:
             pass
     current_config.update(secure_settings)
-    with open(config_file, "w", encoding="utf-8") as f:
-        json.dump(current_config, f, indent=4)
+    config_file.write_text(json.dumps(current_config, indent=4), encoding="utf-8")
     try:
         os.chmod(config_file, 0o600)
     except Exception:

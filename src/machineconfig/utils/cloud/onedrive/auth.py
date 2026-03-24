@@ -87,11 +87,11 @@ def is_token_valid(section: str) -> bool:
 
 def save_token_to_file(token_data: dict[str, Any], file_path: str) -> bool:
     try:
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, "w") as f:
-            json.dump(token_data, f, indent=2)
-        os.chmod(file_path, 0o600)
-        print(f"💾 Token saved to: {file_path}")
+        token_file_path = Path(file_path)
+        token_file_path.parent.mkdir(parents=True, exist_ok=True)
+        token_file_path.write_text(json.dumps(token_data, indent=2), encoding="utf-8")
+        os.chmod(token_file_path, 0o600)
+        print(f"💾 Token saved to: {token_file_path}")
         return True
     except Exception as e:
         print(f"❌ Error saving token: {e}")
@@ -100,18 +100,18 @@ def save_token_to_file(token_data: dict[str, Any], file_path: str) -> bool:
 
 def load_token_from_file(file_path: str) -> dict[str, Any] | None:
     try:
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                token_data: dict[str, Any] = json.load(f)
+        token_file_path = Path(file_path)
+        if token_file_path.exists():
+            token_data = json.loads(token_file_path.read_text(encoding="utf-8"))
             global _cached_config
             if _cached_config is not None:
                 _cached_config["token"] = token_data
             else:
                 clear_config_cache()
-            print(f"📂 Token loaded from: {file_path}")
+            print(f"📂 Token loaded from: {token_file_path}")
             return token_data
         else:
-            print(f"ℹ️  No saved token file found at: {file_path}")
+            print(f"ℹ️  No saved token file found at: {token_file_path}")
             return None
     except Exception as e:
         print(f"❌ Error loading token: {e}")

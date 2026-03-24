@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 import subprocess
-from typing import Annotated, Literal, TextIO, get_args
+from typing import Annotated, Literal, get_args
 
 import typer
 
@@ -49,9 +49,9 @@ def build_file_prompt_command(reasoning_effort: ReasoningEffort) -> list[str]:
     return [*_build_exec_prefix(reasoning_effort=reasoning_effort), "-"]
 
 
-def _run_subprocess(command: Sequence[str], stdin_handle: TextIO | None) -> int:
+def _run_subprocess(command: Sequence[str], stdin_text: str | None) -> int:
     try:
-        completed_process = subprocess.run(command, check=False, stdin=stdin_handle)
+        completed_process = subprocess.run(command, check=False, input=stdin_text, text=stdin_text is not None)
     except FileNotFoundError as error:
         filename = error.filename or command[0]
         strerror = error.strerror or "unknown error"
@@ -61,13 +61,12 @@ def _run_subprocess(command: Sequence[str], stdin_handle: TextIO | None) -> int:
 
 
 def run_command(command: Sequence[str]) -> int:
-    return _run_subprocess(command=command, stdin_handle=None)
+    return _run_subprocess(command=command, stdin_text=None)
 
 
 def run_command_with_prompt_file(command: Sequence[str], prompt_path: Path) -> int:
     try:
-        with prompt_path.open(mode="r", encoding="utf-8") as prompt_handle:
-            return _run_subprocess(command=command, stdin_handle=prompt_handle)
+        return _run_subprocess(command=command, stdin_text=prompt_path.read_text(encoding="utf-8"))
     except OSError as error:
         strerror = error.strerror or "unknown error"
         typer.echo(f"""Failed to read prompt file {str(prompt_path)!r}: {strerror}""", err=True)

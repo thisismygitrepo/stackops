@@ -5,6 +5,7 @@ This module provides utilities to detect the CPU model and fetch Geekbench score
 using the geekbench-browser-python tool.
 """
 
+from pathlib import Path
 import platform
 import re
 import subprocess
@@ -21,10 +22,9 @@ def get_cpu_name() -> str:
 
     if system == "Linux":
         try:
-            with open("/proc/cpuinfo") as f:
-                for line in f:
-                    if "model name" in line:
-                        return line.split(":", 1)[1].strip()
+            for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
+                if "model name" in line:
+                    return line.split(":", 1)[1].strip()
         except FileNotFoundError:
             pass
 

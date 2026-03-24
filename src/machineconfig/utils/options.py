@@ -1,3 +1,4 @@
+import io
 from pathlib import Path
 from rich.text import Text
 from rich.panel import Panel
@@ -309,7 +310,7 @@ def get_ssh_hosts() -> list[str]:
     from paramiko import SSHConfig
 
     c = SSHConfig()
-    c.parse(open(Path.home().joinpath(".ssh/config"), encoding="utf-8"))
+    c.parse(io.StringIO(Path.home().joinpath(".ssh/config").read_text(encoding="utf-8")))
     return list(c.get_hostnames())
 
 

@@ -42,12 +42,10 @@ def secure_cursor_cli() -> None:
         base_dir.mkdir(parents=True, exist_ok=True)
         current_settings = {}
         if settings_file.exists():
-            with open(settings_file, "r", encoding="utf-8") as f:
-                content = re.sub(r"//.*?\n|/\*.*?\*/", "\n", f.read(), flags=re.S)
-                if content.strip():
-                    current_settings = json.loads(content)
+            content = re.sub(r"//.*?\n|/\*.*?\*/", "\n", settings_file.read_text(encoding="utf-8"), flags=re.S)
+            if content.strip():
+                current_settings = json.loads(content)
         current_settings.update(privacy_settings)
-        with open(settings_file, "w", encoding="utf-8") as f:
-            json.dump(current_settings, f, indent=4)
+        settings_file.write_text(json.dumps(current_settings, indent=4), encoding="utf-8")
     except Exception:
         pass

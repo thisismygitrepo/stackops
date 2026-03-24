@@ -25,8 +25,7 @@ def generate_uv_add_commands(pyproject_path: Path, output_path: Path) -> None:
         pyproject_path: Path to the pyproject.toml file
         output_path: Path where to write the uv add commands
     """
-    with open(pyproject_path, "rb") as f:
-        pyproject_data: dict[str, Any] = tomllib.load(f)
+    pyproject_data: dict[str, Any] = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
 
     commands: list[str] = []
 
@@ -53,12 +52,6 @@ def generate_uv_add_commands(pyproject_path: Path, output_path: Path) -> None:
                 else:
                     commands.append(f"uv add --no-cache --group {group_name} {' '.join(package_names)}")
 
-    # with open(output_path, "w") as f:
-    #     f.write("#!/bin/bash\n")
-    #     f.write("set -e\n\n")
-    #     f.write("uv cache clean --force\n\n")
-    #     for command in commands:
-    #         f.write(command + "\n")
     script = f"""
 #!/bin/bash
 set -e
@@ -101,8 +94,7 @@ def upgrade_machine_config_version() -> None:
     pyproject_file: Path = current_dir / "pyproject.toml"
     
     # Read current version from pyproject.toml
-    with open(pyproject_file, "rb") as f:
-        pyproject_data: dict[str, Any] = tomllib.load(f)
+    pyproject_data: dict[str, Any] = tomllib.loads(pyproject_file.read_text(encoding="utf-8"))
     
     current_version_str: str = pyproject_data["project"]["version"]
     version_parts: list[str] = current_version_str.split(".")

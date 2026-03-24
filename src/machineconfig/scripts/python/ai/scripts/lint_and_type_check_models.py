@@ -172,8 +172,7 @@ def relative_path(path: Path) -> str:
 def read_report_stats(report_path: Path) -> ReportStats:
     if report_path.exists() is False:
         return ReportStats(line_count=0, byte_count=0)
-    with report_path.open("r", encoding="utf-8", errors="replace") as handle:
-        line_count = sum(1 for _ in handle)
+    line_count = len(report_path.read_text(encoding="utf-8", errors="replace").splitlines())
     return ReportStats(line_count=line_count, byte_count=report_path.stat().st_size)
 
 

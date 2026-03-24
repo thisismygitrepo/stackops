@@ -3,7 +3,7 @@
 This guide covers local preview and hosting options for the repository's Zensical-powered documentation site.
 
 !!! note
-    Machineconfig now uses `zensical` for local builds and deployment, while keeping `mkdocs.yml` as the transition-friendly config format. If you install docs tooling manually instead of running `uv sync --group dev`, install `zensical` and `mkdocstrings-python`.
+    Machineconfig builds and deploys docs with `zensical`, configured in `zensical.toml`. If you install docs tooling manually instead of running `uv sync --group dev`, install `zensical` and `mkdocstrings-python`.
 
 ---
 
@@ -77,7 +77,7 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
         paths:
           - 'docs/**'
           - 'docs_fragments/**'
-          - 'mkdocs.yml'
+          - 'zensical.toml'
           - 'pyproject.toml'
           - 'uv.lock'
           - 'src/**'

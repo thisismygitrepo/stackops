@@ -1,5 +1,6 @@
 
-from typing import Any, Union, Mapping
+from io import StringIO
+from typing import Any, Mapping, Union
 from pathlib import Path
 import json
 import pickle
@@ -17,8 +18,7 @@ def _ensure_parent(path: PathLike) -> Path:
 
 def save_pickle(obj: Any, path: PathLike, verbose: bool = False) -> Path:
     path_obj = _ensure_parent(path)
-    with open(path_obj, "wb") as fh:
-        pickle.dump(obj, fh, protocol=pickle.HIGHEST_PROTOCOL)
+    path_obj.write_bytes(pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL))
     if verbose:
         print(f"Saved pickle -> {path_obj}")
     return Path(path_obj)
@@ -26,9 +26,8 @@ def save_pickle(obj: Any, path: PathLike, verbose: bool = False) -> Path:
 
 def save_json(obj: Any, path: PathLike, indent: int | None = None, verbose: bool = False) -> Path:
     path_obj = _ensure_parent(path)
-    with open(path_obj, "w", encoding="utf-8") as fh:
-        json.dump(obj, fh, indent=indent, ensure_ascii=False)
-        fh.write("\n")
+    json_text = json.dumps(obj, indent=indent, ensure_ascii=False)
+    path_obj.write_text(f"{json_text}\n", encoding="utf-8")
     if verbose:
         print(f"Saved json -> {path_obj}")
     return Path(path_obj)
@@ -39,18 +38,20 @@ def save_ini(path: PathLike, obj: Mapping[str, Mapping[str, Any]], verbose: bool
     for section, values in obj.items():
         cp[section] = {str(k): str(v) for k, v in values.items()}
     path_obj = _ensure_parent(path)
-    with open(path_obj, "w", encoding="utf-8") as fh:
-        cp.write(fh)
+    buffer = StringIO()
+    cp.write(buffer)
+    path_obj.write_text(buffer.getvalue(), encoding="utf-8")
     if verbose:
         print(f"Saved ini -> {path_obj}")
     return Path(path_obj)
 
 
 def read_ini(path: "Path", encoding: str | None = None):
-    if not Path(path).exists() or Path(path).is_dir():
+    path_obj = Path(path)
+    if not path_obj.exists() or path_obj.is_dir():
         raise FileNotFoundError(f"File not found or is a directory: {path}")
     res = configparser.ConfigParser()
-    res.read(filenames=[str(path)], encoding=encoding)
+    res.read_string(path_obj.read_text(encoding=encoding))
     return res
 
 

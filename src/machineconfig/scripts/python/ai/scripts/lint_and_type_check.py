@@ -7,6 +7,7 @@
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -49,17 +50,21 @@ def run_cleanup(console: Console) -> CleanupResult:
     cleanup_path = REPORTS_DIR / "log_cleanup.md"
     started_at = time.monotonic()
     exit_code = 0
-    with cleanup_path.open("w", encoding="utf-8") as handle:
-        for command in CLEANUP_COMMANDS:
-            handle.write(f"$ {' '.join(command)}\n")
-            handle.flush()
-            completed = subprocess.run(
-                command, stdout=handle, stderr=subprocess.STDOUT, check=False
-            )
-            if completed.returncode != 0 and exit_code == 0:
-                exit_code = completed.returncode
-            handle.write("\n")
-            handle.flush()
+    cleanup_chunks: list[str] = []
+    for command in CLEANUP_COMMANDS:
+        cleanup_chunks.append(f"$ {' '.join(command)}\n")
+        completed = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+        )
+        cleanup_chunks.append(completed.stdout or "")
+        cleanup_chunks.append("\n")
+        if completed.returncode != 0 and exit_code == 0:
+            exit_code = completed.returncode
+    cleanup_path.write_text("".join(cleanup_chunks), encoding="utf-8")
     finished_at = time.monotonic()
     result = CleanupResult(
         exit_code=exit_code,
@@ -87,7 +92,8 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
     completed_tools: dict[str, ToolResult] = {}
     for spec in CHECKER_SPECS:
         spec.report_path.unlink(missing_ok=True)
-        report_handle = spec.report_path.open("w", encoding="utf-8")
+        spec.report_path.write_text("", encoding="utf-8")
+        report_handle = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
         started_at = time.monotonic()
         try:
             process = subprocess.Popen(
@@ -129,6 +135,8 @@ def finish_ready_processes(
         if exit_code is None:
             continue
         running_tool.report_handle.flush()
+        running_tool.report_handle.seek(0)
+        running_tool.spec.report_path.write_text(running_tool.report_handle.read(), encoding="utf-8")
         running_tool.report_handle.close()
         finished_at = time.monotonic()
         completed_tools[slug] = ToolResult(
@@ -151,6 +159,9 @@ def terminate_running_tools(running_tools: dict[str, RunningTool]) -> None:
     for running_tool in running_tools.values():
         if running_tool.process.poll() is None:
             running_tool.process.wait(timeout=5)
+        running_tool.report_handle.flush()
+        running_tool.report_handle.seek(0)
+        running_tool.spec.report_path.write_text(running_tool.report_handle.read(), encoding="utf-8")
         running_tool.report_handle.close()
 
 

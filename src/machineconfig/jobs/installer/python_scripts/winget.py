@@ -70,10 +70,11 @@ def download_file(url: str, destination: Path) -> bool:
         response = requests.get(url, stream=True, timeout=60)
         response.raise_for_status()
 
-        with open(destination, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
+        download_buffer = bytearray()
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                download_buffer.extend(chunk)
+        destination.write_bytes(bytes(download_buffer))
 
         return True
     except (requests.RequestException, IOError) as e:

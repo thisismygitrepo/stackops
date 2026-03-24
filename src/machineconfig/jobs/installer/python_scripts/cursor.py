@@ -44,8 +44,7 @@ Terminal=false
 Type=Application
 Categories=Development;IDE;
 """
-    with open(desktop_file, "w") as f:
-        f.write(desktop_content)
+    Path(desktop_file).write_text(desktop_content, encoding="utf-8")
     # Step 3: Make the .desktop file executable
     os.chmod(desktop_file, 0o755)
     # Step 4: Update desktop database (optional, usually not needed)

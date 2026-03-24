@@ -176,7 +176,8 @@ size = {preview_panel_size}
         temp_channel_link.symlink_to(channel_path)
         output_file = tempdir / "selection.txt"
         try:
-            result = subprocess.run(["tv", "temp_options"], check=False, stdout=output_file.open("w"), text=True, env=env)
+            result = subprocess.run(["tv", "temp_options"], check=False, stdout=subprocess.PIPE, text=True, env=env)
+            output_file.write_text(result.stdout or "", encoding="utf-8")
         finally:
             if temp_channel_link.exists() or temp_channel_link.is_symlink():
                 temp_channel_link.unlink()

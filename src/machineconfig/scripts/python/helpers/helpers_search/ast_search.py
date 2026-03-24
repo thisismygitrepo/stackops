@@ -1,6 +1,7 @@
 
 import ast
 import os
+from pathlib import Path
 from typing import TypedDict
 
 
@@ -61,8 +62,7 @@ def get_repo_symbols(repo_path: str) -> list[SymbolInfo]:
             )
             try:
                 if counter % 100 == 0: print(f"🔍 Parsing {counter}: {file_path}...")
-                with open(file_path, encoding="utf-8") as f:
-                    source = f.read()
+                source = Path(file_path).read_text(encoding="utf-8")
                 tree = ast.parse(source, filename=file_path)
                 symbols = _extract_symbols(tree, module_path, source)
                 results.extend(symbols)

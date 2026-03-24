@@ -30,13 +30,11 @@ def secure_q_cli() -> None:
             current_settings = {}
             if config_file.exists():
                 try:
-                    with open(config_file, "r", encoding="utf-8") as f:
-                        current_settings = json.load(f)
+                    current_settings = json.loads(config_file.read_text(encoding="utf-8"))
                 except Exception:
                     pass
             current_settings.update(privacy_settings)
-            with open(config_file, "w", encoding="utf-8") as f:
-                json.dump(current_settings, f, indent=2)
+            config_file.write_text(json.dumps(current_settings, indent=2), encoding="utf-8")
             if os.name != "nt":
                 config_file.chmod(0o600)
         except Exception:

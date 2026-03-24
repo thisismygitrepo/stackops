@@ -39,8 +39,7 @@ def print_python_files_by_size_impl(repo_path: str) -> pl.DataFrame | Exception:
                     file_path = os.path.join(root, file)
                     try:
                         # Count lines in the file
-                        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-                            line_count = sum(1 for _ in f)
+                        line_count = len(Path(file_path).read_text(encoding="utf-8", errors="replace").splitlines())
 
                         # Make path relative to repo_path for better display
                         rel_path = os.path.relpath(file_path, repo_path)

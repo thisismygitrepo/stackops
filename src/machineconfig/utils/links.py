@@ -49,12 +49,8 @@ class OperationRecord(TypedDict):
 def files_are_identical(file1: PathExtended, file2: PathExtended) -> bool:
     """Check if two files are identical by comparing their SHA256 hashes."""
     def get_file_hash(path: PathExtended) -> str:
-        hash_sha256 = hashlib.sha256()
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_sha256.update(chunk)
-        return hash_sha256.hexdigest()
-    
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
     try:
         return get_file_hash(file1) == get_file_hash(file2)
     except (OSError, IOError):

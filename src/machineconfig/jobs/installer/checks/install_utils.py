@@ -6,6 +6,7 @@ This module provides functionality to download and install pre-checked applicati
 """
 
 import csv
+from io import StringIO
 import platform
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -21,6 +22,11 @@ ENGINE_RESULTS_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().
 CLOUD_STORAGE_NAME = "gdp"  # Default cloud storage name for rclone
 
 console = Console()
+
+
+def _load_csv_report(path: Path) -> list[dict[str, str]]:
+    csv_text = path.read_text(encoding="utf-8")
+    return list(csv.DictReader(StringIO(csv_text)))
 
 def upload_app(path: PathExtended) -> str | None:
     """Uploads the app to cloud storage and returns the shareable link."""
@@ -95,9 +101,7 @@ def install_cli_app(app_url: str) -> bool:
 def load_app_metadata_report() -> list[dict[str, str]]:
     """Loads the app metadata report from CSV."""
     if APP_METADATA_PATH.exists():
-        with open(APP_METADATA_PATH, 'r', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            return list(reader)
+        return _load_csv_report(APP_METADATA_PATH)
     console.print(f"[yellow]Warning: App metadata report not found at {APP_METADATA_PATH}[/yellow]")
     return []
 
@@ -105,9 +109,7 @@ def load_app_metadata_report() -> list[dict[str, str]]:
 def load_engine_results_report() -> list[dict[str, str]]:
     """Loads the engine results report from CSV."""
     if ENGINE_RESULTS_PATH.exists():
-        with open(ENGINE_RESULTS_PATH, 'r', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            return list(reader)
+        return _load_csv_report(ENGINE_RESULTS_PATH)
     console.print(f"[yellow]Warning: Engine results report not found at {ENGINE_RESULTS_PATH}[/yellow]")
     return []
 

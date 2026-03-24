@@ -6,7 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'docs_fragments/**'
-      - 'mkdocs.yml'
+      - 'zensical.toml'
       - 'pyproject.toml'
       - 'uv.lock'
       - 'src/**'

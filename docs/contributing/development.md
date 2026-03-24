@@ -68,7 +68,7 @@ uv run zensical serve
 
 Visit `http://127.0.0.1:8000/machineconfig/` to preview docs.
 
-This repo builds docs with `zensical` while keeping `mkdocs.yml` as the compatibility config format. `uv sync --group dev` installs everything you need; if you set up docs tooling manually, install `zensical` and `mkdocstrings-python`.
+This repo builds docs with `zensical` and keeps its configuration in `zensical.toml`. `uv sync --group dev` installs everything you need; if you set up docs tooling manually, install `zensical` and `mkdocstrings-python`.
 
 ---
 

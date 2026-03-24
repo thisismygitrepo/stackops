@@ -19,6 +19,7 @@ from machineconfig.utils.source_of_truth import LIBRARY_ROOT, CONFIG_ROOT
 import platform
 import subprocess
 import tomllib
+import io
 from typing import Any, TypedDict, Literal, TypeAlias
 from pathlib import Path
 
@@ -315,12 +316,13 @@ def apply_mapper(mapper_data: dict[str, list[ConfigMapper]],
         csv_filename = f"symlink_operations_{timestamp}.csv"
         csv_path = csv_dir.joinpath(csv_filename)
         
-        with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
-            fieldnames = ["program", "file_key", "defaultPath", "selfManaged", "operation", "action", "details", "status"]
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(operation_records)
-        
+        fieldnames = ["program", "file_key", "defaultPath", "selfManaged", "operation", "action", "details", "status"]
+        csv_buffer = io.StringIO(newline="")
+        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(operation_records)
+        csv_path.write_text(csv_buffer.getvalue(), encoding="utf-8")
+
         console.print(f"\n[bold green]📊 Operations exported to CSV:[/bold green] [cyan]{csv_path}[/cyan]")
 
     if len(ERROR_LIST) > 0:

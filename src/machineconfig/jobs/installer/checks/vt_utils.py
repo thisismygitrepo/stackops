@@ -7,6 +7,7 @@ This module provides functionality to interact with VirusTotal API.
 
 import time
 from collections.abc import Iterable, Mapping
+import io
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
@@ -153,7 +154,7 @@ def scan_file(
         return None, []
 
     try:
-        with path.open("rb") as file_handle:
+        with io.BytesIO(path.read_bytes()) as file_handle:
             analysis = client.scan_file(file_handle)
 
         repeat_counter = 0
