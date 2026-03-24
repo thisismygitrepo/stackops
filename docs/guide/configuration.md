@@ -24,13 +24,13 @@ devops config --help
 
 ## Shell configuration
 
-The current shell entrypoint is:
+Shell-specific commands now live under a dedicated subgroup:
 
 ```bash
 devops config shell --help
 ```
 
-The live help shows a `--which` option for selecting the shell profile variant to configure.
+The shell group keeps the profile setup flow on the group entrypoint itself, so `devops config shell` still configures the default shell profile and `--which` selects the variant to create.
 
 ---
 
@@ -55,24 +55,30 @@ That makes `devops config sync` the main high-level replacement for older global
 
 ## Other configuration subcommands
 
-Current `devops config --help` also lists subcommands for:
+Current `devops config --help` lists subcommands for:
 
 - `register`
 - `edit`
 - `export-dotfiles`
 - `import-dotfiles`
 - `shell`
+- `copy-assets`
+- `dump`
+
+Inside `devops config shell --help`, the current shell theme commands are:
+
 - `starship-theme`
 - `pwsh-theme`
 - `wezterm-theme`
 - `ghostty-theme`
 - `windows-terminal-theme`
-- `copy-assets`
-- `dump`
-- `list-devices`
-- `mount`
 
-Use `devops config --help` as the entrypoint, then drill down with `--help` on the specific subcommand you need.
+Device inspection and local mounting now live under `utils`:
+
+- `utils list-devices`
+- `utils mount`
+
+Use `devops config --help` as the entrypoint for config workflows, then drill down with `--help` on the specific subgroup or subcommand you need.
 
 ---
 

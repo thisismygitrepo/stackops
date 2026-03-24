@@ -17,6 +17,8 @@ Current top-level commands:
 | `kill-process` | Choose a process to kill |
 | `environment` | Inspect and navigate environment and PATH variables |
 | `get-machine-specs` | Print machine specifications |
+| `list-devices` | List mountable local devices |
+| `mount` | Mount a local device to a mount point |
 | `init-project` | Initialize a project with a uv environment and dev packages |
 | `upgrade-packages` | Upgrade project dependencies |
 | `type-hint` | Type-hint a file or project directory |
@@ -35,6 +37,7 @@ Use live help to inspect the command you want:
 ```bash
 utils --help
 utils environment --help
+utils mount --help
 utils init-project --help
 utils download --help
 ```

@@ -198,6 +198,8 @@ devops config [SUBCOMMAND] [ARGS]...
 
 Manage application configurations, dotfiles, and settings.
 
+Shell profile setup and shell theme commands are grouped under `devops config shell ...`.
+
 ---
 
 ## data

@@ -719,7 +719,7 @@
                     "",
                     "    from machineconfig.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.83\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.84\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1714,7 +1714,7 @@
                     "    # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.83\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.84\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -2836,287 +2836,226 @@
                 ]
               },
               {
-                "kind": "command",
+                "kind": "group",
                 "name": "shell",
                 "help": "🐚 <S> Configure your shell profile.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "configure_shell_profile"
+                  "dispatches_to": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell.get_app"
                 },
-                "signature": {
-                  "raw_lines": [
-                    "def configure_shell_profile(",
-                    "    which: Annotated[",
-                    "        Literal[\"default\", \"d\", \"nushell\", \"n\"], typer.Option(..., \"--which\", \"-w\", help=\"Which shell profile to create/configure\")",
-                    "    ] = \"default\",",
-                    "):",
-                    "    \"\"\"🔗 Configure your shell profile.\"\"\"",
-                    "    from machineconfig.profile.create_shell_profile import create_default_shell_profile, create_nu_shell_profile",
-                    "",
-                    "    match which:",
-                    "        case \"nushell\" | \"n\":",
-                    "            create_nu_shell_profile()",
-                    "            return",
-                    "        case \"default\" | \"d\":",
-                    "            create_default_shell_profile()",
-                    "            return",
-                    "    msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Unknown shell profile type: {which}\"",
-                    "    typer.echo(msg)"
-                  ],
-                  "name": "configure_shell_profile",
-                  "parameters": [
-                    {
-                      "name": "which",
-                      "kind": "positional_or_keyword",
-                      "type": "Literal['default', 'd', 'nushell', 'n']",
-                      "default": "default",
-                      "required": false,
-                      "annotation_raw": "Annotated[Literal['default', 'd', 'nushell', 'n'], typer.Option(..., '--which', '-w', help='Which shell profile to create/configure')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--which",
-                          "-w"
-                        ],
-                        "long_flags": [
-                          "--which"
-                        ],
-                        "short_flags": [
-                          "-w"
-                        ],
-                        "help": "Which shell profile to create/configure",
-                        "default": "..."
+                "app": {
+                  "help": "🐚 <S> Configure your shell profile.",
+                  "no_args_is_help": false,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "starship-theme",
+                    "help": "⭐ <t> Select starship prompt theme.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "callable": "starship_theme"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def starship_theme() -> None:",
+                        "    \"\"\"🔗 Select starship prompt theme.\"\"\"",
+                        "    themes_dir = Path(__file__).resolve().parent / \"themes\"",
+                        "",
+                        "    if platform.system() == \"Windows\":",
+                        "        script_path = themes_dir / \"choose_starship_theme.ps1\"",
+                        "        try:",
+                        "            subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
+                        "        except FileNotFoundError:",
+                        "            subprocess.run([\"powershell\", \"-File\", str(script_path)], check=True)",
+                        "        return",
+                        "",
+                        "    script_path = themes_dir / \"choose_starship_theme.sh\"",
+                        "    os.chmod(script_path, 0o755)",
+                        "    subprocess.run([\"bash\", str(script_path)], check=True)"
+                      ],
+                      "name": "starship_theme",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🔗 Select starship prompt theme.",
+                    "aliases": [
+                      {
+                        "name": "t",
+                        "hidden": true,
+                        "help": "Select starship prompt theme."
                       }
-                    }
-                  ]
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 Configure your shell profile.",
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "pwsh-theme",
+                    "help": "⚡ <T> Select powershell prompt theme.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "callable": "pwsh_theme"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def pwsh_theme() -> None:",
+                        "    \"\"\"🔗 Select powershell prompt theme.\"\"\"",
+                        "    from machineconfig.utils.code import exit_then_run_shell_file",
+                        "",
+                        "    script_path = Path(__file__).resolve().parent / \"themes\" / \"choose_pwsh_theme.ps1\"",
+                        "    exit_then_run_shell_file(script_path=str(script_path), strict=False)"
+                      ],
+                      "name": "pwsh_theme",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🔗 Select powershell prompt theme.",
+                    "aliases": [
+                      {
+                        "name": "T",
+                        "hidden": true,
+                        "help": "Select powershell prompt theme."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "wezterm-theme",
+                    "help": "💻 <W> Select WezTerm terminal theme.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "callable": "configure_wezterm_theme"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def configure_wezterm_theme() -> None:",
+                        "    \"\"\"🔗 Select WezTerm theme with interactive live preview.\"\"\"",
+                        "    from machineconfig.scripts.python.helpers.helpers_devops.themes import choose_wezterm_theme",
+                        "",
+                        "    choose_wezterm_theme.main()"
+                      ],
+                      "name": "configure_wezterm_theme",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🔗 Select WezTerm theme with interactive live preview.",
+                    "aliases": [
+                      {
+                        "name": "W",
+                        "hidden": true,
+                        "help": "Select WezTerm terminal theme."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "ghostty-theme",
+                    "help": "👻 <g> Select Ghostty terminal theme.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "callable": "configure_ghostty_theme"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def configure_ghostty_theme() -> None:",
+                        "    \"\"\"🔗 Select Ghostty theme with interactive preview.\"\"\"",
+                        "    ghostty_config_path = Path(os.environ.get(\"XDG_CONFIG_HOME\", \"~/.config\")).expanduser() / \"ghostty\" / \"config\"",
+                        "    auto_theme_include = \"config-file = ?auto/theme.ghostty\"",
+                        "",
+                        "    existing_lines = ghostty_config_path.read_text(encoding=\"utf-8\").splitlines() if ghostty_config_path.exists() else []",
+                        "    existing_lines_stripped = [line.strip() for line in existing_lines]",
+                        "    if auto_theme_include not in existing_lines_stripped:",
+                        "        ghostty_config_path.parent.mkdir(parents=True, exist_ok=True)",
+                        "        if existing_lines and existing_lines[-1].strip():",
+                        "            existing_lines.append(\"\")",
+                        "        existing_lines.append(auto_theme_include)",
+                        "        ghostty_config_path.write_text(\"\\n\".join(existing_lines) + \"\\n\", encoding=\"utf-8\")",
+                        "",
+                        "    reload_hint = \"cmd+shift+,\" if platform.system() == \"Darwin\" else \"ctrl+shift+,\"",
+                        "    typer.echo(\"🎨 Opening Ghostty interactive theme preview. Use arrows/j/k to browse, Enter then w to save.\")",
+                        "    typer.echo(f\"💡 After saving, reload Ghostty config with {reload_hint} to apply.\")",
+                        "    subprocess.run([\"ghostty\", \"+list-themes\"], check=True)"
+                      ],
+                      "name": "configure_ghostty_theme",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🔗 Select Ghostty theme with interactive preview.",
+                    "aliases": [
+                      {
+                        "name": "g",
+                        "hidden": true,
+                        "help": "Select Ghostty terminal theme."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "windows-terminal-theme",
+                    "help": "🪟 <x> Select Windows Terminal color scheme.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "callable": "configure_windows_terminal_theme"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def configure_windows_terminal_theme() -> None:",
+                        "    \"\"\"🔗 Select Windows Terminal color scheme with interactive live preview.\"\"\"",
+                        "    if platform.system().lower() != \"windows\":",
+                        "        typer.echo(\"Error: Windows Terminal theme selection is only supported on Windows systems.\", err=True)",
+                        "        raise typer.Exit(code=1)",
+                        "",
+                        "    script_path = Path(__file__).resolve().parent / \"themes\" / \"choose_windows_terminal_theme.ps1\"",
+                        "    try:",
+                        "        subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
+                        "    except FileNotFoundError:",
+                        "        subprocess.run([\"powershell\", \"-File\", str(script_path)], check=True)"
+                      ],
+                      "name": "configure_windows_terminal_theme",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🔗 Select Windows Terminal color scheme with interactive live preview.",
+                    "aliases": [
+                      {
+                        "name": "x",
+                        "hidden": true,
+                        "help": "Select Windows Terminal color scheme."
+                      },
+                      {
+                        "name": "wt-theme",
+                        "hidden": true,
+                        "help": "Select Windows Terminal color scheme."
+                      }
+                    ]
+                  }
+                ],
                 "aliases": [
                   {
                     "name": "S",
-                    "hidden": true,
-                    "help": "Configure your shell profile."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "starship-theme",
-                "help": "⭐ <t> Select starship prompt theme.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "starship_theme"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def starship_theme():",
-                    "    \"\"\"🔗 Select starship prompt theme.\"\"\"",
-                    "    import subprocess",
-                    "    import platform",
-                    "    import os",
-                    "",
-                    "    current_dir = Path(__file__).parent.joinpath(\"themes\")",
-                    "",
-                    "    if platform.system() == \"Windows\":",
-                    "        script_path = current_dir / \"choose_starship_theme.ps1\"",
-                    "        try:",
-                    "            subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
-                    "        except FileNotFoundError:",
-                    "            # Fallback to powershell if pwsh is not available",
-                    "            subprocess.run([\"powershell\", \"-File\", str(script_path)], check=True)",
-                    "    else:",
-                    "        script_path = current_dir / \"choose_starship_theme.sh\"",
-                    "        # Ensure executable",
-                    "        os.chmod(script_path, 0o755)",
-                    "        subprocess.run([\"bash\", str(script_path)], check=True)"
-                  ],
-                  "name": "starship_theme",
-                  "parameters": []
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 Select starship prompt theme.",
-                "aliases": [
-                  {
-                    "name": "t",
-                    "hidden": true,
-                    "help": "Select starship prompt theme."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "pwsh-theme",
-                "help": "⚡ <T> Select powershell prompt theme.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "pwsh_theme"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def pwsh_theme():",
-                    "    \"\"\"🔗 Select powershell prompt theme.\"\"\"",
-                    "    from machineconfig.scripts.python.helpers.helpers_devops import themes",
-                    "",
-                    "    file_path = themes.__file__",
-                    "    # if file_path is None:",
-                    "    #     typer.echo(\"❌ ERROR: Could not locate themes module file.\", err=True)",
-                    "    #     raise typer.Exit(code=1)",
-                    "    file = Path(file_path).parent / \"choose_pwsh_theme.ps1\"",
-                    "    # import subprocess",
-                    "    # subprocess.run([\"pwsh\", \"-File\", str(file)])",
-                    "    from machineconfig.utils.code import exit_then_run_shell_file",
-                    "",
-                    "    exit_then_run_shell_file(script_path=str(file), strict=False)"
-                  ],
-                  "name": "pwsh_theme",
-                  "parameters": []
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 Select powershell prompt theme.",
-                "aliases": [
-                  {
-                    "name": "T",
-                    "hidden": true,
-                    "help": "Select powershell prompt theme."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "wezterm-theme",
-                "help": "💻 <W> Select WezTerm terminal theme.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "configure_wezterm_theme"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def configure_wezterm_theme() -> None:",
-                    "    \"\"\"🔗 Select WezTerm theme with interactive live preview.\"\"\"",
-                    "    from machineconfig.scripts.python.helpers.helpers_devops.themes import choose_wezterm_theme",
-                    "",
-                    "    choose_wezterm_theme.main()"
-                  ],
-                  "name": "configure_wezterm_theme",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 Select WezTerm theme with interactive live preview.",
-                "aliases": [
-                  {
-                    "name": "W",
-                    "hidden": true,
-                    "help": "Select WezTerm terminal theme."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "ghostty-theme",
-                "help": "👻 <g> Select Ghostty terminal theme.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "configure_ghostty_theme"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def configure_ghostty_theme() -> None:",
-                    "    \"\"\"🔗 Select Ghostty theme with interactive preview.\"\"\"",
-                    "    import os",
-                    "    import platform",
-                    "    import subprocess",
-                    "",
-                    "    ghostty_config_path = Path(os.environ.get(\"XDG_CONFIG_HOME\", \"~/.config\")).expanduser() / \"ghostty\" / \"config\"",
-                    "    auto_theme_include = \"config-file = ?auto/theme.ghostty\"",
-                    "",
-                    "    existing_lines = ghostty_config_path.read_text(encoding=\"utf-8\").splitlines() if ghostty_config_path.exists() else []",
-                    "    existing_lines_stripped = [line.strip() for line in existing_lines]",
-                    "    if auto_theme_include not in existing_lines_stripped:",
-                    "        ghostty_config_path.parent.mkdir(parents=True, exist_ok=True)",
-                    "        if existing_lines and existing_lines[-1].strip():",
-                    "            existing_lines.append(\"\")",
-                    "        existing_lines.append(auto_theme_include)",
-                    "        ghostty_config_path.write_text(\"\\n\".join(existing_lines) + \"\\n\", encoding=\"utf-8\")",
-                    "",
-                    "    reload_hint = \"cmd+shift+,\" if platform.system() == \"Darwin\" else \"ctrl+shift+,\"",
-                    "    typer.echo(\"🎨 Opening Ghostty interactive theme preview. Use arrows/j/k to browse, Enter then w to save.\")",
-                    "    typer.echo(f\"💡 After saving, reload Ghostty config with {reload_hint} to apply.\")",
-                    "    subprocess.run([\"ghostty\", \"+list-themes\"], check=True)"
-                  ],
-                  "name": "configure_ghostty_theme",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 Select Ghostty theme with interactive preview.",
-                "aliases": [
-                  {
-                    "name": "g",
-                    "hidden": true,
-                    "help": "Select Ghostty terminal theme."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "windows-terminal-theme",
-                "help": "🪟 <x> Select Windows Terminal color scheme.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "configure_windows_terminal_theme"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def configure_windows_terminal_theme() -> None:",
-                    "    \"\"\"🔗 Select Windows Terminal color scheme with interactive live preview.\"\"\"",
-                    "    import platform",
-                    "    import subprocess",
-                    "",
-                    "    if platform.system().lower() != \"windows\":",
-                    "        typer.echo(\"Error: Windows Terminal theme selection is only supported on Windows systems.\", err=True)",
-                    "        raise typer.Exit(code=1)",
-                    "    script_path = Path(__file__).parent.joinpath(\"themes\", \"choose_windows_terminal_theme.ps1\")",
-                    "    try:",
-                    "        subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
-                    "    except FileNotFoundError:",
-                    "        subprocess.run([\"powershell\", \"-File\", str(script_path)], check=True)"
-                  ],
-                  "name": "configure_windows_terminal_theme",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 Select Windows Terminal color scheme with interactive live preview.",
-                "aliases": [
-                  {
-                    "name": "x",
-                    "hidden": true,
-                    "help": "Select Windows Terminal color scheme."
-                  },
-                  {
-                    "name": "wt-theme",
-                    "hidden": true,
-                    "help": "Select Windows Terminal color scheme."
+                    "hidden": true
                   }
                 ]
               },
@@ -3131,7 +3070,7 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def copy_assets(which: Annotated[Literal[\"scripts\", \"s\", \"settings\", \"t\", \"both\", \"b\"], typer.Argument(..., help=\"Which assets to copy\")]):",
+                    "def copy_assets(which: Annotated[Literal[\"scripts\", \"s\", \"settings\", \"t\", \"both\", \"b\"], typer.Argument(..., help=\"Which assets to copy\")]) -> None:",
                     "    \"\"\"🔗 Copy asset files from library to machine.\"\"\"",
                     "    from machineconfig.profile import create_helper",
                     "",
@@ -3167,7 +3106,8 @@
                         "default": "..."
                       }
                     }
-                  ]
+                  ],
+                  "return": "None"
                 },
                 "typer": {
                   "no_args_is_help": true
@@ -3192,7 +3132,7 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def dump_config(which: Annotated[Literal[\"ve\"], typer.Option(..., \"--which\", \"-w\", help=\"Which config to dump\")]):",
+                    "def dump_config(which: Annotated[Literal[\"ve\"], typer.Option(..., \"--which\", \"-w\", help=\"Which config to dump\")]) -> None:",
                     "    \"\"\"🔗 Dump example configuration files.\"\"\"",
                     "    match which:",
                     "        case \"ve\":",
@@ -3226,7 +3166,8 @@
                         "default": "..."
                       }
                     }
-                  ]
+                  ],
+                  "return": "None"
                 },
                 "typer": {
                   "no_args_is_help": true
@@ -3237,150 +3178,6 @@
                     "name": "d",
                     "hidden": true,
                     "help": "Dump example configuration files."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "list-devices",
-                "help": "💽 <l> List available devices for mounting.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "list_devices"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def list_devices() -> None:",
-                    "    \"\"\"🔗 List available mountable devices.\"\"\"",
-                    "    import machineconfig.scripts.python.helpers.helpers_devops.cli_config_mount as mount_module",
-                    "",
-                    "    mount_module.list_devices()"
-                  ],
-                  "name": "list_devices",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 List available mountable devices.",
-                "aliases": [
-                  {
-                    "name": "l",
-                    "hidden": true,
-                    "help": "List available devices for mounting."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "mount",
-                "help": "🔌 <m> Mount a device to a mount point.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "mount_device"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def mount_device(",
-                    "    device_query: Annotated[str | None, typer.Option(\"--device\", \"-d\", help=\"Device query (path, key, or label).\")] = None,",
-                    "    mount_point: Annotated[str | None, typer.Option(\"--mount-point\", \"-p\", help=\"Mount point (use '-' for default on macOS).\")] = None,",
-                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Pick device and mount point interactively.\")] = False,",
-                    ") -> None:",
-                    "    \"\"\"🔗 Mount a device to a mount point.\"\"\"",
-                    "    import machineconfig.scripts.python.helpers.helpers_devops.cli_config_mount as mount_module",
-                    "",
-                    "    if interactive:",
-                    "        mount_module.mount_interactive()",
-                    "        return",
-                    "    if device_query is None or mount_point is None:",
-                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"--device and --mount-point are required unless --interactive is set\"",
-                    "        typer.echo(msg)",
-                    "        raise typer.Exit(2)",
-                    "    mount_module.mount_device(device_query=device_query, mount_point=mount_point)"
-                  ],
-                  "name": "mount_device",
-                  "parameters": [
-                    {
-                      "name": "device_query",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--device', '-d', help='Device query (path, key, or label).')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--device",
-                          "-d"
-                        ],
-                        "long_flags": [
-                          "--device"
-                        ],
-                        "short_flags": [
-                          "-d"
-                        ],
-                        "help": "Device query (path, key, or label)."
-                      }
-                    },
-                    {
-                      "name": "mount_point",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--mount-point', '-p', help=\"Mount point (use '-' for default on macOS).\")]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--mount-point",
-                          "-p"
-                        ],
-                        "long_flags": [
-                          "--mount-point"
-                        ],
-                        "short_flags": [
-                          "-p"
-                        ],
-                        "help": "Mount point (use '-' for default on macOS)."
-                      }
-                    },
-                    {
-                      "name": "interactive",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Pick device and mount point interactively.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--interactive",
-                          "-i"
-                        ],
-                        "long_flags": [
-                          "--interactive"
-                        ],
-                        "short_flags": [
-                          "-i"
-                        ],
-                        "help": "Pick device and mount point interactively."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": true
-                },
-                "doc": "🔗 Mount a device to a mount point.",
-                "aliases": [
-                  {
-                    "name": "m",
-                    "hidden": true,
-                    "help": "Mount a device to a mount point."
                   }
                 ]
               }
@@ -3925,9 +3722,15 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def update(copy_assets: Annotated[bool, typer.Option(\"--assets-copy/--no-assets-copy\", \"-a/-na\", help=\"Copy (overwrite) assets to the machine after the update\")] = True,",
-                    "           link_public_configs: Annotated[bool, typer.Option(\"--link-public-configs/--no-link-public-configs\", \"-b/-nb\", help=\"Link public configs after update (overwrites your configs!)\")] = False,",
-                    "           ):",
+                    "def update(",
+                    "    copy_assets: Annotated[",
+                    "        bool, typer.Option(\"--assets-copy/--no-assets-copy\", \"-a/-na\", help=\"Copy (overwrite) assets to the machine after the update\")",
+                    "    ] = True,",
+                    "    link_public_configs: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--link-public-configs/--no-link-public-configs\", \"-b/-nb\", help=\"Link public configs after update (overwrites your configs!)\"),",
+                    "    ] = False,",
+                    "):",
                     "    \"\"\"🔄 UPDATE uv and machineconfig\"\"\"",
                     "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
                     "        shell_script = \"\"\"",
@@ -3942,9 +3745,11 @@
                     "uv tool install --no-cache --upgrade machineconfig",
                     "    \"\"\"",
                     "    import platform",
+                    "",
                     "    if platform.system() == \"Windows\":",
                     "        from machineconfig.utils.code import exit_then_run_shell_script, get_uv_command_executing_python_script",
                     "        from machineconfig.utils.meta import lambda_to_python_script",
+                    "",
                     "        python_script = lambda_to_python_script(",
                     "            lambda: copy_both_assets(),  # pylint: disable=unnecessary-lambda",
                     "            in_global=True,",
@@ -3954,6 +3759,7 @@
                     "        exit_then_run_shell_script(shell_script + \"\\n\" + uv_command, strict=True)",
                     "    else:",
                     "        from machineconfig.utils.code import run_shell_script",
+                    "",
                     "        run_shell_script(shell_script, display_script=True, clean_env=False)",
                     "        if copy_assets:",
                     "            copy_both_assets()",
@@ -4036,24 +3842,32 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def init(which: Annotated[Literal[\"init\", \"ia\", \"live\", \"wrap\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")] = \"init\",",
-                    "         run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
-                    "                        ) -> None:",
+                    "def init(",
+                    "    which: Annotated[",
+                    "        Literal[\"init\", \"ia\", \"live\", \"wrap\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
+                    "    ] = \"init\",",
+                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
+                    ") -> None:",
                     "    import platform",
+                    "",
                     "    script = \"\"",
                     "    if platform.system() == \"Linux\" or platform.system() == \"Darwin\":",
                     "        match which:",
                     "            case \"init\":",
                     "                import machineconfig.settings as module",
+                    "",
                     "                if platform.system() == \"Darwin\":",
                     "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"zsh\", \"init.sh\")",
-                    "                else: init_path = Path(module.__file__).parent.joinpath(\"shells\", \"bash\", \"init.sh\")",
+                    "                else:",
+                    "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"bash\", \"init.sh\")",
                     "                script = init_path.read_text(encoding=\"utf-8\")",
                     "            case \"ia\":",
                     "                from machineconfig.setup_linux import INTERACTIVE as script_path",
+                    "",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case \"live\":",
                     "                from machineconfig.setup_linux import LIVE as script_path",
+                    "",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case _:",
                     "                typer.echo(\"Unsupported shell script for Linux.\")",
@@ -4063,13 +3877,16 @@
                     "        match which:",
                     "            case \"init\":",
                     "                import machineconfig.settings as module",
+                    "",
                     "                init_path = Path(module.__file__).parent.joinpath(\"shells\", \"powershell\", \"init.ps1\")",
                     "                script = init_path.read_text(encoding=\"utf-8\")",
                     "            case \"ia\":",
                     "                from machineconfig.setup_windows import INTERACTIVE as script_path",
+                    "",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case \"live\":",
                     "                from machineconfig.setup_windows import LIVE as script_path",
+                    "",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case _:",
                     "                typer.echo(\"Unsupported shell script for Windows.\")",
@@ -4081,6 +3898,7 @@
                     "        raise typer.Exit(code=1)",
                     "    if run:",
                     "        from machineconfig.utils.code import exit_then_run_shell_script",
+                    "",
                     "        exit_then_run_shell_script(script, strict=True)",
                     "    else:",
                     "        print(script)"
@@ -4154,6 +3972,7 @@
                     "def status() -> None:",
                     "    \"\"\"📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.\"\"\"",
                     "    import machineconfig.scripts.python.helpers.helpers_devops.devops_status as helper",
+                    "",
                     "    helper.main()"
                   ],
                   "name": "status",
@@ -4183,14 +4002,20 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def install(copy_assets: Annotated[bool, typer.Option(\"--copy-assets/--no-assets-copy\", \"-a/-na\", help=\"Copy (overwrite) assets to the machine after the update\")] = True,",
-                    "            dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Install from local development code instead of PyPI\")] = False,",
-                    "            export: Annotated[bool, typer.Option(\"--export\", \"-e\", help=\"Export the installation files to get an offline image\")] = False,",
-                    "            interactive_config: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"🤖 INTERACTIVE configuration of machine after installation\")] = False,",
-                    "            ):",
+                    "def install(",
+                    "    copy_assets: Annotated[",
+                    "        bool, typer.Option(\"--copy-assets/--no-assets-copy\", \"-a/-na\", help=\"Copy (overwrite) assets to the machine after the update\")",
+                    "    ] = True,",
+                    "    dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Install from local development code instead of PyPI\")] = False,",
+                    "    export: Annotated[bool, typer.Option(\"--export\", \"-e\", help=\"Export the installation files to get an offline image\")] = False,",
+                    "    interactive_config: Annotated[",
+                    "        bool, typer.Option(\"--interactive\", \"-i\", help=\"🤖 INTERACTIVE configuration of machine after installation\")",
+                    "    ] = False,",
+                    "):",
                     "    \"\"\"📋 CLONE machienconfig locally for nightly updates.\"\"\"",
                     "    if export:",
                     "        from machineconfig.utils.installer_utils import installer_offline",
+                    "",
                     "        installer_offline.export()",
                     "        return",
                     "    if interactive_config:",
@@ -4198,21 +4023,25 @@
                     "        return",
                     "    from machineconfig.utils.code import run_shell_script, get_uv_command, get_shell_script_running_lambda_function, exit_then_run_shell_script",
                     "    import platform",
+                    "",
                     "    mcfg_path = Path.home().joinpath(\"code/machineconfig\")",
                     "    _ = run_shell_script",
                     "    if dev and not mcfg_path.exists():",
                     "        # clone: https://github.com/thisismygitrepo/machineconfig.git",
                     "        import git",
+                    "",
                     "        mcfg_path.parent.mkdir(parents=True, exist_ok=True)",
                     "        git.Repo.clone_from(\"https://github.com/thisismygitrepo/machineconfig.git\", str(mcfg_path))",
                     "        # now we need to run `uv sync` to install dependencies",
                     "",
                     "    uv_command = get_uv_command(platform=platform.system())",
                     "    if copy_assets:",
+                    "",
                     "        def func() -> None:",
                     "            from machineconfig.profile.create_shell_profile import create_default_shell_profile",
                     "",
-                    "            create_default_shell_profile()   # involves copying assets too",
+                    "            create_default_shell_profile()  # involves copying assets too",
+                    "",
                     "        uv_command2, _script_path = get_shell_script_running_lambda_function(",
                     "            lambda: func(),  # pylint: disable=unnecessary-lambda",
                     "            uv_with=[\"machineconfig\"],",
@@ -4385,6 +4214,14 @@
                         "        root = graph_data.get(\"root\")",
                         "        if not isinstance(root, dict):",
                         "            raise ValueError(f\"Invalid graph root in {graph_file}\")",
+                        "",
+                        "        from typing import cast",
+                        "        def _as_string_keyed_dict(value: object) -> dict[str, object] | None:",
+                        "            if not isinstance(value, dict):",
+                        "                return None",
+                        "            if not all(isinstance(key, str) for key in value):",
+                        "                return None",
+                        "            return cast(dict[str, object], value)",
                         "",
                         "        entries: list[tuple[str, str, dict[str, object]]] = []",
                         "",
@@ -5373,11 +5210,10 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def buid_docker(",
-                    "    variant: Annotated[Literal[\"slim\", \"ai\"], typer.Argument(..., help=\"Variant to build: 'slim' or 'ai'\")] = \"slim\",",
-                    ") -> None:",
+                    "def buid_docker(variant: Annotated[Literal[\"slim\", \"ai\"], typer.Argument(..., help=\"Variant to build: 'slim' or 'ai'\")] = \"slim\") -> None:",
                     "    \"\"\"🧱 `buid_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`\"\"\"",
                     "    import machineconfig",
+                    "",
                     "    script_path = Path(machineconfig.__file__).resolve().parent.parent.parent.joinpath(\"jobs\", \"shell\", \"docker_build_and_publish.sh\")",
                     "    if not script_path.exists():",
                     "        typer.echo(f\"❌ Script not found: {str(script_path)}\")",
@@ -5385,6 +5221,7 @@
                     "",
                     "    # shell_cmd = f'VARIANT=\"{variant}\" && bash \"{str(script_path)}\"'\\",
                     "    from machineconfig.utils.source_of_truth import REPO_ROOT",
+                    "",
                     "    shell_cmd = f\"\"\"",
                     "export VARIANT=\"{variant}\"",
                     "cd \"{str(REPO_ROOT)}\"",
@@ -5392,6 +5229,7 @@
                     "\"\"\"",
                     "    # Use exit_then_run_shell_script for interactive runs (keeps tty), otherwise run shell script non-interactively",
                     "    from machineconfig.utils.code import exit_then_run_shell_script",
+                    "",
                     "    exit_then_run_shell_script(shell_cmd, strict=True)"
                   ],
                   "name": "buid_docker",
@@ -5745,6 +5583,67 @@
                   },
                   {
                     "kind": "command",
+                    "name": "repo-licenses",
+                    "help": "<p> Download GitHub repo license files for installer entries",
+                    "source": {
+                      "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
+                      "module": "machineconfig.jobs.installer.checks.security_cli",
+                      "callable": "repo_licenses"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def repo_licenses(",
+                        "    github_token: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(",
+                        "            \"--github-token\",",
+                        "            help=\"GitHub token. Prefer MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN to avoid shell history.\",",
+                        "            hide_input=True,",
+                        "            envvar=[\"MACHINECONFIG_GITHUB_TOKEN\", \"GITHUB_TOKEN\", \"GH_TOKEN\"],",
+                        "        ),",
+                        "    ] = None,",
+                        ") -> None:",
+                        "    from machineconfig.scripts.python.helpers.helpers_repos import download_repo_licenses",
+                        "",
+                        "    try:",
+                        "        download_repo_licenses.run_download(github_token=github_token)",
+                        "    except RuntimeError as err:",
+                        "        raise typer.BadParameter(str(err), param_hint=\"--github-token\") from err"
+                      ],
+                      "name": "repo_licenses",
+                      "parameters": [
+                        {
+                          "name": "github_token",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--github-token', help='GitHub token. Prefer MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN to avoid shell history.', hide_input=True, envvar=['MACHINECONFIG_GITHUB_TOKEN', 'GITHUB_TOKEN', 'GH_TOKEN'])]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--github-token"
+                            ],
+                            "long_flags": [
+                              "--github-token"
+                            ],
+                            "short_flags": [],
+                            "help": "GitHub token. Prefer MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN to avoid shell history."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "p",
+                        "hidden": true,
+                        "help": "<p> Download GitHub repo license files for installer entries"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
                     "name": "report",
                     "help": "<r> Show saved scan results, CSV rows, or summary stats",
                     "source": {
@@ -5956,6 +5855,63 @@
                 "aliases": [
                   {
                     "name": "r",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "docs",
+                "help": "📚 <o> Serve local docs with preview URLs.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "docs"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def docs(",
+                    "    rebuild: Annotated[bool, typer.Option(\"--rebuild\", \"-b\", help=\"Rebuild docs before starting the preview server.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"📚 <o> Serve local docs with preview URLs.\"\"\"",
+                    "    from machineconfig.scripts.python.helpers.helpers_devops import cli_self_docs",
+                    "",
+                    "    cli_self_docs.serve_docs(rebuild=rebuild)"
+                  ],
+                  "name": "docs",
+                  "parameters": [
+                    {
+                      "name": "rebuild",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--rebuild', '-b', help='Rebuild docs before starting the preview server.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--rebuild",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--rebuild"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Rebuild docs before starting the preview server."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "📚 <o> Serve local docs with preview URLs.",
+                "aliases": [
+                  {
+                    "name": "o",
                     "hidden": true
                   }
                 ]
@@ -7072,8 +7028,7 @@
                     "def upload_file(file_path: Annotated[Path, typer.Argument(..., exists=True, dir_okay=False, readable=True)]) -> None:",
                     "    \"\"\"Upload a file to temp.sh (unsecure) and print the resulting URL. Use '-' as the file path to read from stdin.\"\"\"",
                     "    try:",
-                    "        with file_path.open(\"rb\") as file_handle:",
-                    "            url = _upload_file_handle(file_name=file_path.name, file_handle=file_handle, content_type=None)",
+                    "        url = _upload_file_handle(file_name=file_path.name, file_handle=file_path.read_bytes(), content_type=None)",
                     "    except requests.RequestException as exc:",
                     "        typer.echo(f\"Upload failed: {exc}\")",
                     "        raise typer.Exit(1)",
@@ -11114,8 +11069,12 @@
                 "signature": {
                   "raw_lines": [
                     "def agents_create(",
-                    "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent type.\")],",
+                    "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent type.\")] = \"codex\",",
                     "    model: Annotated[str | None, typer.Option(..., \"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
+                    "    reasoning_effort: Annotated[",
+                    "        ReasoningEffort | None,",
+                    "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                    "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Provider to use (if agent support many)\")] = None,",
                     "    host: Annotated[HOST, typer.Option(..., \"--host\", \"-h\", help=f\"Machine to run agents on. One of {', '.join(get_args(HOST))}\")] = \"local\",",
                     "    context: Annotated[",
@@ -11139,6 +11098,7 @@
                     "            ..., \"--agents-dir\", \"-d\", help=\"Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.\"",
                     "        ),",
                     "    ] = None,",
+                    "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\")] = False,",
                     ") -> None:",
                     "    \"\"\"Create agents layout file, ready to run.\"\"\"",
                     "    from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl",
@@ -11148,6 +11108,7 @@
                     "            agent=agent,",
                     "            host=host,",
                     "            model=model,",
+                    "            reasoning_effort=reasoning_effort,",
                     "            provider=provider,",
                     "            context=context,",
                     "            context_path=context_path,",
@@ -11159,6 +11120,7 @@
                     "            join_prompt_and_context=join_prompt_and_context,",
                     "            output_path=output_path,",
                     "            agents_dir=agents_dir,",
+                    "            interactive=interactive,",
                     "        )",
                     "    except ValueError as e:",
                     "        raise typer.BadParameter(str(e)) from e",
@@ -11172,8 +11134,8 @@
                       "name": "agent",
                       "kind": "positional_or_keyword",
                       "type": "AGENTS",
-                      "default": null,
-                      "required": true,
+                      "default": "codex",
+                      "required": false,
                       "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent type.')]",
                       "typer": {
                         "kind": "option",
@@ -11211,6 +11173,29 @@
                           "-m"
                         ],
                         "help": "Model to use, agent will use its default otherwise.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "reasoning_effort",
+                      "kind": "positional_or_keyword",
+                      "type": "ReasoningEffort | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--reasoning-effort",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--reasoning-effort"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Reasoning effort for codex agents. When omitted, codex uses its default.",
                         "default": "..."
                       }
                     },
@@ -11488,6 +11473,29 @@
                         "help": "Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>.",
                         "default": "..."
                       }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--interactive', '-i', help='Whether to run in interactive mode, asking for missing parameters.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Whether to run in interactive mode, asking for missing parameters.",
+                        "default": "..."
+                      }
                     }
                   ],
                   "return": "None"
@@ -11539,6 +11547,7 @@
                     "        impl(",
                     "            prompt=full_prompt,",
                     "            agent=agent,",
+                    "            reasoning_effort=None,",
                     "            context=\"\",",
                     "            context_path=None,",
                     "            prompts_yaml_path=None,",
@@ -12343,6 +12352,10 @@
                 "def run_prompt(",
                 "    prompt: Annotated[str | None, typer.Argument(help=\"Prompt text (optional positional argument). If omitted, an empty prompt is used.\")] = None,",
                 "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = \"copilot\",",
+                "    reasoning_effort: Annotated[",
+                "        ReasoningEffort | None,",
+                "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                "    ] = None,",
                 "    context: Annotated[str | None, typer.Option(..., \"--context\", \"-c\", help=\"Context string. Mutually exclusive with --context-path.\")] = None,",
                 "    context_path: Annotated[",
                 "        str | None, typer.Option(..., \"--context-path\", \"-C\", help=\"Path to a context file. Mutually exclusive with --context.\")",
@@ -12395,6 +12408,7 @@
                 "        impl(",
                 "            prompt=prompt,",
                 "            agent=agent,",
+                "            reasoning_effort=reasoning_effort,",
                 "            context=context,",
                 "            context_path=context_path,",
                 "            prompts_yaml_path=context_yaml_path,",
@@ -12443,6 +12457,29 @@
                       "-a"
                     ],
                     "help": "Agent to launch.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "reasoning_effort",
+                  "kind": "positional_or_keyword",
+                  "type": "ReasoningEffort | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--reasoning-effort",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--reasoning-effort"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Reasoning effort for codex agents. When omitted, codex uses its default.",
                     "default": "..."
                   }
                 },
@@ -12634,7 +12671,7 @@
             "signature": {
               "raw_lines": [
                 "def ask(",
-                "    reasoning: Annotated[ReasoningShortcut, typer.Argument(help=\"n=none, l=low, h=high, x=xhigh\")],",
+                "    reasoning: Annotated[ReasoningShortcut, typer.Argument(help=reasoning_help(agent=\"codex\"))],",
                 "    prompt: Annotated[",
                 "        list[str],",
                 "        typer.Argument(help=\"Prompt text to pass to codex, or a prompt file path when --file-prompt is set\"),",
@@ -12645,7 +12682,7 @@
                 "    ] = False,",
                 ") -> None:",
                 "    \"\"\"Ask codex directly via codex exec.\"\"\"",
-                "    reasoning_effort = _resolve_reasoning(shortcut=reasoning)",
+                "    reasoning_effort = resolve_reasoning(shortcut=reasoning, agent=\"codex\")",
                 "    if file_prompt:",
                 "        prompt_path = _resolve_prompt_path(prompt_parts=prompt)",
                 "        return_code = run_command_with_prompt_file(",
@@ -12668,13 +12705,12 @@
                   "type": "ReasoningShortcut",
                   "default": null,
                   "required": true,
-                  "annotation_raw": "Annotated[ReasoningShortcut, typer.Argument(help='n=none, l=low, h=high, x=xhigh')]",
+                  "annotation_raw": "Annotated[ReasoningShortcut, typer.Argument(help=reasoning_help(agent='codex'))]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
-                    "short_flags": [],
-                    "help": "n=none, l=low, h=high, x=xhigh"
+                    "short_flags": []
                   }
                 },
                 {
@@ -13572,7 +13608,7 @@
           {
             "kind": "command",
             "name": "pdf-merge",
-            "help": "◫ <m> Merge two PDF files into one.",
+            "help": "◫ <p> Merge two PDF files into one.",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
               "module": "machineconfig.scripts.python.utils",
@@ -13660,7 +13696,7 @@
             "doc": "◫ Merge two PDF files into one.",
             "aliases": [
               {
-                "name": "m",
+                "name": "p",
                 "hidden": true
               },
               {
