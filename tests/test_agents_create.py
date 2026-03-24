@@ -136,6 +136,9 @@ def test_interactive_main_collects_values_and_delegates() -> None:
         prompt="inspect the repo",
         prompt_path=None,
         job_name="abc",
+        join_prompt_and_context=True,
+        output_path="/tmp/layout.json",
+        agents_dir="/tmp/agents",
     )
 
     with (
@@ -162,6 +165,9 @@ def test_interactive_main_collects_values_and_delegates() -> None:
 
     collect_inputs.assert_called_once_with(
         agent="copilot",
+        join_prompt_and_context=True,
+        output_path="/tmp/layout.json",
+        agents_dir="/tmp/agents",
         host="local",
         model=None,
         reasoning_effort=None,
@@ -186,8 +192,58 @@ def test_interactive_main_collects_values_and_delegates() -> None:
         prompt="inspect the repo",
         prompt_path=None,
         job_name="abc",
-        join_prompt_and_context=False,
-        output_path=None,
-        agents_dir=None,
+        join_prompt_and_context=True,
+        output_path="/tmp/layout.json",
+        agents_dir="/tmp/agents",
         interactive=False,
+    )
+
+
+def test_collect_reviewed_create_options_updates_only_selected_values() -> None:
+    with (
+        patch.object(
+            agent_impl_interactive,
+            "choose_from_options",
+            return_value=[
+                "output_path = <leave empty>",
+                "provider = <leave empty>",
+            ],
+        ) as choose_from_options,
+        patch.object(
+            agent_impl_interactive,
+            "_prompt_optional_text_value",
+            return_value="/tmp/layout.json",
+        ) as prompt_optional_text_value,
+        patch.object(
+            agent_impl_interactive,
+            "_choose_optional_option",
+            return_value="openai",
+        ) as choose_optional_option,
+    ):
+        reviewed = agent_impl_interactive._collect_reviewed_create_options(  # pyright: ignore[reportPrivateUsage]
+            agent="codex",
+            join_prompt_and_context=False,
+            output_path=None,
+            agents_dir=None,
+            host="local",
+            reasoning_effort=None,
+            provider=None,
+        )
+
+    assert reviewed == agent_impl_interactive.InteractiveCreateReviewOptions(
+        join_prompt_and_context=False,
+        output_path="/tmp/layout.json",
+        agents_dir=None,
+        host="local",
+        reasoning_effort=None,
+        provider="openai",
+    )
+    assert choose_from_options.call_args.kwargs["multi"] is True
+    assert choose_from_options.call_args.kwargs["header"] == "Create Options"
+    prompt_optional_text_value.assert_called_once_with(label="output path", current=None)
+    choose_optional_option.assert_called_once_with(
+        options=("openai",),
+        current=None,
+        msg="Choose provider",
+        header="Provider",
     )
