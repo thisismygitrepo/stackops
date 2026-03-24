@@ -10,7 +10,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities 
 
 
 def agents_create(
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")],
+    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")] = "codex",
     model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
     reasoning_effort: Annotated[
         ReasoningEffort | None,
@@ -39,6 +39,7 @@ def agents_create(
             ..., "--agents-dir", "-d", help="Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>."
         ),
     ] = None,
+    interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")] = False,
 ) -> None:
     """Create agents layout file, ready to run."""
     from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
@@ -60,6 +61,7 @@ def agents_create(
             join_prompt_and_context=join_prompt_and_context,
             output_path=output_path,
             agents_dir=agents_dir,
+            interactive=interactive,
         )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e

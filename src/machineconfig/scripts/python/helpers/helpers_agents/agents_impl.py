@@ -42,22 +42,48 @@ def resolve_agents_output_dir(*, repo_root: Path, agents_dir: str | None, job_na
 
 def agents_create(
     agent: AGENTS,
-    host: HOST,
     model: str | None,
-    reasoning_effort: ReasoningEffort | None,
-    provider: PROVIDER | None,
+    agent_load: int,
+
     context: str | None,
     context_path: str | None,
     separator: str,
-    agent_load: int,
+
     prompt: str | None,
     prompt_path: str | None,
+
     job_name: str | None,
+
     join_prompt_and_context: bool,
     output_path: str | None,
     agents_dir: str | None,
+    host: HOST,
+    reasoning_effort: ReasoningEffort | None,
+    provider: PROVIDER | None,
+
+    interactive: bool,
 ) -> None:
     """Create agents layout file, ready to run."""
+    if interactive:
+        from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive import main
+        main(
+            agent=agent,
+            host=host,
+            model=model,
+            reasoning_effort=reasoning_effort,
+            provider=provider,
+            agent_load=agent_load,
+            context=context,
+            context_path=context_path,
+            separator=separator,
+            prompt=prompt,
+            prompt_path=prompt_path,
+            job_name=job_name,
+            join_prompt_and_context=join_prompt_and_context,
+            output_path=output_path,
+            agents_dir=agents_dir,
+        )
+        return
     from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_help_launch import prep_agent_launch, get_agents_launch_layout
     from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_load_balancer import chunk_prompts
     from machineconfig.utils.accessories import get_repo_root
