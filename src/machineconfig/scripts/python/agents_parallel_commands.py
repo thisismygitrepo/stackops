@@ -24,7 +24,7 @@ def agents_create(
     context_path: Annotated[
         str | None, typer.Option(..., "--context-path", "-C", help="Path to the context file/folder, defaults to .ai/todo/")
     ] = None,
-    separator: Annotated[str, typer.Option(..., "--separator", "-s", help="Separator for context")] = DEFAULT_SEAPRATOR,
+    separator: Annotated[str, typer.Option(..., "--separator", "-s", help="Separator for context. Supports escaped values like '\\n'.")] = DEFAULT_SEAPRATOR,
     agent_load: Annotated[int, typer.Option(..., "--agent-load", "-l", help="Number of tasks per prompt")] = 3,
     prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
     prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
@@ -45,6 +45,7 @@ def agents_create(
     from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
 
     try:
+        normalized_separator = _decode_separator(separator=separator)
         impl(
             agent=agent,
             host=host,
@@ -53,7 +54,7 @@ def agents_create(
             provider=provider,
             context=context,
             context_path=context_path,
-            separator=separator,
+            separator=normalized_separator,
             agent_load=agent_load,
             prompt=prompt,
             prompt_path=prompt_path,

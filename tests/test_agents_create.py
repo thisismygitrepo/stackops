@@ -1,3 +1,4 @@
+import json
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
@@ -72,6 +73,26 @@ def test_parallel_create_passes_reasoning_effort_to_impl() -> None:
         agents_dir=None,
         interactive=False,
     )
+
+
+def test_parallel_create_decodes_separator_escape_sequences() -> None:
+    with patch("machineconfig.scripts.python.helpers.helpers_agents.agents_impl.agents_create") as impl:
+        result = runner.invoke(
+            agents.get_app(),
+            [
+                "parallel",
+                "create",
+                "--prompt",
+                "inspect the repo",
+                "--context",
+                "task one",
+                "--separator",
+                r"\n---\n",
+            ],
+        )
+
+    assert result.exit_code == 0
+    assert impl.call_args.kwargs["separator"] == "\n---\n"
 
 
 def test_agents_impl_rejects_reasoning_effort_for_non_codex() -> None:
@@ -286,3 +307,124 @@ def test_collect_reviewed_create_options_updates_only_selected_values() -> None:
         msg="Choose provider",
         header="Provider",
     )
+
+
+def test_agents_impl_persists_recreate_artifacts(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    agents_dir = repo_root / ".ai" / "agents" / "persisted"
+    output_path = repo_root / "layout-out.json"
+
+    with patch("machineconfig.utils.accessories.get_repo_root", return_value=repo_root):
+        agents_impl.agents_create(
+            agent="copilot",
+            host="local",
+            model=None,
+            reasoning_effort=None,
+            provider=None,
+            context="task one\n---\ntask two",
+            context_path=None,
+            separator="\n---\n",
+            agent_load=1,
+            prompt="inspect the repo",
+            prompt_path=None,
+            job_name="persisted",
+            join_prompt_and_context=False,
+            output_path=str(output_path),
+            agents_dir=str(agents_dir),
+            interactive=False,
+        )
+
+    artifacts_dir = agents_dir / ".create"
+    manifest_path = artifacts_dir / "manifest.json"
+    prompt_snapshot_path = artifacts_dir / "prompt.md"
+    context_snapshot_path = artifacts_dir / "context.md"
+    recreate_script_path = artifacts_dir / "recreate_layout.sh"
+
+    assert output_path.exists()
+    assert prompt_snapshot_path.read_text(encoding="utf-8") == "inspect the repo"
+    assert context_snapshot_path.read_text(encoding="utf-8") == "task one\n---\ntask two"
+    assert recreate_script_path.exists()
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["job_name"] == "persisted"
+    assert manifest["prompt"]["source_kind"] == "inline_text"
+    assert manifest["context"]["source_kind"] == "inline_text"
+    assert manifest["prompt"]["snapshot_path"] == str(prompt_snapshot_path)
+    assert manifest["context"]["snapshot_path"] == str(context_snapshot_path)
+    assert manifest["separator_cli_value"] == r"\n---\n"
+    assert manifest["recreate_command_args"] == [
+        "uv",
+        "run",
+        "agents",
+        "parallel",
+        "create",
+        "--agent",
+        "copilot",
+        "--host",
+        "local",
+        "--context-path",
+        str(context_snapshot_path),
+        "--separator",
+        r"\n---\n",
+        "--agent-load",
+        "1",
+        "--prompt-path",
+        str(prompt_snapshot_path),
+        "--job-name",
+        "persisted",
+        "--output-path",
+        str(output_path.resolve()),
+        "--agents-dir",
+        str(agents_dir),
+    ]
+
+
+def test_agents_impl_can_recreate_from_snapshots_inside_agents_dir(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    agents_dir = repo_root / ".ai" / "agents" / "persisted"
+    output_path = repo_root / "layout-out.json"
+
+    with patch("machineconfig.utils.accessories.get_repo_root", return_value=repo_root):
+        agents_impl.agents_create(
+            agent="copilot",
+            host="local",
+            model=None,
+            reasoning_effort=None,
+            provider=None,
+            context="task one",
+            context_path=None,
+            separator=DEFAULT_SEAPRATOR,
+            agent_load=1,
+            prompt="inspect the repo",
+            prompt_path=None,
+            job_name="persisted",
+            join_prompt_and_context=False,
+            output_path=str(output_path),
+            agents_dir=str(agents_dir),
+            interactive=False,
+        )
+
+        agents_impl.agents_create(
+            agent="copilot",
+            host="local",
+            model=None,
+            reasoning_effort=None,
+            provider=None,
+            context=None,
+            context_path=str(agents_dir / ".create" / "context.md"),
+            separator=DEFAULT_SEAPRATOR,
+            agent_load=1,
+            prompt=None,
+            prompt_path=str(agents_dir / ".create" / "prompt.md"),
+            job_name="persisted",
+            join_prompt_and_context=False,
+            output_path=str(output_path),
+            agents_dir=str(agents_dir),
+            interactive=False,
+        )
+
+    assert output_path.exists()
+    assert (agents_dir / ".create" / "prompt.md").exists()
+    assert (agents_dir / ".create" / "context.md").exists()
