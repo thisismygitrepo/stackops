@@ -247,6 +247,23 @@ def summarize(
     console.print(table)
 
 
+def trace(
+    session_name: Annotated[str, typer.Argument(..., help="Name of the tmux session to trace")],
+    every: Annotated[float, typer.Option("--every", "-e", help="Polling interval in seconds between tmux checks")] = 10.0,
+    until: Annotated[Literal["idle-shell", "all-exited", "exit-code", "session-missing"], typer.Option("--until", "-u", help="Stop only when the selected criterion is satisfied")] = "idle-shell",
+    exit_code: Annotated[int | None, typer.Option("--exit-code", help="Required pane exit code when `--until exit-code` is selected")] = None,
+) -> None:
+    """Trace a tmux session until every target matches a strict stop criterion."""
+    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_trace import trace_session as impl
+
+    impl(
+        session_name=session_name,
+        until=until,
+        every_seconds=every,
+        exit_code=exit_code,
+    )
+
+
 def run_aoe(
     ctx: typer.Context,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
@@ -316,6 +333,9 @@ def get_app() -> typer.Typer:
 
     layouts_app.command("kill", no_args_is_help=False, help=kill_session_target.__doc__, short_help="<k> Kill a session target")(kill_session_target)
     layouts_app.command("k", no_args_is_help=False, help=kill_session_target.__doc__, hidden=True)(kill_session_target)
+
+    layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="<x> Trace a tmux session until it settles")(trace)
+    layouts_app.command("x", no_args_is_help=True, help=trace.__doc__, hidden=True)(trace)
 
     layouts_app.command("create-from-function", no_args_is_help=True, short_help="<c> Create a layout from a function")(create_from_function)
     layouts_app.command("c", no_args_is_help=True, hidden=True)(create_from_function)

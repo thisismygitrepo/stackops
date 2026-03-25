@@ -6,9 +6,9 @@
 REPO_ROOT="$HOME/code/machineconfig"
 
 JOB_NAME="agentsTrial"
-CONTEXT_PATH="$REPO_ROOT/.ai/agents/files.md"
-PROMPT_PATH="$REPO_ROOT/.ai/agents/prompt.txt"
-AGENTS_DIR="$REPO_ROOT/.ai/agents/$JOB_NAME"
+CONTEXT_PATH="$REPO_ROOT/.ai/agents/template/files.md"
+PROMPT_PATH="$REPO_ROOT/.ai/agents/template/prompt.txt"
+AGENTS_DIR="$REPO_ROOT/.ai/agents/template/$JOB_NAME"
 rm -rfd "$AGENTS_DIR" || true
 
 agents parallel create \

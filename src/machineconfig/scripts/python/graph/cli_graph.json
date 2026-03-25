@@ -2837,15 +2837,15 @@
               },
               {
                 "kind": "group",
-                "name": "shell",
-                "help": "🐚 <S> Configure your shell profile.",
+                "name": "terminal",
+                "help": "🐚 <t> Configure your terminal profile.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
-                  "dispatches_to": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell.get_app"
+                  "dispatches_to": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_terminal.get_app"
                 },
                 "app": {
-                  "help": "🐚 <S> Configure your shell profile.",
+                  "help": "🐚 <t> Configure your terminal profile.",
                   "no_args_is_help": false,
                   "add_help_option": true,
                   "add_completion": false
@@ -2856,8 +2856,8 @@
                     "name": "config-shell",
                     "help": "🐚 <s> Create or configure a shell profile.",
                     "source": {
-                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
-                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_terminal",
                       "callable": "configure_shell_profile"
                     },
                     "signature": {
@@ -2923,8 +2923,8 @@
                     "name": "starship-theme",
                     "help": "⭐ <t> Select starship prompt theme.",
                     "source": {
-                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
-                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_terminal",
                       "callable": "starship_theme"
                     },
                     "signature": {
@@ -2966,8 +2966,8 @@
                     "name": "pwsh-theme",
                     "help": "⚡ <T> Select powershell prompt theme.",
                     "source": {
-                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
-                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_terminal",
                       "callable": "pwsh_theme"
                     },
                     "signature": {
@@ -3000,8 +3000,8 @@
                     "name": "wezterm-theme",
                     "help": "💻 <W> Select WezTerm terminal theme.",
                     "source": {
-                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
-                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_terminal",
                       "callable": "configure_wezterm_theme"
                     },
                     "signature": {
@@ -3033,8 +3033,8 @@
                     "name": "ghostty-theme",
                     "help": "👻 <g> Select Ghostty terminal theme.",
                     "source": {
-                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
-                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_terminal",
                       "callable": "configure_ghostty_theme"
                     },
                     "signature": {
@@ -3079,8 +3079,8 @@
                     "name": "windows-terminal-theme",
                     "help": "🪟 <x> Select Windows Terminal color scheme.",
                     "source": {
-                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_shell.py",
-                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_shell",
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_terminal",
                       "callable": "configure_windows_terminal_theme"
                     },
                     "signature": {
@@ -3121,8 +3121,9 @@
                 ],
                 "aliases": [
                   {
-                    "name": "S",
-                    "hidden": true
+                    "name": "t",
+                    "hidden": true,
+                    "help": "🐚 <t> Configure your terminal profile."
                   }
                 ]
               },
@@ -10614,6 +10615,130 @@
           },
           {
             "kind": "command",
+            "name": "trace",
+            "help": "Trace a tmux session until every target matches a strict stop criterion.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/sessions.py",
+              "module": "machineconfig.scripts.python.sessions",
+              "callable": "trace"
+            },
+            "signature": {
+              "raw_lines": [
+                "def trace(",
+                "    session_name: Annotated[str, typer.Argument(..., help=\"Name of the tmux session to trace\")],",
+                "    every: Annotated[float, typer.Option(\"--every\", \"-e\", help=\"Polling interval in seconds between tmux checks\")] = 10.0,",
+                "    until: Annotated[Literal[\"idle-shell\", \"all-exited\", \"exit-code\", \"session-missing\"], typer.Option(\"--until\", \"-u\", help=\"Stop only when the selected criterion is satisfied\")] = \"idle-shell\",",
+                "    exit_code: Annotated[int | None, typer.Option(\"--exit-code\", help=\"Required pane exit code when `--until exit-code` is selected\")] = None,",
+                ") -> None:",
+                "    \"\"\"Trace a tmux session until every target matches a strict stop criterion.\"\"\"",
+                "    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_trace import trace_session as impl",
+                "",
+                "    impl(",
+                "        session_name=session_name,",
+                "        until=until,",
+                "        every_seconds=every,",
+                "        exit_code=exit_code,",
+                "    )"
+              ],
+              "name": "trace",
+              "parameters": [
+                {
+                  "name": "session_name",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "Annotated[str, typer.Argument(..., help='Name of the tmux session to trace')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Name of the tmux session to trace",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "every",
+                  "kind": "positional_or_keyword",
+                  "type": "float",
+                  "default": 10.0,
+                  "required": false,
+                  "annotation_raw": "Annotated[float, typer.Option('--every', '-e', help='Polling interval in seconds between tmux checks')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--every",
+                      "-e"
+                    ],
+                    "long_flags": [
+                      "--every"
+                    ],
+                    "short_flags": [
+                      "-e"
+                    ],
+                    "help": "Polling interval in seconds between tmux checks"
+                  }
+                },
+                {
+                  "name": "until",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['idle-shell', 'all-exited', 'exit-code', 'session-missing']",
+                  "default": "idle-shell",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['idle-shell', 'all-exited', 'exit-code', 'session-missing'], typer.Option('--until', '-u', help='Stop only when the selected criterion is satisfied')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--until",
+                      "-u"
+                    ],
+                    "long_flags": [
+                      "--until"
+                    ],
+                    "short_flags": [
+                      "-u"
+                    ],
+                    "help": "Stop only when the selected criterion is satisfied"
+                  }
+                },
+                {
+                  "name": "exit_code",
+                  "kind": "positional_or_keyword",
+                  "type": "int | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[int | None, typer.Option('--exit-code', help='Required pane exit code when `--until exit-code` is selected')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--exit-code"
+                    ],
+                    "long_flags": [
+                      "--exit-code"
+                    ],
+                    "short_flags": [],
+                    "help": "Required pane exit code when `--until exit-code` is selected"
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<x> Trace a tmux session until it settles",
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "Trace a tmux session until every target matches a strict stop criterion.",
+            "aliases": [
+              {
+                "name": "x",
+                "hidden": true,
+                "help": "Trace a tmux session until every target matches a strict stop criterion."
+              }
+            ]
+          },
+          {
+            "kind": "command",
             "name": "create-from-function",
             "help": "Create a layout from a function to run in multiple processes.",
             "source": {
@@ -10929,14 +11054,14 @@
               ],
               "return": "None"
             },
-            "short_help": "<t> Create a layout template file",
+            "short_help": "<p> Create a layout template file",
             "typer": {
               "no_args_is_help": false
             },
             "doc": "Create a layout template file.",
             "aliases": [
               {
-                "name": "t",
+                "name": "p",
                 "hidden": true,
                 "help": "Create a layout template file."
               }
@@ -11869,14 +11994,14 @@
                   "parameters": [],
                   "return": "None"
                 },
-                "short_help": "<t> Create a template for fire agents",
+                "short_help": "<p> Create a template for fire agents",
                 "typer": {
                   "no_args_is_help": false
                 },
                 "doc": "Create a template for fire agents.",
                 "aliases": [
                   {
-                    "name": "t",
+                    "name": "p",
                     "hidden": true,
                     "help": "make_agents_command_template.__doc__"
                   }

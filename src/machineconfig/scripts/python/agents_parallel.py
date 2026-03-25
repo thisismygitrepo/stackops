@@ -48,7 +48,7 @@ AGENT options: {", ".join(get_args(AGENTS))}
         "make-template",
         no_args_is_help=False,
         help=make_agents_command_template.__doc__,
-        short_help="<t> Create a template for fire agents",
+        short_help="<p> Create a template for fire agents",
     )(make_agents_command_template)
-    parallel_app.command("t", no_args_is_help=False, help=make_agents_command_template.__doc__, hidden=True)(make_agents_command_template)
+    parallel_app.command("p", no_args_is_help=False, help=make_agents_command_template.__doc__, hidden=True)(make_agents_command_template)
     return parallel_app

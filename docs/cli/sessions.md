@@ -1,6 +1,6 @@
 # sessions
 
-Terminal session and layout management for Zellij/Windows Terminal.
+Terminal session and layout management for tmux, Zellij, and Windows Terminal.
 
 ---
 
@@ -16,11 +16,15 @@ sessions [OPTIONS] COMMAND [ARGS]...
 
 | Command | Shortcut | Description |
 |---------|----------|-------------|
-| `run` | `r` | Launch sessions from layout file |
-| `run-aoe` | - | Launch layout tabs as AoE sessions |
-| `create-template` | `t` | Create a layout template file |
-| `create-from-function` | `c` | Create layout from function |
+| `run` | `r` | Launch sessions from a layout file |
+| `run-aoe` | `e` | Launch layout tabs as AoE sessions |
+| `attach` | `a` | Attach to a session target |
+| `kill` | `k` | Kill a session target |
+| `trace` | `x` | Trace a tmux session until a strict criterion is met |
+| `create-from-function` | `c` | Create a layout from a function |
 | `balance-load` | `b` | Balance load across sessions |
+| `create-template` | `p` | Create a layout template file |
+| `summarize` | `s` | Summarize a layout file |
 
 ---
 
@@ -112,6 +116,37 @@ sessions run-aoe --layouts-file layout.json --tab-command-mode cmd
 
 # Preview the generated aoe commands
 sessions run-aoe --layouts-file layout.json --model gpt-5-codex --dry-run
+```
+
+---
+
+## trace
+
+Trace a tmux session until every observed pane satisfies a strict stop criterion.
+
+```bash
+sessions trace SESSION_NAME [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--every` | `-e` | Polling interval in seconds between tmux checks |
+| `--until` | `-u` | Stop criterion: `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
+| `--exit-code` | - | Required exit code when `--until exit-code` is selected |
+
+**Examples:**
+
+```bash
+# Wait until every pane returns to an idle shell
+sessions trace build-session
+
+# Check every 5 seconds until every pane has exited
+sessions trace build-session --every 5 --until all-exited
+
+# Require every pane to exit successfully
+sessions trace build-session --until exit-code --exit-code 0
 ```
 
 ---

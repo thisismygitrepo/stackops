@@ -251,8 +251,7 @@ def make_agents_command_template() -> None:
     if repo_root is None:
         raise RuntimeError("💥 Could not determine the repository root. Please run this script from within a git repository.")
 
-    save_path_root = repo_root / ".ai" / "agents"
-
+    save_path_root = repo_root / ".ai" / "agents" / "template"
     save_path_root.mkdir(parents=True, exist_ok=True)
     save_path_root.joinpath("template_fire_agents.sh").write_text(template_path.read_text(encoding="utf-8"), encoding="utf-8")
     print(f"Template bash script written to {save_path_root}")
