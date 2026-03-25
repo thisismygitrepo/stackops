@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -120,6 +121,44 @@ def test_interactive_context_directory_with_multiple_text_files_skips_separator_
     context_root.joinpath("b.txt").write_text("two", encoding="utf-8")
 
     assert agent_impl_interactive.separator_is_applicable_for_context_path(context_root) is False
+
+
+def test_prompt_separator_uses_editor_and_decodes_escape_sequences(tmp_path: Path) -> None:
+    scratch_path = tmp_path / "separator.txt"
+
+    def _fake_run(command: list[str], check: bool) -> subprocess.CompletedProcess[str]:
+        _ = check
+        scratch_path.write_text(r"\n---\n", encoding="utf-8")
+        return subprocess.CompletedProcess(args=command, returncode=0)
+
+    with (
+        patch.object(agent_impl_interactive, "_discover_editor_command", return_value=["fake-editor"]),
+        patch.object(agent_impl_interactive, "_editor_scratch_path", return_value=scratch_path),
+        patch.object(agent_impl_interactive.subprocess, "run", side_effect=_fake_run),
+    ):
+        separator = agent_impl_interactive._prompt_separator(current=DEFAULT_SEAPRATOR)  # pyright: ignore[reportPrivateUsage]
+
+    assert separator == "\n---\n"
+    assert scratch_path.exists() is False
+
+
+def test_prompt_separator_keeps_current_when_editor_result_is_blank(tmp_path: Path) -> None:
+    scratch_path = tmp_path / "separator.txt"
+
+    def _fake_run(command: list[str], check: bool) -> subprocess.CompletedProcess[str]:
+        _ = check
+        scratch_path.write_text("\n", encoding="utf-8")
+        return subprocess.CompletedProcess(args=command, returncode=0)
+
+    with (
+        patch.object(agent_impl_interactive, "_discover_editor_command", return_value=["fake-editor"]),
+        patch.object(agent_impl_interactive, "_editor_scratch_path", return_value=scratch_path),
+        patch.object(agent_impl_interactive.subprocess, "run", side_effect=_fake_run),
+    ):
+        separator = agent_impl_interactive._prompt_separator(current=DEFAULT_SEAPRATOR)  # pyright: ignore[reportPrivateUsage]
+
+    assert separator == DEFAULT_SEAPRATOR
+    assert scratch_path.exists() is False
 
 
 def test_interactive_main_collects_values_and_delegates() -> None:

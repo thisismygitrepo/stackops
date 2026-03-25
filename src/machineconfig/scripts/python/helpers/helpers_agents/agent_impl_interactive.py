@@ -151,6 +151,13 @@ def _discover_editor_command() -> list[str] | None:
     return None
 
 
+def _editor_scratch_path(*, label: str, suffix: str) -> Path:
+    repo_root = get_repo_root(Path.cwd())
+    base_dir = Path("/tmp/machineconfig_agent_impl_interactive") if repo_root is None else repo_root / ".ai" / "tmp_scripts" / "agent_impl_interactive"
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir / f"{label.replace(' ', '_')}_{randstr(length=6, lower=True, upper=False, digits=False, punctuation=False)}{suffix}"
+
+
 def _edit_text(*, label: str, current: str | None) -> str | None:
     editor_command = _discover_editor_command()
     if editor_command is None:
@@ -165,10 +172,7 @@ def _edit_text(*, label: str, current: str | None) -> str | None:
         if value != "":
             return value
         return current
-    repo_root = get_repo_root(Path.cwd())
-    base_dir = Path("/tmp/machineconfig_agent_impl_interactive") if repo_root is None else repo_root / ".ai" / "tmp_scripts" / "agent_impl_interactive"
-    base_dir.mkdir(parents=True, exist_ok=True)
-    temp_path = base_dir / f"{label.replace(' ', '_')}_{randstr(length=6, lower=True, upper=False, digits=False, punctuation=False)}.md"
+    temp_path = _editor_scratch_path(label=label, suffix=".md")
     temp_path.write_text("" if current is None else current, encoding="utf-8")
     try:
         subprocess.run([*editor_command, str(temp_path)], check=False)
@@ -215,12 +219,28 @@ def _decode_separator(raw_separator: str) -> str:
         return raw_separator
 
 
+def _strip_editor_trailing_newline(value: str) -> str:
+    return value.removesuffix("\n").removesuffix("\r")
+
+
 def _prompt_separator(*, current: str) -> str:
     displayed = current.encode("unicode_escape").decode("ascii")
-    raw = input(f"separator [{displayed}] (escape sequences like \\\\n are supported): ").strip()
-    if raw == "":
-        return current
-    return _decode_separator(raw)
+    editor_command = _discover_editor_command()
+    if editor_command is None:
+        raw = input(f"separator [{displayed}] (escape sequences like \\\\n are supported): ")
+        if raw == "":
+            return current
+        return _decode_separator(raw)
+    temp_path = _editor_scratch_path(label="separator", suffix=".txt")
+    temp_path.write_text(displayed, encoding="utf-8")
+    try:
+        subprocess.run([*editor_command, str(temp_path)], check=False)
+        raw = _strip_editor_trailing_newline(temp_path.read_text(encoding="utf-8"))
+        if raw == "":
+            return current
+        return _decode_separator(raw)
+    finally:
+        temp_path.unlink(missing_ok=True)
 
 
 def _provider_options_for_agent(agent: AGENTS) -> tuple[PROVIDER, ...]:
