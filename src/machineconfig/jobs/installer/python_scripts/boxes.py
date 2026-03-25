@@ -11,6 +11,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 installer_data_modified: InstallerData = {
       "appName": "boxes",
+      "license": "GPL-3.0",
       "repoURL": "https://github.com/ascii-boxes/boxes",
       "doc": "📦 ASCI draws boxes around text.",
       "fileNamePattern": {

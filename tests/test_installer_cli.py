@@ -8,6 +8,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 def _make_installer_data(app_name: str, doc: str) -> InstallerData:
     return InstallerData(
         appName=app_name,
+        license="MIT License",
         doc=doc,
         repoURL=f"https://github.com/example/{app_name.lower()}",
         fileNamePattern={

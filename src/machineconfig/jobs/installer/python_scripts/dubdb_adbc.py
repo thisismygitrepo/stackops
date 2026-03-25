@@ -5,6 +5,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 installer_data: InstallerData = {
       "appName": "libduckdb.so",
+      "license": "MIT",
       "repoURL": "https://github.com/duckdb/duckdb",
       "doc": "🗃️ An in-process SQL OLAP database management system",
       "fileNamePattern": {

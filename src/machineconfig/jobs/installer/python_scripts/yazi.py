@@ -7,6 +7,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 installer_standard: InstallerData =    {
       "appName": "yazi",
+      "license": "MIT",
       "repoURL": "https://github.com/sxyazi/yazi",
       "doc": "⚡ Blazing Fast Terminal File Manager.",
       "fileNamePattern": {

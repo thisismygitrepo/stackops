@@ -18,6 +18,7 @@ LANGUAGES_SUPPORTED = ["python", "nu", "bash", "lua", "powershell",
     ]
 config_dict: InstallerData = {
     "appName": "hx",
+    "license": "MPL-2.0",
     "repoURL": "CMD",
     "doc": "Helix is a post-modern modal text editor.",
     "fileNamePattern": {

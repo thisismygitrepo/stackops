@@ -34,6 +34,10 @@
           "type": "string",
           "description": "Name of the application."
         },
+        "license": {
+          "type": "string",
+          "description": "SPDX license identifier or name."
+        },
         "repoURL": {
           "type": "string",
           "description": "URL of the repository."

@@ -8,6 +8,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 poppler_installer: InstallerData = {
     "appName": "poppler",
+    "license": "GPL-2.0-or-later",
     "repoURL": "https://github.com/oschwartz10612/poppler-windows",
     "doc": "PDF rendering library - Windows builds.",
     "fileNamePattern": {

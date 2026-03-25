@@ -21,6 +21,7 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 nerd_fonts: InstallerData = {
     "appName": "Cascadia Code Nerd Font",
+    "license": "MIT / SIL OFL 1.1",
     "repoURL": "https://github.com/ryanoasis/nerd-fonts",
     "doc": "Nerd Fonts is a project that patches developer targeted fonts with a high number of glyphs (icons)",
     "fileNamePattern": {
