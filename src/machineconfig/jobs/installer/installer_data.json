@@ -3,6 +3,7 @@
   "installers": [
     {
       "appName": "sysabc",
+      "license": "",
       "repoURL": "CMD",
       "doc": "ABC programs (package managers and other system essential tools)",
       "fileNamePattern": {
@@ -20,6 +21,7 @@
     },
     {
       "appName": "bun",
+      "license": "",
       "repoURL": "CMD",
       "doc": "js runtime and package manager, in one fast zig-based binary.",
       "fileNamePattern": {
@@ -37,6 +39,7 @@
     },
     {
       "appName": "rust",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Systems programming language",
       "fileNamePattern": {
@@ -54,6 +57,7 @@
     },
     {
       "appName": "scrcpy",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/Genymobile/scrcpy",
       "doc": "This application mirrors Android devices",
       "fileNamePattern": {
@@ -71,6 +75,7 @@
     },
     {
       "appName": "fx",
+      "license": "MIT License",
       "repoURL": "https://github.com/antonmedv/fx",
       "doc": "🧙‍♂️ Command-line JSON viewer",
       "fileNamePattern": {
@@ -88,6 +93,7 @@
     },
     {
       "appName": "git",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🧙‍♂️ Distributed version control system",
       "fileNamePattern": {
@@ -105,6 +111,7 @@
     },
     {
       "appName": "jq",
+      "license": "MIT License",
       "repoURL": "https://github.com/jqlang/jq",
       "doc": "🧙‍♂️ Command-line JSON processor",
       "fileNamePattern": {
@@ -122,6 +129,7 @@
     },
     {
       "appName": "yq",
+      "license": "MIT License",
       "repoURL": "https://github.com/mikefarah/yq",
       "doc": "🧙‍♂️ Command-line YAML, JSON, XML, CSV processor",
       "fileNamePattern": {
@@ -139,6 +147,7 @@
     },
     {
       "appName": "magick",
+      "license": "ImageMagick License",
       "repoURL": "https://github.com/ImageMagick/ImageMagick",
       "doc": "🧙‍♂️ Command-line image manipulation tool",
       "fileNamePattern": {
@@ -156,6 +165,7 @@
     },
     {
       "appName": "speedtest",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🚀 Test your internet connection speed and ping using speedtest.net from the CLI",
       "fileNamePattern": {
@@ -173,6 +183,7 @@
     },
     {
       "appName": "pistol",
+      "license": "MIT License",
       "repoURL": "https://github.com/doronbehar/pistol",
       "doc": "👁️ file previewer.",
       "fileNamePattern": {
@@ -190,6 +201,7 @@
     },
     {
       "appName": "diskonaut",
+      "license": "MIT License",
       "repoURL": "https://github.com/imsnif/diskonaut",
       "doc": "💾 like dua, diskonaut is a terminal disk space navigator.",
       "fileNamePattern": {
@@ -207,6 +219,7 @@
     },
     {
       "appName": "xplr",
+      "license": "MIT License",
       "repoURL": "https://github.com/sayanarijit/xplr",
       "doc": "📂 A terminal file explorer with vi keybindings",
       "fileNamePattern": {
@@ -224,6 +237,7 @@
     },
     {
       "appName": "btop",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/aristocratos/btop",
       "doc": "📊 btop is a resource monitor for Linux, FreeBSD and MacOS.",
       "fileNamePattern": {
@@ -241,6 +255,7 @@
     },
     {
       "appName": "gotty",
+      "license": "MIT License",
       "repoURL": "https://github.com/sorenisanerd/gotty",
       "doc": "🌐 gotty is a simple command line tool that turns your CLI tools into web applications.",
       "fileNamePattern": {
@@ -258,6 +273,7 @@
     },
     {
       "appName": "joshuto",
+      "license": "GNU Lesser General Public License v3.0",
       "repoURL": "https://github.com/kamiyaa/joshuto",
       "doc": "📂 A terminal file manager written in Rust.",
       "fileNamePattern": {
@@ -275,6 +291,7 @@
     },
     {
       "appName": "mprocs",
+      "license": "MIT License",
       "repoURL": "https://github.com/pvolok/mprocs",
       "doc": "🖥️ Windows/Linux/macOS poorman's zellij",
       "fileNamePattern": {
@@ -292,6 +309,7 @@
     },
     {
       "appName": "process-compose",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/F1bonacc1/process-compose",
       "doc": "Process Compose is a simple and flexible scheduler and orchestrator to manage non-containerized applications.",
       "fileNamePattern": {
@@ -309,6 +327,7 @@
     },
     {
       "appName": "zellij",
+      "license": "MIT License",
       "repoURL": "https://github.com/zellij-org/zellij",
       "doc": "🖥️ Zellij is a terminal workspace with support for multiple plugins, such as a terminal, status bar, tabs, splits, etc.",
       "fileNamePattern": {
@@ -326,6 +345,7 @@
     },
     {
       "appName": "tmux",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🖥️ Terminal multiplexer",
       "fileNamePattern": {
@@ -343,6 +363,7 @@
     },
     {
       "appName": "boxes",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📦 ASCI draws boxes around text.",
       "fileNamePattern": {
@@ -360,6 +381,7 @@
     },
     {
       "appName": "sharewifi",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📶 Share WiFi credentials via QR code",
       "fileNamePattern": {
@@ -377,6 +399,7 @@
     },
     {
       "appName": "croc",
+      "license": "MIT license",
       "repoURL": "https://github.com/schollz/croc",
       "doc": "🦎 Easily and securely send and share things from one computer to another",
       "fileNamePattern": {
@@ -394,6 +417,7 @@
     },
     {
       "appName": "wormhole-rs",
+      "license": "EUPL-1.2 license",
       "repoURL": "https://github.com/magic-wormhole/magic-wormhole.rs",
       "doc": "🐛 Get things from one computer to another, safely (Rust implementation)",
       "fileNamePattern": {
@@ -411,6 +435,7 @@
     },
     {
       "appName": "easy-sharing",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔗 Easy file sharing from command line",
       "fileNamePattern": {
@@ -428,6 +453,7 @@
     },
     {
       "appName": "ezshare",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔗 Easy file sharing tool",
       "fileNamePattern": {
@@ -445,6 +471,7 @@
     },
     {
       "appName": "asciinema",
+      "license": "GPL-3.0 license",
       "repoURL": "https://github.com/asciinema/asciinema",
       "doc": "🎥 Terminal session recorder",
       "fileNamePattern": {
@@ -462,6 +489,7 @@
     },
     {
       "appName": "lolcatjs",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🌈 Rainbow colored text output for terminal",
       "fileNamePattern": {
@@ -479,6 +507,7 @@
     },
     {
       "appName": "rusty-rain",
+      "license": "Apache-2.0 license",
       "repoURL": "https://github.com/cowboy8625/rusty-rain",
       "doc": "🌧️ cross-platform cmatrix-like terminal rain animation",
       "fileNamePattern": {
@@ -496,6 +525,7 @@
     },
     {
       "appName": "figlet-cli",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📝 ASCII art text generator for terminal",
       "fileNamePattern": {
@@ -513,6 +543,7 @@
     },
     {
       "appName": "cowsay",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📝 ASCII art text generator for terminal",
       "fileNamePattern": {
@@ -530,6 +561,7 @@
     },
     {
       "appName": "ugrep",
+      "license": "BSD-3-Clause",
       "repoURL": "https://github.com/Genivia/ugrep",
       "doc": "🔍 A fast, portable, feature-rich command-line search tool",
       "fileNamePattern": {
@@ -547,6 +579,7 @@
     },
     {
       "appName": "zoomit",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔍 A screen zoom and annotation tool for presentations",
       "fileNamePattern": {
@@ -564,6 +597,7 @@
     },
     {
       "appName": "ntop",
+      "license": "GPL-3.0",
       "repoURL": "https://github.com/gsass1/NTop",
       "doc": "📊 Like htop, for Windows",
       "fileNamePattern": {
@@ -581,6 +615,7 @@
     },
     {
       "appName": "devtunnel",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔄 devtunnel secure introspectable tunnels to localhost",
       "fileNamePattern": {
@@ -598,6 +633,7 @@
     },
     {
       "appName": "bat",
+      "license": "MIT OR Apache-2.0",
       "repoURL": "https://github.com/sharkdp/bat",
       "doc": "🦇 A cat(1) clone with wings.",
       "fileNamePattern": {
@@ -615,6 +651,7 @@
     },
     {
       "appName": "broot",
+      "license": "MIT",
       "repoURL": "https://github.com/Canop/broot",
       "doc": "🌳 broot is an fzf variant for folder structure and layered search.",
       "fileNamePattern": {
@@ -632,6 +669,7 @@
     },
     {
       "appName": "btm",
+      "license": "MIT",
       "repoURL": "https://github.com/ClementTsang/bottom",
       "doc": "📊 bottom is a cross-platform graphical process/system monitor with a customizable interface and a multitude of features.",
       "fileNamePattern": {
@@ -649,6 +687,7 @@
     },
     {
       "appName": "chatgpt",
+      "license": "MIT",
       "repoURL": "https://github.com/j178/chatgpt",
       "doc": "🤖 chagpt cli",
       "fileNamePattern": {
@@ -666,6 +705,7 @@
     },
     {
       "appName": "cloudflared",
+      "license": "Apache-2.0",
       "repoURL": "https://github.com/cloudflare/cloudflared",
       "doc": "☁️ Cloudflared installer. Should only be installed at main computer and servers of tunnels.",
       "fileNamePattern": {
@@ -683,6 +723,7 @@
     },
     {
       "appName": "cloudflare-warp",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🌐 Cloudflare WARP VPN client",
       "fileNamePattern": {
@@ -700,6 +741,7 @@
     },
     {
       "appName": "warp-cli",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🌐 Cloudflare WARP VPN client in the terminal",
       "fileNamePattern": {
@@ -717,6 +759,7 @@
     },
     {
       "appName": "cpufetch",
+      "license": "GPL-2.0 license",
       "repoURL": "https://github.com/Dr-Noob/cpufetch",
       "doc": "💻 cpufetch is a small yet fancy CPU architecture fetching tool, like fastfetch but for CPUs.",
       "fileNamePattern": {
@@ -734,6 +777,7 @@
     },
     {
       "appName": "delta",
+      "license": "MIT license",
       "repoURL": "https://github.com/dandavison/delta",
       "doc": "👀 A viewer for git and diff output",
       "fileNamePattern": {
@@ -751,6 +795,7 @@
     },
     {
       "appName": "dua",
+      "license": "MIT license",
       "repoURL": "https://github.com/Byron/dua-cli",
       "doc": "💾 Rust-based cli tool to get a quick overview of disk usage.",
       "fileNamePattern": {
@@ -768,6 +813,7 @@
     },
     {
       "appName": "fastfetch",
+      "license": "MIT license",
       "repoURL": "https://github.com/fastfetch-cli/fastfetch",
       "doc": "💻 fastfetch is a system information tool written in C.",
       "fileNamePattern": {
@@ -785,6 +831,7 @@
     },
     {
       "appName": "fd",
+      "license": "Apache-2.0 license / MIT license",
       "repoURL": "https://github.com/sharkdp/fd",
       "doc": "🔍 fd is a simple, fast and user-friendly alternative to find.",
       "fileNamePattern": {
@@ -802,6 +849,7 @@
     },
     {
       "appName": "fzf",
+      "license": "MIT license",
       "repoURL": "https://github.com/junegunn/fzf",
       "doc": "🔍 a general-purpose cli fuzzy finder.",
       "fileNamePattern": {
@@ -819,6 +867,7 @@
     },
     {
       "appName": "tv",
+      "license": "MIT license",
       "repoURL": "https://github.com/alexpasmantier/television",
       "doc": "🔍 A fast and hackable fuzzy finder for the terminal.",
       "fileNamePattern": {
@@ -836,6 +885,7 @@
     },
     {
       "appName": "gitui",
+      "license": "MIT license",
       "repoURL": "https://github.com/gitui-org/gitui",
       "doc": "🐙 gitui is a terminal ui for git written in rust.",
       "fileNamePattern": {
@@ -853,6 +903,7 @@
     },
     {
       "appName": "glow",
+      "license": "MIT License",
       "repoURL": "https://github.com/charmbracelet/glow/",
       "doc": "✨ Render markdown on the CLI, with pizzazz!",
       "fileNamePattern": {
@@ -870,6 +921,7 @@
     },
     {
       "appName": "gum",
+      "license": "MIT License",
       "repoURL": "https://github.com/charmbracelet/gum",
       "doc": "🎯 Prompt user to select from options, written in golang.",
       "fileNamePattern": {
@@ -887,6 +939,7 @@
     },
     {
       "appName": "lf",
+      "license": "MIT License",
       "repoURL": "https://github.com/gokcehan/lf",
       "doc": "📂 lf is a terminal file manager written in go.",
       "fileNamePattern": {
@@ -904,6 +957,7 @@
     },
     {
       "appName": "clifm",
+      "license": "GNU General Public License v2.0 or later",
       "repoURL": "https://github.com/leo-arch/clifm",
       "doc": "📂 A terminal file manager with vim-like keybindings.",
       "fileNamePattern": {
@@ -921,6 +975,7 @@
     },
     {
       "appName": "lsd",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/lsd-rs/lsd",
       "doc": "📂 A modern replacement for ls written in Rust.",
       "fileNamePattern": {
@@ -938,6 +993,7 @@
     },
     {
       "appName": "m365",
+      "license": "",
       "repoURL": "CMD",
       "doc": "☁️ CLI for Microsoft 365",
       "fileNamePattern": {
@@ -955,6 +1011,7 @@
     },
     {
       "appName": "mcfly",
+      "license": "MIT License",
       "repoURL": "https://github.com/cantino/mcfly",
       "doc": "🚀 Fly through your shell history. Great Scott!",
       "fileNamePattern": {
@@ -972,6 +1029,7 @@
     },
     {
       "appName": "ouch",
+      "license": "MIT License",
       "repoURL": "https://github.com/ouch-org/ouch",
       "doc": "📦 A cli for extracting and creating archives in unified way.",
       "fileNamePattern": {
@@ -989,6 +1047,7 @@
     },
     {
       "appName": "procs",
+      "license": "MIT License",
       "repoURL": "https://github.com/dalance/procs/",
       "doc": "📊 procs is a modern replacement for ps written in Rust.",
       "fileNamePattern": {
@@ -1006,6 +1065,7 @@
     },
     {
       "appName": "rclone",
+      "license": "MIT License",
       "repoURL": "https://github.com/rclone/rclone",
       "doc": "☁️ cli to sync to cloud storage providers.",
       "fileNamePattern": {
@@ -1023,6 +1083,7 @@
     },
     {
       "appName": "meilisearch",
+      "license": "MIT License and Business Source License 1.1",
       "repoURL": "https://github.com/meilisearch/meilisearch",
       "doc": "🔍 symantic search at lightening speed",
       "fileNamePattern": {
@@ -1040,6 +1101,7 @@
     },
     {
       "appName": "semtools",
+      "license": "MIT License",
       "repoURL": "https://github.com/run-llama/semtools",
       "doc": "Semantic search and document parsing tools for the command line",
       "fileNamePattern": {
@@ -1057,6 +1119,7 @@
     },
     {
       "appName": "ast-grep",
+      "license": "MIT License",
       "repoURL": "https://github.com/ast-grep/ast-grep",
       "doc": "🔍 grep for code - search and rewrite code with ASTs",
       "fileNamePattern": {
@@ -1074,6 +1137,7 @@
     },
     {
       "appName": "rg",
+      "license": "MIT License or The Unlicense",
       "repoURL": "https://github.com/BurntSushi/ripgrep",
       "doc": "🔍 recursively searches directories for a regex pattern while respecting your gitignore rules",
       "fileNamePattern": {
@@ -1091,6 +1155,7 @@
     },
     {
       "appName": "rga",
+      "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/phiresky/ripgrep-all",
       "doc": "🔍 ripgrep, but also search in PDFs, E-Books, Office documents, zip, tar.gz, etc.",
       "fileNamePattern": {
@@ -1108,6 +1173,7 @@
     },
     {
       "appName": "parse",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔍 ripgrep + semantic search from https://github.com/run-llama/semtools",
       "fileNamePattern": {
@@ -1125,6 +1191,7 @@
     },
     {
       "appName": "starship",
+      "license": "ISC License",
       "repoURL": "https://github.com/starship/starship",
       "doc": "⭐ The minimal, blazing-fast, and infinitely customizable prompt for any shell!",
       "fileNamePattern": {
@@ -1142,6 +1209,7 @@
     },
     {
       "appName": "tere",
+      "license": "EUPL-1.2",
       "repoURL": "https://github.com/mgunyho/tere",
       "doc": "📂 Tere is a terminal file explorer written in Rust. No more ls + cd",
       "fileNamePattern": {
@@ -1159,6 +1227,7 @@
     },
     {
       "appName": "topgrade",
+      "license": "GPL-3.0",
       "repoURL": "https://github.com/topgrade-rs/topgrade",
       "doc": "⬆️ Keeping your system up to date usually involves invoking multiple package managers.",
       "fileNamePattern": {
@@ -1176,6 +1245,7 @@
     },
     {
       "appName": "ttyd",
+      "license": "MIT License",
       "repoURL": "https://github.com/tsl0922/ttyd",
       "doc": "🌐 ttyd shares your terminal on the web.",
       "fileNamePattern": {
@@ -1193,6 +1263,7 @@
     },
     {
       "appName": "upterm",
+      "license": "Apache-2.0",
       "repoURL": "https://github.com/owenthereal/upterm",
       "doc": "🌐 upterm is a terminal multiplexer that allows you to share your terminal session over the web.",
       "fileNamePattern": {
@@ -1210,6 +1281,7 @@
     },
     {
       "appName": "viu",
+      "license": "MIT",
       "repoURL": "https://github.com/atanunq/viu",
       "doc": "🖼️ A cli image viewer for the terminal (like chafa & ueberzugpp but in Rust)",
       "fileNamePattern": {
@@ -1227,6 +1299,7 @@
     },
     {
       "appName": "timg",
+      "license": "",
       "repoURL": "CMD",
       "doc": "👁️ terminal image previewer.",
       "fileNamePattern": {
@@ -1244,6 +1317,7 @@
     },
     {
       "appName": "chafa",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🖼️ Terminal graphics and image viewer",
       "fileNamePattern": {
@@ -1261,6 +1335,7 @@
     },
     {
       "appName": "poppler",
+      "license": "MIT",
       "repoURL": "https://github.com/oschwartz10612/poppler-windows",
       "doc": "PDF rendering library - Windows builds.",
       "fileNamePattern": {
@@ -1278,6 +1353,7 @@
     },
     {
       "appName": "resvg",
+      "license": "Apache-2.0 OR MIT",
       "repoURL": "https://github.com/linebender/resvg",
       "doc": "SVG rendering library - Windows builds.",
       "fileNamePattern": {
@@ -1295,6 +1371,7 @@
     },
     {
       "appName": "watchexec",
+      "license": "Apache-2.0",
       "repoURL": "https://github.com/watchexec/watchexec",
       "doc": "👀 Executes commands in response to file modifications.",
       "fileNamePattern": {
@@ -1312,6 +1389,7 @@
     },
     {
       "appName": "yazi",
+      "license": "",
       "repoURL": "CMD",
       "doc": "⚡ Blazing Fast Terminal File Manager.",
       "fileNamePattern": {
@@ -1329,6 +1407,7 @@
     },
     {
       "appName": "zoxide",
+      "license": "MIT",
       "repoURL": "https://github.com/ajeetdsouza/zoxide",
       "doc": "🚀 A cd command that learns - easily navigate directories from the command-line",
       "fileNamePattern": {
@@ -1346,6 +1425,7 @@
     },
     {
       "appName": "ytui-music",
+      "license": "GPL-2.0",
       "repoURL": "https://github.com/sudipghimire533/ytui-music",
       "doc": "🎵 A terminal based YouTube music player written in Rust.",
       "fileNamePattern": {
@@ -1363,6 +1443,7 @@
     },
     {
       "appName": "youtube-tui",
+      "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/Siriusmart/youtube-tui",
       "doc": "🎵 A terminal based YouTube music player written in Rust.",
       "fileNamePattern": {
@@ -1380,6 +1461,7 @@
     },
     {
       "appName": "youtube-dl",
+      "license": "The Unlicense",
       "repoURL": "CMD",
       "doc": "📥 Command-line program to download videos from YouTube and other sites. By https://github.com/ytdl-org/youtube-dl",
       "fileNamePattern": {
@@ -1397,6 +1479,7 @@
     },
     {
       "appName": "yt-dlp",
+      "license": "The Unlicense",
       "repoURL": "CMD",
       "doc": "📥 A youtube-dl fork with additional features and fixes, by https://github.com/yt-dlp/yt-dlp",
       "fileNamePattern": {
@@ -1414,6 +1497,7 @@
     },
     {
       "appName": "termusic",
+      "license": "GNU General Public License v3.0, MIT",
       "repoURL": "https://github.com/tramhao/termusic",
       "doc": "🎵 A terminal-based music player written in Rust.",
       "fileNamePattern": {
@@ -1431,6 +1515,7 @@
     },
     {
       "appName": "kronos",
+      "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/TrevorSatori/kronos",
       "doc": "🎵 A Customizable Terminal Music Player For Offline Listening",
       "fileNamePattern": {
@@ -1448,6 +1533,7 @@
     },
     {
       "appName": "transmission",
+      "license": "GNU GPLv2 or GNU GPLv3",
       "repoURL": "https://github.com/transmission/transmission",
       "doc": "📥 A fast, easy, and free BitTorrent client.",
       "fileNamePattern": {
@@ -1465,6 +1551,7 @@
     },
     {
       "appName": "nnn",
+      "license": "BSD 2-Clause \"Simplified\" License",
       "repoURL": "https://github.com/jarun/nnn",
       "doc": "📂 A terminal-based file manager.",
       "fileNamePattern": {
@@ -1482,6 +1569,7 @@
     },
     {
       "appName": "eza",
+      "license": "European Union Public License 1.2",
       "repoURL": "https://github.com/eza-community/eza",
       "doc": "📂 A modern replacement for ls. lsd alternative.",
       "fileNamePattern": {
@@ -1499,6 +1587,7 @@
     },
     {
       "appName": "bytehound",
+      "license": "MIT OR Apache-2.0",
       "repoURL": "https://github.com/koute/bytehound",
       "doc": "🔍 Inspecting the memory usage of a running process",
       "fileNamePattern": {
@@ -1516,6 +1605,7 @@
     },
     {
       "appName": "cb",
+      "license": "GNU General Public License v3.0",
       "repoURL": "CMD",
       "doc": "📋 Clipboard manager for the terminal",
       "fileNamePattern": {
@@ -1533,6 +1623,7 @@
     },
     {
       "appName": "atuin",
+      "license": "MIT License",
       "repoURL": "https://github.com/atuinsh/atuin",
       "doc": "🔍 Shell history search tool. Mcfly alternative",
       "fileNamePattern": {
@@ -1550,6 +1641,7 @@
     },
     {
       "appName": "browsh",
+      "license": "GNU Lesser General Public License v2.1",
       "repoURL": "https://github.com/browsh-org/browsh",
       "doc": "🌐 browser in the shell",
       "fileNamePattern": {
@@ -1567,6 +1659,7 @@
     },
     {
       "appName": "carbonyl",
+      "license": "BSD 3-Clause License",
       "repoURL": "https://github.com/fathyb/carbonyl",
       "doc": "A Chromium based browser built to run in a terminal",
       "fileNamePattern": {
@@ -1584,6 +1677,7 @@
     },
     {
       "appName": "patat",
+      "license": "GNU General Public License v2.0",
       "repoURL": "https://github.com/jaspervdj/patat",
       "doc": "🎯 Terminal-based presentations using Pandoc. Presenterm alternative.",
       "fileNamePattern": {
@@ -1601,6 +1695,7 @@
     },
     {
       "appName": "redis-cli",
+      "license": "",
       "repoURL": "CMD",
       "doc": "A cli for redis",
       "fileNamePattern": {
@@ -1618,6 +1713,7 @@
     },
     {
       "appName": "sqlite3",
+      "license": "",
       "repoURL": "CMD",
       "doc": "A cli for sqlite",
       "fileNamePattern": {
@@ -1635,6 +1731,7 @@
     },
     {
       "appName": "postgresql-client",
+      "license": "",
       "repoURL": "CMD",
       "doc": "A cli for postgresql",
       "fileNamePattern": {
@@ -1652,6 +1749,7 @@
     },
     {
       "appName": "sqliteBrowser",
+      "license": "Mozilla Public License 2.0 and GNU General Public License v3.0 or later",
       "repoURL": "https://github.com/sqlitebrowser/sqlitebrowser",
       "doc": "🗃️ A visual tool to create, design, and edit database files compatible with SQLite.",
       "fileNamePattern": {
@@ -1669,6 +1767,7 @@
     },
     {
       "appName": "dbeaver",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/dbeaver/dbeaver",
       "doc": "🗃️ Free universal database tool and SQL client.",
       "fileNamePattern": {
@@ -1686,6 +1785,7 @@
     },
     {
       "appName": "pgweb",
+      "license": "MIT License",
       "repoURL": "https://github.com/sosedoff/pgweb/",
       "doc": "🗃️ Web-based PostgreSQL database browser written in Go",
       "fileNamePattern": {
@@ -1703,6 +1803,7 @@
     },
     {
       "appName": "dbgate",
+      "license": "GPL-3.0 license",
       "repoURL": "https://github.com/dbgate/dbgate",
       "doc": "🗃️ Cross-platform database manager for developers and database administrators",
       "fileNamePattern": {
@@ -1720,6 +1821,7 @@
     },
     {
       "appName": "rainfrog",
+      "license": "MIT license",
       "repoURL": "https://github.com/achristmascarl/rainfrog",
       "doc": "🗃️ TUI DB Visualizer",
       "fileNamePattern": {
@@ -1737,6 +1839,7 @@
     },
     {
       "appName": "lazysql",
+      "license": "MIT license",
       "repoURL": "https://github.com/jorgerojas26/lazysql",
       "doc": "🗃️ TUI DB Visualizer",
       "fileNamePattern": {
@@ -1754,6 +1857,7 @@
     },
     {
       "appName": "dblab",
+      "license": "MIT license",
       "repoURL": "https://github.com/danvergara/dblab",
       "doc": "🗃️ TUI database client",
       "fileNamePattern": {
@@ -1771,6 +1875,7 @@
     },
     {
       "appName": "usql",
+      "license": "MIT license",
       "repoURL": "https://github.com/xo/usql",
       "doc": "🗃️ Universal command-line database client",
       "fileNamePattern": {
@@ -1788,6 +1893,7 @@
     },
     {
       "appName": "harlequin",
+      "license": "MIT license",
       "repoURL": "https://github.com/tconbeer/harlequin",
       "doc": "🗃️ Universal command-line database client",
       "fileNamePattern": {
@@ -1805,6 +1911,7 @@
     },
     {
       "appName": "sqlit",
+      "license": "MIT license",
       "repoURL": "https://github.com/Maxteabag/sqlit",
       "doc": "🗃️ Universal command-line database client",
       "fileNamePattern": {
@@ -1822,6 +1929,7 @@
     },
     {
       "appName": "duckdb",
+      "license": "MIT license",
       "repoURL": "https://github.com/duckdb/duckdb",
       "doc": "🗃️ An in-process SQL OLAP database management system",
       "fileNamePattern": {
@@ -1839,6 +1947,7 @@
     },
     {
       "appName": "gonzo",
+      "license": "MIT license",
       "repoURL": "https://github.com/control-theory/gonzo",
       "doc": "🕶️ Gonzo is a Go-based TUI for real-time log analysis, like nerdlog, caps-log and lnav.",
       "fileNamePattern": {
@@ -1856,6 +1965,7 @@
     },
     {
       "appName": "cpz",
+      "license": "Apache-2.0 license",
       "repoURL": "https://github.com/SUPERCILEX/fuc",
       "doc": "📋 Fast copy",
       "fileNamePattern": {
@@ -1873,6 +1983,7 @@
     },
     {
       "appName": "rmz",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/SUPERCILEX/fuc",
       "doc": "🗑️ Fast remove",
       "fileNamePattern": {
@@ -1890,6 +2001,7 @@
     },
     {
       "appName": "mermaid-cli",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📊 Generate diagrams and flowcharts from text in a similar manner as markdown",
       "fileNamePattern": {
@@ -1907,6 +2019,7 @@
     },
     {
       "appName": "html2markdown",
+      "license": "MIT License",
       "repoURL": "https://github.com/JohannesKaufmann/html-to-markdown",
       "doc": "📜 Convert HTML to Markdown (no LLM, very fast, very cheap)",
       "fileNamePattern": {
@@ -1924,6 +2037,7 @@
     },
     {
       "appName": "xcrawl3r",
+      "license": "MIT License",
       "repoURL": "https://github.com/hueristiq/xcrawl3r",
       "doc": "🕷️ A command line tool to crawl and scrape websites",
       "fileNamePattern": {
@@ -1941,6 +2055,7 @@
     },
     {
       "appName": "obsidian",
+      "license": "Custom Proprietary License",
       "repoURL": "https://github.com/obsidianmd/obsidian-releases",
       "doc": "🧠 Obsidian is a powerful knowledge base that works on top of a local folder of plain text Markdown files.",
       "fileNamePattern": {
@@ -1958,6 +2073,7 @@
     },
     {
       "appName": "marp",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🎯 Markdown presentation writer",
       "fileNamePattern": {
@@ -1975,6 +2091,7 @@
     },
     {
       "appName": "presenterm",
+      "license": "BSD 2-Clause \"Simplified\" License",
       "repoURL": "https://github.com/mfontanini/presenterm",
       "doc": "🎭 present from temrinal",
       "fileNamePattern": {
@@ -1992,6 +2109,7 @@
     },
     {
       "appName": "pandoc",
+      "license": "GNU General Public License v2.0",
       "repoURL": "https://github.com/jgm/pandoc",
       "doc": "📝 The universal markup converter",
       "fileNamePattern": {
@@ -2009,6 +2127,7 @@
     },
     {
       "appName": "devcontainer",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🐋 Devcontainer is a command-line tool to manage development containers",
       "fileNamePattern": {
@@ -2026,6 +2145,7 @@
     },
     {
       "appName": "bw",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔐 bitwarden is a password manager.",
       "fileNamePattern": {
@@ -2043,6 +2163,7 @@
     },
     {
       "appName": "OBS Background removal",
+      "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/royshil/obs-backgroundremoval",
       "doc": "🎥 A plugin for OBS Studio to remove background from a video",
       "fileNamePattern": {
@@ -2060,6 +2181,7 @@
     },
     {
       "appName": "rustdesk",
+      "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/rustdesk/rustdesk",
       "doc": "🖥️ Yet another remote desktop software, written in Rust. Works out of the box, no configuration required",
       "fileNamePattern": {
@@ -2077,6 +2199,7 @@
     },
     {
       "appName": "evcxr",
+      "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/evcxr/evcxr",
       "doc": "🧪 A Jupyter Kernel for Rust",
       "fileNamePattern": {
@@ -2094,6 +2217,7 @@
     },
     {
       "appName": "forward-cli",
+      "license": "MIT License",
       "repoURL": "https://github.com/axetroy/forward-cli",
       "doc": "🔄 Reverse Proxy port forwarding cli tool",
       "fileNamePattern": {
@@ -2111,6 +2235,7 @@
     },
     {
       "appName": "bandwhich",
+      "license": "MIT License",
       "repoURL": "https://github.com/imsnif/bandwhich",
       "doc": "📊 monitor network usage from cli",
       "fileNamePattern": {
@@ -2128,6 +2253,7 @@
     },
     {
       "appName": "ipinfo",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/ipinfo/cli",
       "doc": "🌐 cli to get info of ips",
       "fileNamePattern": {
@@ -2145,6 +2271,7 @@
     },
     {
       "appName": "dust",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/bootandy/dust",
       "doc": "📊 A more intuitive version of du in rust. It is a dua alternative.",
       "fileNamePattern": {
@@ -2162,6 +2289,7 @@
     },
     {
       "appName": "ots",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/Luzifer/ots",
       "doc": "🔒 A command line tool for generating and verifying one-time secrets.",
       "fileNamePattern": {
@@ -2179,6 +2307,7 @@
     },
     {
       "appName": "ffsend",
+      "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/timvisee/ffsend",
       "doc": "📤 Send files in secure encrypted way over the internet.",
       "fileNamePattern": {
@@ -2196,6 +2325,7 @@
     },
     {
       "appName": "portal",
+      "license": "MIT License",
       "repoURL": "https://github.com/SpatiumPortae/portal",
       "doc": "🔄 A terminal-based file transfer between two computers.",
       "fileNamePattern": {
@@ -2213,6 +2343,7 @@
     },
     {
       "appName": "qrcp",
+      "license": "MIT license",
       "repoURL": "https://github.com/claudiodangelis/qrcp",
       "doc": "📱 Transfer files over WiFi from your computer to mobile device by scanning a QR code without leaving the terminal.",
       "fileNamePattern": {
@@ -2230,6 +2361,7 @@
     },
     {
       "appName": "qrscan",
+      "license": "MIT license",
       "repoURL": "https://github.com/sayanarijit/qrscan",
       "doc": "📷 qr code scanner",
       "fileNamePattern": {
@@ -2247,6 +2379,7 @@
     },
     {
       "appName": "qrterminal",
+      "license": "MIT license",
       "repoURL": "https://github.com/mdp/qrterminal",
       "doc": "📷 qr code terminal from string",
       "fileNamePattern": {
@@ -2264,6 +2397,7 @@
     },
     {
       "appName": "termscp",
+      "license": "MIT license",
       "repoURL": "https://github.com/veeso/termscp",
       "doc": "📂 A TUI like winscp",
       "fileNamePattern": {
@@ -2281,6 +2415,7 @@
     },
     {
       "appName": "qr",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔲 qr code generator. String to qr code.",
       "fileNamePattern": {
@@ -2298,6 +2433,7 @@
     },
     {
       "appName": "filebrowser",
+      "license": "Apache-2.0 license",
       "repoURL": "https://github.com/filebrowser/filebrowser",
       "doc": "🗂️ filebrowser provides a file managing interface within a specified directory",
       "fileNamePattern": {
@@ -2315,6 +2451,7 @@
     },
     {
       "appName": "miniserve",
+      "license": "MIT license",
       "repoURL": "https://github.com/svenstaro/miniserve",
       "doc": "📂 A small, self-contained file server with directory listings",
       "fileNamePattern": {
@@ -2332,6 +2469,7 @@
     },
     {
       "appName": "cloudreve",
+      "license": "GPL-3.0 license",
       "repoURL": "https://github.com/cloudreve/Cloudreve",
       "doc": "☁️ Self-hosted file management system with muilt-cloud support.",
       "fileNamePattern": {
@@ -2349,6 +2487,7 @@
     },
     {
       "appName": "restic",
+      "license": "BSD-2-Clause license",
       "repoURL": "https://github.com/restic/restic",
       "doc": "💾 backup program that is fast, efficient and secure. It supports the three major operating systems",
       "fileNamePattern": {
@@ -2366,6 +2505,7 @@
     },
     {
       "appName": "syncthing",
+      "license": "MPL-2.0 license",
       "repoURL": "https://github.com/syncthing/syncthing",
       "doc": "🔄 Syncthing is a continuous file synchronization program. It synchronizes files between two or more computers.",
       "fileNamePattern": {
@@ -2383,6 +2523,7 @@
     },
     {
       "appName": "istio",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/istio/istio",
       "doc": "🌐 Istio is an open source service mesh that layers transparently onto existing distributed applications",
       "fileNamePattern": {
@@ -2400,6 +2541,7 @@
     },
     {
       "appName": "openpomodoro-cli",
+      "license": "MIT License",
       "repoURL": "https://github.com/open-pomodoro/openpomodoro-cli",
       "doc": "⏲️ Pomodoro timer for the command-line",
       "fileNamePattern": {
@@ -2417,6 +2559,7 @@
     },
     {
       "appName": "rust-analyzer",
+      "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/rust-lang/rust-analyzer",
       "doc": "🦀 Rust Language Server (LSP)",
       "fileNamePattern": {
@@ -2434,6 +2577,7 @@
     },
     {
       "appName": "kondo",
+      "license": "MIT License",
       "repoURL": "https://github.com/tbillington/kondo",
       "doc": "🧹 cleans projects from litter files.",
       "fileNamePattern": {
@@ -2451,6 +2595,7 @@
     },
     {
       "appName": "tokei",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📊 Counts the number of lines of code, comments, and blanks in a project.",
       "fileNamePattern": {
@@ -2468,6 +2613,7 @@
     },
     {
       "appName": "lazygit",
+      "license": "MIT License",
       "repoURL": "https://github.com/jesseduffield/lazygit",
       "doc": "🐙 A simple terminal UI for git commands",
       "fileNamePattern": {
@@ -2485,6 +2631,7 @@
     },
     {
       "appName": "docker",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🐳 Docker is an open platform for developing, shipping, and running applications.",
       "fileNamePattern": {
@@ -2502,6 +2649,7 @@
     },
     {
       "appName": "lazydocker",
+      "license": "MIT License",
       "repoURL": "https://github.com/jesseduffield/lazydocker",
       "doc": "🐋 A simple terminal UI for both docker and docker-compose",
       "fileNamePattern": {
@@ -2519,6 +2667,7 @@
     },
     {
       "appName": "onefetch",
+      "license": "MIT License",
       "repoURL": "https://github.com/o2sh/onefetch",
       "doc": "📊 Git repository summary on your terminal",
       "fileNamePattern": {
@@ -2536,6 +2685,7 @@
     },
     {
       "appName": "gitcs",
+      "license": "MIT License",
       "repoURL": "https://github.com/knbr13/gitcs",
       "doc": "📈 analyze Git repositories and generate a visual contributions graph",
       "fileNamePattern": {
@@ -2553,6 +2703,7 @@
     },
     {
       "appName": "just",
+      "license": "CC0-1.0",
       "repoURL": "https://github.com/casey/just",
       "doc": "🎯 A command runner",
       "fileNamePattern": {
@@ -2570,6 +2721,7 @@
     },
     {
       "appName": "navi",
+      "license": "Apache-2.0",
       "repoURL": "https://github.com/denisidoro/navi",
       "doc": "📚 An interactive cheatsheet tool for the command-line",
       "fileNamePattern": {
@@ -2587,6 +2739,7 @@
     },
     {
       "appName": "tealdeer",
+      "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/dbrgn/tealdeer",
       "doc": "⚡ A very fast implementation of tldr in Rust",
       "fileNamePattern": {
@@ -2604,6 +2757,7 @@
     },
     {
       "appName": "sniffnet",
+      "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/GyulyVGC/sniffnet",
       "doc": "🔍 A simple network sniffer in Rust",
       "fileNamePattern": {
@@ -2621,6 +2775,7 @@
     },
     {
       "appName": "trippy",
+      "license": "Apache-2.0",
       "repoURL": "https://github.com/fujiapple852/trippy",
       "doc": "🧭 A network diagnostic tool combining traceroute and ping)",
       "fileNamePattern": {
@@ -2638,6 +2793,7 @@
     },
     {
       "appName": "oryx",
+      "license": "GPL-3.0",
       "repoURL": "https://github.com/pythops/oryx",
       "doc": "🕵️‍♂️ TUI for sniffing network traffic using eBPF on Linux",
       "fileNamePattern": {
@@ -2655,6 +2811,7 @@
     },
     {
       "appName": "tufw",
+      "license": "MIT",
       "repoURL": "https://github.com/peltho/tufw",
       "doc": "📋 Terminal UI for UFW (Uncomplicated Firewall) on Linux",
       "fileNamePattern": {
@@ -2672,6 +2829,7 @@
     },
     {
       "appName": "netscanner",
+      "license": "MIT",
       "repoURL": "https://github.com/Chleba/netscanner",
       "doc": "📡 Terminal network scanner & diagnostic tool with TUI (v0.6.3)",
       "fileNamePattern": {
@@ -2689,6 +2847,7 @@
     },
     {
       "appName": "hyperfine",
+      "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/sharkdp/hyperfine",
       "doc": "⚡ A command-line benchmarking tool",
       "fileNamePattern": {
@@ -2706,6 +2865,7 @@
     },
     {
       "appName": "ollama",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🤖 Get up and running with large language models locally.",
       "fileNamePattern": {
@@ -2723,6 +2883,7 @@
     },
     {
       "appName": "cointop",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/cointop-sh/cointop",
       "doc": "💰 Cointop is a fast and lightweight interactive terminal based UI application for tracking and monitoring cryptocurrency coin stats in real-time.",
       "fileNamePattern": {
@@ -2740,6 +2901,7 @@
     },
     {
       "appName": "vtm",
+      "license": "MIT License",
       "repoURL": "https://github.com/netxs-group/vtm",
       "doc": "🖥️ Text-based desktop environment inside your terminal",
       "fileNamePattern": {
@@ -2757,6 +2919,7 @@
     },
     {
       "appName": "edex-ui",
+      "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/GitSquared/edex-ui",
       "doc": "🚀 fullscreen, cross-platform terminal emulator and system monitor that looks and feels like a sci-fi computer interface",
       "fileNamePattern": {
@@ -2774,6 +2937,7 @@
     },
     {
       "appName": "extraterm",
+      "license": "MIT License",
       "repoURL": "https://github.com/sedwards2009/extraterm/",
       "doc": "💻 Terminal emulator",
       "fileNamePattern": {
@@ -2791,6 +2955,7 @@
     },
     {
       "appName": "nu",
+      "license": "MIT License",
       "repoURL": "https://github.com/nushell/nushell",
       "doc": "🐚 Nushell, a cross-platform shell in Rust.",
       "fileNamePattern": {
@@ -2808,6 +2973,7 @@
     },
     {
       "appName": "geckodriver",
+      "license": "Mozilla Public License 2.0",
       "repoURL": "https://github.com/mozilla/geckodriver",
       "doc": "🦊 WebDriver for Firefox.",
       "fileNamePattern": {
@@ -2825,6 +2991,7 @@
     },
     {
       "appName": "ngrok",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Secure introspectable tunnels to localhost",
       "fileNamePattern": {
@@ -2842,6 +3009,7 @@
     },
     {
       "appName": "code",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Visual Studio Code",
       "fileNamePattern": {
@@ -2859,6 +3027,7 @@
     },
     {
       "appName": "aider",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Aider Chat",
       "fileNamePattern": {
@@ -2876,6 +3045,7 @@
     },
     {
       "appName": "mods",
+      "license": "MIT License",
       "repoURL": "https://github.com/charmbracelet/mods/",
       "doc": "🤖 AI for the command line, built for pipelines",
       "fileNamePattern": {
@@ -2893,6 +3063,7 @@
     },
     {
       "appName": "aichat",
+      "license": "MIT OR Apache-2.0",
       "repoURL": "https://github.com/sigoden/aichat",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "fileNamePattern": {
@@ -2910,6 +3081,7 @@
     },
     {
       "appName": "qwen-code",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "fileNamePattern": {
@@ -2927,6 +3099,7 @@
     },
     {
       "appName": "cline",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Cline agent extension in the terminal",
       "fileNamePattern": {
@@ -2944,6 +3117,7 @@
     },
     {
       "appName": "kilocode",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Kilocode agent extension in the terminal",
       "fileNamePattern": {
@@ -2961,6 +3135,7 @@
     },
     {
       "appName": "copilot",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "fileNamePattern": {
@@ -2978,6 +3153,7 @@
     },
     {
       "appName": "agent-browser",
+      "license": "",
       "repoURL": "CMD",
       "doc": "browser internet.",
       "fileNamePattern": {
@@ -2995,6 +3171,7 @@
     },
     {
       "appName": "agent-deck",
+      "license": "MIT",
       "repoURL": "https://github.com/asheshgoplani/agent-deck",
       "doc": "Terminal UI for AI coding agents",
       "fileNamePattern": {
@@ -3012,6 +3189,7 @@
     },
     {
       "appName": "agent-hand",
+      "license": "MIT",
       "repoURL": "https://github.com/weykon/agent-hand",
       "doc": "Fast tmux-backed terminal session manager for AI coding agents.",
       "fileNamePattern": {
@@ -3029,6 +3207,7 @@
     },
     {
       "appName": "aoe",
+      "license": "MIT",
       "repoURL": "https://github.com/njbrake/agent-of-empires",
       "doc": "Agent of Empires terminal session manager for AI coding agents",
       "fileNamePattern": {
@@ -3046,6 +3225,7 @@
     },
     {
       "appName": "cagent",
+      "license": "Apache-2.0",
       "repoURL": "https://github.com/docker/cagent",
       "doc": "Docker terminal coding agent",
       "fileNamePattern": {
@@ -3063,6 +3243,7 @@
     },
     {
       "appName": "openclaw",
+      "license": "",
       "repoURL": "CMD",
       "doc": "OpenClaw is a personal AI assistant you run on your own devices.",
       "fileNamePattern": {
@@ -3080,6 +3261,7 @@
     },
     {
       "appName": "gemini",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "fileNamePattern": {
@@ -3097,6 +3279,7 @@
     },
     {
       "appName": "crush",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "fileNamePattern": {
@@ -3114,6 +3297,7 @@
     },
     {
       "appName": "opencode",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "fileNamePattern": {
@@ -3131,6 +3315,7 @@
     },
     {
       "appName": "codex",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents from openai designed specifically for openai models.",
       "fileNamePattern": {
@@ -3148,6 +3333,7 @@
     },
     {
       "appName": "auggie",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "fileNamePattern": {
@@ -3165,6 +3351,7 @@
     },
     {
       "appName": "warp-terminal",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Modern terminal with AI-powered features",
       "fileNamePattern": {
@@ -3182,6 +3369,7 @@
     },
     {
       "appName": "warp-terminal-cli",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Modern terminal cli with AI-powered features",
       "fileNamePattern": {
@@ -3199,6 +3387,7 @@
     },
     {
       "appName": "q",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Q desktop application",
       "fileNamePattern": {
@@ -3216,6 +3405,7 @@
     },
     {
       "appName": "cursor-cli",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Cursor CLI installer",
       "fileNamePattern": {
@@ -3233,6 +3423,7 @@
     },
     {
       "appName": "droid",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Factory AI CLI installer",
       "fileNamePattern": {
@@ -3250,6 +3441,7 @@
     },
     {
       "appName": "Alacritty",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal Console",
       "fileNamePattern": {
@@ -3267,6 +3459,7 @@
     },
     {
       "appName": "brave",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Privacy-focused web browser with built-in ad blocking",
       "fileNamePattern": {
@@ -3284,6 +3477,7 @@
     },
     {
       "appName": "bypass-paywalls-chrome",
+      "license": "No license asserted",
       "repoURL": "https://github.com/iamadamdev/bypass-paywalls-chrome",
       "doc": "Plugin for chrome to bypass paywalls",
       "fileNamePattern": {
@@ -3301,6 +3495,7 @@
     },
     {
       "appName": "Cursor",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Cursor",
       "fileNamePattern": {
@@ -3318,6 +3513,7 @@
     },
     {
       "appName": "espanso",
+      "license": "",
       "repoURL": "CMD",
       "doc": "A text expander.",
       "fileNamePattern": {
@@ -3335,6 +3531,7 @@
     },
     {
       "appName": "gorilla",
+      "license": "Apache License 2.0",
       "repoURL": "https://github.com/ShishirPatil/gorilla",
       "doc": "natural language to API",
       "fileNamePattern": {
@@ -3352,6 +3549,7 @@
     },
     {
       "appName": "lvim",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Terminal text editor based on neovim.",
       "fileNamePattern": {
@@ -3369,6 +3567,7 @@
     },
     {
       "appName": "nerdfont",
+      "license": "",
       "repoURL": "CMD",
       "doc": "lightweight containerization",
       "fileNamePattern": {
@@ -3386,6 +3585,7 @@
     },
     {
       "appName": "redis",
+      "license": "",
       "repoURL": "CMD",
       "doc": "submillisecond fast key-value db",
       "fileNamePattern": {
@@ -3403,6 +3603,7 @@
     },
     {
       "appName": "wezterm",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Modern, GPU-accelerated terminal emulator",
       "fileNamePattern": {
@@ -3420,6 +3621,7 @@
     },
     {
       "appName": "winget",
+      "license": "",
       "repoURL": "CMD",
       "doc": "winget installer",
       "fileNamePattern": {
@@ -3437,6 +3639,7 @@
     },
     {
       "appName": "gh",
+      "license": "",
       "repoURL": "CMD",
       "doc": "GitHub CLI",
       "fileNamePattern": {
@@ -3454,6 +3657,7 @@
     },
     {
       "appName": "nano",
+      "license": "",
       "repoURL": "CMD",
       "doc": "a simple terminal text editor",
       "fileNamePattern": {
@@ -3471,6 +3675,7 @@
     },
     {
       "appName": "hx",
+      "license": "",
       "repoURL": "CMD",
       "doc": "Helix is a post-modern modal text editor.",
       "fileNamePattern": {
@@ -3488,6 +3693,7 @@
     },
     {
       "appName": "file",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔍 File type identification utility",
       "fileNamePattern": {
@@ -3505,6 +3711,7 @@
     },
     {
       "appName": "oh-my-posh",
+      "license": "",
       "repoURL": "CMD",
       "doc": "✨ Prompt theme engine for any shell",
       "fileNamePattern": {
@@ -3522,6 +3729,7 @@
     },
     {
       "appName": "vsredistrib",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📦 Microsoft Visual C++ Redistributable",
       "fileNamePattern": {
@@ -3539,6 +3747,7 @@
     },
     {
       "appName": "vsbuildtools",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔨 Visual Studio Build Tools",
       "fileNamePattern": {
@@ -3556,6 +3765,7 @@
     },
     {
       "appName": "codeblocks",
+      "license": "",
       "repoURL": "CMD",
       "doc": "💻 IDE for C/C++",
       "fileNamePattern": {
@@ -3573,6 +3783,7 @@
     },
     {
       "appName": "make",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔧 GNU Make utility for building projects",
       "fileNamePattern": {
@@ -3590,6 +3801,7 @@
     },
     {
       "appName": "gnupg",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔐 GNU Privacy Guard encryption tool",
       "fileNamePattern": {
@@ -3607,6 +3819,7 @@
     },
     {
       "appName": "graphviz",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📊 Graph visualization software",
       "fileNamePattern": {
@@ -3624,6 +3837,7 @@
     },
     {
       "appName": "winfsp",
+      "license": "",
       "repoURL": "CMD",
       "doc": "💾 Windows File System Proxy",
       "fileNamePattern": {
@@ -3641,6 +3855,7 @@
     },
     {
       "appName": "sshfs",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🌐 Mount remote filesystems over SSH",
       "fileNamePattern": {
@@ -3658,6 +3873,7 @@
     },
     {
       "appName": "xming",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🖥️ X11 server for Windows",
       "fileNamePattern": {
@@ -3675,6 +3891,7 @@
     },
     {
       "appName": "nodejs",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🟢 JavaScript runtime environment",
       "fileNamePattern": {
@@ -3692,6 +3909,7 @@
     },
     {
       "appName": "rustup",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🦀 Rust toolchain installer",
       "fileNamePattern": {
@@ -3709,6 +3927,7 @@
     },
     {
       "appName": "mouse-without-borders",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🖱️ Control multiple computers with one mouse",
       "fileNamePattern": {
@@ -3726,6 +3945,7 @@
     },
     {
       "appName": "chrome",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🌐 Google Chrome web browser",
       "fileNamePattern": {
@@ -3743,6 +3963,7 @@
     },
     {
       "appName": "chrome-remote-desktop",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🖥️ Chrome Remote Desktop Host",
       "fileNamePattern": {
@@ -3760,6 +3981,7 @@
     },
     {
       "appName": "zoom",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📹 Video conferencing software",
       "fileNamePattern": {
@@ -3777,6 +3999,7 @@
     },
     {
       "appName": "7zip",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📦 File archiver with high compression ratio",
       "fileNamePattern": {
@@ -3794,6 +4017,7 @@
     },
     {
       "appName": "firefox",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🦊 Mozilla Firefox web browser",
       "fileNamePattern": {
@@ -3811,6 +4035,7 @@
     },
     {
       "appName": "thunderbird",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📧 Mozilla Thunderbird email client",
       "fileNamePattern": {
@@ -3828,6 +4053,7 @@
     },
     {
       "appName": "streamlabs-obs",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🎥 Streamlabs OBS streaming software",
       "fileNamePattern": {
@@ -3845,6 +4071,7 @@
     },
     {
       "appName": "obs-studio",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🎬 OBS Studio streaming and recording software",
       "fileNamePattern": {
@@ -3862,6 +4089,7 @@
     },
     {
       "appName": "miktex",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📝 LaTeX distribution for Windows",
       "fileNamePattern": {
@@ -3879,6 +4107,7 @@
     },
     {
       "appName": "texlive",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📝 TeX Live LaTeX distribution",
       "fileNamePattern": {
@@ -3896,6 +4125,7 @@
     },
     {
       "appName": "texmaker",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📄 LaTeX editor",
       "fileNamePattern": {
@@ -3913,6 +4143,7 @@
     },
     {
       "appName": "lapce",
+      "license": "",
       "repoURL": "CMD",
       "doc": "⚡ Lightning-fast code editor written in Rust",
       "fileNamePattern": {
@@ -3930,6 +4161,7 @@
     },
     {
       "appName": "tesseract",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🔤 OCR engine for text recognition",
       "fileNamePattern": {
@@ -3947,6 +4179,7 @@
     },
     {
       "appName": "perl",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🍓 Strawberry Perl programming language",
       "fileNamePattern": {
@@ -3964,6 +4197,7 @@
     },
     {
       "appName": "db-browser-sqlite",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🗄️ DB Browser for SQLite database tool",
       "fileNamePattern": {
@@ -3981,6 +4215,7 @@
     },
     {
       "appName": "ssms",
+      "license": "",
       "repoURL": "CMD",
       "doc": "🗄️ SQL Server Management Studio",
       "fileNamePattern": {
@@ -3998,6 +4233,7 @@
     },
     {
       "appName": "adobe-reader",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📄 Adobe Acrobat Reader DC",
       "fileNamePattern": {
@@ -4015,6 +4251,7 @@
     },
     {
       "appName": "julia",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📊 Julia programming language",
       "fileNamePattern": {
@@ -4032,6 +4269,7 @@
     },
     {
       "appName": "awscli",
+      "license": "",
       "repoURL": "CMD",
       "doc": "☁️ AWS Command Line Interface",
       "fileNamePattern": {
@@ -4049,6 +4287,7 @@
     },
     {
       "appName": "notepadplusplus",
+      "license": "",
       "repoURL": "CMD",
       "doc": "📝 Notepad++ text editor",
       "fileNamePattern": {
@@ -4066,6 +4305,7 @@
     },
     {
       "appName": "polymarket",
+      "license": "MIT",
       "repoURL": "https://github.com/Polymarket/polymarket-cli",
       "doc": "Polymarket CLI for market interactions",
       "fileNamePattern": {
