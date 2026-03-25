@@ -7,6 +7,7 @@ from machineconfig.scripts.python.graph.visualize.graph_data import (
     build_graph,
     iter_nodes,
 )
+from machineconfig.scripts.python.graph.visualize.plotly_browser import write_plotly_image
 
 KIND_COLORS = {
     "root": "#1f2937",
@@ -34,13 +35,11 @@ def render_plotly(
     if output is None:
         fig.show()
         return
-
     suffix = output.suffix.lower()
     if suffix in IMAGE_EXTENSIONS:
-        fig.write_image(output, width=width, height=height, scale=2)
+        write_plotly_image(fig=fig, output=output, width=width, height=height)
     else:
         fig.write_html(output, include_plotlyjs="cdn")
-
     print(f"Wrote {output}")
 
 

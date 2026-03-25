@@ -31,13 +31,7 @@ def md2html(body: str) -> str:
     console.print(markdown_obj)
     html_output = console.export_html(inline_styles=True)
 
-    # Try to load GitHub CSS style, fallback to basic style if not found
-    gh_style_path = Path(__file__).parent.joinpath("gh_style.css")
-    if gh_style_path.exists():
-        gh_style = gh_style_path.read_text()
-    else:
-        # Fallback basic styling
-        gh_style = """
+    gh_style = """
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         h1, h2, h3, h4, h5, h6 { color: #0366d6; }
         code { background-color: #f6f8fa; padding: 2px 4px; border-radius: 3px; }

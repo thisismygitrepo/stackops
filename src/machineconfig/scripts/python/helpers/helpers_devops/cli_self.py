@@ -25,7 +25,6 @@ def init(
         match which:
             case "init":
                 import machineconfig.settings as module
-
                 if platform.system() == "Darwin":
                     init_path = Path(module.__file__).parent.joinpath("shells", "zsh", "init.sh")
                 else:
@@ -47,16 +46,13 @@ def init(
         match which:
             case "init":
                 import machineconfig.settings as module
-
-                init_path = Path(module.__file__).parent.joinpath("shells", "powershell", "init.ps1")
+                init_path = Path(module.__file__).parent.joinpath("shells", "pwsh", "init.ps1")
                 script = init_path.read_text(encoding="utf-8")
             case "ia":
                 from machineconfig.setup_windows import INTERACTIVE as script_path
-
                 script = script_path.read_text(encoding="utf-8")
             case "live":
                 from machineconfig.setup_windows import LIVE as script_path
-
                 script = script_path.read_text(encoding="utf-8")
             case _:
                 typer.echo("Unsupported shell script for Windows.")
