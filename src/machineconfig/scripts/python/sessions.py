@@ -323,8 +323,8 @@ def get_app() -> typer.Typer:
     layouts_app.command("balance-load", no_args_is_help=True, help=balance_load.__doc__, short_help="<b> Balance the load across sessions")(balance_load)
     layouts_app.command("b", no_args_is_help=True, help=balance_load.__doc__, hidden=True)(balance_load)
 
-    layouts_app.command("create-template", no_args_is_help=False, help=create_template.__doc__, short_help="<t> Create a layout template file")(create_template)
-    layouts_app.command("t", no_args_is_help=False, help=create_template.__doc__, hidden=True)(create_template)
+    layouts_app.command("create-template", no_args_is_help=False, help=create_template.__doc__, short_help="<p> Create a layout template file")(create_template)
+    layouts_app.command("p", no_args_is_help=False, help=create_template.__doc__, hidden=True)(create_template)
 
     layouts_app.command("summarize", no_args_is_help=True, help=summarize.__doc__, short_help="<s> Summarize a layout file")(summarize)
     layouts_app.command("s", no_args_is_help=True, help=summarize.__doc__, hidden=True)(summarize)
