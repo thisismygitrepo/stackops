@@ -99,7 +99,7 @@ def shell_group(ctx: typer.Context) -> None:
 
 
 def get_app() -> typer.Typer:
-    shell_app = typer.Typer(help="🐚 <S> Configure your shell profile.", no_args_is_help=False, add_help_option=True, add_completion=False)
+    shell_app = typer.Typer(help="🐚 <t> Configure your terminal profile.", no_args_is_help=False, add_help_option=True, add_completion=False)
     shell_app.callback(invoke_without_command=True)(shell_group)
 
     shell_app.command("config-shell", no_args_is_help=False, help="🐚 <s> Create or configure a shell profile.")(configure_shell_profile)

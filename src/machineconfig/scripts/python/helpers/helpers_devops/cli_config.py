@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 import typer
 
 import machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile as dotfile_module
-from machineconfig.scripts.python.helpers.helpers_devops import cli_config_shell
+from machineconfig.scripts.python.helpers.helpers_devops import cli_config_terminal
 from machineconfig.profile import create_links_export
 from machineconfig.utils.ve import read_default_cloud_config
 
@@ -93,8 +93,8 @@ def get_app() -> typer.Typer:
     )
     config_apps.command("i", no_args_is_help=False, help="Import dotfiles from exported archive.", hidden=True)(dotfile_module.import_dotfiles)
 
-    config_apps.add_typer(cli_config_shell.get_app(), name="shell", help="🐚 <S> Configure your shell profile.")
-    config_apps.add_typer(cli_config_shell.get_app(), name="S", hidden=True)
+    config_apps.add_typer(cli_config_terminal.get_app(), name="terminal", help="🐚 <t> Configure your terminal profile.")
+    config_apps.add_typer(cli_config_terminal.get_app(), name="t", help="🐚 <t> Configure your terminal profile.", hidden=True)
 
     config_apps.command("copy-assets", no_args_is_help=True, help="📋 <c> Copy asset files from library to machine.", hidden=False)(copy_assets)
     config_apps.command("c", no_args_is_help=True, help="Copy asset files from library to machine.", hidden=True)(copy_assets)
