@@ -1,7 +1,9 @@
 """Utility commands - lazy loading subcommands."""
 
-import typer
+from pathlib import Path
 from typing import Annotated, Literal
+
+import typer
 
 
 UTILS_HELP_GLYPHS: list[str] = [
@@ -58,11 +60,22 @@ def kill_process(
     _ = ProcessManager
 
 
-def upgrade_packages(root: Annotated[str, typer.Argument(help="Root directory of the project")] = ".") -> None:
+def upgrade_packages(
+    root: Annotated[str, typer.Argument(help="Root directory of the project")] = ".",
+    clean_group: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--clean-group",
+            "-c",
+            help="Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups.",
+        ),
+    ] = None,
+) -> None:
     """↑ Upgrade project dependencies."""
-    from machineconfig.utils.upgrade_packages import generate_uv_add_commands
-    from pathlib import Path
+    from machineconfig.utils.upgrade_packages import clean_dependency_groups, generate_uv_add_commands
     root_resolved = Path(root).expanduser().absolute().resolve()
+    if clean_group:
+        clean_dependency_groups(project_root=root_resolved, group_names=clean_group)
     generate_uv_add_commands(pyproject_path=root_resolved / "pyproject.toml", output_path=root_resolved / "pyproject_init.sh")
 
 
