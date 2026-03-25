@@ -2,8 +2,54 @@
 """Devops Devapps Install
 """
 
+import json
+from typing import Annotated, Literal, TypedDict
+
 import typer
-from typing import Annotated
+
+from machineconfig.utils.schemas.installer.installer_types import InstallerData
+
+
+class InteractiveGroupPreview(TypedDict):
+    type: Literal["package_group"]
+    groupName: str
+    apps: list[str]
+
+
+def _render_preview_json(value: InstallerData | InteractiveGroupPreview) -> str:
+    return json.dumps(value, indent=2, ensure_ascii=False)
+
+
+def _build_installer_option_to_data(installers: list[InstallerData]) -> dict[str, InstallerData]:
+    from machineconfig.utils.installer_utils.installer_class import Installer
+
+    installer_option_to_data: dict[str, InstallerData] = {}
+    for installer_data in installers:
+        option_label = Installer(installer_data=installer_data).get_description()
+        if option_label in installer_option_to_data:
+            raise ValueError(f"Duplicate installer option label: {option_label}")
+        installer_option_to_data[option_label] = installer_data
+    return installer_option_to_data
+
+
+def _build_interactive_option_previews(
+    category_display_to_name: dict[str, str], installer_option_to_data: dict[str, InstallerData]
+) -> dict[str, str]:
+    from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
+
+    option_previews: dict[str, str] = {}
+    for display_label, group_name in category_display_to_name.items():
+        group_name_typed: PACKAGE_NAME = next(package_name for package_name in PACKAGE_GROUP2NAMES if package_name == group_name)
+        option_previews[display_label] = _render_preview_json(
+            InteractiveGroupPreview(
+                type="package_group",
+                groupName=group_name_typed,
+                apps=list(PACKAGE_GROUP2NAMES[group_name_typed]),
+            )
+        )
+    for option_label, installer_data in installer_option_to_data.items():
+        option_previews[option_label] = _render_preview_json(installer_data)
+    return option_previews
 
 
 def main_installer_cli(
@@ -51,34 +97,54 @@ def main_installer_cli(
     raise typer.Exit(1)
 
 
-def install_interactively():
+def install_interactively() -> None:
     from machineconfig.utils.options import choose_from_options
+    from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
+    from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
     from machineconfig.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from machineconfig.utils.installer_utils.installer_runner import get_installers
     from machineconfig.utils.installer_utils.installer_class import Installer
     from machineconfig.utils.installer_utils.installer_helper import get_group_name_to_repr
     from rich.console import Console
     from rich.panel import Panel
-    # from rich.table import Table
+
     installers = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
-    installer_options = [Installer(installer_data=x).get_description() for x in installers]
+    installer_option_to_data = _build_installer_option_to_data(installers)
     category_display_to_name = get_group_name_to_repr()
-    options = list(category_display_to_name.keys()) + installer_options
-    program_names = choose_from_options(multi=True, msg="Categories are prefixed with 📦", options=options, header="🚀 CHOOSE DEV APP OR CATEGORY", tv=True)
+    options = list(category_display_to_name.keys()) + list(installer_option_to_data.keys())
+
+    if check_tool_exists("tv"):
+        option_previews = _build_interactive_option_previews(
+            category_display_to_name=category_display_to_name,
+            installer_option_to_data=installer_option_to_data,
+        )
+        program_names = choose_from_dict_with_preview(
+            options_to_preview_mapping=option_previews,
+            extension="json",
+            multi=True,
+            preview_size_percent=55.0,
+        )
+    else:
+        program_names = choose_from_options(
+            multi=True,
+            msg="Categories are prefixed with 📦",
+            options=options,
+            header="🚀 CHOOSE DEV APP OR CATEGORY",
+            tv=True,
+        )
+
     if program_names is None or len(program_names) == 0:
-        from rich.console import Console
-        from rich.panel import Panel
         Console().print(Panel("❓ Selection cancelled. Nothing to install.", title="Cancelled", border_style="yellow"))
         return
+
     installation_messages: list[str] = []
-    for _an_idx, a_program_name in enumerate(program_names):
+    for a_program_name in program_names:
         if a_program_name.startswith("📦 "):
             category_name = category_display_to_name.get(a_program_name)
             if category_name:
                 install_group(package_group=category_name)
         else:
-            installer_idx = installer_options.index(a_program_name)
-            an_installer_data = installers[installer_idx]
+            an_installer_data = installer_option_to_data[a_program_name]
             status_message = Installer(an_installer_data).install_robust(version=None)  # finish the task - this returns a status message, not a command
             installation_messages.append(status_message)
     if installation_messages:
@@ -88,7 +154,7 @@ def install_interactively():
         console.print(panel)
 
 
-def install_group(package_group: str):
+def install_group(package_group: str) -> None:
     from machineconfig.utils.installer_utils.installer_runner import get_installers, install_bulk
     from machineconfig.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from rich.console import Console
@@ -107,7 +173,7 @@ def install_group(package_group: str):
     console.print(f"❌ ERROR: Unknown package group: {package_group}. Available groups are: {list(PACKAGE_GROUP2NAMES.keys())}")
 
 
-def install_clis(clis_names: list[str]):
+def install_clis(clis_names: list[str]) -> None:
     from machineconfig.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from machineconfig.utils.installer_utils.installer_runner import get_installers
     from machineconfig.utils.installer_utils.installer_class import Installer
