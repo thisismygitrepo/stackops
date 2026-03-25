@@ -12854,7 +12854,7 @@
           {
             "kind": "command",
             "name": "ask",
-            "help": "Ask codex directly via codex exec.",
+            "help": "Ask a selected agent directly.",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
               "module": "machineconfig.scripts.python.agents",
@@ -12863,61 +12863,100 @@
             "signature": {
               "raw_lines": [
                 "def ask(",
-                "    reasoning: Annotated[ReasoningShortcut, typer.Argument(help=reasoning_help(agent=\"codex\"))],",
                 "    prompt: Annotated[",
                 "        list[str],",
-                "        typer.Argument(help=\"Prompt text to pass to codex, or a prompt file path when --file-prompt is set\"),",
+                "        typer.Argument(help=\"Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set\"),",
                 "    ],",
+                "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to ask directly.\")] = \"codex\",",
+                "    reasoning: Annotated[",
+                "        ReasoningShortcut | None,",
+                "        typer.Option(\"--reasoning\", \"-r\", help=_ASK_REASONING_HELP),",
+                "    ] = None,",
                 "    file_prompt: Annotated[",
                 "        bool,",
-                "        typer.Option(\"--file-prompt\", \"-f\", help=\"Treat PROMPT as a file path and pass its contents to codex via stdin\"),",
+                "        typer.Option(\"--file-prompt\", \"-f\", help=\"Treat PROMPT as a file path and pass its contents to the selected agent\"),",
                 "    ] = False,",
                 ") -> None:",
-                "    \"\"\"Ask codex directly via codex exec.\"\"\"",
-                "    reasoning_effort = resolve_reasoning(shortcut=reasoning, agent=\"codex\")",
+                "    \"\"\"Ask a selected agent directly.\"\"\"",
+                "    reasoning_shortcut, prompt_parts = _split_legacy_ask_reasoning(agent=agent, reasoning=reasoning, prompt_parts=prompt)",
+                "    reasoning_effort = _resolve_ask_reasoning(agent=agent, reasoning=reasoning_shortcut)",
                 "    if file_prompt:",
-                "        prompt_path = _resolve_prompt_path(prompt_parts=prompt)",
-                "        return_code = run_command_with_prompt_file(",
-                "            command=build_file_prompt_command(reasoning_effort=reasoning_effort),",
-                "            prompt_path=prompt_path,",
-                "        )",
+                "        prompt_path = _resolve_prompt_path(prompt_parts=prompt_parts)",
+                "        try:",
+                "            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))",
+                "        except ValueError as error:",
+                "            raise typer.BadParameter(str(error)) from error",
                 "        raise typer.Exit(code=return_code)",
                 "",
-                "    prompt_text = _join_prompt_parts(prompt_parts=prompt)",
-                "    return_code = run_command(",
-                "        command=build_prompt_command(reasoning_effort=reasoning_effort, prompt=prompt_text)",
-                "    )",
+                "    prompt_text = _join_prompt_parts(prompt_parts=prompt_parts)",
+                "    prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)",
+                "    try:",
+                "        try:",
+                "            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))",
+                "        except ValueError as error:",
+                "            raise typer.BadParameter(str(error)) from error",
+                "    finally:",
+                "        prompt_path.unlink(missing_ok=True)",
                 "    raise typer.Exit(code=return_code)"
               ],
               "name": "ask",
               "parameters": [
-                {
-                  "name": "reasoning",
-                  "kind": "positional_or_keyword",
-                  "type": "ReasoningShortcut",
-                  "default": null,
-                  "required": true,
-                  "annotation_raw": "Annotated[ReasoningShortcut, typer.Argument(help=reasoning_help(agent='codex'))]",
-                  "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": []
-                  }
-                },
                 {
                   "name": "prompt",
                   "kind": "positional_or_keyword",
                   "type": "list[str]",
                   "default": null,
                   "required": true,
-                  "annotation_raw": "Annotated[list[str], typer.Argument(help='Prompt text to pass to codex, or a prompt file path when --file-prompt is set')]",
+                  "annotation_raw": "Annotated[list[str], typer.Argument(help='Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Prompt text to pass to codex, or a prompt file path when --file-prompt is set"
+                    "help": "Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set"
+                  }
+                },
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "AGENTS",
+                  "default": "codex",
+                  "required": false,
+                  "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent to ask directly.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Agent to ask directly."
+                  }
+                },
+                {
+                  "name": "reasoning",
+                  "kind": "positional_or_keyword",
+                  "type": "ReasoningShortcut | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[ReasoningShortcut | None, typer.Option('--reasoning', '-r', help=_ASK_REASONING_HELP)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--reasoning",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--reasoning"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ]
                   }
                 },
                 {
@@ -12926,7 +12965,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--file-prompt', '-f', help='Treat PROMPT as a file path and pass its contents to codex via stdin')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--file-prompt', '-f', help='Treat PROMPT as a file path and pass its contents to the selected agent')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -12939,17 +12978,17 @@
                     "short_flags": [
                       "-f"
                     ],
-                    "help": "Treat PROMPT as a file path and pass its contents to codex via stdin"
+                    "help": "Treat PROMPT as a file path and pass its contents to the selected agent"
                   }
                 }
               ],
               "return": "None"
             },
-            "short_help": "<a> Ask codex directly via codex exec",
+            "short_help": "<a> Ask a selected agent directly",
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Ask codex directly via codex exec.",
+            "doc": "Ask a selected agent directly.",
             "aliases": [
               {
                 "name": "a",

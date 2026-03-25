@@ -198,7 +198,30 @@ devops config [SUBCOMMAND] [ARGS]...
 
 Manage application configurations, dotfiles, and settings.
 
-Shell profile setup and shell theme commands are grouped under `devops config shell ...`.
+Current `devops config --help` exposes:
+
+| Command | Description |
+|---------|-------------|
+| `sync` | Sync dotfiles |
+| `register` | Register dotfiles against `mapper.toml` |
+| `edit` | Open the dotfiles mapper |
+| `export-dotfiles` | Export dotfiles for migration |
+| `import-dotfiles` | Import a dotfiles archive |
+| `copy-assets` | Copy packaged assets to the local machine |
+| `dump` | Dump example configuration files |
+| `terminal` | Terminal profile and terminal theme commands |
+
+Use `devops config terminal --help` for shell profile setup and theme commands.
+The nested help screens render `Usage: devops terminal ...`, but the entrypoint remains `devops config terminal ...`.
+
+Current `devops config terminal --help` exposes:
+
+- `config-shell`
+- `starship-theme`
+- `pwsh-theme`
+- `wezterm-theme`
+- `ghostty-theme`
+- `windows-terminal-theme`
 
 ---
 
@@ -223,6 +246,25 @@ devops self [SUBCOMMAND] [ARGS]...
 ```
 
 Manage machineconfig itself - updates, configuration, etc.
+
+Current `devops self --help` exposes:
+
+| Command | Description |
+|---------|-------------|
+| `update` | Upgrade machineconfig |
+| `init` | Print or run init scripts |
+| `status` | Inspect the current machine configuration state |
+| `install` | Install machineconfig locally or run the interactive setup path |
+| `explore` | Inspect the CLI graph |
+| `readme` | Render the project README in the terminal |
+
+When `~/code/machineconfig` exists, `devops self` also exposes checkout-oriented commands:
+
+| Command | Description |
+|---------|-------------|
+| `buid-docker` | Build Docker images from the repo scripts |
+| `security` | Run security-related CLI tools |
+| `docs` | Serve the local docs preview, optionally with `--rebuild` |
 
 ### explore
 

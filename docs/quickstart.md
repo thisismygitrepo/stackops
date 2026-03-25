@@ -11,23 +11,25 @@ devops --help
 
 Use `mcfg` or `machineconfig` as umbrella entrypoints, then prefer the direct commands for routine work.
 
-## 2. Explore shell configuration
+## 2. Explore terminal configuration
 
 ```bash
-devops config shell
+devops config terminal --help
 ```
 
 To configure a shell profile directly, use the dedicated subcommand:
 
 ```bash
-devops config shell config-shell --which default
+devops config terminal config-shell --which default
 ```
 
-For the subgroup help and theme commands:
+If you want the Nushell profile instead:
 
 ```bash
-devops config shell --help
+devops config terminal config-shell --which nushell
 ```
+
+The nested help screens render `Usage: devops terminal ...`, but the full entrypoint is still `devops config terminal ...`.
 
 ## 3. Install tools
 

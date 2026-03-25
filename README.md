@@ -50,7 +50,8 @@ Machineconfig now exposes direct command families instead of a single old `mcfg 
 ```bash
 mcfg --help
 devops --help
-devops config shell
+devops config --help
+devops config terminal --help
 devops install --interactive
 devops config sync --help
 devops data sync --help

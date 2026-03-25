@@ -40,7 +40,7 @@ Use `mcfg` when you want a single compatibility command:
 
 ```bash
 mcfg devops --help
-mcfg devops config shell --help
+mcfg devops config terminal --help
 mcfg cloud --help
 mcfg sessions --help
 ```

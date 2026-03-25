@@ -19,7 +19,7 @@ Current top-level commands:
 | `make-todo` | Generate a markdown file listing Python files in the repo |
 | `make-symlinks` | Create symlinks to the current repo in `~/code_copies/` |
 | `run-prompt` | Run one prompt via a selected agent |
-| `ask` | Ask codex directly via `codex exec` |
+| `ask` | Ask a selected agent directly |
 | `add-skill` | Add a skill to an agent |
 
 ---
@@ -48,6 +48,14 @@ For `codex` runs, `run-prompt` also accepts explicit reasoning effort:
 
 ```bash
 agents r --agent codex --reasoning-effort high "inspect the repo"
+```
+
+For quick one-shot asks, `ask` now accepts `--agent` and optional `--reasoning`:
+
+```bash
+agents ask h "inspect the repo"
+agents ask --agent copilot --reasoning h "inspect the repo"
+agents ask --agent gemini "summarize the current module"
 ```
 
 ---

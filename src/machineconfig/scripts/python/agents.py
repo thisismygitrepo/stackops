@@ -2,19 +2,26 @@
 
 from collections.abc import Sequence
 from pathlib import Path
+from platform import system
+import shlex
 import subprocess
-from typing import Annotated, Literal, get_args
+from tempfile import NamedTemporaryFile
+from typing import Annotated, Final, Literal, cast, get_args
 
 import typer
 
 from machineconfig.scripts.python.agents_parallel import get_app as get_parallel_app
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from machineconfig.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
     ReasoningShortcut,
-    reasoning_help,
     resolve_reasoning,
 )
+
+_ASK_REASONING_AGENTS: Final[tuple[AGENTS, ...]] = ("codex", "copilot")
+_ASK_REASONING_SHORTCUTS: Final[tuple[str, ...]] = cast(tuple[str, ...], get_args(ReasoningShortcut))
+_ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex and copilot"
 
 
 def _join_prompt_parts(prompt_parts: Sequence[str]) -> str:
@@ -49,6 +56,33 @@ def build_file_prompt_command(reasoning_effort: ReasoningEffort) -> list[str]:
     return [*_build_exec_prefix(reasoning_effort=reasoning_effort), "-"]
 
 
+def _quote_for_shell(value: str, *, is_windows: bool) -> str:
+    if is_windows:
+        return "'" + value.replace("'", "''") + "'"
+    return shlex.quote(value)
+
+
+def _build_copilot_ask_command(prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
+    is_windows = system() == "Windows"
+    prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
+    if is_windows:
+        prompt_content_expr = f"(Get-Content -Raw {prompt_file_q})"
+    else:
+        prompt_content_expr = f'"$(cat {prompt_file_q})"'
+    reasoning_arg = ""
+    if reasoning_effort is not None:
+        reasoning_arg = f" --reasoning-effort {reasoning_effort}"
+    return f"copilot{reasoning_arg} -p {prompt_content_expr} --yolo"
+
+
+def build_ask_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
+    if reasoning_effort is not None and agent not in _ASK_REASONING_AGENTS:
+        raise ValueError("--reasoning is only supported for --agent codex or --agent copilot")
+    if agent == "copilot":
+        return _build_copilot_ask_command(prompt_file=prompt_file, reasoning_effort=reasoning_effort)
+    return build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
+
+
 def _run_subprocess(command: Sequence[str], stdin_text: str | None) -> int:
     try:
         completed_process = subprocess.run(command, check=False, input=stdin_text, text=stdin_text is not None)
@@ -64,6 +98,12 @@ def run_command(command: Sequence[str]) -> int:
     return _run_subprocess(command=command, stdin_text=None)
 
 
+def run_shell_command(command_line: str) -> int:
+    if system() == "Windows":
+        return _run_subprocess(command=["powershell", "-NoProfile", "-Command", command_line], stdin_text=None)
+    return _run_subprocess(command=["bash", "-lc", command_line], stdin_text=None)
+
+
 def run_command_with_prompt_file(command: Sequence[str], prompt_path: Path) -> int:
     try:
         return _run_subprocess(command=command, stdin_text=prompt_path.read_text(encoding="utf-8"))
@@ -71,6 +111,37 @@ def run_command_with_prompt_file(command: Sequence[str], prompt_path: Path) -> i
         strerror = error.strerror or "unknown error"
         typer.echo(f"""Failed to read prompt file {str(prompt_path)!r}: {strerror}""", err=True)
         return 1
+
+
+def _write_temporary_prompt_file(prompt_text: str) -> Path:
+    with NamedTemporaryFile("w", encoding="utf-8", suffix=".md", prefix="agents_ask_", delete=False) as prompt_file:
+        prompt_file.write(prompt_text)
+        return Path(prompt_file.name)
+
+
+def _split_legacy_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None, prompt_parts: Sequence[str]) -> tuple[ReasoningShortcut | None, list[str]]:
+    normalized_prompt_parts = list(prompt_parts)
+    if reasoning is not None:
+        return reasoning, normalized_prompt_parts
+    if agent not in _ASK_REASONING_AGENTS:
+        return None, normalized_prompt_parts
+    if len(normalized_prompt_parts) <= 1:
+        return None, normalized_prompt_parts
+    first_prompt_part = normalized_prompt_parts[0]
+    if first_prompt_part not in _ASK_REASONING_SHORTCUTS:
+        return None, normalized_prompt_parts
+    return cast(ReasoningShortcut, first_prompt_part), normalized_prompt_parts[1:]
+
+
+def _resolve_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None) -> ReasoningEffort | None:
+    if reasoning is None:
+        return None
+    if agent not in _ASK_REASONING_AGENTS:
+        raise typer.BadParameter("--reasoning is only supported for --agent codex or --agent copilot")
+    try:
+        return resolve_reasoning(shortcut=reasoning, agent=agent)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
 
 
 def init_config(
@@ -225,30 +296,40 @@ def run_prompt(
 
 
 def ask(
-    reasoning: Annotated[ReasoningShortcut, typer.Argument(help=reasoning_help(agent="codex"))],
     prompt: Annotated[
         list[str],
-        typer.Argument(help="Prompt text to pass to codex, or a prompt file path when --file-prompt is set"),
+        typer.Argument(help="Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set"),
     ],
+    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = "codex",
+    reasoning: Annotated[
+        ReasoningShortcut | None,
+        typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP),
+    ] = None,
     file_prompt: Annotated[
         bool,
-        typer.Option("--file-prompt", "-f", help="Treat PROMPT as a file path and pass its contents to codex via stdin"),
+        typer.Option("--file-prompt", "-f", help="Treat PROMPT as a file path and pass its contents to the selected agent"),
     ] = False,
 ) -> None:
-    """Ask codex directly via codex exec."""
-    reasoning_effort = resolve_reasoning(shortcut=reasoning, agent="codex")
+    """Ask a selected agent directly."""
+    reasoning_shortcut, prompt_parts = _split_legacy_ask_reasoning(agent=agent, reasoning=reasoning, prompt_parts=prompt)
+    reasoning_effort = _resolve_ask_reasoning(agent=agent, reasoning=reasoning_shortcut)
     if file_prompt:
-        prompt_path = _resolve_prompt_path(prompt_parts=prompt)
-        return_code = run_command_with_prompt_file(
-            command=build_file_prompt_command(reasoning_effort=reasoning_effort),
-            prompt_path=prompt_path,
-        )
+        prompt_path = _resolve_prompt_path(prompt_parts=prompt_parts)
+        try:
+            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
         raise typer.Exit(code=return_code)
 
-    prompt_text = _join_prompt_parts(prompt_parts=prompt)
-    return_code = run_command(
-        command=build_prompt_command(reasoning_effort=reasoning_effort, prompt=prompt_text)
-    )
+    prompt_text = _join_prompt_parts(prompt_parts=prompt_parts)
+    prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)
+    try:
+        try:
+            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
+    finally:
+        prompt_path.unlink(missing_ok=True)
     raise typer.Exit(code=return_code)
 
 
@@ -305,7 +386,7 @@ def get_app() -> typer.Typer:
     agents_app.command(name="l", no_args_is_help=True, hidden=True)(create_symlink_command)
     agents_app.command(name="run-prompt", no_args_is_help=True, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=True, hidden=True)(run_prompt)
-    agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask codex directly via codex exec")(ask)
+    agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
     agents_app.command(name="add-skill", no_args_is_help=True, short_help="<s> Add a skill to an agent")(add_skill)
     agents_app.command(name="s", no_args_is_help=True, hidden=True)(add_skill)

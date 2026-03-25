@@ -22,15 +22,17 @@ devops config --help
 
 ---
 
-## Shell configuration
+## Terminal configuration
 
-Shell-specific commands now live under a dedicated subgroup:
+Terminal-profile and terminal-theme commands now live under a dedicated subgroup:
 
 ```bash
-devops config shell --help
+devops config terminal --help
 ```
 
-Running `devops config shell` shows the shell subgroup help. Use `devops config shell config-shell --which default` or `devops config shell config-shell --which nushell` if you want to invoke the shell-profile setup action directly.
+Use `devops config terminal config-shell --which default` or `devops config terminal config-shell --which nushell` to invoke the shell-profile setup action directly.
+
+The nested help screen renders `Usage: devops terminal ...`, but the full entrypoint remains `devops config terminal ...`.
 
 ---
 
@@ -61,14 +63,13 @@ Current `devops config --help` lists subcommands for:
 - `edit`
 - `export-dotfiles`
 - `import-dotfiles`
-- `shell`
 - `copy-assets`
 - `dump`
+- `terminal`
 
-Inside `devops config shell --help`, the current shell commands are:
+Inside `devops config terminal --help`, the current terminal commands are:
 
 - `config-shell`
-
 - `starship-theme`
 - `pwsh-theme`
 - `wezterm-theme`

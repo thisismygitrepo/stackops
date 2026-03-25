@@ -9,8 +9,8 @@ devops install --group sysabc
 # configs
 devops config copy-assets both
 devops config sync --sensitivity public --method copy --on-conflict overwrite-default-path --which all
-devops config shell
-devops config shell --which nushell
+devops config terminal config-shell --which default
+devops config terminal config-shell --which nushell
 
 devops install --group termabc 
 wt  # start Windows Terminal to pick up config changes

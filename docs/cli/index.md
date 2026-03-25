@@ -51,7 +51,7 @@ Use `--help` on the direct command you want to explore:
 ```bash
 devops --help
 devops install --help
-devops config shell --help
+devops config terminal --help
 devops config sync --help
 devops data sync --help
 cloud --help
