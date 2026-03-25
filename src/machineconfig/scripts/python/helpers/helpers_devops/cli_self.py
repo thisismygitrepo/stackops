@@ -289,12 +289,11 @@ def get_app() -> typer.Typer:
         cli_app.command(name="d", no_args_is_help=False, help="Build docker images (wraps jobs/shell/docker_build_and_publish.sh)", hidden=True)(
             buid_docker
         )
-
         cli_app.command(name="security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
         cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
+        cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
+        cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)
 
     cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
     cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)
-    cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
-    cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)
     return cli_app

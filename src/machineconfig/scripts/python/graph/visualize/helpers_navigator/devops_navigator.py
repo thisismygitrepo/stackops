@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "machineconfig>=8.84",
+#     "machineconfig>=8.85",
 #     "textual",
 # ]
 # ///
