@@ -84,6 +84,9 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
           - '.github/workflows/docs.yml'
       workflow_dispatch:
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
     permissions:
       contents: read
       pages: write
@@ -97,18 +100,18 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
       build:
         runs-on: ubuntu-latest
         steps:
-          - uses: actions/checkout@v4
+          - uses: actions/checkout@v5
 
           - name: Setup Python
-            uses: actions/setup-python@v5
+            uses: actions/setup-python@v6
             with:
               python-version: '3.13'
 
           - name: Install uv
-            uses: astral-sh/setup-uv@v4
+            uses: astral-sh/setup-uv@v7
 
           - name: Configure GitHub Pages
-            uses: actions/configure-pages@v5
+            uses: actions/configure-pages@v6
 
           - name: Install dependencies
             run: uv sync --group dev
@@ -116,10 +119,24 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
           - name: Build site
             run: rm -rf site && uv run zensical build
 
+          - name: Archive Pages artifact
+            run: |
+              tar \
+                --dereference --hard-dereference \
+                --directory site \
+                -cvf "${RUNNER_TEMP}/github-pages.tar" \
+                --exclude=.git \
+                --exclude=.github \
+                --exclude=".[^/]*" \
+                .
+
           - name: Upload Pages artifact
-            uses: actions/upload-pages-artifact@v3
+            uses: actions/upload-artifact@v7
             with:
-              path: site
+              name: github-pages
+              path: ${{ runner.temp }}/github-pages.tar
+              retention-days: 1
+              if-no-files-found: error
 
       deploy:
         runs-on: ubuntu-latest
@@ -129,8 +146,10 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
           url: ${{ steps.deployment.outputs.page_url }}
         steps:
           - id: deployment
-            uses: actions/deploy-pages@v4
+            uses: actions/deploy-pages@v5
     ```
+
+    This workflow intentionally archives `site/` and uploads `github-pages.tar` with `actions/upload-artifact@v7` instead of `actions/upload-pages-artifact`, because the GitHub Pages composite uploader still embeds a Node.js 20 artifact action.
 
 **Enable GitHub Pages**:
 
