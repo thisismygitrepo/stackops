@@ -143,3 +143,17 @@ html {
 .md-version {
   border-radius: 0.375rem;
 }
+
+/* Embedded Plotly previews */
+.md-typeset .plotly-preview-frame {
+  display: block;
+  width: 100%;
+  min-height: 720px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .plotly-preview-frame {
+  border-color: rgba(255, 255, 255, 0.12);
+}

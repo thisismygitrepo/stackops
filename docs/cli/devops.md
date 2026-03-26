@@ -378,7 +378,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     devops self explore sunburst --output ./sunburst.html --max-depth 3
     ```
 
-    Interactive HTML result: [sunburst.xhtml](../assets/devops-self-explore/sunburst.xhtml)
+    Interactive HTML result: [sunburst.html](../assets/devops-self-explore/sunburst.html)
 
     #### `treemap`
 
@@ -386,7 +386,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     devops self explore treemap --output ./treemap.html --max-depth 3
     ```
 
-    Interactive HTML result: [treemap.xhtml](../assets/devops-self-explore/treemap.xhtml)
+    Interactive HTML result: [treemap.html](../assets/devops-self-explore/treemap.html)
 
     #### `icicle`
 
@@ -394,7 +394,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     devops self explore icicle --output ./icicle.html --max-depth 3
     ```
 
-    Interactive HTML result: [icicle.xhtml](../assets/devops-self-explore/icicle.xhtml)
+    Interactive HTML result: [icicle.html](../assets/devops-self-explore/icicle.html)
 
     #### `tui`
 
@@ -410,6 +410,129 @@ Current self-management commands also expose the CLI graph explorer through `dev
     - `b` to build a command with arguments
     - `?` to open the in-app help
     - `q` to quit
+
+=== "Outcome Previews"
+
+    Static previews below were generated from the current repo. The Plotly views use `--output ...svg` here so the docs can render them inline while the linked XHTML files remain interactive.
+
+    #### `search`
+
+    ```bash
+    devops self explore search
+    ```
+
+    `search` is interactive, so the exact result depends on the selected entry. Choosing `tree` currently shows:
+
+    ```json
+    {
+      "kind": "command",
+      "name": "tree",
+      "help": "🌳 <t> Render a rich tree view in the terminal.",
+      "source": {
+        "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
+        "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
+        "callable": "tree"
+      }
+    }
+    ```
+
+    #### `tree`
+
+    ```bash
+    devops self explore tree --max-depth 2
+    ```
+
+    ```text
+    mcfg - MachineConfig CLI - Manage your machine configurations and workflows
+    ├── devops - 🔧 DevOps operations
+    │   ├── install - 🔧 <i> Install essential packages
+    │   ├── repos - 📁 <r> Manage development repositories
+    │   ├── config - 🧰 <c> configuration subcommands
+    │   ├── data - 🗄 <d> Backup and retrieve configuration files and directories to/from cloud storage using rclone.
+    │   ├── self - 🔄 <s> self operations subcommands
+    │   ├── network - 🔐 <n> Network subcommands
+    │   └── execute - 🚀 <e> Execute python/shell scripts from pre-defined directories or as command
+    ├── cloud - ☁ Cloud management commands
+    ├── sessions - Layouts management subcommands
+    ├── agents - 🤖 AI Agents management subcommands
+    ├── utils - ⚙ utilities operations
+    ├── fire - <f> Fire and manage jobs
+    └── croshell - <r> Cross-shell command execution
+    ```
+
+    #### `dot`
+
+    ```bash
+    devops self explore dot --max-depth 2
+    ```
+
+    ```dot
+    digraph cli_graph {
+      graph [rankdir=LR, splines=true, bgcolor="white"];
+      node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, color="#333333"];
+      edge [color="#999999"];
+      "mcfg" [label="mcfg\nMachineConfig CLI - Manage your machine configurations and workflows", shape="doubleoctagon", fillcolor="#f1f1f1", color="#555555"];
+      "mcfg devops" [label="devops\n🔧 DevOps operations", shape="box", fillcolor="#dbeafe", color="#2563eb"];
+      "mcfg" -> "mcfg devops";
+      "mcfg devops self" [label="self\n🔄 <s> self operations subcommands", shape="box", fillcolor="#dbeafe", color="#2563eb"];
+      "mcfg devops" -> "mcfg devops self";
+    }
+    ```
+
+    #### `sunburst`
+
+    ```bash
+    devops self explore sunburst --output docs/assets/devops-self-explore/sunburst.html --max-depth 3 --template plotly_white
+    ```
+
+    <iframe
+      class="plotly-preview-frame"
+      src="../assets/devops-self-explore/sunburst.html"
+      title="Interactive sunburst preview"
+      loading="lazy"
+    ></iframe>
+
+    Standalone HTML result: [sunburst.html](../assets/devops-self-explore/sunburst.html)
+
+    #### `treemap`
+
+    ```bash
+    devops self explore treemap --output docs/assets/devops-self-explore/treemap.html --max-depth 3 --template plotly_white
+    ```
+
+    <iframe
+      class="plotly-preview-frame"
+      src="../assets/devops-self-explore/treemap.html"
+      title="Interactive treemap preview"
+      loading="lazy"
+    ></iframe>
+
+    Standalone HTML result: [treemap.html](../assets/devops-self-explore/treemap.html)
+
+    #### `icicle`
+
+    ```bash
+    devops self explore icicle --output docs/assets/devops-self-explore/icicle.html --max-depth 3 --template plotly_white
+    ```
+
+    <iframe
+      class="plotly-preview-frame"
+      src="../assets/devops-self-explore/icicle.html"
+      title="Interactive icicle preview"
+      loading="lazy"
+    ></iframe>
+
+    Standalone HTML result: [icicle.html](../assets/devops-self-explore/icicle.html)
+
+    #### `tui`
+
+    ```bash
+    devops self explore tui
+    ```
+
+    ![TUI preview](../assets/devops-self-explore/tui.svg){ width="100%" }
+
+    `tui` launches the full-screen navigator shown above. The live app then lets you search, inspect command details, copy a command, run it, or build one with arguments.
 
 ---
 
