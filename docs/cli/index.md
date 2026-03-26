@@ -10,12 +10,12 @@ These commands are defined in `pyproject.toml` and reflected in the current CLI 
 
 | Command | Purpose |
 |---------|---------|
-| `devops` | Package installation, configuration, data, repo, network, and self-management workflows |
+| [`devops`](devops.md) | Package installation, configuration, data, repo, network, and self-management workflows |
 | [`sessions`](sessions.md) | Session and layout management |
 | [`agents`](agents.md) | AI agent utilities |
 | [`utils`](utils.md) | General-purpose utilities |
 | `croshell` | Cross-shell execution helper |
-| `msearch` | Search helper entrypoint |
+| [`msearch`](msearch.md) | Search helper entrypoint |
 | [`fire`](fire.md) | Fire job runner |
 | [`cloud`](cloud.md) | Cloud sync, copy, mount, and FTP-over-SSH helpers |
 

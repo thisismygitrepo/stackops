@@ -157,3 +157,7 @@ html {
 [data-md-color-scheme="slate"] .md-typeset .plotly-preview-frame {
   border-color: rgba(255, 255, 255, 0.12);
 }
+
+.md-content__inner:has(.plotly-preview-frame--wide) {
+  max-width: 78rem;
+}
