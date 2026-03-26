@@ -719,7 +719,7 @@
                     "",
                     "    from machineconfig.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.84\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.85\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1714,7 +1714,7 @@
                     "    # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.84\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.85\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -3912,7 +3912,7 @@
                   "raw_lines": [
                     "def init(",
                     "    which: Annotated[",
-                    "        Literal[\"init\", \"ia\", \"live\", \"wrap\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
+                    "        Literal[\"init\", \"ia\", \"live\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
                     "    ] = \"init\",",
                     "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
                     ") -> None:",
@@ -3923,7 +3923,6 @@
                     "        match which:",
                     "            case \"init\":",
                     "                import machineconfig.settings as module",
-                    "",
                     "                if platform.system() == \"Darwin\":",
                     "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"zsh\", \"init.sh\")",
                     "                else:",
@@ -3945,16 +3944,13 @@
                     "        match which:",
                     "            case \"init\":",
                     "                import machineconfig.settings as module",
-                    "",
-                    "                init_path = Path(module.__file__).parent.joinpath(\"shells\", \"powershell\", \"init.ps1\")",
+                    "                init_path = Path(module.__file__).parent.joinpath(\"shells\", \"pwsh\", \"init.ps1\")",
                     "                script = init_path.read_text(encoding=\"utf-8\")",
                     "            case \"ia\":",
                     "                from machineconfig.setup_windows import INTERACTIVE as script_path",
-                    "",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case \"live\":",
                     "                from machineconfig.setup_windows import LIVE as script_path",
-                    "",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case _:",
                     "                typer.echo(\"Unsupported shell script for Windows.\")",
@@ -3976,10 +3972,10 @@
                     {
                       "name": "which",
                       "kind": "positional_or_keyword",
-                      "type": "Literal['init', 'ia', 'live', 'wrap']",
+                      "type": "Literal['init', 'ia', 'live']",
                       "default": "init",
                       "required": false,
-                      "annotation_raw": "Annotated[Literal['init', 'ia', 'live', 'wrap'], typer.Argument(..., help='Comma-separated list of script names to run all initialization scripts.')]",
+                      "annotation_raw": "Annotated[Literal['init', 'ia', 'live'], typer.Argument(..., help='Comma-separated list of script names to run all initialization scripts.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
@@ -5455,6 +5451,9 @@
                       ],
                       "return": "None"
                     },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
                     "aliases": [
                       {
                         "name": "s",
@@ -5500,6 +5499,9 @@
                         }
                       ],
                       "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
                     },
                     "aliases": [
                       {
@@ -5550,6 +5552,9 @@
                       ],
                       "return": "None"
                     },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
                     "aliases": [
                       {
                         "name": "u",
@@ -5596,6 +5601,9 @@
                       ],
                       "return": "None"
                     },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
                     "aliases": [
                       {
                         "name": "d",
@@ -5640,6 +5648,9 @@
                         }
                       ],
                       "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
                     },
                     "aliases": [
                       {
@@ -5701,6 +5712,9 @@
                         }
                       ],
                       "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
                     },
                     "aliases": [
                       {
@@ -5859,6 +5873,9 @@
                       ],
                       "return": "None"
                     },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
                     "aliases": [
                       {
                         "name": "r",
@@ -5880,50 +5897,6 @@
                     "name": "y",
                     "hidden": true,
                     "help": "🔐 <y> Security related CLI tools."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "readme",
-                "help": "📚 <r> render readme markdown in terminal.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
-                  "callable": "readme"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def readme() -> None:",
-                    "    from rich.console import Console",
-                    "    from rich.markdown import Markdown",
-                    "    import requests",
-                    "",
-                    "    # URL of the raw README.md file",
-                    "    url_readme = \"https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md\"",
-                    "",
-                    "    # Fetch the content",
-                    "    response = requests.get(url_readme, timeout=10)",
-                    "    response.raise_for_status()  # Raise an error for bad responses",
-                    "",
-                    "    # Parse markdown",
-                    "    md = Markdown(response.text)",
-                    "",
-                    "    # Render in terminal",
-                    "    console = Console()",
-                    "    console.print(md)"
-                  ],
-                  "name": "readme",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "aliases": [
-                  {
-                    "name": "r",
-                    "hidden": true
                   }
                 ]
               },
@@ -5980,6 +5953,50 @@
                 "aliases": [
                   {
                     "name": "o",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "readme",
+                "help": "📚 <r> render readme markdown in terminal.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "readme"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def readme() -> None:",
+                    "    from rich.console import Console",
+                    "    from rich.markdown import Markdown",
+                    "    import requests",
+                    "",
+                    "    # URL of the raw README.md file",
+                    "    url_readme = \"https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md\"",
+                    "",
+                    "    # Fetch the content",
+                    "    response = requests.get(url_readme, timeout=10)",
+                    "    response.raise_for_status()  # Raise an error for bad responses",
+                    "",
+                    "    # Parse markdown",
+                    "    md = Markdown(response.text)",
+                    "",
+                    "    # Render in terminal",
+                    "    console = Console()",
+                    "    console.print(md)"
+                  ],
+                  "name": "readme",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "r",
                     "hidden": true
                   }
                 ]
@@ -11275,7 +11292,7 @@
                     "    context_path: Annotated[",
                     "        str | None, typer.Option(..., \"--context-path\", \"-C\", help=\"Path to the context file/folder, defaults to .ai/todo/\")",
                     "    ] = None,",
-                    "    separator: Annotated[str, typer.Option(..., \"--separator\", \"-s\", help=\"Separator for context\")] = DEFAULT_SEAPRATOR,",
+                    "    separator: Annotated[str, typer.Option(..., \"--separator\", \"-s\", help=\"Separator for context. Supports escaped values like '\\\\n'.\")] = DEFAULT_SEAPRATOR,",
                     "    agent_load: Annotated[int, typer.Option(..., \"--agent-load\", \"-l\", help=\"Number of tasks per prompt\")] = 3,",
                     "    prompt: Annotated[str | None, typer.Option(..., \"--prompt\", \"-p\", help=\"Prompt prefix as string\")] = None,",
                     "    prompt_path: Annotated[str | None, typer.Option(..., \"--prompt-path\", \"-P\", help=\"Path to prompt file\")] = None,",
@@ -11296,6 +11313,7 @@
                     "    from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl",
                     "",
                     "    try:",
+                    "        normalized_separator = _decode_separator(separator=separator)",
                     "        impl(",
                     "            agent=agent,",
                     "            host=host,",
@@ -11304,7 +11322,7 @@
                     "            provider=provider,",
                     "            context=context,",
                     "            context_path=context_path,",
-                    "            separator=separator,",
+                    "            separator=normalized_separator,",
                     "            agent_load=agent_load,",
                     "            prompt=prompt,",
                     "            prompt_path=prompt_path,",
@@ -11488,7 +11506,7 @@
                       "type": "str",
                       "default": "DEFAULT_SEAPRATOR",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--separator', '-s', help='Separator for context')]",
+                      "annotation_raw": "Annotated[str, typer.Option(..., '--separator', '-s', help=\"Separator for context. Supports escaped values like '\\\\n'.\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -11501,7 +11519,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Separator for context",
+                        "help": "Separator for context. Supports escaped values like '\\n'.",
                         "default": "..."
                       }
                     },
@@ -13540,11 +13558,22 @@
             },
             "signature": {
               "raw_lines": [
-                "def upgrade_packages(root: Annotated[str, typer.Argument(help=\"Root directory of the project\")] = \".\") -> None:",
+                "def upgrade_packages(",
+                "    root: Annotated[str, typer.Argument(help=\"Root directory of the project\")] = \".\",",
+                "    clean_group: Annotated[",
+                "        list[str] | None,",
+                "        typer.Option(",
+                "            \"--clean-group\",",
+                "            \"-c\",",
+                "            help=\"Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups.\",",
+                "        ),",
+                "    ] = None,",
+                ") -> None:",
                 "    \"\"\"↑ Upgrade project dependencies.\"\"\"",
-                "    from machineconfig.utils.upgrade_packages import generate_uv_add_commands",
-                "    from pathlib import Path",
+                "    from machineconfig.utils.upgrade_packages import clean_dependency_groups, generate_uv_add_commands",
                 "    root_resolved = Path(root).expanduser().absolute().resolve()",
+                "    if clean_group:",
+                "        clean_dependency_groups(project_root=root_resolved, group_names=clean_group)",
                 "    generate_uv_add_commands(pyproject_path=root_resolved / \"pyproject.toml\", output_path=root_resolved / \"pyproject_init.sh\")"
               ],
               "name": "upgrade_packages",
@@ -13562,6 +13591,28 @@
                     "long_flags": [],
                     "short_flags": [],
                     "help": "Root directory of the project"
+                  }
+                },
+                {
+                  "name": "clean_group",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--clean-group', '-c', help='Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--clean-group",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--clean-group"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups."
                   }
                 }
               ],

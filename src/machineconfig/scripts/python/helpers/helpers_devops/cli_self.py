@@ -14,7 +14,7 @@ def copy_both_assets() -> None:
 
 def init(
     which: Annotated[
-        Literal["init", "ia", "live", "wrap"], typer.Argument(..., help="Comma-separated list of script names to run all initialization scripts.")
+        Literal["init", "ia", "live"], typer.Argument(..., help="Comma-separated list of script names to run all initialization scripts.")
     ] = "init",
     run: Annotated[bool, typer.Option("--run/--no-run", "-r/-nr", help="Run the script after displaying it.")] = False,
 ) -> None:

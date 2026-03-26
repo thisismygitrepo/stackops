@@ -19,7 +19,7 @@ hide:
 [![License](https://img.shields.io/github/license/thisismygitrepo/machineconfig.svg)](https://github.com/thisismygitrepo/machineconfig/blob/main/LICENSE)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thisismygitrepo/machineconfig)](https://github.com/thisismygitrepo/machineconfig/commits)
 
-Machineconfig installs as both umbrella commands (`mcfg`, `machineconfig`) and direct entrypoints for each command family.
+Machineconfig offers a cli family to manage your digital life.
 
 [Install with uv](installation.md){ .md-button .md-button--primary }
 [Quickstart](quickstart.md){ .md-button }

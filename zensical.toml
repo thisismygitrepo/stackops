@@ -7,7 +7,7 @@ repo_name = "thisismygitrepo/machineconfig"
 repo_url = "https://github.com/thisismygitrepo/machineconfig"
 edit_uri = "edit/main/docs/"
 copyright = """
-Copyright &copy; 2024 Alex Al-Saffar
+Copyright &copy; 2026 Alex Al-Saffar
 """
 extra_css = ["stylesheets/extra.css"]
 nav = [
