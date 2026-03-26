@@ -1,6 +1,9 @@
 *.html
 *.htm
 *.xhtml
+!docs/assets/**/*.html
+!docs/assets/**/*.htm
+!docs/assets/**/*.xhtml
 .tmp
 .specify
 bin

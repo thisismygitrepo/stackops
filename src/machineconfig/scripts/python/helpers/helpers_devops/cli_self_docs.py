@@ -1,4 +1,7 @@
+from dataclasses import dataclass
+import json
 from pathlib import Path
+from typing import Literal
 
 import typer
 
@@ -7,6 +10,21 @@ DOCS_BIND_ADDRESS = "0.0.0.0"
 DOCS_PORT = 8000
 DOCS_SITE_PATH = "/machineconfig/"
 DOCS_CONFIG_FILE_NAME = "zensical.toml"
+CLI_GRAPH_RELATIVE_PATH = Path("src/machineconfig/scripts/python/graph/cli_graph.json")
+DOCS_ARTIFACT_TEMPLATE = "plotly_dark"
+
+
+@dataclass(frozen=True, slots=True)
+class DocsArtifactSpec:
+    view: Literal["sunburst", "treemap", "icicle"]
+    output_relative_path: Path
+
+
+DOCS_ARTIFACT_SPECS: tuple[DocsArtifactSpec, ...] = (
+    DocsArtifactSpec(view="sunburst", output_relative_path=Path("docs/assets/devops-self-explore/sunburst.html")),
+    DocsArtifactSpec(view="treemap", output_relative_path=Path("docs/assets/devops-self-explore/treemap.html")),
+    DocsArtifactSpec(view="icicle", output_relative_path=Path("docs/assets/devops-self-explore/icicle.html")),
+)
 
 
 def _build_docs_url(host: str) -> str:
@@ -56,7 +74,37 @@ def _print_docs_urls() -> None:
     _display_docs_url(_build_docs_url(lan_ipv4))
 
 
-def serve_docs(rebuild: bool) -> None:
+def _write_cli_graph_snapshot(repo_root: Path) -> Path:
+    from machineconfig.scripts.python.graph.generate_cli_graph import build_cli_graph
+
+    cli_graph_path = repo_root.joinpath(CLI_GRAPH_RELATIVE_PATH)
+    cli_graph_payload = build_cli_graph()
+    cli_graph_path.write_text(
+        json.dumps(cli_graph_payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    typer.echo(f"""Regenerated CLI graph snapshot: {cli_graph_path.relative_to(repo_root).as_posix()}""")
+    return cli_graph_path
+
+
+def create_docs_artifacts(repo_root: Path) -> list[Path]:
+    from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
+
+    _write_cli_graph_snapshot(repo_root=repo_root)
+    generated_paths: list[Path] = []
+    for artifact_spec in DOCS_ARTIFACT_SPECS:
+        output_path = repo_root.joinpath(artifact_spec.output_relative_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        render_plotly(
+            view=artifact_spec.view,
+            output=output_path,
+            template=DOCS_ARTIFACT_TEMPLATE,
+        )
+        generated_paths.append(output_path)
+    return generated_paths
+
+
+def serve_docs(rebuild: bool, create_artifacts: bool) -> None:
     import platform
 
     from machineconfig.utils.code import exit_then_run_shell_script, get_uv_command
@@ -65,6 +113,8 @@ def serve_docs(rebuild: bool) -> None:
     repo_root = get_docs_repo_root()
     _print_docs_urls()
     uv_command = get_uv_command(platform=platform.system()).strip()
+    if create_artifacts:
+        create_docs_artifacts(repo_root=repo_root)
     rebuild_command = ""
     if rebuild:
         sync_docs_changelog(repo_root=repo_root)

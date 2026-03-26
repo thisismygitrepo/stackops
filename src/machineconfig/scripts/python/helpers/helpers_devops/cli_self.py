@@ -251,11 +251,15 @@ def security(ctx: typer.Context) -> None:
 
 def docs(
     rebuild: Annotated[bool, typer.Option("--rebuild", "-b", help="Rebuild docs before starting the preview server.")] = False,
+    create_artifacts: Annotated[
+        bool,
+        typer.Option("--create-artifacts", help="Regenerate CLI graph docs artifacts before starting the preview server."),
+    ] = False,
 ) -> None:
     """📚 <o> Serve local docs with preview URLs."""
     from machineconfig.scripts.python.helpers.helpers_devops import cli_self_docs
 
-    cli_self_docs.serve_docs(rebuild=rebuild)
+    cli_self_docs.serve_docs(rebuild=rebuild, create_artifacts=create_artifacts)
 
 
 def get_app() -> typer.Typer:

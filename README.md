@@ -15,7 +15,7 @@ uv tool install --upgrade --python 3.13 machineconfig
 
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-uv tool install --upgrade --python 3.13 machineconfig
+uv tool install --upgrade --python 3.14 machineconfig
 ```
 
 ## Verify the install

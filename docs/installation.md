@@ -21,7 +21,7 @@ Machineconfig supports Python 3.13+ and is easiest to install with [uv](https://
 ### 2. Install Machineconfig
 
 ```bash
-uv tool install --upgrade --python 3.13 machineconfig
+uv tool install --upgrade --python 3.14 machineconfig
 ```
 
 ## Verify the CLI surface
