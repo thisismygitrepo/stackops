@@ -148,7 +148,7 @@ html {
 .md-typeset .plotly-preview-frame {
   display: block;
   width: 100%;
-  min-height: 720px;
+  height: 980px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 0.5rem;
   background: #fff;

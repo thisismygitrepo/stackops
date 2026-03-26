@@ -375,7 +375,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     #### `sunburst`
 
     ```bash
-    devops self explore sunburst --output ./sunburst.html --max-depth 3
+    devops self explore sunburst --output ./sunburst.html
     ```
 
     Interactive HTML result: [sunburst.html](../assets/devops-self-explore/sunburst.html)
@@ -383,7 +383,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     #### `treemap`
 
     ```bash
-    devops self explore treemap --output ./treemap.html --max-depth 3
+    devops self explore treemap --output ./treemap.html
     ```
 
     Interactive HTML result: [treemap.html](../assets/devops-self-explore/treemap.html)
@@ -391,7 +391,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     #### `icicle`
 
     ```bash
-    devops self explore icicle --output ./icicle.html --max-depth 3
+    devops self explore icicle --output ./icicle.html
     ```
 
     Interactive HTML result: [icicle.html](../assets/devops-self-explore/icicle.html)
@@ -413,7 +413,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
 
 === "Outcome Previews"
 
-    Static previews below were generated from the current repo. The Plotly views use `--output ...svg` here so the docs can render them inline while the linked XHTML files remain interactive.
+    Static previews below were generated from the current repo. The Plotly views use `--output ...html` here so the docs can embed the live charts inline.
 
     #### `search`
 
@@ -482,7 +482,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     #### `sunburst`
 
     ```bash
-    devops self explore sunburst --output docs/assets/devops-self-explore/sunburst.html --max-depth 3 --template plotly_white
+    devops self explore sunburst --output docs/assets/devops-self-explore/sunburst.html --template plotly_dark
     ```
 
     <iframe
@@ -497,7 +497,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     #### `treemap`
 
     ```bash
-    devops self explore treemap --output docs/assets/devops-self-explore/treemap.html --max-depth 3 --template plotly_white
+    devops self explore treemap --output docs/assets/devops-self-explore/treemap.html --template plotly_dark
     ```
 
     <iframe
@@ -512,7 +512,7 @@ Current self-management commands also expose the CLI graph explorer through `dev
     #### `icicle`
 
     ```bash
-    devops self explore icicle --output docs/assets/devops-self-explore/icicle.html --max-depth 3 --template plotly_white
+    devops self explore icicle --output docs/assets/devops-self-explore/icicle.html --template plotly_dark
     ```
 
     <iframe
