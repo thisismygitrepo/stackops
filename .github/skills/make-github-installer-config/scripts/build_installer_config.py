@@ -99,6 +99,7 @@ def main() -> None:
     entry: dict[str, Any] = {
         "appName": app_name,
         "repoURL": repo_url,
+        "licence": "MIT",
         "doc": doc,
         "fileNamePattern": pattern_matrix,
     }
