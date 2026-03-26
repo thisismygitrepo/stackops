@@ -111,7 +111,7 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
             uses: astral-sh/setup-uv@v7
 
           - name: Configure GitHub Pages
-            uses: actions/configure-pages@v6
+            uses: actions/configure-pages@v6.0.0
 
           - name: Install dependencies
             run: uv sync --group dev
