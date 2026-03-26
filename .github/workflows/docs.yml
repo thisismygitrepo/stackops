@@ -28,6 +28,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -44,7 +47,7 @@ jobs:
         run: uv sync --group dev
 
       - name: Build site
-        run: rm -rf site && uv run zensical build
+        run: uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && rm -rf site && uv run zensical build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

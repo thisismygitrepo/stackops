@@ -60,12 +60,14 @@ def serve_docs(rebuild: bool) -> None:
     import platform
 
     from machineconfig.utils.code import exit_then_run_shell_script, get_uv_command
+    from machineconfig.scripts.python.helpers.helpers_devops.docs_changelog import sync_docs_changelog
 
     repo_root = get_docs_repo_root()
     _print_docs_urls()
     uv_command = get_uv_command(platform=platform.system()).strip()
     rebuild_command = ""
     if rebuild:
+        sync_docs_changelog(repo_root=repo_root)
         rebuild_command = f"""{uv_command} run zensical build
 """
     command = f"""

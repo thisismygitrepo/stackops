@@ -27,13 +27,12 @@ nav = [
   ] },
   { "CLI Reference" = [
     "cli/index.md",
-    { mcfg = "cli/mcfg.md" },
     { devops = "cli/devops.md" },
-    { cloud = "cli/cloud.md" },
     { sessions = "cli/sessions.md" },
     { agents = "cli/agents.md" },
     { utils = "cli/utils.md" },
     { fire = "cli/fire.md" },
+    { cloud = "cli/cloud.md" },
   ] },
   { "API Reference" = [
     "api/index.md",
@@ -55,6 +54,7 @@ nav = [
     { "Development Setup" = "contributing/development.md" },
     { "Code Style" = "contributing/code-style.md" },
   ] },
+  { Hierarchy = "hierarchy.md" },
   { Changelog = "changelog.md" },
 ]
 

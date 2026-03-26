@@ -25,11 +25,13 @@ def test_serve_docs_rebuilds_before_serving() -> None:
         patch.object(cli_self_docs, "_print_docs_urls"),
         patch("platform.system", return_value="Linux"),
         patch("machineconfig.utils.code.get_uv_command", return_value="uv"),
+        patch("machineconfig.scripts.python.helpers.helpers_devops.docs_changelog.sync_docs_changelog") as sync_docs_changelog,
         patch("machineconfig.utils.code.exit_then_run_shell_script") as exit_then_run_shell_script,
     ):
         cli_self_docs.serve_docs(rebuild=True)
 
     script = exit_then_run_shell_script.call_args.kwargs["script"]
+    sync_docs_changelog.assert_called_once_with(repo_root=Path("/repo"))
     assert "uv run zensical build" in script
     assert script.index("uv run zensical build") < script.index("uv run zensical serve -a 0.0.0.0:8000")
 
