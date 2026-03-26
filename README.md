@@ -2,7 +2,7 @@
 
 Machineconfig is a cross-platform CLI for bootstrapping and maintaining a development machine. It groups package installation, config syncing, data syncing, session automation, and helper utilities into one install.
 
-## Install with uv
+## Install with `uv`
 
 ### Linux / macOS
 
