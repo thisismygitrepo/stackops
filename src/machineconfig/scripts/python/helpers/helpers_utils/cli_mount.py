@@ -13,6 +13,8 @@ def mount_device(
     device_query: Annotated[str | None, typer.Option("--device", "-d", help="Device query (path, key, or label).")] = None,
     mount_point: Annotated[str | None, typer.Option("--mount-point", "-p", help="Mount point (use '-' for default on macOS).")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Pick device and mount point interactively.")] = False,
+    read_only: Annotated[bool, typer.Option("--read-only", "-r", help="Mount in read-only mode.")] = False,
+    backend: Annotated[str, typer.Option("--backend", "-b", help="Mount backend: mount | dislocker | udisksctl.")] = "mount",
 ) -> None:
     from machineconfig.scripts.python.helpers.helpers_devops import cli_config_mount
 
@@ -23,7 +25,10 @@ def mount_device(
         msg = typer.style("Error: ", fg=typer.colors.RED) + "--device and --mount-point are required unless --interactive is set"
         typer.echo(msg)
         raise typer.Exit(2)
-    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point)
+    if backend not in {"mount", "dislocker", "udisksctl"}:
+        typer.echo(f"Invalid backend '{backend}'. Choose: mount, dislocker, udisksctl")
+        raise typer.Exit(2)
+    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point, read_only=read_only, backend=backend)  # type: ignore[arg-type]
 
 
 def register_mount_commands(app: typer.Typer) -> None:

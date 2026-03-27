@@ -8,7 +8,7 @@ from rich.table import Table
 
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.devices import list_devices as list_devices_internal
-from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.linux import mount_linux, select_linux_partition
+from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.linux import MountBackend, mount_linux, select_linux_partition
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.selection import pick_device, resolve_device
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.windows import mount_windows
@@ -54,7 +54,7 @@ def list_devices() -> None:
     console.print(_build_devices_table(entries))
 
 
-def mount_device(device_query: Annotated[str, typer.Argument(...)], mount_point: Annotated[str, typer.Argument(...)]) -> None:
+def mount_device(device_query: Annotated[str, typer.Argument(...)], mount_point: Annotated[str, typer.Argument(...)], read_only: bool, backend: MountBackend) -> None:
     try:
         entries = list_devices_internal()
         if not entries:
@@ -64,7 +64,7 @@ def mount_device(device_query: Annotated[str, typer.Argument(...)], mount_point:
         platform_name = platform.system()
         if platform_name == "Linux":
             selected = select_linux_partition(entries, entry)
-            mount_linux(selected, mount_point)
+            mount_linux(selected, mount_point, read_only, backend)
         elif platform_name == "Darwin":
             mount_macos(entry, mount_point)
         elif platform_name == "Windows":
@@ -90,9 +90,15 @@ def mount_interactive() -> None:
             mount_point = typer.prompt("Mount point (use '-' for default)")
         else:
             mount_point = typer.prompt("Mount point")
+        read_only = typer.confirm("Mount read-only?", default=False)
+        backend_str = typer.prompt("Backend", default="mount", prompt_suffix=" [mount/dislocker/udisksctl]: ")
+        if backend_str not in {"mount", "dislocker", "udisksctl"}:
+            typer.echo(f"Invalid backend: {backend_str}")
+            raise typer.Exit(2)
+        backend: MountBackend = backend_str  # type: ignore[assignment]
         if platform_name == "Linux":
             selected = select_linux_partition(entries, entry)
-            mount_linux(selected, mount_point)
+            mount_linux(selected, mount_point, read_only, backend)
         elif platform_name == "Darwin":
             mount_macos(entry, mount_point)
         elif platform_name == "Windows":
