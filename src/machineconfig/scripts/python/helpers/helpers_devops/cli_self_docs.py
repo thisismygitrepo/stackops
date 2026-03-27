@@ -88,18 +88,20 @@ def _write_cli_graph_snapshot(repo_root: Path) -> Path:
 
 
 def create_docs_artifacts(repo_root: Path) -> list[Path]:
-    from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
+    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly
+
     _write_cli_graph_snapshot(repo_root=repo_root)
     generated_paths: list[Path] = []
     for artifact_spec in DOCS_ARTIFACT_SPECS:
         output_path = repo_root.joinpath(artifact_spec.output_relative_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        render_plotly(
+        use_render_plotly(
             view=artifact_spec.view,
             output=str(output_path),
             template=DOCS_ARTIFACT_TEMPLATE,
             path=None,
             max_depth=None,
+            uv_with=None,
         )
         generated_paths.append(output_path)
     return generated_paths

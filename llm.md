@@ -87,7 +87,12 @@
 * https://github.com/microsoft/PubSec-Info-Assistant `Information Assistant Accelerator`
 * https://github.com/goldmansachs/gs-quant
 * aider
-
+* https://github.com/garrytan/gstack
+* Agent of Empires
+* Agent Stack
+* https://github.com/nousresearch/hermes-agent
+* https://github.com/obra/superpowers
+* https://github.com/paperclipai/paperclip
 
 # Viz
 * chainlit: https://github.com/Chainlit/cookbook

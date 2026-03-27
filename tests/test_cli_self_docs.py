@@ -75,27 +75,23 @@ def test_serve_docs_creates_artifacts_before_serving() -> None:
 
 
 def test_create_docs_artifacts_regenerates_cli_graph_and_plotly_views(tmp_path: Path) -> None:
-    render_calls: list[tuple[str, Path, str]] = []
+    render_calls: list[tuple[str, str, str]] = []
 
-    def _record_render(*, view: str, output: Path, template: str) -> None:
+    def _record_render(*, view: str, output: str, template: str, **_kwargs: object) -> None:
         render_calls.append((view, output, template))
 
     with (
         patch.object(cli_self_docs, "_write_cli_graph_snapshot") as write_cli_graph_snapshot,
-        patch("machineconfig.scripts.python.graph.visualize.plotly_views.render_plotly", side_effect=_record_render),
+        patch("machineconfig.scripts.python.graph.visualize.plotly_views.use_render_plotly", side_effect=_record_render),
     ):
         generated_paths = cli_self_docs.create_docs_artifacts(repo_root=tmp_path)
 
     write_cli_graph_snapshot.assert_called_once_with(repo_root=tmp_path)
-    assert generated_paths == [
-        tmp_path.joinpath("docs/assets/devops-self-explore/sunburst.html"),
-        tmp_path.joinpath("docs/assets/devops-self-explore/treemap.html"),
-        tmp_path.joinpath("docs/assets/devops-self-explore/icicle.html"),
-    ]
+    expected_paths = [tmp_path.joinpath(spec.output_relative_path) for spec in cli_self_docs.DOCS_ARTIFACT_SPECS]
+    assert generated_paths == expected_paths
     assert render_calls == [
-        ("sunburst", tmp_path.joinpath("docs/assets/devops-self-explore/sunburst.html"), "plotly_dark"),
-        ("treemap", tmp_path.joinpath("docs/assets/devops-self-explore/treemap.html"), "plotly_dark"),
-        ("icicle", tmp_path.joinpath("docs/assets/devops-self-explore/icicle.html"), "plotly_dark"),
+        (spec.view, str(tmp_path.joinpath(spec.output_relative_path)), "plotly_dark")
+        for spec in cli_self_docs.DOCS_ARTIFACT_SPECS
     ]
 
 
