@@ -202,7 +202,7 @@ def search(
         from machineconfig.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
         from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
         from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-        install_if_missing(which="tv")
+        install_if_missing(which="tv", binary_name=None, verbose=True)
         graph_file = Path(graph_path_str) if graph_path_str else DEFAULT_GRAPH_PATH
         graph_data = json.loads(graph_file.read_text(encoding="utf-8"))
         root = graph_data.get("root")

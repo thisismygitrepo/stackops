@@ -58,10 +58,10 @@ def share_terminal(
 ) -> None:
     if install_missing_dependencies:
         from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-        install_if_missing("ttyd")
+        install_if_missing(which="ttyd", binary_name=None, verbose=True)
     if over_internet and install_missing_dependencies:
         from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-        install_if_missing("ngrok")
+        install_if_missing(which="ngrok", binary_name=None, verbose=True)
 
     from pathlib import Path
     if username is None:

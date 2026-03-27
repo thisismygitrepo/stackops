@@ -23,9 +23,9 @@ def web_file_explorer(
         typer.echo(f"❌ ERROR: Invalid backend '{backend}'. Must be one of: filebrowser, miniserve, qrcp, easy-sharing", err=True)
         raise typer.Exit(code=1)
     if install_missing_dependencies:
-        install_if_missing(which=backend)
+        install_if_missing(which=backend, binary_name=None, verbose=True)
     if over_internet and install_missing_dependencies:
-        install_if_missing(which="ngrok")
+        install_if_missing(which="ngrok", binary_name=None, verbose=True)
     if password is None and not no_auth:
         pwd_path = Path.home().joinpath("dotfiles/creds/passwords/quick_password")
         if pwd_path.exists():

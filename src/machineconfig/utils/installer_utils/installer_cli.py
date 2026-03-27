@@ -212,18 +212,21 @@ def install_clis(clis_names: list[str]) -> None:
         for a_message in total_messages:
             console.print(f"[blue]• {a_message}[/blue]")
     return None
-def install_if_missing(which: str, binary_name: str | None = None) -> bool:
+def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bool:
     from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
     if binary_name is None:
         binary_name = which
     exists = check_tool_exists(binary_name)
     if exists:
-        print(f"✅ {which} is already installed.")
+        if verbose:
+            print(f"✅ {which} is already installed.")
         return True
-    print(f"⏳ {which} not found. Installing...")
+    if verbose:
+        print(f"⏳ {which} not found. Installing...")
     try:
         main_installer_cli(which=which, interactive=False)
         return True
     except Exception as e:
-        print(f"❌ Error installing {which}: {e}")
+        if verbose:
+            print(f"❌ Error installing {which}: {e}")
     return False

@@ -17,7 +17,7 @@ def _ip_is_acceptable(ip: str, current_ip: str | None, target_ip_addresses: list
 def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_addresses: list[str] | None) -> tuple[bool, str]:
     print("🔁 Switching IP ... ")
     from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-    install_if_missing("warp-cli")
+    install_if_missing(which="warp-cli", binary_name=None, verbose=True)
 
     current_ip: str | None = None
     try:

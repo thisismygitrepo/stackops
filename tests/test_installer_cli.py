@@ -1,6 +1,8 @@
 import json
 from unittest.mock import patch
 
+import pytest
+
 from machineconfig.utils.installer_utils import installer_cli
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
@@ -86,3 +88,25 @@ def test_install_interactively_uses_tv_preview_and_installs_selected_app() -> No
     assert json.loads(next(value for key, value in captured_preview_map.items() if key.startswith("fd"))) == installer_data
     install_group.assert_called_once_with(package_group="core")
     assert FakeInstaller.install_calls == [installer_data]
+
+
+def test_install_if_missing_uses_explicit_binary_name() -> None:
+    with patch("machineconfig.utils.installer_utils.installer_locator_utils.check_tool_exists", return_value=True) as check_tool_exists:
+        result = installer_cli.install_if_missing(which="poppler", binary_name="pdftoppm", verbose=True)
+
+    assert result is True
+    check_tool_exists.assert_called_once_with("pdftoppm")
+
+
+def test_install_if_missing_uses_which_when_binary_name_is_none(capsys: pytest.CaptureFixture[str]) -> None:
+    with (
+        patch("machineconfig.utils.installer_utils.installer_locator_utils.check_tool_exists", return_value=False) as check_tool_exists,
+        patch.object(installer_cli, "main_installer_cli") as main_installer_cli,
+    ):
+        result = installer_cli.install_if_missing(which="fd", binary_name=None, verbose=False)
+
+    captured = capsys.readouterr()
+    assert result is True
+    check_tool_exists.assert_called_once_with("fd")
+    main_installer_cli.assert_called_once_with(which="fd", interactive=False)
+    assert captured.out == ""

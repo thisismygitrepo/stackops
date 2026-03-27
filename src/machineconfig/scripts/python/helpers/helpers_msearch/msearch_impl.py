@@ -50,12 +50,12 @@ def _install_dependencies() -> None:
     """Install required dependencies."""
     from machineconfig.utils.installer_utils.installer_cli import install_if_missing
 
-    install_if_missing("fzf")
-    install_if_missing("tv")
-    install_if_missing("bat")
-    install_if_missing("fd")
-    install_if_missing("rg")
-    install_if_missing("rga")
+    install_if_missing(which="fzf", binary_name=None, verbose=True)
+    install_if_missing(which="tv", binary_name=None, verbose=True)
+    install_if_missing(which="bat", binary_name=None, verbose=True)
+    install_if_missing(which="fd", binary_name=None, verbose=True)
+    install_if_missing(which="rg", binary_name=None, verbose=True)
+    install_if_missing(which="rga", binary_name=None, verbose=True)
 
 def search_file_with_context(path: str, is_temp_file: bool, edit: bool) -> str:
     import platform

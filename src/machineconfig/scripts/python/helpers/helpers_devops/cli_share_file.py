@@ -14,7 +14,7 @@ Usage examples:
 """
     if install_missing_dependencies:
         from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-        install_if_missing(which="croc")
+        install_if_missing(which="croc", binary_name=None, verbose=True)
     import platform
     import sys
 
@@ -118,7 +118,7 @@ uvx magic-wormhole send {code_line} {text_line}
         case "croc" | "c":
             if install_missing_dependencies:
                 from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-                install_if_missing(which="croc")
+                install_if_missing(which="croc", binary_name=None, verbose=True)
 
             # Get relay server IP from environment or use default
             import machineconfig.scripts.python.helpers.helpers_network.address as helper

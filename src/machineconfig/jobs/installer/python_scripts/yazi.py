@@ -74,15 +74,15 @@ def main(installer_data: InstallerData, version: str | None):
     yazi_plugins_dir.mkdir(parents=True, exist_ok=True)
     from machineconfig.utils.installer_utils.installer_cli import install_if_missing
     # previewers:
-    install_if_missing(which= "glow")
-    install_if_missing(which="duckdb")
-    install_if_missing(which="poppler", binary_name="pdftoppm")
-    install_if_missing(which="jq")
-    install_if_missing(which="resvg")
+    install_if_missing(which="glow", binary_name=None, verbose=True)
+    install_if_missing(which="duckdb", binary_name=None, verbose=True)
+    install_if_missing(which="poppler", binary_name="pdftoppm", verbose=True)
+    install_if_missing(which="jq", binary_name=None, verbose=True)
+    install_if_missing(which="resvg", binary_name=None, verbose=True)
     # on windows those are missing
-    install_if_missing(which="git")
-    install_if_missing(which="7zip", binary_name="7z")
-    install_if_missing(which="file")
+    install_if_missing(which="git", binary_name=None, verbose=True)
+    install_if_missing(which="7zip", binary_name="7z", verbose=True)
+    install_if_missing(which="file", binary_name=None, verbose=True)
     import git
     git.Repo.clone_from("https://github.com/yazi-rs/plugins", yazi_plugins_path)
     force_remove(yazi_flavours_path)

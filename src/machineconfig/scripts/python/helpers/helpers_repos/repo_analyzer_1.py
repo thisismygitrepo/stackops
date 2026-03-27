@@ -99,7 +99,7 @@ def gitcs_viz(repo_path: Union[str, Path], email: str | None = None, pull_full_h
         pull_full_history: If True, unshallow the repo to fetch full history (useful for shallow clones)
     """
     from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-    install_if_missing("gitcs")
+    install_if_missing(which="gitcs", binary_name=None, verbose=True)
 
     repo_path = Path(repo_path).expanduser().resolve()
     repo = Repo(repo_path)
@@ -155,5 +155,3 @@ def gitcs_viz(repo_path: Union[str, Path], email: str | None = None, pull_full_h
                 print(f"⚠️ gitcs exited with code {completed.returncode} for this range.")
 
             chunk_idx += 1
-
-

@@ -35,7 +35,7 @@ class PublicIpInfo(TypedDict, total=True):
 
 def get_public_ip_address() -> PublicIpInfo:
     from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-    install_if_missing("ipinfo")
+    install_if_missing(which="ipinfo", binary_name=None, verbose=True)
     import subprocess
     result = subprocess.run(["ipinfo", "myip", "--json"], check=True, capture_output=True, text=True, encoding="utf-8")
     import json

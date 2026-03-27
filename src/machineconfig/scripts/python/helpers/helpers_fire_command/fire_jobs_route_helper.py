@@ -102,7 +102,7 @@ def get_command_streamlit(choice_file: Path, environment: str, repo_root: Path |
                     print(ex)
                     raise ex
     from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-    install_if_missing("qrterminal")
+    install_if_missing(which="qrterminal", binary_name=None, verbose=True)
     script = f"""
 qrterminal "http://{local_ip_v4}:{port}"
 echo "http://{local_ip_v4}:{port}"
