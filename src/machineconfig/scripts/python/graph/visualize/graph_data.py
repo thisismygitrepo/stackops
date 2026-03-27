@@ -26,13 +26,13 @@ class GraphNode:
         return self.kind in {"group", "root"}
 
 
-def load_cli_graph(path: Path | None = None) -> dict[str, Any]:
-    graph_path = path or DEFAULT_GRAPH_PATH
-    return json.loads(graph_path.read_text(encoding="utf-8"))
-
-
 def build_graph(path: str | None = None) -> GraphNode:
-    data = load_cli_graph(path)
+    # data = load_cli_graph(path)
+    if path is None:
+        graph_path = DEFAULT_GRAPH_PATH
+    else:
+        graph_path = Path(path)
+    data = json.loads(graph_path.read_text(encoding="utf-8"))
     root = data.get("root") or {}
     root_name = root.get("name") or "root"
     node = _build_node(root, parent_tokens=[], depth=0, fallback_name=root_name)

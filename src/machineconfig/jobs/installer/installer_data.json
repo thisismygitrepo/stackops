@@ -4320,6 +4320,42 @@
           "windows": null
         }
       }
+    },
+    {
+      "appName": "himalaya",
+      "repoURL": "https://github.com/pimalaya/himalaya",
+      "licence": "MIT",
+      "doc": "CLI email client",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "himalaya.x86_64-linux.tgz",
+          "macos": "himalaya.x86_64-darwin.tgz",
+          "windows": "himalaya.x86_64-windows.tgz"
+        },
+        "arm64": {
+          "linux": "himalaya.aarch64-linux.tgz",
+          "macos": "himalaya.aarch64-darwin.tgz",
+          "windows": null
+        }
+      }
+    },
+    {
+      "appName": "meli",
+      "repoURL": "https://github.com/meli/meli",
+      "licence": "MIT",
+      "doc": "Terminal mail client",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "meli-{version}-linux-amd64.deb",
+          "macos": null,
+          "windows": null
+        },
+        "arm64": {
+          "linux": "meli-{version}-linux-arm64.deb",
+          "macos": null,
+          "windows": null
+        }
+      }
     }
   ]
 }
