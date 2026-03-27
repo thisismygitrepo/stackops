@@ -22,16 +22,15 @@ IMAGE_EXTENSIONS = {".png", ".svg", ".pdf", ".jpg", ".jpeg", ".webp"}
 def render_plotly(
     *,
     view: str,
-    path: Path | None = None,
-    output: Path | None = None,
+    path: str | None,
+    output: str | None,
     height: int = 900,
     width: int = 1200,
     template: str = "plotly_dark",
-    max_depth: int | None = None,
+    max_depth: int | None,
 ) -> None:
     root = build_graph(path)
     fig = build_figure(root, view=view, template=template, max_depth=max_depth)
-
     if output is None:
         fig.show()
         return
@@ -43,22 +42,31 @@ def render_plotly(
     print(f"Wrote {output}")
 
 
+def use_render_plotly():
+    from machineconfig.utils.code import run_lambda_function
+    run_lambda_function(
+        lambda : render_plotly(
+            view="sunburst",
+            output=None,
+            template="plotly_dark",
+            path=None,
+            max_depth=None,
+        ),
+        uv_with="plotly",
+    )
+
+
 def build_figure(
     root: GraphNode,
     *,
     view: str,
     template: str = "plotly_dark",
-    max_depth: int | None = None,
+    max_depth: int | None,
 ):
     view_key = view.lower().strip()
     if view_key not in SUPPORTED_VIEWS:
         raise ValueError(f"Unsupported view '{view}'. Choose from {sorted(SUPPORTED_VIEWS)}.")
-
-    try:
-        import plotly.graph_objects as go
-    except ImportError as exc:
-        raise RuntimeError("Plotly is required for this view. Install with: uv add plotly --dev") from exc
-
+    import plotly.graph_objects as go
     ids, labels, parents, values, customdata, colors = _build_plotly_payload(root, max_depth=max_depth)
 
     hovertemplate = (

@@ -5915,7 +5915,7 @@
                     "    rebuild: Annotated[bool, typer.Option(\"--rebuild\", \"-b\", help=\"Rebuild docs before starting the preview server.\")] = False,",
                     "    create_artifacts: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--create-artifacts\", help=\"Regenerate CLI graph docs artifacts before starting the preview server.\"),",
+                    "        typer.Option(\"--create-artifacts\", \"-a\", help=\"Regenerate CLI graph docs artifacts before starting the preview server.\"),",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"📚 <o> Serve local docs with preview URLs.\"\"\"",
@@ -5953,16 +5953,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--create-artifacts', help='Regenerate CLI graph docs artifacts before starting the preview server.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--create-artifacts', '-a', help='Regenerate CLI graph docs artifacts before starting the preview server.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--create-artifacts"
+                          "--create-artifacts",
+                          "-a"
                         ],
                         "long_flags": [
                           "--create-artifacts"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-a"
+                        ],
                         "help": "Regenerate CLI graph docs artifacts before starting the preview server."
                       }
                     }
@@ -7485,6 +7488,631 @@
                 ]
               },
               {
+                "kind": "group",
+                "name": "device",
+                "help": "🖥 <d> Device subcommands",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
+                  "dispatches_to": "machineconfig.scripts.python.helpers.helpers_devops.cli_device.get_app"
+                },
+                "app": {
+                  "help": "🖥 <d> Device subcommands",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "switch-public-ip",
+                    "help": "🔁 <c> Switch public IP address (Cloudflare WARP)",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_device",
+                      "callable": "switch_public_ip_address"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def switch_public_ip_address(",
+                        "    wait_seconds: Annotated[float, typer.Option(..., \"--wait\", \"-w\", help=\"Seconds to wait between steps\")] = 2.0,",
+                        "    max_trials: Annotated[int, typer.Option(..., \"--max-trials\", \"-m\", help=\"Max number of switch attempts\")] = 10,",
+                        "    target_ip: Annotated[",
+                        "        list[str] | None, typer.Option(..., \"--target-ip\", \"-t\", help=\"Acceptable target IPs, if current IP matches any, no switch needed\")",
+                        "    ] = None,",
+                        ") -> None:",
+                        "    \"\"\"🔁 Switch public IP address (Cloudflare WARP)\"\"\"",
+                        "    import machineconfig.scripts.python.helpers.helpers_network.address_switch as helper",
+                        "",
+                        "    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)"
+                      ],
+                      "name": "switch_public_ip_address",
+                      "parameters": [
+                        {
+                          "name": "wait_seconds",
+                          "kind": "positional_or_keyword",
+                          "type": "float",
+                          "default": 2.0,
+                          "required": false,
+                          "annotation_raw": "Annotated[float, typer.Option(..., '--wait', '-w', help='Seconds to wait between steps')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--wait",
+                              "-w"
+                            ],
+                            "long_flags": [
+                              "--wait"
+                            ],
+                            "short_flags": [
+                              "-w"
+                            ],
+                            "help": "Seconds to wait between steps",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "max_trials",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 10,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option(..., '--max-trials', '-m', help='Max number of switch attempts')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-trials",
+                              "-m"
+                            ],
+                            "long_flags": [
+                              "--max-trials"
+                            ],
+                            "short_flags": [
+                              "-m"
+                            ],
+                            "help": "Max number of switch attempts",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "target_ip",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Option(..., '--target-ip', '-t', help='Acceptable target IPs, if current IP matches any, no switch needed')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--target-ip",
+                              "-t"
+                            ],
+                            "long_flags": [
+                              "--target-ip"
+                            ],
+                            "short_flags": [
+                              "-t"
+                            ],
+                            "help": "Acceptable target IPs, if current IP matches any, no switch needed",
+                            "default": "..."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "doc": "🔁 Switch public IP address (Cloudflare WARP)",
+                    "aliases": [
+                      {
+                        "name": "c",
+                        "hidden": true,
+                        "help": "Switch public IP address (Cloudflare WARP)"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "wifi-select",
+                    "help": "📶 <w> WiFi connection utility.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_device",
+                      "callable": "wifi_select"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def wifi_select(",
+                        "    ssid: Annotated[str, typer.Option(\"-n\", \"--ssid\", help=\"🔗 SSID of WiFi (from config)\")] = \"MyPhoneHotSpot\",",
+                        "    manual: Annotated[bool, typer.Option(\"-m\", \"--manual\", help=\"🔍 Manual network selection mode\")] = False,",
+                        "    list_: Annotated[bool, typer.Option(\"-l\", \"--list\", help=\"📡 List available networks only\")] = False,",
+                        ") -> None:",
+                        "    \"\"\"Main function with fallback network selection\"\"\"",
+                        "    from rich.console import Console",
+                        "    from rich.panel import Panel",
+                        "    from rich.prompt import Confirm",
+                        "",
+                        "    from machineconfig.scripts.python.helpers.helpers_network.wifi_conn import (",
+                        "        display_available_networks,",
+                        "        manual_network_selection,",
+                        "        try_config_connection,",
+                        "    )",
+                        "",
+                        "    console = Console()",
+                        "    console.print(Panel(\"📶 Welcome to the WiFi Connector Tool\", title=\"[bold blue]WiFi Connection[/bold blue]\", border_style=\"blue\"))",
+                        "",
+                        "    if list_:",
+                        "        display_available_networks()",
+                        "        return",
+                        "",
+                        "    if manual:",
+                        "        console.print(\"[blue]🔍 Manual network selection mode[/blue]\")",
+                        "        if manual_network_selection():",
+                        "            console.print(\"[green]🎉 Successfully connected![/green]\")",
+                        "        else:",
+                        "            console.print(\"[red]❌ Failed to connect[/red]\")",
+                        "        return",
+                        "",
+                        "    console.print(f\"[blue]🔍 Attempting to connect to configured network: {ssid}[/blue]\")",
+                        "",
+                        "    if try_config_connection(ssid):",
+                        "        console.print(\"[green]🎉 Successfully connected using configuration![/green]\")",
+                        "        return",
+                        "",
+                        "    console.print(\"\\n[yellow]⚠️  Configuration connection failed or not available[/yellow]\")",
+                        "",
+                        "    if Confirm.ask(\"[blue]Would you like to manually select a network?[/blue]\", default=True):",
+                        "        if manual_network_selection():",
+                        "            console.print(\"[green]🎉 Successfully connected![/green]\")",
+                        "        else:",
+                        "            console.print(\"[red]❌ Failed to connect[/red]\")",
+                        "    else:",
+                        "        console.print(\"[blue]👋 Goodbye![/blue]\")"
+                      ],
+                      "name": "wifi_select",
+                      "parameters": [
+                        {
+                          "name": "ssid",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "MyPhoneHotSpot",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('-n', '--ssid', help='🔗 SSID of WiFi (from config)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "-n",
+                              "--ssid"
+                            ],
+                            "long_flags": [
+                              "--ssid"
+                            ],
+                            "short_flags": [
+                              "-n"
+                            ],
+                            "help": "🔗 SSID of WiFi (from config)"
+                          }
+                        },
+                        {
+                          "name": "manual",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('-m', '--manual', help='🔍 Manual network selection mode')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "-m",
+                              "--manual"
+                            ],
+                            "long_flags": [
+                              "--manual"
+                            ],
+                            "short_flags": [
+                              "-m"
+                            ],
+                            "help": "🔍 Manual network selection mode"
+                          }
+                        },
+                        {
+                          "name": "list_",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('-l', '--list', help='📡 List available networks only')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "-l",
+                              "--list"
+                            ],
+                            "long_flags": [
+                              "--list"
+                            ],
+                            "short_flags": [
+                              "-l"
+                            ],
+                            "help": "📡 List available networks only"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
+                    "doc": "Main function with fallback network selection",
+                    "aliases": [
+                      {
+                        "name": "w",
+                        "hidden": true
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "bind-wsl-port",
+                    "help": "🔌 <b> Bind WSL port to Windows host",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_device",
+                      "callable": "bind_wsl_port"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def bind_wsl_port(port: Annotated[int, typer.Option(..., \"--port\", \"-p\", help=\"Port number to bind\")]) -> None:",
+                        "    code = f\"\"\"",
+                        "",
+                        "$wsl_ip = (wsl.exe hostname -I).Trim().Split(' ')[0]",
+                        "netsh interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0 connectport={port} connectaddress=$wsl_ip",
+                        "",
+                        "\"\"\"",
+                        "    from machineconfig.utils.code import exit_then_run_shell_script",
+                        "",
+                        "    exit_then_run_shell_script(code)"
+                      ],
+                      "name": "bind_wsl_port",
+                      "parameters": [
+                        {
+                          "name": "port",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[int, typer.Option(..., '--port', '-p', help='Port number to bind')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--port",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--port"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Port number to bind",
+                            "default": "..."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
+                    "aliases": [
+                      {
+                        "name": "b",
+                        "hidden": true,
+                        "help": "Bind WSL port to Windows host"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "open-wsl-port",
+                    "help": "🔥 <o> Open Windows firewall ports for WSL.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_device",
+                      "callable": "open_wsl_port"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def open_wsl_port(ports: Annotated[str, typer.Argument(..., help=\"Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')\")]) -> None:",
+                        "    \"\"\"🔥 Open Windows firewall ports for WSL (Windows only).\"\"\"",
+                        "    import machineconfig.utils.ssh_utils.wsl as wsl_utils",
+                        "",
+                        "    wsl_utils.open_wsl_port(ports)"
+                      ],
+                      "name": "open_wsl_port",
+                      "parameters": [
+                        {
+                          "name": "ports",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[str, typer.Argument(..., help=\"Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')\")]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')",
+                            "default": "..."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
+                    "doc": "🔥 Open Windows firewall ports for WSL (Windows only).",
+                    "aliases": [
+                      {
+                        "name": "o",
+                        "hidden": true,
+                        "help": "Open Windows firewall ports for WSL."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "link-wsl-windows",
+                    "help": "🔗 <l> Link WSL home and Windows home directories.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_device",
+                      "callable": "link_wsl_and_windows_home"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def link_wsl_and_windows_home(",
+                        "    windows_username: Annotated[",
+                        "        str | None, typer.Option(\"--windows-username\", \"-u\", help=\"Windows username to use (optional, auto-detected if not provided)\")",
+                        "    ] = None,",
+                        ") -> None:",
+                        "    \"\"\"🔗 Link WSL home and Windows home directories.\"\"\"",
+                        "    import machineconfig.utils.ssh_utils.wsl as wsl_utils",
+                        "",
+                        "    wsl_utils.link_wsl_and_windows(windows_username)"
+                      ],
+                      "name": "link_wsl_and_windows_home",
+                      "parameters": [
+                        {
+                          "name": "windows_username",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--windows-username', '-u', help='Windows username to use (optional, auto-detected if not provided)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--windows-username",
+                              "-u"
+                            ],
+                            "long_flags": [
+                              "--windows-username"
+                            ],
+                            "short_flags": [
+                              "-u"
+                            ],
+                            "help": "Windows username to use (optional, auto-detected if not provided)"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🔗 Link WSL home and Windows home directories.",
+                    "aliases": [
+                      {
+                        "name": "l",
+                        "hidden": true,
+                        "help": "Link WSL home and Windows home directories."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "reset-cloudflare-tunnel",
+                    "help": "☁ <r> Reset Cloudflare tunnel service",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_device",
+                      "callable": "reset_cloudflare_tunnel"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def reset_cloudflare_tunnel(",
+                        "    task: Annotated[",
+                        "        Literal[\"oneoff-shell-process\", \"oneoff-background-process\", \"as-service\"],",
+                        "        typer.Option(..., \"--task\", \"-t\", help=\"Task to perform\", case_sensitive=False, show_choices=True),",
+                        "    ],",
+                        "    tunnel_name: Annotated[str | None, typer.Option(\"--tunnel-name\", \"-n\", help=\"Name of the Cloudflare tunnel to run\")] = None,",
+                        ") -> None:",
+                        "    code = \"\"\"",
+                        "# cloudflared tunnel route dns glenn  # creates CNAMES in Cloudflare dashboard",
+                        "# sudo systemctl stop cloudflared",
+                        "\"\"\"",
+                        "    match task:",
+                        "        case \"oneoff-shell-process\":",
+                        "            tunnel_name = tunnel_name or \"\"",
+                        "            code = f\"\"\"cloudflared tunnel run {tunnel_name}  #  This is running like a normal command \"\"\"",
+                        "        case \"oneoff-background-process\":",
+                        "            tunnel_name = tunnel_name or \"\"",
+                        "            import getpass",
+                        "",
+                        "            user_name = getpass.getuser()",
+                        "            code = f\"\"\"",
+                        "# This verion runs like a deamon, but its not peristent across reboots",
+                        "sudo systemd-run \\",
+                        "  --unit=cloudflared-tunnel \\",
+                        "  --description=\"Cloudflared Tunnel (transient)\" \\",
+                        "  --property=Restart=on-failure \\",
+                        "  --property=RestartSec=5 \\",
+                        "  --property=User={user_name} \\",
+                        "  --property=Group={user_name} \\",
+                        "  --property=Environment=HOME=/home/{user_name} \\",
+                        "  --property=WorkingDirectory=/home/{user_name} \\",
+                        "  /home/{user_name}/.local/bin/cloudflared \\",
+                        "    --config /home/{user_name}/.cloudflared/config.yml \\",
+                        "    tunnel run {tunnel_name}",
+                        "\"\"\"",
+                        "        case \"as-service\":",
+                        "            code = \"\"\"",
+                        "home_dir=$HOME",
+                        "cloudflared_path=\"$home_dir/.local/bin/cloudflared\"",
+                        "sudo $cloudflared_path service uninstall",
+                        "sudo rm /etc/cloudflared/config.yml || true",
+                        "sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service install",
+                        "\"\"\"",
+                        "",
+                        "    from machineconfig.utils.code import exit_then_run_shell_script, print_code",
+                        "",
+                        "    print_code(code, lexer=\"bash\", desc=\"code to achieve the goal\")",
+                        "    yes = typer.confirm(\"Do you want to run the above commands now?\", default=False)",
+                        "    if yes:",
+                        "        exit_then_run_shell_script(code)"
+                      ],
+                      "name": "reset_cloudflare_tunnel",
+                      "parameters": [
+                        {
+                          "name": "task",
+                          "kind": "positional_or_keyword",
+                          "type": "Literal['oneoff-shell-process', 'oneoff-background-process', 'as-service']",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[Literal['oneoff-shell-process', 'oneoff-background-process', 'as-service'], typer.Option(..., '--task', '-t', help='Task to perform', case_sensitive=False, show_choices=True)]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--task",
+                              "-t"
+                            ],
+                            "long_flags": [
+                              "--task"
+                            ],
+                            "short_flags": [
+                              "-t"
+                            ],
+                            "help": "Task to perform",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "tunnel_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--tunnel-name', '-n', help='Name of the Cloudflare tunnel to run')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--tunnel-name",
+                              "-n"
+                            ],
+                            "long_flags": [
+                              "--tunnel-name"
+                            ],
+                            "short_flags": [
+                              "-n"
+                            ],
+                            "help": "Name of the Cloudflare tunnel to run"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "r",
+                        "hidden": true,
+                        "help": "Reset Cloudflare tunnel service"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "add-ip-exclusion-to-warp",
+                    "help": "🚫 <p> Add IP exclusion to WARP",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_device",
+                      "callable": "add_ip_exclusion_to_warp"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., \"--ip\", help=\"IP address(es) to exclude from WARP (Comma separated)\")]) -> None:",
+                        "    ips = ip.split(\",\")",
+                        "    res = \"\"",
+                        "    for an_ip in ips:",
+                        "        res += f\"\"\"sudo warp-cli tunnel ip add {an_ip}",
+                        "\"\"\"",
+                        "        print(f\"Adding IP exclusion to WARP for: {an_ip}\")",
+                        "    code = f\"\"\"",
+                        "{res}",
+                        "echo \"Restarting WARP connection...\"",
+                        "sudo warp-cli disconnect",
+                        "echo \"Waiting for 2 seconds...\"",
+                        "sleep 2",
+                        "echo \"Reconnecting WARP...\"",
+                        "sudo warp-cli connect",
+                        "\"\"\"",
+                        "    print(code)",
+                        "    print(\"NOTE: Please run the above commands in your terminal to apply the changes.\")"
+                      ],
+                      "name": "add_ip_exclusion_to_warp",
+                      "parameters": [
+                        {
+                          "name": "ip",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[str, typer.Option(..., '--ip', help='IP address(es) to exclude from WARP (Comma separated)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--ip"
+                            ],
+                            "long_flags": [
+                              "--ip"
+                            ],
+                            "short_flags": [],
+                            "help": "IP address(es) to exclude from WARP (Comma separated)",
+                            "default": "..."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "p",
+                        "hidden": true,
+                        "help": "Add IP exclusion to WARP"
+                      }
+                    ]
+                  }
+                ],
+                "aliases": [
+                  {
+                    "name": "d",
+                    "hidden": true,
+                    "help": "Device subcommands"
+                  }
+                ]
+              },
+              {
                 "kind": "command",
                 "name": "show-address",
                 "help": "📌 <a> Show this computer addresses on network",
@@ -7503,6 +8131,7 @@
                     "    try:",
                     "        loaded_json = helper.get_public_ip_address()",
                     "        from rich import print_json",
+                    "",
                     "        print_json(data=loaded_json)",
                     "        public_ip_address = loaded_json[\"ip\"]",
                     "    except Exception as e:",
@@ -7510,9 +8139,10 @@
                     "",
                     "    from rich.table import Table",
                     "    from rich.console import Console",
+                    "",
                     "    addresses = helper.get_all_ipv4_addresses()",
                     "    addresses.append((\"Public IP\", public_ip_address))",
-                    "    ",
+                    "",
                     "    # loc = loaded_json[\"loc\"]",
                     "    # cmd = f\"\"\"curl \"https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=300&center=lonlat:{loc}&zoom=6&marker=lonlat:{loc};color:%23ff0000;size:medium&apiKey=$GEOAPIFY_API_KEY\" -o map.png && chafa map.png\"\"\"",
                     "    # from machineconfig.utils.code import run_shell_script",
@@ -7521,13 +8151,13 @@
                     "    table = Table(title=\"Network Interfaces\")",
                     "    table.add_column(\"Interface\", style=\"cyan\")",
                     "    table.add_column(\"IP Address\", style=\"green\")",
-                    "    ",
+                    "",
                     "    for iface, ip in addresses:",
                     "        table.add_row(iface, ip)",
-                    "    ",
+                    "",
                     "    console = Console()",
                     "    console.print(table)",
-                    "    ",
+                    "",
                     "    selected_lan_ip = helper.select_lan_ipv4(prefer_vpn=False)",
                     "    if selected_lan_ip is not None:",
                     "        # ip, iface = res",
@@ -7551,585 +8181,6 @@
               },
               {
                 "kind": "command",
-                "name": "switch-public-ip",
-                "help": "🔁 <c> Switch public IP address (Cloudflare WARP)",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
-                  "callable": "switch_public_ip_address"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def switch_public_ip_address(",
-                    "    wait_seconds: Annotated[float, typer.Option(..., \"--wait\", \"-w\", help=\"Seconds to wait between steps\")] = 2.0,",
-                    "    max_trials: Annotated[int, typer.Option(..., \"--max-trials\", \"-m\", help=\"Max number of switch attempts\")] = 10,",
-                    "    target_ip: Annotated[list[str] | None, typer.Option(..., \"--target-ip\", \"-t\", help=\"Acceptable target IPs, if current IP matches any, no switch needed\")] = None,",
-                    ") -> None:",
-                    "    \"\"\"🔁 Switch public IP address (Cloudflare WARP)\"\"\"",
-                    "    import machineconfig.scripts.python.helpers.helpers_network.address_switch as helper",
-                    "    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)"
-                  ],
-                  "name": "switch_public_ip_address",
-                  "parameters": [
-                    {
-                      "name": "wait_seconds",
-                      "kind": "positional_or_keyword",
-                      "type": "float",
-                      "default": 2.0,
-                      "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option(..., '--wait', '-w', help='Seconds to wait between steps')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--wait",
-                          "-w"
-                        ],
-                        "long_flags": [
-                          "--wait"
-                        ],
-                        "short_flags": [
-                          "-w"
-                        ],
-                        "help": "Seconds to wait between steps",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "max_trials",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": 10,
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--max-trials', '-m', help='Max number of switch attempts')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--max-trials",
-                          "-m"
-                        ],
-                        "long_flags": [
-                          "--max-trials"
-                        ],
-                        "short_flags": [
-                          "-m"
-                        ],
-                        "help": "Max number of switch attempts",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "target_ip",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option(..., '--target-ip', '-t', help='Acceptable target IPs, if current IP matches any, no switch needed')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--target-ip",
-                          "-t"
-                        ],
-                        "long_flags": [
-                          "--target-ip"
-                        ],
-                        "short_flags": [
-                          "-t"
-                        ],
-                        "help": "Acceptable target IPs, if current IP matches any, no switch needed",
-                        "default": "..."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "doc": "🔁 Switch public IP address (Cloudflare WARP)",
-                "aliases": [
-                  {
-                    "name": "c",
-                    "hidden": true,
-                    "help": "Switch public IP address (Cloudflare WARP)"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "wifi-select",
-                "help": "📶 <w> WiFi connection utility.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
-                  "callable": "wifi_select"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def wifi_select(",
-                    "    ssid: Annotated[str, typer.Option(\"-n\", \"--ssid\", help=\"🔗 SSID of WiFi (from config)\")] = \"MyPhoneHotSpot\",",
-                    "    manual: Annotated[bool, typer.Option(\"-m\", \"--manual\", help=\"🔍 Manual network selection mode\")] = False,",
-                    "    list_: Annotated[bool, typer.Option(\"-l\", \"--list\", help=\"📡 List available networks only\")] = False,",
-                    ") -> None:",
-                    "    \"\"\"Main function with fallback network selection\"\"\"",
-                    "    from rich.panel import Panel",
-                    "    from rich.prompt import Confirm",
-                    "    from rich.console import Console",
-                    "    from machineconfig.scripts.python.helpers.helpers_network.wifi_conn import try_config_connection, manual_network_selection, display_available_networks",
-                    "    console = Console()",
-                    "    console.print(Panel(\"📶 Welcome to the WiFi Connector Tool\", title=\"[bold blue]WiFi Connection[/bold blue]\", border_style=\"blue\"))",
-                    "",
-                    "    # If user just wants to list networks",
-                    "    if list_:",
-                    "        display_available_networks()",
-                    "        return",
-                    "",
-                    "    # If user wants manual mode, skip config and go straight to selection",
-                    "    if manual:",
-                    "        console.print(\"[blue]🔍 Manual network selection mode[/blue]\")",
-                    "        if manual_network_selection():",
-                    "            console.print(\"[green]🎉 Successfully connected![/green]\")",
-                    "        else:",
-                    "            console.print(\"[red]❌ Failed to connect[/red]\")",
-                    "        return",
-                    "",
-                    "    # Try to connect using configuration first",
-                    "    console.print(f\"[blue]🔍 Attempting to connect to configured network: {ssid}[/blue]\")",
-                    "",
-                    "    if try_config_connection(ssid):",
-                    "        console.print(\"[green]🎉 Successfully connected using configuration![/green]\")",
-                    "        return",
-                    "",
-                    "    # Configuration failed, offer fallback options",
-                    "    console.print(\"\\n[yellow]⚠️  Configuration connection failed or not available[/yellow]\")",
-                    "",
-                    "    if Confirm.ask(\"[blue]Would you like to manually select a network?[/blue]\", default=True):",
-                    "        if manual_network_selection():",
-                    "            console.print(\"[green]🎉 Successfully connected![/green]\")",
-                    "        else:",
-                    "            console.print(\"[red]❌ Failed to connect[/red]\")",
-                    "    else:",
-                    "        console.print(\"[blue]👋 Goodbye![/blue]\")"
-                  ],
-                  "name": "wifi_select",
-                  "parameters": [
-                    {
-                      "name": "ssid",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": "MyPhoneHotSpot",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('-n', '--ssid', help='🔗 SSID of WiFi (from config)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "-n",
-                          "--ssid"
-                        ],
-                        "long_flags": [
-                          "--ssid"
-                        ],
-                        "short_flags": [
-                          "-n"
-                        ],
-                        "help": "🔗 SSID of WiFi (from config)"
-                      }
-                    },
-                    {
-                      "name": "manual",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('-m', '--manual', help='🔍 Manual network selection mode')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "-m",
-                          "--manual"
-                        ],
-                        "long_flags": [
-                          "--manual"
-                        ],
-                        "short_flags": [
-                          "-m"
-                        ],
-                        "help": "🔍 Manual network selection mode"
-                      }
-                    },
-                    {
-                      "name": "list_",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('-l', '--list', help='📡 List available networks only')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "-l",
-                          "--list"
-                        ],
-                        "long_flags": [
-                          "--list"
-                        ],
-                        "short_flags": [
-                          "-l"
-                        ],
-                        "help": "📡 List available networks only"
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": true
-                },
-                "doc": "Main function with fallback network selection",
-                "aliases": [
-                  {
-                    "name": "w",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "bind-wsl-port",
-                "help": "🔌 <b> Bind WSL port to Windows host",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
-                  "callable": "bind_wsl_port"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def bind_wsl_port(port: Annotated[int, typer.Option(..., \"--port\", \"-p\", help=\"Port number to bind\")]):",
-                    "    code = f\"\"\"",
-                    "",
-                    "$wsl_ip = (wsl.exe hostname -I).Trim().Split(' ')[0]",
-                    "netsh interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0 connectport={port} connectaddress=$wsl_ip",
-                    "",
-                    "\"\"\"",
-                    "    from machineconfig.utils.code import exit_then_run_shell_script",
-                    "    exit_then_run_shell_script(code)"
-                  ],
-                  "name": "bind_wsl_port",
-                  "parameters": [
-                    {
-                      "name": "port",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--port', '-p', help='Port number to bind')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--port",
-                          "-p"
-                        ],
-                        "long_flags": [
-                          "--port"
-                        ],
-                        "short_flags": [
-                          "-p"
-                        ],
-                        "help": "Port number to bind",
-                        "default": "..."
-                      }
-                    }
-                  ]
-                },
-                "typer": {
-                  "no_args_is_help": true
-                },
-                "aliases": [
-                  {
-                    "name": "b",
-                    "hidden": true,
-                    "help": "Bind WSL port to Windows host"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "open-wsl-port",
-                "help": "🔥 <o> Open Windows firewall ports for WSL.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
-                  "callable": "open_wsl_port"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def open_wsl_port(ports: Annotated[str, typer.Argument(..., help=\"Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')\")]):",
-                    "    \"\"\"🔥 Open Windows firewall ports for WSL (Windows only).\"\"\"",
-                    "    import machineconfig.utils.ssh_utils.wsl as wsl_utils",
-                    "    wsl_utils.open_wsl_port(ports)"
-                  ],
-                  "name": "open_wsl_port",
-                  "parameters": [
-                    {
-                      "name": "ports",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(..., help=\"Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')\")]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')",
-                        "default": "..."
-                      }
-                    }
-                  ]
-                },
-                "typer": {
-                  "no_args_is_help": true
-                },
-                "doc": "🔥 Open Windows firewall ports for WSL (Windows only).",
-                "aliases": [
-                  {
-                    "name": "o",
-                    "hidden": true,
-                    "help": "Open Windows firewall ports for WSL."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "link-wsl-windows",
-                "help": "🔗 <l> Link WSL home and Windows home directories.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
-                  "callable": "link_wsl_and_windows_home"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def link_wsl_and_windows_home(windows_username: Annotated[str | None, typer.Option(\"--windows-username\", \"-u\", help=\"Windows username to use (optional, auto-detected if not provided)\")] = None):",
-                    "    \"\"\"🔗 Link WSL home and Windows home directories.\"\"\"",
-                    "    import machineconfig.utils.ssh_utils.wsl as wsl_utils",
-                    "    wsl_utils.link_wsl_and_windows(windows_username)"
-                  ],
-                  "name": "link_wsl_and_windows_home",
-                  "parameters": [
-                    {
-                      "name": "windows_username",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--windows-username', '-u', help='Windows username to use (optional, auto-detected if not provided)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--windows-username",
-                          "-u"
-                        ],
-                        "long_flags": [
-                          "--windows-username"
-                        ],
-                        "short_flags": [
-                          "-u"
-                        ],
-                        "help": "Windows username to use (optional, auto-detected if not provided)"
-                      }
-                    }
-                  ]
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🔗 Link WSL home and Windows home directories.",
-                "aliases": [
-                  {
-                    "name": "l",
-                    "hidden": true,
-                    "help": "Link WSL home and Windows home directories."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "reset-cloudflare-tunnel",
-                "help": "☁ <r> Reset Cloudflare tunnel service",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
-                  "callable": "reset_cloudflare_tunnel"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def reset_cloudflare_tunnel(task: Annotated[Literal[\"oneoff-shell-process\", \"oneoff-background-process\", \"as-service\"], typer.Option(..., \"--task\", \"-t\", help=\"Task to perform\", case_sensitive=False, show_choices=True)],",
-                    "                            tunnel_name: Annotated[str | None, typer.Option(\"--tunnel-name\", \"-n\", help=\"Name of the Cloudflare tunnel to run\")] = None,",
-                    "                    ):",
-                    "    code = \"\"\"",
-                    "# cloudflared tunnel route dns glenn  # creates CNAMES in Cloudflare dashboard",
-                    "# sudo systemctl stop cloudflared",
-                    "\"\"\"",
-                    "    match task:",
-                    "        case \"oneoff-shell-process\":",
-                    "            if tunnel_name is None:",
-                    "                tunnel_name = \"\"",
-                    "            code = f\"\"\"cloudflared tunnel run {tunnel_name}  #  This is running like a normal command \"\"\"",
-                    "        case \"oneoff-background-process\":",
-                    "            if tunnel_name is None:",
-                    "                tunnel_name = \"\"",
-                    "            import getpass",
-                    "            user_name = getpass.getuser()",
-                    "            code = f\"\"\"",
-                    "# This verion runs like a deamon, but its not peristent across reboots",
-                    "sudo systemd-run \\",
-                    "  --unit=cloudflared-tunnel \\",
-                    "  --description=\"Cloudflared Tunnel (transient)\" \\",
-                    "  --property=Restart=on-failure \\",
-                    "  --property=RestartSec=5 \\",
-                    "  --property=User={user_name} \\",
-                    "  --property=Group={user_name} \\",
-                    "  --property=Environment=HOME=/home/{user_name} \\",
-                    "  --property=WorkingDirectory=/home/{user_name} \\",
-                    "  /home/{user_name}/.local/bin/cloudflared \\",
-                    "    --config /home/{user_name}/.cloudflared/config.yml \\",
-                    "    tunnel run {tunnel_name}",
-                    "\"\"\"",
-                    "        case \"as-service\":",
-                    "            code = \"\"\"",
-                    "home_dir=$HOME",
-                    "cloudflared_path=\"$home_dir/.local/bin/cloudflared\"",
-                    "sudo $cloudflared_path service uninstall",
-                    "sudo rm /etc/cloudflared/config.yml || true",
-                    "sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service install",
-                    "\"\"\"",
-                    "",
-                    "",
-                    "    from machineconfig.utils.code import exit_then_run_shell_script, print_code",
-                    "    print_code(code, lexer=\"bash\", desc=\"code to achieve the goal\")",
-                    "    yes = typer.confirm(\"Do you want to run the above commands now?\", default=False)",
-                    "    if yes:",
-                    "        exit_then_run_shell_script(code)"
-                  ],
-                  "name": "reset_cloudflare_tunnel",
-                  "parameters": [
-                    {
-                      "name": "task",
-                      "kind": "positional_or_keyword",
-                      "type": "Literal['oneoff-shell-process', 'oneoff-background-process', 'as-service']",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[Literal['oneoff-shell-process', 'oneoff-background-process', 'as-service'], typer.Option(..., '--task', '-t', help='Task to perform', case_sensitive=False, show_choices=True)]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--task",
-                          "-t"
-                        ],
-                        "long_flags": [
-                          "--task"
-                        ],
-                        "short_flags": [
-                          "-t"
-                        ],
-                        "help": "Task to perform",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "tunnel_name",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--tunnel-name', '-n', help='Name of the Cloudflare tunnel to run')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--tunnel-name",
-                          "-n"
-                        ],
-                        "long_flags": [
-                          "--tunnel-name"
-                        ],
-                        "short_flags": [
-                          "-n"
-                        ],
-                        "help": "Name of the Cloudflare tunnel to run"
-                      }
-                    }
-                  ]
-                },
-                "aliases": [
-                  {
-                    "name": "r",
-                    "hidden": true,
-                    "help": "Reset Cloudflare tunnel service"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "add-ip-exclusion-to-warp",
-                "help": "🚫 <p> Add IP exclusion to WARP",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
-                  "callable": "add_ip_exclusion_to_warp"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., \"--ip\", help=\"IP address(es) to exclude from WARP (Comma separated)\")]):",
-                    "    ips = ip.split(\",\")",
-                    "    res = \"\"",
-                    "    for an_ip in ips:",
-                    "        res += f'sudo warp-cli tunnel ip add {an_ip}\\n'",
-                    "        print(f\"Adding IP exclusion to WARP for: {an_ip}\")",
-                    "    code = f\"\"\"",
-                    "{res}",
-                    "echo \"Restarting WARP connection...\"",
-                    "sudo warp-cli disconnect",
-                    "echo \"Waiting for 2 seconds...\"",
-                    "sleep 2",
-                    "echo \"Reconnecting WARP...\"",
-                    "sudo warp-cli connect",
-                    "\"\"\"",
-                    "    print(code)",
-                    "    print(\"NOTE: Please run the above commands in your terminal to apply the changes.\")"
-                  ],
-                  "name": "add_ip_exclusion_to_warp",
-                  "parameters": [
-                    {
-                      "name": "ip",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--ip', help='IP address(es) to exclude from WARP (Comma separated)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--ip"
-                        ],
-                        "long_flags": [
-                          "--ip"
-                        ],
-                        "short_flags": [],
-                        "help": "IP address(es) to exclude from WARP (Comma separated)",
-                        "default": "..."
-                      }
-                    }
-                  ]
-                },
-                "aliases": [
-                  {
-                    "name": "p",
-                    "hidden": true,
-                    "help": "Add IP exclusion to WARP"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
                 "name": "vscode-share",
                 "help": "💻 <v> Share workspace via VS Code Tunnels",
                 "source": {
@@ -8140,11 +8191,16 @@
                 "signature": {
                   "raw_lines": [
                     "def vscode_share(",
-                    "    action: Annotated[Literal[\"run\", \"r\", \"install-service\", \"i\", \"uninstall-service\", \"u\", \"share-local\", \"l\"], typer.Argument(..., help=\"Action to perform\", case_sensitive=False, show_choices=True)],",
+                    "    action: Annotated[",
+                    "        Literal[\"run\", \"r\", \"install-service\", \"i\", \"uninstall-service\", \"u\", \"share-local\", \"l\"],",
+                    "        typer.Argument(..., help=\"Action to perform\", case_sensitive=False, show_choices=True),",
+                    "    ],",
                     "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Name for tunnel/service actions (run, install-service)\")] = None,",
                     "    path: Annotated[str | None, typer.Option(\"--path\", \"-p\", help=\"Server base path for local web mode (share-local)\")] = None,",
                     "    host: Annotated[str, typer.Option(\"--host\", \"-h\", help=\"Host for local web mode (share-local)\")] = \"0.0.0.0\",",
-                    "    directory: Annotated[str | None, typer.Option(\"--dir\", \"-d\", help=\"Folder to open in local web mode (share-local), defaults to the current working directory\")] = None,",
+                    "    directory: Annotated[",
+                    "        str | None, typer.Option(\"--dir\", \"-d\", help=\"Folder to open in local web mode (share-local), defaults to the current working directory\")",
+                    "    ] = None,",
                     "    extra_args: Annotated[str | None, typer.Option(\"--extra-args\", \"-e\", help=\"Extra args to append to the generated VS Code command\")] = None,",
                     ") -> None:",
                     "    \"\"\"🧑‍💻 Share workspace using VS Code CLI (\"code tunnel\" / \"code serve-web\")",
@@ -8155,12 +8211,7 @@
                     "    accept = \"--accept-server-license-terms\"",
                     "    name_part = f\"--name {name}\" if name else \"\"",
                     "    extra = extra_args or \"\"",
-                    "    action_normalized = {",
-                    "        \"r\": \"run\",",
-                    "        \"i\": \"install-service\",",
-                    "        \"u\": \"uninstall-service\",",
-                    "        \"l\": \"share-local\",",
-                    "    }.get(action, action)",
+                    "    action_normalized = {\"r\": \"run\", \"i\": \"install-service\", \"u\": \"uninstall-service\", \"l\": \"share-local\"}.get(action, action)",
                     "    match action_normalized:",
                     "        case \"run\" | \"r\":",
                     "            cmd = f\"code tunnel {name_part} {accept} {extra}\".strip()",
@@ -8172,7 +8223,11 @@
                     "            cmd = \"code tunnel service uninstall\"",
                     "            desc = \"Uninstall code tunnel service\"",
                     "        case \"share-local\" | \"l\":",
-                    "            from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder",
+                    "            from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import (",
+                    "                ensure_without_connection_token,",
+                    "                resolve_share_local_folder,",
+                    "            )",
+                    "",
                     "            host_part = f\"--host {host}\" if host else \"\"",
                     "            server_base_path_part = f\"--server-base-path {path}\" if path else \"\"",
                     "            directory = resolve_share_local_folder(directory)",
@@ -8183,6 +8238,7 @@
                     "            print(f\"Unknown action: {action_normalized}\")",
                     "            return",
                     "    from machineconfig.utils.code import print_code, exit_then_run_shell_script",
+                    "",
                     "    print_code(cmd, lexer=\"bash\", desc=desc)",
                     "    if action_normalized == \"share-local\":",
                     "        from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls",
@@ -8190,7 +8246,7 @@
                     "        print_serve_web_urls(cmd, folder_path=directory)",
                     "        exit_then_run_shell_script(cmd)",
                     "        return",
-                    "    exit_then_run_shell_script(cmd)    "
+                    "    exit_then_run_shell_script(cmd)"
                   ],
                   "name": "vscode_share",
                   "parameters": [

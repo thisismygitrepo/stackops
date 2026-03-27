@@ -95,17 +95,15 @@ def sunburst(
         height: int,
         width: int,
     ) -> None:
-        from pathlib import Path
         from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
-
-        output_path = Path(output_str) if output_str else None
         render_plotly(
             view="sunburst",
-            output=output_path,
+            output=output_str,
             height=height,
             width=width,
             template=template,
             max_depth=max_depth,
+            path=None,
         )
 
     from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
@@ -147,17 +145,15 @@ def treemap(
         height: int,
         width: int,
     ) -> None:
-        from pathlib import Path
         from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
-
-        output_path = Path(output_str) if output_str else None
         render_plotly(
             view="treemap",
-            output=output_path,
+            output=output_str,
             height=height,
             width=width,
             template=template,
             max_depth=max_depth,
+            path=None,
         )
 
     from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
@@ -199,17 +195,15 @@ def icicle(
         height: int,
         width: int,
     ) -> None:
-        from pathlib import Path
         from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
-
-        output_path = Path(output_str) if output_str else None
         render_plotly(
             view="icicle",
-            output=output_path,
+            output=output_str,
             height=height,
             width=width,
             template=template,
             max_depth=max_depth,
+            path=None,
         )
 
     from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION

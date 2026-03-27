@@ -31,7 +31,7 @@ def load_cli_graph(path: Path | None = None) -> dict[str, Any]:
     return json.loads(graph_path.read_text(encoding="utf-8"))
 
 
-def build_graph(path: Path | None = None) -> GraphNode:
+def build_graph(path: str | None = None) -> GraphNode:
     data = load_cli_graph(path)
     root = data.get("root") or {}
     root_name = root.get("name") or "root"

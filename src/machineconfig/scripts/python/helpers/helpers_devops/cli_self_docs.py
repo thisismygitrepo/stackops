@@ -22,8 +22,8 @@ class DocsArtifactSpec:
 
 DOCS_ARTIFACT_SPECS: tuple[DocsArtifactSpec, ...] = (
     DocsArtifactSpec(view="sunburst", output_relative_path=Path("docs/assets/devops-self-explore/sunburst.html")),
-    DocsArtifactSpec(view="treemap", output_relative_path=Path("docs/assets/devops-self-explore/treemap.html")),
-    DocsArtifactSpec(view="icicle", output_relative_path=Path("docs/assets/devops-self-explore/icicle.html")),
+    # DocsArtifactSpec(view="treemap", output_relative_path=Path("docs/assets/devops-self-explore/treemap.html")),
+    # DocsArtifactSpec(view="icicle", output_relative_path=Path("docs/assets/devops-self-explore/icicle.html")),
 )
 
 
@@ -89,7 +89,6 @@ def _write_cli_graph_snapshot(repo_root: Path) -> Path:
 
 def create_docs_artifacts(repo_root: Path) -> list[Path]:
     from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
-
     _write_cli_graph_snapshot(repo_root=repo_root)
     generated_paths: list[Path] = []
     for artifact_spec in DOCS_ARTIFACT_SPECS:
@@ -97,8 +96,10 @@ def create_docs_artifacts(repo_root: Path) -> list[Path]:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         render_plotly(
             view=artifact_spec.view,
-            output=output_path,
+            output=str(output_path),
             template=DOCS_ARTIFACT_TEMPLATE,
+            path=None,
+            max_depth=None,
         )
         generated_paths.append(output_path)
     return generated_paths

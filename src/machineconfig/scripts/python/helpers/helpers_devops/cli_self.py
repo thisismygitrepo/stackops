@@ -253,7 +253,7 @@ def docs(
     rebuild: Annotated[bool, typer.Option("--rebuild", "-b", help="Rebuild docs before starting the preview server.")] = False,
     create_artifacts: Annotated[
         bool,
-        typer.Option("--create-artifacts", help="Regenerate CLI graph docs artifacts before starting the preview server."),
+        typer.Option("--create-artifacts", "-a", help="Regenerate CLI graph docs artifacts before starting the preview server."),
     ] = False,
 ) -> None:
     """📚 <o> Serve local docs with preview URLs."""

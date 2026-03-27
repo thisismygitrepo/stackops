@@ -1,7 +1,5 @@
 
 
-from pathlib import Path
-
 from machineconfig.scripts.python.graph.visualize.graph_data import (
     GraphNode,
     build_graph,
@@ -17,7 +15,7 @@ KIND_STYLES = {
 
 def render_dot(
     *,
-    path: Path | None = None,
+    path: str | None = None,
     max_depth: int | None = None,
     include_help: bool = True,
 ) -> str:

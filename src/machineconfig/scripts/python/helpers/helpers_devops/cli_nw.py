@@ -1,17 +1,14 @@
 import typer
 from typing import Annotated, Literal
 
-from machineconfig.scripts.python.helpers.helpers_devops import cli_share_file, cli_share_server, cli_share_temp, cli_share_terminal, cli_ssh
-
-
-def switch_public_ip_address(
-    wait_seconds: Annotated[float, typer.Option(..., "--wait", "-w", help="Seconds to wait between steps")] = 2.0,
-    max_trials: Annotated[int, typer.Option(..., "--max-trials", "-m", help="Max number of switch attempts")] = 10,
-    target_ip: Annotated[list[str] | None, typer.Option(..., "--target-ip", "-t", help="Acceptable target IPs, if current IP matches any, no switch needed")] = None,
-) -> None:
-    """🔁 Switch public IP address (Cloudflare WARP)"""
-    import machineconfig.scripts.python.helpers.helpers_network.address_switch as helper
-    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)
+from machineconfig.scripts.python.helpers.helpers_devops import (
+    cli_device,
+    cli_share_file,
+    cli_share_server,
+    cli_share_temp,
+    cli_share_terminal,
+    cli_ssh,
+)
 
 
 def show_address() -> None:
@@ -22,6 +19,7 @@ def show_address() -> None:
     try:
         loaded_json = helper.get_public_ip_address()
         from rich import print_json
+
         print_json(data=loaded_json)
         public_ip_address = loaded_json["ip"]
     except Exception as e:
@@ -29,9 +27,10 @@ def show_address() -> None:
 
     from rich.table import Table
     from rich.console import Console
+
     addresses = helper.get_all_ipv4_addresses()
     addresses.append(("Public IP", public_ip_address))
-    
+
     # loc = loaded_json["loc"]
     # cmd = f"""curl "https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=300&center=lonlat:{loc}&zoom=6&marker=lonlat:{loc};color:%23ff0000;size:medium&apiKey=$GEOAPIFY_API_KEY" -o map.png && chafa map.png"""
     # from machineconfig.utils.code import run_shell_script
@@ -40,13 +39,13 @@ def show_address() -> None:
     table = Table(title="Network Interfaces")
     table.add_column("Interface", style="cyan")
     table.add_column("IP Address", style="green")
-    
+
     for iface, ip in addresses:
         table.add_row(iface, ip)
-    
+
     console = Console()
     console.print(table)
-    
+
     selected_lan_ip = helper.select_lan_ipv4(prefer_vpn=False)
     if selected_lan_ip is not None:
         # ip, iface = res
@@ -56,129 +55,17 @@ def show_address() -> None:
         print("No network interfaces found.")
 
 
-
-def bind_wsl_port(port: Annotated[int, typer.Option(..., "--port", "-p", help="Port number to bind")]):
-    code = f"""
-
-$wsl_ip = (wsl.exe hostname -I).Trim().Split(' ')[0]
-netsh interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0 connectport={port} connectaddress=$wsl_ip
-
-"""
-    from machineconfig.utils.code import exit_then_run_shell_script
-    exit_then_run_shell_script(code)
-def open_wsl_port(ports: Annotated[str, typer.Argument(..., help="Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')")]):
-    """🔥 Open Windows firewall ports for WSL (Windows only)."""
-    import machineconfig.utils.ssh_utils.wsl as wsl_utils
-    wsl_utils.open_wsl_port(ports)
-def link_wsl_and_windows_home(windows_username: Annotated[str | None, typer.Option("--windows-username", "-u", help="Windows username to use (optional, auto-detected if not provided)")] = None):
-    """🔗 Link WSL home and Windows home directories."""
-    import machineconfig.utils.ssh_utils.wsl as wsl_utils
-    wsl_utils.link_wsl_and_windows(windows_username)
-
-
-def wifi_select(
-    ssid: Annotated[str, typer.Option("-n", "--ssid", help="🔗 SSID of WiFi (from config)")] = "MyPhoneHotSpot",
-    manual: Annotated[bool, typer.Option("-m", "--manual", help="🔍 Manual network selection mode")] = False,
-    list_: Annotated[bool, typer.Option("-l", "--list", help="📡 List available networks only")] = False,
-) -> None:
-    """Main function with fallback network selection"""
-    from rich.panel import Panel
-    from rich.prompt import Confirm
-    from rich.console import Console
-    from machineconfig.scripts.python.helpers.helpers_network.wifi_conn import try_config_connection, manual_network_selection, display_available_networks
-    console = Console()
-    console.print(Panel("📶 Welcome to the WiFi Connector Tool", title="[bold blue]WiFi Connection[/bold blue]", border_style="blue"))
-
-    # If user just wants to list networks
-    if list_:
-        display_available_networks()
-        return
-
-    # If user wants manual mode, skip config and go straight to selection
-    if manual:
-        console.print("[blue]🔍 Manual network selection mode[/blue]")
-        if manual_network_selection():
-            console.print("[green]🎉 Successfully connected![/green]")
-        else:
-            console.print("[red]❌ Failed to connect[/red]")
-        return
-
-    # Try to connect using configuration first
-    console.print(f"[blue]🔍 Attempting to connect to configured network: {ssid}[/blue]")
-
-    if try_config_connection(ssid):
-        console.print("[green]🎉 Successfully connected using configuration![/green]")
-        return
-
-    # Configuration failed, offer fallback options
-    console.print("\n[yellow]⚠️  Configuration connection failed or not available[/yellow]")
-
-    if Confirm.ask("[blue]Would you like to manually select a network?[/blue]", default=True):
-        if manual_network_selection():
-            console.print("[green]🎉 Successfully connected![/green]")
-        else:
-            console.print("[red]❌ Failed to connect[/red]")
-    else:
-        console.print("[blue]👋 Goodbye![/blue]")
-
-
-
-def reset_cloudflare_tunnel(task: Annotated[Literal["oneoff-shell-process", "oneoff-background-process", "as-service"], typer.Option(..., "--task", "-t", help="Task to perform", case_sensitive=False, show_choices=True)],
-                            tunnel_name: Annotated[str | None, typer.Option("--tunnel-name", "-n", help="Name of the Cloudflare tunnel to run")] = None,
-                    ):
-    code = """
-# cloudflared tunnel route dns glenn  # creates CNAMES in Cloudflare dashboard
-# sudo systemctl stop cloudflared
-"""
-    match task:
-        case "oneoff-shell-process":
-            if tunnel_name is None:
-                tunnel_name = ""
-            code = f"""cloudflared tunnel run {tunnel_name}  #  This is running like a normal command """
-        case "oneoff-background-process":
-            if tunnel_name is None:
-                tunnel_name = ""
-            import getpass
-            user_name = getpass.getuser()
-            code = f"""
-# This verion runs like a deamon, but its not peristent across reboots
-sudo systemd-run \
-  --unit=cloudflared-tunnel \
-  --description="Cloudflared Tunnel (transient)" \
-  --property=Restart=on-failure \
-  --property=RestartSec=5 \
-  --property=User={user_name} \
-  --property=Group={user_name} \
-  --property=Environment=HOME=/home/{user_name} \
-  --property=WorkingDirectory=/home/{user_name} \
-  /home/{user_name}/.local/bin/cloudflared \
-    --config /home/{user_name}/.cloudflared/config.yml \
-    tunnel run {tunnel_name}
-"""
-        case "as-service":
-            code = """
-home_dir=$HOME
-cloudflared_path="$home_dir/.local/bin/cloudflared"
-sudo $cloudflared_path service uninstall
-sudo rm /etc/cloudflared/config.yml || true
-sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service install
-"""
-
-
-    from machineconfig.utils.code import exit_then_run_shell_script, print_code
-    print_code(code, lexer="bash", desc="code to achieve the goal")
-    yes = typer.confirm("Do you want to run the above commands now?", default=False)
-    if yes:
-        exit_then_run_shell_script(code)
-    
-
-
 def vscode_share(
-    action: Annotated[Literal["run", "r", "install-service", "i", "uninstall-service", "u", "share-local", "l"], typer.Argument(..., help="Action to perform", case_sensitive=False, show_choices=True)],
+    action: Annotated[
+        Literal["run", "r", "install-service", "i", "uninstall-service", "u", "share-local", "l"],
+        typer.Argument(..., help="Action to perform", case_sensitive=False, show_choices=True),
+    ],
     name: Annotated[str | None, typer.Option("--name", "-n", help="Name for tunnel/service actions (run, install-service)")] = None,
     path: Annotated[str | None, typer.Option("--path", "-p", help="Server base path for local web mode (share-local)")] = None,
     host: Annotated[str, typer.Option("--host", "-h", help="Host for local web mode (share-local)")] = "0.0.0.0",
-    directory: Annotated[str | None, typer.Option("--dir", "-d", help="Folder to open in local web mode (share-local), defaults to the current working directory")] = None,
+    directory: Annotated[
+        str | None, typer.Option("--dir", "-d", help="Folder to open in local web mode (share-local), defaults to the current working directory")
+    ] = None,
     extra_args: Annotated[str | None, typer.Option("--extra-args", "-e", help="Extra args to append to the generated VS Code command")] = None,
 ) -> None:
     """🧑‍💻 Share workspace using VS Code CLI ("code tunnel" / "code serve-web")
@@ -189,12 +76,7 @@ def vscode_share(
     accept = "--accept-server-license-terms"
     name_part = f"--name {name}" if name else ""
     extra = extra_args or ""
-    action_normalized = {
-        "r": "run",
-        "i": "install-service",
-        "u": "uninstall-service",
-        "l": "share-local",
-    }.get(action, action)
+    action_normalized = {"r": "run", "i": "install-service", "u": "uninstall-service", "l": "share-local"}.get(action, action)
     match action_normalized:
         case "run" | "r":
             cmd = f"code tunnel {name_part} {accept} {extra}".strip()
@@ -206,7 +88,11 @@ def vscode_share(
             cmd = "code tunnel service uninstall"
             desc = "Uninstall code tunnel service"
         case "share-local" | "l":
-            from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder
+            from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import (
+                ensure_without_connection_token,
+                resolve_share_local_folder,
+            )
+
             host_part = f"--host {host}" if host else ""
             server_base_path_part = f"--server-base-path {path}" if path else ""
             directory = resolve_share_local_folder(directory)
@@ -217,6 +103,7 @@ def vscode_share(
             print(f"Unknown action: {action_normalized}")
             return
     from machineconfig.utils.code import print_code, exit_then_run_shell_script
+
     print_code(cmd, lexer="bash", desc=desc)
     if action_normalized == "share-local":
         from machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls
@@ -224,35 +111,20 @@ def vscode_share(
         print_serve_web_urls(cmd, folder_path=directory)
         exit_then_run_shell_script(cmd)
         return
-    exit_then_run_shell_script(cmd)    
+    exit_then_run_shell_script(cmd)
 
 
-def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., "--ip", help="IP address(es) to exclude from WARP (Comma separated)")]):
-    ips = ip.split(",")
-    res = ""
-    for an_ip in ips:
-        res += f'sudo warp-cli tunnel ip add {an_ip}\n'
-        print(f"Adding IP exclusion to WARP for: {an_ip}")
-    code = f"""
-{res}
-echo "Restarting WARP connection..."
-sudo warp-cli disconnect
-echo "Waiting for 2 seconds..."
-sleep 2
-echo "Reconnecting WARP..."
-sudo warp-cli connect
-"""
-    print(code)
-    print("NOTE: Please run the above commands in your terminal to apply the changes.")
-
-
-def get_app():
+def get_app() -> typer.Typer:
     nw_apps = typer.Typer(help="🔐 <n> Network subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     nw_apps.command(name="share-terminal", help="📡 <t> Share terminal via web browser")(cli_share_terminal.share_terminal)
     nw_apps.command(name="t", help="Share terminal via web browser", hidden=True)(cli_share_terminal.share_terminal)
 
-    nw_apps.command(name="share-server", help="🌐 <s> Start local/global server to share files/folders via web browser", no_args_is_help=True)(cli_share_server.web_file_explorer)
-    nw_apps.command(name="s", help="Start local/global server to share files/folders via web browser", hidden=True, no_args_is_help=True)(cli_share_server.web_file_explorer)
+    nw_apps.command(name="share-server", help="🌐 <s> Start local/global server to share files/folders via web browser", no_args_is_help=True)(
+        cli_share_server.web_file_explorer
+    )
+    nw_apps.command(name="s", help="Start local/global server to share files/folders via web browser", hidden=True, no_args_is_help=True)(
+        cli_share_server.web_file_explorer
+    )
 
     # app = cli_share_server.get_share_file_app()
     # nw_apps.add_typer(app, name="share-file", help="📁 <f> Share a file via relay server", no_args_is_help=True)
@@ -267,28 +139,11 @@ def get_app():
 
     nw_apps.add_typer(cli_ssh.get_app(), name="ssh", help="🔐 <S> SSH subcommands")
     nw_apps.add_typer(cli_ssh.get_app(), name="S", help="SSH subcommands", hidden=True)
+    nw_apps.add_typer(cli_device.get_app(), name="device", help="🖥 <d> Device subcommands")
+    nw_apps.add_typer(cli_device.get_app(), name="d", help="Device subcommands", hidden=True)
 
     nw_apps.command(name="show-address", help="📌 <a> Show this computer addresses on network")(show_address)
     nw_apps.command(name="a", help="Show this computer addresses on network", hidden=True)(show_address)
-
-    nw_apps.command(name="switch-public-ip", help="🔁 <c> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
-    nw_apps.command(name="c", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
-
-    nw_apps.command(name="wifi-select", no_args_is_help=True, help="📶 <w> WiFi connection utility.")(wifi_select)
-    nw_apps.command(name="w", no_args_is_help=True, hidden=True)(wifi_select)
-
-    nw_apps.command(name="bind-wsl-port", help="🔌 <b> Bind WSL port to Windows host", no_args_is_help=True)(bind_wsl_port)
-    nw_apps.command(name="b", help="Bind WSL port to Windows host", hidden=True, no_args_is_help=True)(bind_wsl_port)
-    nw_apps.command(name="open-wsl-port", no_args_is_help=True, help="🔥 <o> Open Windows firewall ports for WSL.", hidden=False)(open_wsl_port)
-    nw_apps.command(name="o", no_args_is_help=True, help="Open Windows firewall ports for WSL.", hidden=True)(open_wsl_port)
-    nw_apps.command(name="link-wsl-windows", no_args_is_help=False, help="🔗 <l> Link WSL home and Windows home directories.", hidden=False)(link_wsl_and_windows_home)
-    nw_apps.command(name="l", no_args_is_help=False, help="Link WSL home and Windows home directories.", hidden=True)(link_wsl_and_windows_home)
-
-
-    nw_apps.command(name="reset-cloudflare-tunnel", help="☁ <r> Reset Cloudflare tunnel service")(reset_cloudflare_tunnel)
-    nw_apps.command(name="r", help="Reset Cloudflare tunnel service", hidden=True)(reset_cloudflare_tunnel)
-    nw_apps.command(name="add-ip-exclusion-to-warp", help="🚫 <p> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
-    nw_apps.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
 
     # VS Code Tunnels helper
     nw_apps.command(name="vscode-share", no_args_is_help=True, help="💻 <v> Share workspace via VS Code Tunnels")(vscode_share)

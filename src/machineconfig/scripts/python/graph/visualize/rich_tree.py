@@ -1,7 +1,5 @@
 
 
-from pathlib import Path
-
 from rich.console import Console
 from rich.text import Text
 from rich.tree import Tree
@@ -17,7 +15,7 @@ STYLE_BY_KIND = {
 
 def render_tree(
     *,
-    path: Path | None = None,
+    path: str | None = None,
     show_help: bool = True,
     show_aliases: bool = False,
     max_depth: int | None = None,
