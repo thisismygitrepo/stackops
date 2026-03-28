@@ -115,14 +115,21 @@ def attach_to_session(
 
 def kill_session_target(
         name: Annotated[str | None, typer.Argument(help="Name of the session to kill. If not provided, a list will be shown to choose from.")] = None,
+        kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser.", show_default=True)] = False,
         backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
     """Choose one or more session targets to kill."""
+    if kill_all and name is not None:
+        typer.echo("Error: --all cannot be used together with NAME.", err=True, color=True)
+        raise typer.Exit()
+    if kill_all and window:
+        typer.echo("Error: --all cannot be used together with --window.", err=True, color=True)
+        raise typer.Exit()
     backend_resolved = _resolve_session_backend(backend)
     from machineconfig.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl
 
-    action, payload = impl(backend=backend_resolved, name=name, window=window)
+    action, payload = impl(backend=backend_resolved, name=name, kill_all=kill_all, window=window)
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit()
