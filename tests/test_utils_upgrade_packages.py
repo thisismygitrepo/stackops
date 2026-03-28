@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest.mock import call, patch
 
+import pytest
 from typer.testing import CliRunner
 
 from machineconfig.scripts.python import utils as utils_cli
@@ -11,10 +12,38 @@ runner = CliRunner()
 
 
 def test_upgrade_packages_help_includes_clean_group_option() -> None:
-    result = runner.invoke(utils_cli.get_app(), ["a", "--help"])
+    result = runner.invoke(utils_cli.get_app(), ["pyproject", "a", "--help"])
 
     assert result.exit_code == 0
     assert "--clean-group" in result.output
+
+
+def test_utils_root_help_lists_nested_apps() -> None:
+    result = runner.invoke(utils_cli.get_app(), ["--help"])
+
+    assert result.exit_code == 0
+    assert "machine" in result.output
+    assert "pyproject" in result.output
+    assert "file" in result.output
+    assert "kill-process" not in result.output
+    assert "upgrade-packages" not in result.output
+    assert "download" not in result.output
+
+
+@pytest.mark.parametrize(
+    ("sub_app", "expected_commands"),
+    [
+        ("machine", ["kill-process", "environment", "get-machine-specs", "list-devices", "mount"]),
+        ("pyproject", ["init-project", "upgrade-packages", "type-hint"]),
+        ("file", ["edit", "download", "pdf-merge", "pdf-compress", "read-db"]),
+    ],
+)
+def test_utils_sub_apps_expose_expected_commands(sub_app: str, expected_commands: list[str]) -> None:
+    result = runner.invoke(utils_cli.get_app(), [sub_app, "--help"])
+
+    assert result.exit_code == 0
+    for command in expected_commands:
+        assert command in result.output
 
 
 def test_upgrade_packages_cleans_requested_groups_before_generating_script(tmp_path: Path) -> None:
@@ -24,7 +53,7 @@ def test_upgrade_packages_cleans_requested_groups_before_generating_script(tmp_p
     ):
         result = runner.invoke(
             utils_cli.get_app(),
-            ["a", "--clean-group", "other", "--clean-group", "plot", str(tmp_path)],
+            ["pyproject", "a", "--clean-group", "other", "--clean-group", "plot", str(tmp_path)],
         )
 
     resolved_root = tmp_path.resolve()

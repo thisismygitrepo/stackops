@@ -76,10 +76,10 @@ Inside `devops config terminal --help`, the current terminal commands are:
 - `ghostty-theme`
 - `windows-terminal-theme`
 
-Device inspection and local mounting now live under `utils`:
+Device inspection and local mounting now live under `utils machine`:
 
-- `utils list-devices`
-- `utils mount`
+- `utils machine list-devices`
+- `utils machine mount`
 
 Use `devops config --help` as the entrypoint for config workflows, then drill down with `--help` on the specific subgroup or subcommand you need.
 

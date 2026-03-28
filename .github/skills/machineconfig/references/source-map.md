@@ -31,6 +31,10 @@ Use this map to jump from a direct CLI command path to the file that registers i
 
 - `utils ...`
   - Group registration: `src/machineconfig/scripts/python/utils.py`
+  - Nested apps:
+    - `machine` -> `src/machineconfig/scripts/python/helpers/helpers_utils/machine_utils_app.py`
+    - `pyproject` -> `src/machineconfig/scripts/python/helpers/helpers_utils/pyproject_utils_app.py`
+    - `file` -> `src/machineconfig/scripts/python/helpers/helpers_utils/file_utils_app.py`
   - Implementations spread across `helpers/helpers_utils/*`, `machineconfig/utils/*`, and `machineconfig/type_hinting/*`
 
 - `fire ...`

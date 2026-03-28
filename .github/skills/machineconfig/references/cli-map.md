@@ -131,17 +131,22 @@ agents
 └─ run-prompt
 
 utils
-├─ kill-process
-├─ environment
-├─ upgrade-packages
-├─ download
-├─ get-machine-specs
-├─ init-project
-├─ edit
-├─ pdf-merge
-├─ pdf-compress
-├─ type-hint
-└─ read-db
+├─ machine
+│  ├─ kill-process
+│  ├─ environment
+│  ├─ get-machine-specs
+│  ├─ list-devices
+│  └─ mount
+├─ pyproject
+│  ├─ init-project
+│  ├─ upgrade-packages
+│  └─ type-hint
+└─ file
+   ├─ edit
+   ├─ download
+   ├─ pdf-merge
+   ├─ pdf-compress
+   └─ read-db
 
 fire
 croshell

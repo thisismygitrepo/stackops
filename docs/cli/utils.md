@@ -10,7 +10,15 @@
 utils [OPTIONS] COMMAND [ARGS]...
 ```
 
-Current top-level commands:
+Top-level sub-apps:
+
+| Sub-app | Purpose |
+|---------|---------|
+| `machine` | Process, environment, machine specs, and local device helpers |
+| `pyproject` | Project bootstrap, dependency maintenance, and type-hint generation |
+| `file` | File editing, downloading, PDF tools, and database viewing |
+
+Commands under `utils machine`:
 
 | Command | Purpose |
 |---------|---------|
@@ -19,9 +27,19 @@ Current top-level commands:
 | `get-machine-specs` | Print machine specifications |
 | `list-devices` | List mountable local devices |
 | `mount` | Mount a local device to a mount point |
+
+Commands under `utils pyproject`:
+
+| Command | Purpose |
+|---------|---------|
 | `init-project` | Initialize a project with a uv environment and dev packages |
 | `upgrade-packages` | Upgrade project dependencies |
 | `type-hint` | Type-hint a file or project directory |
+
+Commands under `utils file`:
+
+| Command | Purpose |
+|---------|---------|
 | `edit` | Open a file in the default editor |
 | `download` | Download a file and optionally decompress it |
 | `pdf-merge` | Merge two PDF files |
@@ -36,10 +54,10 @@ Use live help to inspect the command you want:
 
 ```bash
 utils --help
-utils environment --help
-utils mount --help
-utils init-project --help
-utils download --help
+utils machine --help
+utils machine mount --help
+utils pyproject init-project --help
+utils file download --help
 ```
 
 The same surface is also reachable through the umbrella dispatcher:
@@ -53,5 +71,5 @@ machineconfig utils --help
 
 ## Notes
 
-- `utils` covers several unrelated helper workflows, so `utils --help` is the best entry point for discovery.
+- `utils` now groups helper workflows under `machine`, `pyproject`, and `file`, so start with `utils --help` and then drill into the subgroup you need.
 - Prefer the direct `utils` command in docs and scripts rather than routing through the older umbrella command by default.

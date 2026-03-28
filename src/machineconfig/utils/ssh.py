@@ -205,7 +205,7 @@ class SSH:
 
         self.local_specs: MachineSpecs = get_machine_specs()
         resp = self.run_shell_cmd_on_remote(
-            command="""~/.local/bin/utils get-machine-specs """,
+            command="""~/.local/bin/utils machine get-machine-specs """,
             verbose_output=False,
             description="Getting remote machine specs",
             strict_stderr=False,
