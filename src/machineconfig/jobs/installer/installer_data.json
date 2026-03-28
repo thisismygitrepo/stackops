@@ -3800,19 +3800,19 @@
       }
     },
     {
-      "appName": "gnupg",
+      "appName": "gpg",
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "🔐 GNU Privacy Guard encryption tool",
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install gnupg -y",
-          "windows": "winget install --no-upgrade --name \"GnuPG\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "macos": "brew install gnupg"
         },
         "arm64": {
           "linux": "sudo nala install gnupg -y",
-          "windows": "winget install --no-upgrade --name \"GnuPG\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "macos": "brew install gnupg"
         }
       }
