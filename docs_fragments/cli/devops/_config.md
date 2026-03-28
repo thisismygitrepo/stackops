@@ -26,13 +26,14 @@ Current `devops config --help` exposes:
 Apply the current dotfile mapping set.
 
 ```bash
-devops config sync --sensitivity <public|private|all> --method <symlink|copy> [OPTIONS]
+devops config sync <up|down> --sensitivity <public|private|all> --method <symlink|copy> [OPTIONS]
 ```
 
-Key options from current help:
+Key arguments and options from current help:
 
-| Option | Description |
-|--------|-------------|
+| Item | Description |
+|------|-------------|
+| `direction` | Required. Use `up` to push default paths into the managed location, or `down` to apply managed files back to default paths |
 | `--sensitivity`, `-s` | Required. Choose `private`, `public`, or `all` |
 | `--method`, `-m` | Required. Use `symlink` or `copy` |
 | `--repo`, `-r` | Select mappings from `library`, `user`, or `all` |
@@ -41,14 +42,20 @@ Key options from current help:
 
 If `--which` is omitted, the command falls back to interactive selection.
 
+For library-backed public configs, copy packaged settings first when needed:
+
+```bash
+devops config copy-assets settings
+```
+
 Examples:
 
 ```bash
-# Sync all public mappings with symlinks
-devops config sync --sensitivity public --method symlink --which all
+# Apply all public mappings with symlinks
+devops config sync down --sensitivity public --method symlink --which all
 
-# Apply only user-defined private mappings by copying files
-devops config sync --sensitivity private --method copy --repo user
+# Push local private config changes back into the managed backup area
+devops config sync up --sensitivity private --method copy --repo user
 ```
 
 ### register

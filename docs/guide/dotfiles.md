@@ -9,7 +9,7 @@ Dotfiles workflows are now documented through `devops config ...` rather than ol
 Machineconfig treats dotfiles as part of the configuration management flow:
 
 - register the files you want managed
-- sync them onto a machine
+- sync them up into the managed backup area or down onto a machine
 - choose whether to copy or symlink
 - separate public and private material
 - export or import them during migration
@@ -27,12 +27,15 @@ devops config sync --help
 
 Current `devops config sync --help` exposes the main dotfiles concepts:
 
+- positional `direction` with `up` and `down`
 - `--sensitivity` for `public`, `private`, or `all`
 - `--method` for `symlink` or `copy`
 - `--repo` for mapper source selection
 - `--which` to target one item or all items
 
 This is the current replacement for older top-level `mcfg dotfiles sync` examples.
+
+For library public configs, run `devops config copy-assets settings` before `devops config sync down ...` when you need the packaged settings copied onto the current machine.
 
 ---
 

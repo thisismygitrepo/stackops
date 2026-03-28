@@ -1,6 +1,6 @@
+from typing import Annotated, Literal, TypeAlias
 
 import typer
-from typing import Literal, Annotated, TypeAlias
 
 
 ON_CONFLICT_LOOSE: TypeAlias = Literal[
@@ -55,20 +55,34 @@ METHOD_MAP: dict[METHOD_LOOSE, METHOD_STRICT] = {
     "c": "copy",
 }
 
+DIRECTION_LOOSE: TypeAlias = Literal["up", "u", "down", "d"]
+DIRECTION_STRICT: TypeAlias = Literal["up", "down"]
+DIRECTION_MAP: dict[DIRECTION_LOOSE, DIRECTION_STRICT] = {
+    "up": "up",
+    "u": "up",
+    "down": "down",
+    "d": "down",
+}
+
 
 
 def main_from_parser(
+    direction: Annotated[
+        DIRECTION_LOOSE,
+        typer.Argument(..., help="Direction of sync: 'up' pushes default paths into the managed location, 'down' applies managed files back to default paths."),
+    ],
     sensitivity: Annotated[SENSITIVITY_LOOSE, typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the configuration files to manage.")],
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")],
     repo: Annotated[REPO_LOOSE, typer.Option(..., "--repo", "-r", help="Mapper source to use for config files.")] = "library",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-o", help="Action to take on conflict")] = "throw-error",
     which: Annotated[str | None, typer.Option(..., "--which", "-w", help="Specific items to process ('all' for all items) (default is None, selection is interactive)")] = None,
-):
+) -> None:
     """Terminology:
-    SOURCE = Self-Managed-Config-File-Path
-    TARGET = Config-File-Default-Path
-    For public config files in the library repo, the source always exists."""
+    UP = Config-File-Default-Path -> Self-Managed-Config-File-Path
+    DOWN = Self-Managed-Config-File-Path -> Config-File-Default-Path
+    For public config files in the library repo, copy packaged settings first when syncing down."""
     from machineconfig.profile.create_links import ConfigMapper, read_mapper
+
     repo_key = REPO_MAP[repo]
     mapper_full_obj = read_mapper(repo=repo_key)
     mapper_full: dict[str, list[ConfigMapper]]
@@ -93,13 +107,14 @@ def main_from_parser(
     if len(items_objections) == 0:
         msg = typer.style("Error: ", fg=typer.colors.RED) + "No valid items selected."
         typer.echo(msg)
-        typer.Exit(code=1)
-        return
-
-    if (sensitivity == "public" or sensitivity == "b") and repo_key == "library":
-        from machineconfig.profile.create_helper import copy_assets_to_machine
-        copy_assets_to_machine(which="settings")  # config files live here and will be linked to.
+        raise typer.Exit(code=1)
 
     method = METHOD_MAP[method]
     from machineconfig.profile.create_links import apply_mapper
-    apply_mapper(mapper_data=items_objections, on_conflict=ON_CONFLICT_MAPPER[on_conflict], method=method)
+
+    apply_mapper(
+        mapper_data=items_objections,
+        on_conflict=ON_CONFLICT_MAPPER[on_conflict],
+        method=method,
+        direction=DIRECTION_MAP[direction],
+    )

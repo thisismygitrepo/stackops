@@ -144,7 +144,7 @@ Set-Service -Name sshd -StartupType 'Automatic'"""
             create_default_shell_profile()
             console.print("✅ Shell profile configured successfully", style="bold green")
             from machineconfig.profile.create_links_export import main_from_parser
-            main_from_parser(sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
+            main_from_parser(direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
             if platform.system() == "Windows":
                 from machineconfig.jobs.installer.python_scripts.nerfont_windows_helper import install_nerd_fonts
                 install_nerd_fonts()
@@ -158,7 +158,10 @@ Set-Service -Name sshd -StartupType 'Automatic'"""
         console.print("🔧 Linking public configs", style="bold cyan")
         try:
             from machineconfig.profile.create_links_export import main_from_parser
-            main_from_parser(sensitivity="public", method="symlink", on_conflict="overwrite-default-path", which="all")
+            from machineconfig.profile.create_helper import copy_assets_to_machine
+
+            copy_assets_to_machine(which="settings")
+            main_from_parser(direction="down", sensitivity="public", method="symlink", on_conflict="overwrite-default-path", which="all")
             console.print("✅ Public configs linked successfully", style="bold green")
         except Exception as e:
             console.print(f"❌ Error linking public configs: {e}", style="bold red")
@@ -210,7 +213,7 @@ Set-Service -Name sshd -StartupType 'Automatic'"""
         console.print("🔧 Linking private configs", style="bold cyan")
         try:
             from machineconfig.profile.create_links_export import main_from_parser
-            main_from_parser(sensitivity="private", method="symlink", on_conflict="overwrite-default-path", which="all")
+            main_from_parser(direction="down", sensitivity="private", method="symlink", on_conflict="overwrite-default-path", which="all")
             console.print("✅ Private configs linked successfully", style="bold green")
         except Exception as e:
             console.print(f"❌ Error linking private configs: {e}", style="bold red")

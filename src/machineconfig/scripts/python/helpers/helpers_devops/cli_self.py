@@ -114,7 +114,7 @@ uv tool install --no-cache --upgrade machineconfig
         if link_public_configs:
             from machineconfig.profile import create_links_export
 
-            create_links_export.main_from_parser(sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
+            create_links_export.main_from_parser(direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
 
 
 def install(

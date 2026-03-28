@@ -4,7 +4,7 @@ This script Takes away all config files from the computer, place them in one dir
 
 """
 
-from machineconfig.utils.links import OperationRecord
+from machineconfig.utils.links import ActionType, OperationRecord, OperationResult
 from rich.console import Console
 from rich.panel import Panel
 from rich.pretty import Pretty
@@ -13,7 +13,7 @@ from rich.table import Table
 
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.links import symlink_map, copy_map
-from machineconfig.profile.create_links_export import ON_CONFLICT_STRICT
+from machineconfig.profile.create_links_export import DIRECTION_STRICT, ON_CONFLICT_STRICT
 from machineconfig.utils.source_of_truth import LIBRARY_ROOT, CONFIG_ROOT
 
 import platform
@@ -41,6 +41,13 @@ OS_ALIASES = {
 REPO_ALIASES = {
     "l": "library",
     "i": "user",
+}
+ON_CONFLICT_UP_COPY_MAP: dict[ON_CONFLICT_STRICT, ON_CONFLICT_STRICT] = {
+    "throw-error": "throw-error",
+    "overwrite-self-managed": "overwrite-default-path",
+    "backup-self-managed": "backup-default-path",
+    "overwrite-default-path": "overwrite-self-managed",
+    "backup-default-path": "backup-self-managed",
 }
 
 
@@ -137,10 +144,102 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
     return {"public": public, "private": private}
 
 
-def apply_mapper(mapper_data: dict[str, list[ConfigMapper]],
-                 on_conflict: ON_CONFLICT_STRICT,
-                 method: Literal["symlink", "copy"]
-                 ):
+def _resolve_mapper_paths(a_mapper: ConfigMapper) -> tuple[PathExtended, PathExtended]:
+    config_file_default_path = PathExtended(a_mapper["config_file_default_path"]).expanduser().absolute()
+    self_managed_config_file_path = PathExtended(
+        a_mapper["self_managed_config_file_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())
+    ).expanduser().absolute()
+    return config_file_default_path, self_managed_config_file_path
+
+
+def _get_source_label(direction: DIRECTION_STRICT) -> Literal["default", "self-managed"]:
+    if direction == "up":
+        return "default"
+    return "self-managed"
+
+
+def _iter_operation_paths(
+    config_file_default_path: PathExtended,
+    self_managed_config_file_path: PathExtended,
+    contents: bool,
+    direction: DIRECTION_STRICT,
+) -> list[tuple[PathExtended, PathExtended]]:
+    source_root = config_file_default_path if direction == "up" else self_managed_config_file_path
+    source_label = _get_source_label(direction)
+    if not source_root.exists():
+        raise FileNotFoundError(f"{direction} sync requires existing {source_label} path: {source_root}")
+    if not contents:
+        return [(config_file_default_path, self_managed_config_file_path)]
+    if not source_root.is_dir():
+        raise NotADirectoryError(f"{direction} sync expects a directory for contents mapper: {source_root}")
+    source_children = sorted(source_root.glob("*"), key=lambda path: path.name)
+    return [
+        (
+            config_file_default_path.joinpath(source_child.name),
+            self_managed_config_file_path.joinpath(source_child.name),
+        )
+        for source_child in source_children
+    ]
+
+
+def _run_directional_operation(
+    config_file_default_path: PathExtended,
+    self_managed_config_file_path: PathExtended,
+    on_conflict: ON_CONFLICT_STRICT,
+    method: Literal["symlink", "copy"],
+    direction: DIRECTION_STRICT,
+) -> OperationResult:
+    if method == "copy" and direction == "up":
+        return copy_map(
+            config_file_default_path=self_managed_config_file_path,
+            self_managed_config_file_path=config_file_default_path,
+            on_conflict=ON_CONFLICT_UP_COPY_MAP[on_conflict],
+        )
+    if method == "copy":
+        return copy_map(
+            config_file_default_path=config_file_default_path,
+            self_managed_config_file_path=self_managed_config_file_path,
+            on_conflict=on_conflict,
+        )
+    return symlink_map(
+        config_file_default_path=config_file_default_path,
+        self_managed_config_file_path=self_managed_config_file_path,
+        on_conflict=on_conflict,
+    )
+
+
+def _append_operation_record(
+    operation_records: list[OperationRecord],
+    *,
+    program_name: str,
+    file_key: str,
+    config_file_default_path: PathExtended,
+    self_managed_config_file_path: PathExtended,
+    operation: str,
+    action: ActionType,
+    details: str,
+    status: str,
+) -> None:
+    operation_records.append(
+        {
+            "program": program_name,
+            "file_key": file_key,
+            "defaultPath": str(config_file_default_path),
+            "selfManaged": str(self_managed_config_file_path),
+            "operation": operation,
+            "action": action,
+            "details": details,
+            "status": status,
+        }
+    )
+
+
+def apply_mapper(
+    mapper_data: dict[str, list[ConfigMapper]],
+    on_conflict: ON_CONFLICT_STRICT,
+    method: Literal["symlink", "copy"],
+    direction: DIRECTION_STRICT,
+) -> None:
     operation_records: list[OperationRecord] = []
     print(f"Working with {len(mapper_data)} programs from mapper data.")
     if len(mapper_data) == 1:
@@ -169,100 +268,83 @@ def apply_mapper(mapper_data: dict[str, list[ConfigMapper]],
             )
             raise RuntimeError("Run terminal as admin and try again, otherwise, there will be too many popups for admin requests and no chance to terminate the program.")
     for program_name, program_files in mapper_data.items():
-        console.rule(f"🔄 Processing [bold]{program_name}[/] symlinks", style="cyan")
+        console.rule(f"🔄 Processing [bold]{program_name}[/] ({direction})", style="cyan")
         for a_mapper in program_files:
-            config_file_default_path = PathExtended(a_mapper["config_file_default_path"])
-            self_managed_config_file_path = PathExtended(a_mapper["self_managed_config_file_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix()))
-            # Determine whether to use copy or symlink
+            config_file_default_path, self_managed_config_file_path = _resolve_mapper_paths(a_mapper)
             use_copy = method == "copy" or a_mapper.get("copy", False)
-            if "contents" in a_mapper and a_mapper["contents"]:
-                targets = list(self_managed_config_file_path.expanduser().glob("*"))
-                for a_target in targets:
-                    operation_type = "contents_copy" if use_copy else "contents_symlink"
-                    try:
-                        if use_copy:
-                            result = copy_map(config_file_default_path=config_file_default_path.joinpath(a_target.name), self_managed_config_file_path=a_target, on_conflict=on_conflict)
-                        else:
-                            result = symlink_map(config_file_default_path=config_file_default_path.joinpath(a_target.name), self_managed_config_file_path=a_target, on_conflict=on_conflict)
-                        operation_records.append({
-                            "program": program_name,
-                            "file_key": a_mapper["file_name"],
-                            "defaultPath": str(config_file_default_path.joinpath(a_target.name)),
-                            "selfManaged": str(a_target),
-                            "operation": operation_type,
-                            "action": result["action"],
-                            "details": result["details"],
-                            "status": "success"
-                        })
-                    except ValueError as ex:
-                        if "resolve to the same location" in str(ex):
-                            operation_records.append({
-                                "program": program_name,
-                                "file_key": a_mapper["file_name"],
-                                "defaultPath": str(config_file_default_path.joinpath(a_target.name)),
-                                "selfManaged": str(a_target),
-                                "operation": operation_type,
-                                "action": "already_linked",
-                                "details": "defaultPath and selfManaged resolve to same location - already correctly configured",
-                                "status": "success"
-                            })
-                        else:
-                            raise
-                    except Exception as ex:
-                        console.print(f"❌ [red]Config error[/red]: {program_name} | {a_mapper['file_name']} | {a_target.name}. {ex}")
-                        operation_records.append({
-                            "program": program_name,
-                            "file_key": a_mapper["file_name"],
-                            "defaultPath": str(config_file_default_path.joinpath(a_target.name)),
-                            "selfManaged": str(a_target),
-                            "operation": operation_type,
-                            "action": "error",
-                            "details": f"Failed to process contents: {str(ex)}",
-                            "status": f"error: {str(ex)}"
-                        })                    
-            else:
-                operation_type = "copy" if use_copy else "symlink"
+            resolved_method: Literal["symlink", "copy"] = "copy" if use_copy else "symlink"
+            operation_type = f"{direction}_{resolved_method}"
+            if a_mapper.get("contents"):
+                operation_type = f"{operation_type}_contents"
+            try:
+                operation_paths = _iter_operation_paths(
+                    config_file_default_path=config_file_default_path,
+                    self_managed_config_file_path=self_managed_config_file_path,
+                    contents=bool(a_mapper.get("contents")),
+                    direction=direction,
+                )
+            except Exception as ex:
+                console.print(f"❌ [red]Config error[/red]: {program_name} | {a_mapper['file_name']} | {ex}")
+                _append_operation_record(
+                    operation_records,
+                    program_name=program_name,
+                    file_key=a_mapper["file_name"],
+                    config_file_default_path=config_file_default_path,
+                    self_managed_config_file_path=self_managed_config_file_path,
+                    operation=operation_type,
+                    action="error",
+                    details=f"Failed to prepare {operation_type}: {str(ex)}",
+                    status=f"error: {str(ex)}",
+                )
+                continue
+            for config_file_default_path_item, self_managed_config_file_path_item in operation_paths:
                 try:
-                    if use_copy:
-                        result = copy_map(config_file_default_path=config_file_default_path, self_managed_config_file_path=self_managed_config_file_path, on_conflict=on_conflict)
-                    else:
-                        result = symlink_map(config_file_default_path=config_file_default_path, self_managed_config_file_path=self_managed_config_file_path, on_conflict=on_conflict)
-                    operation_records.append({
-                        "program": program_name,
-                        "file_key": a_mapper["file_name"],
-                        "defaultPath": str(config_file_default_path),
-                        "selfManaged": str(self_managed_config_file_path),
-                        "operation": operation_type,
-                        "action": result["action"],
-                        "details": result["details"],
-                        "status": "success"
-                    })
+                    result = _run_directional_operation(
+                        config_file_default_path=config_file_default_path_item,
+                        self_managed_config_file_path=self_managed_config_file_path_item,
+                        on_conflict=on_conflict,
+                        method=resolved_method,
+                        direction=direction,
+                    )
+                    _append_operation_record(
+                        operation_records,
+                        program_name=program_name,
+                        file_key=a_mapper["file_name"],
+                        config_file_default_path=config_file_default_path_item,
+                        self_managed_config_file_path=self_managed_config_file_path_item,
+                        operation=operation_type,
+                        action=result["action"],
+                        details=result["details"],
+                        status="success",
+                    )
                 except ValueError as ex:
                     if "resolve to the same location" in str(ex):
-                        operation_records.append({
-                            "program": program_name,
-                            "file_key": a_mapper["file_name"],
-                            "defaultPath": str(config_file_default_path),
-                            "selfManaged": str(self_managed_config_file_path),
-                            "operation": operation_type,
-                            "action": "already_linked",
-                            "details": "defaultPath and selfManaged resolve to same location - already correctly configured",
-                            "status": "success"
-                        })
+                        _append_operation_record(
+                            operation_records,
+                            program_name=program_name,
+                            file_key=a_mapper["file_name"],
+                            config_file_default_path=config_file_default_path_item,
+                            self_managed_config_file_path=self_managed_config_file_path_item,
+                            operation=operation_type,
+                            action="already_linked",
+                            details="defaultPath and selfManaged resolve to same location - already correctly configured",
+                            status="success",
+                        )
                     else:
                         raise
                 except Exception as ex:
                     console.print(f"❌ [red]Config error[/red]: {program_name} | {a_mapper['file_name']} | {ex}")
-                    operation_records.append({
-                        "program": program_name,
-                        "file_key": a_mapper["file_name"],
-                        "defaultPath": str(config_file_default_path),
-                        "selfManaged": str(self_managed_config_file_path),
-                        "operation": operation_type,
-                        "action": "error",
-                        "details": f"Failed to create {operation_type}: {str(ex)}",
-                        "status": f"error: {str(ex)}"
-                    })
+                    _append_operation_record(
+                        operation_records,
+                        program_name=program_name,
+                        file_key=a_mapper["file_name"],
+                        config_file_default_path=config_file_default_path_item,
+                        self_managed_config_file_path=self_managed_config_file_path_item,
+                        operation=operation_type,
+                        action="error",
+                        details=f"Failed to create {operation_type}: {str(ex)}",
+                        status=f"error: {str(ex)}",
+                    )
 
             if program_name == "ssh" and system == "Linux":  # permissions of ~/dotfiles/.ssh should be adjusted
                 try:
@@ -278,7 +360,7 @@ def apply_mapper(mapper_data: dict[str, list[ConfigMapper]],
 
     # Display operation summary table
     if operation_records:
-        table = Table(title="🔗 Symlink Operations Summary", show_header=True, header_style="bold magenta")
+        table = Table(title="🔗 Dotfile Sync Summary", show_header=True, header_style="bold magenta")
         table.add_column("Program", style="cyan", no_wrap=True)
         table.add_column("File Key", style="blue", no_wrap=True)
         table.add_column("Default Path", style="green")
@@ -337,8 +419,8 @@ def apply_mapper(mapper_data: dict[str, list[ConfigMapper]],
     else:
         console.print(
             Panel.fit(
-                Text("✅ All symlinks created successfully!", justify="center"),
-                title="Symlink Creation Complete",
+                Text("✅ Dotfile sync completed successfully!", justify="center"),
+                title="Dotfile Sync Complete",
                 border_style="green",
             )
         )
