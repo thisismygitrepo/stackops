@@ -125,8 +125,11 @@ def choose_session(
 
 def choose_kill_target(
     name: str | None,
+    kill_all: bool = False,
     window: bool = False,
 ) -> tuple[str, str | None]:
+    if kill_all:
+        return ("run_script", "tmux kill-server")
     if name is not None:
         return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote))
 
