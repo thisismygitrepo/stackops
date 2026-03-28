@@ -3806,14 +3806,14 @@
       "doc": "🔐 GNU Privacy Guard encryption tool",
       "fileNamePattern": {
         "amd64": {
-          "linux": null,
+          "linux": "sudo nala install gnupg -y",
           "windows": "winget install --no-upgrade --name \"GnuPG\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "macos": "brew install gnupg"
         },
         "arm64": {
-          "linux": null,
+          "linux": "sudo nala install gnupg -y",
           "windows": "winget install --no-upgrade --name \"GnuPG\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "macos": "brew install gnupg"
         }
       }
     },
