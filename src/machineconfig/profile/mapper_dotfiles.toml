@@ -252,3 +252,6 @@ config_linux = {original = '~/.config/atuin/config.toml', self_managed = 'CONFIG
 themes_linux = {original = '~/.config/atuin/themes', self_managed = 'CONFIG_ROOT/settings/atuin/themes', contents = true, os = 'linux,darwin'}
 config_windows = {original = '~/AppData/Roaming/atuin/config.toml', self_managed = 'CONFIG_ROOT/settings/atuin/config.toml', os = 'windows'}
 themes_windows = {original = '~/AppData/Roaming/atuin/themes', self_managed = 'CONFIG_ROOT/settings/atuin/themes', contents = true, os = 'windows'}
+
+[himalaya]
+config = {original = '~/.config/himalaya/config.toml', self_managed = '~/dotfiles/creds/himalaya/config.toml', os = 'linux,darwin'}
