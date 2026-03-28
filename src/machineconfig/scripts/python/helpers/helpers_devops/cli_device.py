@@ -168,8 +168,8 @@ sudo warp-cli connect
 
 def get_app() -> typer.Typer:
     device_app = typer.Typer(help="🖥 <d> Device subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
-    device_app.command(name="switch-public-ip", help="🔁 <c> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
-    device_app.command(name="c", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
+    device_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
+    device_app.command(name="s", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
 
     device_app.command(name="wifi-select", no_args_is_help=True, help="📶 <w> WiFi connection utility.")(wifi_select)
     device_app.command(name="w", no_args_is_help=True, hidden=True)(wifi_select)
