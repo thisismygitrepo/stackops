@@ -144,7 +144,7 @@ def report(
     format_type: Annotated[
         ReportFormat, typer.Option("--format", "-f", help="Output format for apps or engines views", case_sensitive=False, show_choices=True)
     ] = "table",
-    summarize: Annotated[bool, typer.Option("--summarize/--full", hidden=True)] = True,
+    summarize: Annotated[bool, typer.Option("--summarize/--full", hidden=True)] = False,
 ) -> None:
     from machineconfig.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH
     from machineconfig.jobs.installer.checks.report_utils import (
@@ -207,7 +207,7 @@ def get_app() -> typer.Typer:
     app.command(name="i", help="<i> Install safe apps from app metadata report", hidden=True, no_args_is_help=True)(install)
     app.command(name="repo-licenses", help="<p> Download GitHub repo license files for installer entries", no_args_is_help=True)(repo_licenses)
     app.command(name="p", help="<p> Download GitHub repo license files for installer entries", hidden=True, no_args_is_help=True)(repo_licenses)
-    app.command(name="report", help="<r> Show saved scan results, CSV rows, or summary stats", no_args_is_help=True)(report)
-    app.command(name="r", help="<r> Show saved scan results, CSV rows, or summary stats", hidden=True, no_args_is_help=True)(report)
+    app.command(name="report", help="<r> Show the full saved scan report by default, or CSV rows/summary stats")(report)
+    app.command(name="r", help="<r> Show the full saved scan report by default, or CSV rows/summary stats", hidden=True)(report)
 
     return app

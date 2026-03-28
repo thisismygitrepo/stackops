@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 ReportFormat = Literal["table", "csv"]
-ReportView = Literal["app-summary", "apps", "engines", "options", "stats"]
+ReportView = Literal["engines", "app-summary", "apps", "options", "stats"]
 
 
 def _parse_positive_pct(value: str | None) -> float | None:
@@ -264,9 +264,9 @@ def build_report_options_text() -> str:
     return "\n".join(
         [
             "Views:",
-            "  app-summary: derived app safety summary table",
+            "  engines: full engine results table or raw engine CSV (default)",
+            "  app-summary: compact derived app safety summary table",
             "  apps: app metadata CSV rows",
-            "  engines: engine results table or raw engine CSV",
             "  stats: summary statistics for the selected apps",
             "  options: available views, formats, and CSV columns",
             "Formats:",

@@ -487,7 +487,7 @@ Key option:
 
 #### report
 
-Inspect saved report data in summary, table, or CSV form.
+Inspect saved report data in full, summary, table, or CSV form. The default invocation shows the full engine-level report.
 
 ```bash
 devops self security report [OPTIONS] [APPS]
@@ -498,13 +498,14 @@ Key options from current help:
 | Option | Description |
 |--------|-------------|
 | `APPS` | Optional comma-separated app names to filter on |
-| `--view`, `-v` | Choose `app-summary`, `apps`, `engines`, `options`, or `stats` |
+| `--view`, `-v` | Choose `engines`, `app-summary`, `apps`, `options`, or `stats` |
 | `--format`, `-f` | Choose `table` or `csv` output for the raw `apps` and `engines` views |
 
 Examples:
 
 ```bash
 devops self security report
+devops self security report --view app-summary
 devops self security report --view stats
 devops self security report uv --view apps --format csv
 devops self security report git --view engines
