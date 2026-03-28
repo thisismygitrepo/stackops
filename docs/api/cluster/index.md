@@ -1,39 +1,22 @@
-# Cluster Module
+# Cluster API
 
-The `cluster` module provides functionality for managing remote machines and distributed operations.
+The `machineconfig.cluster` package is the orchestration layer of the library. It is where typed layout definitions, session managers, SSH helpers, and remote-job models come together.
 
----
+In practice the cluster APIs fall into three related groups:
 
-## Overview
-
-```python
-from machineconfig import cluster
-```
+- layout building
+- session management
+- remote execution
 
 ---
 
-## Submodules
+## Topics in this section
 
-### Remote
-
-Handles remote machine connectivity and operations:
-
-- SSH connections
-- File transfers
-- Command execution
-- Job distribution
-
-[:octicons-arrow-right-24: Remote Documentation](remote.md)
-
-### Sessions Managers
-
-Manages terminal sessions:
-
-- Session creation and management
-- Multiplexer integration (tmux, zellij)
-- Persistent sessions
-
-[:octicons-arrow-right-24: Sessions Documentation](sessions.md)
+| Topic | What it covers | Main modules |
+| --- | --- | --- |
+| [Layouts](layouts.md) | Typed layout schema, turning Python callables into tabs, splitting oversized layouts, tmux layout launchers | `machineconfig.utils.schemas.layouts.layout_types`, `machineconfig.cluster.sessions_managers.utils.maker`, `machineconfig.cluster.sessions_managers.utils.load_balancer`, `machineconfig.cluster.sessions_managers.tmux.*` |
+| [Sessions](sessions.md) | zellij, tmux, and Windows Terminal managers, conflict handling, session start/attach/status flows | `machineconfig.cluster.sessions_managers.*` |
+| [Remote execution and networking](remote.md) | Remote job config models, generated scripts, transfer, firing jobs, SSH, IP helpers | `machineconfig.cluster.remote.*`, `machineconfig.utils.ssh`, `machineconfig.scripts.python.helpers.helpers_network.*` |
 
 ---
 
@@ -41,13 +24,26 @@ Manages terminal sessions:
 
 ```mermaid
 graph TB
-    subgraph "Cluster Module"
-        A[Remote] --> B[SSH Connection]
-        A --> C[File Transfer]
-        A --> D[Command Execution]
-        
-        E[Sessions] --> F[tmux]
-        E --> G[zellij]
-        E --> H[screen]
-    end
+    A[LayoutConfig / TabConfig] --> B[Layout builders]
+    B --> C[Session managers]
+    C --> D[tmux]
+    C --> E[zellij]
+    C --> F[Windows Terminal]
+
+    G[RemoteMachineConfig] --> H[RemoteMachine]
+    H --> I[FileManager]
+    H --> J[SSH]
+    H --> K[Transfer: sftp or cloud]
+```
+
+---
+
+## Common import patterns
+
+```python
+from machineconfig.cluster.remote.models import RemoteMachineConfig
+from machineconfig.cluster.remote.remote_machine import RemoteMachine
+from machineconfig.cluster.sessions_managers.tmux.tmux_local import run_tmux_layout
+from machineconfig.cluster.sessions_managers.utils.maker import make_layout_from_functions
+from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 ```

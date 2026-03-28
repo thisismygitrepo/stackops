@@ -1,147 +1,78 @@
-# Jobs Module
+# Jobs and Installer APIs
 
-The `jobs` module provides functionality for package installation, job execution, and system setup.
+The `machineconfig.jobs` package is where curated installer metadata and setup flows live. In practice, most direct usage here comes from the installer subsystem.
 
----
+There are two complementary ways these APIs show up:
 
-## Overview
-
-```python
-from machineconfig import jobs
-```
-
-The jobs module contains:
-
-- **Installer** - Cross-platform package installation system
-- **Scripts** - Installation scripts for various platforms
+- directly, when you want to inspect package groups or use the installer catalog
+- indirectly, when higher-level helpers call into the installer layer through guards like `install_if_missing()`
 
 ---
 
-## Submodules
+## What lives here
 
-### Installer
-
-Handles package installation across platforms:
-
-- Package detection and verification
-- Cross-platform installation commands
-- Package groups for batch installation
-- VirusTotal integration for security scanning
-
-[:octicons-arrow-right-24: Installer Documentation](installer.md)
+| Area | What it provides | Main modules |
+| --- | --- | --- |
+| Package groups | Named collections of tools for common machine setups | `machineconfig.jobs.installer.package_groups` |
+| Installer catalog | Per-tool install metadata and routing across package managers | `machineconfig.jobs.installer.*` |
+| Security checks | Verification and reporting helpers used around installation | `machineconfig.jobs.installer.checks.*` |
+| Per-tool scripts | Python installers for tools that need custom flows | `machineconfig.jobs.installer.python_scripts.*` |
 
 ---
 
-## Package Groups
+## Package groups
 
 Machineconfig defines curated package groups for common use cases:
 
-| Group | Description | Package Count |
-|-------|-------------|---------------|
-| `gui` | Essential GUI applications (Brave, VS Code, Git) | 3 |
-| `agents` | AI/LLM coding assistants (aider, copilot, etc.) | 14+ |
-| `termabc` | Terminal essentials (analysis, monitors, shell tools) | 40+ |
-| `dev` | Full development environment | 80+ |
-| `sysabc` | System ABC utilities | 1 |
+| Group | Description |
+| --- | --- |
+| `gui` | Essential GUI applications |
+| `agents` | AI and coding-assistant tools |
+| `termabc` | Terminal essentials and shell tooling |
+| `dev` | Broader development environment packages |
+| `sysabc` | Core system helpers |
 
-### Using Package Groups
-
-```bash
-# Install all packages in a group
-devops install-group dev
-
-# Install specific group
-devops install-group agents
-```
-
-### Available Groups
+### Example
 
 ```python
 from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
 
-# List all groups
 print(PACKAGE_GROUP2NAMES.keys())
-# dict_keys(['sysabc', 'termabc', 'gui', 'dev', 'dev-utils', ...])
-
-# Get packages in a group
-print(PACKAGE_GROUP2NAMES['agents'])
-# ['aider', 'aichat', 'copilot', 'gemini', ...]
+print(PACKAGE_GROUP2NAMES["agents"])
 ```
 
 ---
 
-## Package Categories
+## Relationship to utility helpers
 
-### AI/LLM Tools (`agents`)
-
-AI-powered coding and chat assistants:
-
-- `aider` - AI pair programming
-- `copilot` - GitHub Copilot CLI
-- `opencode-ai` - OpenCode AI assistant
-- `chatgpt` - ChatGPT CLI
-- `mods` - AI in the terminal
-- And more...
-
-### Terminal Essentials (`termabc`)
-
-Must-have terminal tools:
-
-- **File Search**: `fd`, `fzf`, `rg`, `broot`
-- **File Management**: `yazi`, `tere`, `lsd`, `zoxide`
-- **System Monitors**: `btop`, `btm`, `procs`, `bandwhich`
-- **Shell Tools**: `zellij`, `starship`, `atuin`, `mcfly`
-
-### Development Tools (`dev`)
-
-Full development setup:
-
-- **Editors**: VS Code, Cursor, LunarVim
-- **Browsers**: Brave, terminal browsers
-- **Databases**: SQLite, DuckDB, Redis, DBeaver
-- **Productivity**: espanso, glow, pandoc
-
----
-
-## Installation Data
-
-Package installation data is stored in `installer_data.json`:
-
-```json
-{
-  "packages": [
-    {
-      "appName": "btop",
-      "description": "Resource monitor",
-      "platforms": {
-        "linux": {"apt": "btop", "cargo": "btop"},
-        "darwin": {"brew": "btop"},
-        "windows": {"scoop": "btop", "winget": "btop"}
-      }
-    }
-  ]
-}
-```
-
----
-
-## Scripts
-
-Platform-specific installation scripts:
-
-```
-jobs/installer/
-├── linux_scripts/     # Bash scripts for Linux
-├── powershell_scripts/  # PowerShell for Windows
-└── python_scripts/    # Cross-platform Python installers
-```
-
-### Python Scripts
-
-Custom installers for complex packages:
+The low-level helper:
 
 ```python
-# Example: Install Helix editor with language support
-from machineconfig.jobs.installer.python_scripts import hx
-hx.install()
+from machineconfig.utils.installer_utils.installer_cli import install_if_missing
 ```
+
+is often used inside other utility or networking modules before they invoke an external CLI. The full installer catalog and package-manager logic still lives here in `jobs.installer`.
+
+So a good rule of thumb is:
+
+- use `install_if_missing()` when you just need a guard before continuing
+- use the installer docs when you want to understand or extend the actual installation pipeline
+
+---
+
+## Directory layout
+
+```text
+jobs/installer/
+├── checks/              # Security and reporting helpers
+├── linux_scripts/       # Linux shell installers
+├── powershell_scripts/  # Windows PowerShell installers
+├── python_scripts/      # Custom Python installers for specific tools
+└── package_groups.py    # Named tool bundles
+```
+
+---
+
+## Next page
+
+Continue to the [Installer reference](installer.md) for the detailed catalog, data model, package groups, and per-tool installer behavior.

@@ -1,224 +1,134 @@
-# Sessions Managers
+# Sessions
 
-The `sessions_managers` subpackage provides terminal session management functionality for both local and remote machines.
+The session-manager layer takes a `LayoutConfig` and turns it into running terminal sessions. Different backends implement the same general workflow with platform-specific mechanics.
 
----
-
-## Overview
-
-Manages terminal multiplexer sessions using platform-specific backends:
-
-- **Zellij** - Modern terminal workspace for Linux/macOS
-- **Windows Terminal** - Native Windows terminal multiplexing
+This part of the API is where `machineconfig` becomes a terminal-orchestration tool.
 
 ---
 
-## Architecture
+## Supported backends
 
-```mermaid
-graph TB
-    subgraph Session Managers
-        A[ZellijLocalManager] --> B[ZellijLayoutGenerator]
-        C[ZellijRemoteManager] --> D[SSH + Zellij]
-        E[WTLocalManager] --> F[Windows Terminal API]
-        G[WTRemoteManager] --> H[SSH + WT]
-    end
-    
-    subgraph Layout System
-        B --> I[Layout Config]
-        I --> J[KDL Layout File]
-        J --> K[Session Creation]
-    end
-```
+| Manager | Module path | Platform | Notes |
+| --- | --- | --- | --- |
+| `ZellijLocalManager` | `machineconfig.cluster.sessions_managers.zellij.zellij_local_manager` | Linux/macOS | Starts local zellij sessions, polls for appearance, and monitors tabs |
+| `ZellijRemoteManager` | `machineconfig.cluster.sessions_managers.zellij.zellij_remote_manager` | Linux/macOS + remote | Remote zellij-oriented orchestration |
+| `TmuxLocalManager` | `machineconfig.cluster.sessions_managers.tmux.tmux_local_manager` | Any tmux-capable host | Local tmux sessions and status reporting |
+| `WTLocalManager` | `machineconfig.cluster.sessions_managers.windows_terminal.wt_local_manager` | Windows | Local Windows Terminal orchestration |
+| `WTRemoteManager` | `machineconfig.cluster.sessions_managers.windows_terminal.wt_remote_manager` | Windows + remote | Remote Windows Terminal workflows |
 
 ---
 
-## Session Managers
+## Common lifecycle
 
-| Module | Platform | Scope | Description |
-|--------|----------|-------|-------------|
-| `zellij_local_manager` | Linux/macOS | Local | Manage local Zellij sessions |
-| `zellij_remote_manager` | Linux/macOS | Remote | Manage Zellij sessions over SSH |
-| `wt_local_manager` | Windows | Local | Manage local Windows Terminal sessions |
-| `wt_remote_manager` | Windows | Remote | Manage Windows Terminal sessions over SSH |
+Most manager classes follow the same shape:
+
+1. Accept one or more `LayoutConfig` objects.
+2. Build backend-specific layout or script files.
+3. Resolve session-name conflicts.
+4. Start sessions.
+5. Attach, inspect, monitor, or stop sessions later.
+
+That shared lifecycle is why the same layout builder APIs can feed different session backends.
 
 ---
 
-## ZellijLocalManager
+## Session conflict policies
 
-Manages multiple local Zellij sessions with layout support:
+`machineconfig.cluster.sessions_managers.session_conflict` defines the conflict strategy used by zellij and tmux flows.
+
+### Available policies
+
+| Policy | Meaning |
+| --- | --- |
+| `error` | Fail immediately if a requested session name already exists or duplicates another requested name |
+| `restart` | Reuse the original name and restart the existing session |
+| `rename` | Keep the original request but create a suffixed session name such as `name_1` |
+
+This is especially helpful when generated layouts are launched repeatedly from automation code.
+
+---
+
+## Backend-specific behavior
+
+### Zellij
+
+`ZellijLocalManager`:
+
+- prefixes session names with `LocalJobMgr`
+- starts sessions non-blockingly
+- polls `zellij list-sessions` to verify that sessions appeared
+- provides session and command summaries over time
+
+Its start method currently expects:
 
 ```python
-from machineconfig.cluster.sessions_managers.zellij_local_manager import ZellijLocalManager
-from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
-
-# Define session layouts
-layouts: list[LayoutConfig] = [
-    {
-        "layoutName": "Development",
-        "tabs": [
-            {"tabName": "editor", "command": "hx ."},
-            {"tabName": "terminal", "command": ""},
-            {"tabName": "logs", "command": "tail -f /var/log/syslog"},
-        ]
-    }
-]
-
-# Create manager
-manager = ZellijLocalManager(session_layouts=layouts)
-
-# Start all sessions
-results = manager.start_all_sessions(poll_seconds=10, poll_interval=0.5)
-
-# Get session names
-sessions = manager.get_all_session_names()
+results = manager.start_all_sessions(
+    on_conflict="rename",
+    poll_seconds=10,
+    poll_interval=0.5,
+)
 ```
 
-### Key Features
+### tmux
 
-| Feature | Description |
-|---------|-------------|
-| Multi-session management | Manage multiple named sessions simultaneously |
-| Layout templates | Define tab layouts with commands |
-| Process monitoring | Track running processes in each tab |
-| Non-blocking startup | Sessions start in background |
-
----
-
-## ZellijLayoutGenerator
-
-Generates Zellij layout files (KDL format) from configuration:
+`TmuxLocalManager` is a good fit when you want explicit shell-script generation and simple attach/status flows:
 
 ```python
-from machineconfig.cluster.sessions_managers.zellij_local import ZellijLayoutGenerator
+from machineconfig.cluster.sessions_managers.tmux.tmux_local_manager import TmuxLocalManager
 
-layout_config = {
-    "layoutName": "MyLayout",
-    "tabs": [
-        {"tabName": "main", "command": "htop"},
-        {"tabName": "shell", "command": ""},
-    ]
-}
-
-generator = ZellijLayoutGenerator(
-    layout_config=layout_config,
-    session_name="my-session"
+manager = TmuxLocalManager(
+    session_layouts=[layout],
+    session_name_prefix="ops",
 )
 
-# Create layout file
-generator.create_layout_file()
-
-# Get layout path
-print(generator.layout_path)
+manager.start_all_sessions(on_conflict="rename")
+print(manager.attach_to_session(None))
+report = manager.check_all_sessions_status()
 ```
+
+### Windows Terminal
+
+`WTLocalManager` manages a collection of Windows Terminal sessions and supports:
+
+- generated PowerShell launch scripts
+- status inspection
+- attach commands such as `wt -w <session_name>`
+- monitoring and persistence helpers under `wt_utils`
+
+Unlike the tmux and zellij managers, `WTLocalManager.start_all_sessions()` currently does not take an `on_conflict` policy directly.
 
 ---
 
-## Windows Terminal Manager
+## Monitoring and reporting helpers
 
-For Windows environments, the WT managers provide similar functionality:
+Under the backend-specific utility packages you will find:
 
-```python
-from machineconfig.cluster.sessions_managers.wt_local_manager import WTLocalManager
+- process monitors
+- session health checks
+- reporting helpers
+- persistence helpers for saved Windows Terminal session state
 
-# Windows Terminal session management
-manager = WTLocalManager(session_configs=configs)
-manager.start_sessions()
-```
+Representative modules include:
 
----
-
-## Utility Modules
-
-### Process Monitoring
-
-Track processes running in session tabs:
-
-```python
-from machineconfig.cluster.sessions_managers.zellij.zellij_utils.process_monitor import ProcessMonitor
-
-monitor = ProcessMonitor(session_name="my-session")
-status = monitor.get_tab_status("editor")
-```
-
-### Status Reporting
-
-Generate status reports for running sessions:
-
-```python
-from machineconfig.cluster.sessions_managers.zellij.zellij_utils.status_reporter import StatusReporter
-
-reporter = StatusReporter()
-report = reporter.generate_report(session_names=["session1", "session2"])
-```
+- `machineconfig.cluster.sessions_managers.zellij.zellij_utils.process_monitor`
+- `machineconfig.cluster.sessions_managers.zellij.zellij_utils.status_reporter`
+- `machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting`
+- `machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence`
 
 ---
 
-## Layout Configuration
+## See also
 
-Layouts are defined using `LayoutConfig` TypedDict:
-
-```python
-from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
-
-config: LayoutConfig = {
-    "layoutName": "Development Environment",
-    "tabs": [
-        {
-            "tabName": "code",
-            "command": "hx .",
-            "cwd": "~/projects/myapp",  # optional
-        },
-        {
-            "tabName": "server",
-            "command": "python -m http.server 8000",
-        },
-        {
-            "tabName": "tests",
-            "command": "pytest --watch",
-        },
-    ]
-}
-```
+- [Layouts](layouts.md) for `LayoutConfig`, layout serialization, and tab generation
+- [Remote execution and networking](remote.md) for remote-job flows that hand work off to these session backends
+- [CLI Sessions Reference](../../cli/sessions.md) for the user-facing command layer
 
 ---
 
-## CLI Integration
+## Conflict-planning reference
 
-Session managers integrate with the `sessions` CLI:
-
-```bash
-# List active sessions
-sessions list
-
-# Create session with layout
-sessions create dev --layout development
-
-# Attach to session
-sessions attach dev
-
-# Kill session
-sessions kill dev
-```
-
----
-
-## Platform Support
-
-| Platform | Session Manager | Terminal |
-|----------|-----------------|----------|
-| Linux | Zellij | Any terminal |
-| macOS | Zellij | Any terminal |
-| Windows | Windows Terminal | Windows Terminal |
-| WSL | Zellij | Windows Terminal + WSL |
-
-!!! note "Zellij Requirement"
-    Linux/macOS session management requires [Zellij](https://zellij.dev/) to be installed.
-    Install via: `cargo install zellij` or your package manager.
-
----
-
-## See Also
-
-- [Remote Module Documentation](remote.md) - Remote machine operations
-- [CLI Sessions Reference](../../cli/sessions.md) - Command-line interface
+::: machineconfig.cluster.sessions_managers.session_conflict
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source

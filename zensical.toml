@@ -39,6 +39,7 @@ nav = [
     "api/index.md",
     { Cluster = [
       "api/cluster/index.md",
+      { Layouts = "api/cluster/layouts.md" },
       { Remote = "api/cluster/remote.md" },
       { Sessions = "api/cluster/sessions.md" },
     ] },
@@ -48,6 +49,11 @@ nav = [
     ] },
     { Utils = [
       "api/utils/index.md",
+      { "Environment and Project Wiring" = "api/utils/environment-and-projects.md" },
+      { "Paths, Files, and Config" = "api/utils/paths-files-config.md" },
+      { "Scheduling and Cache" = "api/utils/scheduling-and-cache.md" },
+      { "Interactive Helpers and Notifications" = "api/utils/interactive-helpers.md" },
+      { "Code Generation and Command Launching" = "api/utils/code-generation.md" },
     ] },
   ] },
   { Contributing = [

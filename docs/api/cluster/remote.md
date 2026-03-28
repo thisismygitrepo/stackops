@@ -1,190 +1,251 @@
-# Remote Module
+# Remote Execution and Networking
 
-The `remote` subpackage provides functionality for remote machine connectivity and distributed job execution.
+The remote-execution layer packages a Python function or script, generates the shell and Python artifacts required to run it elsewhere, transfers those artifacts, fires the job on a target machine, and provides helpers for checking status and downloading results.
 
----
-
-## Overview
-
-The remote module handles:
-
-- **SSH Connections** - Secure shell connections to remote machines
-- **File Transfers** - Upload and download files between machines
-- **Command Execution** - Run commands on remote systems
-- **Job Distribution** - Distribute and manage jobs across clusters
-- **Cloud Integration** - Sync job state via cloud storage (rclone)
+It also includes lower-level SSH and networking utilities that show up in remote or multi-machine workflows.
 
 ---
 
-## Architecture
+## Remote workflow in one view
 
 ```mermaid
-graph TB
-    subgraph Local Machine
-        A[RemoteMachine] --> B[FileManager]
-        A --> C[JobParams]
-        A --> D[SSH Connection]
-    end
-    
-    subgraph Remote Machine
-        D --> E[Session Manager]
-        E --> F[Zellij/WT]
-        F --> G[Job Execution]
-    end
-    
-    subgraph Cloud Storage
-        H[CloudManager] --> I[Job Queue]
-        H --> J[Logs]
-        H --> K[Lock File]
-    end
+graph LR
+    A[RemoteMachineConfig] --> B[RemoteMachine]
+    B --> C[JobParams]
+    B --> D[FileManager]
+    B --> E[generate_scripts()]
+    E --> F[submit()]
+    F --> G[SSH / transfer]
+    G --> H[fire()]
+    H --> I[check_job_status()]
+    I --> J[download_results()]
 ```
 
 ---
 
-## Available Modules
+## Core modules
 
-| Module | Description |
-|--------|-------------|
-| `remote_machine` | Core `RemoteMachine` class for job submission and execution |
-| `file_manager` | Manages job files, scripts, and execution logs |
-| `job_params` | Job parameter configuration and serialization |
-| `data_transfer` | File transfer utilities (upload/download) |
-| `distribute` | Job distribution across multiple machines |
-| `run_cluster` | Cluster-wide execution orchestration |
-| `cloud_manager` | Cloud-based job queue management |
-| `loader_runner` | Job loading and execution runtime |
+| Module | Responsibility |
+| --- | --- |
+| `machineconfig.cluster.remote.models` | Dataclasses and typed aliases for job status, workload splits, transfer mode, and remote-machine config |
+| `machineconfig.cluster.remote.job_params` | Normalizes a callable or script path into importable execution metadata |
+| `machineconfig.cluster.remote.file_manager` | Defines the on-disk job layout, lock files, logs, and helper paths |
+| `machineconfig.cluster.remote.remote_machine` | High-level orchestration object for generating, submitting, firing, and collecting jobs |
+| `machineconfig.utils.ssh` | SSH transport, remote command execution, SFTP, and remote machine inspection |
+| `machineconfig.scripts.python.helpers.helpers_network.address` | Public IP lookup, local IPv4 enumeration, best-LAN-address selection |
+| `machineconfig.scripts.python.helpers.helpers_network.address_switch` | Public IP rotation flow built around `warp-cli` |
 
 ---
 
-## RemoteMachine Class
+## `RemoteMachineConfig`
 
-The `RemoteMachine` class is the primary interface for remote job execution:
+`RemoteMachineConfig` is the central description of how a job should run.
+
+### Important fields
+
+| Field | Purpose |
+| --- | --- |
+| `job_id` | Stable identifier for the job folder and log files |
+| `base_dir` | Root directory for generated job artifacts |
+| `ssh_host` | SSH config alias or hostname for the target machine |
+| `transfer_method` | `sftp` or `cloud` |
+| `cloud_name` | Required when `transfer_method="cloud"` |
+| `copy_repo`, `update_repo`, `install_repo` | Control repo setup on the target |
+| `notify_upon_completion`, `to_email`, `email_config_name` | Completion-notification settings |
+| `parallelize` and `workload_params` | Split callable execution into multiple worker chunks |
+| `lock_resources`, `max_simultaneous_jobs` | Concurrency control for the target machine |
+
+`WorkloadParams` complements this by describing how a large workload should be sliced into job ranges.
+
+---
+
+## `RemoteMachine`
+
+`RemoteMachine` accepts either:
+
+- a script path
+- an importable callable
+- a bound method
+
+and turns that into a runnable remote job.
+
+### Typical usage
 
 ```python
+from machineconfig.cluster.remote.models import RemoteMachineConfig
 from machineconfig.cluster.remote.remote_machine import RemoteMachine
-from machineconfig.cluster.remote.loader_runner import RemoteMachineConfig
 
-# Configure remote execution
 config = RemoteMachineConfig(
-    job_id="my-job",
-    ssh_params={"host": "server.example.com", "username": "user"},
-    base_dir="~/jobs",
+    job_id="nightly-train",
+    ssh_host="gpu-box",
+    base_dir="~/tmp_results/remote_machines/jobs",
+    transfer_method="sftp",
+    notify_upon_completion=False,
 )
 
-# Create remote machine instance
-rm = RemoteMachine(
-    func="path/to/script.py::main_function",
+job = RemoteMachine(
+    func="src/my_project/jobs/train.py",
     config=config,
-    func_kwargs={"param1": "value1"},
+    func_kwargs={"epochs": 10},
+    data=["data/input.csv"],
 )
 
-# Execute the job
-rm.run(run=True, open_console=True)
+job.run(run=True, show_scripts=False)
 ```
 
-### Key Methods
+### Main methods
 
-| Method | Description |
-|--------|-------------|
-| `generate_scripts()` | Generate execution scripts for the job |
-| `submit()` | Submit job files to remote machine |
-| `fire()` | Launch job execution in a terminal session |
-| `run()` | Complete workflow: generate, submit, and fire |
+| Method | Purpose |
+| --- | --- |
+| `generate_scripts()` | Write the job's shell script, Python wrapper, kwargs JSON, and metadata JSON |
+| `show_scripts()` | Display the generated shell and Python source |
+| `submit()` | Transfer artifacts to the target using the configured transfer method |
+| `fire(run)` | Launch the generated command locally or remotely |
+| `run(run, show_scripts)` | End-to-end wrapper over generate -> submit -> fire |
+| `check_job_status()` | Sync logs back, inspect status markers, and discover the results folder |
+| `download_results(target)` | Retrieve results once the job is complete |
+| `delete_remote_results()` | Remove remote output after collection |
+
+!!! note
+    If you pass a callable, it must come from an importable module. The current `JobParams.from_callable()` rejects functions defined as `__main__`.
 
 ---
 
-## FileManager
+## File layout and locking
 
-Manages the job file structure on remote machines:
+`FileManager` gives the remote-job system a stable directory shape. A generated job typically looks like this:
 
-```
-~/jobs/{job_id}/
+```text
+{base_dir}/queued/{job_id}/
 ├── data/
-│   ├── remote_machine.Machine.pkl
-│   └── input_data/
-├── scripts/
-│   ├── run.sh
-│   └── run.py
+│   ├── file_manager.json
+│   ├── func_kwargs.json
+│   ├── job_params.json
+│   ├── remote_machine.json
+│   └── remote_machine_config.json
+├── python/
+│   └── cluster_wrap.py
+├── shell/
+│   └── cluster_script.sh
 └── logs/
     ├── status.txt
-    ├── pid.txt
-    └── output.log
+    ├── start_time.txt
+    ├── end_time.txt
+    └── results_folder_path.txt
 ```
 
----
+It also manages:
 
-## CloudManager
-
-!!! warning "Experimental"
-    The CloudManager is currently under development and may change.
-
-Enables distributed job execution using cloud storage as a coordination layer:
-
-- **Job Queue** - Jobs are queued and picked up by available workers
-- **Distributed Locking** - Prevents race conditions with cloud-based locks
-- **Status Monitoring** - Track job status across multiple machines
+- queue and running-job tracking JSON files
+- resource locking for machines with limited concurrency
+- history files for completed jobs
 
 ---
 
-## Session Backends
+## SSH helper
 
-Jobs are executed within terminal multiplexer sessions:
+`machineconfig.utils.ssh.SSH` is the lower-level transport used by remote jobs and other operational flows.
 
-| Platform | Backend |
-|----------|---------|
-| Linux/macOS | Zellij |
-| Windows | Windows Terminal |
+It can:
 
-This enables:
+- resolve hosts through `~/.ssh/config`
+- open an SSH connection with Paramiko
+- open an SFTP channel when available
+- run remote commands
+- display local and remote machine specs side-by-side
 
-- Persistent sessions that survive SSH disconnections
-- Job monitoring through the terminal interface
-- Multiple jobs in separate tabs/panes
-
----
-
-## Usage Example
-
-### Simple Remote Execution
-
-```bash
-# Using the sessions CLI
-sessions exec "python script.py" --host server1
-```
-
-### Cluster Execution
-
-```bash
-# Execute across multiple machines
-croshell cluster-exec "apt update" --targets server1,server2,server3
-```
-
----
-
-## Configuration
-
-Remote connections are configured via SSH:
+A common entrypoint is:
 
 ```python
-ssh_params = {
-    "host": "server.example.com",
-    "username": "user",
-    "key_filename": "~/.ssh/id_rsa",
-    "port": 22,
-}
-```
+from machineconfig.utils.ssh import SSH
 
-Or use existing SSH config entries:
-
-```python
-ssh_params = {
-    "host": "my-server",  # References ~/.ssh/config entry
-}
+ssh = SSH.from_config_file(host="gpu-box")
 ```
 
 ---
 
-## See Also
+## Networking helper entrypoints
 
-- [Sessions Documentation](sessions.md) - Terminal session management
-- [CLI Sessions Reference](../../cli/sessions.md) - Command-line interface
+Some remote workflows need address discovery rather than full job submission.
+
+### `helpers_network.address`
+
+Useful functions include:
+
+- `get_public_ip_address()`
+- `get_all_ipv4_addresses()`
+- `select_lan_ipv4(prefer_vpn)`
+
+### `helpers_network.address_switch`
+
+`switch_public_ip_address(max_trials, wait_seconds, target_ip_addresses)` automates a public-IP rotation flow using `warp-cli` and repeated `ipinfo` checks.
+
+These modules live under `scripts/python/helpers` because they are also exposed through CLI flows, but they are still useful as library entrypoints.
+
+---
+
+## See also
+
+- [Sessions](sessions.md) for the backend managers that actually host launched jobs
+- [Layouts](layouts.md) for the typed tab and layout schema used by session-oriented flows
+- [CLI Sessions Reference](../../cli/sessions.md) for the user-facing command layer
+
+---
+
+## API reference
+
+## Remote models
+
+::: machineconfig.cluster.remote.models
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Job parameters
+
+::: machineconfig.cluster.remote.job_params
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## File manager
+
+::: machineconfig.cluster.remote.file_manager
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Remote machine
+
+::: machineconfig.cluster.remote.remote_machine
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## SSH helper
+
+::: machineconfig.utils.ssh
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Address helpers
+
+::: machineconfig.scripts.python.helpers.helpers_network.address
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Address switching
+
+::: machineconfig.scripts.python.helpers.helpers_network.address_switch
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
