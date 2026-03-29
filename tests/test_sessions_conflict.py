@@ -35,19 +35,55 @@ def test_build_session_launch_plan_rejects_removed_merge_new_windows_policy() ->
         )
 
 
-def test_build_session_launch_plan_rejects_windows_terminal_merge_modes_for_tmux() -> None:
-    try:
+@pytest.mark.parametrize(
+    "on_conflict",
+    [
+        "mergeNewWindowsOverwriteMatchingWindows",
+        "mergeNewWindowsSkipMatchingWindows",
+    ],
+)
+def test_build_session_launch_plan_rejects_merge_modes_for_zellij(
+    on_conflict: session_conflict.SessionConflictAction,
+) -> None:
+    with pytest.raises(ValueError) as exc_info:
         session_conflict.build_session_launch_plan(
             requested_session_names=["demo"],
+            backend="zellij",
+            on_conflict=on_conflict,
+        )
+    assert "tmux" in str(exc_info.value)
+    assert "windows-terminal" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "on_conflict",
+    [
+        "mergeNewWindowsOverwriteMatchingWindows",
+        "mergeNewWindowsSkipMatchingWindows",
+    ],
+)
+def test_build_session_launch_plan_accepts_tmux_merge_modes(
+    on_conflict: session_conflict.SessionConflictAction,
+) -> None:
+    with patch.object(
+        session_conflict,
+        "list_existing_sessions",
+        return_value={"demo"},
+    ):
+        launch_plan = session_conflict.build_session_launch_plan(
+            requested_session_names=["demo"],
             backend="tmux",
-            on_conflict="mergeNewWindowsOverwriteMatchingWindows",
+            on_conflict=on_conflict,
         )
-    except ValueError as exc:
-        assert "windows-terminal" in str(exc)
-    else:
-        raise AssertionError(
-            "Expected mergeNewWindowsOverwriteMatchingWindows to be rejected for tmux."
-        )
+
+    assert launch_plan == [
+        {
+            "requested_name": "demo",
+            "session_name": "demo",
+            "restart_required": False,
+            "conflict_source": "existing",
+        }
+    ]
 
 
 def test_build_session_launch_plan_overwrites_matching_windows_once() -> None:

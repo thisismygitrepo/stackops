@@ -5,6 +5,7 @@ from typing import TypedDict
 
 from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
+    SessionLaunchPlan,
     build_session_launch_plan,
     kill_existing_session,
 )
@@ -13,6 +14,7 @@ from rich.console import Console
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 from machineconfig.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import (
     build_tmux_script,
+    build_tmux_merge_script,
     check_tmux_session_status,
     build_unknown_command_status,
     validate_layout_config,
@@ -22,6 +24,12 @@ from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_type
 
 
 console = Console()
+TMUX_MERGE_CONFLICT_ACTIONS = frozenset(
+    {
+        "mergeNewWindowsOverwriteMatchingWindows",
+        "mergeNewWindowsSkipMatchingWindows",
+    }
+)
 
 
 class TmuxLayoutSummary(TypedDict):
@@ -51,15 +59,22 @@ class TmuxLayoutGenerator:
         for tab in self.layout_config["layoutTabs"]:
             console.print(f"  [yellow]→[/yellow] [bold]{tab['tabName']}[/bold] [dim]in[/dim] [blue]{tab['startDir']}[/blue]")
         script_content = build_tmux_script(self.layout_config, self.session_name)
+        self._write_script_content(script_content=script_content)
+        console.print(f"[bold green]✅ Layout created successfully:[/bold green] [cyan]{self.script_path}[/cyan]")
+        return True
+
+    def _write_script_content(self, script_content: str) -> None:
         tmp_dir = Path.home() / "tmp_results" / "sessions" / "tmux_layouts"
         tmp_dir.mkdir(parents=True, exist_ok=True)
-        import tempfile
-        layout_file = Path(tempfile.mkstemp(suffix="_layout.sh", dir=tmp_dir)[1])
+        if self.script_path is None:
+            import tempfile
+
+            layout_file = Path(tempfile.mkstemp(suffix="_layout.sh", dir=tmp_dir)[1])
+        else:
+            layout_file = Path(self.script_path)
         layout_file.write_text(script_content, encoding="utf-8")
         layout_file.chmod(layout_file.stat().st_mode | 0o111)
         self.script_path = str(layout_file.absolute())
-        console.print(f"[bold green]✅ Layout created successfully:[/bold green] [cyan]{self.script_path}[/cyan]")
-        return True
 
     def check_all_commands_status(self) -> dict[str, CommandStatus]:
         if not self.layout_config:
@@ -114,18 +129,66 @@ class TmuxLayoutGenerator:
             f"[yellow]Session healthy:[/yellow] {'✅' if summary['session_healthy'] else '❌'}"
         )
 
-    def run(self, on_conflict: SessionConflictAction) -> dict[str, str | int]:
-        launch_plan = build_session_launch_plan([self.session_name], backend="tmux", on_conflict=on_conflict)[0]
+    def prepare_launch_script(self, on_conflict: SessionConflictAction) -> None:
+        session_status = check_tmux_session_status(self.session_name or "default")
+        session_exists = session_status.get("session_exists", False)
+
+        if session_exists and on_conflict in TMUX_MERGE_CONFLICT_ACTIONS:
+            match on_conflict:
+                case "mergeNewWindowsOverwriteMatchingWindows":
+                    console.print(
+                        f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
+                        f"[yellow]'{self.session_name}'[/yellow] [yellow]and overwriting matching windows.[/yellow]"
+                    )
+                    script_content = build_tmux_merge_script(
+                        layout_config=self.layout_config,
+                        session_name=self.session_name,
+                        on_conflict="mergeNewWindowsOverwriteMatchingWindows",
+                    )
+                case "mergeNewWindowsSkipMatchingWindows":
+                    console.print(
+                        f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
+                        f"[yellow]'{self.session_name}'[/yellow] [yellow]and skipping matching windows.[/yellow]"
+                    )
+                    script_content = build_tmux_merge_script(
+                        layout_config=self.layout_config,
+                        session_name=self.session_name,
+                        on_conflict="mergeNewWindowsSkipMatchingWindows",
+                    )
+                case _:
+                    raise ValueError(f"Unsupported tmux merge policy: {on_conflict}")
+        else:
+            script_content = build_tmux_script(
+                layout_config=self.layout_config,
+                session_name=self.session_name,
+            )
+
+        self._write_script_content(script_content=script_content)
+
+    def apply_launch_plan(
+        self,
+        launch_plan: SessionLaunchPlan,
+        on_conflict: SessionConflictAction,
+    ) -> None:
         if launch_plan["session_name"] != self.session_name:
             console.print(
                 f"[bold yellow]📝 Renaming tmux session[/bold yellow] [yellow]'{self.session_name}'[/yellow] "
                 f"[yellow]to[/yellow] [yellow]'{launch_plan['session_name']}'[/yellow] [yellow]to avoid session conflict.[/yellow]"
             )
             self.session_name = launch_plan["session_name"]
-            self.create_layout_file()
         if launch_plan["restart_required"]:
-            console.print(f"[bold yellow]♻️ Restarting existing tmux session[/bold yellow] [yellow]'{self.session_name}'[/yellow]")
+            console.print(
+                f"[bold yellow]♻️ Restarting existing tmux session[/bold yellow] [yellow]'{self.session_name}'[/yellow]"
+            )
             kill_existing_session("tmux", self.session_name)
+        self.prepare_launch_script(on_conflict=on_conflict)
+
+    def run(self, on_conflict: SessionConflictAction) -> dict[str, str | int]:
+        launch_plan = build_session_launch_plan([self.session_name], backend="tmux", on_conflict=on_conflict)[0]
+        self.apply_launch_plan(
+            launch_plan=launch_plan,
+            on_conflict=on_conflict,
+        )
         if self.script_path is None:
             raise RuntimeError("Script path was not set after creating layout file")
         result = subprocess.run(["bash", self.script_path], capture_output=True, text=True)

@@ -7,11 +7,7 @@ import tempfile
 import time
 from typing import Literal, TypedDict
 
-from machineconfig.cluster.sessions_managers.session_conflict import (
-    SessionConflictAction,
-    build_session_launch_plan,
-    kill_existing_session,
-)
+from machineconfig.cluster.sessions_managers.session_conflict import SessionConflictAction
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper import parse_command, format_args_for_kdl
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper import check_command_status
 from machineconfig.cluster.sessions_managers.zellij.zellij_local_manager import ZellijLocalManager
@@ -109,23 +105,19 @@ def _start_tmux_initial_session(
 ) -> str:
     if len(initial_tasks) == 0:
         raise ValueError("No initial tasks provided for tmux startup.")
-    launch_plan = build_session_launch_plan([session_name], backend="tmux", on_conflict=on_conflict)[0]
-    actual_session_name = launch_plan["session_name"]
-    if actual_session_name != session_name:
-        print(f"📝 Renaming tmux session '{session_name}' to '{actual_session_name}' to avoid session conflict.")
-    if launch_plan["restart_required"]:
-        print(f"♻️ Restarting existing tmux session '{actual_session_name}'.")
-        kill_existing_session("tmux", actual_session_name)
+    from machineconfig.cluster.sessions_managers.tmux.tmux_local import TmuxLayoutGenerator
 
-    first_task = initial_tasks[0]
-    first_tab = first_task["tab"]
-    _run_tmux_command(args=["new-session", "-d", "-s", actual_session_name, "-n", first_task["runtime_tab_name"], "-c", first_tab["startDir"]])
-    _run_tmux_command(args=["send-keys", "-t", f"{actual_session_name}:{first_task['runtime_tab_name']}", first_tab["command"], "C-m"])
-
-    for task in initial_tasks[1:]:
-        _spawn_tab_tmux(session_name=actual_session_name, task=task)
-
-    return actual_session_name
+    initial_layout: LayoutConfig = {
+        "layoutName": session_name,
+        "layoutTabs": [task["tab"] for task in initial_tasks],
+    }
+    generator = TmuxLayoutGenerator(
+        layout_config=initial_layout,
+        session_name=session_name,
+    )
+    generator.create_layout_file()
+    generator.run(on_conflict=on_conflict)
+    return generator.session_name
 
 
 def _is_task_running(task: DynamicTabTask) -> bool:

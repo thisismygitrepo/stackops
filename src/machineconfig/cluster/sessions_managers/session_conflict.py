@@ -23,12 +23,13 @@ SUPPORTED_SESSION_CONFLICT_ACTIONS = frozenset(
         "mergeNewWindowsSkipMatchingWindows",
     }
 )
-WINDOWS_TERMINAL_ONLY_SESSION_CONFLICT_ACTIONS = frozenset(
+MERGE_NEW_WINDOWS_SESSION_CONFLICT_ACTIONS = frozenset(
     {
         "mergeNewWindowsOverwriteMatchingWindows",
         "mergeNewWindowsSkipMatchingWindows",
     }
 )
+MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS = frozenset({"tmux", "windows-terminal"})
 
 
 class SessionLaunchPlan(TypedDict):
@@ -43,14 +44,15 @@ def _validate_backend_supports_session_conflict_action(
     backend: SessionBackend,
     on_conflict: SessionConflictAction,
 ) -> None:
-    if backend == "windows-terminal":
-        return
-    if on_conflict in WINDOWS_TERMINAL_ONLY_SESSION_CONFLICT_ACTIONS:
+    if (
+        on_conflict in MERGE_NEW_WINDOWS_SESSION_CONFLICT_ACTIONS
+        and backend not in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS
+    ):
         raise ValueError(
             f"Unsupported on_conflict policy '{on_conflict}' for backend '{backend}'. "
             "mergeNewWindowsOverwriteMatchingWindows and "
             "mergeNewWindowsSkipMatchingWindows are only supported with the "
-            "windows-terminal backend."
+            "tmux and windows-terminal backends."
         )
 
 
@@ -85,7 +87,7 @@ def _build_launch_plan(
 
 
 def _existing_conflict_hint(backend: SessionBackend) -> str:
-    if backend == "windows-terminal":
+    if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
         return (
             "Use --on-conflict restart, --on-conflict rename, "
             "--on-conflict mergeNewWindowsOverwriteMatchingWindows, or "
@@ -95,7 +97,7 @@ def _existing_conflict_hint(backend: SessionBackend) -> str:
 
 
 def _duplicate_conflict_hint(backend: SessionBackend) -> str:
-    if backend == "windows-terminal":
+    if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
         return (
             "Use unique layout names, --on-conflict rename, "
             "--on-conflict mergeNewWindowsOverwriteMatchingWindows, or "
@@ -208,7 +210,11 @@ def build_session_launch_plan(
 
         match on_conflict:
             case "mergeNewWindowsOverwriteMatchingWindows":
-                should_restart_existing = conflict_with_existing and requested_name not in restarted_sessions
+                should_restart_existing = (
+                    backend == "windows-terminal"
+                    and conflict_with_existing
+                    and requested_name not in restarted_sessions
+                )
                 if should_restart_existing:
                     restarted_sessions.add(requested_name)
                 plans.append(
@@ -223,7 +229,7 @@ def build_session_launch_plan(
                 planned_sessions.add(requested_name)
                 continue
             case "mergeNewWindowsSkipMatchingWindows":
-                if conflict_with_existing:
+                if backend == "windows-terminal" and conflict_with_existing:
                     plans.append(
                         _build_launch_plan(
                             requested_name=requested_name,

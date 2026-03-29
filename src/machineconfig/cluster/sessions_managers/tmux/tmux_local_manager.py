@@ -6,7 +6,6 @@ from typing import Any, TypedDict, cast
 from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     build_session_launch_plan,
-    kill_existing_session,
 )
 from machineconfig.logger import get_logger
 from machineconfig.utils.scheduler import Scheduler
@@ -59,20 +58,13 @@ class TmuxLocalManager:
         )
         for manager, plan in zip(self.managers, launch_plan, strict=True):
             original_session_name = manager.session_name or "unknown"
-            if plan["session_name"] != original_session_name:
-                logger.info(
-                    "Renaming tmux session '%s' to '%s' to avoid session conflict.",
-                    original_session_name,
-                    plan["session_name"],
-                )
-                manager.session_name = plan["session_name"]
-                manager.create_layout_file()
-
-            session_name = manager.session_name or original_session_name
+            session_name = original_session_name
             try:
-                if plan["restart_required"]:
-                    logger.info("Restarting existing tmux session '%s'.", session_name)
-                    kill_existing_session("tmux", session_name)
+                manager.apply_launch_plan(
+                    launch_plan=plan,
+                    on_conflict=on_conflict,
+                )
+                session_name = manager.session_name or original_session_name
                 script_path = manager.script_path
                 if script_path is None:
                     results[session_name] = {"success": False, "error": "No script file path available"}

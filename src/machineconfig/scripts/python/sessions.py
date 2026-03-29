@@ -57,7 +57,7 @@ def run(
 
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictAction, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are Windows Terminal only.")] = "error",
+    on_conflict: Annotated[SessionConflictAction, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
     max_parallel_tabs: Annotated[int | None, typer.Option("--max-parallel-tabs", help="Enable dynamic tab scheduling and cap active tabs to this value.")] = None,
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Dynamic mode only: polling interval in seconds used to detect finished tabs.")] = 2.0,
 
@@ -73,7 +73,7 @@ def run(
     Use --on-conflict to choose behavior when a target session already exists:
     error, restart, rename, mergeNewWindowsOverwriteMatchingWindows, or
     mergeNewWindowsSkipMatchingWindows. Those two merge policies are
-    Windows Terminal only.
+    supported for tmux and Windows Terminal.
     Pass --max-parallel-tabs to enable dynamic tab scheduling.
     """
     from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
