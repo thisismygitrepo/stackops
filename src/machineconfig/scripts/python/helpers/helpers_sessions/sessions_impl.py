@@ -6,9 +6,8 @@ from typing import Literal
 
 from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
+    build_session_launch_plan,
     kill_existing_session,
-    list_existing_sessions,
-    session_exists,
     validate_session_conflict_action,
 )
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult
@@ -85,74 +84,48 @@ def _session_name_for_layout(layout_name: str, backend: BackendName) -> str:
     return name_core
 
 
-def _resolve_conflicts_for_batch(
+def resolve_conflicts_for_batch(
     layouts_batch: list["LayoutConfig"],
     backend: BackendName,
     on_conflict: SessionConflictAction,
 ) -> tuple[list["LayoutConfig"], set[str]]:
-    existing_sessions = list_existing_sessions(backend)
-    reserved_sessions = set(existing_sessions)
+    launch_plan = build_session_launch_plan(
+        requested_session_names=[
+            _session_name_for_layout(layout["layoutName"], backend)
+            for layout in layouts_batch
+        ],
+        backend=backend,
+        on_conflict=on_conflict,
+    )
     layouts_to_run: list["LayoutConfig"] = []
     sessions_to_restart: set[str] = set()
 
-    for layout in layouts_batch:
+    for layout, plan in zip(layouts_batch, launch_plan, strict=True):
         original_layout_name = layout["layoutName"]
-        target_session_name = _session_name_for_layout(original_layout_name, backend)
-        conflict_with_existing = session_exists(target_session_name, existing_sessions, backend)
-        conflict_with_reserved = session_exists(target_session_name, reserved_sessions, backend)
-
-        if conflict_with_reserved:
-            if on_conflict == "error":
-                if conflict_with_existing:
-                    raise ValueError(
-                        f"Session '{target_session_name}' already exists. "
-                        "Use --on-conflict restart or --on-conflict rename."
-                    )
-                raise ValueError(
-                    f"Duplicate target session '{target_session_name}' detected in the selected layouts. "
-                    "Use unique layout names or --on-conflict rename."
-                )
-
-            if on_conflict == "restart":
-                if conflict_with_existing and target_session_name in sessions_to_restart:
-                    raise ValueError(
-                        f"Duplicate target session '{target_session_name}' detected in the selected layouts. "
-                        "Use unique layout names or --on-conflict rename."
-                    )
-                if not conflict_with_existing:
-                    raise ValueError(
-                        f"Duplicate target session '{target_session_name}' detected in the selected layouts. "
-                        "Use unique layout names or --on-conflict rename."
-                    )
-                print(
-                    f"♻️ Restarting existing session '{target_session_name}' "
-                    f"for layout '{original_layout_name}'."
-                )
-                sessions_to_restart.add(target_session_name)
-
-            if on_conflict == "rename":
-                suffix = 1
-                renamed_layout_name = original_layout_name
-                while True:
-                    candidate_layout_name = f"{original_layout_name}_{suffix}"
-                    candidate_session_name = _session_name_for_layout(candidate_layout_name, backend)
-                    if not session_exists(candidate_session_name, reserved_sessions, backend):
-                        renamed_layout_name = candidate_layout_name
-                        target_session_name = candidate_session_name
-                        break
-                    suffix += 1
-                print(
-                    f"📝 Renaming layout '{original_layout_name}' to '{renamed_layout_name}' "
-                    f"to avoid session conflict."
-                )
-                renamed_layout: "LayoutConfig" = {
-                    "layoutName": renamed_layout_name,
-                    "layoutTabs": layout["layoutTabs"],
-                }
-                layout = renamed_layout
-
+        target_session_name = plan["session_name"]
+        if plan.get("skip_launch", False):
+            print(
+                f"⏭️ Skipping layout '{original_layout_name}' because session "
+                f"'{target_session_name}' already exists."
+            )
+            continue
+        if plan["restart_required"]:
+            print(
+                f"♻️ Restarting existing session '{target_session_name}' "
+                f"for layout '{original_layout_name}'."
+            )
+            sessions_to_restart.add(target_session_name)
+        if target_session_name != original_layout_name:
+            print(
+                f"📝 Renaming layout '{original_layout_name}' to '{target_session_name}' "
+                f"to avoid session conflict."
+            )
+            renamed_layout: "LayoutConfig" = {
+                "layoutName": target_session_name,
+                "layoutTabs": layout["layoutTabs"],
+            }
+            layout = renamed_layout
         layouts_to_run.append(layout)
-        reserved_sessions.add(target_session_name)
 
     return layouts_to_run, sessions_to_restart
 
@@ -202,8 +175,8 @@ def run_layouts(
         case "windows-terminal":
             from machineconfig.cluster.sessions_managers.windows_terminal.wt_local_manager import WTLocalManager
             for i, a_layouts in enumerate(iterable):
-                layouts_to_run, sessions_to_restart = _resolve_conflicts_for_batch(a_layouts, backend, on_conflict)
-                if on_conflict == "restart":
+                layouts_to_run, sessions_to_restart = resolve_conflicts_for_batch(a_layouts, backend, on_conflict)
+                if len(sessions_to_restart) > 0:
                     for session_name in sorted(sessions_to_restart):
                         kill_existing_session(backend, session_name)
                 if len(layouts_to_run) == 0:

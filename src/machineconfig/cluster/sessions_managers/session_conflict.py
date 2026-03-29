@@ -6,8 +6,29 @@ from typing import Literal, NotRequired, TypedDict, cast
 
 
 SessionBackend = Literal["zellij", "tmux", "windows-terminal"]
-SessionConflictAction = Literal["restart", "rename", "error"]
+SessionConflictAction = Literal[
+    "restart",
+    "rename",
+    "error",
+    "mergeNewWindowsOverwriteMatchingWindows",
+    "mergeNewWindowsSkipMatchingWindows",
+]
 ConflictSource = Literal["existing", "duplicate"]
+SUPPORTED_SESSION_CONFLICT_ACTIONS = frozenset(
+    {
+        "restart",
+        "rename",
+        "error",
+        "mergeNewWindowsOverwriteMatchingWindows",
+        "mergeNewWindowsSkipMatchingWindows",
+    }
+)
+WINDOWS_TERMINAL_ONLY_SESSION_CONFLICT_ACTIONS = frozenset(
+    {
+        "mergeNewWindowsOverwriteMatchingWindows",
+        "mergeNewWindowsSkipMatchingWindows",
+    }
+)
 
 
 class SessionLaunchPlan(TypedDict):
@@ -15,12 +36,78 @@ class SessionLaunchPlan(TypedDict):
     session_name: str
     restart_required: bool
     conflict_source: NotRequired[ConflictSource]
+    skip_launch: NotRequired[bool]
 
 
 def validate_session_conflict_action(on_conflict: str) -> SessionConflictAction:
-    if on_conflict not in {"restart", "rename", "error"}:
+    if on_conflict not in SUPPORTED_SESSION_CONFLICT_ACTIONS:
         raise ValueError(f"Unsupported on_conflict policy: {on_conflict}")
     return cast(SessionConflictAction, on_conflict)
+
+
+def _validate_backend_supports_session_conflict_action(
+    backend: SessionBackend,
+    on_conflict: SessionConflictAction,
+) -> None:
+    if backend == "windows-terminal":
+        return
+    if on_conflict in WINDOWS_TERMINAL_ONLY_SESSION_CONFLICT_ACTIONS:
+        raise ValueError(
+            f"Unsupported on_conflict policy '{on_conflict}' for backend '{backend}'. "
+            "mergeNewWindowsOverwriteMatchingWindows and "
+            "mergeNewWindowsSkipMatchingWindows are only supported with the "
+            "windows-terminal backend."
+        )
+
+
+def _build_conflict_source(
+    conflict_with_existing: bool,
+    conflict_with_planned: bool,
+) -> ConflictSource | None:
+    if conflict_with_planned:
+        return "duplicate"
+    if conflict_with_existing:
+        return "existing"
+    return None
+
+
+def _build_launch_plan(
+    requested_name: str,
+    session_name: str,
+    restart_required: bool,
+    conflict_source: ConflictSource | None,
+    skip_launch: bool,
+) -> SessionLaunchPlan:
+    plan: SessionLaunchPlan = {
+        "requested_name": requested_name,
+        "session_name": session_name,
+        "restart_required": restart_required,
+    }
+    if conflict_source is not None:
+        plan["conflict_source"] = conflict_source
+    if skip_launch:
+        plan["skip_launch"] = True
+    return plan
+
+
+def _existing_conflict_hint(backend: SessionBackend) -> str:
+    if backend == "windows-terminal":
+        return (
+            "Use --on-conflict restart, --on-conflict rename, "
+            "--on-conflict mergeNewWindowsOverwriteMatchingWindows, or "
+            "--on-conflict mergeNewWindowsSkipMatchingWindows."
+        )
+    return "Use --on-conflict restart or --on-conflict rename."
+
+
+def _duplicate_conflict_hint(backend: SessionBackend) -> str:
+    if backend == "windows-terminal":
+        return (
+            "Use unique layout names, --on-conflict rename, "
+            "--on-conflict mergeNewWindowsOverwriteMatchingWindows, or "
+            "--on-conflict mergeNewWindowsSkipMatchingWindows."
+        )
+    return "Use unique layout names or --on-conflict rename."
 
 
 def list_existing_sessions(backend: SessionBackend) -> set[str]:
@@ -108,67 +195,120 @@ def build_session_launch_plan(
     backend: SessionBackend,
     on_conflict: SessionConflictAction,
 ) -> list[SessionLaunchPlan]:
+    _validate_backend_supports_session_conflict_action(
+        backend=backend,
+        on_conflict=on_conflict,
+    )
     existing_sessions = list_existing_sessions(backend)
     planned_sessions: set[str] = set()
+    restarted_sessions: set[str] = set()
     plans: list[SessionLaunchPlan] = []
 
     for requested_name in requested_session_names:
         conflict_with_existing = session_exists(requested_name, existing_sessions, backend)
         conflict_with_planned = session_exists(requested_name, planned_sessions, backend)
+        conflict_source = _build_conflict_source(
+            conflict_with_existing=conflict_with_existing,
+            conflict_with_planned=conflict_with_planned,
+        )
 
-        if conflict_with_planned or conflict_with_existing:
-            if on_conflict == "error":
-                if conflict_with_planned:
-                    raise ValueError(
-                        f"Duplicate target session '{requested_name}' detected in the selected layouts. "
-                        "Use unique layout names or --on-conflict rename."
-                    )
-                raise ValueError(
-                    f"Session '{requested_name}' already exists. "
-                    "Use --on-conflict restart or --on-conflict rename."
-                )
-
-            if on_conflict == "restart":
-                if conflict_with_planned:
-                    raise ValueError(
-                        f"Duplicate target session '{requested_name}' detected in the selected layouts. "
-                        "Use unique layout names or --on-conflict rename."
-                    )
+        match on_conflict:
+            case "mergeNewWindowsOverwriteMatchingWindows":
+                should_restart_existing = conflict_with_existing and requested_name not in restarted_sessions
+                if should_restart_existing:
+                    restarted_sessions.add(requested_name)
                 plans.append(
-                    {
-                        "requested_name": requested_name,
-                        "session_name": requested_name,
-                        "restart_required": True,
-                        "conflict_source": "existing",
-                    }
+                    _build_launch_plan(
+                        requested_name=requested_name,
+                        session_name=requested_name,
+                        restart_required=should_restart_existing,
+                        conflict_source=conflict_source,
+                        skip_launch=False,
+                    )
                 )
                 planned_sessions.add(requested_name)
                 continue
-
-            suffix = 1
-            reserved_sessions = existing_sessions | planned_sessions
-            while True:
-                candidate_name = f"{requested_name}_{suffix}"
-                if not session_exists(candidate_name, reserved_sessions, backend):
+            case "mergeNewWindowsSkipMatchingWindows":
+                if conflict_with_existing:
                     plans.append(
-                        {
-                            "requested_name": requested_name,
-                            "session_name": candidate_name,
-                            "restart_required": False,
-                            "conflict_source": "duplicate" if conflict_with_planned else "existing",
-                        }
+                        _build_launch_plan(
+                            requested_name=requested_name,
+                            session_name=requested_name,
+                            restart_required=False,
+                            conflict_source="existing",
+                            skip_launch=True,
+                        )
                     )
-                    planned_sessions.add(candidate_name)
-                    break
-                suffix += 1
-            continue
+                    continue
+                plans.append(
+                    _build_launch_plan(
+                        requested_name=requested_name,
+                        session_name=requested_name,
+                        restart_required=False,
+                        conflict_source=conflict_source,
+                        skip_launch=False,
+                    )
+                )
+                planned_sessions.add(requested_name)
+                continue
+            case "error":
+                if conflict_with_planned:
+                    raise ValueError(
+                        f"Duplicate target session '{requested_name}' detected in the selected layouts. "
+                        f"{_duplicate_conflict_hint(backend)}"
+                    )
+                if conflict_with_existing:
+                    raise ValueError(
+                        f"Session '{requested_name}' already exists. "
+                        f"{_existing_conflict_hint(backend)}"
+                    )
+            case "restart":
+                if conflict_with_planned:
+                    raise ValueError(
+                        f"Duplicate target session '{requested_name}' detected in the selected layouts. "
+                        f"{_duplicate_conflict_hint(backend)}"
+                    )
+                if conflict_with_existing:
+                    plans.append(
+                        _build_launch_plan(
+                            requested_name=requested_name,
+                            session_name=requested_name,
+                            restart_required=True,
+                            conflict_source="existing",
+                            skip_launch=False,
+                        )
+                    )
+                    planned_sessions.add(requested_name)
+                    continue
+            case "rename":
+                if conflict_with_planned or conflict_with_existing:
+                    suffix = 1
+                    reserved_sessions = existing_sessions | planned_sessions
+                    while True:
+                        candidate_name = f"{requested_name}_{suffix}"
+                        if not session_exists(candidate_name, reserved_sessions, backend):
+                            plans.append(
+                                _build_launch_plan(
+                                    requested_name=requested_name,
+                                    session_name=candidate_name,
+                                    restart_required=False,
+                                    conflict_source=conflict_source,
+                                    skip_launch=False,
+                                )
+                            )
+                            planned_sessions.add(candidate_name)
+                            break
+                        suffix += 1
+                    continue
 
         plans.append(
-            {
-                "requested_name": requested_name,
-                "session_name": requested_name,
-                "restart_required": False,
-            }
+            _build_launch_plan(
+                requested_name=requested_name,
+                session_name=requested_name,
+                restart_required=False,
+                conflict_source=None,
+                skip_launch=False,
+            )
         )
         planned_sessions.add(requested_name)
 

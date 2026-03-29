@@ -6,6 +6,7 @@ from typing import Literal
 
 import typer
 
+from machineconfig.cluster.sessions_managers.session_conflict import SessionConflictAction
 from machineconfig.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts, find_layout_file, select_layout
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig, substitute_home
 
@@ -20,7 +21,7 @@ def run_cli(
     max_tabs: int,
     max_layouts: int,
     backend: Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"],
-    on_conflict: Literal["restart", "error", "rename"],
+    on_conflict: SessionConflictAction,
     max_parallel_tabs: int | None,
     poll_seconds: float,
     kill_finished_tabs: bool,
