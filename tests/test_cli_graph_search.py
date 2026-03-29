@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 from unittest.mock import patch
 
+from rich.panel import Panel
 from typer.testing import CliRunner
 
 from machineconfig.scripts.python.graph.visualize import cli_graph_app, cli_graph_search
@@ -24,11 +25,15 @@ def _write_graph(graph_path: Path) -> None:
         "root": {
             "kind": "root",
             "name": "mcfg",
+            "fullPath": "",
+            "shortPath": "",
             "source": {"file": "src/machineconfig/scripts/python/mcfg_entry.py"},
             "children": [
                 {
                     "kind": "group",
                     "name": "devops",
+                    "fullPath": "devops",
+                    "shortPath": "d",
                     "help": "DevOps operations",
                     "app": {"help": "DevOps operations"},
                     "source": {"file": "src/machineconfig/scripts/python/devops.py"},
@@ -36,6 +41,8 @@ def _write_graph(graph_path: Path) -> None:
                         {
                             "kind": "group",
                             "name": "self",
+                            "fullPath": "devops self",
+                            "shortPath": "d s",
                             "help": "Self management",
                             "app": {"help": "Self management"},
                             "source": {"file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py"},
@@ -43,6 +50,8 @@ def _write_graph(graph_path: Path) -> None:
                                 {
                                     "kind": "command",
                                     "name": "status",
+                                    "fullPath": "devops self status",
+                                    "shortPath": "d s s",
                                     "short_help": "Status output",
                                     "source": {"file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py"},
                                 }
@@ -93,6 +102,9 @@ def test_search_cli_graph_runs_help_for_selected_entry_by_default(tmp_path: Path
     assert return_code == 0
     subprocess_run.assert_called_once_with(["devops", "self", "--help"], check=False)
     assert len(console.calls) == 1
+    assert isinstance(console.calls[0], Panel)
+    assert "Short command:" in str(console.calls[0].renderable)
+    assert "d s" in str(console.calls[0].renderable)
 
 
 def test_search_cli_graph_can_show_json_instead_of_running_help(tmp_path: Path) -> None:
@@ -115,3 +127,32 @@ def test_search_cli_graph_can_show_json_instead_of_running_help(tmp_path: Path) 
     assert return_code == 0
     subprocess_run.assert_not_called()
     assert len(console.calls) == 2
+
+
+def test_build_entry_lookup_includes_short_command_in_preview(tmp_path: Path) -> None:
+    graph_path = tmp_path.joinpath("cli_graph.json")
+    _write_graph(graph_path=graph_path)
+    captured_preview_map: dict[str, str] = {}
+
+    def _capture_preview_map(**kwargs: object) -> None:
+        options_to_preview_mapping = kwargs.get("options_to_preview_mapping")
+        assert isinstance(options_to_preview_mapping, dict)
+        for key, value in options_to_preview_mapping.items():
+            assert isinstance(key, str)
+            assert isinstance(value, str)
+        captured_preview_map.update(options_to_preview_mapping)
+        return None
+
+    with (
+        patch.object(cli_graph_search, "install_if_missing"),
+        patch.object(
+            cli_graph_search,
+            "choose_from_dict_with_preview",
+            side_effect=_capture_preview_map,
+        ),
+    ):
+        return_code = cli_graph_search.search_cli_graph(graph_path=graph_path, show_json=False)
+
+    assert return_code == 0
+    preview = captured_preview_map["devops self    [src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py]"]
+    assert "Short command: d s" in preview

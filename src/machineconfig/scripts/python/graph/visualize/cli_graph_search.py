@@ -18,11 +18,16 @@ type JsonObject = dict[str, object]
 class CliGraphSearchEntry:
     source_file: str
     command_tokens: tuple[str, ...]
+    short_command_tokens: tuple[str, ...]
     entry: JsonObject
 
     @property
     def command(self) -> str:
         return " ".join(self.command_tokens)
+
+    @property
+    def short_command(self) -> str:
+        return " ".join(self.short_command_tokens)
 
     @property
     def help_command(self) -> str:
@@ -44,12 +49,14 @@ def load_search_entries(graph_path: Path) -> list[CliGraphSearchEntry]:
         source = _as_json_object(node.get("source"))
         source_file = _as_string(source.get("file")) if source is not None else ""
         command_tokens = _normalize_command_tokens(tokens=node_tokens)
+        short_command_tokens = _short_command_tokens(node=node, fallback_tokens=command_tokens)
 
         if node_kind in {"group", "command"} and source_file.endswith(".py") and command_tokens:
             entries.append(
                 CliGraphSearchEntry(
                     source_file=source_file,
                     command_tokens=command_tokens,
+                    short_command_tokens=short_command_tokens,
                     entry=node,
                 )
             )
@@ -86,9 +93,7 @@ def search_cli_graph(graph_path: Path, show_json: bool) -> int:
     console = _console()
     console.print(
         Panel(
-            f"[bold]Source file:[/bold] {selected_entry.source_file}\n"
-            f"[bold]Command:[/bold] {selected_entry.command}\n"
-            f"[bold]Action:[/bold] {selected_entry.help_command if not show_json else 'show json'}",
+            _search_result_summary(entry=selected_entry, show_json=show_json),
             title="🔎 CLI Graph Search Result",
             border_style="green",
         )
@@ -116,7 +121,7 @@ def _build_entry_lookup(entries: list[CliGraphSearchEntry]) -> tuple[dict[str, s
         option_key = f"{entry.command}    [{entry.source_file}]"
         entry_lookup[option_key] = entry
         summary = _node_summary(node=entry.entry)
-        header = f"Source: {entry.source_file}\nCommand: {entry.command}\n"
+        header = _preview_header(entry=entry)
         if summary:
             options_to_preview_mapping[option_key] = (
                 f"{header}Help target: {entry.help_command}\nSummary: {summary}\n\n"
@@ -152,6 +157,42 @@ def _normalize_command_tokens(tokens: list[str]) -> tuple[str, ...]:
     else:
         normalized_tokens = tokens
     return tuple(token for token in normalized_tokens if token)
+
+
+def _short_command_tokens(node: JsonObject, fallback_tokens: tuple[str, ...]) -> tuple[str, ...]:
+    short_path = _as_string(node.get("shortPath")).strip()
+    if not short_path:
+        return fallback_tokens
+    return tuple(token for token in short_path.split() if token)
+
+
+def _distinct_short_command(entry: CliGraphSearchEntry) -> str | None:
+    if not entry.short_command or entry.short_command == entry.command:
+        return None
+    return entry.short_command
+
+
+def _preview_header(entry: CliGraphSearchEntry) -> str:
+    lines = [
+        f"Source: {entry.source_file}",
+        f"Command: {entry.command}",
+    ]
+    short_command = _distinct_short_command(entry=entry)
+    if short_command is not None:
+        lines.append(f"Short command: {short_command}")
+    return "\n".join(lines) + "\n"
+
+
+def _search_result_summary(entry: CliGraphSearchEntry, show_json: bool) -> str:
+    lines = [
+        f"[bold]Source file:[/bold] {entry.source_file}",
+        f"[bold]Command:[/bold] {entry.command}",
+    ]
+    short_command = _distinct_short_command(entry=entry)
+    if short_command is not None:
+        lines.append(f"[bold]Short command:[/bold] {short_command}")
+    lines.append(f"[bold]Action:[/bold] {entry.help_command if not show_json else 'show json'}")
+    return "\n".join(lines)
 
 
 def _as_json_object(value: object) -> JsonObject | None:
