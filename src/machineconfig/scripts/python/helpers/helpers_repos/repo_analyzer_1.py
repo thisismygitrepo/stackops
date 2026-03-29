@@ -136,13 +136,13 @@ def gitcs_viz(repo_path: Union[str, Path], email: str | None = None, pull_full_h
     for year in range(min_year, max_year + 1):
         windows = [(date(year, 1, 1), date(year, 6, 30)), (date(year, 7, 1), date(year, 12, 31))]
         for chunk_start, chunk_end in windows:
-            cmd = ["gitcs", "--since", chunk_start.isoformat(), "--until", chunk_end.isoformat()]
+            cmd = ["gitcs", "-path", str(repo_path), "-since", chunk_start.isoformat(), "-until", chunk_end.isoformat()]
             if email:
-                cmd.extend(["--email", email])
+                cmd.extend(["-email", email])
 
             print(f"\n===== gitcs chunk {chunk_idx}: {chunk_start.isoformat()} → {chunk_end.isoformat()} =====")
             try:
-                completed = subprocess.run(cmd, cwd=str(repo_path), capture_output=True, text=True, input=f"{repo_path}\n")
+                completed = subprocess.run(cmd, cwd=str(repo_path), capture_output=True, text=True)
             except FileNotFoundError:
                 print("❌ gitcs CLI is not available on PATH; aborting visualization.")
                 return

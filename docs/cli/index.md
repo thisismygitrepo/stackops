@@ -14,7 +14,7 @@ These commands are defined in `pyproject.toml` and reflected in the current CLI 
 | [`sessions`](sessions.md) | Session and layout management |
 | [`agents`](agents.md) | AI agent utilities |
 | [`utils`](utils.md) | General-purpose utilities |
-| `croshell` | Cross-shell execution helper |
+| [`croshell`](croshell.md) | Cross-shell execution helper |
 | [`msearch`](msearch.md) | Search helper entrypoint |
 | [`fire`](fire.md) | Fire job runner |
 | [`cloud`](cloud.md) | Cloud sync, copy, mount, and FTP-over-SSH helpers |
@@ -34,6 +34,7 @@ devops data sync --help
 sessions --help
 agents --help
 utils --help
+croshell --help
 msearch --help
 fire --help
 cloud --help

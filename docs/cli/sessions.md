@@ -1,6 +1,6 @@
 # sessions
 
-Terminal session and layout management for tmux, Zellij, and Windows Terminal.
+Terminal session and layout management for `tmux`, `zellij`, and Windows Terminal.
 
 ---
 
@@ -12,66 +12,73 @@ sessions [OPTIONS] COMMAND [ARGS]...
 
 ---
 
-## Commands Overview
+## Commands overview
 
-| Command | Shortcut | Description |
-|---------|----------|-------------|
-| `run` | `r` | Launch sessions from a layout file |
-| `run-aoe` | `e` | Launch layout tabs as AoE sessions |
-| `attach` | `a` | Attach to a session target |
-| `kill` | `k` | Kill a session target |
-| `trace` | `x` | Trace a tmux session until a strict criterion is met |
-| `create-from-function` | `c` | Create a layout from a function |
-| `balance-load` | `b` | Balance load across sessions |
-| `create-template` | `p` | Create a layout template file |
-| `summarize` | `s` | Summarize a layout file |
+| Command | Description |
+|---------|-------------|
+| `run` | Launch terminal sessions from a layout file |
+| `run-aoe` | Launch selected layout tabs as agent-of-empires sessions |
+| `attach` | Attach to a session target |
+| `kill` | Kill a session target |
+| `trace` | Trace a tmux session until it reaches a strict stop condition |
+| `create-from-function` | Create a layout from a function |
+| `balance-load` | Split or rebalance layouts |
+| `create-template` | Create a layout template file |
+| `summarize` | Summarize a layout file |
+
+The CLI help also exposes one-letter aliases, but this page uses canonical command names.
 
 ---
 
 ## run
 
-Launch terminal sessions based on a layout configuration file.
-Use `--on-conflict` to choose behavior when a target session already exists (`skip`, `restart`, `rename`).
+Launch terminal sessions from a layout file. Current `run` usage is option-based: pass the file with `--layouts-file` instead of as a positional argument.
 
 ```bash
-sessions run LAYOUT_PATH [OPTIONS]
+sessions run [OPTIONS]
 ```
 
 **Options:**
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--max-tabs` | `-mt` | Max tabs per layout (sanity check) |
-| `--max-layouts` | `-ml` | Max parallel layouts (sanity check) |
-| `--sleep-inbetween` | `-si` | Sleep time between layouts (seconds) |
+| `--layouts-file` | `-f` | Path to the layout file |
+| `--choose-layouts` | `-c` | Comma-separated layout names; pass `""` for interactive layout selection |
+| `--choose-tabs` | `-t` | Comma-separated tab names; pass `""` for interactive tab selection |
+| `--sleep-inbetween` | `-S` | Delay in seconds between launching layouts |
+| `--parallel-layouts` | `-p` | Maximum number of layouts to launch per monitored batch |
+| `--max-tabs-per-layout` | `-T` | Sanity-check cap for tabs inside a single layout |
+| `--max-parallel-layouts` | `-P` | Sanity-check cap for the number of parallel layouts |
+| `--backend` | `-b` | Backend to use: `tmux`, `zellij`, `windows-terminal`, or `auto` |
+| `--on-conflict` | `-o` | Conflict policy: `error`, `restart`, `rename`, `mergeNewWindowsOverwriteMatchingWindows`, or `mergeNewWindowsSkipMatchingWindows` |
+| `--max-parallel-tabs` | - | Enable dynamic tab scheduling and cap active tabs |
+| `--poll-seconds` | - | Polling interval for dynamic tab scheduling |
+| `--kill-finished-tabs` | - | Close each dynamically scheduled tab after it finishes |
+| `--all-file` | - | Merge tabs from all layouts into one dynamic run |
 | `--monitor` | `-m` | Monitor sessions for completion |
-| `--parallel` | `-p` | Launch multiple layouts in parallel |
-| `--on-conflict` | `-o` | Conflict policy for existing sessions: `skip`, `restart`, `rename` |
-| `--kill-upon-completion` | `-k` | Kill sessions when done (requires --monitor) |
-| `--choose` | `-c` | Comma-separated layout names to select |
-| `--choose-interactively` | `-i` | Select layouts interactively |
-| `--substitute-home` | `-sh` | Replace ~ and $HOME in paths |
+| `--kill-upon-completion` | `-k` | Kill sessions after completion when monitoring is enabled |
+| `--substitute-home` | `-H` | Expand `~` and `$HOME` inside the layout file |
 
 **Examples:**
 
 ```bash
-# Run all layouts in a file
-sessions run layouts.json
+# Run every layout in a file
+sessions run --layouts-file layouts.json
 
 # Run specific layouts
-sessions run layouts.json --choose "dev,build"
+sessions run --layouts-file layouts.json --choose-layouts "dev,build"
 
-# Interactive layout selection
-sessions run layouts.json -i
+# Choose layouts interactively
+sessions run --layouts-file layouts.json --choose-layouts ""
 
-# Monitor and kill upon completion
-sessions run layouts.json --monitor --kill-upon-completion
+# Monitor and kill sessions when they finish
+sessions run --layouts-file layouts.json --monitor --kill-upon-completion
 
-# Restart existing session names and relaunch
-sessions run layouts.json --on-conflict restart
+# Restart matching sessions before relaunching
+sessions run --layouts-file layouts.json --on-conflict restart
 
-# Run in parallel
-sessions run layouts.json --parallel
+# Dynamically schedule at most eight tabs at a time
+sessions run --layouts-file layouts.json --max-parallel-tabs 8 --kill-finished-tabs
 ```
 
 ---
@@ -79,7 +86,6 @@ sessions run layouts.json --parallel
 ## run-aoe
 
 Launch selected layout tabs through [agent-of-empires](https://github.com/njbrake/agent-of-empires).
-`run-aoe` detects the installed AoE CLI shape and adapts to both the older `--agent/--prompt` flow and newer AoE releases that use `--cmd/--cmd-override/--extra-args`.
 
 The mapping is:
 
@@ -89,21 +95,32 @@ The mapping is:
 - `command` -> initial prompt by default
 
 ```bash
-sessions run-aoe --layouts-file layout.json [OPTIONS]
+sessions run-aoe [OPTIONS]
 ```
 
 **Useful options:**
 
-| Option | Description |
-|--------|-------------|
-| `--model` | Model name forwarded to the underlying AoE/agent CLI when supported |
-| `--agent` | AoE tool/agent name (defaults to `codex`) |
-| `--provider` | Provider forwarded to the underlying AoE/agent CLI when supported |
-| `--sandbox` | Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported |
-| `--yolo` | Enables AoE/agent YOLO mode when supported |
-| `--tab-command-mode` | Interpret `command` as `prompt`, `cmd`, or `ignore` |
-| `--dry-run` | Print the generated `aoe add` commands without executing them |
-| `--force` | Forward force/overwrite to AoE when supported |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--layouts-file` | `-f` | Path to the layout file |
+| `--choose-layouts` | `-c` | Comma-separated layout names; pass `""` for interactive selection |
+| `--choose-tabs` | `-t` | Comma-separated tab names; pass `""` for interactive selection |
+| `--sleep-inbetween` | `-S` | Delay between AoE launches |
+| `--max-tabs-per-layout` | `-T` | Sanity-check cap for selected layouts |
+| `--agent` | - | AoE tool or agent name; defaults to `codex` |
+| `--model` | `-m` | Model forwarded to the underlying AoE or agent CLI |
+| `--provider` | `-p` | Provider forwarded to the underlying AoE or agent CLI |
+| `--sandbox` | - | Forward `--sandbox <value>` when supported |
+| `--yolo` | - | Enable AoE or agent YOLO mode when supported |
+| `--cmd` | - | Override the launched agent binary or command |
+| `--args` | - | Repeatable extra arguments forwarded to the launched agent CLI |
+| `--env` | - | Repeatable `KEY=VALUE` pairs forwarded to AoE when supported |
+| `--force` | - | Forward force or overwrite to AoE when supported |
+| `--dry-run` | - | Print generated `aoe add` commands without executing them |
+| `--aoe-bin` | - | AoE executable to invoke |
+| `--tab-command-mode` | - | Interpret `command` as `prompt`, `cmd`, or `ignore` |
+| `--substitute-home` | `-H` | Expand `~` and `$HOME` inside the layout file |
+| `--launch` / `--no-launch` | - | Control whether AoE sessions are launched immediately |
 
 **Examples:**
 
@@ -111,7 +128,7 @@ sessions run-aoe --layouts-file layout.json [OPTIONS]
 # Treat each tab command as the initial prompt
 sessions run-aoe --layouts-file layout.json --model gpt-5-codex --sandbox workspace-write --yolo
 
-# Use existing tab commands as agent-command overrides instead
+# Use tab commands as agent-command overrides instead
 sessions run-aoe --layouts-file layout.json --tab-command-mode cmd
 
 # Preview the generated aoe commands
@@ -122,7 +139,7 @@ sessions run-aoe --layouts-file layout.json --model gpt-5-codex --dry-run
 
 ## trace
 
-Trace a tmux session until every observed pane satisfies a strict stop criterion.
+Trace a tmux session until every target matches a strict stop criterion.
 
 ```bash
 sessions trace SESSION_NAME [OPTIONS]
@@ -153,7 +170,7 @@ sessions trace build-session --until exit-code --exit-code 0
 
 ## create-template
 
-Create a layout template file.
+Create a layout template file in the current directory.
 
 ```bash
 sessions create-template [NAME] [OPTIONS]
@@ -163,7 +180,7 @@ sessions create-template [NAME] [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--num-tabs` | `-t` | Number of tabs in template (default: 3) |
+| `--num-tabs` | `-t` | Number of tabs in the template (default: 3) |
 
 **Example:**
 
@@ -186,22 +203,22 @@ sessions create-from-function [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--num-process` | `-n` | Number of parallel processes |
-| `--path` | `-p` | Path to Python/Shell script file or directory |
-| `--function` | `-f` | Function to run (interactive if not provided) |
+| `--num-process` | `-n` | Number of parallel processes to run |
+| `--path` | `-p` | Path to a Python or shell script file, or a directory containing candidates |
+| `--function` | `-f` | Function to run; if omitted, Machineconfig prompts you to choose |
 
 **Example:**
 
 ```bash
-# Create layout for running function in 4 parallel processes
-sessions create-from-function -n 4 -p ./my_script.py -f process_data
+# Create a layout for running a function in 4 parallel processes
+sessions create-from-function --num-process 4 --path ./my_script.py --function process_data
 ```
 
 ---
 
 ## balance-load
 
-Adjust layout file to limit tabs per layout.
+Adjust a layout file to limit tabs per layout or total layout weight.
 
 ```bash
 sessions balance-load LAYOUT_PATH [OPTIONS]
@@ -211,74 +228,67 @@ sessions balance-load LAYOUT_PATH [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--max-threshold` | `-m` | Maximum tabs per layout |
-| `--threshold-type` | `-t` | Type: `number`/`n` or `weight`/`w` |
-| `--breaking-method` | `-b` | Method: `moreLayouts`/`ml` or `combineTabs`/`ct` |
+| `--max-threshold` | `-m` | Maximum tabs or total weight per layout |
+| `--threshold-type` | `-t` | Threshold type: `number` or `weight` |
+| `--breaking-method` | `-b` | Split strategy: `moreLayouts` or `combineTabs` |
 | `--output-path` | `-o` | Output file path |
 
 **Example:**
 
 ```bash
 # Balance layouts to max 5 tabs each
-sessions balance-load layouts.json -m 5 -t number -b moreLayouts
+sessions balance-load layouts.json --max-threshold 5 --threshold-type number --breaking-method moreLayouts
 ```
 
 ---
 
-## Layout File Format
+## Layout file format
 
-Layouts are defined in JSON format:
+Current layout files use the `LayoutsFile` wrapper. The important keys are `layouts`, `layoutName`, `layoutTabs`, `tabName`, `startDir`, and `command`.
 
 ```json
-[
-  {
-    "layoutName": "Development",
-    "tabs": [
-      {
-        "tabName": "editor",
-        "command": "hx .",
-        "cwd": "~/projects/myapp"
-      },
-      {
-        "tabName": "server",
-        "command": "python -m http.server 8000"
-      },
-      {
-        "tabName": "tests",
-        "command": "pytest --watch"
-      }
-    ]
-  },
-  {
-    "layoutName": "Monitoring",
-    "tabs": [
-      {
-        "tabName": "htop",
-        "command": "htop"
-      },
-      {
-        "tabName": "logs",
-        "command": "tail -f /var/log/syslog"
-      }
-    ]
-  }
-]
+{
+  "$schema": "https://bit.ly/cfglayout",
+  "version": "0.1",
+  "layouts": [
+    {
+      "layoutName": "Development",
+      "layoutTabs": [
+        {
+          "tabName": "editor",
+          "startDir": "~/projects/myapp",
+          "command": "hx ."
+        },
+        {
+          "tabName": "server",
+          "startDir": "~/projects/myapp",
+          "command": "python -m http.server 8000"
+        },
+        {
+          "tabName": "tests",
+          "startDir": "~/projects/myapp",
+          "command": "pytest --watch"
+        }
+      ]
+    }
+  ]
+}
 ```
+
+Older examples that use `tabs` or `cwd` are stale; the current schema uses `layoutTabs` and `startDir`.
 
 ---
 
-## Session Backends
+## Session backends
 
-Sessions uses platform-specific terminal multiplexers:
+`sessions run` currently supports these backends through `--backend`:
 
-| Platform | Backend |
-|----------|---------|
-| Linux/macOS | Zellij |
-| Windows | Windows Terminal |
+- `tmux` (default)
+- `zellij`
+- `windows-terminal`
+- `auto`
 
-!!! note "Zellij Required"
-    On Linux/macOS, [Zellij](https://zellij.dev/) must be installed.
-    Install via: `cargo install zellij` or your package manager.
+`trace` is tmux-specific. Use `auto` when you want Machineconfig to pick an available backend.
 
 ---
 
@@ -286,17 +296,17 @@ Sessions uses platform-specific terminal multiplexers:
 
 ```bash
 # Create a layout template
-sessions create-template dev_environment -t 4
+sessions create-template dev_environment --num-tabs 4
 
 # Run the layout
-sessions run dev_environment.json
+sessions run --layouts-file dev_environment.json
 
 # Run with monitoring
-sessions run tasks.json --monitor --kill-upon-completion
+sessions run --layouts-file tasks.json --monitor --kill-upon-completion
 
-# Interactive selection
-sessions run layouts.json -i
+# Choose layouts interactively
+sessions run --layouts-file layouts.json --choose-layouts ""
 
-# Create multiprocess layout
-sessions create-from-function -n 8 -p ./process.py -f worker
+# Create a multiprocess layout
+sessions create-from-function --num-process 8 --path ./process.py --function worker
 ```

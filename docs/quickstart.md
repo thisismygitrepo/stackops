@@ -67,6 +67,7 @@ cloud --help
 sessions --help
 agents --help
 utils --help
+croshell --help
 ```
 
 Highlights from the current surface:
@@ -74,7 +75,8 @@ Highlights from the current surface:
 - `cloud`: `sync`, `copy`, `mount`, `ftpx`
 - `sessions`: `run`, `run-aoe`, `attach`, `kill`, `trace`, `create-from-function`, `balance-load`, `create-template`, `summarize`
 - `agents`: `parallel.{create, create-context, collect, make-template}`, `make-config`, `make-todo`, `make-symlinks`, `run-prompt`, `ask`, `add-skill`
-- `utils`: `kill-process`, `environment`, `get-machine-specs`, `list-devices`, `mount`, `init-project`, `upgrade-packages`, `type-hint`, `edit`, `download`, `pdf-merge`, `pdf-compress`, `read-db`
+- `utils`: `machine.{kill-process, environment, get-machine-specs, list-devices, mount}`, `pyproject.{init-project, upgrade-packages, type-hint}`, `file.{edit, download, pdf-merge, pdf-compress, read-db}`
+- `croshell`: launch `ipython`, `python`, `marimo`, `jupyter`, `vscode`, or `visidata` against a file or project context
 
 ## Next steps
 

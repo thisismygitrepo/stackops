@@ -9,7 +9,7 @@ Automate repetitive tasks and workflows with machineconfig.
 Machineconfig provides automation capabilities for:
 
 - Script execution and job management
-- Session-based task orchestration
+- Session-based task orchestration across `tmux`, `zellij`, and Windows Terminal
 - Multi-process parallel execution
 - Remote machine operations
 
@@ -87,8 +87,8 @@ fire my_jobs.py process -d
 # Run in loop (auto-restart)
 fire my_jobs.py daemon --loop
 
-# Open in Zellij tab
-fire my_jobs.py long_task -z "Background"
+# Open in a new Zellij tab
+fire my_jobs.py long_task --zellij-tab "Background"
 ```
 
 ---
@@ -100,23 +100,43 @@ Use layout files to orchestrate multiple tasks:
 ### Create a Layout
 
 ```bash
-sessions create-template automation_tasks -t 4
+sessions create-template automation_tasks --num-tabs 4
 ```
 
-This creates a template layout file:
+This writes `automation_tasks.json` in the current directory. Current layout files use the `LayoutsFile` wrapper with `layoutTabs` and `startDir` fields:
 
 ```json
-[
-  {
-    "layoutName": "automation_tasks",
-    "tabs": [
-      {"tabName": "task1", "command": ""},
-      {"tabName": "task2", "command": ""},
-      {"tabName": "task3", "command": ""},
-      {"tabName": "task4", "command": ""}
-    ]
-  }
-]
+{
+  "$schema": "https://bit.ly/cfglayout",
+  "version": "0.1",
+  "layouts": [
+    {
+      "layoutName": "automation_tasks",
+      "layoutTabs": [
+        {
+          "tabName": "task1",
+          "startDir": "~/code/machineconfig",
+          "command": "bash"
+        },
+        {
+          "tabName": "task2",
+          "startDir": "~/code/machineconfig",
+          "command": "bash"
+        },
+        {
+          "tabName": "task3",
+          "startDir": "~/code/machineconfig",
+          "command": "bash"
+        },
+        {
+          "tabName": "task4",
+          "startDir": "~/code/machineconfig",
+          "command": "bash"
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ### Define Your Workflow
@@ -124,42 +144,50 @@ This creates a template layout file:
 Edit the layout file with your commands:
 
 ```json
-[
-  {
-    "layoutName": "daily_automation",
-    "tabs": [
-      {
-        "tabName": "backup",
-        "command": "fire backup.py run_backup ~/data"
-      },
-      {
-        "tabName": "sync",
-        "command": "rclone sync ~/documents remote:documents"
-      },
-      {
-        "tabName": "cleanup",
-        "command": "fire maintenance.py cleanup_temp"
-      },
-      {
-        "tabName": "monitor",
-        "command": "btop"
-      }
-    ]
-  }
-]
+{
+  "$schema": "https://bit.ly/cfglayout",
+  "version": "0.1",
+  "layouts": [
+    {
+      "layoutName": "daily_automation",
+      "layoutTabs": [
+        {
+          "tabName": "backup",
+          "startDir": "~/data",
+          "command": "fire backup.py run_backup ~/data"
+        },
+        {
+          "tabName": "sync",
+          "startDir": "~/documents",
+          "command": "rclone sync ~/documents remote:documents"
+        },
+        {
+          "tabName": "cleanup",
+          "startDir": "~/code/maintenance",
+          "command": "fire maintenance.py cleanup_temp"
+        },
+        {
+          "tabName": "monitor",
+          "startDir": "~",
+          "command": "btop"
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ### Run the Workflow
 
 ```bash
 # Run all tasks
-sessions run daily_automation.json
+sessions run --layouts-file daily_automation.json
 
 # Run with monitoring
-sessions run daily_automation.json --monitor
+sessions run --layouts-file daily_automation.json --monitor
 
 # Kill sessions when all tasks complete
-sessions run daily_automation.json --monitor --kill-upon-completion
+sessions run --layouts-file daily_automation.json --monitor --kill-upon-completion
 ```
 
 ---
@@ -170,14 +198,14 @@ Run a function across multiple parallel processes:
 
 ```bash
 # Create layout for 8 parallel workers
-sessions create-from-function -n 8 -p ./worker.py -f process_chunk
+sessions create-from-function --num-process 8 --path ./worker.py --function process_chunk
 ```
 
 ### Example: Parallel Data Processing
 
 ```python
 # worker.py
-import os
+from pathlib import Path
 
 def process_chunk(chunk_id: int = 0, total_chunks: int = 8):
     """Process a chunk of data.
@@ -216,7 +244,7 @@ devops execute --list
 devops execute my_automation_script
 
 # Interactive selection
-devops execute -i
+devops execute --interactive
 ```
 
 ### Script Locations
@@ -225,11 +253,11 @@ Scripts can be placed in various locations:
 
 | Location | Flag | Description |
 |----------|------|-------------|
-| Private | `-w private` | Personal automation scripts |
-| Public | `-w public` | Shared scripts |
-| Library | `-w library` | Package scripts |
-| Dynamic | `-w dynamic` | Generated scripts |
-| Custom | `-w custom` | Custom location |
+| Private | `--where private` | Personal automation scripts |
+| Public | `--where public` | Shared scripts |
+| Library | `--where library` | Package scripts |
+| Dynamic | `--where dynamic` | Generated scripts |
+| Custom | `--where custom` | Custom location |
 
 ---
 
@@ -300,4 +328,4 @@ Machineconfig integrates with:
 - **Cloud Storage**: rclone for sync operations
 - **Version Control**: Git operations in scripts
 - **Task Runners**: Fire-based execution system
-- **Terminal Multiplexers**: Zellij sessions for parallel tasks
+- **Terminal Multiplexers**: `sessions` backends for `tmux`, `zellij`, and Windows Terminal
