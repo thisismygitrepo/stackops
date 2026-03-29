@@ -117,10 +117,16 @@ def build_cli_graph() -> dict[str, Any]:
     root_node: dict[str, Any] = {
         "kind": "root",
         "name": "mcfg",
+        "fullPath": "",
+        "shortPath": "",
         "help": root_model.app_config.get("help") or "MachineConfig CLI",
         "source": root_source,
         "app": root_model.app_config,
-        "children": build_children(root_model),
+        "children": build_children(
+            app_model=root_model,
+            parent_full_tokens=(),
+            parent_short_tokens=(),
+        ),
     }
 
     return {
@@ -134,6 +140,11 @@ def build_cli_graph() -> dict[str, Any]:
             "node": {
                 "kind": "root | group | command",
                 "name": "CLI token for this node",
+                "fullPath": "Space-separated command path excluding the root entry token",
+                "shortPath": (
+                    "Space-separated command path using the shortest alias token per "
+                    "segment when available"
+                ),
                 "help": "Command help string as registered on parent (if any)",
                 "short_help": "Short help string (if set)",
                 "doc": "Docstring text for leaf commands or wrapper functions",
@@ -155,6 +166,7 @@ def build_cli_graph() -> dict[str, Any]:
             "notes": [
                 "Graph derived from static source inspection of Typer app factories and lazy wrapper dispatchers.",
                 "Aliases are recorded on each node with hidden flags; no standalone alias nodes.",
+                "fullPath and shortPath are root-relative command strings, excluding the 'mcfg' entry token.",
                 "Signature objects preserve raw lines while parsing Annotated/Option/Argument metadata into structured parameters.",
             ],
         },
@@ -162,7 +174,11 @@ def build_cli_graph() -> dict[str, Any]:
     }
 
 
-def build_children(app_model: AppModel) -> list[dict[str, Any]]:
+def build_children(
+    app_model: AppModel,
+    parent_full_tokens: tuple[str, ...],
+    parent_short_tokens: tuple[str, ...],
+) -> list[dict[str, Any]]:
     grouped: dict[tuple[str, str], list[Registration]] = {}
     ordered_keys: list[tuple[str, str]] = []
 
@@ -179,10 +195,49 @@ def build_children(app_model: AppModel) -> list[dict[str, Any]]:
         primary = choose_primary(regs)
         aliases = build_aliases(regs, primary)
         if key[0] == "group":
-            children.append(build_group_node(app_model, primary, aliases))
+            children.append(
+                build_group_node(
+                    app_model=app_model,
+                    reg=primary,
+                    aliases=aliases,
+                    parent_full_tokens=parent_full_tokens,
+                    parent_short_tokens=parent_short_tokens,
+                )
+            )
         else:
-            children.append(build_command_node(app_model, primary, aliases))
+            children.append(
+                build_command_node(
+                    app_model=app_model,
+                    reg=primary,
+                    aliases=aliases,
+                    parent_full_tokens=parent_full_tokens,
+                    parent_short_tokens=parent_short_tokens,
+                )
+            )
     return children
+
+
+def choose_short_name(name: str, aliases: list[dict[str, Any]]) -> str:
+    candidates: list[str] = [name]
+    for alias in aliases:
+        alias_name = alias.get("name")
+        if isinstance(alias_name, str) and alias_name:
+            candidates.append(alias_name)
+
+    non_empty_candidates = [candidate for candidate in candidates if candidate]
+    if not non_empty_candidates:
+        return ""
+    return min(non_empty_candidates, key=len)
+
+
+def extend_path_tokens(parent_tokens: tuple[str, ...], name: str) -> tuple[str, ...]:
+    if not name:
+        return parent_tokens
+    return (*parent_tokens, name)
+
+
+def join_command_path(tokens: Sequence[str]) -> str:
+    return " ".join(token for token in tokens if token)
 
 
 def registration_key(reg: Registration, module_info: ModuleInfo) -> tuple[str, str]:
@@ -228,7 +283,11 @@ def build_aliases(
 
 
 def build_group_node(
-    app_model: AppModel, reg: Registration, aliases: list[dict[str, Any]]
+    app_model: AppModel,
+    reg: Registration,
+    aliases: list[dict[str, Any]],
+    parent_full_tokens: tuple[str, ...],
+    parent_short_tokens: tuple[str, ...],
 ) -> dict[str, Any]:
     module_info = app_model.module_info
     child_ref = resolve_group_target(reg, module_info)
@@ -238,13 +297,23 @@ def build_group_node(
         )
 
     child_model = load_app_model(child_ref)
+    name = reg.name or ""
+    short_name = choose_short_name(name=name, aliases=aliases)
+    full_tokens = extend_path_tokens(parent_tokens=parent_full_tokens, name=name)
+    short_tokens = extend_path_tokens(parent_tokens=parent_short_tokens, name=short_name)
     node: dict[str, Any] = {
         "kind": "group",
-        "name": reg.name or "",
+        "name": name,
+        "fullPath": join_command_path(tokens=full_tokens),
+        "shortPath": join_command_path(tokens=short_tokens),
         "help": select_help(reg, default=child_model.app_config.get("help")),
         "source": build_group_source(app_model, reg, child_ref),
         "app": child_model.app_config,
-        "children": build_children(child_model),
+        "children": build_children(
+            app_model=child_model,
+            parent_full_tokens=full_tokens,
+            parent_short_tokens=short_tokens,
+        ),
     }
 
     if reg.context_settings is not None:
@@ -290,7 +359,11 @@ def group_doc_value(reg: Registration, module_info: ModuleInfo) -> str | None:
 
 
 def build_command_node(
-    app_model: AppModel, reg: Registration, aliases: list[dict[str, Any]]
+    app_model: AppModel,
+    reg: Registration,
+    aliases: list[dict[str, Any]],
+    parent_full_tokens: tuple[str, ...],
+    parent_short_tokens: tuple[str, ...],
 ) -> dict[str, Any]:
     resolved = resolve_registration_callable(reg, app_model.module_info)
     if resolved is None:
@@ -306,9 +379,15 @@ def build_command_node(
         )
 
     doc = ast.get_docstring(function_info)
+    name = reg.name or resolved.callable_name.replace("_", "-")
+    short_name = choose_short_name(name=name, aliases=aliases)
+    full_tokens = extend_path_tokens(parent_tokens=parent_full_tokens, name=name)
+    short_tokens = extend_path_tokens(parent_tokens=parent_short_tokens, name=short_name)
     node: dict[str, Any] = {
         "kind": "command",
-        "name": reg.name or resolved.callable_name.replace("_", "-"),
+        "name": name,
+        "fullPath": join_command_path(tokens=full_tokens),
+        "shortPath": join_command_path(tokens=short_tokens),
         "help": select_help(reg, default=doc),
         "source": {
             "file": function_module.relative_path(),

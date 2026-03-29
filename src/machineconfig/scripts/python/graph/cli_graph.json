@@ -5,6 +5,8 @@
     "node": {
       "kind": "root | group | command",
       "name": "CLI token for this node",
+      "fullPath": "Space-separated command path excluding the root entry token",
+      "shortPath": "Space-separated command path using the shortest alias token per segment when available",
       "help": "Command help string as registered on parent (if any)",
       "short_help": "Short help string (if set)",
       "doc": "Docstring text for leaf commands or wrapper functions",
@@ -23,12 +25,15 @@
     "notes": [
       "Graph derived from static source inspection of Typer app factories and lazy wrapper dispatchers.",
       "Aliases are recorded on each node with hidden flags; no standalone alias nodes.",
+      "fullPath and shortPath are root-relative command strings, excluding the 'mcfg' entry token.",
       "Signature objects preserve raw lines while parsing Annotated/Option/Argument metadata into structured parameters."
     ]
   },
   "root": {
     "kind": "root",
     "name": "mcfg",
+    "fullPath": "",
+    "shortPath": "",
     "help": "MachineConfig CLI - Manage your machine configurations and workflows",
     "source": {
       "file": "src/machineconfig/scripts/python/mcfg_entry.py",
@@ -45,6 +50,8 @@
       {
         "kind": "group",
         "name": "devops",
+        "fullPath": "devops",
+        "shortPath": "d",
         "help": "<d> DevOps related commands",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
@@ -62,6 +69,8 @@
           {
             "kind": "command",
             "name": "install",
+            "fullPath": "devops install",
+            "shortPath": "d i",
             "help": "📦 Install packages",
             "source": {
               "file": "src/machineconfig/scripts/python/devops.py",
@@ -165,6 +174,8 @@
           {
             "kind": "group",
             "name": "repos",
+            "fullPath": "devops repos",
+            "shortPath": "d r",
             "help": "📁 <r> Manage development repositories",
             "source": {
               "file": "src/machineconfig/scripts/python/devops.py",
@@ -182,6 +193,8 @@
               {
                 "kind": "command",
                 "name": "sync",
+                "fullPath": "devops repos sync",
+                "shortPath": "d r s",
                 "help": "📥 <s> Clone repositories described by a repos.json specification",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -395,6 +408,8 @@
               {
                 "kind": "command",
                 "name": "register",
+                "fullPath": "devops repos register",
+                "shortPath": "d r r",
                 "help": "📝 <r> Record repositories into a repos.json specification",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -442,6 +457,8 @@
               {
                 "kind": "command",
                 "name": "checkout-to-commit",
+                "fullPath": "devops repos checkout-to-commit",
+                "shortPath": "d r ctc",
                 "help": "🔀 [ctc] Deprecated: use sync --checkout-to-commit",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -486,6 +503,8 @@
               {
                 "kind": "command",
                 "name": "checkout-to-branch",
+                "fullPath": "devops repos checkout-to-branch",
+                "shortPath": "d r ctb",
                 "help": "🔀 [ctb] Deprecated: use sync --checkout-to-branch",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -530,6 +549,8 @@
               {
                 "kind": "command",
                 "name": "action",
+                "fullPath": "devops repos action",
+                "shortPath": "d r a",
                 "help": "🔄 <a> Run pull/commit/push actions across repositories",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -703,6 +724,8 @@
               {
                 "kind": "command",
                 "name": "analyze",
+                "fullPath": "devops repos analyze",
+                "shortPath": "d r z",
                 "help": "📊 <z> Analyze repository development over time",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -752,6 +775,8 @@
               {
                 "kind": "command",
                 "name": "guard",
+                "fullPath": "devops repos guard",
+                "shortPath": "d r g",
                 "help": "🔐 <g> Securely sync git repository to/from cloud with encryption",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_repos/cloud_repo_sync.py",
@@ -1092,6 +1117,8 @@
               {
                 "kind": "command",
                 "name": "viz",
+                "fullPath": "devops repos viz",
+                "shortPath": "d r v",
                 "help": "🎬 <v> Visualize repository activity using Gource",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -1633,6 +1660,8 @@
               {
                 "kind": "command",
                 "name": "count-lines",
+                "fullPath": "devops repos count-lines",
+                "shortPath": "d r lc",
                 "help": "📄 <l> Count python lines of code in current repo + historical edits.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -1685,6 +1714,8 @@
               {
                 "kind": "command",
                 "name": "config-linters",
+                "fullPath": "devops repos config-linters",
+                "shortPath": "d r l",
                 "help": "🧰 <l> Add linter config files to a git repository",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -1790,6 +1821,8 @@
               {
                 "kind": "command",
                 "name": "cleanup",
+                "fullPath": "devops repos cleanup",
+                "shortPath": "d r n",
                 "help": "🧹 <n> Clean repository directories from cache files",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",
@@ -1907,6 +1940,8 @@
           {
             "kind": "group",
             "name": "config",
+            "fullPath": "devops config",
+            "shortPath": "d c",
             "help": "🔩 <c> Configuration management",
             "source": {
               "file": "src/machineconfig/scripts/python/devops.py",
@@ -1924,6 +1959,8 @@
               {
                 "kind": "command",
                 "name": "sync",
+                "fullPath": "devops config sync",
+                "shortPath": "d c s",
                 "help": "🔄 <s> Sync dotfiles.",
                 "source": {
                   "file": "src/machineconfig/profile/create_links_export.py",
@@ -2136,6 +2173,8 @@
               {
                 "kind": "command",
                 "name": "register",
+                "fullPath": "devops config register",
+                "shortPath": "d c r",
                 "help": "📇 <r> Register dotfiles agains user mapper.toml",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
@@ -2397,6 +2436,8 @@
               {
                 "kind": "command",
                 "name": "edit",
+                "fullPath": "devops config edit",
+                "shortPath": "d c E",
                 "help": "📝 <E> Open dotfiles mapper.toml in nano, hx, or code.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
@@ -2506,6 +2547,8 @@
               {
                 "kind": "command",
                 "name": "export-dotfiles",
+                "fullPath": "devops config export-dotfiles",
+                "shortPath": "d c e",
                 "help": "📤 <e> Export dotfiles for migration to new machine.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
@@ -2650,6 +2693,8 @@
               {
                 "kind": "command",
                 "name": "import-dotfiles",
+                "fullPath": "devops config import-dotfiles",
+                "shortPath": "d c i",
                 "help": "📥 <i> Import dotfiles from exported archive.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
@@ -2793,6 +2838,8 @@
               {
                 "kind": "group",
                 "name": "terminal",
+                "fullPath": "devops config terminal",
+                "shortPath": "d c t",
                 "help": "🐚 <t> Configure your terminal profile.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
@@ -2809,6 +2856,8 @@
                   {
                     "kind": "command",
                     "name": "config-shell",
+                    "fullPath": "devops config terminal config-shell",
+                    "shortPath": "d c t s",
                     "help": "🐚 <s> Create or configure a shell profile.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
@@ -2876,6 +2925,8 @@
                   {
                     "kind": "command",
                     "name": "starship-theme",
+                    "fullPath": "devops config terminal starship-theme",
+                    "shortPath": "d c t t",
                     "help": "⭐ <t> Select starship prompt theme.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
@@ -2919,6 +2970,8 @@
                   {
                     "kind": "command",
                     "name": "pwsh-theme",
+                    "fullPath": "devops config terminal pwsh-theme",
+                    "shortPath": "d c t T",
                     "help": "⚡ <T> Select powershell prompt theme.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
@@ -2953,6 +3006,8 @@
                   {
                     "kind": "command",
                     "name": "wezterm-theme",
+                    "fullPath": "devops config terminal wezterm-theme",
+                    "shortPath": "d c t W",
                     "help": "💻 <W> Select WezTerm terminal theme.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
@@ -2986,6 +3041,8 @@
                   {
                     "kind": "command",
                     "name": "ghostty-theme",
+                    "fullPath": "devops config terminal ghostty-theme",
+                    "shortPath": "d c t g",
                     "help": "👻 <g> Select Ghostty terminal theme.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
@@ -3032,6 +3089,8 @@
                   {
                     "kind": "command",
                     "name": "windows-terminal-theme",
+                    "fullPath": "devops config terminal windows-terminal-theme",
+                    "shortPath": "d c t x",
                     "help": "🪟 <x> Select Windows Terminal color scheme.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
@@ -3085,6 +3144,8 @@
               {
                 "kind": "command",
                 "name": "copy-assets",
+                "fullPath": "devops config copy-assets",
+                "shortPath": "d c c",
                 "help": "📋 <c> Copy asset files from library to machine.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
@@ -3147,6 +3208,8 @@
               {
                 "kind": "command",
                 "name": "dump",
+                "fullPath": "devops config dump",
+                "shortPath": "d c d",
                 "help": "📦 <d> Dump example configuration files.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config.py",
@@ -3222,6 +3285,8 @@
           {
             "kind": "group",
             "name": "data",
+            "fullPath": "devops data",
+            "shortPath": "d d",
             "help": "💾 <d> Data management",
             "source": {
               "file": "src/machineconfig/scripts/python/devops.py",
@@ -3240,6 +3305,8 @@
               {
                 "kind": "command",
                 "name": "sync",
+                "fullPath": "devops data sync",
+                "shortPath": "d d s",
                 "help": "🔄 <s> Sync (backup) files and directories to cloud storage using rclone.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_data.py",
@@ -3368,6 +3435,8 @@
               {
                 "kind": "command",
                 "name": "register",
+                "fullPath": "devops data register",
+                "shortPath": "d d r",
                 "help": "📝 <r> Register a new backup entry in user backup.toml.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_data.py",
@@ -3593,6 +3662,8 @@
               {
                 "kind": "command",
                 "name": "edit",
+                "fullPath": "devops data edit",
+                "shortPath": "d d e",
                 "help": "✏️ <e> Open backup configuration file in nano, hx, or code.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_data.py",
@@ -3720,6 +3791,8 @@
           {
             "kind": "group",
             "name": "self",
+            "fullPath": "devops self",
+            "shortPath": "d s",
             "help": "🔧 <s> Self management",
             "source": {
               "file": "src/machineconfig/scripts/python/devops.py",
@@ -3737,6 +3810,8 @@
               {
                 "kind": "command",
                 "name": "update",
+                "fullPath": "devops self update",
+                "shortPath": "d s u",
                 "help": "🔄 <u> UPDATE machineconfig",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -3857,6 +3932,8 @@
               {
                 "kind": "command",
                 "name": "init",
+                "fullPath": "devops self init",
+                "shortPath": "d s t",
                 "help": "🦐 <t> Define and manage configurations",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -3980,6 +4057,8 @@
               {
                 "kind": "command",
                 "name": "status",
+                "fullPath": "devops self status",
+                "shortPath": "d s s",
                 "help": "📊 <s> STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -4013,6 +4092,8 @@
               {
                 "kind": "command",
                 "name": "install",
+                "fullPath": "devops self install",
+                "shortPath": "d s i",
                 "help": "📋 <i> CLONE machienconfig locally for nightly updates.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -4190,6 +4271,8 @@
               {
                 "kind": "group",
                 "name": "explore",
+                "fullPath": "devops self explore",
+                "shortPath": "d s x",
                 "help": "🧭 <x> Explore the MachineConfig CLI graph.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -4207,6 +4290,8 @@
                   {
                     "kind": "command",
                     "name": "search",
+                    "fullPath": "devops self explore search",
+                    "shortPath": "d s x s",
                     "help": "🔎 <s> Search CLI graph entries and run the selected command help.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
@@ -4310,6 +4395,8 @@
                   {
                     "kind": "command",
                     "name": "tree",
+                    "fullPath": "devops self explore tree",
+                    "shortPath": "d s x t",
                     "help": "🌳 <t> Render a rich tree view in the terminal.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
@@ -4432,6 +4519,8 @@
                   {
                     "kind": "command",
                     "name": "dot",
+                    "fullPath": "devops self explore dot",
+                    "shortPath": "d s x d",
                     "help": "🧩 <d> Export the graph as Graphviz DOT.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
@@ -4564,6 +4653,8 @@
                   {
                     "kind": "command",
                     "name": "sunburst",
+                    "fullPath": "devops self explore sunburst",
+                    "shortPath": "d s x b",
                     "help": "☀ <b> Render a Plotly sunburst view.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
@@ -4720,6 +4811,8 @@
                   {
                     "kind": "command",
                     "name": "treemap",
+                    "fullPath": "devops self explore treemap",
+                    "shortPath": "d s x m",
                     "help": "🧱 <m> Render a Plotly treemap view.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
@@ -4876,6 +4969,8 @@
                   {
                     "kind": "command",
                     "name": "icicle",
+                    "fullPath": "devops self explore icicle",
+                    "shortPath": "d s x i",
                     "help": "🧊 <i> Render a Plotly icicle view.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
@@ -5032,6 +5127,8 @@
                   {
                     "kind": "command",
                     "name": "tui",
+                    "fullPath": "devops self explore tui",
+                    "shortPath": "d s x u",
                     "help": "📚 <u> NAVIGATE command structure with TUI",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
@@ -5098,6 +5195,8 @@
               {
                 "kind": "command",
                 "name": "buid-docker",
+                "fullPath": "devops self buid-docker",
+                "shortPath": "d s d",
                 "help": "🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -5164,6 +5263,8 @@
               {
                 "kind": "group",
                 "name": "security",
+                "fullPath": "devops self security",
+                "shortPath": "d s y",
                 "help": "🔐 <y> Security related CLI tools.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -5182,6 +5283,8 @@
                   {
                     "kind": "command",
                     "name": "scan",
+                    "fullPath": "devops self security scan",
+                    "shortPath": "d s y s",
                     "help": "<s> Scan installed apps or a single file path with VirusTotal",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
@@ -5297,6 +5400,8 @@
                   {
                     "kind": "command",
                     "name": "list",
+                    "fullPath": "devops self security list",
+                    "shortPath": "d s y l",
                     "help": "<l> List installed apps, optionally filtered by comma-separated app names",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
@@ -5346,6 +5451,8 @@
                   {
                     "kind": "command",
                     "name": "upload",
+                    "fullPath": "devops self security upload",
+                    "shortPath": "d s y u",
                     "help": "<u> Upload a local file to cloud storage",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
@@ -5398,6 +5505,8 @@
                   {
                     "kind": "command",
                     "name": "download",
+                    "fullPath": "devops self security download",
+                    "shortPath": "d s y d",
                     "help": "<d> Download a file from Google Drive",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
@@ -5447,6 +5556,8 @@
                   {
                     "kind": "command",
                     "name": "install",
+                    "fullPath": "devops self security install",
+                    "shortPath": "d s y i",
                     "help": "<i> Install safe apps from app metadata report",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
@@ -5495,6 +5606,8 @@
                   {
                     "kind": "command",
                     "name": "repo-licenses",
+                    "fullPath": "devops self security repo-licenses",
+                    "shortPath": "d s y p",
                     "help": "<p> Download GitHub repo license files for installer entries",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
@@ -5559,6 +5672,8 @@
                   {
                     "kind": "command",
                     "name": "report",
+                    "fullPath": "devops self security report",
+                    "shortPath": "d s y r",
                     "help": "<r> Show the full saved scan report by default, or CSV rows/summary stats",
                     "source": {
                       "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
@@ -5732,6 +5847,8 @@
               {
                 "kind": "command",
                 "name": "docs",
+                "fullPath": "devops self docs",
+                "shortPath": "d s o",
                 "help": "📚 <o> Serve local docs with preview URLs.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -5815,6 +5932,8 @@
               {
                 "kind": "command",
                 "name": "readme",
+                "fullPath": "devops self readme",
+                "shortPath": "d s r",
                 "help": "📚 <r> render readme markdown in terminal.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -5874,6 +5993,8 @@
           {
             "kind": "group",
             "name": "network",
+            "fullPath": "devops network",
+            "shortPath": "d n",
             "help": "🌐 <n> Network management",
             "source": {
               "file": "src/machineconfig/scripts/python/devops.py",
@@ -5891,6 +6012,8 @@
               {
                 "kind": "command",
                 "name": "share-terminal",
+                "fullPath": "devops network share-terminal",
+                "shortPath": "d n t",
                 "help": "📡 <t> Share terminal via web browser",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_share_terminal.py",
@@ -6274,6 +6397,8 @@
               {
                 "kind": "command",
                 "name": "share-server",
+                "fullPath": "devops network share-server",
+                "shortPath": "d n s",
                 "help": "🌐 <s> Start local/global server to share files/folders via web browser",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_share_server.py",
@@ -6571,6 +6696,8 @@
               {
                 "kind": "command",
                 "name": "send",
+                "fullPath": "devops network send",
+                "shortPath": "d n sx",
                 "help": "📁 <sx> send files from here.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_share_file.py",
@@ -6802,6 +6929,8 @@
               {
                 "kind": "command",
                 "name": "receive",
+                "fullPath": "devops network receive",
+                "shortPath": "d n rx",
                 "help": "📁 <rx> receive files to here.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_share_file.py",
@@ -6957,6 +7086,8 @@
               {
                 "kind": "command",
                 "name": "share-temp-file",
+                "fullPath": "devops network share-temp-file",
+                "shortPath": "d n T",
                 "help": "🌡 <T> Share a file via temp.sh",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_share_temp.py",
@@ -7009,6 +7140,8 @@
               {
                 "kind": "group",
                 "name": "ssh",
+                "fullPath": "devops network ssh",
+                "shortPath": "d n S",
                 "help": "🔐 <S> SSH subcommands",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
@@ -7025,6 +7158,8 @@
                   {
                     "kind": "command",
                     "name": "install-server",
+                    "fullPath": "devops network ssh install-server",
+                    "shortPath": "d n S i",
                     "help": "📡 <i> Install SSH server",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_ssh.py",
@@ -7067,6 +7202,8 @@
                   {
                     "kind": "command",
                     "name": "change-port",
+                    "fullPath": "devops network ssh change-port",
+                    "shortPath": "d n S p",
                     "help": "🔌 <p> Change SSH port (Linux/WSL only)",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_ssh.py",
@@ -7124,6 +7261,8 @@
                   {
                     "kind": "command",
                     "name": "add-key",
+                    "fullPath": "devops network ssh add-key",
+                    "shortPath": "d n S k",
                     "help": "🔑 <k> Add SSH public key to this machine",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_ssh.py",
@@ -7271,6 +7410,8 @@
                   {
                     "kind": "command",
                     "name": "debug",
+                    "fullPath": "devops network ssh debug",
+                    "shortPath": "d n S d",
                     "help": "🐛 <d> Debug SSH connection",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_ssh.py",
@@ -7319,6 +7460,8 @@
               {
                 "kind": "group",
                 "name": "device",
+                "fullPath": "devops network device",
+                "shortPath": "d n d",
                 "help": "🖥 <d> Device subcommands",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
@@ -7335,6 +7478,8 @@
                   {
                     "kind": "command",
                     "name": "switch-public-ip",
+                    "fullPath": "devops network device switch-public-ip",
+                    "shortPath": "d n d s",
                     "help": "🔁 <s> Switch public IP address (Cloudflare WARP)",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
@@ -7441,6 +7586,8 @@
                   {
                     "kind": "command",
                     "name": "wifi-select",
+                    "fullPath": "devops network device wifi-select",
+                    "shortPath": "d n d w",
                     "help": "📶 <w> WiFi connection utility.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
@@ -7581,6 +7728,8 @@
                   {
                     "kind": "command",
                     "name": "bind-wsl-port",
+                    "fullPath": "devops network device bind-wsl-port",
+                    "shortPath": "d n d b",
                     "help": "🔌 <b> Bind WSL port to Windows host",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
@@ -7642,6 +7791,8 @@
                   {
                     "kind": "command",
                     "name": "open-wsl-port",
+                    "fullPath": "devops network device open-wsl-port",
+                    "shortPath": "d n d o",
                     "help": "🔥 <o> Open Windows firewall ports for WSL.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
@@ -7692,6 +7843,8 @@
                   {
                     "kind": "command",
                     "name": "link-wsl-windows",
+                    "fullPath": "devops network device link-wsl-windows",
+                    "shortPath": "d n d l",
                     "help": "🔗 <l> Link WSL home and Windows home directories.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
@@ -7752,6 +7905,8 @@
                   {
                     "kind": "command",
                     "name": "reset-cloudflare-tunnel",
+                    "fullPath": "devops network device reset-cloudflare-tunnel",
+                    "shortPath": "d n d r",
                     "help": "☁ <r> Reset Cloudflare tunnel service",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
@@ -7872,6 +8027,8 @@
                   {
                     "kind": "command",
                     "name": "add-ip-exclusion-to-warp",
+                    "fullPath": "devops network device add-ip-exclusion-to-warp",
+                    "shortPath": "d n d p",
                     "help": "🚫 <p> Add IP exclusion to WARP",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_device.py",
@@ -7944,6 +8101,8 @@
               {
                 "kind": "command",
                 "name": "show-address",
+                "fullPath": "devops network show-address",
+                "shortPath": "d n a",
                 "help": "📌 <a> Show this computer addresses on network",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
@@ -8011,6 +8170,8 @@
               {
                 "kind": "command",
                 "name": "vscode-share",
+                "fullPath": "devops network vscode-share",
+                "shortPath": "d n v",
                 "help": "💻 <v> Share workspace via VS Code Tunnels",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_nw.py",
@@ -8238,6 +8399,8 @@
           {
             "kind": "command",
             "name": "execute",
+            "fullPath": "devops execute",
+            "shortPath": "d e",
             "help": "🚀 Execute python/shell scripts from pre-defined directories or as command.",
             "source": {
               "file": "src/machineconfig/scripts/python/devops.py",
@@ -8411,6 +8574,8 @@
       {
         "kind": "group",
         "name": "cloud",
+        "fullPath": "cloud",
+        "shortPath": "c",
         "help": "<c> Cloud management commands",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
@@ -8427,6 +8592,8 @@
           {
             "kind": "command",
             "name": "sync",
+            "fullPath": "cloud sync",
+            "shortPath": "c s",
             "help": "🔄 Synchronize files/folders between local and cloud storage.",
             "source": {
               "file": "src/machineconfig/scripts/python/cloud.py",
@@ -8723,6 +8890,8 @@
           {
             "kind": "command",
             "name": "copy",
+            "fullPath": "cloud copy",
+            "shortPath": "c c",
             "help": "📤 Upload or 📥 Download files/folders to/from cloud storage services.",
             "source": {
               "file": "src/machineconfig/scripts/python/cloud.py",
@@ -9019,6 +9188,8 @@
           {
             "kind": "command",
             "name": "mount",
+            "fullPath": "cloud mount",
+            "shortPath": "c m",
             "help": "🔗 Mount cloud storage services as local drives.",
             "source": {
               "file": "src/machineconfig/scripts/python/cloud.py",
@@ -9172,6 +9343,8 @@
           {
             "kind": "command",
             "name": "ftpx",
+            "fullPath": "cloud ftpx",
+            "shortPath": "c f",
             "help": "📦 File transfer utility through SSH.",
             "source": {
               "file": "src/machineconfig/scripts/python/cloud.py",
@@ -9345,6 +9518,8 @@
       {
         "kind": "group",
         "name": "sessions",
+        "fullPath": "sessions",
+        "shortPath": "s",
         "help": "<s> Session and layout management",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
@@ -9362,6 +9537,8 @@
           {
             "kind": "command",
             "name": "run",
+            "fullPath": "sessions run",
+            "shortPath": "s r",
             "help": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeNewWindowsOverwriteMatchingWindows, or\nmergeNewWindowsSkipMatchingWindows. Those two merge policies are\nsupported for tmux and Windows Terminal.\nUse `run-all` for the paced whole-file dynamic scheduler.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -9717,6 +9894,8 @@
           {
             "kind": "command",
             "name": "run-all",
+            "fullPath": "sessions run-all",
+            "shortPath": "s R",
             "help": "Dynamically run every tab from every layout in a layout configuration file.\n\nThis merges the whole file into one paced run and keeps at most\n--max-parallel-tabs tabs active at a time.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -9932,6 +10111,8 @@
           {
             "kind": "command",
             "name": "run-aoe",
+            "fullPath": "sessions run-aoe",
+            "shortPath": "s e",
             "help": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -10415,6 +10596,8 @@
           {
             "kind": "command",
             "name": "attach",
+            "fullPath": "sessions attach",
+            "shortPath": "s a",
             "help": "Choose a session or deeper target to attach to.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -10566,6 +10749,8 @@
           {
             "kind": "command",
             "name": "kill",
+            "fullPath": "sessions kill",
+            "shortPath": "s k",
             "help": "Choose one or more session targets to kill.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -10702,6 +10887,8 @@
           {
             "kind": "command",
             "name": "trace",
+            "fullPath": "sessions trace",
+            "shortPath": "s x",
             "help": "Trace a tmux session until every target matches a strict stop criterion.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -10826,6 +11013,8 @@
           {
             "kind": "command",
             "name": "create-from-function",
+            "fullPath": "sessions create-from-function",
+            "shortPath": "s c",
             "help": "Create a layout from a function to run in multiple processes.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -10932,6 +11121,8 @@
           {
             "kind": "command",
             "name": "balance-load",
+            "fullPath": "sessions balance-load",
+            "shortPath": "s b",
             "help": "Adjust layout file to limit max tabs per layout, etc.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -11080,6 +11271,8 @@
           {
             "kind": "command",
             "name": "create-template",
+            "fullPath": "sessions create-template",
+            "shortPath": "s p",
             "help": "Create a layout template file.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -11156,6 +11349,8 @@
           {
             "kind": "command",
             "name": "summarize",
+            "fullPath": "sessions summarize",
+            "shortPath": "s s",
             "help": "Summarize a layout file with counts for layouts and tabs.",
             "source": {
               "file": "src/machineconfig/scripts/python/sessions.py",
@@ -11305,6 +11500,8 @@
       {
         "kind": "group",
         "name": "agents",
+        "fullPath": "agents",
+        "shortPath": "a",
         "help": "<a> 🤖 AI Agents management commands",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
@@ -11322,6 +11519,8 @@
           {
             "kind": "group",
             "name": "parallel",
+            "fullPath": "agents parallel",
+            "shortPath": "a p",
             "help": "🧵 <p> Parallel agent workflow commands",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
@@ -11338,6 +11537,8 @@
               {
                 "kind": "command",
                 "name": "create",
+                "fullPath": "agents parallel create",
+                "shortPath": "a p c",
                 "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, google, aws, openai, anthropic, openrouter, xai\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid\n",
                 "source": {
                   "file": "src/machineconfig/scripts/python/agents_parallel_commands.py",
@@ -11795,6 +11996,8 @@
               {
                 "kind": "command",
                 "name": "create-context",
+                "fullPath": "agents parallel create-context",
+                "shortPath": "a p x",
                 "help": "Run one prompt and ask the selected agent to persist a context file for the job.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/agents_parallel_commands.py",
@@ -11950,6 +12153,8 @@
               {
                 "kind": "command",
                 "name": "collect",
+                "fullPath": "agents parallel collect",
+                "shortPath": "a p T",
                 "help": "collect.__doc__",
                 "source": {
                   "file": "src/machineconfig/scripts/python/agents_parallel_commands.py",
@@ -12057,6 +12262,8 @@
               {
                 "kind": "command",
                 "name": "make-template",
+                "fullPath": "agents parallel make-template",
+                "shortPath": "a p p",
                 "help": "make_agents_command_template.__doc__",
                 "source": {
                   "file": "src/machineconfig/scripts/python/agents_parallel_commands.py",
@@ -12106,6 +12313,8 @@
           {
             "kind": "command",
             "name": "make-config",
+            "fullPath": "agents make-config",
+            "shortPath": "a g",
             "help": "Initialize AI configurations in the current repository.",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
@@ -12328,6 +12537,8 @@
           {
             "kind": "command",
             "name": "make-todo",
+            "fullPath": "agents make-todo",
+            "shortPath": "a d",
             "help": "Generate checklist with Python and shell script files in the repository filtered by pattern.",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
@@ -12571,6 +12782,8 @@
           {
             "kind": "command",
             "name": "make-symlinks",
+            "fullPath": "agents make-symlinks",
+            "shortPath": "a l",
             "help": "Create symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}.",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
@@ -12620,6 +12833,8 @@
           {
             "kind": "command",
             "name": "run-prompt",
+            "fullPath": "agents run-prompt",
+            "shortPath": "a r",
             "help": "Run one prompt via selected agent.",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
@@ -12941,6 +13156,8 @@
           {
             "kind": "command",
             "name": "ask",
+            "fullPath": "agents ask",
+            "shortPath": "a a",
             "help": "Ask a selected agent directly.",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
@@ -13086,6 +13303,8 @@
           {
             "kind": "command",
             "name": "add-skill",
+            "fullPath": "agents add-skill",
+            "shortPath": "a s",
             "help": "Add a skill to an agent in a directory.",
             "source": {
               "file": "src/machineconfig/scripts/python/agents.py",
@@ -13219,6 +13438,8 @@
       {
         "kind": "group",
         "name": "utils",
+        "fullPath": "utils",
+        "shortPath": "u",
         "help": "<u> Utility commands",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
@@ -13236,6 +13457,8 @@
           {
             "kind": "group",
             "name": "machine",
+            "fullPath": "utils machine",
+            "shortPath": "u m",
             "help": "🖥 <m> Machine and device utilities",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
@@ -13252,6 +13475,8 @@
               {
                 "kind": "command",
                 "name": "kill-process",
+                "fullPath": "utils machine kill-process",
+                "shortPath": "u m k",
                 "help": "⚔ <k> Choose a process to kill",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/machine_utils_app.py",
@@ -13360,6 +13585,8 @@
               {
                 "kind": "command",
                 "name": "environment",
+                "fullPath": "utils machine environment",
+                "shortPath": "u m v",
                 "help": "⌘ <v> Navigate ENV/PATH variables. Default: fuzzy picker with preview; use --tui for Textual.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/machine_utils_app.py",
@@ -13431,6 +13658,8 @@
               {
                 "kind": "command",
                 "name": "get-machine-specs",
+                "fullPath": "utils machine get-machine-specs",
+                "shortPath": "u m g",
                 "help": "🖥 <g> Get machine specifications.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/machine_utils_app.py",
@@ -13487,6 +13716,8 @@
               {
                 "kind": "command",
                 "name": "list-devices",
+                "fullPath": "utils machine list-devices",
+                "shortPath": "u m l",
                 "help": "💽 <l> List available devices for mounting.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/machine_utils_app.py",
@@ -13517,6 +13748,8 @@
               {
                 "kind": "command",
                 "name": "mount",
+                "fullPath": "utils machine mount",
+                "shortPath": "u m m",
                 "help": "🔌 <m> Mount a device to a mount point.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/machine_utils_app.py",
@@ -13684,6 +13917,8 @@
           {
             "kind": "group",
             "name": "pyproject",
+            "fullPath": "utils pyproject",
+            "shortPath": "u p",
             "help": "🐍 <p> Pyproject bootstrap and typing utilities",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
@@ -13700,6 +13935,8 @@
               {
                 "kind": "command",
                 "name": "init-project",
+                "fullPath": "utils pyproject init-project",
+                "shortPath": "u p i",
                 "help": "✦ <i> Initialize a project with a uv virtual environment and install dev packages.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
@@ -13856,6 +14093,8 @@
               {
                 "kind": "command",
                 "name": "upgrade-packages",
+                "fullPath": "utils pyproject upgrade-packages",
+                "shortPath": "u p a",
                 "help": "↑ <a> Upgrade project dependencies.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
@@ -13941,6 +14180,8 @@
               {
                 "kind": "command",
                 "name": "type-hint",
+                "fullPath": "utils pyproject type-hint",
+                "shortPath": "u p t",
                 "help": "✐ <t> Type hint a file or project directory.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
@@ -14041,6 +14282,8 @@
           {
             "kind": "group",
             "name": "file",
+            "fullPath": "utils file",
+            "shortPath": "u f",
             "help": "📁 <f> File, document, and database utilities",
             "source": {
               "file": "src/machineconfig/scripts/python/utils.py",
@@ -14057,6 +14300,8 @@
               {
                 "kind": "command",
                 "name": "edit",
+                "fullPath": "utils file edit",
+                "shortPath": "u f e",
                 "help": "✏ <e> Open a file in the default editor.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/file_utils_app.py",
@@ -14106,6 +14351,8 @@
               {
                 "kind": "command",
                 "name": "download",
+                "fullPath": "utils file download",
+                "shortPath": "u f d",
                 "help": "↓ <d> Download a file from a URL and optionally decompress it.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/file_utils_app.py",
@@ -14222,6 +14469,8 @@
               {
                 "kind": "command",
                 "name": "pdf-merge",
+                "fullPath": "utils file pdf-merge",
+                "shortPath": "u f p",
                 "help": "◫ <p> Merge two PDF files into one.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/file_utils_app.py",
@@ -14321,6 +14570,8 @@
               {
                 "kind": "command",
                 "name": "pdf-compress",
+                "fullPath": "utils file pdf-compress",
+                "shortPath": "u f c",
                 "help": "↧ <c> Compress a PDF file.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/file_utils_app.py",
@@ -14496,6 +14747,8 @@
               {
                 "kind": "command",
                 "name": "read-db",
+                "fullPath": "utils file read-db",
+                "shortPath": "u f r",
                 "help": "🗃 <r> TUI DB Visualizer.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_utils/file_utils_app.py",
@@ -14665,6 +14918,8 @@
       {
         "kind": "command",
         "name": "fire",
+        "fullPath": "fire",
+        "shortPath": "f",
         "help": "<f> Fire and manage jobs",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
@@ -15232,6 +15487,8 @@
       {
         "kind": "command",
         "name": "croshell",
+        "fullPath": "croshell",
+        "shortPath": "r",
         "help": "<r> Cross-shell command execution",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
