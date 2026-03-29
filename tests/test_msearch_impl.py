@@ -3,7 +3,7 @@ from unittest.mock import patch
 from machineconfig.scripts.python.helpers.helpers_msearch import msearch_impl
 
 
-def test_machineconfig_search_keeps_default_file_source_when_dotfiles_allowed() -> None:
+def test_machineconfig_search_limits_default_file_source_to_non_dotfiles() -> None:
     with (
         patch("platform.system", return_value="Linux"),
         patch("machineconfig.utils.code.run_shell_script") as run_shell_script,
@@ -15,30 +15,7 @@ def test_machineconfig_search_keeps_default_file_source_when_dotfiles_allowed() 
             symantic=False,
             extension="",
             file=True,
-            no_dotfiles=False,
-            rga=False,
-            edit=False,
-            install_dependencies=False,
-        )
-
-    assert run_shell_script.call_count == 1
-    script = run_shell_script.call_args.kwargs["script"]
-    assert not script.startswith("fd ")
-
-
-def test_machineconfig_search_limits_fd_source_to_files_when_excluding_dotfiles() -> None:
-    with (
-        patch("platform.system", return_value="Linux"),
-        patch("machineconfig.utils.code.run_shell_script") as run_shell_script,
-    ):
-        msearch_impl.machineconfig_search(
-            path=".",
-            search_term="",
-            ast=False,
-            symantic=False,
-            extension="",
-            file=True,
-            no_dotfiles=True,
+            dotfiles=False,
             rga=False,
             edit=False,
             install_dependencies=False,
@@ -47,6 +24,29 @@ def test_machineconfig_search_limits_fd_source_to_files_when_excluding_dotfiles(
     assert run_shell_script.call_count == 1
     script = run_shell_script.call_args.kwargs["script"]
     assert "fd --type file | " in script
+
+
+def test_machineconfig_search_keeps_default_file_source_when_dotfiles_enabled() -> None:
+    with (
+        patch("platform.system", return_value="Linux"),
+        patch("machineconfig.utils.code.run_shell_script") as run_shell_script,
+    ):
+        msearch_impl.machineconfig_search(
+            path=".",
+            search_term="",
+            ast=False,
+            symantic=False,
+            extension="",
+            file=True,
+            dotfiles=True,
+            rga=False,
+            edit=False,
+            install_dependencies=False,
+        )
+
+    assert run_shell_script.call_count == 1
+    script = run_shell_script.call_args.kwargs["script"]
+    assert not script.startswith("fd ")
 
 
 def test_machineconfig_search_windows_file_search_changes_directory_with_literal_path() -> None:
@@ -61,7 +61,7 @@ def test_machineconfig_search_windows_file_search_changes_directory_with_literal
             symantic=False,
             extension="",
             file=True,
-            no_dotfiles=False,
+            dotfiles=False,
             rga=False,
             edit=False,
             install_dependencies=False,
@@ -84,7 +84,7 @@ def test_machineconfig_search_windows_text_search_changes_directory_with_literal
             symantic=False,
             extension="",
             file=False,
-            no_dotfiles=False,
+            dotfiles=False,
             rga=False,
             edit=False,
             install_dependencies=False,
@@ -108,7 +108,7 @@ def test_machineconfig_search_macos_text_search_script_does_not_exit_parent_shel
             symantic=False,
             extension="",
             file=False,
-            no_dotfiles=False,
+            dotfiles=False,
             rga=False,
             edit=False,
             install_dependencies=False,

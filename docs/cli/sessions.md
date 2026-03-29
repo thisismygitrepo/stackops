@@ -150,15 +150,17 @@ sessions run-aoe [OPTIONS]
 
 **Examples:**
 
+Replace `<model-name>` with a model accepted by the agent CLI you are launching.
+
 ```bash
 # Treat each tab command as the initial prompt
-sessions run-aoe --layouts-file layout.json --model gpt-5-codex --sandbox workspace-write --yolo
+sessions run-aoe --layouts-file layout.json --model <model-name> --sandbox workspace-write --yolo
 
 # Use tab commands as agent-command overrides instead
 sessions run-aoe --layouts-file layout.json --tab-command-mode cmd
 
 # Preview the generated aoe commands
-sessions run-aoe --layouts-file layout.json --model gpt-5-codex --dry-run
+sessions run-aoe --layouts-file layout.json --model <model-name> --dry-run
 ```
 
 ---

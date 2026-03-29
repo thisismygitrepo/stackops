@@ -1,121 +1,141 @@
 # Data Sync
 
-Backup and synchronize your data across machines and cloud storage.
+Machineconfig currently splits data movement into two layers:
+
+- `devops data` for repeatable, named backup entries stored in the backup config
+- `cloud` for direct source/target copy, sync, mount, and SSH file transfer
 
 ---
 
-## Overview
+## Repeatable backups with `devops data`
 
-Machineconfig integrates with [rclone](https://rclone.org/) to provide powerful data synchronization capabilities:
-
-- Sync to cloud storage providers
-- Encrypted backups
-- Incremental syncing
-- Cross-platform support
-
----
-
-## Supported Backends
-
-| Provider | Status |
-|----------|--------|
-| OneDrive | Full support |
-| Google Drive | Full support |
-| Dropbox | Full support |
-| AWS S3 | Full support |
-| Azure Blob | Full support |
-| SFTP | Full support |
-| Local | Full support |
-
----
-
-## Quick Start
-
-### Configure Cloud Provider
+Start with the current backup workflow entrypoint:
 
 ```bash
-cloud config
+devops data --help
 ```
 
-This walks you through setting up your preferred cloud provider.
+Current subcommands:
 
-### Sync Data
+- `sync`
+- `register`
+- `edit`
+
+### Register a backup item
+
+Add one file or directory to the user backup config:
 
 ```bash
-cloud sync /local/path remote:path
+devops data register ~/.config/wezterm --group dotfiles --zip --encrypt
+devops data register ~/Documents/work --group documents --path-cloud backups/work --os linux,darwin
 ```
 
-### Backup
+`register` records fields such as:
 
-```bash
-cloud backup /important/data
+- `path_local`
+- `path_cloud`
+- `encrypt`
+- `zip`
+- `rel2home`
+- `os`
+
+Representative entry:
+
+```toml
+[dotfiles]
+wezterm = { path_local = "~/.config/wezterm", path_cloud = "^", encrypt = true, zip = true, rel2home = true, os = "linux,darwin" }
 ```
 
----
+`^` means "derive the remote path from `path_local`".
 
-## Sync Strategies
+### Generate backup or restore commands
 
-### Mirror
+`devops data sync` is direction-based:
 
-One-way sync that makes destination identical to source:
+- `up` backs up to the cloud
+- `down` restores from the cloud
+
+Examples:
 
 ```bash
-cloud sync --mirror source/ dest/
+# Generate commands for every registered item
+devops data sync up --which all
+
+# Restore one group from the user backup config
+devops data sync down --repo user --which dotfiles
+
+# Restrict the generated commands to one item and one cloud profile
+devops data sync up --cloud myremote --which dotfiles.wezterm
 ```
 
-### Bidirectional
-
-Two-way sync that merges changes:
+### Inspect or edit the backup config
 
 ```bash
-cloud sync --bidirectional source/ dest/
-```
-
----
-
-## Encryption
-
-Encrypt sensitive data before uploading:
-
-```bash
-# Setup encrypted remote
-cloud setup-encrypted myencrypted
-
-# Sync to encrypted remote
-cloud sync ~/secrets myencrypted:secrets
+devops data edit --repo user
+devops data edit --repo library
 ```
 
 ---
 
-## Scheduled Backups
+## Direct transfers with `cloud`
 
-Set up automatic backups:
+Use `cloud` when you want explicit source/target operations instead of registered backup items:
 
 ```bash
-cloud schedule-backup ~/documents --interval daily
+cloud --help
+```
+
+Current top-level commands:
+
+- `sync`
+- `copy`
+- `mount`
+- `ftpx`
+
+### Copy
+
+One-off upload or download:
+
+```bash
+cloud copy ./report.pdf remote:reports/report.pdf
+cloud copy remote:reports/report.pdf ./report.pdf
+```
+
+### Sync
+
+Ad hoc directory synchronization:
+
+```bash
+cloud sync ~/documents remote:documents
+cloud sync ~/documents remote:documents --bisync
+```
+
+### Mount
+
+Mount a configured remote locally:
+
+```bash
+cloud mount --interactive
+```
+
+### FTP-over-SSH
+
+Transfer files between `machine:path` endpoints:
+
+```bash
+cloud ftpx localmachine:/tmp/archive remotehost:/tmp/archive --recursive
 ```
 
 ---
 
-## Data Recovery
+## Config sources
 
-Restore from backup:
+The `cloud` commands can load defaults from a nearby `.ve.yaml` file or from an explicit `--config` path. The live help shows the current flags for ad hoc operations such as:
 
-```bash
-cloud restore backup:documents ~/documents
-```
+- `--config`
+- `--root`
+- `--encrypt`
+- `--zip`
+- `--relative2home`
 
-List available backups:
-
-```bash
-cloud list-backups
-```
-
----
-
-## Best Practices
-
-1. **Use encryption** for sensitive data
-2. **Test restores** regularly
-3. **Use multiple backends** for critical data
-4. **Monitor sync status** for issues
+Use `devops data` when you want durable named backup sets. Use `cloud copy` or `cloud sync` when you already know the exact source and destination you want to move.

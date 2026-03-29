@@ -47,13 +47,13 @@ machineconfig agents --help
 For `codex` runs, `run-prompt` also accepts explicit reasoning effort:
 
 ```bash
-agents r --agent codex --reasoning-effort high "inspect the repo"
+agents run-prompt --agent codex --reasoning-effort high "inspect the repo"
 ```
 
-For quick one-shot asks, `ask` now accepts `--agent` and optional `--reasoning`:
+For quick one-shot asks, `ask` accepts `--agent`, and `--reasoning` is supported for `codex` and `copilot`:
 
 ```bash
-agents ask h "inspect the repo"
+agents ask --reasoning h "inspect the repo"
 agents ask --agent copilot --reasoning h "inspect the repo"
 agents ask --agent gemini "summarize the current module"
 ```

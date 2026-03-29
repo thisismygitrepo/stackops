@@ -2,7 +2,16 @@
 
 
 def machineconfig_search(
-    path: str, search_term: str, ast: bool, symantic: bool, extension: str, file: bool, no_dotfiles: bool, rga: bool, edit: bool, install_dependencies: bool
+    path: str,
+    search_term: str,
+    ast: bool,
+    symantic: bool,
+    extension: str,
+    file: bool,
+    dotfiles: bool,
+    rga: bool,
+    edit: bool,
+    install_dependencies: bool,
 ) -> None:
     """Machineconfig search helper."""
 
@@ -16,7 +25,7 @@ def machineconfig_search(
         _run_ast_search(directory=path)
         return
     if file:
-        _run_file_search(directory=path, no_dotfiles=no_dotfiles, edit=edit, search_term=search_term)
+        _run_file_search(directory=path, dotfiles=dotfiles, edit=edit, search_term=search_term)
         return
 
     from pathlib import Path
@@ -163,13 +172,13 @@ def _run_ast_search(directory: str) -> None:
         print(f"❌ Error during selection: {e}")
 
 
-def _run_file_search(directory: str | None, no_dotfiles: bool, edit: bool, search_term: str) -> None:
+def _run_file_search(directory: str | None, dotfiles: bool, edit: bool, search_term: str) -> None:
     """Run file search."""
     import platform
 
     platform_name = platform.system()
     query_argument = _get_fzf_query_argument(search_term=search_term, platform_name=platform_name)
-    source_command = _get_file_search_source_command(no_dotfiles=no_dotfiles)
+    source_command = _get_file_search_source_command(dotfiles=dotfiles)
 
     if not edit:
         script = """fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT}"""
@@ -232,9 +241,9 @@ if ($selected) {
     run_shell_script(script=script, display_script=True, clean_env=False)
 
 
-def _get_file_search_source_command(no_dotfiles: bool) -> str:
+def _get_file_search_source_command(dotfiles: bool) -> str:
     """Return the shell source used for file search candidates."""
-    if not no_dotfiles:
+    if dotfiles:
         return ""
     return "fd --type file | "
 

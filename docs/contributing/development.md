@@ -63,12 +63,19 @@ uv run ruff format src/
 ### Building Documentation
 
 ```bash
-uv run zensical serve
+uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
+uv run zensical build
+```
+
+For the repo-aware preview flow that also refreshes the CLI hierarchy artifacts:
+
+```bash
+uv run devops self docs --rebuild --create-artifacts
 ```
 
 Visit `http://127.0.0.1:8000/machineconfig/` to preview docs.
 
-This repo builds docs with `zensical` and keeps its configuration in `zensical.toml`. `uv sync --group dev` installs everything you need; if you set up docs tooling manually, install `zensical` and `mkdocstrings-python`.
+This repo builds docs with `zensical` and keeps its configuration in `zensical.toml`. The deploy flow also syncs `docs/changelog.md` from git tags before building. `uv sync --group dev` installs everything you need.
 
 ---
 
@@ -76,15 +83,16 @@ This repo builds docs with `zensical` and keeps its configuration in `zensical.t
 
 ```
 machineconfig/
+├── docs/                 # Documentation sources
+├── docs_fragments/       # Included CLI reference fragments
 ├── src/machineconfig/    # Main package
 │   ├── cluster/          # Remote operations
 │   ├── jobs/             # Job execution
 │   ├── scripts/          # CLI implementations
 │   ├── settings/         # Config templates
 │   └── utils/            # Utilities
-├── docs/                 # Documentation
 ├── tests/                # Test suite
-└── pyproject.toml        # Project config
+└── zensical.toml         # Docs site config
 ```
 
 ---

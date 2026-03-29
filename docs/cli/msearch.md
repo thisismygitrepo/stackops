@@ -46,7 +46,7 @@ When multiple mode flags are passed together, `msearch` resolves them in this or
 | `--symantic` | `-s` | Run symantic symbol search |
 | `--extension TEXT` | `-E` | Filter by extension such as `.py` or `.js` |
 | `--file` | `-f` | Search for files instead of text matches |
-| `--no-dotfiles` | `-D` | Exclude dotfiles from file search results |
+| `--dotfiles` | `-D` | Include dotfiles in file search results |
 | `--rga` | `-A` | Use `ripgrep-all` instead of `ripgrep` |
 | `--edit` | `-e` | Open the selected match in Helix |
 | `--install-req` | `-i` | Install required search dependencies |
@@ -64,6 +64,9 @@ msearch . "TODO"
 
 # Search for files only
 msearch src --file
+
+# Search files including dotfiles
+msearch src --file --dotfiles
 
 # Search files and jump into Helix
 msearch src --file --edit

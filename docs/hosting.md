@@ -3,13 +3,23 @@
 This guide covers local preview and hosting options for the repository's Zensical-powered documentation site.
 
 !!! note
-    Machineconfig builds and deploys docs with `zensical`, configured in `zensical.toml`. If you install docs tooling manually instead of running `uv sync --group dev`, install `zensical` and `mkdocstrings-python`.
+    Machineconfig builds and deploys docs with `zensical`, configured in `zensical.toml`. The canonical build flow is `uv sync --group dev`, then `uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog`, then `uv run zensical build`.
 
 ---
 
 ## Local Development
 
-### Quick Serve
+### Quick Preview
+
+Use the repo-aware helper when you want the local preview to match the published docs flow:
+
+```bash
+uv run devops self docs --rebuild --create-artifacts
+```
+
+This syncs the changelog, refreshes the checked-in CLI graph HTML artifacts, and then serves the site.
+
+### Raw Zensical Serve
 
 ```bash
 uv run zensical serve
@@ -34,6 +44,7 @@ uv run zensical serve --open
 ### Build Static Files
 
 ```bash
+uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
 uv run zensical build
 ```
 
@@ -60,6 +71,7 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
 === "Build locally"
 
     ```bash
+    uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
     uv run zensical build
     ```
 
@@ -117,7 +129,7 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
             run: uv sync --group dev
 
           - name: Build site
-            run: rm -rf site && uv run zensical build
+            run: uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && rm -rf site && uv run zensical build
 
           - name: Archive Pages artifact
             run: |
@@ -180,7 +192,7 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
 
 | Setting | Value |
 |---------|-------|
-| Build command | `pip install . zensical mkdocstrings-python && zensical build` |
+| Build command | `pip install uv && uv sync --group dev && uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && uv run zensical build` |
 | Build output directory | `site` |
 | Root directory | `/` |
 
@@ -190,6 +202,7 @@ If you removed or renamed pages, delete `site/` before rebuilding so stale files
 #!/bin/bash
 pip install uv
 uv sync --group dev
+uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
 uv run zensical build
 ```
 
@@ -216,18 +229,18 @@ Then set build command to: `bash build_docs.sh`
 
 | Setting | Value |
 |---------|-------|
-| Build command | `pip install . zensical mkdocstrings-python && zensical build` |
+| Build command | `pip install uv && uv sync --group dev && uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && uv run zensical build` |
 | Publish directory | `site` |
 
 **Or create `netlify.toml`**:
 
 ```toml
 [build]
-  command = "pip install . zensical mkdocstrings-python && zensical build"
+  command = "pip install uv && uv sync --group dev && uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && uv run zensical build"
   publish = "site"
 
 [build.environment]
-  PYTHON_VERSION = "3.11"
+  PYTHON_VERSION = "3.13"
 ```
 
 ---
@@ -250,9 +263,9 @@ Then set build command to: `bash build_docs.sh`
 
 ```json
 {
-  "buildCommand": "zensical build",
+  "buildCommand": "uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && uv run zensical build",
   "outputDirectory": "site",
-  "installCommand": "pip install . zensical mkdocstrings-python"
+  "installCommand": "pip install uv && uv sync --group dev"
 }
 ```
 
@@ -270,13 +283,15 @@ Then set build command to: `bash build_docs.sh`
 **Setup** - create `.gitlab-ci.yml`:
 
 ```yaml
-image: python:3.11
+image: python:3.13
 
 pages:
   stage: deploy
   script:
-    - pip install . zensical mkdocstrings-python
-    - zensical build
+    - pip install uv
+    - uv sync --group dev
+    - uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
+    - uv run zensical build
     - mv site public
   artifacts:
     paths:
@@ -312,11 +327,13 @@ build:
     python: "3.13"
   jobs:
     install:
-      - pip install . zensical mkdocstrings-python
+      - pip install uv
+      - uv sync --group dev
     build:
       html:
         - mkdir -p $READTHEDOCS_OUTPUT/html
-        - zensical build
+        - uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
+        - uv run zensical build
         - cp -r site/. $READTHEDOCS_OUTPUT/html/
 ```
 
@@ -342,7 +359,7 @@ Read the Docs is still oriented around MkDocs and Sphinx, so with Zensical you p
 
 | Setting | Value |
 |---------|-------|
-| Build Command | `pip install . zensical mkdocstrings-python && zensical build` |
+| Build Command | `pip install uv && uv sync --group dev && uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && uv run zensical build` |
 | Publish Directory | `site` |
 
 ---
@@ -363,6 +380,7 @@ Read the Docs is still oriented around MkDocs and Sphinx, so with Zensical you p
 npm install -g surge
 
 # Build docs
+uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
 uv run zensical build
 
 # Deploy
@@ -401,6 +419,7 @@ firebase login
 firebase init hosting
 
 # Build docs
+uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
 uv run zensical build
 
 # Deploy
@@ -476,7 +495,7 @@ For **machineconfig**, I recommend **GitHub Pages** with GitHub Actions:
 
 ```bash
 # Preview locally
-uv run zensical serve
+uv run devops self docs --rebuild --create-artifacts
 
 # Deploy after pushing to main
 git push origin main
@@ -513,8 +532,9 @@ FROM python:3.13-slim
 WORKDIR /docs
 COPY . .
 
-RUN pip install . zensical mkdocstrings-python
-RUN zensical build
+RUN pip install uv && uv sync --group dev
+RUN uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog
+RUN uv run zensical build
 
 FROM nginx:alpine
 COPY --from=0 /docs/site /usr/share/nginx/html

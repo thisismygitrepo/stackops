@@ -43,6 +43,8 @@ class Registration:
     app_var: str
     target_expr: ast.AST
     order: int
+    local_modules: dict[str, str] = field(default_factory=dict)
+    local_names: dict[str, tuple[str, str]] = field(default_factory=dict)
     name: str | None = None
     hidden: bool = False
     help: Any = None
@@ -185,13 +187,13 @@ def build_children(app_model: AppModel) -> list[dict[str, Any]]:
 
 def registration_key(reg: Registration, module_info: ModuleInfo) -> tuple[str, str]:
     if reg.kind == "add_typer":
-        child_ref = resolve_child_app_ref(reg.target_expr, module_info)
+        child_ref = resolve_registration_child_app_ref(reg, module_info)
         if child_ref is None:
             name = reg.name or ast.unparse(reg.target_expr)
             return ("group", f"{module_info.module}:{name}")
         return ("group", f"{child_ref.module}.{child_ref.factory}")
 
-    resolved = resolve_callable(reg.target_expr, module_info)
+    resolved = resolve_registration_callable(reg, module_info)
     if resolved is None:
         name = reg.name or ast.unparse(reg.target_expr)
         return ("command", f"{module_info.module}:{name}")
@@ -268,7 +270,7 @@ def build_group_source(
     }
 
     if reg.kind == "command":
-        resolved = resolve_callable(reg.target_expr, app_model.module_info)
+        resolved = resolve_registration_callable(reg, app_model.module_info)
         if resolved is not None:
             source["callable"] = resolved.callable_name
 
@@ -278,7 +280,7 @@ def build_group_source(
 def group_doc_value(reg: Registration, module_info: ModuleInfo) -> str | None:
     if reg.kind != "command":
         return None
-    resolved = resolve_callable(reg.target_expr, module_info)
+    resolved = resolve_registration_callable(reg, module_info)
     if resolved is None:
         return None
     function_info = load_module(resolved.module).functions.get(resolved.callable_name)
@@ -290,7 +292,7 @@ def group_doc_value(reg: Registration, module_info: ModuleInfo) -> str | None:
 def build_command_node(
     app_model: AppModel, reg: Registration, aliases: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    resolved = resolve_callable(reg.target_expr, app_model.module_info)
+    resolved = resolve_registration_callable(reg, app_model.module_info)
     if resolved is None:
         raise RuntimeError(
             f"Could not resolve command target for {app_model.ref.module}:{reg.name}"
@@ -347,12 +349,34 @@ def select_help(reg: Registration, default: str | None) -> str:
 
 def resolve_group_target(reg: Registration, module_info: ModuleInfo) -> AppRef | None:
     if reg.kind == "add_typer":
-        return resolve_child_app_ref(reg.target_expr, module_info)
+        return resolve_registration_child_app_ref(reg, module_info)
 
-    resolved = resolve_callable(reg.target_expr, module_info)
+    resolved = resolve_registration_callable(reg, module_info)
     if resolved is None:
         return None
     return find_dispatch_target(resolved)
+
+
+def resolve_registration_callable(
+    reg: Registration, module_info: ModuleInfo
+) -> ResolvedCallable | None:
+    return resolve_callable(
+        reg.target_expr,
+        module_info,
+        local_modules=reg.local_modules,
+        local_names=reg.local_names,
+    )
+
+
+def resolve_registration_child_app_ref(
+    reg: Registration, module_info: ModuleInfo
+) -> AppRef | None:
+    return resolve_child_app_ref(
+        reg.target_expr,
+        module_info,
+        local_modules=reg.local_modules,
+        local_names=reg.local_names,
+    )
 
 
 def find_dispatch_target(resolved: ResolvedCallable) -> AppRef | None:
@@ -622,6 +646,7 @@ def extract_app_model(
     registrations: list[Registration] = []
     return_app_var: str | None = None
     order = 0
+    local_modules, local_names = collect_local_imports(function_info)
 
     def process_statements(statements: list[ast.stmt]) -> None:
         nonlocal return_app_var
@@ -691,6 +716,8 @@ def extract_app_model(
                     module_info=module_info,
                     env=env,
                     function_docs=function_docs,
+                    local_modules=local_modules,
+                    local_names=local_names,
                     order=order,
                 )
                 if registration is not None:
@@ -724,6 +751,8 @@ def parse_registration(
     module_info: ModuleInfo,
     env: dict[str, Any],
     function_docs: dict[str, str | None],
+    local_modules: dict[str, str],
+    local_names: dict[str, tuple[str, str]],
     order: int,
 ) -> Registration | None:
     if not isinstance(expr, ast.Call):
@@ -747,6 +776,8 @@ def parse_registration(
             app_var=app_var,
             target_expr=expr.args[0],
             order=order,
+            local_modules=local_modules,
+            local_names=local_names,
             name=name,
             hidden=bool(kwargs.get("hidden", False)),
             help=kwargs.get("help"),
@@ -770,6 +801,8 @@ def parse_registration(
         app_var=app_var,
         target_expr=expr.args[0],
         order=order,
+        local_modules=local_modules,
+        local_names=local_names,
         name=name,
         hidden=bool(kwargs.get("hidden", False)),
         help=kwargs.get("help"),

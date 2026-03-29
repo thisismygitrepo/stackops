@@ -148,7 +148,8 @@ Current `devops self explore --help` exposes:
 
 #### search
 
-Interactive fuzzy-search over the generated CLI graph JSON.
+Interactive fuzzy-search over the generated CLI graph JSON. By default it runs `--help`
+for the selected command or group; use `--show-json` to print the raw graph entry.
 
 ```bash
 devops self explore search [OPTIONS]
@@ -159,8 +160,9 @@ Key option:
 | Option | Description |
 |--------|-------------|
 | `--graph-path`, `-g` | Override the path to `cli_graph.json` |
+| `--show-json` | Print the selected `cli_graph.json` entry instead of running help |
 
-Representative result excerpt:
+Representative JSON result excerpt:
 
 ```json
 {
@@ -354,7 +356,7 @@ Interactive controls:
 - `?` opens in-app help
 - `q` quits
 
-![TUI preview](../assets/devops-self-explore/tui.svg){ width="100%" }
+No static screenshot is checked into the docs for the TUI. Launch it locally to inspect the current command tree.
 
 ### buid-docker
 
@@ -521,16 +523,18 @@ Serve the local docs preview and print the localhost and LAN URLs.
 devops self docs [OPTIONS]
 ```
 
-Key option:
+Key options:
 
 | Option | Description |
 |--------|-------------|
 | `--rebuild`, `-b` | Rebuild the docs before starting the preview server |
+| `--create-artifacts`, `-a` | Regenerate the Plotly CLI graph HTML artifacts before serving |
 
 Current behavior:
 
 - Prints `http://127.0.0.1:8000/machineconfig/` and, when available, the LAN preview URL.
 - With `--rebuild`, syncs the changelog and runs `zensical build` before `zensical serve`.
+- With `--create-artifacts`, refreshes the checked-in CLI graph HTML exports under `docs/assets/devops-self-explore/`.
 - Serves on `0.0.0.0:8000`.
 
 Examples:
@@ -538,6 +542,7 @@ Examples:
 ```bash
 devops self docs
 devops self docs --rebuild
+devops self docs --rebuild --create-artifacts
 ```
 
 ### readme

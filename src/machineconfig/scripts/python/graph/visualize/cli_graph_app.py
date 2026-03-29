@@ -192,90 +192,20 @@ def navigate():
 
 def search(
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Path to cli_graph.json")] = None,
+    show_json: Annotated[
+        bool,
+        typer.Option("--show-json", help="Print the selected cli_graph.json entry instead of running '<command> --help'."),
+    ] = False,
 ) -> None:
-    """🔎 Search cli_graph.json entries and print the full selected entry."""
-    def func(graph_path_str: str | None) -> None:
-        import json
-        from rich.console import Console
-        from rich.panel import Panel
-        from rich.syntax import Syntax
+    """🔎 Search cli_graph.json entries and run --help for the selected command or group."""
+    def func(graph_path_str: str | None, show_json: bool) -> None:
         from machineconfig.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
-        from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
-        from machineconfig.utils.installer_utils.installer_cli import install_if_missing
-        install_if_missing(which="tv", binary_name=None, verbose=True)
+        from machineconfig.scripts.python.graph.visualize.cli_graph_search import search_cli_graph
+
         graph_file = Path(graph_path_str) if graph_path_str else DEFAULT_GRAPH_PATH
-        graph_data = json.loads(graph_file.read_text(encoding="utf-8"))
-        root = graph_data.get("root")
-        if not isinstance(root, dict):
-            raise ValueError(f"Invalid graph root in {graph_file}")
-
-        from typing import cast
-        def _as_string_keyed_dict(value: object) -> dict[str, object] | None:
-            if not isinstance(value, dict):
-                return None
-            if not all(isinstance(key, str) for key in value):
-                return None
-            return cast(dict[str, object], value)
-
-        entries: list[tuple[str, str, dict[str, object]]] = []
-
-        def walk(node: dict[str, object], parent_tokens: list[str]) -> None:
-            node_name = node.get("name")
-            node_name_str = node_name if isinstance(node_name, str) else ""
-            tokens = parent_tokens + ([node_name_str] if node_name_str else [])
-            source = _as_string_keyed_dict(node.get("source"))
-            if node.get("kind") == "command" and source is not None:
-                source_file = source.get("file")
-                if isinstance(source_file, str) and source_file.endswith(".py"):
-                    command_path = " ".join(tokens).strip() or source_file
-                    entries.append((source_file, command_path, node))
-            children = node.get("children")
-            if isinstance(children, list):
-                for child in children:
-                    child_node = _as_string_keyed_dict(child)
-                    if child_node is not None:
-                        walk(child_node, tokens)
-
-        walk(root, [])
-        if not entries:
-            raise ValueError(f"No .py command entries found in {graph_file}")
-
-        entries.sort(key=lambda item: (item[0], item[1]))
-        entry_preview_mapping: dict[str, str] = {}
-        entry_lookup: dict[str, tuple[str, str, dict[str, object]]] = {}
-        for source_file, command_path, entry in entries:
-            summary = str(entry.get("short_help") or entry.get("help") or entry.get("doc") or "").strip()
-            display_command = command_path if command_path else str(entry.get("name", "command"))
-            option_key = f"{display_command}    [{source_file}]"
-            entry_lookup[option_key] = (source_file, display_command, entry)
-            if summary:
-                entry_preview_mapping[option_key] = f"Source: {source_file}\nSummary: {summary}\n\n" + json.dumps(entry, ensure_ascii=False, indent=2)
-            else:
-                entry_preview_mapping[option_key] = f"Source: {source_file}\n\n" + json.dumps(entry, ensure_ascii=False, indent=2)
-
-        selected_entry_key = choose_from_dict_with_preview(
-            options_to_preview_mapping=entry_preview_mapping,
-            extension="json",
-            multi=False,
-            preview_size_percent=70,
-        )
-        if selected_entry_key is not None:
-            selected_file, selected_command, selected_entry = entry_lookup[selected_entry_key]
-            console = Console()
-            console.print(
-                Panel(
-                    f"[bold]Source file:[/bold] {selected_file}\n[bold]Command:[/bold] {selected_command}",
-                    title="🔎 CLI Graph Search Result",
-                    border_style="green",
-                )
-            )
-            console.print(
-                Panel(
-                    Syntax(json.dumps(selected_entry, ensure_ascii=False, indent=2), "json", line_numbers=True),
-                    title="📦 Full cli_graph.json Entry",
-                    border_style="cyan",
-                )
-            )
+        return_code = search_cli_graph(graph_path=graph_file, show_json=show_json)
+        if return_code != 0:
+            raise typer.Exit(code=return_code)
             
 
     from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
@@ -288,7 +218,7 @@ def search(
         uv_with = [MACHINECONFIG_VERSION]
         uv_project_dir = None
     shell_script, _pyfile = get_shell_script_running_lambda_function(
-        lambda: func(graph_path_str=str(graph_path) if graph_path else None),
+        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_json=show_json),
         uv_with=uv_with,
         uv_project_dir=uv_project_dir,
     )
@@ -302,8 +232,8 @@ def get_app() -> typer.Typer:
         add_help_option=True,
         add_completion=False,
     )
-    cli_app.command(name="search", no_args_is_help=False, help="🔎 <s> Search all cli_graph.json command entries.")(search)
-    cli_app.command(name="s", no_args_is_help=False, help="Search all cli_graph.json command entries.", hidden=True)(search)
+    cli_app.command(name="search", no_args_is_help=False, help="🔎 <s> Search CLI graph entries and run the selected command help.")(search)
+    cli_app.command(name="s", no_args_is_help=False, help="Search CLI graph entries and run the selected command help.", hidden=True)(search)
     cli_app.command(name="tree", no_args_is_help=False, help="🌳 <t> Render a rich tree view in the terminal.")(tree)
     cli_app.command(name="t", no_args_is_help=False, help="Render a rich tree view in the terminal.", hidden=True)(tree)
     cli_app.command(name="dot", no_args_is_help=False, help="🧩 <d> Export the graph as Graphviz DOT.")(dot)
