@@ -17,6 +17,7 @@ sessions [OPTIONS] COMMAND [ARGS]...
 | Command | Description |
 |---------|-------------|
 | `run` | Launch terminal sessions from a layout file |
+| `run-all` | Dynamically work through every tab in a layout file |
 | `run-aoe` | Launch selected layout tabs as agent-of-empires sessions |
 | `attach` | Attach to a session target |
 | `kill` | Kill a session target |
@@ -32,7 +33,7 @@ The CLI help also exposes one-letter aliases, but this page uses canonical comma
 
 ## run
 
-Launch terminal sessions from a layout file. Current `run` usage is option-based: pass the file with `--layouts-file` instead of as a positional argument.
+Launch selected layout sessions from a layout file. Current `run` usage is option-based: pass the file with `--layouts-file` instead of as a positional argument.
 
 ```bash
 sessions run [OPTIONS]
@@ -51,10 +52,6 @@ sessions run [OPTIONS]
 | `--max-parallel-layouts` | `-P` | Sanity-check cap for the number of parallel layouts |
 | `--backend` | `-b` | Backend to use: `tmux`, `zellij`, `windows-terminal`, or `auto` |
 | `--on-conflict` | `-o` | Conflict policy: `error`, `restart`, `rename`, `mergeNewWindowsOverwriteMatchingWindows`, or `mergeNewWindowsSkipMatchingWindows` |
-| `--max-parallel-tabs` | - | Enable dynamic tab scheduling and cap active tabs |
-| `--poll-seconds` | - | Polling interval for dynamic tab scheduling |
-| `--kill-finished-tabs` | - | Close each dynamically scheduled tab after it finishes |
-| `--all-file` | - | Merge tabs from all layouts into one dynamic run |
 | `--monitor` | `-m` | Monitor sessions for completion |
 | `--kill-upon-completion` | `-k` | Kill sessions after completion when monitoring is enabled |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside the layout file |
@@ -76,9 +73,38 @@ sessions run --layouts-file layouts.json --monitor --kill-upon-completion
 
 # Restart matching sessions before relaunching
 sessions run --layouts-file layouts.json --on-conflict restart
+```
 
+---
+
+## run-all
+
+Dynamically merge every layout in a file into one paced run. Use this when you want to chug through the whole file while capping how many tabs stay active at once.
+
+```bash
+sessions run-all [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--layouts-file` | `-f` | Path to the layout file |
+| `--max-parallel-tabs` | - | Maximum number of tabs to keep active while dynamically scheduling the whole file |
+| `--poll-seconds` | - | Polling interval used to detect finished tabs |
+| `--kill-finished-tabs` | - | Close each dynamically scheduled tab after it finishes |
+| `--backend` | `-b` | Backend to use: `tmux`, `zellij`, or `auto` |
+| `--on-conflict` | `-o` | Conflict policy for the dynamic session |
+| `--substitute-home` | `-H` | Expand `~` and `$HOME` inside the layout file |
+
+**Examples:**
+
+```bash
 # Dynamically schedule at most eight tabs at a time
-sessions run --layouts-file layouts.json --max-parallel-tabs 8 --kill-finished-tabs
+sessions run-all --layouts-file layouts.json --max-parallel-tabs 8
+
+# Close finished tabs as the scheduler works through the file
+sessions run-all --layouts-file layouts.json --max-parallel-tabs 8 --kill-finished-tabs
 ```
 
 ---
@@ -286,6 +312,12 @@ Older examples that use `tabs` or `cwd` are stale; the current schema uses `layo
 - `tmux` (default)
 - `zellij`
 - `windows-terminal`
+- `auto`
+
+`sessions run-all` supports:
+
+- `tmux` (default)
+- `zellij`
 - `auto`
 
 `trace` is tmux-specific. Use `auto` when you want Machineconfig to pick an available backend.

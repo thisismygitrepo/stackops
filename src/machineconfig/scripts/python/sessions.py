@@ -58,23 +58,18 @@ def run(
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
     on_conflict: Annotated[SessionConflictAction, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
-    max_parallel_tabs: Annotated[int | None, typer.Option("--max-parallel-tabs", help="Enable dynamic tab scheduling and cap active tabs to this value.")] = None,
-    poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Dynamic mode only: polling interval in seconds used to detect finished tabs.")] = 2.0,
-
-    kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", help="Dynamic mode only: close each tab once its command is finished.")] = False,
-    all_file: Annotated[bool, typer.Option("--all-file", help="Dynamic mode only: merge tabs from all layouts in the file into one dynamic run.")] = False,
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 
 ) -> None:
-    """Launch terminal sessions based on a layout configuration file.
+    """Launch selected layouts from a layout configuration file.
 
     Use --on-conflict to choose behavior when a target session already exists:
     error, restart, rename, mergeNewWindowsOverwriteMatchingWindows, or
     mergeNewWindowsSkipMatchingWindows. Those two merge policies are
     supported for tmux and Windows Terminal.
-    Pass --max-parallel-tabs to enable dynamic tab scheduling.
+    Use `run-all` for the paced whole-file dynamic scheduler.
     """
     from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
     impl(
@@ -88,12 +83,38 @@ def run(
         max_layouts=max_layouts,
         backend=backend,
         on_conflict=on_conflict,
+        monitor=monitor,
+        kill_upon_completion=kill_upon_completion,
+        subsitute_home=subsitute_home,
+    )
+
+
+def run_all(
+    ctx: typer.Context,
+    *,
+    layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
+    max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
+    poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
+    kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", help="Close each tab once its command is finished.")] = False,
+    backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
+    on_conflict: Annotated[SessionConflictAction, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.")] = "error",
+    subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
+) -> None:
+    """Dynamically run every tab from every layout in a layout configuration file.
+
+    This merges the whole file into one paced run and keeps at most
+    --max-parallel-tabs tabs active at a time.
+    """
+    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl
+
+    impl(
+        ctx=ctx,
+        layouts_file=layouts_file,
         max_parallel_tabs=max_parallel_tabs,
         poll_seconds=poll_seconds,
         kill_finished_tabs=kill_finished_tabs,
-        all_file=all_file,
-        monitor=monitor,
-        kill_upon_completion=kill_upon_completion,
+        backend=backend,
+        on_conflict=on_conflict,
         subsitute_home=subsitute_home,
     )
 
@@ -335,6 +356,9 @@ def get_app() -> typer.Typer:
 
     layouts_app.command("run", no_args_is_help=True, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
     layouts_app.command("r", no_args_is_help=True, help=run.__doc__, hidden=True)(run)
+
+    layouts_app.command("run-all", no_args_is_help=True, help=run_all.__doc__, short_help="<R> Dynamically run every layout in a file")(run_all)
+    layouts_app.command("R", no_args_is_help=True, help=run_all.__doc__, hidden=True)(run_all)
     
     layouts_app.command("run-aoe", no_args_is_help=True, help=run_aoe.__doc__, short_help="<e> Run selected layout(s) through agent-of-empires")(run_aoe)
     layouts_app.command("e", no_args_is_help=True, help=run_aoe.__doc__, hidden=True)(run_aoe)

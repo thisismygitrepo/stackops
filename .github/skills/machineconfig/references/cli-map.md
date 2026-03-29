@@ -114,6 +114,7 @@ cloud
 
 sessions
 ├─ run
+├─ run-all
 ├─ attach
 ├─ create-from-function
 ├─ balance-load

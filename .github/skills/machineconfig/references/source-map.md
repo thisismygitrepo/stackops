@@ -23,6 +23,9 @@ Use this map to jump from a direct CLI command path to the file that registers i
 
 - `sessions ...`
   - Group registration: `src/machineconfig/scripts/python/sessions.py`
+  - `run` -> `src/machineconfig/scripts/python/helpers/helpers_sessions/sessions_cli_run.py`
+  - `run-all` -> `src/machineconfig/scripts/python/helpers/helpers_sessions/sessions_cli_run_all.py`
+  - `run-aoe` -> `src/machineconfig/scripts/python/helpers/helpers_sessions/sessions_cli_run_aoe.py`
   - Heavy logic in `helpers/helpers_sessions/*`
 
 - `agents ...`
