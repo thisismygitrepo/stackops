@@ -42,7 +42,7 @@ def agents_create(
 ) -> None:
     """Create agents layout file, ready to run."""
     if interactive:
-        from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive import main
+        from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
         main(
             agent=agent,
             host=host,

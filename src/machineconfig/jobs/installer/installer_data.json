@@ -3950,14 +3950,14 @@
       "doc": "🌐 Google Chrome web browser",
       "fileNamePattern": {
         "amd64": {
-          "linux": null,
+          "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; sudo apt install ./google-chrome-stable_current_amd64.deb; rm google-chrome-stable_current_amd64.deb",
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "macos": "brew install --cask google-chrome"
         },
         "arm64": {
-          "linux": null,
+          "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; sudo apt install ./google-chrome-stable_current_amd64.deb; rm google-chrome-stable_current_amd64.deb",
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "macos": "brew install --cask google-chrome"
         }
       }
     },

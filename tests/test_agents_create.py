@@ -7,8 +7,10 @@ import pytest
 from typer.testing import CliRunner
 
 from machineconfig.scripts.python import agents
-from machineconfig.scripts.python.helpers.helpers_agents import agent_impl_interactive
 from machineconfig.scripts.python.helpers.helpers_agents import agents_impl
+from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive import common as interactive_common
+from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive import create_options as interactive_create_options
+from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive import main as interactive_main
 from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex import fire_codex
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AI_SPEC, API_SPEC, DEFAULT_SEAPRATOR
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
@@ -141,7 +143,7 @@ def test_interactive_context_directory_with_multiple_text_files_skips_separator_
     context_root.joinpath("a.md").write_text("one", encoding="utf-8")
     context_root.joinpath("b.txt").write_text("two", encoding="utf-8")
 
-    assert agent_impl_interactive.separator_is_applicable_for_context_path(context_root) is False
+    assert interactive_common.separator_is_applicable_for_context_path(context_root) is False
 
 
 def test_prompt_separator_uses_editor_and_decodes_escape_sequences(tmp_path: Path) -> None:
@@ -153,11 +155,11 @@ def test_prompt_separator_uses_editor_and_decodes_escape_sequences(tmp_path: Pat
         return subprocess.CompletedProcess(args=command, returncode=0)
 
     with (
-        patch.object(agent_impl_interactive, "_discover_editor_command", return_value=["fake-editor"]),
-        patch.object(agent_impl_interactive, "_editor_scratch_path", return_value=scratch_path),
-        patch.object(agent_impl_interactive.subprocess, "run", side_effect=_fake_run),
+        patch.object(interactive_common, "_discover_editor_command", return_value=["fake-editor"]),
+        patch.object(interactive_common, "_editor_scratch_path", return_value=scratch_path),
+        patch.object(interactive_common.subprocess, "run", side_effect=_fake_run),
     ):
-        separator = agent_impl_interactive._prompt_separator(current=DEFAULT_SEAPRATOR)  # pyright: ignore[reportPrivateUsage]
+        separator = interactive_common.prompt_separator(current=DEFAULT_SEAPRATOR)
 
     assert separator == "\n---\n"
     assert scratch_path.exists() is False
@@ -172,18 +174,18 @@ def test_prompt_separator_keeps_current_when_editor_result_is_blank(tmp_path: Pa
         return subprocess.CompletedProcess(args=command, returncode=0)
 
     with (
-        patch.object(agent_impl_interactive, "_discover_editor_command", return_value=["fake-editor"]),
-        patch.object(agent_impl_interactive, "_editor_scratch_path", return_value=scratch_path),
-        patch.object(agent_impl_interactive.subprocess, "run", side_effect=_fake_run),
+        patch.object(interactive_common, "_discover_editor_command", return_value=["fake-editor"]),
+        patch.object(interactive_common, "_editor_scratch_path", return_value=scratch_path),
+        patch.object(interactive_common.subprocess, "run", side_effect=_fake_run),
     ):
-        separator = agent_impl_interactive._prompt_separator(current=DEFAULT_SEAPRATOR)  # pyright: ignore[reportPrivateUsage]
+        separator = interactive_common.prompt_separator(current=DEFAULT_SEAPRATOR)
 
     assert separator == DEFAULT_SEAPRATOR
     assert scratch_path.exists() is False
 
 
 def test_interactive_main_collects_values_and_delegates() -> None:
-    collected = agent_impl_interactive.InteractiveAgentCreateParams(
+    collected = interactive_main.InteractiveAgentCreateParams(
         agent="codex",
         host="docker",
         model="gpt-5.4",
@@ -202,10 +204,10 @@ def test_interactive_main_collects_values_and_delegates() -> None:
     )
 
     with (
-        patch.object(agent_impl_interactive, "_collect_inputs", return_value=collected) as collect_inputs,
+        patch.object(interactive_main, "_collect_inputs", return_value=collected) as collect_inputs,
         patch("machineconfig.scripts.python.helpers.helpers_agents.agents_impl.agents_create") as impl,
     ):
-        agent_impl_interactive.main(
+        interactive_main.main(
             agent="copilot",
             host="local",
             model=None,
@@ -262,7 +264,7 @@ def test_interactive_main_collects_values_and_delegates() -> None:
 def test_collect_reviewed_create_options_updates_only_selected_values() -> None:
     with (
         patch.object(
-            agent_impl_interactive,
+            interactive_create_options,
             "choose_from_options",
             return_value=[
                 "output_path = <leave empty>",
@@ -270,17 +272,17 @@ def test_collect_reviewed_create_options_updates_only_selected_values() -> None:
             ],
         ) as choose_from_options,
         patch.object(
-            agent_impl_interactive,
-            "_prompt_optional_text_value",
+            interactive_create_options,
+            "prompt_optional_text_value",
             return_value="/tmp/layout.json",
         ) as prompt_optional_text_value,
         patch.object(
-            agent_impl_interactive,
-            "_choose_optional_option",
+            interactive_create_options,
+            "choose_optional_option",
             return_value="openai",
         ) as choose_optional_option,
     ):
-        reviewed = agent_impl_interactive._collect_reviewed_create_options(  # pyright: ignore[reportPrivateUsage]
+        reviewed = interactive_create_options.collect_reviewed_create_options(
             agent="codex",
             join_prompt_and_context=False,
             output_path=None,
@@ -290,7 +292,7 @@ def test_collect_reviewed_create_options_updates_only_selected_values() -> None:
             provider=None,
         )
 
-    assert reviewed == agent_impl_interactive.InteractiveCreateReviewOptions(
+    assert reviewed == interactive_create_options.InteractiveCreateReviewOptions(
         join_prompt_and_context=False,
         output_path="/tmp/layout.json",
         agents_dir=None,
