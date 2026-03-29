@@ -37,7 +37,7 @@ Load `references/cli-map.md` for the current command tree and nested subcommands
 Highlights:
 - Primary commands: `devops`, `cloud`, `sessions`, `agents`, `utils`, `fire`, `croshell`, `msearch`.
 - This skill intentionally excludes command aliases.
-- `devops self security` and `devops self buid-docker` appear only when `~/code/machineconfig` exists.
+- `devops self security` and `devops self build-docker` appear only when `~/code/machineconfig` exists.
 
 ## Practical Rules
 

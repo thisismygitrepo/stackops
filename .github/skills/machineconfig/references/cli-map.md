@@ -73,7 +73,7 @@ devops
 │  │  ├─ icicle
 │  │  └─ tui
 │  ├─ readme
-│  ├─ buid-docker (conditional)
+│  ├─ build-docker (conditional)
 │  └─ security (conditional)
 │     ├─ scan-all
 │     ├─ scan
@@ -156,5 +156,5 @@ msearch
 
 ## Important Nuances
 
-- `devops self security` and `devops self buid-docker` are conditionally registered when `~/code/machineconfig` exists.
+- `devops self security` and `devops self build-docker` are conditionally registered when `~/code/machineconfig` exists.
 - The docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

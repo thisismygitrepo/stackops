@@ -287,7 +287,7 @@ def get_app() -> typer.Typer:
     cli_app.command(name="x", hidden=True, context_settings=ctx_settings)(explore)
 
     if Path.home().joinpath("code", "machineconfig").exists():
-        cli_app.command(name="buid-docker", no_args_is_help=False, help="🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)")(
+        cli_app.command(name="build-docker", no_args_is_help=False, help="🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)")(
             buid_docker
         )
         cli_app.command(name="d", no_args_is_help=False, help="Build docker images (wraps jobs/shell/docker_build_and_publish.sh)", hidden=True)(

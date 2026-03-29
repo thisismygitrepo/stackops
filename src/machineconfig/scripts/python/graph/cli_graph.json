@@ -5194,8 +5194,8 @@
               },
               {
                 "kind": "command",
-                "name": "buid-docker",
-                "fullPath": "devops self buid-docker",
+                "name": "build-docker",
+                "fullPath": "devops self build-docker",
                 "shortPath": "d s d",
                 "help": "🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)",
                 "source": {

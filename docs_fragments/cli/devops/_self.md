@@ -17,7 +17,7 @@ Current `devops self --help` exposes:
 | `status` | Inspect shell profile, apps, symlinks, dotfiles, and related machine state | Always |
 | `install` | Install machineconfig locally, export an offline image, or run the interactive setup flow | Always |
 | `explore` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
-| `buid-docker` | Build Docker images from the repo script | Only when `~/code/machineconfig` exists |
+| `build-docker` | Build Docker images from the repo script | Only when `~/code/machineconfig` exists |
 | `security` | Run security and installer-audit helpers | Only when `~/code/machineconfig` exists |
 | `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/machineconfig` exists |
 | `readme` | Fetch and render the project README in the terminal | Always |
@@ -358,12 +358,12 @@ Interactive controls:
 
 No static screenshot is checked into the docs for the TUI. Launch it locally to inspect the current command tree.
 
-### buid-docker
+### build-docker
 
 Build the repo Docker image variants through the checked-in shell wrapper.
 
 ```bash
-devops self buid-docker [VARIANT]
+devops self build-docker [VARIANT]
 ```
 
 Supported variants from current help:
@@ -376,7 +376,7 @@ Supported variants from current help:
 Example:
 
 ```bash
-devops self buid-docker ai
+devops self build-docker ai
 ```
 
 This command is only registered when `~/code/machineconfig` exists locally.
