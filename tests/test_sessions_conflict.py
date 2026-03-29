@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import patch
 import pytest
 
@@ -25,24 +26,13 @@ def _layout(name: str) -> LayoutConfig:
     }
 
 
-def test_validate_session_conflict_action_accepts_windows_terminal_merge_modes() -> None:
-    assert (
-        session_conflict.validate_session_conflict_action(
-            "mergeNewWindowsOverwriteMatchingWindows"
-        )
-        == "mergeNewWindowsOverwriteMatchingWindows"
-    )
-    assert (
-        session_conflict.validate_session_conflict_action(
-            "mergeNewWindowsSkipMatchingWindows"
-        )
-        == "mergeNewWindowsSkipMatchingWindows"
-    )
-
-
-def test_validate_session_conflict_action_rejects_removed_merge_new_windows_policy() -> None:
+def test_build_session_launch_plan_rejects_removed_merge_new_windows_policy() -> None:
     with pytest.raises(ValueError, match="Unsupported on_conflict policy: mergeNewWindows"):
-        session_conflict.validate_session_conflict_action("mergeNewWindows")
+        session_conflict.build_session_launch_plan(
+            requested_session_names=["demo"],
+            backend="windows-terminal",
+            on_conflict=cast(session_conflict.SessionConflictAction, "mergeNewWindows"),
+        )
 
 
 def test_build_session_launch_plan_rejects_windows_terminal_merge_modes_for_tmux() -> None:

@@ -8,7 +8,6 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     build_session_launch_plan,
     kill_existing_session,
-    validate_session_conflict_action,
 )
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult
 
@@ -147,8 +146,6 @@ def run_layouts(
         print("Note: --parallel-layouts implies --monitor; waiting for each batch to finish before launching the next one.")
     if parallel_layouts is not None and parallel_layouts <= 0:
         raise ValueError("parallel_layouts must be a positive integer when provided")
-    validate_session_conflict_action(on_conflict)
-
     if parallel_layouts is None:
         iterable: list[list["LayoutConfig"]] = [layouts_selected]
     else:

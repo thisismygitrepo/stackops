@@ -7,7 +7,6 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     build_session_launch_plan,
     kill_existing_session,
-    validate_session_conflict_action,
 )
 from rich.console import Console
 
@@ -116,7 +115,6 @@ class TmuxLayoutGenerator:
         )
 
     def run(self, on_conflict: SessionConflictAction) -> dict[str, str | int]:
-        validate_session_conflict_action(on_conflict)
         launch_plan = build_session_launch_plan([self.session_name], backend="tmux", on_conflict=on_conflict)[0]
         if launch_plan["session_name"] != self.session_name:
             console.print(

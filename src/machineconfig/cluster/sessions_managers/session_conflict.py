@@ -2,7 +2,7 @@
 
 import json
 import subprocess
-from typing import Literal, NotRequired, TypedDict, cast
+from typing import Literal, NotRequired, TypedDict
 
 
 SessionBackend = Literal["zellij", "tmux", "windows-terminal"]
@@ -37,12 +37,6 @@ class SessionLaunchPlan(TypedDict):
     restart_required: bool
     conflict_source: NotRequired[ConflictSource]
     skip_launch: NotRequired[bool]
-
-
-def validate_session_conflict_action(on_conflict: str) -> SessionConflictAction:
-    if on_conflict not in SUPPORTED_SESSION_CONFLICT_ACTIONS:
-        raise ValueError(f"Unsupported on_conflict policy: {on_conflict}")
-    return cast(SessionConflictAction, on_conflict)
 
 
 def _validate_backend_supports_session_conflict_action(
@@ -300,6 +294,8 @@ def build_session_launch_plan(
                             break
                         suffix += 1
                     continue
+            case _:
+                raise ValueError(f"Unsupported on_conflict policy: {on_conflict}")
 
         plans.append(
             _build_launch_plan(

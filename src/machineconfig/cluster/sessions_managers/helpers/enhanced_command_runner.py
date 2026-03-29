@@ -12,7 +12,6 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     build_session_launch_plan,
     kill_existing_session,
-    validate_session_conflict_action,
 )
 from rich.console import Console
 from rich.panel import Panel
@@ -94,7 +93,6 @@ def enhanced_zellij_session_start(
     """
     Start a Zellij session with enhanced visual feedback.
     """
-    validate_session_conflict_action(on_conflict)
     launch_plan = build_session_launch_plan([session_name], backend="zellij", on_conflict=on_conflict)[0]
     actual_session_name = launch_plan["session_name"]
 

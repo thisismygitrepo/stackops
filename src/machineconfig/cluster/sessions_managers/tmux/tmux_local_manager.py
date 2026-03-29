@@ -7,7 +7,6 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     build_session_launch_plan,
     kill_existing_session,
-    validate_session_conflict_action,
 )
 from machineconfig.logger import get_logger
 from machineconfig.utils.scheduler import Scheduler
@@ -52,7 +51,6 @@ class TmuxLocalManager:
         return [manager.session_name for manager in self.managers]
 
     def start_all_sessions(self, on_conflict: SessionConflictAction) -> dict[str, StartResult]:
-        validate_session_conflict_action(on_conflict)
         results: dict[str, StartResult] = {}
         launch_plan = build_session_launch_plan(
             requested_session_names=[manager.session_name for manager in self.managers],
