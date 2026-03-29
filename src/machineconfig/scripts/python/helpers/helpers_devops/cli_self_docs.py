@@ -74,7 +74,7 @@ def _print_docs_urls() -> None:
     _display_docs_url(_build_docs_url(lan_ipv4))
 
 
-def _write_cli_graph_snapshot(repo_root: Path) -> Path:
+def write_cli_graph_snapshot(repo_root: Path) -> Path:
     from machineconfig.scripts.python.graph.generate_cli_graph import build_cli_graph
 
     cli_graph_path = repo_root.joinpath(CLI_GRAPH_RELATIVE_PATH)
@@ -87,23 +87,25 @@ def _write_cli_graph_snapshot(repo_root: Path) -> Path:
     return cli_graph_path
 
 
-def create_docs_artifacts(repo_root: Path) -> list[Path]:
-    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly
+def render_docs_artifact(repo_root: Path, artifact_spec: DocsArtifactSpec) -> Path:
+    from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
 
-    _write_cli_graph_snapshot(repo_root=repo_root)
-    generated_paths: list[Path] = []
-    for artifact_spec in DOCS_ARTIFACT_SPECS:
-        output_path = repo_root.joinpath(artifact_spec.output_relative_path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        use_render_plotly(
-            view=artifact_spec.view,
-            output=str(output_path),
-            template=DOCS_ARTIFACT_TEMPLATE,
-            path=None,
-            max_depth=None,
-            uv_with=None,
-        )
-        generated_paths.append(output_path)
+    output_path = repo_root.joinpath(artifact_spec.output_relative_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    render_plotly(
+        view=artifact_spec.view,
+        output=str(output_path),
+        template=DOCS_ARTIFACT_TEMPLATE,
+        path=None,
+        max_depth=None,
+    )
+    typer.echo(f"""Regenerated docs artifact: {output_path.relative_to(repo_root).as_posix()}""")
+    return output_path
+
+
+def create_docs_artifacts(repo_root: Path) -> list[Path]:
+    write_cli_graph_snapshot(repo_root=repo_root)
+    generated_paths = [render_docs_artifact(repo_root=repo_root, artifact_spec=artifact_spec) for artifact_spec in DOCS_ARTIFACT_SPECS]
     return generated_paths
 
 

@@ -263,6 +263,8 @@ def docs(
 
 
 def get_app() -> typer.Typer:
+    from machineconfig.scripts.python.helpers.helpers_devops import cli_self_assets
+
     cli_app = typer.Typer(help="🔄 <s> self operations subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     ctx_settings: dict[str, object] = {
         "allow_extra_args": True,
@@ -297,6 +299,8 @@ def get_app() -> typer.Typer:
         cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
         cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
         cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)
+        cli_app.add_typer(cli_self_assets.get_app(), name="assets", help="🗂 <a> Regenerate repo-local CLI graph assets.")
+        cli_app.add_typer(cli_self_assets.get_app(), name="a", help="Regenerate repo-local CLI graph assets.", hidden=True)
 
     cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
     cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)

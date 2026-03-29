@@ -5930,6 +5930,107 @@
                 ]
               },
               {
+                "kind": "group",
+                "name": "assets",
+                "fullPath": "devops self assets",
+                "shortPath": "d s a",
+                "help": "🗂 <a> Regenerate repo-local CLI graph assets.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "dispatches_to": "machineconfig.scripts.python.helpers.helpers_devops.cli_self_assets.get_app"
+                },
+                "app": {
+                  "help": "🗂 <a> Regenerate repo-local CLI graph assets.",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "update-cli-graph",
+                    "fullPath": "devops self assets update-cli-graph",
+                    "shortPath": "d s a g",
+                    "help": "🧩 <g> Regenerate the checked-in CLI graph snapshot.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_assets.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self_assets",
+                      "callable": "update_cli_graph"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def update_cli_graph() -> None:",
+                        "    \"\"\"🧩 <g> Regenerate the checked-in CLI graph snapshot.\"\"\"",
+                        "    repo_root = cli_self_docs.get_docs_repo_root()",
+                        "    cli_self_docs.write_cli_graph_snapshot(repo_root=repo_root)"
+                      ],
+                      "name": "update_cli_graph",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🧩 <g> Regenerate the checked-in CLI graph snapshot.",
+                    "aliases": [
+                      {
+                        "name": "g",
+                        "hidden": true,
+                        "help": "Regenerate the checked-in CLI graph snapshot."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "regenerate-charts",
+                    "fullPath": "devops self assets regenerate-charts",
+                    "shortPath": "d s a r",
+                    "help": "☀ <r> Regenerate the checked-in sunburst HTML chart.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_assets.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self_assets",
+                      "callable": "regenerate_charts"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def regenerate_charts() -> None:",
+                        "    \"\"\"☀ <r> Regenerate the checked-in sunburst HTML chart.\"\"\"",
+                        "    repo_root = cli_self_docs.get_docs_repo_root()",
+                        "    cli_self_docs.render_docs_artifact(",
+                        "        repo_root=repo_root,",
+                        "        artifact_spec=cli_self_docs.DocsArtifactSpec(",
+                        "            view=\"sunburst\",",
+                        "            output_relative_path=SUNBURST_OUTPUT_RELATIVE_PATH,",
+                        "        ),",
+                        "    )"
+                      ],
+                      "name": "regenerate_charts",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "☀ <r> Regenerate the checked-in sunburst HTML chart.",
+                    "aliases": [
+                      {
+                        "name": "r",
+                        "hidden": true,
+                        "help": "Regenerate the checked-in sunburst HTML chart."
+                      }
+                    ]
+                  }
+                ],
+                "aliases": [
+                  {
+                    "name": "a",
+                    "hidden": true,
+                    "help": "Regenerate repo-local CLI graph assets."
+                  }
+                ]
+              },
+              {
                 "kind": "command",
                 "name": "readme",
                 "fullPath": "devops self readme",

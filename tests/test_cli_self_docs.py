@@ -75,24 +75,25 @@ def test_serve_docs_creates_artifacts_before_serving() -> None:
 
 
 def test_create_docs_artifacts_regenerates_cli_graph_and_plotly_views(tmp_path: Path) -> None:
-    render_calls: list[tuple[str, str, str]] = []
+    rendered_paths: list[Path] = []
 
-    def _record_render(*, view: str, output: str, template: str, **_kwargs: object) -> None:
-        render_calls.append((view, output, template))
+    def _record_render(*, repo_root: Path, artifact_spec: cli_self_docs.DocsArtifactSpec) -> Path:
+        assert repo_root == tmp_path
+        output_path = repo_root.joinpath(artifact_spec.output_relative_path)
+        rendered_paths.append(output_path)
+        return output_path
 
     with (
-        patch.object(cli_self_docs, "_write_cli_graph_snapshot") as write_cli_graph_snapshot,
-        patch("machineconfig.scripts.python.graph.visualize.plotly_views.use_render_plotly", side_effect=_record_render),
+        patch.object(cli_self_docs, "write_cli_graph_snapshot") as write_cli_graph_snapshot,
+        patch.object(cli_self_docs, "render_docs_artifact", side_effect=_record_render) as render_docs_artifact,
     ):
         generated_paths = cli_self_docs.create_docs_artifacts(repo_root=tmp_path)
 
     write_cli_graph_snapshot.assert_called_once_with(repo_root=tmp_path)
     expected_paths = [tmp_path.joinpath(spec.output_relative_path) for spec in cli_self_docs.DOCS_ARTIFACT_SPECS]
     assert generated_paths == expected_paths
-    assert render_calls == [
-        (spec.view, str(tmp_path.joinpath(spec.output_relative_path)), "plotly_dark")
-        for spec in cli_self_docs.DOCS_ARTIFACT_SPECS
-    ]
+    assert rendered_paths == expected_paths
+    assert [call.kwargs["artifact_spec"] for call in render_docs_artifact.call_args_list] == list(cli_self_docs.DOCS_ARTIFACT_SPECS)
 
 
 def test_get_docs_repo_root_accepts_zensical_config(tmp_path: Path) -> None:

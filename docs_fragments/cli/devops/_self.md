@@ -20,6 +20,7 @@ Current `devops self --help` exposes:
 | `build-docker` | Build Docker images from the repo script | Only when `~/code/machineconfig` exists |
 | `security` | Run security and installer-audit helpers | Only when `~/code/machineconfig` exists |
 | `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/machineconfig` exists |
+| `assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/machineconfig` exists |
 | `readme` | Fetch and render the project README in the terminal | Always |
 
 The nested help screens render shortened usage such as `Usage: devops update ...`, but the full entrypoints remain `devops self ...` and `devops self security ...`.
@@ -544,6 +545,30 @@ devops self docs
 devops self docs --rebuild
 devops self docs --rebuild --create-artifacts
 ```
+
+### assets
+
+Regenerate the checked-in CLI graph JSON and chart artifacts from the local repo checkout.
+
+```bash
+devops self assets [SUBCOMMAND] [ARGS]...
+```
+
+Current `devops self assets --help` exposes:
+
+| Command | Description |
+|---------|-------------|
+| `update-cli-graph` | Rewrite `src/machineconfig/scripts/python/graph/cli_graph.json` from the current Typer source |
+| `regenerate-charts` | Rewrite `docs/assets/devops-self-explore/sunburst.html` from the current graph snapshot |
+
+Examples:
+
+```bash
+devops self assets update-cli-graph
+devops self assets regenerate-charts
+```
+
+This sub-app is only registered when `~/code/machineconfig` exists locally.
 
 ### readme
 
