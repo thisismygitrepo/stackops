@@ -1,6 +1,6 @@
 # Hierarchy
 
-This page mirrors the interactive CLI hierarchy view from the `devops self explore sunburst` docs.
+This page mirrors the interactive CLI hierarchy view from `devops self explore view`, which defaults to `sunburst`.
 
 <iframe
   class="plotly-preview-frame plotly-preview-frame--wide"

@@ -1,9 +1,12 @@
 
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal, TypeAlias, get_args
 
 import typer
+
+
+PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
 
 
 def tree(
@@ -80,14 +83,18 @@ def dot(
     exit_then_run_shell_script(str(shell_script), strict=False)
 
 
-def sunburst(
+def chart(
+    view: Annotated[
+        PlotlyView,
+        typer.Argument(help=f"""Plotly chart view. Choose from {", ".join(get_args(PlotlyView))}."""),
+    ] = "sunburst",
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write HTML or image output")] = None,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
     template: Annotated[str, typer.Option("--template", help="Plotly template name")] = "plotly_dark",
     height: Annotated[int, typer.Option("--height", help="Image height (for static output)")] = 900,
     width: Annotated[int, typer.Option("--width", help="Image width (for static output)")] = 1200,
 ) -> None:
-    """Render a Plotly sunburst view."""
+    """Render a Plotly hierarchy chart."""
     from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
     from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly
 
@@ -99,69 +106,7 @@ def sunburst(
         uv_project_dir = None
 
     use_render_plotly(
-        view="sunburst",
-        output=str(output) if output else None,
-        height=height,
-        width=width,
-        template=template,
-        max_depth=max_depth,
-        path=None,
-        uv_with=uv_with,
-        uv_project_dir=uv_project_dir,
-    )
-
-
-def treemap(
-    output: Annotated[Path | None, typer.Option("--output", "-o", help="Write HTML or image output")] = None,
-    max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
-    template: Annotated[str, typer.Option("--template", help="Plotly template name")] = "plotly_dark",
-    height: Annotated[int, typer.Option("--height", help="Image height (for static output)")] = 900,
-    width: Annotated[int, typer.Option("--width", help="Image width (for static output)")] = 1200,
-) -> None:
-    """Render a Plotly treemap view."""
-    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
-    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly
-
-    if Path.home().joinpath("code", "machineconfig").exists():
-        uv_with: list[str] | None = None
-        uv_project_dir = str(Path.home().joinpath("code/machineconfig"))
-    else:
-        uv_with = [MACHINECONFIG_VERSION]
-        uv_project_dir = None
-
-    use_render_plotly(
-        view="treemap",
-        output=str(output) if output else None,
-        height=height,
-        width=width,
-        template=template,
-        max_depth=max_depth,
-        path=None,
-        uv_with=uv_with,
-        uv_project_dir=uv_project_dir,
-    )
-
-
-def icicle(
-    output: Annotated[Path | None, typer.Option("--output", "-o", help="Write HTML or image output")] = None,
-    max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
-    template: Annotated[str, typer.Option("--template", help="Plotly template name")] = "plotly_dark",
-    height: Annotated[int, typer.Option("--height", help="Image height (for static output)")] = 900,
-    width: Annotated[int, typer.Option("--width", help="Image width (for static output)")] = 1200,
-) -> None:
-    """Render a Plotly icicle view."""
-    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
-    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly
-
-    if Path.home().joinpath("code", "machineconfig").exists():
-        uv_with: list[str] | None = None
-        uv_project_dir = str(Path.home().joinpath("code/machineconfig"))
-    else:
-        uv_with = [MACHINECONFIG_VERSION]
-        uv_project_dir = None
-
-    use_render_plotly(
-        view="icicle",
+        view=view,
         output=str(output) if output else None,
         height=height,
         width=width,
@@ -247,12 +192,8 @@ def get_app() -> typer.Typer:
     cli_app.command(name="t", no_args_is_help=False, help="Render a rich tree view in the terminal.", hidden=True)(tree)
     cli_app.command(name="dot", no_args_is_help=False, help="🧩 <d> Export the graph as Graphviz DOT.")(dot)
     cli_app.command(name="d", no_args_is_help=False, help="Export the graph as Graphviz DOT.", hidden=True)(dot)
-    cli_app.command(name="sunburst", no_args_is_help=False, help="☀ <b> Render a Plotly sunburst view.")(sunburst)
-    cli_app.command(name="b", no_args_is_help=False, help="Render a Plotly sunburst view.", hidden=True)(sunburst)
-    cli_app.command(name="treemap", no_args_is_help=False, help="🧱 <m> Render a Plotly treemap view.")(treemap)
-    cli_app.command(name="m", no_args_is_help=False, help="Render a Plotly treemap view.", hidden=True)(treemap)
-    cli_app.command(name="icicle", no_args_is_help=False, help="🧊 <i> Render a Plotly icicle view.")(icicle)
-    cli_app.command(name="i", no_args_is_help=False, help="Render a Plotly icicle view.", hidden=True)(icicle)
+    cli_app.command(name="view", no_args_is_help=False, help="📊 <v> Render a Plotly hierarchy chart.")(chart)
+    cli_app.command(name="v", no_args_is_help=False, help="Render a Plotly hierarchy chart.", hidden=True)(chart)
     cli_app.command(name="tui", no_args_is_help=False, help="📚 <u> NAVIGATE command structure with TUI")(navigate)
     cli_app.command(name="u", no_args_is_help=False, help="NAVIGATE command structure with TUI", hidden=True)(navigate)
     return cli_app

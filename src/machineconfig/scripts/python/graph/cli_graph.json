@@ -4652,35 +4652,41 @@
                   },
                   {
                     "kind": "command",
-                    "name": "sunburst",
-                    "fullPath": "devops self explore sunburst",
-                    "shortPath": "d s x b",
-                    "help": "☀ <b> Render a Plotly sunburst view.",
+                    "name": "view",
+                    "fullPath": "devops self explore view",
+                    "shortPath": "d s x v",
+                    "help": "📊 <v> Render a Plotly hierarchy chart.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
                       "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "sunburst"
+                      "callable": "chart"
                     },
                     "signature": {
                       "raw_lines": [
-                        "def sunburst(",
+                        "def chart(",
+                        "    view: Annotated[",
+                        "        PlotlyView,",
+                        "        typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(PLOTLY_VIEWS)}.\"\"\"),",
+                        "    ] = \"sunburst\",",
                         "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
                         "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
                         "    height: Annotated[int, typer.Option(\"--height\", help=\"Image height (for static output)\")] = 900,",
                         "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
                         ") -> None:",
-                        "    \"\"\"Render a Plotly sunburst view.\"\"\"",
+                        "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
                         "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
                         "    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly",
                         "",
                         "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
                         "        uv_with: list[str] | None = None",
+                        "        uv_project_dir = str(Path.home().joinpath(\"code/machineconfig\"))",
                         "    else:",
                         "        uv_with = [MACHINECONFIG_VERSION]",
+                        "        uv_project_dir = None",
                         "",
                         "    use_render_plotly(",
-                        "        view=\"sunburst\",",
+                        "        view=view,",
                         "        output=str(output) if output else None,",
                         "        height=height,",
                         "        width=width,",
@@ -4688,10 +4694,25 @@
                         "        max_depth=max_depth,",
                         "        path=None,",
                         "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
                         "    )"
                       ],
-                      "name": "sunburst",
+                      "name": "chart",
                       "parameters": [
+                        {
+                          "name": "view",
+                          "kind": "positional_or_keyword",
+                          "type": "PlotlyView",
+                          "default": "sunburst",
+                          "required": false,
+                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f\"Plotly chart view. Choose from {', '.join(PLOTLY_VIEWS)}.\")]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": []
+                          }
+                        },
                         {
                           "name": "output",
                           "kind": "positional_or_keyword",
@@ -4799,328 +4820,12 @@
                     "typer": {
                       "no_args_is_help": false
                     },
-                    "doc": "Render a Plotly sunburst view.",
+                    "doc": "Render a Plotly hierarchy chart.",
                     "aliases": [
                       {
-                        "name": "b",
+                        "name": "v",
                         "hidden": true,
-                        "help": "Render a Plotly sunburst view."
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
-                    "name": "treemap",
-                    "fullPath": "devops self explore treemap",
-                    "shortPath": "d s x m",
-                    "help": "🧱 <m> Render a Plotly treemap view.",
-                    "source": {
-                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "treemap"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def treemap(",
-                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
-                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
-                        "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
-                        "    height: Annotated[int, typer.Option(\"--height\", help=\"Image height (for static output)\")] = 900,",
-                        "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
-                        ") -> None:",
-                        "    \"\"\"Render a Plotly treemap view.\"\"\"",
-                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
-                        "    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly",
-                        "",
-                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "        uv_with: list[str] | None = None",
-                        "    else:",
-                        "        uv_with = [MACHINECONFIG_VERSION]",
-                        "",
-                        "    use_render_plotly(",
-                        "        view=\"treemap\",",
-                        "        output=str(output) if output else None,",
-                        "        height=height,",
-                        "        width=width,",
-                        "        template=template,",
-                        "        max_depth=max_depth,",
-                        "        path=None,",
-                        "        uv_with=uv_with,",
-                        "    )"
-                      ],
-                      "name": "treemap",
-                      "parameters": [
-                        {
-                          "name": "output",
-                          "kind": "positional_or_keyword",
-                          "type": "Path | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write HTML or image output')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--output",
-                              "-o"
-                            ],
-                            "long_flags": [
-                              "--output"
-                            ],
-                            "short_flags": [
-                              "-o"
-                            ],
-                            "help": "Write HTML or image output"
-                          }
-                        },
-                        {
-                          "name": "max_depth",
-                          "kind": "positional_or_keyword",
-                          "type": "int | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--max-depth",
-                              "-d"
-                            ],
-                            "long_flags": [
-                              "--max-depth"
-                            ],
-                            "short_flags": [
-                              "-d"
-                            ],
-                            "help": "Limit depth of the graph"
-                          }
-                        },
-                        {
-                          "name": "template",
-                          "kind": "positional_or_keyword",
-                          "type": "str",
-                          "default": "plotly_dark",
-                          "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--template', help='Plotly template name')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--template"
-                            ],
-                            "long_flags": [
-                              "--template"
-                            ],
-                            "short_flags": [],
-                            "help": "Plotly template name"
-                          }
-                        },
-                        {
-                          "name": "height",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 900,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--height', help='Image height (for static output)')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--height"
-                            ],
-                            "long_flags": [
-                              "--height"
-                            ],
-                            "short_flags": [],
-                            "help": "Image height (for static output)"
-                          }
-                        },
-                        {
-                          "name": "width",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 1200,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--width', help='Image width (for static output)')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--width"
-                            ],
-                            "long_flags": [
-                              "--width"
-                            ],
-                            "short_flags": [],
-                            "help": "Image width (for static output)"
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "doc": "Render a Plotly treemap view.",
-                    "aliases": [
-                      {
-                        "name": "m",
-                        "hidden": true,
-                        "help": "Render a Plotly treemap view."
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
-                    "name": "icicle",
-                    "fullPath": "devops self explore icicle",
-                    "shortPath": "d s x i",
-                    "help": "🧊 <i> Render a Plotly icicle view.",
-                    "source": {
-                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "icicle"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def icicle(",
-                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
-                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
-                        "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
-                        "    height: Annotated[int, typer.Option(\"--height\", help=\"Image height (for static output)\")] = 900,",
-                        "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
-                        ") -> None:",
-                        "    \"\"\"Render a Plotly icicle view.\"\"\"",
-                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
-                        "    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly",
-                        "",
-                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "        uv_with: list[str] | None = None",
-                        "    else:",
-                        "        uv_with = [MACHINECONFIG_VERSION]",
-                        "",
-                        "    use_render_plotly(",
-                        "        view=\"icicle\",",
-                        "        output=str(output) if output else None,",
-                        "        height=height,",
-                        "        width=width,",
-                        "        template=template,",
-                        "        max_depth=max_depth,",
-                        "        path=None,",
-                        "        uv_with=uv_with,",
-                        "    )"
-                      ],
-                      "name": "icicle",
-                      "parameters": [
-                        {
-                          "name": "output",
-                          "kind": "positional_or_keyword",
-                          "type": "Path | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write HTML or image output')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--output",
-                              "-o"
-                            ],
-                            "long_flags": [
-                              "--output"
-                            ],
-                            "short_flags": [
-                              "-o"
-                            ],
-                            "help": "Write HTML or image output"
-                          }
-                        },
-                        {
-                          "name": "max_depth",
-                          "kind": "positional_or_keyword",
-                          "type": "int | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--max-depth",
-                              "-d"
-                            ],
-                            "long_flags": [
-                              "--max-depth"
-                            ],
-                            "short_flags": [
-                              "-d"
-                            ],
-                            "help": "Limit depth of the graph"
-                          }
-                        },
-                        {
-                          "name": "template",
-                          "kind": "positional_or_keyword",
-                          "type": "str",
-                          "default": "plotly_dark",
-                          "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--template', help='Plotly template name')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--template"
-                            ],
-                            "long_flags": [
-                              "--template"
-                            ],
-                            "short_flags": [],
-                            "help": "Plotly template name"
-                          }
-                        },
-                        {
-                          "name": "height",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 900,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--height', help='Image height (for static output)')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--height"
-                            ],
-                            "long_flags": [
-                              "--height"
-                            ],
-                            "short_flags": [],
-                            "help": "Image height (for static output)"
-                          }
-                        },
-                        {
-                          "name": "width",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 1200,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--width', help='Image width (for static output)')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--width"
-                            ],
-                            "long_flags": [
-                              "--width"
-                            ],
-                            "short_flags": [],
-                            "help": "Image width (for static output)"
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "doc": "Render a Plotly icicle view.",
-                    "aliases": [
-                      {
-                        "name": "i",
-                        "hidden": true,
-                        "help": "Render a Plotly icicle view."
+                        "help": "Render a Plotly hierarchy chart."
                       }
                     ]
                   },
