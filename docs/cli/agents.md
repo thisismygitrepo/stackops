@@ -37,13 +37,6 @@ agents run-prompt --help
 agents ask --help
 ```
 
-If you prefer to start from the umbrella command, the same surface is reachable through:
-
-```bash
-mcfg agents --help
-machineconfig agents --help
-```
-
 For `codex` runs, `run-prompt` also accepts explicit reasoning effort:
 
 ```bash

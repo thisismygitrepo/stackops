@@ -60,13 +60,6 @@ utils pyproject init-project --help
 utils file download --help
 ```
 
-The same surface is also reachable through the umbrella dispatcher:
-
-```bash
-mcfg utils --help
-machineconfig utils --help
-```
-
 ---
 
 ## Notes

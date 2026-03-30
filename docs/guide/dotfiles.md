@@ -1,6 +1,6 @@
 # Dotfiles Management
 
-Dotfiles workflows are now documented through `devops config ...` rather than older `mcfg dotfiles ...` commands.
+Dotfiles workflows are documented through `devops config ...`.
 
 ---
 
@@ -33,7 +33,7 @@ Current `devops config sync --help` exposes the main dotfiles concepts:
 - `--repo` for mapper source selection
 - `--which` to target one item or all items
 
-This is the current replacement for older top-level `mcfg dotfiles sync` examples.
+This is the current replacement for older top-level dotfiles sync examples.
 
 For library public configs, run `devops config copy-assets settings` before `devops config sync down ...` when you need the packaged settings copied onto the current machine.
 

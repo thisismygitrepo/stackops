@@ -52,7 +52,7 @@ Current help shows these key concepts:
 - `--repo` chooses which mapper source to use
 - `--which` narrows the operation to specific items
 
-That makes `devops config sync` the main high-level replacement for older global `mcfg config ...`, `mcfg dotfiles ...`, and `mcfg links ...` documentation.
+That makes `devops config sync` the main high-level replacement for older global configuration, dotfiles, and links documentation.
 
 For packaged library settings, use `devops config copy-assets settings` explicitly before syncing `down`.
 
@@ -92,4 +92,3 @@ Use `devops config --help` as the entrypoint for config workflows, then drill do
 
 - For data backup and retrieval, use `devops data --help`.
 - For cloud storage actions, use `cloud --help`.
-- For the umbrella compatibility wrapper, use `mcfg devops config --help`.

@@ -7,11 +7,11 @@ uv tool install --upgrade  --python 3.14 machineconfig
 devops install --group sysabc
 
 # configs
-devops config copy-assets both
-devops config sync --sensitivity public --method copy --on-conflict overwrite-default-path --which all
+devops config copy-assets all
+devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
 devops config terminal config-shell --which default
 devops config terminal config-shell --which nushell
 
-devops install --group termabc 
+devops install --group termabc
 wt  # start Windows Terminal to pick up config changes
 devops install --group gui

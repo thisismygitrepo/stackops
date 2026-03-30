@@ -5,11 +5,10 @@ This quickstart assumes Machineconfig is already installed with `uv tool install
 ## 1. See the current command families
 
 ```bash
-mcfg --help
 devops --help
 ```
 
-Use `mcfg` or `machineconfig` as umbrella entrypoints, then prefer the direct commands for routine work.
+Use `machineconfig` as an umbrella entrypoint if you want a single starting point, then prefer the direct commands for routine work.
 
 ## 2. Explore terminal configuration
 

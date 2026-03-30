@@ -84,7 +84,7 @@ msearch docs --rga
 
 - `msearch --install-req` installs the helper tools the workflow expects, including `fzf`, `tv`, `bat`, `fd`, `rg`, and `rga`.
 - When standard input is piped into `msearch`, it can stage that input into a temporary file and open the same preview flow against the captured content.
-- `msearch` is a standalone entrypoint. It is not routed through `mcfg --help`.
+- `msearch` is a standalone entrypoint. Use it directly rather than routing through an umbrella dispatcher.
 
 ---
 

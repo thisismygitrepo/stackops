@@ -54,12 +54,12 @@ cloud:
     typer.echo(msg)
 
 
-def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "both", "b"], typer.Argument(..., help="Which assets to copy")]) -> None:
+def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all", "a"], typer.Argument(..., help="Which assets to copy")]) -> None:
     """🔗 Copy asset files from library to machine."""
     from machineconfig.profile import create_helper
 
     match which:
-        case "both" | "b":
+        case "all" | "a":
             create_helper.copy_assets_to_machine(which="scripts")
             create_helper.copy_assets_to_machine(which="settings")
             return

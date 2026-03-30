@@ -30,7 +30,7 @@ The main commands you will see today are:
 - `croshell`
 - `msearch`
 
-`mcfg` and `machineconfig` still exist as compatibility entrypoints that dispatch into the main command families.
+`machineconfig` still exists as an umbrella entrypoint that dispatches into the main command families.
 
 ---
 
@@ -55,9 +55,9 @@ Machineconfig treats your working environment as a stack of related assets:
 - backed-up data
 - repositories and automation helpers
 
-### 3. High-level wrappers still exist
+### 3. An umbrella entrypoint still exists
 
-If you already use `mcfg` or `machineconfig`, they still work as umbrella commands, but the detailed command trees now live under direct entrypoints.
+If you already use `machineconfig`, it still works as an umbrella command, but the detailed command trees now live under direct entrypoints.
 
 ---
 
@@ -82,13 +82,6 @@ devops --help
 cloud --help
 sessions --help
 msearch --help
-```
-
-If you want the compatibility wrapper instead:
-
-```bash
-mcfg --help
-machineconfig --help
 ```
 
 For the current command map, see [CLI Reference](../cli/index.md).

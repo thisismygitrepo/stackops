@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -59,6 +59,25 @@ def test_config_sync_passes_direction_without_copying_assets() -> None:
         direction="down",
     )
     copy_assets_to_machine.assert_not_called()
+
+
+def test_copy_assets_all_copies_scripts_and_settings() -> None:
+    with patch("machineconfig.profile.create_helper.copy_assets_to_machine") as copy_assets_to_machine:
+        result = runner.invoke(cli_config.get_app(), ["copy-assets", "all"])
+
+    assert result.exit_code == 0
+    assert copy_assets_to_machine.call_args_list == [
+        call(which="scripts"),
+        call(which="settings"),
+    ]
+
+
+def test_copy_assets_rejects_legacy_both_argument() -> None:
+    result = runner.invoke(cli_config.get_app(), ["copy-assets", "both"])
+
+    assert result.exit_code != 0
+    assert "Invalid value" in result.output
+    assert "both" in result.output
 
 
 @pytest.mark.parametrize(

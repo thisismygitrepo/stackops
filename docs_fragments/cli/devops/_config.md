@@ -127,14 +127,14 @@ devops config import-dotfiles --url /path/to/dotfiles.zip.enc --pwd <password>
 Copy packaged helper assets from the library onto the current machine.
 
 ```bash
-devops config copy-assets <scripts|settings|both>
+devops config copy-assets <scripts|settings|all>
 ```
 
 Examples:
 
 ```bash
 devops config copy-assets scripts
-devops config copy-assets both
+devops config copy-assets all
 ```
 
 ### dump

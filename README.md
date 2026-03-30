@@ -10,7 +10,7 @@ See the [online docs](https://thisismygitrepo.github.io/machineconfig/) for full
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-uv tool install --upgrade --python 3.13 machineconfig
+uv tool install --upgrade --python 3.14 machineconfig
 ```
 
 ### Windows
@@ -28,6 +28,15 @@ From a checkout of this repository, you can run the current CLI surface without 
 UV_CACHE_DIR=/tmp/uv-cache uv run mcfg --help
 UV_CACHE_DIR=/tmp/uv-cache uv run devops --help
 ```
+
+## Quick init
+
+devops install --group sysabc  # Install (if missing) package manager (apt, brew, winget)
+devops config copy-assets all  # copy config files to machine
+devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all  # link config files
+devops config terminal config-shell --which default  # add alias to shell
+devops install --group termabc  # install the basic terminal cli's
+
 
 ## Author
 
