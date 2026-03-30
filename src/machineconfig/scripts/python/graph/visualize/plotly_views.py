@@ -145,6 +145,7 @@ def use_render_plotly(
     template: str = "plotly_dark",
     max_depth: int | None,
     uv_with: list[str] | None,
+    uv_project_dir: str | None,
 ) -> None:
     from machineconfig.utils.code import run_lambda_function
     # from machineconfig.utils.source_of_truth import REPO_ROOT
@@ -167,7 +168,7 @@ def use_render_plotly(
             width=width,
         ),
         uv_with=resolved_uv_with,
-        uv_project_dir=None,
+        uv_project_dir=uv_project_dir,
     )
 
 

@@ -93,8 +93,10 @@ def sunburst(
 
     if Path.home().joinpath("code", "machineconfig").exists():
         uv_with: list[str] | None = None
+        uv_project_dir = str(Path.home().joinpath("code/machineconfig"))
     else:
         uv_with = [MACHINECONFIG_VERSION]
+        uv_project_dir = None
 
     use_render_plotly(
         view="sunburst",
@@ -105,6 +107,7 @@ def sunburst(
         max_depth=max_depth,
         path=None,
         uv_with=uv_with,
+        uv_project_dir=uv_project_dir,
     )
 
 
@@ -121,8 +124,10 @@ def treemap(
 
     if Path.home().joinpath("code", "machineconfig").exists():
         uv_with: list[str] | None = None
+        uv_project_dir = str(Path.home().joinpath("code/machineconfig"))
     else:
         uv_with = [MACHINECONFIG_VERSION]
+        uv_project_dir = None
 
     use_render_plotly(
         view="treemap",
@@ -133,6 +138,7 @@ def treemap(
         max_depth=max_depth,
         path=None,
         uv_with=uv_with,
+        uv_project_dir=uv_project_dir,
     )
 
 
@@ -149,8 +155,10 @@ def icicle(
 
     if Path.home().joinpath("code", "machineconfig").exists():
         uv_with: list[str] | None = None
+        uv_project_dir = str(Path.home().joinpath("code/machineconfig"))
     else:
         uv_with = [MACHINECONFIG_VERSION]
+        uv_project_dir = None
 
     use_render_plotly(
         view="icicle",
@@ -161,6 +169,7 @@ def icicle(
         max_depth=max_depth,
         path=None,
         uv_with=uv_with,
+        uv_project_dir=uv_project_dir,
     )
 
 
