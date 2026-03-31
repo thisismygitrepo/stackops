@@ -12,7 +12,7 @@ hide:
 
 # **Machineconfig**
 
-### Cross-platform CLI for stack management, machine setup and maintenance
+### Cross-platform CLI for Stack Management, Setup & Maintenance
 
 [![PyPI version](https://img.shields.io/pypi/v/machineconfig.svg)](https://pypi.org/project/machineconfig/)
 [![Python versions](https://img.shields.io/pypi/pyversions/machineconfig.svg)](https://pypi.org/project/machineconfig/)
@@ -23,7 +23,7 @@ hide:
 [Quickstart](quickstart.md){ .md-button }
 [View on GitHub](https://github.com/thisismygitrepo/machineconfig){ .md-button }
 
-`1 command + 5 minutes`: from a naked, minimal, freshly purchased/formatted machine to the usable-ready machine that you have been optimizing for 10 years, all your digitial life, sorted out.
+`1 command + 5 minutes`: from a naked, minimal, freshly purchased/formatted machine to the usable-ready machine that you have been optimizing for 10 years, all your digitial life, sorted out, by 100s of scripts that configure your machine.
 
 | Before | After |
 | --- | --- |
@@ -36,12 +36,13 @@ hide:
 ## What you get
 
 * cross-platform package mangager, top 200 rust-based most popular cli projects on github, and more.
-* private and public configurations for all those applications and more.
-* secrets, creds, passwords etc.
+* Dotfile manager:
+    * private and public configurations for all those applications and more.
+    * secrets, creds, passwords etc.
 * data sync solution.
 * repositories mapped out for 1-liner backup and retreival.
 
-This covers 100% of your digital footprint.
+✅ This covers `100%` of your digital footprint.
 
 Machineconfig does not invent anything, it simply manages the stack that you are comfortable with.
 
