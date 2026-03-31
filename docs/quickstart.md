@@ -1,10 +1,10 @@
 # Quickstart
 
-## Good first commands
+## Good first commands (install ABCs, configure them & init the shell profile)
 
 ```bash
 
-devops install --group sysabc  # Install (if missing) package manager (apt or brew or winget)
+devops install --group sysabc  # Install (if missing) the underlying package managers (apt or brew or winget)
 devops config copy-assets all  # copy config files to machine
 devops config sync down --sensitivity public --method copy --on-conflict throw-error --which all  # link config files
 devops config terminal config-shell --which default  # add alias to shell (pwsh, zsh or bash)
@@ -33,7 +33,7 @@ Check the live help before choosing names:
 devops install --help
 ```
 
-## 4. Inspect config and data sync workflows
+## Inspect config and data sync workflows
 
 ```bash
 devops config sync --help
