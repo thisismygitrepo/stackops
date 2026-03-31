@@ -19,13 +19,11 @@ hide:
 [![License](https://img.shields.io/github/license/thisismygitrepo/machineconfig.svg)](https://github.com/thisismygitrepo/machineconfig/blob/main/LICENSE)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thisismygitrepo/machineconfig)](https://github.com/thisismygitrepo/machineconfig/commits)
 
-Machineconfig offers a cli family to manage your digital life.
-
 [Install with uv](installation.md){ .md-button .md-button--primary }
 [Quickstart](quickstart.md){ .md-button }
 [View on GitHub](https://github.com/thisismygitrepo/machineconfig){ .md-button }
 
-From a naked, minimal, freshly formatted machine to a developer-ready machine in 1 command + 5 minutes using the setup I optimized over 10 years.
+`1 command + 5 minutes`: from a naked, minimal, freshly purchased/formatted machine to the usable-ready machine that you have been optimizing for 10 years, all your digitial life, sorted out.
 
 | Before | After |
 | --- | --- |
@@ -37,18 +35,15 @@ From a naked, minimal, freshly formatted machine to a developer-ready machine in
 
 ## What you get
 
-Machineconfig is organized around direct CLI families:
+* cross-platform package mangager, top 200 rust-based most popular cli projects on github, and more.
+* private and public configurations for all those applications and more.
+* secrets, creds, passwords etc.
+* data sync solution.
+* repositories mapped out for 1-liner backup and retreival.
 
-| Command | What it covers |
-| --- | --- |
-| `devops` | Package installs, repos, config, data, self-management, networking, scripted execution |
-| `cloud` | Syncing, copying, mounting, and SSH file transfer workflows |
-| `sessions` | Launching, attaching to, killing, templating, and summarizing terminal multiplexer session layouts |
-| `agents` | Generating agent configs, templates, prompts, symlinks, and skills |
-| `utils` | Process, environment, project, file, PDF, and database helpers |
-| `fire`, `croshell`, `msearch` | Standalone helper entrypoints |
+This covers 100% of your digital footprint.
 
-Treat the direct entrypoints as the primary interface; older all-in-one command layouts are not documented here.
+Machineconfig does not invent anything, it simply manages the stack that you are comfortable with.
 
 
 ---
