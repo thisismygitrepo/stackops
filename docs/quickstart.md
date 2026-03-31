@@ -13,8 +13,6 @@ devops install --group termabc  # install the basic terminal cli's
 ```
 
 
-Use `machineconfig` as an umbrella entrypoint if you want a single starting point, then prefer the direct commands for routine work.
-
 ## 2. Explore terminal configuration
 
 ```bash

@@ -30,7 +30,7 @@ The main commands you will see today are:
 - `croshell`
 - `msearch`
 
-`machineconfig` still exists as an umbrella entrypoint that dispatches into the main command families.
+`mcfg` still exists as an umbrella entrypoint that dispatches into the main command families.
 
 ---
 
@@ -54,10 +54,6 @@ Machineconfig treats your working environment as a stack of related assets:
 - dotfiles mappings
 - backed-up data
 - repositories and automation helpers
-
-### 3. An umbrella entrypoint still exists
-
-If you already use `machineconfig`, it still works as an umbrella command, but the detailed command trees now live under direct entrypoints.
 
 ---
 
