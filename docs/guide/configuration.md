@@ -1,6 +1,6 @@
 # Configuration Management
 
-Configuration workflows now live under `devops config ...`.
+Configuration and dotfiles workflows now live under `devops config ...`.
 
 ---
 
@@ -18,6 +18,7 @@ Start here:
 
 ```bash
 devops config --help
+devops config sync --help
 ```
 
 ---
@@ -46,26 +47,50 @@ devops config sync --help
 
 Current help shows these key concepts:
 
-- `direction` is now required: use `up` for default path to managed path, or `down` for managed path to default path
+- positional `direction` with `up` and `down`
 - `--sensitivity` selects whether you are managing `public`, `private`, or `all` configuration files
 - `--method` selects `symlink` or `copy`
 - `--repo` chooses which mapper source to use
 - `--which` narrows the operation to specific items
 
-That makes `devops config sync` the main high-level replacement for older global configuration, dotfiles, and links documentation.
+That makes `devops config sync` the main high-level replacement for older configuration, dotfiles, and links documentation.
 
 For packaged library settings, use `devops config copy-assets settings` explicitly before syncing `down`.
 
 ---
 
+## Registering and editing mappings
+
+Use these commands when you need to add new managed dotfiles or inspect the active mapping configuration:
+
+- `devops config register`
+- `devops config edit`
+
+---
+
+## Exporting and importing dotfiles
+
+For machine migration or archive-style workflows, use:
+
+- `devops config export-dotfiles`
+- `devops config import-dotfiles`
+
+These commands replace the older init, push, backup, and restore flow.
+
+---
+
+## Configuration versus data
+
+Use `devops config ...` for managed configuration files and shell, editor, or tool settings.
+
+Use `devops data sync --help` when you want backup-style synchronization of data directories and files to or from cloud storage.
+
+---
+
 ## Other configuration subcommands
 
-Current `devops config --help` lists subcommands for:
+Beyond sync, register, edit, export, and import, `devops config --help` also lists:
 
-- `register`
-- `edit`
-- `export-dotfiles`
-- `import-dotfiles`
 - `copy-assets`
 - `dump`
 - `terminal`
@@ -78,17 +103,3 @@ Inside `devops config terminal --help`, the current terminal commands are:
 - `wezterm-theme`
 - `ghostty-theme`
 - `windows-terminal-theme`
-
-Device inspection and local mounting now live under `utils machine`:
-
-- `utils machine list-devices`
-- `utils machine mount`
-
-Use `devops config --help` as the entrypoint for config workflows, then drill down with `--help` on the specific subgroup or subcommand you need.
-
----
-
-## Related workflows
-
-- For data backup and retrieval, use `devops data --help`.
-- For cloud storage actions, use `cloud --help`.

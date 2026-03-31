@@ -20,9 +20,7 @@ nav = [
     { Overview = "guide/overview.md" },
     { "Package Management" = "guide/packages.md" },
     { "Configuration Management" = "guide/configuration.md" },
-    { Dotfiles = "guide/dotfiles.md" },
     { "Data Sync" = "guide/data-sync.md" },
-    { Automation = "guide/automation.md" },
   ] },
   { "CLI Reference" = [
     "cli/index.md",
