@@ -25,6 +25,12 @@ Machineconfig offers a cli family to manage your digital life.
 [Quickstart](quickstart.md){ .md-button }
 [View on GitHub](https://github.com/thisismygitrepo/machineconfig){ .md-button }
 
+From a naked, minimal, freshly formatted machine to a developer-ready machine in 1 command + 5 minutes using the setup I optimized over 10 years.
+
+| Before | After |
+| --- | --- |
+| ![Fresh minimal machine state](assets/before.png) | ![Developer-ready machine state](assets/after.png) |
+
 </div>
 
 ---
