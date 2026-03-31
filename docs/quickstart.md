@@ -1,12 +1,17 @@
 # Quickstart
 
-This quickstart assumes Machineconfig is already installed with `uv tool install machineconfig`.
-
-## 1. See the current command families
+## Good first commands
 
 ```bash
-devops --help
+
+devops install --group sysabc  # Install (if missing) package manager (apt or brew or winget)
+devops config copy-assets all  # copy config files to machine
+devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all  # link config files
+devops config terminal config-shell --which default  # add alias to shell
+devops install --group termabc  # install the basic terminal cli's
+
 ```
+
 
 Use `machineconfig` as an umbrella entrypoint if you want a single starting point, then prefer the direct commands for routine work.
 

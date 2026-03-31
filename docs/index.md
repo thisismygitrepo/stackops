@@ -44,39 +44,6 @@ Machineconfig is organized around direct CLI families:
 
 Treat the direct entrypoints as the primary interface; older all-in-one command layouts are not documented here.
 
----
-
-## Install and verify
-
-=== "Linux / macOS"
-
-    ```bash
-    curl -LsSf https://astral.sh/uv/install.sh | sh  # if you don't have `uv`
-    uv tool install --upgrade --python 3.14 machineconfig
-    devops --help
-    ```
-
-=== "Windows"
-
-    ```powershell
-    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-    uv tool install --upgrade --python 3.14 machineconfig
-    devops --help
-    ```
-
----
-
-## Good first commands
-
-```bash
-
-devops install --group sysabc  # Install (if missing) package manager (apt or brew or winget)
-devops config copy-assets all  # copy config files to machine
-devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all  # link config files
-devops config terminal config-shell --which default  # add alias to shell
-devops install --group termabc  # install the basic terminal cli's
-
-```
 
 ---
 

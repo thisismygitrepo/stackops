@@ -15,7 +15,6 @@ nav = [
     { Welcome = "index.md" },
     { Installation = "installation.md" },
     { Quickstart = "quickstart.md" },
-    { Hosting = "hosting.md" },
   ] },
   { "User Guide" = [
     { Overview = "guide/overview.md" },
