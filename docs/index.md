@@ -12,7 +12,7 @@ hide:
 
 # **Machineconfig**
 
-### Cross-platform CLI for machine setup and maintenance
+### Cross-platform CLI for stack management, machine setup and maintenance
 
 [![PyPI version](https://img.shields.io/pypi/v/machineconfig.svg)](https://pypi.org/project/machineconfig/)
 [![Python versions](https://img.shields.io/pypi/pyversions/machineconfig.svg)](https://pypi.org/project/machineconfig/)
@@ -37,7 +37,7 @@ Machineconfig is organized around direct CLI families:
 | --- | --- |
 | `devops` | Package installs, repos, config, data, self-management, networking, scripted execution |
 | `cloud` | Syncing, copying, mounting, and SSH file transfer workflows |
-| `sessions` | Launching, attaching to, killing, templating, and summarizing session layouts |
+| `sessions` | Launching, attaching to, killing, templating, and summarizing terminal multiplexer session layouts |
 | `agents` | Generating agent configs, templates, prompts, symlinks, and skills |
 | `utils` | Process, environment, project, file, PDF, and database helpers |
 | `fire`, `croshell`, `msearch` | Standalone helper entrypoints |
