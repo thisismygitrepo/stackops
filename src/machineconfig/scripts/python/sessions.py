@@ -3,7 +3,7 @@
 from typing import Literal, Annotated
 import typer
 
-from machineconfig.cluster.sessions_managers.session_conflict import SessionConflictAction
+from machineconfig.cluster.sessions_managers.session_conflict import SessionConflictActionLoose, SessionConflictActionLoose2Strict
 
 
 def _resolve_session_backend(
@@ -57,7 +57,7 @@ def run(
 
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictAction, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
+    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
@@ -71,6 +71,7 @@ def run(
     supported for tmux and Windows Terminal.
     Use `run-all` for the paced whole-file dynamic scheduler.
     """
+    on_conflict = SessionConflictActionLoose2Strict[on_conflict]
     from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
     impl(
         ctx=ctx,
@@ -97,7 +98,7 @@ def run_all(
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", help="Close each tab once its command is finished.")] = False,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictAction, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.")] = "error",
+    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.")] = "error",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
     """Dynamically run every tab from every layout in a layout configuration file.
@@ -106,7 +107,7 @@ def run_all(
     --max-parallel-tabs tabs active at a time.
     """
     from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl
-
+    on_conflict = SessionConflictActionLoose2Strict[on_conflict]
     impl(
         ctx=ctx,
         layouts_file=layouts_file,

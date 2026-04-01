@@ -93,15 +93,29 @@
 * https://github.com/nousresearch/hermes-agent
 * https://github.com/obra/superpowers
 * https://github.com/paperclipai/paperclip
+Terminus 2
+→ Open-source autonomous coding agent (focused on SWE tasks)
+Mux
+→ Agent framework for multi-step coding workflows (less mainstream)
+Droid
+→ Experimental autonomous dev agent (often benchmarked in SWE-bench-style evals)
+TongAgents
+→ Research-oriented multi-agent system (less widely used in practice)
+MAYA-V2
+→ Advanced agent framework (often appears in research benchmarks)
+Terminus-KIRA
+→ Variant of Terminus with improved planning / reasoning loop
+Capy
+→ Lightweight coding agent (designed for SWE tasks)
+ForgeCode
+→ Strong-performing coding agent (high score here suggests good autonomy loop)
 
 # Viz
-* chainlit: https://github.com/Chainlit/cookbook
 * https://github.com/wandb/openui `aims to make the process fun, fast, and flexible. It's also a tool we're using at W&B to test and prototype our next generation tooling for building powerful applications on top of LLM's.`
 * https://github.com/oobabooga/text-generation-webui `A Gradio web UI for Large Language Models.`.
 * https://github.com/google/mesop `Next streamlit`
 
 # Deployment
-* https://github.com/bigscience-workshop/petals `LLM on private swarm`
 * https://github.com/h2oai/h2o-llmstudio `framework and no-code GUI designed for fine-tuning state-of-the-art large language models (LLMs).`
 * https://github.com/hiyouga/LLaMA-Factory `Finetune`
 * https://github.com/microsoft/DeepSpeed `training with a single click, offering 15x speedup over SOTA RLHF systems with unprecedented cost reduction at all scales`.

@@ -6,6 +6,13 @@ from typing import Literal, NotRequired, TypedDict
 
 
 SessionBackend = Literal["zellij", "tmux", "windows-terminal"]
+SessionConflictActionLoose = Literal[
+    "restart", "r",
+    "rename", "n",
+    "error", "e",
+    "mergeNewWindowsOverwriteMatchingWindows", "m",
+    "mergeNewWindowsSkipMatchingWindows", "s",
+]
 SessionConflictAction = Literal[
     "restart",
     "rename",
@@ -13,6 +20,19 @@ SessionConflictAction = Literal[
     "mergeNewWindowsOverwriteMatchingWindows",
     "mergeNewWindowsSkipMatchingWindows",
 ]
+SessionConflictActionLoose2Strict: dict[SessionConflictActionLoose, SessionConflictAction] = {
+    "restart": "restart",
+    "r": "restart",
+    "rename": "rename",
+    "n": "rename",
+    "error": "error",
+    "e": "error",
+    "mergeNewWindowsOverwriteMatchingWindows": "mergeNewWindowsOverwriteMatchingWindows",
+    "m": "mergeNewWindowsOverwriteMatchingWindows",
+    "mergeNewWindowsSkipMatchingWindows": "mergeNewWindowsSkipMatchingWindows",
+    "s": "mergeNewWindowsSkipMatchingWindows",
+}
+
 ConflictSource = Literal["existing", "duplicate"]
 SUPPORTED_SESSION_CONFLICT_ACTIONS = frozenset(
     {
@@ -39,21 +59,6 @@ class SessionLaunchPlan(TypedDict):
     conflict_source: NotRequired[ConflictSource]
     skip_launch: NotRequired[bool]
 
-
-def _validate_backend_supports_session_conflict_action(
-    backend: SessionBackend,
-    on_conflict: SessionConflictAction,
-) -> None:
-    if (
-        on_conflict in MERGE_NEW_WINDOWS_SESSION_CONFLICT_ACTIONS
-        and backend not in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS
-    ):
-        raise ValueError(
-            f"Unsupported on_conflict policy '{on_conflict}' for backend '{backend}'. "
-            "mergeNewWindowsOverwriteMatchingWindows and "
-            "mergeNewWindowsSkipMatchingWindows are only supported with the "
-            "tmux and windows-terminal backends."
-        )
 
 
 def _build_conflict_source(
@@ -191,10 +196,6 @@ def build_session_launch_plan(
     backend: SessionBackend,
     on_conflict: SessionConflictAction,
 ) -> list[SessionLaunchPlan]:
-    _validate_backend_supports_session_conflict_action(
-        backend=backend,
-        on_conflict=on_conflict,
-    )
     existing_sessions = list_existing_sessions(backend)
     planned_sessions: set[str] = set()
     restarted_sessions: set[str] = set()
