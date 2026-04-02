@@ -3,9 +3,9 @@ from typing import TypeAlias, Literal
 GUI = [
     "brave",
     "code",
-    "zoomit",
+    # "zoomit",
     "wezterm",
-    "mouse-without-borders",
+    # "mouse-without-borders",
 ]
 
 # AI/LLM Tools - AI-powered coding and chat assistants

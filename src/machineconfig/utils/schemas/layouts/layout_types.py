@@ -9,7 +9,6 @@ from typing import TypedDict, List, Literal, NotRequired
 
 class TabConfig(TypedDict):
     """Configuration for a single tab in a layout."""
-
     tabName: str
     startDir: str
     command: str
@@ -18,14 +17,12 @@ class TabConfig(TypedDict):
 
 class LayoutConfig(TypedDict):
     """Configuration for a complete layout with its tabs."""
-
     layoutName: str
     layoutTabs: List[TabConfig]
 
 
 class LayoutsFile(TypedDict):
     """Complete layout file structure."""
-
     version: str
     layouts: List[LayoutConfig]
 
