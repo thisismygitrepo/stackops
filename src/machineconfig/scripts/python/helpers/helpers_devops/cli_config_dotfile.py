@@ -273,12 +273,14 @@ def import_dotfiles(
     #     cloud copy SHARE_URL . --config ss[/dim]
     if use_ssh:
         print("🔗 Importing dotfiles via SSH-based transfer (scp).")
-        code = """fptx $USER@$(hostname):^ ~/dotfiles -z"""
+        code = """cloud ftpx $USER@$(hostname):^ ~/dotfiles -z"""
         print(f"💡 Run the following command on the remote machine that has the dotfiles:\n{code}")
         url = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles from ")
-        code_concrete = f"fptx {url}:^ ~/dotfiles -z"
+
+        code_concrete = f"cloud ftpx {url}:^ ~/dotfiles -z"
         from machineconfig.utils.code import run_shell_script
         run_shell_script(code_concrete, display_script=True, clean_env=False)
+
         print("✅ Dotfiles copied via SSH.")
         return
     if url is None:

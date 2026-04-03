@@ -14,11 +14,6 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
 )
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
-# config_dict: InstallerData = {
-#     "appName": "espanso",
-#     "repoURL": "CMD",
-#     "doc": "A text expander.",
-# }
 
 def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     console = Console()
