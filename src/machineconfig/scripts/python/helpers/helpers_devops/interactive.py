@@ -53,7 +53,7 @@ def display_header() -> None:
     version = get_machineconfig_version()
     title = f"✨ MACHINE CONFIGURATION v{version} ✨"
     subtitle = "🎯 Your digital life manager. Dotfiles, data, code and more."
-    bug_report = "🐛 Please report bugs to Alex Al-Saffar @ https://github.com/thisismygitrepo/machineconfig"
+    bug_report = "🐛 Please report bugs @ https://github.com/thisismygitrepo/machineconfig"
 
     # Print ASCII art
     console.print(Text(ascii_art, style="bold cyan"))
@@ -80,9 +80,9 @@ def get_installation_choices() -> list[InstallOption]:
     v8: InstallOption = "link_private_configs"
     choices = [
         Choice(value=v0, title="🐍 Install machineconfig cli.", checked=False),
-        Choice(value=v1, title="📥 Install System Package Manager (Needed for other apps to be installed).", checked=False),
+        Choice(value=v1, title="📥 Install ABCs: package manager, then git, then bun.", checked=False),
         Choice(value=v2, title="⚡ Install Terminal CLI apps essentials (group `termabc`)", checked=False),
-        Choice(value=v3, title="🐚 Configure Shell Profile And Map Other Configs.", checked=False),
+        Choice(value=v3, title="🐚 Configure Shell Profile Init.", checked=False),
         Choice(value=v7, title="🔗 Link Public Configs (symlink public dotfiles).", checked=False),
         Choice(value=v8, title="🔐 [ADVANCED] Link Private Configs (symlink private dotfiles).", checked=False),
         Choice(value=v4, title="🔒 [ADVANCED] Configure SSH Server", checked=False),

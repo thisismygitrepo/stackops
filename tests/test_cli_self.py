@@ -39,3 +39,26 @@ def test_interactive_command_calls_interactive_main() -> None:
 
     assert result.exit_code == 0
     interactive_main.assert_called_once_with()
+
+
+def test_status_help_lists_section_flags() -> None:
+    result = runner.invoke(cli_self.get_app(), ["status", "--help"])
+
+    assert result.exit_code == 0
+    assert "--apps" in result.output
+    assert "--shell" in result.output
+    assert "--repos" in result.output
+    assert "--dotfiles" in result.output
+    assert "--backup" in result.output
+
+
+def test_status_command_passes_selected_sections_to_helper() -> None:
+    with (
+        patch("machineconfig.scripts.python.helpers.helpers_devops.devops_status.resolve_sections", return_value=("apps",)) as resolve_sections,
+        patch("machineconfig.scripts.python.helpers.helpers_devops.devops_status.main") as status_main,
+    ):
+        result = runner.invoke(cli_self.get_app(), ["status", "--apps"])
+
+    assert result.exit_code == 0
+    resolve_sections.assert_called_once_with(machine=False, shell=False, repos=False, ssh=False, configs=False, apps=True, backup=False)
+    status_main.assert_called_once_with(sections=("apps",))

@@ -177,11 +177,26 @@ def interactive() -> None:
     main()
 
 
-def status() -> None:
-    """📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc."""
+def status(
+    machine: Annotated[bool, typer.Option("--machine", "-m", help="Show the machine/system information section.")] = False,
+    shell: Annotated[bool, typer.Option("--shell", "-s", help="Show the shell profile section.")] = False,
+    repos: Annotated[bool, typer.Option("--repos", "-r", help="Show the configured repositories section.")] = False,
+    ssh: Annotated[bool, typer.Option("--ssh", "-h", help="Show the SSH configuration section.")] = False,
+    configs: Annotated[
+        bool,
+        typer.Option("--configs", "--dotfiles", "--symlinks", "-c", "-d", "-l", help="Show the linked config, dotfile, and symlink section."),
+    ] = False,
+    apps: Annotated[bool, typer.Option("--apps", "--tools", "-a", "-t", help="Show the installed apps/tools section.")] = False,
+    backup: Annotated[bool, typer.Option("--backup", "-b", help="Show the backup configuration section.")] = False,
+) -> None:
+    """📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.
+
+    Pass one or more section flags to limit the report to those sections.
+    """
     import machineconfig.scripts.python.helpers.helpers_devops.devops_status as helper
 
-    helper.main()
+    sections = helper.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)
+    helper.main(sections=sections)
 
 
 def readme() -> None:
