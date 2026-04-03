@@ -26,4 +26,4 @@ function ms { wrap_in_shell_script msearch @args }
 
 Write-Host "mcfg command aliases are now defined in this PowerShell session."
 
-d self install --interactive
+d self config

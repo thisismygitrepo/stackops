@@ -123,7 +123,7 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
     if "install_machineconfig" in selected_options:
         console.print(Panel("🐍 [bold green]PYTHON ENVIRONMENT[/bold green]\n[italic]Virtual environment setup[/italic]", border_style="green"))
         from machineconfig.scripts.python.helpers.helpers_devops.cli_self import install
-        install(copy_assets=True, dev=False)
+        install(dev=False)
 
     if "install_ssh_server" in selected_options:
         console.print(Panel("🔒 [bold red]SSH SERVER[/bold red]\n[italic]Remote access setup[/italic]", border_style="red"))

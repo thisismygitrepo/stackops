@@ -24,4 +24,4 @@ alias ms='wrap_in_shell_script msearch'
 
 echo "mcfg command aliases are now defined in this shell session."
 
-d self install --interactive
+d self config
