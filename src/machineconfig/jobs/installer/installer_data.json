@@ -2972,6 +2972,24 @@
       }
     },
     {
+      "appName": "poweshell",
+      "license": "MIT License",
+      "repoURL": "https://github.com/powershell/powershell",
+      "doc": "🐚 PowerShell, a cross-platform shell in C#.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "powershell-{version}-linux-x64.tar.gz",
+          "macos": "powershell-{version}-osx-x64.tar.gz",
+          "windows": "winget install --no-upgrade --name \"Powershell\"                   --Id \"Microsoft.PowerShell\"       --source winget --scope user --accept-package-agreements --accept-source-agreements"
+        },
+        "arm64": {
+          "linux": "powershell-{version}-linux-arm64.tar.gz",
+          "macos": "powershell-{version}-osx-arm64.tar.gz",
+          "windows": "winget install --no-upgrade --name \"Powershell\"                   --Id \"Microsoft.PowerShell\"       --source winget --scope user --accept-package-agreements --accept-source-agreements"
+        }
+      }
+    },
+    {
       "appName": "geckodriver",
       "license": "Mozilla Public License 2.0",
       "repoURL": "https://github.com/mozilla/geckodriver",
