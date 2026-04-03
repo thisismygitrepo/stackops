@@ -20,6 +20,10 @@ devops install termabc --group
 devops install --interactive
 ```
 
+![Quick Start walkthrough](../../assets/quick_start.png)
+
+You can also use `devops self config` for an interactive way of running these quick start commands.
+
 ---
 
 ## Architecture Overview

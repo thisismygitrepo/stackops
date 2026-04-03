@@ -1,6 +1,13 @@
 # Quickstart
 
-## Good first commands (install ABCs, configure them & init the shell profile)
+## Good first commands (install System ABC's, configure cli's & init the shell profile)
+
+
+You interactively start with `devops self config`, which gives selection menu:
+
+![Quick Start walkthrough](assets/quick_start.png)
+
+Behind the scense, its simply running the commands below, in case you want to script it later on:
 
 ```bash
 
