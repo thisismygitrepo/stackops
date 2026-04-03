@@ -5,6 +5,7 @@ Installers do not add runtime files to the machine, hence this script.
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.installer_utils.installer_locator_utils import WINDOWS_INSTALL_PATH
 import platform
+from typing import TYPE_CHECKING
 
 from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
@@ -225,7 +226,6 @@ def main(
 
 
 if __name__ == "__main__":
+    if TYPE_CHECKING:
+        _main_protocol_check: InstallerPythonScriptMain = main
     pass
-
-
-main: InstallerPythonScriptMain

@@ -2,6 +2,7 @@
 
 import platform
 import subprocess
+from typing import TYPE_CHECKING
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -111,7 +112,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 
 
 if __name__ == "__main__":
+    if TYPE_CHECKING:
+        _main_protocol_check: InstallerPythonScriptMain = main
     pass
-
-
-main: InstallerPythonScriptMain

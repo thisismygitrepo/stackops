@@ -1,6 +1,7 @@
 
 
 import platform
+from typing import TYPE_CHECKING
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -57,4 +58,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     run_shell_script(program, display_script=True, clean_env=False)
 
 
-main: InstallerPythonScriptMain
+if __name__ == "__main__":
+    if TYPE_CHECKING:
+        _main_protocol_check: InstallerPythonScriptMain = main

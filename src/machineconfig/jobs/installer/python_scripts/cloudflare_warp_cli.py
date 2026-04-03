@@ -1,5 +1,6 @@
 
 import platform
+from typing import TYPE_CHECKING
 from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
@@ -25,4 +26,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> st
     return f"Cloudflare WARP CLI installed successfully on {system}."
 
 
-main: InstallerPythonScriptMain
+if __name__ == "__main__":
+    if TYPE_CHECKING:
+        _main_protocol_check: InstallerPythonScriptMain = main

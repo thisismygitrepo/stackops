@@ -2,6 +2,7 @@
 
 import platform
 import subprocess
+from typing import TYPE_CHECKING
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -86,7 +87,6 @@ git clone https://github.com/alacritty/alacritty-theme $HOME/.config/alacritty/t
 
 
 if __name__ == "__main__":
+    if TYPE_CHECKING:
+        _main_protocol_check: InstallerPythonScriptMain = main
     pass
-
-
-main: InstallerPythonScriptMain

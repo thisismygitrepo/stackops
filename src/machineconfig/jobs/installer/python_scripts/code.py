@@ -1,6 +1,7 @@
 """vs code installer as per https://code.visualstudio.com/docs/setup/linux"""
 
 import platform
+from typing import TYPE_CHECKING
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -65,7 +66,6 @@ winget install --no-upgrade --name "Microsoft Visual Studio Code" --Id "Microsof
 
 
 if __name__ == "__main__":
+    if TYPE_CHECKING:
+        _main_protocol_check: InstallerPythonScriptMain = main
     pass
-
-
-main: InstallerPythonScriptMain
