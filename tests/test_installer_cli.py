@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from machineconfig.utils.installer_utils import installer_cli
-from machineconfig.utils.schemas.installer.installer_types import InstallerData
+from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallerData
 
 
 def _make_installer_data(app_name: str, doc: str) -> InstallerData:
@@ -53,7 +53,7 @@ def test_install_interactively_uses_tv_preview_and_installs_selected_app() -> No
     captured_preview_map: dict[str, str] = {}
 
     class FakeInstaller:
-        install_calls: list[InstallerData] = []
+        install_calls: list[tuple[InstallerData, InstallRequest]] = []
 
         def __init__(self, installer_data: InstallerData) -> None:
             self.installer_data = installer_data
@@ -61,9 +61,8 @@ def test_install_interactively_uses_tv_preview_and_installs_selected_app() -> No
         def get_description(self) -> str:
             return f"{self.installer_data['appName'].lower():<12} ✅ {self.installer_data['doc']}"
 
-        def install_robust(self, version: str | None) -> str:
-            _ = version
-            FakeInstaller.install_calls.append(self.installer_data)
+        def install_robust(self, install_request: InstallRequest) -> str:
+            FakeInstaller.install_calls.append((self.installer_data, install_request))
             return f"installed {self.installer_data['appName']}"
 
     def _fake_choose(
@@ -83,11 +82,11 @@ def test_install_interactively_uses_tv_preview_and_installs_selected_app() -> No
         patch("machineconfig.utils.installer_utils.installer_class.Installer", FakeInstaller),
         patch.object(installer_cli, "install_group") as install_group,
     ):
-        installer_cli.install_interactively()
+        installer_cli.install_interactively(install_request=InstallRequest(version="v1.2.3", update=True))
 
     assert json.loads(next(value for key, value in captured_preview_map.items() if key.startswith("fd"))) == installer_data
-    install_group.assert_called_once_with(package_group="core")
-    assert FakeInstaller.install_calls == [installer_data]
+    install_group.assert_called_once_with(package_group="core", install_request=InstallRequest(version="v1.2.3", update=True))
+    assert FakeInstaller.install_calls == [(installer_data, InstallRequest(version="v1.2.3", update=True))]
 
 
 def test_install_if_missing_uses_explicit_binary_name() -> None:
@@ -108,5 +107,5 @@ def test_install_if_missing_uses_which_when_binary_name_is_none(capsys: pytest.C
     captured = capsys.readouterr()
     assert result is True
     check_tool_exists.assert_called_once_with("fd")
-    main_installer_cli.assert_called_once_with(which="fd", interactive=False)
+    main_installer_cli.assert_called_once_with(which="fd", interactive=False, update=False, version=None)
     assert captured.out == ""

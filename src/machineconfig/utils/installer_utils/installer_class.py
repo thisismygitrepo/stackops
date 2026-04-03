@@ -1,8 +1,14 @@
 from machineconfig.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
+from machineconfig.utils.installer_utils.install_request_logic import (
+    build_install_target,
+    resolve_installer_value,
+    should_skip_install,
+    validate_install_request,
+)
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT
 from machineconfig.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows, check_tool_exists
-from machineconfig.utils.schemas.installer.installer_types import InstallerData, get_os_name, get_normalized_arch
+from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallerData, get_normalized_arch, get_os_name
 from machineconfig.utils.installer_utils.github_release_bulk import (
     get_repo_name_from_url,
     get_release_info,
@@ -36,15 +42,39 @@ class Installer:
         """Derive executable name from app name by converting to lowercase and removing spaces."""
         return self.installer_data["appName"].lower().replace(" ", "")  # .replace("-", "")
 
-    def install_robust(self, version: str | None) -> str:
+    def _get_installer_value(self) -> str:
+        os_name = get_os_name()
+        arch = get_normalized_arch()
+        installer_value = self.installer_data["fileNamePattern"][arch][os_name]
+        if installer_value is None:
+            exe_name = self._get_exe_name()
+            raise ValueError(f"No installation pattern for {exe_name} on {os_name} {arch}")
+        return installer_value
+
+    def _read_installed_version(self, exe_name: str) -> str:
+        try:
+            result = subprocess.run([exe_name, "--version"], capture_output=True, text=True, check=False)
+        except FileNotFoundError:
+            return ""
+        return result.stdout.strip()
+
+    def install_requested(self, install_request: InstallRequest) -> None:
+        installer_value = self._get_installer_value()
+        install_target = build_install_target(repo_url=self.installer_data["repoURL"], installer_value=installer_value)
+        validate_install_request(install_target=install_target, install_request=install_request)
+        effective_installer_value = resolve_installer_value(install_target=install_target, install_request=install_request)
+        version = install_request.version if install_target.installer_kind == "github_release" or effective_installer_value.strip().startswith("winget install ") else None
+        self._install_from_value(installer_arch_os=effective_installer_value, version=version)
+
+    def install_robust(self, install_request: InstallRequest) -> str:
         try:
             exe_name = self._get_exe_name()
-            result_old = subprocess.run(f"{exe_name} --version", shell=True, capture_output=True, text=True, check=False)
-            old_version_cli = result_old.stdout.strip()
+            if should_skip_install(exe_name=exe_name, install_request=install_request, tool_exists=check_tool_exists):
+                return f"""📦️ ⏭️ {exe_name} already installed, skipped"""
+            old_version_cli = self._read_installed_version(exe_name=exe_name)
             print(f"🚀 INSTALLING {exe_name.upper()} 🚀. 📊 Current version: {old_version_cli or 'Not installed'}")
-            self.install(version=version)
-            result_new = subprocess.run(f"{exe_name} --version", shell=True, capture_output=True, text=True, check=False)
-            new_version_cli = result_new.stdout.strip()
+            self.install_requested(install_request=install_request)
+            new_version_cli = self._read_installed_version(exe_name=exe_name)
             if old_version_cli == new_version_cli:
                 return f"""📦️ 😑 {exe_name}, same version: {old_version_cli}"""
             else:
@@ -56,16 +86,14 @@ class Installer:
             return f"""📦️ ❌ Failed to install `{app_name}` with error: {ex}"""
 
     def install(self, version: str | None) -> None:
+        self._install_from_value(installer_arch_os=self._get_installer_value(), version=version)
+
+    def _install_from_value(self, installer_arch_os: str, version: str | None) -> None:
         exe_name = self._get_exe_name()
         repo_url = self.installer_data["repoURL"]
-        os_name = get_os_name()
-        arch = get_normalized_arch()
-        installer_arch_os = self.installer_data["fileNamePattern"][arch][os_name]
-        if installer_arch_os is None:
-            raise ValueError(f"No installation pattern for {exe_name} on {os_name} {arch}")
         version_to_be_installed: str = "unknown"  # Initialize to ensure it's always bound
 
-        package_manager_installer = any(pm in installer_arch_os.split(" ") for pm in PACAKGE_MANAGERS)
+        package_manager_installer = any(pm in installer_arch_os.split() for pm in PACAKGE_MANAGERS)
         script_installer = installer_arch_os.endswith((".sh", ".py", ".ps1"))
         binary_download_link = installer_arch_os.startswith("https://") or installer_arch_os.startswith("http://")
 
@@ -77,7 +105,7 @@ class Installer:
                 package_manager = installer_arch_os.split(" ", maxsplit=1)[0]
                 print(f"📦 Using package manager: {installer_arch_os}")
                 desc = package_manager + " installation"
-                version_to_be_installed = package_manager + "Latest"
+                version_to_be_installed = version or package_manager + "Latest"
                 result = subprocess.run(installer_arch_os, shell=True, capture_output=False, text=True, encoding="utf-8", check=False)
                 success = result.returncode == 0 and result.stderr == ""
                 if not success:

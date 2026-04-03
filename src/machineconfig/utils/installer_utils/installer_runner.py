@@ -1,6 +1,7 @@
 """package manager"""
 
 from pathlib import Path
+from typing import cast
 
 from machineconfig.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from machineconfig.utils.installer_utils.installer_class import Installer
@@ -127,6 +128,9 @@ def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: l
     return all_installers
 
 
+def _install_single_installer(installer_data: InstallerData, install_request: InstallRequest) -> str:
+    return Installer(installer_data).install_robust(install_request=install_request)
+
 
 def install_bulk(
     installers_data: list[InstallerData],
@@ -148,12 +152,9 @@ def install_bulk(
     installers_remaining = installers_data[1:]
     print("📦 INSTALLING REMAINING PACKAGES 📦")
 
-    # Use joblib for parallel processing of remaining installers
-    res = Parallel(n_jobs=jobs)(
-        delayed(lambda installer_data: Installer(installer_data).install_robust(install_request=install_request))(installer)
-        for installer in installers_remaining
-    )
-    res.insert(0, first_result)
+    delayed_jobs = [delayed(_install_single_installer)(installer, install_request) for installer in installers_remaining]
+    remaining_results = cast(list[str], list(Parallel(n_jobs=jobs)(delayed_jobs)))
+    res: list[str] = [first_result, *remaining_results]
 
     console = Console()
 
