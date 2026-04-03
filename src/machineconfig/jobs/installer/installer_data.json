@@ -2972,7 +2972,7 @@
       }
     },
     {
-      "appName": "poweshell",
+      "appName": "powershell",
       "license": "MIT License",
       "repoURL": "https://github.com/powershell/powershell",
       "doc": "🐚 PowerShell, a cross-platform shell in C#.",

@@ -71,9 +71,6 @@ def init(
 
 
 def update(
-    copy_assets: Annotated[
-        bool, typer.Option("--assets-copy/--no-assets-copy", "-a/-na", help="Copy (overwrite) assets to the machine after the update")
-    ] = True,
     link_public_configs: Annotated[
         bool,
         typer.Option("--link-public-configs/--no-link-public-configs", "-b/-nb", help="Link public configs after update (overwrites your configs!)"),
@@ -107,10 +104,8 @@ uv tool install --no-cache --upgrade machineconfig
         exit_then_run_shell_script(shell_script + "\n" + uv_command, strict=True)
     else:
         from machineconfig.utils.code import run_shell_script
-
         run_shell_script(shell_script, display_script=True, clean_env=False)
-        if copy_assets:
-            copy_both_assets()
+        copy_both_assets()
         if link_public_configs:
             from machineconfig.profile import create_links_export
 
@@ -118,9 +113,6 @@ uv tool install --no-cache --upgrade machineconfig
 
 
 def install(
-    copy_assets: Annotated[
-        bool, typer.Option("--copy-assets/--no-assets-copy", "-a/-na", help="Copy (overwrite) assets to the machine after the update")
-    ] = True,
     dev: Annotated[bool, typer.Option("--dev", "-d", help="Install from local development code instead of PyPI")] = False,
     export: Annotated[bool, typer.Option("--export", "-e", help="Export the installation files to get an offline image")] = False,
     interactive_config: Annotated[
@@ -150,20 +142,16 @@ def install(
         # now we need to run `uv sync` to install dependencies
 
     uv_command = get_uv_command(platform=platform.system())
-    if copy_assets:
+    def func() -> None:
+        from machineconfig.profile.create_shell_profile import create_default_shell_profile
 
-        def func() -> None:
-            from machineconfig.profile.create_shell_profile import create_default_shell_profile
+        create_default_shell_profile()  # involves copying assets too
 
-            create_default_shell_profile()  # involves copying assets too
-
-        uv_command2, _script_path = get_shell_script_running_lambda_function(
-            lambda: func(),  # pylint: disable=unnecessary-lambda
-            uv_with=["machineconfig"],
-            uv_project_dir=None,
-        )
-    else:
-        uv_command2 = ""
+    uv_command2, _script_path = get_shell_script_running_lambda_function(
+        lambda: func(),  # pylint: disable=unnecessary-lambda
+        uv_with=["machineconfig"],
+        uv_project_dir=None,
+    )
     if mcfg_path.exists():
         exit_then_run_shell_script(f"""
 cd {str(mcfg_path)}
