@@ -3,7 +3,7 @@
 Interactive Machine Configuration Setup Script
 
 
-
+TODO: add option for importing dotfiles
 """
 
 import sys
@@ -22,7 +22,6 @@ InstallOption = Literal[
     "sysabc",
     "termabc",
     "install_shell_profile",
-    "install_ssh_server",
     "link_public_configs",
     "link_private_configs",
     "retrieve_repositories",
@@ -73,7 +72,6 @@ def get_installation_choices() -> list[InstallOption]:
     v1: InstallOption = "sysabc"
     v2: InstallOption = "termabc"
     v3: InstallOption = "install_shell_profile"
-    v4: InstallOption = "install_ssh_server"
     v5: InstallOption = "retrieve_repositories"
     v6: InstallOption = "retrieve_data"
     v7: InstallOption = "link_public_configs"
@@ -85,7 +83,6 @@ def get_installation_choices() -> list[InstallOption]:
         Choice(value=v3, title="🐚 Configure Shell Profile Init.", checked=False),
         Choice(value=v7, title="🔗 Link Public Configs (symlink public dotfiles).", checked=False),
         Choice(value=v8, title="🔐 [ADVANCED] Link Private Configs (symlink private dotfiles).", checked=False),
-        Choice(value=v4, title="🔒 [ADVANCED] Configure SSH Server", checked=False),
         Choice(value=v5, title="📚 [ADVANCED] Retrieve Repositories", checked=False),
         Choice(value=v6, title="💾 [ADVANCED] Retrieve Data.", checked=False),
     ]
@@ -124,17 +121,6 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
         console.print(Panel("🐍 [bold green]PYTHON ENVIRONMENT[/bold green]\n[italic]Virtual environment setup[/italic]", border_style="green"))
         from machineconfig.scripts.python.helpers.helpers_devops.cli_self import install
         install(dev=False)
-
-    if "install_ssh_server" in selected_options:
-        console.print(Panel("🔒 [bold red]SSH SERVER[/bold red]\n[italic]Remote access setup[/italic]", border_style="red"))
-        if platform.system() == "Windows":
-            powershell_script = """Write-Host "🔧 Installing and configuring SSH server..."
-Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
-Start-Service sshd
-Set-Service -Name sshd -StartupType 'Automatic'"""
-            run_shell_script(f'powershell -Command "{powershell_script}"', display_script=True, clean_env=False)
-        else:
-            run_shell_script("sudo nala install openssh-server -y", display_script=True, clean_env=False)
 
     if "install_shell_profile" in selected_options:
         console.print(Panel("🐚 [bold green]SHELL PROFILE[/bold green]\n[italic]Shell configuration setup[/italic]", border_style="green"))
