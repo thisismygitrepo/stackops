@@ -25,6 +25,7 @@ def init(
         match which:
             case "init":
                 import machineconfig.settings as module
+
                 if platform.system() == "Darwin":
                     init_path = Path(module.__file__).parent.joinpath("shells", "zsh", "init.sh")
                 else:
@@ -46,13 +47,16 @@ def init(
         match which:
             case "init":
                 import machineconfig.settings as module
+
                 init_path = Path(module.__file__).parent.joinpath("shells", "pwsh", "init.ps1")
                 script = init_path.read_text(encoding="utf-8")
             case "ia":
                 from machineconfig.setup_windows import INTERACTIVE as script_path
+
                 script = script_path.read_text(encoding="utf-8")
             case "live":
                 from machineconfig.setup_windows import LIVE as script_path
+
                 script = script_path.read_text(encoding="utf-8")
             case _:
                 typer.echo("Unsupported shell script for Windows.")
@@ -104,25 +108,27 @@ uv tool install --no-cache --upgrade machineconfig
         exit_then_run_shell_script(shell_script + "\n" + uv_command, strict=True)
     else:
         from machineconfig.utils.code import run_shell_script
+
         run_shell_script(shell_script, display_script=True, clean_env=False)
         copy_both_assets()
         if link_public_configs:
             from machineconfig.profile import create_links_export
 
-            create_links_export.main_from_parser(direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
+            create_links_export.main_from_parser(
+                direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all"
+            )
 
 
 def install(
-    dev: Annotated[bool, typer.Option("--dev", "-d", help="Install from local development code instead of PyPI")] = False,
+    dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False,
     export: Annotated[bool, typer.Option("--export", "-e", help="Export the installation files to get an offline image")] = False,
     interactive_config: Annotated[
         bool, typer.Option("--interactive", "-i", help="🤖 INTERACTIVE configuration of machine after installation")
     ] = False,
 ):
-    """📋 CLONE machienconfig locally for nightly updates."""
+    """📋 install machienconfig locally for nightly updates."""
     if export:
         from machineconfig.utils.installer_utils import installer_offline
-
         installer_offline.export()
         return
     if interactive_config:
@@ -142,6 +148,7 @@ def install(
         # now we need to run `uv sync` to install dependencies
 
     uv_command = get_uv_command(platform=platform.system())
+
     def func() -> None:
         from machineconfig.profile.create_shell_profile import create_default_shell_profile
 
@@ -240,8 +247,7 @@ def security(ctx: typer.Context) -> None:
 def docs(
     rebuild: Annotated[bool, typer.Option("--rebuild", "-b", help="Rebuild docs before starting the preview server.")] = False,
     create_artifacts: Annotated[
-        bool,
-        typer.Option("--create-artifacts", "-a", help="Regenerate CLI graph docs artifacts before starting the preview server."),
+        bool, typer.Option("--create-artifacts", "-a", help="Regenerate CLI graph docs artifacts before starting the preview server.")
     ] = False,
 ) -> None:
     """📚 <o> Serve local docs with preview URLs."""
@@ -260,21 +266,28 @@ def get_app() -> typer.Typer:
         "ignore_unknown_options": True,
         "help_option_names": [],
     }
+    cli_app.command(name="install", no_args_is_help=False, help="📋 <i> install machienconfig locally for nightly updates.")(install)
+    cli_app.command(name="i", no_args_is_help=False, help="install machienconfig locally for nightly updates.", hidden=True)(install)
     cli_app.command(name="update", no_args_is_help=False, help="🔄 <u> UPDATE machineconfig")(update)
     cli_app.command(name="u", no_args_is_help=False, hidden=True)(update)
-    cli_app.command(name="init", no_args_is_help=False, help="🦐 <t> Define and manage configurations")(init)
-    cli_app.command(name="t", no_args_is_help=False, hidden=True)(init)
     cli_app.command(name="status", no_args_is_help=False, help="📊 <s> STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.")(status)
     cli_app.command(name="s", no_args_is_help=False, help="STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.", hidden=True)(status)
-    cli_app.command(name="install", no_args_is_help=False, help="📋 <i> CLONE machienconfig locally for nightly updates.")(install)
-    cli_app.command(name="i", no_args_is_help=False, help="CLONE machienconfig locally for nightly updates.", hidden=True)(install)
 
-    # src\machineconfig\utils\installer_utils\installer_offline.py
-    # from machineconfig.utils.installer_utils import installer_offline
-    # cli_app.add_typer(installer_offline.get_app(), name="offline", help="📦 [io] Export and Import binaries and configs for offline installation")
+    cli_app.command(name="security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
+    cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
+
+    cli_app.command(name="init", no_args_is_help=False, help="🦐 <t> Define and manage configurations")(init)
+    cli_app.command(name="t", no_args_is_help=False, hidden=True)(init)
 
     cli_app.command(name="explore", help="🧭 <x> Explore the MachineConfig CLI graph.", context_settings=ctx_settings)(explore)
     cli_app.command(name="x", hidden=True, context_settings=ctx_settings)(explore)
+
+    cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
+    cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)
+
+    if Path.home().joinpath("code", "machineconfig").exists():
+        cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
+        cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)
 
     if Path.home().joinpath("code", "machineconfig").exists():
         cli_app.command(name="build-docker", no_args_is_help=False, help="🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)")(
@@ -283,13 +296,7 @@ def get_app() -> typer.Typer:
         cli_app.command(name="d", no_args_is_help=False, help="Build docker images (wraps jobs/shell/docker_build_and_publish.sh)", hidden=True)(
             buid_docker
         )
-        cli_app.command(name="security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
-        cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
-        cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
-        cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)
-        cli_app.add_typer(cli_self_assets.get_app(), name="assets", help="🗂 <a> Regenerate repo-local CLI graph assets.")
+        cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI graph assets.")
         cli_app.add_typer(cli_self_assets.get_app(), name="a", help="Regenerate repo-local CLI graph assets.", hidden=True)
 
-    cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
-    cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)
     return cli_app
