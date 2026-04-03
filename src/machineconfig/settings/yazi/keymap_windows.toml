@@ -74,6 +74,16 @@ run  = 'shell --block -- powershell "~\.config\machineconfig\scripts\wrap_mcfg"f
 desc = "Read with fire interactively"
 
 [[mgr.prepend_keymap]]
+on   = ["o", "c"]
+run  = 'shell --block -- ouch compress "$0" "$0.zip"'
+desc = "Ops: compress with ouch"
+
+[[mgr.prepend_keymap]]
+on   = ["o", "d"]
+run  = 'shell --block -- ouch decompress "$0"'
+desc = "Ops: decompress with ouch"
+
+[[mgr.prepend_keymap]]
 on  = "y"
 run = [ 'shell -- echo "$@" | cb cp0', "yank" ]
 
