@@ -110,12 +110,12 @@ desc = "Ops: encrypt asymmetrically with gpg"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "S"]
-run  = 'shell --block -- gpg --output "$0.decrypted" --decrypt "$0"'
+run  = "shell --block -- sh -c 'input=\"$1\"; case \"$input\" in (*.gpg) output=\"${input%.gpg}\" ;; (*) echo \"Expected a .gpg file: $input\" >&2; exit 1 ;; esac; gpg --output \"$output\" --decrypt \"$input\"' sh \"$0\""
 desc = "Ops: decrypt symmetric gpg file"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "A"]
-run  = 'shell --block -- gpg --output "$0.decrypted" --decrypt "$0"'
+run  = "shell --block -- sh -c 'input=\"$1\"; case \"$input\" in (*.gpg) output=\"${input%.gpg}\" ;; (*) echo \"Expected a .gpg file: $input\" >&2; exit 1 ;; esac; gpg --output \"$output\" --decrypt \"$input\"' sh \"$0\""
 desc = "Ops: decrypt asymmetric gpg file"
 
 [[mgr.prepend_keymap]]
