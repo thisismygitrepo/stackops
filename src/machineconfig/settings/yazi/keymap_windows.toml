@@ -84,6 +84,26 @@ run  = 'shell --block -- ouch decompress "$0"'
 desc = "Ops: decompress with ouch"
 
 [[mgr.prepend_keymap]]
+on   = ["o", "s"]
+run  = 'shell --block -- gpg --output "$0.gpg" --symmetric "$0"'
+desc = "Ops: encrypt symmetrically with gpg"
+
+[[mgr.prepend_keymap]]
+on   = ["o", "a"]
+run  = 'shell --block -- gpg --output "$0.gpg" --default-recipient-self --encrypt "$0"'
+desc = "Ops: encrypt asymmetrically with gpg"
+
+[[mgr.prepend_keymap]]
+on   = ["o", "S"]
+run  = 'shell --block -- gpg --output "$0.decrypted" --decrypt "$0"'
+desc = "Ops: decrypt symmetric gpg file"
+
+[[mgr.prepend_keymap]]
+on   = ["o", "A"]
+run  = 'shell --block -- gpg --output "$0.decrypted" --decrypt "$0"'
+desc = "Ops: decrypt asymmetric gpg file"
+
+[[mgr.prepend_keymap]]
 on  = "y"
 run = [ 'shell -- echo "$@" | cb cp0', "yank" ]
 

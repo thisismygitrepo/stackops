@@ -118,12 +118,16 @@ def __setitem__(path: Path | str | os.PathLike[str], key: str | int | slice, val
 
 def _type(path: Path | str | os.PathLike[str]) -> str:
     path_obj = _to_path(path)
+    if path_obj.absolute():
+        if path_obj.is_file():
+            return "📄"
+        if path_obj.is_dir():
+            return "📁"
+        return "👻NotExist"
     if path_obj.is_file():
         return "📄"
     if path_obj.is_dir():
         return "📁"
-    if path_obj.is_absolute():
-        return "👻NotExist"
     return "📍Relative"
 
 
@@ -162,6 +166,10 @@ def _append_text(path: Path, text: str) -> Path:
     return path_obj.parent.joinpath(path_obj.name + str(text))
 
 
+def _render_path(path: Path | str | os.PathLike[str]) -> str:
+    return __repr__(_to_path(path))
+
+
 def _print_message(message: str) -> None:
     try:
         print(str(message))
@@ -194,7 +202,7 @@ def _finalize_result(source: Path, result: Path, *, inplace: bool, orig: bool, v
     delayed_message = ""
     if inplace:
         delete(source, sure=True, verbose=False)
-        delayed_message = f"DELETED 🗑️❌ {source!r}."
+        delayed_message = f"DELETED 🗑️❌ {_render_path(source)}."
     if verbose:
         _print_message(message)
     if verbose and delayed_message != "":
@@ -225,9 +233,7 @@ def _copy_file_bytes(source: Path, destination: Path) -> None:
 
 
 def _copy_tree(source: Path, destination: Path, *, allow_existing: bool = False) -> None:
-    if destination.exists() and not allow_existing:
-        raise FileExistsError(f"Destination already exists: {destination!r}")
-    destination.mkdir(parents=True, exist_ok=True)
+    destination.mkdir(parents=True, exist_ok=allow_existing)
     for child in source.iterdir():
         target = destination / child.name
         if child.is_dir() and not child.is_symlink():
@@ -241,19 +247,19 @@ def delete(path: Path | str | os.PathLike[str], sure: bool = False, verbose: boo
     path_obj = _to_path(path)
     if not sure:
         if verbose:
-            _print_message(f"❌ Did NOT DELETE because user is not sure. file: {path_obj!r}.")
+            _print_message(f"❌ Did NOT DELETE because user is not sure. file: {_render_path(path_obj)}.")
         return path_obj
     if not path_obj.exists():
         path_obj.unlink(missing_ok=True)
         if verbose:
-            _print_message(f"❌ Could NOT DELETE nonexisting file {path_obj!r}. ")
+            _print_message(f"❌ Could NOT DELETE nonexisting file {_render_path(path_obj)}. ")
         return path_obj  # broken symlinks exhibit funny existence behaviour, catch them here.
     if path_obj.is_file() or path_obj.is_symlink():
         path_obj.unlink(missing_ok=True)
     else:
         _delete_tree(path_obj)
     if verbose:
-        _print_message(f"🗑️ ❌ DELETED {path_obj!r}.")
+        _print_message(f"🗑️ ❌ DELETED {_render_path(path_obj)}.")
     return path_obj
 
 
@@ -274,7 +280,7 @@ def move(
     if parents:
         destination.parent.mkdir(parents=True, exist_ok=True)
     if content:
-        assert path_obj.is_dir(), NotADirectoryError(f"💥 When `content` flag is set to True, path must be a directory. It is not: `{path_obj!r}`")
+        assert path_obj.is_dir(), NotADirectoryError(f"💥 When `content` flag is set to True, path must be a directory. It is not: `{_render_path(path_obj)}`")
         for child in path_obj.glob("*"):
             move(path=child, folder=destination.parent, content=False, overwrite=overwrite)
         return destination
@@ -294,7 +300,7 @@ def move(
                 delete(source, sure=True, verbose=False)
             _ = oe
     if verbose:
-        _print_message(f"🚚 MOVED {path_obj!r} ==> {destination!r}`")
+        _print_message(f"🚚 MOVED {_render_path(path_obj)} ==> {_render_path(destination)}`")
     return destination
 
 
@@ -327,18 +333,18 @@ def copy(
     if not content and overwrite and destination.exists():
         delete(destination, sure=True)
     if not content and not overwrite and destination.exists():
-        raise FileExistsError(f"💥 Destination already exists: {destination!r}")
+        raise FileExistsError(f"💥 Destination already exists: {_render_path(destination)}")
     if source_path.is_file():
         _copy_file_bytes(source_path, destination)
         if verbose:
-            _print_message(f"🖨️ COPIED {source_path!r} ==> {destination!r}")
+            _print_message(f"🖨️ COPIED {_render_path(source_path)} ==> {_render_path(destination)}")
     elif source_path.is_dir():
         destination = destination.parent if content else destination
         _copy_tree(source_path, destination, allow_existing=False)
         if verbose:
-            _print_message(f"🖨️ COPIED {'Content of ' if content else ''} {source_path!r} ==> {destination!r}")
+            _print_message(f"🖨️ COPIED {'Content of ' if content else ''} {_render_path(source_path)} ==> {_render_path(destination)}")
     else:
-        _print_message(f"💥 Could NOT COPY. Not a file nor a path: {source_path!r}.")
+        _print_message(f"💥 Could NOT COPY. Not a file nor a path: {_render_path(source_path)}.")
     return path_obj if orig else destination
 
 
@@ -409,11 +415,11 @@ def append(
             if strict:
                 raise FileExistsError(f"❌ RENAMING failed. File `{destination}` already exists.")
             if verbose:
-                _print_message(f"⚠️ SKIPPED RENAMING {path_obj!r} ➡️ {destination!r} because FileExistsError and scrict=False policy.")
+                _print_message(f"⚠️ SKIPPED RENAMING {_render_path(path_obj)} ➡️ {_render_path(destination)} because FileExistsError and scrict=False policy.")
             return path_obj if orig else destination
         path_obj.rename(destination)
         if verbose:
-            _print_message(f"RENAMED {path_obj!r} ➡️ {destination!r}")
+            _print_message(f"RENAMED {_render_path(path_obj)} ➡️ {_render_path(destination)}")
     return path_obj if orig else destination
 
 
@@ -439,11 +445,11 @@ def with_name(
                 raise FileExistsError(f"❌ RENAMING failed. File `{destination}` already exists.")
             else:
                 if verbose:
-                    _print_message(f"⚠️ SKIPPED RENAMING {path_obj!r} ➡️ {destination!r} because FileExistsError and strict=False policy.")
+                    _print_message(f"⚠️ SKIPPED RENAMING {_render_path(path_obj)} ➡️ {_render_path(destination)} because FileExistsError and scrict=False policy.")
                 return path_obj if orig else destination
         path_obj.rename(destination)
         if verbose:
-            _print_message(f"RENAMED {path_obj!r} ➡️ {destination!r}")
+            _print_message(f"RENAMED {_render_path(path_obj)} ➡️ {_render_path(destination)}")
     return path_obj if orig else destination
 
 
@@ -542,7 +548,7 @@ def symlink_to(path: Path | str, target: Path | str, verbose: bool = True, overw
     else:
         _expand(path_obj).symlink_to(str(target_obj))
     if verbose:
-        _print_message(f"LINKED {path_obj!r} ➡️ {target_obj!r}")
+        _print_message(f"LINKED {_render_path(path_obj)} ➡️ {_render_path(target_obj)}")
     return path_obj if orig else target_obj
 
 
@@ -682,7 +688,7 @@ def zip_path(
             root_dir, base_dir = split(source, at=str(arcname_obj.parts[0]), sep=1)[0], str(arcname_obj)
         base_name = str(output_path)[:-4] if str(output_path).endswith(".zip") else str(output_path)
         output_path = Path(shutil.make_archive(base_name=base_name, format="zip", root_dir=str(root_dir), base_dir=str(base_dir), verbose=False, **kwargs))
-    message = f"ZIPPED {source!r} ==> {output_path!r}"
+    message = f"ZIPPED {_render_path(source)} ==> {_render_path(output_path)}"
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
@@ -768,7 +774,7 @@ def _unzip_archive(
         else:
             zip_obj.extract(member=str(target_name), path=str(output_folder))
             result = Path(str(output_folder)) / target_name
-    message = f"UNZIPPED {zipfile_path!r} ==> {result!r}"
+    message = f"UNZIPPED {_render_path(zipfile_path)} ==> {result!r}"
     return _finalize_result(_to_path(path), Path(result), inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
@@ -810,7 +816,7 @@ def untar(path: Path, folder: Path | None = None, name: str | None = None, targe
 
     with tarfile.open(str(_safe_resolve(_expand(path), strict=False)), "r") as tar_obj:
         tar_obj.extractall(path=str(output_path))
-    message = f"UNTARRED {_to_path(path)!r} ==>  {output_path!r}"
+    message = f"UNTARRED {_render_path(_to_path(path))} ==>  {_render_path(output_path)}"
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
@@ -819,7 +825,7 @@ def ungz(path: Path, folder: Path | None = None, name: str | None = None, target
     import gzip
 
     output_path.write_bytes(gzip.decompress(_safe_resolve(_expand(path), strict=False).read_bytes()))
-    message = f"UNGZED {_to_path(path)!r} ==>  {output_path!r}"
+    message = f"UNGZED {_render_path(_to_path(path))} ==>  {_render_path(output_path)}"
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
@@ -828,7 +834,7 @@ def unxz(path: Path, folder: Path | None = None, name: str | None = None, target
     import lzma
 
     output_path.write_bytes(lzma.decompress(_safe_resolve(_expand(path), strict=False).read_bytes()))
-    message = f"UNXZED {_to_path(path)!r} ==>  {output_path!r}"
+    message = f"UNXZED {_render_path(_to_path(path))} ==>  {_render_path(output_path)}"
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
@@ -838,7 +844,7 @@ def unbz(path: Path, folder: Path | None = None, name: str | None = None, target
     import bz2
 
     output_path.write_bytes(bz2.decompress(_safe_resolve(_expand(path), strict=False).read_bytes()))
-    message = f"UNBZED {_to_path(path)!r} ==>  {output_path!r}"
+    message = f"UNBZED {_render_path(_to_path(path))} ==>  {_render_path(output_path)}"
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
@@ -862,12 +868,12 @@ def decompress(path: Path, folder: Path | None = None, name: str | None = None, 
 
         archive_path = _safe_resolve(_expand(path_obj), strict=False)
         if not archive_path.is_file():
-            raise FileNotFoundError(f"Archive file not found: {archive_path!r}")
+            raise FileNotFoundError(f"Archive file not found: {_render_path(archive_path)}")
         destination = Path(str(archive_path).replace(".7z", ""))
         destination.mkdir(parents=True, exist_ok=True)
         with py7zr.SevenZipFile(str(archive_path), mode="r") as archive:
             archive.extractall(path=str(destination))
-        message = f"UNZIPPED7Z {path_obj!r} ==>  {destination!r}"
+        message = f"UNZIPPED7Z {_render_path(path_obj)} ==>  {_render_path(destination)}"
         return _finalize_result(path_obj, destination, inplace=inplace, orig=orig, verbose=verbose, message=message)
     raise ValueError(f"Cannot decompress file with unknown extension: {path_obj}")
 
@@ -889,7 +895,7 @@ def _encrypt_path(
     output_path = _resolve_path(path_obj, folder, name, target_path, source.name + suffix)
     assert source.is_file(), f"Cannot encrypt a directory. You might want to try `zip_n_encrypt`. {path}"
     output_path.write_bytes(io_encrypt(msg=source.read_bytes(), key=key, pwd=pwd))
-    message = f"🔒🔑 ENCRYPTED: {source!r} ==> {output_path!r}."
+    message = f"🔒🔑 ENCRYPTED: {_render_path(source)} ==> {_render_path(output_path)}."
     return _finalize_result(_to_path(path), output_path, inplace=inplace, orig=orig, verbose=verbose, message=message)
 
 
@@ -924,11 +930,11 @@ def _decrypt_path(
     default_name = source.name.replace(suffix, "") if suffix in source.name else "decrypted_" + source.name
     output_path = _resolve_path(path_obj, folder=folder, name=name, target_path=target_path, default_name=default_name)
     output_path.write_bytes(io_decrypt(token=source.read_bytes(), key=key, pwd=pwd))
-    message = f"🔓🔑 DECRYPTED: {source!r} ==> {output_path!r}."
+    message = f"🔓🔑 DECRYPTED: {_render_path(source)} ==> {_render_path(output_path)}."
     delayed_message = ""
     if inplace:
         delete(_to_path(path), sure=True, verbose=False)
-        delayed_message = f"DELETED 🗑️❌ {_to_path(path)!r}."
+        delayed_message = f"DELETED 🗑️❌ {_render_path(_to_path(path))}."
     if verbose:
         _print_message(message)
     if verbose and delayed_message != "":
@@ -1017,7 +1023,7 @@ def to_cloud(
     from rclone_python import rclone
 
     if verbose:
-        _print_message(f"⬆️ UPLOADING {localpath!r} TO {cloud}:{remote_obj.as_posix()}`")
+        _print_message(f"⬆️ UPLOADING {_render_path(localpath)} TO {cloud}:{remote_obj.as_posix()}`")
     rclone.copyto(in_path=localpath.as_posix(), out_path=f"{cloud}:{remote_obj.as_posix()}")
     for item in temporary:
         delete(item, sure=True)
@@ -1070,7 +1076,6 @@ def from_cloud(
     localpath = _append_text(localpath, ".zip") if unzip else localpath
     localpath = _append_text(localpath, ".enc") if decrypt else localpath
     from rclone_python import rclone
-
     try:
         rclone.copyto(in_path=f"{cloud}:{remote_obj.as_posix()}", out_path=localpath.as_posix())
     except Exception as err:  # noqa: BLE001
