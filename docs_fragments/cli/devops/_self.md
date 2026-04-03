@@ -12,22 +12,24 @@ Current `devops self --help` exposes:
 
 | Command | Description | Availability |
 |---------|-------------|--------------|
-| `update` | Upgrade machineconfig and optionally refresh copied assets or public config links | Always |
+| `install` | Install machineconfig locally, optionally from a development checkout | Always |
+| `update` | Upgrade machineconfig, refresh packaged assets, and optionally relink public configs | Always |
+| `status` | Inspect machine, shell, repo, SSH, config, app, or backup state | Always |
+| `config` | Run the interactive machine configuration flow | Always |
+| `security` | Run security and installer-audit helpers | Always |
 | `init` | Print or run packaged init/setup scripts | Always |
-| `status` | Inspect shell profile, apps, symlinks, dotfiles, and related machine state | Always |
-| `install` | Install machineconfig locally, export an offline image, or run the interactive setup flow | Always |
 | `explore` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
-| `build-docker` | Build Docker images from the repo script | Only when `~/code/machineconfig` exists |
-| `security` | Run security and installer-audit helpers | Only when `~/code/machineconfig` exists |
-| `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/machineconfig` exists |
-| `assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/machineconfig` exists |
 | `readme` | Fetch and render the project README in the terminal | Always |
+| `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/machineconfig` exists |
+| `build-installer` | Export installation files for an offline installer image | Always |
+| `build-docker` | Build Docker images from the repo script | Only when `~/code/machineconfig` exists |
+| `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/machineconfig` exists |
 
 The nested help screens render shortened usage such as `Usage: devops update ...`, but the full entrypoints remain `devops self ...` and `devops self security ...`.
 
 ### update
 
-Upgrade the installed tool and optionally re-apply local assets or public configs.
+Upgrade the installed tool, refresh packaged assets, and optionally relink public configs.
 
 ```bash
 devops self update [OPTIONS]
@@ -37,20 +39,19 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--assets-copy`, `-a` | Copy packaged assets onto the current machine after the update |
 | `--link-public-configs`, `-b` | Re-link public configs after the update |
 
 Current behavior:
 
 - If `~/code/machineconfig` exists, the command runs `uv self update`, `git pull`, and reinstalls the repo checkout as an editable tool.
 - Otherwise it updates `uv` and upgrades the installed `machineconfig` tool package.
-- On non-Windows platforms, `--assets-copy` and `--link-public-configs` trigger follow-up local configuration work after the tool update.
+- After the update succeeds, it copies packaged scripts and settings onto the current machine.
+- On non-Windows platforms, `--link-public-configs` additionally re-links the public config set.
 
 Examples:
 
 ```bash
 devops self update
-devops self update --no-assets-copy
 devops self update --link-public-configs
 ```
 
@@ -86,17 +87,29 @@ devops self init live --run
 
 ### status
 
-Run the self-audit report for the current machine.
+Run the self-audit report for the current machine, optionally limited to specific sections.
 
 ```bash
-devops self status
+devops self status [OPTIONS]
 ```
 
-This command delegates to the status helper that inspects installed tools, shell profile state, symlinks, and managed config layout.
+Key options from current help:
+
+| Option | Description |
+|--------|-------------|
+| `--machine`, `-m` | Show the machine and system information section |
+| `--shell`, `-s` | Show the shell profile section |
+| `--repos`, `-r` | Show the configured repositories section |
+| `--ssh`, `-h` | Show the SSH configuration section |
+| `--configs`, `--dotfiles`, `--symlinks`, `-c`, `-d`, `-l` | Show linked config, dotfile, and symlink state |
+| `--apps`, `--tools`, `-a`, `-t` | Show installed apps and tools |
+| `--backup`, `-b` | Show backup configuration status |
+
+Without flags, the command prints the full report.
 
 ### install
 
-Install machineconfig, clone a local development checkout when requested, export an offline image, or hand off to the interactive setup flow.
+Install machineconfig locally, optionally from a local development checkout.
 
 ```bash
 devops self install [OPTIONS]
@@ -106,15 +119,10 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--copy-assets`, `-a` | Copy packaged assets after installation |
 | `--dev`, `-d` | Install from a local development checkout instead of PyPI |
-| `--export`, `-e` | Export installation files for an offline image |
-| `--interactive`, `-i` | Run the interactive configuration flow instead of a direct install |
 
 Current behavior:
 
-- `--interactive` switches into the guided setup flow immediately.
-- `--export` produces the offline-installation image and exits.
 - `--dev` clones `~/code/machineconfig` first when that checkout does not already exist, then installs it editable.
 - Without a local checkout, the default path installs the published tool package.
 
@@ -123,9 +131,27 @@ Examples:
 ```bash
 devops self install
 devops self install --dev
-devops self install --interactive
-devops self install --export
 ```
+
+### config
+
+Run the interactive machine configuration flow.
+
+```bash
+devops self config
+```
+
+This launches the guided setup helper instead of performing a direct install.
+
+### build-installer
+
+Export the installation files used to create an offline installer image.
+
+```bash
+devops self build-installer
+```
+
+This command wraps the offline installer export path and does not accept extra options.
 
 ### explore
 
@@ -142,9 +168,7 @@ Current `devops self explore --help` exposes:
 | `search` | Search all `cli_graph.json` command entries |
 | `tree` | Render a rich tree view in the terminal |
 | `dot` | Export the graph as Graphviz DOT |
-| `sunburst` | Render a Plotly sunburst view |
-| `treemap` | Render a Plotly treemap view |
-| `icicle` | Render a Plotly icicle view |
+| `view` | Render a Plotly hierarchy chart (`sunburst`, `treemap`, or `icicle`) |
 | `tui` | Open the full-screen Textual navigator |
 
 #### search
@@ -162,21 +186,6 @@ Key option:
 |--------|-------------|
 | `--graph-path`, `-g` | Override the path to `cli_graph.json` |
 | `--show-json` | Print the selected `cli_graph.json` entry instead of running help |
-
-Representative JSON result excerpt:
-
-```json
-{
-  "kind": "command",
-  "name": "tree",
-  "help": "🌳 <t> Render a rich tree view in the terminal.",
-  "source": {
-    "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-    "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-    "callable": "tree"
-  }
-}
-```
 
 #### tree
 
@@ -198,26 +207,6 @@ Example:
 
 ```bash
 devops self explore tree --max-depth 2
-```
-
-Representative output:
-
-```text
-mcfg - MachineConfig CLI - Manage your machine configurations and workflows
-├── devops - 🔧 DevOps operations
-│   ├── install - 🔧 <i> Install essential packages
-│   ├── repos - 📁 <r> Manage development repositories
-│   ├── config - 🧰 <c> configuration subcommands
-│   ├── data - 🗄 <d> Backup and retrieve configuration files and directories to/from cloud storage using rclone.
-│   ├── self - 🔄 <s> self operations subcommands
-│   ├── network - 🔐 <n> Network subcommands
-│   └── execute - 🚀 <e> Execute python/shell scripts from pre-defined directories or as command
-├── cloud - ☁ Cloud management commands
-├── sessions - Layouts management subcommands
-├── agents - 🤖 AI Agents management subcommands
-├── utils - ⚙ utilities operations
-├── fire - <f> Fire and manage jobs
-└── croshell - <r> Cross-shell command execution
 ```
 
 #### dot
@@ -242,43 +231,38 @@ Example:
 devops self explore dot --max-depth 2
 ```
 
-Representative output:
+#### view
 
-```dot
-digraph cli_graph {
-  graph [rankdir=LR, splines=true, bgcolor="white"];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, color="#333333"];
-  edge [color="#999999"];
-  "mcfg" [label="mcfg\nMachineConfig CLI - Manage your machine configurations and workflows", shape="doubleoctagon", fillcolor="#f1f1f1", color="#555555"];
-  "mcfg devops" [label="devops\n🔧 DevOps operations", shape="box", fillcolor="#dbeafe", color="#2563eb"];
-  "mcfg" -> "mcfg devops";
-  "mcfg devops self" [label="self\n🔄 <s> self operations subcommands", shape="box", fillcolor="#dbeafe", color="#2563eb"];
-  "mcfg devops" -> "mcfg devops self";
-}
-```
-
-#### sunburst
-
-Render the graph as a Plotly sunburst view.
+Render the graph as a Plotly hierarchy chart. The default view is `sunburst`.
 
 ```bash
-devops self explore sunburst [OPTIONS]
+devops self explore view [OPTIONS] [VIEW]
 ```
+
+Supported `VIEW` values from current help:
+
+| Value | Meaning |
+|-------|---------|
+| `sunburst` | Render a sunburst chart |
+| `treemap` | Render a treemap chart |
+| `icicle` | Render an icicle chart |
 
 Key options from current help:
 
 | Option | Description |
 |--------|-------------|
 | `--output`, `-o` | Write HTML or image output |
-| `--max-depth`, `-d` | Limit the exported depth |
+| `--max-depth`, `-d` | Limit depth of the graph |
 | `--template` | Plotly template name |
 | `--height` | Static image height |
 | `--width` | Static image width |
 
-Example:
+Examples:
 
 ```bash
-devops self explore sunburst --output docs/assets/devops-self-explore/sunburst.html --template plotly_dark
+devops self explore view
+devops self explore view treemap
+devops self explore view icicle --output /tmp/icicle.html
 ```
 
 <iframe
@@ -288,57 +272,9 @@ devops self explore sunburst --output docs/assets/devops-self-explore/sunburst.h
   loading="lazy"
 ></iframe>
 
-Standalone HTML result: [sunburst.html](../assets/devops-self-explore/sunburst.html)
+Checked-in example: [sunburst.html](../assets/devops-self-explore/sunburst.html)
 
-#### treemap
-
-Render the graph as a Plotly treemap view.
-
-```bash
-devops self explore treemap [OPTIONS]
-```
-
-The option set matches `sunburst`: `--output`, `--max-depth`, `--template`, `--height`, and `--width`.
-
-Example:
-
-```bash
-devops self explore treemap --output docs/assets/devops-self-explore/treemap.html --template plotly_dark
-```
-
-<iframe
-  class="plotly-preview-frame"
-  src="../assets/devops-self-explore/treemap.html"
-  title="Interactive treemap preview"
-  loading="lazy"
-></iframe>
-
-Standalone HTML result: [treemap.html](../assets/devops-self-explore/treemap.html)
-
-#### icicle
-
-Render the graph as a Plotly icicle view.
-
-```bash
-devops self explore icicle [OPTIONS]
-```
-
-The option set matches `sunburst`: `--output`, `--max-depth`, `--template`, `--height`, and `--width`.
-
-Example:
-
-```bash
-devops self explore icicle --output docs/assets/devops-self-explore/icicle.html --template plotly_dark
-```
-
-<iframe
-  class="plotly-preview-frame"
-  src="../assets/devops-self-explore/icicle.html"
-  title="Interactive icicle preview"
-  loading="lazy"
-></iframe>
-
-Standalone HTML result: [icicle.html](../assets/devops-self-explore/icicle.html)
+Only the sunburst artifact is checked in by default. Use `--output` if you want local treemap or icicle exports.
 
 #### tui
 
@@ -514,8 +450,6 @@ devops self security report uv --view apps --format csv
 devops self security report git --view engines
 ```
 
-This command is only registered when `~/code/machineconfig` exists locally.
-
 ### docs
 
 Serve the local docs preview and print the localhost and LAN URLs.
@@ -535,7 +469,7 @@ Current behavior:
 
 - Prints `http://127.0.0.1:8000/machineconfig/` and, when available, the LAN preview URL.
 - With `--rebuild`, syncs the changelog and runs `zensical build` before `zensical serve`.
-- With `--create-artifacts`, refreshes the checked-in CLI graph HTML exports under `docs/assets/devops-self-explore/`.
+- With `--create-artifacts`, regenerates both `src/machineconfig/scripts/python/graph/cli_graph.json` and `docs/assets/devops-self-explore/sunburst.html`.
 - Serves on `0.0.0.0:8000`.
 
 Examples:
@@ -546,15 +480,15 @@ devops self docs --rebuild
 devops self docs --rebuild --create-artifacts
 ```
 
-### assets
+### build-assets
 
 Regenerate the checked-in CLI graph JSON and chart artifacts from the local repo checkout.
 
 ```bash
-devops self assets [SUBCOMMAND] [ARGS]...
+devops self build-assets [SUBCOMMAND] [ARGS]...
 ```
 
-Current `devops self assets --help` exposes:
+Current `devops self build-assets --help` exposes:
 
 | Command | Description |
 |---------|-------------|
@@ -564,8 +498,8 @@ Current `devops self assets --help` exposes:
 Examples:
 
 ```bash
-devops self assets update-cli-graph
-devops self assets regenerate-charts
+devops self build-assets update-cli-graph
+devops self build-assets regenerate-charts
 ```
 
 This sub-app is only registered when `~/code/machineconfig` exists locally.

@@ -12,7 +12,7 @@ This page mirrors the interactive CLI hierarchy view from `devops self explore v
 Use the live explorer commands to inspect or regenerate the hierarchy from an installed checkout:
 
 ```bash
-devops self assets regenerate-charts
+devops self build-assets regenerate-charts
 devops self explore tree
 devops self explore search
 devops self explore view
