@@ -1,7 +1,8 @@
-
+from datetime import datetime
+import os
 from pathlib import Path
 from platform import system
-import os
+import re
 import subprocess
 import sys
 import time
@@ -10,10 +11,18 @@ from typing import Any, Callable, Literal, TypeAlias
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.io import decrypt as io_decrypt
 from machineconfig.utils.io import encrypt as io_encrypt
-from machineconfig.utils.path_extended import FILE_MODE, timestamp, validate_name
 
 PathPredicate: TypeAlias = Callable[[Path], bool]
 PathLike: TypeAlias = Path | str | os.PathLike[str] | None
+FILE_MODE: TypeAlias = Literal["r", "w", "x", "a"]
+
+
+def validate_name(astring: str, replace: str = "_") -> str:
+    return re.sub(r"[^-a-zA-Z0-9_.()]+", replace, str(astring))
+
+
+def timestamp(fmt: str | None = None, name: str | None = None) -> str:
+    return ((name + "_") if name is not None else "") + datetime.now().strftime(fmt or "%Y-%m-%d-%I-%M-%S-%p-%f")
 
 
 def _to_path(path: Path | str | os.PathLike[str]) -> Path:
@@ -35,6 +44,87 @@ def _safe_resolve(path: Path | str | os.PathLike[str], strict: bool = False) -> 
 
 def resolve(path: Path | str | os.PathLike[str], strict: bool = False) -> Path:
     return _safe_resolve(_to_path(path), strict=strict)
+
+
+def __deepcopy__(path: Path | str | os.PathLike[str], *_args: object, **_kwargs: object) -> Path:
+    return Path(str(_to_path(path)))
+
+
+def __getstate__(path: Path | str | os.PathLike[str]) -> str:
+    return str(_to_path(path))
+
+
+def __add__(path: Path | str | os.PathLike[str], other: Path | str | os.PathLike[str]) -> Path:
+    path_obj = _to_path(path)
+    return path_obj.parent.joinpath(path_obj.name + str(other))
+
+
+def __radd__(path: Path | str | os.PathLike[str], other: Path | str | os.PathLike[str]) -> Path:
+    path_obj = _to_path(path)
+    return path_obj.parent.joinpath(str(other) + path_obj.name)
+
+
+def __sub__(path: Path | str | os.PathLike[str], other: Path | str | os.PathLike[str]) -> Path:
+    result = Path(str(_to_path(path)).replace(str(other), ""))
+    if len(result.parts) == 0:
+        return result
+    return __getitem__(result, slice(1, None)) if result.parts[0] in {"\\", "/"} else result
+
+
+def __getitem__(path: Path | str | os.PathLike[str], slici: int | list[int] | slice) -> Path:
+    path_obj = _to_path(path)
+    if isinstance(slici, list):
+        selected_parts: list[str] = []
+        for item in slici:
+            selected_parts.extend(__getitem__(path_obj, item).parts)
+        return Path(*selected_parts)
+    if isinstance(slici, int):
+        return Path(path_obj.parts[slici])
+    return Path(*path_obj.parts[slici])
+
+
+def __repr__(path: Path | str | os.PathLike[str]) -> str:
+    path_obj = _to_path(path)
+    if path_obj.is_symlink():
+        try:
+            target = resolve(path_obj, strict=False)
+        except Exception:  # noqa: BLE001
+            target = Path(f"BROKEN LINK {path_obj}")
+        rendered_target = str(target) if target != path_obj else str(path_obj)
+        if not path_obj.exists() and target == path_obj:
+            rendered_target = f"BROKEN LINK {path_obj}"
+        return f"""🔗 Symlink '{path_obj}' ==> {rendered_target}"""
+    if path_obj.is_absolute():
+        created_at = f""" | {datetime.fromtimestamp(path_obj.stat().st_ctime).isoformat()[:-7].replace("T", "  ")}""" if path_obj.exists() else ""
+        size_part = f""" | {round(path_obj.stat().st_size / (1024**2), 1)} Mb""" if path_obj.is_file() else ""
+        return f"""{_type(path_obj)} '{clickable(path_obj)}'{created_at}{size_part}"""
+    if "http" in str(path_obj):
+        return f"""🕸️ URL {as_url_str(path_obj)}"""
+    return f"""📍 Relative '{path_obj}'"""
+
+
+def __setitem__(path: Path | str | os.PathLike[str], key: str | int | slice, value: Path | str | os.PathLike[str]) -> Path:
+    fullparts = list(_to_path(path).parts)
+    new_parts = list(_to_path(value).parts)
+    if isinstance(key, str):
+        index = fullparts.index(key)
+        return Path(*(fullparts[:index] + new_parts + fullparts[index + 1 :]))
+    if isinstance(key, int):
+        return Path(*(fullparts[:key] + new_parts + fullparts[key + 1 :]))
+    start = 0 if key.start is None else key.start
+    stop = len(fullparts) if key.stop is None else key.stop
+    return Path(*(fullparts[:start] + new_parts + fullparts[stop:]))
+
+
+def _type(path: Path | str | os.PathLike[str]) -> str:
+    path_obj = _to_path(path)
+    if path_obj.is_file():
+        return "📄"
+    if path_obj.is_dir():
+        return "📁"
+    if path_obj.is_absolute():
+        return "👻NotExist"
+    return "📍Relative"
 
 
 def _is_user_admin() -> bool:
