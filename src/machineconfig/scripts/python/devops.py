@@ -50,11 +50,13 @@ def install(
     ] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
+    update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
+    version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
 ) -> None:
     """📦 Install packages"""
     import machineconfig.utils.installer_utils.installer_cli as installer_entry_point
 
-    installer_entry_point.main_installer_cli(which=which, group=group, interactive=interactive)
+    installer_entry_point.main_installer_cli(which=which, group=group, interactive=interactive, update=update, version=version)
 
 
 def repos(ctx: typer.Context) -> None:

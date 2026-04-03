@@ -7,7 +7,7 @@ from typing import Annotated, Literal, TypedDict
 
 import typer
 
-from machineconfig.utils.schemas.installer.installer_types import InstallerData
+from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallerData
 
 
 class InteractiveGroupPreview(TypedDict):
@@ -56,15 +56,18 @@ def main_installer_cli(
     which: Annotated[str | None, typer.Argument(..., help="Comma-separated list of program/groups names to install (if --group flag is set).")] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
+    update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
+    version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
 ) -> None:
+    install_request = InstallRequest(version=version, update=update)
     if interactive:
-        return install_interactively()
+        return install_interactively(install_request=install_request)
     if which is not None:
         if group:
             for a_group in [x.strip() for x in which.split(",") if x.strip() != ""]:
-                return install_group(package_group=a_group)
+                return install_group(package_group=a_group, install_request=install_request)
         else:
-            return install_clis(clis_names=[x.strip() for x in which.split(",") if x.strip() != ""])
+            return install_clis(clis_names=[x.strip() for x in which.split(",") if x.strip() != ""], install_request=install_request)
     else:
         if group:
             from rich.console import Console
@@ -97,7 +100,7 @@ def main_installer_cli(
     raise typer.Exit(1)
 
 
-def install_interactively() -> None:
+def install_interactively(install_request: InstallRequest) -> None:
     from machineconfig.utils.options import choose_from_options
     from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
     from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
@@ -142,10 +145,10 @@ def install_interactively() -> None:
         if a_program_name.startswith("📦 "):
             category_name = category_display_to_name.get(a_program_name)
             if category_name:
-                install_group(package_group=category_name)
+                install_group(package_group=category_name, install_request=install_request)
         else:
             an_installer_data = installer_option_to_data[a_program_name]
-            status_message = Installer(an_installer_data).install_robust(version=None)  # finish the task - this returns a status message, not a command
+            status_message = Installer(an_installer_data).install_robust(install_request=install_request)
             installation_messages.append(status_message)
     if installation_messages:
         console = Console()
@@ -154,7 +157,7 @@ def install_interactively() -> None:
         console.print(panel)
 
 
-def install_group(package_group: str) -> None:
+def install_group(package_group: str, install_request: InstallRequest) -> None:
     from machineconfig.utils.installer_utils.installer_runner import get_installers, install_bulk
     from machineconfig.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from rich.console import Console
@@ -167,13 +170,13 @@ def install_group(package_group: str) -> None:
         console.print(panel)
         package_group_typed: PACKAGE_NAME = next(group_name for group_name in PACKAGE_GROUP2NAMES if group_name == package_group)
         installers_ = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=[package_group_typed])
-        install_bulk(installers_data=installers_)
+        install_bulk(installers_data=installers_, install_request=install_request)
         return
     console = Console()
     console.print(f"❌ ERROR: Unknown package group: {package_group}. Available groups are: {list(PACKAGE_GROUP2NAMES.keys())}")
 
 
-def install_clis(clis_names: list[str]) -> None:
+def install_clis(clis_names: list[str], install_request: InstallRequest) -> None:
     from machineconfig.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from machineconfig.utils.installer_utils.installer_runner import get_installers
     from machineconfig.utils.installer_utils.installer_class import Installer
@@ -202,9 +205,9 @@ def install_clis(clis_names: list[str]) -> None:
             clis_names_chosen_interactively = handle_installer_not_found(a_cli_name, all_installers_data)
             if len(clis_names_chosen_interactively)  == 0:
                 continue
-            install_clis(clis_names=clis_names_chosen_interactively)
+            install_clis(clis_names=clis_names_chosen_interactively, install_request=install_request)
             continue
-        message = Installer(selected_installer).install_robust(version=None)  # finish the task
+        message = Installer(selected_installer).install_robust(install_request=install_request)
         total_messages.append(message)
     if total_messages:
         console = Console()
@@ -224,7 +227,7 @@ def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bo
     if verbose:
         print(f"⏳ {which} not found. Installing...")
     try:
-        main_installer_cli(which=which, interactive=False)
+        main_installer_cli(which=which, interactive=False, update=False, version=None)
         return True
     except Exception as e:
         if verbose:

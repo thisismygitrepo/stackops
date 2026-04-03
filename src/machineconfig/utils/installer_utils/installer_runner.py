@@ -4,7 +4,7 @@ from pathlib import Path
 
 from machineconfig.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from machineconfig.utils.installer_utils.installer_class import Installer
-from machineconfig.utils.schemas.installer.installer_types import InstallerData, InstallerDataFiles, get_normalized_arch, get_os_name, OPERATING_SYSTEMS, CPU_ARCHITECTURES
+from machineconfig.utils.schemas.installer.installer_types import CPU_ARCHITECTURES, InstallRequest, InstallerData, InstallerDataFiles, OPERATING_SYSTEMS, get_normalized_arch, get_os_name
 from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
@@ -128,22 +128,32 @@ def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: l
 
 
 
-def install_bulk(installers_data: list[InstallerData], safe: bool = False, jobs: int = 10, fresh: bool = False):
+def install_bulk(
+    installers_data: list[InstallerData],
+    install_request: InstallRequest,
+    safe: bool = False,
+    jobs: int = 10,
+    fresh: bool = False,
+):
     print("🚀 BULK INSTALLATION PROCESS 🚀")
     if fresh:
         print("🧹 Fresh install requested - clearing version cache...")
         PathExtended(INSTALL_VERSION_ROOT).delete(sure=True)
-        print("✅ Version cache cleared")
+    print("✅ Version cache cleared")
     if safe:
         pass
     print(f"🚀 Starting installation of {len(installers_data)} packages...")
     print("📦 INSTALLING FIRST PACKAGE 📦")
-    Installer(installers_data[0]).install(version=None)
+    first_result = Installer(installers_data[0]).install_robust(install_request=install_request)
     installers_remaining = installers_data[1:]
     print("📦 INSTALLING REMAINING PACKAGES 📦")
 
     # Use joblib for parallel processing of remaining installers
-    res = Parallel(n_jobs=jobs)(delayed(lambda x: Installer(x).install_robust(version=None))(installer) for installer in installers_remaining)
+    res = Parallel(n_jobs=jobs)(
+        delayed(lambda installer_data: Installer(installer_data).install_robust(install_request=install_request))(installer)
+        for installer in installers_remaining
+    )
+    res.insert(0, first_result)
 
     console = Console()
 

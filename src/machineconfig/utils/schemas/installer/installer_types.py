@@ -1,4 +1,5 @@
-from typing import TypedDict, Literal, TypeAlias
+from dataclasses import dataclass
+from typing import Literal, TypeAlias, TypedDict
 import platform
 
 
@@ -17,6 +18,12 @@ class InstallerData(TypedDict):
 class InstallerDataFiles(TypedDict):
     version: str
     installers: list[InstallerData]
+
+
+@dataclass(frozen=True, slots=True)
+class InstallRequest:
+    version: str | None
+    update: bool
 
 
 def get_os_name() -> OPERATING_SYSTEMS:
