@@ -742,7 +742,7 @@
                     "",
                     "    from machineconfig.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.85\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.86\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1675,7 +1675,7 @@
                     "    # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.85\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.86\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -3809,6 +3809,63 @@
             "children": [
               {
                 "kind": "command",
+                "name": "install",
+                "fullPath": "devops self install",
+                "shortPath": "d s i",
+                "help": "📋 <i> install machineconfig locally for nightly updates.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "install"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def install(",
+                    "    dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Clone repo and install from it instead of PyPI\")] = False,",
+                    "):",
+                    "    \"\"\"📋 install machineconfig locally for nightly updates.\"\"\"",
+                    "    _install_machineconfig(dev=dev)"
+                  ],
+                  "name": "install",
+                  "parameters": [
+                    {
+                      "name": "dev",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--dev', '-d', help='Clone repo and install from it instead of PyPI')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--dev",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--dev"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Clone repo and install from it instead of PyPI"
+                      }
+                    }
+                  ]
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "📋 install machineconfig locally for nightly updates.",
+                "aliases": [
+                  {
+                    "name": "i",
+                    "hidden": true,
+                    "help": "install machineconfig locally for nightly updates."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "update",
                 "fullPath": "devops self update",
                 "shortPath": "d s u",
@@ -3821,9 +3878,6 @@
                 "signature": {
                   "raw_lines": [
                     "def update(",
-                    "    copy_assets: Annotated[",
-                    "        bool, typer.Option(\"--assets-copy/--no-assets-copy\", \"-a/-na\", help=\"Copy (overwrite) assets to the machine after the update\")",
-                    "    ] = True,",
                     "    link_public_configs: Annotated[",
                     "        bool,",
                     "        typer.Option(\"--link-public-configs/--no-link-public-configs\", \"-b/-nb\", help=\"Link public configs after update (overwrites your configs!)\"),",
@@ -3859,39 +3913,16 @@
                     "        from machineconfig.utils.code import run_shell_script",
                     "",
                     "        run_shell_script(shell_script, display_script=True, clean_env=False)",
-                    "        if copy_assets:",
-                    "            copy_both_assets()",
+                    "        copy_both_assets()",
                     "        if link_public_configs:",
                     "            from machineconfig.profile import create_links_export",
                     "",
-                    "            create_links_export.main_from_parser(direction=\"down\", sensitivity=\"public\", method=\"copy\", on_conflict=\"overwrite-default-path\", which=\"all\")"
+                    "            create_links_export.main_from_parser(",
+                    "                direction=\"down\", sensitivity=\"public\", method=\"copy\", on_conflict=\"overwrite-default-path\", which=\"all\"",
+                    "            )"
                   ],
                   "name": "update",
                   "parameters": [
-                    {
-                      "name": "copy_assets",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": true,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--assets-copy/--no-assets-copy', '-a/-na', help='Copy (overwrite) assets to the machine after the update')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--assets-copy/--no-assets-copy",
-                          "-a/-na"
-                        ],
-                        "long_flags": [
-                          "--assets-copy",
-                          "--no-assets-copy"
-                        ],
-                        "short_flags": [
-                          "-a",
-                          "-na"
-                        ],
-                        "help": "Copy (overwrite) assets to the machine after the update"
-                      }
-                    },
                     {
                       "name": "link_public_configs",
                       "kind": "positional_or_keyword",
@@ -3931,131 +3962,6 @@
               },
               {
                 "kind": "command",
-                "name": "init",
-                "fullPath": "devops self init",
-                "shortPath": "d s t",
-                "help": "🦐 <t> Define and manage configurations",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
-                  "callable": "init"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def init(",
-                    "    which: Annotated[",
-                    "        Literal[\"init\", \"ia\", \"live\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
-                    "    ] = \"init\",",
-                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
-                    ") -> None:",
-                    "    import platform",
-                    "",
-                    "    script = \"\"",
-                    "    if platform.system() == \"Linux\" or platform.system() == \"Darwin\":",
-                    "        match which:",
-                    "            case \"init\":",
-                    "                import machineconfig.settings as module",
-                    "                if platform.system() == \"Darwin\":",
-                    "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"zsh\", \"init.sh\")",
-                    "                else:",
-                    "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"bash\", \"init.sh\")",
-                    "                script = init_path.read_text(encoding=\"utf-8\")",
-                    "            case \"ia\":",
-                    "                from machineconfig.setup_linux import INTERACTIVE as script_path",
-                    "",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case \"live\":",
-                    "                from machineconfig.setup_linux import LIVE as script_path",
-                    "",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case _:",
-                    "                typer.echo(\"Unsupported shell script for Linux.\")",
-                    "                raise typer.Exit(code=1)",
-                    "",
-                    "    elif platform.system() == \"Windows\":",
-                    "        match which:",
-                    "            case \"init\":",
-                    "                import machineconfig.settings as module",
-                    "                init_path = Path(module.__file__).parent.joinpath(\"shells\", \"pwsh\", \"init.ps1\")",
-                    "                script = init_path.read_text(encoding=\"utf-8\")",
-                    "            case \"ia\":",
-                    "                from machineconfig.setup_windows import INTERACTIVE as script_path",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case \"live\":",
-                    "                from machineconfig.setup_windows import LIVE as script_path",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case _:",
-                    "                typer.echo(\"Unsupported shell script for Windows.\")",
-                    "                raise typer.Exit(code=1)",
-                    "                # return",
-                    "    else:",
-                    "        # raise NotImplementedError(\"Unsupported platform\")",
-                    "        typer.echo(\"Unsupported platform for init scripts.\")",
-                    "        raise typer.Exit(code=1)",
-                    "    if run:",
-                    "        from machineconfig.utils.code import exit_then_run_shell_script",
-                    "",
-                    "        exit_then_run_shell_script(script, strict=True)",
-                    "    else:",
-                    "        print(script)"
-                  ],
-                  "name": "init",
-                  "parameters": [
-                    {
-                      "name": "which",
-                      "kind": "positional_or_keyword",
-                      "type": "Literal['init', 'ia', 'live']",
-                      "default": "init",
-                      "required": false,
-                      "annotation_raw": "Annotated[Literal['init', 'ia', 'live'], typer.Argument(..., help='Comma-separated list of script names to run all initialization scripts.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Comma-separated list of script names to run all initialization scripts.",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "run",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run the script after displaying it.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--run/--no-run",
-                          "-r/-nr"
-                        ],
-                        "long_flags": [
-                          "--run",
-                          "--no-run"
-                        ],
-                        "short_flags": [
-                          "-r",
-                          "-nr"
-                        ],
-                        "help": "Run the script after displaying it."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "aliases": [
-                  {
-                    "name": "t",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
                 "name": "status",
                 "fullPath": "devops self status",
                 "shortPath": "d s s",
@@ -4067,20 +3973,202 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def status() -> None:",
-                    "    \"\"\"📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.\"\"\"",
+                    "def status(",
+                    "    machine: Annotated[bool, typer.Option(\"--machine\", \"-m\", help=\"Show the machine/system information section.\")] = False,",
+                    "    shell: Annotated[bool, typer.Option(\"--shell\", \"-s\", help=\"Show the shell profile section.\")] = False,",
+                    "    repos: Annotated[bool, typer.Option(\"--repos\", \"-r\", help=\"Show the configured repositories section.\")] = False,",
+                    "    ssh: Annotated[bool, typer.Option(\"--ssh\", \"-h\", help=\"Show the SSH configuration section.\")] = False,",
+                    "    configs: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--configs\", \"--dotfiles\", \"--symlinks\", \"-c\", \"-d\", \"-l\", help=\"Show the linked config, dotfile, and symlink section.\"),",
+                    "    ] = False,",
+                    "    apps: Annotated[bool, typer.Option(\"--apps\", \"--tools\", \"-a\", \"-t\", help=\"Show the installed apps/tools section.\")] = False,",
+                    "    backup: Annotated[bool, typer.Option(\"--backup\", \"-b\", help=\"Show the backup configuration section.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.",
+                    "",
+                    "    Pass one or more section flags to limit the report to those sections.",
+                    "    \"\"\"",
                     "    import machineconfig.scripts.python.helpers.helpers_devops.devops_status as helper",
                     "",
-                    "    helper.main()"
+                    "    sections = helper.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)",
+                    "    helper.main(sections=sections)"
                   ],
                   "name": "status",
-                  "parameters": [],
+                  "parameters": [
+                    {
+                      "name": "machine",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--machine', '-m', help='Show the machine/system information section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--machine",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--machine"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Show the machine/system information section."
+                      }
+                    },
+                    {
+                      "name": "shell",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--shell', '-s', help='Show the shell profile section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--shell",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--shell"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Show the shell profile section."
+                      }
+                    },
+                    {
+                      "name": "repos",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--repos', '-r', help='Show the configured repositories section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--repos",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--repos"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Show the configured repositories section."
+                      }
+                    },
+                    {
+                      "name": "ssh",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--ssh', '-h', help='Show the SSH configuration section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--ssh",
+                          "-h"
+                        ],
+                        "long_flags": [
+                          "--ssh"
+                        ],
+                        "short_flags": [
+                          "-h"
+                        ],
+                        "help": "Show the SSH configuration section."
+                      }
+                    },
+                    {
+                      "name": "configs",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--configs', '--dotfiles', '--symlinks', '-c', '-d', '-l', help='Show the linked config, dotfile, and symlink section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--configs",
+                          "--dotfiles",
+                          "--symlinks",
+                          "-c",
+                          "-d",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--configs",
+                          "--dotfiles",
+                          "--symlinks"
+                        ],
+                        "short_flags": [
+                          "-c",
+                          "-d",
+                          "-l"
+                        ],
+                        "help": "Show the linked config, dotfile, and symlink section."
+                      }
+                    },
+                    {
+                      "name": "apps",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--apps', '--tools', '-a', '-t', help='Show the installed apps/tools section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--apps",
+                          "--tools",
+                          "-a",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--apps",
+                          "--tools"
+                        ],
+                        "short_flags": [
+                          "-a",
+                          "-t"
+                        ],
+                        "help": "Show the installed apps/tools section."
+                      }
+                    },
+                    {
+                      "name": "backup",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--backup', '-b', help='Show the backup configuration section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backup",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backup"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Show the backup configuration section."
+                      }
+                    }
+                  ],
                   "return": "None"
                 },
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.",
+                "doc": "📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.\n\nPass one or more section flags to limit the report to those sections.",
                 "aliases": [
                   {
                     "name": "s",
@@ -4091,877 +4179,36 @@
               },
               {
                 "kind": "command",
-                "name": "install",
-                "fullPath": "devops self install",
-                "shortPath": "d s i",
-                "help": "📋 <i> CLONE machienconfig locally for nightly updates.",
+                "name": "config",
+                "fullPath": "devops self config",
+                "shortPath": "d s c",
+                "help": "🤖 <c> interactive configuration of machine.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
-                  "callable": "install"
+                  "callable": "interactive"
                 },
                 "signature": {
                   "raw_lines": [
-                    "def install(",
-                    "    copy_assets: Annotated[",
-                    "        bool, typer.Option(\"--copy-assets/--no-assets-copy\", \"-a/-na\", help=\"Copy (overwrite) assets to the machine after the update\")",
-                    "    ] = True,",
-                    "    dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Install from local development code instead of PyPI\")] = False,",
-                    "    export: Annotated[bool, typer.Option(\"--export\", \"-e\", help=\"Export the installation files to get an offline image\")] = False,",
-                    "    interactive_config: Annotated[",
-                    "        bool, typer.Option(\"--interactive\", \"-i\", help=\"🤖 INTERACTIVE configuration of machine after installation\")",
-                    "    ] = False,",
-                    "):",
-                    "    \"\"\"📋 CLONE machienconfig locally for nightly updates.\"\"\"",
-                    "    if export:",
-                    "        from machineconfig.utils.installer_utils import installer_offline",
+                    "def interactive() -> None:",
+                    "    \"\"\"🤖 <c> INTERACTIVE configuration of machine.\"\"\"",
+                    "    from machineconfig.scripts.python.helpers.helpers_devops.interactive import main",
                     "",
-                    "        installer_offline.export()",
-                    "        return",
-                    "    if interactive_config:",
-                    "        interactive()",
-                    "        return",
-                    "    from machineconfig.utils.code import run_shell_script, get_uv_command, get_shell_script_running_lambda_function, exit_then_run_shell_script",
-                    "    import platform",
-                    "",
-                    "    mcfg_path = Path.home().joinpath(\"code/machineconfig\")",
-                    "    _ = run_shell_script",
-                    "    if dev and not mcfg_path.exists():",
-                    "        # clone: https://github.com/thisismygitrepo/machineconfig.git",
-                    "        import git",
-                    "",
-                    "        mcfg_path.parent.mkdir(parents=True, exist_ok=True)",
-                    "        git.Repo.clone_from(\"https://github.com/thisismygitrepo/machineconfig.git\", str(mcfg_path))",
-                    "        # now we need to run `uv sync` to install dependencies",
-                    "",
-                    "    uv_command = get_uv_command(platform=platform.system())",
-                    "    if copy_assets:",
-                    "",
-                    "        def func() -> None:",
-                    "            from machineconfig.profile.create_shell_profile import create_default_shell_profile",
-                    "",
-                    "            create_default_shell_profile()  # involves copying assets too",
-                    "",
-                    "        uv_command2, _script_path = get_shell_script_running_lambda_function(",
-                    "            lambda: func(),  # pylint: disable=unnecessary-lambda",
-                    "            uv_with=[\"machineconfig\"],",
-                    "            uv_project_dir=None,",
-                    "        )",
-                    "    else:",
-                    "        uv_command2 = \"\"",
-                    "    if mcfg_path.exists():",
-                    "        exit_then_run_shell_script(f\"\"\"",
-                    "cd {str(mcfg_path)}",
-                    "{uv_command} sync",
-                    "{uv_command} tool install --upgrade --editable \"{str(mcfg_path)}\"",
-                    "{uv_command2}",
-                    "\"\"\")",
-                    "    else:",
-                    "        exit_then_run_shell_script(rf\"\"\"",
-                    "{uv_command} tool install --upgrade \"{MACHINECONFIG_VERSION}\"",
-                    "{uv_command2}",
-                    "\"\"\")"
+                    "    main()"
                   ],
-                  "name": "install",
-                  "parameters": [
-                    {
-                      "name": "copy_assets",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": true,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--copy-assets/--no-assets-copy', '-a/-na', help='Copy (overwrite) assets to the machine after the update')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--copy-assets/--no-assets-copy",
-                          "-a/-na"
-                        ],
-                        "long_flags": [
-                          "--copy-assets",
-                          "--no-assets-copy"
-                        ],
-                        "short_flags": [
-                          "-a",
-                          "-na"
-                        ],
-                        "help": "Copy (overwrite) assets to the machine after the update"
-                      }
-                    },
-                    {
-                      "name": "dev",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--dev', '-d', help='Install from local development code instead of PyPI')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--dev",
-                          "-d"
-                        ],
-                        "long_flags": [
-                          "--dev"
-                        ],
-                        "short_flags": [
-                          "-d"
-                        ],
-                        "help": "Install from local development code instead of PyPI"
-                      }
-                    },
-                    {
-                      "name": "export",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--export', '-e', help='Export the installation files to get an offline image')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--export",
-                          "-e"
-                        ],
-                        "long_flags": [
-                          "--export"
-                        ],
-                        "short_flags": [
-                          "-e"
-                        ],
-                        "help": "Export the installation files to get an offline image"
-                      }
-                    },
-                    {
-                      "name": "interactive_config",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='🤖 INTERACTIVE configuration of machine after installation')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--interactive",
-                          "-i"
-                        ],
-                        "long_flags": [
-                          "--interactive"
-                        ],
-                        "short_flags": [
-                          "-i"
-                        ],
-                        "help": "🤖 INTERACTIVE configuration of machine after installation"
-                      }
-                    }
-                  ]
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "📋 CLONE machienconfig locally for nightly updates.",
-                "aliases": [
-                  {
-                    "name": "i",
-                    "hidden": true,
-                    "help": "CLONE machienconfig locally for nightly updates."
-                  }
-                ]
-              },
-              {
-                "kind": "group",
-                "name": "explore",
-                "fullPath": "devops self explore",
-                "shortPath": "d s x",
-                "help": "🧭 <x> Explore the MachineConfig CLI graph.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
-                  "dispatches_to": "machineconfig.scripts.python.graph.visualize.cli_graph_app.get_app",
-                  "callable": "explore"
-                },
-                "app": {
-                  "help": "🧭 <g> Visualize the MachineConfig CLI graph in multiple formats.",
-                  "no_args_is_help": true,
-                  "add_help_option": true,
-                  "add_completion": false
-                },
-                "children": [
-                  {
-                    "kind": "command",
-                    "name": "search",
-                    "fullPath": "devops self explore search",
-                    "shortPath": "d s x s",
-                    "help": "🔎 <s> Search CLI graph entries and run the selected command help.",
-                    "source": {
-                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "search"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def search(",
-                        "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Path to cli_graph.json\")] = None,",
-                        "    show_json: Annotated[",
-                        "        bool,",
-                        "        typer.Option(\"--show-json\", help=\"Print the selected cli_graph.json entry instead of running '<command> --help'.\"),",
-                        "    ] = False,",
-                        ") -> None:",
-                        "    \"\"\"🔎 Search cli_graph.json entries and run --help for the selected command or group.\"\"\"",
-                        "    def func(graph_path_str: str | None, show_json: bool) -> None:",
-                        "        from machineconfig.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH",
-                        "        from machineconfig.scripts.python.graph.visualize.cli_graph_search import search_cli_graph",
-                        "",
-                        "        graph_file = Path(graph_path_str) if graph_path_str else DEFAULT_GRAPH_PATH",
-                        "        return_code = search_cli_graph(graph_path=graph_file, show_json=show_json)",
-                        "        if return_code != 0:",
-                        "            raise typer.Exit(code=return_code)",
-                        "            ",
-                        "",
-                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
-                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
-                        "",
-                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "        uv_with = []",
-                        "        uv_project_dir = str(Path.home().joinpath(\"code/machineconfig\"))",
-                        "    else:",
-                        "        uv_with = [MACHINECONFIG_VERSION]",
-                        "        uv_project_dir = None",
-                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_json=show_json),",
-                        "        uv_with=uv_with,",
-                        "        uv_project_dir=uv_project_dir,",
-                        "    )",
-                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
-                      ],
-                      "name": "search",
-                      "parameters": [
-                        {
-                          "name": "graph_path",
-                          "kind": "positional_or_keyword",
-                          "type": "Path | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--graph-path', '-g', help='Path to cli_graph.json')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--graph-path",
-                              "-g"
-                            ],
-                            "long_flags": [
-                              "--graph-path"
-                            ],
-                            "short_flags": [
-                              "-g"
-                            ],
-                            "help": "Path to cli_graph.json"
-                          }
-                        },
-                        {
-                          "name": "show_json",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-json', help=\"Print the selected cli_graph.json entry instead of running '<command> --help'.\")]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--show-json"
-                            ],
-                            "long_flags": [
-                              "--show-json"
-                            ],
-                            "short_flags": [],
-                            "help": "Print the selected cli_graph.json entry instead of running '<command> --help'."
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "doc": "🔎 Search cli_graph.json entries and run --help for the selected command or group.",
-                    "aliases": [
-                      {
-                        "name": "s",
-                        "hidden": true,
-                        "help": "Search CLI graph entries and run the selected command help."
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
-                    "name": "tree",
-                    "fullPath": "devops self explore tree",
-                    "shortPath": "d s x t",
-                    "help": "🌳 <t> Render a rich tree view in the terminal.",
-                    "source": {
-                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "tree"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def tree(",
-                        "    show_help: Annotated[bool, typer.Option(\"--show-help/--no-show-help\", help=\"Include help text in labels\")] = True,",
-                        "    show_aliases: Annotated[bool, typer.Option(\"--show-aliases/--no-show-aliases\", help=\"Include aliases in labels\")] = False,",
-                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the tree\")] = None,",
-                        ") -> None:",
-                        "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
-                        "    def func(show_help: bool, show_aliases: bool, max_depth: int | None) -> None:",
-                        "        from machineconfig.scripts.python.graph.visualize.rich_tree import render_tree",
-                        "",
-                        "        render_tree(show_help=show_help, show_aliases=show_aliases, max_depth=max_depth)",
-                        "",
-                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
-                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
-                        "",
-                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "        uv_with: list[str] = [\"plotly\", \"kaleido\"]",
-                        "        uv_project_dir = str(Path.home().joinpath(\"code\", \"machineconfig\"))",
-                        "    else:",
-                        "        uv_with = [MACHINECONFIG_VERSION, \"plotly\", \"kaleido\"]",
-                        "        uv_project_dir = None",
-                        "",
-                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(",
-                        "            show_help=show_help,",
-                        "            show_aliases=show_aliases,",
-                        "            max_depth=max_depth,",
-                        "        ),",
-                        "        uv_with=uv_with,",
-                        "        uv_project_dir=uv_project_dir,",
-                        "    )",
-                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
-                      ],
-                      "name": "tree",
-                      "parameters": [
-                        {
-                          "name": "show_help",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": true,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-help/--no-show-help', help='Include help text in labels')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--show-help/--no-show-help"
-                            ],
-                            "long_flags": [
-                              "--show-help",
-                              "--no-show-help"
-                            ],
-                            "short_flags": [],
-                            "help": "Include help text in labels"
-                          }
-                        },
-                        {
-                          "name": "show_aliases",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-aliases/--no-show-aliases', help='Include aliases in labels')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--show-aliases/--no-show-aliases"
-                            ],
-                            "long_flags": [
-                              "--show-aliases",
-                              "--no-show-aliases"
-                            ],
-                            "short_flags": [],
-                            "help": "Include aliases in labels"
-                          }
-                        },
-                        {
-                          "name": "max_depth",
-                          "kind": "positional_or_keyword",
-                          "type": "int | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the tree')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--max-depth",
-                              "-d"
-                            ],
-                            "long_flags": [
-                              "--max-depth"
-                            ],
-                            "short_flags": [
-                              "-d"
-                            ],
-                            "help": "Limit depth of the tree"
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "doc": "Render a rich tree view in the terminal.",
-                    "aliases": [
-                      {
-                        "name": "t",
-                        "hidden": true,
-                        "help": "Render a rich tree view in the terminal."
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
-                    "name": "dot",
-                    "fullPath": "devops self explore dot",
-                    "shortPath": "d s x d",
-                    "help": "🧩 <d> Export the graph as Graphviz DOT.",
-                    "source": {
-                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "dot"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def dot(",
-                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write DOT output to a file\")] = None,",
-                        "    include_help: Annotated[bool, typer.Option(\"--include-help/--no-include-help\", help=\"Include help text in labels\")] = True,",
-                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
-                        ") -> None:",
-                        "    \"\"\"Export the graph as Graphviz DOT.\"\"\"",
-                        "    def func(output_str: str | None, include_help: bool, max_depth: int | None) -> None:",
-                        "        from pathlib import Path",
-                        "        from machineconfig.scripts.python.graph.visualize.dot_export import render_dot",
-                        "",
-                        "        output_path = Path(output_str) if output_str else None",
-                        "        dot_text = render_dot(max_depth=max_depth, include_help=include_help)",
-                        "",
-                        "        if output_path is None:",
-                        "            print(dot_text)",
-                        "        else:",
-                        "            output_path.write_text(dot_text, encoding=\"utf-8\")",
-                        "            print(f\"Wrote {output_path}\")",
-                        "",
-                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
-                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
-                        "",
-                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "        uv_with: list[str] = [\"plotly\", \"kaleido\"]",
-                        "        uv_project_dir = str(Path.home().joinpath(\"code\", \"machineconfig\"))",
-                        "    else:",
-                        "        uv_with = [MACHINECONFIG_VERSION]",
-                        "        uv_project_dir = None",
-                        "",
-                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(",
-                        "            output_str=str(output) if output else None,",
-                        "            include_help=include_help,",
-                        "            max_depth=max_depth,",
-                        "        ),",
-                        "        uv_with=uv_with,",
-                        "        uv_project_dir=uv_project_dir,",
-                        "    )",
-                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
-                      ],
-                      "name": "dot",
-                      "parameters": [
-                        {
-                          "name": "output",
-                          "kind": "positional_or_keyword",
-                          "type": "Path | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write DOT output to a file')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--output",
-                              "-o"
-                            ],
-                            "long_flags": [
-                              "--output"
-                            ],
-                            "short_flags": [
-                              "-o"
-                            ],
-                            "help": "Write DOT output to a file"
-                          }
-                        },
-                        {
-                          "name": "include_help",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": true,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--include-help/--no-include-help', help='Include help text in labels')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--include-help/--no-include-help"
-                            ],
-                            "long_flags": [
-                              "--include-help",
-                              "--no-include-help"
-                            ],
-                            "short_flags": [],
-                            "help": "Include help text in labels"
-                          }
-                        },
-                        {
-                          "name": "max_depth",
-                          "kind": "positional_or_keyword",
-                          "type": "int | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--max-depth",
-                              "-d"
-                            ],
-                            "long_flags": [
-                              "--max-depth"
-                            ],
-                            "short_flags": [
-                              "-d"
-                            ],
-                            "help": "Limit depth of the graph"
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "doc": "Export the graph as Graphviz DOT.",
-                    "aliases": [
-                      {
-                        "name": "d",
-                        "hidden": true,
-                        "help": "Export the graph as Graphviz DOT."
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
-                    "name": "view",
-                    "fullPath": "devops self explore view",
-                    "shortPath": "d s x v",
-                    "help": "📊 <v> Render a Plotly hierarchy chart.",
-                    "source": {
-                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "chart"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def chart(",
-                        "    view: Annotated[",
-                        "        PlotlyView,",
-                        "        typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(PLOTLY_VIEWS)}.\"\"\"),",
-                        "    ] = \"sunburst\",",
-                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
-                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
-                        "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
-                        "    height: Annotated[int, typer.Option(\"--height\", help=\"Image height (for static output)\")] = 900,",
-                        "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
-                        ") -> None:",
-                        "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
-                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
-                        "    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly",
-                        "",
-                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "        uv_with: list[str] | None = None",
-                        "        uv_project_dir = str(Path.home().joinpath(\"code/machineconfig\"))",
-                        "    else:",
-                        "        uv_with = [MACHINECONFIG_VERSION]",
-                        "        uv_project_dir = None",
-                        "",
-                        "    use_render_plotly(",
-                        "        view=view,",
-                        "        output=str(output) if output else None,",
-                        "        height=height,",
-                        "        width=width,",
-                        "        template=template,",
-                        "        max_depth=max_depth,",
-                        "        path=None,",
-                        "        uv_with=uv_with,",
-                        "        uv_project_dir=uv_project_dir,",
-                        "    )"
-                      ],
-                      "name": "chart",
-                      "parameters": [
-                        {
-                          "name": "view",
-                          "kind": "positional_or_keyword",
-                          "type": "PlotlyView",
-                          "default": "sunburst",
-                          "required": false,
-                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f\"Plotly chart view. Choose from {', '.join(PLOTLY_VIEWS)}.\")]",
-                          "typer": {
-                            "kind": "argument",
-                            "param_decls": [],
-                            "long_flags": [],
-                            "short_flags": []
-                          }
-                        },
-                        {
-                          "name": "output",
-                          "kind": "positional_or_keyword",
-                          "type": "Path | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write HTML or image output')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--output",
-                              "-o"
-                            ],
-                            "long_flags": [
-                              "--output"
-                            ],
-                            "short_flags": [
-                              "-o"
-                            ],
-                            "help": "Write HTML or image output"
-                          }
-                        },
-                        {
-                          "name": "max_depth",
-                          "kind": "positional_or_keyword",
-                          "type": "int | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--max-depth",
-                              "-d"
-                            ],
-                            "long_flags": [
-                              "--max-depth"
-                            ],
-                            "short_flags": [
-                              "-d"
-                            ],
-                            "help": "Limit depth of the graph"
-                          }
-                        },
-                        {
-                          "name": "template",
-                          "kind": "positional_or_keyword",
-                          "type": "str",
-                          "default": "plotly_dark",
-                          "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--template', help='Plotly template name')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--template"
-                            ],
-                            "long_flags": [
-                              "--template"
-                            ],
-                            "short_flags": [],
-                            "help": "Plotly template name"
-                          }
-                        },
-                        {
-                          "name": "height",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 900,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--height', help='Image height (for static output)')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--height"
-                            ],
-                            "long_flags": [
-                              "--height"
-                            ],
-                            "short_flags": [],
-                            "help": "Image height (for static output)"
-                          }
-                        },
-                        {
-                          "name": "width",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 1200,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--width', help='Image width (for static output)')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--width"
-                            ],
-                            "long_flags": [
-                              "--width"
-                            ],
-                            "short_flags": [],
-                            "help": "Image width (for static output)"
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "doc": "Render a Plotly hierarchy chart.",
-                    "aliases": [
-                      {
-                        "name": "v",
-                        "hidden": true,
-                        "help": "Render a Plotly hierarchy chart."
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
-                    "name": "tui",
-                    "fullPath": "devops self explore tui",
-                    "shortPath": "d s x u",
-                    "help": "📚 <u> NAVIGATE command structure with TUI",
-                    "source": {
-                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
-                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
-                      "callable": "navigate"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def navigate():",
-                        "    \"\"\"📚 NAVIGATE command structure with TUI\"\"\"",
-                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
-                        "    # import machineconfig.scripts.python.graph.visualize.helpers_navigator as navigator",
-                        "    # path = Path(navigator.__file__).resolve().parent.joinpath(\"devops_navigator.py\")",
-                        "    # from machineconfig.utils.code import exit_then_run_shell_script",
-                        "    # if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "    #     executable = f\"\"\"--project \"{str(Path.home().joinpath(\"code/machineconfig\"))}\" --with textual\"\"\"",
-                        "    # else:",
-                        "    #     executable = f\"\"\"--with \"{MACHINECONFIG_VERSION},textual\" \"\"\"",
-                        "    # exit_then_run_shell_script(f\"\"\"uv run {executable} {path}\"\"\")",
-                        "    def func():",
-                        "        from machineconfig.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator",
-                        "        main_devops_navigator()",
-                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
-                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
-                        "        uv_with = [\"textual\"]",
-                        "        uv_project_dir = str(Path.home().joinpath(\"code/machineconfig\"))",
-                        "    else:",
-                        "        uv_with = [MACHINECONFIG_VERSION, \"textual\"]",
-                        "        uv_project_dir = None",
-                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),",
-                        "            uv_with=uv_with, uv_project_dir=uv_project_dir)",
-                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
-                      ],
-                      "name": "navigate",
-                      "parameters": []
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "doc": "📚 NAVIGATE command structure with TUI",
-                    "aliases": [
-                      {
-                        "name": "u",
-                        "hidden": true,
-                        "help": "NAVIGATE command structure with TUI"
-                      }
-                    ]
-                  }
-                ],
-                "command_context_settings": {
-                  "allow_extra_args": true,
-                  "allow_interspersed_args": true,
-                  "ignore_unknown_options": true,
-                  "help_option_names": []
-                },
-                "doc": "🧭 <x> Explore the MachineConfig CLI graph.",
-                "aliases": [
-                  {
-                    "name": "x",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "build-docker",
-                "fullPath": "devops self build-docker",
-                "shortPath": "d s d",
-                "help": "🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
-                  "callable": "buid_docker"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def buid_docker(variant: Annotated[Literal[\"slim\", \"ai\"], typer.Argument(..., help=\"Variant to build: 'slim' or 'ai'\")] = \"slim\") -> None:",
-                    "    \"\"\"🧱 `buid_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`\"\"\"",
-                    "    import machineconfig",
-                    "",
-                    "    script_path = Path(machineconfig.__file__).resolve().parent.parent.parent.joinpath(\"jobs\", \"shell\", \"docker_build_and_publish.sh\")",
-                    "    if not script_path.exists():",
-                    "        typer.echo(f\"❌ Script not found: {str(script_path)}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    # shell_cmd = f'VARIANT=\"{variant}\" && bash \"{str(script_path)}\"'\\",
-                    "    from machineconfig.utils.source_of_truth import REPO_ROOT",
-                    "",
-                    "    shell_cmd = f\"\"\"",
-                    "export VARIANT=\"{variant}\"",
-                    "cd \"{str(REPO_ROOT)}\"",
-                    "bash \"{str(script_path)}\"",
-                    "\"\"\"",
-                    "    # Use exit_then_run_shell_script for interactive runs (keeps tty), otherwise run shell script non-interactively",
-                    "    from machineconfig.utils.code import exit_then_run_shell_script",
-                    "",
-                    "    exit_then_run_shell_script(shell_cmd, strict=True)"
-                  ],
-                  "name": "buid_docker",
-                  "parameters": [
-                    {
-                      "name": "variant",
-                      "kind": "positional_or_keyword",
-                      "type": "Literal['slim', 'ai']",
-                      "default": "slim",
-                      "required": false,
-                      "annotation_raw": "Annotated[Literal['slim', 'ai'], typer.Argument(..., help=\"Variant to build: 'slim' or 'ai'\")]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Variant to build: 'slim' or 'ai'",
-                        "default": "..."
-                      }
-                    }
-                  ],
+                  "name": "interactive",
+                  "parameters": [],
                   "return": "None"
                 },
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "🧱 `buid_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`",
+                "doc": "🤖 <c> INTERACTIVE configuration of machine.",
                 "aliases": [
                   {
-                    "name": "d",
+                    "name": "c",
                     "hidden": true,
-                    "help": "Build docker images (wraps jobs/shell/docker_build_and_publish.sh)"
+                    "help": "INTERACTIVE configuration of machine."
                   }
                 ]
               },
@@ -5551,6 +4798,810 @@
               },
               {
                 "kind": "command",
+                "name": "init",
+                "fullPath": "devops self init",
+                "shortPath": "d s t",
+                "help": "🦐 <t> Define and manage configurations",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "init"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def init(",
+                    "    which: Annotated[",
+                    "        Literal[\"init\", \"ia\", \"live\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
+                    "    ] = \"init\",",
+                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
+                    ") -> None:",
+                    "    import platform",
+                    "",
+                    "    script = \"\"",
+                    "    if platform.system() == \"Linux\" or platform.system() == \"Darwin\":",
+                    "        match which:",
+                    "            case \"init\":",
+                    "                import machineconfig.settings as module",
+                    "",
+                    "                if platform.system() == \"Darwin\":",
+                    "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"zsh\", \"init.sh\")",
+                    "                else:",
+                    "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"bash\", \"init.sh\")",
+                    "                script = init_path.read_text(encoding=\"utf-8\")",
+                    "            case \"ia\":",
+                    "                from machineconfig.setup_linux import INTERACTIVE as script_path",
+                    "",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case \"live\":",
+                    "                from machineconfig.setup_linux import LIVE as script_path",
+                    "",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case _:",
+                    "                typer.echo(\"Unsupported shell script for Linux.\")",
+                    "                raise typer.Exit(code=1)",
+                    "",
+                    "    elif platform.system() == \"Windows\":",
+                    "        match which:",
+                    "            case \"init\":",
+                    "                import machineconfig.settings as module",
+                    "",
+                    "                init_path = Path(module.__file__).parent.joinpath(\"shells\", \"pwsh\", \"init.ps1\")",
+                    "                script = init_path.read_text(encoding=\"utf-8\")",
+                    "            case \"ia\":",
+                    "                from machineconfig.setup_windows import INTERACTIVE as script_path",
+                    "",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case \"live\":",
+                    "                from machineconfig.setup_windows import LIVE as script_path",
+                    "",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case _:",
+                    "                typer.echo(\"Unsupported shell script for Windows.\")",
+                    "                raise typer.Exit(code=1)",
+                    "                # return",
+                    "    else:",
+                    "        # raise NotImplementedError(\"Unsupported platform\")",
+                    "        typer.echo(\"Unsupported platform for init scripts.\")",
+                    "        raise typer.Exit(code=1)",
+                    "    if run:",
+                    "        from machineconfig.utils.code import exit_then_run_shell_script",
+                    "",
+                    "        exit_then_run_shell_script(script, strict=True)",
+                    "    else:",
+                    "        print(script)"
+                  ],
+                  "name": "init",
+                  "parameters": [
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['init', 'ia', 'live']",
+                      "default": "init",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['init', 'ia', 'live'], typer.Argument(..., help='Comma-separated list of script names to run all initialization scripts.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Comma-separated list of script names to run all initialization scripts.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run the script after displaying it.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--run/--no-run",
+                          "-r/-nr"
+                        ],
+                        "long_flags": [
+                          "--run",
+                          "--no-run"
+                        ],
+                        "short_flags": [
+                          "-r",
+                          "-nr"
+                        ],
+                        "help": "Run the script after displaying it."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "t",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "group",
+                "name": "explore",
+                "fullPath": "devops self explore",
+                "shortPath": "d s x",
+                "help": "🧭 <x> Explore the MachineConfig CLI graph.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "dispatches_to": "machineconfig.scripts.python.graph.visualize.cli_graph_app.get_app",
+                  "callable": "explore"
+                },
+                "app": {
+                  "help": "🧭 <g> Visualize the MachineConfig CLI graph in multiple formats.",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "search",
+                    "fullPath": "devops self explore search",
+                    "shortPath": "d s x s",
+                    "help": "🔎 <s> Search CLI graph entries and run the selected command help.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
+                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
+                      "callable": "search"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def search(",
+                        "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Path to cli_graph.json\")] = None,",
+                        "    show_json: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--show-json\", help=\"Print the selected cli_graph.json entry instead of running '<command> --help'.\"),",
+                        "    ] = False,",
+                        ") -> None:",
+                        "    \"\"\"🔎 Search cli_graph.json entries and run --help for the selected command or group.\"\"\"",
+                        "    def func(graph_path_str: str | None, show_json: bool) -> None:",
+                        "        from machineconfig.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH",
+                        "        from machineconfig.scripts.python.graph.visualize.cli_graph_search import search_cli_graph",
+                        "",
+                        "        graph_file = Path(graph_path_str) if graph_path_str else DEFAULT_GRAPH_PATH",
+                        "        return_code = search_cli_graph(graph_path=graph_file, show_json=show_json)",
+                        "        if return_code != 0:",
+                        "            raise typer.Exit(code=return_code)",
+                        "            ",
+                        "",
+                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
+                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
+                        "",
+                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
+                        "        uv_with = []",
+                        "        uv_project_dir = str(Path.home().joinpath(\"code/machineconfig\"))",
+                        "    else:",
+                        "        uv_with = [MACHINECONFIG_VERSION]",
+                        "        uv_project_dir = None",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
+                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_json=show_json),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "    )",
+                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
+                      ],
+                      "name": "search",
+                      "parameters": [
+                        {
+                          "name": "graph_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--graph-path', '-g', help='Path to cli_graph.json')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--graph-path",
+                              "-g"
+                            ],
+                            "long_flags": [
+                              "--graph-path"
+                            ],
+                            "short_flags": [
+                              "-g"
+                            ],
+                            "help": "Path to cli_graph.json"
+                          }
+                        },
+                        {
+                          "name": "show_json",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--show-json', help=\"Print the selected cli_graph.json entry instead of running '<command> --help'.\")]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--show-json"
+                            ],
+                            "long_flags": [
+                              "--show-json"
+                            ],
+                            "short_flags": [],
+                            "help": "Print the selected cli_graph.json entry instead of running '<command> --help'."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "🔎 Search cli_graph.json entries and run --help for the selected command or group.",
+                    "aliases": [
+                      {
+                        "name": "s",
+                        "hidden": true,
+                        "help": "Search CLI graph entries and run the selected command help."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "tree",
+                    "fullPath": "devops self explore tree",
+                    "shortPath": "d s x t",
+                    "help": "🌳 <t> Render a rich tree view in the terminal.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
+                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
+                      "callable": "tree"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def tree(",
+                        "    show_help: Annotated[bool, typer.Option(\"--show-help/--no-show-help\", help=\"Include help text in labels\")] = True,",
+                        "    show_aliases: Annotated[bool, typer.Option(\"--show-aliases/--no-show-aliases\", help=\"Include aliases in labels\")] = False,",
+                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the tree\")] = None,",
+                        ") -> None:",
+                        "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
+                        "    def func(show_help: bool, show_aliases: bool, max_depth: int | None) -> None:",
+                        "        from machineconfig.scripts.python.graph.visualize.rich_tree import render_tree",
+                        "",
+                        "        render_tree(show_help=show_help, show_aliases=show_aliases, max_depth=max_depth)",
+                        "",
+                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
+                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
+                        "",
+                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
+                        "        uv_with: list[str] = [\"plotly\", \"kaleido\"]",
+                        "        uv_project_dir = str(Path.home().joinpath(\"code\", \"machineconfig\"))",
+                        "    else:",
+                        "        uv_with = [MACHINECONFIG_VERSION, \"plotly\", \"kaleido\"]",
+                        "        uv_project_dir = None",
+                        "",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
+                        "        lambda: func(",
+                        "            show_help=show_help,",
+                        "            show_aliases=show_aliases,",
+                        "            max_depth=max_depth,",
+                        "        ),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "    )",
+                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
+                      ],
+                      "name": "tree",
+                      "parameters": [
+                        {
+                          "name": "show_help",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": true,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--show-help/--no-show-help', help='Include help text in labels')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--show-help/--no-show-help"
+                            ],
+                            "long_flags": [
+                              "--show-help",
+                              "--no-show-help"
+                            ],
+                            "short_flags": [],
+                            "help": "Include help text in labels"
+                          }
+                        },
+                        {
+                          "name": "show_aliases",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--show-aliases/--no-show-aliases', help='Include aliases in labels')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--show-aliases/--no-show-aliases"
+                            ],
+                            "long_flags": [
+                              "--show-aliases",
+                              "--no-show-aliases"
+                            ],
+                            "short_flags": [],
+                            "help": "Include aliases in labels"
+                          }
+                        },
+                        {
+                          "name": "max_depth",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the tree')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-depth",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--max-depth"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Limit depth of the tree"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Render a rich tree view in the terminal.",
+                    "aliases": [
+                      {
+                        "name": "t",
+                        "hidden": true,
+                        "help": "Render a rich tree view in the terminal."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "dot",
+                    "fullPath": "devops self explore dot",
+                    "shortPath": "d s x d",
+                    "help": "🧩 <d> Export the graph as Graphviz DOT.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
+                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
+                      "callable": "dot"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def dot(",
+                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write DOT output to a file\")] = None,",
+                        "    include_help: Annotated[bool, typer.Option(\"--include-help/--no-include-help\", help=\"Include help text in labels\")] = True,",
+                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
+                        ") -> None:",
+                        "    \"\"\"Export the graph as Graphviz DOT.\"\"\"",
+                        "    def func(output_str: str | None, include_help: bool, max_depth: int | None) -> None:",
+                        "        from pathlib import Path",
+                        "        from machineconfig.scripts.python.graph.visualize.dot_export import render_dot",
+                        "",
+                        "        output_path = Path(output_str) if output_str else None",
+                        "        dot_text = render_dot(max_depth=max_depth, include_help=include_help)",
+                        "",
+                        "        if output_path is None:",
+                        "            print(dot_text)",
+                        "        else:",
+                        "            output_path.write_text(dot_text, encoding=\"utf-8\")",
+                        "            print(f\"Wrote {output_path}\")",
+                        "",
+                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
+                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
+                        "",
+                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
+                        "        uv_with: list[str] = [\"plotly\", \"kaleido\"]",
+                        "        uv_project_dir = str(Path.home().joinpath(\"code\", \"machineconfig\"))",
+                        "    else:",
+                        "        uv_with = [MACHINECONFIG_VERSION]",
+                        "        uv_project_dir = None",
+                        "",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
+                        "        lambda: func(",
+                        "            output_str=str(output) if output else None,",
+                        "            include_help=include_help,",
+                        "            max_depth=max_depth,",
+                        "        ),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "    )",
+                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
+                      ],
+                      "name": "dot",
+                      "parameters": [
+                        {
+                          "name": "output",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write DOT output to a file')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Write DOT output to a file"
+                          }
+                        },
+                        {
+                          "name": "include_help",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": true,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--include-help/--no-include-help', help='Include help text in labels')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--include-help/--no-include-help"
+                            ],
+                            "long_flags": [
+                              "--include-help",
+                              "--no-include-help"
+                            ],
+                            "short_flags": [],
+                            "help": "Include help text in labels"
+                          }
+                        },
+                        {
+                          "name": "max_depth",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-depth",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--max-depth"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Limit depth of the graph"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Export the graph as Graphviz DOT.",
+                    "aliases": [
+                      {
+                        "name": "d",
+                        "hidden": true,
+                        "help": "Export the graph as Graphviz DOT."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "view",
+                    "fullPath": "devops self explore view",
+                    "shortPath": "d s x v",
+                    "help": "📊 <v> Render a Plotly hierarchy chart.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
+                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
+                      "callable": "chart"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def chart(",
+                        "    view: Annotated[",
+                        "        PlotlyView,",
+                        "        typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(get_args(PlotlyView))}.\"\"\"),",
+                        "    ] = \"sunburst\",",
+                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
+                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
+                        "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
+                        "    height: Annotated[int, typer.Option(\"--height\", help=\"Image height (for static output)\")] = 900,",
+                        "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
+                        ") -> None:",
+                        "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
+                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
+                        "    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly",
+                        "",
+                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
+                        "        uv_with: list[str] | None = None",
+                        "        uv_project_dir = str(Path.home().joinpath(\"code/machineconfig\"))",
+                        "    else:",
+                        "        uv_with = [MACHINECONFIG_VERSION]",
+                        "        uv_project_dir = None",
+                        "",
+                        "    use_render_plotly(",
+                        "        view=view,",
+                        "        output=str(output) if output else None,",
+                        "        height=height,",
+                        "        width=width,",
+                        "        template=template,",
+                        "        max_depth=max_depth,",
+                        "        path=None,",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "    )"
+                      ],
+                      "name": "chart",
+                      "parameters": [
+                        {
+                          "name": "view",
+                          "kind": "positional_or_keyword",
+                          "type": "PlotlyView",
+                          "default": "sunburst",
+                          "required": false,
+                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f\"Plotly chart view. Choose from {', '.join(get_args(PlotlyView))}.\")]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": []
+                          }
+                        },
+                        {
+                          "name": "output",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write HTML or image output')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Write HTML or image output"
+                          }
+                        },
+                        {
+                          "name": "max_depth",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-depth",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--max-depth"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Limit depth of the graph"
+                          }
+                        },
+                        {
+                          "name": "template",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "plotly_dark",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('--template', help='Plotly template name')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--template"
+                            ],
+                            "long_flags": [
+                              "--template"
+                            ],
+                            "short_flags": [],
+                            "help": "Plotly template name"
+                          }
+                        },
+                        {
+                          "name": "height",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 900,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option('--height', help='Image height (for static output)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--height"
+                            ],
+                            "long_flags": [
+                              "--height"
+                            ],
+                            "short_flags": [],
+                            "help": "Image height (for static output)"
+                          }
+                        },
+                        {
+                          "name": "width",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 1200,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option('--width', help='Image width (for static output)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--width"
+                            ],
+                            "long_flags": [
+                              "--width"
+                            ],
+                            "short_flags": [],
+                            "help": "Image width (for static output)"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Render a Plotly hierarchy chart.",
+                    "aliases": [
+                      {
+                        "name": "v",
+                        "hidden": true,
+                        "help": "Render a Plotly hierarchy chart."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "tui",
+                    "fullPath": "devops self explore tui",
+                    "shortPath": "d s x u",
+                    "help": "📚 <u> NAVIGATE command structure with TUI",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py",
+                      "module": "machineconfig.scripts.python.graph.visualize.cli_graph_app",
+                      "callable": "navigate"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def navigate():",
+                        "    \"\"\"📚 NAVIGATE command structure with TUI\"\"\"",
+                        "    from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION",
+                        "    # import machineconfig.scripts.python.graph.visualize.helpers_navigator as navigator",
+                        "    # path = Path(navigator.__file__).resolve().parent.joinpath(\"devops_navigator.py\")",
+                        "    # from machineconfig.utils.code import exit_then_run_shell_script",
+                        "    # if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
+                        "    #     executable = f\"\"\"--project \"{str(Path.home().joinpath(\"code/machineconfig\"))}\" --with textual\"\"\"",
+                        "    # else:",
+                        "    #     executable = f\"\"\"--with \"{MACHINECONFIG_VERSION},textual\" \"\"\"",
+                        "    # exit_then_run_shell_script(f\"\"\"uv run {executable} {path}\"\"\")",
+                        "    def func():",
+                        "        from machineconfig.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator",
+                        "        main_devops_navigator()",
+                        "    from machineconfig.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
+                        "    if Path.home().joinpath(\"code\", \"machineconfig\").exists():",
+                        "        uv_with = [\"textual\"]",
+                        "        uv_project_dir = str(Path.home().joinpath(\"code/machineconfig\"))",
+                        "    else:",
+                        "        uv_with = [MACHINECONFIG_VERSION, \"textual\"]",
+                        "        uv_project_dir = None",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),",
+                        "            uv_with=uv_with, uv_project_dir=uv_project_dir)",
+                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
+                      ],
+                      "name": "navigate",
+                      "parameters": []
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "📚 NAVIGATE command structure with TUI",
+                    "aliases": [
+                      {
+                        "name": "u",
+                        "hidden": true,
+                        "help": "NAVIGATE command structure with TUI"
+                      }
+                    ]
+                  }
+                ],
+                "command_context_settings": {
+                  "allow_extra_args": true,
+                  "allow_interspersed_args": true,
+                  "ignore_unknown_options": true,
+                  "help_option_names": []
+                },
+                "doc": "🧭 <x> Explore the MachineConfig CLI graph.",
+                "aliases": [
+                  {
+                    "name": "x",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "readme",
+                "fullPath": "devops self readme",
+                "shortPath": "d s r",
+                "help": "📚 <r> render readme markdown in terminal.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "readme"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def readme() -> None:",
+                    "    from rich.console import Console",
+                    "    from rich.markdown import Markdown",
+                    "    import requests",
+                    "",
+                    "    # URL of the raw README.md file",
+                    "    url_readme = \"https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md\"",
+                    "",
+                    "    # Fetch the content",
+                    "    response = requests.get(url_readme, timeout=10)",
+                    "    response.raise_for_status()  # Raise an error for bad responses",
+                    "",
+                    "    # Parse markdown",
+                    "    md = Markdown(response.text)",
+                    "",
+                    "    # Render in terminal",
+                    "    console = Console()",
+                    "    console.print(md)"
+                  ],
+                  "name": "readme",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "r",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "docs",
                 "fullPath": "devops self docs",
                 "shortPath": "d s o",
@@ -5565,8 +5616,7 @@
                     "def docs(",
                     "    rebuild: Annotated[bool, typer.Option(\"--rebuild\", \"-b\", help=\"Rebuild docs before starting the preview server.\")] = False,",
                     "    create_artifacts: Annotated[",
-                    "        bool,",
-                    "        typer.Option(\"--create-artifacts\", \"-a\", help=\"Regenerate CLI graph docs artifacts before starting the preview server.\"),",
+                    "        bool, typer.Option(\"--create-artifacts\", \"-a\", help=\"Regenerate CLI graph docs artifacts before starting the preview server.\")",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"📚 <o> Serve local docs with preview URLs.\"\"\"",
@@ -5635,9 +5685,112 @@
                 ]
               },
               {
+                "kind": "command",
+                "name": "build-installer",
+                "fullPath": "devops self build-installer",
+                "shortPath": "d s e",
+                "help": "📤 <e> Build an offline installer.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "export"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def export() -> None:",
+                    "    \"\"\"📤 export the installation files to get an offline image.\"\"\"",
+                    "    from machineconfig.utils.installer_utils import installer_offline",
+                    "",
+                    "    installer_offline.export()"
+                  ],
+                  "name": "export",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "📤 export the installation files to get an offline image.",
+                "aliases": [
+                  {
+                    "name": "e",
+                    "hidden": true,
+                    "help": "Export the installation files to get an offline image."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "build-docker",
+                "fullPath": "devops self build-docker",
+                "shortPath": "d s d",
+                "help": "🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "buid_docker"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def buid_docker(variant: Annotated[Literal[\"slim\", \"ai\"], typer.Argument(..., help=\"Variant to build: 'slim' or 'ai'\")] = \"slim\") -> None:",
+                    "    \"\"\"🧱 `buid_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`\"\"\"",
+                    "    import machineconfig",
+                    "",
+                    "    script_path = Path(machineconfig.__file__).resolve().parent.parent.parent.joinpath(\"jobs\", \"shell\", \"docker_build_and_publish.sh\")",
+                    "    if not script_path.exists():",
+                    "        typer.echo(f\"❌ Script not found: {str(script_path)}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    # shell_cmd = f'VARIANT=\"{variant}\" && bash \"{str(script_path)}\"'\\",
+                    "    from machineconfig.utils.source_of_truth import REPO_ROOT",
+                    "",
+                    "    shell_cmd = f\"\"\"",
+                    "export VARIANT=\"{variant}\"",
+                    "cd \"{str(REPO_ROOT)}\"",
+                    "bash \"{str(script_path)}\"",
+                    "\"\"\"",
+                    "    # Use exit_then_run_shell_script for interactive runs (keeps tty), otherwise run shell script non-interactively",
+                    "    from machineconfig.utils.code import exit_then_run_shell_script",
+                    "",
+                    "    exit_then_run_shell_script(shell_cmd, strict=True)"
+                  ],
+                  "name": "buid_docker",
+                  "parameters": [
+                    {
+                      "name": "variant",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['slim', 'ai']",
+                      "default": "slim",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['slim', 'ai'], typer.Argument(..., help=\"Variant to build: 'slim' or 'ai'\")]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Variant to build: 'slim' or 'ai'",
+                        "default": "..."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "🧱 `buid_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`",
+                "aliases": [
+                  {
+                    "name": "d",
+                    "hidden": true,
+                    "help": "Build docker images (wraps jobs/shell/docker_build_and_publish.sh)"
+                  }
+                ]
+              },
+              {
                 "kind": "group",
-                "name": "assets",
-                "fullPath": "devops self assets",
+                "name": "build-assets",
+                "fullPath": "devops self build-assets",
                 "shortPath": "d s a",
                 "help": "🗂 <a> Regenerate repo-local CLI graph assets.",
                 "source": {
@@ -5655,7 +5808,7 @@
                   {
                     "kind": "command",
                     "name": "update-cli-graph",
-                    "fullPath": "devops self assets update-cli-graph",
+                    "fullPath": "devops self build-assets update-cli-graph",
                     "shortPath": "d s a g",
                     "help": "🧩 <g> Regenerate the checked-in CLI graph snapshot.",
                     "source": {
@@ -5689,7 +5842,7 @@
                   {
                     "kind": "command",
                     "name": "regenerate-charts",
-                    "fullPath": "devops self assets regenerate-charts",
+                    "fullPath": "devops self build-assets regenerate-charts",
                     "shortPath": "d s a r",
                     "help": "☀ <r> Regenerate the checked-in sunburst HTML chart.",
                     "source": {
@@ -5732,52 +5885,6 @@
                     "name": "a",
                     "hidden": true,
                     "help": "Regenerate repo-local CLI graph assets."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "readme",
-                "fullPath": "devops self readme",
-                "shortPath": "d s r",
-                "help": "📚 <r> render readme markdown in terminal.",
-                "source": {
-                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
-                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
-                  "callable": "readme"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def readme() -> None:",
-                    "    from rich.console import Console",
-                    "    from rich.markdown import Markdown",
-                    "    import requests",
-                    "",
-                    "    # URL of the raw README.md file",
-                    "    url_readme = \"https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md\"",
-                    "",
-                    "    # Fetch the content",
-                    "    response = requests.get(url_readme, timeout=10)",
-                    "    response.raise_for_status()  # Raise an error for bad responses",
-                    "",
-                    "    # Parse markdown",
-                    "    md = Markdown(response.text)",
-                    "",
-                    "    # Render in terminal",
-                    "    console = Console()",
-                    "    console.print(md)"
-                  ],
-                  "name": "readme",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "aliases": [
-                  {
-                    "name": "r",
-                    "hidden": true
                   }
                 ]
               }
@@ -9365,7 +9472,7 @@
                 "",
                 "    max_layouts: Annotated[int, typer.Option(..., \"--max-parallel-layouts\", \"-P\", help=\"A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.\")] = 25,",
                 "    backend: Annotated[Literal[\"zellij\", \"z\", \"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"tmux\",",
-                "    on_conflict: Annotated[SessionConflictAction, typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.\")] = \"error\",",
+                "    on_conflict: Annotated[SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.\")] = \"error\",",
                 "    monitor: Annotated[bool, typer.Option(..., \"--monitor\", \"-m\", help=\"Monitor the layout sessions for completion (implied by --parallel-layouts)\")] = False,",
                 "    kill_upon_completion: Annotated[bool, typer.Option(..., \"--kill-upon-completion\", \"-k\", help=\"Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)\")] = False,",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
@@ -9379,6 +9486,7 @@
                 "    supported for tmux and Windows Terminal.",
                 "    Use `run-all` for the paced whole-file dynamic scheduler.",
                 "    \"\"\"",
+                "    on_conflict = SessionConflictActionLoose2Strict[on_conflict]",
                 "    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl",
                 "    impl(",
                 "        ctx=ctx,",
@@ -9593,10 +9701,10 @@
                 {
                   "name": "on_conflict",
                   "kind": "positional_or_keyword",
-                  "type": "SessionConflictAction",
+                  "type": "SessionConflictActionLoose",
                   "default": "error",
                   "required": false,
-                  "annotation_raw": "Annotated[SessionConflictAction, typer.Option('--on-conflict', '-o', help='How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.')]",
+                  "annotation_raw": "Annotated[SessionConflictActionLoose, typer.Option('--on-conflict', '-o', help='How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -9718,7 +9826,7 @@
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-seconds\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
                 "    kill_finished_tabs: Annotated[bool, typer.Option(\"--kill-finished-tabs\", help=\"Close each tab once its command is finished.\")] = False,",
                 "    backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use\")] = \"tmux\",",
-                "    on_conflict: Annotated[SessionConflictAction, typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.\")] = \"error\",",
+                "    on_conflict: Annotated[SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.\")] = \"error\",",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
                 ") -> None:",
                 "    \"\"\"Dynamically run every tab from every layout in a layout configuration file.",
@@ -9727,7 +9835,7 @@
                 "    --max-parallel-tabs tabs active at a time.",
                 "    \"\"\"",
                 "    from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl",
-                "",
+                "    on_conflict = SessionConflictActionLoose2Strict[on_conflict]",
                 "    impl(",
                 "        ctx=ctx,",
                 "        layouts_file=layouts_file,",
@@ -9856,10 +9964,10 @@
                 {
                   "name": "on_conflict",
                   "kind": "keyword_only",
-                  "type": "SessionConflictAction",
+                  "type": "SessionConflictActionLoose",
                   "default": "error",
                   "required": false,
-                  "annotation_raw": "Annotated[SessionConflictAction, typer.Option('--on-conflict', '-o', help='How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.')]",
+                  "annotation_raw": "Annotated[SessionConflictActionLoose, typer.Option('--on-conflict', '-o', help='How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [

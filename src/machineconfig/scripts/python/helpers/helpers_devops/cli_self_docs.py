@@ -88,16 +88,18 @@ def write_cli_graph_snapshot(repo_root: Path) -> Path:
 
 
 def render_docs_artifact(repo_root: Path, artifact_spec: DocsArtifactSpec) -> Path:
-    from machineconfig.scripts.python.graph.visualize.plotly_views import render_plotly
+    from machineconfig.scripts.python.graph.visualize.plotly_views import use_render_plotly
 
     output_path = repo_root.joinpath(artifact_spec.output_relative_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    render_plotly(
+    use_render_plotly(
         view=artifact_spec.view,
         output=str(output_path),
         template=DOCS_ARTIFACT_TEMPLATE,
         path=None,
         max_depth=None,
+        uv_with=None,
+        uv_project_dir=None,
     )
     typer.echo(f"""Regenerated docs artifact: {output_path.relative_to(repo_root).as_posix()}""")
     return output_path

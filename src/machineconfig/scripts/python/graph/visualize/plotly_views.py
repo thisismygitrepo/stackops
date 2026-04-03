@@ -3,7 +3,7 @@
 
 PLOTLY_RUNTIME_DEPENDENCIES = ("plotly", "kaleido")
 
-def render_plotly(
+def _render_plotly(
     *,
     view: str,
     path: str | None,
@@ -158,7 +158,7 @@ def use_render_plotly(
     # resolved_uv_project_dir = str(REPO_ROOT) if REPO_ROOT.joinpath("pyproject.toml").exists() else None
 
     run_lambda_function(
-        lambda: render_plotly(
+        lambda: _render_plotly(
             view=view,
             output=output,
             template=template,

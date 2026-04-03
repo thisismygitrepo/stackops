@@ -1,16 +1,8 @@
 #!/bin/bash
-# Record script start time for runtime measurement
-# _START_TIME_NS=$(date +%s%N)
-# _show_elapsed() {
-#     local _end_ns _elapsed_ns _secs _ms
-#     _end_ns=$(date +%s%N)
-#     _elapsed_ns=$((_end_ns - _START_TIME_NS))
-#     _secs=$((_elapsed_ns / 1000000000))
-#     _ms=$((_elapsed_ns / 1000000 % 1000))
-#     printf "Script runtime: %d.%03d seconds\n" "$_secs" "$_ms"
-# }
-
 # 🛠️ Bash Shell Configuration and Initialization
+# 1- Add to path 
+# 2- Define aliases
+# 3- Init shell history search
 
 add_to_path_if_not_already() {
     for dir in "$@"; do
@@ -43,7 +35,6 @@ add_to_path_if_not_already \
 
 # check if file in ~/dotfiles/machineconfig/init_linux.sh exists and source it
 if [ -f "$HOME/dotfiles/machineconfig/init_linux.sh" ]; then
-    # echo "Sourcing $HOME/dotfiles/machineconfig/init_linux.sh"
     source "$HOME/dotfiles/machineconfig/init_linux.sh"
 fi
 
@@ -111,8 +102,3 @@ else
     }
     bind -x '"\C-r": tv_shell_history'
 fi
-
-
-# Show elapsed runtime
-# _show_elapsed
-

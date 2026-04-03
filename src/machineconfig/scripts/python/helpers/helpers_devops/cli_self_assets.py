@@ -15,7 +15,7 @@ def update_cli_graph() -> None:
 
 
 def regenerate_charts() -> None:
-    """☀ <r> Regenerate the checked-in sunburst HTML chart."""
+    """☀ <c> Regenerate the checked-in sunburst HTML chart."""
     repo_root = cli_self_docs.get_docs_repo_root()
     cli_self_docs.render_docs_artifact(
         repo_root=repo_root,
@@ -47,10 +47,10 @@ def get_app() -> typer.Typer:
     cli_app.command(
         name="regenerate-charts",
         no_args_is_help=False,
-        help="☀ <r> Regenerate the checked-in sunburst HTML chart.",
+        help="☀ <c> Regenerate the checked-in sunburst HTML chart.",
     )(regenerate_charts)
     cli_app.command(
-        name="r",
+        name="c",
         no_args_is_help=False,
         help="Regenerate the checked-in sunburst HTML chart.",
         hidden=True,

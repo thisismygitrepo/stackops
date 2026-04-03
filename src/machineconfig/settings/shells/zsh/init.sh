@@ -1,15 +1,4 @@
 #!/bin/zsh
-# Record script start time for runtime measurement
-# _START_TIME_NS=$(date +%s%N)
-# _show_elapsed() {
-#     local _end_ns _elapsed_ns _secs _ms
-#     _end_ns=$(date +%s%N)
-#     _elapsed_ns=$((_end_ns - _START_TIME_NS))
-#     _secs=$((_elapsed_ns / 1000000000))
-#     _ms=$((_elapsed_ns / 1000000 % 1000))
-#     printf "Script runtime: %d.%03d seconds\n" "$_secs" "$_ms"
-# }
-
 # 🛠️ Zsh Shell Configuration and Initialization
 
 add_to_path_if_not_already() {
@@ -45,10 +34,6 @@ if [ -f "$HOME/dotfiles/machineconfig/init_linux.sh" ]; then
     # echo "Sourcing $HOME/dotfiles/machineconfig/init_linux.sh"
     source "$HOME/dotfiles/machineconfig/init_linux.sh"
 fi
-
-# if [ -x "$HOME/.bun/bin/bun" ]; then
-#     alias node='$HOME/.bun/bin/bun'
-# fi
 
 alias l='lsd -la'
 alias d='wrap_in_shell_script devops'
