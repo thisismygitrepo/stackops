@@ -1,10 +1,14 @@
 
 import platform
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
-def main(installer_data: InstallerData, version: str | None) -> str:
-    _ = installer_data, version
+def main(installer_data: InstallerData, version: str | None, update: bool) -> str:
+    _ = installer_data, version, update
     system = platform.system()
     if system == "Windows":
         raise NotImplementedError("Installer is not yet implemented for Windows.")
@@ -19,3 +23,6 @@ def main(installer_data: InstallerData, version: str | None) -> str:
     import subprocess
     subprocess.run(program, shell=True, check=True)
     return f"Cloudflare WARP CLI installed successfully on {system}."
+
+
+main: InstallerPythonScriptMain

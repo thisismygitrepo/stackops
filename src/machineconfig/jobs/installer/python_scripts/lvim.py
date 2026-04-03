@@ -5,15 +5,19 @@ from rich.console import Console
 from rich.panel import Panel
 import subprocess
 import platform
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
 # as per https://www.lunarvim.org/docs/installation
 
 
-def main(installer_data: InstallerData, version: str | None) -> None:
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     console = Console()
-    _ = installer_data
+    _ = installer_data, update
     console.print(
         Panel.fit(
             "\n".join(
@@ -86,3 +90,6 @@ LV_BRANCH='release-1.4/neovim-0.9' bash <(curl -s https://raw.githubusercontent.
 
 if __name__ == "__main__":
     pass
+
+
+main: InstallerPythonScriptMain

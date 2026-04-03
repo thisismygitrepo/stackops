@@ -5,14 +5,18 @@ import subprocess
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 # config_dict: InstallerData = {"appName": "Redis", "repoURL": "CMD", "doc": "submillisecond fast key-value db"}
 
 
-def main(installer_data: InstallerData, version: str | None) -> None:
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     console = Console()
-    _ = installer_data
+    _ = installer_data, update
     console.print(
         Panel.fit(
             "\n".join([f"💻 Platform: {platform.system()}", f"🔄 Version: {'latest' if version is None else version}"]),
@@ -85,3 +89,6 @@ def main(installer_data: InstallerData, version: str | None) -> None:
 
 if __name__ == "__main__":
     pass
+
+
+main: InstallerPythonScriptMain

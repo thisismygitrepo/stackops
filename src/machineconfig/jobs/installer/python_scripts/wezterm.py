@@ -6,13 +6,17 @@ import subprocess
 from rich.console import Console
 from rich.panel import Panel
 
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 console = Console()
 
 
-def main(installer_data: InstallerData, version: str | None):
-    _ = installer_data
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
+    _ = installer_data, update
     console.print(
         Panel.fit(
             "\n".join(
@@ -89,3 +93,6 @@ def main(installer_data: InstallerData, version: str | None):
 
 if __name__ == "__main__":
     pass
+
+
+main: InstallerPythonScriptMain

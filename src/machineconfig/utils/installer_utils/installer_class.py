@@ -6,6 +6,9 @@ from machineconfig.utils.installer_utils.install_request_logic import (
     should_skip_install,
     validate_install_request,
 )
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    load_installer_python_script_main,
+)
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT
 from machineconfig.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows, check_tool_exists
@@ -70,7 +73,11 @@ class Installer:
     def _install_requested_with_target(self, install_target: InstallTarget, install_request: InstallRequest) -> None:
         effective_installer_value = resolve_installer_value(install_target=install_target, install_request=install_request)
         version = install_request.version if install_target.installer_kind == "github_release" or effective_installer_value.strip().startswith("winget install ") else None
-        self._install_from_value(installer_arch_os=effective_installer_value, version=version)
+        self._install_from_value(
+            installer_arch_os=effective_installer_value,
+            version=version,
+            update=install_request.update,
+        )
 
     def install_requested(self, install_request: InstallRequest) -> None:
         install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
@@ -97,9 +104,18 @@ class Installer:
             return f"""📦️ ❌ Failed to install `{app_name}` with error: {ex}"""
 
     def install(self, version: str | None) -> None:
-        self._install_from_value(installer_arch_os=self._get_installer_value(), version=version)
+        self._install_from_value(
+            installer_arch_os=self._get_installer_value(),
+            version=version,
+            update=False,
+        )
 
-    def _install_from_value(self, installer_arch_os: str, version: str | None) -> None:
+    def _install_from_value(
+        self,
+        installer_arch_os: str,
+        version: str | None,
+        update: bool,
+    ) -> None:
         exe_name = self._get_exe_name()
         repo_url = self.installer_data["repoURL"]
         version_to_be_installed: str = "unknown"  # Initialize to ensure it's always bound
@@ -150,7 +166,12 @@ class Installer:
                     version_to_be_installed = "scripted_installation"
                 elif installer_arch_os.endswith(".py"):
                     import runpy
-                    runpy.run_path(str(installer_path), run_name=None)["main"](self.installer_data, version=version)
+                    script_module = runpy.run_path(str(installer_path), run_name=None)
+                    script_main = load_installer_python_script_main(
+                        module_globals=script_module,
+                        installer_path=installer_path,
+                    )
+                    script_main(self.installer_data, version=version, update=update)
                     version_to_be_installed = str(version)
             elif binary_download_link:
                 downloaded_object = download_and_prepare(installer_arch_os)

@@ -56,9 +56,8 @@ def validate_install_request(install_target: InstallTarget, install_request: Ins
 
     if install_request.update and not supports_update:
         warnings.append(
-            f"""Ignoring unsupported --update/-u for {install_target.installer_kind} installers and continuing with the supported install flow."""
+            f"""Unsupported --update/-u for {install_target.installer_kind} installers; update-specific handling is unavailable, so installation will continue regardless of whether the app is already installed."""
         )
-        effective_update = False
     if install_request.version is not None and not supports_version:
         warnings.append(
             f"""Ignoring unsupported --version/-v for {install_target.installer_kind} installers and continuing with the supported install flow."""

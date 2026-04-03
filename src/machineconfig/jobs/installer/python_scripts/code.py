@@ -4,12 +4,16 @@ import platform
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
-def main(installer_data: InstallerData, version: str | None = None) -> None:
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     console = Console()
-    _ = installer_data
+    _ = installer_data, update
     console.print(
         Panel.fit(
             "\n".join([f"🖥️  Platform: {platform.system()}", f"🔄 Version: {'latest' if version is None else version}"]),
@@ -62,3 +66,6 @@ winget install --no-upgrade --name "Microsoft Visual Studio Code" --Id "Microsof
 
 if __name__ == "__main__":
     pass
+
+
+main: InstallerPythonScriptMain

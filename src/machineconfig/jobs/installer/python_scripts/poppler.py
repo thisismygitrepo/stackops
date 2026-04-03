@@ -1,6 +1,10 @@
 import platform
 from pathlib import Path
 
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
@@ -35,8 +39,8 @@ def _select_extracted_root(extracted_path: PathExtended) -> PathExtended:
     return extracted_path
 
 
-def main(installer_data: InstallerData, version: str | None) -> None:
-    _ = installer_data
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
+    _ = installer_data, update
     if platform.system() != "Windows":
         raise NotImplementedError("Poppler Windows installer is only supported on Windows.")
 
@@ -57,3 +61,6 @@ def main(installer_data: InstallerData, version: str | None) -> None:
 
 if __name__ == "__main__":
     _ = Path
+
+
+main: InstallerPythonScriptMain

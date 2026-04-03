@@ -1,6 +1,9 @@
-
-from typing import Any, Callable
+from typing import Callable
 import platform
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
@@ -25,8 +28,8 @@ installer_standard: InstallerData =    {
     }
 
 
-def main(installer_data: InstallerData, version: str | None):
-    _ = installer_data
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
+    _ = installer_data, update
     inst = Installer(installer_data=installer_standard)
     inst.install(version=version)
 
@@ -54,7 +57,7 @@ def main(installer_data: InstallerData, version: str | None):
     import stat
     import time
 
-    def on_rm_error(_func: Callable[..., Any], path: str, exc: BaseException) -> None:
+    def on_rm_error(_func: Callable[..., object], path: str, exc: BaseException) -> None:
         _ = _func, exc
         os.chmod(path, stat.S_IWRITE)
         try:
@@ -105,3 +108,6 @@ ya pkg install
 
 if __name__ == "__main__":
     pass
+
+
+main: InstallerPythonScriptMain

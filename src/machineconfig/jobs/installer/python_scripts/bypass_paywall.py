@@ -4,6 +4,10 @@
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 from machineconfig.utils.path_extended import PathExtended
 
@@ -15,9 +19,9 @@ from machineconfig.utils.path_extended import PathExtended
 # }
 
 
-def main(installer_data: InstallerData, version: str | None = None) -> str:
+def main(installer_data: InstallerData, version: str | None, update: bool) -> str:
     console = Console()
-    _ = installer_data
+    _ = installer_data, update
     console.print(
         Panel.fit(
             "\n".join([f"🔄 Version: {'latest' if version is None else version}"]),
@@ -56,3 +60,6 @@ def main(installer_data: InstallerData, version: str | None = None) -> str:
 
 if __name__ == "__main__":
     pass
+
+
+main: InstallerPythonScriptMain

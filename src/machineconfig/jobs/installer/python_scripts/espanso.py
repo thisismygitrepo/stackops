@@ -7,6 +7,10 @@ import subprocess
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 # config_dict: InstallerData = {
@@ -15,9 +19,9 @@ from machineconfig.utils.schemas.installer.installer_types import InstallerData
 #     "doc": "A text expander.",
 # }
 
-def main(installer_data: InstallerData, version: str | None) -> None:
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     console = Console()
-    _ = installer_data
+    _ = installer_data, update
     console.print(
         Panel.fit(
             "\n".join(
@@ -114,3 +118,6 @@ espanso install actually-all-emojis
     except subprocess.CalledProcessError as e:
         console.print(f"❌ Configuration failed with exit code {e.returncode}", style="bold red")
         raise
+
+
+main: InstallerPythonScriptMain

@@ -6,6 +6,10 @@ from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.installer_utils.installer_locator_utils import WINDOWS_INSTALL_PATH
 import platform
 
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH
 from machineconfig.utils.installer_utils.installer_class import Installer
 from rich.console import Console
@@ -36,8 +40,13 @@ config_dict: InstallerData = {
 }
 
 
-def main(installer_data: InstallerData, version: str | None, install_lib: bool = True):
-    _ = installer_data
+def main(
+    installer_data: InstallerData,
+    version: str | None,
+    update: bool,
+    install_lib: bool = True,
+) -> str:
+    _ = installer_data, update
     console = Console()
 
     console.print(Panel(f"HELIX EDITOR INSTALLER 🧬\nPlatform: {platform.system()}\nVersion:  {'latest' if version is None else version}", title="Installer", expand=False))
@@ -217,3 +226,6 @@ def main(installer_data: InstallerData, version: str | None, install_lib: bool =
 
 if __name__ == "__main__":
     pass
+
+
+main: InstallerPythonScriptMain

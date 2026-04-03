@@ -1,6 +1,10 @@
 
 
 
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 installer_data: InstallerData = {
@@ -23,8 +27,11 @@ installer_data: InstallerData = {
     }
 
 
-def main(installer_data: InstallerData, version: str | None) -> None:
-    _ = version
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
+    _ = version, update
     from machineconfig.utils.installer_utils.installer_runner import Installer
     installer = Installer(installer_data)
     installer.install(version=None)
+
+
+main: InstallerPythonScriptMain

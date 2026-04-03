@@ -4,13 +4,17 @@ import platform
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 from pathlib import Path
 
 
-def main(installer_data: InstallerData, version: str | None) -> None:
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     console = Console()
-    _ = installer_data
+    _ = installer_data, update
     console.print(
         Panel.fit(
             "\n".join([f"💻 Platform: {platform.system()}", f"🔄 Version: {'latest' if version is None else version}"]),
@@ -51,3 +55,6 @@ def main(installer_data: InstallerData, version: str | None) -> None:
     from machineconfig.utils.code import print_code, run_shell_script
     print_code(code=program, lexer="shell", desc="Installation Script Preview")
     run_shell_script(program, display_script=True, clean_env=False)
+
+
+main: InstallerPythonScriptMain

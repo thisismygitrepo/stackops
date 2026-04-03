@@ -2,6 +2,10 @@ import subprocess
 import requests
 import tempfile
 from pathlib import Path
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
@@ -115,7 +119,7 @@ def install_msix_package(package_path: Path) -> bool:
         return False
 
 
-def main(installer_data: InstallerData, version: str | None) -> bool:
+def main(installer_data: InstallerData, version: str | None, update: bool) -> bool:
     """
     Ensure winget is available on the system. If not available, download and install it.
 
@@ -123,7 +127,7 @@ def main(installer_data: InstallerData, version: str | None) -> bool:
         bool: True if winget is available (either was already installed or successfully installed),
               False if installation failed
     """
-    _ = installer_data
+    _ = installer_data, update
     # First check if winget is already available
     if is_winget_available():
         print("Winget is already available on the system.")
@@ -170,3 +174,6 @@ def main(installer_data: InstallerData, version: str | None) -> bool:
     else:
         print("Installation completed but winget is still not available. You may need to restart your terminal or add it to PATH.")
         return False
+
+
+main: InstallerPythonScriptMain

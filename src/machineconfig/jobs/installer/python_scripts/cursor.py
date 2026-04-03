@@ -3,6 +3,10 @@ import shutil
 from pathlib import Path
 import platform
 import subprocess
+from machineconfig.jobs.installer.python_scripts.main_protocol import (
+    InstallerPythonScriptMain,
+    
+)
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 from machineconfig.utils.source_of_truth import LINUX_INSTALL_PATH
 
@@ -10,7 +14,7 @@ from machineconfig.utils.source_of_truth import LINUX_INSTALL_PATH
 # config_dict: InstallerData = {"appName": "Cursor", "repoURL": "CMD", "doc": "Cursor"}
 
 
-def install_linux(version: str | None = None):
+def install_linux(version: str | None) -> None:
     """Install Cursor on Linux systems."""
     _ = version
     # Variables
@@ -52,7 +56,7 @@ Categories=Development;IDE;
     print("Cursor is now available from the start menu.")
 
 
-def install_windows(version: str | None = None):
+def install_windows(version: str | None) -> None:
     """Install Cursor on Windows systems."""
     _ = version
     home = Path.home()
@@ -99,15 +103,15 @@ def install_windows(version: str | None = None):
     print("Cursor installation completed. Check your Start Menu or Desktop for Cursor.")
 
 
-def main(installer_data: InstallerData, version: str | None = None):
+def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     """Main installation function that handles both Linux and Windows."""
-    _ = installer_data
+    _ = installer_data, update
     system = platform.system()
 
     if system == "Linux":
-        install_linux(version)
+        install_linux(version=version)
     elif system == "Windows":
-        install_windows(version)
+        install_windows(version=version)
     else:
         raise OSError(f"Unsupported operating system: {system}. This script supports Linux and Windows only.")
 
@@ -115,3 +119,6 @@ def main(installer_data: InstallerData, version: str | None = None):
 if __name__ == "__main__":
     pass
     # main()
+
+
+main: InstallerPythonScriptMain

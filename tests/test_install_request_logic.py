@@ -32,7 +32,7 @@ def test_validate_install_request_accepts_github_release_flags() -> None:
     assert resolution.warnings == ()
 
 
-def test_validate_install_request_ignores_unsupported_package_manager_flags() -> None:
+def test_validate_install_request_keeps_force_install_when_update_is_unsupported() -> None:
     install_target = InstallTarget(installer_kind="package_manager", installer_value="brew install git")
 
     resolution = validate_install_request(
@@ -40,9 +40,9 @@ def test_validate_install_request_ignores_unsupported_package_manager_flags() ->
         install_request=InstallRequest(version=None, update=True),
     )
 
-    assert resolution.install_request == InstallRequest(version=None, update=False)
+    assert resolution.install_request == InstallRequest(version=None, update=True)
     assert resolution.warnings == (
-        "Ignoring unsupported --update/-u for package_manager installers and continuing with the supported install flow.",
+        "Unsupported --update/-u for package_manager installers; update-specific handling is unavailable, so installation will continue regardless of whether the app is already installed.",
     )
 
 
@@ -78,14 +78,29 @@ def test_validate_install_request_ignores_unsupported_version_for_direct_binary_
     )
 
 
-def test_should_skip_install_when_unsupported_flags_are_ignored() -> None:
+def test_should_not_skip_install_when_script_update_is_unsupported() -> None:
+    install_target = InstallTarget(installer_kind="script", installer_value="yazi.py")
+    resolution = validate_install_request(
+        install_target=install_target,
+        install_request=InstallRequest(version=None, update=True),
+    )
+
+    assert resolution.install_request == InstallRequest(version=None, update=True)
+    assert not should_skip_install(
+        exe_name="yazi",
+        install_request=resolution.install_request,
+        tool_exists=lambda _name: True,
+    )
+
+
+def test_should_not_skip_install_when_update_is_unsupported() -> None:
     install_target = InstallTarget(installer_kind="package_manager", installer_value="brew install git")
     resolution = validate_install_request(
         install_target=install_target,
         install_request=InstallRequest(version="1.2.3", update=True),
     )
 
-    assert should_skip_install(
+    assert not should_skip_install(
         exe_name="git",
         install_request=resolution.install_request,
         tool_exists=lambda _name: True,
