@@ -14,6 +14,12 @@ class InstallTarget:
     installer_value: str
 
 
+@dataclass(frozen=True, slots=True)
+class InstallRequestResolution:
+    install_request: InstallRequest
+    warnings: tuple[str, ...]
+
+
 def build_install_target(repo_url: str, installer_value: str) -> InstallTarget:
     package_manager_installer = any(package_manager in installer_value.split() for package_manager in PACKAGE_MANAGERS)
     script_installer = installer_value.endswith((".sh", ".py", ".ps1"))
@@ -40,14 +46,29 @@ def should_skip_install(
     return tool_exists(exe_name)
 
 
-def validate_install_request(install_target: InstallTarget, install_request: InstallRequest) -> None:
+def validate_install_request(install_target: InstallTarget, install_request: InstallRequest) -> InstallRequestResolution:
     supports_update = install_target.installer_kind in {"binary_url", "github_release"} or _is_winget_install_command(install_target.installer_value)
     supports_version = install_target.installer_kind == "github_release" or _is_winget_install_command(install_target.installer_value)
 
+    warnings: list[str] = []
+    effective_update = install_request.update
+    effective_version = install_request.version
+
     if install_request.update and not supports_update:
-        raise NotImplementedError("--update/-u is only supported for GitHub-release installers, direct binary URLs, and winget CMD installers.")
+        warnings.append(
+            f"""Ignoring unsupported --update/-u for {install_target.installer_kind} installers and continuing with the supported install flow."""
+        )
+        effective_update = False
     if install_request.version is not None and not supports_version:
-        raise NotImplementedError("--version/-v is only supported for GitHub-release installers and winget CMD installers.")
+        warnings.append(
+            f"""Ignoring unsupported --version/-v for {install_target.installer_kind} installers and continuing with the supported install flow."""
+        )
+        effective_version = None
+
+    return InstallRequestResolution(
+        install_request=InstallRequest(version=effective_version, update=effective_update),
+        warnings=tuple(warnings),
+    )
 
 
 def resolve_installer_value(install_target: InstallTarget, install_request: InstallRequest) -> str:

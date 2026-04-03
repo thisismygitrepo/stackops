@@ -24,6 +24,7 @@ installer_standard: InstallerData =    {
       }
     }
 
+
 def main(installer_data: InstallerData, version: str | None):
     _ = installer_data
     inst = Installer(installer_data=installer_standard)

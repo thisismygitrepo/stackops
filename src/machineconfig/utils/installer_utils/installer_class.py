@@ -1,5 +1,6 @@
 from machineconfig.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
 from machineconfig.utils.installer_utils.install_request_logic import (
+    InstallTarget,
     build_install_target,
     resolve_installer_value,
     should_skip_install,
@@ -58,22 +59,32 @@ class Installer:
             return ""
         return result.stdout.strip()
 
-    def install_requested(self, install_request: InstallRequest) -> None:
+    def _resolve_install_request(self, install_request: InstallRequest) -> tuple[InstallTarget, InstallRequest]:
         installer_value = self._get_installer_value()
         install_target = build_install_target(repo_url=self.installer_data["repoURL"], installer_value=installer_value)
-        validate_install_request(install_target=install_target, install_request=install_request)
+        install_request_resolution = validate_install_request(install_target=install_target, install_request=install_request)
+        for warning in install_request_resolution.warnings:
+            print(f"⚠️ WARNING: {warning}")
+        return install_target, install_request_resolution.install_request
+
+    def _install_requested_with_target(self, install_target: InstallTarget, install_request: InstallRequest) -> None:
         effective_installer_value = resolve_installer_value(install_target=install_target, install_request=install_request)
         version = install_request.version if install_target.installer_kind == "github_release" or effective_installer_value.strip().startswith("winget install ") else None
         self._install_from_value(installer_arch_os=effective_installer_value, version=version)
 
+    def install_requested(self, install_request: InstallRequest) -> None:
+        install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
+        self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
+
     def install_robust(self, install_request: InstallRequest) -> str:
         try:
             exe_name = self._get_exe_name()
-            if should_skip_install(exe_name=exe_name, install_request=install_request, tool_exists=check_tool_exists):
+            install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
+            if should_skip_install(exe_name=exe_name, install_request=effective_install_request, tool_exists=check_tool_exists):
                 return f"""📦️ ⏭️ {exe_name} already installed, skipped"""
             old_version_cli = self._read_installed_version(exe_name=exe_name)
             print(f"🚀 INSTALLING {exe_name.upper()} 🚀. 📊 Current version: {old_version_cli or 'Not installed'}")
-            self.install_requested(install_request=install_request)
+            self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
             new_version_cli = self._read_installed_version(exe_name=exe_name)
             if old_version_cli == new_version_cli:
                 return f"""📦️ 😑 {exe_name}, same version: {old_version_cli}"""
