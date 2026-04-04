@@ -187,8 +187,6 @@ def check_important_tools() -> dict[str, dict[str, bool]]:
 
 def check_backup_config() -> dict[str, Any]:
     """Check backup configuration status."""
-    import tomllib
-
     from machineconfig.utils.io import read_ini
 
     try:
@@ -197,17 +195,14 @@ def check_backup_config() -> dict[str, Any]:
         cloud_config = "Not configured"
 
     try:
-        from machineconfig.scripts.python.helpers.helpers_devops.backup_config import LIBRARY_BACKUP_PATH
+        from machineconfig.scripts.python.helpers.helpers_devops.backup_config import LIBRARY_BACKUP_PATH, read_backup_config
 
         backup_file = LIBRARY_BACKUP_PATH
         if backup_file.exists():
-            backup_data = tomllib.loads(backup_file.read_text(encoding="utf-8"))
+            backup_data = read_backup_config(repo="library")
             backup_items: list[str] = []
             for group_name, entries in backup_data.items():
-                if isinstance(entries, dict):
-                    backup_items.extend([f"{group_name}.{entry_name}" for entry_name in entries.keys()])
-                else:
-                    backup_items.append(str(group_name))
+                backup_items.extend([f"{group_name}.{entry_name}" for entry_name in entries.keys()])
             backup_items_count = len(backup_items)
         else:
             backup_items = []

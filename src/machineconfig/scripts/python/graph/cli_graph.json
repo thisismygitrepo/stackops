@@ -790,7 +790,7 @@
                     "",
                     "    from machineconfig.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.86\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.87\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1723,7 +1723,7 @@
                     "    # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.86\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.87\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -2048,7 +2048,7 @@
                     "        from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview",
                     "        import pprint",
                     "        options_with_preview: dict[str, str] = {key: pprint.pformat(value, width=88, sort_dicts=True) for key, value in mapper_full.items()}",
-                    "        items_chosen = choose_from_dict_with_preview(options_with_preview, extension=\"toml\", multi=True, preview_size_percent=75.0)",
+                    "        items_chosen = choose_from_dict_with_preview(options_with_preview, extension=\"yaml\", multi=True, preview_size_percent=75.0)",
                     "    else:",
                     "        if which == \"all\":",
                     "            items_chosen = list(mapper_full.keys())",
@@ -2223,7 +2223,7 @@
                 "name": "register",
                 "fullPath": "devops config register",
                 "shortPath": "d c r",
-                "help": "📇 <r> Register dotfiles agains user mapper.toml",
+                "help": "📇 <r> Register dotfiles against user mapper.yaml",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile",
@@ -2237,10 +2237,10 @@
                     "    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., \"--on-conflict\", \"-o\", help=\"Action to take on conflict\")] = \"throw-error\",",
                     "    sensitivity: Annotated[Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the config file.\")] = \"private\",",
                     "    destination: Annotated[str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")] = None,",
-                    "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper_dotfiles.toml to record this mapping.\")] = \"default\",",
+                    "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper_dotfiles.yaml to record this mapping.\")] = \"default\",",
                     "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list or 'any' to apply everywhere.\")] = \"any\",",
                     "    shared: Annotated[bool, typer.Option(\"--shared\", \"-sh\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
-                    "    record: Annotated[bool, typer.Option(\"--record\", \"-r\", help=\"Record the mapping in user's mapper.toml\")] = True,",
+                    "    record: Annotated[bool, typer.Option(\"--record\", \"-r\", help=\"Record the mapping in user's mapper.yaml\")] = True,",
                     "    ) -> None:",
                     "    from rich.console import Console",
                     "    from rich.panel import Panel",
@@ -2271,9 +2271,36 @@
                     "                raise typer.Exit(code=1) from e",
                     "        case _:",
                     "            raise ValueError(f\"Unknown method: {method}\")",
-                    "    console.print(Panel(\"\\n\".join([\"✅ Symbolic link created successfully!\", \"🔄 Add the following snippet to mapper.toml to persist this mapping:\",]), title=\"Symlink Created\", border_style=\"green\", padding=(1, 2),))",
                     "    if record:",
-                    "        record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter)"
+                    "        record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter)",
+                    "        return",
+                    "    entry_name = _build_entry_name(orig_path)",
+                    "    preview = _build_mapper_preview(",
+                    "        section=section,",
+                    "        entry_name=entry_name,",
+                    "        entry=_build_mapper_entry(",
+                    "            original_path=orig_path,",
+                    "            self_managed_path=new_path,",
+                    "            method=METHOD_MAP[method],",
+                    "            is_contents=False,",
+                    "            os_filter=os_filter,",
+                    "        ),",
+                    "    )",
+                    "    console.print(",
+                    "        Panel(",
+                    "            \"\\n\".join(",
+                    "                [",
+                    "                    \"✅ Dotfile mapping applied successfully.\",",
+                    "                    \"🔄 Add the following YAML to mapper.yaml to persist this mapping:\",",
+                    "                    \"\",",
+                    "                    preview,",
+                    "                ]",
+                    "            ),",
+                    "            title=\"Mapping Preview\",",
+                    "            border_style=\"green\",",
+                    "            padding=(1, 2),",
+                    "        )",
+                    "    )"
                   ],
                   "name": "register_dotfile",
                   "parameters": [
@@ -2389,7 +2416,7 @@
                       "type": "str",
                       "default": "default",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--section', '-se', help='Section name in mapper_dotfiles.toml to record this mapping.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--section', '-se', help='Section name in mapper_dotfiles.yaml to record this mapping.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2402,7 +2429,7 @@
                         "short_flags": [
                           "-se"
                         ],
-                        "help": "Section name in mapper_dotfiles.toml to record this mapping."
+                        "help": "Section name in mapper_dotfiles.yaml to record this mapping."
                       }
                     },
                     {
@@ -2452,7 +2479,7 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--record', '-r', help=\"Record the mapping in user's mapper.toml\")]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--record', '-r', help=\"Record the mapping in user's mapper.yaml\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2465,7 +2492,7 @@
                         "short_flags": [
                           "-r"
                         ],
-                        "help": "Record the mapping in user's mapper.toml"
+                        "help": "Record the mapping in user's mapper.yaml"
                       }
                     }
                   ],
@@ -2486,7 +2513,7 @@
                 "name": "edit",
                 "fullPath": "devops config edit",
                 "shortPath": "d c E",
-                "help": "📝 <E> Open dotfiles mapper.toml in nano, hx, or code.",
+                "help": "📝 <E> Open dotfiles mapper.yaml in nano, hx, or code.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile",
@@ -2497,7 +2524,7 @@
                     "def edit_dotfile(",
                     "    editor: Annotated[",
                     "        Literal[\"nano\", \"hx\", \"code\"],",
-                    "        typer.Option(\"--editor\", \"-e\", help=\"📝 Editor to open the dotfiles mapper file.\"),",
+                    "        typer.Option(\"--editor\", \"-e\", help=\"📝 Editor to open the dotfiles mapper.yaml file.\"),",
                     "    ] = \"hx\",",
                     "    repo: Annotated[",
                     "        Literal[\"library\", \"l\", \"user\", \"u\"],",
@@ -2505,14 +2532,13 @@
                     "    ] = \"user\",",
                     ") -> None:",
                     "    from machineconfig.profile.create_links_export import REPO_MAP",
-                    "    from machineconfig.profile.create_links import LIBRARY_MAPPER_PATH, USER_MAPPER_PATH",
                     "",
                     "    repo_key = REPO_MAP[repo]",
                     "    if repo_key == \"user\":",
                     "        file_path = USER_MAPPER_PATH",
                     "        file_path.parent.mkdir(parents=True, exist_ok=True)",
                     "        if not file_path.exists():",
-                    "            file_path.write_text(DEFAULT_DOTFILE_MAPPER_HEADER, encoding=\"utf-8\")",
+                    "            write_dotfiles_mapper(path=file_path, mapper={}, header=DEFAULT_DOTFILE_MAPPER_HEADER)",
                     "    else:",
                     "        file_path = LIBRARY_MAPPER_PATH",
                     "        if not file_path.exists():",
@@ -2540,7 +2566,7 @@
                       "type": "Literal['nano', 'hx', 'code']",
                       "default": "hx",
                       "required": false,
-                      "annotation_raw": "Annotated[Literal['nano', 'hx', 'code'], typer.Option('--editor', '-e', help='📝 Editor to open the dotfiles mapper file.')]",
+                      "annotation_raw": "Annotated[Literal['nano', 'hx', 'code'], typer.Option('--editor', '-e', help='📝 Editor to open the dotfiles mapper.yaml file.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2553,7 +2579,7 @@
                         "short_flags": [
                           "-e"
                         ],
-                        "help": "📝 Editor to open the dotfiles mapper file."
+                        "help": "📝 Editor to open the dotfiles mapper.yaml file."
                       }
                     },
                     {
@@ -2588,7 +2614,7 @@
                   {
                     "name": "E",
                     "hidden": true,
-                    "help": "Open dotfiles mapper.toml in nano, hx, or code."
+                    "help": "Open dotfiles mapper.yaml in nano, hx, or code."
                   }
                 ]
               },
@@ -3369,7 +3395,7 @@
                     "    direction: Annotated[Literal[\"up\", \"u\", \"down\", \"d\"], typer.Argument(..., help=\"Direction of sync: backup or retrieve\")],",
                     "    cloud: Annotated[str | None, typer.Option(\"--cloud\", \"-c\", help=\"☁ Cloud configuration name (rclone config name)\")] = None,",
                     "    which: Annotated[",
-                    "        str | None, typer.Option(\"--which\", \"-w\", help=\"📝 Comma-separated list of items to BACKUP (from backup.toml), or 'all' for all items\")",
+                    "        str | None, typer.Option(\"--which\", \"-w\", help=\"📝 Comma-separated list of items to BACKUP (from mapper_data.yaml), or 'all' for all items\")",
                     "    ] = None,",
                     "    repo: Annotated[REPO_LOOSE, typer.Option(\"--repo\", \"-r\", help=\"📁 Which backup configuration to use: 'library' or 'user'\")] = \"all\",",
                     "    # interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"🤔 Prompt the selection of which items to process\")] = False,",
@@ -3431,7 +3457,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"📝 Comma-separated list of items to BACKUP (from backup.toml), or 'all' for all items\")]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"📝 Comma-separated list of items to BACKUP (from mapper_data.yaml), or 'all' for all items\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3444,7 +3470,7 @@
                         "short_flags": [
                           "-w"
                         ],
-                        "help": "📝 Comma-separated list of items to BACKUP (from backup.toml), or 'all' for all items"
+                        "help": "📝 Comma-separated list of items to BACKUP (from mapper_data.yaml), or 'all' for all items"
                       }
                     },
                     {
@@ -3487,7 +3513,7 @@
                 "name": "register",
                 "fullPath": "devops data register",
                 "shortPath": "d d r",
-                "help": "📝 <r> Register a new backup entry in user backup.toml.",
+                "help": "📝 <r> Register a new backup entry in user mapper_data.yaml.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_data.py",
                   "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_data",
@@ -3497,8 +3523,8 @@
                   "raw_lines": [
                     "def register_data(",
                     "    path_local: Annotated[str, typer.Argument(..., help=\"Local file/folder path to back up.\")],",
-                    "    group: Annotated[str, typer.Option(\"--group\", \"-g\", help=\"Group section name in backup.toml.\")] = \"default\",",
-                    "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name inside the group in backup.toml.\")] = None,",
+                    "    group: Annotated[str, typer.Option(\"--group\", \"-g\", help=\"Group name in mapper_data.yaml.\")] = \"default\",",
+                    "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name inside the group in mapper_data.yaml.\")] = None,",
                     "    path_cloud: Annotated[str | None, typer.Option(\"--path-cloud\", \"-C\", help=\"Cloud path override (optional).\")] = None,",
                     "    zip_: Annotated[bool, typer.Option(\"--zip/--no-zip\", \"-z/-nz\", help=\"Zip before uploading.\")] = False,",
                     "    encrypt: Annotated[bool, typer.Option(\"--encrypt/--no-encrypt\", \"-e/-ne\", help=\"Encrypt before uploading.\")] = False,",
@@ -3542,7 +3568,7 @@
                       "type": "str",
                       "default": "default",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--group', '-g', help='Group section name in backup.toml.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--group', '-g', help='Group name in mapper_data.yaml.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3555,7 +3581,7 @@
                         "short_flags": [
                           "-g"
                         ],
-                        "help": "Group section name in backup.toml."
+                        "help": "Group name in mapper_data.yaml."
                       }
                     },
                     {
@@ -3564,7 +3590,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Entry name inside the group in backup.toml.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Entry name inside the group in mapper_data.yaml.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3577,7 +3603,7 @@
                         "short_flags": [
                           "-n"
                         ],
-                        "help": "Entry name inside the group in backup.toml."
+                        "help": "Entry name inside the group in mapper_data.yaml."
                       }
                     },
                     {

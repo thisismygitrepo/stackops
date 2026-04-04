@@ -2,11 +2,12 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from machineconfig.profile import create_links
 from machineconfig.scripts.python import devops as devops_cli
-from machineconfig.scripts.python.helpers.helpers_devops import cli_config
+from machineconfig.scripts.python.helpers.helpers_devops import cli_config, cli_config_dotfile
 
 
 runner = CliRunner()
@@ -78,6 +79,81 @@ def test_copy_assets_rejects_legacy_both_argument() -> None:
     assert result.exit_code != 0
     assert "Invalid value" in result.output
     assert "both" in result.output
+
+
+def test_read_mapper_loads_yaml_file(tmp_path: Path) -> None:
+    mapper_path = tmp_path / "mapper_dotfiles.yaml"
+    mapper_path.write_text(
+        f"""
+demo_public:
+  config:
+    original: ~/.demo-public
+    self_managed: CONFIG_ROOT/settings/demo/public.conf
+    os:
+    - {create_links.SYSTEM}
+demo_private:
+  creds:
+    original: ~/.demo-private
+    self_managed: ~/dotfiles/demo/private.conf
+    os: any
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with patch.object(create_links, "LIBRARY_MAPPER_PATH", mapper_path):
+        mapper = create_links.read_mapper(repo="library")
+
+    assert mapper["public"] == {
+        "demo_public": [
+            {
+                "file_name": "config",
+                "config_file_default_path": "~/.demo-public",
+                "self_managed_config_file_path": "CONFIG_ROOT/settings/demo/public.conf",
+                "contents": None,
+                "copy": None,
+                "os": [create_links.SYSTEM],
+            }
+        ]
+    }
+    assert mapper["private"] == {
+        "demo_private": [
+            {
+                "file_name": "creds",
+                "config_file_default_path": "~/.demo-private",
+                "self_managed_config_file_path": "~/dotfiles/demo/private.conf",
+                "contents": None,
+                "copy": None,
+                "os": "any",
+            }
+        ]
+    }
+
+
+def test_record_mapping_writes_yaml_mapper_file(tmp_path: Path) -> None:
+    mapper_path = tmp_path / "mapper_dotfiles.yaml"
+    original_path = tmp_path / "demo-file.conf"
+    managed_path = tmp_path / "managed" / "demo-file.conf"
+
+    with patch.object(cli_config_dotfile, "USER_MAPPER_PATH", mapper_path):
+        cli_config_dotfile.record_mapping(
+            orig_path=original_path,
+            new_path=managed_path,
+            method="copy",
+            section="demo",
+            os_filter="linux,darwin",
+        )
+
+    mapper_data = yaml.safe_load(mapper_path.read_text(encoding="utf-8"))
+    assert mapper_data == {
+        "demo": {
+            "demo_file": {
+                "original": original_path.as_posix(),
+                "self_managed": managed_path.as_posix(),
+                "copy": True,
+                "os": ["linux", "darwin"],
+            }
+        }
+    }
 
 
 @pytest.mark.parametrize(

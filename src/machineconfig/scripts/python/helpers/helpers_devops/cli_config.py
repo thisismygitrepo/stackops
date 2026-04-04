@@ -79,10 +79,10 @@ def get_app() -> typer.Typer:
     config_apps.command("sync", no_args_is_help=True, help="🔄 <s> Sync dotfiles.")(create_links_export.main_from_parser)
     config_apps.command("s", no_args_is_help=True, help="Sync dotfiles.", hidden=True)(create_links_export.main_from_parser)
 
-    config_apps.command("register", no_args_is_help=True, help="📇 <r> Register dotfiles agains user mapper.toml")(dotfile_module.register_dotfile)
+    config_apps.command("register", no_args_is_help=True, help="📇 <r> Register dotfiles against user mapper.yaml")(dotfile_module.register_dotfile)
     config_apps.command("r", no_args_is_help=True, hidden=True)(dotfile_module.register_dotfile)
-    config_apps.command("edit", no_args_is_help=True, help="📝 <E> Open dotfiles mapper.toml in nano, hx, or code.")(dotfile_module.edit_dotfile)
-    config_apps.command("E", no_args_is_help=True, help="Open dotfiles mapper.toml in nano, hx, or code.", hidden=True)(dotfile_module.edit_dotfile)
+    config_apps.command("edit", no_args_is_help=True, help="📝 <E> Open dotfiles mapper.yaml in nano, hx, or code.")(dotfile_module.edit_dotfile)
+    config_apps.command("E", no_args_is_help=True, help="Open dotfiles mapper.yaml in nano, hx, or code.", hidden=True)(dotfile_module.edit_dotfile)
 
     config_apps.command("export-dotfiles", no_args_is_help=True, help="📤 <e> Export dotfiles for migration to new machine.")(
         dotfile_module.export_dotfiles

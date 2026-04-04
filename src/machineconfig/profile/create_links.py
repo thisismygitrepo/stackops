@@ -14,18 +14,14 @@ from rich.table import Table
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.links import symlink_map, copy_map
 from machineconfig.profile.create_links_export import DIRECTION_STRICT, ON_CONFLICT_STRICT
-from machineconfig.utils.source_of_truth import LIBRARY_ROOT, CONFIG_ROOT
+from machineconfig.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, MapperDocument, OsField, load_dotfiles_mapper
+from machineconfig.utils.source_of_truth import CONFIG_ROOT
 
 import platform
 import subprocess
-import tomllib
 import io
 from typing import Any, TypedDict, Literal, TypeAlias
-from pathlib import Path
 
-
-LIBRARY_MAPPER_PATH = LIBRARY_ROOT.joinpath("profile/mapper_dotfiles.toml")
-USER_MAPPER_PATH  = Path.home().joinpath("dotfiles/machineconfig/mapper_dotfiles.toml")
 
 system = platform.system()  # Linux or Windows
 ERROR_LIST: list[Any] = []  # append to this after every exception captured.
@@ -59,7 +55,7 @@ def _normalize_repo_name(value: str) -> str:
     return REPO_ALIASES.get(value.strip().lower(), value.strip().lower())
 
 
-def _parse_os_field(os_field: Any) -> set[str]:
+def _parse_os_field(os_field: OsField | None) -> set[str]:
     if not os_field:
         return {"any"}
     if isinstance(os_field, list):
@@ -77,19 +73,13 @@ def _parse_os_field(os_field: Any) -> set[str]:
     return values or {"any"}
 
 
-class Base(TypedDict):
-    original: str
-    self_managed: str
-    contents: bool | None
-    copy: bool | None
-    os: str | None
 class ConfigMapper(TypedDict):
     file_name: str
     config_file_default_path: str
     self_managed_config_file_path: str
     contents: bool | None
     copy: bool | None
-    os: str | None
+    os: OsField | None
 class MapperFileData(TypedDict):
     public: dict[str, list[ConfigMapper]]
     private: dict[str, list[ConfigMapper]]
@@ -116,7 +106,7 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
             return {"public": merged_public, "private": merged_private}
         case _:
             raise ValueError(f"Unsupported repo value: {repo}")
-    mapper_data: dict[str, dict[str, Base]] = tomllib.loads(mapper_path.read_text(encoding="utf-8"))
+    mapper_data: MapperDocument = load_dotfiles_mapper(mapper_path)
     public: dict[str, list[ConfigMapper]] = {}
     private: dict[str, list[ConfigMapper]] = {}
     normalized_system = _normalize_os_name(SYSTEM)

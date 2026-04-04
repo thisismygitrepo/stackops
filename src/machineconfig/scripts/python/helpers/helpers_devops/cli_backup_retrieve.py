@@ -14,8 +14,8 @@ from machineconfig.utils.code import print_code
 from machineconfig.utils.options import choose_cloud_interactively
 from machineconfig.scripts.python.helpers.helpers_cloud.helpers2 import ES
 from machineconfig.scripts.python.helpers.helpers_devops.backup_config import (
-    BackupConfig, BackupGroup, VALID_OS, USER_BACKUP_PATH, DEFAULT_BACKUP_HEADER,
-    normalize_os_name, os_applies, read_backup_config,
+    BackupConfig, BackupGroup, VALID_OS, USER_BACKUP_PATH,
+    normalize_os_name, os_applies, read_backup_config, write_backup_config,
 )
 from machineconfig.profile.create_links_export import REPO_LOOSE
 
@@ -27,61 +27,6 @@ def _sanitize_entry_name(value: str) -> str:
     token = re.sub(r"\s+", "_", token)
     token = re.sub(r"[^A-Za-z0-9_]", "_", token)
     return token or "backup_item"
-
-
-def _format_backup_entry_block(
-    entry_name: str,
-    path_local: str,
-    path_cloud: str,
-    zip_: bool,
-    encrypt: bool,
-    rel2home: bool,
-    os_value: str,
-) -> str:
-    parts = [
-        f"path_local = '{path_local}'",
-        f"path_cloud = '{path_cloud}'",
-        f"encrypt = {str(encrypt).lower()}",
-        f"zip = {str(zip_).lower()}",
-        f"rel2home = {str(rel2home).lower()}",
-        f"os = '{os_value}'",
-    ]
-    return f"{entry_name} = {{ {', '.join(parts)} }}"
-
-
-def _upsert_backup_entry(content: str, group_name: str, entry_name: str, entry_line: str) -> tuple[str, bool]:
-    header = f"[{group_name}]"
-    lines = content.splitlines()
-    new_lines: list[str] = []
-    in_target = False
-    entry_written = False
-    replaced = False
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            if in_target and not entry_written:
-                new_lines.append(entry_line)
-                entry_written = True
-            in_target = False
-            if stripped == header:
-                in_target = True
-            new_lines.append(line)
-            continue
-        if in_target:
-            if stripped.startswith(f"{entry_name} ="):
-                new_lines.append(entry_line)
-                replaced = True
-                entry_written = True
-                continue
-        new_lines.append(line)
-    if not entry_written:
-        if header not in content:
-            if new_lines and new_lines[-1].strip():
-                new_lines.append("")
-            new_lines.append(header)
-        new_lines.append(entry_line)
-    updated = "\n".join(new_lines).rstrip() + "\n"
-    return updated, replaced
 
 
 def register_backup_entry(
@@ -126,23 +71,26 @@ def register_backup_entry(
         entry_name = _sanitize_entry_name(entry_name)
     local_display = f"~/{local_path.relative_to(home)}" if rel2home and in_home else local_path.as_posix()
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
-    os_value = "any" if "any" in os_tokens else ",".join(os_tokens)
-    entry_block = _format_backup_entry_block(
-        entry_name=entry_name,
-        path_local=local_display,
-        path_cloud=cloud_value,
-        zip_=zip_,
-        encrypt=encrypt,
-        rel2home=rel2home,
-        os_value=os_value,
-    )
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
     if USER_BACKUP_PATH.exists():
-        content = USER_BACKUP_PATH.read_text(encoding="utf-8")
+        config = read_backup_config(repo="user")
     else:
-        content = DEFAULT_BACKUP_HEADER
-    updated, replaced = _upsert_backup_entry(content=content, group_name=group_name, entry_name=entry_name, entry_line=entry_block)
-    USER_BACKUP_PATH.write_text(updated, encoding="utf-8")
+        config = {}
+    if group_name in config:
+        group_entries = config[group_name]
+    else:
+        group_entries = {}
+        config[group_name] = group_entries
+    replaced = entry_name in group_entries
+    group_entries[entry_name] = {
+        "path_local": local_display,
+        "path_cloud": cloud_value,
+        "zip": zip_,
+        "encrypt": encrypt,
+        "rel2home": rel2home,
+        "os": {"any"} if "any" in os_tokens else set(os_tokens),
+    }
+    write_backup_config(USER_BACKUP_PATH, config)
     return USER_BACKUP_PATH, entry_name, replaced
 
 
@@ -186,7 +134,7 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
     if which is None:
         from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
         choices = choose_from_dict_with_preview(
-            options_to_preview_mapping=bu_file, extension="toml", multi=True, preview_size_percent=75.0,
+            options_to_preview_mapping=bu_file, extension="yaml", multi=True, preview_size_percent=75.0,
         )
         if len(choices) == 0:
             console.print(Panel("❌ NO ITEMS SELECTED\n⚠️  Exiting without processing any items", title="[bold red]No Items Selected[/bold red]", border_style="red"))

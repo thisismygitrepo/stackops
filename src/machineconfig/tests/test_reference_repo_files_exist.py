@@ -5,7 +5,7 @@ type UsedBy = tuple[str, ...]
 type ReferenceUsersByPath = dict[str, UsedBy]
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = next(parent for parent in Path(__file__).resolve().parents if parent.joinpath("pyproject.toml").is_file())
 
 # Hardcoded from .ai/references/*.txt. The tuple values keep the Python users inline.
 REFERENCE_USERS_BY_PATH: ReferenceUsersByPath = {
@@ -50,14 +50,15 @@ REFERENCE_USERS_BY_PATH: ReferenceUsersByPath = {
     "src/machineconfig/jobs/installer/linux_scripts/wezterm.sh": (
         "src/machineconfig/jobs/installer/python_scripts/wezterm.py",
     ),
-    "src/machineconfig/profile/mapper_data.toml": (
+    "src/machineconfig/profile/mapper_data.yaml": (
         "src/machineconfig/scripts/python/helpers/helpers_devops/backup_config.py",
         "src/machineconfig/scripts/python/helpers/helpers_devops/cli_backup_retrieve.py",
         "src/machineconfig/scripts/python/helpers/helpers_devops/cli_data.py",
         "src/machineconfig/scripts/python/helpers/helpers_devops/devops_status_checks.py",
     ),
-    "src/machineconfig/profile/mapper_dotfiles.toml": (
+    "src/machineconfig/profile/mapper_dotfiles.yaml": (
         "src/machineconfig/profile/create_links.py",
+        "src/machineconfig/profile/dotfiles_mapper.py",
         "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
         "src/machineconfig/scripts/python/helpers/helpers_devops/devops_status_checks.py",
     ),

@@ -40,7 +40,7 @@ def test_self_app_registers_assets_subapp_when_local_repo_exists(tmp_path: Path)
     fake_home.joinpath("code", "machineconfig").mkdir(parents=True)
 
     with patch.object(cli_self.Path, "home", return_value=fake_home):
-        result = runner.invoke(cli_self.get_app(), ["assets", "--help"])
+        result = runner.invoke(cli_self.get_app(), ["build-assets", "--help"])
 
     assert result.exit_code == 0
     assert "update-cli-graph" in result.output
@@ -49,7 +49,7 @@ def test_self_app_registers_assets_subapp_when_local_repo_exists(tmp_path: Path)
 
 def test_self_app_omits_assets_subapp_when_local_repo_missing(tmp_path: Path) -> None:
     with patch.object(cli_self.Path, "home", return_value=tmp_path):
-        result = runner.invoke(cli_self.get_app(), ["assets", "--help"])
+        result = runner.invoke(cli_self.get_app(), ["build-assets", "--help"])
 
     assert result.exit_code != 0
-    assert "No such command 'assets'" in result.output
+    assert "No such command 'build-assets'" in result.output
