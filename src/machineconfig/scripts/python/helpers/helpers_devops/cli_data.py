@@ -2,6 +2,8 @@ import typer
 import shutil
 import subprocess
 from typing import Annotated, Literal
+
+from machineconfig.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
 from machineconfig.profile.create_links_export import REPO_LOOSE
 
 
@@ -34,7 +36,7 @@ def register_data(
     zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z/-nz", help="Zip before uploading.")] = False,
     encrypt: Annotated[bool, typer.Option("--encrypt/--no-encrypt", "-e/-ne", help="Encrypt before uploading.")] = False,
     rel2home: Annotated[bool | None, typer.Option("--rel2home/--no-rel2home", "-r/-nr", help="Treat the local path as relative to home.")] = None,
-    os: Annotated[str, typer.Option("--os", "-o", help="OS filter for this backup entry (comma-separated, or 'any').")] = "any",
+    os: Annotated[str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")] = DEFAULT_OS_FILTER,
 ) -> None:
     from machineconfig.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry
 

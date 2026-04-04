@@ -2238,7 +2238,7 @@
                     "    sensitivity: Annotated[Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the config file.\")] = \"private\",",
                     "    destination: Annotated[str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")] = None,",
                     "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper_dotfiles.yaml to record this mapping.\")] = \"default\",",
-                    "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list or 'any' to apply everywhere.\")] = \"any\",",
+                    "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = \"linux,darwin,windows\",",
                     "    shared: Annotated[bool, typer.Option(\"--shared\", \"-sh\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
                     "    record: Annotated[bool, typer.Option(\"--record\", \"-r\", help=\"Record the mapping in user's mapper.yaml\")] = True,",
                     "    ) -> None:",
@@ -2257,14 +2257,14 @@
                     "    match method:",
                     "        case \"copy\" | \"c\":",
                     "            try:",
-                    "                copy_map(config_file_default_path=orig_path_extended, self_managed_config_file_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
+                    "                copy_map(config_file_default_path=orig_path_extended, config_file_self_managed_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
                     "            except Exception as e:",
                     "                msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(e)",
                     "                typer.echo(msg)",
                     "                raise typer.Exit(code=1) from e",
                     "        case \"symlink\" | \"s\":",
                     "            try:",
-                    "                symlink_map(config_file_default_path=orig_path_extended, self_managed_config_file_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
+                    "                symlink_map(config_file_default_path=orig_path_extended, config_file_self_managed_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
                     "            except Exception as e:",
                     "                msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(e)",
                     "                typer.echo(msg)",
@@ -2436,9 +2436,9 @@
                       "name": "os_filter",
                       "kind": "positional_or_keyword",
                       "type": "str",
-                      "default": "any",
+                      "default": "linux,darwin,windows",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--os', help=\"Comma-separated OS list or 'any' to apply everywhere.\")]",
+                      "annotation_raw": "Annotated[str, typer.Option('--os', help='Comma-separated OS list from: linux,darwin,windows.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2448,7 +2448,7 @@
                           "--os"
                         ],
                         "short_flags": [],
-                        "help": "Comma-separated OS list or 'any' to apply everywhere."
+                        "help": "Comma-separated OS list from: linux,darwin,windows."
                       }
                     },
                     {
@@ -3529,7 +3529,7 @@
                     "    zip_: Annotated[bool, typer.Option(\"--zip/--no-zip\", \"-z/-nz\", help=\"Zip before uploading.\")] = False,",
                     "    encrypt: Annotated[bool, typer.Option(\"--encrypt/--no-encrypt\", \"-e/-ne\", help=\"Encrypt before uploading.\")] = False,",
                     "    rel2home: Annotated[bool | None, typer.Option(\"--rel2home/--no-rel2home\", \"-r/-nr\", help=\"Treat the local path as relative to home.\")] = None,",
-                    "    os: Annotated[str, typer.Option(\"--os\", \"-o\", help=\"OS filter for this backup entry (comma-separated, or 'any').\")] = \"any\",",
+                    "    os: Annotated[str, typer.Option(\"--os\", \"-o\", help=\"OS filter for this backup entry. Comma-separated values from: linux, darwin, windows.\")] = \"linux,darwin,windows\",",
                     ") -> None:",
                     "    from machineconfig.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry",
                     "",
@@ -3704,9 +3704,9 @@
                       "name": "os",
                       "kind": "positional_or_keyword",
                       "type": "str",
-                      "default": "any",
+                      "default": "linux,darwin,windows",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help=\"OS filter for this backup entry (comma-separated, or 'any').\")]",
+                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help='OS filter for this backup entry. Comma-separated values from: linux, darwin, windows.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3719,7 +3719,7 @@
                         "short_flags": [
                           "-o"
                         ],
-                        "help": "OS filter for this backup entry (comma-separated, or 'any')."
+                        "help": "OS filter for this backup entry. Comma-separated values from: linux, darwin, windows."
                       }
                     }
                   ],

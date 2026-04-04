@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 import yaml
 
@@ -9,19 +9,29 @@ from machineconfig.utils.source_of_truth import LIBRARY_ROOT
 
 LIBRARY_MAPPER_PATH = LIBRARY_ROOT.joinpath("profile/mapper_dotfiles.yaml")
 USER_MAPPER_PATH = Path.home().joinpath("dotfiles/machineconfig/mapper_dotfiles.yaml")
-DEFAULT_DOTFILE_MAPPER_HEADER = "# User-defined config file mappings\n# Created by `d c` CLI tool"
+DEFAULT_DOTFILE_MAPPER_HEADER = (
+    "# User-defined config file mappings\n"
+    "# Created by `d c` CLI tool\n"
+    "# os must be an explicit YAML list containing one or more of: linux, darwin, windows"
+)
 
-type OsField = str | list[str]
+type OsName = Literal["linux", "darwin", "windows"]
+type OsField = list[OsName]
 type MapperSection = dict[str, "RawMapperEntry"]
 type MapperDocument = dict[str, MapperSection]
+
+ALL_OS_VALUES: tuple[OsName, OsName, OsName] = ("linux", "darwin", "windows")
+DEFAULT_OS_FILTER = ",".join(ALL_OS_VALUES)
+VALID_OS_VALUES: frozenset[OsName] = frozenset(ALL_OS_VALUES)
+OS_OUTPUT_ORDER: dict[OsName, int] = {value: index for index, value in enumerate(ALL_OS_VALUES)}
 
 
 class RawMapperEntry(TypedDict):
     original: str
     self_managed: str
+    os: OsField
     contents: NotRequired[bool]
     copy: NotRequired[bool]
-    os: NotRequired[OsField]
 
 
 def _require_mapping(value: object, *, context: str) -> Mapping[object, object]:
@@ -42,40 +52,51 @@ def _require_bool(value: object, *, context: str) -> bool:
     raise TypeError(f"{context} must be a boolean, got {type(value).__name__}")
 
 
+def _require_os_name(value: object, *, context: str) -> OsName:
+    token = _require_str(value, context=context).strip().lower()
+    if token not in VALID_OS_VALUES:
+        raise ValueError(f"{context} must be one of: {', '.join(ALL_OS_VALUES)}.")
+    return token
+
+
+def _normalize_os_values(raw_values: list[object], *, context: str) -> OsField:
+    if len(raw_values) == 0:
+        raise ValueError(f"{context} must contain at least one OS value.")
+    seen: set[OsName] = set()
+    for index, raw_value in enumerate(raw_values):
+        token = _require_os_name(raw_value, context=f"{context}[{index}]")
+        if token in seen:
+            raise ValueError(f"{context} contains a duplicate OS value: {token}.")
+        seen.add(token)
+    return sorted(seen, key=OS_OUTPUT_ORDER.__getitem__)
+
+
 def _require_os_field(value: object, *, context: str) -> OsField:
-    if isinstance(value, str):
-        return value
-    if isinstance(value, list):
-        parsed_values: list[str] = []
-        for index, item in enumerate(value):
-            parsed_values.append(_require_str(item, context=f"{context}[{index}]"))
-        return parsed_values
-    raise TypeError(f"{context} must be a string or list[str], got {type(value).__name__}")
+    if not isinstance(value, list):
+        raise TypeError(f"{context} must be a YAML list[str], got {type(value).__name__}")
+    return _normalize_os_values(list(value), context=context)
 
 
 def normalize_os_filter(os_filter: str) -> OsField:
-    tokens = [token.strip().lower() for token in os_filter.split(",") if token.strip()]
+    tokens = [token.strip() for token in os_filter.split(",") if token.strip()]
     if len(tokens) == 0:
         raise ValueError("OS filter cannot be empty.")
-    if any(token in {"any", "all", "*"} for token in tokens):
-        return "any"
-    if len(tokens) == 1:
-        return tokens[0]
-    return tokens
+    return _normalize_os_values(list(tokens), context="OS filter")
 
 
 def _normalize_mapper_entry(entry_value: object, *, context: str) -> RawMapperEntry:
     entry_mapping = _require_mapping(entry_value, context=context)
+    if "os" not in entry_mapping:
+        raise ValueError(f"{context}.os is required.")
     normalized_entry: RawMapperEntry = {
         "original": _require_str(entry_mapping.get("original"), context=f"{context}.original"),
         "self_managed": _require_str(entry_mapping.get("self_managed"), context=f"{context}.self_managed"),
+        "os": _require_os_field(entry_mapping.get("os"), context=f"{context}.os"),
     }
     if "contents" in entry_mapping:
         normalized_entry["contents"] = _require_bool(entry_mapping["contents"], context=f"{context}.contents")
     if "copy" in entry_mapping:
         normalized_entry["copy"] = _require_bool(entry_mapping["copy"], context=f"{context}.copy")
-    if "os" in entry_mapping:
-        normalized_entry["os"] = _require_os_field(entry_mapping["os"], context=f"{context}.os")
     return normalized_entry
 
 

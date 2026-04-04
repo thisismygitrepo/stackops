@@ -6,11 +6,13 @@ import yaml
 from typer.testing import CliRunner
 
 from machineconfig.profile import create_links
+from machineconfig.profile.dotfiles_mapper import OsField
 from machineconfig.scripts.python import devops as devops_cli
 from machineconfig.scripts.python.helpers.helpers_devops import cli_config, cli_config_dotfile
 
 
 runner = CliRunner()
+ALL_DOTFILE_OS: OsField = ["linux", "darwin", "windows"]
 
 
 def test_config_sync_help_exposes_direction_argument() -> None:
@@ -34,7 +36,7 @@ def test_config_sync_passes_direction_without_copying_assets() -> None:
                     "self_managed_config_file_path": "~/dotfiles/demo",
                     "contents": None,
                     "copy": None,
-                    "os": "any",
+                    "os": ALL_DOTFILE_OS,
                 }
             ]
         },
@@ -95,7 +97,10 @@ demo_private:
   creds:
     original: ~/.demo-private
     self_managed: ~/dotfiles/demo/private.conf
-    os: any
+    os:
+    - linux
+    - darwin
+    - windows
 """.lstrip(),
         encoding="utf-8",
     )
@@ -123,10 +128,30 @@ demo_private:
                 "self_managed_config_file_path": "~/dotfiles/demo/private.conf",
                 "contents": None,
                 "copy": None,
-                "os": "any",
+                "os": ALL_DOTFILE_OS,
             }
         ]
     }
+
+
+def test_read_mapper_rejects_scalar_os_field(tmp_path: Path) -> None:
+    mapper_path = tmp_path / "mapper_dotfiles.yaml"
+    mapper_path.write_text(
+        """
+demo:
+  config:
+    original: ~/.demo
+    self_managed: ~/dotfiles/demo
+    os: windows
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with (
+        patch.object(create_links, "LIBRARY_MAPPER_PATH", mapper_path),
+        pytest.raises(TypeError, match="must be a YAML list\\[str\\]"),
+    ):
+        create_links.read_mapper(repo="library")
 
 
 def test_record_mapping_writes_yaml_mapper_file(tmp_path: Path) -> None:
@@ -154,6 +179,24 @@ def test_record_mapping_writes_yaml_mapper_file(tmp_path: Path) -> None:
             }
         }
     }
+
+
+def test_record_mapping_rejects_invalid_os_filter(tmp_path: Path) -> None:
+    mapper_path = tmp_path / "mapper_dotfiles.yaml"
+    original_path = tmp_path / "demo-file.conf"
+    managed_path = tmp_path / "managed" / "demo-file.conf"
+
+    with (
+        patch.object(cli_config_dotfile, "USER_MAPPER_PATH", mapper_path),
+        pytest.raises(ValueError, match="must be one of"),
+    ):
+        cli_config_dotfile.record_mapping(
+            orig_path=original_path,
+            new_path=managed_path,
+            method="copy",
+            section="demo",
+            os_filter="plan9",
+        )
 
 
 @pytest.mark.parametrize(
@@ -184,7 +227,7 @@ def test_apply_mapper_copy_respects_explicit_direction(
         "self_managed_config_file_path": str(managed_path),
         "contents": None,
         "copy": None,
-        "os": "any",
+        "os": ALL_DOTFILE_OS,
     }
 
     create_links.ERROR_LIST.clear()

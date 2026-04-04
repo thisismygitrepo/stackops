@@ -1,5 +1,5 @@
 # locations to be backed up to the cloud.
-# os must be a YAML list containing one or more of: any, windows, linux, darwin.
+# os must be a YAML list containing one or more of: linux, darwin, windows.
 
 thunderbird:
   windows_files:
@@ -56,7 +56,9 @@ atuin:
     zip: false
     rel2home: true
     os:
-      - any
+      - linux
+      - darwin
+      - windows
 
 # McFly shell history search tool
 # Docs: https://github.com/cantino/mcfly#database-location
@@ -123,7 +125,9 @@ shell_history:
 #     zip: true
 #     rel2home: true
 #     os:
-#       - any
+#       - linux
+#       - darwin
+#       - windows
 
 ipython:
   profile:
@@ -133,4 +137,6 @@ ipython:
     zip: true
     rel2home: true
     os:
-      - any
+      - linux
+      - darwin
+      - windows

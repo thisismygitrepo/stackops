@@ -9,6 +9,7 @@ import typer
 
 from machineconfig.profile.dotfiles_mapper import (
     DEFAULT_DOTFILE_MAPPER_HEADER,
+    DEFAULT_OS_FILTER,
     LIBRARY_MAPPER_PATH,
     USER_MAPPER_PATH,
     RawMapperEntry,
@@ -172,7 +173,7 @@ def register_dotfile(
     sensitivity: Annotated[Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the config file.")] = "private",
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")] = None,
     section: Annotated[str, typer.Option("--section", "-se", help="Section name in mapper_dotfiles.yaml to record this mapping.")] = "default",
-    os_filter: Annotated[str, typer.Option("--os", help="Comma-separated OS list or 'any' to apply everywhere.")] = "any",
+    os_filter: Annotated[str, typer.Option("--os", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
     shared: Annotated[bool, typer.Option("--shared", "-sh", help="Whether the config file is shared across destinations directory.")] = False,
     record: Annotated[bool, typer.Option("--record", "-r", help="Record the mapping in user's mapper.yaml")] = True,
     ) -> None:
@@ -191,14 +192,14 @@ def register_dotfile(
     match method:
         case "copy" | "c":
             try:
-                copy_map(config_file_default_path=orig_path_extended, self_managed_config_file_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])
+                copy_map(config_file_default_path=orig_path_extended, config_file_self_managed_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])
             except Exception as e:
                 msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
                 typer.echo(msg)
                 raise typer.Exit(code=1) from e
         case "symlink" | "s":
             try:
-                symlink_map(config_file_default_path=orig_path_extended, self_managed_config_file_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])
+                symlink_map(config_file_default_path=orig_path_extended, config_file_self_managed_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])
             except Exception as e:
                 msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
                 typer.echo(msg)

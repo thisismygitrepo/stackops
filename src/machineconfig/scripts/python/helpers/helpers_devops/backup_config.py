@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 import yaml
 
+from machineconfig.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from machineconfig.utils.source_of_truth import LIBRARY_ROOT
 from machineconfig.profile.create_links_export import REPO_LOOSE
 
@@ -29,7 +30,7 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #     zip: false               # true/false
 #     rel2home: true           # true: path_local is interpreted relative to your home dir
 #     os:
-#       - linux                # any | linux | darwin | windows
+#       - linux                # linux | darwin | windows
 #
 # Selection behavior:
 # - `devops data sync` filters entries by the current OS using the `os` field.
@@ -50,9 +51,9 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #       - linux
 #       - darwin
 """
-VALID_OS = frozenset({"any", "windows", "linux", "darwin"})
+VALID_OS = frozenset(ALL_OS_VALUES)
 EXPECTED_BACKUP_FIELDS = frozenset({"path_local", "path_cloud", "zip", "encrypt", "rel2home", "os"})
-OS_OUTPUT_ORDER = {"any": 0, "linux": 1, "darwin": 2, "windows": 3}
+OS_OUTPUT_ORDER: dict[OsName, int] = {value: index for index, value in enumerate(ALL_OS_VALUES)}
 
 
 class BackupItem(TypedDict):
@@ -61,12 +62,12 @@ class BackupItem(TypedDict):
     zip: bool
     encrypt: bool
     rel2home: bool
-    os: set[str]
+    os: set[OsName]
 
 
 BackupGroup = dict[str, BackupItem]
 BackupConfig = dict[str, BackupGroup]
-type BackupYamlItem = dict[str, str | bool | list[str]]
+type BackupYamlItem = dict[str, str | bool | list[OsName]]
 type BackupYamlGroup = dict[str, BackupYamlItem]
 type BackupYamlDocument = dict[str, BackupYamlGroup]
 
@@ -75,36 +76,32 @@ def normalize_os_name(value: str) -> str:
     return value.strip().lower()
 
 
-def _parse_os_field(os_field: object, item_name: str) -> set[str]:
+def _require_os_name(value: object, *, item_name: str, os_field: object) -> OsName:
+    if not isinstance(value, str):
+        raise ValueError(f"Backup entry '{item_name}' has an invalid 'os' value: {os_field!r}.")
+    token = normalize_os_name(value)
+    if token not in VALID_OS:
+        raise ValueError(f"Backup entry '{item_name}' has an invalid 'os' value: {os_field!r}.")
+    return token
+
+
+def _parse_os_field(os_field: object, item_name: str) -> set[OsName]:
     if os_field is None:
         raise ValueError(f"Backup entry '{item_name}' must define a non-empty 'os'.")
     if isinstance(os_field, Sequence) and not isinstance(os_field, str | bytes):
-        raw_values = [str(item) for item in os_field]
+        raw_values = list(os_field)
     else:
         raise ValueError(f"Backup entry '{item_name}' must define 'os' as a YAML list.")
-    values: set[str] = set()
-    saw_any = False
+    values: set[OsName] = set()
     for raw in raw_values:
-        token = normalize_os_name(raw)
-        if not token:
-            continue
-        if token in {"any", "all", "*"}:
-            saw_any = True
-            continue
-        if token not in VALID_OS:
-            raise ValueError(f"Backup entry '{item_name}' has an invalid 'os' value: {os_field!r}.")
-        values.add(token)
-    if saw_any:
-        if values:
-            raise ValueError(f"Backup entry '{item_name}' cannot mix 'any' with specific OS values.")
-        return {"any"}
+        values.add(_require_os_name(raw, item_name=item_name, os_field=os_field))
     if not values:
         raise ValueError(f"Backup entry '{item_name}' must define a non-empty 'os'.")
     return values
 
 
-def os_applies(os_values: set[str], system_name: str) -> bool:
-    return "any" in os_values or system_name in os_values
+def os_applies(os_values: set[OsName], system_name: str) -> bool:
+    return normalize_os_name(system_name) in os_values
 
 
 def _parse_bool(value: object, field: str, item_name: str) -> bool:
@@ -205,7 +202,7 @@ def _serialize_backup_config(config: BackupConfig) -> str:
 {yaml_body}"""
 
 
-def _serialize_os_values(os_values: set[str]) -> list[str]:
+def _serialize_os_values(os_values: set[OsName]) -> list[OsName]:
     return sorted(os_values, key=lambda value: OS_OUTPUT_ORDER[value])
 
 

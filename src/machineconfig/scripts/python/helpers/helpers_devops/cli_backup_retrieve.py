@@ -8,6 +8,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 
+from machineconfig.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from machineconfig.utils.io import read_ini
 from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 from machineconfig.utils.code import print_code
@@ -29,6 +30,17 @@ def _sanitize_entry_name(value: str) -> str:
     return token or "backup_item"
 
 
+def _is_all_os_values(os_values: set[OsName]) -> bool:
+    return len(os_values) == len(ALL_OS_VALUES) and all(value in os_values for value in ALL_OS_VALUES)
+
+
+def _require_os_name(value: str, *, os_filter: str) -> OsName:
+    token = normalize_os_name(value)
+    if token not in VALID_OS:
+        raise ValueError(f"Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}")
+    return token
+
+
 def register_backup_entry(
     path_local: str,
     group: str,
@@ -37,23 +49,18 @@ def register_backup_entry(
     zip_: bool = True,
     encrypt: bool = True,
     rel2home: bool | None = None,
-    os: str = "any",
+    os: str = "",
 ) -> tuple[Path, str, bool]:
     local_path = Path(path_local).expanduser().absolute()
     if not local_path.exists():
         raise ValueError(f"Local path does not exist: {local_path}")
     os_parts = [part.strip() for part in os.split(",")]
-    os_tokens: list[str] = []
+    os_tokens_unsorted: set[OsName] = set()
     for part in os_parts:
         if not part:
             continue
-        token = normalize_os_name(part)
-        if token in {"any", "all", "*"}:
-            os_tokens = ["any"]
-            break
-        if token not in VALID_OS:
-            raise ValueError(f"Invalid os value: {os!r}. Expected one of: {sorted(VALID_OS)}")
-        os_tokens.append(token)
+        os_tokens_unsorted.add(_require_os_name(part, os_filter=os))
+    os_tokens = sorted(os_tokens_unsorted, key=ALL_OS_VALUES.index)
     if not os_tokens:
         raise ValueError(f"Invalid os value: {os!r}. Expected one of: {sorted(VALID_OS)}")
     home = Path.home()
@@ -65,8 +72,7 @@ def register_backup_entry(
     group_name = _sanitize_entry_name(group) if group and group.strip() else "default"
     if entry_name is None or not entry_name.strip():
         base_name = _sanitize_entry_name(local_path.stem)
-        os_tag = "any" if "any" in os_tokens else "_".join(os_tokens)
-        entry_name = f"{base_name}_{os_tag}" if os_tag != "any" else base_name
+        entry_name = base_name if _is_all_os_values(set(os_tokens)) else f"{base_name}_{'_'.join(os_tokens)}"
     else:
         entry_name = _sanitize_entry_name(entry_name)
     local_display = f"~/{local_path.relative_to(home)}" if rel2home and in_home else local_path.as_posix()
@@ -88,7 +94,7 @@ def register_backup_entry(
         "zip": zip_,
         "encrypt": encrypt,
         "rel2home": rel2home,
-        "os": {"any"} if "any" in os_tokens else set(os_tokens),
+        "os": set(os_tokens),
     }
     write_backup_config(USER_BACKUP_PATH, config)
     return USER_BACKUP_PATH, entry_name, replaced
@@ -174,7 +180,7 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             flags += "z" if item["zip"] else ""
             flags += "e" if item["encrypt"] else ""
             flags += "r" if item["rel2home"] else ""
-            flags += "o" if "any" not in item["os"] else ""
+            flags += "o" if not _is_all_os_values(item["os"]) else ""
             local_path = Path(item["path_local"]).as_posix()
             path_cloud = item["path_cloud"]
             if path_cloud in (None, ES):
