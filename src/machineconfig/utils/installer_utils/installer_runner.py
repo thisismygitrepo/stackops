@@ -5,7 +5,17 @@ from typing import cast
 
 from machineconfig.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from machineconfig.utils.installer_utils.installer_class import Installer
-from machineconfig.utils.schemas.installer.installer_types import CPU_ARCHITECTURES, InstallRequest, InstallerData, InstallerDataFiles, OPERATING_SYSTEMS, get_normalized_arch, get_os_name
+from machineconfig.utils.installer_utils.installer_summary import render_installation_summary
+from machineconfig.utils.schemas.installer.installer_types import (
+    CPU_ARCHITECTURES,
+    InstallRequest,
+    InstallationResult,
+    InstallerData,
+    InstallerDataFiles,
+    OPERATING_SYSTEMS,
+    get_normalized_arch,
+    get_os_name,
+)
 from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
@@ -128,7 +138,7 @@ def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: l
     return all_installers
 
 
-def _install_single_installer(installer_data: InstallerData, install_request: InstallRequest) -> str:
+def _install_single_installer(installer_data: InstallerData, install_request: InstallRequest) -> InstallationResult:
     return Installer(installer_data).install_robust(install_request=install_request)
 
 
@@ -153,31 +163,11 @@ def install_bulk(
     print("📦 INSTALLING REMAINING PACKAGES 📦")
 
     delayed_jobs = [delayed(_install_single_installer)(installer, install_request) for installer in installers_remaining]
-    remaining_results = cast(list[str], list(Parallel(n_jobs=jobs)(delayed_jobs)))
-    res: list[str] = [first_result, *remaining_results]
+    remaining_results = cast(list[InstallationResult], list(Parallel(n_jobs=jobs)(delayed_jobs)))
+    res: list[InstallationResult] = [first_result, *remaining_results]
 
     console = Console()
-
-    print("\n")
-    console.rule("📊 INSTALLATION RESULTS SUMMARY 📊")
-
-    print("\n")
-    console.rule("✓ Same Version Apps")
-    same_version_results = [r for r in res if r and "same version" in str(r)]
-    for result in same_version_results:
-        print(f"  {result}")
-
-    print("\n")
-    console.rule("⬆️ Updated Apps")
-    updated_results = [r for r in res if r and "updated from" in str(r)]
-    for result in updated_results:
-        print(f"  {result}")
-
-    print("\n")
-    console.rule("❌ Failed Apps")
-    failed_results = [r for r in res if r and "Failed at" in str(r)]
-    for result in failed_results:
-        print(f"  {result}")
+    render_installation_summary(results=res, console=console, title="📊 INSTALLATION RESULTS SUMMARY 📊")
 
     print("\n")
     print("✨ INSTALLATION COMPLETE ✨".center(100, "="))

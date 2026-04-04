@@ -7,7 +7,7 @@ from typing import Annotated, Literal, TypedDict
 
 import typer
 
-from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallerData
+from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallationResult, InstallerData
 
 
 class InteractiveGroupPreview(TypedDict):
@@ -104,6 +104,7 @@ def install_interactively(install_request: InstallRequest) -> None:
     from machineconfig.utils.options import choose_from_options
     from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
     from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
+    from machineconfig.utils.installer_utils.installer_summary import render_installation_summary
     from machineconfig.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from machineconfig.utils.installer_utils.installer_runner import get_installers
     from machineconfig.utils.installer_utils.installer_class import Installer
@@ -140,7 +141,7 @@ def install_interactively(install_request: InstallRequest) -> None:
         Console().print(Panel("❓ Selection cancelled. Nothing to install.", title="Cancelled", border_style="yellow"))
         return
 
-    installation_messages: list[str] = []
+    installation_results: list[InstallationResult] = []
     for a_program_name in program_names:
         if a_program_name.startswith("📦 "):
             category_name = category_display_to_name.get(a_program_name)
@@ -148,13 +149,10 @@ def install_interactively(install_request: InstallRequest) -> None:
                 install_group(package_group=category_name, install_request=install_request)
         else:
             an_installer_data = installer_option_to_data[a_program_name]
-            status_message = Installer(an_installer_data).install_robust(install_request=install_request)
-            installation_messages.append(status_message)
-    if installation_messages:
-        console = Console()
-
-        panel = Panel("\n".join([f"[blue]• {message}[/blue]" for message in installation_messages]), title="[bold green]📊 Installation Summary[/bold green]", border_style="green", padding=(1, 2))
-        console.print(panel)
+            installation_result = Installer(an_installer_data).install_robust(install_request=install_request)
+            installation_results.append(installation_result)
+    if installation_results:
+        render_installation_summary(results=installation_results, console=Console(), title="📊 Installation Summary")
 
 
 def install_group(package_group: str, install_request: InstallRequest) -> None:
@@ -178,11 +176,12 @@ def install_group(package_group: str, install_request: InstallRequest) -> None:
 
 def install_clis(clis_names: list[str], install_request: InstallRequest) -> None:
     from machineconfig.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
+    from machineconfig.utils.installer_utils.installer_summary import render_installation_summary
     from machineconfig.utils.installer_utils.installer_runner import get_installers
     from machineconfig.utils.installer_utils.installer_class import Installer
     from rich.console import Console
     all_installers_data = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
-    total_messages: list[str] = []
+    total_results: list[InstallationResult] = []
     for a_cli_name in clis_names:
         if "github.com" in a_cli_name.lower():
             from machineconfig.utils.installer_utils.install_from_url import install_from_github_url
@@ -207,13 +206,10 @@ def install_clis(clis_names: list[str], install_request: InstallRequest) -> None
                 continue
             install_clis(clis_names=clis_names_chosen_interactively, install_request=install_request)
             continue
-        message = Installer(selected_installer).install_robust(install_request=install_request)
-        total_messages.append(message)
-    if total_messages:
-        console = Console()
-        console.print("\n[bold green]📊 Installation Results:[/bold green]")
-        for a_message in total_messages:
-            console.print(f"[blue]• {a_message}[/blue]")
+        result = Installer(selected_installer).install_robust(install_request=install_request)
+        total_results.append(result)
+    if total_results:
+        render_installation_summary(results=total_results, console=Console(), title="📊 Installation Results")
     return None
 def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bool:
     from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists

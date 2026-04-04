@@ -1,6 +1,6 @@
+import platform
 from dataclasses import dataclass
 from typing import Literal, TypeAlias, TypedDict
-import platform
 
 
 CPU_ARCHITECTURES: TypeAlias = Literal["amd64", "arm64"]
@@ -18,6 +18,54 @@ class InstallerData(TypedDict):
 class InstallerDataFiles(TypedDict):
     version: str
     installers: list[InstallerData]
+
+
+class InstallationResultSkipped(TypedDict):
+    kind: Literal["skipped"]
+    appName: str
+    exeName: str
+    emoji: Literal["⏭️"]
+    detail: str
+
+
+class InstallationResultSameVersion(TypedDict):
+    kind: Literal["same_version"]
+    appName: str
+    exeName: str
+    emoji: Literal["😑"]
+    version: str
+
+
+class InstallationResultUpdated(TypedDict):
+    kind: Literal["updated"]
+    appName: str
+    exeName: str
+    emoji: Literal["🤩"]
+    oldVersion: str
+    newVersion: str
+
+
+class InstallationResultFailed(TypedDict):
+    kind: Literal["failed"]
+    appName: str
+    exeName: str
+    emoji: Literal["❌"]
+    error: str
+
+
+InstallationResult: TypeAlias = (
+    InstallationResultSkipped
+    | InstallationResultSameVersion
+    | InstallationResultUpdated
+    | InstallationResultFailed
+)
+
+
+class InstallationResultBuckets(TypedDict):
+    skipped: list[InstallationResultSkipped]
+    same_version: list[InstallationResultSameVersion]
+    updated: list[InstallationResultUpdated]
+    failed: list[InstallationResultFailed]
 
 
 @dataclass(frozen=True, slots=True)

@@ -12,7 +12,17 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT
 from machineconfig.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows, check_tool_exists
-from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallerData, get_normalized_arch, get_os_name
+from machineconfig.utils.schemas.installer.installer_types import (
+    InstallRequest,
+    InstallationResult,
+    InstallationResultFailed,
+    InstallationResultSameVersion,
+    InstallationResultSkipped,
+    InstallationResultUpdated,
+    InstallerData,
+    get_normalized_arch,
+    get_os_name,
+)
 from machineconfig.utils.installer_utils.github_release_bulk import (
     get_repo_name_from_url,
     get_release_info,
@@ -70,6 +80,43 @@ class Installer:
             print(f"⚠️ WARNING: {warning}")
         return install_target, install_request_resolution.install_request
 
+    def _build_skipped_result(self, exe_name: str) -> InstallationResultSkipped:
+        return InstallationResultSkipped(
+            kind="skipped",
+            appName=self.installer_data["appName"],
+            exeName=exe_name,
+            emoji="⏭️",
+            detail="already installed, skipped",
+        )
+
+    def _build_same_version_result(self, exe_name: str, version: str) -> InstallationResultSameVersion:
+        return InstallationResultSameVersion(
+            kind="same_version",
+            appName=self.installer_data["appName"],
+            exeName=exe_name,
+            emoji="😑",
+            version=version,
+        )
+
+    def _build_updated_result(self, exe_name: str, old_version: str, new_version: str) -> InstallationResultUpdated:
+        return InstallationResultUpdated(
+            kind="updated",
+            appName=self.installer_data["appName"],
+            exeName=exe_name,
+            emoji="🤩",
+            oldVersion=old_version,
+            newVersion=new_version,
+        )
+
+    def _build_failed_result(self, exe_name: str, error: str) -> InstallationResultFailed:
+        return InstallationResultFailed(
+            kind="failed",
+            appName=self.installer_data["appName"],
+            exeName=exe_name,
+            emoji="❌",
+            error=error,
+        )
+
     def _install_requested_with_target(self, install_target: InstallTarget, install_request: InstallRequest) -> None:
         effective_installer_value = resolve_installer_value(install_target=install_target, install_request=install_request)
         version = install_request.version if install_target.installer_kind == "github_release" or effective_installer_value.strip().startswith("winget install ") else None
@@ -83,25 +130,23 @@ class Installer:
         install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
         self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
 
-    def install_robust(self, install_request: InstallRequest) -> str:
+    def install_robust(self, install_request: InstallRequest) -> InstallationResult:
         try:
             exe_name = self._get_exe_name()
             install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
             if should_skip_install(exe_name=exe_name, install_request=effective_install_request, tool_exists=check_tool_exists):
-                return f"""📦️ ⏭️ {exe_name} already installed, skipped"""
+                return self._build_skipped_result(exe_name=exe_name)
             old_version_cli = self._read_installed_version(exe_name=exe_name)
             print(f"🚀 INSTALLING {exe_name.upper()} 🚀. 📊 Current version: {old_version_cli or 'Not installed'}")
             self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
             new_version_cli = self._read_installed_version(exe_name=exe_name)
             if old_version_cli == new_version_cli:
-                return f"""📦️ 😑 {exe_name}, same version: {old_version_cli}"""
-            else:
-                return f"""📦️ 🤩 {exe_name} updated from {old_version_cli} ➡️ TO ➡️  {new_version_cli}"""
+                return self._build_same_version_result(exe_name=exe_name, version=old_version_cli)
+            return self._build_updated_result(exe_name=exe_name, old_version=old_version_cli, new_version=new_version_cli)
         except Exception as ex:
             exe_name = self._get_exe_name()
-            app_name = self.installer_data["appName"]
             print(f"❌ ERROR: Installation failed for {exe_name}: {ex}")
-            return f"""📦️ ❌ Failed to install `{app_name}` with error: {ex}"""
+            return self._build_failed_result(exe_name=exe_name, error=str(ex))
 
     def install(self, version: str | None) -> None:
         self._install_from_value(
@@ -134,15 +179,11 @@ class Installer:
                 desc = package_manager + " installation"
                 version_to_be_installed = version or package_manager + "Latest"
                 result = subprocess.run(installer_arch_os, shell=True, capture_output=False, text=True, encoding="utf-8", check=False)
-                success = result.returncode == 0 and result.stderr == ""
+                success = result.returncode == 0
                 if not success:
-                    sub_panels = []
-                    if result.stdout:
-                        sub_panels.append(Panel(result.stdout, title="STDOUT", style="blue"))
-                    if result.stderr:
-                        sub_panels.append(Panel(result.stderr, title="STDERR", style="red"))
-                    group_content = Group(f"❌ {desc} failed\nReturn code: {result.returncode}", *sub_panels)
+                    group_content = Group(f"❌ {desc} failed\nReturn code: {result.returncode}")
                     rprint(Panel(group_content, title=desc, style="red"))
+                    raise RuntimeError(f"{desc} failed with return code {result.returncode}")
             elif script_installer:
                 import machineconfig.jobs.installer as module
                 from pathlib import Path

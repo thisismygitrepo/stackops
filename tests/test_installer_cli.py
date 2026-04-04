@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from machineconfig.utils.installer_utils import installer_cli
-from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallerData
+from machineconfig.utils.schemas.installer.installer_types import InstallRequest, InstallationResultSameVersion, InstallerData
 
 
 def _make_installer_data(app_name: str, doc: str) -> InstallerData:
@@ -61,9 +61,15 @@ def test_install_interactively_uses_tv_preview_and_installs_selected_app() -> No
         def get_description(self) -> str:
             return f"{self.installer_data['appName'].lower():<12} ✅ {self.installer_data['doc']}"
 
-        def install_robust(self, install_request: InstallRequest) -> str:
+        def install_robust(self, install_request: InstallRequest) -> InstallationResultSameVersion:
             FakeInstaller.install_calls.append((self.installer_data, install_request))
-            return f"installed {self.installer_data['appName']}"
+            return InstallationResultSameVersion(
+                kind="same_version",
+                appName=self.installer_data["appName"],
+                exeName=self.installer_data["appName"].lower(),
+                emoji="😑",
+                version="1.0.0",
+            )
 
     def _fake_choose(
         *, options_to_preview_mapping: dict[str, str], extension: str | None, multi: bool, preview_size_percent: float
