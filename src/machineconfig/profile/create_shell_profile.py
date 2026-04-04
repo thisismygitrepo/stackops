@@ -151,20 +151,46 @@ def create_nu_shell_profile() -> None:
     config_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/nushell/config.nu")
     env_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/nushell/env.nu")
     legacy_source_line = f"""use {str(init_script)}"""
+    legacy_path_expr_source_line = """use ($nu.home-path | path join ".config" "machineconfig" "settings" "shells" "nushell" "init.nu") *"""
+    current_path_expr_source_line = """use ($nu.home-dir | path join ".config" "machineconfig" "settings" "shells" "nushell" "init.nu") *"""
     config_source_line = """source ($nu.home-dir | path join ".config" "machineconfig" "settings" "shells" "nushell" "config.nu")"""
     env_source_line = """source-env ($nu.home-dir | path join ".config" "machineconfig" "settings" "shells" "nushell" "env.nu")"""
     was_config_updated = False
     was_env_updated = False
-    if legacy_source_line in config_content and config_source_line not in config_content:
-        console.print(Panel("🔄 NU SHELL CONFIG | Replacing legacy init.nu import with config.nu source", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-        config_content = config_content.replace(legacy_source_line, config_source_line)
+    legacy_managed_config_lines = (
+        legacy_source_line,
+        legacy_path_expr_source_line,
+        current_path_expr_source_line,
+    )
+    if (
+        "machineconfig Nushell configuration loader" in config_content
+        and "$nu.home-path" in config_content
+        and config_source_line not in config_content
+    ):
+        console.print(Panel("🔄 NU SHELL CONFIG | Replacing legacy managed config.nu stub with config.nu source", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+        config_content = config_source_line + "\n"
         was_config_updated = True
+    else:
+        for legacy_line in legacy_managed_config_lines:
+            if legacy_line in config_content and config_source_line not in config_content:
+                console.print(Panel("🔄 NU SHELL CONFIG | Replacing legacy init.nu import with config.nu source", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+                config_content = config_content.replace(legacy_line, config_source_line)
+                was_config_updated = True
+                break
     if config_source_line in config_content:
         console.print(Panel(f"""🔄 NU SHELL CONFIG | Skipping config.nu sourcing - already present in `{config_script}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
     else:
         console.print(Panel(f"""📝 NU SHELL CONFIG | Adding config.nu sourcing from `{config_script}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
         config_content += "\n" + config_source_line + "\n"
         was_config_updated = True
+    if (
+        "machineconfig Nushell environment setup" in env_content
+        and "$nu.home-path" in env_content
+        and env_source_line not in env_content
+    ):
+        console.print(Panel("🔄 NU SHELL CONFIG | Replacing legacy managed env.nu stub with env.nu source", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+        env_content = env_source_line + "\n"
+        was_env_updated = True
     if env_source_line in env_content:
         console.print(Panel(f"""🔄 NU SHELL CONFIG | Skipping env.nu sourcing - already present in `{env_script}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
     else:
