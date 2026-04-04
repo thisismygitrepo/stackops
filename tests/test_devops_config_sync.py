@@ -181,6 +181,37 @@ def test_record_mapping_writes_yaml_mapper_file(tmp_path: Path) -> None:
     }
 
 
+def test_record_mapping_uses_config_root_placeholder_for_public_paths(tmp_path: Path) -> None:
+    mapper_path = tmp_path / "mapper_dotfiles.yaml"
+    config_root = tmp_path / "config-root"
+    original_path = tmp_path / "demo-file.conf"
+    managed_path = config_root / "settings" / "demo-file.conf"
+
+    with (
+        patch.object(cli_config_dotfile, "USER_MAPPER_PATH", mapper_path),
+        patch.object(cli_config_dotfile, "CONFIG_ROOT", config_root),
+    ):
+        cli_config_dotfile.record_mapping(
+            orig_path=original_path,
+            new_path=managed_path,
+            method="copy",
+            section="demo",
+            os_filter="linux",
+        )
+
+    mapper_data = yaml.safe_load(mapper_path.read_text(encoding="utf-8"))
+    assert mapper_data == {
+        "demo": {
+            "demo_file": {
+                "original": original_path.as_posix(),
+                "self_managed": "CONFIG_ROOT/settings/demo-file.conf",
+                "copy": True,
+                "os": ["linux"],
+            }
+        }
+    }
+
+
 def test_record_mapping_rejects_invalid_os_filter(tmp_path: Path) -> None:
     mapper_path = tmp_path / "mapper_dotfiles.yaml"
     original_path = tmp_path / "demo-file.conf"
@@ -241,3 +272,40 @@ def test_apply_mapper_copy_respects_explicit_direction(
 
     assert default_path.read_text(encoding="utf-8") == expected_default
     assert managed_path.read_text(encoding="utf-8") == expected_managed
+
+
+def test_read_mapper_classifies_absolute_config_root_paths_as_public(tmp_path: Path) -> None:
+    config_root = tmp_path / "config-root"
+    mapper_path = tmp_path / "mapper_dotfiles.yaml"
+    managed_path = config_root / "settings" / "demo" / "public.conf"
+    mapper_path.write_text(
+        f"""
+demo_public:
+  config:
+    original: ~/.demo-public
+    self_managed: {managed_path.as_posix()}
+    os:
+    - {create_links.SYSTEM}
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with (
+        patch.object(create_links, "LIBRARY_MAPPER_PATH", mapper_path),
+        patch.object(create_links, "CONFIG_ROOT", config_root),
+    ):
+        mapper = create_links.read_mapper(repo="library")
+
+    assert mapper["public"] == {
+        "demo_public": [
+            {
+                "file_name": "config",
+                "config_file_default_path": "~/.demo-public",
+                "config_file_self_managed_path": managed_path.as_posix(),
+                "contents": None,
+                "copy": None,
+                "os": [create_links.SYSTEM],
+            }
+        ]
+    }
+    assert mapper["private"] == {}

@@ -66,6 +66,16 @@ def _parse_os_field(os_field: OsField) -> set[OsName]:
     return set(os_field)
 
 
+def _resolve_self_managed_path(path_value: str) -> PathExtended:
+    return PathExtended(path_value.replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())).expanduser().absolute()
+
+
+def _is_public_self_managed_path(path_value: str) -> bool:
+    config_root = PathExtended(CONFIG_ROOT).expanduser().absolute()
+    resolved_path = _resolve_self_managed_path(path_value)
+    return resolved_path == config_root or resolved_path.is_relative_to(config_root)
+
+
 class ConfigMapper(TypedDict):
     file_name: str
     config_file_default_path: str
@@ -116,7 +126,7 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
                 "copy": file_base.get("copy"),
                 "os": file_base["os"],
             }
-            if "CONFIG_ROOT" in file_map["config_file_self_managed_path"]:
+            if _is_public_self_managed_path(file_map["config_file_self_managed_path"]):
                 if program_key not in public:
                     public[program_key] = []
                 public[program_key].append(file_map)
@@ -129,9 +139,7 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
 
 def _resolve_mapper_paths(a_mapper: ConfigMapper) -> tuple[PathExtended, PathExtended]:
     config_file_default_path = PathExtended(a_mapper["config_file_default_path"]).expanduser().absolute()
-    config_file_self_managed_path = PathExtended(
-        a_mapper["config_file_self_managed_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())
-    ).expanduser().absolute()
+    config_file_self_managed_path = _resolve_self_managed_path(a_mapper["config_file_self_managed_path"])
     return config_file_default_path, config_file_self_managed_path
 
 

@@ -2,11 +2,13 @@
 
 import platform
 import shutil
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
+from machineconfig.utils.links import files_are_identical
 
 
 def check_shell_profile_status() -> dict[str, Any]:
@@ -123,39 +125,66 @@ def check_ssh_status() -> dict[str, Any]:
     }
 
 
+class ConfigStatusItem(TypedDict):
+    config_file_default_path: str
+    config_file_self_managed_path: str
+    contents: bool | None
+    copy: bool | None
+
+
+def _resolve_config_paths(config_item: ConfigStatusItem) -> tuple[PathExtended, PathExtended]:
+    default_path = PathExtended(config_item["config_file_default_path"]).expanduser()
+    self_managed_path = PathExtended(
+        config_item["config_file_self_managed_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())
+    ).expanduser()
+    return default_path, self_managed_path
+
+
+def _config_item_is_configured(config_item: ConfigStatusItem) -> bool:
+    default_path, self_managed_path = _resolve_config_paths(config_item)
+    if not default_path.exists() or not self_managed_path.exists():
+        return False
+    if bool(config_item.get("contents")):
+        return default_path.is_dir() and self_managed_path.is_dir()
+    try:
+        if default_path.resolve() == self_managed_path.resolve():
+            return True
+    except OSError:
+        return False
+    if default_path.is_symlink():
+        return False
+    if bool(config_item.get("copy")) and default_path.is_file() and self_managed_path.is_file():
+        return files_are_identical(default_path, self_managed_path)
+    return False
+
+
+def _flatten_config_items(mapper_section: Mapping[str, Sequence[ConfigStatusItem]]) -> list[ConfigStatusItem]:
+    return [config_item for config_items in mapper_section.values() for config_item in config_items]
+
+
 def check_config_files_status() -> dict[str, Any]:
     """Check public and private configuration files status."""
     from machineconfig.profile.create_links import read_mapper
 
     try:
-        mapper = read_mapper(repo="library")
+        mapper = read_mapper(repo="all")
         public_configs = list(mapper.get("public", {}).keys())
         private_configs = list(mapper.get("private", {}).keys())
+        public_items = _flatten_config_items(mapper.get("public", {}))
+        private_items = _flatten_config_items(mapper.get("private", {}))
 
-        public_count = len(public_configs)
-        private_count = len(private_configs)
-
-        public_linked = 0
-        for config_name in public_configs:
-            for config_item in mapper["public"][config_name]:
-                target_path = PathExtended(config_item["config_file_default_path"]).expanduser()
-                if target_path.exists():
-                    public_linked += 1
-                    break
-
-        private_linked = 0
-        for config_name in private_configs:
-            for config_item in mapper["private"][config_name]:
-                target_path = PathExtended(config_item["config_file_default_path"]).expanduser()
-                if target_path.exists():
-                    private_linked += 1
-                    break
+        public_count = len(public_items)
+        private_count = len(private_items)
+        public_linked = sum(1 for config_item in public_items if _config_item_is_configured(config_item))
+        private_linked = sum(1 for config_item in private_items if _config_item_is_configured(config_item))
 
         return {
             "public_count": public_count,
             "public_linked": public_linked,
             "private_count": private_count,
             "private_linked": private_linked,
+            "public_program_count": len(public_configs),
+            "private_program_count": len(private_configs),
             "public_configs": public_configs,
             "private_configs": private_configs,
         }
@@ -165,6 +194,8 @@ def check_config_files_status() -> dict[str, Any]:
             "public_linked": 0,
             "private_count": 0,
             "private_linked": 0,
+            "public_program_count": 0,
+            "private_program_count": 0,
             "error": str(ex),
             "public_configs": [],
             "private_configs": [],

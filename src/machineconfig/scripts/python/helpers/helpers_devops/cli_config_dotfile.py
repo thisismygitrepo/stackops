@@ -33,6 +33,17 @@ def _format_home_relative_path(path: Path) -> str:
     return path.as_posix()
 
 
+def _format_self_managed_mapper_path(path: Path) -> str:
+    config_root = Path(CONFIG_ROOT).expanduser().resolve()
+    resolved_path = path.expanduser().resolve(strict=False)
+    if resolved_path == config_root:
+        return "CONFIG_ROOT"
+    if resolved_path.is_relative_to(config_root):
+        relative_path = resolved_path.relative_to(config_root)
+        return f"CONFIG_ROOT/{relative_path.as_posix()}"
+    return _format_home_relative_path(path)
+
+
 def _build_entry_name(original_path: Path) -> str:
     return original_path.stem.replace(".", "_").replace("-", "_")
 
@@ -46,7 +57,7 @@ def _build_mapper_entry(
 ) -> RawMapperEntry:
     entry: RawMapperEntry = {
         "original": _format_home_relative_path(original_path),
-        "self_managed": _format_home_relative_path(self_managed_path),
+        "self_managed": _format_self_managed_mapper_path(self_managed_path),
         "os": normalize_os_filter(os_filter),
     }
     if is_contents:

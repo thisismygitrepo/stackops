@@ -168,8 +168,8 @@ def display_config_files_status(status: dict[str, Any]) -> None:
 
     table = Table(show_header=True, box=None, padding=(0, 2), expand=False)
     table.add_column("Type", style="cyan", no_wrap=True)
-    table.add_column("Linked", justify="right")
-    table.add_column("Total", justify="right")
+    table.add_column("Configured", justify="right")
+    table.add_column("Mapped", justify="right")
     table.add_column("Progress", justify="right")
 
     table.add_row("📂 Public", str(status["public_linked"]), str(status["public_count"]), f"{public_percentage:.0f}%")
