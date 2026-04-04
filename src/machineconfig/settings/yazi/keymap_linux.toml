@@ -90,7 +90,7 @@ desc = "Read with code"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "c"]
-run  = 'shell --block -- ouch compress "$0" "$0.zip"'
+run  = 'shell --block -- uv run --python 3.14 "$HOME/.config/yazi/scripts/compress_selected.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Ops: compress with ouch"
 
 [[mgr.prepend_keymap]]

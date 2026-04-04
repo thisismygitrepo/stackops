@@ -102,6 +102,8 @@ keymap_linux = {original = '~/.config/yazi/keymap.toml', self_managed = 'CONFIG_
 theme_linux = {original = '~/.config/yazi/theme.toml', self_managed = 'CONFIG_ROOT/settings/yazi/theme.toml', os = 'linux,darwin'}
 init_linux = {original = '~/.config/yazi/init.lua', self_managed = 'CONFIG_ROOT/settings/yazi/init.lua', os = 'linux,darwin'}
 yazi_picker_linux = { original = '~/.config/helix/yazi-picker.sh', self_managed = 'CONFIG_ROOT/settings/helix/yazi-picker.sh' , os = 'linux,darwin'}
+scripts_windows = {original = '~/AppData/Roaming/yazi/config/scripts', self_managed = 'CONFIG_ROOT/settings/yazi/scripts', os = 'windows'}
+scripts_linux_macos = {original = '~/.config/yazi/scripts', self_managed = 'CONFIG_ROOT/settings/yazi/scripts', os = 'linux,darwin'}
 
 [television]
 cable_linux = {original = '~/.config/television/cable', self_managed = 'CONFIG_ROOT/settings/television/cable_unix', contents = true, os = 'linux,darwin'}
