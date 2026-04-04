@@ -93,17 +93,21 @@ export def --env tere_cd [...args: string] {
 }
 
 export def --env --wrapped z [...args: string] {
+    let cwd = ($env.PWD? | default (pwd))
     let dest = match $args {
         [] => { "~" }
         [ "-" ] => { "-" }
         [ $arg ] if ($arg | path expand | path type) == "dir" => { $arg }
-        _ => { ^zoxide query --exclude $env.PWD -- ...$args | str trim -r -c "\n" }
+        _ => { ^zoxide query --exclude $cwd -- ...$args | str trim -r -c "\n" }
     }
     cd $dest
 }
 
 export def --env --wrapped zi [...args: string] {
-    cd $'(^zoxide query --interactive -- ...$args | str trim -r -c "\n")'
+    let dest = (^zoxide query --interactive -- ...$args | str trim -r -c "\n")
+    if ($dest | str length) > 0 {
+        cd $dest
+    }
 }
 
 export alias lf = lfcd

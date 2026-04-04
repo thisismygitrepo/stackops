@@ -35,14 +35,17 @@ def --env __machineconfig_init_zoxide [] {
         return
     }
 
+    let config_hooks = ($env.config.hooks? | default {})
+    let env_change_hooks = ($config_hooks | get env_change? | default {})
+
     $env.config = (
         $env.config
         | upsert hooks (
-            $env.config.hooks
+            $config_hooks
             | upsert env_change (
-                $env.config.hooks.env_change
+                $env_change_hooks
                 | upsert PWD (
-                    $env.config.hooks.env_change.PWD
+                    ($env_change_hooks | get PWD? | default [])
                     | append {
                         __machineconfig_zoxide_hook: true
                         code: {|_, dir| ^zoxide add -- $dir }
@@ -119,15 +122,18 @@ def --env __machineconfig_init_atuin [] {
         hide-env ATUIN_HISTORY_ID
     }
 
+    let config_hooks = ($env.config.hooks? | default {})
+    let keybindings = ($env.config.keybindings? | default [])
+
     $env.config = (
         $env.config
         | upsert hooks (
-            $env.config.hooks
-            | upsert pre_execution ($env.config.hooks.pre_execution | append $atuin_pre_execution)
-            | upsert pre_prompt ($env.config.hooks.pre_prompt | append $atuin_pre_prompt)
+            $config_hooks
+            | upsert pre_execution (($config_hooks | get pre_execution? | default []) | append $atuin_pre_execution)
+            | upsert pre_prompt (($config_hooks | get pre_prompt? | default []) | append $atuin_pre_prompt)
         )
         | upsert keybindings (
-            $env.config.keybindings
+            $keybindings
             | append {
                 name: "machineconfig_atuin_ctrl_r"
                 modifier: control
@@ -163,4 +169,6 @@ const machineconfig_user_init = if (($nu.home-dir | path join "dotfiles" "machin
     null
 }
 
-source $machineconfig_user_init
+if $machineconfig_user_init != null {
+    source $machineconfig_user_init
+}
