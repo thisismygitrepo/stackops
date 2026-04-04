@@ -6,7 +6,7 @@ def machineconfig_search(
     search_term: str,
     ast: bool,
     symantic: bool,
-    extension: str,
+    extension: str | None,
     file: bool,
     dotfiles: bool,
     rga: bool,
@@ -19,7 +19,8 @@ def machineconfig_search(
         _install_dependencies()
         return
     if symantic:
-        _run_symantic_search(extension=extension)
+        _ = extension
+        _run_symantic_search(path=path, query=search_term, extension=extension)
         return
     if ast:
         _run_ast_search(directory=path)
@@ -141,14 +142,61 @@ tv `
         raise RuntimeError(f"Unsupported platform, {platform.system()}")
     return code
 
-def _run_symantic_search(extension: str) -> None:
+def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
     """Run symantic search."""
-    script = ""
-    for an_ex in extension.split(","):
-        script = script + f"""\nparse *.{an_ex} """
-    from machineconfig.utils.code import run_shell_script
 
-    run_shell_script(script=script, display_script=True, clean_env=False)
+    from pathlib import Path
+    path_obj = Path(path).absolute()
+    if path_obj.is_file():
+        text_files = [str(path_obj)]
+    else:
+        if extension is not None:
+            # Find files with the given extension
+            text_files = list(map(str, path_obj.rglob(f"*{extension}")))
+        else:
+            import subprocess
+            def get_text_files(root: str):
+                result = subprocess.run(
+                    ["rg", "--files", "-0", root],
+                    stdout=subprocess.PIPE,
+                    check=True,
+                )
+                return result.stdout.decode().split("\0")[:-1]
+            text_files = get_text_files(str(path_obj))
+
+
+    from typing import TypedDict
+    class SymanticSearchResult(TypedDict):
+        filename: str
+        start_line_number: int
+        end_line_number: int
+        match_line_number: int
+        distance: float
+        content: str
+
+    def symantic_search(query: str, text_files: list[str]):
+        # semtools search "hi" ./devcontainer.json --json
+        import random
+        random_suffix = str(random.randint(1000, 9999))
+        import string
+        random_suffix += ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        results_file = Path.home().joinpath("tmp_results", "tmp_text", "symantic_search", "results_" + random_suffix + ".json")
+        results_file.parent.mkdir(parents=True, exist_ok=True)
+        command = f"""semtools search {query} {" ".join(text_files)} --json --top-k 5 --n-lines 10 > {results_file}"""
+        import subprocess
+        subprocess.run(command, shell=True, check=True)
+        import json
+        with open(results_file, "r", encoding="utf-8") as f:
+            results_json = f.read()
+        results: list[SymanticSearchResult] = json.loads(results_json)["results"]
+        return results
+
+    results = symantic_search(query=query, text_files=text_files)
+    results_as_dict = {res["content"]: res["content"] + f"\n\nDetails:\n{res['filename']}:{res['start_line_number']}-{res['end_line_number']}\nMatch: {res['match_line_number']}\nDistance: {res['distance']}" for res in results}
+    from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
+    preview_extension = Path(text_files[0]).suffix
+    choose_from_dict_with_preview(options_to_preview_mapping=results_as_dict, extension=preview_extension, multi=False, preview_size_percent=75.0
+    )
 
 
 def _run_ast_search(directory: str) -> None:

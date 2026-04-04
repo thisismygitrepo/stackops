@@ -9,7 +9,7 @@ def machineconfig_search(
     search_term: Annotated[str, typer.Argument(help="Initial search term to seed the interactive search")] = "",
     ast: Annotated[bool, typer.Option(..., "--ast", "-a", help="The abstract syntax tree search/ tree sitter search of symbols")] = False,
     symantic: Annotated[bool, typer.Option(..., "--symantic", "-s", help="The symantic search of symbols")] = False,
-    extension: Annotated[str, typer.Option(..., "--extension", "-E", help="File extension to filter by (e.g., .py, .js)")] = "",
+    extension: Annotated[str | None, typer.Option(..., "--extension", "-E", help="File extension to filter by (e.g., .py, .js)")] = None,
     file: Annotated[bool, typer.Option(..., "--file", "-f", help="File search using fzf")] = False,
     dotfiles: Annotated[bool, typer.Option(..., "--dotfiles", "-D", help="Include dotfiles in search")] = False,
     rga: Annotated[bool, typer.Option(..., "--rga", "-A", help="Use ripgrep-all for searching all (non text files) instead of ripgrep")] = False,
