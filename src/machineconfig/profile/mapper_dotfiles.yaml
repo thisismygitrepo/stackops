@@ -1,6 +1,7 @@
 # User-defined config file mappings
 # os values are explicit YAML lists containing linux, darwin, or windows
 
+# ============ Credentials And Secrets ============
 git:
   gitconfig:
     original: ~/.gitconfig
@@ -104,6 +105,8 @@ remmina:
     - linux
     - darwin
     - windows
+
+# ============ Desktop Launchers ============
 webapp_linux:
   brave:
     original: ~/.local/share/applications
@@ -112,12 +115,16 @@ webapp_linux:
     os:
     - linux
     - darwin
+
+# ============ Terminal Apps ============
 wt_windows:
   settings:
     original: ~/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json
     self_managed: CONFIG_ROOT/settings/shells/wt/settings.json
     os:
     - windows
+
+# ============ AI And Assistant Tools ============
 chatgpt:
   config:
     original: ~/.config/chatgpt/config.json
@@ -165,6 +172,8 @@ marvin:
     - linux
     - darwin
     - windows
+
+# ============ Developer Tools ============
 docker:
   config:
     original: ~/.docker/config.json
@@ -212,6 +221,8 @@ procs:
     - linux
     - darwin
     - windows
+
+# ============ Desktop UI ============
 rofi_linux:
   config:
     original: ~/.config/rofi/config.rasi
@@ -219,6 +230,8 @@ rofi_linux:
     os:
     - linux
     - darwin
+
+# ============ File Managers And Previewers ============
 yazi:
   yazi_windows:
     original: ~/AppData/Roaming/yazi/config/yazi.toml
@@ -369,6 +382,8 @@ pistol_linux:
     os:
     - linux
     - darwin
+
+# ============ CLI UX And Input ============
 glow:
   config:
     original: ~/.config/glow/glow.yml
@@ -425,6 +440,8 @@ pudb:
     - linux
     - darwin
     - windows
+
+# ============ Shells, Terminals, And Multiplexers ============
 nushell:
   config_windows:
     original: ~/AppData/Roaming/nushell/config.nu
@@ -545,6 +562,8 @@ zellij_linux:
     os:
     - linux
     - darwin
+
+# ============ Code Editors ============
 zed_linux:
   settings:
     original: ~/.config/zed/settings.json
@@ -599,6 +618,8 @@ svim:
     os:
     - linux
     - darwin
+
+# ============ Linters And Type Checkers ============
 linters:
   flake8:
     original: ~/.flake8
@@ -649,6 +670,8 @@ linters:
     - linux
     - darwin
     - windows
+
+# ============ Shell History And Email ============
 atuin:
   config_linux:
     original: ~/.config/atuin/config.toml
