@@ -55,6 +55,10 @@ on   = "F"
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg fire "$0"'
 desc = "Run fire on hovered file"
 
+[[mgr.prepend_keymap]]
+on   = "b"
+run  = 'shell --block -- bat "$0"'
+desc = "bat the file"
 
 [[mgr.prepend_keymap]]
 on = [ "g", "r" ]
@@ -68,7 +72,7 @@ desc = "Read with vscode"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "h"]
-run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg utils edit "$0"'
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg utils file edit "$0"'
 desc = "Read with helix"
 
 [[mgr.prepend_keymap]]

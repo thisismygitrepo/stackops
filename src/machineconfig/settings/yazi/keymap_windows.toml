@@ -54,7 +54,7 @@ desc = "Read with vscode"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "h"]
-run  = 'shell --block -- powershell "~\.config\machineconfig\scripts\wrap_mcfg" utils edit "$0"'
+run  = 'shell --block -- powershell "~\.config\machineconfig\scripts\wrap_mcfg" utils file edit "$0"'
 desc = "Read with helix"
 
 [[mgr.prepend_keymap]]
@@ -72,6 +72,12 @@ desc = "Read with fire"
 on   = ["R", "F"]
 run  = 'shell --block -- powershell "~\.config\machineconfig\scripts\wrap_mcfg"fire -i "$0"'
 desc = "Read with fire interactively"
+
+[[mgr.prepend_keymap]]
+on   = "b"
+run  = 'shell --block -- bat "$0"'
+desc = "bat the file"
+
 
 [[mgr.prepend_keymap]]
 on   = ["o", "c"]

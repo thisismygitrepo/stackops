@@ -7,7 +7,6 @@ from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
 
 def copy_both_assets() -> None:
     from machineconfig.profile import create_helper
-
     create_helper.copy_assets_to_machine(which="scripts")
     create_helper.copy_assets_to_machine(which="settings")
 
