@@ -144,6 +144,10 @@ tv `
 
 def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
     """Run symantic search."""
+    if query == "":
+        # print("❓ No search term provided for symantic search.")
+        # return
+        query = input("Enter search term for symantic search: ")
 
     from pathlib import Path
     path_obj = Path(path).absolute()
@@ -182,7 +186,7 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
         random_suffix += ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         results_file = Path.home().joinpath("tmp_results", "tmp_text", "symantic_search", "results_" + random_suffix + ".json")
         results_file.parent.mkdir(parents=True, exist_ok=True)
-        command = f"""semtools search {query} {" ".join(text_files)} --json --top-k 5 --n-lines 10 > {results_file}"""
+        command = f"""semtools search "{query}" {" ".join(text_files)} --json --top-k 5 --n-lines 10 > {results_file}"""
         import subprocess
         subprocess.run(command, shell=True, check=True)
         import json

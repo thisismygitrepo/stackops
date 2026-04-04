@@ -67,6 +67,10 @@ desc = "Search files"
 on   = ["L", "e"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg msearch -e "$0"'
 desc = "Search then edit"
+[[mgr.prepend_keymap]]
+on   = ["L", "s"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg msearch -s "$0"'
+desc = "Symantic search"
 
 
 [[mgr.prepend_keymap]]
