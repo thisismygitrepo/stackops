@@ -2582,13 +2582,13 @@
       "doc": "🧹 cleans projects from litter files.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "kondo-linux-x86_64.tar.gz",
-          "macos": "kondo-macos-x86_64.tar.gz",
-          "windows": "kondo-windows-x86_64.zip"
+          "linux": "kondo-x86_64-unknown-linux-gnu.tar.gz",
+          "macos": "kondo-x86_64-apple-darwin.tar.gz",
+          "windows": "kondo-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "kondo-linux-aarch64.tar.gz",
-          "macos": "kondo-macos-aarch64.tar.gz",
+          "linux": "kondo-aarch64-unknown-linux-gnu.tar.gz",
+          "macos": "kondo-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
