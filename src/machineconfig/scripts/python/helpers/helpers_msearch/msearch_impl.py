@@ -195,6 +195,9 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
         results: list[SymanticSearchResult] = json.loads(results_json)["results"]
         return results
 
+    if len(text_files) > 50:
+        print(f"⚠️ Found {len(text_files)} text files, which may take a while to search through symantically. Consider providing a more specific path or file extension filter.")
+        return None
     results = symantic_search(query=query, text_files=text_files)
 
     results_as_dict = {res["content"]: res["content"] + f"\n\nDetails:\n{res['filename']}:{res['start_line_number']}-{res['end_line_number']}\nMatch: {res['match_line_number']}\nDistance: {res['distance']}" for res in results}

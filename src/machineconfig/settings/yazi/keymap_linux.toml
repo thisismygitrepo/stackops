@@ -113,32 +113,32 @@ desc = "Read with code"
 [[mgr.prepend_keymap]]
 on   = ["o", "c"]
 run  = 'shell --block -- uv run --python 3.14 "$HOME/.config/yazi/scripts/compress_selected.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
-desc = "Ops: compress with ouch"
+desc = "compress with ouch"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "d"]
 run  = 'shell --block -- ouch decompress "$0"'
-desc = "Ops: decompress with ouch"
+desc = "decompress with ouch"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "s"]
 run  = 'shell --block -- gpg --output "$0.gpg" --symmetric "$0"'
-desc = "Ops: encrypt symmetrically with gpg"
+desc = "encrypt symmetrically with gpg"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "a"]
 run  = 'shell --block -- gpg --output "$0.gpg" --default-recipient-self --encrypt "$0"'
-desc = "Ops: encrypt asymmetrically with gpg"
+desc = "encrypt asymmetrically with gpg"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "S"]
 run  = "shell --block -- sh -c 'input=\"$1\"; case \"$input\" in (*.gpg) output=\"${input%.gpg}\" ;; (*) echo \"Expected a .gpg file: $input\" >&2; exit 1 ;; esac; gpg --output \"$output\" --decrypt \"$input\"' sh \"$0\""
-desc = "Ops: decrypt symmetric gpg file"
+desc = "decrypt symmetric gpg file"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "A"]
 run  = "shell --block -- sh -c 'input=\"$1\"; case \"$input\" in (*.gpg) output=\"${input%.gpg}\" ;; (*) echo \"Expected a .gpg file: $input\" >&2; exit 1 ;; esac; gpg --output \"$output\" --decrypt \"$input\"' sh \"$0\""
-desc = "Ops: decrypt asymmetric gpg file"
+desc = "decrypt asymmetric gpg file"
 
 [[mgr.prepend_keymap]]
 on  = "y"
