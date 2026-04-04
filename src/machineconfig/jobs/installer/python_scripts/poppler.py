@@ -20,12 +20,12 @@ poppler_installer: InstallerData = {
         "amd64": {
             "windows": "Release-{version}.zip",
             "linux": None,
-            "macos": None,
+            "darwin": None,
         },
         "arm64": {
             "windows": None,
             "linux": None,
-            "macos": None,
+            "darwin": None,
         }
     }
 }

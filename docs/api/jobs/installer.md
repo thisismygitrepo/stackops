@@ -100,7 +100,7 @@ Direct package manager commands:
     "amd64": {
       "linux": "sudo nala install git",
       "windows": "winget install --no-upgrade --name \"Git\" --Id \"Git.Git\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-      "macos": "brew install git"
+      "darwin": "brew install git"
     }
   }
 }
@@ -126,7 +126,7 @@ For complex installations requiring custom logic:
     "amd64": {
       "linux": "yazi.py",
       "windows": "yazi.py",
-      "macos": "yazi.py"
+      "darwin": "yazi.py"
     }
   }
 }
@@ -192,7 +192,7 @@ Automatic download from GitHub releases with version pattern matching:
   "fileNamePattern": {
     "amd64": {
       "linux": "btop-x86_64-linux-musl.tbz",
-      "macos": null,
+      "darwin": null,
       "windows": null
     },
     "arm64": {
@@ -237,7 +237,7 @@ class InstallerData(TypedDict):
     fileNamePattern: dict[          # Platform-specific installation patterns
         CPU_ARCHITECTURES,          # "amd64" | "arm64"
         dict[
-            OPERATING_SYSTEMS,      # "windows" | "linux" | "macos"
+            OPERATING_SYSTEMS,      # "windows" | "linux" | "darwin"
             Optional[str]           # Installation pattern or None if unsupported
         ]
     ]
@@ -261,7 +261,7 @@ class InstallerData(TypedDict):
 
 - `windows`: Microsoft Windows
 - `linux`: Linux distributions
-- `macos`: macOS (Darwin)
+- `darwin`: macOS (Darwin)
 
 ---
 
@@ -281,11 +281,11 @@ installer_data: InstallerData = {
         "amd64": {
             "linux": "fd-v{version}-x86_64-unknown-linux-musl.tar.gz",
             "windows": "fd-v{version}-x86_64-pc-windows-msvc.zip",
-            "macos": "fd-v{version}-x86_64-apple-darwin.tar.gz"
+            "darwin": "fd-v{version}-x86_64-apple-darwin.tar.gz"
         },
         "arm64": {
             "linux": "fd-v{version}-aarch64-unknown-linux-musl.tar.gz",
-            "macos": "fd-v{version}-aarch64-apple-darwin.tar.gz",
+            "darwin": "fd-v{version}-aarch64-apple-darwin.tar.gz",
             "windows": None
         }
     }
@@ -722,12 +722,12 @@ When using `--interactive`:
     "amd64": {
       "linux": "mytool-{version}-linux-amd64.tar.gz",
       "windows": "mytool-{version}-windows-amd64.zip",
-      "macos": "mytool-{version}-darwin-amd64.tar.gz"
+      "darwin": "mytool-{version}-darwin-amd64.tar.gz"
     },
     "arm64": {
       "linux": "mytool-{version}-linux-arm64.tar.gz",
       "windows": null,
-      "macos": "mytool-{version}-darwin-arm64.tar.gz"
+      "darwin": "mytool-{version}-darwin-arm64.tar.gz"
     }
   }
 }
@@ -865,7 +865,7 @@ from machineconfig.utils.schemas.installer.installer_types import (
     InstallerData,           # Package definition
     InstallerDataFiles,      # installer_data.json structure
     CPU_ARCHITECTURES,       # "amd64" | "arm64"
-    OPERATING_SYSTEMS,       # "windows" | "linux" | "macos"
+    OPERATING_SYSTEMS,       # "windows" | "linux" | "darwin"
     get_os_name,             # Get current OS
     get_normalized_arch,     # Get current architecture
 )

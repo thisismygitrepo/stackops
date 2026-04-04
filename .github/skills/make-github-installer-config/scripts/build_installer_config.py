@@ -16,7 +16,7 @@ from skill_lib import parse_repo_url
 from skill_lib import to_placeholder_pattern
 
 
-PLATFORMS: tuple[str, ...] = ("linux", "macos", "windows")
+PLATFORMS: tuple[str, ...] = ("linux", "darwin", "windows")
 ARCHES: tuple[str, ...] = ("amd64", "arm64")
 
 

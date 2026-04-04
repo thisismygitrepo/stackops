@@ -24,7 +24,7 @@
       "enum": ["amd64", "arm64"]
     },
     "OPERATING_SYSTEMS": {
-      "enum": ["windows", "linux", "macos"]
+      "enum": ["windows", "linux", "darwin"]
     },
     "InstallerData": {
       "type": "object",
@@ -83,12 +83,12 @@
           "type": "string",
           "description": "Filename template for Linux."
         },
-        "macos": {
+        "darwin": {
           "type": "string",
           "description": "Filename template for macOS."
         }
       },
-      "required": ["windows", "linux", "macos"]
+      "required": ["windows", "linux", "darwin"]
     }
   }
 }

@@ -16,12 +16,12 @@ installer_data: InstallerData = {
       "fileNamePattern": {
         "amd64": {
           "linux": "libduckdb-linux-amd64.zip",
-          "macos": None,
+          "darwin": None,
           "windows": None
         },
         "arm64": {
           "linux": "libduckdb-linux-arm64.zip",
-          "macos": None,
+          "darwin": None,
           "windows": None
         }
       }

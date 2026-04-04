@@ -91,7 +91,7 @@ def classify_os(asset_name: str) -> str | None:
     if "linux" in lowered:
         return "linux"
     if "darwin" in lowered or "macos" in lowered or "apple" in lowered or "osx" in lowered:
-        return "macos"
+        return "darwin"
     if "windows" in lowered or "win" in lowered or "msvc" in lowered:
         return "windows"
     return None

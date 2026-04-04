@@ -10,12 +10,12 @@
         "amd64": {
           "linux": "sysabc.py",
           "windows": "sysabc.py",
-          "macos": "sysabc.py"
+          "darwin": "sysabc.py"
         },
         "arm64": {
           "linux": "sysabc.py",
           "windows": "sysabc.py",
-          "macos": "sysabc.py"
+          "darwin": "sysabc.py"
         }
       }
     },
@@ -28,12 +28,12 @@
         "amd64": {
           "linux": "sudo nala install unzip -y; curl -fsSL https://bun.com/install | bash; . ~/.bashrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/npx",
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\npx.cmd' -Target (Get-Command bunx).Source\"",
-          "macos": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/npx"
+          "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/npx"
         },
         "arm64": {
           "linux": "sudo nala install unzip -y; curl -fsSL https://bun.com/install | bash; . ~/.bashrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/npx",
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\npx.cmd' -Target (Get-Command bunx).Source\"",
-          "macos": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/npx"
+          "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/npx"
         }
       }
     },
@@ -46,12 +46,12 @@
         "amd64": {
           "linux": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
           "windows": "https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe",
-          "macos": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+          "darwin": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
         },
         "arm64": {
           "linux": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
           "windows": "https://static.rust-lang.org/rustup/dist/aarch64-pc-windows-msvc/rustup-init.exe",
-          "macos": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+          "darwin": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
         }
       }
     },
@@ -64,12 +64,12 @@
         "amd64": {
           "linux": "scrcpy-linux-x86_64-v3.3.3.tar.gz",
           "windows": "scrcpy-win64-v3.3.3.zip",
-          "macos": "scrcpy-macos-x86_64-v3.3.3.tar.gz"
+          "darwin": "scrcpy-macos-x86_64-v3.3.3.tar.gz"
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": "scrcpy-macos-aarch64-v3.3.3.tar.gz"
+          "darwin": "scrcpy-macos-aarch64-v3.3.3.tar.gz"
         }
       }
     },
@@ -82,12 +82,12 @@
         "amd64": {
           "linux": "fx_linux_amd64",
           "windows": "fx_windows_amd64.exe",
-          "macos": "fx_darwin_amd64"
+          "darwin": "fx_darwin_amd64"
         },
         "arm64": {
           "linux": "fx_linux_arm64",
           "windows": "fx_windows_arm64.exe",
-          "macos": "fx_darwin_arm64"
+          "darwin": "fx_darwin_arm64"
         }
       }
     },
@@ -100,12 +100,12 @@
         "amd64": {
           "linux": "sudo nala install git -y",
           "windows": "winget install --no-upgrade --name \"Git\" --Id \"Git.Git\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install git"
+          "darwin": "brew install git"
         },
         "arm64": {
           "linux": "sudo nala install git -y",
           "windows": "winget install --no-upgrade --name \"Git\" --Id \"Git.Git\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install git"
+          "darwin": "brew install git"
         }
       }
     },
@@ -118,12 +118,12 @@
         "amd64": {
           "linux": "jq-linux-amd64",
           "windows": "jq-windows-amd64.exe",
-          "macos": "jq-macos-amd64"
+          "darwin": "jq-macos-amd64"
         },
         "arm64": {
           "linux": "jq-linux-arm64",
           "windows": null,
-          "macos": "jq-macos-arm64"
+          "darwin": "jq-macos-arm64"
         }
       }
     },
@@ -136,12 +136,12 @@
         "amd64": {
           "linux": "yq_linux_amd64",
           "windows": "yq_windows_amd64.exe",
-          "macos": "yq_darwin_amd64"
+          "darwin": "yq_darwin_amd64"
         },
         "arm64": {
           "linux": "yq_linux_arm64",
           "windows": "yq_windows_arm64.exe",
-          "macos": "yq_darwin_arm64"
+          "darwin": "yq_darwin_arm64"
         }
       }
     },
@@ -154,12 +154,12 @@
         "amd64": {
           "linux": "ImageMagick-{version}-gcc-x86_64.AppImage",
           "windows": "ImageMagick-{version}-portable-Q16-x64.7z",
-          "macos": "brew install imagemagick"
+          "darwin": "brew install imagemagick"
         },
         "arm64": {
           "linux": "jq-linux-arm64",
           "windows": "ImageMagick-{version}-Q16-arm64-dll.exe",
-          "macos": "brew install imagemagick"
+          "darwin": "brew install imagemagick"
         }
       }
     },
@@ -172,12 +172,12 @@
         "amd64": {
           "linux": "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-x86_64.tgz",
           "windows": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -190,12 +190,12 @@
         "amd64": {
           "linux": "pistol-static-linux-x86_64",
           "windows": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": "pistol-static-linux-aarch64",
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -208,12 +208,12 @@
         "amd64": {
           "linux": "diskonaut-{version}-unknown-linux-musl.tar.gz",
           "windows": null,
-          "macos": "brew install diskonaut"
+          "darwin": "brew install diskonaut"
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": "brew install diskonaut"
+          "darwin": "brew install diskonaut"
         }
       }
     },
@@ -226,12 +226,12 @@
         "amd64": {
           "linux": "xplr-linux.tar.gz",
           "windows": null,
-          "macos": "xplr-macos.tar.gz"
+          "darwin": "xplr-macos.tar.gz"
         },
         "arm64": {
           "linux": "xplr-linux-aarch64.tar.gz",
           "windows": null,
-          "macos": "xplr-macos-aarch64.tar.gz"
+          "darwin": "xplr-macos-aarch64.tar.gz"
         }
       }
     },
@@ -243,12 +243,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "btop-x86_64-linux-musl.tbz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": "btop-aarch64-linux-musl.tbz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -261,12 +261,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "gotty_v{version}_linux_amd64.tar.gz",
-          "macos": "gotty_v{version}_darwin_amd64.tar.gz",
+          "darwin": "gotty_v{version}_darwin_amd64.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "gotty_v{version}_linux_arm64.tar.gz",
-          "macos": "gotty_v{version}_darwin_arm64.tar.gz",
+          "darwin": "gotty_v{version}_darwin_arm64.tar.gz",
           "windows": null
         }
       }
@@ -279,12 +279,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "joshuto-v{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "joshuto-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "joshuto-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "joshuto-v{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "joshuto-v{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "joshuto-v{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -297,12 +297,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "mprocs-{version}-linux-x86_64-musl.tar.gz",
-          "macos": "mprocs-{version}-darwin-x86_64.tar.gz",
+          "darwin": "mprocs-{version}-darwin-x86_64.tar.gz",
           "windows": "mprocs-{version}-windows-x86_64.zip"
         },
         "arm64": {
           "linux": "mprocs-{version}-linux-aarch64-musl.tar.gz",
-          "macos": "mprocs-{version}-darwin-aarch64.tar.gz",
+          "darwin": "mprocs-{version}-darwin-aarch64.tar.gz",
           "windows": "mprocs-{version}-windows-x86_64.zip"
         }
       }
@@ -315,12 +315,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "process-compose_linux_amd64.tar.gz",
-          "macos": "process-compose_darwin_amd64.tar.gz",
+          "darwin": "process-compose_darwin_amd64.tar.gz",
           "windows": "process-compose_windows_amd64.zip"
         },
         "arm64": {
           "linux": "process-compose_linux_arm.tar.gz",
-          "macos": "process-compose_darwin_arm64.tar.gz",
+          "darwin": "process-compose_darwin_arm64.tar.gz",
           "windows": "process-compose_windows_arm64.zip"
         }
       }
@@ -333,12 +333,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "zellij-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "zellij-x86_64-apple-darwin.tar.gz",
+          "darwin": "zellij-x86_64-apple-darwin.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "zellij-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "zellij-aarch64-apple-darwin.tar.gz",
+          "darwin": "zellij-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -352,12 +352,12 @@
         "amd64": {
           "linux": "sudo nala install tmux -y",
           "windows": null,
-          "macos": "brew install tmux"
+          "darwin": "brew install tmux"
         },
         "arm64": {
           "linux": "sudo nala install tmux -y",
           "windows": null,
-          "macos": "brew install tmux"
+          "darwin": "brew install tmux"
         }
       }
     },
@@ -370,11 +370,11 @@
         "amd64": {
           "windows": "boxes.py",
           "linux": "sudo nala install boxes -y",
-          "macos": "brew install boxes"
+          "darwin": "brew install boxes"
         },
         "arm64": {
           "linux": "sudo nala install boxes -y",
-          "macos": "brew install boxes",
+          "darwin": "brew install boxes",
           "windows": "boxes.py"
         }
       }
@@ -388,12 +388,12 @@
         "amd64": {
           "linux": "bun install -g sharewifi",
           "windows": "bun install -g sharewifi",
-          "macos": "bun install -g sharewifi"
+          "darwin": "bun install -g sharewifi"
         },
         "arm64": {
           "linux": "bun install -g sharewifi",
           "windows": "bun install -g sharewifi",
-          "macos": "bun install -g sharewifi"
+          "darwin": "bun install -g sharewifi"
         }
       }
     },
@@ -406,12 +406,12 @@
         "amd64": {
           "linux": "croc_{version}_Linux-64bit.tar.gz",
           "windows": "croc_{version}_Windows-64bit.zip",
-          "macos": "croc_{version}_macOS-64bit.tar.gz"
+          "darwin": "croc_{version}_macOS-64bit.tar.gz"
         },
         "arm64": {
           "linux": "croc_{version}_Linux-ARM64.tar.gz",
           "windows": null,
-          "macos": "croc_{version}_macOS-ARM64.tar.gz"
+          "darwin": "croc_{version}_macOS-ARM64.tar.gz"
         }
       }
     },
@@ -424,12 +424,12 @@
         "amd64": {
           "linux": "magic-wormhole-cli-x86_64-unknown-linux-gnu.tgz",
           "windows": "magic-wormhole-cli-x86_64-pc-windows-gnu.tgz",
-          "macos": "magic-wormhole-cli-aarch64-apple-darwin.tgz"
+          "darwin": "magic-wormhole-cli-aarch64-apple-darwin.tgz"
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -442,12 +442,12 @@
         "amd64": {
           "linux": "bun install -g easy-sharing",
           "windows": "bun install -g easy-sharing",
-          "macos": "bun install -g easy-sharing"
+          "darwin": "bun install -g easy-sharing"
         },
         "arm64": {
           "linux": "bun install -g easy-sharing",
           "windows": "bun install -g easy-sharing",
-          "macos": "bun install -g easy-sharing"
+          "darwin": "bun install -g easy-sharing"
         }
       }
     },
@@ -460,12 +460,12 @@
         "amd64": {
           "linux": "bun install -g @ezshare/cli",
           "windows": "bun install -g @ezshare/cli",
-          "macos": "bun install -g @ezshare/cli"
+          "darwin": "bun install -g @ezshare/cli"
         },
         "arm64": {
           "linux": "bun install -g @ezshare/cli",
           "windows": "bun install -g @ezshare/cli",
-          "macos": "bun install -g @ezshare/cli"
+          "darwin": "bun install -g @ezshare/cli"
         }
       }
     },
@@ -478,12 +478,12 @@
         "amd64": {
           "linux": "asciinema-x86_64-unknown-linux-gnu",
           "windows": null,
-          "macos": "asciinema-x86_64-apple-darwin"
+          "darwin": "asciinema-x86_64-apple-darwin"
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -496,12 +496,12 @@
         "amd64": {
           "linux": "bun install -g lolcatjs",
           "windows": "bun install -g lolcatjs",
-          "macos": "bun install -g lolcatjs"
+          "darwin": "bun install -g lolcatjs"
         },
         "arm64": {
           "linux": "bun install -g lolcatjs",
           "windows": "bun install -g lolcatjs",
-          "macos": "bun install -g lolcatjs"
+          "darwin": "bun install -g lolcatjs"
         }
       }
     },
@@ -513,12 +513,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "x86_64-unknown-linux-musl-rusty-rain-{version}",
-          "macos": "x86_64-apple-darwin-rusty-rain-{version}",
+          "darwin": "x86_64-apple-darwin-rusty-rain-{version}",
           "windows": "x86_64-pc-windows-gnu-rusty-rain-{version}.exe"
         },
         "arm64": {
           "linux": "aarch64-unknown-linux-musl-rusty-rain-{version}",
-          "macos": "aarch64-apple-darwin-rusty-rain-{version}",
+          "darwin": "aarch64-apple-darwin-rusty-rain-{version}",
           "windows": "x86_64-pc-windows-gnu-rusty-rain-{version}.exe"
         }
       }
@@ -532,12 +532,12 @@
         "amd64": {
           "linux": "bun install -g figlet-cli",
           "windows": "bun install -g figlet-cli",
-          "macos": "bun install -g figlet-cli"
+          "darwin": "bun install -g figlet-cli"
         },
         "arm64": {
           "linux": "bun install -g figlet-cli",
           "windows": "bun install -g figlet-cli",
-          "macos": "bun install -g figlet-cli"
+          "darwin": "bun install -g figlet-cli"
         }
       }
     },
@@ -550,12 +550,12 @@
         "amd64": {
           "linux": "uv tool install cowsay",
           "windows": "uv tool install cowsay",
-          "macos": "uv tool install cowsay"
+          "darwin": "uv tool install cowsay"
         },
         "arm64": {
           "linux": "uv tool install cowsay",
           "windows": "uv tool install cowsay",
-          "macos": "uv tool install cowsay"
+          "darwin": "uv tool install cowsay"
         }
       }
     },
@@ -568,11 +568,11 @@
         "amd64": {
           "windows": "ugrep-windows-x64.zip",
           "linux": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -586,11 +586,11 @@
         "amd64": {
           "windows": "https://download.sysinternals.com/files/ZoomIt.zip",
           "linux": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": "https://download.sysinternals.com/files/ZoomIt.zip"
         }
       }
@@ -604,11 +604,11 @@
         "amd64": {
           "windows": "NTop.exe",
           "linux": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -622,11 +622,11 @@
         "amd64": {
           "windows": "winget install --Id Microsoft.devtunnel --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "linux": "curl -sL https://aka.ms/DevTunnelCliInstall | bash",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": "curl -sL https://aka.ms/DevTunnelCliInstall | bash",
-          "macos": null,
+          "darwin": null,
           "windows": "winget install --Id Microsoft.devtunnel --source winget --scope user --accept-package-agreements --accept-source-agreements"
         }
       }
@@ -639,12 +639,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "bat-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "bat-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "bat-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "bat-v{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "bat-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "bat-v{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "bat-v{version}-aarch64-apple-darwin.tar.gz",
           "windows": "bat-v{version}-x86_64-pc-windows-msvc.zip"
         }
       }
@@ -657,12 +657,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "broot_{version}.zip",
-          "macos": "broot_{version}.zip",
+          "darwin": "broot_{version}.zip",
           "windows": "broot_{version}.zip"
         },
         "arm64": {
           "linux": "broot_{version}.zip",
-          "macos": "broot_{version}.zip",
+          "darwin": "broot_{version}.zip",
           "windows": "broot_{version}.zip"
         }
       }
@@ -675,12 +675,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "bottom_x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "bottom_x86_64-apple-darwin.tar.gz",
+          "darwin": "bottom_x86_64-apple-darwin.tar.gz",
           "windows": "bottom_x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "bottom_aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "bottom_aarch64-apple-darwin.tar.gz",
+          "darwin": "bottom_aarch64-apple-darwin.tar.gz",
           "windows": "bottom_x86_64-pc-windows-msvc.zip"
         }
       }
@@ -693,12 +693,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "chatgpt_Linux_x86_64.tar.gz",
-          "macos": "chatgpt_Darwin_x86_64.tar.gz",
+          "darwin": "chatgpt_Darwin_x86_64.tar.gz",
           "windows": "chatgpt_Windows_x86_64.zip"
         },
         "arm64": {
           "linux": "chatgpt_Linux_arm64.tar.gz",
-          "macos": "chatgpt_Darwin_arm64.tar.gz",
+          "darwin": "chatgpt_Darwin_arm64.tar.gz",
           "windows": "chatgpt_Windows_arm64.zip"
         }
       }
@@ -711,12 +711,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "cloudflared-linux-amd64",
-          "macos": "cloudflared-darwin-amd64.tgz",
+          "darwin": "cloudflared-darwin-amd64.tgz",
           "windows": "cloudflared-windows-amd64.exe"
         },
         "arm64": {
           "linux": "cloudflared-linux-arm64",
-          "macos": "cloudflared-darwin-arm64.tgz",
+          "darwin": "cloudflared-darwin-arm64.tgz",
           "windows": "cloudflared-windows-amd64.exe"
         }
       }
@@ -730,12 +730,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Cloudflare WARP\" --Id \"Cloudflare.Warp\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Cloudflare WARP\" --Id \"Cloudflare.Warp\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -748,12 +748,12 @@
         "amd64": {
           "linux": "cloudflare_warp_cli.py",
           "windows": "cloudflare_warp_cli.py",
-          "macos": "cloudflare_warp_cli.py"
+          "darwin": "cloudflare_warp_cli.py"
         },
         "arm64": {
           "linux": "cloudflare_warp_cli.py",
           "windows": "cloudflare_warp_cli.py",
-          "macos": "cloudflare_warp_cli.py"
+          "darwin": "cloudflare_warp_cli.py"
         }
       }
     },
@@ -765,12 +765,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "cpufetch_x86-64_linux",
-          "macos": null,
+          "darwin": null,
           "windows": "cpufetch_x86-64_windows.exe"
         },
         "arm64": {
           "linux": "cpufetch_arm64_linux",
-          "macos": null,
+          "darwin": null,
           "windows": "cpufetch_x86-64_windows.exe"
         }
       }
@@ -783,12 +783,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "delta-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "delta-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "delta-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "delta-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "delta-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "delta-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "delta-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "delta-{version}-x86_64-pc-windows-msvc.zip"
         }
       }
@@ -801,12 +801,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "dua-v{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "dua-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "dua-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "dua-v{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "dua-v{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "dua-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "dua-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "dua-v{version}-x86_64-pc-windows-msvc.zip"
         }
       }
@@ -819,12 +819,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "fastfetch-linux-amd64.tar.gz",
-          "macos": "fastfetch-macos-amd64.tar.gz",
+          "darwin": "fastfetch-macos-amd64.tar.gz",
           "windows": "fastfetch-windows-amd64.zip"
         },
         "arm64": {
           "linux": "fastfetch-linux-aarch64.tar.gz",
-          "macos": "fastfetch-macos-aarch64.tar.gz",
+          "darwin": "fastfetch-macos-aarch64.tar.gz",
           "windows": "fastfetch-windows-aarch64.zip"
         }
       }
@@ -837,12 +837,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "fd-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "fd-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "fd-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "fd-v{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "fd-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "fd-v{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "fd-v{version}-aarch64-apple-darwin.tar.gz",
           "windows": "fd-v{version}-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -855,12 +855,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "fzf-{version}-linux_amd64.tar.gz",
-          "macos": "fzf-{version}-darwin_amd64.tar.gz",
+          "darwin": "fzf-{version}-darwin_amd64.tar.gz",
           "windows": "fzf-{version}-windows_amd64.zip"
         },
         "arm64": {
           "linux": "fzf-{version}-linux_arm64.tar.gz",
-          "macos": "fzf-{version}-darwin_arm64.tar.gz",
+          "darwin": "fzf-{version}-darwin_arm64.tar.gz",
           "windows": "fzf-{version}-windows_arm64.zip"
         }
       }
@@ -873,12 +873,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "tv-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "tv-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "tv-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "tv-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "tv-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "tv-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "tv-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -891,12 +891,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "gitui-linux-x86_64.tar.gz",
-          "macos": "gitui-mac-x86.tar.gz",
+          "darwin": "gitui-mac-x86.tar.gz",
           "windows": "gitui-win.tar.gz"
         },
         "arm64": {
           "linux": "gitui-linux-aarch64.tar.gz",
-          "macos": "gitui-mac.tar.gz",
+          "darwin": "gitui-mac.tar.gz",
           "windows": "gitui-win.tar.gz"
         }
       }
@@ -909,12 +909,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "glow_{version}_Linux_x86_64.tar.gz",
-          "macos": "glow_{version}_Darwin_x86_64.tar.gz",
+          "darwin": "glow_{version}_Darwin_x86_64.tar.gz",
           "windows": "glow_{version}_Windows_x86_64.zip"
         },
         "arm64": {
           "linux": "glow_{version}_Linux_arm64.tar.gz",
-          "macos": "glow_{version}_Darwin_arm64.tar.gz",
+          "darwin": "glow_{version}_Darwin_arm64.tar.gz",
           "windows": "glow_{version}_Windows_x86_64.zip"
         }
       }
@@ -927,12 +927,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "gum_{version}_Linux_x86_64.tar.gz",
-          "macos": "gum_{version}_Darwin_x86_64.tar.gz",
+          "darwin": "gum_{version}_Darwin_x86_64.tar.gz",
           "windows": "gum_{version}_Windows_x86_64.zip"
         },
         "arm64": {
           "linux": "gum_{version}_Linux_arm64.tar.gz",
-          "macos": "gum_{version}_Darwin_arm64.tar.gz",
+          "darwin": "gum_{version}_Darwin_arm64.tar.gz",
           "windows": "gum_{version}_Windows_x86_64.zip"
         }
       }
@@ -945,12 +945,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "lf-linux-amd64.tar.gz",
-          "macos": "lf-darwin-amd64.tar.gz",
+          "darwin": "lf-darwin-amd64.tar.gz",
           "windows": "lf-windows-amd64.zip"
         },
         "arm64": {
           "linux": "lf-linux-arm64.tar.gz",
-          "macos": "lf-darwin-arm64.tar.gz",
+          "darwin": "lf-darwin-arm64.tar.gz",
           "windows": "lf-windows-amd64.zip"
         }
       }
@@ -963,12 +963,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "clifm-{version}-linux-x86_64.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -981,12 +981,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "lsd-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "lsd-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "lsd-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "lsd-v{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "lsd-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "lsd-v{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "lsd-v{version}-aarch64-apple-darwin.tar.gz",
           "windows": "lsd-v{version}-x86_64-pc-windows-msvc.zip"
         }
       }
@@ -999,12 +999,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @pnp/cli-microsoft365",
-          "macos": "bun install -g @pnp/cli-microsoft365",
+          "darwin": "bun install -g @pnp/cli-microsoft365",
           "windows": "bun install -g @pnp/cli-microsoft365"
         },
         "arm64": {
           "linux": "bun install -g @pnp/cli-microsoft365",
-          "macos": "bun install -g @pnp/cli-microsoft365",
+          "darwin": "bun install -g @pnp/cli-microsoft365",
           "windows": "bun install -g @pnp/cli-microsoft365"
         }
       }
@@ -1017,12 +1017,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "mcfly-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "brew install mcfly",
+          "darwin": "brew install mcfly",
           "windows": "mcfly-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "mcfly-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "brew install mcfly",
+          "darwin": "brew install mcfly",
           "windows": "mcfly-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1035,12 +1035,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "ouch-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "ouch-x86_64-apple-darwin.tar.gz",
+          "darwin": "ouch-x86_64-apple-darwin.tar.gz",
           "windows": "ouch-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "ouch-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "ouch-aarch64-apple-darwin.tar.gz",
+          "darwin": "ouch-aarch64-apple-darwin.tar.gz",
           "windows": "ouch-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1053,12 +1053,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "procs-v{version}-x86_64-linux.zip",
-          "macos": "procs-v{version}-x86_64-mac.zip",
+          "darwin": "procs-v{version}-x86_64-mac.zip",
           "windows": "procs-v{version}-x86_64-windows.zip"
         },
         "arm64": {
           "linux": "procs-v{version}-aarch64-linux.zip",
-          "macos": "procs-v{version}-aarch64-mac.zip",
+          "darwin": "procs-v{version}-aarch64-mac.zip",
           "windows": "procs-v{version}-aarch64-windows.zip"
         }
       }
@@ -1071,12 +1071,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "rclone-v{version}-linux-amd64.zip",
-          "macos": "rclone-v{version}-osx-amd64.zip",
+          "darwin": "rclone-v{version}-osx-amd64.zip",
           "windows": "rclone-v{version}-windows-amd64.zip"
         },
         "arm64": {
           "linux": "rclone-v{version}-linux-arm64.zip",
-          "macos": "rclone-v{version}-osx-arm64.zip",
+          "darwin": "rclone-v{version}-osx-arm64.zip",
           "windows": "rclone-v{version}-windows-arm64.zip"
         }
       }
@@ -1089,12 +1089,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "meilisearch-linux-amd64",
-          "macos": "meilisearch-macos-amd64",
+          "darwin": "meilisearch-macos-amd64",
           "windows": "meilisearch-windows-amd64.exe"
         },
         "arm64": {
           "linux": "meilisearch-linux-aarch64",
-          "macos": "meilisearch-macos-aarch64",
+          "darwin": "meilisearch-macos-aarch64",
           "windows": "meilisearch-windows-aarch64.exe"
         }
       }
@@ -1107,12 +1107,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "semtools-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": "semtools-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "semtools-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "semtools-aarch64-apple-darwin.tar.gz",
+          "darwin": "semtools-aarch64-apple-darwin.tar.gz",
           "windows": "semtools-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1125,12 +1125,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "app-x86_64-unknown-linux-gnu.zip",
-          "macos": "app-x86_64-apple-darwin.zip",
+          "darwin": "app-x86_64-apple-darwin.zip",
           "windows": "app-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "app-aarch64-unknown-linux-gnu.zip",
-          "macos": "app-aarch64-apple-darwin.zip",
+          "darwin": "app-aarch64-apple-darwin.zip",
           "windows": "app-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1143,12 +1143,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "ripgrep-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "ripgrep-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "ripgrep-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "ripgrep-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "ripgrep-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "ripgrep-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "ripgrep-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "ripgrep-{version}-x86_64-pc-windows-msvc.zip"
         }
       }
@@ -1161,12 +1161,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "ripgrep_all-v{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "ripgrep_all-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "ripgrep_all-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "ripgrep_all-v{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1179,12 +1179,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @llamaindex/semtools",
-          "macos": "bun install -g @llamaindex/semtools",
+          "darwin": "bun install -g @llamaindex/semtools",
           "windows": "bun install -g @llamaindex/semtools"
         },
         "arm64": {
           "linux": "bun install -g @llamaindex/semtools",
-          "macos": "bun install -g @llamaindex/semtools",
+          "darwin": "bun install -g @llamaindex/semtools",
           "windows": "bun install -g @llamaindex/semtools"
         }
       }
@@ -1197,12 +1197,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "starship-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "starship-x86_64-apple-darwin.tar.gz",
+          "darwin": "starship-x86_64-apple-darwin.tar.gz",
           "windows": "starship-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "starship-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "starship-aarch64-apple-darwin.tar.gz",
+          "darwin": "starship-aarch64-apple-darwin.tar.gz",
           "windows": "starship-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1215,12 +1215,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "tere-{version}-x86_64-unknown-linux-gnu.zip",
-          "macos": "tere-{version}-x86_64-apple-darwin.zip",
+          "darwin": "tere-{version}-x86_64-apple-darwin.zip",
           "windows": "tere-{version}-x86_64-pc-windows-gnu.zip"
         },
         "arm64": {
           "linux": "tere-{version}-aarch64-unknown-linux-gnu.zip",
-          "macos": "tere-{version}-aarch64-apple-darwin.zip",
+          "darwin": "tere-{version}-aarch64-apple-darwin.zip",
           "windows": "tere-{version}-aarch64-pc-windows-gnu.zip"
         }
       }
@@ -1233,12 +1233,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "topgrade-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "topgrade-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "topgrade-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "topgrade-v{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "topgrade-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "topgrade-v{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "topgrade-v{version}-aarch64-apple-darwin.tar.gz",
           "windows": "topgrade-v{version}-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1251,12 +1251,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "ttyd.x86_64",
-          "macos": null,
+          "darwin": null,
           "windows": "ttyd.win32.exe"
         },
         "arm64": {
           "linux": "ttyd.aarch64",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1269,12 +1269,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "uptermd_linux_amd64.tar.gz",
-          "macos": "upterm_darwin_amd64.tar.gz",
+          "darwin": "upterm_darwin_amd64.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "uptermd_linux_arm64.tar.gz",
-          "macos": "upterm_darwin_arm64.tar.gz",
+          "darwin": "upterm_darwin_arm64.tar.gz",
           "windows": null
         }
       }
@@ -1287,12 +1287,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "viu-x86_64-unknown-linux-musl",
-          "macos": "viu-x86_64-apple-darwin",
+          "darwin": "viu-x86_64-apple-darwin",
           "windows": "viu-x86_64-pc-windows-msvc.exe"
         },
         "arm64": {
           "linux": "viu-aarch64-unknown-linux-musl",
-          "macos": "viu-x86_64-apple-darwin",
+          "darwin": "viu-x86_64-apple-darwin",
           "windows": "viu-x86_64-pc-windows-msvc.exe"
         }
       }
@@ -1306,12 +1306,12 @@
         "amd64": {
           "linux": "sudo apt install timg",
           "windows": null,
-          "macos": "brew install timg"
+          "darwin": "brew install timg"
         },
         "arm64": {
           "linux": "sudo apt install timg",
           "windows": null,
-          "macos": "brew install timg"
+          "darwin": "brew install timg"
         }
       }
     },
@@ -1324,12 +1324,12 @@
         "amd64": {
           "linux": "sudo nala install chafa -y",
           "windows": "winget install --no-upgrade --name \"Chafa\" --Id \"hpjansson.Chafa\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install chafa"
+          "darwin": "brew install chafa"
         },
         "arm64": {
           "linux": "sudo nala install chafa -y",
           "windows": "winget install --no-upgrade --name \"Chafa\" --Id \"hpjansson.Chafa\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install chafa"
+          "darwin": "brew install chafa"
         }
       }
     },
@@ -1342,12 +1342,12 @@
         "amd64": {
           "windows": "poppler.py",
           "linux": "sudo nala install poppler-utils -y",
-          "macos": "brew install --upgrade poppler"
+          "darwin": "brew install --upgrade poppler"
         },
         "arm64": {
           "windows": "poppler.py",
           "linux": "sudo nala install poppler-utils -y",
-          "macos": "brew install --upgrade poppler"
+          "darwin": "brew install --upgrade poppler"
         }
       }
     },
@@ -1360,12 +1360,12 @@
         "amd64": {
           "windows": "resvg-win64.zip",
           "linux": "resvg-linux-x86_64.tar.gz",
-          "macos": "resvg-macos-x86_64.zip"
+          "darwin": "resvg-macos-x86_64.zip"
         },
         "arm64": {
           "windows": "resvg-win64.zip",
           "linux": "resvg-linux-aarch64.tar.gz",
-          "macos": "resvg-macos-aarch64.zip"
+          "darwin": "resvg-macos-aarch64.zip"
         }
       }
     },
@@ -1377,12 +1377,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "watchexec-{version}-x86_64-unknown-linux-gnu.tar.xz",
-          "macos": "watchexec-{version}-x86_64-apple-darwin.tar.xz",
+          "darwin": "watchexec-{version}-x86_64-apple-darwin.tar.xz",
           "windows": "watchexec-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "watchexec-{version}-aarch64-unknown-linux-gnu.tar.xz",
-          "macos": "watchexec-{version}-aarch64-apple-darwin.tar.xz",
+          "darwin": "watchexec-{version}-aarch64-apple-darwin.tar.xz",
           "windows": "watchexec-{version}-x86_64-pc-windows-msvc.zip"
         }
       }
@@ -1395,12 +1395,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "yazi.py",
-          "macos": "yazi.py",
+          "darwin": "yazi.py",
           "windows": "yazi.py"
         },
         "arm64": {
           "linux": "yazi.py",
-          "macos": "yazi.py",
+          "darwin": "yazi.py",
           "windows": "yazi.py"
         }
       }
@@ -1413,12 +1413,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "zoxide-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "zoxide-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "zoxide-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "zoxide-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "zoxide-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "zoxide-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "zoxide-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "zoxide-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1431,12 +1431,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "ytui_music-linux-amd64",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1449,12 +1449,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "youtube-tui-full_arch-x86_64",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1467,12 +1467,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "https://yt-dl.org/downloads/latest/youtube-dl",
-          "macos": "https://yt-dl.org/downloads/latest/youtube-dl",
+          "darwin": "https://yt-dl.org/downloads/latest/youtube-dl",
           "windows": "https://yt-dl.org/latest/youtube-dl.exe"
         },
         "arm64": {
           "linux": "https://yt-dl.org/downloads/latest/youtube-dl",
-          "macos": "https://yt-dl.org/downloads/latest/youtube-dl",
+          "darwin": "https://yt-dl.org/downloads/latest/youtube-dl",
           "windows": "https://yt-dl.org/latest/youtube-dl.exe"
         }
       }
@@ -1485,12 +1485,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp",
-          "macos": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos",
+          "darwin": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos",
           "windows": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
         },
         "arm64": {
           "linux": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_musllinux_aarch64",
-          "macos": null,
+          "darwin": null,
           "windows": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_arm64.exe"
         }
       }
@@ -1503,12 +1503,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "termusic-v{version}-x86_64-linux.tar.xz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1521,12 +1521,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "Kronos",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1539,12 +1539,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "transmission-{version}.tar.xz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1557,12 +1557,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "nnn-static-{version}.x86_64.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1575,12 +1575,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "eza_x86_64-unknown-linux-musl.zip",
-          "macos": null,
+          "darwin": null,
           "windows": "eza.exe_x86_64-pc-windows-gnu.zip"
         },
         "arm64": {
           "linux": "eza_aarch64-unknown-linux-gnu.zip",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1593,12 +1593,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "bytehound-x86_64-unknown-linux-gnu.tgz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1611,12 +1611,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -sSL https://github.com/Slackadays/Clipboard/raw/main/install.sh | sh",
-          "macos": "curl -sSL https://github.com/Slackadays/Clipboard/raw/main/install.sh | sh",
+          "darwin": "curl -sSL https://github.com/Slackadays/Clipboard/raw/main/install.sh | sh",
           "windows": "winget install -e --id Slackadays.Clipboard --source winget --scope user --accept-package-agreements --accept-source-agreements"
         },
         "arm64": {
           "linux": "curl -sSL https://github.com/Slackadays/Clipboard/raw/main/install.sh | sh",
-          "macos": "curl -sSL https://github.com/Slackadays/Clipboard/raw/main/install.sh | sh",
+          "darwin": "curl -sSL https://github.com/Slackadays/Clipboard/raw/main/install.sh | sh",
           "windows": "winget install -e --id Slackadays.Clipboard --source winget --scope user --accept-package-agreements --accept-source-agreements"
         }
       }
@@ -1629,12 +1629,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "atuin-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": "atuin-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "atuin-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "atuin-aarch64-apple-darwin.tar.gz",
+          "darwin": "atuin-aarch64-apple-darwin.tar.gz",
           "windows": "atuin-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1647,12 +1647,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "browsh-v{version}-linux-amd64",
-          "macos": "browsh-v{version}-darwin-amd64",
+          "darwin": "browsh-v{version}-darwin-amd64",
           "windows": null
         },
         "arm64": {
           "linux": "browsh-v{version}-linux-arm64",
-          "macos": "browsh-v{version}-darwin-arm64",
+          "darwin": "browsh-v{version}-darwin-arm64",
           "windows": null
         }
       }
@@ -1665,12 +1665,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "carbonyl.linux-amd64.zip",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": "carbonyl.linux-arm64.zip",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1683,12 +1683,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "patat-v{version}-linux-x86_64.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1701,12 +1701,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install redis-tools -y",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1719,12 +1719,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install sqlite3 -y",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1737,12 +1737,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install postgresql-client -y",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1755,12 +1755,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "DB.Browser.for.SQLite-v{version}-x86.64-v2.AppImage",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1773,12 +1773,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "dbeaver-ce-{version}-linux.gtk.x86_64.tar.gz",
-          "macos": "dbeaver-ce-{version}-macos-x86_64.dmg",
+          "darwin": "dbeaver-ce-{version}-macos-x86_64.dmg",
           "windows": "winget install DBeaver.DBeaver.Community --source winget --scope user --accept-package-agreements --accept-source-agreements"
         },
         "arm64": {
           "linux": "dbeaver-ce-{version}-linux.gtk.aarch64.tar.gz",
-          "macos": "dbeaver-ce-{version}-macos-aarch64.dmg",
+          "darwin": "dbeaver-ce-{version}-macos-aarch64.dmg",
           "windows": "winget install DBeaver.DBeaver.Community --source winget --scope user --accept-package-agreements --accept-source-agreements"
         }
       }
@@ -1791,12 +1791,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "pgweb-linux-amd64.zip",
-          "macos": "pgweb_darwin_amd64.zip",
+          "darwin": "pgweb_darwin_amd64.zip",
           "windows": "pgweb_windows_amd64.zip"
         },
         "arm64": {
           "linux": "pgweb-linux-arm64.zip",
-          "macos": "pgweb_darwin_arm64.zip",
+          "darwin": "pgweb_darwin_arm64.zip",
           "windows": "pgweb_windows_arm64.zip"
         }
       }
@@ -1809,12 +1809,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "dbgate-{version}-linux_x64.tar.gz",
-          "macos": "dbgate-{version}-mac_x64.zip",
+          "darwin": "dbgate-{version}-mac_x64.zip",
           "windows": "dbgate-windows-latest.zip"
         },
         "arm64": {
           "linux": "dbgate-{version}-linux_arm64.tar.gz",
-          "macos": "dbgate-{version}-mac_arm64.zip",
+          "darwin": "dbgate-{version}-mac_arm64.zip",
           "windows": "dbgate-windows-latest-arm64.exe"
         }
       }
@@ -1827,12 +1827,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "rainfrog-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": "rainfrog-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1845,12 +1845,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "lazysql_Linux_x86_64.tar.gz",
-          "macos": "lazysql_Darwin_x86_64.tar.gz",
+          "darwin": "lazysql_Darwin_x86_64.tar.gz",
           "windows": "lazysql_Windows_x86_64.zip"
         },
         "arm64": {
           "linux": "lazysql_Linux_arm64.tar.gz",
-          "macos": "lazysql_Darwin_arm64.tar.gz",
+          "darwin": "lazysql_Darwin_arm64.tar.gz",
           "windows": "lazysql_Windows_arm64.zip"
         }
       }
@@ -1863,12 +1863,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "dblab_{version}_linux_amd64.tar.gz",
-          "macos": "dblab_{version}_darwin_amd64.tar.gz",
+          "darwin": "dblab_{version}_darwin_amd64.tar.gz",
           "windows": "dblab_{version}_windows_amd64.tar.gz"
         },
         "arm64": {
           "linux": "dblab_{version}_linux_arm64.tar.gz",
-          "macos": "dblab_{version}_darwin_arm64.tar.gz",
+          "darwin": "dblab_{version}_darwin_arm64.tar.gz",
           "windows": null
         }
       }
@@ -1881,12 +1881,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "usql-{version}-linux-amd64.tar.bz2",
-          "macos": "usql-{version}-darwin-amd64.tar.bz2",
+          "darwin": "usql-{version}-darwin-amd64.tar.bz2",
           "windows": "usql-{version}-windows-amd64.zip"
         },
         "arm64": {
           "linux": "usql-{version}-linux-arm64.tar.bz2",
-          "macos": "usql-{version}-darwin-arm64.tar.bz2",
+          "darwin": "usql-{version}-darwin-arm64.tar.bz2",
           "windows": null
         }
       }
@@ -1899,12 +1899,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install harlequin",
-          "macos": "uv tool install harlequin",
+          "darwin": "uv tool install harlequin",
           "windows": "uv tool install harlequin"
         },
         "arm64": {
           "linux": "uv tool install harlequin",
-          "macos": "uv tool install harlequin",
+          "darwin": "uv tool install harlequin",
           "windows": "uv tool install harlequin"
         }
       }
@@ -1917,12 +1917,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install sqlit-tui",
-          "macos": "uv tool install sqlit-tui",
+          "darwin": "uv tool install sqlit-tui",
           "windows": "uv tool install sqlit-tui"
         },
         "arm64": {
           "linux": "uv tool install sqlit-tui",
-          "macos": "uv tool install sqlit-tui",
+          "darwin": "uv tool install sqlit-tui",
           "windows": "uv tool install sqlit-tui"
         }
       }
@@ -1935,12 +1935,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "duckdb_cli-linux-amd64.zip",
-          "macos": "duckdb_cli-osx-universal.zip",
+          "darwin": "duckdb_cli-osx-universal.zip",
           "windows": "duckdb_cli-windows-amd64.zip"
         },
         "arm64": {
           "linux": "duckdb_cli-linux-arm64.zip",
-          "macos": "duckdb_cli-osx-universal.zip",
+          "darwin": "duckdb_cli-osx-universal.zip",
           "windows": "duckdb_cli-windows-arm64.zip"
         }
       }
@@ -1953,12 +1953,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "gonzo-{version}-linux-amd64.tar.gz",
-          "macos": "gonzo-{version}-darwin-amd64.tar.gz",
+          "darwin": "gonzo-{version}-darwin-amd64.tar.gz",
           "windows": "gonzo-{version}-windows-amd64.zip"
         },
         "arm64": {
           "linux": "gonzo-{version}-linux-arm64.tar.gz",
-          "macos": "gonzo-{version}-darwin-arm64.tar.gz",
+          "darwin": "gonzo-{version}-darwin-arm64.tar.gz",
           "windows": "gonzo-{version}-windows-arm64.zip"
         }
       }
@@ -1972,12 +1972,12 @@
         "amd64": {
           "linux": "x86_64-unknown-linux-gnu-cpz",
           "windows": "x86_64-pc-windows-msvc-cpz.exe",
-          "macos": "x86_64-apple-darwin-cpz"
+          "darwin": "x86_64-apple-darwin-cpz"
         },
         "arm64": {
           "linux": "aarch64-unknown-linux-gnu-cpz",
           "windows": "aarch64-pc-windows-msvc-cpz.exe",
-          "macos": "aarch64-apple-darwin-cpz"
+          "darwin": "aarch64-apple-darwin-cpz"
         }
       }
     },
@@ -1990,12 +1990,12 @@
         "amd64": {
           "linux": "x86_64-unknown-linux-gnu-rmz",
           "windows": "x86_64-pc-windows-msvc-rmz.exe",
-          "macos": "x86_64-apple-darwin-rmz"
+          "darwin": "x86_64-apple-darwin-rmz"
         },
         "arm64": {
           "linux": "aarch64-unknown-linux-gnu-rmz",
           "windows": "aarch64-pc-windows-msvc-rmz.exe",
-          "macos": "aarch64-apple-darwin-rmz"
+          "darwin": "aarch64-apple-darwin-rmz"
         }
       }
     },
@@ -2008,12 +2008,12 @@
         "amd64": {
           "linux": "bun install -g @mermaid-js/mermaid-cli",
           "windows": "bun install -g @mermaid-js/mermaid-cli",
-          "macos": "bun install -g @mermaid-js/mermaid-cli"
+          "darwin": "bun install -g @mermaid-js/mermaid-cli"
         },
         "arm64": {
           "linux": "bun install -g @mermaid-js/mermaid-cli",
           "windows": "bun install -g @mermaid-js/mermaid-cli",
-          "macos": "bun install -g @mermaid-js/mermaid-cli"
+          "darwin": "bun install -g @mermaid-js/mermaid-cli"
         }
       }
     },
@@ -2026,12 +2026,12 @@
         "amd64": {
           "linux": "html-to-markdown_Linux_x86_64.tar.gz",
           "windows": "html-to-markdown_Windows_x86_64.zip",
-          "macos": "html-to-markdown_Darwin_x86_64.tar.gz"
+          "darwin": "html-to-markdown_Darwin_x86_64.tar.gz"
         },
         "arm64": {
           "linux": "html-to-markdown_Linux_arm64.tar.gz",
           "windows": "html-to-markdown_Windows_arm64.zip",
-          "macos": "html-to-markdown_Darwin_arm64.tar.gz"
+          "darwin": "html-to-markdown_Darwin_arm64.tar.gz"
         }
       }
     },
@@ -2044,12 +2044,12 @@
         "amd64": {
           "linux": "xcrawl3r_{version}_linux_amd64.tar.gz",
           "windows": "xcrawl3r_{version}_windows_amd64.zip",
-          "macos": "xcrawl3r_{version}_darwin_amd64.tar.gz"
+          "darwin": "xcrawl3r_{version}_darwin_amd64.tar.gz"
         },
         "arm64": {
           "linux": "xcrawl3r_{version}_linux_arm64.tar.gz",
           "windows": null,
-          "macos": "xcrawl3r_{version}_darwin_arm64.tar.gz"
+          "darwin": "xcrawl3r_{version}_darwin_arm64.tar.gz"
         }
       }
     },
@@ -2062,12 +2062,12 @@
         "amd64": {
           "linux": "Obsidian-{version}.AppImage",
           "windows": "Obsidian-{version}.exe",
-          "macos": "Obsidian-{version}.dmg"
+          "darwin": "Obsidian-{version}.dmg"
         },
         "arm64": {
           "linux": "Obsidian-{version}-arm64.AppImage",
           "windows": null,
-          "macos": "Obsidian-{version}.dmg"
+          "darwin": "Obsidian-{version}.dmg"
         }
       }
     },
@@ -2080,12 +2080,12 @@
         "amd64": {
           "linux": "bun install -g @marp-team/marp-cli",
           "windows": "bun install -g @marp-team/marp-cli",
-          "macos": "bun install -g @marp-team/marp-cli"
+          "darwin": "bun install -g @marp-team/marp-cli"
         },
         "arm64": {
           "linux": "bun install -g @marp-team/marp-cli",
           "windows": "bun install -g @marp-team/marp-cli",
-          "macos": "bun install -g @marp-team/marp-cli"
+          "darwin": "bun install -g @marp-team/marp-cli"
         }
       }
     },
@@ -2098,12 +2098,12 @@
         "amd64": {
           "linux": "presenterm-{version}-x86_64-unknown-linux-gnu.tar.gz",
           "windows": "presenterm-{version}-x86_64-pc-windows-msvc.zip",
-          "macos": "presenterm-{version}-x86_64-apple-darwin.tar.gz"
+          "darwin": "presenterm-{version}-x86_64-apple-darwin.tar.gz"
         },
         "arm64": {
           "linux": "presenterm-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "windows": null,
-          "macos": "presenterm-{version}-aarch64-apple-darwin.tar.gz"
+          "darwin": "presenterm-{version}-aarch64-apple-darwin.tar.gz"
         }
       }
     },
@@ -2116,12 +2116,12 @@
         "amd64": {
           "linux": "pandoc-{version}-linux-amd64.tar.gz",
           "windows": "pandoc-{version}-windows-x86_64.zip",
-          "macos": "pandoc-{version}-x86_64-macOS.pkg"
+          "darwin": "pandoc-{version}-x86_64-macOS.pkg"
         },
         "arm64": {
           "linux": "pandoc-{version}-linux-arm64.tar.gz",
           "windows": null,
-          "macos": "pandoc-{version}-arm64-macOS.pkg"
+          "darwin": "pandoc-{version}-arm64-macOS.pkg"
         }
       }
     },
@@ -2134,12 +2134,12 @@
         "amd64": {
           "linux": "bun install -g @devcontainers/cli",
           "windows": "bun install -g @devcontainers/cli",
-          "macos": "bun install -g @devcontainers/cli"
+          "darwin": "bun install -g @devcontainers/cli"
         },
         "arm64": {
           "linux": "bun install -g @devcontainers/cli",
           "windows": "bun install -g @devcontainers/cli",
-          "macos": "bun install -g @devcontainers/cli"
+          "darwin": "bun install -g @devcontainers/cli"
         }
       }
     },
@@ -2152,12 +2152,12 @@
         "amd64": {
           "linux": "bun install -g @bitwarden/cli",
           "windows": "bun install -g @bitwarden/cli",
-          "macos": "bun install -g @bitwarden/cli"
+          "darwin": "bun install -g @bitwarden/cli"
         },
         "arm64": {
           "linux": "bun install -g @bitwarden/cli",
           "windows": "bun install -g @bitwarden/cli",
-          "macos": "bun install -g @bitwarden/cli"
+          "darwin": "bun install -g @bitwarden/cli"
         }
       }
     },
@@ -2170,12 +2170,12 @@
         "amd64": {
           "linux": "obs-backgroundremoval-{version}-x86_64-linux-gnu.deb",
           "windows": "obs-backgroundremoval-{version}-windows-x64-Installer.exe",
-          "macos": "obs-backgroundremoval-{version}-macos-universal.pkg"
+          "darwin": "obs-backgroundremoval-{version}-macos-universal.pkg"
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": "obs-backgroundremoval-{version}-macos-universal.pkg"
+          "darwin": "obs-backgroundremoval-{version}-macos-universal.pkg"
         }
       }
     },
@@ -2188,12 +2188,12 @@
         "amd64": {
           "linux": "rustdesk-{version}-x86_64.AppImage",
           "windows": "rustdesk-{version}-x86_64.msi",
-          "macos": "rustdesk-{version}-x86_64.dmg"
+          "darwin": "rustdesk-{version}-x86_64.dmg"
         },
         "arm64": {
           "linux": "rustdesk-{version}-aarch64.AppImage",
           "windows": null,
-          "macos": "rustdesk-{version}-aarch64.dmg"
+          "darwin": "rustdesk-{version}-aarch64.dmg"
         }
       }
     },
@@ -2206,12 +2206,12 @@
         "amd64": {
           "linux": "evcxr-v{version}-x86_64-unknown-linux-gnu.tar.gz",
           "windows": "evcxr-v{version}-x86_64-pc-windows-msvc.zip",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": "evcxr-v{version}-aarch64-apple-darwin.tar.gz"
+          "darwin": "evcxr-v{version}-aarch64-apple-darwin.tar.gz"
         }
       }
     },
@@ -2224,12 +2224,12 @@
         "amd64": {
           "linux": "forward_linux_amd64.tar.gz",
           "windows": "forward_windows_amd64.tar.gz",
-          "macos": "forward_darwin_amd64.tar.gz"
+          "darwin": "forward_darwin_amd64.tar.gz"
         },
         "arm64": {
           "linux": "forward_linux_arm64.tar.gz",
           "windows": "forward_windows_arm64.tar.gz",
-          "macos": "forward_darwin_arm64.tar.gz"
+          "darwin": "forward_darwin_arm64.tar.gz"
         }
       }
     },
@@ -2242,12 +2242,12 @@
         "amd64": {
           "linux": "bandwhich-v{version}-x86_64-unknown-linux-gnu.tar.gz",
           "windows": "bandwhich-v{version}-x86_64-pc-windows-msvc.zip",
-          "macos": "bandwhich-v{version}-x86_64-apple-darwin.tar.gz"
+          "darwin": "bandwhich-v{version}-x86_64-apple-darwin.tar.gz"
         },
         "arm64": {
           "linux": "bandwhich-v{version}-aarch64-unknown-linux-gnu.tar.gz",
           "windows": null,
-          "macos": "bandwhich-v{version}-aarch64-apple-darwin.tar.gz"
+          "darwin": "bandwhich-v{version}-aarch64-apple-darwin.tar.gz"
         }
       }
     },
@@ -2260,12 +2260,12 @@
         "amd64": {
           "linux": "{version}_linux_amd64.tar.gz",
           "windows": "{version}_windows_amd64.zip",
-          "macos": "{version}_darwin_amd64.tar.gz"
+          "darwin": "{version}_darwin_amd64.tar.gz"
         },
         "arm64": {
           "linux": "{version}_linux_arm64.tar.gz",
           "windows": "{version}_windows_arm64.zip",
-          "macos": "{version}_darwin_arm64.tar.gz"
+          "darwin": "{version}_darwin_arm64.tar.gz"
         }
       }
     },
@@ -2278,12 +2278,12 @@
         "amd64": {
           "linux": "dust-v{version}-x86_64-unknown-linux-gnu.tar.gz",
           "windows": "dust-v{version}-x86_64-pc-windows-msvc.zip",
-          "macos": "dust-v{version}-x86_64-apple-darwin.tar.gz"
+          "darwin": "dust-v{version}-x86_64-apple-darwin.tar.gz"
         },
         "arm64": {
           "linux": "dust-v{version}-aarch64-unknown-linux-gnu.tar.gz",
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -2296,12 +2296,12 @@
         "amd64": {
           "linux": "ots_linux_amd64.tgz",
           "windows": "ots_windows_amd64.zip",
-          "macos": "ots_darwin_amd64.zip"
+          "darwin": "ots_darwin_amd64.zip"
         },
         "arm64": {
           "linux": "ots_linux_arm64.tgz",
           "windows": null,
-          "macos": "ots_darwin_arm64.zip"
+          "darwin": "ots_darwin_arm64.zip"
         }
       }
     },
@@ -2314,12 +2314,12 @@
         "amd64": {
           "linux": "ffsend-v{version}-linux-x64",
           "windows": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -2332,12 +2332,12 @@
         "amd64": {
           "linux": "portal_{version}_Linux_x86_64.tar.gz",
           "windows": "portal_{version}_Windows_x86_64.zip",
-          "macos": "portal_{version}_macOS_x86_64.tar.gz"
+          "darwin": "portal_{version}_macOS_x86_64.tar.gz"
         },
         "arm64": {
           "linux": "portal_{version}_Linux_arm64.tar.gz",
           "windows": "portal_{version}_Windows_arm64.zip",
-          "macos": "portal_{version}_macOS_arm64.tar.gz"
+          "darwin": "portal_{version}_macOS_arm64.tar.gz"
         }
       }
     },
@@ -2350,12 +2350,12 @@
         "amd64": {
           "linux": "qrcp_{version}_linux_amd64.tar.gz",
           "windows": "qrcp_{version}_windows_amd64.zip",
-          "macos": "qrcp_{version}_darwin_amd64.tar.gz"
+          "darwin": "qrcp_{version}_darwin_amd64.tar.gz"
         },
         "arm64": {
           "linux": "qrcp_{version}_linux_arm64.tar.gz",
           "windows": "qrcp_{version}_windows_arm64.zip",
-          "macos": "qrcp_{version}_darwin_arm64.tar.gz"
+          "darwin": "qrcp_{version}_darwin_arm64.tar.gz"
         }
       }
     },
@@ -2367,12 +2367,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "qrscan-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "qrscan-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "qrscan-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "qrscan-{version}-i686-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -2385,12 +2385,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "qrterminal_Linux_x86_64.tar.gz",
-          "macos": "qrterminal_Darwin_x86_64.tar.gz",
+          "darwin": "qrterminal_Darwin_x86_64.tar.gz",
           "windows": "qrterminal_Windows_x86_64.zip"
         },
         "arm64": {
           "linux": "qrterminal_Linux_arm64.tar.gz",
-          "macos": "qrterminal_Darwin_arm64.tar.gz",
+          "darwin": "qrterminal_Darwin_arm64.tar.gz",
           "windows": "qrterminal_Windows_arm64.zip"
         }
       }
@@ -2403,12 +2403,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "termscp-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "termscp-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "termscp-{version}-x86_64-apple-darwin.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "termscp-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "termscp-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "termscp-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -2421,12 +2421,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install qrcode",
-          "macos": "uv tool install qrcode",
+          "darwin": "uv tool install qrcode",
           "windows": "uv tool install qrcode"
         },
         "arm64": {
           "linux": "uv tool install qrcode",
-          "macos": "uv tool install qrcode",
+          "darwin": "uv tool install qrcode",
           "windows": "uv tool install qrcode"
         }
       }
@@ -2439,12 +2439,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "linux-amd64-filebrowser.tar.gz",
-          "macos": "darwin-amd64-filebrowser.tar.gz",
+          "darwin": "darwin-amd64-filebrowser.tar.gz",
           "windows": "windows-amd64-filebrowser.zip"
         },
         "arm64": {
           "linux": "linux-arm64-filebrowser.tar.gz",
-          "macos": "darwin-arm64-filebrowser.tar.gz",
+          "darwin": "darwin-arm64-filebrowser.tar.gz",
           "windows": "windows-arm64-filebrowser.zip"
         }
       }
@@ -2457,12 +2457,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "miniserve-{version}-x86_64-unknown-linux-musl",
-          "macos": "miniserve-{version}-x86_64-apple-darwin",
+          "darwin": "miniserve-{version}-x86_64-apple-darwin",
           "windows": "miniserve-{version}-x86_64-pc-windows-msvc.exe"
         },
         "arm64": {
           "linux": "miniserve-{version}-aarch64-unknown-linux-musl",
-          "macos": "miniserve-{version}-aarch64-apple-darwin",
+          "darwin": "miniserve-{version}-aarch64-apple-darwin",
           "windows": "miniserve-{version}-aarch64-pc-windows-msvc.exe"
         }
       }
@@ -2475,12 +2475,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "cloudreve_{version}_linux_amd64.tar.gz",
-          "macos": "cloudreve_{version}_darwin_amd64.tar.gz",
+          "darwin": "cloudreve_{version}_darwin_amd64.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "cloudreve_{version}_linux_arm64.tar.gz",
-          "macos": "cloudreve_{version}_darwin_arm64.tar.gz",
+          "darwin": "cloudreve_{version}_darwin_arm64.tar.gz",
           "windows": null
         }
       }
@@ -2493,12 +2493,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "restic_{version}_linux_amd64.bz2",
-          "macos": "restic_{version}_darwin_amd64.bz2",
+          "darwin": "restic_{version}_darwin_amd64.bz2",
           "windows": "restic_{version}_windows_amd64.zip"
         },
         "arm64": {
           "linux": "restic_{version}_linux_arm64.bz2",
-          "macos": "restic_{version}_darwin_arm64.bz2",
+          "darwin": "restic_{version}_darwin_arm64.bz2",
           "windows": null
         }
       }
@@ -2511,12 +2511,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "syncthing-linux-amd64-v{version}.tar.gz",
-          "macos": "syncthing-osx-amd64-v{version}.tar.gz",
+          "darwin": "syncthing-osx-amd64-v{version}.tar.gz",
           "windows": "syncthing-windows-amd64-v{version}.zip"
         },
         "arm64": {
           "linux": "syncthing-linux-arm64-v{version}.tar.gz",
-          "macos": "syncthing-osx-arm64-v{version}.tar.gz",
+          "darwin": "syncthing-osx-arm64-v{version}.tar.gz",
           "windows": null
         }
       }
@@ -2529,12 +2529,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "istio-{version}-linux-amd64.tar.gz",
-          "macos": "istio-{version}-osx-amd64.tar.gz",
+          "darwin": "istio-{version}-osx-amd64.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "istio-{version}-linux-arm64.tar.gz",
-          "macos": "istio-{version}-osx-arm64.tar.gz",
+          "darwin": "istio-{version}-osx-arm64.tar.gz",
           "windows": null
         }
       }
@@ -2547,12 +2547,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "openpomodoro-cli_{version}_linux_x86_64.tar.gz",
-          "macos": "openpomodoro-cli_{version}_darwin_x86_64.tar.gz",
+          "darwin": "openpomodoro-cli_{version}_darwin_x86_64.tar.gz",
           "windows": "openpomodoro-cli_{version}_windows_x86_64.zip"
         },
         "arm64": {
           "linux": "openpomodoro-cli_{version}_linux_aarch64.tar.gz",
-          "macos": "openpomodoro-cli_{version}_darwin_aarch64.tar.gz",
+          "darwin": "openpomodoro-cli_{version}_darwin_aarch64.tar.gz",
           "windows": null
         }
       }
@@ -2565,12 +2565,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "rust-analyzer-x86_64-unknown-linux-gnu.gz",
-          "macos": "rust-analyzer-x86_64-apple-darwin.gz",
+          "darwin": "rust-analyzer-x86_64-apple-darwin.gz",
           "windows": "rust-analyzer-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "rust-analyzer-aarch64-unknown-linux-gnu.gz",
-          "macos": "rust-analyzer-aarch64-apple-darwin.gz",
+          "darwin": "rust-analyzer-aarch64-apple-darwin.gz",
           "windows": "rust-analyzer-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -2583,12 +2583,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "kondo-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "kondo-x86_64-apple-darwin.tar.gz",
+          "darwin": "kondo-x86_64-apple-darwin.tar.gz",
           "windows": "kondo-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "kondo-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "kondo-aarch64-apple-darwin.tar.gz",
+          "darwin": "kondo-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -2601,12 +2601,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "cargo install tokei",
-          "macos": "brew install tokei",
+          "darwin": "brew install tokei",
           "windows": "winget install XAMPPRocky.tokei --source winget --scope user --accept-package-agreements --accept-source-agreements"
         },
         "arm64": {
           "linux": "cargo install tokei",
-          "macos": "brew install tokei",
+          "darwin": "brew install tokei",
           "windows": "winget install XAMPPRocky.tokei --source winget --scope user --accept-package-agreements --accept-source-agreements"
         }
       }
@@ -2619,12 +2619,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "lazygit_{version}_linux_x86_64.tar.gz",
-          "macos": "lazygit_{version}_darwin_x86_64.tar.gz",
+          "darwin": "lazygit_{version}_darwin_x86_64.tar.gz",
           "windows": "lazygit_{version}_windows_x86_64.zip"
         },
         "arm64": {
           "linux": "lazygit_{version}_linux_arm64.tar.gz",
-          "macos": "lazygit_{version}_darwin_arm64.tar.gz",
+          "darwin": "lazygit_{version}_darwin_arm64.tar.gz",
           "windows": null
         }
       }
@@ -2637,12 +2637,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "docker.sh",
-          "macos": "docker.sh",
+          "darwin": "docker.sh",
           "windows": null
         },
         "arm64": {
           "linux": "docker.sh",
-          "macos": "docker.sh",
+          "darwin": "docker.sh",
           "windows": null
         }
       }
@@ -2655,12 +2655,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "lazydocker_{version}_Linux_x86_64.tar.gz",
-          "macos": "lazydocker_{version}_Darwin_x86_64.tar.gz",
+          "darwin": "lazydocker_{version}_Darwin_x86_64.tar.gz",
           "windows": "lazydocker_{version}_Windows_x86_64.zip"
         },
         "arm64": {
           "linux": "lazydocker_{version}_Linux_arm64.tar.gz",
-          "macos": "lazydocker_{version}_Darwin_arm64.tar.gz",
+          "darwin": "lazydocker_{version}_Darwin_arm64.tar.gz",
           "windows": "lazydocker_{version}_Windows_arm64.zip"
         }
       }
@@ -2673,12 +2673,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "onefetch-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "brew install onefetch",
+          "darwin": "brew install onefetch",
           "windows": "onefetch-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "onefetch-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "brew install onefetch",
+          "darwin": "brew install onefetch",
           "windows": null
         }
       }
@@ -2691,12 +2691,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "gitcs_linux_amd64",
-          "macos": "gitcs_darwin_amd64",
+          "darwin": "gitcs_darwin_amd64",
           "windows": "gitcs_windows_amd64.exe"
         },
         "arm64": {
           "linux": "gitcs_linux_386",
-          "macos": null,
+          "darwin": null,
           "windows": "gitcs_windows_386.exe"
         }
       }
@@ -2709,12 +2709,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "gitcs_linux_amd64",
-          "macos": "gitcs_darwin_amd64",
+          "darwin": "gitcs_darwin_amd64",
           "windows": "gitcs_windows_amd64.exe"
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -2727,12 +2727,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "navi-v{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": "navi-v{version}-x86_64-pc-windows-gnu.zip"
         },
         "arm64": {
           "linux": "navi-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -2745,12 +2745,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "tealdeer-linux-x86_64-musl",
-          "macos": "tealdeer-macos-x86_64",
+          "darwin": "tealdeer-macos-x86_64",
           "windows": "tealdeer-windows-x86_64-msvc.exe"
         },
         "arm64": {
           "linux": "tealdeer-linux-aarch64-musl",
-          "macos": "tealdeer-macos-aarch64",
+          "darwin": "tealdeer-macos-aarch64",
           "windows": null
         }
       }
@@ -2763,12 +2763,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "Sniffnet_LinuxAppImage_amd64.AppImage",
-          "macos": "Sniffnet_macOS_Intel.dmg",
+          "darwin": "Sniffnet_macOS_Intel.dmg",
           "windows": "Sniffnet_Windows_x64.msi"
         },
         "arm64": {
           "linux": "Sniffnet_LinuxAppImage_arm64.AppImage",
-          "macos": "Sniffnet_macOS_AppleSilicon.dmg",
+          "darwin": "Sniffnet_macOS_AppleSilicon.dmg",
           "windows": "Sniffnet_Windows_arm64.msi"
         }
       }
@@ -2781,12 +2781,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "trippy-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "trippy-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "trippy-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "trippy-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "trippy-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "trippy-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "trippy-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "trippy-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -2799,12 +2799,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "oryx-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "",
+          "darwin": "",
           "windows": ""
         },
         "arm64": {
           "linux": "oryx-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "",
+          "darwin": "",
           "windows": ""
         }
       }
@@ -2817,12 +2817,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "tufw_{version}_linux_amd64.tar.gz",
-          "macos": "",
+          "darwin": "",
           "windows": ""
         },
         "arm64": {
           "linux": "tufw_{version}_linux_arm64.tar.gz",
-          "macos": "",
+          "darwin": "",
           "windows": ""
         }
       }
@@ -2835,12 +2835,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "netscanner-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "netscanner-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "netscanner-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "netscanner-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "netscanner-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "netscanner-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "netscanner-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "netscanner-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -2853,12 +2853,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "hyperfine-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "hyperfine-v{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "hyperfine-v{version}-x86_64-apple-darwin.tar.gz",
           "windows": "hyperfine-v{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "hyperfine-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "hyperfine-v{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "hyperfine-v{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -2871,12 +2871,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -fsSL https://ollama.com/install.sh | sh",
-          "macos": "devops install https://ollama.com/download/Ollama.dmg",
+          "darwin": "devops install https://ollama.com/download/Ollama.dmg",
           "windows": "devops install https://ollama.com/download/OllamaSetup.exe"
         },
         "arm64": {
           "linux": "curl -fsSL https://ollama.com/install.sh | sh",
-          "macos": "devops install https://ollama.com/download/Ollama.dmg",
+          "darwin": "devops install https://ollama.com/download/Ollama.dmg",
           "windows": "devops install https://ollama.com/download/OllamaSetup.exe"
         }
       }
@@ -2889,12 +2889,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "cointop_{version}_linux_amd64.tar.gz",
-          "macos": "cointop_{version}_darwin_amd64.tar.gz",
+          "darwin": "cointop_{version}_darwin_amd64.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -2907,12 +2907,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "vtm_linux_x86_64.tar.7z",
-          "macos": "vtm_macos_any.tar.7z",
+          "darwin": "vtm_macos_any.tar.7z",
           "windows": "vtm_windows_x86_64.7z"
         },
         "arm64": {
           "linux": "vtm_linux_arm64.tar.7z",
-          "macos": "vtm_macos_any.tar.7z",
+          "darwin": "vtm_macos_any.tar.7z",
           "windows": "vtm_windows_arm64.7z"
         }
       }
@@ -2925,12 +2925,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "eDEX-UI-Linux-x86_64.AppImage",
-          "macos": "eDEX-UI-macOS-x64.dmg",
+          "darwin": "eDEX-UI-macOS-x64.dmg",
           "windows": "eDEX-UI-Windows-x64.exe"
         },
         "arm64": {
           "linux": "eDEX-UI-Linux-arm64.AppImage",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -2943,12 +2943,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "ExtratermQt-{version}.glibc2.34-x86_64.AppImage",
-          "macos": "ExtratermQt_{version}.dmg",
+          "darwin": "ExtratermQt_{version}.dmg",
           "windows": "extratermqt-setup-{version}.exe"
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -2961,12 +2961,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "nu-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "nu-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "nu-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "nu-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -2979,12 +2979,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "powershell-{version}-linux-x64.tar.gz",
-          "macos": "powershell-{version}-osx-x64.tar.gz",
+          "darwin": "powershell-{version}-osx-x64.tar.gz",
           "windows": "winget install --no-upgrade --name \"Powershell\"                   --Id \"Microsoft.PowerShell\"       --source winget --scope user --accept-package-agreements --accept-source-agreements"
         },
         "arm64": {
           "linux": "powershell-{version}-linux-arm64.tar.gz",
-          "macos": "powershell-{version}-osx-arm64.tar.gz",
+          "darwin": "powershell-{version}-osx-arm64.tar.gz",
           "windows": "winget install --no-upgrade --name \"Powershell\"                   --Id \"Microsoft.PowerShell\"       --source winget --scope user --accept-package-agreements --accept-source-agreements"
         }
       }
@@ -2997,12 +2997,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "geckodriver-v{version}-linux64.tar.gz",
-          "macos": "geckodriver-v{version}-macos.tar.gz",
+          "darwin": "geckodriver-v{version}-macos.tar.gz",
           "windows": "geckodriver-v{version}-win64.zip"
         },
         "arm64": {
           "linux": "geckodriver-v{version}-linux-aarch64.tar.gz",
-          "macos": "geckodriver-v{version}-macos-aarch64.tar.gz",
+          "darwin": "geckodriver-v{version}-macos-aarch64.tar.gz",
           "windows": "geckodriver-v{version}-win-aarch64.zip"
         }
       }
@@ -3016,12 +3016,12 @@
         "amd64": {
           "linux": "ngrok.sh",
           "windows": "winget install ngrok --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install ngrok"
+          "darwin": "brew install ngrok"
         },
         "arm64": {
           "linux": "ngrok.sh",
           "windows": "winget install ngrok --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install ngrok"
+          "darwin": "brew install ngrok"
         }
       }
     },
@@ -3034,12 +3034,12 @@
         "amd64": {
           "linux": "code.py",
           "windows": "code.py",
-          "macos": "code.py"
+          "darwin": "code.py"
         },
         "arm64": {
           "linux": "code.py",
           "windows": "code.py",
-          "macos": "code.py"
+          "darwin": "code.py"
         }
       }
     },
@@ -3052,12 +3052,12 @@
         "amd64": {
           "linux": "uv tool install --force --python python3.13 aider-chat@latest",
           "windows": "uv tool install --force --python python3.13 aider-chat@latest",
-          "macos": "uv tool install --force --python python3.13 aider-chat@latest"
+          "darwin": "uv tool install --force --python python3.13 aider-chat@latest"
         },
         "arm64": {
           "linux": "uv tool install --force --python python3.13 aider-chat@latest",
           "windows": "uv tool install --force --python python3.13 aider-chat@latest",
-          "macos": "uv tool install --force --python python3.13 aider-chat@latest"
+          "darwin": "uv tool install --force --python python3.13 aider-chat@latest"
         }
       }
     },
@@ -3069,12 +3069,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "mods_{version}_Linux_x86_64.tar.gz",
-          "macos": "mods_{version}_Darwin_x86_64.tar.gz",
+          "darwin": "mods_{version}_Darwin_x86_64.tar.gz",
           "windows": "mods_{version}_Windows_x86_64.zip"
         },
         "arm64": {
           "linux": "mods_{version}_Linux_arm64.tar.gz",
-          "macos": "mods_{version}_Darwin_arm64.tar.gz",
+          "darwin": "mods_{version}_Darwin_arm64.tar.gz",
           "windows": "mods_{version}_Windows_arm64.zip"
         }
       }
@@ -3087,12 +3087,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "aichat-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "macos": "aichat-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "aichat-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "aichat-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "aichat-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "macos": "aichat-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "aichat-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "aichat-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -3106,12 +3106,12 @@
         "amd64": {
           "linux": "bun install -g @qwen-code/qwen-code@latest",
           "windows": "bun install -g @qwen-code/qwen-code@latest",
-          "macos": "bun install -g @qwen-code/qwen-code@latest"
+          "darwin": "bun install -g @qwen-code/qwen-code@latest"
         },
         "arm64": {
           "linux": "bun install -g @qwen-code/qwen-code@latest",
           "windows": "bun install -g @qwen-code/qwen-code@latest",
-          "macos": "bun install -g @qwen-code/qwen-code@latest"
+          "darwin": "bun install -g @qwen-code/qwen-code@latest"
         }
       }
     },
@@ -3124,12 +3124,12 @@
         "amd64": {
           "linux": "bun install -g cline",
           "windows": "bun install -g cline",
-          "macos": "bun install -g cline"
+          "darwin": "bun install -g cline"
         },
         "arm64": {
           "linux": "bun install -g cline",
           "windows": "bun install -g cline",
-          "macos": "bun install -g cline"
+          "darwin": "bun install -g cline"
         }
       }
     },
@@ -3142,12 +3142,12 @@
         "amd64": {
           "linux": "bun install -g @kilocode/cli",
           "windows": "bun install -g @kilocode/cli",
-          "macos": "bun install -g @kilocode/cli"
+          "darwin": "bun install -g @kilocode/cli"
         },
         "arm64": {
           "linux": "bun install -g @kilocode/cli",
           "windows": "bun install -g @kilocode/cli",
-          "macos": "bun install -g @kilocode/cli"
+          "darwin": "bun install -g @kilocode/cli"
         }
       }
     },
@@ -3160,12 +3160,12 @@
         "amd64": {
           "linux": "bun install -g @github/copilot",
           "windows": "bun install -g @github/copilot",
-          "macos": "bun install -g @github/copilot"
+          "darwin": "bun install -g @github/copilot"
         },
         "arm64": {
           "linux": "bun install -g @github/copilot",
           "windows": "bun install -g @github/copilot",
-          "macos": "bun install -g @github/copilot"
+          "darwin": "bun install -g @github/copilot"
         }
       }
     },
@@ -3178,12 +3178,12 @@
         "amd64": {
           "linux": "bun install -g agent-browser;  bun install -g playwright install-deps chromium",
           "windows": "bun install -g agent-browser",
-          "macos": "bun install -g agent-browser"
+          "darwin": "bun install -g agent-browser"
         },
         "arm64": {
           "linux": "bun install -g agent-browser",
           "windows": "bun install -g agent-browser",
-          "macos": "bun install -g agent-browser"
+          "darwin": "bun install -g agent-browser"
         }
       }
     },
@@ -3195,12 +3195,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "agent-deck_{version}_linux_amd64.tar.gz",
-          "macos": "agent-deck_{version}_darwin_amd64.tar.gz",
+          "darwin": "agent-deck_{version}_darwin_amd64.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "agent-deck_{version}_linux_arm64.tar.gz",
-          "macos": "agent-deck_{version}_darwin_arm64.tar.gz",
+          "darwin": "agent-deck_{version}_darwin_arm64.tar.gz",
           "windows": null
         }
       }
@@ -3213,12 +3213,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "agent-hand-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "agent-hand-x86_64-apple-darwin.tar.gz",
+          "darwin": "agent-hand-x86_64-apple-darwin.tar.gz",
           "windows": "agent-hand-x86_64-pc-windows-msvc.tar.gz"
         },
         "arm64": {
           "linux": null,
-          "macos": "agent-hand-aarch64-apple-darwin.tar.gz",
+          "darwin": "agent-hand-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -3231,12 +3231,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "aoe-linux-amd64.tar.gz",
-          "macos": "aoe-darwin-amd64.tar.gz",
+          "darwin": "aoe-darwin-amd64.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "aoe-linux-arm64.tar.gz",
-          "macos": "aoe-darwin-arm64.tar.gz",
+          "darwin": "aoe-darwin-arm64.tar.gz",
           "windows": null
         }
       }
@@ -3249,12 +3249,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": "cagent-windows-amd64.exe"
         },
         "arm64": {
           "linux": null,
-          "macos": null,
+          "darwin": null,
           "windows": "cagent-windows-arm64.exe"
         }
       }
@@ -3268,12 +3268,12 @@
         "amd64": {
           "linux": "bun install -g openclaw@latest",
           "windows": "bun install -g openclaw@latest",
-          "macos": "bun install -g openclaw@latest"
+          "darwin": "bun install -g openclaw@latest"
         },
         "arm64": {
           "linux": "bun install -g openclaw@latest",
           "windows": "bun install -g openclaw@latest",
-          "macos": "bun install -g openclaw@latest"
+          "darwin": "bun install -g openclaw@latest"
         }
       }
     },
@@ -3286,12 +3286,12 @@
         "amd64": {
           "linux": "bun install -g @google/gemini-cli",
           "windows": "bun install -g @google/gemini-cli",
-          "macos": "bun install -g @google/gemini-cli"
+          "darwin": "bun install -g @google/gemini-cli"
         },
         "arm64": {
           "linux": "bun install -g @google/gemini-cli",
           "windows": "bun install -g @google/gemini-cli",
-          "macos": "bun install -g @google/gemini-cli"
+          "darwin": "bun install -g @google/gemini-cli"
         }
       }
     },
@@ -3304,12 +3304,12 @@
         "amd64": {
           "linux": "bun install -g @charmland/crush",
           "windows": "bun install -g @charmland/crush",
-          "macos": "bun install -g @charmland/crush"
+          "darwin": "bun install -g @charmland/crush"
         },
         "arm64": {
           "linux": "bun install -g @charmland/crush",
           "windows": "bun install -g @charmland/crush",
-          "macos": "bun install -g @charmland/crush"
+          "darwin": "bun install -g @charmland/crush"
         }
       }
     },
@@ -3322,12 +3322,12 @@
         "amd64": {
           "linux": "bun install -g opencode-ai@latest",
           "windows": "bun install -g opencode-ai@latest",
-          "macos": "bun install -g opencode-ai@latest"
+          "darwin": "bun install -g opencode-ai@latest"
         },
         "arm64": {
           "linux": "bun install -g opencode-ai@latest",
           "windows": "bun install -g opencode-ai@latest",
-          "macos": "bun install -g opencode-ai@latest"
+          "darwin": "bun install -g opencode-ai@latest"
         }
       }
     },
@@ -3340,12 +3340,12 @@
         "amd64": {
           "linux": "bun install -g @openai/codex",
           "windows": "bun install -g @openai/codex",
-          "macos": "bun install -g @openai/codex"
+          "darwin": "bun install -g @openai/codex"
         },
         "arm64": {
           "linux": "bun install -g @openai/codex",
           "windows": "bun install -g @openai/codex",
-          "macos": "bun install -g @openai/codex"
+          "darwin": "bun install -g @openai/codex"
         }
       }
     },
@@ -3358,12 +3358,12 @@
         "amd64": {
           "linux": "bun install -g @augmentcode/auggie",
           "windows": "bun install -g @augmentcode/auggie",
-          "macos": "bun install -g @augmentcode/auggie"
+          "darwin": "bun install -g @augmentcode/auggie"
         },
         "arm64": {
           "linux": "bun install -g @augmentcode/auggie",
           "windows": "bun install -g @augmentcode/auggie",
-          "macos": "bun install -g @augmentcode/auggie"
+          "darwin": "bun install -g @augmentcode/auggie"
         }
       }
     },
@@ -3376,12 +3376,12 @@
         "amd64": {
           "linux": "https://app.warp.dev/get_warp?package=deb",
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install --cask warp"
+          "darwin": "brew install --cask warp"
         },
         "arm64": {
           "linux": "https://app.warp.dev/get_warp?package=deb_arm64",
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install --cask warp"
+          "darwin": "brew install --cask warp"
         }
       }
     },
@@ -3394,12 +3394,12 @@
         "amd64": {
           "linux": "https://app.warp.dev/download/cli?os=linux&package=deb&arch=x86_64",
           "windows": null,
-          "macos": " brew tap warpdotdev/warp; brew update; brew install --cask warp-cli"
+          "darwin": " brew tap warpdotdev/warp; brew update; brew install --cask warp-cli"
         },
         "arm64": {
           "linux": "https://app.warp.dev/download/cli?os=linux&package=deb&arch=aarch64",
           "windows": null,
-          "macos": " brew tap warpdotdev/warp; brew update; brew install --cask warp-cli"
+          "darwin": " brew tap warpdotdev/warp; brew update; brew install --cask warp-cli"
         }
       }
     },
@@ -3412,12 +3412,12 @@
         "amd64": {
           "linux": "q.sh",
           "windows": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3430,12 +3430,12 @@
         "amd64": {
           "linux": "curl https://cursor.com/install -fsS | bash",
           "windows": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3448,12 +3448,12 @@
         "amd64": {
           "linux": "curl -fsSL https://app.factory.ai/cli | sh",
           "windows": null,
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3466,12 +3466,12 @@
         "amd64": {
           "linux": "alacritty.py",
           "windows": "alacritty.py",
-          "macos": "alacritty.py"
+          "darwin": "alacritty.py"
         },
         "arm64": {
           "linux": "alacritty.py",
           "windows": "alacritty.py",
-          "macos": "alacritty.py"
+          "darwin": "alacritty.py"
         }
       }
     },
@@ -3484,12 +3484,12 @@
         "amd64": {
           "linux": "brave.py",
           "windows": "brave.py",
-          "macos": "brave.py"
+          "darwin": "brave.py"
         },
         "arm64": {
           "linux": "brave.py",
           "windows": "brave.py",
-          "macos": "brave.py"
+          "darwin": "brave.py"
         }
       }
     },
@@ -3502,12 +3502,12 @@
         "amd64": {
           "linux": "bypass_paywall.py",
           "windows": "bypass_paywall.py",
-          "macos": "bypass_paywall.py"
+          "darwin": "bypass_paywall.py"
         },
         "arm64": {
           "linux": "bypass_paywall.py",
           "windows": "bypass_paywall.py",
-          "macos": "bypass_paywall.py"
+          "darwin": "bypass_paywall.py"
         }
       }
     },
@@ -3520,12 +3520,12 @@
         "amd64": {
           "linux": "cursor.py",
           "windows": "cursor.py",
-          "macos": "cursor.py"
+          "darwin": "cursor.py"
         },
         "arm64": {
           "linux": "cursor.py",
           "windows": "cursor.py",
-          "macos": "cursor.py"
+          "darwin": "cursor.py"
         }
       }
     },
@@ -3538,12 +3538,12 @@
         "amd64": {
           "linux": "espanso.py",
           "windows": "espanso.py",
-          "macos": "espanso.py"
+          "darwin": "espanso.py"
         },
         "arm64": {
           "linux": "espanso.py",
           "windows": "espanso.py",
-          "macos": "espanso.py"
+          "darwin": "espanso.py"
         }
       }
     },
@@ -3556,12 +3556,12 @@
         "amd64": {
           "linux": "goes.py",
           "windows": "goes.py",
-          "macos": "goes.py"
+          "darwin": "goes.py"
         },
         "arm64": {
           "linux": "goes.py",
           "windows": "goes.py",
-          "macos": "goes.py"
+          "darwin": "goes.py"
         }
       }
     },
@@ -3574,12 +3574,12 @@
         "amd64": {
           "linux": "lvim.py",
           "windows": "lvim.py",
-          "macos": "lvim.py"
+          "darwin": "lvim.py"
         },
         "arm64": {
           "linux": "lvim.py",
           "windows": "lvim.py",
-          "macos": "lvim.py"
+          "darwin": "lvim.py"
         }
       }
     },
@@ -3592,12 +3592,12 @@
         "amd64": {
           "linux": "nerdfont.py",
           "windows": "nerdfont.py",
-          "macos": "nerdfont.py"
+          "darwin": "nerdfont.py"
         },
         "arm64": {
           "linux": "nerdfont.py",
           "windows": "nerdfont.py",
-          "macos": "nerdfont.py"
+          "darwin": "nerdfont.py"
         }
       }
     },
@@ -3610,12 +3610,12 @@
         "amd64": {
           "linux": "redis.py",
           "windows": "redis.py",
-          "macos": "redis.py"
+          "darwin": "redis.py"
         },
         "arm64": {
           "linux": "redis.py",
           "windows": "redis.py",
-          "macos": "redis.py"
+          "darwin": "redis.py"
         }
       }
     },
@@ -3628,12 +3628,12 @@
         "amd64": {
           "linux": "wezterm.py",
           "windows": "wezterm.py",
-          "macos": "wezterm.py"
+          "darwin": "wezterm.py"
         },
         "arm64": {
           "linux": "wezterm.py",
           "windows": "wezterm.py",
-          "macos": "wezterm.py"
+          "darwin": "wezterm.py"
         }
       }
     },
@@ -3646,12 +3646,12 @@
         "amd64": {
           "linux": "winget.py",
           "windows": "winget.py",
-          "macos": "winget.py"
+          "darwin": "winget.py"
         },
         "arm64": {
           "linux": "winget.py",
           "windows": "winget.py",
-          "macos": "winget.py"
+          "darwin": "winget.py"
         }
       }
     },
@@ -3664,12 +3664,12 @@
         "amd64": {
           "windows": "gh.py",
           "linux": "gh.py",
-          "macos": "gh.py"
+          "darwin": "gh.py"
         },
         "arm64": {
           "windows": "gh.py",
           "linux": "gh.py",
-          "macos": "gh.py"
+          "darwin": "gh.py"
         }
       }
     },
@@ -3682,12 +3682,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"GNU Nano\" --Id \"GNU.Nano\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"GNU Nano\" --Id \"GNU.Nano\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3700,12 +3700,12 @@
         "amd64": {
           "linux": "hx.py",
           "windows": "hx.py",
-          "macos": "hx.py"
+          "darwin": "hx.py"
         },
         "arm64": {
           "linux": "hx.py",
           "windows": "hx.py",
-          "macos": "hx.py"
+          "darwin": "hx.py"
         }
       }
     },
@@ -3718,12 +3718,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3736,12 +3736,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Oh My Posh\" --Id \"JanDeDobbeleer.OhMyPosh\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Oh My Posh\" --Id \"JanDeDobbeleer.OhMyPosh\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3754,12 +3754,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"VSRedistrib\" --Id \"Microsoft.VC++2015-2022Redist-x64\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"VSRedistrib\" --Id \"Microsoft.VC++2015-2022Redist-x64\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3772,12 +3772,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"VSBuildTools\" --Id \"Microsoft.VisualStudio.2022.BuildTools\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"VSBuildTools\" --Id \"Microsoft.VisualStudio.2022.BuildTools\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3790,12 +3790,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Codeblocks\" --Id \"Codeblocks.Codeblocks\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Codeblocks\" --Id \"Codeblocks.Codeblocks\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3808,12 +3808,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"GnuWin32: Make\" --Id \"GnuWin32.Make\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"GnuWin32: Make\" --Id \"GnuWin32.Make\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3826,12 +3826,12 @@
         "amd64": {
           "linux": "sudo nala install gnupg -y",
           "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install gnupg"
+          "darwin": "brew install gnupg"
         },
         "arm64": {
           "linux": "sudo nala install gnupg -y",
           "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install gnupg"
+          "darwin": "brew install gnupg"
         }
       }
     },
@@ -3844,12 +3844,12 @@
         "amd64": {
           "linux": "sudo nala install graphviz -y",
           "windows": "winget install --no-upgrade --name \"graphviz\" --Id \"Graphviz.Graphviz\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install graphviz"
+          "darwin": "brew install graphviz"
         },
         "arm64": {
           "linux": "sudo nala install graphviz -y",
           "windows": "winget install --no-upgrade --name \"graphviz\" --Id \"Graphviz.Graphviz\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install graphviz"
+          "darwin": "brew install graphviz"
         }
       }
     },
@@ -3862,12 +3862,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"WinFsp\" --Id \"WinFsp.WinFsp\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"WinFsp\" --Id \"WinFsp.WinFsp\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3880,12 +3880,12 @@
         "amd64": {
           "linux": "sudo nala install sshfs -y",
           "windows": "winget install --no-upgrade --name \"SSHFS-win\" --Id \"SSHFS-Win.SSHFS-Win\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install sshfs"
+          "darwin": "brew install sshfs"
         },
         "arm64": {
           "linux": "sudo nala install sshfs -y",
           "windows": "winget install --no-upgrade --name \"SSHFS-win\" --Id \"SSHFS-Win.SSHFS-Win\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install sshfs"
+          "darwin": "brew install sshfs"
         }
       }
     },
@@ -3898,12 +3898,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"xming\" --Id \"xming.xming\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"xming\" --Id \"xming.xming\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3916,12 +3916,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Node.js\" --Id \"OpenJS.NodeJS\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Node.js\" --Id \"OpenJS.NodeJS\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3934,12 +3934,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Rustup\" --Id \"Rustlang.Rustup\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Rustup\" --Id \"Rustlang.Rustup\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3952,12 +3952,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Microsoft Garage Mouse without Borders\" --Id \"Microsoft.MouseWithoutBorders\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Microsoft Garage Mouse without Borders\" --Id \"Microsoft.MouseWithoutBorders\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -3970,12 +3970,12 @@
         "amd64": {
           "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; sudo apt install ./google-chrome-stable_current_amd64.deb; rm google-chrome-stable_current_amd64.deb",
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install --cask google-chrome"
+          "darwin": "brew install --cask google-chrome"
         },
         "arm64": {
           "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; sudo apt install ./google-chrome-stable_current_amd64.deb; rm google-chrome-stable_current_amd64.deb",
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install --cask google-chrome"
+          "darwin": "brew install --cask google-chrome"
         }
       }
     },
@@ -3988,12 +3988,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Chrome Remote Desktop Host\" --Id \"Google.ChromeRemoteDesktop\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Chrome Remote Desktop Host\" --Id \"Google.ChromeRemoteDesktop\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4006,12 +4006,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Zoom Workplace\" --Id \"Zoom.Zoom\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Zoom Workplace\" --Id \"Zoom.Zoom\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4024,12 +4024,12 @@
         "amd64": {
           "linux": "sudo nala install p7zip-full -y",
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install p7zip"
+          "darwin": "brew install p7zip"
         },
         "arm64": {
           "linux": "sudo nala install p7zip-full -y",
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": "brew install p7zip"
+          "darwin": "brew install p7zip"
         }
       }
     },
@@ -4042,12 +4042,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Mozilla Firefox\" --Id \"Mozilla.Firefox\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Mozilla Firefox\" --Id \"Mozilla.Firefox\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4060,12 +4060,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Mozilla Thunderbird (en-US)\" --Id \"Mozilla.Thunderbird\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Mozilla Thunderbird (en-US)\" --Id \"Mozilla.Thunderbird\" --source winget --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4078,12 +4078,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"StreamlabsOBS\" --Id \"Streamlabs.StreamlabsOBS\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"StreamlabsOBS\" --Id \"Streamlabs.StreamlabsOBS\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4096,12 +4096,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"OBSStudio\" --Id \"OBSProject.OBSStudio\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"OBSStudio\" --Id \"OBSProject.OBSStudio\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4114,12 +4114,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"MiKTeX\" --Id \"MiKTeX.MiKTeX\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"MiKTeX\" --Id \"MiKTeX.MiKTeX\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4132,12 +4132,12 @@
         "amd64": {
           "linux": "sudo nala install texlive -y",
           "windows": "texlive.ps1",
-          "macos": "brew install texlive"
+          "darwin": "brew install texlive"
         },
         "arm64": {
           "linux": "sudo nala install texlive -y",
           "windows": "texlive.ps1",
-          "macos": "brew install texlive"
+          "darwin": "brew install texlive"
         }
       }
     },
@@ -4150,12 +4150,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"TexMaker\" --Id \"Texmaker.Texmaker\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"TexMaker\" --Id \"Texmaker.Texmaker\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4168,12 +4168,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Lapce\" --Id \"Lapce.Lapce\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Lapce\" --Id \"Lapce.Lapce\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4186,12 +4186,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"TesseractOCR\" --Id \"UB-Mannheim.TesseractOCR\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"TesseractOCR\" --Id \"UB-Mannheim.TesseractOCR\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4204,12 +4204,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"perl\" --Id \"StrawberryPerl.StrawberryPerl\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"perl\" --Id \"StrawberryPerl.StrawberryPerl\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4222,12 +4222,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"DB Browser for SQLite\" --Id \"DBBrowserForSQLite.DBBrowserForSQLite\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"DB Browser for SQLite\" --Id \"DBBrowserForSQLite.DBBrowserForSQLite\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4240,12 +4240,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"sql server management studio\" --Id \"Microsoft.SQLServerManagementStudio\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"sql server management studio\" --Id \"Microsoft.SQLServerManagementStudio\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4258,12 +4258,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Adobe Acrobat Reader DC\" --Id \"Adobe.Acrobat.Reader.64-bit\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"Adobe Acrobat Reader DC\" --Id \"Adobe.Acrobat.Reader.64-bit\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4276,12 +4276,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"julia\" --Id \"Julialang.Julia\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"julia\" --Id \"Julialang.Julia\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4294,12 +4294,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"AWS Command Line Interface\" --Id \"Amazon.AWSCLI\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"AWS Command Line Interface\" --Id \"Amazon.AWSCLI\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4312,12 +4312,12 @@
         "amd64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"notepad++\" --Id \"Notepad++.Notepad++\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": "winget install --no-upgrade --name \"notepad++\" --Id \"Notepad++.Notepad++\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
-          "macos": null
+          "darwin": null
         }
       }
     },
@@ -4329,12 +4329,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "polymarket-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "macos": "polymarket-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": "polymarket-{version}-x86_64-apple-darwin.tar.gz",
           "windows": null
         },
         "arm64": {
           "linux": "polymarket-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "macos": "polymarket-{version}-aarch64-apple-darwin.tar.gz",
+          "darwin": "polymarket-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -4347,12 +4347,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "himalaya.x86_64-linux.tgz",
-          "macos": "himalaya.x86_64-darwin.tgz",
+          "darwin": "himalaya.x86_64-darwin.tgz",
           "windows": "himalaya.x86_64-windows.tgz"
         },
         "arm64": {
           "linux": "himalaya.aarch64-linux.tgz",
-          "macos": "himalaya.aarch64-darwin.tgz",
+          "darwin": "himalaya.aarch64-darwin.tgz",
           "windows": null
         }
       }
@@ -4365,12 +4365,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "meli-{version}-linux-amd64.deb",
-          "macos": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": "meli-{version}-linux-arm64.deb",
-          "macos": null,
+          "darwin": null,
           "windows": null
         }
       }

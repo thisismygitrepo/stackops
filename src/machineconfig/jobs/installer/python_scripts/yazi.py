@@ -16,12 +16,12 @@ installer_standard: InstallerData =    {
       "fileNamePattern": {
         "amd64": {
           "linux": "yazi-x86_64-unknown-linux-musl.zip",
-          "macos": "yazi-x86_64-apple-darwin.zip",
+          "darwin": "yazi-x86_64-apple-darwin.zip",
           "windows": "yazi-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "yazi-aarch64-unknown-linux-musl.zip",
-          "macos": "yazi-aarch64-apple-darwin.zip",
+          "darwin": "yazi-aarch64-apple-darwin.zip",
           "windows": "yazi-aarch64-pc-windows-msvc.zip"
         }
       }

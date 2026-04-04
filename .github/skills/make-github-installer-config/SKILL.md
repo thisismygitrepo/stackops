@@ -71,12 +71,12 @@ Output JSON entry must use this exact shape:
   "fileNamePattern": {
     "amd64": {
       "linux": "... or null",
-      "macos": "... or null",
+      "darwin": "... or null",
       "windows": "... or null"
     },
     "arm64": {
       "linux": "... or null",
-      "macos": "... or null",
+      "darwin": "... or null",
       "windows": "... or null"
     }
   }

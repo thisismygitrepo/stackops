@@ -28,12 +28,12 @@ nerd_fonts: InstallerData = {
         "amd64": {
             "windows": "CascadiaCode.zip",
             "linux": "CascadiaCode.zip",
-            "macos": "CascadiaCode.zip",
+            "darwin": "CascadiaCode.zip",
         },
         "arm64": {
             "windows": "CascadiaCode.zip",
             "linux": "CascadiaCode.zip",
-            "macos": "CascadiaCode.zip",
+            "darwin": "CascadiaCode.zip",
         }
     }
 }

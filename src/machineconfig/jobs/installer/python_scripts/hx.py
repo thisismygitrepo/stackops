@@ -29,12 +29,12 @@ config_dict: InstallerData = {
     "fileNamePattern": {
         "amd64": {
             "linux": "helix-{version}-x86_64-linux.tar.xz",
-            "macos": "helix-{version}-x86_64-macos.tar.xz",
+            "darwin": "helix-{version}-x86_64-macos.tar.xz",
             "windows": "helix-{version}-x86_64-windows.zip",
         },
         "arm64": {
             "linux": "helix-{version}-aarch64-linux.tar.xz",
-            "macos": "helix-{version}-aarch64-macos.tar.xz",
+            "darwin": "helix-{version}-aarch64-macos.tar.xz",
             "windows": "helix-{version}-arm64-windows.zip",
         },
     },

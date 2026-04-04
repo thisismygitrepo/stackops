@@ -65,7 +65,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
                 installer_data["fileNamePattern"]["amd64"]["linux"] = "espanso-debian-x11-amd64.deb"
         else:  # Darwin/macOS
             console.print("🍎 Installing Espanso on macOS...", style="bold")
-            installer_data["fileNamePattern"]["amd64"]["macos"] = "Espanso.dmg"
+            installer_data["fileNamePattern"]["amd64"]["darwin"] = "Espanso.dmg"
     else:
         error_msg = f"Unsupported platform: {platform.system()}"
         console.print(

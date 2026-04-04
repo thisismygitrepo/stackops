@@ -24,12 +24,12 @@ def _make_installer_data(app_name: str) -> InstallerData:
         fileNamePattern={
             "amd64": {
                 "linux": f"{app_name.lower()}-linux.tar.gz",
-                "macos": None,
+                "darwin": None,
                 "windows": None,
             },
             "arm64": {
                 "linux": f"{app_name.lower()}-arm64.tar.gz",
-                "macos": None,
+                "darwin": None,
                 "windows": None,
             },
         },

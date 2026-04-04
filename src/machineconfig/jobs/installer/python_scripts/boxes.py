@@ -23,11 +23,11 @@ installer_data_modified: InstallerData = {
         "amd64": {
           "windows": "boxes-{version}-intel-win32.zip",
           "linux": None,
-          "macos": None
+          "darwin": None
         },
         "arm64": {
           "linux": None,
-          "macos": None,
+          "darwin": None,
           "windows": None
         }
       }
