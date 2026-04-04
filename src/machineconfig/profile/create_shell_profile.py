@@ -132,29 +132,53 @@ def create_nu_shell_profile() -> None:
     nu_profile_path = get_nu_shell_profile_path()
     config_dir = nu_profile_path
     config_file = config_dir.joinpath("config.nu")
+    env_file = config_dir.joinpath("env.nu")
     if not config_dir.exists():
         console.print(Panel(f"""🆕 NU SHELL CONFIG | Config directory does not exist at `{config_dir}`. Creating a new one.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
         config_dir.mkdir(parents=True, exist_ok=True)
     if not config_file.exists():
         console.print(Panel(f"""🆕 NU SHELL CONFIG | config.nu file does not exist at `{config_file}`. Creating a new one.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
         config_file.write_text("", encoding="utf-8")
+    if not env_file.exists():
+        console.print(Panel(f"""🆕 NU SHELL CONFIG | env.nu file does not exist at `{env_file}`. Creating a new one.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+        env_file.write_text("", encoding="utf-8")
     config_content = config_file.read_text(encoding="utf-8")
+    env_content = env_file.read_text(encoding="utf-8")
     from machineconfig.profile.create_helper import copy_assets_to_machine
     copy_assets_to_machine("settings")
     copy_assets_to_machine("scripts")
     init_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/nushell/init.nu")
-    source_line = f"""use {str(init_script)}"""
+    config_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/nushell/config.nu")
+    env_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/nushell/env.nu")
+    legacy_source_line = f"""use {str(init_script)}"""
+    config_source_line = """source ($nu.home-dir | path join ".config" "machineconfig" "settings" "shells" "nushell" "config.nu")"""
+    env_source_line = """source-env ($nu.home-dir | path join ".config" "machineconfig" "settings" "shells" "nushell" "env.nu")"""
     was_config_updated = False
-    if source_line in config_content:
-        console.print(Panel("🔄 NU SHELL CONFIG | Skipping init script sourcing - already present in config.nu", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-    else:
-        console.print(Panel("📝 NU SHELL CONFIG | Adding init script sourcing to config.nu", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-        config_content += "\n" + source_line + "\n"
+    was_env_updated = False
+    if legacy_source_line in config_content and config_source_line not in config_content:
+        console.print(Panel("🔄 NU SHELL CONFIG | Replacing legacy init.nu import with config.nu source", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+        config_content = config_content.replace(legacy_source_line, config_source_line)
         was_config_updated = True
+    if config_source_line in config_content:
+        console.print(Panel(f"""🔄 NU SHELL CONFIG | Skipping config.nu sourcing - already present in `{config_script}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+    else:
+        console.print(Panel(f"""📝 NU SHELL CONFIG | Adding config.nu sourcing from `{config_script}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+        config_content += "\n" + config_source_line + "\n"
+        was_config_updated = True
+    if env_source_line in env_content:
+        console.print(Panel(f"""🔄 NU SHELL CONFIG | Skipping env.nu sourcing - already present in `{env_script}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+    else:
+        console.print(Panel(f"""📝 NU SHELL CONFIG | Adding env.nu sourcing from `{env_script}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+        env_content += "\n" + env_source_line + "\n"
+        was_env_updated = True
     if was_config_updated:
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file.write_text(config_content, encoding="utf-8")
         console.print(Panel("✅ Nu shell config updated successfully", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+    if was_env_updated:
+        config_dir.mkdir(parents=True, exist_ok=True)
+        env_file.write_text(env_content, encoding="utf-8")
+        console.print(Panel("✅ Nu shell env updated successfully", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
 
 
 if __name__ == "__main__":

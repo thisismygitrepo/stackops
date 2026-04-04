@@ -163,6 +163,12 @@ REFERENCE_USERS_BY_PATH: ReferenceUsersByPath = {
         "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
         "src/machineconfig/scripts/python/helpers/helpers_devops/devops_status_checks.py",
     ),
+    "src/machineconfig/settings/shells/nushell/config.nu": (
+        "src/machineconfig/profile/create_shell_profile.py",
+    ),
+    "src/machineconfig/settings/shells/nushell/env.nu": (
+        "src/machineconfig/profile/create_shell_profile.py",
+    ),
     "src/machineconfig/settings/shells/nushell/init.nu": (
         "src/machineconfig/profile/create_shell_profile.py",
     ),

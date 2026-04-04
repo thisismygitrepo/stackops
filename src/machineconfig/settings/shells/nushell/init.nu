@@ -2,7 +2,7 @@
 
 # Cross-platform home directory helper
 def get_home []: nothing -> string {
-    $env.HOME? | default ($env.USERPROFILE? | default $nu.home-path)
+    $env.HOME? | default ($env.USERPROFILE? | default $nu.home-dir)
 }
 
 def get_config_root []: nothing -> string {
@@ -120,6 +120,20 @@ export def --env tere_cd [...args: string] {
     }
 }
 
+export def --env --wrapped z [...args: string] {
+    let dest = match $args {
+        [] => { "~" }
+        [ "-" ] => { "-" }
+        [ $arg ] if ($arg | path expand | path type) == "dir" => { $arg }
+        _ => { ^zoxide query --exclude $env.PWD -- ...$args | str trim -r -c "\n" }
+    }
+    cd $dest
+}
+
+export def --env --wrapped zi [...args: string] {
+    cd $'(^zoxide query --interactive -- ...$args | str trim -r -c "\n")'
+}
+
 export alias lf = lfcd
 
 export def d [...args: string] { wrap_in_shell_script "devops" ...$args }
@@ -135,4 +149,3 @@ export def ms [...args: string] { wrap_in_shell_script "msearch" ...$args }
 export def x [...args: string] { wrap_in_shell_script "explore" ...$args }
 
 export alias l = lsd -la
-
