@@ -1,5 +1,5 @@
-let home = (($env.HOME? | default ($env.USERPROFILE? | default $nu.home-dir)) | path expand)
-let config_root = (($env.CONFIG_ROOT? | default ($home | path join ".config" "machineconfig")) | path expand)
+let home = ($nu.home-dir | path expand)
+let config_root = ($home | path join ".config" "machineconfig")
 $env.CONFIG_ROOT = $config_root
 
 use std/util "path add"
@@ -40,15 +40,6 @@ let paths_to_add = match $os_name {
         ($home | path join ".cargo" "bin")
         "/usr/games"
     ]
-    _ => [
-        ($config_root | path join "scripts")
-        ($home | path join ".local" "bin")
-        ($home | path join ".cargo" "bin")
-    ]
 }
 
-for path_entry in $paths_to_add {
-    if ($path_entry | path exists) {
-        path add --append $path_entry
-    }
-}
+path add --append ...$paths_to_add

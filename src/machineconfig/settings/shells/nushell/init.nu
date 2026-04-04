@@ -1,22 +1,17 @@
 # machineconfig Nushell initialization
 
-# Cross-platform home directory helper
 def get_home []: nothing -> string {
-    $env.HOME? | default ($env.USERPROFILE? | default $nu.home-dir)
-}
-
-def get_config_root []: nothing -> string {
-    $env.CONFIG_ROOT? | default ((get_home) | path join ".config" "machineconfig")
+    $nu.home-dir
 }
 
 def ensure_directory [dir: string] {
     if not ($dir | path exists) {
-        try { mkdir $dir } catch { }
+        mkdir $dir
     }
 }
 
 def temp_file [prefix: string, suffix: string]: nothing -> string {
-    let base_dir = ($env.TMPDIR? | default ($env.TEMP? | default ($env.TMP? | default "/tmp")))
+    let base_dir = $nu.temp-dir
     ensure_directory $base_dir
     let token = (random uuid | str replace "-" "" | str substring 0..16)
     let file_path = ($base_dir | path join $"($prefix)($token)($suffix)")
@@ -34,37 +29,14 @@ export def wrap_in_shell_script [command: string, ...args: string] {
     print $"machineconfig: running ($command) at ($timestamp)"
     print $"machineconfig: op program path ($op_program_path)"
 
-    let run_status = try {
-        with-env { OP_PROGRAM_PATH: $op_program_path } { ^$command ...$args }
-        0
-    } catch {
-        1
-    }
+    with-env { OP_PROGRAM_PATH: $op_program_path } { ^$command ...$args }
 
     if ($op_program_path | path exists) {
-        if (which bat | is-not-empty) {
-            ^bat "--style=plain" "--paging=never" $op_program_path
-        } else {
-            print (open --raw $op_program_path)
-        }
-
-        let follow_status = try {
-            ^bash $op_program_path
-            0
-        } catch {
-            1
-        }
-
-        if $follow_status == 0 {
-            print $"machineconfig: completed ($command)"
-        } else {
-            print $"machineconfig: script exited with status ($follow_status)"
-        }
-    } else if $run_status == 0 {
-        print $"machineconfig: completed ($command)"
-    } else {
-        print $"machineconfig: ($command) exited with status ($run_status)"
+        print (open --raw $op_program_path)
+        ^bash $op_program_path
     }
+
+    print $"machineconfig: completed ($command)"
 }
 
 export def --env br [...args: string] {
