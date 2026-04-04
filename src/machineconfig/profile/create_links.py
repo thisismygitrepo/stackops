@@ -14,7 +14,15 @@ from rich.table import Table
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.links import symlink_map, copy_map
 from machineconfig.profile.create_links_export import DIRECTION_STRICT, ON_CONFLICT_STRICT
-from machineconfig.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, MapperDocument, OsField, load_dotfiles_mapper
+from machineconfig.profile.dotfiles_mapper import (
+    LIBRARY_MAPPER_PATH,
+    USER_MAPPER_PATH,
+    MapperDocument,
+    OsField,
+    OsName,
+    VALID_OS_VALUES,
+    load_dotfiles_mapper,
+)
 from machineconfig.utils.source_of_truth import CONFIG_ROOT
 
 import platform
@@ -29,11 +37,6 @@ SYSTEM = system.lower()
 
 console = Console()
 
-OS_ALIASES = {
-    "mac": "darwin",
-    "macos": "darwin",
-    "osx": "darwin",
-}
 REPO_ALIASES = {
     "l": "library",
     "i": "user",
@@ -47,39 +50,29 @@ ON_CONFLICT_UP_COPY_MAP: dict[ON_CONFLICT_STRICT, ON_CONFLICT_STRICT] = {
 }
 
 
-def _normalize_os_name(value: str) -> str:
-    return OS_ALIASES.get(value.strip().lower(), value.strip().lower())
+def _normalize_os_name(value: str) -> OsName:
+    token = value.strip().lower()
+    if token not in VALID_OS_VALUES:
+        expected_values = ", ".join(sorted(VALID_OS_VALUES))
+        raise ValueError(f"Unsupported operating system: {value!r}. Expected one of: {expected_values}.")
+    return token
 
 
 def _normalize_repo_name(value: str) -> str:
     return REPO_ALIASES.get(value.strip().lower(), value.strip().lower())
 
 
-def _parse_os_field(os_field: OsField | None) -> set[str]:
-    if not os_field:
-        return {"any"}
-    if isinstance(os_field, list):
-        raw_values = [str(item) for item in os_field]
-    else:
-        raw_values = str(os_field).split(",")
-    values: set[str] = set()
-    for raw in raw_values:
-        token = _normalize_os_name(raw)
-        if not token:
-            continue
-        if token in {"any", "all", "*"}:
-            return {"any"}
-        values.add(token)
-    return values or {"any"}
+def _parse_os_field(os_field: OsField) -> set[OsName]:
+    return set(os_field)
 
 
 class ConfigMapper(TypedDict):
     file_name: str
     config_file_default_path: str
-    self_managed_config_file_path: str
+    config_file_self_managed_path: str
     contents: bool | None
     copy: bool | None
-    os: OsField | None
+    os: OsField
 class MapperFileData(TypedDict):
     public: dict[str, list[ConfigMapper]]
     private: dict[str, list[ConfigMapper]]
@@ -112,18 +105,18 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
     normalized_system = _normalize_os_name(SYSTEM)
     for program_key, program_map in mapper_data.items():
         for file_name, file_base in program_map.items():
-            os_values = _parse_os_field(file_base.get("os"))
-            if "any" not in os_values and normalized_system not in os_values:
+            os_values = _parse_os_field(file_base["os"])
+            if normalized_system not in os_values:
                 continue
             file_map: ConfigMapper = {
                 "file_name": file_name,
                 "config_file_default_path": file_base["original"],
-                "self_managed_config_file_path": file_base["self_managed"],
+                "config_file_self_managed_path": file_base["self_managed"],
                 "contents": file_base.get("contents"),
                 "copy": file_base.get("copy"),
-                "os": file_base.get("os"),
+                "os": file_base["os"],
             }
-            if "CONFIG_ROOT" in file_map["self_managed_config_file_path"]:
+            if "CONFIG_ROOT" in file_map["config_file_self_managed_path"]:
                 if program_key not in public:
                     public[program_key] = []
                 public[program_key].append(file_map)
@@ -136,10 +129,10 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
 
 def _resolve_mapper_paths(a_mapper: ConfigMapper) -> tuple[PathExtended, PathExtended]:
     config_file_default_path = PathExtended(a_mapper["config_file_default_path"]).expanduser().absolute()
-    self_managed_config_file_path = PathExtended(
-        a_mapper["self_managed_config_file_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())
+    config_file_self_managed_path = PathExtended(
+        a_mapper["config_file_self_managed_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())
     ).expanduser().absolute()
-    return config_file_default_path, self_managed_config_file_path
+    return config_file_default_path, config_file_self_managed_path
 
 
 def _get_source_label(direction: DIRECTION_STRICT) -> Literal["default", "self-managed"]:
@@ -150,23 +143,23 @@ def _get_source_label(direction: DIRECTION_STRICT) -> Literal["default", "self-m
 
 def _iter_operation_paths(
     config_file_default_path: PathExtended,
-    self_managed_config_file_path: PathExtended,
+    config_file_self_managed_path: PathExtended,
     contents: bool,
     direction: DIRECTION_STRICT,
 ) -> list[tuple[PathExtended, PathExtended]]:
-    source_root = config_file_default_path if direction == "up" else self_managed_config_file_path
+    source_root = config_file_default_path if direction == "up" else config_file_self_managed_path
     source_label = _get_source_label(direction)
     if not source_root.exists():
         raise FileNotFoundError(f"{direction} sync requires existing {source_label} path: {source_root}")
     if not contents:
-        return [(config_file_default_path, self_managed_config_file_path)]
+        return [(config_file_default_path, config_file_self_managed_path)]
     if not source_root.is_dir():
         raise NotADirectoryError(f"{direction} sync expects a directory for contents mapper: {source_root}")
     source_children = sorted(source_root.glob("*"), key=lambda path: path.name)
     return [
         (
             config_file_default_path.joinpath(source_child.name),
-            self_managed_config_file_path.joinpath(source_child.name),
+            config_file_self_managed_path.joinpath(source_child.name),
         )
         for source_child in source_children
     ]
@@ -174,26 +167,26 @@ def _iter_operation_paths(
 
 def _run_directional_operation(
     config_file_default_path: PathExtended,
-    self_managed_config_file_path: PathExtended,
+    config_file_self_managed_path: PathExtended,
     on_conflict: ON_CONFLICT_STRICT,
     method: Literal["symlink", "copy"],
     direction: DIRECTION_STRICT,
 ) -> OperationResult:
     if method == "copy" and direction == "up":
         return copy_map(
-            config_file_default_path=self_managed_config_file_path,
-            self_managed_config_file_path=config_file_default_path,
+            config_file_default_path=config_file_self_managed_path,
+            config_file_self_managed_path=config_file_default_path,
             on_conflict=ON_CONFLICT_UP_COPY_MAP[on_conflict],
         )
     if method == "copy":
         return copy_map(
             config_file_default_path=config_file_default_path,
-            self_managed_config_file_path=self_managed_config_file_path,
+            config_file_self_managed_path=config_file_self_managed_path,
             on_conflict=on_conflict,
         )
     return symlink_map(
         config_file_default_path=config_file_default_path,
-        self_managed_config_file_path=self_managed_config_file_path,
+        config_file_self_managed_path=config_file_self_managed_path,
         on_conflict=on_conflict,
     )
 
@@ -204,7 +197,7 @@ def _append_operation_record(
     program_name: str,
     file_key: str,
     config_file_default_path: PathExtended,
-    self_managed_config_file_path: PathExtended,
+    config_file_self_managed_path: PathExtended,
     operation: str,
     action: ActionType,
     details: str,
@@ -215,7 +208,7 @@ def _append_operation_record(
             "program": program_name,
             "file_key": file_key,
             "defaultPath": str(config_file_default_path),
-            "selfManaged": str(self_managed_config_file_path),
+            "selfManaged": str(config_file_self_managed_path),
             "operation": operation,
             "action": action,
             "details": details,
@@ -260,7 +253,7 @@ def apply_mapper(
     for program_name, program_files in mapper_data.items():
         console.rule(f"🔄 Processing [bold]{program_name}[/] ({direction})", style="cyan")
         for a_mapper in program_files:
-            config_file_default_path, self_managed_config_file_path = _resolve_mapper_paths(a_mapper)
+            config_file_default_path, config_file_self_managed_path = _resolve_mapper_paths(a_mapper)
             use_copy = method == "copy" or a_mapper.get("copy", False)
             resolved_method: Literal["symlink", "copy"] = "copy" if use_copy else "symlink"
             operation_type = f"{direction}_{resolved_method}"
@@ -269,7 +262,7 @@ def apply_mapper(
             try:
                 operation_paths = _iter_operation_paths(
                     config_file_default_path=config_file_default_path,
-                    self_managed_config_file_path=self_managed_config_file_path,
+                    config_file_self_managed_path=config_file_self_managed_path,
                     contents=bool(a_mapper.get("contents")),
                     direction=direction,
                 )
@@ -280,18 +273,18 @@ def apply_mapper(
                     program_name=program_name,
                     file_key=a_mapper["file_name"],
                     config_file_default_path=config_file_default_path,
-                    self_managed_config_file_path=self_managed_config_file_path,
+                    config_file_self_managed_path=config_file_self_managed_path,
                     operation=operation_type,
                     action="error",
                     details=f"Failed to prepare {operation_type}: {str(ex)}",
                     status=f"error: {str(ex)}",
                 )
                 continue
-            for config_file_default_path_item, self_managed_config_file_path_item in operation_paths:
+            for config_file_default_path_item, config_file_self_managed_path_item in operation_paths:
                 try:
                     result = _run_directional_operation(
                         config_file_default_path=config_file_default_path_item,
-                        self_managed_config_file_path=self_managed_config_file_path_item,
+                        config_file_self_managed_path=config_file_self_managed_path_item,
                         on_conflict=on_conflict,
                         method=resolved_method,
                         direction=direction,
@@ -301,7 +294,7 @@ def apply_mapper(
                         program_name=program_name,
                         file_key=a_mapper["file_name"],
                         config_file_default_path=config_file_default_path_item,
-                        self_managed_config_file_path=self_managed_config_file_path_item,
+                        config_file_self_managed_path=config_file_self_managed_path_item,
                         operation=operation_type,
                         action=result["action"],
                         details=result["details"],
@@ -314,7 +307,7 @@ def apply_mapper(
                             program_name=program_name,
                             file_key=a_mapper["file_name"],
                             config_file_default_path=config_file_default_path_item,
-                            self_managed_config_file_path=self_managed_config_file_path_item,
+                            config_file_self_managed_path=config_file_self_managed_path_item,
                             operation=operation_type,
                             action="already_linked",
                             details="defaultPath and selfManaged resolve to same location - already correctly configured",
@@ -329,7 +322,7 @@ def apply_mapper(
                         program_name=program_name,
                         file_key=a_mapper["file_name"],
                         config_file_default_path=config_file_default_path_item,
-                        self_managed_config_file_path=self_managed_config_file_path_item,
+                        config_file_self_managed_path=config_file_self_managed_path_item,
                         operation=operation_type,
                         action="error",
                         details=f"Failed to create {operation_type}: {str(ex)}",

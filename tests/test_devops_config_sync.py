@@ -33,7 +33,7 @@ def test_config_sync_passes_direction_without_copying_assets() -> None:
                 {
                     "file_name": "demo",
                     "config_file_default_path": "~/.demo",
-                    "self_managed_config_file_path": "~/dotfiles/demo",
+                    "config_file_self_managed_path": "~/dotfiles/demo",
                     "contents": None,
                     "copy": None,
                     "os": ALL_DOTFILE_OS,
@@ -113,7 +113,7 @@ demo_private:
             {
                 "file_name": "config",
                 "config_file_default_path": "~/.demo-public",
-                "self_managed_config_file_path": "CONFIG_ROOT/settings/demo/public.conf",
+                "config_file_self_managed_path": "CONFIG_ROOT/settings/demo/public.conf",
                 "contents": None,
                 "copy": None,
                 "os": [create_links.SYSTEM],
@@ -125,7 +125,7 @@ demo_private:
             {
                 "file_name": "creds",
                 "config_file_default_path": "~/.demo-private",
-                "self_managed_config_file_path": "~/dotfiles/demo/private.conf",
+                "config_file_self_managed_path": "~/dotfiles/demo/private.conf",
                 "contents": None,
                 "copy": None,
                 "os": ALL_DOTFILE_OS,
@@ -224,7 +224,7 @@ def test_apply_mapper_copy_respects_explicit_direction(
     mapper: create_links.ConfigMapper = {
         "file_name": "demo",
         "config_file_default_path": str(default_path),
-        "self_managed_config_file_path": str(managed_path),
+        "config_file_self_managed_path": str(managed_path),
         "contents": None,
         "copy": None,
         "os": ALL_DOTFILE_OS,
