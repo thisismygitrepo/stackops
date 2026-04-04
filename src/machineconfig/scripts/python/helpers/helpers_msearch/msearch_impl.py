@@ -192,6 +192,7 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
         return results
 
     results = symantic_search(query=query, text_files=text_files)
+
     results_as_dict = {res["content"]: res["content"] + f"\n\nDetails:\n{res['filename']}:{res['start_line_number']}-{res['end_line_number']}\nMatch: {res['match_line_number']}\nDistance: {res['distance']}" for res in results}
     from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
     preview_extension = Path(text_files[0]).suffix

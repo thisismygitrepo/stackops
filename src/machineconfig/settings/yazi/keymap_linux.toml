@@ -56,6 +56,20 @@ run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg fire "$0"
 desc = "Run fire on hovered file"
 
 [[mgr.prepend_keymap]]
+on   = ["L", "c"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg msearch "$0"'
+desc = "Search contents"
+[[mgr.prepend_keymap]]
+on   = ["L", "f"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg msearch -f "$0"'
+desc = "Search files"
+[[mgr.prepend_keymap]]
+on   = ["L", "e"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg msearch -e "$0"'
+desc = "Search then edit"
+
+
+[[mgr.prepend_keymap]]
 on   = "b"
 run  = 'shell --block -- bat "$0"'
 desc = "bat the file"
