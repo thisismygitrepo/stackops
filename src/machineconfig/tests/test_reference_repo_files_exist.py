@@ -213,8 +213,8 @@ def test_reference_repo_files_exist() -> None:
             continue
         sources = "\n".join(f"  - {source}" for source in used_by)
         missing_entries.append(f"{relative_path}\n{sources}")
-
     assert not missing_entries, "Missing referenced repo files:\n\n" + "\n\n".join(missing_entries)
+    print("All referenced repo files exist.")
 
 if __name__ == "__main__":
     test_reference_repo_files_exist()

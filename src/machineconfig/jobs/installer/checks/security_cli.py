@@ -113,25 +113,6 @@ def install(name: Annotated[str, typer.Argument(..., help="App name from app met
     download_safe_apps(name)
 
 
-def repo_licenses(
-    github_token: Annotated[
-        str | None,
-        typer.Option(
-            "--github-token",
-            help="GitHub token. Prefer MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN to avoid shell history.",
-            hide_input=True,
-            envvar=["MACHINECONFIG_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"],
-        ),
-    ] = None,
-) -> None:
-    from machineconfig.scripts.python.helpers.helpers_repos import download_repo_licenses
-
-    try:
-        download_repo_licenses.run_download(github_token=github_token)
-    except RuntimeError as err:
-        raise typer.BadParameter(str(err), param_hint="--github-token") from err
-
-
 def summary() -> None:
     report(view="stats")
 
@@ -205,8 +186,6 @@ def get_app() -> typer.Typer:
     app.command(name="d", help="<d> Download a file from Google Drive", hidden=True, no_args_is_help=True)(download)
     app.command(name="install", help="<i> Install safe apps from app metadata report", no_args_is_help=True)(install)
     app.command(name="i", help="<i> Install safe apps from app metadata report", hidden=True, no_args_is_help=True)(install)
-    app.command(name="repo-licenses", help="<p> Download GitHub repo license files for installer entries", no_args_is_help=True)(repo_licenses)
-    app.command(name="p", help="<p> Download GitHub repo license files for installer entries", hidden=True, no_args_is_help=True)(repo_licenses)
     app.command(name="report", help="<r> Show the full saved scan report by default, or CSV rows/summary stats")(report)
     app.command(name="r", help="<r> Show the full saved scan report by default, or CSV rows/summary stats", hidden=True)(report)
 
