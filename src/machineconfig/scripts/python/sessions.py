@@ -370,8 +370,8 @@ def get_app() -> typer.Typer:
     layouts_app.command("kill", no_args_is_help=False, help=kill_session_target.__doc__, short_help="<k> Kill a session target")(kill_session_target)
     layouts_app.command("k", no_args_is_help=False, help=kill_session_target.__doc__, hidden=True)(kill_session_target)
 
-    layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="<x> Trace a tmux session until it settles")(trace)
-    layouts_app.command("x", no_args_is_help=True, help=trace.__doc__, hidden=True)(trace)
+    layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="<t> Trace a tmux session until it settles")(trace)
+    layouts_app.command("t", no_args_is_help=True, help=trace.__doc__, hidden=True)(trace)
 
     layouts_app.command("create-from-function", no_args_is_help=True, short_help="<c> Create a layout from a function")(create_from_function)
     layouts_app.command("c", no_args_is_help=True, hidden=True)(create_from_function)

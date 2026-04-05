@@ -29,7 +29,13 @@ def agents_create(
     prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
     prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
     job_name: Annotated[
-        str, typer.Option(..., "--job-name", "-n", help="Job label. Also used to build the default output directory when --agents-dir is omitted.")
+        str,
+        typer.Option(
+            ...,
+            "--job-name",
+            "-n",
+            help="Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.",
+        ),
     ] = "AI_Agents",
     join_prompt_and_context: Annotated[bool, typer.Option(..., "--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
     output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Path to write the layout.json file")] = None,

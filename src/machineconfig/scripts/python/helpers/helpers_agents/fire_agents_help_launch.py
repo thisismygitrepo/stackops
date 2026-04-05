@@ -1,6 +1,7 @@
 import random
 import shlex
 from pathlib import Path
+
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import (
     AGENTS,
     AGENT_NAME_FORMATTER,
@@ -10,6 +11,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_type
     API_SPEC,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig
 
 
 def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -> str:
@@ -208,9 +210,9 @@ sleep 0.1
 echo "---------END OF AGENT OUTPUT---------"
 """
         agent_cmd_launch_path.write_text(cmd_prefix + cmd + cmd_postfix, encoding="utf-8")
-def get_agents_launch_layout(session_root: Path):
-    from machineconfig.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig, LayoutsFile
 
+
+def get_agents_launch_layout(session_root: Path, *, job_name: str) -> LayoutsFile:
     tab_config: list[TabConfig] = []
     prompt_root = session_root / "prompts"
     all_dirs_under_prompts = [d for d in prompt_root.iterdir() if d.is_dir()]
@@ -226,6 +228,6 @@ def get_agents_launch_layout(session_root: Path):
         agent_cmd_path = a_prompt_dir / AGENT_NAME_FORMATTER.format(idx=idx)
         fire_cmd = f"bash {shlex.quote(str(agent_cmd_path))}"
         tab_config.append(TabConfig(tabName=f"Agent{idx}", startDir=str(session_root.parent.parent.parent), command=fire_cmd))
-    layout = LayoutConfig(layoutName="Agents", layoutTabs=tab_config)
+    layout = LayoutConfig(layoutName=job_name, layoutTabs=tab_config)
     layouts_file: LayoutsFile = LayoutsFile(version="1.0", layouts=[layout])
     return layouts_file

@@ -338,7 +338,7 @@ def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_
 def test_agents_impl_persists_recreate_artifacts(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
-    agents_dir = repo_root / ".ai" / "agents" / "persisted"
+    agents_dir = repo_root / ".ai" / "agents" / "persisted-dir"
     output_path = repo_root / "layout-out.json"
 
     with patch("machineconfig.utils.accessories.get_repo_root", return_value=repo_root):
@@ -368,6 +368,7 @@ def test_agents_impl_persists_recreate_artifacts(tmp_path: Path) -> None:
     recreate_script_path = artifacts_dir / "recreate_layout.sh"
 
     assert output_path.exists()
+    assert json.loads(output_path.read_text(encoding="utf-8"))["layouts"][0]["layoutName"] == "persisted"
     assert prompt_snapshot_path.read_text(encoding="utf-8") == "inspect the repo"
     assert context_snapshot_path.read_text(encoding="utf-8") == "task one\n---\ntask two"
     assert recreate_script_path.exists()

@@ -117,7 +117,7 @@ def agents_create(
         provider=provider,
         job_name=job_name_resolved,
     )
-    layoutfile = get_agents_launch_layout(session_root=agents_dir_obj)
+    layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved)
 
     layout_output_path = Path(output_path) if output_path is not None else agents_dir_obj / "layout.json"
     layout_output_path.parent.mkdir(parents=True, exist_ok=True)
