@@ -1,8 +1,8 @@
 
 from pathlib import Path
 import glob as glob_module
+import os
 import shutil
-import subprocess
 from typing import Literal, TypeAlias
 
 BACKEND_LOOSE: TypeAlias = Literal[
@@ -34,10 +34,9 @@ LOOSE2STRICT: dict[BACKEND_LOOSE, BACKEND] = {
 MULTI_DB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin"})
 # backends that can natively handle duckdb connection strings
 DUCKDB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin", "rainfrog", "usql"})
-RAINFROG_INVALID_DRIVER_MESSAGE = "Invalid driver"
-RAINFROG_DUCKDB_PROBE_TIMEOUT_SECONDS = 1
 
 DUCKDB_EXTS: frozenset[str] = frozenset({".duckdb", ".ddb"})
+SQLITE_EXTS: frozenset[str] = frozenset({".sqlite", ".sqlite3", ".db", ".db3", ".s3db", ".sl3"})
 EXT_TO_PREFIX: dict[str, str] = {
     ".duckdb": "duckdb://", ".ddb": "duckdb://",
     ".sqlite": "sqlite://", ".sqlite3": "sqlite://", ".db": "sqlite://",
@@ -54,45 +53,37 @@ def _find_files(pattern: str, root: Path, recursive: bool) -> list[Path]:
 
 def _url_for(p: Path) -> str:
     prefix = EXT_TO_PREFIX.get(p.suffix.lower(), "sqlite://")
-    return f'"{prefix}{p}"'
+    return f"{prefix}{p}"
 
 
-def _rainfrog_supports_duckdb(path: Path) -> bool | None:
-    if shutil.which("rainfrog") is None:
-        return None
-    try:
-        proc = subprocess.run(
-            ["rainfrog", "--driver", "duckdb", "--database", str(path)],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=RAINFROG_DUCKDB_PROBE_TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired:
-        return True
-    output = f"{proc.stdout}\n{proc.stderr}"
-    if RAINFROG_INVALID_DRIVER_MESSAGE in output:
-        return False
-    return True
+def _rainfrog_command(path: Path | None) -> list[str]:
+    command = ["rainfrog"]
+    if path is None:
+        return command
+    suffix = path.suffix.lower()
+    if suffix in DUCKDB_EXTS:
+        return [*command, "--driver", "duckdb", "--database", str(path)]
+    if suffix in SQLITE_EXTS:
+        return [*command, "--driver", "sqlite", "--database", str(path)]
+    return [*command, "--url", str(path)]
+
+
+def _launch_interactive_command(command: list[str]) -> None:
+    executable = command[0]
+    if shutil.which(executable) is None:
+        raise FileNotFoundError(f"Command not found: {executable}")
+    os.execvp(executable, command)
 
 
 def _validate_backend(backend: BACKEND, resolved: list[Path]) -> None:
     is_all_duckdb = all(p.suffix.lower() in DUCKDB_EXTS for p in resolved)
-    if is_all_duckdb:
-        if backend == "rainfrog":
-            if _rainfrog_supports_duckdb(resolved[0]) is False:
-                raise ValueError(
-                    "Installed rainfrog binary does not include DuckDB support.\n"
-                    "Use harlequin or usql, or install a rainfrog build with DuckDB enabled.\n"
-                    f"Files: {[str(p) for p in resolved]}"
-                )
-        elif backend not in DUCKDB_CAPABLE:
-            duckdb_capable_list = ", ".join(sorted(DUCKDB_CAPABLE))
-            raise ValueError(
-                f"Backend '{backend}' does not support DuckDB files.\n"
-                f"DuckDB-capable backends: {duckdb_capable_list}\n"
-                f"Files: {[str(p) for p in resolved]}"
-            )
+    if is_all_duckdb and backend not in DUCKDB_CAPABLE:
+        duckdb_capable_list = ", ".join(sorted(DUCKDB_CAPABLE))
+        raise ValueError(
+            f"Backend '{backend}' does not support DuckDB files.\n"
+            f"DuckDB-capable backends: {duckdb_capable_list}\n"
+            f"Files: {[str(p) for p in resolved]}"
+        )
     if len(resolved) > 1 and backend not in MULTI_DB_CAPABLE:
         multi_capable_list = ", ".join(sorted(MULTI_DB_CAPABLE))
         raise ValueError(
@@ -120,7 +111,6 @@ def app(
     recursive  – search subdirectories when using `find`.
     """
     backend_strict = LOOSE2STRICT[backend]
-    from machineconfig.utils.code import exit_then_run_shell_script
 
     resolved: list[Path] = []
     if path is not None and find is not None:
@@ -137,48 +127,42 @@ def app(
     if resolved:
         _validate_backend(backend_strict, resolved)
 
-    shell_script_init = 'echo "Initializing TUI DB Visualizer..."'
-    cmd = ""
+    command: list[str]
     match backend_strict:
         case "rainfrog":
-            cmd = "rainfrog"
-            if resolved:
-                # cmd += f" --url {_url_for(resolved[0])}"
-                cmd += f" --url {resolved[0]}"
+            command = _rainfrog_command(resolved[0] if resolved else None)
         case "lazysql":
-            cmd = "lazysql"
+            command = ["lazysql"]
             if read_only:
-                cmd += " -read-only"
+                command.append("-read-only")
             if resolved:
-                cmd += f" {_url_for(resolved[0])}"
+                command.append(_url_for(resolved[0]))
         case "dblab":
-            cmd = "dblab"
+            command = ["dblab"]
             if limit is not None:
-                cmd += f" --limit {limit}"
+                command.extend(["--limit", str(limit)])
             if resolved:
-                cmd += f" --url {_url_for(resolved[0])}"
+                command.extend(["--url", _url_for(resolved[0])])
         case "usql":
-            cmd = "usql"
+            command = ["usql"]
             if resolved:
-                cmd += f" {_url_for(resolved[0])}"
+                command.append(_url_for(resolved[0]))
         case "harlequin":
-            cmd = "harlequin"
+            command = ["harlequin"]
             if read_only:
-                cmd += " --read-only"
-            if theme:
-                cmd += f" --theme {theme}"
+                command.append("--read-only")
+            if theme is not None:
+                command.extend(["--theme", theme])
             if limit is not None:
-                cmd += f" --limit {limit}"
-            for p in resolved:
-                cmd += f' "{p}"'
+                command.extend(["--limit", str(limit)])
+            command.extend(str(p) for p in resolved)
         case "sqlit":
-            cmd = "sqlit"
-            if theme:
-                cmd += f" --theme {theme}"
+            command = ["sqlit"]
+            if theme is not None:
+                command.extend(["--theme", theme])
             if limit is not None:
-                cmd += f" --max-rows {limit}"
+                command.extend(["--max-rows", str(limit)])
             if resolved:
-                cmd += f" {_url_for(resolved[0])}"
+                command.append(_url_for(resolved[0]))
 
-    shell_script = f"{shell_script_init}\n{cmd}"
-    exit_then_run_shell_script(shell_script)
+    _launch_interactive_command(command)
