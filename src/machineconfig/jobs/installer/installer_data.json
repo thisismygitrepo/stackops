@@ -1335,7 +1335,7 @@
     },
     {
       "appName": "poppler",
-      "license": "GPL-2.0-or-later",
+      "license": "MIT",
       "repoURL": "https://github.com/oschwartz10612/poppler-windows",
       "doc": "PDF rendering library - Windows builds.",
       "fileNamePattern": {
@@ -1363,8 +1363,8 @@
           "darwin": "resvg-macos-x86_64.zip"
         },
         "arm64": {
-          "windows": "resvg-win64.zip",
-          "linux": "resvg-linux-aarch64.tar.gz",
+          "windows": null,
+          "linux": null,
           "darwin": "resvg-macos-aarch64.zip"
         }
       }
