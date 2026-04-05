@@ -7,9 +7,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive.
     order_current_first,
     prompt_existing_path,
     prompt_multiline_text,
-    prompt_positive_int,
     prompt_separator,
-    prompt_text,
     separator_is_applicable_for_context_path,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import (
@@ -25,8 +23,6 @@ from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_type
 from machineconfig.utils.accessories import randstr
 
 
-_CHANGE_JOB_NAME_LABEL = "change job name"
-_CONFIRM_GENERATED_JOB_NAME_PREFIX = "use generated job name: "
 _CONTEXT_MODE_TEXT = "enter context text"
 _CONTEXT_MODE_PATH = "use context path"
 _PROMPT_MODE_TEXT = "enter prompt text"
@@ -68,6 +64,7 @@ def _collect_inputs(
     separator: str,
     prompt: str | None,
     prompt_path: str | None,
+    job_name: str,
 ) -> InteractiveAgentCreateParams:
     agent_selected = cast(
         AGENTS,
@@ -83,11 +80,12 @@ def _collect_inputs(
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
+        model=model,
+        agent_load=agent_load,
+        job_name=job_name,
         reasoning_effort=reasoning_effort,
         provider=provider,
     )
-    model_selected = prompt_text(label="model", current=model, required=False, hint=" (blank keeps default)")
-    agent_load_selected = prompt_positive_int(label="agent load", current=agent_load)
     context_mode = choose_required_option(
         options=[_CONTEXT_MODE_PATH, _CONTEXT_MODE_TEXT] if context_path is not None and context is None else [_CONTEXT_MODE_TEXT, _CONTEXT_MODE_PATH],
         msg="Choose how to provide context",
@@ -114,33 +112,29 @@ def _collect_inputs(
     else:
         prompt_selected = None
         prompt_path_selected = prompt_existing_path(label="prompt path", current=prompt_path, must_be_file=True)
-    generated_job_name = randstr(length=3, lower=True, upper=False, digits=False, punctuation=False)
-    job_choice = choose_required_option(
-        options=[f"{_CONFIRM_GENERATED_JOB_NAME_PREFIX}{generated_job_name}", _CHANGE_JOB_NAME_LABEL],
-        msg="Confirm the generated job name or choose a custom one",
-        header="Job Name",
-    )
-    if job_choice == _CHANGE_JOB_NAME_LABEL:
-        job_name_selected = cast(str, prompt_text(label="job name", current=None, required=True, hint=""))
-    else:
-        job_name_selected = generated_job_name
     return InteractiveAgentCreateParams(
         agent=agent_selected,
         host=reviewed_create_options.host,
-        model=model_selected,
+        model=reviewed_create_options.model,
         reasoning_effort=reviewed_create_options.reasoning_effort,
         provider=reviewed_create_options.provider,
-        agent_load=agent_load_selected,
+        agent_load=reviewed_create_options.agent_load,
         context=context_selected,
         context_path=context_path_selected,
         separator=separator_selected,
         prompt=prompt_selected,
         prompt_path=prompt_path_selected,
-        job_name=job_name_selected,
+        job_name=reviewed_create_options.job_name,
         join_prompt_and_context=reviewed_create_options.join_prompt_and_context,
         output_path=reviewed_create_options.output_path,
         agents_dir=reviewed_create_options.agents_dir,
     )
+
+
+def _resolve_initial_job_name(job_name: str | None) -> str:
+    if job_name is not None and job_name != "AI_Agents":
+        return job_name
+    return randstr(length=3, lower=True, upper=False, digits=False, punctuation=False)
 
 
 def main(
@@ -161,7 +155,6 @@ def main(
     output_path: str | None = None,
     agents_dir: str | None = None,
 ) -> None:
-    _ = job_name
     collected = _collect_inputs(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
@@ -177,6 +170,7 @@ def main(
         separator=separator,
         prompt=prompt,
         prompt_path=prompt_path,
+        job_name=_resolve_initial_job_name(job_name),
     )
     from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create
 

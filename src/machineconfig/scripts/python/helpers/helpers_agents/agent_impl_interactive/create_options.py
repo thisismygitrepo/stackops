@@ -20,6 +20,9 @@ EditableCreateOption: TypeAlias = Literal[
     "output_path",
     "agents_dir",
     "host",
+    "model",
+    "agent_load",
+    "job_name",
     "reasoning_effort",
     "provider",
 ]
@@ -31,6 +34,9 @@ class InteractiveCreateReviewOptions:
     output_path: str | None
     agents_dir: str | None
     host: HOST
+    model: str | None
+    agent_load: int
+    job_name: str
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
 
@@ -41,6 +47,9 @@ class _CreateOptionsFormSelection:
     output_path: str | None
     agents_dir: str | None
     host: HOST
+    model: str | None
+    agent_load: int
+    job_name: str
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
 
@@ -69,6 +78,20 @@ def _format_output_path_value(value: str | None) -> str:
 def _format_agents_dir_value(value: str | None) -> str:
     if value is None:
         return "auto: .ai/agents derived from job_name"
+    return value
+
+
+def _format_model_value(value: str | None) -> str:
+    if value is None:
+        return "agent default"
+    return value
+
+
+def _format_agent_load_value(value: int) -> str:
+    return str(value)
+
+
+def _format_job_name_value(value: str) -> str:
     return value
 
 
@@ -101,6 +124,9 @@ def _build_review_option_labels(
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
+    model: str | None,
+    agent_load: int,
+    job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
 ) -> dict[EditableCreateOption, str]:
@@ -109,6 +135,9 @@ def _build_review_option_labels(
         "output_path": f"output_path = {_format_output_path_value(output_path)}",
         "agents_dir": f"agents_dir = {_format_agents_dir_value(agents_dir)}",
         "host": f"host = {host}",
+        "model": f"model = {_format_model_value(model)}",
+        "agent_load": f"agent_load = {_format_agent_load_value(agent_load)}",
+        "job_name": f"job_name = {_format_job_name_value(job_name)}",
         "reasoning_effort": f"reasoning_effort = {_format_reasoning_effort_value(agent=agent, value=reasoning_effort)}",
         "provider": f"provider = {_format_provider_value(agent=agent, value=provider)}",
     }
@@ -142,6 +171,9 @@ def _build_create_options_form(
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
+    model: str | None,
+    agent_load: int,
+    job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
 ) -> TextualOptionMap:
@@ -160,6 +192,9 @@ def _build_create_options_form(
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
+        model=model,
+        agent_load=agent_load,
+        job_name=job_name,
         reasoning_effort=reasoning_effort,
         provider=provider,
     )
@@ -181,6 +216,21 @@ def _build_create_options_form(
         review_options["host"]: _select_option_spec(
             default=host,
             options=_to_option_values(order_current_first(options=cast(tuple[HOST, ...], get_args(HOST)), current=host)),
+        ),
+        review_options["model"]: _text_option_spec(
+            default=model,
+            allow_blank=True,
+            placeholder="Leave blank to use the agent default model",
+        ),
+        review_options["agent_load"]: _text_option_spec(
+            default=str(agent_load),
+            allow_blank=False,
+            placeholder="Enter a positive integer",
+        ),
+        review_options["job_name"]: _text_option_spec(
+            default=job_name,
+            allow_blank=False,
+            placeholder="Enter the job name",
         ),
         review_options["reasoning_effort"]: _select_option_spec(
             default=reasoning_effort,
@@ -213,6 +263,28 @@ def _require_optional_text_value(*, selected_values: SelectedOptionMap, key: str
     raise TypeError(f"""Expected "{key}" to be str | None, got {value!r}.""")
 
 
+def _require_positive_int_value(*, selected_values: SelectedOptionMap, key: str) -> int:
+    value = _require_selected_value(selected_values=selected_values, key=key)
+    if not isinstance(value, str):
+        raise TypeError(f"""Expected "{key}" to be str, got {value!r}.""")
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise TypeError(f"""Expected "{key}" to be a positive integer, got {value!r}.""") from exc
+    if parsed <= 0:
+        raise TypeError(f"""Expected "{key}" to be a positive integer, got {value!r}.""")
+    return parsed
+
+
+def _require_non_blank_text_value(*, selected_values: SelectedOptionMap, key: str) -> str:
+    value = _require_selected_value(selected_values=selected_values, key=key)
+    if not isinstance(value, str):
+        raise TypeError(f"""Expected "{key}" to be str, got {value!r}.""")
+    if len(value.strip()) == 0:
+        raise TypeError(f"""Expected "{key}" to be non-blank, got {value!r}.""")
+    return value
+
+
 def _require_choice[T: str](*, selected_values: SelectedOptionMap, key: str, options: tuple[T, ...]) -> T:
     value = _require_selected_value(selected_values=selected_values, key=key)
     if isinstance(value, str) and value in options:
@@ -236,6 +308,9 @@ def _collect_create_options_form_selection(
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
+    model: str | None,
+    agent_load: int,
+    job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
 ) -> _CreateOptionsFormSelection:
@@ -245,6 +320,9 @@ def _collect_create_options_form_selection(
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
+        model=model,
+        agent_load=agent_load,
+        job_name=job_name,
         reasoning_effort=reasoning_effort,
         provider=provider,
     )
@@ -257,6 +335,9 @@ def _collect_create_options_form_selection(
                 output_path=output_path,
                 agents_dir=agents_dir,
                 host=host,
+                model=model,
+                agent_load=agent_load,
+                job_name=job_name,
                 reasoning_effort=reasoning_effort,
                 provider=provider,
             )
@@ -268,6 +349,9 @@ def _collect_create_options_form_selection(
         output_path=_require_optional_text_value(selected_values=selected_values, key=review_options["output_path"]),
         agents_dir=_require_optional_text_value(selected_values=selected_values, key=review_options["agents_dir"]),
         host=_require_choice(selected_values=selected_values, key=review_options["host"], options=cast(tuple[HOST, ...], get_args(HOST))),
+        model=_require_optional_text_value(selected_values=selected_values, key=review_options["model"]),
+        agent_load=_require_positive_int_value(selected_values=selected_values, key=review_options["agent_load"]),
+        job_name=_require_non_blank_text_value(selected_values=selected_values, key=review_options["job_name"]),
         reasoning_effort=_require_optional_choice(selected_values=selected_values, key=review_options["reasoning_effort"], options=reasoning_support(agent=agent).efforts),
         provider=_require_optional_choice(selected_values=selected_values, key=review_options["provider"], options=provider_options),
     )
@@ -280,6 +364,9 @@ def collect_reviewed_create_options(
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
+    model: str | None,
+    agent_load: int,
+    job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
 ) -> InteractiveCreateReviewOptions:
@@ -293,6 +380,9 @@ def collect_reviewed_create_options(
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
+        model=model,
+        agent_load=agent_load,
+        job_name=job_name,
         reasoning_effort=reasoning_current,
         provider=provider_current,
     )
@@ -302,6 +392,9 @@ def collect_reviewed_create_options(
         output_path=selection.output_path,
         agents_dir=selection.agents_dir,
         host=selection.host,
+        model=selection.model,
+        agent_load=selection.agent_load,
+        job_name=selection.job_name,
         reasoning_effort=selection.reasoning_effort,
         provider=selection.provider,
     )

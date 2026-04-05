@@ -205,6 +205,7 @@ def test_interactive_main_collects_values_and_delegates() -> None:
     )
 
     with (
+        patch.object(interactive_main, "randstr", return_value="abc"),
         patch.object(interactive_main, "_collect_inputs", return_value=collected) as collect_inputs,
         patch("machineconfig.scripts.python.helpers.helpers_agents.agents_impl.agents_create") as impl,
     ):
@@ -241,6 +242,7 @@ def test_interactive_main_collects_values_and_delegates() -> None:
         separator=DEFAULT_SEAPRATOR,
         prompt=None,
         prompt_path="/tmp/prompt.md",
+        job_name="abc",
     )
     impl.assert_called_once_with(
         agent="codex",
@@ -272,6 +274,9 @@ def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_
                 "output_path = auto: layout.json inside agents_dir": "/tmp/layout.json",
                 "agents_dir = auto: .ai/agents derived from job_name": None,
                 "host = local": "local",
+                "model = agent default": "gpt-5.4",
+                "agent_load = 3": "5",
+                "job_name = abc": "custom-job",
                 "reasoning_effort = agent default": None,
                 "provider = auto: openai": "openai",
             },
@@ -283,6 +288,9 @@ def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_
             output_path=None,
             agents_dir=None,
             host="local",
+            model=None,
+            agent_load=3,
+            job_name="abc",
             reasoning_effort=None,
             provider=None,
         )
@@ -292,6 +300,9 @@ def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_
         output_path="/tmp/layout.json",
         agents_dir=None,
         host="local",
+        model="gpt-5.4",
+        agent_load=5,
+        job_name="custom-job",
         reasoning_effort=None,
         provider="openai",
     )
@@ -302,6 +313,24 @@ def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_
         "default": None,
         "allow_blank": True,
         "placeholder": "Leave blank to auto-create layout.json inside agents_dir",
+    }
+    assert form_options["model = agent default"] == {
+        "kind": "text",
+        "default": None,
+        "allow_blank": True,
+        "placeholder": "Leave blank to use the agent default model",
+    }
+    assert form_options["agent_load = 3"] == {
+        "kind": "text",
+        "default": "3",
+        "allow_blank": False,
+        "placeholder": "Enter a positive integer",
+    }
+    assert form_options["job_name = abc"] == {
+        "kind": "text",
+        "default": "abc",
+        "allow_blank": False,
+        "placeholder": "Enter the job name",
     }
     assert form_options["provider = auto: openai"]["options"] == [None, "openai"]
 

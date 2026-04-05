@@ -7,6 +7,7 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.css.scalar import Scalar
 from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
 
 from machineconfig.utils.options_utils.textual_options_form_types import (
@@ -18,6 +19,7 @@ from machineconfig.utils.options_utils.textual_options_form_types import (
 
 _SELECT_PROMPT: Final[str] = "Choose a value"
 _TEXT_PLACEHOLDER: Final[str] = "Enter a value"
+_DEFAULT_FIELD_LABEL_WIDTH_PERCENT: Final[int] = 50
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +100,20 @@ def _normalized_text_value(value: str) -> str | None:
     return value
 
 
+def _validated_field_label_width_percent(field_label_width_percent: int) -> int:
+    if type(field_label_width_percent) is not int:
+        raise TypeError(
+            f"""Expected field_label_width_percent to be int, got {type(field_label_width_percent).__name__}."""
+        )
+    if field_label_width_percent < 1 or field_label_width_percent > 99:
+        raise ValueError("field_label_width_percent must be between 1 and 99.")
+    return field_label_width_percent
+
+
+def _percentage_width(percent: int) -> Scalar:
+    return Scalar.parse(f"""{percent}%""")
+
+
 def _build_select_field_model(*, key: str, field_index: int, spec: TextualOptionSpec) -> _SelectFieldModel:
     if spec["kind"] != "select":
         raise TypeError(f"""Expected select field for "{key}", got {spec["kind"]!r}.""")
@@ -162,9 +178,8 @@ class TextualOptionsFormApp(App[SelectedOptionMap | None]):
     #shell { height: 100%; padding: 1 2; }
     #intro { padding-bottom: 1; color: $text-muted; }
     #fields { height: 1fr; border: solid $accent; padding: 1; }
-    .field { padding-bottom: 1; }
-    .field-label { padding-bottom: 1; color: $text; text-style: bold; }
-    Select { width: 1fr; }
+    .field { height: auto; padding-bottom: 1; }
+    .field-label { padding: 0 1 0 0; color: $text; text-style: bold; }
     #actions { height: auto; padding-top: 1; align: center middle; }
     #status { width: 1fr; min-height: 3; border: solid $success; padding: 1; }
     #submit { margin-left: 1; }
@@ -175,9 +190,16 @@ class TextualOptionsFormApp(App[SelectedOptionMap | None]):
         Binding("escape", "cancel", "Cancel", show=True),
     ]
 
-    def __init__(self, option_specs: TextualOptionMap) -> None:
+    def __init__(
+        self,
+        option_specs: TextualOptionMap,
+        *,
+        field_label_width_percent: int = _DEFAULT_FIELD_LABEL_WIDTH_PERCENT,
+    ) -> None:
         super().__init__()
         self._fields = _build_field_models(option_specs=option_specs)
+        self._field_label_width_percent = _validated_field_label_width_percent(field_label_width_percent)
+        self._field_control_width_percent = 100 - self._field_label_width_percent
         self._field_by_key = {field.key: field for field in self._fields}
         self._key_by_widget_id = {field.widget_id: field.key for field in self._fields}
         self._selected_values: dict[str, str | None] = {
@@ -191,22 +213,30 @@ class TextualOptionsFormApp(App[SelectedOptionMap | None]):
             yield Static("Set each value, then submit the form.", id="intro")
             with VerticalScroll(id="fields"):
                 for field in self._fields:
-                    with Vertical(classes="field"):
-                        yield Label(field.key, classes="field-label")
+                    with Horizontal(classes="field"):
+                        label = Label(field.key, classes="field-label")
+                        label.styles.width = _percentage_width(percent=self._field_label_width_percent)
+                        yield label
                         if isinstance(field, _SelectFieldModel):
-                            yield Select(
+                            select = Select(
                                 field.select_options,
                                 prompt=_SELECT_PROMPT,
                                 allow_blank=field.allow_blank,
                                 value=field.default_token if field.default_token is not None else Select.NULL,
                                 id=field.widget_id,
+                                classes="field-control",
                             )
+                            select.styles.width = _percentage_width(percent=self._field_control_width_percent)
+                            yield select
                         else:
-                            yield Input(
+                            input_widget = Input(
                                 value="" if field.default_value is None else field.default_value,
                                 placeholder=field.placeholder or _TEXT_PLACEHOLDER,
                                 id=field.widget_id,
+                                classes="field-control",
                             )
+                            input_widget.styles.width = _percentage_width(percent=self._field_control_width_percent)
+                            yield input_widget
             with Horizontal(id="actions"):
                 yield Static("Ready.", id="status")
                 yield Button("Submit", id="submit", variant="primary")
@@ -291,10 +321,17 @@ class TextualOptionsFormApp(App[SelectedOptionMap | None]):
         self.action_submit()
 
 
-def select_option_values_with_textual(option_specs: TextualOptionMap) -> SelectedOptionMap:
+def select_option_values_with_textual(
+    option_specs: TextualOptionMap,
+    *,
+    field_label_width_percent: int = _DEFAULT_FIELD_LABEL_WIDTH_PERCENT,
+) -> SelectedOptionMap:
     if len(option_specs) == 0:
         return {}
-    app = TextualOptionsFormApp(option_specs=option_specs)
+    app = TextualOptionsFormApp(
+        option_specs=option_specs,
+        field_label_width_percent=field_label_width_percent,
+    )
     result = app.run()
     if result is None:
         raise RuntimeError("Option selection cancelled.")

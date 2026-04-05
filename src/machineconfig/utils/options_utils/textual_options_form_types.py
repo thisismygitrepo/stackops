@@ -35,16 +35,23 @@ def resolve_uv_run_config(*, cwd: Path, module_file: Path) -> tuple[list[str], s
     return ["textual", "machineconfig>=8.89"], None
 
 
-def use_textual_options_form(options: TextualOptionMap) -> SelectedOptionMap:
+def use_textual_options_form(
+    options: TextualOptionMap,
+    *,
+    field_label_width_percent: int = 50,
+) -> SelectedOptionMap:
     from machineconfig.utils.accessories import randstr
 
     random_path = str(Path.home() / "tmp_results" / "textual_options_form" / f"{randstr(6)}.json")
 
-    def func(inputs: "TextualOptionMap", result_path: str) -> None:
+    def func(inputs: "TextualOptionMap", result_path: str, label_width_percent: int) -> None:
         import json
         from machineconfig.utils.options_utils.textual_options_form import select_option_values_with_textual
 
-        result = select_option_values_with_textual(inputs)
+        result = select_option_values_with_textual(
+            inputs,
+            field_label_width_percent=label_width_percent,
+        )
         from pathlib import Path
 
         result_path_obj = Path(result_path)
@@ -55,7 +62,11 @@ def use_textual_options_form(options: TextualOptionMap) -> SelectedOptionMap:
     uv_with, uv_project_dir = resolve_uv_run_config(cwd=Path.cwd(), module_file=Path(__file__).resolve())
     # uv_with, uv_project_dir = ["textual", "machineconfig>=8.89"], None
     run_lambda_function(
-        lambda: func(inputs=options, result_path=random_path),
+        lambda: func(
+            inputs=options,
+            result_path=random_path,
+            label_width_percent=field_label_width_percent,
+        ),
         uv_with=uv_with,
         uv_project_dir=uv_project_dir,
     )
