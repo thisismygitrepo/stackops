@@ -269,14 +269,13 @@ def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_
             "use_textual_options_form",
             return_value={
                 "join_prompt_and_context = False": False,
-                "output_path = auto: layout.json inside agents_dir": "edit value",
-                "agents_dir = auto: .ai/agents derived from job_name": "keep current",
+                "output_path = auto: layout.json inside agents_dir": "/tmp/layout.json",
+                "agents_dir = auto: .ai/agents derived from job_name": None,
                 "host = local": "local",
                 "reasoning_effort = agent default": None,
                 "provider = auto: openai": "openai",
             },
         ) as use_textual_options_form,
-        patch.object(interactive_create_options, "prompt_optional_text_value", return_value="/tmp/layout.json") as prompt_optional_text_value,
     ):
         reviewed = interactive_create_options.collect_reviewed_create_options(
             agent="codex",
@@ -298,9 +297,13 @@ def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_
     )
     form_options = use_textual_options_form.call_args.kwargs["options"]
     assert form_options["join_prompt_and_context = False"]["default"] is False
-    assert form_options["output_path = auto: layout.json inside agents_dir"]["options"] == ["keep current", "edit value"]
+    assert form_options["output_path = auto: layout.json inside agents_dir"] == {
+        "kind": "text",
+        "default": None,
+        "allow_blank": True,
+        "placeholder": "Leave blank to auto-create layout.json inside agents_dir",
+    }
     assert form_options["provider = auto: openai"]["options"] == [None, "openai"]
-    prompt_optional_text_value.assert_called_once_with(label="output path", current=None)
 
 
 def test_agents_impl_persists_recreate_artifacts(tmp_path: Path) -> None:

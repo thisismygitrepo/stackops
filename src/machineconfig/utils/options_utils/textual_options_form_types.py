@@ -1,58 +1,97 @@
-from typing import TypeAlias, TypedDict
+from pathlib import Path
+from typing import Literal, TypeAlias, TypedDict
+
+from machineconfig.utils.accessories import get_repo_root
 
 
 OptionValue: TypeAlias = str | float | int | bool | None
 
 
-class TextualOptionSpec(TypedDict):
+class TextualSelectOptionSpec(TypedDict):
+    kind: Literal["select"]
     default: OptionValue
     options: list[OptionValue]
+
+
+class TextualTextOptionSpec(TypedDict):
+    kind: Literal["text"]
+    default: str | None
+    allow_blank: bool
+    placeholder: str
+
+
+type TextualOptionSpec = TextualSelectOptionSpec | TextualTextOptionSpec
 
 
 TextualOptionMap: TypeAlias = dict[str, TextualOptionSpec]
 SelectedOptionMap: TypeAlias = dict[str, OptionValue]
 
 
-def use_textual_options_form(options: TextualOptionMap, ) -> "SelectedOptionMap":
-    from pathlib import Path
+def resolve_uv_run_config(*, cwd: Path, module_file: Path) -> tuple[list[str], str | None]:
+    for probe_path in (cwd, module_file):
+        repo_root = get_repo_root(probe_path)
+        if repo_root is None:
+            continue
+        if repo_root.joinpath("pyproject.toml").exists():
+            return ["textual"], str(repo_root)
+    return ["textual", "machineconfig>=8.89"], None
+
+
+def use_textual_options_form(options: TextualOptionMap) -> SelectedOptionMap:
     from machineconfig.utils.accessories import randstr
+
     random_path = str(Path.home() / "tmp_results" / "textual_options_form" / f"{randstr(6)}.json")
 
     def func(inputs: "TextualOptionMap", result_path: str) -> None:
+        import json
         from machineconfig.utils.options_utils.textual_options_form import select_option_values_with_textual
-        result = select_option_values_with_textual(inputs, )
+
+        result = select_option_values_with_textual(inputs)
         from pathlib import Path
+
         result_path_obj = Path(result_path)
         result_path_obj.parent.mkdir(parents=True, exist_ok=True)
-        import json
         result_path_obj.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
     from machineconfig.utils.code import run_lambda_function
+
+    uv_with, uv_project_dir = resolve_uv_run_config(cwd=Path.cwd(), module_file=Path(__file__).resolve())
     run_lambda_function(
-        lambda : func(inputs=options, result_path=random_path),
-        uv_with=["textual", "machineconfig>=8.89"],
-        uv_project_dir=None,
+        lambda: func(inputs=options, result_path=random_path),
+        uv_with=uv_with,
+        uv_project_dir=uv_project_dir,
     )
     import json
+
     result_content = Path(random_path).read_text(encoding="utf-8")
     result_data = json.loads(result_content)
     from typing import cast
+
     return cast(SelectedOptionMap, result_data)
 
 
 if __name__ == "__main__":
     demo_options: TextualOptionMap = {
         "option1": {
+            "kind": "select",
             "default": "value1",
             "options": ["value1", "value2", "value3"],
         },
         "option2": {
+            "kind": "select",
             "default": 10,
             "options": [10, 20, 30],
         },
         "option3": {
+            "kind": "select",
             "default": True,
             "options": [True, False],
+        },
+        "option4": {
+            "kind": "text",
+            "default": "hello",
+            "allow_blank": False,
+            "placeholder": "Enter any string",
         },
     }
     selected_values = use_textual_options_form(demo_options)
