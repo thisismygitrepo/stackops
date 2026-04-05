@@ -14,13 +14,21 @@ from machineconfig.scripts.python.helpers.helpers_agents.agents_run_context impo
     resolve_prompts_yaml_paths,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from machineconfig.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from machineconfig.utils.accessories import get_repo_root
 
 
 def _quote_for_shell(value: str, is_windows: bool) -> str:
     if is_windows:
         return "'" + value.replace("'", "''") + "'"
     return shlex.quote(value)
+
+
+def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
+    if len(values) == 0:
+        return ""
+    return " " + " ".join(_quote_for_shell(value, is_windows=is_windows) for value in values)
 
 
 def _make_prompt_file(prompt: str, context: str) -> Path:
@@ -63,6 +71,9 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
     is_windows = system() == "Windows"
     prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
     agent_cli = cast(str, agent)
+    repo_root = get_repo_root(Path.cwd())
+    agent_launch_prefix = resolve_agent_launch_prefix(agent=agent, repo_root=repo_root)
+    agent_launch_prefix_q = _format_shell_args(agent_launch_prefix, is_windows=is_windows)
     if reasoning_effort is not None and agent != "codex":
         raise ValueError("--reasoning-effort is only supported for --agent codex")
 
@@ -94,7 +105,7 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
         case "kilocode":
             return f"{agent_cli} {prompt_content_expr}"
         case "cline":
-            return f"{agent_cli} --yolo {prompt_content_expr}"
+            return f"{agent_cli}{agent_launch_prefix_q} --yolo {prompt_content_expr}"
         case "auggie":
             return f"{agent_cli} --print {prompt_content_expr}"
         case "warp-cli":

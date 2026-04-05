@@ -12,6 +12,7 @@ import typer
 
 from machineconfig.scripts.python.agents_parallel import get_app as get_parallel_app
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from machineconfig.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
 from machineconfig.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
 from machineconfig.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
@@ -190,6 +191,14 @@ def add_mcp(
         str | None,
         typer.Argument(help="MCP servers/tools to resolve from machineconfig MCP catalogs (comma-separated)."),
     ] = None,
+    agents: Annotated[
+        str,
+        typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}"),
+    ] = "",
+    scope: Annotated[
+        MCP_INSTALL_SCOPE,
+        typer.Option("--scope", "-s", help="Install MCP config into repo-local or user-global agent config."),
+    ] = "local",
     where: Annotated[
         MCP_CATALOG_WHERE,
         typer.Option(..., "--where", "-w", help="Where to resolve or edit MCP catalog files."),
@@ -206,6 +215,7 @@ def add_mcp(
 ) -> None:
     """Resolve MCP servers from machineconfig catalogs, or open catalog files for editing."""
     from machineconfig.scripts.python.helpers.helpers_agents.mcp_catalog import (
+        collect_available_mcp_names,
         edit_mcp_catalog,
         ensure_mcp_catalog_exists,
         format_resolved_mcp_servers,
@@ -213,6 +223,12 @@ def add_mcp(
         resolve_mcp_catalog_locations,
         resolve_requested_mcp_servers,
     )
+    from machineconfig.scripts.python.helpers.helpers_agents.mcp_install import (
+        choose_requested_mcp_names,
+        install_resolved_mcp_servers,
+        parse_requested_agents,
+    )
+    from machineconfig.utils.accessories import get_repo_root
 
     try:
         search_locations = resolve_mcp_catalog_locations(where=where)
@@ -234,11 +250,28 @@ def add_mcp(
         if requested_mcp_servers is None:
             if edit:
                 return
-            raise typer.BadParameter("Provide MCP server names or use --edit")
+            if len(collect_available_mcp_names(locations=search_locations)) == 0:
+                raise ValueError("No MCP servers are available to choose from in the selected catalog locations")
+            requested_mcp_names = choose_requested_mcp_names(locations=search_locations)
+        else:
+            requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
 
-        requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
         resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
-        typer.echo(format_resolved_mcp_servers(resolved_mcp_servers))
+        selected_agents = parse_requested_agents(raw_value=agents)
+        repo_root = get_repo_root(Path.cwd()) if scope == "local" else None
+        if scope == "local" and repo_root is None:
+            raise ValueError("Local MCP installation requires running the command inside a git repository")
+
+        typer.echo(f"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}")
+        for selected_agent in selected_agents:
+            install_path = install_resolved_mcp_servers(
+                agent=selected_agent,
+                scope=scope,
+                resolved_servers=resolved_mcp_servers,
+                repo_root=repo_root,
+                home_dir=Path.home(),
+            )
+            typer.echo(f"{selected_agent}: {install_path}")
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
@@ -435,8 +468,8 @@ def get_app() -> typer.Typer:
         "make-config", no_args_is_help=True, help=init_config.__doc__, short_help="<g> Initialize AI configurations in the current repository"
     )(init_config)
     agents_app.command("g", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
-    agents_app.command(name="add-mcp", no_args_is_help=True, short_help="<m> Resolve or edit MCP catalog entries")(add_mcp)
-    agents_app.command(name="m", no_args_is_help=True, hidden=True)(add_mcp)
+    agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries and install them for agents")(add_mcp)
+    agents_app.command(name="m", hidden=True)(add_mcp)
     agents_app.command("make-todo", no_args_is_help=True, short_help="<d> Generate a markdown file listing all Python files in the repo")(
         make_todo_files
     )

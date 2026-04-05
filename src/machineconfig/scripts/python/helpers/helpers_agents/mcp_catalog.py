@@ -277,5 +277,40 @@ def resolve_requested_mcp_servers(
     return tuple(resolved_servers)
 
 
+def collect_available_mcp_names(
+    *,
+    locations: Sequence[McpCatalogLocation] | None = None,
+) -> tuple[str, ...]:
+    search_locations = tuple(locations) if locations is not None else default_mcp_catalog_locations()
+    if len(search_locations) == 0:
+        raise ValueError("No MCP catalog locations are configured")
+
+    loaded_catalogs: dict[Path, McpCatalogFile] = {}
+    existing_locations: list[McpCatalogLocation] = []
+    for location in search_locations:
+        catalog_path = location["path"]
+        if not catalog_path.exists():
+            continue
+        if not catalog_path.is_file():
+            raise ValueError(f"MCP catalog path exists but is not a file: {catalog_path}")
+        loaded_catalogs[catalog_path] = _load_mcp_catalog(catalog_path)
+        existing_locations.append(location)
+
+    searched_paths = ", ".join(str(location["path"]) for location in search_locations)
+    if len(existing_locations) == 0:
+        raise ValueError(f"No MCP catalog files were found. Searched: {searched_paths}")
+
+    names: list[str] = []
+    seen_names: set[str] = set()
+    for location in existing_locations:
+        catalog = loaded_catalogs[location["path"]]
+        for server_name in catalog["mcpServers"]:
+            if server_name in seen_names:
+                continue
+            seen_names.add(server_name)
+            names.append(server_name)
+    return tuple(names)
+
+
 def format_resolved_mcp_servers(resolved_servers: Sequence[ResolvedMcpServer]) -> str:
     return ", ".join(f"""{resolved_server["name"]} ({resolved_server["scope"]})""" for resolved_server in resolved_servers)
