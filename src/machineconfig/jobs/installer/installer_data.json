@@ -62,14 +62,14 @@
       "doc": "This application mirrors Android devices",
       "fileNamePattern": {
         "amd64": {
-          "linux": "scrcpy-linux-x86_64-v3.3.3.tar.gz",
-          "windows": "scrcpy-win64-v3.3.3.zip",
-          "darwin": "scrcpy-macos-x86_64-v3.3.3.tar.gz"
+          "linux": "scrcpy-linux-x86_64-{version}.tar.gz",
+          "windows": "scrcpy-win64-{version}.zip",
+          "darwin": "scrcpy-macos-x86_64-{version}.tar.gz"
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "darwin": "scrcpy-macos-aarch64-v3.3.3.tar.gz"
+          "darwin": "scrcpy-macos-aarch64-{version}.tar.gz"
         }
       }
     },
@@ -157,7 +157,7 @@
           "darwin": "brew install imagemagick"
         },
         "arm64": {
-          "linux": "jq-linux-arm64",
+          "linux": null,
           "windows": "ImageMagick-{version}-Q16-arm64-dll.exe",
           "darwin": "brew install imagemagick"
         }
@@ -681,7 +681,7 @@
         "arm64": {
           "linux": "bottom_aarch64-unknown-linux-gnu.tar.gz",
           "darwin": "bottom_aarch64-apple-darwin.tar.gz",
-          "windows": "bottom_x86_64-pc-windows-msvc.zip"
+          "windows": "bottom_aarch64-pc-windows-msvc.tar.gz"
         }
       }
     },
@@ -915,7 +915,7 @@
         "arm64": {
           "linux": "glow_{version}_Linux_arm64.tar.gz",
           "darwin": "glow_{version}_Darwin_arm64.tar.gz",
-          "windows": "glow_{version}_Windows_x86_64.zip"
+          "windows": null
         }
       }
     },
@@ -933,7 +933,7 @@
         "arm64": {
           "linux": "gum_{version}_Linux_arm64.tar.gz",
           "darwin": "gum_{version}_Darwin_arm64.tar.gz",
-          "windows": "gum_{version}_Windows_x86_64.zip"
+          "windows": null
         }
       }
     },
@@ -951,7 +951,7 @@
         "arm64": {
           "linux": "lf-linux-arm64.tar.gz",
           "darwin": "lf-darwin-arm64.tar.gz",
-          "windows": "lf-windows-amd64.zip"
+          "windows": null
         }
       }
     },
@@ -987,7 +987,7 @@
         "arm64": {
           "linux": "lsd-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "darwin": "lsd-{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "lsd-{version}-x86_64-pc-windows-msvc.zip"
+          "windows": null
         }
       }
     },
@@ -1040,7 +1040,7 @@
         },
         "arm64": {
           "linux": "ouch-aarch64-unknown-linux-musl.tar.gz",
-          "darwin": "ouch-aarch64-apple-darwin.tar.gz",
+          "darwin": null,
           "windows": "ouch-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -1059,7 +1059,7 @@
         "arm64": {
           "linux": "procs-{version}-aarch64-linux.zip",
           "darwin": "procs-{version}-aarch64-mac.zip",
-          "windows": "procs-{version}-aarch64-windows.zip"
+          "windows": null
         }
       }
     },
