@@ -260,13 +260,13 @@
       "doc": "🌐 gotty is a simple command line tool that turns your CLI tools into web applications.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "gotty_v{version}_linux_amd64.tar.gz",
-          "darwin": "gotty_v{version}_darwin_amd64.tar.gz",
+          "linux": "gotty_{version}_linux_amd64.tar.gz",
+          "darwin": "gotty_{version}_darwin_amd64.tar.gz",
           "windows": null
         },
         "arm64": {
-          "linux": "gotty_v{version}_linux_arm64.tar.gz",
-          "darwin": "gotty_v{version}_darwin_arm64.tar.gz",
+          "linux": "gotty_{version}_linux_arm64.tar.gz",
+          "darwin": "gotty_{version}_darwin_arm64.tar.gz",
           "windows": null
         }
       }
