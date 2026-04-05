@@ -11,7 +11,7 @@ def peek(
     symantic: Annotated[bool, typer.Option(..., "--symantic", "-s", help="The symantic search of symbols")] = False,
     extension: Annotated[str | None, typer.Option(..., "--extension", "-E", help="File extension to filter by (e.g., .py, .js)")] = None,
     file: Annotated[bool, typer.Option(..., "--file", "-f", help="File search using fzf")] = False,
-    dotfiles: Annotated[bool, typer.Option(..., "--dotfiles", "-D", help="Include dotfiles in search")] = False,
+    dotfiles: Annotated[bool, typer.Option(..., "--dotfiles", "-d", help="Include dotfiles in search")] = False,
     rga: Annotated[bool, typer.Option(..., "--rga", "-A", help="Use ripgrep-all for searching all (non text files) instead of ripgrep")] = False,
     edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open selection in editor (helix)")] = False,
     install_dependencies: Annotated[bool, typer.Option(..., "--install-req", "-i", help="Install required dependencies if missing")] = False,
