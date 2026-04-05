@@ -1,5 +1,11 @@
 """Pure Python implementation for peek command without Typer."""
 
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from machineconfig.scripts.python.helpers.helpers_search.ast_search import SymbolInfo
+
 
 def peek(
     path: str,
@@ -33,6 +39,7 @@ def peek(
     import sys
     import tempfile
     import io
+
     is_temp_file = False
     if not sys.stdin.isatty() and Path(path).is_dir():
         # Use UTF-8 encoding to handle emoji and Unicode characters on Windows
@@ -49,6 +56,7 @@ def peek(
 
     if Path(path).absolute().resolve().is_file():
         from machineconfig.utils.code import exit_then_run_shell_script
+
         code = search_file_with_context(path=path, is_temp_file=is_temp_file, edit=edit)
         exit_then_run_shell_script(script=code, strict=False)
         return
@@ -72,6 +80,7 @@ def search_file_with_context(path: str, is_temp_file: bool, edit: bool) -> str:
     import platform
     import base64
     from pathlib import Path
+
     abs_path = str(Path(path).absolute())
     if platform.system() in {"Linux", "Darwin"}:
         if edit:
@@ -143,6 +152,7 @@ tv `
         raise RuntimeError(f"Unsupported platform, {platform.system()}")
     return code
 
+
 def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
     """Run symantic search."""
     if query == "":
@@ -151,6 +161,7 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
         query = input("Enter search term for symantic search: ")
 
     from pathlib import Path
+
     path_obj = Path(path).absolute()
     if path_obj.is_file():
         text_files = [str(path_obj)]
@@ -162,15 +173,10 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
             import subprocess
 
             def get_text_files(root: str) -> list[str]:
-                result = subprocess.run(
-                    ["rg", "--files", "-0", root],
-                    stdout=subprocess.PIPE,
-                    check=True,
-                )
+                result = subprocess.run(["rg", "--files", "-0", root], stdout=subprocess.PIPE, check=True)
                 return result.stdout.decode().split("\0")[:-1]
 
             text_files = get_text_files(str(path_obj))
-
 
     from typing import TypedDict
 
@@ -185,51 +191,104 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
     def symantic_search(query: str, text_files: list[str]) -> list[SymanticSearchResult]:
         # semtools search "hi" ./devcontainer.json --json
         import random
+
         random_suffix = str(random.randint(1000, 9999))
         import string
+
         random_suffix += "".join(random.choices(string.ascii_letters + string.digits, k=8))
         results_file = Path.home().joinpath("tmp_results", "tmp_text", "symantic_search", "results_" + random_suffix + ".json")
         results_file.parent.mkdir(parents=True, exist_ok=True)
         command = f"""semtools search "{query}" {" ".join(text_files)} --json --top-k 5 --n-lines 10 > {results_file}"""
         import subprocess
+
         subprocess.run(command, shell=True, check=True)
         import json
+
         with open(results_file, "r", encoding="utf-8") as f:
             results_json = f.read()
         results: list[SymanticSearchResult] = json.loads(results_json)["results"]
         return results
 
     if len(text_files) > 50:
-        print(f"⚠️ Found {len(text_files)} text files, which may take a while to search through symantically. Consider providing a more specific path or file extension filter.")
+        print(
+            f"⚠️ Found {len(text_files)} text files, which may take a while to search through symantically. Consider providing a more specific path or file extension filter."
+        )
         return None
     results = symantic_search(query=query, text_files=text_files)
 
-    results_as_dict = {res["content"]: res["content"] + f"\n\nDetails:\n{res['filename']}:{res['start_line_number']}-{res['end_line_number']}\nMatch: {res['match_line_number']}\nDistance: {res['distance']}" for res in results}
+    results_as_dict = {
+        res["content"]: res["content"]
+        + f"\n\nDetails:\n{res['filename']}:{res['start_line_number']}-{res['end_line_number']}\nMatch: {res['match_line_number']}\nDistance: {res['distance']}"
+        for res in results
+    }
     from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
+
     preview_extension = Path(text_files[0]).suffix
-    choose_from_dict_with_preview(options_to_preview_mapping=results_as_dict, extension=preview_extension, multi=False, preview_size_percent=75.0
-    )
+    choose_from_dict_with_preview(options_to_preview_mapping=results_as_dict, extension=preview_extension, multi=False, preview_size_percent=75.0)
 
 
 def _run_ast_search(directory: str) -> None:
     """Run AST search."""
     from machineconfig.scripts.python.helpers.helpers_search.ast_search import get_repo_symbols
+    from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     symbols = get_repo_symbols(directory)
-    from machineconfig.utils.options import choose_from_options
+    options_to_preview_mapping, symbol_lookup = _build_ast_option_lookup(symbols=symbols)
 
     try:
-        res = choose_from_options(options=symbols, msg="Select a symbol to search for:", tv=True, multi=False)
-        if res is None:
+        selected_key = choose_from_dict_with_preview(
+            options_to_preview_mapping=options_to_preview_mapping, extension="py", multi=False, preview_size_percent=75.0
+        )
+        if selected_key is None:
             print("❓ Selection cancelled.")
+            return
+        selected_symbol = symbol_lookup.get(selected_key)
+        if selected_symbol is None:
+            print("❌ Selected symbol could not be resolved.")
             return
         from rich import print_json
         import json
 
-        res_json = json.dumps(res, indent=4)
-        print_json(res_json)
+        selected_symbol_json = json.dumps(_build_ast_output_payload(symbol=selected_symbol), indent=4)
+        print_json(selected_symbol_json)
     except Exception as e:
         print(f"❌ Error during selection: {e}")
+
+
+def _build_ast_option_lookup(symbols: list["SymbolInfo"]) -> tuple[dict[str, str], dict[str, "SymbolInfo"]]:
+    options_to_preview_mapping: dict[str, str] = {}
+    symbol_lookup: dict[str, "SymbolInfo"] = {}
+    for symbol in symbols:
+        option_key = _build_ast_option_key(symbol=symbol)
+        options_to_preview_mapping[option_key] = _build_ast_option_preview(symbol=symbol)
+        symbol_lookup[option_key] = symbol
+    return options_to_preview_mapping, symbol_lookup
+
+
+def _build_ast_option_key(symbol: "SymbolInfo") -> str:
+    return f"""{symbol["path"]}    [{symbol["file_path"]}:{symbol["line"]}]"""
+
+
+def _build_ast_option_preview(symbol: "SymbolInfo") -> str:
+    header = f"""# {symbol["type"]}: {symbol["path"]}
+# {symbol["file_path"]}:{symbol["line"]}-{symbol["end_line"]}"""
+    if symbol["body"] == "":
+        return header
+    return f"""{header}
+
+{symbol["body"]}"""
+
+
+def _build_ast_output_payload(symbol: "SymbolInfo") -> dict[str, str | int]:
+    return {
+        "type": symbol["type"],
+        "name": symbol["name"],
+        "path": symbol["path"],
+        "file_path": symbol["file_path"],
+        "line": symbol["line"],
+        "end_line": symbol["end_line"],
+        "docstring": symbol["docstring"],
+    }
 
 
 def _run_file_search(directory: str | None, dotfiles: bool, edit: bool, search_term: str) -> None:
@@ -328,6 +387,7 @@ def _run_text_search(rga: bool, directory: str | None, search_term: str) -> None
     script = _set_initial_query(script=script, search_term=search_term, platform_name=platform_name)
     script = _prepend_directory_change(script=script, directory=directory, platform_name=platform_name)
     from machineconfig.utils.code import exit_then_run_shell_script
+
     exit_then_run_shell_script(script=script, strict=False)
 
 

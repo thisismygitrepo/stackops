@@ -1,25 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Final, Literal, TypeAlias, TypedDict, cast
+from typing import Final, Literal, cast
 
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, Footer, Header, Label, Select, Static
-
-
-OptionValue: TypeAlias = str | float | int | bool | None
-
-
-class TextualOptionSpec(TypedDict):
-    default: OptionValue
-    options: list[OptionValue]
-
-
-TextualOptionMap: TypeAlias = dict[str, TextualOptionSpec]
-SelectedOptionMap: TypeAlias = dict[str, OptionValue]
+from machineconfig.utils.options_utils.textual_options_form_types import OptionValue, SelectedOptionMap, TextualOptionMap
 
 _SELECT_PROMPT: Final[str] = "Choose a value"
 
