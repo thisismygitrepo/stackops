@@ -143,7 +143,8 @@ def app(
         case "rainfrog":
             cmd = "rainfrog"
             if resolved:
-                cmd += f" --url {_url_for(resolved[0])}"
+                # cmd += f" --url {_url_for(resolved[0])}"
+                cmd += f" --url {resolved[0]}"
         case "lazysql":
             cmd = "lazysql"
             if read_only:
