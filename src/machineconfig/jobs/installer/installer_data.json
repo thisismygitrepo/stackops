@@ -1646,14 +1646,14 @@
       "doc": "🌐 browser in the shell",
       "fileNamePattern": {
         "amd64": {
-          "linux": null,
-          "darwin": null,
-          "windows": null
+          "linux": "browsh-{version}.xpi",
+          "darwin": "browsh-{version}.xpi",
+          "windows": "browsh-{version}.xpi"
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
-          "windows": null
+          "linux": "browsh-{version}.xpi",
+          "darwin": "browsh-{version}.xpi",
+          "windows": "browsh-{version}.xpi"
         }
       }
     },
