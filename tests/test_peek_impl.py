@@ -1,4 +1,6 @@
 from unittest.mock import patch
+from pathlib import Path
+import textwrap
 
 from machineconfig.scripts.python.helpers.helpers_peek import peek_impl
 from machineconfig.scripts.python.helpers.helpers_search.ast_search import SymbolInfo
@@ -165,3 +167,42 @@ def test_peek_ast_uses_tv_preview_with_symbol_body() -> None:
     printed_json = print_json.call_args.args[0]
     assert '"path": "demo.sample"' in printed_json
     assert '"body"' not in printed_json
+
+
+def test_peek_ast_supports_single_python_file_path(tmp_path: Path) -> None:
+    source_path = tmp_path.joinpath("demo.py")
+    source_path.write_text(
+        textwrap.dedent(
+            """
+            def sample() -> None:
+                return None
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    def _fake_choose(*, options_to_preview_mapping: dict[str, str], extension: str | None, multi: bool, preview_size_percent: float) -> str | None:
+        assert extension == "py"
+        assert multi is False
+        assert preview_size_percent == 75.0
+        return next(iter(options_to_preview_mapping))
+
+    with patch("machineconfig.utils.options_utils.tv_options.choose_from_dict_with_preview", side_effect=_fake_choose), patch(
+        "rich.print_json"
+    ) as print_json:
+        peek_impl.peek(
+            path=str(source_path),
+            search_term="",
+            ast=True,
+            symantic=False,
+            extension=None,
+            file=False,
+            dotfiles=False,
+            rga=False,
+            edit=False,
+            install_dependencies=False,
+        )
+
+    printed_json = print_json.call_args.args[0]
+    assert '"path": "demo.sample"' in printed_json
+    assert '"file_path": "demo.py"' in printed_json

@@ -83,18 +83,38 @@ def _extract_symbols_from_body(
     return symbols
 
 
-def get_repo_symbols(repo_path: str) -> list[SymbolInfo]:
-    repo_root = Path(repo_path).resolve()
+def _iter_python_files(search_path: Path) -> list[Path]:
     skip_dirs = {".git", ".mypy_cache", ".pytest_cache", ".venv", "__pycache__", "venv"}
-    results: list[SymbolInfo] = []
-    counter: int = 0
-    for root_path in repo_root.rglob("*"):
+    if search_path.is_file():
+        if search_path.suffix != ".py":
+            return []
+        return [search_path]
+
+    python_files: list[Path] = []
+    for root_path in search_path.rglob("*"):
         if not root_path.is_file() or root_path.suffix != ".py":
             continue
-        if any(part in skip_dirs or part.startswith(".") for part in root_path.relative_to(repo_root).parts[:-1]):
+        if any(part in skip_dirs or part.startswith(".") for part in root_path.relative_to(search_path).parts[:-1]):
             continue
-        relative_file_path = root_path.relative_to(repo_root).as_posix()
-        module_path = relative_file_path.replace("/", ".").removesuffix(".py")
+        python_files.append(root_path)
+    return python_files
+
+
+def _build_module_metadata(search_path: Path, root_path: Path) -> tuple[str, str]:
+    if search_path.is_file():
+        relative_file_path = root_path.name
+    else:
+        relative_file_path = root_path.relative_to(search_path).as_posix()
+    module_path = relative_file_path.replace("/", ".").removesuffix(".py")
+    return relative_file_path, module_path
+
+
+def get_repo_symbols(search_path: str) -> list[SymbolInfo]:
+    resolved_search_path = Path(search_path).resolve()
+    results: list[SymbolInfo] = []
+    counter: int = 0
+    for root_path in _iter_python_files(search_path=resolved_search_path):
+        relative_file_path, module_path = _build_module_metadata(search_path=resolved_search_path, root_path=root_path)
         try:
             if counter % 100 == 0:
                 print(f"🔍 Parsing {counter}: {root_path}...")

@@ -29,7 +29,7 @@ def peek(
         _run_symantic_search(path=path, query=search_term, extension=extension)
         return
     if ast:
-        _run_ast_search(directory=path)
+        _run_ast_search(path=path)
         return
     if file:
         _run_file_search(directory=path, dotfiles=dotfiles, edit=edit, search_term=search_term)
@@ -227,12 +227,12 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
     choose_from_dict_with_preview(options_to_preview_mapping=results_as_dict, extension=preview_extension, multi=False, preview_size_percent=75.0)
 
 
-def _run_ast_search(directory: str) -> None:
+def _run_ast_search(path: str) -> None:
     """Run AST search."""
     from machineconfig.scripts.python.helpers.helpers_search.ast_search import get_repo_symbols
     from machineconfig.utils.options_utils.tv_options import choose_from_dict_with_preview
 
-    symbols = get_repo_symbols(directory)
+    symbols = get_repo_symbols(path)
     options_to_preview_mapping, symbol_lookup = _build_ast_option_lookup(symbols=symbols)
 
     if len(symbols) == 0:

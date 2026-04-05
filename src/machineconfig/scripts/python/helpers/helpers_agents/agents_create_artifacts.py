@@ -164,7 +164,7 @@ def write_create_artifacts(
     recreate_script_path = artifacts_dir / "recreate_layout.sh"
     recreate_script_path.write_text(
         f"""#!/usr/bin/env bash
-set -euo pipefail
+# set -euo pipefail
 
 {recreate_command}
 """,

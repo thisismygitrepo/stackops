@@ -40,3 +40,29 @@ def test_get_repo_symbols_captures_nested_symbol_paths_and_bodies(tmp_path: Path
     nested_symbol = symbols_by_path["demo.top.nested"]
     assert nested_symbol["type"] == "function"
     assert "def nested() -> None:" in nested_symbol["body"]
+
+
+def test_get_repo_symbols_supports_single_python_file_path(tmp_path: Path) -> None:
+    source = textwrap.dedent(
+        """
+        def sample() -> int:
+            return 7
+        """
+    ).lstrip()
+    source_path = tmp_path.joinpath("demo.py")
+    source_path.write_text(source, encoding="utf-8")
+
+    symbols = get_repo_symbols(str(source_path))
+
+    assert symbols == [
+        {
+            "type": "function",
+            "name": "sample",
+            "path": "demo.sample",
+            "file_path": "demo.py",
+            "line": 1,
+            "end_line": 2,
+            "docstring": "",
+            "body": "def sample() -> int:\n    return 7",
+        }
+    ]
