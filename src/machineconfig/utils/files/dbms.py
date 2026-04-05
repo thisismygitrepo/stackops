@@ -25,17 +25,59 @@ class DBMS:
         self.eng.pool.dispose()
         self.eng.dispose()
         time.sleep(sleep)
+
     @staticmethod
     def _get_table_identifier(engine: Engine, table: str, sch: str | None) -> str:
         if sch is not None:
-            # Handle DuckDB schema names that contain dots (e.g., "klines.main")
-            if engine.url.drivername == 'duckdb' and '.' in sch and sch.endswith('.main'):
-                # For DuckDB schemas like "klines.main", just use the table name without schema
-                return f'"{table}"'
-            else:
-                return f'"{sch}"."{table}"'
-        else:
-            return f'"{table}"'
+            if engine.url.drivername == 'duckdb' and '.' in sch:
+                catalog_name, schema_name = sch.rsplit('.', 1)
+                return f'"{catalog_name}"."{schema_name}"."{table}"'
+            return f'"{sch}"."{table}"'
+        return f'"{table}"'
+
+    @staticmethod
+    def _is_system_schema_name(schema_name: str) -> bool:
+        return schema_name in {'information_schema', 'pg_catalog', 'system', 'temp'} or schema_name.startswith(('system.', 'temp.')) or schema_name.endswith(('.information_schema', '.pg_catalog'))
+
+    def _iter_table_refs(self, sch: str | None = None) -> list[tuple[str | None, str]]:
+        insp = inspect__(self.eng)
+        if sch is not None:
+            return [(sch, table_name) for table_name in insp.get_table_names(schema=sch)]
+
+        table_refs: list[tuple[str | None, str]] = []
+        for schema_name in insp.get_schema_names():
+            if self._is_system_schema_name(schema_name):
+                continue
+            for table_name in insp.get_table_names(schema=schema_name):
+                table_refs.append((schema_name, table_name))
+        return table_refs
+
+    def _get_duckdb_column_details(self, table: str, sch: str | None) -> list[dict[str, Any]]:
+        identifier = self._get_table_identifier(self.eng, table, sch)
+        with self.eng.connect() as conn:
+            describe_rows = conn.execute(text(f'''DESCRIBE {identifier}''')).mappings().all()
+
+        return [
+            {
+                'name': str(row['column_name']),
+                'type': str(row['column_type']),
+                'nullable': row['null'] == 'YES',
+                'default': row['default'],
+                'autoincrement': None,
+            }
+            for row in describe_rows
+        ]
+
+    def get_column_details(self, table: str, sch: str | None) -> list[dict[str, Any]]:
+        if self.eng.url.drivername == 'duckdb':
+            return self._get_duckdb_column_details(table=table, sch=sch)
+        return [dict(column_info) for column_info in inspect__(self.eng).get_columns(table_name=table, schema=sch)]
+
+    def _count_rows(self, table: str, sch: str | None) -> int:
+        identifier = self._get_table_identifier(self.eng, table, sch)
+        with self.eng.connect() as conn:
+            result = conn.execute(text(f'''SELECT COUNT(*) AS row_count FROM {identifier}'''))
+            return int(result.scalar_one())
 
     # ==================== QUERIES =====================================
     def execute_as_you_go(self, *commands: str, res_func: Callable[[Any], Any] = lambda x: x.all(), df: bool = False):
@@ -73,7 +115,8 @@ class DBMS:
         con = self.eng.connect()
         ses = sessionmaker()(bind=self.eng)
         meta = MetaData()
-        meta.reflect(bind=self.eng, schema=sch)
+        if self.eng.url.drivername != 'duckdb':
+            meta.reflect(bind=self.eng, schema=sch)
         insp = inspect__(subject=self.eng)
         schema = insp.get_schema_names()
         sch_tab = {k: v for k, v in zip(schema, [insp.get_table_names(schema=x) for x in schema])}
@@ -81,9 +124,7 @@ class DBMS:
         return {'con': con, 'ses': ses, 'meta': meta, 'insp': insp, 'schema': schema, 'sch_tab': sch_tab, 'sch_vws': sch_vws}
 
     def get_columns(self, table: str, sch: str | None = None) -> list[str]:
-        meta = MetaData()
-        meta.reflect(bind=self.eng, schema=sch)
-        return list(meta.tables[self._get_table_identifier(self.eng, table, sch)].exported_columns.keys())
+        return [str(column_info['name']) for column_info in self.get_column_details(table=table, sch=sch)]
 
     def read_table(self, table: str | None = None, sch: str | None = None, size: int = 5) -> pl.DataFrame:
         insp = inspect__(self.eng)
@@ -93,9 +134,10 @@ class DBMS:
             # First try to find schemas that have tables (excluding system schemas)
             schemas_with_tables = []
             for schema_name in schema:
-                if schema_name not in ["information_schema", "pg_catalog", "system"]:
-                    if schema_name in sch_tab and len(sch_tab[schema_name]) > 0:
-                        schemas_with_tables.append(schema_name)
+                if self._is_system_schema_name(schema_name):
+                    continue
+                if schema_name in sch_tab and len(sch_tab[schema_name]) > 0:
+                    schemas_with_tables.append(schema_name)
 
             if len(schemas_with_tables) == 0:
                 raise ValueError(f"No schemas with tables found. Available schemas: {schema}")
@@ -126,32 +168,26 @@ class DBMS:
                 raise
 
     def describe_db(self, sch: str | None = None) -> pl.DataFrame:
-        meta = MetaData()
-        meta.reflect(bind=self.eng, schema=sch)
-        ses = sessionmaker()(bind=self.eng)
+        table_refs = self._iter_table_refs(sch=sch)
         res_all = []
         from rich.progress import Progress
         with Progress() as progress:
-            task = progress.add_task("Inspecting tables", total=len(meta.sorted_tables))
-            for tbl in meta.sorted_tables:
-                table = tbl.name
-                if sch is not None:
-                    table = f"{sch}.{table}"
-                count = ses.query(tbl).count()
-                res = dict(table=table, count=count, size_mb=count * len(tbl.exported_columns) * 10 / 1e6,
-                           columns=len(tbl.exported_columns), schema=sch)
+            task = progress.add_task("Inspecting tables", total=len(table_refs))
+            for table_schema, table_name in table_refs:
+                column_details = self.get_column_details(table=table_name, sch=table_schema)
+                count = self._count_rows(table=table_name, sch=table_schema)
+                display_name = table_name if table_schema is None else f"{table_schema}.{table_name}"
+                res = dict(table=display_name, count=count, size_mb=count * len(column_details) * 10 / 1e6,
+                           columns=len(column_details), schema=table_schema)
                 res_all.append(res)
                 progress.update(task, advance=1)
         return pl.DataFrame(res_all)
 
     def describe_table(self, table: str, sch: str | None = None, dtype: bool = True) -> None:
         print(table.center(100, "="))
-        meta = MetaData()
-        meta.reflect(bind=self.eng, schema=sch)
-        tbl = meta.tables[self._get_table_identifier(self.eng, table, sch)]
-        ses = sessionmaker()(bind=self.eng)
-        count = ses.query(tbl).count()
-        res = dict(name=table, count=count, size_mb=count * len(tbl.exported_columns) * 10 / 1e6)
+        column_details = self.get_column_details(table=table, sch=sch)
+        count = self._count_rows(table=table, sch=sch)
+        res = dict(name=table, count=count, size_mb=count * len(column_details) * 10 / 1e6)
         # from machineconfig.utils.accessories import pprint
         def pprint(obj: dict[Any, Any], title: str) -> None:
             from rich import inspect
@@ -160,9 +196,8 @@ class DBMS:
         dat = self.read_table(table=table, sch=sch, size=2)
         df = dat
         print("SAMPLE:\n", df)
-        insp = inspect__(self.eng)
         if dtype:
-            print("\nDETAILED COLUMNS:\n", pl.DataFrame(insp.get_columns(self._get_table_identifier(self.eng, table, sch))))
+            print("\nDETAILED COLUMNS:\n", pl.DataFrame(column_details))
         print("\n" * 3)
 
     @staticmethod
@@ -215,6 +250,7 @@ def from_db(table: str):
 
 
 def get_table_specs(engine: Engine, table_name: str) -> pl.DataFrame:
+    dbms = DBMS(engine=engine)
     inspector = inspect__(engine)
     # Collect table information
     columns_info = [{
@@ -224,7 +260,7 @@ def get_table_specs(engine: Engine, table_name: str) -> pl.DataFrame:
         'default': col['default'],
         'autoincrement': col.get('autoincrement'),
         'category': 'column'
-    } for col in inspector.get_columns(table_name)]
+    } for col in dbms.get_column_details(table=table_name, sch=None)]
     # Primary keys
     pk_info = [{
         'name': pk,
