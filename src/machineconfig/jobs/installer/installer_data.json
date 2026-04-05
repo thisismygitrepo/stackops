@@ -1826,12 +1826,12 @@
       "doc": "🗃️ TUI DB Visualizer",
       "fileNamePattern": {
         "amd64": {
-          "linux": "rainfrog-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "linux": "rainfrog-{version}-x86_64-unknown-linux-gnu.tar.gz",
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": "rainfrog-{version}-aarch64-unknown-linux-musl.tar.gz",
+          "linux": "rainfrog-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "darwin": null,
           "windows": null
         }

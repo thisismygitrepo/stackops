@@ -1,7 +1,9 @@
 
-from typing import Literal, TypeAlias
 from pathlib import Path
 import glob as glob_module
+import shutil
+import subprocess
+from typing import Literal, TypeAlias
 
 BACKEND_LOOSE: TypeAlias = Literal[
     "rainfrog", "r",
@@ -31,7 +33,9 @@ LOOSE2STRICT: dict[BACKEND_LOOSE, BACKEND] = {
 # harlequin is the only backend that can open multiple DB files simultaneously
 MULTI_DB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin"})
 # backends that can natively handle duckdb connection strings
-DUCKDB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin", "usql"})
+DUCKDB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin", "rainfrog", "usql"})
+RAINFROG_INVALID_DRIVER_MESSAGE = "Invalid driver"
+RAINFROG_DUCKDB_PROBE_TIMEOUT_SECONDS = 1
 
 DUCKDB_EXTS: frozenset[str] = frozenset({".duckdb", ".ddb"})
 EXT_TO_PREFIX: dict[str, str] = {
@@ -53,15 +57,42 @@ def _url_for(p: Path) -> str:
     return f'"{prefix}{p}"'
 
 
+def _rainfrog_supports_duckdb(path: Path) -> bool | None:
+    if shutil.which("rainfrog") is None:
+        return None
+    try:
+        proc = subprocess.run(
+            ["rainfrog", "--driver", "duckdb", "--database", str(path)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=RAINFROG_DUCKDB_PROBE_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        return True
+    output = f"{proc.stdout}\n{proc.stderr}"
+    if RAINFROG_INVALID_DRIVER_MESSAGE in output:
+        return False
+    return True
+
+
 def _validate_backend(backend: BACKEND, resolved: list[Path]) -> None:
     is_all_duckdb = all(p.suffix.lower() in DUCKDB_EXTS for p in resolved)
-    if is_all_duckdb and backend not in DUCKDB_CAPABLE:
-        duckdb_capable_list = ", ".join(sorted(DUCKDB_CAPABLE))
-        raise ValueError(
-            f"Backend '{backend}' does not support DuckDB files.\n"
-            f"DuckDB-capable backends: {duckdb_capable_list}\n"
-            f"Files: {[str(p) for p in resolved]}"
-        )
+    if is_all_duckdb:
+        if backend == "rainfrog":
+            if _rainfrog_supports_duckdb(resolved[0]) is False:
+                raise ValueError(
+                    "Installed rainfrog binary does not include DuckDB support.\n"
+                    "Use harlequin or usql, or install a rainfrog build with DuckDB enabled.\n"
+                    f"Files: {[str(p) for p in resolved]}"
+                )
+        elif backend not in DUCKDB_CAPABLE:
+            duckdb_capable_list = ", ".join(sorted(DUCKDB_CAPABLE))
+            raise ValueError(
+                f"Backend '{backend}' does not support DuckDB files.\n"
+                f"DuckDB-capable backends: {duckdb_capable_list}\n"
+                f"Files: {[str(p) for p in resolved]}"
+            )
     if len(resolved) > 1 and backend not in MULTI_DB_CAPABLE:
         multi_capable_list = ", ".join(sorted(MULTI_DB_CAPABLE))
         raise ValueError(
