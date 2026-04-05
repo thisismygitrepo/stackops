@@ -117,7 +117,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "jq-linux-amd64",
-          "windows": "jq-windows-amd64.exe",
+          "windows": "jq-win64.exe",
           "darwin": "jq-macos-amd64"
         },
         "arm64": {
@@ -152,12 +152,12 @@
       "doc": "🧙‍♂️ Command-line image manipulation tool",
       "fileNamePattern": {
         "amd64": {
-          "linux": "ImageMagick-{version}-gcc-x86_64.AppImage",
+          "linux": "ImageMagick-{version}-portable-Q16-x64.7z",
           "windows": "ImageMagick-{version}-portable-Q16-x64.7z",
           "darwin": "brew install imagemagick"
         },
         "arm64": {
-          "linux": null,
+          "linux": "ImageMagick-{version}-portable-Q16-arm64.7z",
           "windows": "ImageMagick-{version}-Q16-arm64-dll.exe",
           "darwin": "brew install imagemagick"
         }
