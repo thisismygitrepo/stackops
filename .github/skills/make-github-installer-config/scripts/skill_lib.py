@@ -1,32 +1,49 @@
-
-
 from dataclasses import dataclass
-from typing import Any
+from typing import Literal, cast
 import json
 import re
 import urllib.error
 import urllib.request
 
 
+type OperatingSystem = Literal["linux", "darwin", "windows"]
+type CpuArchitecture = Literal["amd64", "arm64"]
+type LicenseSource = Literal["user", "github_api_name", "github_api_spdx", "fallback"]
+
 GITHUB_API_BASE: str = "https://api.github.com"
 USER_AGENT: str = "machineconfig-skill/make-github-installer-config"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RepoSpec:
     owner: str
     repo: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ReleaseAsset:
     name: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ReleaseInfo:
     tag_name: str
     assets: list[ReleaseAsset]
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedLicense:
+    value: str
+    source: LicenseSource
+    warning: str | None
+
+
+def _as_string_key_dict(value: object) -> dict[str, object] | None:
+    if not isinstance(value, dict):
+        return None
+    if any(not isinstance(key, str) for key in value):
+        return None
+    return cast(dict[str, object], value)
 
 
 def parse_repo_url(repo_url: str) -> RepoSpec:
@@ -39,7 +56,7 @@ def parse_repo_url(repo_url: str) -> RepoSpec:
     return RepoSpec(owner=owner, repo=repo)
 
 
-def _http_get_json(url: str) -> Any:
+def _http_get_json(url: str) -> object:
     request = urllib.request.Request(url=url, headers={"Accept": "application/vnd.github+json", "User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -55,24 +72,26 @@ def fetch_releases(spec: RepoSpec, limit: int) -> list[ReleaseInfo]:
     if limit <= 0:
         raise ValueError("limit must be positive")
     api_url: str = f"{GITHUB_API_BASE}/repos/{spec.owner}/{spec.repo}/releases?per_page={limit}"
-    payload: Any = _http_get_json(api_url)
+    payload = _http_get_json(api_url)
     if not isinstance(payload, list):
         raise RuntimeError("Unexpected GitHub API response format for releases endpoint")
 
     releases: list[ReleaseInfo] = []
     for release_row in payload:
-        if not isinstance(release_row, dict):
+        release_map = _as_string_key_dict(release_row)
+        if release_map is None:
             continue
-        tag_name_raw: Any = release_row.get("tag_name")
-        assets_raw: Any = release_row.get("assets")
+        tag_name_raw = release_map.get("tag_name")
+        assets_raw = release_map.get("assets")
         if not isinstance(tag_name_raw, str):
             continue
         assets: list[ReleaseAsset] = []
         if isinstance(assets_raw, list):
             for asset_row in assets_raw:
-                if not isinstance(asset_row, dict):
+                asset_map = _as_string_key_dict(asset_row)
+                if asset_map is None:
                     continue
-                asset_name: Any = asset_row.get("name")
+                asset_name = asset_map.get("name")
                 if isinstance(asset_name, str):
                     assets.append(ReleaseAsset(name=asset_name))
         releases.append(ReleaseInfo(tag_name=tag_name_raw, assets=assets))
@@ -82,11 +101,43 @@ def fetch_releases(spec: RepoSpec, limit: int) -> list[ReleaseInfo]:
     return releases
 
 
+def fetch_repo_license(spec: RepoSpec) -> ResolvedLicense:
+    api_url: str = f"{GITHUB_API_BASE}/repos/{spec.owner}/{spec.repo}"
+    payload = _http_get_json(api_url)
+    payload_map = _as_string_key_dict(payload)
+    if payload_map is None:
+        raise RuntimeError("Unexpected GitHub API response format for repository endpoint")
+
+    license_value = payload_map.get("license")
+    license_map = _as_string_key_dict(license_value)
+    if license_map is None:
+        return ResolvedLicense(
+            value="No license asserted",
+            source="fallback",
+            warning="GitHub repository metadata does not declare a license",
+        )
+
+    license_name_raw = license_map.get("name")
+    license_spdx_raw = license_map.get("spdx_id")
+    license_name = license_name_raw.strip() if isinstance(license_name_raw, str) else ""
+    license_spdx = license_spdx_raw.strip() if isinstance(license_spdx_raw, str) else ""
+
+    if license_name and license_name.lower() != "other":
+        return ResolvedLicense(value=license_name, source="github_api_name", warning=None)
+    if license_spdx and license_spdx.upper() != "NOASSERTION":
+        return ResolvedLicense(value=license_spdx, source="github_api_spdx", warning=None)
+    return ResolvedLicense(
+        value="No license asserted",
+        source="fallback",
+        warning="GitHub repository metadata does not provide a usable license value",
+    )
+
+
 def normalize_version_for_placeholder(tag_name: str) -> str:
     return tag_name[1:] if tag_name.startswith("v") else tag_name
 
 
-def classify_os(asset_name: str) -> str | None:
+def classify_os(asset_name: str) -> OperatingSystem | None:
     lowered: str = asset_name.lower()
     if "linux" in lowered:
         return "linux"
@@ -97,7 +148,7 @@ def classify_os(asset_name: str) -> str | None:
     return None
 
 
-def classify_arch(asset_name: str) -> str | None:
+def classify_arch(asset_name: str) -> CpuArchitecture | None:
     lowered: str = asset_name.lower()
     if "aarch64" in lowered or "arm64" in lowered:
         return "arm64"
