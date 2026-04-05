@@ -1,9 +1,6 @@
 from pathlib import Path
 from typing import Literal, TypeAlias, TypedDict
 
-from machineconfig.utils.accessories import get_repo_root
-
-
 OptionValue: TypeAlias = str | float | int | bool | None
 
 
@@ -29,6 +26,7 @@ SelectedOptionMap: TypeAlias = dict[str, OptionValue]
 
 def resolve_uv_run_config(*, cwd: Path, module_file: Path) -> tuple[list[str], str | None]:
     for probe_path in (cwd, module_file):
+        from machineconfig.utils.accessories import get_repo_root
         repo_root = get_repo_root(probe_path)
         if repo_root is None:
             continue
@@ -54,8 +52,8 @@ def use_textual_options_form(options: TextualOptionMap) -> SelectedOptionMap:
         result_path_obj.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
     from machineconfig.utils.code import run_lambda_function
-
     uv_with, uv_project_dir = resolve_uv_run_config(cwd=Path.cwd(), module_file=Path(__file__).resolve())
+    # uv_with, uv_project_dir = ["textual", "machineconfig>=8.89"], None
     run_lambda_function(
         lambda: func(inputs=options, result_path=random_path),
         uv_with=uv_with,
