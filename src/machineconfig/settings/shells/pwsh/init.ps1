@@ -69,18 +69,7 @@ else {
 }
 
 
-# patches ===========================================================
-
-try {
-    # patched by machineconfig from https://github.com/ajeetdsouza/zoxide
-    Invoke-Expression (& {
-        # $hook = if ($PSVersionTable.PSVersion.Major -lt 6) { 'prompt' } else { 'pwd' }
-        (zoxide init --hook pwd powershell | Out-String)
-    })
-}
-catch {
-    # Do nothing
-}
+# prompt integrations ===========================================================
 
 try {
     # Initialize Starship prompt
@@ -148,4 +137,15 @@ else {
     catch {
         # Do nothing
     }
+}
+
+try {
+    # zoxide must be initialized after other prompt integrations so its hook
+    # wraps the final prompt function instead of getting replaced on Windows.
+    Invoke-Expression (& {
+        (zoxide init --hook pwd powershell | Out-String)
+    })
+}
+catch {
+    # Do nothing
 }
