@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://bytesense.local/schemas/mapper_dotfiles.schema.json",
+  "title": "Dotfiles Mapper Schema",
+  "description": "Schema for profile/mapper_dotfiles.yaml.",
+  "type": "object",
+  "propertyNames": {
+    "type": "string",
+    "minLength": 1
+  },
+  "additionalProperties": {
+    "$ref": "#/definitions/MapperSection"
+  },
+  "definitions": {
+    "MapperSection": {
+      "type": "object",
+      "description": "A program or tool grouping containing one or more mapped files.",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/MapperEntry"
+      }
+    },
+    "MapperEntry": {
+      "type": "object",
+      "description": "A single dotfile mapping entry.",
+      "properties": {
+        "original": {
+          "type": "string",
+          "description": "Path to the live file or directory on the machine.",
+          "examples": [
+            "~/.gitconfig",
+            "~/AppData/Local/ngrok/ngrok.yml"
+          ]
+        },
+        "self_managed": {
+          "type": "string",
+          "description": "Path to the managed copy. May use CONFIG_ROOT or ~.",
+          "examples": [
+            "~/dotfiles/creds/git/.gitconfig",
+            "CONFIG_ROOT/settings/presenterm/config.yaml"
+          ]
+        },
+        "os": {
+          "type": "array",
+          "description": "Supported operating systems for this mapping.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "linux",
+              "darwin",
+              "windows"
+            ]
+          }
+        },
+        "contents": {
+          "type": "boolean",
+          "description": "When true, sync the contents of the directory rather than the directory entry itself."
+        },
+        "copy": {
+          "type": "boolean",
+          "description": "When true, copy instead of symlink."
+        }
+      },
+      "required": [
+        "original",
+        "self_managed",
+        "os"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

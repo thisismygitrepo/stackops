@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=./mapper_dotfiles.schema.json
 # User-defined config file mappings
 # os values are explicit YAML lists containing linux, darwin, or windows
 
