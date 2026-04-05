@@ -20,32 +20,68 @@ def _write_mcp_catalog(path: Path, content: dict[str, object]) -> None:
     path.write_text(json.dumps(content, indent=2), encoding="utf-8")
 
 
-def test_make_config_help_lists_add_mcp_option() -> None:
+def test_make_config_help_no_longer_lists_add_mcp_option() -> None:
     result = runner.invoke(agents.get_app(), ["g", "--help"])
 
     assert result.exit_code == 0
-    assert "--add-mcp" in result.output
-    assert "-m" in result.output
+    assert "--add-mcp" not in result.output
 
 
-def test_make_config_passes_add_mcp_to_impl(tmp_path: Path) -> None:
-    with patch("machineconfig.scripts.python.helpers.helpers_agents.agents_impl.init_config") as impl:
-        result = runner.invoke(
-            agents.get_app(),
-            ["g", "--root", str(tmp_path), "--agent", "codex", "--add-mcp", "github,context7"],
-        )
+def test_add_mcp_help_lists_edit_and_where_options() -> None:
+    result = runner.invoke(agents.get_app(), ["m", "--help"])
 
     assert result.exit_code == 0
-    impl.assert_called_once_with(
-        root=str(tmp_path),
-        frameworks=("codex",),
-        include_common=False,
-        add_all_configs_to_gitignore=False,
-        add_lint_task=False,
-        add_config=True,
-        add_instructions=True,
-        requested_mcp_servers="github,context7",
-    )
+    assert "--where" in result.output
+    assert "-w" in result.output
+    assert "--edit" in result.output
+    assert "-e" in result.output
+    assert "REQUESTED_MCP_SERVERS" in result.output
+
+
+def test_add_mcp_command_resolves_servers_using_selected_locations(tmp_path: Path) -> None:
+    private_catalog = tmp_path / "private" / "mcp.json"
+    public_catalog = tmp_path / "public" / "mcp.json"
+
+    _write_mcp_catalog(private_catalog, {"mcpServers": {"github": {"command": "uvx", "args": ["mcp-github-private"]}}})
+    _write_mcp_catalog(public_catalog, {"mcpServers": {"context7": {"url": "https://mcp.context7.com/mcp"}}})
+
+    with patch(
+        "machineconfig.scripts.python.helpers.helpers_agents.mcp_catalog.default_mcp_catalog_locations",
+        return_value=(
+            {"scope": "private", "path": private_catalog},
+            {"scope": "public", "path": public_catalog},
+            {"scope": "library", "path": tmp_path / "library" / "mcp.json"},
+        )
+    ):
+        result = runner.invoke(agents.get_app(), ["m", "github,context7"])
+
+    assert result.exit_code == 0
+    assert result.stdout.strip() == "github (private), context7 (public)"
+
+
+def test_add_mcp_edit_scaffolds_missing_public_catalog_before_opening(tmp_path: Path) -> None:
+    public_catalog = tmp_path / "public" / "mcp.json"
+    edited_paths: list[Path] = []
+
+    def _capture_edit(path: Path) -> None:
+        edited_paths.append(path)
+
+    with (
+        patch(
+            "machineconfig.scripts.python.helpers.helpers_agents.mcp_catalog.default_mcp_catalog_locations",
+            return_value=(
+                {"scope": "private", "path": tmp_path / "private" / "mcp.json"},
+                {"scope": "public", "path": public_catalog},
+                {"scope": "library", "path": tmp_path / "library" / "mcp.json"},
+            ),
+        ),
+        patch("machineconfig.scripts.python.helpers.helpers_agents.mcp_catalog.edit_mcp_catalog", side_effect=_capture_edit),
+    ):
+        result = runner.invoke(agents.get_app(), ["m", "--where", "public", "--edit"])
+
+    assert result.exit_code == 0
+    assert json.loads(public_catalog.read_text(encoding="utf-8")) == {"mcpServers": {}}
+    assert edited_paths == [public_catalog]
 
 
 def test_parse_requested_mcp_names_rejects_duplicates() -> None:

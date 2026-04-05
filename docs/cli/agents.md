@@ -16,6 +16,7 @@ Current top-level commands:
 |---------|---------|
 | `parallel` | Parallel workflow helpers: `create`, `create-context`, `collect`, `make-template` |
 | `make-config` | Initialize AI configuration in the current repository |
+| `add-mcp` | Resolve MCP catalog entries or edit MCP catalog files |
 | `make-todo` | Generate a markdown file listing Python files in the repo |
 | `make-symlinks` | Create symlinks to the current repo in `~/code_copies/` |
 | `run-prompt` | Run one prompt via a selected agent |
@@ -33,6 +34,7 @@ agents --help
 agents parallel --help
 agents parallel create --help
 agents make-config --help
+agents add-mcp --help
 agents run-prompt --help
 agents ask --help
 ```

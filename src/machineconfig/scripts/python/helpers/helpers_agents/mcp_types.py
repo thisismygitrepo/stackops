@@ -3,6 +3,7 @@ from typing import Literal, TypeAlias, TypedDict
 
 
 MCP_CATALOG_SCOPE: TypeAlias = Literal["private", "public", "library"]
+MCP_CATALOG_WHERE: TypeAlias = Literal["all", "a", "private", "p", "public", "b", "library", "l"]
 MCP_TRANSPORT: TypeAlias = Literal["stdio", "http"]
 
 

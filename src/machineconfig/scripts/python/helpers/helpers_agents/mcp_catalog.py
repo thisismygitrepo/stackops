@@ -1,9 +1,13 @@
 from collections.abc import Sequence
+import json
 from pathlib import Path
+import shutil
+import subprocess
 
 from machineconfig.scripts.python.helpers.helpers_agents.mcp_types import (
     McpCatalogFile,
     McpCatalogLocation,
+    MCP_CATALOG_WHERE,
     McpServerDefinitionRaw,
     ResolvedMcpServer,
     ResolvedMcpServerDefinition,
@@ -13,11 +17,11 @@ from machineconfig.utils.files.read import read_json
 
 def parse_requested_mcp_names(raw_value: str) -> tuple[str, ...]:
     if raw_value.strip() == "":
-        raise ValueError("--add-mcp requires at least one MCP server name")
+        raise ValueError("Provide at least one MCP server name")
 
     parts = [part.strip() for part in raw_value.split(",")]
     if any(part == "" for part in parts):
-        raise ValueError("--add-mcp must be a comma-separated list without empty entries")
+        raise ValueError("MCP server names must be a comma-separated list without empty entries")
 
     seen: set[str] = set()
     duplicates: list[str] = []
@@ -40,6 +44,50 @@ def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
         {"scope": "public", "path": CONFIG_ROOT / "agents" / "mcps" / "mcp.json"},
         {"scope": "library", "path": LIBRARY_ROOT / "jobs" / "agents" / "mcps" / "mcp.json"},
     )
+
+
+def resolve_mcp_catalog_locations(where: MCP_CATALOG_WHERE) -> tuple[McpCatalogLocation, ...]:
+    locations = default_mcp_catalog_locations()
+    match where:
+        case "all" | "a":
+            return locations
+        case "private" | "p":
+            return (locations[0],)
+        case "public" | "b":
+            return (locations[1],)
+        case "library" | "l":
+            return (locations[2],)
+
+
+def _mcp_catalog_template() -> str:
+    return json.dumps({"mcpServers": {}}, indent=2) + "\n"
+
+
+def ensure_mcp_catalog_exists(location: McpCatalogLocation) -> bool:
+    catalog_path = location["path"]
+    if catalog_path.exists():
+        if not catalog_path.is_file():
+            raise ValueError(f"MCP catalog path exists but is not a file: {catalog_path}")
+        return False
+
+    if location["scope"] == "library":
+        return False
+
+    catalog_path.parent.mkdir(parents=True, exist_ok=True)
+    catalog_path.write_text(_mcp_catalog_template(), encoding="utf-8")
+    return True
+
+
+def edit_mcp_catalog(path: Path) -> None:
+    editor = shutil.which("hx")
+    if editor is None:
+        editor = shutil.which("nano")
+    if editor is None:
+        raise ValueError("No supported editor found. Install 'hx' or 'nano', or run without --edit")
+
+    result = subprocess.run([editor, str(path)], check=False)
+    if result.returncode != 0:
+        raise ValueError(f"Editor exited with status code {result.returncode}")
 
 
 def _validate_non_empty_string(raw_value: object, *, field_name: str, server_name: str, path: Path) -> str:

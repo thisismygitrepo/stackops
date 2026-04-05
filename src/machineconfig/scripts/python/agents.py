@@ -13,6 +13,7 @@ import typer
 from machineconfig.scripts.python.agents_parallel import get_app as get_parallel_app
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from machineconfig.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
+from machineconfig.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
     ReasoningShortcut,
@@ -151,9 +152,6 @@ def init_config(
     agents: Annotated[
         str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
     ] = "",
-    add_mcp: Annotated[
-        str, typer.Option("--add-mcp", "-m", help="MCP servers/tools to resolve from machineconfig MCP catalogs (comma-separated).")
-    ] = "",
     add_config: Annotated[bool, typer.Option("--add-config", "-c", help="Create private agent config files/directories")] = True,
     add_instructions: Annotated[bool, typer.Option("--add-instructions", "-i", help="Create agent instructions files (e.g. AGENTS.md)")] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai/.scripts scaffold")] = False,
@@ -182,8 +180,65 @@ def init_config(
             add_lint_task=add_vscode_tasks,
             add_config=add_config,
             add_instructions=add_instructions,
-            requested_mcp_servers=add_mcp,
         )
+    except ValueError as e:
+        raise typer.BadParameter(str(e)) from e
+
+
+def add_mcp(
+    requested_mcp_servers: Annotated[
+        str | None,
+        typer.Argument(help="MCP servers/tools to resolve from machineconfig MCP catalogs (comma-separated)."),
+    ] = None,
+    where: Annotated[
+        MCP_CATALOG_WHERE,
+        typer.Option(..., "--where", "-w", help="Where to resolve or edit MCP catalog files."),
+    ] = "all",
+    edit: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--edit",
+            "-e",
+            help="Open MCP catalog files in an editor (hx preferred, nano fallback). If no MCP names are provided, exits after editing.",
+        ),
+    ] = False,
+) -> None:
+    """Resolve MCP servers from machineconfig catalogs, or open catalog files for editing."""
+    from machineconfig.scripts.python.helpers.helpers_agents.mcp_catalog import (
+        edit_mcp_catalog,
+        ensure_mcp_catalog_exists,
+        format_resolved_mcp_servers,
+        parse_requested_mcp_names,
+        resolve_mcp_catalog_locations,
+        resolve_requested_mcp_servers,
+    )
+
+    try:
+        search_locations = resolve_mcp_catalog_locations(where=where)
+        if edit:
+            created_catalog_paths: list[Path] = []
+            for location in search_locations:
+                if ensure_mcp_catalog_exists(location=location):
+                    created_catalog_paths.append(location["path"])
+            for created_catalog_path in created_catalog_paths:
+                typer.echo(f"Created MCP catalog template at: {created_catalog_path}")
+
+            editable_catalog_paths = tuple(location["path"] for location in search_locations if location["path"].exists() and location["path"].is_file())
+            if len(editable_catalog_paths) == 0:
+                searched = ", ".join(str(location["path"]) for location in search_locations)
+                raise ValueError(f"No MCP catalog files found for --where '{where}'. Searched: {searched}")
+            for catalog_path in editable_catalog_paths:
+                edit_mcp_catalog(path=catalog_path)
+
+        if requested_mcp_servers is None:
+            if edit:
+                return
+            raise typer.BadParameter("Provide MCP server names or use --edit")
+
+        requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
+        resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
+        typer.echo(format_resolved_mcp_servers(resolved_mcp_servers))
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
@@ -380,6 +435,8 @@ def get_app() -> typer.Typer:
         "make-config", no_args_is_help=True, help=init_config.__doc__, short_help="<g> Initialize AI configurations in the current repository"
     )(init_config)
     agents_app.command("g", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
+    agents_app.command(name="add-mcp", no_args_is_help=True, short_help="<m> Resolve or edit MCP catalog entries")(add_mcp)
+    agents_app.command(name="m", no_args_is_help=True, hidden=True)(add_mcp)
     agents_app.command("make-todo", no_args_is_help=True, short_help="<d> Generate a markdown file listing all Python files in the repo")(
         make_todo_files
     )

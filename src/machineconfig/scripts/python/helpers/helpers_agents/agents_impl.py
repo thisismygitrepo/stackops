@@ -232,15 +232,9 @@ def init_config(
     add_lint_task: bool,
     add_config: bool,
     add_instructions: bool,
-    requested_mcp_servers: str,
 ) -> None:
     """Initialize AI configurations in the current repository."""
     from machineconfig.scripts.python.ai.initai import add_ai_configs
-    from machineconfig.scripts.python.helpers.helpers_agents.mcp_catalog import (
-        format_resolved_mcp_servers,
-        parse_requested_mcp_names,
-        resolve_requested_mcp_servers,
-    )
     started_at = perf_counter()
     print("[init-config] Starting configuration")
     if root is None:
@@ -260,11 +254,6 @@ def init_config(
         print(f"[init-config] Selected frameworks: {', '.join(selected_frameworks)}")
     else:
         raise ValueError("Provide at least one --framework option, or pass --all-frameworks")
-
-    if requested_mcp_servers.strip() != "":
-        requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
-        resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names)
-        print(f"[init-config] Resolved MCP servers: {format_resolved_mcp_servers(resolved_mcp_servers)}")
 
     before_add_configs = perf_counter()
     print("[init-config] Running add_ai_configs")
