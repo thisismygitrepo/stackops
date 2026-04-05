@@ -84,7 +84,7 @@ from rich.text import Text
 from rich.console import Console
 from pathlib import Path
 console = Console()
-p = Path(f"{choice_file}").absolute()
+p = Path(rf"{choice_file}").absolute()
 try:
     dat = read_file(p)
     panel_title = f"📄 Successfully read the file: {{p.name}}"

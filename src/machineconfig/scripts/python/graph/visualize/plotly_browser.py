@@ -136,16 +136,16 @@ def _downloaded_browser_relative_path() -> Path | None:
     if not platform_string:
         return None
     if platform_string.startswith("linux"):
-        return Path(f"chrome-{platform_string}").joinpath("chrome")
+        return Path(rf"chrome-{platform_string}").joinpath("chrome")
     if platform_string.startswith("mac"):
-        return Path(f"chrome-{platform_string}").joinpath(
+        return Path(rf"chrome-{platform_string}").joinpath(
             "Google Chrome for Testing.app",
             "Contents",
             "MacOS",
             "Google Chrome for Testing",
         )
     if platform_string.startswith("win"):
-        return Path(f"chrome-{platform_string}").joinpath("chrome.exe")
+        return Path(rf"chrome-{platform_string}").joinpath("chrome.exe")
     return None
 
 

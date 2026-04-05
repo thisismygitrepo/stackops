@@ -89,7 +89,7 @@ def __repr__(path: Path | str | os.PathLike[str]) -> str:
         try:
             target = resolve(path_obj, strict=False)
         except Exception:  # noqa: BLE001
-            target = Path(f"BROKEN LINK {path_obj}")
+            target = Path(rf"BROKEN LINK {path_obj}")
         rendered_target = str(target) if target != path_obj else str(path_obj)
         if not path_obj.exists() and target == path_obj:
             rendered_target = f"BROKEN LINK {path_obj}"
@@ -213,7 +213,7 @@ def _finalize_result(source: Path, result: Path, *, inplace: bool, orig: bool, v
 def _append_path_name(path: Path, name: str) -> Path:
     path_obj = _to_path(path)
     full_name = name or ("_" + str(timestamp()))
-    full_suffix = "".join(Path(f"bruh{path_obj.name}").suffixes)
+    full_suffix = "".join(Path(rf"bruh{path_obj.name}").suffixes)
     subpath = path_obj.name.split(".")[0] + full_name + full_suffix
     return path_obj.parent / subpath
 
@@ -399,7 +399,7 @@ def append(
         indexed_name = f"{name}_{len(search(path_obj.parent, pattern=pattern))}"
         return append(path_obj, name=indexed_name, index=False, verbose=verbose, suffix=suffix, inplace=inplace, overwrite=overwrite, orig=orig, strict=strict)
     full_name = name or ("_" + str(timestamp()))
-    prefixed_path = Path(f"bruh{path_obj.name}")
+    prefixed_path = Path(rf"bruh{path_obj.name}")
     full_suffix = suffix or "".join(prefixed_path.suffixes)
     subpath = path_obj.name.split(".")[0] + full_name + full_suffix
     destination = path_obj.with_name(subpath)
@@ -986,7 +986,7 @@ def get_remote_path(path: Path, root: str | None, os_specific: bool = False, rel
             sanitized = _path_from_parts(list(reduced.parts[1:])).as_posix()
         else:
             sanitized = reduced.as_posix()
-        return Path(f"{root}/{os_part}/{sanitized}")
+        return Path(rf"{root}/{os_part}/{sanitized}")
     return Path(os_part) / reduced
 
 

@@ -11,6 +11,8 @@ type ArchName = Literal["amd64", "arm64"]
 
 PLATFORMS: tuple[PlatformName, ...] = ("linux", "darwin", "windows")
 ARCHES: tuple[ArchName, ...] = ("amd64", "arm64")
+PLATFORM_KEYS: frozenset[str] = frozenset(PLATFORMS)
+ARCH_KEYS: frozenset[str] = frozenset(ARCHES)
 ENTRY_KEYS: frozenset[str] = frozenset({"appName", "license", "repoURL", "doc", "fileNamePattern"})
 
 
@@ -46,8 +48,8 @@ def expect_non_empty_string(value: object, label: str) -> str:
 
 def validate_pattern_row(value: object, label: str) -> None:
     row = expect_string_key_dict(value=value, label=label)
-    missing_keys = sorted(set(PLATFORMS) - set(row))
-    unexpected_keys = sorted(set(row) - set(PLATFORMS))
+    missing_keys = sorted(PLATFORM_KEYS - set(row))
+    unexpected_keys = sorted(set(row) - PLATFORM_KEYS)
     if len(missing_keys) > 0 or len(unexpected_keys) > 0:
         raise ValueError(f"{label} keys mismatch, missing={missing_keys}, unexpected={unexpected_keys}")
     for platform in PLATFORMS:
@@ -69,8 +71,8 @@ def validate_entry_shape(entry: object) -> tuple[str, str]:
     expect_non_empty_string(value=entry_map["doc"], label="entry.doc")
 
     pattern_map = expect_string_key_dict(value=entry_map["fileNamePattern"], label="entry.fileNamePattern")
-    missing_arches = sorted(set(ARCHES) - set(pattern_map))
-    unexpected_arches = sorted(set(pattern_map) - set(ARCHES))
+    missing_arches = sorted(ARCH_KEYS - set(pattern_map))
+    unexpected_arches = sorted(set(pattern_map) - ARCH_KEYS)
     if len(missing_arches) > 0 or len(unexpected_arches) > 0:
         raise ValueError(f"entry.fileNamePattern keys mismatch, missing={missing_arches}, unexpected={unexpected_arches}")
     for arch in ARCHES:

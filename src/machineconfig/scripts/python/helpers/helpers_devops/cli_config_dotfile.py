@@ -315,7 +315,7 @@ def export_dotfiles(
         pwd=pwd,
     )
     Path(zipfile).unlink()
-    zipfile_enc_path = Path(f"{zipfile}.enc")
+    zipfile_enc_path = Path(rf"{zipfile}.enc")
     if zipfile_enc_path.exists():
         zipfile_enc_path.unlink()
     zipfile_enc_path.write_bytes(zipfile_enc_bytes)
