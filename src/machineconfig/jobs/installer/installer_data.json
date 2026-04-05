@@ -2546,13 +2546,13 @@
       "doc": "⏲️ Pomodoro timer for the command-line",
       "fileNamePattern": {
         "amd64": {
-          "linux": "openpomodoro-cli_{version}_linux_x86_64.tar.gz",
-          "darwin": "openpomodoro-cli_{version}_darwin_x86_64.tar.gz",
-          "windows": "openpomodoro-cli_{version}_windows_x86_64.zip"
+          "linux": "openpomodoro-cli_{version}_linux_amd64.tar.gz",
+          "darwin": "openpomodoro-cli_{version}_darwin_amd64.tar.gz",
+          "windows": "openpomodoro-cli_{version}_windows_amd64.tar.gz"
         },
         "arm64": {
-          "linux": "openpomodoro-cli_{version}_linux_aarch64.tar.gz",
-          "darwin": "openpomodoro-cli_{version}_darwin_aarch64.tar.gz",
+          "linux": "openpomodoro-cli_{version}_linux_arm64.tar.gz",
+          "darwin": null,
           "windows": null
         }
       }
@@ -2625,7 +2625,7 @@
         "arm64": {
           "linux": "lazygit_{version}_linux_arm64.tar.gz",
           "darwin": "lazygit_{version}_darwin_arm64.tar.gz",
-          "windows": null
+          "windows": "lazygit_{version}_windows_arm64.zip"
         }
       }
     },
@@ -2708,14 +2708,14 @@
       "doc": "🎯 A command runner",
       "fileNamePattern": {
         "amd64": {
-          "linux": "gitcs_linux_amd64",
-          "darwin": "gitcs_darwin_amd64",
-          "windows": "gitcs_windows_amd64.exe"
+          "linux": "just-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "darwin": "just-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "just-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
-          "windows": null
+          "linux": "just-{version}-aarch64-unknown-linux-musl.tar.gz",
+          "darwin": "just-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "just-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -2740,7 +2740,7 @@
     {
       "appName": "tealdeer",
       "license": "Apache-2.0, MIT",
-      "repoURL": "https://github.com/dbrgn/tealdeer",
+      "repoURL": "https://github.com/tealdeer-rs/tealdeer",
       "doc": "⚡ A very fast implementation of tldr in Rust",
       "fileNamePattern": {
         "amd64": {
@@ -2817,13 +2817,13 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "tufw_{version}_linux_amd64.tar.gz",
-          "darwin": "",
-          "windows": ""
+          "darwin": null,
+          "windows": null
         },
         "arm64": {
           "linux": "tufw_{version}_linux_arm64.tar.gz",
-          "darwin": "",
-          "windows": ""
+          "darwin": null,
+          "windows": null
         }
       }
     },
@@ -2902,17 +2902,17 @@
     {
       "appName": "vtm",
       "license": "MIT License",
-      "repoURL": "https://github.com/netxs-group/vtm",
+      "repoURL": "https://github.com/directvt/vtm",
       "doc": "🖥️ Text-based desktop environment inside your terminal",
       "fileNamePattern": {
         "amd64": {
           "linux": "vtm_linux_x86_64.tar.7z",
-          "darwin": "vtm_macos_any.tar.7z",
+          "darwin": "vtm_macos_x86_64.tar.7z",
           "windows": "vtm_windows_x86_64.7z"
         },
         "arm64": {
           "linux": "vtm_linux_arm64.tar.7z",
-          "darwin": "vtm_macos_any.tar.7z",
+          "darwin": "vtm_macos_arm64.tar.7z",
           "windows": "vtm_windows_arm64.7z"
         }
       }
@@ -4023,12 +4023,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": null,
-          "windows": "winget install --no-upgrade --name \"Chrome Remote Desktop Host\" --Id \"Google.ChromeRemoteDesktop\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade --name \"Chrome Remote Desktop Host\" --Id \"Google.ChromeRemoteDesktopHost\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": null
         },
         "arm64": {
           "linux": null,
-          "windows": "winget install --no-upgrade --name \"Chrome Remote Desktop Host\" --Id \"Google.ChromeRemoteDesktop\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade --name \"Chrome Remote Desktop Host\" --Id \"Google.ChromeRemoteDesktopHost\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": null
         }
       }
@@ -4396,7 +4396,6 @@
     {
       "appName": "meli",
       "repoURL": "https://github.com/meli/meli",
-      "licence": "MIT",
       "doc": "Terminal mail client",
       "fileNamePattern": {
         "amd64": {
@@ -4409,7 +4408,8 @@
           "darwin": null,
           "windows": null
         }
-      }
+      },
+      "license": "EUPL-1.2 OR GPL-3.0-or-later"
     }
   ]
 }
