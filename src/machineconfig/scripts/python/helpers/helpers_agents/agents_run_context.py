@@ -120,12 +120,13 @@ def _collect_context_name_candidates(raw_data: Any, prefix: str = "") -> dict[st
 
 
 def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
-    from machineconfig.utils.source_of_truth import PRIVATE_SCRIPTS_ROOT, PUBLIC_SCRIPTS_ROOT, LIBRARY_SCRIPTS_ROOT
+    from machineconfig.utils.source_of_truth import DOTFILES_MCFG_ROOT, CONFIG_ROOT, LIBRARY_ROOT
     from machineconfig.scripts.python.helpers.helpers_search.script_help import get_custom_roots
 
-    private_prompts = PRIVATE_SCRIPTS_ROOT / "prompts" / "prompts.yaml"
-    public_prompts = PUBLIC_SCRIPTS_ROOT / "prompts" / "prompts.yaml"
-    library_prompts = LIBRARY_SCRIPTS_ROOT / "prompts" / "prompts.yaml"
+    private_prompts = DOTFILES_MCFG_ROOT / "agents" / "prompts" / "prompts.yaml"
+    public_prompts = CONFIG_ROOT / "agents" / "prompts" / "prompts.yaml"
+    library_prompts = LIBRARY_ROOT / "agents" / "prompts" / "prompts.yaml"
+
     custom_prompts = [(f"custom_{idx}", custom_root / "prompts.yaml") for idx, custom_root in enumerate(get_custom_roots("prompts"))]
 
     match where:

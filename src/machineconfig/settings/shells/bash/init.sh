@@ -16,7 +16,7 @@ CONFIG_ROOT="$HOME/.config/machineconfig"
 # 📂 Add directories to PATH
 add_to_path_if_not_already \
     "$CONFIG_ROOT/scripts" \
-    "$HOME/dotfiles/scripts/linux" \
+    "$HOME/dotfiles/machineconfig/scripts/linux" \
     "$HOME/.local/bin" \
     "$HOME/.cargo/bin" \
     "$HOME/.duckdb/cli/latest" \

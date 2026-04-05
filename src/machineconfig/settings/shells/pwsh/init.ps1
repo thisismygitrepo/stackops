@@ -24,7 +24,7 @@ Add-ToPathIfNotAlready -Directories @(
     "$HOME\.local\share\poppler\Library\bin",
     "$HOME\.bun\bin",
     "$CONFIG_ROOT\scripts",
-    "$HOME\dotfiles\scripts\windows",
+    "$HOME\dotfiles\machineconfig\scripts\windows",
     "C:\Program Files (x86)\GnuWin32\bin",
     "C:\Program Files\CodeBlocks\MinGW\bin",
     "C:\Program Files\nu\bin",

@@ -13,7 +13,7 @@ CONFIG_ROOT="$HOME/.config/machineconfig"
 # 📂 Add directories to PATH
 add_to_path_if_not_already \
     "$CONFIG_ROOT/scripts" \
-    "$HOME/dotfiles/scripts/macos" \
+    "$HOME/dotfiles/machineconfig/scripts/macos" \
     "$HOME/.local/bin" \
     "$HOME/.cargo/bin" \
     "/usr/games"

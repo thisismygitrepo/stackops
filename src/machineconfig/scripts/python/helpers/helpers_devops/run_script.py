@@ -79,7 +79,7 @@ def run_py_script(ctx: typer.Context,
             print(f"❌ Error: File '{name}' is not a recognized script type. Supported types are {'.py', '.sh', '.ps1', '.bat', '.cmd', ''}.")
             raise typer.Exit(code=1)
 
-    from machineconfig.utils.source_of_truth import DEFAULTS_PATH, PRIVATE_SCRIPTS_ROOT, PUBLIC_SCRIPTS_ROOT, LIBRARY_SCRIPTS_ROOT
+    from machineconfig.utils.source_of_truth import DEFAULTS_PATH, SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY
 
     def get_custom_roots() -> list[Path]:
         custom_roots: list[Path] = []
@@ -98,13 +98,13 @@ def run_py_script(ctx: typer.Context,
     roots: list[Path] = []
     match where:
         case "all" | "a":
-            roots = [PRIVATE_SCRIPTS_ROOT, PUBLIC_SCRIPTS_ROOT, LIBRARY_SCRIPTS_ROOT] + get_custom_roots()
+            roots = [SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY] + get_custom_roots()
         case "private" | "p":
-            roots = [PRIVATE_SCRIPTS_ROOT]
+            roots = [SCRIPTS_ROOT_PRIVATE]
         case "public" | "b":
-            roots = [PUBLIC_SCRIPTS_ROOT]
+            roots = [SCRIPTS_ROOT_PUBLIC]
         case "library" | "l":
-            roots = [LIBRARY_SCRIPTS_ROOT]
+            roots = [SCRIPTS_ROOT_LIBRARY]
         case "dynamic" | "d":
             roots = []
         case "custom" | "c":
