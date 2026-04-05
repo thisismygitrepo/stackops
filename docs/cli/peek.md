@@ -1,13 +1,13 @@
-# msearch
+# peek
 
-`msearch` is the direct entrypoint for interactive search across files, text matches, and code symbols.
+`peek` is the direct entrypoint for interactive search across files, text matches, and code symbols.
 
 ---
 
 ## Usage
 
 ```bash
-msearch [OPTIONS] [PATH] [SEARCH_TERM]
+peek [OPTIONS] [PATH] [SEARCH_TERM]
 ```
 
 ---
@@ -23,7 +23,7 @@ msearch [OPTIONS] [PATH] [SEARCH_TERM]
 
 ## Search modes
 
-`msearch` exposes several entry modes:
+`peek` exposes several entry modes:
 
 | Mode | Option | Behavior |
 |------|--------|----------|
@@ -32,9 +32,9 @@ msearch [OPTIONS] [PATH] [SEARCH_TERM]
 | AST search | `--ast`, `-a` | Inspect parsed symbols from the target directory |
 | Symantic search | `--symantic`, `-s` | Run the symbol-oriented helper workflow |
 
-If `PATH` points to a file, `msearch` opens a line-oriented preview flow for that file instead of directory search.
+If `PATH` points to a file, `peek` opens a line-oriented preview flow for that file instead of directory search.
 
-When multiple mode flags are passed together, `msearch` resolves them in this order: `--symantic`, then `--ast`, then `--file`, then the default text search flow.
+When multiple mode flags are passed together, `peek` resolves them in this order: `--symantic`, then `--ast`, then `--file`, then the default text search flow.
 
 ---
 
@@ -57,34 +57,34 @@ When multiple mode flags are passed together, `msearch` resolves them in this or
 
 ```bash
 # Search the current project for text
-msearch
+peek
 
 # Start with an initial query
-msearch . "TODO"
+peek . "TODO"
 
 # Search for files only
-msearch src --file
+peek src --file
 
 # Search files including dotfiles
-msearch src --file --dotfiles
+peek src --file --dotfiles
 
 # Search files and jump into Helix
-msearch src --file --edit
+peek src --file --edit
 
 # Search code symbols
-msearch src --ast
+peek src --ast
 
 # Use ripgrep-all for non-text files
-msearch docs --rga
+peek docs --rga
 ```
 
 ---
 
 ## Notes
 
-- `msearch --install-req` installs the helper tools the workflow expects, including `fzf`, `tv`, `bat`, `fd`, `rg`, and `rga`.
-- When standard input is piped into `msearch`, it can stage that input into a temporary file and open the same preview flow against the captured content.
-- `msearch` is a standalone entrypoint. Use it directly rather than routing through an umbrella dispatcher.
+- `peek --install-req` installs the helper tools the workflow expects, including `fzf`, `tv`, `bat`, `fd`, `rg`, and `rga`.
+- When standard input is piped into `peek`, it can stage that input into a temporary file and open the same preview flow against the captured content.
+- `peek` is a standalone entrypoint. Use it directly rather than routing through an umbrella dispatcher.
 
 ---
 
@@ -93,5 +93,5 @@ msearch docs --rga
 Use live help to inspect the exact options in your installed version:
 
 ```bash
-msearch --help
+peek --help
 ```

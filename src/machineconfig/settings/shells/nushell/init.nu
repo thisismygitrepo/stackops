@@ -121,7 +121,7 @@ export def f [...args: string] { wrap_in_shell_script "fire" ...$args }
 export def r [...args: string] { wrap_in_shell_script "croshell" ...$args }
 export def u [...args: string] { wrap_in_shell_script "utils" ...$args }
 export def t [...args: string] { wrap_in_shell_script "terminal" ...$args }
-export def ms [...args: string] { wrap_in_shell_script "msearch" ...$args }
+export def p [...args: string] { wrap_in_shell_script "peek" ...$args }
 export def x [...args: string] { wrap_in_shell_script "explore" ...$args }
 
 export alias l = lsd -la

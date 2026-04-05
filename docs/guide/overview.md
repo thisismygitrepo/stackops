@@ -18,7 +18,7 @@ Start with the command family you need:
 devops --help
 cloud --help
 sessions --help
-msearch --help
+peek --help
 ```
 
 For the current command map, see [CLI Reference](../cli/index.md).

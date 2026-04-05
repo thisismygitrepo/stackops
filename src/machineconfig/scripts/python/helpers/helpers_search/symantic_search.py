@@ -14,7 +14,7 @@ command to rebuild index
 coimmand to search
 command show stats and rop index
 
-learn from my style of building apps like this #file:msearch.py 
+learn from my style of building apps like this #file:peek.py 
 
 and add option when building index to say --symantic (means use ai locall embedding to build the index)
 

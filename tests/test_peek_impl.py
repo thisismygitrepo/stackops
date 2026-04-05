@@ -1,14 +1,14 @@
 from unittest.mock import patch
 
-from machineconfig.scripts.python.helpers.helpers_msearch import msearch_impl
+from machineconfig.scripts.python.helpers.helpers_peek import peek_impl
 
 
-def test_machineconfig_search_limits_default_file_source_to_non_dotfiles() -> None:
+def test_peek_limits_default_file_source_to_non_dotfiles() -> None:
     with (
         patch("platform.system", return_value="Linux"),
         patch("machineconfig.utils.code.run_shell_script") as run_shell_script,
     ):
-        msearch_impl.machineconfig_search(
+        peek_impl.peek(
             path=".",
             search_term="",
             ast=False,
@@ -26,12 +26,12 @@ def test_machineconfig_search_limits_default_file_source_to_non_dotfiles() -> No
     assert "fd --type file | " in script
 
 
-def test_machineconfig_search_keeps_default_file_source_when_dotfiles_enabled() -> None:
+def test_peek_keeps_default_file_source_when_dotfiles_enabled() -> None:
     with (
         patch("platform.system", return_value="Linux"),
         patch("machineconfig.utils.code.run_shell_script") as run_shell_script,
     ):
-        msearch_impl.machineconfig_search(
+        peek_impl.peek(
             path=".",
             search_term="",
             ast=False,
@@ -49,12 +49,12 @@ def test_machineconfig_search_keeps_default_file_source_when_dotfiles_enabled() 
     assert not script.startswith("fd ")
 
 
-def test_machineconfig_search_windows_file_search_changes_directory_with_literal_path() -> None:
+def test_peek_windows_file_search_changes_directory_with_literal_path() -> None:
     with (
         patch("platform.system", return_value="Windows"),
         patch("machineconfig.utils.code.run_shell_script") as run_shell_script,
     ):
-        msearch_impl.machineconfig_search(
+        peek_impl.peek(
             path="C:/Users/Alex/My Repo",
             search_term="",
             ast=False,
@@ -72,12 +72,12 @@ def test_machineconfig_search_windows_file_search_changes_directory_with_literal
     assert script.startswith("Set-Location -LiteralPath 'C:/Users/Alex/My Repo'\n")
 
 
-def test_machineconfig_search_windows_text_search_changes_directory_with_literal_path() -> None:
+def test_peek_windows_text_search_changes_directory_with_literal_path() -> None:
     with (
         patch("platform.system", return_value="Windows"),
         patch("machineconfig.utils.code.exit_then_run_shell_script") as exit_then_run_shell_script,
     ):
-        msearch_impl.machineconfig_search(
+        peek_impl.peek(
             path="C:/Users/Alex/My Repo",
             search_term="needle",
             ast=False,
@@ -96,12 +96,12 @@ def test_machineconfig_search_windows_text_search_changes_directory_with_literal
     assert "$initialQuery = 'needle'" in script
 
 
-def test_machineconfig_search_macos_text_search_script_does_not_exit_parent_shell() -> None:
+def test_peek_macos_text_search_script_does_not_exit_parent_shell() -> None:
     with (
         patch("platform.system", return_value="Darwin"),
         patch("machineconfig.utils.code.exit_then_run_shell_script") as exit_then_run_shell_script,
     ):
-        msearch_impl.machineconfig_search(
+        peek_impl.peek(
             path="/Users/alex/My Repo",
             search_term="needle",
             ast=False,
@@ -123,6 +123,6 @@ def test_machineconfig_search_macos_text_search_script_does_not_exit_parent_shel
 
 def test_search_file_with_context_quotes_preview_path_on_windows() -> None:
     with patch("platform.system", return_value="Windows"):
-        code = msearch_impl.search_file_with_context(path="/tmp/My File.txt", is_temp_file=False, edit=False)
+        code = peek_impl.search_file_with_context(path="/tmp/My File.txt", is_temp_file=False, edit=False)
 
     assert '--preview-command \'bat --color=always --style=numbers --highlight-line {split: :0} "/tmp/My File.txt"\'' in code

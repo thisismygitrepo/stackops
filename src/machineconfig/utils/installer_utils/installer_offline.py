@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Iterable
 
 UV_TOOL_BINARIES: list[str] = [
-        "devops", "cloud", "agents", "sessions", "ftpx", "fire", "croshell", "utils", "msearch", "explore",
+        "devops", "cloud", "agents", "sessions", "ftpx", "fire", "croshell", "utils", "peek", "explore",
 ]
 UV_TOOL_NAME = "machineconfig"
 UV_TOOLS_ROOT = Path.home().joinpath(".local/share/uv/tools")
@@ -207,7 +207,7 @@ LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
 UV_BUNDLE_DIR="$SCRIPT_DIR/uv_bundle"
 UV_MANIFEST="$UV_BUNDLE_DIR/uv_manifest.env"
 UV_LINKS="$UV_BUNDLE_DIR/uv_links.txt"
-UV_FALLBACK_LINKS="devops cloud agents sessions ftpx fire croshell utils msearch explore machineconfig mcfg"
+UV_FALLBACK_LINKS="devops cloud agents sessions ftpx fire croshell utils peek explore machineconfig mcfg"
 
 if [ -d "$BINS_DIR" ]; then
     mkdir -p "$INSTALL_PATH"

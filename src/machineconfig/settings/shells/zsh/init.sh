@@ -43,7 +43,7 @@ alias s='wrap_in_shell_script sessions'
 alias f='wrap_in_shell_script fire'
 alias r='wrap_in_shell_script croshell'
 alias u='wrap_in_shell_script utils'
-alias ms='wrap_in_shell_script msearch'
+alias p='wrap_in_shell_script peek'
 
 # alias gcs='gh copilot suggest -t shell'
 # alias gcg='gh copilot suggest -t git'
@@ -89,4 +89,3 @@ else
     zle -N tv_shell_history
     bindkey '^R' tv_shell_history
 fi
-

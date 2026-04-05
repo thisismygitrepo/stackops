@@ -15,7 +15,7 @@ These commands are defined in `pyproject.toml` and reflected in the current CLI 
 | [`agents`](agents.md) | AI agent utilities |
 | [`utils`](utils.md) | General-purpose utilities |
 | [`croshell`](croshell.md) | Cross-shell execution helper |
-| [`msearch`](msearch.md) | Search helper entrypoint |
+| [`peek`](peek.md) | Search helper entrypoint |
 | [`fire`](fire.md) | Fire job runner |
 | [`cloud`](cloud.md) | Cloud sync, copy, mount, and FTP-over-SSH helpers |
 
@@ -35,7 +35,7 @@ sessions --help
 agents --help
 utils --help
 croshell --help
-msearch --help
+peek --help
 fire --help
 cloud --help
 ```
@@ -48,7 +48,7 @@ The current docs follow this model:
 
 1. Start from a direct entrypoint such as `devops` or `sessions`.
 2. Drill into nested apps with `--help`.
-3. Use standalone helpers like `fire`, `cloud`, and `msearch` directly.
+3. Use standalone helpers like `fire`, `cloud`, and `peek` directly.
 
 For example:
 

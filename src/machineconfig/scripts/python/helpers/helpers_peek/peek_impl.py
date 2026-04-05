@@ -1,7 +1,7 @@
-"""Pure Python implementation for msearch command - no typer dependencies."""
+"""Pure Python implementation for peek command without Typer."""
 
 
-def machineconfig_search(
+def peek(
     path: str,
     search_term: str,
     ast: bool,
@@ -13,7 +13,7 @@ def machineconfig_search(
     edit: bool,
     install_dependencies: bool,
 ) -> None:
-    """Machineconfig search helper."""
+    """Peek across files, text matches, and code symbols."""
 
     if install_dependencies:
         _install_dependencies()
@@ -36,13 +36,13 @@ def machineconfig_search(
     is_temp_file = False
     if not sys.stdin.isatty() and Path(path).is_dir():
         # Use UTF-8 encoding to handle emoji and Unicode characters on Windows
-        if sys.stdin.encoding != 'utf-8':
-            stdin_wrapper = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8', errors='replace')
+        if sys.stdin.encoding != "utf-8":
+            stdin_wrapper = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
             content = stdin_wrapper.read()
         else:
             content = sys.stdin.read()
         if content:
-            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, prefix="msearch_stdin_") as temp_file:
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, prefix="peek_stdin_") as temp_file:
                 temp_file.write(content)
                 path = temp_file.name
             is_temp_file = True
@@ -66,6 +66,7 @@ def _install_dependencies() -> None:
     install_if_missing(which="fd", binary_name=None, verbose=True)
     install_if_missing(which="rg", binary_name=None, verbose=True)
     install_if_missing(which="rga", binary_name=None, verbose=True)
+
 
 def search_file_with_context(path: str, is_temp_file: bool, edit: bool) -> str:
     import platform
@@ -159,17 +160,20 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
             text_files = list(map(str, path_obj.rglob(f"*{extension}")))
         else:
             import subprocess
-            def get_text_files(root: str):
+
+            def get_text_files(root: str) -> list[str]:
                 result = subprocess.run(
                     ["rg", "--files", "-0", root],
                     stdout=subprocess.PIPE,
                     check=True,
                 )
                 return result.stdout.decode().split("\0")[:-1]
+
             text_files = get_text_files(str(path_obj))
 
 
     from typing import TypedDict
+
     class SymanticSearchResult(TypedDict):
         filename: str
         start_line_number: int
@@ -178,12 +182,12 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
         distance: float
         content: str
 
-    def symantic_search(query: str, text_files: list[str]):
+    def symantic_search(query: str, text_files: list[str]) -> list[SymanticSearchResult]:
         # semtools search "hi" ./devcontainer.json --json
         import random
         random_suffix = str(random.randint(1000, 9999))
         import string
-        random_suffix += ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        random_suffix += "".join(random.choices(string.ascii_letters + string.digits, k=8))
         results_file = Path.home().joinpath("tmp_results", "tmp_text", "symantic_search", "results_" + random_suffix + ".json")
         results_file.parent.mkdir(parents=True, exist_ok=True)
         command = f"""semtools search "{query}" {" ".join(text_files)} --json --top-k 5 --n-lines 10 > {results_file}"""
@@ -268,7 +272,7 @@ fi
         script = r"""
 $selected = {SOURCE_CMD} fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT}
 if ($selected) {
-    $choicesPath = Join-Path $env:TEMP ("msearch_choices_" + [guid]::NewGuid().ToString() + ".txt")
+    $choicesPath = Join-Path $env:TEMP ("peek_choices_" + [guid]::NewGuid().ToString() + ".txt")
     $i = 0
     Get-Content -LiteralPath "$selected" | ForEach-Object { $i = $i + 1; "{0} {1}" -f $i, $_ } | Set-Content -LiteralPath $choicesPath -Encoding utf8
     $sourceCmd = 'cmd /C type "' + $choicesPath + '"'
@@ -306,7 +310,7 @@ def _get_file_search_source_command(dotfiles: bool) -> str:
 
 def _run_text_search(rga: bool, directory: str | None, search_term: str) -> None:
     """Run text search using fzf with ripgrep."""
-    from machineconfig.scripts.python.helpers.helpers_msearch import FZFG_LINUX_PATH, FZFG_WINDOWS_PATH, FZFG_MACOS_PATH
+    from machineconfig.scripts.python.helpers.helpers_peek import FZFG_LINUX_PATH, FZFG_WINDOWS_PATH, FZFG_MACOS_PATH
     import platform
 
     platform_name = platform.system()

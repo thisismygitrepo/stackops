@@ -1,10 +1,10 @@
-"""msearch - Machineconfig search helper."""
+"""peek - Machineconfig search helper."""
 
 import typer
 from typing import Annotated
 
 
-def machineconfig_search(
+def peek(
     path: Annotated[str, typer.Argument(help="The directory/file to search")] = ".",
     search_term: Annotated[str, typer.Argument(help="Initial search term to seed the interactive search")] = "",
     ast: Annotated[bool, typer.Option(..., "--ast", "-a", help="The abstract syntax tree search/ tree sitter search of symbols")] = False,
@@ -16,8 +16,8 @@ def machineconfig_search(
     edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open selection in editor (helix)")] = False,
     install_dependencies: Annotated[bool, typer.Option(..., "--install-req", "-i", help="Install required dependencies if missing")] = False,
 ) -> None:
-    """Machineconfig search helper."""
-    from machineconfig.scripts.python.helpers.helpers_msearch.msearch_impl import machineconfig_search as impl
+    """Peek across files, text matches, and code symbols."""
+    from machineconfig.scripts.python.helpers.helpers_peek.peek_impl import peek as impl
     impl(
         path=path,
         search_term=search_term,
@@ -34,5 +34,5 @@ def machineconfig_search(
 
 def main() -> None:
     app = typer.Typer(add_completion=False, no_args_is_help=True)
-    app.command(name="msearch", help=machineconfig_search.__doc__, short_help="machineconfig search helper", no_args_is_help=False)(machineconfig_search)
+    app.command(name="peek", help=peek.__doc__, short_help="machineconfig search helper", no_args_is_help=False)(peek)
     app()

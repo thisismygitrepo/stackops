@@ -16,7 +16,8 @@ alias f='wrap_in_shell_script mcfg fire'
 alias rr='wrap_in_shell_script mcfg croshell'
 alias u='wrap_in_shell_script mcfg utils'
 alias t='wrap_in_shell_script mcfg terminal'
-alias ms='wrap_in_shell_script mcfg msearch'
+peek() { "$HOME/.local/bin/uvx" --python 3.14 --from "git+https://github.com/thisismygitrepo/machineconfig" peek "$@"; }
+alias p='wrap_in_shell_script peek'
 
 alias devops='mcfg devops'
 alias cloud='mcfg cloud'
@@ -27,7 +28,6 @@ alias fire='mcfg fire'
 alias croshell='mcfg croshell'
 alias utils='mcfg utils'
 alias terminal='mcfg terminal'
-alias msearch='mcfg msearch'
 
 
 echo "mcfg command aliases are now defined in this shell session."

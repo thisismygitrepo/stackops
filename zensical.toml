@@ -28,7 +28,7 @@ nav = [
     { sessions = "cli/sessions.md" },
     { agents = "cli/agents.md" },
     { utils = "cli/utils.md" },
-    { msearch = "cli/msearch.md" },
+    { peek = "cli/peek.md" },
     { fire = "cli/fire.md" },
     { cloud = "cli/cloud.md" },
   ] },
