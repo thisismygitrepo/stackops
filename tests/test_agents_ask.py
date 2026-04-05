@@ -102,6 +102,12 @@ def test_build_ask_command_supports_copilot_reasoning() -> None:
     assert command == 'copilot --reasoning-effort high -p "$(cat /tmp/prompt.md)" --yolo'
 
 
+def test_build_agent_command_supports_forge() -> None:
+    command = agents_run_impl.build_agent_command(agent="forge", prompt_file=Path("/tmp/prompt.md"), reasoning_effort=None)
+
+    assert command == 'forge -p "$(cat /tmp/prompt.md)"'
+
+
 def test_ask_supports_copilot_via_agent_option() -> None:
     with (
         patch.object(agents, "_write_temporary_prompt_file", return_value=Path("/tmp/copilot_prompt.md")) as write_temporary_prompt_file,

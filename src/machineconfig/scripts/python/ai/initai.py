@@ -8,6 +8,7 @@ from machineconfig.scripts.python.ai.solutions.cline import cline
 from machineconfig.scripts.python.ai.solutions.copilot import github_copilot
 from machineconfig.scripts.python.ai.solutions.crush import crush
 from machineconfig.scripts.python.ai.solutions.cursor import cursors
+from machineconfig.scripts.python.ai.solutions.forge import forge
 from machineconfig.scripts.python.ai.solutions.gemini import gemini
 from machineconfig.scripts.python.ai.solutions.qwen_code import qwen_code
 from machineconfig.scripts.python.ai.solutions.codex import codex
@@ -68,6 +69,8 @@ def _build_framework_config(repo_root: Path, framework: AGENTS, add_private_conf
             qwen_code.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "codex":
             codex.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+        case "forge":
+            forge.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "q":
             amazon_q.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "opencode":

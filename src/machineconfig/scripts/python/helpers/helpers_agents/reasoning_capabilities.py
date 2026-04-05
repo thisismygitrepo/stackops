@@ -38,6 +38,7 @@ _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
         efforts=("none", "low", "medium", "high", "xhigh"),
         note="actual model support can be a narrower subset",
     ),
+    "forge": AgentReasoningSupport(efforts=(), note=None),
     "crush": AgentReasoningSupport(efforts=(), note=None),
     "q": AgentReasoningSupport(efforts=(), note=None),
     "opencode": AgentReasoningSupport(efforts=(), note=None),

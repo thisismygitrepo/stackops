@@ -18,6 +18,7 @@ AGENTS = [
     "crush",
     "opencode-ai",
     "chatgpt",
+    "forge",
     "mods",
     "q",
     "qwen-code",

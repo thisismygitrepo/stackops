@@ -90,6 +90,8 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
             if is_windows:
                 return f"Get-Content -Raw {prompt_file_q} | {agent_cli} exec{reasoning_arg} -"
             return f"{agent_cli} exec{reasoning_arg} - < {prompt_file_q}"
+        case "forge":
+            return f"{agent_cli} -p {prompt_content_expr}"
         case "gemini":
             return f"{agent_cli} --yolo --prompt {prompt_file_q}"
         case "crush":

@@ -3368,6 +3368,24 @@
       }
     },
     {
+      "appName": "forge",
+      "license": "Apache-2.0",
+      "repoURL": "https://github.com/antinomyhq/forgecode",
+      "doc": "AI-enabled terminal pair programmer for many model providers.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "forge-x86_64-unknown-linux-gnu",
+          "windows": "forge-x86_64-pc-windows-msvc.exe",
+          "darwin": "forge-x86_64-apple-darwin"
+        },
+        "arm64": {
+          "linux": "forge-aarch64-unknown-linux-gnu",
+          "windows": "forge-aarch64-pc-windows-msvc.exe",
+          "darwin": "forge-aarch64-apple-darwin"
+        }
+      }
+    },
+    {
       "appName": "auggie",
       "license": "Custom Proprietary License for Augment CLI",
       "repoURL": "CMD",

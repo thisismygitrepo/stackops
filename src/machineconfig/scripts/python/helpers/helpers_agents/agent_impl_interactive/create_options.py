@@ -1,20 +1,26 @@
 from dataclasses import dataclass
-from typing import Literal, TypeAlias, cast, get_args
+from typing import Final, Literal, TypeAlias, cast, get_args
 
 from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import (
-    NONE_LABEL,
-    choose_optional_option,
-    choose_required_option,
     order_current_first,
-    prompt_bool,
     prompt_optional_text_value,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import reasoning_support
-from machineconfig.utils.options import choose_from_options
+from machineconfig.utils.options_utils.textual_options_form_types import (
+    OptionValue,
+    SelectedOptionMap,
+    TextualOptionMap,
+    TextualOptionSpec,
+    use_textual_options_form,
+)
 
 
-_KEEP_CURRENT_VALUES_LABEL = "<keep current values>"
+TextFieldDecision: TypeAlias = Literal["keep current", "edit value"]
+
+_KEEP_CURRENT_TEXT_FIELD: Final[TextFieldDecision] = "keep current"
+_EDIT_TEXT_FIELD: Final[TextFieldDecision] = "edit value"
+_TEXT_FIELD_DECISIONS: Final[tuple[TextFieldDecision, ...]] = (_KEEP_CURRENT_TEXT_FIELD, _EDIT_TEXT_FIELD)
 
 EditableCreateOption: TypeAlias = Literal[
     "join_prompt_and_context",
@@ -36,6 +42,16 @@ class InteractiveCreateReviewOptions:
     provider: PROVIDER | None
 
 
+@dataclass(frozen=True, slots=True)
+class _CreateOptionsFormSelection:
+    join_prompt_and_context: bool
+    output_path: TextFieldDecision
+    agents_dir: TextFieldDecision
+    host: HOST
+    reasoning_effort: ReasoningEffort | None
+    provider: PROVIDER | None
+
+
 def _provider_options_for_agent(agent: AGENTS) -> tuple[PROVIDER, ...]:
     provider_options = cast(tuple[PROVIDER, ...], get_args(PROVIDER))
     match agent:
@@ -51,18 +67,43 @@ def _provider_allows_none(agent: AGENTS) -> bool:
     return agent not in {"gemini", "crush"}
 
 
-def _format_nullable_value(value: str | None) -> str:
+def _format_output_path_value(value: str | None) -> str:
     if value is None:
-        return NONE_LABEL
+        return "auto: layout.json inside agents_dir"
     return value
 
 
-def _format_bool_value(value: bool) -> str:
-    return "true" if value else "false"
+def _format_agents_dir_value(value: str | None) -> str:
+    if value is None:
+        return "auto: .ai/agents derived from job_name"
+    return value
+
+
+def _format_reasoning_effort_value(*, agent: AGENTS, value: ReasoningEffort | None) -> str:
+    if value is not None:
+        return value
+    if len(reasoning_support(agent=agent).efforts) == 0:
+        return "not used by this agent"
+    return "agent default"
+
+
+def _format_provider_value(*, agent: AGENTS, value: PROVIDER | None) -> str:
+    if value is not None:
+        return value
+    match agent:
+        case "codex":
+            return "auto: openai"
+        case "gemini":
+            return "auto: google"
+        case "crush":
+            return "required"
+        case _:
+            return "not passed"
 
 
 def _build_review_option_labels(
     *,
+    agent: AGENTS,
     join_prompt_and_context: bool,
     output_path: str | None,
     agents_dir: str | None,
@@ -71,25 +112,47 @@ def _build_review_option_labels(
     provider: PROVIDER | None,
 ) -> dict[EditableCreateOption, str]:
     return {
-        "join_prompt_and_context": f"join_prompt_and_context = {_format_bool_value(join_prompt_and_context)}",
-        "output_path": f"output_path = {_format_nullable_value(output_path)}",
-        "agents_dir": f"agents_dir = {_format_nullable_value(agents_dir)}",
+        "join_prompt_and_context": f"join_prompt_and_context = {join_prompt_and_context}",
+        "output_path": f"output_path = {_format_output_path_value(output_path)}",
+        "agents_dir": f"agents_dir = {_format_agents_dir_value(agents_dir)}",
         "host": f"host = {host}",
-        "reasoning_effort": f"reasoning_effort = {_format_nullable_value(reasoning_effort)}",
-        "provider": f"provider = {_format_nullable_value(provider)}",
+        "reasoning_effort": f"reasoning_effort = {_format_reasoning_effort_value(agent=agent, value=reasoning_effort)}",
+        "provider": f"provider = {_format_provider_value(agent=agent, value=provider)}",
     }
 
 
-def _choose_create_options_to_edit(
+def _to_option_values[T: str | float | int | bool | None](values: list[T] | tuple[T, ...]) -> list[OptionValue]:
+    return [value for value in values]
+
+
+def _option_spec(*, default: OptionValue, options: list[OptionValue]) -> TextualOptionSpec:
+    return {
+        "default": default,
+        "options": options,
+    }
+
+
+def _build_create_options_form(
     *,
+    agent: AGENTS,
     join_prompt_and_context: bool,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
-) -> list[EditableCreateOption]:
+) -> TextualOptionMap:
+    support = reasoning_support(agent=agent)
+    provider_options = _provider_options_for_agent(agent)
+    reasoning_options = _to_option_values([None, *order_current_first(options=support.efforts, current=reasoning_effort)])
+    provider_form_options: list[OptionValue]
+    ordered_provider_options = order_current_first(options=provider_options, current=provider)
+    if _provider_allows_none(agent=agent):
+        provider_form_options = _to_option_values([None, *ordered_provider_options])
+    else:
+        provider_form_options = _to_option_values(ordered_provider_options)
     review_options = _build_review_option_labels(
+        agent=agent,
         join_prompt_and_context=join_prompt_and_context,
         output_path=output_path,
         agents_dir=agents_dir,
@@ -97,24 +160,112 @@ def _choose_create_options_to_edit(
         reasoning_effort=reasoning_effort,
         provider=provider,
     )
-    labels = [_KEEP_CURRENT_VALUES_LABEL, *review_options.values()]
-    option_by_label: dict[str, EditableCreateOption] = {label: key for key, label in review_options.items()}
-    while True:
-        selection = choose_from_options(
-            options=labels,
-            msg="Review current values. Multi-select anything you want to change.",
-            multi=True,
-            header="Create Options",
-            tv=True,
+    return {
+        review_options["join_prompt_and_context"]: _option_spec(
+            default=join_prompt_and_context,
+            options=_to_option_values([join_prompt_and_context, not join_prompt_and_context]),
+        ),
+        review_options["output_path"]: _option_spec(
+            default=_KEEP_CURRENT_TEXT_FIELD,
+            options=_to_option_values(_TEXT_FIELD_DECISIONS),
+        ),
+        review_options["agents_dir"]: _option_spec(
+            default=_KEEP_CURRENT_TEXT_FIELD,
+            options=_to_option_values(_TEXT_FIELD_DECISIONS),
+        ),
+        review_options["host"]: _option_spec(
+            default=host,
+            options=_to_option_values(order_current_first(options=cast(tuple[HOST, ...], get_args(HOST)), current=host)),
+        ),
+        review_options["reasoning_effort"]: _option_spec(
+            default=reasoning_effort,
+            options=reasoning_options,
+        ),
+        review_options["provider"]: _option_spec(
+            default=provider,
+            options=provider_form_options,
+        ),
+    }
+
+
+def _require_selected_value(*, selected_values: SelectedOptionMap, key: str) -> object:
+    if key not in selected_values:
+        raise KeyError(f"""Missing value for "{key}".""")
+    return selected_values[key]
+
+
+def _require_bool_value(*, selected_values: SelectedOptionMap, key: str) -> bool:
+    value = _require_selected_value(selected_values=selected_values, key=key)
+    if type(value) is not bool:
+        raise TypeError(f"""Expected "{key}" to be bool, got {value!r}.""")
+    return value
+
+
+def _require_text_field_decision(*, selected_values: SelectedOptionMap, key: str) -> TextFieldDecision:
+    value = _require_selected_value(selected_values=selected_values, key=key)
+    if isinstance(value, str) and value in _TEXT_FIELD_DECISIONS:
+        return value
+    raise TypeError(f"""Expected "{key}" to be one of {_TEXT_FIELD_DECISIONS}, got {value!r}.""")
+
+
+def _require_choice[T: str](*, selected_values: SelectedOptionMap, key: str, options: tuple[T, ...]) -> T:
+    value = _require_selected_value(selected_values=selected_values, key=key)
+    if isinstance(value, str) and value in options:
+        return cast(T, value)
+    raise TypeError(f"""Expected "{key}" to be one of {options}, got {value!r}.""")
+
+
+def _require_optional_choice[T: str](*, selected_values: SelectedOptionMap, key: str, options: tuple[T, ...]) -> T | None:
+    value = _require_selected_value(selected_values=selected_values, key=key)
+    if value is None:
+        return None
+    if isinstance(value, str) and value in options:
+        return cast(T, value)
+    raise TypeError(f"""Expected "{key}" to be one of {options} or None, got {value!r}.""")
+
+
+def _collect_create_options_form_selection(
+    *,
+    agent: AGENTS,
+    join_prompt_and_context: bool,
+    output_path: str | None,
+    agents_dir: str | None,
+    host: HOST,
+    reasoning_effort: ReasoningEffort | None,
+    provider: PROVIDER | None,
+) -> _CreateOptionsFormSelection:
+    review_options = _build_review_option_labels(
+        agent=agent,
+        join_prompt_and_context=join_prompt_and_context,
+        output_path=output_path,
+        agents_dir=agents_dir,
+        host=host,
+        reasoning_effort=reasoning_effort,
+        provider=provider,
+    )
+    provider_options = _provider_options_for_agent(agent)
+    try:
+        selected_values = use_textual_options_form(
+            options=_build_create_options_form(
+                agent=agent,
+                join_prompt_and_context=join_prompt_and_context,
+                output_path=output_path,
+                agents_dir=agents_dir,
+                host=host,
+                reasoning_effort=reasoning_effort,
+                provider=provider,
+            )
         )
-        if selection is None:
-            raise ValueError("Selection cancelled for create options")
-        if _KEEP_CURRENT_VALUES_LABEL in selection:
-            if len(selection) == 1:
-                return []
-            print(f"Select either {_KEEP_CURRENT_VALUES_LABEL} or specific options to change.")
-            continue
-        return [option_by_label[label] for label in selection]
+    except RuntimeError as exc:
+        raise ValueError("Selection cancelled for create options") from exc
+    return _CreateOptionsFormSelection(
+        join_prompt_and_context=_require_bool_value(selected_values=selected_values, key=review_options["join_prompt_and_context"]),
+        output_path=_require_text_field_decision(selected_values=selected_values, key=review_options["output_path"]),
+        agents_dir=_require_text_field_decision(selected_values=selected_values, key=review_options["agents_dir"]),
+        host=_require_choice(selected_values=selected_values, key=review_options["host"], options=cast(tuple[HOST, ...], get_args(HOST))),
+        reasoning_effort=_require_optional_choice(selected_values=selected_values, key=review_options["reasoning_effort"], options=reasoning_support(agent=agent).efforts),
+        provider=_require_optional_choice(selected_values=selected_values, key=review_options["provider"], options=provider_options),
+    )
 
 
 def collect_reviewed_create_options(
@@ -131,7 +282,8 @@ def collect_reviewed_create_options(
     reasoning_current = reasoning_effort if reasoning_effort in support.efforts else None
     provider_options = _provider_options_for_agent(agent)
     provider_current = provider if provider in provider_options else None
-    selected_options = _choose_create_options_to_edit(
+    selection = _collect_create_options_form_selection(
+        agent=agent,
         join_prompt_and_context=join_prompt_and_context,
         output_path=output_path,
         agents_dir=agents_dir,
@@ -140,74 +292,18 @@ def collect_reviewed_create_options(
         provider=provider_current,
     )
 
-    join_prompt_and_context_selected = join_prompt_and_context
     output_path_selected = output_path
     agents_dir_selected = agents_dir
-    host_selected = host
-    reasoning_selected = reasoning_current
-    provider_selected = provider_current
-
-    for option_name in selected_options:
-        match option_name:
-            case "join_prompt_and_context":
-                join_prompt_and_context_selected = prompt_bool(
-                    label="join_prompt_and_context",
-                    current=join_prompt_and_context_selected,
-                )
-            case "output_path":
-                output_path_selected = prompt_optional_text_value(label="output path", current=output_path_selected)
-            case "agents_dir":
-                agents_dir_selected = prompt_optional_text_value(label="agents dir", current=agents_dir_selected)
-            case "host":
-                host_selected = cast(
-                    HOST,
-                    choose_required_option(
-                        options=order_current_first(cast(tuple[HOST, ...], get_args(HOST)), host_selected),
-                        msg="Choose host",
-                        header="Host",
-                    ),
-                )
-            case "reasoning_effort":
-                if len(support.efforts) == 0:
-                    print(f"Reasoning effort is not supported for agent {agent}. Leaving it empty.")
-                    reasoning_selected = None
-                else:
-                    msg = "Choose reasoning effort" if support.note is None else f"Choose reasoning effort. {support.note}"
-                    reasoning_selected = cast(
-                        ReasoningEffort | None,
-                        choose_optional_option(
-                            options=support.efforts,
-                            current=reasoning_selected,
-                            msg=msg,
-                            header="Reasoning Effort",
-                        ),
-                    )
-            case "provider":
-                if _provider_allows_none(agent=agent):
-                    provider_selected = cast(
-                        PROVIDER | None,
-                        choose_optional_option(
-                            options=provider_options,
-                            current=provider_selected,
-                            msg="Choose provider",
-                            header="Provider",
-                        ),
-                    )
-                else:
-                    provider_selected = cast(
-                        PROVIDER,
-                        choose_required_option(
-                            options=order_current_first(provider_options, provider_selected),
-                            msg="Choose provider",
-                            header="Provider",
-                        ),
-                    )
+    if selection.output_path == _EDIT_TEXT_FIELD:
+        output_path_selected = prompt_optional_text_value(label="output path", current=output_path_selected)
+    if selection.agents_dir == _EDIT_TEXT_FIELD:
+        agents_dir_selected = prompt_optional_text_value(label="agents dir", current=agents_dir_selected)
 
     return InteractiveCreateReviewOptions(
-        join_prompt_and_context=join_prompt_and_context_selected,
+        join_prompt_and_context=selection.join_prompt_and_context,
         output_path=output_path_selected,
         agents_dir=agents_dir_selected,
-        host=host_selected,
-        reasoning_effort=reasoning_selected,
-        provider=provider_selected,
+        host=selection.host,
+        reasoning_effort=selection.reasoning_effort,
+        provider=selection.provider,
     )

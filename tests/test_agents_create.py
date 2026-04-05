@@ -7,6 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from machineconfig.scripts.python import agents
+from machineconfig.scripts.python.ai.initai import add_ai_configs
 from machineconfig.scripts.python.helpers.helpers_agents import agents_impl
 from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive import common as interactive_common
 from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive import create_options as interactive_create_options
@@ -261,26 +262,21 @@ def test_interactive_main_collects_values_and_delegates() -> None:
     )
 
 
-def test_collect_reviewed_create_options_updates_only_selected_values() -> None:
+def test_collect_reviewed_create_options_uses_textual_form_and_updates_selected_values() -> None:
     with (
         patch.object(
             interactive_create_options,
-            "choose_from_options",
-            return_value=[
-                "output_path = <leave empty>",
-                "provider = <leave empty>",
-            ],
-        ) as choose_from_options,
-        patch.object(
-            interactive_create_options,
-            "prompt_optional_text_value",
-            return_value="/tmp/layout.json",
-        ) as prompt_optional_text_value,
-        patch.object(
-            interactive_create_options,
-            "choose_optional_option",
-            return_value="openai",
-        ) as choose_optional_option,
+            "use_textual_options_form",
+            return_value={
+                "join_prompt_and_context = False": False,
+                "output_path = auto: layout.json inside agents_dir": "edit value",
+                "agents_dir = auto: .ai/agents derived from job_name": "keep current",
+                "host = local": "local",
+                "reasoning_effort = agent default": None,
+                "provider = auto: openai": "openai",
+            },
+        ) as use_textual_options_form,
+        patch.object(interactive_create_options, "prompt_optional_text_value", return_value="/tmp/layout.json") as prompt_optional_text_value,
     ):
         reviewed = interactive_create_options.collect_reviewed_create_options(
             agent="codex",
@@ -300,15 +296,11 @@ def test_collect_reviewed_create_options_updates_only_selected_values() -> None:
         reasoning_effort=None,
         provider="openai",
     )
-    assert choose_from_options.call_args.kwargs["multi"] is True
-    assert choose_from_options.call_args.kwargs["header"] == "Create Options"
+    form_options = use_textual_options_form.call_args.kwargs["options"]
+    assert form_options["join_prompt_and_context = False"]["default"] is False
+    assert form_options["output_path = auto: layout.json inside agents_dir"]["options"] == ["keep current", "edit value"]
+    assert form_options["provider = auto: openai"]["options"] == [None, "openai"]
     prompt_optional_text_value.assert_called_once_with(label="output path", current=None)
-    choose_optional_option.assert_called_once_with(
-        options=("openai",),
-        current=None,
-        msg="Choose provider",
-        header="Provider",
-    )
 
 
 def test_agents_impl_persists_recreate_artifacts(tmp_path: Path) -> None:
@@ -430,3 +422,24 @@ def test_agents_impl_can_recreate_from_snapshots_inside_agents_dir(tmp_path: Pat
     assert output_path.exists()
     assert (agents_dir / ".create" / "prompt.md").exists()
     assert (agents_dir / ".create" / "context.md").exists()
+
+
+def test_add_ai_configs_supports_forge(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    add_ai_configs(
+        repo_root=repo_root,
+        frameworks=("forge",),
+        include_common_scaffold=False,
+        add_all_touched_configs_to_gitignore=False,
+        add_vscode_task=False,
+        add_private_config=True,
+        add_instructions=True,
+    )
+
+    assert repo_root.joinpath("AGENTS.md").exists()
+    assert repo_root.joinpath("forge.yaml").read_text(encoding="utf-8") == (
+        "# yaml-language-server: $schema=https://raw.githubusercontent.com/antinomyhq/forge/main/forge.schema.json\n"
+    )
+    assert json.loads(repo_root.joinpath(".mcp.json").read_text(encoding="utf-8")) == {"mcpServers": {}}

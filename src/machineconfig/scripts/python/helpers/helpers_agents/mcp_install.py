@@ -81,7 +81,7 @@ def install_resolved_mcp_servers(
                 _write_copilot_workspace_config(path=path, resolved_servers=resolved_servers)
             else:
                 _write_copilot_user_config(path=path, resolved_servers=resolved_servers)
-        case "claude" | "cursor-agent" | "kilocode" | "warp-cli":
+        case "claude" | "cursor-agent" | "forge" | "kilocode" | "warp-cli":
             _write_mcp_servers_file(path=path, resolved_servers=resolved_servers)
         case "gemini" | "qwen":
             _write_settings_with_mcp_servers(path=path, resolved_servers=resolved_servers, ensure_mcp_enabled=True)
@@ -113,6 +113,8 @@ def resolve_install_path(
                 return repo_root / ".vscode" / "mcp.json"
             case "claude":
                 return repo_root / ".mcp.json"
+            case "forge":
+                return repo_root / ".mcp.json"
             case "gemini":
                 return repo_root / ".gemini" / "settings.json"
             case "cursor-agent":
@@ -143,6 +145,8 @@ def resolve_install_path(
             return home_dir / ".copilot" / "mcp-config.json"
         case "claude":
             return home_dir / ".claude.json"
+        case "forge":
+            return home_dir / "forge" / ".mcp.json"
         case "gemini":
             return home_dir / ".gemini" / "settings.json"
         case "cursor-agent":
