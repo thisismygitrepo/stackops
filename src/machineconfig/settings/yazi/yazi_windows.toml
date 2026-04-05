@@ -46,8 +46,10 @@ rules = [
 # dir = "~/AppData/Roaming/yazi/config/plugins"
 
 prepend_previewers = [
-  # Markdown previewer on Windows: avoid piper, which requires sh.exe
-  { url = "*.md", run = "code" },
+  # Markdown previewer
+  { url = "*.md", run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"' },
+  # { url = "*.md", run = "code" },
+
   # JSON previewer - explicitly use built-in json previewer
   { mime = "application/json", run = "json" },
   { url = "*.json", run = "json" },
@@ -89,4 +91,5 @@ path = "toggle-pane.yazi"
 # Change them to your desired values
 max_width  = 1000
 max_height = 1000
+
 

@@ -29,7 +29,8 @@ Add-ToPathIfNotAlready -Directories @(
     "C:\Program Files\CodeBlocks\MinGW\bin",
     "C:\Program Files\nu\bin",
     "C:\Program Files\Graphviz\bin",
-    "C:\Program Files\7-Zip"
+    "C:\Program Files\7-Zip",
+    "C:\Program Files\Git\bin"  # gives sh.exe bash.exe & git.exe
 )
 
 # sources  ================================================================
@@ -66,23 +67,6 @@ else {
     function u { utils $args }
     function ms { msearch @args }
 }
-
-
-
-# sources end
-
-# try {
-#     Set-Alias -Name gcs -Value {gh copilot suggest -t shell}
-#     Set-Alias -Name gcg -Value {gh copilot suggest -t git}
-#     Set-Alias -Name gce -Value {gh copilot explain}
-#     # Check for conflicts
-#     # Get-Command gcs -ErrorAction SilentlyContinue
-#     # Get-Command gcg -ErrorAction SilentlyContinue
-#     # Get-Command gce -ErrorAction SilentlyContinue
-# }
-# catch {
-#     # Do nothing
-# }
 
 
 # patches ===========================================================
