@@ -56,27 +56,38 @@ run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg fire "$0"
 desc = "Run fire on hovered file"
 
 [[mgr.prepend_keymap]]
-on   = ["L", "c"]
+on   = ["p", "c"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek "$0"'
 desc = "Search contents"
 [[mgr.prepend_keymap]]
-on   = ["L", "f"]
+on   = ["p", "f"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek -f "$0"'
 desc = "Search files"
 [[mgr.prepend_keymap]]
-on   = ["L", "e"]
+on   = ["p", "e"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek -e "$0"'
 desc = "Search then edit"
 [[mgr.prepend_keymap]]
-on   = ["L", "s"]
+on   = ["p", "s"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek -s "$0"'
 desc = "Symantic search"
-
+[[mgr.prepend_keymap]]
+on   = ["p", "a"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek -a "$0"'
+desc = "Symbol search"
 
 [[mgr.prepend_keymap]]
 on   = "b"
 run  = 'shell --block -- bat "$0"'
 desc = "bat the file"
+[[mgr.prepend_keymap]]
+on   = "e"
+run  = 'shell --block -- hx "$0"'
+desc = "edit the file with helix"
+[[mgr.prepend_keymap]]
+on   = "n"
+run  = 'shell --block -- nano "$0"'
+desc = "nano the file"
 
 [[mgr.prepend_keymap]]
 on = [ "g", "r" ]

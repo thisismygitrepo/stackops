@@ -235,6 +235,9 @@ def _run_ast_search(directory: str) -> None:
     symbols = get_repo_symbols(directory)
     options_to_preview_mapping, symbol_lookup = _build_ast_option_lookup(symbols=symbols)
 
+    if len(symbols) == 0:
+        print("❓ No symbols found in the repository.")
+        return
     try:
         selected_key = choose_from_dict_with_preview(
             options_to_preview_mapping=options_to_preview_mapping, extension="py", multi=False, preview_size_percent=75.0
