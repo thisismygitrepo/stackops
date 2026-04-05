@@ -151,6 +151,9 @@ def init_config(
     agents: Annotated[
         str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
     ] = "",
+    add_mcp: Annotated[
+        str, typer.Option("--add-mcp", "-m", help="MCP servers/tools to resolve from machineconfig MCP catalogs (comma-separated).")
+    ] = "",
     add_config: Annotated[bool, typer.Option("--add-config", "-c", help="Create private agent config files/directories")] = True,
     add_instructions: Annotated[bool, typer.Option("--add-instructions", "-i", help="Create agent instructions files (e.g. AGENTS.md)")] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai/.scripts scaffold")] = False,
@@ -179,6 +182,7 @@ def init_config(
             add_lint_task=add_vscode_tasks,
             add_config=add_config,
             add_instructions=add_instructions,
+            requested_mcp_servers=add_mcp,
         )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e

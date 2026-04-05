@@ -3224,6 +3224,24 @@
       }
     },
     {
+      "appName": "tmux-mcp-rs",
+      "license": "MIT",
+      "repoURL": "https://github.com/bnomei/tmux-mcp",
+      "doc": "Tmux MCP server for AI assistants. Requires tmux on PATH.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "tmux-mcp-rs-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "darwin": "tmux-mcp-rs-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "tmux-mcp-rs-{version}-x86_64-pc-windows-msvc.zip"
+        },
+        "arm64": {
+          "linux": "tmux-mcp-rs-{version}-aarch64-unknown-linux-musl.tar.gz",
+          "darwin": "tmux-mcp-rs-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "aoe",
       "license": "MIT",
       "repoURL": "https://github.com/njbrake/agent-of-empires",

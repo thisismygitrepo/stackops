@@ -1,0 +1,8 @@
+{
+  "$schema": "./mcp.schema.json",
+  "mcpServers": {
+    "tmux": {
+      "command": "~/.local/bin/tmux-mcp-rs"
+    }
+  }
+}
