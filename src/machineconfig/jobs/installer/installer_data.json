@@ -278,13 +278,13 @@
       "doc": "📂 A terminal file manager written in Rust.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "joshuto-v{version}-x86_64-unknown-linux-musl.tar.gz",
-          "darwin": "joshuto-v{version}-x86_64-apple-darwin.tar.gz",
+          "linux": "joshuto-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "darwin": "joshuto-{version}-x86_64-apple-darwin.tar.gz",
           "windows": null
         },
         "arm64": {
-          "linux": "joshuto-v{version}-aarch64-unknown-linux-musl.tar.gz",
-          "darwin": "joshuto-v{version}-aarch64-apple-darwin.tar.gz",
+          "linux": "joshuto-{version}-aarch64-unknown-linux-musl.tar.gz",
+          "darwin": "joshuto-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -410,7 +410,7 @@
         },
         "arm64": {
           "linux": "croc_{version}_Linux-ARM64.tar.gz",
-          "windows": null,
+          "windows": "croc_{version}_Windows-ARM64.zip",
           "darwin": "croc_{version}_macOS-ARM64.tar.gz"
         }
       }
@@ -424,12 +424,12 @@
         "amd64": {
           "linux": "magic-wormhole-cli-x86_64-unknown-linux-gnu.tgz",
           "windows": "magic-wormhole-cli-x86_64-pc-windows-gnu.tgz",
-          "darwin": "magic-wormhole-cli-aarch64-apple-darwin.tgz"
+          "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "darwin": null
+          "darwin": "magic-wormhole-cli-aarch64-apple-darwin.tgz"
         }
       }
     },
@@ -481,9 +481,9 @@
           "darwin": "asciinema-x86_64-apple-darwin"
         },
         "arm64": {
-          "linux": null,
+          "linux": "asciinema-aarch64-unknown-linux-gnu",
           "windows": null,
-          "darwin": null
+          "darwin": "asciinema-aarch64-apple-darwin"
         }
       }
     },
@@ -517,9 +517,9 @@
           "windows": "x86_64-pc-windows-gnu-rusty-rain-{version}.exe"
         },
         "arm64": {
-          "linux": "aarch64-unknown-linux-musl-rusty-rain-{version}",
+          "linux": null,
           "darwin": "aarch64-apple-darwin-rusty-rain-{version}",
-          "windows": "x86_64-pc-windows-gnu-rusty-rain-{version}.exe"
+          "windows": null
         }
       }
     },
@@ -638,14 +638,14 @@
       "doc": "🦇 A cat(1) clone with wings.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "bat-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "bat-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "bat-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "bat-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "bat-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "bat-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "bat-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "bat-v{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "bat-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "bat-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "bat-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "bat-{version}-x86_64-pc-windows-msvc.zip"
         }
       }
     },
@@ -800,14 +800,14 @@
       "doc": "💾 Rust-based cli tool to get a quick overview of disk usage.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "dua-v{version}-x86_64-unknown-linux-musl.tar.gz",
-          "darwin": "dua-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "dua-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "dua-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "darwin": "dua-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "dua-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "dua-v{version}-aarch64-unknown-linux-musl.tar.gz",
-          "darwin": "dua-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "dua-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "dua-{version}-aarch64-unknown-linux-musl.tar.gz",
+          "darwin": "dua-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "dua-{version}-x86_64-pc-windows-msvc.zip"
         }
       }
     },
@@ -836,14 +836,14 @@
       "doc": "🔍 fd is a simple, fast and user-friendly alternative to find.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "fd-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "fd-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "fd-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "fd-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "fd-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "fd-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "fd-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "fd-v{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "fd-v{version}-aarch64-pc-windows-msvc.zip"
+          "linux": "fd-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "fd-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "fd-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -980,14 +980,14 @@
       "doc": "📂 A modern replacement for ls written in Rust.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "lsd-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "lsd-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "lsd-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "lsd-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "lsd-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "lsd-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "lsd-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "lsd-v{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "lsd-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "lsd-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "lsd-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "lsd-{version}-x86_64-pc-windows-msvc.zip"
         }
       }
     },
@@ -1052,14 +1052,14 @@
       "doc": "📊 procs is a modern replacement for ps written in Rust.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "procs-v{version}-x86_64-linux.zip",
-          "darwin": "procs-v{version}-x86_64-mac.zip",
-          "windows": "procs-v{version}-x86_64-windows.zip"
+          "linux": "procs-{version}-x86_64-linux.zip",
+          "darwin": "procs-{version}-x86_64-mac.zip",
+          "windows": "procs-{version}-x86_64-windows.zip"
         },
         "arm64": {
-          "linux": "procs-v{version}-aarch64-linux.zip",
-          "darwin": "procs-v{version}-aarch64-mac.zip",
-          "windows": "procs-v{version}-aarch64-windows.zip"
+          "linux": "procs-{version}-aarch64-linux.zip",
+          "darwin": "procs-{version}-aarch64-mac.zip",
+          "windows": "procs-{version}-aarch64-windows.zip"
         }
       }
     },
@@ -1070,14 +1070,14 @@
       "doc": "☁️ cli to sync to cloud storage providers.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "rclone-v{version}-linux-amd64.zip",
-          "darwin": "rclone-v{version}-osx-amd64.zip",
-          "windows": "rclone-v{version}-windows-amd64.zip"
+          "linux": "rclone-{version}-linux-amd64.zip",
+          "darwin": "rclone-{version}-osx-amd64.zip",
+          "windows": "rclone-{version}-windows-amd64.zip"
         },
         "arm64": {
-          "linux": "rclone-v{version}-linux-arm64.zip",
-          "darwin": "rclone-v{version}-osx-arm64.zip",
-          "windows": "rclone-v{version}-windows-arm64.zip"
+          "linux": "rclone-{version}-linux-arm64.zip",
+          "darwin": "rclone-{version}-osx-arm64.zip",
+          "windows": "rclone-{version}-windows-arm64.zip"
         }
       }
     },
@@ -1094,8 +1094,8 @@
         },
         "arm64": {
           "linux": "meilisearch-linux-aarch64",
-          "darwin": "meilisearch-macos-aarch64",
-          "windows": "meilisearch-windows-aarch64.exe"
+          "darwin": "meilisearch-macos-apple-silicon",
+          "windows": null
         }
       }
     },
@@ -1149,7 +1149,7 @@
         "arm64": {
           "linux": "ripgrep-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "darwin": "ripgrep-{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "ripgrep-{version}-x86_64-pc-windows-msvc.zip"
+          "windows": "ripgrep-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -1160,13 +1160,13 @@
       "doc": "🔍 ripgrep, but also search in PDFs, E-Books, Office documents, zip, tar.gz, etc.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "ripgrep_all-v{version}-x86_64-unknown-linux-musl.tar.gz",
-          "darwin": "ripgrep_all-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "ripgrep_all-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "ripgrep_all-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "darwin": "ripgrep_all-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": null
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
+          "linux": "ripgrep_all-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "ripgrep_all-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -1215,13 +1215,13 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "tere-{version}-x86_64-unknown-linux-gnu.zip",
-          "darwin": "tere-{version}-x86_64-apple-darwin.zip",
+          "darwin": null,
           "windows": "tere-{version}-x86_64-pc-windows-gnu.zip"
         },
         "arm64": {
           "linux": "tere-{version}-aarch64-unknown-linux-gnu.zip",
-          "darwin": "tere-{version}-aarch64-apple-darwin.zip",
-          "windows": "tere-{version}-aarch64-pc-windows-gnu.zip"
+          "darwin": null,
+          "windows": null
         }
       }
     },
@@ -1232,14 +1232,14 @@
       "doc": "⬆️ Keeping your system up to date usually involves invoking multiple package managers.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "topgrade-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "topgrade-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "topgrade-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "topgrade-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "topgrade-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "topgrade-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "topgrade-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "topgrade-v{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "topgrade-v{version}-aarch64-pc-windows-msvc.zip"
+          "linux": "topgrade-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "topgrade-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": null
         }
       }
     },
@@ -1502,7 +1502,7 @@
       "doc": "🎵 A terminal-based music player written in Rust.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "termusic-v{version}-x86_64-linux.tar.xz",
+          "linux": "termusic-{version}-x86_64-linux.tar.xz",
           "darwin": null,
           "windows": null
         },
@@ -1635,7 +1635,7 @@
         "arm64": {
           "linux": "atuin-aarch64-unknown-linux-gnu.tar.gz",
           "darwin": "atuin-aarch64-apple-darwin.tar.gz",
-          "windows": "atuin-aarch64-pc-windows-msvc.zip"
+          "windows": null
         }
       }
     },
@@ -1646,13 +1646,13 @@
       "doc": "🌐 browser in the shell",
       "fileNamePattern": {
         "amd64": {
-          "linux": "browsh-v{version}-linux-amd64",
-          "darwin": "browsh-v{version}-darwin-amd64",
+          "linux": null,
+          "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": "browsh-v{version}-linux-arm64",
-          "darwin": "browsh-v{version}-darwin-arm64",
+          "linux": null,
+          "darwin": null,
           "windows": null
         }
       }
@@ -1665,12 +1665,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "carbonyl.linux-amd64.zip",
-          "darwin": null,
+          "darwin": "carbonyl.macos-amd64.zip",
           "windows": null
         },
         "arm64": {
           "linux": "carbonyl.linux-arm64.zip",
-          "darwin": null,
+          "darwin": "carbonyl.macos-arm64.zip",
           "windows": null
         }
       }
@@ -1682,13 +1682,13 @@
       "doc": "🎯 Terminal-based presentations using Pandoc. Presenterm alternative.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "patat-v{version}-linux-x86_64.tar.gz",
+          "linux": "patat-{version}-linux-x86_64.tar.gz",
           "darwin": null,
           "windows": null
         },
         "arm64": {
           "linux": null,
-          "darwin": null,
+          "darwin": "patat-{version}-darwin-arm64.zip",
           "windows": null
         }
       }
@@ -1754,14 +1754,14 @@
       "doc": "🗃️ A visual tool to create, design, and edit database files compatible with SQLite.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "DB.Browser.for.SQLite-v{version}-x86.64-v2.AppImage",
-          "darwin": null,
-          "windows": null
+          "linux": "DB.Browser.for.SQLite-{version}-x86.64-v2.AppImage",
+          "darwin": "DB.Browser.for.SQLite-{version}.dmg",
+          "windows": "DB.Browser.for.SQLite-{version}-win64.zip"
         },
         "arm64": {
           "linux": null,
-          "darwin": null,
-          "windows": null
+          "darwin": "DB.Browser.for.SQLite-{version}.dmg",
+          "windows": "DB.Browser.for.SQLite-{version}-arm64.zip"
         }
       }
     },
@@ -1772,14 +1772,14 @@
       "doc": "🗃️ Free universal database tool and SQL client.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "dbeaver-ce-{version}-linux.gtk.x86_64.tar.gz",
+          "linux": "dbeaver-ce-{version}-linux-x86_64.tar.gz",
           "darwin": "dbeaver-ce-{version}-macos-x86_64.dmg",
-          "windows": "winget install DBeaver.DBeaver.Community --source winget --scope user --accept-package-agreements --accept-source-agreements"
+          "windows": "dbeaver-ce-{version}-windows-x86_64.zip"
         },
         "arm64": {
-          "linux": "dbeaver-ce-{version}-linux.gtk.aarch64.tar.gz",
+          "linux": "dbeaver-ce-{version}-linux-aarch64.tar.gz",
           "darwin": "dbeaver-ce-{version}-macos-aarch64.dmg",
-          "windows": "winget install DBeaver.DBeaver.Community --source winget --scope user --accept-package-agreements --accept-source-agreements"
+          "windows": "dbeaver-ce-{version}-windows-aarch64.zip"
         }
       }
     },
@@ -1790,14 +1790,14 @@
       "doc": "🗃️ Web-based PostgreSQL database browser written in Go",
       "fileNamePattern": {
         "amd64": {
-          "linux": "pgweb-linux-amd64.zip",
+          "linux": "pgweb_linux_amd64.zip",
           "darwin": "pgweb_darwin_amd64.zip",
           "windows": "pgweb_windows_amd64.zip"
         },
         "arm64": {
-          "linux": "pgweb-linux-arm64.zip",
+          "linux": "pgweb_linux_arm64.zip",
           "darwin": "pgweb_darwin_arm64.zip",
-          "windows": "pgweb_windows_arm64.zip"
+          "windows": null
         }
       }
     },
@@ -2204,14 +2204,14 @@
       "doc": "🧪 A Jupyter Kernel for Rust",
       "fileNamePattern": {
         "amd64": {
-          "linux": "evcxr-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "windows": "evcxr-v{version}-x86_64-pc-windows-msvc.zip",
+          "linux": "evcxr-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "windows": "evcxr-{version}-x86_64-pc-windows-msvc.zip",
           "darwin": null
         },
         "arm64": {
           "linux": null,
           "windows": null,
-          "darwin": "evcxr-v{version}-aarch64-apple-darwin.tar.gz"
+          "darwin": "evcxr-{version}-aarch64-apple-darwin.tar.gz"
         }
       }
     },
@@ -2240,14 +2240,14 @@
       "doc": "📊 monitor network usage from cli",
       "fileNamePattern": {
         "amd64": {
-          "linux": "bandwhich-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "windows": "bandwhich-v{version}-x86_64-pc-windows-msvc.zip",
-          "darwin": "bandwhich-v{version}-x86_64-apple-darwin.tar.gz"
+          "linux": "bandwhich-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "windows": "bandwhich-{version}-x86_64-pc-windows-msvc.zip",
+          "darwin": "bandwhich-{version}-x86_64-apple-darwin.tar.gz"
         },
         "arm64": {
-          "linux": "bandwhich-v{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "linux": "bandwhich-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "windows": null,
-          "darwin": "bandwhich-v{version}-aarch64-apple-darwin.tar.gz"
+          "darwin": "bandwhich-{version}-aarch64-apple-darwin.tar.gz"
         }
       }
     },
@@ -2276,12 +2276,12 @@
       "doc": "📊 A more intuitive version of du in rust. It is a dua alternative.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "dust-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "windows": "dust-v{version}-x86_64-pc-windows-msvc.zip",
-          "darwin": "dust-v{version}-x86_64-apple-darwin.tar.gz"
+          "linux": "dust-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "windows": "dust-{version}-x86_64-pc-windows-msvc.zip",
+          "darwin": "dust-{version}-x86_64-apple-darwin.tar.gz"
         },
         "arm64": {
-          "linux": "dust-v{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "linux": "dust-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "windows": null,
           "darwin": null
         }
@@ -2312,7 +2312,7 @@
       "doc": "📤 Send files in secure encrypted way over the internet.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "ffsend-v{version}-linux-x64",
+          "linux": "ffsend-{version}-linux-x64",
           "windows": null,
           "darwin": null
         },
@@ -2510,13 +2510,13 @@
       "doc": "🔄 Syncthing is a continuous file synchronization program. It synchronizes files between two or more computers.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "syncthing-linux-amd64-v{version}.tar.gz",
-          "darwin": "syncthing-osx-amd64-v{version}.tar.gz",
-          "windows": "syncthing-windows-amd64-v{version}.zip"
+          "linux": "syncthing-linux-amd64-{version}.tar.gz",
+          "darwin": "syncthing-osx-amd64-{version}.tar.gz",
+          "windows": "syncthing-windows-amd64-{version}.zip"
         },
         "arm64": {
-          "linux": "syncthing-linux-arm64-v{version}.tar.gz",
-          "darwin": "syncthing-osx-arm64-v{version}.tar.gz",
+          "linux": "syncthing-linux-arm64-{version}.tar.gz",
+          "darwin": "syncthing-osx-arm64-{version}.tar.gz",
           "windows": null
         }
       }
@@ -2726,12 +2726,12 @@
       "doc": "📚 An interactive cheatsheet tool for the command-line",
       "fileNamePattern": {
         "amd64": {
-          "linux": "navi-v{version}-x86_64-unknown-linux-musl.tar.gz",
+          "linux": "navi-{version}-x86_64-unknown-linux-musl.tar.gz",
           "darwin": null,
-          "windows": "navi-v{version}-x86_64-pc-windows-gnu.zip"
+          "windows": "navi-{version}-x86_64-pc-windows-gnu.zip"
         },
         "arm64": {
-          "linux": "navi-v{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "linux": "navi-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "darwin": null,
           "windows": null
         }
@@ -2852,13 +2852,13 @@
       "doc": "⚡ A command-line benchmarking tool",
       "fileNamePattern": {
         "amd64": {
-          "linux": "hyperfine-v{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "hyperfine-v{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "hyperfine-v{version}-x86_64-pc-windows-msvc.zip"
+          "linux": "hyperfine-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "hyperfine-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "hyperfine-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "hyperfine-v{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "hyperfine-v{version}-aarch64-apple-darwin.tar.gz",
+          "linux": "hyperfine-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "hyperfine-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -2996,14 +2996,14 @@
       "doc": "🦊 WebDriver for Firefox.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "geckodriver-v{version}-linux64.tar.gz",
-          "darwin": "geckodriver-v{version}-macos.tar.gz",
-          "windows": "geckodriver-v{version}-win64.zip"
+          "linux": "geckodriver-{version}-linux64.tar.gz",
+          "darwin": "geckodriver-{version}-macos.tar.gz",
+          "windows": "geckodriver-{version}-win64.zip"
         },
         "arm64": {
-          "linux": "geckodriver-v{version}-linux-aarch64.tar.gz",
-          "darwin": "geckodriver-v{version}-macos-aarch64.tar.gz",
-          "windows": "geckodriver-v{version}-win-aarch64.zip"
+          "linux": "geckodriver-{version}-linux-aarch64.tar.gz",
+          "darwin": "geckodriver-{version}-macos-aarch64.tar.gz",
+          "windows": "geckodriver-{version}-win-aarch64.zip"
         }
       }
     },
@@ -3262,18 +3262,18 @@
     {
       "appName": "cagent",
       "license": "Apache-2.0",
-      "repoURL": "https://github.com/docker/cagent",
+      "repoURL": "https://github.com/docker/docker-agent",
       "doc": "Docker terminal coding agent",
       "fileNamePattern": {
         "amd64": {
-          "linux": null,
-          "darwin": null,
-          "windows": "cagent-windows-amd64.exe"
+          "linux": "docker-agent-linux-amd64",
+          "darwin": "docker-agent-darwin-amd64",
+          "windows": "docker-agent-windows-amd64.exe"
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
-          "windows": "cagent-windows-arm64.exe"
+          "linux": "docker-agent-linux-arm64",
+          "darwin": "docker-agent-darwin-arm64",
+          "windows": "docker-agent-windows-arm64.exe"
         }
       }
     },
@@ -4009,7 +4009,7 @@
           "darwin": "brew install --cask google-chrome"
         },
         "arm64": {
-          "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; sudo apt install ./google-chrome-stable_current_amd64.deb; rm google-chrome-stable_current_amd64.deb",
+          "linux": null,
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask google-chrome"
         }
@@ -4017,7 +4017,7 @@
     },
     {
       "appName": "chrome-remote-desktop",
-      "license": "BSD-3-Clause",
+      "license": "Proprietary; governed by Google Terms of Service / service-specific terms",
       "repoURL": "CMD",
       "doc": "🖥️ Chrome Remote Desktop Host",
       "fileNamePattern": {
