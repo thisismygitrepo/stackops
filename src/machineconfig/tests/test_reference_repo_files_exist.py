@@ -134,14 +134,14 @@ REFERENCE_USERS_BY_PATH: ReferenceUsersByPath = {
     "src/machineconfig/scripts/python/helpers/helpers_devops/themes/choose_windows_terminal_theme.ps1": (
         "src/machineconfig/scripts/python/helpers/helpers_devops/cli_config_terminal.py",
     ),
-    "src/machineconfig/scripts/python/helpers/helpers_peek/scripts_linux/fzfg": (
-        "src/machineconfig/scripts/python/helpers/helpers_peek/peek_impl.py",
+    "src/machineconfig/scripts/python/helpers/helpers_seek/scripts_linux/fzfg": (
+        "src/machineconfig/scripts/python/helpers/helpers_seek/seek_impl.py",
     ),
-    "src/machineconfig/scripts/python/helpers/helpers_peek/scripts_windows/fzfg.ps1": (
-        "src/machineconfig/scripts/python/helpers/helpers_peek/peek_impl.py",
+    "src/machineconfig/scripts/python/helpers/helpers_seek/scripts_windows/fzfg.ps1": (
+        "src/machineconfig/scripts/python/helpers/helpers_seek/seek_impl.py",
     ),
-    "src/machineconfig/scripts/python/helpers/helpers_peek/scripts_macos/fzfg": (
-        "src/machineconfig/scripts/python/helpers/helpers_peek/peek_impl.py",
+    "src/machineconfig/scripts/python/helpers/helpers_seek/scripts_macos/fzfg": (
+        "src/machineconfig/scripts/python/helpers/helpers_seek/seek_impl.py",
     ),
     "src/machineconfig/settings/linters/.flake8": (
         "src/machineconfig/scripts/python/helpers/helpers_devops/cli_repos.py",

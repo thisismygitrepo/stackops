@@ -14,7 +14,7 @@ function fire {mcfg fire @args }
 function croshell {mcfg croshell @args }
 function utils {mcfg utils @args }
 function terminal {mcfg terminal @args }
-function peek { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "git+https://github.com/thisismygitrepo/machineconfig" peek @args }
+function seek { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "git+https://github.com/thisismygitrepo/machineconfig" seek @args }
 
 function d { wrap_in_shell_script mcfg devops @args }
 function c { wrap_in_shell_script mcfg cloud @args }
@@ -24,6 +24,6 @@ function f { wrap_in_shell_script mcfg fire @args }
 function rr { wrap_in_shell_script mcfg croshell @args }
 function u { wrap_in_shell_script mcfg utils @args }
 function t { wrap_in_shell_script mcfg terminal @args }
-function p { wrap_in_shell_script peek @args }
+function p { wrap_in_shell_script seek @args }
 
 Write-Host "mcfg command aliases are now defined in this PowerShell session."

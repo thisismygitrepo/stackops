@@ -1,8 +1,7 @@
 """seek - Machineconfig search helper."""
 
-from typing import Annotated
-
 import typer
+from typing import Annotated
 
 
 def seek(
@@ -17,9 +16,8 @@ def seek(
     edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open selection in editor (helix)")] = False,
     install_dependencies: Annotated[bool, typer.Option(..., "--install-req", "-i", help="Install required dependencies if missing")] = False,
 ) -> None:
-    """Seek across files, text matches, and code symbols."""
-    from machineconfig.scripts.python.helpers.helpers_peek.peek_impl import peek as impl
-
+    """seek across files, text matches, and code symbols."""
+    from machineconfig.scripts.python.helpers.helpers_seek.seek_impl import seek as impl
     impl(
         path=path,
         search_term=search_term,
@@ -34,11 +32,7 @@ def seek(
     )
 
 
-def get_app() -> typer.Typer:
+def main() -> None:
     app = typer.Typer(add_completion=False, no_args_is_help=True)
     app.command(name="seek", help=seek.__doc__, short_help="machineconfig search helper", no_args_is_help=False)(seek)
-    return app
-
-
-def main() -> None:
-    get_app()()
+    app()

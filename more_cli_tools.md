@@ -105,7 +105,7 @@
 * Linux:
     * https://github.com/xlmnxp/blue-recorder
     * https://github.com/SeaDve/Kooha
-    * https://github.com/phw/peek
+    * https://github.com/phw/seek
     * https://github.com/linuxdeepin/deepin-screen-recorder
 * Windows Only:
     * https://github.com/ShareX/ShareX.

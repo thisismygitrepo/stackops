@@ -2,13 +2,13 @@ from unittest.mock import patch
 from pathlib import Path
 import textwrap
 
-from machineconfig.scripts.python.helpers.helpers_peek import peek_impl
+from machineconfig.scripts.python.helpers.helpers_seek import seek_impl
 from machineconfig.scripts.python.helpers.helpers_search.ast_search import SymbolInfo
 
 
-def test_peek_limits_default_file_source_to_non_dotfiles() -> None:
+def test_seek_limits_default_file_source_to_non_dotfiles() -> None:
     with patch("platform.system", return_value="Linux"), patch("machineconfig.utils.code.run_shell_script") as run_shell_script:
-        peek_impl.peek(
+        seek_impl.seek(
             path=".",
             search_term="",
             ast=False,
@@ -26,9 +26,9 @@ def test_peek_limits_default_file_source_to_non_dotfiles() -> None:
     assert "fd --type file | " in script
 
 
-def test_peek_keeps_default_file_source_when_dotfiles_enabled() -> None:
+def test_seek_keeps_default_file_source_when_dotfiles_enabled() -> None:
     with patch("platform.system", return_value="Linux"), patch("machineconfig.utils.code.run_shell_script") as run_shell_script:
-        peek_impl.peek(
+        seek_impl.seek(
             path=".",
             search_term="",
             ast=False,
@@ -46,9 +46,9 @@ def test_peek_keeps_default_file_source_when_dotfiles_enabled() -> None:
     assert not script.startswith("fd ")
 
 
-def test_peek_windows_file_search_changes_directory_with_literal_path() -> None:
+def test_seek_windows_file_search_changes_directory_with_literal_path() -> None:
     with patch("platform.system", return_value="Windows"), patch("machineconfig.utils.code.run_shell_script") as run_shell_script:
-        peek_impl.peek(
+        seek_impl.seek(
             path="C:/Users/Alex/My Repo",
             search_term="",
             ast=False,
@@ -66,9 +66,9 @@ def test_peek_windows_file_search_changes_directory_with_literal_path() -> None:
     assert script.startswith("Set-Location -LiteralPath 'C:/Users/Alex/My Repo'\n")
 
 
-def test_peek_windows_text_search_changes_directory_with_literal_path() -> None:
+def test_seek_windows_text_search_changes_directory_with_literal_path() -> None:
     with patch("platform.system", return_value="Windows"), patch("machineconfig.utils.code.exit_then_run_shell_script") as exit_then_run_shell_script:
-        peek_impl.peek(
+        seek_impl.seek(
             path="C:/Users/Alex/My Repo",
             search_term="needle",
             ast=False,
@@ -87,9 +87,9 @@ def test_peek_windows_text_search_changes_directory_with_literal_path() -> None:
     assert "$initialQuery = 'needle'" in script
 
 
-def test_peek_macos_text_search_script_does_not_exit_parent_shell() -> None:
+def test_seek_macos_text_search_script_does_not_exit_parent_shell() -> None:
     with patch("platform.system", return_value="Darwin"), patch("machineconfig.utils.code.exit_then_run_shell_script") as exit_then_run_shell_script:
-        peek_impl.peek(
+        seek_impl.seek(
             path="/Users/alex/My Repo",
             search_term="needle",
             ast=False,
@@ -111,12 +111,12 @@ def test_peek_macos_text_search_script_does_not_exit_parent_shell() -> None:
 
 def test_search_file_with_context_quotes_preview_path_on_windows() -> None:
     with patch("platform.system", return_value="Windows"):
-        code = peek_impl.search_file_with_context(path="/tmp/My File.txt", is_temp_file=False, edit=False)
+        code = seek_impl.search_file_with_context(path="/tmp/My File.txt", is_temp_file=False, edit=False)
 
     assert "--preview-command 'bat --color=always --style=numbers --highlight-line {split: :0} \"/tmp/My File.txt\"'" in code
 
 
-def test_peek_ast_uses_tv_preview_with_symbol_body() -> None:
+def test_seek_ast_uses_tv_preview_with_symbol_body() -> None:
     symbol: SymbolInfo = {
         "type": "function",
         "name": "sample",
@@ -145,7 +145,7 @@ def test_peek_ast_uses_tv_preview_with_symbol_body() -> None:
         patch("machineconfig.utils.options_utils.tv_options.choose_from_dict_with_preview", side_effect=_fake_choose),
         patch("rich.print_json") as print_json,
     ):
-        peek_impl.peek(
+        seek_impl.seek(
             path=".",
             search_term="",
             ast=True,
@@ -169,7 +169,7 @@ def test_peek_ast_uses_tv_preview_with_symbol_body() -> None:
     assert '"body"' not in printed_json
 
 
-def test_peek_ast_supports_single_python_file_path(tmp_path: Path) -> None:
+def test_seek_ast_supports_single_python_file_path(tmp_path: Path) -> None:
     source_path = tmp_path.joinpath("demo.py")
     source_path.write_text(
         textwrap.dedent(
@@ -190,7 +190,7 @@ def test_peek_ast_supports_single_python_file_path(tmp_path: Path) -> None:
     with patch("machineconfig.utils.options_utils.tv_options.choose_from_dict_with_preview", side_effect=_fake_choose), patch(
         "rich.print_json"
     ) as print_json:
-        peek_impl.peek(
+        seek_impl.seek(
             path=str(source_path),
             search_term="",
             ast=True,

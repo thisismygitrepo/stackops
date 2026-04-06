@@ -50,7 +50,7 @@ Use this map to jump from a direct CLI command path to the file that registers i
 
 - `seek ...`
   - Registration and CLI surface: `src/machineconfig/scripts/python/seek.py`
-  - Helper implementation: `src/machineconfig/scripts/python/helpers/helpers_peek/peek_impl.py`
+  - Helper implementation: `src/machineconfig/scripts/python/helpers/helpers_seek/seek_impl.py`
 
 - `msearch ...`
   - Registration and CLI surface: `src/machineconfig/scripts/python/msearch.py`

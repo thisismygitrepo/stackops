@@ -1,4 +1,4 @@
-"""Pure Python implementation for peek command without Typer."""
+"""Pure Python implementation for seek command without Typer."""
 
 from typing import TYPE_CHECKING
 
@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from machineconfig.scripts.python.helpers.helpers_search.ast_search import SymbolInfo
 
 
-def peek(
+def seek(
     path: str,
     search_term: str,
     ast: bool,
@@ -19,7 +19,7 @@ def peek(
     edit: bool,
     install_dependencies: bool,
 ) -> None:
-    """Peek across files, text matches, and code symbols."""
+    """seek across files, text matches, and code symbols."""
 
     if install_dependencies:
         _install_dependencies()
@@ -49,7 +49,7 @@ def peek(
         else:
             content = sys.stdin.read()
         if content:
-            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, prefix="peek_stdin_") as temp_file:
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, prefix="seek_stdin_") as temp_file:
                 temp_file.write(content)
                 path = temp_file.name
             is_temp_file = True
@@ -334,7 +334,7 @@ fi
         script = r"""
 $selected = {SOURCE_CMD} fzf --ansi --preview-window 'right:60%' --preview 'bat --color=always --style=numbers,grid,header --line-range :300 {}' {QUERY_ARGUMENT}
 if ($selected) {
-    $choicesPath = Join-Path $env:TEMP ("peek_choices_" + [guid]::NewGuid().ToString() + ".txt")
+    $choicesPath = Join-Path $env:TEMP ("seek_choices_" + [guid]::NewGuid().ToString() + ".txt")
     $i = 0
     Get-Content -LiteralPath "$selected" | ForEach-Object { $i = $i + 1; "{0} {1}" -f $i, $_ } | Set-Content -LiteralPath $choicesPath -Encoding utf8
     $sourceCmd = 'cmd /C type "' + $choicesPath + '"'
@@ -372,7 +372,7 @@ def _get_file_search_source_command(dotfiles: bool) -> str:
 
 def _run_text_search(rga: bool, directory: str | None, search_term: str) -> None:
     """Run text search using fzf with ripgrep."""
-    from machineconfig.scripts.python.helpers.helpers_peek import FZFG_LINUX_PATH, FZFG_WINDOWS_PATH, FZFG_MACOS_PATH
+    from machineconfig.scripts.python.helpers.helpers_seek import FZFG_LINUX_PATH, FZFG_WINDOWS_PATH, FZFG_MACOS_PATH
     import platform
 
     platform_name = platform.system()
