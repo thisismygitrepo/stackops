@@ -32,7 +32,12 @@ def seek(
     )
 
 
-def main() -> None:
+def get_app() -> typer.Typer:
     app = typer.Typer(add_completion=False, no_args_is_help=True)
     app.command(name="seek", help=seek.__doc__, short_help="machineconfig search helper", no_args_is_help=False)(seek)
+    return app
+
+
+def main() -> None:
+    app = get_app()
     app()
