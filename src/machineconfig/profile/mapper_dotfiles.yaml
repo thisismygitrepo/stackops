@@ -259,12 +259,20 @@ yazi:
     self_managed: CONFIG_ROOT/settings/yazi/yazi_linux.toml
     os:
     - linux
-    - darwin
   keymap_linux:
     original: ~/.config/yazi/keymap.toml
     self_managed: CONFIG_ROOT/settings/yazi/keymap_linux.toml
     os:
     - linux
+  yazi_darwin:
+    original: ~/.config/yazi/yazi.toml
+    self_managed: CONFIG_ROOT/settings/yazi/yazi_darwin.toml
+    os:
+    - darwin
+  keymap_darwin:
+    original: ~/.config/yazi/keymap.toml
+    self_managed: CONFIG_ROOT/settings/yazi/keymap_darwin.toml
+    os:
     - darwin
   theme_linux:
     original: ~/.config/yazi/theme.toml

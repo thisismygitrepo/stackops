@@ -44,6 +44,12 @@ on = "M"            # whatever key you choose
 run = "plugin toggle-pane"
 desc = "Toggle preview pane / maximize pane"
 
+
+# https://yazi-rs.github.io/docs/tips#macos-quick-look
+[[mgr.prepend_keymap]]
+on   = "<C-p>"
+run  = 'shell -- qlmanage -p "$@"'
+
 [[mgr.prepend_keymap]]
 on   = "F"
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg fire "$0"'
