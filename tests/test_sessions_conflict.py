@@ -5,7 +5,7 @@ import pytest
 from typer.testing import CliRunner
 
 from machineconfig.cluster.sessions_managers import session_conflict
-from machineconfig.scripts.python import sessions
+from machineconfig.scripts.python import terminal
 from machineconfig.scripts.python.helpers.helpers_sessions import sessions_impl
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 
@@ -162,7 +162,7 @@ def test_run_command_accepts_merge_overwrite_conflict_policy() -> None:
         "machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run.run_cli"
     ) as run_cli:
         result = runner.invoke(
-            sessions.get_app(),
+            terminal.get_app(),
             ["run", "--on-conflict", "mergeNewWindowsOverwriteMatchingWindows"],
         )
 

@@ -10,19 +10,17 @@ alias mcfg='$HOME/.local/bin/uvx --python 3.14 --from "git+https://github.com/th
 alias d='wrap_in_shell_script mcfg devops'
 alias c='wrap_in_shell_script mcfg cloud'
 alias a='wrap_in_shell_script mcfg agents'
-alias ss='wrap_in_shell_script mcfg sessions'
 alias fx='wrap_in_shell_script mcfg cloud ftpx'
 alias f='wrap_in_shell_script mcfg fire'
 alias rr='wrap_in_shell_script mcfg croshell'
 alias u='wrap_in_shell_script mcfg utils'
 alias t='wrap_in_shell_script mcfg terminal'
-peek() { "$HOME/.local/bin/uvx" --python 3.14 --from "git+https://github.com/thisismygitrepo/machineconfig" peek "$@"; }
-alias p='wrap_in_shell_script peek'
+seek() { "$HOME/.local/bin/uvx" --python 3.14 --from "git+https://github.com/thisismygitrepo/machineconfig" seek "$@"; }
+alias s='wrap_in_shell_script seek'
 
 alias devops='mcfg devops'
 alias cloud='mcfg cloud'
 alias agents='mcfg agents'
-alias sessions='mcfg sessions'
 alias ftpx='mcfg cloud ftpx'
 alias fire='mcfg fire'
 alias croshell='mcfg croshell'

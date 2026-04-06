@@ -25,10 +25,10 @@ nav = [
   { "CLI Reference" = [
     "cli/index.md",
     { devops = "cli/devops.md" },
-    { sessions = "cli/sessions.md" },
+    { terminal = "cli/terminal.md" },
     { agents = "cli/agents.md" },
     { utils = "cli/utils.md" },
-    { peek = "cli/peek.md" },
+    { seek = "cli/seek.md" },
     { fire = "cli/fire.md" },
     { cloud = "cli/cloud.md" },
   ] },

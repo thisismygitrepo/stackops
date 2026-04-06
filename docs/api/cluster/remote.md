@@ -188,7 +188,7 @@ These modules live under `scripts/python/helpers` because they are also exposed 
 
 - [Sessions](sessions.md) for the backend managers that actually host launched jobs
 - [Layouts](layouts.md) for the typed tab and layout schema used by session-oriented flows
-- [CLI Sessions Reference](../../cli/sessions.md) for the user-facing command layer
+- [CLI Terminal Reference](../../cli/terminal.md) for the user-facing command layer
 
 ---
 

@@ -21,8 +21,8 @@ Use this map to jump from a direct CLI command path to the file that registers i
     - `mount` -> `helpers/helpers_cloud/cloud_mount.py`
     - `ftpx` -> `src/machineconfig/scripts/python/ftpx.py` -> `helpers/helpers_network/ftpx_impl.py`
 
-- `sessions ...`
-  - Group registration: `src/machineconfig/scripts/python/sessions.py`
+- `terminal ...`
+  - Group registration: `src/machineconfig/scripts/python/terminal.py`
   - `run` -> `src/machineconfig/scripts/python/helpers/helpers_sessions/sessions_cli_run.py`
   - `run-all` -> `src/machineconfig/scripts/python/helpers/helpers_sessions/sessions_cli_run_all.py`
   - `run-aoe` -> `src/machineconfig/scripts/python/helpers/helpers_sessions/sessions_cli_run_aoe.py`
@@ -47,6 +47,10 @@ Use this map to jump from a direct CLI command path to the file that registers i
 - `croshell ...`
   - Registration and CLI surface: `src/machineconfig/scripts/python/croshell.py`
   - Helper backend routing: `helpers/helpers_croshell/croshell_impl.py`
+
+- `seek ...`
+  - Registration and CLI surface: `src/machineconfig/scripts/python/seek.py`
+  - Helper implementation: `src/machineconfig/scripts/python/helpers/helpers_peek/peek_impl.py`
 
 - `msearch ...`
   - Registration and CLI surface: `src/machineconfig/scripts/python/msearch.py`

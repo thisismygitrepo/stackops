@@ -1,6 +1,6 @@
 ---
 name: machineconfig
-description: Teach and execute Machineconfig usage through direct Typer entrypoints. Use this when asked to use, explain, troubleshoot, or extend the machineconfig CLI/library via devops, cloud, sessions, agents, utils, fire, croshell, or msearch, especially when mapping command paths to implementation files.
+description: Teach and execute Machineconfig usage through direct Typer entrypoints. Use this when asked to use, explain, troubleshoot, or extend the machineconfig CLI/library via devops, cloud, terminal, agents, utils, fire, croshell, seek, or msearch, especially when mapping command paths to implementation files.
 ---
 
 # Machineconfig
@@ -11,7 +11,7 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 
 1. Detect execution mode.
 - In this repository, prefer `UV_CACHE_DIR=/tmp/uv-cache uv run <command> ...`.
-- For globally installed usage, use direct entrypoints like `devops`, `cloud`, `sessions`, `agents`, `utils`, `fire`, `croshell`, `msearch`.
+- For globally installed usage, use direct entrypoints like `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`, `msearch`.
 
 2. Resolve command path before acting.
 - Start with `<command> --help`.
@@ -35,7 +35,7 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 Load `references/cli-map.md` for the current command tree and nested subcommands.
 
 Highlights:
-- Primary commands: `devops`, `cloud`, `sessions`, `agents`, `utils`, `fire`, `croshell`, `msearch`.
+- Primary commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`, `msearch`.
 - This skill intentionally excludes command aliases.
 - `devops self security` and `devops self build-docker` appear only when `~/code/machineconfig` exists.
 

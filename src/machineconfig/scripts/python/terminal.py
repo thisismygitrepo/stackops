@@ -1,4 +1,4 @@
-"""Sessions management commands - lazy loading subcommands."""
+"""Terminal management commands - lazy loading subcommands."""
 
 from typing import Literal, Annotated
 import typer
@@ -353,7 +353,7 @@ def run_aoe(
 
 
 def get_app() -> typer.Typer:
-    layouts_app = typer.Typer(help="Layouts management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    layouts_app = typer.Typer(help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
 
     layouts_app.command("run", no_args_is_help=True, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
     layouts_app.command("r", no_args_is_help=True, help=run.__doc__, hidden=True)(run)

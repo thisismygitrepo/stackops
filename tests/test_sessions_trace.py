@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from machineconfig.scripts.python import sessions
+from machineconfig.scripts.python import terminal
 from machineconfig.scripts.python.helpers.helpers_sessions.sessions_trace import (
     evaluate_trace_snapshot,
 )
@@ -16,7 +16,7 @@ def test_trace_command_dispatches_to_impl() -> None:
         "machineconfig.scripts.python.helpers.helpers_sessions.sessions_trace.trace_session"
     ) as trace_session:
         result = runner.invoke(
-            sessions.get_app(),
+            terminal.get_app(),
             [
                 "trace",
                 "build-session",
@@ -40,7 +40,7 @@ def test_trace_command_dispatches_to_impl() -> None:
 
 def test_trace_command_requires_exit_code_for_exit_code_criterion() -> None:
     result = runner.invoke(
-        sessions.get_app(),
+        terminal.get_app(),
         ["trace", "build-session", "--until", "exit-code"],
     )
 

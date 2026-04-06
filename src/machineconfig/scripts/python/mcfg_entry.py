@@ -69,10 +69,10 @@ def cloud(ctx: typer.Context) -> None:
     get_app_cloud()(ctx.args, standalone_mode=not ctx.args)
 
 
-def sessions(ctx: typer.Context) -> None:
-    """<s> Session and layout management."""
-    from machineconfig.scripts.python.sessions import get_app as get_app_sessions
-    get_app_sessions()(ctx.args, standalone_mode=not ctx.args)
+def terminal(ctx: typer.Context) -> None:
+    """<t> Terminal and layout management."""
+    from machineconfig.scripts.python.terminal import get_app as get_app_terminal
+    get_app_terminal()(ctx.args, standalone_mode=not ctx.args)
 
 
 def agents(ctx: typer.Context) -> None:
@@ -87,6 +87,12 @@ def utils(ctx: typer.Context) -> None:
     get_app_utils()(ctx.args, standalone_mode=not ctx.args)
 
 
+def seek(ctx: typer.Context) -> None:
+    """<s> Search across files, text matches, and code symbols."""
+    from machineconfig.scripts.python.seek import get_app as get_app_seek
+    get_app_seek()(ctx.args, standalone_mode=not ctx.args)
+
+
 
 def get_app() -> typer.Typer:
     app = typer.Typer(help="MachineConfig CLI - Manage your machine configurations and workflows", no_args_is_help=True, add_help_option=True, add_completion=False)
@@ -97,12 +103,14 @@ def get_app() -> typer.Typer:
     app.command(name="d", hidden=True, context_settings=ctx_settings)(devops)
     app.command(name="cloud", help="<c> Cloud management commands", context_settings=ctx_settings)(cloud)
     app.command(name="c", hidden=True, context_settings=ctx_settings)(cloud)
-    app.command(name="sessions", help="<s> Session and layout management", context_settings=ctx_settings)(sessions)
-    app.command(name="s", hidden=True, context_settings=ctx_settings)(sessions)
+    app.command(name="terminal", help="<t> Terminal and layout management", context_settings=ctx_settings)(terminal)
+    app.command(name="t", hidden=True, context_settings=ctx_settings)(terminal)
     app.command(name="agents", help="<a> 🤖 AI Agents management commands", context_settings=ctx_settings)(agents)
     app.command(name="a", hidden=True, context_settings=ctx_settings)(agents)
     app.command(name="utils", help="<u> Utility commands", context_settings=ctx_settings)(utils)
     app.command(name="u", hidden=True, context_settings=ctx_settings)(utils)
+    app.command(name="seek", help="<s> Search across files, text matches, and code symbols", context_settings=ctx_settings)(seek)
+    app.command(name="s", hidden=True, context_settings=ctx_settings)(seek)
 
     app.command(name="fire", help="<f> Fire and manage jobs", no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
     app.command(name="f", hidden=True, no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)

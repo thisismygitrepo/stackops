@@ -21,7 +21,7 @@ The foundation is the typed schema in `machineconfig.utils.schemas.layouts.layou
 Two utility helpers round out the schema:
 
 - `serialize_layouts_to_file()` writes layout collections to JSON and replaces layouts by name when needed.
-- `substitute_home()` expands `~` and `$HOME` and also rewrites shorthand command prefixes for `fire` and `sessions`.
+- `substitute_home()` expands `~` and `$HOME` and also rewrites shorthand command prefixes for `fire`, `terminal`, and `seek`.
 
 !!! note
     Current layout configs use `layoutTabs`, not the older `tabs` key. If you are migrating old examples, that is the first field to update.

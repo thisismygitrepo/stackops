@@ -17,8 +17,8 @@ Start with the command family you need:
 ```bash
 devops --help
 cloud --help
-sessions --help
-peek --help
+terminal --help
+seek --help
 ```
 
 For the current command map, see [CLI Reference](../cli/index.md).

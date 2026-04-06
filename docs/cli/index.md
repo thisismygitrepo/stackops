@@ -11,11 +11,11 @@ These commands are defined in `pyproject.toml` and reflected in the current CLI 
 | Command | Purpose |
 |---------|---------|
 | [`devops`](devops.md) | Package installation, configuration, data, repo, network, and self-management workflows |
-| [`sessions`](sessions.md) | Session and layout management |
+| [`terminal`](terminal.md) | Terminal session and layout management |
 | [`agents`](agents.md) | AI agent utilities |
 | [`utils`](utils.md) | General-purpose utilities |
 | [`croshell`](croshell.md) | Cross-shell execution helper |
-| [`peek`](peek.md) | Search helper entrypoint |
+| [`seek`](seek.md) | Search helper entrypoint |
 | [`fire`](fire.md) | Fire job runner |
 | [`cloud`](cloud.md) | Cloud sync, copy, mount, and FTP-over-SSH helpers |
 
@@ -31,11 +31,11 @@ devops install --help
 devops config terminal --help
 devops config sync --help
 devops data sync --help
-sessions --help
+terminal --help
 agents --help
 utils --help
 croshell --help
-peek --help
+seek --help
 fire --help
 cloud --help
 ```
@@ -46,16 +46,16 @@ cloud --help
 
 The current docs follow this model:
 
-1. Start from a direct entrypoint such as `devops` or `sessions`.
+1. Start from a direct entrypoint such as `devops` or `terminal`.
 2. Drill into nested apps with `--help`.
-3. Use standalone helpers like `fire`, `cloud`, and `peek` directly.
+3. Use standalone helpers like `fire`, `cloud`, and `seek` directly.
 
 For example:
 
 ```bash
 devops config --help
 devops data --help
-sessions --help
+terminal --help
 fire --help
 cloud --help
 ```

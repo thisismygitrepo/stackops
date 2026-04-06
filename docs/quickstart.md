@@ -53,7 +53,7 @@ These help screens show the current required arguments and options for dotfiles/
 
 ```bash
 cloud --help
-sessions --help
+terminal --help
 agents --help
 utils --help
 croshell --help

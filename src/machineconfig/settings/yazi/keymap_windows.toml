@@ -141,18 +141,18 @@ run = "plugin duckdb -ui"
 desc = "open with duckdb ui"
 
 [[mgr.prepend_keymap]]
-on   = ["p", "c"]
-run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek "$0"'
+on   = ["s", "c"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek "$0"'
 desc = "Search contents"
 [[mgr.prepend_keymap]]
-on   = ["p", "f"]
-run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek -f "$0"'
+on   = ["s", "f"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek -f "$0"'
 desc = "Search files"
 [[mgr.prepend_keymap]]
-on   = ["p", "e"]
-run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek -e "$0"'
+on   = ["s", "e"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek -e "$0"'
 desc = "Search then edit"
 [[mgr.prepend_keymap]]
-on   = ["p", "s"]
-run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg peek -s "$0"'
+on   = ["s", "s"]
+run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek -s "$0"'
 desc = "Symantic search"

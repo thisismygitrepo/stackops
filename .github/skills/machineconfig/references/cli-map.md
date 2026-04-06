@@ -15,11 +15,12 @@ Defined in `pyproject.toml` `[project.scripts]`:
 
 - `devops` -> `machineconfig.scripts.python.devops:main`
 - `cloud` -> `machineconfig.scripts.python.cloud:main`
-- `sessions` -> `machineconfig.scripts.python.sessions:main`
+- `terminal` -> `machineconfig.scripts.python.terminal:main`
 - `agents` -> `machineconfig.scripts.python.agents:main`
 - `utils` -> `machineconfig.scripts.python.utils:main`
 - `fire` -> `machineconfig.scripts.python.fire_jobs:main`
 - `croshell` -> `machineconfig.scripts.python.croshell:main`
+- `seek` -> `machineconfig.scripts.python.seek:main`
 - `msearch` -> `machineconfig.scripts.python.msearch:main`
 
 ## Command Trees
@@ -112,10 +113,13 @@ cloud
 ├─ mount
 └─ ftpx
 
-sessions
+terminal
 ├─ run
 ├─ run-all
+├─ run-aoe
 ├─ attach
+├─ kill
+├─ trace
 ├─ create-from-function
 ├─ balance-load
 ├─ create-template
@@ -151,6 +155,7 @@ utils
 
 fire
 croshell
+seek
 msearch
 ```
 

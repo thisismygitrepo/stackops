@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from typer.testing import CliRunner
 
-from machineconfig.scripts.python import sessions
+from machineconfig.scripts.python import terminal
 from machineconfig.scripts.python.helpers.helpers_sessions import (
     sessions_cli_run_all,
 )
@@ -13,7 +13,7 @@ runner = CliRunner()
 
 
 def test_sessions_help_lists_run_all_command() -> None:
-    result = runner.invoke(sessions.get_app(), ["--help"])
+    result = runner.invoke(terminal.get_app(), ["--help"])
 
     assert result.exit_code == 0
     assert "run-all" in result.output
@@ -21,7 +21,7 @@ def test_sessions_help_lists_run_all_command() -> None:
 
 
 def test_run_help_omits_dynamic_mode_options() -> None:
-    result = runner.invoke(sessions.get_app(), ["run", "--help"])
+    result = runner.invoke(terminal.get_app(), ["run", "--help"])
 
     assert result.exit_code == 0
     assert "--max-parallel-tabs" not in result.output
@@ -32,7 +32,7 @@ def test_run_help_omits_dynamic_mode_options() -> None:
 
 def test_run_rejects_old_dynamic_mode_flag() -> None:
     result = runner.invoke(
-        sessions.get_app(),
+        terminal.get_app(),
         ["run", "--max-parallel-tabs", "4"],
     )
 
@@ -42,7 +42,7 @@ def test_run_rejects_old_dynamic_mode_flag() -> None:
 
 
 def test_run_all_help_only_exposes_dynamic_options() -> None:
-    result = runner.invoke(sessions.get_app(), ["run-all", "--help"])
+    result = runner.invoke(terminal.get_app(), ["run-all", "--help"])
 
     assert result.exit_code == 0
     assert "--max-parallel-tabs" in result.output
@@ -57,7 +57,7 @@ def test_run_all_dispatches_to_impl() -> None:
         "machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run_all.run_all_cli"
     ) as run_all_cli:
         result = runner.invoke(
-            sessions.get_app(),
+            terminal.get_app(),
             ["run-all", "--max-parallel-tabs", "6"],
         )
 
@@ -70,7 +70,7 @@ def test_run_all_hidden_alias_dispatches_to_impl() -> None:
         "machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run_all.run_all_cli"
     ) as run_all_cli:
         result = runner.invoke(
-            sessions.get_app(),
+            terminal.get_app(),
             ["R", "--max-parallel-tabs", "3"],
         )
 

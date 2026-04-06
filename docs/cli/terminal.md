@@ -1,4 +1,4 @@
-# sessions
+# terminal
 
 Terminal session and layout management for `tmux`, `zellij`, and Windows Terminal.
 
@@ -7,7 +7,7 @@ Terminal session and layout management for `tmux`, `zellij`, and Windows Termina
 ## Usage
 
 ```bash
-sessions [OPTIONS] COMMAND [ARGS]...
+terminal [OPTIONS] COMMAND [ARGS]...
 ```
 
 ---
@@ -36,7 +36,7 @@ The CLI help also exposes one-letter aliases, but this page uses canonical comma
 Launch selected layout sessions from a layout file. Current `run` usage is option-based: pass the file with `--layouts-file` instead of as a positional argument.
 
 ```bash
-sessions run [OPTIONS]
+terminal run [OPTIONS]
 ```
 
 **Options:**
@@ -60,19 +60,19 @@ sessions run [OPTIONS]
 
 ```bash
 # Run every layout in a file
-sessions run --layouts-file layouts.json
+terminal run --layouts-file layouts.json
 
 # Run specific layouts
-sessions run --layouts-file layouts.json --choose-layouts "dev,build"
+terminal run --layouts-file layouts.json --choose-layouts "dev,build"
 
 # Choose layouts interactively
-sessions run --layouts-file layouts.json --choose-layouts ""
+terminal run --layouts-file layouts.json --choose-layouts ""
 
 # Monitor and kill sessions when they finish
-sessions run --layouts-file layouts.json --monitor --kill-upon-completion
+terminal run --layouts-file layouts.json --monitor --kill-upon-completion
 
 # Restart matching sessions before relaunching
-sessions run --layouts-file layouts.json --on-conflict restart
+terminal run --layouts-file layouts.json --on-conflict restart
 ```
 
 ---
@@ -82,7 +82,7 @@ sessions run --layouts-file layouts.json --on-conflict restart
 Dynamically merge every layout in a file into one paced run. Use this when you want to chug through the whole file while capping how many tabs stay active at once.
 
 ```bash
-sessions run-all [OPTIONS]
+terminal run-all [OPTIONS]
 ```
 
 **Options:**
@@ -101,10 +101,10 @@ sessions run-all [OPTIONS]
 
 ```bash
 # Dynamically schedule at most eight tabs at a time
-sessions run-all --layouts-file layouts.json --max-parallel-tabs 8
+terminal run-all --layouts-file layouts.json --max-parallel-tabs 8
 
 # Close finished tabs as the scheduler works through the file
-sessions run-all --layouts-file layouts.json --max-parallel-tabs 8 --kill-finished-tabs
+terminal run-all --layouts-file layouts.json --max-parallel-tabs 8 --kill-finished-tabs
 ```
 
 ---
@@ -121,7 +121,7 @@ The mapping is:
 - `command` -> initial prompt by default
 
 ```bash
-sessions run-aoe [OPTIONS]
+terminal run-aoe [OPTIONS]
 ```
 
 **Useful options:**
@@ -154,13 +154,13 @@ Replace `<model-name>` with a model accepted by the agent CLI you are launching.
 
 ```bash
 # Treat each tab command as the initial prompt
-sessions run-aoe --layouts-file layout.json --model <model-name> --sandbox workspace-write --yolo
+terminal run-aoe --layouts-file layout.json --model <model-name> --sandbox workspace-write --yolo
 
 # Use tab commands as agent-command overrides instead
-sessions run-aoe --layouts-file layout.json --tab-command-mode cmd
+terminal run-aoe --layouts-file layout.json --tab-command-mode cmd
 
 # Preview the generated aoe commands
-sessions run-aoe --layouts-file layout.json --model <model-name> --dry-run
+terminal run-aoe --layouts-file layout.json --model <model-name> --dry-run
 ```
 
 ---
@@ -170,7 +170,7 @@ sessions run-aoe --layouts-file layout.json --model <model-name> --dry-run
 Trace a tmux session until every target matches a strict stop criterion.
 
 ```bash
-sessions trace SESSION_NAME [OPTIONS]
+terminal trace SESSION_NAME [OPTIONS]
 ```
 
 **Options:**
@@ -185,13 +185,13 @@ sessions trace SESSION_NAME [OPTIONS]
 
 ```bash
 # Wait until every pane returns to an idle shell
-sessions trace build-session
+terminal trace build-session
 
 # Check every 5 seconds until every pane has exited
-sessions trace build-session --every 5 --until all-exited
+terminal trace build-session --every 5 --until all-exited
 
 # Require every pane to exit successfully
-sessions trace build-session --until exit-code --exit-code 0
+terminal trace build-session --until exit-code --exit-code 0
 ```
 
 ---
@@ -201,7 +201,7 @@ sessions trace build-session --until exit-code --exit-code 0
 Create a layout template file in the current directory.
 
 ```bash
-sessions create-template [NAME] [OPTIONS]
+terminal create-template [NAME] [OPTIONS]
 ```
 
 **Options:**
@@ -214,7 +214,7 @@ sessions create-template [NAME] [OPTIONS]
 
 ```bash
 # Create a template with 5 tabs
-sessions create-template my_layout --num-tabs 5
+terminal create-template my_layout --num-tabs 5
 ```
 
 ---
@@ -224,7 +224,7 @@ sessions create-template my_layout --num-tabs 5
 Create a layout from a Python function to run in multiple processes.
 
 ```bash
-sessions create-from-function [OPTIONS]
+terminal create-from-function [OPTIONS]
 ```
 
 **Options:**
@@ -239,7 +239,7 @@ sessions create-from-function [OPTIONS]
 
 ```bash
 # Create a layout for running a function in 4 parallel processes
-sessions create-from-function --num-process 4 --path ./my_script.py --function process_data
+terminal create-from-function --num-process 4 --path ./my_script.py --function process_data
 ```
 
 ---
@@ -249,7 +249,7 @@ sessions create-from-function --num-process 4 --path ./my_script.py --function p
 Adjust a layout file to limit tabs per layout or total layout weight.
 
 ```bash
-sessions balance-load LAYOUT_PATH [OPTIONS]
+terminal balance-load LAYOUT_PATH [OPTIONS]
 ```
 
 **Options:**
@@ -265,7 +265,7 @@ sessions balance-load LAYOUT_PATH [OPTIONS]
 
 ```bash
 # Balance layouts to max 5 tabs each
-sessions balance-load layouts.json --max-threshold 5 --threshold-type number --breaking-method moreLayouts
+terminal balance-load layouts.json --max-threshold 5 --threshold-type number --breaking-method moreLayouts
 ```
 
 ---
@@ -309,14 +309,14 @@ Older examples that use `tabs` or `cwd` are stale; the current schema uses `layo
 
 ## Session backends
 
-`sessions run` currently supports these backends through `--backend`:
+`terminal run` currently supports these backends through `--backend`:
 
 - `tmux` (default)
 - `zellij`
 - `windows-terminal`
 - `auto`
 
-`sessions run-all` supports:
+`terminal run-all` supports:
 
 - `tmux` (default)
 - `zellij`
@@ -330,17 +330,17 @@ Older examples that use `tabs` or `cwd` are stale; the current schema uses `layo
 
 ```bash
 # Create a layout template
-sessions create-template dev_environment --num-tabs 4
+terminal create-template dev_environment --num-tabs 4
 
 # Run the layout
-sessions run --layouts-file dev_environment.json
+terminal run --layouts-file dev_environment.json
 
 # Run with monitoring
-sessions run --layouts-file tasks.json --monitor --kill-upon-completion
+terminal run --layouts-file tasks.json --monitor --kill-upon-completion
 
 # Choose layouts interactively
-sessions run --layouts-file layouts.json --choose-layouts ""
+terminal run --layouts-file layouts.json --choose-layouts ""
 
 # Create a multiprocess layout
-sessions create-from-function --num-process 8 --path ./process.py --function worker
+terminal create-from-function --num-process 8 --path ./process.py --function worker
 ```

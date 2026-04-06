@@ -24,7 +24,7 @@ Machineconfig supports Python 3.13+ and is easiest to install with [uv](https://
 uv tool install --upgrade --python 3.14 machineconfig
 ```
 
-This should give entrypoints: `devops`, `cloud`, `sessions`, `agents`, `utils`, `fire`, `croshell`, `peek`
+This should give entrypoints: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`
 You can verify with, e.g.:
 
 ```bash

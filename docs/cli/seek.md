@@ -1,13 +1,13 @@
-# peek
+# seek
 
-`peek` is the direct entrypoint for interactive search across files, text matches, and code symbols.
+`seek` is the direct entrypoint for interactive search across files, text matches, and code symbols.
 
 ---
 
 ## Usage
 
 ```bash
-peek [OPTIONS] [PATH] [SEARCH_TERM]
+seek [OPTIONS] [PATH] [SEARCH_TERM]
 ```
 
 ---
@@ -23,7 +23,7 @@ peek [OPTIONS] [PATH] [SEARCH_TERM]
 
 ## Search modes
 
-`peek` exposes several entry modes:
+`seek` exposes several entry modes:
 
 | Mode | Option | Behavior |
 |------|--------|----------|
@@ -32,9 +32,9 @@ peek [OPTIONS] [PATH] [SEARCH_TERM]
 | AST search | `--ast`, `-a` | Inspect parsed symbols from the target directory |
 | Symantic search | `--symantic`, `-s` | Run the symbol-oriented helper workflow |
 
-If `PATH` points to a file, `peek` opens a line-oriented preview flow for that file instead of directory search.
+If `PATH` points to a file, `seek` opens a line-oriented preview flow for that file instead of directory search.
 
-When multiple mode flags are passed together, `peek` resolves them in this order: `--symantic`, then `--ast`, then `--file`, then the default text search flow.
+When multiple mode flags are passed together, `seek` resolves them in this order: `--symantic`, then `--ast`, then `--file`, then the default text search flow.
 
 ---
 
@@ -57,34 +57,34 @@ When multiple mode flags are passed together, `peek` resolves them in this order
 
 ```bash
 # Search the current project for text
-peek
+seek
 
 # Start with an initial query
-peek . "TODO"
+seek . "TODO"
 
 # Search for files only
-peek src --file
+seek src --file
 
 # Search files including dotfiles
-peek src --file --dotfiles
+seek src --file --dotfiles
 
 # Search files and jump into Helix
-peek src --file --edit
+seek src --file --edit
 
 # Search code symbols
-peek src --ast
+seek src --ast
 
 # Use ripgrep-all for non-text files
-peek docs --rga
+seek docs --rga
 ```
 
 ---
 
 ## Notes
 
-- `peek --install-req` installs the helper tools the workflow expects, including `fzf`, `tv`, `bat`, `fd`, `rg`, and `rga`.
-- When standard input is piped into `peek`, it can stage that input into a temporary file and open the same preview flow against the captured content.
-- `peek` is a standalone entrypoint. Use it directly rather than routing through an umbrella dispatcher.
+- `seek --install-req` installs the helper tools the workflow expects, including `fzf`, `tv`, `bat`, `fd`, `rg`, and `rga`.
+- When standard input is piped into `seek`, it can stage that input into a temporary file and open the same preview flow against the captured content.
+- `seek` is a standalone entrypoint. Use it directly rather than routing through an umbrella dispatcher.
 
 ---
 
@@ -93,5 +93,5 @@ peek docs --rga
 Use live help to inspect the exact options in your installed version:
 
 ```bash
-peek --help
+seek --help
 ```

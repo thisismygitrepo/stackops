@@ -121,7 +121,7 @@ Representative modules include:
 
 - [Layouts](layouts.md) for `LayoutConfig`, layout serialization, and tab generation
 - [Remote execution and networking](remote.md) for remote-job flows that hand work off to these session backends
-- [CLI Sessions Reference](../../cli/sessions.md) for the user-facing command layer
+- [CLI Terminal Reference](../../cli/terminal.md) for the user-facing command layer
 
 ---
 
