@@ -50,23 +50,23 @@ run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg fire "$0"
 desc = "Run fire on hovered file"
 
 [[mgr.prepend_keymap]]
-on   = ["p", "c"]
+on   = ["P", "c"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek "$0"'
 desc = "Search contents"
 [[mgr.prepend_keymap]]
-on   = ["p", "f"]
+on   = ["P", "f"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek -f "$0"'
 desc = "Search files"
 [[mgr.prepend_keymap]]
-on   = ["p", "e"]
+on   = ["P", "e"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek -e "$0"'
 desc = "Search then edit"
 [[mgr.prepend_keymap]]
-on   = ["p", "s"]
+on   = ["P", "s"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek -s "$0"'
 desc = "Symantic search"
 [[mgr.prepend_keymap]]
-on   = ["p", "a"]
+on   = ["P", "a"]
 run  = 'shell --block -- $HOME/.config/machineconfig/scripts/wrap_mcfg seek -a "$0"'
 desc = "Symbol search"
 
