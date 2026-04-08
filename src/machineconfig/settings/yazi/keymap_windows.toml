@@ -94,7 +94,7 @@ desc = "compress with ouch"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "d"]
-run  = 'shell --block -- ouch decompress "$0"'
+run  = 'shell --block -- ouch decompress "%h"'
 desc = "decompress with ouch"
 
 [[mgr.prepend_keymap]]
