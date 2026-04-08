@@ -41,7 +41,7 @@ def build_command(target_path: Path) -> list[str]:
         raise ValueError(f"Interactive view requires a file, got: {target_path}")
     match target_path.suffix.lower():
         case ".csv":
-            return ["~/.config/machineconfig/scripts/wrap_mcfg", "croshell", "-b", "v", str(target_path)]
+            return [str(Path.home() / ".config/machineconfig/scripts/wrap_mcfg"), "croshell", "-b", "v", str(target_path)]
         case _:
             raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")
 
