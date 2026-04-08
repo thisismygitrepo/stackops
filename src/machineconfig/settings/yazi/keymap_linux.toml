@@ -5,12 +5,6 @@ run = "plugin goto-drives"
 desc = "Go to drives"
 
 [[mgr.prepend_keymap]]
-on   = "v"
-run  = "plugin tv-reveal"
-desc = "Run tv and reveal result"
-
-
-[[mgr.prepend_keymap]]
 on   = "!"
 for  = "unix"
 run  = 'shell "$SHELL" --block'
