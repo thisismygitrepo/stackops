@@ -5,11 +5,13 @@ import typer
 from machineconfig.cluster.sessions_managers.session_conflict import SessionConflictAction
 from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
     SessionBackendOption,
-    choose_tabs_from_layouts,
-    load_selected_layouts,
-    resolve_layouts_file,
     resolve_standard_backend,
     substitute_home_in_layouts,
+)
+from machineconfig.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
+    choose_tabs_from_source,
+    load_selected_layouts_from_source,
+    resolve_layout_source,
 )
 from machineconfig.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
 
@@ -17,6 +19,7 @@ from machineconfig.scripts.python.helpers.helpers_sessions.sessions_impl import 
 def run_cli(
     ctx: typer.Context,
     layouts_file: str | None,
+    test_layout: bool,
     choose_layouts: str | None,
     choose_tabs: str | None,
     sleep_inbetween: float,
@@ -29,13 +32,20 @@ def run_cli(
     kill_upon_completion: bool,
     subsitute_home: bool,
 ) -> None:
-    layouts_file_resolved = resolve_layouts_file(ctx, layouts_file)
     try:
-        layouts_selected = load_selected_layouts(layouts_file_resolved, choose_layouts)
-        layouts_selected = choose_tabs_from_layouts(
-            layouts_file_resolved,
-            layouts_selected,
-            choose_tabs,
+        layout_source = resolve_layout_source(
+            ctx=ctx,
+            layouts_file=layouts_file,
+            test_layout=test_layout,
+        )
+        layouts_selected = load_selected_layouts_from_source(
+            layout_source=layout_source,
+            choose_layouts=choose_layouts,
+        )
+        layouts_selected = choose_tabs_from_source(
+            layout_source=layout_source,
+            layouts_selected=layouts_selected,
+            choose_tabs=choose_tabs,
         )
         if subsitute_home:
             layouts_selected = substitute_home_in_layouts(layouts_selected)

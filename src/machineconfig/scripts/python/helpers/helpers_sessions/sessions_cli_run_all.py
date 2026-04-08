@@ -7,9 +7,11 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
 )
 from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
     DynamicSessionBackendOption,
-    load_all_layouts,
-    resolve_layouts_file,
     substitute_home_in_layouts,
+)
+from machineconfig.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
+    load_all_layouts_from_source,
+    resolve_layout_source,
 )
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 
@@ -17,6 +19,7 @@ from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 def run_all_cli(
     ctx: typer.Context,
     layouts_file: str | None,
+    test_layout: bool,
     max_parallel_tabs: int,
     poll_seconds: float,
     kill_finished_tabs: bool,
@@ -24,9 +27,13 @@ def run_all_cli(
     on_conflict: SessionConflictAction,
     subsitute_home: bool,
 ) -> None:
-    layouts_file_resolved = resolve_layouts_file(ctx, layouts_file)
     try:
-        layouts_selected = load_all_layouts(layouts_file_resolved)
+        layout_source = resolve_layout_source(
+            ctx=ctx,
+            layouts_file=layouts_file,
+            test_layout=test_layout,
+        )
+        layouts_selected = load_all_layouts_from_source(layout_source=layout_source)
         if subsitute_home:
             layouts_selected = substitute_home_in_layouts(layouts_selected)
         merged_tabs = [

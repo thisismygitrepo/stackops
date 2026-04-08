@@ -77,6 +77,8 @@ desc = "Read with fire interactively"
 on   = "b"
 run  = 'shell --block -- bat "$0"'
 desc = "bat the file"
+
+[[mgr.prepend_keymap]]
 on   = "e"
 run  = 'shell --block -- hx "$0"'
 desc = "edit the file with helix"

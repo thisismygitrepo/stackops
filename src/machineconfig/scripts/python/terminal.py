@@ -48,6 +48,7 @@ def balance_load(
 def run(
     ctx: typer.Context,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-c", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
     sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between launching layouts")] = 1.0,
@@ -76,6 +77,7 @@ def run(
     impl(
         ctx=ctx,
         layouts_file=layouts_file,
+        test_layout=test_layout,
         choose_layouts=choose_layouts,
         choose_tabs=choose_tabs,
         sleep_inbetween=sleep_inbetween,
@@ -94,6 +96,7 @@ def run_all(
     ctx: typer.Context,
     *,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", help="Close each tab once its command is finished.")] = False,
@@ -111,6 +114,7 @@ def run_all(
     impl(
         ctx=ctx,
         layouts_file=layouts_file,
+        test_layout=test_layout,
         max_parallel_tabs=max_parallel_tabs,
         poll_seconds=poll_seconds,
         kill_finished_tabs=kill_finished_tabs,

@@ -34,7 +34,7 @@ def type_hint(
         typer.Option(..., "--dependency", "-d", help="Generated file is self contained or performs imports"),
     ] = "self-contained",
 ) -> None:
-    from machineconfig.type_hinting.typedict.generators import generate_names_file
+    # from machineconfig.type_hinting.typedict.generators import generate_names_file
 
     path_resolved = Path(path).resolve()
     if not path_resolved.exists():
@@ -50,8 +50,9 @@ def type_hint(
     for input_file in modules:
         print(f"Worked on: {input_file}")
         output_file = input_file.parent.joinpath(f"{input_file.stem}_names.py")
-        generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)
-        print(f"Generated: {generated_file}")
+        # generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)
+        # print(f"Generated: {generated_file}")
+        print(f"Generated: {output_file}")
 
 
 def init_project(
