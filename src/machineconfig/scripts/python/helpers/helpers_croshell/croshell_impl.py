@@ -177,6 +177,12 @@ def _build_preprogram() -> str:
         try:
             from machineconfig.utils.files.headers import print_header, print_logo
             print_header()
+            # from datetime import date
+            # todays_date = date.today().strftime("%Y-m-%d")
+            # if todays_date == "2026-04-09":
+            #     print_logo("Happy Birthday, Ruby! 🎉")
+            # else:
+            #     print_logo("Machineconfig")
             print_logo("Machineconfig")
             from machineconfig.utils.path_extended import PathExtended
             _ = PathExtended
