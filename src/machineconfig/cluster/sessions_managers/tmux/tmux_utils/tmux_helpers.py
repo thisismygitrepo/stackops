@@ -6,6 +6,10 @@ import subprocess
 import shlex
 from typing import Literal, NotRequired, TypedDict
 
+from machineconfig.cluster.sessions_managers.session_exit_mode import (
+    SessionExitMode,
+    build_tmux_exit_mode_command,
+)
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus
 
@@ -92,12 +96,17 @@ def _build_new_window_commands(
     window_name: str,
     cwd: str,
     command: str,
+    exit_mode: SessionExitMode,
 ) -> list[str]:
     session_target = f"{session_name}:"
     target = f"{session_name}:{window_name}"
+    if exit_mode == "backToShell":
+        return [
+            f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(window_name)} -c {shell_quote(cwd)}",
+            f"tmux send-keys -t {shell_quote(target)} {shell_quote(command)} C-m",
+        ]
     return [
         f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(window_name)} -c {shell_quote(cwd)}",
-        f"tmux send-keys -t {shell_quote(target)} {shell_quote(command)} C-m",
     ]
 
 
@@ -121,6 +130,7 @@ def _build_replace_window_commands(
     cwd: str,
     command: str,
     reserved_window_names: set[str],
+    exit_mode: SessionExitMode,
 ) -> list[str]:
     temp_window_name = _build_temporary_window_name(
         window_name=window_name,
@@ -129,15 +139,41 @@ def _build_replace_window_commands(
     session_target = f"{session_name}:"
     target = f"{session_name}:{window_name}"
     temp_target = f"{session_name}:{temp_window_name}"
+    if exit_mode == "backToShell":
+        return [
+            f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(temp_window_name)} -c {shell_quote(cwd)}",
+            f"tmux send-keys -t {shell_quote(temp_target)} {shell_quote(command)} C-m",
+            f"tmux kill-window -t {shell_quote(target)}",
+            f"tmux rename-window -t {shell_quote(temp_target)} {shell_quote(window_name)}",
+        ]
     return [
         f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(temp_window_name)} -c {shell_quote(cwd)}",
-        f"tmux send-keys -t {shell_quote(temp_target)} {shell_quote(command)} C-m",
         f"tmux kill-window -t {shell_quote(target)}",
         f"tmux rename-window -t {shell_quote(temp_target)} {shell_quote(window_name)}",
     ]
 
 
-def build_tmux_commands(layout_config: LayoutConfig, session_name: str) -> list[str]:
+def _build_send_command_for_window(
+    session_name: str,
+    window_name: str,
+    command: str,
+    exit_mode: SessionExitMode,
+) -> str:
+    target = f"{session_name}:{window_name}"
+    actual_command = command
+    if exit_mode != "backToShell":
+        actual_command = build_tmux_exit_mode_command(
+            command=command,
+            exit_mode=exit_mode,
+        )
+    return f"tmux send-keys -t {shell_quote(target)} {shell_quote(actual_command)} C-m"
+
+
+def build_tmux_commands(
+    layout_config: LayoutConfig,
+    session_name: str,
+    exit_mode: SessionExitMode,
+) -> list[str]:
     validate_layout_config(layout_config)
     tabs = layout_config["layoutTabs"]
     first_tab = tabs[0]
@@ -145,26 +181,40 @@ def build_tmux_commands(layout_config: LayoutConfig, session_name: str) -> list[
     first_cwd = normalize_cwd(first_tab["startDir"])
     first_target = f"{session_name}:{first_window}"
     commands: list[str] = []
-    session_target = f"{session_name}:"
+    commands_to_send: list[str] = []
     commands.append(
         f"tmux new-session -d -s {shell_quote(session_name)} -n {shell_quote(first_window)} -c {shell_quote(first_cwd)}"
     )
     if first_tab["command"].strip():
-        commands.append(
-            f"tmux send-keys -t {shell_quote(first_target)} {shell_quote(first_tab['command'])} C-m"
+        commands_to_send.append(
+            _build_send_command_for_window(
+                session_name=session_name,
+                window_name=first_window,
+                command=first_tab["command"],
+                exit_mode=exit_mode,
+            )
         )
     for tab in tabs[1:]:
-        window_name = tab["tabName"]
-        cwd = normalize_cwd(tab["startDir"])
-        commands.append(
-            f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(window_name)} -c {shell_quote(cwd)}"
+        commands.extend(
+            _build_new_window_commands(
+                session_name=session_name,
+                window_name=tab["tabName"],
+                cwd=normalize_cwd(tab["startDir"]),
+                command=tab["command"],
+                exit_mode=exit_mode,
+            )
         )
         if tab["command"].strip():
-            target = f"{session_name}:{window_name}"
-            commands.append(
-                f"tmux send-keys -t {shell_quote(target)} {shell_quote(tab['command'])} C-m"
+            commands_to_send.append(
+                _build_send_command_for_window(
+                    session_name=session_name,
+                    window_name=tab["tabName"],
+                    command=tab["command"],
+                    exit_mode=exit_mode,
+                )
             )
     commands.append(f"tmux select-window -t {shell_quote(first_target)}")
+    commands.extend(commands_to_send)
     return commands
 
 
@@ -172,11 +222,13 @@ def build_tmux_merge_commands(
     layout_config: LayoutConfig,
     session_name: str,
     on_conflict: TmuxMergeConflictAction,
+    exit_mode: SessionExitMode,
 ) -> list[str]:
     validate_layout_config(layout_config)
     existing_window_names = list_tmux_window_names(session_name=session_name)
     first_target: str | None = None
     commands: list[str] = []
+    commands_to_send: list[str] = []
 
     for tab in layout_config["layoutTabs"]:
         window_name = tab["tabName"]
@@ -195,8 +247,18 @@ def build_tmux_merge_commands(
                         window_name=window_name,
                         cwd=cwd,
                         command=command,
+                        exit_mode=exit_mode,
                     )
                 )
+                if command.strip():
+                    commands_to_send.append(
+                        _build_send_command_for_window(
+                            session_name=session_name,
+                            window_name=window_name,
+                            command=command,
+                            exit_mode=exit_mode,
+                        )
+                    )
             case "mergeNewWindowsOverwriteMatchingWindows":
                 if window_exists:
                     commands.extend(
@@ -206,8 +268,18 @@ def build_tmux_merge_commands(
                             cwd=cwd,
                             command=command,
                             reserved_window_names=existing_window_names,
+                            exit_mode=exit_mode,
                         )
                     )
+                    if command.strip():
+                        commands_to_send.append(
+                            _build_send_command_for_window(
+                                session_name=session_name,
+                                window_name=window_name,
+                                command=command,
+                                exit_mode=exit_mode,
+                            )
+                        )
                 else:
                     commands.extend(
                         _build_new_window_commands(
@@ -215,8 +287,18 @@ def build_tmux_merge_commands(
                             window_name=window_name,
                             cwd=cwd,
                             command=command,
+                            exit_mode=exit_mode,
                         )
                     )
+                    if command.strip():
+                        commands_to_send.append(
+                            _build_send_command_for_window(
+                                session_name=session_name,
+                                window_name=window_name,
+                                command=command,
+                                exit_mode=exit_mode,
+                            )
+                        )
             case _:
                 raise ValueError(f"Unsupported tmux merge policy: {on_conflict}")
 
@@ -226,12 +308,17 @@ def build_tmux_merge_commands(
 
     if first_target is not None:
         commands.append(f"tmux select-window -t {shell_quote(first_target)}")
+    commands.extend(commands_to_send)
     return commands
 
 
-def build_tmux_script(layout_config: LayoutConfig, session_name: str) -> str:
+def build_tmux_script(
+    layout_config: LayoutConfig,
+    session_name: str,
+    exit_mode: SessionExitMode,
+) -> str:
     script_lines = ["#!/usr/bin/env bash", "set -e"]
-    script_lines.extend(build_tmux_commands(layout_config, session_name))
+    script_lines.extend(build_tmux_commands(layout_config, session_name, exit_mode))
     return "\n".join(script_lines) + "\n"
 
 
@@ -239,6 +326,7 @@ def build_tmux_merge_script(
     layout_config: LayoutConfig,
     session_name: str,
     on_conflict: TmuxMergeConflictAction,
+    exit_mode: SessionExitMode,
 ) -> str:
     script_lines = ["#!/usr/bin/env bash", "set -e"]
     script_lines.extend(
@@ -246,6 +334,7 @@ def build_tmux_merge_script(
             layout_config=layout_config,
             session_name=session_name,
             on_conflict=on_conflict,
+            exit_mode=exit_mode,
         )
     )
     return "\n".join(script_lines) + "\n"

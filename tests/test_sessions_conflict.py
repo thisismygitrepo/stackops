@@ -195,6 +195,7 @@ def test_run_layouts_kills_matching_windows_for_overwrite_policy() -> None:
             kill_upon_completion=False,
             backend="windows-terminal",
             on_conflict="mergeNewWindowsOverwriteMatchingWindows",
+            exit_mode="backToShell",
             layouts_selected=[_layout("Alpha")],
         )
 

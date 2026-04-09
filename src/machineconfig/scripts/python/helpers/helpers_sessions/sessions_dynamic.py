@@ -114,6 +114,7 @@ def _start_tmux_initial_session(
     generator = TmuxLayoutGenerator(
         layout_config=initial_layout,
         session_name=session_name,
+        exit_mode="backToShell",
     )
     generator.create_layout_file()
     generator.run(on_conflict=on_conflict)

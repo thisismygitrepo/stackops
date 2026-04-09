@@ -7,6 +7,10 @@ import logging
 from typing import Any
 from pathlib import Path
 
+from machineconfig.cluster.sessions_managers.session_exit_mode import (
+    SessionExitMode,
+    build_powershell_exit_mode_command_parts,
+)
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 
 logger = logging.getLogger(__name__)
@@ -52,7 +56,11 @@ def validate_layout_config(layout_config: LayoutConfig) -> None:
             raise ValueError(f"Invalid startDir for tab '{tab['tabName']}': {tab['startDir']}")
 
 
-def generate_wt_command_string(layout_config: LayoutConfig, window_name: str) -> str:
+def generate_wt_command_string(
+    layout_config: LayoutConfig,
+    window_name: str,
+    exit_mode: SessionExitMode,
+) -> str:
     """Generate complete Windows Terminal command string."""
     command_parts = []
     
@@ -77,9 +85,12 @@ def generate_wt_command_string(layout_config: LayoutConfig, window_name: str) ->
         tab_parts.extend(["--title", escape_for_wt(tab_name)])
         tab_parts.append("--")
         
-        # Split the command into arguments
-        command_args = shlex.split(command)
-        tab_parts.extend(command_args)
+        command_args = build_powershell_exit_mode_command_parts(
+            command=command,
+            exit_mode=exit_mode,
+            shell_name=POWERSHELL_CMD,
+        )
+        tab_parts.extend(escape_for_wt(arg) for arg in command_args)
         
         command_parts.append(" ".join(tab_parts))
     

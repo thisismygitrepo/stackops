@@ -7,6 +7,7 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     build_session_launch_plan,
 )
+from machineconfig.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from machineconfig.logger import get_logger
 from machineconfig.utils.scheduler import Scheduler
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
@@ -31,8 +32,14 @@ class TmuxSessionReport(TypedDict):
 
 
 class TmuxLocalManager:
-    def __init__(self, session_layouts: list[LayoutConfig], session_name_prefix: str | None) -> None:
+    def __init__(
+        self,
+        session_layouts: list[LayoutConfig],
+        session_name_prefix: str | None,
+        exit_mode: SessionExitMode,
+    ) -> None:
         self.session_name_prefix: str | None = session_name_prefix
+        self.exit_mode: SessionExitMode = exit_mode
         self.session_layouts = session_layouts
         self.managers: list[TmuxLayoutGenerator] = []
         for layout_config in session_layouts:
@@ -41,7 +48,11 @@ class TmuxLocalManager:
                 full_session_name = f"{self.session_name_prefix}_{session_name}"
             else:
                 full_session_name = session_name
-            manager = TmuxLayoutGenerator(layout_config=layout_config, session_name=full_session_name)
+            manager = TmuxLayoutGenerator(
+                layout_config=layout_config,
+                session_name=full_session_name,
+                exit_mode=exit_mode,
+            )
             manager.create_layout_file()
             self.managers.append(manager)
         logger.info(f"Initialized TmuxLocalManager with {len(self.managers)} sessions")

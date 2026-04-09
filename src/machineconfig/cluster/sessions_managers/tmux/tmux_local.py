@@ -9,6 +9,7 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
     build_session_launch_plan,
     kill_existing_session,
 )
+from machineconfig.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from rich.console import Console
 
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
@@ -46,8 +47,14 @@ class TmuxLayoutStatus(TypedDict):
 
 
 class TmuxLayoutGenerator:
-    def __init__(self, layout_config: LayoutConfig, session_name: str) -> None:
+    def __init__(
+        self,
+        layout_config: LayoutConfig,
+        session_name: str,
+        exit_mode: SessionExitMode,
+    ) -> None:
         self.session_name: str = session_name
+        self.exit_mode: SessionExitMode = exit_mode
         self.layout_config: LayoutConfig = layout_config.copy()
         self.script_path: str | None = None
 
@@ -58,7 +65,11 @@ class TmuxLayoutGenerator:
         console.print(f"[bold cyan]📋 Creating tmux layout[/bold cyan] [bright_green]'{layout_name}' with {tab_count} windows[/bright_green]")
         for tab in self.layout_config["layoutTabs"]:
             console.print(f"  [yellow]→[/yellow] [bold]{tab['tabName']}[/bold] [dim]in[/dim] [blue]{tab['startDir']}[/blue]")
-        script_content = build_tmux_script(self.layout_config, self.session_name)
+        script_content = build_tmux_script(
+            self.layout_config,
+            self.session_name,
+            self.exit_mode,
+        )
         self._write_script_content(script_content=script_content)
         console.print(f"[bold green]✅ Layout created successfully:[/bold green] [cyan]{self.script_path}[/cyan]")
         return True
@@ -144,6 +155,7 @@ class TmuxLayoutGenerator:
                         layout_config=self.layout_config,
                         session_name=self.session_name,
                         on_conflict="mergeNewWindowsOverwriteMatchingWindows",
+                        exit_mode=self.exit_mode,
                     )
                 case "mergeNewWindowsSkipMatchingWindows":
                     console.print(
@@ -154,6 +166,7 @@ class TmuxLayoutGenerator:
                         layout_config=self.layout_config,
                         session_name=self.session_name,
                         on_conflict="mergeNewWindowsSkipMatchingWindows",
+                        exit_mode=self.exit_mode,
                     )
                 case _:
                     raise ValueError(f"Unsupported tmux merge policy: {on_conflict}")
@@ -161,6 +174,7 @@ class TmuxLayoutGenerator:
             script_content = build_tmux_script(
                 layout_config=self.layout_config,
                 session_name=self.session_name,
+                exit_mode=self.exit_mode,
             )
 
         self._write_script_content(script_content=script_content)
@@ -199,7 +213,11 @@ class TmuxLayoutGenerator:
 
 def run_tmux_layout(layout_config: LayoutConfig, on_conflict: SessionConflictAction) -> None:
     session_name = layout_config["layoutName"]
-    generator = TmuxLayoutGenerator(layout_config=layout_config, session_name=session_name)
+    generator = TmuxLayoutGenerator(
+        layout_config=layout_config,
+        session_name=session_name,
+        exit_mode="backToShell",
+    )
     generator.create_layout_file()
     generator.run(on_conflict=on_conflict)
 

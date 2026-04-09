@@ -9,6 +9,7 @@ from machineconfig.cluster.sessions_managers.session_conflict import (
     build_session_launch_plan,
     kill_existing_session,
 )
+from machineconfig.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult
 
 BackendName = Literal["zellij", "windows-terminal", "tmux"]
@@ -136,6 +137,7 @@ def run_layouts(
     kill_upon_completion: bool,
     backend: BackendName,
     on_conflict: SessionConflictAction,
+    exit_mode: SessionExitMode,
     layouts_selected: list["LayoutConfig"],
 ) -> None:
     """Launch terminal sessions based on a layout configuration file."""
@@ -150,6 +152,10 @@ def run_layouts(
         iterable: list[list["LayoutConfig"]] = [layouts_selected]
     else:
         iterable = [layouts_selected[index:index + parallel_layouts] for index in range(0, len(layouts_selected), parallel_layouts)]
+    if backend == "zellij" and exit_mode != "backToShell":
+        raise ValueError(
+            "--exit modes other than backToShell are currently supported only for tmux and windows-terminal."
+        )
 
     def raise_on_failed_start(start_results: dict[str, StartResult], backend_name: str) -> None:
         failures = {name: result for name, result in start_results.items() if not result.get("success", False)}
@@ -181,7 +187,11 @@ def run_layouts(
                     if i < len(iterable) - 1:
                         time.sleep(sleep_inbetween)
                     continue
-                wt_manager = WTLocalManager(session_layouts=layouts_to_run, session_name_prefix=None)
+                wt_manager = WTLocalManager(
+                    session_layouts=layouts_to_run,
+                    session_name_prefix=None,
+                    exit_mode=exit_mode,
+                )
                 start_results = wt_manager.start_all_sessions()
                 raise_on_failed_start(start_results, "Windows Terminal")
                 if monitor:
@@ -193,7 +203,11 @@ def run_layouts(
         case "tmux":
             from machineconfig.cluster.sessions_managers.tmux.tmux_local_manager import TmuxLocalManager
             for i, a_layouts in enumerate(iterable):
-                tmux_manager = TmuxLocalManager(session_layouts=a_layouts, session_name_prefix=None)
+                tmux_manager = TmuxLocalManager(
+                    session_layouts=a_layouts,
+                    session_name_prefix=None,
+                    exit_mode=exit_mode,
+                )
                 start_results = tmux_manager.start_all_sessions(on_conflict=on_conflict)
                 raise_on_failed_start(start_results, "tmux")
                 if monitor:

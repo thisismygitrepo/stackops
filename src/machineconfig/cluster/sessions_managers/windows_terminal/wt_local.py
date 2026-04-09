@@ -13,6 +13,7 @@ from typing import Any
 from pathlib import Path
 import logging
 
+from machineconfig.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -38,8 +39,14 @@ TMP_LAYOUT_DIR = Path.home() / "tmp_results" / "wt_layouts"
 
 
 class WTLayoutGenerator:
-    def __init__(self, layout_config: LayoutConfig, session_name: str):
+    def __init__(
+        self,
+        layout_config: LayoutConfig,
+        session_name: str,
+        exit_mode: SessionExitMode,
+    ) -> None:
         self.session_name: str = session_name
+        self.exit_mode: SessionExitMode = exit_mode
         self.layout_config: LayoutConfig = layout_config.copy()
         self.script_path: str | None = None
 
@@ -53,7 +60,11 @@ class WTLayoutGenerator:
         for tab in self.layout_config['layoutTabs']:
             console.print(f"  [yellow]→[/yellow] [bold]{tab['tabName']}[/bold] [dim]in[/dim] [blue]{tab['startDir']}[/blue]")
 
-        wt_command = generate_wt_command_string(self.layout_config, self.session_name)
+        wt_command = generate_wt_command_string(
+            self.layout_config,
+            self.session_name,
+            self.exit_mode,
+        )
 
         random_suffix = generate_random_suffix(8)
         script_content = f"""# Windows Terminal layout for {self.session_name}
@@ -72,7 +83,7 @@ class WTLayoutGenerator:
     def get_wt_layout_preview(self, layout_config: LayoutConfig) -> str:
         """Generate preview of the Windows Terminal command that would be created."""
         validate_layout_config(layout_config)
-        return generate_wt_command_string(layout_config, "preview")
+        return generate_wt_command_string(layout_config, "preview", self.exit_mode)
 
     def check_all_commands_status(self) -> dict[str, dict[str, Any]]:
         if not self.layout_config:
@@ -164,9 +175,17 @@ class WTLayoutGenerator:
         console.print(Panel(summary_text, title="📊 Summary", style="blue"))
 
 
-def create_wt_layout(layout_config: LayoutConfig, output_path: str) -> str:
+def create_wt_layout(
+    layout_config: LayoutConfig,
+    output_path: str,
+    exit_mode: SessionExitMode,
+) -> str:
     session_name = layout_config["layoutName"]
-    generator = WTLayoutGenerator(layout_config=layout_config, session_name=session_name)
+    generator = WTLayoutGenerator(
+        layout_config=layout_config,
+        session_name=session_name,
+        exit_mode=exit_mode,
+    )
     generator.create_layout_file()
     
     if generator.script_path is None:
@@ -176,10 +195,14 @@ def create_wt_layout(layout_config: LayoutConfig, output_path: str) -> str:
     return generator.script_path
 
 
-def run_wt_layout(layout_config: LayoutConfig) -> None:
+def run_wt_layout(layout_config: LayoutConfig, exit_mode: SessionExitMode) -> None:
     """Create and run a Windows Terminal layout."""
     session_name = layout_config["layoutName"]
-    generator = WTLayoutGenerator(layout_config=layout_config, session_name=session_name)
+    generator = WTLayoutGenerator(
+        layout_config=layout_config,
+        session_name=session_name,
+        exit_mode=exit_mode,
+    )
     generator.create_layout_file()
     if generator.script_path is None:
         raise RuntimeError("Script path was not set after creating layout file")
@@ -210,7 +233,11 @@ if __name__ == "__main__":
             ]}
     try:
         session_name = sample_layout["layoutName"]
-        generator = WTLayoutGenerator(layout_config=sample_layout, session_name=session_name)
+        generator = WTLayoutGenerator(
+            layout_config=sample_layout,
+            session_name=session_name,
+            exit_mode="backToShell",
+        )
         generator.create_layout_file()
         
         print(f"✅ Windows Terminal layout created: {generator.script_path}")

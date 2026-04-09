@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, TypedDict, cast
 
 from rich.console import Console
+from machineconfig.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from machineconfig.utils.scheduler import Scheduler, LoggerTemplate
 from machineconfig.cluster.sessions_managers.windows_terminal.wt_local import WTLayoutGenerator
 from machineconfig.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import check_wt_session_status
@@ -33,13 +34,19 @@ class _LoadedManagerData(TypedDict):
     session_name: str
     layout_config: LayoutConfig
     script_path: str | None
+    exit_mode: SessionExitMode
 
 
 
 class WTLocalManager:
     """Manages multiple local Windows Terminal sessions and monitors their tabs and processes."""
 
-    def __init__(self, session_layouts: list[LayoutConfig], session_name_prefix: str | None):
+    def __init__(
+        self,
+        session_layouts: list[LayoutConfig],
+        session_name_prefix: str | None,
+        exit_mode: SessionExitMode,
+    ) -> None:
         """
         Initialize the local Windows Terminal manager.
 
@@ -49,13 +56,18 @@ class WTLocalManager:
             session_name_prefix: Prefix for session names
         """
         self.session_name_prefix: str | None = session_name_prefix
+        self.exit_mode: SessionExitMode = exit_mode
         self.session_layouts = session_layouts  # Store the original config
         self.managers: list[WTLayoutGenerator] = []
 
         # Create a WTLayoutGenerator for each session
         for layout_config in session_layouts:
             session_name = layout_config["layoutName"]
-            wt_manager = WTLayoutGenerator(layout_config=layout_config, session_name=session_name)
+            wt_manager = WTLayoutGenerator(
+                layout_config=layout_config,
+                session_name=session_name,
+                exit_mode=exit_mode,
+            )
             wt_manager.create_layout_file()
             self.managers.append(wt_manager)
 
@@ -217,12 +229,24 @@ class WTLocalManager:
         session_dir = TMP_SERIALIZATION_DIR / session_id
         ensure_session_dir_exists(session_dir)
         save_json_file(session_dir / "session_layouts.json", self.session_layouts, "session layouts")
-        metadata = {"session_name_prefix": self.session_name_prefix, "created_at": str(datetime.now()), "num_managers": len(self.managers), "sessions": [item["layoutName"] for item in self.session_layouts], "manager_type": "WTLocalManager"}
+        metadata = {
+            "session_name_prefix": self.session_name_prefix,
+            "created_at": str(datetime.now()),
+            "num_managers": len(self.managers),
+            "sessions": [item["layoutName"] for item in self.session_layouts],
+            "manager_type": "WTLocalManager",
+            "exit_mode": self.exit_mode,
+        }
         save_json_file(session_dir / "metadata.json", metadata, "metadata")
         managers_dir = session_dir / "managers"
         managers_dir.mkdir(exist_ok=True)
         for i, wt_manager in enumerate(self.managers):
-            manager_data = {"session_name": wt_manager.session_name, "layout_config": wt_manager.layout_config, "script_path": wt_manager.script_path}
+            manager_data = {
+                "session_name": wt_manager.session_name,
+                "layout_config": wt_manager.layout_config,
+                "script_path": wt_manager.script_path,
+                "exit_mode": wt_manager.exit_mode,
+            }
             save_json_file(managers_dir / f"manager_{i}_{wt_manager.session_name}.json", manager_data, f"manager {i}")
         self.logger.info(f"✅ Saved WTLocalManager session to: {session_dir}")
         return session_id
@@ -237,7 +261,12 @@ class WTLocalManager:
         metadata_data = load_json_file(session_dir / "metadata.json", "Metadata file") if (session_dir / "metadata.json").exists() else {}
         metadata = metadata_data if isinstance(metadata_data, dict) else {}
         session_name_prefix = metadata.get("session_name_prefix", None)
-        instance = WTLocalManager(session_layouts=session_layouts, session_name_prefix=session_name_prefix)
+        exit_mode = metadata.get("exit_mode", "backToShell")
+        instance = WTLocalManager(
+            session_layouts=session_layouts,
+            session_name_prefix=session_name_prefix,
+            exit_mode=exit_mode,
+        )
         managers_dir = session_dir / "managers"
         if managers_dir.exists():
             instance.managers = []
@@ -247,7 +276,11 @@ class WTLocalManager:
                     manager_data = cast(_LoadedManagerData, loaded_manager_data) if isinstance(loaded_manager_data, dict) else None
                     if manager_data is None:
                         raise ValueError("Invalid manager data format")
-                    wt_manager = WTLayoutGenerator(layout_config=manager_data["layout_config"], session_name=manager_data["session_name"])
+                    wt_manager = WTLayoutGenerator(
+                        layout_config=manager_data["layout_config"],
+                        session_name=manager_data["session_name"],
+                        exit_mode=manager_data.get("exit_mode", exit_mode),
+                    )
                     wt_manager.script_path = manager_data["script_path"]
                     instance.managers.append(wt_manager)
                 except Exception as e:

@@ -31,7 +31,11 @@ def run_demo() -> None:
     ]
 
     try:
-        local_manager = WTLocalManager(sample_sessions, session_name_prefix="DevEnv")
+        local_manager = WTLocalManager(
+            sample_sessions,
+            session_name_prefix="DevEnv",
+            exit_mode="backToShell",
+        )
         print(f"✅ Local manager created with {len(local_manager.managers)} sessions")
 
         print(f"📋 Sessions: {local_manager.get_all_session_names()}")

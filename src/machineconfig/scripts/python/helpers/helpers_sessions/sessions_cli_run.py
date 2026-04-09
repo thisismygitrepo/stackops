@@ -3,6 +3,7 @@
 import typer
 
 from machineconfig.cluster.sessions_managers.session_conflict import SessionConflictAction
+from machineconfig.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
     SessionBackendOption,
     resolve_standard_backend,
@@ -28,6 +29,7 @@ def run_cli(
     max_layouts: int,
     backend: SessionBackendOption,
     on_conflict: SessionConflictAction,
+    exit_mode: SessionExitMode,
     monitor: bool,
     kill_upon_completion: bool,
     subsitute_home: bool,
@@ -74,6 +76,7 @@ def run_cli(
             layouts_selected=layouts_selected,
             backend=backend_resolved,
             on_conflict=on_conflict,
+            exit_mode=exit_mode,
         )
     except ValueError as e:
         typer.echo(str(e))

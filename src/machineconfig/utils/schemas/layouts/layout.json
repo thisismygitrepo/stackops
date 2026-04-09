@@ -6,27 +6,15 @@
             "layoutName": "g1",
             "layoutTabs": [
                 {
-                    "command": "ssh p51s",
+                    "command": "ls",
                     "startDir": "$HOME",
                     "tabName": "p51s",
                     "tabWeight": 0
                 },
                 {
-                    "command": "ssh p16s",
+                    "command": "uv run python -c 'import time; time.sleep(10); print(\"hello world\")'",
                     "startDir": "$HOME",
-                    "tabName": "p16s",
-                    "tabWeight": 0
-                },
-                {
-                    "command": "wsl",
-                    "startDir": "$HOME",
-                    "tabName": "wsl",
-                    "tabWeight": 0
-                },
-                {
-                    "command": "pwsh",
-                    "startDir": "$HOME",
-                    "tabName": "windows",
+                    "tabName": "hello",
                     "tabWeight": 0
                 }
             ]

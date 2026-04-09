@@ -2,6 +2,7 @@ from subprocess import CompletedProcess
 from unittest.mock import patch
 
 from machineconfig.cluster.sessions_managers.session_conflict import SessionLaunchPlan
+from machineconfig.cluster.sessions_managers.session_exit_mode import build_tmux_exit_mode_command
 from machineconfig.cluster.sessions_managers.tmux.tmux_local import TmuxLayoutGenerator
 from machineconfig.cluster.sessions_managers.tmux.tmux_utils import tmux_helpers
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
@@ -37,6 +38,7 @@ def test_build_tmux_merge_commands_skip_matching_windows() -> None:
             layout_config=layout,
             session_name="Alpha",
             on_conflict="mergeNewWindowsSkipMatchingWindows",
+            exit_mode="backToShell",
         )
 
     assert all("kill-window" not in command for command in commands)
@@ -65,6 +67,7 @@ def test_build_tmux_merge_commands_overwrite_matching_windows() -> None:
             layout_config=layout,
             session_name="Alpha",
             on_conflict="mergeNewWindowsOverwriteMatchingWindows",
+            exit_mode="backToShell",
         )
 
     commands_blob = "\n".join(commands)
@@ -77,7 +80,11 @@ def test_build_tmux_merge_commands_overwrite_matching_windows() -> None:
 
 def test_tmux_layout_generator_uses_merge_script_for_existing_session() -> None:
     layout = _layout()
-    generator = TmuxLayoutGenerator(layout_config=layout, session_name="Alpha")
+    generator = TmuxLayoutGenerator(
+        layout_config=layout,
+        session_name="Alpha",
+        exit_mode="backToShell",
+    )
     launch_plan: SessionLaunchPlan = {
         "requested_name": "Alpha",
         "session_name": "Alpha",
@@ -113,4 +120,37 @@ def test_tmux_layout_generator_uses_merge_script_for_existing_session() -> None:
         layout_config=layout,
         session_name="Alpha",
         on_conflict="mergeNewWindowsSkipMatchingWindows",
+        exit_mode="backToShell",
     )
+
+
+def test_build_tmux_exit_mode_command_terminate_mode_prompts_for_restart_or_close() -> None:
+    command = build_tmux_exit_mode_command(
+        command="python -c 'print(123)'",
+        exit_mode="terminate",
+    )
+
+    assert "bash -lc" in command
+    assert "Press Enter to restart" in command
+    assert "press Enter to close" in command
+    assert "tmux kill-pane -t" in command
+
+
+def test_build_tmux_merge_commands_kill_window_delays_wrapped_command_until_after_window_creation() -> None:
+    layout = _layout()
+
+    with patch.object(
+        tmux_helpers,
+        "list_tmux_window_names",
+        return_value=set(),
+    ):
+        commands = tmux_helpers.build_tmux_merge_commands(
+            layout_config=layout,
+            session_name="Alpha",
+            on_conflict="mergeNewWindowsSkipMatchingWindows",
+            exit_mode="killWindow",
+        )
+
+    first_send_keys_index = next(i for i, command in enumerate(commands) if "send-keys" in command)
+    assert any("new-window" in command for command in commands[:first_send_keys_index])
+    assert "bash -lc" in commands[first_send_keys_index]

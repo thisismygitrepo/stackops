@@ -33,6 +33,7 @@ def test_run_help_omits_dynamic_mode_options() -> None:
 
     assert result.exit_code == 0
     assert "--test-layout" in result.output
+    assert "--exit" in result.output
     assert "--max-parallel-tabs" not in result.output
     assert "--kill-finished-tabs" not in result.output
     assert "--all-file" not in result.output
@@ -73,6 +74,20 @@ def test_run_dispatches_test_layout_option_to_impl() -> None:
 
     assert result.exit_code == 0
     assert run_cli.call_args.kwargs["test_layout"] is True
+    assert run_cli.call_args.kwargs["exit_mode"] == "backToShell"
+
+
+def test_run_dispatches_exit_mode_to_impl() -> None:
+    with patch(
+        "machineconfig.scripts.python.helpers.helpers_sessions.sessions_cli_run.run_cli"
+    ) as run_cli:
+        result = runner.invoke(
+            terminal.get_app(),
+            ["run", "--exit", "killWindow"],
+        )
+
+    assert result.exit_code == 0
+    assert run_cli.call_args.kwargs["exit_mode"] == "killWindow"
 
 
 def test_run_all_dispatches_to_impl() -> None:
@@ -212,6 +227,7 @@ def test_run_cli_uses_generated_test_layouts_when_requested() -> None:
             max_layouts=25,
             backend="tmux",
             on_conflict="error",
+            exit_mode="backToShell",
             monitor=False,
             kill_upon_completion=False,
             subsitute_home=False,
@@ -285,12 +301,13 @@ def test_run_cli_rejects_test_layout_with_explicit_layouts_file() -> None:
                     parallel_layouts=None,
                     max_tabs=25,
                     max_layouts=25,
-                    backend="tmux",
-                    on_conflict="error",
-                    monitor=False,
-                    kill_upon_completion=False,
-                    subsitute_home=False,
-                )
+            backend="tmux",
+            on_conflict="error",
+            exit_mode="backToShell",
+            monitor=False,
+            kill_upon_completion=False,
+            subsitute_home=False,
+        )
 
     run_layouts.assert_not_called()
     assert any(

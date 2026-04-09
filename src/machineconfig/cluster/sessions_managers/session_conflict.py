@@ -196,6 +196,14 @@ def build_session_launch_plan(
     backend: SessionBackend,
     on_conflict: SessionConflictAction,
 ) -> list[SessionLaunchPlan]:
+    if (
+        on_conflict in MERGE_NEW_WINDOWS_SESSION_CONFLICT_ACTIONS
+        and backend not in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS
+    ):
+        supported_backends_text = ", ".join(sorted(MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS))
+        raise ValueError(
+            f"{on_conflict} is only supported for {supported_backends_text} backends."
+        )
     existing_sessions = list_existing_sessions(backend)
     planned_sessions: set[str] = set()
     restarted_sessions: set[str] = set()
