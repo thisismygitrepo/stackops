@@ -146,6 +146,24 @@
       }
     },
     {
+      "appName": "csvlens",
+      "license": "MIT License",
+      "repoURL": "https://github.com/ys-l/csvlens",
+      "doc": "🧙‍♂️ Command-line CSV viewer",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "csvlens-x86_64-unknown-linux-gnu.tar.xz",
+          "windows": "csvlens-x86_64-pc-windows-msvc.zip",
+          "darwin": "csvlens-x86_64-apple-darwin.tar.xz"
+        },
+        "arm64": {
+          "linux": "csvlens-aarch64-unknown-linux-gnu.tar.xz",
+          "windows": "csvlens-aarch64-pc-windows-msvc.zip",
+          "darwin": "csvlens-aarch64-apple-darwin.tar.xz"
+        }
+      }
+    },
+    {
       "appName": "magick",
       "license": "ImageMagick License",
       "repoURL": "https://github.com/ImageMagick/ImageMagick",

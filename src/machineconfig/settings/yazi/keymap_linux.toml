@@ -5,12 +5,6 @@ run = "plugin goto-drives"
 desc = "Go to drives"
 
 [[mgr.prepend_keymap]]
-on   = "v"
-run  = "plugin tv-reveal"
-desc = "Run tv and reveal result"
-
-
-[[mgr.prepend_keymap]]
 on   = "!"
 for  = "unix"
 run  = 'shell "$SHELL" --block'
@@ -78,6 +72,14 @@ desc = "bat the file"
 on   = "e"
 run  = 'shell --block -- hx "$0"'
 desc = "edit the file with helix"
+[[mgr.prepend_keymap]]
+on   = "v"
+run  = 'shell --block -- uv run --python 3.14 "$HOME/.config/yazi/scripts/fullscreen_preview.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+desc = "Open a standalone fullscreen preview"
+[[mgr.prepend_keymap]]
+on   = "V"
+run  = 'shell --block -- uv run --python 3.14 "$HOME/.config/yazi/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+desc = "Open an interactive file-specific viewer"
 [[mgr.prepend_keymap]]
 on   = "n"
 run  = 'shell --block -- nano "$0"'

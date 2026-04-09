@@ -43,6 +43,7 @@ dir = "~/.config/yazi/plugins"
 prepend_previewers = [
   # Markdown previewer
   { url = "*.md", run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"' },
+  { url = "*.csv", run = 'piper -- uvx --from rich-cli rich --force-terminal --csv --width "$w" "$1"' },
   # JSON previewer - explicitly use built-in json previewer
   { mime = "application/json", run = "json" },
   { url = "*.json", run = "json" },

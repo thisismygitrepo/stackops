@@ -188,5 +188,5 @@ def test_resolve_uv_run_config_falls_back_to_published_package(monkeypatch: pyte
         module_file=Path("/site-packages/machineconfig/textual_options_form_types.py"),
     )
 
-    assert uv_with == ["textual", "machineconfig>=8.89"]
+    assert uv_with == ["textual", "machineconfig>=8.90"]
     assert uv_project_dir is None
