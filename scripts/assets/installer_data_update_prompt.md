@@ -7,4 +7,6 @@ but please only wokr on entries designated for you, ignore the rest because the 
 
 Notes:
 * File pattern should  never be ..v{version}.. with v, even if they have that in release page, the v is implicit.
+* If file pattern is "<name>.py" then it is referencing a custom py script installer, in which case, please don't touch it, at all, no matter what.
+* If file pattern is a custom package installtion command, please don't touch it.
 * don't touch any other field other than thee file pattern.
