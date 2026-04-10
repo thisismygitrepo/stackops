@@ -335,16 +335,40 @@ class Installer:
             ]
 
             # Include hyphen/underscore variants
-            variants = []
+            variants: list[str] = []
             for f in candidates:
                 variants += [f, f.replace("-", "_"), f.replace("_", "-")]
 
-            for f in variants:
+            attempted_filenames = list(dict.fromkeys(variants))
+            for f in attempted_filenames:
                 if f in available_filenames:
                     filename = f
                     break
             else:
-                print(f"❌ Filename not found in assets. Tried: {variants}\nAvailable: {available_filenames}")
+                from rich.console import Console
+                from rich.panel import Panel
+                from rich.table import Table
+
+                console = Console()
+                table = Table(show_header=True, header_style="bold magenta", expand=True)
+                table.add_column("Tried", style="yellow", overflow="fold")
+                table.add_column("Available", style="green", overflow="fold")
+                row_count = max(len(attempted_filenames), len(available_filenames))
+                if row_count == 0:
+                    table.add_row("n/a", "No release assets were returned.")
+                for index in range(row_count):
+                    tried_name = attempted_filenames[index] if index < len(attempted_filenames) else ""
+                    available_name = available_filenames[index] if index < len(available_filenames) else ""
+                    table.add_row(tried_name, available_name)
+
+                console.print(
+                    Panel(
+                        table,
+                        title="❌ Filename not found in assets",
+                        subtitle=f"{username}/{repository} • {actual_version}",
+                        border_style="red",
+                    )
+                )
                 return None, None
         browser_download_url = f"{repo_url}/releases/download/{actual_version}/{filename}"
         return browser_download_url, actual_version
