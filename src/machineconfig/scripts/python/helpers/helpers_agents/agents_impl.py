@@ -28,6 +28,7 @@ def agents_create(
 
     prompt: str | None,
     prompt_path: str | None,
+    prompt_name: str | None,
 
     job_name: str | None,
 
@@ -55,6 +56,7 @@ def agents_create(
             separator=separator,
             prompt=prompt,
             prompt_path=prompt_path,
+            prompt_name=prompt_name,
             job_name=job_name,
             join_prompt_and_context=join_prompt_and_context,
             output_path=output_path,
@@ -89,7 +91,7 @@ def agents_create(
     cleanup_existing_agents_dir = agents_dir is not None and agents_dir_obj.exists()
     del agents_dir
 
-    prompt_input = resolve_prompt_input(prompt=prompt, prompt_path=prompt_path)
+    prompt_input = resolve_prompt_input(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
     context_input = resolve_context_input(
         context=context,
         context_path=context_path,
@@ -136,6 +138,7 @@ def agents_create(
         prompt=CreatePromptArtifactsInput(
             source_kind=prompt_input.source_kind,
             source_path=prompt_input.source_path,
+            source_name=prompt_input.source_name,
             content=prompt_input.prompt_text,
         ),
         context=CreateContextArtifactsInput(

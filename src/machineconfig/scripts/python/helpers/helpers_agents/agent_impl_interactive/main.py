@@ -8,6 +8,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive.
     prompt_existing_path,
     prompt_multiline_text,
     prompt_separator,
+    prompt_text,
     separator_is_applicable_for_context_path,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import (
@@ -27,6 +28,7 @@ _CONTEXT_MODE_TEXT = "enter context text"
 _CONTEXT_MODE_PATH = "use context path"
 _PROMPT_MODE_TEXT = "enter prompt text"
 _PROMPT_MODE_PATH = "use prompt path"
+_PROMPT_MODE_NAME = "use prompt name from yaml"
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +44,7 @@ class InteractiveAgentCreateParams:
     separator: str
     prompt: str | None
     prompt_path: str | None
+    prompt_name: str | None
     job_name: str
     join_prompt_and_context: bool
     output_path: str | None
@@ -64,6 +67,7 @@ def _collect_inputs(
     separator: str,
     prompt: str | None,
     prompt_path: str | None,
+    prompt_name: str | None,
     job_name: str,
 ) -> InteractiveAgentCreateParams:
     agent_selected = cast(
@@ -101,17 +105,33 @@ def _collect_inputs(
         separator_selected = separator
         if separator_is_applicable_for_context_path(Path(context_path_selected)):
             separator_selected = prompt_separator(current=separator)
+    prompt_mode_default = _PROMPT_MODE_TEXT
+    if prompt_name is not None and prompt is None and prompt_path is None:
+        prompt_mode_default = _PROMPT_MODE_NAME
+    elif prompt_path is not None and prompt is None and prompt_name is None:
+        prompt_mode_default = _PROMPT_MODE_PATH
     prompt_mode = choose_required_option(
-        options=[_PROMPT_MODE_PATH, _PROMPT_MODE_TEXT] if prompt_path is not None and prompt is None else [_PROMPT_MODE_TEXT, _PROMPT_MODE_PATH],
+        options=order_current_first(options=[_PROMPT_MODE_TEXT, _PROMPT_MODE_PATH, _PROMPT_MODE_NAME], current=prompt_mode_default),
         msg="Choose how to provide prompt",
         header="Prompt",
     )
     if prompt_mode == _PROMPT_MODE_TEXT:
         prompt_selected = prompt_multiline_text(label="prompt", current=prompt, required=True)
         prompt_path_selected = None
-    else:
+        prompt_name_selected = None
+    elif prompt_mode == _PROMPT_MODE_PATH:
         prompt_selected = None
         prompt_path_selected = prompt_existing_path(label="prompt path", current=prompt_path, must_be_file=True)
+        prompt_name_selected = None
+    else:
+        prompt_selected = None
+        prompt_path_selected = None
+        prompt_name_selected = prompt_text(
+            label="prompt name",
+            current=prompt_name,
+            required=True,
+            hint=" (uses prompts YAML lookup)",
+        )
     return InteractiveAgentCreateParams(
         agent=agent_selected,
         host=reviewed_create_options.host,
@@ -124,6 +144,7 @@ def _collect_inputs(
         separator=separator_selected,
         prompt=prompt_selected,
         prompt_path=prompt_path_selected,
+        prompt_name=prompt_name_selected,
         job_name=reviewed_create_options.job_name,
         join_prompt_and_context=reviewed_create_options.join_prompt_and_context,
         output_path=reviewed_create_options.output_path,
@@ -150,6 +171,7 @@ def main(
     separator: str = DEFAULT_SEAPRATOR,
     prompt: str | None = None,
     prompt_path: str | None = None,
+    prompt_name: str | None = None,
     job_name: str | None = None,
     join_prompt_and_context: bool = False,
     output_path: str | None = None,
@@ -170,6 +192,7 @@ def main(
         separator=separator,
         prompt=prompt,
         prompt_path=prompt_path,
+        prompt_name=prompt_name,
         job_name=_resolve_initial_job_name(job_name),
     )
     from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create
@@ -186,6 +209,7 @@ def main(
         separator=collected.separator,
         prompt=collected.prompt,
         prompt_path=collected.prompt_path,
+        prompt_name=collected.prompt_name,
         job_name=collected.job_name,
         join_prompt_and_context=collected.join_prompt_and_context,
         output_path=collected.output_path,

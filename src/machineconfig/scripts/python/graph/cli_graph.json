@@ -790,7 +790,7 @@
                     "",
                     "    from machineconfig.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.87\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.90\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1723,7 +1723,7 @@
                     "    # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.87\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.90\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -2238,7 +2238,7 @@
                     "    sensitivity: Annotated[Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the config file.\")] = \"private\",",
                     "    destination: Annotated[str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")] = None,",
                     "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper_dotfiles.yaml to record this mapping.\")] = \"default\",",
-                    "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = \"linux,darwin,windows\",",
+                    "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = DEFAULT_OS_FILTER,",
                     "    shared: Annotated[bool, typer.Option(\"--shared\", \"-sh\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
                     "    record: Annotated[bool, typer.Option(\"--record\", \"-r\", help=\"Record the mapping in user's mapper.yaml\")] = True,",
                     "    ) -> None:",
@@ -2436,7 +2436,7 @@
                       "name": "os_filter",
                       "kind": "positional_or_keyword",
                       "type": "str",
-                      "default": "linux,darwin,windows",
+                      "default": "DEFAULT_OS_FILTER",
                       "required": false,
                       "annotation_raw": "Annotated[str, typer.Option('--os', help='Comma-separated OS list from: linux,darwin,windows.')]",
                       "typer": {
@@ -2659,7 +2659,7 @@
                     "        pwd=pwd,",
                     "    )",
                     "    Path(zipfile).unlink()",
-                    "    zipfile_enc_path = Path(f\"{zipfile}.enc\")",
+                    "    zipfile_enc_path = Path(rf\"{zipfile}.enc\")",
                     "    if zipfile_enc_path.exists():",
                     "        zipfile_enc_path.unlink()",
                     "    zipfile_enc_path.write_bytes(zipfile_enc_bytes)",
@@ -3409,7 +3409,12 @@
                     "        case _:",
                     "            typer.echo(\"Error: Invalid direction. Use 'up' or 'down'.\")",
                     "            raise typer.Exit(code=1)",
-                    "    main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo)"
+                    "    try:",
+                    "        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo)",
+                    "    except ValueError as exc:",
+                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(exc)",
+                    "        typer.echo(msg)",
+                    "        raise typer.Exit(code=1)"
                   ],
                   "name": "sync",
                   "parameters": [
@@ -3529,7 +3534,7 @@
                     "    zip_: Annotated[bool, typer.Option(\"--zip/--no-zip\", \"-z/-nz\", help=\"Zip before uploading.\")] = False,",
                     "    encrypt: Annotated[bool, typer.Option(\"--encrypt/--no-encrypt\", \"-e/-ne\", help=\"Encrypt before uploading.\")] = False,",
                     "    rel2home: Annotated[bool | None, typer.Option(\"--rel2home/--no-rel2home\", \"-r/-nr\", help=\"Treat the local path as relative to home.\")] = None,",
-                    "    os: Annotated[str, typer.Option(\"--os\", \"-o\", help=\"OS filter for this backup entry. Comma-separated values from: linux, darwin, windows.\")] = \"linux,darwin,windows\",",
+                    "    os: Annotated[str, typer.Option(\"--os\", \"-o\", help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")] = DEFAULT_OS_FILTER,",
                     ") -> None:",
                     "    from machineconfig.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry",
                     "",
@@ -3704,9 +3709,9 @@
                       "name": "os",
                       "kind": "positional_or_keyword",
                       "type": "str",
-                      "default": "linux,darwin,windows",
+                      "default": "DEFAULT_OS_FILTER",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help='OS filter for this backup entry. Comma-separated values from: linux, darwin, windows.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3718,8 +3723,7 @@
                         ],
                         "short_flags": [
                           "-o"
-                        ],
-                        "help": "OS filter for this backup entry. Comma-separated values from: linux, darwin, windows."
+                        ]
                       }
                     }
                   ],
@@ -4628,72 +4632,6 @@
                         "name": "i",
                         "hidden": true,
                         "help": "<i> Install safe apps from app metadata report"
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
-                    "name": "repo-licenses",
-                    "fullPath": "devops self security repo-licenses",
-                    "shortPath": "d s y p",
-                    "help": "<p> Download GitHub repo license files for installer entries",
-                    "source": {
-                      "file": "src/machineconfig/jobs/installer/checks/security_cli.py",
-                      "module": "machineconfig.jobs.installer.checks.security_cli",
-                      "callable": "repo_licenses"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def repo_licenses(",
-                        "    github_token: Annotated[",
-                        "        str | None,",
-                        "        typer.Option(",
-                        "            \"--github-token\",",
-                        "            help=\"GitHub token. Prefer MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN to avoid shell history.\",",
-                        "            hide_input=True,",
-                        "            envvar=[\"MACHINECONFIG_GITHUB_TOKEN\", \"GITHUB_TOKEN\", \"GH_TOKEN\"],",
-                        "        ),",
-                        "    ] = None,",
-                        ") -> None:",
-                        "    from machineconfig.scripts.python.helpers.helpers_repos import download_repo_licenses",
-                        "",
-                        "    try:",
-                        "        download_repo_licenses.run_download(github_token=github_token)",
-                        "    except RuntimeError as err:",
-                        "        raise typer.BadParameter(str(err), param_hint=\"--github-token\") from err"
-                      ],
-                      "name": "repo_licenses",
-                      "parameters": [
-                        {
-                          "name": "github_token",
-                          "kind": "positional_or_keyword",
-                          "type": "str | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--github-token', help='GitHub token. Prefer MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN to avoid shell history.', hide_input=True, envvar=['MACHINECONFIG_GITHUB_TOKEN', 'GITHUB_TOKEN', 'GH_TOKEN'])]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--github-token"
-                            ],
-                            "long_flags": [
-                              "--github-token"
-                            ],
-                            "short_flags": [],
-                            "help": "GitHub token. Prefer MACHINECONFIG_GITHUB_TOKEN, GITHUB_TOKEN, or GH_TOKEN to avoid shell history."
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": true
-                    },
-                    "aliases": [
-                      {
-                        "name": "p",
-                        "hidden": true,
-                        "help": "<p> Download GitHub repo license files for installer entries"
                       }
                     ]
                   },
@@ -9506,18 +9444,18 @@
       },
       {
         "kind": "group",
-        "name": "sessions",
-        "fullPath": "sessions",
-        "shortPath": "s",
-        "help": "<s> Session and layout management",
+        "name": "terminal",
+        "fullPath": "terminal",
+        "shortPath": "t",
+        "help": "<t> Terminal and layout management",
         "source": {
           "file": "src/machineconfig/scripts/python/mcfg_entry.py",
           "module": "machineconfig.scripts.python.mcfg_entry",
-          "dispatches_to": "machineconfig.scripts.python.sessions.get_app",
-          "callable": "sessions"
+          "dispatches_to": "machineconfig.scripts.python.terminal.get_app",
+          "callable": "terminal"
         },
         "app": {
-          "help": "Layouts management subcommands",
+          "help": "Terminal management subcommands",
           "no_args_is_help": true,
           "add_help_option": true,
           "add_completion": false
@@ -9526,12 +9464,12 @@
           {
             "kind": "command",
             "name": "run",
-            "fullPath": "sessions run",
-            "shortPath": "s r",
+            "fullPath": "terminal run",
+            "shortPath": "t r",
             "help": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeNewWindowsOverwriteMatchingWindows, or\nmergeNewWindowsSkipMatchingWindows. Those two merge policies are\nsupported for tmux and Windows Terminal.\nUse `run-all` for the paced whole-file dynamic scheduler.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "run"
             },
             "signature": {
@@ -9539,6 +9477,7 @@
                 "def run(",
                 "    ctx: typer.Context,",
                 "    layouts_file: Annotated[str | None, typer.Option(..., \"--layouts-file\", \"-f\", help=\"Path to the layout.json file\")] = None,",
+                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.\")] = False,",
                 "    choose_layouts: Annotated[str | None, typer.Option(..., \"--choose-layouts\", \"-c\", help=\"Comma separated layout names. Pass empty string to select layouts interactively.\")] = None,",
                 "    choose_tabs: Annotated[str | None, typer.Option(..., \"--choose-tabs\", \"-t\", help=\"Comma separated tab names. Pass empty string to select tabs interactively from all layouts.\")] = None,",
                 "    sleep_inbetween: Annotated[float, typer.Option(..., \"--sleep-inbetween\", \"-S\", help=\"Sleep time in seconds between launching layouts\")] = 1.0,",
@@ -9549,6 +9488,7 @@
                 "    max_layouts: Annotated[int, typer.Option(..., \"--max-parallel-layouts\", \"-P\", help=\"A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.\")] = 25,",
                 "    backend: Annotated[Literal[\"zellij\", \"z\", \"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"tmux\",",
                 "    on_conflict: Annotated[SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-o\", help=\"How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.\")] = \"error\",",
+                "    exit_mode: Annotated[Literal[\"backToShell\", \"terminate\", \"killWindow\"], typer.Option(\"--exit\", \"-e\", help=\"What each tab/window should do after its command exits.\")] = \"backToShell\",",
                 "    monitor: Annotated[bool, typer.Option(..., \"--monitor\", \"-m\", help=\"Monitor the layout sessions for completion (implied by --parallel-layouts)\")] = False,",
                 "    kill_upon_completion: Annotated[bool, typer.Option(..., \"--kill-upon-completion\", \"-k\", help=\"Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)\")] = False,",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
@@ -9567,6 +9507,7 @@
                 "    impl(",
                 "        ctx=ctx,",
                 "        layouts_file=layouts_file,",
+                "        test_layout=test_layout,",
                 "        choose_layouts=choose_layouts,",
                 "        choose_tabs=choose_tabs,",
                 "        sleep_inbetween=sleep_inbetween,",
@@ -9575,6 +9516,7 @@
                 "        max_layouts=max_layouts,",
                 "        backend=backend,",
                 "        on_conflict=on_conflict,",
+                "        exit_mode=exit_mode,",
                 "        monitor=monitor,",
                 "        kill_upon_completion=kill_upon_completion,",
                 "        subsitute_home=subsitute_home,",
@@ -9610,6 +9552,26 @@
                       "-f"
                     ],
                     "help": "Path to the layout.json file",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "test_layout",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--test-layout"
+                    ],
+                    "long_flags": [
+                      "--test-layout"
+                    ],
+                    "short_flags": [],
+                    "help": "Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.",
                     "default": "..."
                   }
                 },
@@ -9797,6 +9759,28 @@
                   }
                 },
                 {
+                  "name": "exit_mode",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['backToShell', 'terminate', 'killWindow']",
+                  "default": "backToShell",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['backToShell', 'terminate', 'killWindow'], typer.Option('--exit', '-e', help='What each tab/window should do after its command exits.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--exit",
+                      "-e"
+                    ],
+                    "long_flags": [
+                      "--exit"
+                    ],
+                    "short_flags": [
+                      "-e"
+                    ],
+                    "help": "What each tab/window should do after its command exits."
+                  }
+                },
+                {
                   "name": "monitor",
                   "kind": "positional_or_keyword",
                   "type": "bool",
@@ -9884,12 +9868,12 @@
           {
             "kind": "command",
             "name": "run-all",
-            "fullPath": "sessions run-all",
-            "shortPath": "s R",
+            "fullPath": "terminal run-all",
+            "shortPath": "t R",
             "help": "Dynamically run every tab from every layout in a layout configuration file.\n\nThis merges the whole file into one paced run and keeps at most\n--max-parallel-tabs tabs active at a time.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "run_all"
             },
             "signature": {
@@ -9898,6 +9882,7 @@
                 "    ctx: typer.Context,",
                 "    *,",
                 "    layouts_file: Annotated[str | None, typer.Option(..., \"--layouts-file\", \"-f\", help=\"Path to the layout.json file\")] = None,",
+                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.\")] = False,",
                 "    max_parallel_tabs: Annotated[int, typer.Option(..., \"--max-parallel-tabs\", help=\"Maximum number of tabs to keep active while dynamically working through the whole file.\")],",
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-seconds\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
                 "    kill_finished_tabs: Annotated[bool, typer.Option(\"--kill-finished-tabs\", help=\"Close each tab once its command is finished.\")] = False,",
@@ -9915,6 +9900,7 @@
                 "    impl(",
                 "        ctx=ctx,",
                 "        layouts_file=layouts_file,",
+                "        test_layout=test_layout,",
                 "        max_parallel_tabs=max_parallel_tabs,",
                 "        poll_seconds=poll_seconds,",
                 "        kill_finished_tabs=kill_finished_tabs,",
@@ -9953,6 +9939,26 @@
                       "-f"
                     ],
                     "help": "Path to the layout.json file",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "test_layout",
+                  "kind": "keyword_only",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--test-layout"
+                    ],
+                    "long_flags": [
+                      "--test-layout"
+                    ],
+                    "short_flags": [],
+                    "help": "Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.",
                     "default": "..."
                   }
                 },
@@ -10101,12 +10107,12 @@
           {
             "kind": "command",
             "name": "run-aoe",
-            "fullPath": "sessions run-aoe",
-            "shortPath": "s e",
+            "fullPath": "terminal run-aoe",
+            "shortPath": "t e",
             "help": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "run_aoe"
             },
             "signature": {
@@ -10586,12 +10592,12 @@
           {
             "kind": "command",
             "name": "attach",
-            "fullPath": "sessions attach",
-            "shortPath": "s a",
+            "fullPath": "terminal attach",
+            "shortPath": "t a",
             "help": "Choose a session or deeper target to attach to.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "attach_to_session"
             },
             "signature": {
@@ -10739,12 +10745,12 @@
           {
             "kind": "command",
             "name": "kill",
-            "fullPath": "sessions kill",
-            "shortPath": "s k",
+            "fullPath": "terminal kill",
+            "shortPath": "t k",
             "help": "Choose one or more session targets to kill.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "kill_session_target"
             },
             "signature": {
@@ -10877,12 +10883,12 @@
           {
             "kind": "command",
             "name": "trace",
-            "fullPath": "sessions trace",
-            "shortPath": "s x",
+            "fullPath": "terminal trace",
+            "shortPath": "t t",
             "help": "Trace a tmux session until every target matches a strict stop criterion.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "trace"
             },
             "signature": {
@@ -10987,14 +10993,14 @@
               ],
               "return": "None"
             },
-            "short_help": "<x> Trace a tmux session until it settles",
+            "short_help": "<t> Trace a tmux session until it settles",
             "typer": {
               "no_args_is_help": true
             },
             "doc": "Trace a tmux session until every target matches a strict stop criterion.",
             "aliases": [
               {
-                "name": "x",
+                "name": "t",
                 "hidden": true,
                 "help": "Trace a tmux session until every target matches a strict stop criterion."
               }
@@ -11003,12 +11009,12 @@
           {
             "kind": "command",
             "name": "create-from-function",
-            "fullPath": "sessions create-from-function",
-            "shortPath": "s c",
+            "fullPath": "terminal create-from-function",
+            "shortPath": "t c",
             "help": "Create a layout from a function to run in multiple processes.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "create_from_function"
             },
             "signature": {
@@ -11111,12 +11117,12 @@
           {
             "kind": "command",
             "name": "balance-load",
-            "fullPath": "sessions balance-load",
-            "shortPath": "s b",
+            "fullPath": "terminal balance-load",
+            "shortPath": "t b",
             "help": "Adjust layout file to limit max tabs per layout, etc.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "balance_load"
             },
             "signature": {
@@ -11261,12 +11267,12 @@
           {
             "kind": "command",
             "name": "create-template",
-            "fullPath": "sessions create-template",
-            "shortPath": "s p",
+            "fullPath": "terminal create-template",
+            "shortPath": "t p",
             "help": "Create a layout template file.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "create_template"
             },
             "signature": {
@@ -11339,12 +11345,12 @@
           {
             "kind": "command",
             "name": "summarize",
-            "fullPath": "sessions summarize",
-            "shortPath": "s s",
+            "fullPath": "terminal summarize",
+            "shortPath": "t s",
             "help": "Summarize a layout file with counts for layouts and tabs.",
             "source": {
-              "file": "src/machineconfig/scripts/python/sessions.py",
-              "module": "machineconfig.scripts.python.sessions",
+              "file": "src/machineconfig/scripts/python/terminal.py",
+              "module": "machineconfig.scripts.python.terminal",
               "callable": "summarize"
             },
             "signature": {
@@ -11479,10 +11485,10 @@
           "ignore_unknown_options": true,
           "help_option_names": []
         },
-        "doc": "<s> Session and layout management.",
+        "doc": "<t> Terminal and layout management.",
         "aliases": [
           {
-            "name": "s",
+            "name": "t",
             "hidden": true
           }
         ]
@@ -11529,7 +11535,7 @@
                 "name": "create",
                 "fullPath": "agents parallel create",
                 "shortPath": "a p c",
-                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, google, aws, openai, anthropic, openrouter, xai\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid\n",
+                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, google, aws, openai, anthropic, openrouter, xai\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid\n",
                 "source": {
                   "file": "src/machineconfig/scripts/python/agents_parallel_commands.py",
                   "module": "machineconfig.scripts.python.agents_parallel_commands",
@@ -11556,8 +11562,15 @@
                     "    agent_load: Annotated[int, typer.Option(..., \"--agent-load\", \"-l\", help=\"Number of tasks per prompt\")] = 3,",
                     "    prompt: Annotated[str | None, typer.Option(..., \"--prompt\", \"-p\", help=\"Prompt prefix as string\")] = None,",
                     "    prompt_path: Annotated[str | None, typer.Option(..., \"--prompt-path\", \"-P\", help=\"Path to prompt file\")] = None,",
+                    "    prompt_name: Annotated[str | None, typer.Option(..., \"--prompt-name\", \"-N\", help=\"Prompt entry name from prompts YAML\")] = None,",
                     "    job_name: Annotated[",
-                    "        str, typer.Option(..., \"--job-name\", \"-n\", help=\"Job label. Also used to build the default output directory when --agents-dir is omitted.\")",
+                    "        str,",
+                    "        typer.Option(",
+                    "            ...,",
+                    "            \"--job-name\",",
+                    "            \"-n\",",
+                    "            help=\"Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.\",",
+                    "        ),",
                     "    ] = \"AI_Agents\",",
                     "    join_prompt_and_context: Annotated[bool, typer.Option(..., \"--joined-prompt-context\", \"-j\", help=\"Join prompt file to the context.\")] = False,",
                     "    output_path: Annotated[str | None, typer.Option(..., \"--output-path\", \"-o\", help=\"Path to write the layout.json file\")] = None,",
@@ -11586,6 +11599,7 @@
                     "            agent_load=agent_load,",
                     "            prompt=prompt,",
                     "            prompt_path=prompt_path,",
+                    "            prompt_name=prompt_name,",
                     "            job_name=job_name,",
                     "            join_prompt_and_context=join_prompt_and_context,",
                     "            output_path=output_path,",
@@ -11853,12 +11867,35 @@
                       }
                     },
                     {
+                      "name": "prompt_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--prompt-name', '-N', help='Prompt entry name from prompts YAML')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--prompt-name",
+                          "-N"
+                        ],
+                        "long_flags": [
+                          "--prompt-name"
+                        ],
+                        "short_flags": [
+                          "-N"
+                        ],
+                        "help": "Prompt entry name from prompts YAML",
+                        "default": "..."
+                      }
+                    },
+                    {
                       "name": "job_name",
                       "kind": "positional_or_keyword",
                       "type": "str",
                       "default": "AI_Agents",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--job-name', '-n', help='Job label. Also used to build the default output directory when --agents-dir is omitted.')]",
+                      "annotation_raw": "Annotated[str, typer.Option(..., '--job-name', '-n', help='Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -11871,7 +11908,7 @@
                         "short_flags": [
                           "-n"
                         ],
-                        "help": "Job label. Also used to build the default output directory when --agents-dir is omitted.",
+                        "help": "Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.",
                         "default": "..."
                       }
                     },
@@ -11979,7 +12016,7 @@
                   {
                     "name": "c",
                     "hidden": true,
-                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, google, aws, openai, anthropic, openrouter, xai\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid\n"
+                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, google, aws, openai, anthropic, openrouter, xai\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid\n"
                   }
                 ]
               },
@@ -12521,6 +12558,226 @@
                 "name": "g",
                 "hidden": true,
                 "help": "Initialize AI configurations in the current repository."
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "add-mcp",
+            "fullPath": "agents add-mcp",
+            "shortPath": "a m",
+            "help": "Resolve MCP servers from machineconfig catalogs, or open catalog files for editing.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/agents.py",
+              "module": "machineconfig.scripts.python.agents",
+              "callable": "add_mcp"
+            },
+            "signature": {
+              "raw_lines": [
+                "def add_mcp(",
+                "    requested_mcp_servers: Annotated[",
+                "        str | None,",
+                "        typer.Argument(help=\"MCP servers/tools to resolve from machineconfig MCP catalogs (comma-separated).\"),",
+                "    ] = None,",
+                "    agents: Annotated[",
+                "        str,",
+                "        typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\"),",
+                "    ] = \"\",",
+                "    scope: Annotated[",
+                "        MCP_INSTALL_SCOPE,",
+                "        typer.Option(\"--scope\", \"-s\", help=\"Install MCP config into repo-local or user-global agent config.\"),",
+                "    ] = \"local\",",
+                "    where: Annotated[",
+                "        MCP_CATALOG_WHERE,",
+                "        typer.Option(..., \"--where\", \"-w\", help=\"Where to resolve or edit MCP catalog files.\"),",
+                "    ] = \"all\",",
+                "    edit: Annotated[",
+                "        bool,",
+                "        typer.Option(",
+                "            ...,",
+                "            \"--edit\",",
+                "            \"-e\",",
+                "            help=\"Open MCP catalog files in an editor (hx preferred, nano fallback). If no MCP names are provided, exits after editing.\",",
+                "        ),",
+                "    ] = False,",
+                ") -> None:",
+                "    \"\"\"Resolve MCP servers from machineconfig catalogs, or open catalog files for editing.\"\"\"",
+                "    from machineconfig.scripts.python.helpers.helpers_agents.mcp_catalog import (",
+                "        collect_available_mcp_names,",
+                "        edit_mcp_catalog,",
+                "        ensure_mcp_catalog_exists,",
+                "        format_resolved_mcp_servers,",
+                "        parse_requested_mcp_names,",
+                "        resolve_mcp_catalog_locations,",
+                "        resolve_requested_mcp_servers,",
+                "    )",
+                "    from machineconfig.scripts.python.helpers.helpers_agents.mcp_install import (",
+                "        choose_requested_mcp_names,",
+                "        install_resolved_mcp_servers,",
+                "        parse_requested_agents,",
+                "    )",
+                "    from machineconfig.utils.accessories import get_repo_root",
+                "",
+                "    try:",
+                "        search_locations = resolve_mcp_catalog_locations(where=where)",
+                "        if edit:",
+                "            created_catalog_paths: list[Path] = []",
+                "            for location in search_locations:",
+                "                if ensure_mcp_catalog_exists(location=location):",
+                "                    created_catalog_paths.append(location[\"path\"])",
+                "            for created_catalog_path in created_catalog_paths:",
+                "                typer.echo(f\"Created MCP catalog template at: {created_catalog_path}\")",
+                "",
+                "            editable_catalog_paths = tuple(location[\"path\"] for location in search_locations if location[\"path\"].exists() and location[\"path\"].is_file())",
+                "            if len(editable_catalog_paths) == 0:",
+                "                searched = \", \".join(str(location[\"path\"]) for location in search_locations)",
+                "                raise ValueError(f\"No MCP catalog files found for --where '{where}'. Searched: {searched}\")",
+                "            for catalog_path in editable_catalog_paths:",
+                "                edit_mcp_catalog(path=catalog_path)",
+                "",
+                "        if requested_mcp_servers is None:",
+                "            if edit:",
+                "                return",
+                "            if len(collect_available_mcp_names(locations=search_locations)) == 0:",
+                "                raise ValueError(\"No MCP servers are available to choose from in the selected catalog locations\")",
+                "            requested_mcp_names = choose_requested_mcp_names(locations=search_locations)",
+                "        else:",
+                "            requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)",
+                "",
+                "        resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)",
+                "        selected_agents = parse_requested_agents(raw_value=agents)",
+                "        repo_root = get_repo_root(Path.cwd()) if scope == \"local\" else None",
+                "        if scope == \"local\" and repo_root is None:",
+                "            raise ValueError(\"Local MCP installation requires running the command inside a git repository\")",
+                "",
+                "        typer.echo(f\"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}\")",
+                "        for selected_agent in selected_agents:",
+                "            install_path = install_resolved_mcp_servers(",
+                "                agent=selected_agent,",
+                "                scope=scope,",
+                "                resolved_servers=resolved_mcp_servers,",
+                "                repo_root=repo_root,",
+                "                home_dir=Path.home(),",
+                "            )",
+                "            typer.echo(f\"{selected_agent}: {install_path}\")",
+                "    except ValueError as e:",
+                "        raise typer.BadParameter(str(e)) from e"
+              ],
+              "name": "add_mcp",
+              "parameters": [
+                {
+                  "name": "requested_mcp_servers",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='MCP servers/tools to resolve from machineconfig MCP catalogs (comma-separated).')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "MCP servers/tools to resolve from machineconfig MCP catalogs (comma-separated)."
+                  }
+                },
+                {
+                  "name": "agents",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ]
+                  }
+                },
+                {
+                  "name": "scope",
+                  "kind": "positional_or_keyword",
+                  "type": "MCP_INSTALL_SCOPE",
+                  "default": "local",
+                  "required": false,
+                  "annotation_raw": "Annotated[MCP_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install MCP config into repo-local or user-global agent config.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--scope",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--scope"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Install MCP config into repo-local or user-global agent config."
+                  }
+                },
+                {
+                  "name": "where",
+                  "kind": "positional_or_keyword",
+                  "type": "MCP_CATALOG_WHERE",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[MCP_CATALOG_WHERE, typer.Option(..., '--where', '-w', help='Where to resolve or edit MCP catalog files.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--where",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--where"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Where to resolve or edit MCP catalog files.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "edit",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Open MCP catalog files in an editor (hx preferred, nano fallback). If no MCP names are provided, exits after editing.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--edit",
+                      "-e"
+                    ],
+                    "long_flags": [
+                      "--edit"
+                    ],
+                    "short_flags": [
+                      "-e"
+                    ],
+                    "help": "Open MCP catalog files in an editor (hx preferred, nano fallback). If no MCP names are provided, exits after editing.",
+                    "default": "..."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<m> Resolve catalog MCP entries and install them for agents",
+            "doc": "Resolve MCP servers from machineconfig catalogs, or open catalog files for editing.",
+            "aliases": [
+              {
+                "name": "m",
+                "hidden": true
               }
             ]
           },
@@ -14187,7 +14444,7 @@
                     "        typer.Option(..., \"--dependency\", \"-d\", help=\"Generated file is self contained or performs imports\"),",
                     "    ] = \"self-contained\",",
                     ") -> None:",
-                    "    from machineconfig.type_hinting.typedict.generators import generate_names_file",
+                    "    # from machineconfig.type_hinting.typedict.generators import generate_names_file",
                     "",
                     "    path_resolved = Path(path).resolve()",
                     "    if not path_resolved.exists():",
@@ -14203,8 +14460,9 @@
                     "    for input_file in modules:",
                     "        print(f\"Worked on: {input_file}\")",
                     "        output_file = input_file.parent.joinpath(f\"{input_file.stem}_names.py\")",
-                    "        generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)",
-                    "        print(f\"Generated: {generated_file}\")"
+                    "        # generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)",
+                    "        # print(f\"Generated: {generated_file}\")",
+                    "        print(f\"Generated: {output_file}\")"
                   ],
                   "name": "type_hint",
                   "parameters": [
@@ -14901,6 +15159,303 @@
         "aliases": [
           {
             "name": "u",
+            "hidden": true
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "seek",
+        "fullPath": "seek",
+        "shortPath": "s",
+        "help": "<s> Search across files, text matches, and code symbols",
+        "source": {
+          "file": "src/machineconfig/scripts/python/mcfg_entry.py",
+          "module": "machineconfig.scripts.python.mcfg_entry",
+          "dispatches_to": "machineconfig.scripts.python.seek.get_app",
+          "callable": "seek"
+        },
+        "app": {
+          "add_completion": false,
+          "no_args_is_help": true
+        },
+        "children": [
+          {
+            "kind": "command",
+            "name": "seek",
+            "fullPath": "seek seek",
+            "shortPath": "s seek",
+            "help": "seek across files, text matches, and code symbols.",
+            "source": {
+              "file": "src/machineconfig/scripts/python/seek.py",
+              "module": "machineconfig.scripts.python.seek",
+              "callable": "seek"
+            },
+            "signature": {
+              "raw_lines": [
+                "def seek(",
+                "    path: Annotated[str, typer.Argument(help=\"The directory/file to search\")] = \".\",",
+                "    search_term: Annotated[str, typer.Argument(help=\"Initial search term to seed the interactive search\")] = \"\",",
+                "    ast: Annotated[bool, typer.Option(..., \"--ast\", \"-a\", help=\"The abstract syntax tree search/ tree sitter search of symbols\")] = False,",
+                "    symantic: Annotated[bool, typer.Option(..., \"--symantic\", \"-s\", help=\"The symantic search of symbols\")] = False,",
+                "    extension: Annotated[str | None, typer.Option(..., \"--extension\", \"-E\", help=\"File extension to filter by (e.g., .py, .js)\")] = None,",
+                "    file: Annotated[bool, typer.Option(..., \"--file\", \"-f\", help=\"File search using fzf\")] = False,",
+                "    dotfiles: Annotated[bool, typer.Option(..., \"--dotfiles\", \"-d\", help=\"Include dotfiles in search\")] = False,",
+                "    rga: Annotated[bool, typer.Option(..., \"--rga\", \"-A\", help=\"Use ripgrep-all for searching all (non text files) instead of ripgrep\")] = False,",
+                "    edit: Annotated[bool, typer.Option(..., \"--edit\", \"-e\", help=\"Open selection in editor (helix)\")] = False,",
+                "    install_dependencies: Annotated[bool, typer.Option(..., \"--install-req\", \"-i\", help=\"Install required dependencies if missing\")] = False,",
+                ") -> None:",
+                "    \"\"\"seek across files, text matches, and code symbols.\"\"\"",
+                "    from machineconfig.scripts.python.helpers.helpers_seek.seek_impl import seek as impl",
+                "    impl(",
+                "        path=path,",
+                "        search_term=search_term,",
+                "        ast=ast,",
+                "        symantic=symantic,",
+                "        extension=extension,",
+                "        file=file,",
+                "        dotfiles=dotfiles,",
+                "        rga=rga,",
+                "        edit=edit,",
+                "        install_dependencies=install_dependencies,",
+                "    )"
+              ],
+              "name": "seek",
+              "parameters": [
+                {
+                  "name": "path",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": ".",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='The directory/file to search')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "The directory/file to search"
+                  }
+                },
+                {
+                  "name": "search_term",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Initial search term to seed the interactive search')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Initial search term to seed the interactive search"
+                  }
+                },
+                {
+                  "name": "ast",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--ast', '-a', help='The abstract syntax tree search/ tree sitter search of symbols')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--ast",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--ast"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "The abstract syntax tree search/ tree sitter search of symbols",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "symantic",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--symantic', '-s', help='The symantic search of symbols')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--symantic",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--symantic"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "The symantic search of symbols",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "extension",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--extension', '-E', help='File extension to filter by (e.g., .py, .js)')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--extension",
+                      "-E"
+                    ],
+                    "long_flags": [
+                      "--extension"
+                    ],
+                    "short_flags": [
+                      "-E"
+                    ],
+                    "help": "File extension to filter by (e.g., .py, .js)",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "file",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--file', '-f', help='File search using fzf')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--file",
+                      "-f"
+                    ],
+                    "long_flags": [
+                      "--file"
+                    ],
+                    "short_flags": [
+                      "-f"
+                    ],
+                    "help": "File search using fzf",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "dotfiles",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--dotfiles', '-d', help='Include dotfiles in search')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--dotfiles",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--dotfiles"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Include dotfiles in search",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "rga",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--rga', '-A', help='Use ripgrep-all for searching all (non text files) instead of ripgrep')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--rga",
+                      "-A"
+                    ],
+                    "long_flags": [
+                      "--rga"
+                    ],
+                    "short_flags": [
+                      "-A"
+                    ],
+                    "help": "Use ripgrep-all for searching all (non text files) instead of ripgrep",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "edit",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Open selection in editor (helix)')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--edit",
+                      "-e"
+                    ],
+                    "long_flags": [
+                      "--edit"
+                    ],
+                    "short_flags": [
+                      "-e"
+                    ],
+                    "help": "Open selection in editor (helix)",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "install_dependencies",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--install-req', '-i', help='Install required dependencies if missing')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--install-req",
+                      "-i"
+                    ],
+                    "long_flags": [
+                      "--install-req"
+                    ],
+                    "short_flags": [
+                      "-i"
+                    ],
+                    "help": "Install required dependencies if missing",
+                    "default": "..."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "machineconfig search helper",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "seek across files, text matches, and code symbols."
+          }
+        ],
+        "command_context_settings": {
+          "allow_extra_args": true,
+          "allow_interspersed_args": true,
+          "ignore_unknown_options": true,
+          "help_option_names": []
+        },
+        "doc": "<s> Search across files, text matches, and code symbols.",
+        "aliases": [
+          {
+            "name": "s",
             "hidden": true
           }
         ]

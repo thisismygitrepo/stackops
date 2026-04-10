@@ -9,7 +9,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_type
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
-PromptSourceKind: TypeAlias = Literal["inline_text", "file_path"]
+PromptSourceKind: TypeAlias = Literal["inline_text", "file_path", "yaml_name"]
 ContextSourceKind: TypeAlias = Literal["inline_text", "file_path", "directory_path"]
 
 
@@ -23,6 +23,7 @@ class CreateContextDirectoryEntry:
 class CreatePromptArtifactsInput:
     source_kind: PromptSourceKind
     source_path: Path | None
+    source_name: str | None
     content: str
 
 
@@ -66,6 +67,12 @@ def _write_context_snapshot(*, artifacts_dir: Path, context: CreateContextArtifa
     return snapshot_path
 
 
+def _resolve_recreate_source_path(*, source_path: Path | None, snapshot_path: Path) -> Path:
+    if source_path is None:
+        return snapshot_path
+    return source_path
+
+
 def _build_recreate_command_args(
     *,
     agent: AGENTS,
@@ -75,8 +82,10 @@ def _build_recreate_command_args(
     provider: PROVIDER | None,
     agent_load: int,
     separator: str,
-    prompt_snapshot_path: Path,
-    context_snapshot_path: Path,
+    prompt_source_kind: PromptSourceKind,
+    prompt_recreate_path: Path,
+    prompt_name: str | None,
+    context_recreate_path: Path,
     job_name: str,
     join_prompt_and_context: bool,
     layout_output_path: Path,
@@ -93,13 +102,11 @@ def _build_recreate_command_args(
         "--host",
         host,
         "--context-path",
-        str(context_snapshot_path),
+        str(context_recreate_path),
         "--separator",
         _separator_cli_value(separator),
         "--agent-load",
         str(agent_load),
-        "--prompt-path",
-        str(prompt_snapshot_path),
         "--job-name",
         job_name,
         "--output-path",
@@ -107,6 +114,12 @@ def _build_recreate_command_args(
         "--agents-dir",
         str(agents_dir),
     ]
+    if prompt_source_kind == "yaml_name":
+        if prompt_name is None:
+            raise ValueError("prompt_name must be provided when prompt source_kind is 'yaml_name'")
+        command.extend(["--prompt-name", prompt_name])
+    else:
+        command.extend(["--prompt-path", str(prompt_recreate_path)])
     if model is not None:
         command.extend(["--model", model])
     if reasoning_effort is not None:
@@ -116,6 +129,57 @@ def _build_recreate_command_args(
     if join_prompt_and_context:
         command.append("--joined-prompt-context")
     return command
+
+
+_RECREATE_PATH_FLAGS = frozenset({"--context-path", "--prompt-path", "--output-path", "--agents-dir"})
+
+
+def _render_shell_path(*, path: Path, repo_root: Path, home_dir: Path, allow_repo_relative: bool) -> str:
+    if allow_repo_relative:
+        try:
+            relative_to_repo = path.relative_to(repo_root)
+        except ValueError:
+            pass
+        else:
+            relative_text = relative_to_repo.as_posix()
+            return "." if relative_text == "." else shlex.quote(relative_text)
+
+    try:
+        relative_to_home = path.relative_to(home_dir)
+    except ValueError:
+        return shlex.quote(str(path))
+
+    relative_text = relative_to_home.as_posix()
+    if relative_text == ".":
+        return "$HOME"
+    return f"""$HOME{shlex.quote(f"/{relative_text}")}"""
+
+
+def _build_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:
+    repo_root_resolved = repo_root.resolve()
+    home_dir = Path.home().resolve()
+    rendered_args: list[str] = []
+    previous_arg: str | None = None
+    for arg in recreate_command_args:
+        if previous_arg in _RECREATE_PATH_FLAGS:
+            rendered_args.append(
+                _render_shell_path(
+                    path=Path(arg),
+                    repo_root=repo_root_resolved,
+                    home_dir=home_dir,
+                    allow_repo_relative=True,
+                )
+            )
+        else:
+            rendered_args.append(shlex.quote(arg))
+        previous_arg = arg
+    repo_root_shell_path = _render_shell_path(
+        path=repo_root_resolved,
+        repo_root=repo_root_resolved,
+        home_dir=home_dir,
+        allow_repo_relative=False,
+    )
+    return f"""cd {repo_root_shell_path} && {' '.join(rendered_args)}"""
 
 
 def write_create_artifacts(
@@ -143,6 +207,14 @@ def write_create_artifacts(
     prompt_snapshot_path = artifacts_dir / "prompt.md"
     prompt_snapshot_path.write_text(prompt.content, encoding="utf-8")
     context_snapshot_path = _write_context_snapshot(artifacts_dir=artifacts_dir, context=context)
+    prompt_recreate_path = _resolve_recreate_source_path(
+        source_path=prompt.source_path,
+        snapshot_path=prompt_snapshot_path,
+    )
+    context_recreate_path = _resolve_recreate_source_path(
+        source_path=context.source_path,
+        snapshot_path=context_snapshot_path,
+    )
 
     recreate_command_args = _build_recreate_command_args(
         agent=agent,
@@ -152,14 +224,19 @@ def write_create_artifacts(
         provider=provider,
         agent_load=agent_load,
         separator=separator,
-        prompt_snapshot_path=prompt_snapshot_path,
-        context_snapshot_path=context_snapshot_path,
+        prompt_source_kind=prompt.source_kind,
+        prompt_recreate_path=prompt_recreate_path,
+        prompt_name=prompt.source_name,
+        context_recreate_path=context_recreate_path,
         job_name=job_name,
         join_prompt_and_context=join_prompt_and_context,
         layout_output_path=layout_output_path,
         agents_dir=agents_dir,
     )
-    recreate_command = f"""cd {shlex.quote(str(repo_root))} && {shlex.join(recreate_command_args)}"""
+    recreate_command = _build_recreate_command(
+        repo_root=repo_root,
+        recreate_command_args=recreate_command_args,
+    )
 
     recreate_script_path = artifacts_dir / "recreate_layout.sh"
     recreate_script_path.write_text(
@@ -190,6 +267,7 @@ def write_create_artifacts(
         "prompt": {
             "source_kind": prompt.source_kind,
             "source_path": None if prompt.source_path is None else str(prompt.source_path),
+            "source_name": prompt.source_name,
             "snapshot_path": str(prompt_snapshot_path),
         },
         "context": {

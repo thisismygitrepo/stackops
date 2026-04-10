@@ -28,6 +28,7 @@ def agents_create(
     agent_load: Annotated[int, typer.Option(..., "--agent-load", "-l", help="Number of tasks per prompt")] = 3,
     prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
     prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
+    prompt_name: Annotated[str | None, typer.Option(..., "--prompt-name", "-N", help="Prompt entry name from prompts YAML")] = None,
     job_name: Annotated[
         str,
         typer.Option(
@@ -64,6 +65,7 @@ def agents_create(
             agent_load=agent_load,
             prompt=prompt,
             prompt_path=prompt_path,
+            prompt_name=prompt_name,
             job_name=job_name,
             join_prompt_and_context=join_prompt_and_context,
             output_path=output_path,

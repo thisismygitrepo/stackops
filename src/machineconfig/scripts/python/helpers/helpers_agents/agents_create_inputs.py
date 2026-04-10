@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 from machineconfig.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
     ContextSourceKind,
     CreateContextDirectoryEntry,
     PromptSourceKind,
 )
+from machineconfig.scripts.python.helpers.helpers_agents.agents_run_context import resolve_named_prompts_yaml_entry
 
 
 def _split_and_chunk_prompts(raw_material: str, separator: str, tasks_per_prompt: int) -> list[str]:
@@ -30,6 +30,7 @@ class ResolvedPromptInput:
     prompt_text: str
     source_kind: PromptSourceKind
     source_path: Path | None
+    source_name: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,15 +42,30 @@ class ResolvedContextInput:
     directory_entries: tuple[CreateContextDirectoryEntry, ...]
 
 
-def resolve_prompt_input(*, prompt: str | None, prompt_path: str | None) -> ResolvedPromptInput:
-    prompt_options = [prompt, prompt_path]
-    provided_prompt = [opt for opt in prompt_options if opt is not None]
-    if len(provided_prompt) != 1:
-        raise ValueError("Exactly one of --prompt or --prompt-path must be provided")
+def resolve_prompt_input(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> ResolvedPromptInput:
+    provided_prompt_count = sum(value is not None for value in (prompt, prompt_path, prompt_name))
+    if provided_prompt_count != 1:
+        raise ValueError("Exactly one of --prompt, --prompt-path, or --prompt-name must be provided")
+
+    if prompt is not None:
+        return ResolvedPromptInput(prompt_text=prompt, source_kind="inline_text", source_path=None, source_name=None)
+
+    if prompt_name is not None:
+        prompt_text = resolve_named_prompts_yaml_entry(
+            prompts_yaml_path=None,
+            entry_name=prompt_name,
+            where="all",
+            entry_label="Prompt name",
+        )
+        return ResolvedPromptInput(
+            prompt_text=prompt_text,
+            source_kind="yaml_name",
+            source_path=None,
+            source_name=prompt_name,
+        )
 
     if prompt_path is None:
-        return ResolvedPromptInput(prompt_text=cast(str, prompt), source_kind="inline_text", source_path=None)
-
+        raise ValueError("Missing --prompt-path value")
     prompt_path_resolved = Path(prompt_path).expanduser().resolve()
     if not prompt_path_resolved.exists() or not prompt_path_resolved.is_file():
         raise ValueError(f"Path does not exist: {prompt_path_resolved}")
@@ -57,6 +73,7 @@ def resolve_prompt_input(*, prompt: str | None, prompt_path: str | None) -> Reso
         prompt_text=prompt_path_resolved.read_text(encoding="utf-8"),
         source_kind="file_path",
         source_path=prompt_path_resolved,
+        source_name=None,
     )
 
 
