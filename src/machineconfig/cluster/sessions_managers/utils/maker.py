@@ -4,7 +4,7 @@ from typing import Literal
 from machineconfig.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig
 from pathlib import Path
 
-def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bool, uv_with: list[str] | None, uv_project_dir: str | None, start_dir: str) -> tuple[TabConfig, Path]:
+def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bool, uv_with: list[str] | None, uv_project_dir: str | None, start_dir: str, uv_run_flags: str) -> tuple[TabConfig, Path]:
     from machineconfig.utils.meta import lambda_to_python_script
     if func.__name__ == "<lambda>":
         py_script =  lambda_to_python_script(func,
@@ -13,7 +13,7 @@ def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bo
         py_script =  lambda_to_python_script(lambda: func(),
                                              in_global=True, import_module=import_module)
     from machineconfig.utils.code import get_uv_command_executing_python_script
-    command_to_run, py_script_path = get_uv_command_executing_python_script(python_script=py_script, uv_with=uv_with, uv_project_dir=uv_project_dir)
+    command_to_run, py_script_path = get_uv_command_executing_python_script(python_script=py_script, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
     tab_config: TabConfig = {
         "command": command_to_run,
         "startDir": start_dir,
@@ -21,7 +21,7 @@ def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bo
         "tabWeight": tab_weight
     }
     return tab_config, py_script_path
-def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str) -> TabConfig:
+def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str, fire_flags: str) -> TabConfig:
     import inspect
     from machineconfig.utils.source_of_truth import CONFIG_ROOT
     import platform
@@ -34,7 +34,7 @@ def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str)
         raise ValueError(f"Unsupported platform: {platform.system()}")
     path = Path(inspect.getfile(func))
     path_relative = path.relative_to(Path.home())
-    command_to_run = f"""{wrap_mcfg} fire {path_relative} {func.__name__} """
+    command_to_run = f"""{wrap_mcfg} fire {fire_flags} {path_relative} {func.__name__} """
     tab_config: TabConfig = {
         "command": command_to_run,
         "startDir": start_dir,
@@ -49,6 +49,7 @@ def make_layout_from_functions(functions: list[FunctionType], functions_weights:
                                import_module: bool, tab_configs: list[TabConfig],
                                layout_name: str, method: Literal["script", "fire"],
                                uv_with: list[str] | None, uv_project_dir: str | None,
+                               flags: str,
                                start_dir: str
                                ) -> LayoutConfig:
     tabs2artifacts: list[tuple[TabConfig, list[Path]]] = []
@@ -61,10 +62,11 @@ def make_layout_from_functions(functions: list[FunctionType], functions_weights:
                 uv_with=uv_with,
                 uv_project_dir=uv_project_dir,
                 start_dir=start_dir,
+                uv_run_flags=flags
             )
             artifact_files = [artifact_file]
         else:
-            tab_config = get_fire_tab_using_fire(a_func, tab_weight=tab_weight, start_dir=start_dir)
+            tab_config = get_fire_tab_using_fire(a_func, tab_weight=tab_weight, start_dir=start_dir, fire_flags=flags)
             artifact_files = []
         tabs2artifacts.append((tab_config, artifact_files))
     list_of_tabs = [tab for tab, _ in tabs2artifacts] + tab_configs

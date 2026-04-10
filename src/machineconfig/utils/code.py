@@ -39,7 +39,8 @@ def print_code(code: str, lexer: str, desc: str, subtitle: str = "") -> None:
 
 def get_uv_command_executing_python_file(python_file: str, uv_with: list[str] | None,
                                          uv_project_dir: str | None,
-                                        prepend_print: bool = True, ) -> str:
+                                         uv_run_flags: str = "",
+                                        prepend_print: bool = True) -> str:
     # shell script
     if uv_with is not None and len(uv_with) > 0:
         if prepend_print:
@@ -57,11 +58,11 @@ def get_uv_command_executing_python_file(python_file: str, uv_with: list[str] | 
     import platform
 
     uv_command = get_uv_command(platform=platform.system())
-    shell_script = f"""{uv_command} run {uv_with_arg} {uv_project_dir_arg}  {str(python_file)} """
+    shell_script = f"""{uv_command} run {uv_run_flags} {uv_with_arg} {uv_project_dir_arg}  {str(python_file)} """
     return shell_script
 
 
-def get_uv_command_executing_python_script(python_script: str, uv_with: list[str] | None, uv_project_dir: str | None,
+def get_uv_command_executing_python_script(python_script: str, uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "",
                                            prepend_print: bool = True, ) -> tuple[str, Path]:
     python_file = Path.home().joinpath("tmp_results", "tmp_scripts", "python", randstr() + ".py")
     python_file.parent.mkdir(parents=True, exist_ok=True)
@@ -72,18 +73,18 @@ def get_uv_command_executing_python_script(python_script: str, uv_with: list[str
         python_file.write_text(print_code_string + "\n" + python_script, encoding="utf-8")
     else:
         python_file.write_text(python_script, encoding="utf-8")
-    shell_script = get_uv_command_executing_python_file(python_file=str(python_file), uv_with=uv_with, uv_project_dir=uv_project_dir, prepend_print=prepend_print)
+    shell_script = get_uv_command_executing_python_file(python_file=str(python_file), uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags, prepend_print=prepend_print)
     return shell_script, python_file
 
 
-def get_shell_script_running_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None) -> tuple[str, Path]:
+def get_shell_script_running_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> tuple[str, Path]:
     from machineconfig.utils.meta import lambda_to_python_script
     code = lambda_to_python_script(lmb,
                                             in_global=True, import_module=False)
-    uv_command, py_file = get_uv_command_executing_python_script(python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir)
+    uv_command, py_file = get_uv_command_executing_python_script(python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
     return uv_command, py_file
-def run_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None) -> None:
-    uv_command, _py_file = get_shell_script_running_lambda_function(lmb=lmb, uv_with=uv_with, uv_project_dir=uv_project_dir)
+def run_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> None:
+    uv_command, _py_file = get_shell_script_running_lambda_function(lmb=lmb, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
     run_shell_script(uv_command, display_script=True, clean_env=False)
 
 
