@@ -58,7 +58,7 @@ def get_uv_command_executing_python_file(python_file: str, uv_with: list[str] | 
     import platform
 
     uv_command = get_uv_command(platform=platform.system())
-    shell_script = f"""{uv_command} run {uv_run_flags} {uv_with_arg} {uv_project_dir_arg}  {str(python_file)} """
+    shell_script = f"""{uv_command} run {uv_with_arg} {uv_project_dir_arg} {uv_run_flags} {str(python_file)} """
     return shell_script
 
 
