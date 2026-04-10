@@ -171,12 +171,14 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
     return config
 
 
-def _load_backup_config(path: Path) -> BackupConfig:
+def _load_backup_config(path: Path) -> BackupConfig | None:
+    if not path.exists() or not path.is_file():
+        return None
     raw_value = cast(object, yaml.safe_load(path.read_text(encoding="utf-8")))
     if raw_value is None:
-        return {}
+        return None
     if not isinstance(raw_value, Mapping):
-        raise ValueError(f"Backup configuration must be a mapping: {path}")
+        return None
     return _parse_backup_config({str(key): item for key, item in raw_value.items()})
 
 
@@ -210,7 +212,7 @@ def write_backup_config(path: Path, config: BackupConfig) -> None:
     path.write_text(_serialize_backup_config(config), encoding="utf-8")
 
 
-def read_backup_config(repo: REPO_LOOSE) -> BackupConfig:
+def read_backup_config(repo: REPO_LOOSE) -> BackupConfig | None:
     match repo:
         case "library" | "l":
             path = LIBRARY_BACKUP_PATH
@@ -222,9 +224,16 @@ def read_backup_config(repo: REPO_LOOSE) -> BackupConfig:
             console = Console()
             console.print(Panel(f"🧰 LOADING LIBRARY BACKUP CONFIGURATION\n📄 File: {LIBRARY_BACKUP_PATH}", title="[bold blue]Backup Configuration[/bold blue]", border_style="blue"))
             bu_library = _load_backup_config(LIBRARY_BACKUP_PATH)
-            console.print(Panel(f"🧰 LOADING USER BACKUP CONFIGURATION\n📄 File: {USER_BACKUP_PATH}", title="[bold blue]Backup Configuration[/bold blue]", border_style="blue"))
+            console.print(Panel(f"🧰 LOADING USER BACKUP CONFIGURATION\n📄 File: {USER_BACKUP_PATH}", title="[bold blue]Backup Configuration[/bold blue]", border_style="blue"))            
             bu_user = _load_backup_config(USER_BACKUP_PATH)
-            bu_file = {**bu_library, **bu_user}
+            if bu_user is not None and bu_library is not None:
+                bu_file = {**bu_library, **bu_user}
+            elif bu_user is not None:
+                bu_file = bu_user
+            elif bu_library is not None:
+                bu_file = bu_library
+            else:
+                bu_file = None
         case _:
             raise ValueError(f"Invalid which_backup value: {repo!r}.")
     return bu_file
