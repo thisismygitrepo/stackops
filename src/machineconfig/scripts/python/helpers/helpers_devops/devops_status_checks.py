@@ -231,10 +231,14 @@ def check_backup_config() -> dict[str, Any]:
         backup_file = LIBRARY_BACKUP_PATH
         if backup_file.exists():
             backup_data = read_backup_config(repo="library")
-            backup_items: list[str] = []
-            for group_name, entries in backup_data.items():
-                backup_items.extend([f"{group_name}.{entry_name}" for entry_name in entries.keys()])
-            backup_items_count = len(backup_items)
+            if backup_data is None:
+                backup_items = []
+                backup_items_count = 0
+            else:
+                backup_items = []
+                for group_name, entries in backup_data.items():
+                    backup_items.extend([f"{group_name}.{entry_name}" for entry_name in entries.keys()])
+                backup_items_count = len(backup_items)
         else:
             backup_items = []
             backup_items_count = 0

@@ -16,6 +16,7 @@ from machineconfig.utils.options import choose_cloud_interactively
 from machineconfig.scripts.python.helpers.helpers_cloud.helpers2 import ES
 from machineconfig.scripts.python.helpers.helpers_devops.backup_config import (
     BackupConfig, BackupGroup, VALID_OS, USER_BACKUP_PATH,
+    describe_missing_backup_config,
     normalize_os_name, os_applies, read_backup_config, write_backup_config,
 )
 from machineconfig.profile.create_links_export import REPO_LOOSE
@@ -80,6 +81,8 @@ def register_backup_entry(
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
     if USER_BACKUP_PATH.exists():
         config = read_backup_config(repo="user")
+        if config is None:
+            raise ValueError(describe_missing_backup_config(repo="user"))
     else:
         config = {}
     if group_name in config:
@@ -102,6 +105,9 @@ def register_backup_entry(
 
 def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | None, repo: REPO_LOOSE) -> None:
     console = Console()
+    bu_file = read_backup_config(repo=repo)
+    if bu_file is None:
+        raise ValueError(describe_missing_backup_config(repo=repo))
     if cloud is None or not cloud.strip():
         try:
             cloud = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"].strip()
@@ -117,7 +123,6 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
         cloud = cloud.strip()
         console.print(Panel(f"🌥️  Using provided cloud: {cloud}", title="[bold blue]Cloud Configuration[/bold blue]", border_style="blue"))
     assert cloud is not None
-    bu_file: BackupConfig = read_backup_config(repo=repo)
     system_raw = system()
     normalized_system = normalize_os_name(system_raw)
     filtered: BackupConfig = {}
@@ -129,10 +134,13 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
         if matched:
             filtered[group_name] = matched
     bu_file = filtered
+    applicable_entry_count = sum(len(item) for item in bu_file.values())
+    if applicable_entry_count == 0:
+        raise ValueError(f"No backup configuration entries apply to the current OS: {normalized_system}")
     console.print(Panel(
         f"🖥️  {system_raw} ENVIRONMENT DETECTED\n"
         "🔍 Filtering entries by os field\n"
-        f"✅ Found {sum(len(item) for item in bu_file.values())} applicable backup configuration entries",
+        f"✅ Found {applicable_entry_count} applicable backup configuration entries",
         title="[bold blue]Environment[/bold blue]",
         border_style="blue",
     ))

@@ -25,7 +25,12 @@ def sync(
         case _:
             typer.echo("Error: Invalid direction. Use 'up' or 'down'.")
             raise typer.Exit(code=1)
-    main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo)
+    try:
+        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo)
+    except ValueError as exc:
+        msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)
+        typer.echo(msg)
+        raise typer.Exit(code=1)
 
 
 def register_data(

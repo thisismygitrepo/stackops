@@ -208,6 +208,28 @@ def _serialize_os_values(os_values: set[OsName]) -> list[OsName]:
     return sorted(os_values, key=lambda value: OS_OUTPUT_ORDER[value])
 
 
+def _describe_backup_config_state(path: Path, *, label: str) -> str:
+    if not path.exists():
+        return f"{label} backup configuration file does not exist: {path}"
+    if not path.is_file():
+        return f"{label} backup configuration path is not a file: {path}"
+    return f"{label} backup configuration file is empty or invalid: {path}"
+
+
+def describe_missing_backup_config(repo: REPO_LOOSE) -> str:
+    match repo:
+        case "library" | "l":
+            return _describe_backup_config_state(LIBRARY_BACKUP_PATH, label="Library")
+        case "user" | "u":
+            return _describe_backup_config_state(USER_BACKUP_PATH, label="User")
+        case "all" | "a":
+            library_message = _describe_backup_config_state(LIBRARY_BACKUP_PATH, label="Library")
+            user_message = _describe_backup_config_state(USER_BACKUP_PATH, label="User")
+            return f"No backup configuration could be loaded.\n{library_message}\n{user_message}"
+        case _:
+            raise ValueError(f"Invalid which_backup value: {repo!r}.")
+
+
 def write_backup_config(path: Path, config: BackupConfig) -> None:
     path.write_text(_serialize_backup_config(config), encoding="utf-8")
 
