@@ -31,10 +31,26 @@ class CommandBuilderScreen(ModalScreen[str]):
         if not self.command_info.help_text:
             return args
 
-        help_text = self.command_info.help_text
+        help_lines = [
+            line.strip()
+            for line in self.command_info.help_text.splitlines()
+            if line.strip()
+        ]
+        optional_pattern = re.compile(r"--([\w-]+)\s+<([^>]+)>")
+        flag_pattern = re.compile(r"--([\w-]+)")
+        positional_pattern = re.compile(r"<([\w-]+)>")
 
-        optional_pattern = re.compile(r'--(\w+(?:-\w+)*)\s+<([^>]+)>')
-        for match in optional_pattern.finditer(help_text):
+        option_placeholders: set[str] = set()
+        for line in help_lines:
+            match = optional_pattern.fullmatch(line)
+            if match is None:
+                continue
+            option_placeholders.add(match.group(2))
+
+        for line in help_lines:
+            match = optional_pattern.fullmatch(line)
+            if match is None:
+                continue
             arg_name = match.group(1)
             placeholder = match.group(2)
             if arg_name not in seen_names:
@@ -48,8 +64,10 @@ class CommandBuilderScreen(ModalScreen[str]):
                 ))
                 seen_names.add(arg_name)
 
-        flag_pattern = re.compile(r'--(\w+(?:-\w+)*)(?:\s|$)')
-        for match in flag_pattern.finditer(help_text):
+        for line in help_lines:
+            match = flag_pattern.fullmatch(line)
+            if match is None:
+                continue
             arg_name = match.group(1)
             if arg_name not in seen_names:
                 args.append(ArgumentInfo(
@@ -61,10 +79,12 @@ class CommandBuilderScreen(ModalScreen[str]):
                 ))
                 seen_names.add(arg_name)
 
-        positional_pattern = re.compile(r'<(\w+)>(?!\s*>)')
-        for match in positional_pattern.finditer(help_text):
+        for line in help_lines:
+            match = positional_pattern.fullmatch(line)
+            if match is None:
+                continue
             arg_name = match.group(1)
-            if arg_name not in seen_names and not re.search(rf'--\w+\s+<{arg_name}>', help_text):
+            if arg_name not in seen_names and arg_name not in option_placeholders:
                 args.append(ArgumentInfo(
                     name=arg_name,
                     is_required=True,

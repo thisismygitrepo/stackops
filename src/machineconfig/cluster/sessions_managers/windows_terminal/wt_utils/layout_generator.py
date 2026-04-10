@@ -7,7 +7,6 @@ Based on Windows Terminal documentation: https://learn.microsoft.com/en-us/windo
 import shlex
 import random
 import string
-from typing import List, Tuple
 from pathlib import Path
 import logging
 
@@ -26,15 +25,15 @@ class WTLayoutGenerator:
         return "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
     @staticmethod
-    def parse_command(command: str) -> Tuple[str, List[str]]:
+    def parse_command(command: str) -> tuple[str, list[str]]:
         """Parse a command string into command and arguments."""
         try:
             parts = shlex.split(command)
             if not parts:
                 raise ValueError("Empty command provided")
             return parts[0], parts[1:] if len(parts) > 1 else []
-        except ValueError as e:
-            logger.error(f"Error parsing command '{command}': {e}")
+        except ValueError as error:
+            logging.error("Error parsing command %r: %s", command, error)
             parts = command.split()
             return parts[0] if parts else "", parts[1:] if len(parts) > 1 else []
 
@@ -81,7 +80,7 @@ class WTLayoutGenerator:
         return " ".join(tab_parts)
 
     @staticmethod
-    def validate_tab_config(tabs: List[TabConfig]) -> None:
+    def validate_tab_config(tabs: list[TabConfig]) -> None:
         """Validate tab configuration format and content."""
         if not tabs:
             raise ValueError("Tab configuration cannot be empty")
@@ -93,7 +92,7 @@ class WTLayoutGenerator:
             if not tab["startDir"].strip():
                 raise ValueError(f"Invalid startDir for tab '{tab['tabName']}': {tab['startDir']}")
 
-    def generate_wt_command(self, tabs: List[TabConfig], window_name: str | None = None, maximized: bool = False, focus: bool = True) -> str:
+    def generate_wt_command(self, tabs: list[TabConfig], window_name: str | None = None, maximized: bool = False, focus: bool = True) -> str:
         """Generate complete Windows Terminal command string."""
         self.validate_tab_config(tabs)
 
@@ -130,7 +129,7 @@ class WTLayoutGenerator:
 
         return " ".join(wt_parts)
 
-    def create_wt_script(self, tabs: List[TabConfig], session_name: str, window_name: str | None = None) -> str:
+    def create_wt_script(self, tabs: list[TabConfig], session_name: str, window_name: str | None = None) -> str:
         """Create a Windows Terminal PowerShell script content and return it as string."""
         self.validate_tab_config(tabs)
 
@@ -146,7 +145,7 @@ class WTLayoutGenerator:
         logger.info("Windows Terminal PowerShell script content generated")
         return script_content
 
-    def generate_split_pane_command(self, tabs: List[TabConfig], window_name: str | None = None) -> str:
+    def generate_split_pane_command(self, tabs: list[TabConfig], window_name: str | None = None) -> str:
         """Generate Windows Terminal command with split panes instead of separate tabs."""
         self.validate_tab_config(tabs)
 
