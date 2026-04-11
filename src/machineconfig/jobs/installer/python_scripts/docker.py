@@ -119,17 +119,8 @@ brew update
 echo "📥 Installing Docker CLI packages..."
 brew install docker docker-buildx docker-compose
 
-echo "🖥️ Installing Docker Desktop..."
-brew install --cask docker
-
-echo "🚀 Launching Docker Desktop..."
-open -a Docker || echo "⚠️ Could not launch Docker Desktop automatically"
-
-echo "🧪 Testing Docker installation with hello-world..."
-docker run hello-world || echo "⚠️ Docker hello-world test failed (Docker Desktop may still be starting; open Docker.app and retry)"
-
 echo "✅ Docker installation completed"
-echo "ℹ️ If Docker Desktop prompts for permissions on first launch, approve them and rerun the hello-world test."
+echo "ℹ️ This installs the Docker CLI only. You still need a reachable Docker daemon, such as a remote host or a separate local runtime."
 """
 
 
@@ -156,7 +147,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
             console.print("🐧 Installing Docker on Linux with Docker's official apt repository...", style="bold")
             program = _get_linux_install_script()
         case "Darwin":
-            console.print("🍎 Installing Docker on macOS with Homebrew and Docker Desktop...", style="bold")
+            console.print("🍎 Installing Docker CLI on macOS with Homebrew...", style="bold")
             program = _get_darwin_install_script()
         case "Windows":
             error_msg = "Docker installation is not supported on Windows through this installer"
