@@ -1,4 +1,8 @@
+import json
 from pathlib import Path
+from typing import cast
+
+from machineconfig.utils.schemas.installer.installer_types import InstallerDataFiles
 
 
 type UsedBy = tuple[str, ...]
@@ -221,6 +225,33 @@ def test_reference_repo_files_exist() -> None:
         missing_entries.append(f"{relative_path}\n{sources}")
     assert not missing_entries, "Missing referenced repo files:\n\n" + "\n\n".join(missing_entries)
     print("All referenced repo files exist.")
+
+
+def test_installer_data_script_targets_exist() -> None:
+    installer_data_path = REPO_ROOT.joinpath("src", "machineconfig", "jobs", "installer", "installer_data.json")
+    installer_data = cast(
+        InstallerDataFiles,
+        json.loads(installer_data_path.read_text(encoding="utf-8")),
+    )
+    missing_entries: set[str] = set()
+
+    for installer in installer_data["installers"]:
+        app_name = installer["appName"]
+        for arch, by_os in installer["fileNamePattern"].items():
+            for os_name, target in by_os.items():
+                if target is None or not target.endswith((".py", ".sh", ".ps1")):
+                    continue
+                matches = list(installer_data_path.parent.rglob(target))
+                if len(matches) == 1:
+                    continue
+                if len(matches) == 0:
+                    missing_entries.add(f"{app_name} [{arch}/{os_name}] -> {target}")
+                    continue
+                missing_entries.add(
+                    f"{app_name} [{arch}/{os_name}] -> {target} (multiple matches: {len(matches)})"
+                )
+
+    assert not missing_entries, "Missing installer script targets:\n\n" + "\n".join(sorted(missing_entries))
 
 if __name__ == "__main__":
     test_reference_repo_files_exist()
