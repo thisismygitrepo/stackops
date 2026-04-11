@@ -28,14 +28,21 @@ ssh:
     - darwin
     - windows
 gpg:
-  keys:
+  keys_unix:
     original: ~/.gnupg
     self_managed: ~/dotfiles/creds/.gnupg
     contents: true
     os:
     - linux
     - darwin
+  keys_windows:
+    original: ~/AppData/Roaming/gnupg
+    self_managed: ~/dotfiles/creds/.gnupg
+    contents: true
+    os:
     - windows
+
+
 pypi:
   creds:
     original: ~/.pypirc
