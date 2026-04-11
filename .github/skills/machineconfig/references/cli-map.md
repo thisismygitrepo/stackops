@@ -74,6 +74,9 @@ devops
 │  │  ├─ icicle
 │  │  └─ tui
 │  ├─ readme
+│  ├─ ai (conditional)
+│  │  ├─ update-installer
+│  │  └─ update-test
 │  ├─ build-docker (conditional)
 │  └─ security (conditional)
 │     ├─ scan-all
@@ -161,5 +164,5 @@ msearch
 
 ## Important Nuances
 
-- `devops self security` and `devops self build-docker` are conditionally registered when `~/code/machineconfig` exists.
+- `devops self ai`, `devops self security`, and `devops self build-docker` are conditionally registered when `~/code/machineconfig` exists.
 - The docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

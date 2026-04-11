@@ -5,7 +5,10 @@ import pytest
 from typer.testing import CliRunner
 
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import DEFAULT_SEAPRATOR
-from machineconfig.scripts.python.helpers.helpers_devops import cli_self, cli_self_ai
+from machineconfig.scripts.python.helpers.helpers_devops import cli_self
+from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai import app as cli_self_ai_app
+from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai import update_installer as update_installer_module
+from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai import update_test as update_test_module
 
 
 def _init_git_repo(repo_root: Path) -> None:
@@ -50,10 +53,10 @@ def test_update_installer_uses_embedded_defaults(tmp_path: Path, monkeypatch: py
     def fake_agents_create_impl(**kwargs: object) -> None:
         captured.update(kwargs)
 
-    monkeypatch.setattr(cli_self_ai.Path, "home", lambda: home_root)
-    monkeypatch.setattr(cli_self_ai, "agents_create_impl", fake_agents_create_impl)
+    monkeypatch.setattr(update_installer_module.Path, "home", lambda: home_root)
+    monkeypatch.setattr(update_installer_module, "agents_create_impl", fake_agents_create_impl)
 
-    cli_self_ai.update_installer()
+    update_installer_module.update_installer()
 
     job_name = "updateInstallerData"
     agents_dir = repo_root.joinpath(".ai", "agents", job_name)
@@ -64,7 +67,7 @@ def test_update_installer_uses_embedded_defaults(tmp_path: Path, monkeypatch: py
     assert captured["context_path"] == str(repo_root.joinpath("src", "machineconfig", "jobs", "installer", "installer_data.json"))
     assert captured["separator"] == "    },\n    {"
     assert captured["agent_load"] == 10
-    assert captured["prompt"] == cli_self_ai.UPDATE_INSTALLER_PROMPT
+    assert captured["prompt"] == update_installer_module.UPDATE_INSTALLER_PROMPT
     assert captured["prompt_path"] is None
     assert captured["prompt_name"] is None
     assert captured["job_name"] == job_name
@@ -84,10 +87,10 @@ def test_update_installer_allows_overriding_default_sources_and_agent(tmp_path: 
     def fake_agents_create_impl(**kwargs: object) -> None:
         captured.update(kwargs)
 
-    monkeypatch.setattr(cli_self_ai.Path, "home", lambda: home_root)
-    monkeypatch.setattr(cli_self_ai, "agents_create_impl", fake_agents_create_impl)
+    monkeypatch.setattr(update_installer_module.Path, "home", lambda: home_root)
+    monkeypatch.setattr(update_installer_module, "agents_create_impl", fake_agents_create_impl)
 
-    cli_self_ai.update_installer(agent="gemini", context="context body", prompt="prompt body", job_name="customJob")
+    update_installer_module.update_installer(agent="gemini", context="context body", prompt="prompt body", job_name="customJob")
 
     custom_agents_dir = repo_root.joinpath(".ai", "agents", "customJob")
 
@@ -129,10 +132,10 @@ def test_update_test_uses_generated_repo_context(tmp_path: Path, monkeypatch: py
     def fake_agents_create_impl(**kwargs: object) -> None:
         captured.update(kwargs)
 
-    monkeypatch.setattr(cli_self_ai.Path, "home", lambda: home_root)
-    monkeypatch.setattr(cli_self_ai, "agents_create_impl", fake_agents_create_impl)
+    monkeypatch.setattr(update_test_module.Path, "home", lambda: home_root)
+    monkeypatch.setattr(update_test_module, "agents_create_impl", fake_agents_create_impl)
 
-    cli_self_ai.update_test()
+    update_test_module.update_test()
 
     job_name = "updateTests"
     agents_dir = repo_root.joinpath(".ai", "agents", job_name)
@@ -145,7 +148,7 @@ def test_update_test_uses_generated_repo_context(tmp_path: Path, monkeypatch: py
     assert captured["context_path"] is None
     assert captured["separator"] == DEFAULT_SEAPRATOR
     assert captured["agent_load"] == 10
-    assert captured["prompt"] == cli_self_ai.UPDATE_TEST_PROMPT
+    assert captured["prompt"] == update_test_module.UPDATE_TEST_PROMPT
     assert captured["prompt_path"] is None
     assert captured["prompt_name"] is None
     assert captured["job_name"] == job_name
@@ -167,7 +170,7 @@ def test_update_test_uses_generated_repo_context(tmp_path: Path, monkeypatch: py
 def test_update_test_help_hides_generated_context_controls() -> None:
     runner = CliRunner()
 
-    result = runner.invoke(cli_self_ai.get_app(), ["update-test", "--help"])
+    result = runner.invoke(cli_self_ai_app.get_app(), ["update-test", "--help"])
 
     assert result.exit_code == 0
     assert "Create an agents layout for writing tests from repo Python sources." in result.stdout

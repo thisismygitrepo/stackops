@@ -275,7 +275,8 @@ def docs(
 
 
 def get_app() -> typer.Typer:
-    from machineconfig.scripts.python.helpers.helpers_devops import cli_self_ai, cli_self_assets
+    from machineconfig.scripts.python.helpers.helpers_devops import cli_self_assets
+    from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai import app as cli_self_ai_app
 
     cli_app = typer.Typer(help="🔄 <s> self operations subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     ctx_settings: dict[str, object] = {
@@ -322,7 +323,7 @@ def get_app() -> typer.Typer:
         )
         cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI graph assets.")
         cli_app.add_typer(cli_self_assets.get_app(), name="ba", help="Regenerate repo-local CLI graph assets.", hidden=True)
-        cli_app.add_typer(cli_self_ai.get_app(), name="ai", help="🤖 <a> Developer AI workflows.")
-        cli_app.add_typer(cli_self_ai.get_app(), name="a", help="Developer AI workflows.", hidden=True)
+        cli_app.add_typer(cli_self_ai_app.get_app(), name="ai", help="🤖 <a> Developer AI workflows.")
+        cli_app.add_typer(cli_self_ai_app.get_app(), name="a", help="Developer AI workflows.", hidden=True)
 
     return cli_app

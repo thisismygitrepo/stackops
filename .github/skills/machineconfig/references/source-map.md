@@ -64,6 +64,11 @@ Use this map to jump from a direct CLI command path to the file that registers i
 - `devops self explore ...`
   - Registration: `src/machineconfig/scripts/python/graph/visualize/cli_graph_app.py`
 
+- `devops self ai ...`
+  - Registration: `src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_ai/app.py`
+  - `update-installer` -> `src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_ai/update_installer.py`
+  - `update-test` -> `src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_ai/update_test.py`
+
 - `devops self security ...`
   - Registration: `src/machineconfig/jobs/installer/checks/security_cli.py`
 
