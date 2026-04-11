@@ -342,22 +342,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         except OSError:
             return self
 
-    # ======================================== Folder management =======================================
-    # def search(
-    #     self,
-    #     pattern: str = "*",
-    #     r: bool = False,
-    #     files: bool = True,
-    #     folders: bool = True,
-    #     compressed: bool = False,
-    #     dotfiles: bool = False,
-    #     filters_total: list[Callable[[Any], bool]] | None = None,
-    #     not_in: list[str] | None = None,
-    #     exts: list[str] | None = None,
-    #     win_order: bool = False,
-    # ) -> list["PathExtended"]:
-    #     Use pathlib.Path.glob(...) and pathlib.Path.rglob(...) directly at call sites.
-
     @staticmethod
     def tmpdir(prefix: str = "") -> "PathExtended":
         return PathExtended.tmp(folder=rf"tmp_dirs/{prefix + ('_' if prefix != '' else '') + randstr()}")
