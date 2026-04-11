@@ -18,27 +18,24 @@ def test_describe_command_includes_action_tool_and_command() -> None:
     )
 
 
-def test_build_pdf_render_command_uses_pdftoppm(tmp_path: Path) -> None:
+def test_build_pdf_text_command_uses_pdftotext(tmp_path: Path) -> None:
     target_path = tmp_path.joinpath("example.pdf")
     target_path.write_bytes(b"%PDF-1.4\n")
-    output_prefix = tmp_path.joinpath("preview")
+    output_path = tmp_path.joinpath("preview.txt")
 
-    command = fullscreen_preview.build_pdf_render_command(
+    command = fullscreen_preview.build_pdf_text_command(
         target_path=target_path,
-        output_prefix=output_prefix,
+        output_path=output_path,
     )
 
     assert command == [
-        "pdftoppm",
-        "-f",
-        "1",
-        "-l",
-        "1",
-        "-singlefile",
-        "-png",
+        "pdftotext",
+        "-layout",
+        "-nopgbrk",
+        "-q",
         "--",
         str(target_path),
-        str(output_prefix),
+        str(output_path),
     ]
 
 
@@ -52,6 +49,14 @@ def test_build_command_uses_viu_for_images(tmp_path: Path) -> None:
     )
 
     assert command == ["viu", str(target_path)]
+
+
+def test_build_pager_command_uses_less_on_unix(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(fullscreen_preview.platform, "system", lambda: "Darwin")
+
+    command = fullscreen_preview.build_pager_command()
+
+    assert command == ["less", "-R"]
 
 
 def test_should_wait_for_return_only_for_viu() -> None:

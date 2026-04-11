@@ -100,8 +100,14 @@ def build_image_command(target_path: Path) -> Command:
     return ["viu", str(target_path)]
 
 
-def build_pdf_render_command(target_path: Path, output_prefix: Path) -> Command:
-    return ["pdftoppm", "-f", "1", "-l", "1", "-singlefile", "-png", "--", str(target_path), str(output_prefix)]
+def build_pdf_text_command(target_path: Path, output_path: Path) -> Command:
+    return ["pdftotext", "-layout", "-nopgbrk", "-q", "--", str(target_path), str(output_path)]
+
+
+def build_pager_command() -> Command:
+    if platform.system().lower() == "windows":
+        return ["more.com"]
+    return ["less", "-R"]
 
 
 def build_svg_render_command(target_path: Path, output_path: Path) -> Command:
@@ -230,6 +236,13 @@ def run_command(command: Sequence[str], action: str) -> int:
     return completed_process.returncode
 
 
+def run_command_with_input(command: Sequence[str], action: str, input_path: Path) -> int:
+    emit_command_description(action=action, command=command)
+    with input_path.open("rb") as input_file:
+        completed_process = subprocess.run(list(command), stdin=input_file, check=False)
+    return completed_process.returncode
+
+
 def run_rendered_image_preview(render_command: Sequence[str], rendered_image_path: Path) -> int:
     render_exit_code = run_command(command=render_command, action="Render preview image")
     if render_exit_code != 0:
@@ -244,11 +257,19 @@ def run_rendered_image_preview(render_command: Sequence[str], rendered_image_pat
 
 def run_pdf_preview(target_path: Path) -> int:
     with tempfile.TemporaryDirectory(prefix="machineconfig-yazi-preview-") as temp_dir:
-        output_prefix = Path(temp_dir).joinpath("preview")
-        rendered_image_path = output_prefix.with_suffix(".png")
-        return run_rendered_image_preview(
-            render_command=build_pdf_render_command(target_path=target_path, output_prefix=output_prefix),
-            rendered_image_path=rendered_image_path,
+        rendered_text_path = Path(temp_dir).joinpath("preview.txt")
+        extract_exit_code = run_command(
+            command=build_pdf_text_command(target_path=target_path, output_path=rendered_text_path),
+            action="Extract PDF text",
+        )
+        if extract_exit_code != 0:
+            return extract_exit_code
+        if not rendered_text_path.is_file():
+            raise FileNotFoundError(f"Expected rendered preview text at {rendered_text_path}")
+        return run_command_with_input(
+            command=build_pager_command(),
+            action="Page PDF text",
+            input_path=rendered_text_path,
         )
 
 
