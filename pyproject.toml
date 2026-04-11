@@ -78,7 +78,6 @@ dev = [
     "cowsay>=6.1",
     "duckdb>=1.5.1",
     "gdown>=5.2.1",
-    "github-copilot-sdk>=0.2.0",
     "ipdb>=0.13.13",
     "ipykernel>=7.2.0",
     "ipython>=9.11.0",

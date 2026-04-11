@@ -956,16 +956,6 @@ def decrypt(
     return _decrypt_path(path=path, key=key, pwd=pwd, target_path=target_path, folder=folder, name=name, verbose=verbose, suffix=suffix, inplace=inplace)
 
 
-def zip_n_encrypt(path: Path, key: bytes | None = None, pwd: str | None = None, inplace: bool = False, verbose: bool = True, orig: bool = False, content: bool = False) -> Path:
-    path_obj = _to_path(path)
-    return _encrypt_path(zip_path(path_obj, inplace=inplace, verbose=verbose, content=content), key=key, pwd=pwd, verbose=verbose, inplace=True) if not orig else path_obj
-
-
-def decrypt_n_unzip(path: Path, key: bytes | None = None, pwd: str | None = None, inplace: bool = False, verbose: bool = True, orig: bool = False) -> Path:
-    path_obj = _to_path(path)
-    return _unzip_archive(_decrypt_path(path_obj, key=key, pwd=pwd, verbose=verbose, inplace=inplace), folder=None, inplace=True, content=False) if not orig else path_obj
-
-
 def get_remote_path(path: Path, root: str | None, os_specific: bool = False, rel2home: bool = True, strict: bool = True) -> Path:
     import platform
 
@@ -1142,7 +1132,6 @@ __all__ = [
     "copy",
     "decompress",
     "decrypt",
-    "decrypt_n_unzip",
     "delete",
     "download",
     "encrypt",
@@ -1169,6 +1158,5 @@ __all__ = [
     "validate_name",
     "with_name",
     "zip",
-    "zip_n_encrypt",
     "zip_path",
 ]

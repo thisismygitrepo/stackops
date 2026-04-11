@@ -777,12 +777,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 print("P._return warning: UnicodeEncodeError, could not print message.")
         return ret
 
-    def zip_n_encrypt(self, key: bytes | None = None, pwd: str | None = None, inplace: bool = False, verbose: bool = True, orig: bool = False, content: bool = False) -> "PathExtended":
-        return self.zip(inplace=inplace, verbose=verbose, content=content).encrypt(key=key, pwd=pwd, verbose=verbose, inplace=True) if not orig else self
-
-    def decrypt_n_unzip(self, key: bytes | None = None, pwd: str | None = None, inplace: bool = False, verbose: bool = True, orig: bool = False) -> "PathExtended":
-        return self.decrypt(key=key, pwd=pwd, verbose=verbose, inplace=inplace).unzip(folder=None, inplace=True, content=False) if not orig else self
-
     def _resolve_path(self, folder: OPLike, name: str | None, path: OPLike, default_name: str, rel2it: bool = False) -> "PathExtended":
         """:param rel2it: `folder` or `path` are relative to `self` as opposed to cwd. This is used when resolving '../dir'"""
         if path is not None:
