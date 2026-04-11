@@ -127,10 +127,10 @@ def parse_cloud_source_target(
             raise NotImplementedError("There is no .get_local_path method yet")
         else:  # source path is mentioned, target? maybe.
             target_obj = my_abs(target)
-        if cloud_config_final["zip"] and ".zip" not in source:
+        if cloud_config_final["zip"] and not source.endswith(".zip"):
             source += ".zip"
-        if cloud_config_final["encrypt"] and ".enc" not in source:
-            source += ".enc"
+        if cloud_config_final["encrypt"] and not source.endswith(".gpg"):
+            source += ".gpg"
     elif ":" in target and (target[1] != ":" if len(target) > 1 else True):  # avoid the case of "C:/"
         target_parts: list[str] = target.split(":")
         cloud = target.split(":")[0]
@@ -148,10 +148,10 @@ def parse_cloud_source_target(
         else:  # target path is mentioned, source? maybe.
             target = str(target)
             source_obj = my_abs(source)
-        if cloud_config_final["zip"] and ".zip" not in target:
+        if cloud_config_final["zip"] and not target.endswith(".zip"):
             target += ".zip"
-        if cloud_config_final["encrypt"] and ".enc" not in target:
-            target += ".enc"
+        if cloud_config_final["encrypt"] and not target.endswith(".gpg"):
+            target += ".gpg"
     else:
         console.print(
             Panel(

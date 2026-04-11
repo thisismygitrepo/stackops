@@ -17,6 +17,7 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
     from rich.progress import Progress
     import getpass
     import os
+    from machineconfig.utils.io import decrypt_file_symmetric
     from machineconfig.utils.path_extended import PathExtended
     console = Console()
     console.print(Panel("🚀 Secure File Downloader", title="[bold blue]Downloader[/bold blue]", border_style="blue"))
@@ -49,7 +50,9 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
         _task = progress.add_task("Decrypting... ", total=None)
         tmp_folder = PathExtended.tmpdir(prefix="tmp_unzip")
         try:
-            res = url_obj.decrypt(pwd=pwd, inplace=True).unzip(inplace=True, folder=tmp_folder)
+            decrypted_path = PathExtended(decrypt_file_symmetric(file_path=url_obj, pwd=pwd))
+            url_obj.delete(sure=True, verbose=False)
+            res = decrypted_path.unzip(inplace=True, folder=tmp_folder)
             for x in res.glob("*"):
                 x.move(folder=folder_obj, overwrite=True)
         finally:

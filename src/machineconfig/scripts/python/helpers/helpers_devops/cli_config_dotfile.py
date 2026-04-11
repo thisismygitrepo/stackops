@@ -309,17 +309,12 @@ def export_dotfiles(
     if dotfiles_zip.exists():
         dotfiles_zip.unlink()
     zipfile = shutil.make_archive(base_name=str(dotfiles_zip)[:-4], format="zip", root_dir=str(dotfiles_dir), base_dir=".", verbose=False)
-    from machineconfig.utils.io import encrypt
-    zipfile_enc_bytes = encrypt(
-        msg=Path(zipfile).read_bytes(),
-        pwd=pwd,
-    )
-    Path(zipfile).unlink()
-    zipfile_enc_path = Path(rf"{zipfile}.enc")
-    if zipfile_enc_path.exists():
-        zipfile_enc_path.unlink()
-    zipfile_enc_path.write_bytes(zipfile_enc_bytes)
-    print(f"✅ Dotfiles exported to: {zipfile_enc_path}")
+    from machineconfig.utils.io import encrypt_file_symmetric
+
+    zipfile_path = Path(zipfile)
+    zipfile_encrypted_path = encrypt_file_symmetric(file_path=zipfile_path, pwd=pwd)
+    zipfile_path.unlink()
+    print(f"✅ Dotfiles exported to: {zipfile_encrypted_path}")
     if over_internet:
         # rm ~/dotfiles.zip || true
         # ouch c ~/dotfiles dotfiles.zip
@@ -338,7 +333,7 @@ d c i -u http://{localipv4}:{port} -p {pwd}
 
     display_with_flashy_style(msg=msg, title="Remote Machine Instructions")
     cli_share_server.web_file_explorer(
-        path=str(zipfile_enc_path),
+        path=str(zipfile_encrypted_path),
         no_auth=True,
         port=port,
         # bind_address="
@@ -346,11 +341,11 @@ d c i -u http://{localipv4}:{port} -p {pwd}
 
 
 def import_dotfiles(
-        url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles zip")] = None,
+        url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles archive (.zip.gpg)")] = None,
         pwd: Annotated[str | None, typer.Option(..., "--pwd", "-p", help="Password for zip decryption")] = None,
         use_ssh: Annotated[bool, typer.Option("--use-ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles.")]=False,
         ):  
-    # # INSECURE cd $HOME; uvx wormhole-magic receive dotfiles.zip.enc --accept-file
+    # # INSECURE cd $HOME; uvx wormhole-magic receive dotfiles.zip.gpg --accept-file
     # ☁️  [bold blue]Method 3: USING INTERNET SECURE SHARE[/bold blue]
     #     [dim]cd ~
     #     cloud copy SHARE_URL . --config ss[/dim]
@@ -375,17 +370,11 @@ def import_dotfiles(
     if downloaded_file is None or not downloaded_file.exists():
         print(f"❌ Failed to download file from URL: {url}")
         raise typer.Exit(code=1)
-    zipfile_enc_path = downloaded_file
-    from machineconfig.utils.io import decrypt
-    zipfile_bytes = decrypt(
-        token=zipfile_enc_path.read_bytes(),
-        pwd=pwd,
-    )
-    zipfile_path = Path(str(zipfile_enc_path)[:-4])
-    if zipfile_path.exists():
-        print(f"⚠️  WARNING: Overwriting existing file: {zipfile_path}")
-        zipfile_path.unlink()
-    zipfile_path.write_bytes(zipfile_bytes)
+    zipfile_encrypted_path = downloaded_file
+    from machineconfig.utils.io import decrypt_file_symmetric
+
+    assert pwd is not None, "Password prompt should have produced a decryption password."
+    zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)
     print(f"✅ Decrypted zip file saved to: {zipfile_path}")
     import zipfile
     if Path.home().joinpath("dotfiles").exists():

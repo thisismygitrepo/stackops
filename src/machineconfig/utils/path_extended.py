@@ -1,5 +1,10 @@
 from machineconfig.utils.accessories import randstr
-from machineconfig.utils.io import decrypt, encrypt
+from machineconfig.utils.io import (
+    decrypt_file_asymmetric,
+    decrypt_file_symmetric,
+    encrypt_file_asymmetric,
+    encrypt_file_symmetric,
+)
 
 from datetime import datetime
 import time
@@ -729,53 +734,55 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             raise ValueError(f"Cannot decompress file with unknown extension: {self}")
         return res
 
-    def encrypt(
-        self, key: bytes | None = None, pwd: str | None = None, folder: OPLike = None, name: str | None = None, path: OPLike = None, verbose: bool = True, suffix: str = ".enc", inplace: bool = False, orig: bool = False
-    ) -> "PathExtended":
-        # see: https://stackoverflow.com/questions/42568262/how-to-encrypt-text-with-a-password-in-python & https://stackoverflow.com/questions/2490334/simple-way-to-encode-a-string-according-to-a-password"""
-        slf = self.expanduser().resolve()
-        path = self._resolve_path(folder, name, path, slf.name + suffix)
-        assert slf.is_file(), f"Cannot encrypt a directory. You might want to try `zip_n_encrypt`. {self}"
-        path.write_bytes(encrypt(msg=slf.read_bytes(), key=key, pwd=pwd))
-        msg = f"🔒🔑 ENCRYPTED: {repr(slf)} ==> {repr(path)}."
-        ret = self if orig else PathExtended(path)
-        delayed_msg = ""
-        if inplace:
-            self.delete(sure=True, verbose=False)
-            delayed_msg = f"DELETED 🗑️❌ {repr(self)}."
-        if verbose:
-            try:
-                print(msg)
-            except UnicodeEncodeError:
-                print("P._return warning: UnicodeEncodeError, could not print message.")
-        if verbose and delayed_msg != "":
-            try:
-                print(delayed_msg)
-            except UnicodeEncodeError:
-                print("P._return warning: UnicodeEncodeError, could not print message.")
-        return ret
+    # Legacy byte-based file encryption API intentionally disabled in favor of the
+    # GPG file helpers in machineconfig.utils.io.
+    # def encrypt(
+    #     self, key: bytes | None = None, pwd: str | None = None, folder: OPLike = None, name: str | None = None, path: OPLike = None, verbose: bool = True, suffix: str = ".enc", inplace: bool = False, orig: bool = False
+    # ) -> "PathExtended":
+    #     # see: https://stackoverflow.com/questions/42568262/how-to-encrypt-text-with-a-password-in-python & https://stackoverflow.com/questions/2490334/simple-way-to-encode-a-string-according-to-a-password"""
+    #     slf = self.expanduser().resolve()
+    #     path = self._resolve_path(folder, name, path, slf.name + suffix)
+    #     assert slf.is_file(), f"Cannot encrypt a directory. You might want to try `zip_n_encrypt`. {self}"
+    #     path.write_bytes(encrypt(msg=slf.read_bytes(), key=key, pwd=pwd))
+    #     msg = f"🔒🔑 ENCRYPTED: {repr(slf)} ==> {repr(path)}."
+    #     ret = self if orig else PathExtended(path)
+    #     delayed_msg = ""
+    #     if inplace:
+    #         self.delete(sure=True, verbose=False)
+    #         delayed_msg = f"DELETED 🗑️❌ {repr(self)}."
+    #     if verbose:
+    #         try:
+    #             print(msg)
+    #         except UnicodeEncodeError:
+    #             print("P._return warning: UnicodeEncodeError, could not print message.")
+    #     if verbose and delayed_msg != "":
+    #         try:
+    #             print(delayed_msg)
+    #         except UnicodeEncodeError:
+    #             print("P._return warning: UnicodeEncodeError, could not print message.")
+    #     return ret
 
-    def decrypt(self, key: bytes | None = None, pwd: str | None = None, path: OPLike = None, folder: OPLike = None, name: str | None = None, verbose: bool = True, suffix: str = ".enc", inplace: bool = False) -> "PathExtended":
-        slf = self.expanduser().resolve()
-        path = self._resolve_path(folder=folder, name=name, path=path, default_name=slf.name.replace(suffix, "") if suffix in slf.name else "decrypted_" + slf.name)
-        path.write_bytes(decrypt(token=slf.read_bytes(), key=key, pwd=pwd))
-        msg = f"🔓🔑 DECRYPTED: {repr(slf)} ==> {repr(path)}."
-        ret = PathExtended(path)
-        delayed_msg = ""
-        if inplace:
-            self.delete(sure=True, verbose=False)
-            delayed_msg = f"DELETED 🗑️❌ {repr(self)}."
-        if verbose:
-            try:
-                print(msg)
-            except UnicodeEncodeError:
-                print("P._return warning: UnicodeEncodeError, could not print message.")
-        if verbose and delayed_msg != "":
-            try:
-                print(delayed_msg)
-            except UnicodeEncodeError:
-                print("P._return warning: UnicodeEncodeError, could not print message.")
-        return ret
+    # def decrypt(self, key: bytes | None = None, pwd: str | None = None, path: OPLike = None, folder: OPLike = None, name: str | None = None, verbose: bool = True, suffix: str = ".enc", inplace: bool = False) -> "PathExtended":
+    #     slf = self.expanduser().resolve()
+    #     path = self._resolve_path(folder=folder, name=name, path=path, default_name=slf.name.replace(suffix, "") if suffix in slf.name else "decrypted_" + slf.name)
+    #     path.write_bytes(decrypt(token=slf.read_bytes(), key=key, pwd=pwd))
+    #     msg = f"🔓🔑 DECRYPTED: {repr(slf)} ==> {repr(path)}."
+    #     ret = PathExtended(path)
+    #     delayed_msg = ""
+    #     if inplace:
+    #         self.delete(sure=True, verbose=False)
+    #         delayed_msg = f"DELETED 🗑️❌ {repr(self)}."
+    #     if verbose:
+    #         try:
+    #             print(msg)
+    #         except UnicodeEncodeError:
+    #             print("P._return warning: UnicodeEncodeError, could not print message.")
+    #     if verbose and delayed_msg != "":
+    #         try:
+    #             print(delayed_msg)
+    #         except UnicodeEncodeError:
+    #             print("P._return warning: UnicodeEncodeError, could not print message.")
+    #     return ret
 
     def _resolve_path(self, folder: OPLike, name: str | None, path: OPLike, default_name: str, rel2it: bool = False) -> "PathExtended":
         """:param rel2it: `folder` or `path` are relative to `self` as opposed to cwd. This is used when resolving '../dir'"""
@@ -838,7 +845,12 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             localpath = localpath.zip(inplace=False)
             to_del.append(localpath)
         if encrypt:
-            localpath = localpath.encrypt(key=key, pwd=pwd, inplace=False)
+            if key is not None:
+                raise NotImplementedError("Key-based file encryption is not supported for cloud uploads.")
+            if pwd is None:
+                localpath = PathExtended(encrypt_file_asymmetric(file_path=localpath))
+            else:
+                localpath = PathExtended(encrypt_file_symmetric(file_path=localpath, pwd=pwd))
             to_del.append(localpath)
         if remotepath is None:
             rp = localpath.get_remote_path(root=root, os_specific=os_specific, rel2home=rel2home, strict=strict)  # if rel2home else (P(root) / localpath if root is not None else localpath)
@@ -890,12 +902,12 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         if remotepath is None:
             remotepath = self.get_remote_path(root=root, os_specific=os_specific, rel2home=rel2home, strict=strict)
             remotepath += ".zip" if unzip else ""
-            remotepath += ".enc" if decrypt else ""
+            remotepath += ".gpg" if decrypt else ""
         else:
             remotepath = PathExtended(remotepath)
         localpath = self.expanduser().absolute()
         localpath += ".zip" if unzip else ""
-        localpath += ".enc" if decrypt else ""
+        localpath += ".gpg" if decrypt else ""
         from rclone_python import rclone
         try:
             rclone.copyto(in_path=f"{cloud}:{remotepath.as_posix()}", out_path=localpath.as_posix(), )
@@ -903,7 +915,14 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             print("to_cloud error", e)
             return None
         if decrypt:
-            localpath = localpath.decrypt(key=key, pwd=pwd, inplace=True)
+            if key is not None:
+                raise NotImplementedError("Key-based file encryption is not supported for cloud downloads.")
+            encrypted_path = localpath
+            if pwd is None:
+                localpath = PathExtended(decrypt_file_asymmetric(file_path=encrypted_path))
+            else:
+                localpath = PathExtended(decrypt_file_symmetric(file_path=encrypted_path, pwd=pwd))
+            encrypted_path.delete(sure=True, verbose=False)
         if unzip:
             localpath = localpath.unzip(inplace=True, verbose=True, overwrite=overwrite, content=True, merge=merge)
         return localpath
