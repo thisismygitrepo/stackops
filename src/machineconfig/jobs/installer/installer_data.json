@@ -735,7 +735,7 @@
         "arm64": {
           "linux": "cloudflared-linux-arm64",
           "darwin": "cloudflared-darwin-arm64.tgz",
-          "windows": "cloudflared-windows-amd64.exe"
+          "windows": null
         }
       }
     },
@@ -789,7 +789,7 @@
         "arm64": {
           "linux": "cpufetch_arm64_linux",
           "darwin": null,
-          "windows": "cpufetch_x86-64_windows.exe"
+          "windows": null
         }
       }
     },
@@ -807,7 +807,7 @@
         "arm64": {
           "linux": "delta-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "darwin": "delta-{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "delta-{version}-x86_64-pc-windows-msvc.zip"
+          "windows": null
         }
       }
     },
@@ -824,8 +824,8 @@
         },
         "arm64": {
           "linux": "dua-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "darwin": "dua-{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "dua-{version}-x86_64-pc-windows-msvc.zip"
+          "darwin": null,
+          "windows": null
         }
       }
     },
