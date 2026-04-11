@@ -201,10 +201,6 @@ def encrypt_file_symmetric(file_path: PathLike, pwd: str) -> Path:
     return output_path
 
 
-def encrypt_file_symmstric(file_path: PathLike, pwd: str) -> Path:
-    return encrypt_file_symmetric(file_path=file_path, pwd=pwd)
-
-
 def decrypt_file_symmetric(file_path: PathLike, pwd: str) -> Path:
     source = _ensure_file(file_path)
     output_path = _decrypted_gpg_path(source)

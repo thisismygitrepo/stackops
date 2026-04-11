@@ -78,26 +78,6 @@ def test_encrypt_file_symmetric_uses_gpg_loopback_passphrase(
     ]
 
 
-def test_encrypt_file_symmstric_alias_delegates_to_encrypt_file_symmetric(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    source = tmp_path.joinpath("plain.txt")
-    expected = tmp_path.joinpath("plain.txt.gpg")
-    observed: list[tuple[Path, str]] = []
-
-    def fake_encrypt_file_symmetric(file_path: str | Path, pwd: str) -> Path:
-        observed.append((Path(file_path), pwd))
-        return expected
-
-    monkeypatch.setattr(io_module, "encrypt_file_symmetric", fake_encrypt_file_symmetric)
-
-    result = io_module.encrypt_file_symmstric(file_path=source, pwd="secret")
-
-    assert result == expected
-    assert observed == [(source, "secret")]
-
-
 def test_decrypt_file_symmetric_removes_gpg_suffix(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
