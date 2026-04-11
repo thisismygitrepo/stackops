@@ -5,6 +5,13 @@ from typing import Annotated, Literal
 from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
 
 
+def _developer_repo_root() -> Path | None:
+    repo_root = Path.home().joinpath("code", "machineconfig")
+    if repo_root.joinpath("pyproject.toml").is_file():
+        return repo_root
+    return None
+
+
 def copy_both_assets() -> None:
     from machineconfig.profile import create_helper
     create_helper.copy_assets_to_machine(which="scripts")
@@ -268,7 +275,7 @@ def docs(
 
 
 def get_app() -> typer.Typer:
-    from machineconfig.scripts.python.helpers.helpers_devops import cli_self_assets
+    from machineconfig.scripts.python.helpers.helpers_devops import cli_self_ai, cli_self_assets
 
     cli_app = typer.Typer(help="🔄 <s> self operations subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     ctx_settings: dict[str, object] = {
@@ -298,15 +305,15 @@ def get_app() -> typer.Typer:
     cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
     cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)
 
-
-    if Path.home().joinpath("code", "machineconfig").exists():
+    developer_repo_root = _developer_repo_root()
+    if developer_repo_root is not None:
         cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
         cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)
 
     cli_app.command(name="build-installer", no_args_is_help=False, help="📤 <e> Build an offline installer.")(export)
     cli_app.command(name="e", no_args_is_help=False, help="Export the installation files to get an offline image.", hidden=True)(export)
 
-    if Path.home().joinpath("code", "machineconfig").exists():
+    if developer_repo_root is not None:
         cli_app.command(name="build-docker", no_args_is_help=False, help="🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)")(
             buid_docker
         )
@@ -314,6 +321,8 @@ def get_app() -> typer.Typer:
             buid_docker
         )
         cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI graph assets.")
-        cli_app.add_typer(cli_self_assets.get_app(), name="a", help="Regenerate repo-local CLI graph assets.", hidden=True)
+        cli_app.add_typer(cli_self_assets.get_app(), name="ba", help="Regenerate repo-local CLI graph assets.", hidden=True)
+        cli_app.add_typer(cli_self_ai.get_app(), name="ai", help="🤖 <a> Developer AI workflows.")
+        cli_app.add_typer(cli_self_ai.get_app(), name="a", help="Developer AI workflows.", hidden=True)
 
     return cli_app
