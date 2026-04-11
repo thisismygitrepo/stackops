@@ -1,0 +1,1 @@
+FZFG_PATH_REFERENCE = "fzfg.ps1"

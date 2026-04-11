@@ -1,0 +1,1 @@
+GLOW_PATH_REFERENCE = "glow.yml"

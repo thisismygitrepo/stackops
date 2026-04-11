@@ -1,0 +1,2 @@
+HOLLYWOOD_PATH_REFERENCE = "hollywood.sh"
+LID_PATH_REFERENCE = "lid.sh"

@@ -1,0 +1,2 @@
+ALACRITTY_TOML_PATH_REFERENCE = "alacritty.toml"
+ALACRITTY_YML_PATH_REFERENCE = "alacritty.yml"

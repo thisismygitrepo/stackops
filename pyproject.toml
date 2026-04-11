@@ -91,6 +91,7 @@ dev = [
     "polars>=1.39.3",
     "pre-commit>=4.5.1",
     "pudb>=2025.1.5",
+    "py7zr>=1.1.0",
     "pydantic>=2.12.5",
     "pydeps>=3.0.2",
     "pyinstaller>=6.19.0",

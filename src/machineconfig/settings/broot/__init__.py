@@ -1,0 +1,3 @@
+BR_PATH_REFERENCE = "br.sh"
+BROOTCD_PATH_REFERENCE = "brootcd.ps1"
+CONF_PATH_REFERENCE = "conf.toml"

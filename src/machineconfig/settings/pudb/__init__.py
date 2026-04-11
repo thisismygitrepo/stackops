@@ -1,0 +1,1 @@
+PUDB_PATH_REFERENCE = "pudb.cfg"

@@ -14,6 +14,7 @@ def _developer_repo_root() -> Path | None:
 
 def copy_both_assets() -> None:
     from machineconfig.profile import create_helper
+
     create_helper.copy_assets_to_machine(which="scripts")
     create_helper.copy_assets_to_machine(which="settings")
 
@@ -38,12 +39,16 @@ def init(
                     init_path = Path(module.__file__).parent.joinpath("shells", "bash", "init.sh")
                 script = init_path.read_text(encoding="utf-8")
             case "ia":
-                from machineconfig.setup_linux import INTERACTIVE as script_path
+                import machineconfig.setup_linux.web_shortcuts as module
+                from machineconfig.setup_linux.web_shortcuts import INTERACTIVE_PATH_REFERENCE
 
+                script_path = Path(module.__file__).parent.joinpath(INTERACTIVE_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case "live":
-                from machineconfig.setup_linux import LIVE as script_path
+                import machineconfig.setup_linux.web_shortcuts as module
+                from machineconfig.setup_linux.web_shortcuts import LIVE_FROM_GITHUB_PATH_REFERENCE
 
+                script_path = Path(module.__file__).parent.joinpath(LIVE_FROM_GITHUB_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case _:
                 typer.echo("Unsupported shell script for Linux.")
@@ -57,12 +62,16 @@ def init(
                 init_path = Path(module.__file__).parent.joinpath("shells", "pwsh", "init.ps1")
                 script = init_path.read_text(encoding="utf-8")
             case "ia":
-                from machineconfig.setup_windows import INTERACTIVE as script_path
+                import machineconfig.setup_windows.web_shortcuts as module
+                from machineconfig.setup_windows.web_shortcuts import INTERACTIVE_PATH_REFERENCE
 
+                script_path = Path(module.__file__).parent.joinpath(INTERACTIVE_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case "live":
-                from machineconfig.setup_windows import LIVE as script_path
+                import machineconfig.setup_windows.web_shortcuts as module
+                from machineconfig.setup_windows.web_shortcuts import LIVE_FROM_GITHUB_PATH_REFERENCE
 
+                script_path = Path(module.__file__).parent.joinpath(LIVE_FROM_GITHUB_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case _:
                 typer.echo("Unsupported shell script for Windows.")
@@ -162,9 +171,7 @@ cd {str(mcfg_path)}
 """)
 
 
-def install(
-    dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False,
-):
+def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False):
     """📋 install machineconfig locally for nightly updates."""
     _install_machineconfig(dev=dev)
 
@@ -189,8 +196,7 @@ def status(
     repos: Annotated[bool, typer.Option("--repos", "-r", help="Show the configured repositories section.")] = False,
     ssh: Annotated[bool, typer.Option("--ssh", "-h", help="Show the SSH configuration section.")] = False,
     configs: Annotated[
-        bool,
-        typer.Option("--configs", "--dotfiles", "--symlinks", "-c", "-d", "-l", help="Show the linked config, dotfile, and symlink section."),
+        bool, typer.Option("--configs", "--dotfiles", "--symlinks", "-c", "-d", "-l", help="Show the linked config, dotfile, and symlink section.")
     ] = False,
     apps: Annotated[bool, typer.Option("--apps", "--tools", "-a", "-t", help="Show the installed apps/tools section.")] = False,
     backup: Annotated[bool, typer.Option("--backup", "-b", help="Show the backup configuration section.")] = False,

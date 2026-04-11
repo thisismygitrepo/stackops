@@ -1,0 +1,2 @@
+INSTRUCTIONS_PATH_REFERENCE = "instructions.md"
+SETTINGS_PATH_REFERENCE = "settings.json"

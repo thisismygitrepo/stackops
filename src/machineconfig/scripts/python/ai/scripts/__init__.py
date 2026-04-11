@@ -1,1 +1,5 @@
-
+COMMAND_RUNNER_PS1_PATH_REFERENCE = "command_runner.ps1"
+COMMAND_RUNNER_SH_PATH_REFERENCE = "command_runner.sh"
+LINT_AND_TYPE_CHECK_PS1_PATH_REFERENCE = "lint_and_type_check.ps1"
+LINT_AND_TYPE_CHECK_SH_PATH_REFERENCE = "lint_and_type_check.sh"
+LINT_AND_TYPE_CHECK_V0_PATH_REFERENCE = "lint_and_type_check_v0.sh"

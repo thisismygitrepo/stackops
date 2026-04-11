@@ -8,13 +8,11 @@ from platform import system
 from typing import Any, Union, TypeAlias, Literal
 
 
-
 OPLike: TypeAlias = Union[str, "PathExtended", Path, None]
 PLike: TypeAlias = Union[str, "PathExtended", Path]
 FILE_MODE: TypeAlias = Literal["r", "w", "x", "a"]
 SHUTIL_FORMATS: TypeAlias = Literal["zip", "tar", "gztar", "bztar", "xztar"]
-DECOMPRESS_SUPPORTED_FORMATS = [".tar.gz", ".tgz", ".tar", ".gz", ".tar.bz", ".tbz", ".tar.xz", ".zip", ".7z",
-                                ".tar.bz2", ".tbz2", ".xz"]
+DECOMPRESS_SUPPORTED_FORMATS = [".tar.gz", ".tgz", ".tar", ".gz", ".tar.bz", ".tbz", ".tar.xz", ".zip", ".7z", ".tar.bz2", ".tbz2", ".xz"]
 
 
 def _is_user_admin() -> bool:
@@ -37,7 +35,9 @@ def validate_name(astring: str, replace: str = "_") -> str:
 
 
 def timestamp(fmt: str | None = None, name: str | None = None) -> str:
-    return ((name + "_") if name is not None else "") + datetime.now().strftime(fmt or "%Y-%m-%d-%I-%M-%S-%p-%f")  # isoformat is not compatible with file naming convention, fmt here is.
+    return ((name + "_") if name is not None else "") + datetime.now().strftime(
+        fmt or "%Y-%m-%d-%I-%M-%S-%p-%f"
+    )  # isoformat is not compatible with file naming convention, fmt here is.
 
 
 class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
@@ -68,7 +68,17 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             print(f"🗑️ ❌ DELETED {repr(self)}.")
         return self
 
-    def move(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, rel2it: bool = False, overwrite: bool = False, verbose: bool = True, parents: bool = True, content: bool = False) -> "PathExtended":  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def move(
+        self,
+        folder: OPLike = None,
+        name: str | None = None,
+        path: OPLike = None,
+        rel2it: bool = False,
+        overwrite: bool = False,
+        verbose: bool = True,
+        parents: bool = True,
+        content: bool = False,
+    ) -> "PathExtended":  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         path = self._resolve_path(folder=folder, name=name, path=path, default_name=self.absolute().name, rel2it=rel2it)
         if parents:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -94,7 +104,17 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             print(f"🚚 MOVED {repr(self)} ==> {repr(path)}`")
         return path
 
-    def copy(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, content: bool = False, verbose: bool = True, append: str | None = None, overwrite: bool = False, orig: bool = False) -> "PathExtended":  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def copy(
+        self,
+        folder: OPLike = None,
+        name: str | None = None,
+        path: OPLike = None,
+        content: bool = False,
+        verbose: bool = True,
+        append: str | None = None,
+        overwrite: bool = False,
+        orig: bool = False,
+    ) -> "PathExtended":  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         dest = self._resolve_path(folder=folder, name=name, path=path, default_name=self.name, rel2it=False)
         dest = dest.expanduser().resolve()
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -124,9 +144,14 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         return dest if not orig else self
 
     # ======================================= File Editing / Reading ===================================
-    def download(self, folder: OPLike = None, name: str | None = None, allow_redirects: bool = True, timeout: int | None = None, params: Any = None) -> "PathExtended":
+    def download(
+        self, folder: OPLike = None, name: str | None = None, allow_redirects: bool = True, timeout: int | None = None, params: Any = None
+    ) -> "PathExtended":
         import requests
-        response = requests.get(self.as_url_str(), allow_redirects=allow_redirects, timeout=timeout, params=params)  # Alternative: from urllib import request; request.urlopen(url).read().decode('utf-8').
+
+        response = requests.get(
+            self.as_url_str(), allow_redirects=allow_redirects, timeout=timeout, params=params
+        )  # Alternative: from urllib import request; request.urlopen(url).read().decode('utf-8').
         assert response.status_code == 200, f"Download failed with status code {response.status_code}\n{response.text}"
         if name is not None:
             f_name = name
@@ -134,7 +159,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             try:
                 f_name = response.headers["Content-Disposition"].split("filename=")[1].replace('"', "")
             except (KeyError, IndexError):
-                f_name = validate_name(str(PathExtended(response.history[-1].url).name if len(response.history) > 0 else PathExtended(response.url).name))
+                f_name = validate_name(
+                    str(PathExtended(response.history[-1].url).name if len(response.history) > 0 else PathExtended(response.url).name)
+                )
         dest_path = (PathExtended.home().joinpath("Downloads") if folder is None else PathExtended(folder)).joinpath(f_name)
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         dest_path.write_bytes(response.content)
@@ -218,17 +245,27 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
 
     def __sub__(self, other: PLike) -> "PathExtended":
         res = PathExtended(str(self).replace(str(other), ""))
-        return (res[1:] if str(res[0]) in {"\\", "/"} else res) if len(res.parts) else res  # paths starting with "/" are problematic. e.g ~ / "/path" doesn't work.
+        return (
+            (res[1:] if str(res[0]) in {"\\", "/"} else res) if len(res.parts) else res
+        )  # paths starting with "/" are problematic. e.g ~ / "/path" doesn't work.
 
     def rel2home(self) -> "PathExtended":
-        return PathExtended(self.expanduser().absolute().relative_to(Path.home()))  # very similat to collapseuser but without "~" being added so its consistent with rel2cwd.
+        return PathExtended(
+            self.expanduser().absolute().relative_to(Path.home())
+        )  # very similat to collapseuser but without "~" being added so its consistent with rel2cwd.
 
-    def collapseuser(self, strict: bool = True, placeholder: str = "~") -> "PathExtended":  # opposite of `expanduser` resolve is crucial to fix Windows cases insensitivty problem.
+    def collapseuser(
+        self, strict: bool = True, placeholder: str = "~"
+    ) -> "PathExtended":  # opposite of `expanduser` resolve is crucial to fix Windows cases insensitivty problem.
         if strict:
-            assert str(self.expanduser().absolute().resolve()).startswith(str(PathExtended.home())), ValueError(f"`{PathExtended.home()}` is not in the subpath of `{self}`")
+            assert str(self.expanduser().absolute().resolve()).startswith(str(PathExtended.home())), ValueError(
+                f"`{PathExtended.home()}` is not in the subpath of `{self}`"
+            )
         if str(self).startswith(placeholder) or PathExtended.home().as_posix() not in self.resolve().as_posix():
             return self
-        return PathExtended(placeholder) / (self.expanduser().absolute().resolve(strict=strict) - PathExtended.home())  # resolve also solves the problem of Windows case insensitivty.
+        return PathExtended(placeholder) / (
+            self.expanduser().absolute().resolve(strict=strict) - PathExtended.home()
+        )  # resolve also solves the problem of Windows case insensitivty.
 
     def __getitem__(self, slici: Union[int, list[int], slice]):
         if isinstance(slici, list):
@@ -241,7 +278,10 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         if index is None and at is not None:  # at is provided  # ====================================   Splitting
             if not strict:  # behaves like split method of string
                 one, two = (items := str(self).split(sep=str(at)))[0], items[1]
-                one, two = PathExtended(one[:-1]) if one.endswith("/") else PathExtended(one), PathExtended(two[1:]) if two.startswith("/") else PathExtended(two)
+                one, two = (
+                    PathExtended(one[:-1]) if one.endswith("/") else PathExtended(one),
+                    PathExtended(two[1:]) if two.startswith("/") else PathExtended(two),
+                )
             else:  # "strict": # raises an error if exact match is not found.
                 index = self.parts.index(str(at))
                 one, two = self[0:index], self[index + 1 :]  # both one and two do not include the split item.
@@ -251,7 +291,10 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         else:
             raise ValueError("Either `index` or `at` can be provided. Both are not allowed simulatanesouly.")
         if sep == 0:
-            return one, two  # neither of the portions get the sperator appended to it. # ================================  appending `at` to one of the portions
+            return (
+                one,
+                two,
+            )  # neither of the portions get the sperator appended to it. # ================================  appending `at` to one of the portions
         elif sep == 1:
             return one, PathExtended(at) / two  # append it to right portion
         elif sep == -1:
@@ -267,14 +310,25 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 target = "BROKEN LINK " + str(self)  # avoid infinite recursions for broken links.
             return "🔗 Symlink '" + str(self) + "' ==> " + (str(target) if target == self else str(target))
         elif self.is_absolute():
-            return self._type() + " '" + str(self.clickable()) + "'" + (" | " + datetime.fromtimestamp(self.stat().st_ctime).isoformat()[:-7].replace("T", "  ") if self.exists() else "") + (f" | {round(self.stat().st_size / (1024**2), 1)} Mb" if self.is_file() else "")
+            return (
+                self._type()
+                + " '"
+                + str(self.clickable())
+                + "'"
+                + (" | " + datetime.fromtimestamp(self.stat().st_ctime).isoformat()[:-7].replace("T", "  ") if self.exists() else "")
+                + (f" | {round(self.stat().st_size / (1024**2), 1)} Mb" if self.is_file() else "")
+            )
         elif "http" in str(self):
             return "🕸️ URL " + str(self.as_url_str())
         else:
             return "📍 Relative " + "'" + str(self) + "'"  # not much can be said about a relative path.
 
     # def to_str(self) -> str: return str(self)
-    def size(self, units: Literal["b", "kb", "mb", "gb"] = "mb") -> float:  # ===================================== File Specs ==========================================================================================
+    def size(
+        self, units: Literal["b", "kb", "mb", "gb"] = "mb"
+    ) -> (
+        float
+    ):  # ===================================== File Specs ==========================================================================================
         total_size = self.stat().st_size if self.is_file() else sum([item.stat().st_size for item in self.rglob("*") if item.is_file()])
         tmp = {"b": 1024**0, "kb": 1024**1, "mb": 1024**2, "gb": 1024**3}[units]
         return round(number=total_size / tmp, ndigits=1)
@@ -324,7 +378,11 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         if system() == "Windows" and not _is_user_admin():  # you cannot create symlink without priviliages.
             import win32com.shell.shell  # type: ignore # pylint: disable=E0401
 
-            _proce_info = win32com.shell.shell.ShellExecuteEx(lpVerb="runas", lpFile=sys.executable, lpParameters=f" -c \"from pathlib import Path; Path(r'{self.expanduser()}').symlink_to(r'{str(target_obj)}')\"")
+            _proce_info = win32com.shell.shell.ShellExecuteEx(
+                lpVerb="runas",
+                lpFile=sys.executable,
+                lpParameters=f" -c \"from pathlib import Path; Path(r'{self.expanduser()}').symlink_to(r'{str(target_obj)}')\"",
+            )
             # TODO update PATH for this to take effect immediately.
             time.sleep(1)  # wait=True equivalent
         else:
@@ -349,7 +407,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
     @staticmethod
     def tmpfile(name: str | None = None, suffix: str = "", folder: OPLike = None, tstamp: bool = False, noun: bool = False) -> "PathExtended":
         name_concrete = name or randstr(noun=noun)
-        return PathExtended.tmp(file=name_concrete + "_" + randstr() + (("_" + str(timestamp())) if tstamp else "") + suffix, folder=folder or "tmp_files")
+        return PathExtended.tmp(
+            file=name_concrete + "_" + randstr() + (("_" + str(timestamp())) if tstamp else "") + suffix, folder=folder or "tmp_files"
+        )
 
     @staticmethod
     def tmp(folder: OPLike = None, file: str | None = None, root: str = "~/tmp_results") -> "PathExtended":
@@ -366,9 +426,11 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             assert isinstance(path, PathExtended), "path should be a P object at this point"
             assert not path.is_dir(), f"`path` passed is a directory! it must not be that. If this is meant, pass it with `folder` kwarg. `{path}`"
             return path
-        name, folder = (default_name if name is None else str(name)), (self.parent if folder is None else folder)  # good for edge cases of path with single part.  # means same directory, just different name
+        name, folder = (
+            (default_name if name is None else str(name)),
+            (self.parent if folder is None else folder),
+        )  # good for edge cases of path with single part.  # means same directory, just different name
         return PathExtended(self.joinpath(folder).resolve() if rel2it else folder).expanduser().resolve() / name
-
 
     # ====================================== Compression & Encryption ===========================================
     def zip(
@@ -397,6 +459,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             path_resolved = PathExtended(op_zip)
         else:
             import shutil
+
             if content:
                 root_dir, base_dir = slf, "."
             else:
@@ -453,7 +516,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             # zipfile__, name__ = slf.split(at=str(List(slf.parts).filter(lambda x: ztype in x)[0]), sep=-1)
             zipfile__, name__ = slf.split(at=str(next(item for item in slf.parts if ztype in item)), sep=-1)
             name = str(name__)
-        folder = (zipfile__.parent / zipfile__.stem) if folder is None else PathExtended(folder).expanduser().absolute().resolve().joinpath(zipfile__.stem)
+        folder = (
+            (zipfile__.parent / zipfile__.stem) if folder is None else PathExtended(folder).expanduser().absolute().resolve().joinpath(zipfile__.stem)
+        )
         assert isinstance(folder, PathExtended), "folder should be a P object at this point"
         folder = folder if not content else folder.parent
         if slf.suffix == ".7z":
@@ -461,7 +526,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         else:
             if overwrite:
                 if not content:
-                    PathExtended(folder).joinpath(name or "").delete(sure=True, verbose=True)  # deletes a specific file / folder that has the same name as the zip file without extension.
+                    PathExtended(folder).joinpath(name or "").delete(
+                        sure=True, verbose=True
+                    )  # deletes a specific file / folder that has the same name as the zip file without extension.
                 else:
                     import zipfile
 
@@ -498,7 +565,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 print("P._return warning: UnicodeEncodeError, could not print message.")
         return ret
 
-    def untar(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> "PathExtended":
+    def untar(
+        self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True
+    ) -> "PathExtended":
         op_path = self._resolve_path(folder, name, path, self.name.replace(".tar", "")).expanduser().resolve()
         import tarfile
 
@@ -522,7 +591,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 print("P._return warning: UnicodeEncodeError, could not print message.")
         return ret
 
-    def ungz(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> "PathExtended":
+    def ungz(
+        self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True
+    ) -> "PathExtended":
         op_path = self._resolve_path(folder, name, path, self.name.replace(".gz", "")).expanduser().resolve()
         import gzip
 
@@ -545,7 +616,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 print("P._return warning: UnicodeEncodeError, could not print message.")
         return ret
 
-    def unxz(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> "PathExtended":
+    def unxz(
+        self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True
+    ) -> "PathExtended":
         op_path = self._resolve_path(folder, name, path, self.name.replace(".xz", "")).expanduser().resolve()
         import lzma
 
@@ -568,8 +641,14 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 print("P._return warning: UnicodeEncodeError, could not print message.")
         return ret
 
-    def unbz(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> "PathExtended":
-        op_path = self._resolve_path(folder=folder, name=name, path=path, default_name=self.name.replace(".bz", "").replace(".tbz", ".tar")).expanduser().resolve()
+    def unbz(
+        self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True
+    ) -> "PathExtended":
+        op_path = (
+            self._resolve_path(folder=folder, name=name, path=path, default_name=self.name.replace(".bz", "").replace(".tbz", ".tar"))
+            .expanduser()
+            .resolve()
+        )
         import bz2
 
         PathExtended(str(op_path)).write_bytes(bz2.decompress(PathExtended(str(self.expanduser().resolve())).read_bytes()))
@@ -591,10 +670,14 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 print("P._return warning: UnicodeEncodeError, could not print message.")
         return ret
 
-    def decompress(self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True) -> "PathExtended":
+    def decompress(
+        self, folder: OPLike = None, name: str | None = None, path: OPLike = None, inplace: bool = False, orig: bool = False, verbose: bool = True
+    ) -> "PathExtended":
         if str(self).endswith(".tar.gz") or str(self).endswith(".tgz"):
             # res = self.ungz_untar(folder=folder, path=path, name=name, inplace=inplace, verbose=verbose, orig=orig)
-            return self.ungz(name=f"tmp_{randstr()}.tar", inplace=inplace).untar(folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose)  # this works for .tgz suffix as well as .tar.gz
+            return self.ungz(name=f"tmp_{randstr()}.tar", inplace=inplace).untar(
+                folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose
+            )  # this works for .tgz suffix as well as .tar.gz
         elif str(self).endswith(".tar"):
             res = self.untar(folder=folder, name=name, path=path, inplace=inplace, orig=orig, verbose=verbose)
         elif str(self).endswith(".gz"):
@@ -608,6 +691,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         elif str(self).endswith(".zip"):
             res = self.unzip(folder=folder, path=path, name=name, inplace=inplace, verbose=verbose, orig=orig)
         elif str(self).endswith(".7z"):
+
             def unzip_7z(archive_path: str, dest_dir: str | None = None) -> Path:
                 """
                 Uncompresses a .7z archive to a directory and returns the Path to the extraction directory.
@@ -617,9 +701,10 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 :return: pathlib.Path pointing to the destination directory where contents were extracted
                 :raises: FileNotFoundError if archive does not exist; py7zr.Bad7zFile or other error if extraction fails
                 """
-                import py7zr  # type: ignore
+                import py7zr
                 import tempfile
                 from pathlib import Path
+
                 archive_path_obj = Path(archive_path)
                 if not archive_path_obj.is_file():
                     raise FileNotFoundError(f"Archive file not found: {archive_path_obj!r}")
@@ -630,11 +715,13 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                     dest = Path(dest_dir)
                     dest.mkdir(parents=True, exist_ok=True)
                 # Perform extraction
-                with py7zr.SevenZipFile(str(archive_path_obj), mode='r') as archive:
+                with py7zr.SevenZipFile(str(archive_path_obj), mode="r") as archive:
                     archive.extractall(path=str(dest))
                 # Return the extraction directory path
                 return dest
+
             from machineconfig.utils.code import run_lambda_function
+
             destination_dir = str(self.expanduser().resolve()).replace(".7z", "")
             run_lambda_function(lambda: unzip_7z(archive_path=str(self), dest_dir=destination_dir), uv_project_dir=None, uv_with=["py7zr"])
             res = PathExtended(destination_dir)

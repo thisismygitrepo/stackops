@@ -372,17 +372,21 @@ def _get_file_search_source_command(dotfiles: bool) -> str:
 
 def _run_text_search(rga: bool, directory: str | None, search_term: str) -> None:
     """Run text search using fzf with ripgrep."""
-    from machineconfig.scripts.python.helpers.helpers_seek import FZFG_LINUX_PATH, FZFG_WINDOWS_PATH, FZFG_MACOS_PATH
     import platform
+    from pathlib import Path
+
+    import machineconfig.scripts.python.helpers.helpers_seek as module
+    from machineconfig.scripts.python.helpers.helpers_seek import FZFG_LINUX_PATH_REFERENCE, FZFG_MACOS_PATH_REFERENCE, FZFG_WINDOWS_PATH_REFERENCE
 
     platform_name = platform.system()
+    root = Path(module.__file__).parent
 
     if platform_name == "Linux":
-        script = FZFG_LINUX_PATH.read_text(encoding="utf-8")
+        script = root.joinpath(FZFG_LINUX_PATH_REFERENCE).read_text(encoding="utf-8")
     elif platform_name == "Windows":
-        script = FZFG_WINDOWS_PATH.read_text(encoding="utf-8")
+        script = root.joinpath(FZFG_WINDOWS_PATH_REFERENCE).read_text(encoding="utf-8")
     elif platform_name == "Darwin":
-        script = FZFG_MACOS_PATH.read_text(encoding="utf-8")
+        script = root.joinpath(FZFG_MACOS_PATH_REFERENCE).read_text(encoding="utf-8")
     else:
         raise RuntimeError("Unsupported platform")
     if rga:

@@ -1,0 +1,3 @@
+CONFIG_PATH_REFERENCE = "config.nu"
+ENV_PATH_REFERENCE = "env.nu"
+INIT_PATH_REFERENCE = "init.nu"

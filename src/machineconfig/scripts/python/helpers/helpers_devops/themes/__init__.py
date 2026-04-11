@@ -1,0 +1,4 @@
+CHOOSE_PWSH_THEME_PATH_REFERENCE = "choose_pwsh_theme.ps1"
+CHOOSE_STARSHIP_THEME_PS1_PATH_REFERENCE = "choose_starship_theme.ps1"
+CHOOSE_STARSHIP_THEME_SH_PATH_REFERENCE = "choose_starship_theme.sh"
+CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE = "choose_windows_terminal_theme.ps1"

@@ -1,0 +1,7 @@
+DELETE_PATH_REFERENCE = "delete.sh"
+ON_CD_PATH_REFERENCE = "on-cd.sh"
+ON_QUIT_PATH_REFERENCE = "on-quit.sh"
+OPEN_PATH_REFERENCE = "open.sh"
+PASTE_PATH_REFERENCE = "paste.sh"
+PRE_CD_PATH_REFERENCE = "pre-cd.sh"
+RENAME_PATH_REFERENCE = "rename.sh"

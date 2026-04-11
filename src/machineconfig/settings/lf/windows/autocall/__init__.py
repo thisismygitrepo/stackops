@@ -1,0 +1,7 @@
+DELETE_PATH_REFERENCE = "delete.ps1"
+ON_CD_PATH_REFERENCE = "on-cd.ps1"
+ON_QUIT_PATH_REFERENCE = "on-quit.ps1"
+OPEN_PATH_REFERENCE = "open.ps1"
+PASTE_PATH_REFERENCE = "paste.ps1"
+PRE_CD_PATH_REFERENCE = "pre-cd.ps1"
+RENAME_PATH_REFERENCE = "rename.ps1"

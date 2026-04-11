@@ -1,0 +1,3 @@
+THINKING_BEAST_MODE_AGENT_PATH_REFERENCE = "Thinking-Beast-Mode.agent.md"
+ULTIMATE_TRANSPARENT_THINKING_BEAST_MODE_AGENT_PATH_REFERENCE = "Ultimate-Transparent-Thinking-Beast-Mode.agent.md"
+DEEPRESEARCH_AGENT_PATH_REFERENCE = "deepResearch.agent.md"

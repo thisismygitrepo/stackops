@@ -1,0 +1,2 @@
+YAZI_CD_PS1_PATH_REFERENCE = "yazi_cd.ps1"
+YAZI_CD_SH_PATH_REFERENCE = "yazi_cd.sh"

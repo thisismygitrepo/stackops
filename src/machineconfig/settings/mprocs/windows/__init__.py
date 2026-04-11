@@ -1,0 +1,2 @@
+MPROCS_PATH_REFERENCE = "mprocs.yaml"
+OTHER_PATH_REFERENCE = "other"

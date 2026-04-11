@@ -1,0 +1,3 @@
+PROMPT_PATH_REFERENCE = "prompt.txt"
+TEMPLATE_PS1_PATH_REFERENCE = "template.ps1"
+TEMPLATE_SH_PATH_REFERENCE = "template.sh"

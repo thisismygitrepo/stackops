@@ -1,0 +1,2 @@
+TERECD_PS1_PATH_REFERENCE = "terecd.ps1"
+TERECD_SH_PATH_REFERENCE = "terecd.sh"

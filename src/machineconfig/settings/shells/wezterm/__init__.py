@@ -1,0 +1,1 @@
+WEZTERM_PATH_REFERENCE = "wezterm.lua"

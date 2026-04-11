@@ -1,0 +1,1 @@
+DEFAULT_PATH_REFERENCE = "default.yml"

@@ -1,0 +1,8 @@
+INIT_PATH_REFERENCE = "init.lua"
+KEYMAP_DARWIN_PATH_REFERENCE = "keymap_darwin.toml"
+KEYMAP_LINUX_PATH_REFERENCE = "keymap_linux.toml"
+KEYMAP_WINDOWS_PATH_REFERENCE = "keymap_windows.toml"
+THEME_PATH_REFERENCE = "theme.toml"
+YAZI_DARWIN_PATH_REFERENCE = "yazi_darwin.toml"
+YAZI_LINUX_PATH_REFERENCE = "yazi_linux.toml"
+YAZI_WINDOWS_PATH_REFERENCE = "yazi_windows.toml"

@@ -1,0 +1,2 @@
+INIT_PATH_REFERENCE = "init.ps1"
+SEARCH_PWSH_HISTORY_PATH_REFERENCE = "search_pwsh_history.ps1"

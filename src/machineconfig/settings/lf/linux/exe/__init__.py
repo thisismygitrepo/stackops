@@ -1,0 +1,5 @@
+CLEANER_PATH_REFERENCE = "cleaner.sh"
+LEFTPANE_PREVIEWER_PATH_REFERENCE = "leftpane_previewer.sh"
+LFCD_PATH_REFERENCE = "lfcd.sh"
+PREVIEWER_PATH_REFERENCE = "previewer.sh"
+PREVIEWER_ARCHIVE_PATH_REFERENCE = "previewer_archive.sh"

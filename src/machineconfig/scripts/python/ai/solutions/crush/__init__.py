@@ -1,0 +1,2 @@
+CRUSH_PATH_REFERENCE = "crush.json"
+PRIVACY_PATH_REFERENCE = "privacy.md"

@@ -1,0 +1,3 @@
+INSTALL_FONTS_PATH_REFERENCE = "install_fonts.ps1"
+SYSABC_PATH_REFERENCE = "sysabc.ps1"
+TEXLIVE_PATH_REFERENCE = "texlive.ps1"

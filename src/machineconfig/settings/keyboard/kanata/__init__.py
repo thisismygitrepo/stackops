@@ -1,0 +1,1 @@
+KANATA_PATH_REFERENCE = "kanata.kbd"

@@ -1,0 +1,2 @@
+FZFG_PATH_REFERENCE = "fzfg"
+SEARCH_WITH_CONTEXT_PATH_REFERENCE = "search_with_context.sh"
