@@ -1,6 +1,4 @@
 from pathlib import Path
-from types import ModuleType
-import sys
 
 import pytest
 
@@ -19,15 +17,12 @@ def test_to_cloud_uses_symmetric_gpg_helper_when_password_is_present(
     encrypted_path = tmp_path.joinpath("plain.txt.gpg")
     encrypted_path.write_text("encrypted", encoding="utf-8")
     helper_calls: list[tuple[Path, str]] = []
-    upload_calls: list[tuple[str, str]] = []
+    upload_calls: list[tuple[str, str, int, bool, bool]] = []
 
-    def fake_copyto(*, in_path: str, out_path: str) -> None:
-        upload_calls.append((in_path, out_path))
+    def fake_copyto(*, in_path: str, out_path: str, transfers: int, show_command: bool, show_progress: bool) -> None:
+        upload_calls.append((in_path, out_path, transfers, show_command, show_progress))
 
-    fake_rclone_module = ModuleType("rclone_python")
-    fake_rclone_module.rclone = ModuleType("rclone")  # type: ignore[attr-defined]
-    fake_rclone_module.rclone.copyto = fake_copyto  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "rclone_python", fake_rclone_module)
+    monkeypatch.setattr(path_extended_module.rclone_utils, "copyto", fake_copyto)
 
     def fake_encrypt_file_symmetric(file_path: Path, pwd: str) -> Path:
         helper_calls.append((Path(file_path), pwd))
@@ -39,7 +34,7 @@ def test_to_cloud_uses_symmetric_gpg_helper_when_password_is_present(
     source.to_cloud(cloud="demo", encrypt=True, pwd="hunter2", rel2home=False, os_specific=False, strict=False, verbose=False)
 
     assert helper_calls == [(source, "hunter2")]
-    assert upload_calls == [(encrypted_path.as_posix(), upload_calls[0][1])]
+    assert upload_calls == [(encrypted_path.as_posix(), upload_calls[0][1], 10, False, False)]
     assert upload_calls[0][1].startswith("demo:")
     assert upload_calls[0][1].endswith("plain.txt.gpg")
 
@@ -53,15 +48,12 @@ def test_to_cloud_uses_asymmetric_gpg_helper_without_password(
     encrypted_path = tmp_path.joinpath("plain.txt.gpg")
     encrypted_path.write_text("encrypted", encoding="utf-8")
     helper_calls: list[Path] = []
-    upload_calls: list[tuple[str, str]] = []
+    upload_calls: list[tuple[str, str, int, bool, bool]] = []
 
-    def fake_copyto(*, in_path: str, out_path: str) -> None:
-        upload_calls.append((in_path, out_path))
+    def fake_copyto(*, in_path: str, out_path: str, transfers: int, show_command: bool, show_progress: bool) -> None:
+        upload_calls.append((in_path, out_path, transfers, show_command, show_progress))
 
-    fake_rclone_module = ModuleType("rclone_python")
-    fake_rclone_module.rclone = ModuleType("rclone")  # type: ignore[attr-defined]
-    fake_rclone_module.rclone.copyto = fake_copyto  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "rclone_python", fake_rclone_module)
+    monkeypatch.setattr(path_extended_module.rclone_utils, "copyto", fake_copyto)
 
     def fake_encrypt_file_asymmetric(file_path: Path) -> Path:
         helper_calls.append(Path(file_path))
@@ -73,7 +65,7 @@ def test_to_cloud_uses_asymmetric_gpg_helper_without_password(
     source.to_cloud(cloud="demo", encrypt=True, pwd=None, rel2home=False, os_specific=False, strict=False, verbose=False)
 
     assert helper_calls == [source]
-    assert upload_calls == [(encrypted_path.as_posix(), upload_calls[0][1])]
+    assert upload_calls == [(encrypted_path.as_posix(), upload_calls[0][1], 10, False, False)]
     assert upload_calls[0][1].startswith("demo:")
     assert upload_calls[0][1].endswith("plain.txt.gpg")
 
@@ -86,15 +78,12 @@ def test_from_cloud_uses_symmetric_gpg_helper_when_password_is_present(
     encrypted_path = tmp_path.joinpath("plain.txt.gpg")
     encrypted_path.write_text("encrypted", encoding="utf-8")
     helper_calls: list[tuple[Path, str]] = []
-    download_calls: list[tuple[str, str]] = []
+    download_calls: list[tuple[str, str, int, bool, bool]] = []
 
-    def fake_copyto(*, in_path: str, out_path: str) -> None:
-        download_calls.append((in_path, out_path))
+    def fake_copyto(*, in_path: str, out_path: str, transfers: int, show_command: bool, show_progress: bool) -> None:
+        download_calls.append((in_path, out_path, transfers, show_command, show_progress))
 
-    fake_rclone_module = ModuleType("rclone_python")
-    fake_rclone_module.rclone = ModuleType("rclone")  # type: ignore[attr-defined]
-    fake_rclone_module.rclone.copyto = fake_copyto  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "rclone_python", fake_rclone_module)
+    monkeypatch.setattr(path_extended_module.rclone_utils, "copyto", fake_copyto)
 
     def fake_decrypt_file_symmetric(file_path: Path, pwd: str) -> Path:
         helper_calls.append((Path(file_path), pwd))
@@ -106,7 +95,7 @@ def test_from_cloud_uses_symmetric_gpg_helper_when_password_is_present(
     result = destination.from_cloud(cloud="demo", decrypt=True, pwd="hunter2", rel2home=False, os_specific=False, strict=False, verbose=False)
 
     assert helper_calls == [(encrypted_path, "hunter2")]
-    assert download_calls == [(download_calls[0][0], encrypted_path.as_posix())]
+    assert download_calls == [(download_calls[0][0], encrypted_path.as_posix(), 10, False, False)]
     assert download_calls[0][0].startswith("demo:")
     assert download_calls[0][0].endswith("plain.txt.gpg")
     assert result == destination
@@ -120,15 +109,12 @@ def test_from_cloud_uses_asymmetric_gpg_helper_without_password(
     encrypted_path = tmp_path.joinpath("plain.txt.gpg")
     encrypted_path.write_text("encrypted", encoding="utf-8")
     helper_calls: list[Path] = []
-    download_calls: list[tuple[str, str]] = []
+    download_calls: list[tuple[str, str, int, bool, bool]] = []
 
-    def fake_copyto(*, in_path: str, out_path: str) -> None:
-        download_calls.append((in_path, out_path))
+    def fake_copyto(*, in_path: str, out_path: str, transfers: int, show_command: bool, show_progress: bool) -> None:
+        download_calls.append((in_path, out_path, transfers, show_command, show_progress))
 
-    fake_rclone_module = ModuleType("rclone_python")
-    fake_rclone_module.rclone = ModuleType("rclone")  # type: ignore[attr-defined]
-    fake_rclone_module.rclone.copyto = fake_copyto  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "rclone_python", fake_rclone_module)
+    monkeypatch.setattr(path_extended_module.rclone_utils, "copyto", fake_copyto)
 
     def fake_decrypt_file_asymmetric(file_path: Path) -> Path:
         helper_calls.append(Path(file_path))
@@ -140,7 +126,7 @@ def test_from_cloud_uses_asymmetric_gpg_helper_without_password(
     result = destination.from_cloud(cloud="demo", decrypt=True, pwd=None, rel2home=False, os_specific=False, strict=False, verbose=False)
 
     assert helper_calls == [encrypted_path]
-    assert download_calls == [(download_calls[0][0], encrypted_path.as_posix())]
+    assert download_calls == [(download_calls[0][0], encrypted_path.as_posix(), 10, False, False)]
     assert download_calls[0][0].startswith("demo:")
     assert download_calls[0][0].endswith("plain.txt.gpg")
     assert result == destination

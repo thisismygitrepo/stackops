@@ -1741,7 +1741,6 @@ dependencies = [
     { name = "pyyaml" },
     { name = "questionary" },
     { name = "randomname" },
-    { name = "rclone-python" },
     { name = "requests" },
     { name = "rich" },
     { name = "tenacity" },
@@ -1831,7 +1830,6 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "questionary", specifier = ">=2.1.1" },
     { name = "randomname", specifier = ">=0.2.1" },
-    { name = "rclone-python", specifier = ">=0.1.24" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=14.3.3" },
     { name = "tenacity", specifier = ">=9.1.4" },
@@ -3549,18 +3547,6 @@ dependencies = [
     { name = "fire" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e8/c2/525e9e9b458c3ca493d9bd0871f3ed9b51446d26fe82d462494de188f848/randomname-0.2.1.tar.gz", hash = "sha256:b79b98302ba4479164b0a4f87995b7bebbd1d91012aeda483341e3e58ace520e", size = 64242, upload-time = "2023-01-29T02:42:26.469Z" }
-
-[[package]]
-name = "rclone-python"
-version = "0.1.24"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "rich" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c1/40/64fb568fa75baf70a4a9a8ee8d3d49631366784d152a9e3d7cefebb009c8/rclone_python-0.1.24.tar.gz", hash = "sha256:d6d606112121417ed6427eaf489c02ea80240d9cfda8979e37a6ffab5183c012", size = 24150, upload-time = "2026-01-26T15:35:35.719Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/6f/a193a9ddf3fadd006cd4afa9e2a606fc17d2e9a107927652a8abaac9f69e/rclone_python-0.1.24-py3-none-any.whl", hash = "sha256:e229629239fef02b658644057b5f98daebc36460f1abc78f9b076af107b55ba6", size = 15819, upload-time = "2026-01-26T15:35:34.573Z" },
-]
 
 [[package]]
 name = "referencing"

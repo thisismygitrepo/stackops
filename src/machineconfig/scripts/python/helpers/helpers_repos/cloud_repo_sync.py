@@ -13,6 +13,7 @@ from rich.panel import Panel
 import typer
 
 from machineconfig.utils.path_extended import PathExtended
+from machineconfig.utils.rclone import RcloneCommandError, is_missing_remote_path_error
 from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
 
 
@@ -181,10 +182,10 @@ def main(
     try:
         console.print(Panel("📥 DOWNLOADING REMOTE REPOSITORY", title_align="left", border_style="blue"))
         remote_path = repo_local_root.get_remote_path(rel2home=True, os_specific=False, root="myhome") + ".zip.gpg"
-        res = repo_remote_root.from_cloud(remotepath=remote_path, cloud=cloud_resolved, unzip=True, decrypt=True, rel2home=True, os_specific=False, pwd=pwd)
-        if res is None:
-            raise AssertionError("Remote repo does not exist.")
-    except AssertionError:
+        repo_remote_root.from_cloud(remotepath=remote_path, cloud=cloud_resolved, unzip=True, decrypt=True, rel2home=True, os_specific=False, pwd=pwd)
+    except RcloneCommandError as error:
+        if not is_missing_remote_path_error(error):
+            raise
         console.print(Panel("🆕 Remote repository doesn't exist\n📤 Creating new remote and exiting...", title_align="left", border_style="green"))
         repo_local_root.to_cloud(cloud=cloud_resolved, zip=True, encrypt=True, rel2home=True, pwd=pwd, os_specific=False)
         return ""

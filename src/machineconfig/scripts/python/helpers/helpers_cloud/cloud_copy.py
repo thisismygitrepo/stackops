@@ -88,6 +88,7 @@ def main(
     from rich.console import Console
     from rich.panel import Panel
     from machineconfig.utils.io import GpgCommandError
+    from machineconfig.utils.rclone import RcloneCommandError
     from machineconfig.utils.path_extended import PathExtended
     from machineconfig.scripts.python.helpers.helpers_cloud.helpers2 import parse_cloud_source_target
     console = Console()
@@ -154,23 +155,54 @@ def main(
                 )
             )
             raise SystemExit(1) from None
+        except RcloneCommandError as error:
+            console.print(
+                Panel(
+                    f"☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}\n\n{error}",
+                    title="[bold red]Rclone Error[/bold red]",
+                    border_style="red",
+                    width=152,
+                )
+            )
+            raise SystemExit(1) from None
         console.print(Panel("✅ Download completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
 
     elif cloud in target:
         console.print(Panel(f"📤 UPLOADING TO CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}", title="[bold blue]Upload[/bold blue]", border_style="blue", width=152))
 
-        res = PathExtended(source).to_cloud(
-            cloud=cloud,
-            remotepath=target.replace(cloud + ":", ""),
-            zip=cloud_config_explicit["zip"],
-            encrypt=cloud_config_explicit["encrypt"],
-            pwd=cloud_config_explicit["pwd"],
-            rel2home=cloud_config_explicit["rel2home"],
-            root=cloud_config_explicit["root"],
-            os_specific=cloud_config_explicit["os_specific"],
-            strict=False,
-            share=cloud_config_explicit["share"],
-        )
+        try:
+            res = PathExtended(source).to_cloud(
+                cloud=cloud,
+                remotepath=target.replace(cloud + ":", ""),
+                zip=cloud_config_explicit["zip"],
+                encrypt=cloud_config_explicit["encrypt"],
+                pwd=cloud_config_explicit["pwd"],
+                rel2home=cloud_config_explicit["rel2home"],
+                root=cloud_config_explicit["root"],
+                os_specific=cloud_config_explicit["os_specific"],
+                strict=False,
+                share=cloud_config_explicit["share"],
+            )
+        except GpgCommandError as error:
+            console.print(
+                Panel(
+                    f"☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}\n\n{error}",
+                    title="[bold red]GPG Error[/bold red]",
+                    border_style="red",
+                    width=152,
+                )
+            )
+            raise SystemExit(1) from None
+        except RcloneCommandError as error:
+            console.print(
+                Panel(
+                    f"☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}\n\n{error}",
+                    title="[bold red]Rclone Error[/bold red]",
+                    border_style="red",
+                    width=152,
+                )
+            )
+            raise SystemExit(1) from None
         console.print(Panel("✅ Upload completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
 
         if cloud_config_explicit["share"]:

@@ -5,12 +5,12 @@ from machineconfig.utils.io import (
     encrypt_file_asymmetric,
     encrypt_file_symmetric,
 )
+from machineconfig.utils import rclone as rclone_utils
 
 from datetime import datetime
 import time
 from pathlib import Path
 import sys
-import subprocess
 import os
 from platform import system
 from typing import Any, Union, Callable, TypeAlias, Literal
@@ -36,31 +36,6 @@ def _is_user_admin() -> bool:
             print("Admin check failed, assuming not an admin.")
             return False
     return os.getuid() == 0
-
-
-def _run_shell_command(
-    command: str,
-    shell_name: str,
-    *,
-    stdout: int | None = subprocess.PIPE,
-    stderr: int | None = subprocess.PIPE,
-    stdin: int | None = None,
-    check: bool = False,
-) -> subprocess.CompletedProcess[str]:
-    if shell_name in {"powershell", "pwsh"} and sys.platform == "win32":
-        args: list[str] = [shell_name, "-Command", command]
-        return subprocess.run(args, check=check, text=True, stdout=stdout, stderr=stderr, stdin=stdin)
-    executable = "/bin/bash" if shell_name == "bash" and sys.platform != "win32" else None
-    return subprocess.run(
-        command,
-        check=check,
-        text=True,
-        stdout=stdout,
-        stderr=stderr,
-        stdin=stdin,
-        shell=True,
-        executable=executable,
-    )
 
 
 def validate_name(astring: str, replace: str = "_") -> str:
@@ -838,7 +813,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         transfers: int = 10,
         root: str | None = "myhome",
     ) -> "PathExtended":
-        _ = transfers
         to_del = []
         localpath = self.expanduser().absolute() if not self.exists() else self
         if zip:
@@ -856,9 +830,14 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             rp = localpath.get_remote_path(root=root, os_specific=os_specific, rel2home=rel2home, strict=strict)  # if rel2home else (P(root) / localpath if root is not None else localpath)
         else:
             rp = PathExtended(remotepath)
-        from rclone_python import rclone
         print(f"⬆️ UPLOADING {repr(localpath)} TO {cloud}:{rp.as_posix()}`") if verbose else None
-        rclone.copyto(in_path=localpath.as_posix(), out_path=f"{cloud}:{rp.as_posix()}", )
+        rclone_utils.copyto(
+            in_path=localpath.as_posix(),
+            out_path=f"{cloud}:{rp.as_posix()}",
+            transfers=transfers,
+            show_command=verbose,
+            show_progress=verbose,
+        )
 
         _ = [item.delete(sure=True) for item in to_del]
         if verbose:
@@ -866,18 +845,9 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         if share:
             if verbose:
                 print("🔗 SHARING FILE")
-            shell_to_use = "powershell" if sys.platform == "win32" else "bash"
-            command = f"rclone link '{cloud}:{rp.as_posix()}'"
-            completed = _run_shell_command(command, shell_to_use)
-            from machineconfig.utils.terminal import Response
-            res = Response.from_completed_process(completed).capture()
-            tmp = res.op2path(strict_err=False, strict_returncode=False)
-            if tmp is None:
-                res.print()
-                raise RuntimeError(f"💥 Could not get link for {self}.")
-            else:
-                res.print_if_unsuccessful(desc="Cloud Storage Operation", strict_err=True, strict_returncode=True)
-            link_p: "PathExtended" = PathExtended(str(tmp))
+            link_p: "PathExtended" = PathExtended(
+                rclone_utils.link(target=f"{cloud}:{rp.as_posix()}", show_command=verbose)
+            )
             return link_p
         return self
 
@@ -898,7 +868,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         overwrite: bool = True,
         merge: bool = False,
     ):
-        _ = verbose, transfers
         if remotepath is None:
             remotepath = self.get_remote_path(root=root, os_specific=os_specific, rel2home=rel2home, strict=strict)
             remotepath += ".zip" if unzip else ""
@@ -908,12 +877,13 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         localpath = self.expanduser().absolute()
         localpath += ".zip" if unzip else ""
         localpath += ".gpg" if decrypt else ""
-        from rclone_python import rclone
-        try:
-            rclone.copyto(in_path=f"{cloud}:{remotepath.as_posix()}", out_path=localpath.as_posix(), )
-        except Exception as e:
-            print("to_cloud error", e)
-            return None
+        rclone_utils.copyto(
+            in_path=f"{cloud}:{remotepath.as_posix()}",
+            out_path=localpath.as_posix(),
+            transfers=transfers,
+            show_command=verbose,
+            show_progress=verbose,
+        )
         if decrypt:
             if key is not None:
                 raise NotImplementedError("Key-based file encryption is not supported for cloud downloads.")
@@ -940,25 +910,23 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
 
         if not sync_down and not sync_up:
             _ = print(f"SYNCING 🔄️ {source} {'<>' * 7} {target}`") if verbose else None
-            rclone_cmd = f"""rclone bisync '{source}' '{target}' --resync --remove-empty-dirs """
+            rclone_utils.bisync(
+                source=source,
+                target=target,
+                transfers=transfers,
+                delete_during=delete,
+                show_command=verbose,
+                show_progress=verbose,
+            )
         else:
             print(f"SYNCING 🔄️ {source} {'>' * 15} {target}`")
-            rclone_cmd = f"""rclone sync '{source}' '{target}' """
-
-        rclone_cmd += f" --progress --transfers={transfers} --verbose"
-        rclone_cmd += " --delete-during" if delete else ""
-        if verbose:
-            print(rclone_cmd)
-        shell_to_use = "powershell" if sys.platform == "win32" else "bash"
-        stdout_target: int | None = None if verbose else subprocess.PIPE
-        stderr_target: int | None = None if verbose else subprocess.PIPE
-        completed = _run_shell_command(rclone_cmd, shell_to_use, stdout=stdout_target, stderr=stderr_target)
-        from machineconfig.utils.terminal import Response
-
-        res = Response.from_completed_process(completed)
-        success = res.is_successful(strict_err=False, strict_returcode=True)
-        if not success:
-            res.print(capture=False, desc="Cloud Storage Operation")
-            return None
+            rclone_utils.sync(
+                source=source,
+                target=target,
+                transfers=transfers,
+                delete_during=delete,
+                show_command=verbose,
+                show_progress=verbose,
+            )
 
         return self
