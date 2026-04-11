@@ -78,10 +78,13 @@ def build_gpg_environment() -> dict[str, str]:
     env = dict(os.environ)
     if env.get("GPG_TTY"):
         return env
+    ttyname = getattr(os, "ttyname", None)
+    if ttyname is None:
+        return env
     try:
         if sys.stdin.isatty():
-            env["GPG_TTY"] = os.ttyname(sys.stdin.fileno())
-    except OSError:
+            env["GPG_TTY"] = ttyname(sys.stdin.fileno())
+    except (AttributeError, OSError, ValueError):
         return env
     return env
 

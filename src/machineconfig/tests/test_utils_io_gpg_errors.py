@@ -17,11 +17,23 @@ class _FakeTTY:
 def test_gpg_environment_sets_gpg_tty_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("GPG_TTY", raising=False)
     monkeypatch.setattr(io_module.sys, "stdin", _FakeTTY())
-    monkeypatch.setattr(io_module.os, "ttyname", lambda fd: "/dev/pts/42")
+    monkeypatch.setattr(io_module.os, "ttyname", lambda fd: "/dev/pts/42", raising=False)
 
     env = io_module.build_gpg_environment()
 
     assert env["GPG_TTY"] == "/dev/pts/42"
+
+
+def test_gpg_environment_skips_gpg_tty_when_ttyname_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("GPG_TTY", raising=False)
+    monkeypatch.setattr(io_module.sys, "stdin", _FakeTTY())
+    monkeypatch.delattr(io_module.os, "ttyname", raising=False)
+
+    env = io_module.build_gpg_environment()
+
+    assert "GPG_TTY" not in env
 
 
 def test_decrypt_file_asymmetric_surfaces_gpg_stderr(
