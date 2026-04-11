@@ -1,6 +1,7 @@
 from machineconfig.scripts.python.helpers.helpers_cloud.cloud_helpers import my_abs, find_cloud_config, get_secure_share_cloud_config
 from machineconfig.utils.ve import CLOUD
 from machineconfig.utils.io import read_ini
+from machineconfig.utils.rclone_wrapper import get_remote_path
 from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 from machineconfig.utils.accessories import pprint
 from rich.console import Console
@@ -117,10 +118,12 @@ def parse_cloud_source_target(
         if len(source_parts) > 1 and source_parts[1] == ES:  # the source path is to be inferred from target.
             assert ES not in target, f"You can't use expand symbol `{ES}` in both source and target. Cyclical inference dependency arised."
             target_obj = my_abs(target)
-            from machineconfig.utils.path_extended import PathExtended
-
-            remote_path = PathExtended(target_obj).get_remote_path(
-                os_specific=cloud_config_final["os_specific"], root=cloud_config_final["root"], rel2home=cloud_config_final["rel2home"], strict=False
+            remote_path = get_remote_path(
+                local_path=target_obj,
+                os_specific=cloud_config_final["os_specific"],
+                root=cloud_config_final["root"],
+                rel2home=cloud_config_final["rel2home"],
+                strict=False,
             )
             source = f"{cloud}:{remote_path.as_posix()}"
         elif target == ES:  # target path is to be inferred from source.
@@ -137,10 +140,12 @@ def parse_cloud_source_target(
         if len(target_parts) > 1 and target_parts[1] == ES:  # the target path is to be inferred from source.
             assert ES not in source, "You can't use $ in both source and target. Cyclical inference dependency arised."
             source_obj = my_abs(source)
-            from machineconfig.utils.path_extended import PathExtended
-
-            remote_path = PathExtended(source_obj).get_remote_path(
-                os_specific=cloud_config_final["os_specific"], root=cloud_config_final["root"], rel2home=cloud_config_final["rel2home"], strict=False
+            remote_path = get_remote_path(
+                local_path=source_obj,
+                os_specific=cloud_config_final["os_specific"],
+                root=cloud_config_final["root"],
+                rel2home=cloud_config_final["rel2home"],
+                strict=False,
             )
             target = f"{cloud}:{remote_path.as_posix()}"
         elif source == ES:

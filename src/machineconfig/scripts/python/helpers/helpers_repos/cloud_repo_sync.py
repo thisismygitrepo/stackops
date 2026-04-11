@@ -12,8 +12,15 @@ from rich.console import Console
 from rich.panel import Panel
 import typer
 
+from machineconfig.utils.io import (
+    decrypt_file_asymmetric,
+    decrypt_file_symmetric,
+    encrypt_file_asymmetric,
+    encrypt_file_symmetric,
+)
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.rclone import RcloneCommandError, is_missing_remote_path_error
+import machineconfig.utils.rclone_wrapper as rclone_wrapper
 from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
 
 
@@ -95,6 +102,58 @@ def _get_remote_reference_name(remote: Remote, branch_name: str) -> str:
 
 def _get_conflict_paths(repo: Repo) -> tuple[str, ...]:
     return tuple(sorted(str(path) for path in repo.index.unmerged_blobs().keys()))
+
+
+def _cleanup_temp_paths(paths: tuple[Path, ...]) -> None:
+    for temp_path in paths:
+        PathExtended(temp_path).delete(sure=True, verbose=False)
+
+
+def _get_repo_remote_archive_path(repo_root: Path) -> Path:
+    base_remote_path = rclone_wrapper.get_remote_path(
+        local_path=repo_root,
+        root="myhome",
+        os_specific=False,
+        rel2home=True,
+        strict=True,
+    )
+    return Path(f"{base_remote_path.as_posix()}.zip.gpg")
+
+
+def _upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> None:
+    archive_path = Path(PathExtended(repo_root).zip(inplace=False))
+    if pwd is None:
+        encrypted_archive_path = encrypt_file_asymmetric(file_path=archive_path)
+    else:
+        encrypted_archive_path = encrypt_file_symmetric(file_path=archive_path, pwd=pwd)
+    try:
+        rclone_wrapper.to_cloud(
+            local_path=encrypted_archive_path,
+            cloud=cloud,
+            remote_path=remote_path,
+            share=False,
+            verbose=True,
+            transfers=10,
+        )
+    finally:
+        _cleanup_temp_paths((archive_path, encrypted_archive_path))
+
+
+def _download_repo_archive(repo_remote_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> Path:
+    encrypted_archive_path = Path(f"{repo_remote_root}.zip.gpg")
+    rclone_wrapper.from_cloud(
+        local_path=encrypted_archive_path,
+        cloud=cloud,
+        remote_path=remote_path,
+        transfers=10,
+        verbose=True,
+    )
+    if pwd is None:
+        archive_path = decrypt_file_asymmetric(file_path=encrypted_archive_path)
+    else:
+        archive_path = decrypt_file_symmetric(file_path=encrypted_archive_path, pwd=pwd)
+    PathExtended(encrypted_archive_path).delete(sure=True, verbose=False)
+    return Path(PathExtended(archive_path).unzip(inplace=True, verbose=True, overwrite=True, content=True, merge=False))
 
 
 def _merge_remote_copy(repo: Repo, remote_path: PathExtended, console: Console) -> MergeAttemptResult:
@@ -179,15 +238,15 @@ def main(
     PathExtended(CONFIG_ROOT).joinpath("remote").mkdir(parents=True, exist_ok=True)
     repo_remote_root = PathExtended(CONFIG_ROOT).joinpath("remote", local_relative_home)
     repo_remote_root.delete(sure=True)
+    remote_path = _get_repo_remote_archive_path(repo_root=repo_local_root)
     try:
         console.print(Panel("📥 DOWNLOADING REMOTE REPOSITORY", title_align="left", border_style="blue"))
-        remote_path = repo_local_root.get_remote_path(rel2home=True, os_specific=False, root="myhome") + ".zip.gpg"
-        repo_remote_root.from_cloud(remotepath=remote_path, cloud=cloud_resolved, unzip=True, decrypt=True, rel2home=True, os_specific=False, pwd=pwd)
+        _download_repo_archive(repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
     except RcloneCommandError as error:
         if not is_missing_remote_path_error(error):
             raise
         console.print(Panel("🆕 Remote repository doesn't exist\n📤 Creating new remote and exiting...", title_align="left", border_style="green"))
-        repo_local_root.to_cloud(cloud=cloud_resolved, zip=True, encrypt=True, rel2home=True, pwd=pwd, os_specific=False)
+        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
         return ""
 
     repo_remote_obj = Repo(repo_remote_root)
@@ -213,7 +272,7 @@ def main(
         console.print(Panel("✅ Pull succeeded!\n🧹 Removing originEnc remote and local copy\n📤 Pushing merged repository to cloud storage", title="Success", border_style="green"))
         repo_remote_root.delete(sure=True)
         _remove_remote_if_present(repo=repo_local_obj, remote_name=REMOTE_NAME)
-        repo_local_root.to_cloud(cloud=cloud_resolved, zip=True, encrypt=True, rel2home=True, pwd=pwd, os_specific=False)
+        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
         return "success"
     if merge_result.status == "git_error":
         console.print(

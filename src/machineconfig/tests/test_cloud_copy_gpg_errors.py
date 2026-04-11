@@ -1,66 +1,11 @@
 from pathlib import Path
-from types import ModuleType
-import sys
 
 import pytest
 
 from machineconfig.scripts.python.helpers.helpers_cloud import cloud_copy
+from machineconfig.scripts.python.helpers.helpers_cloud import helpers2
 from machineconfig.utils.io import GpgCommandError
 from machineconfig.utils.rclone import RcloneCommandError
-
-
-class _FailingPathExtended:
-    def __init__(self, value: str) -> None:
-        self.value = value
-
-    def from_cloud(
-        self,
-        *,
-        cloud: str,
-        remotepath: str,
-        unzip: bool,
-        decrypt: bool,
-        pwd: str | None,
-        overwrite: bool,
-        rel2home: bool,
-        os_specific: bool,
-        root: str,
-        strict: bool,
-    ) -> None:
-        raise GpgCommandError(
-            command=["gpg", "--batch", "--yes", "--decrypt", "--output", self.value, f"{self.value}.gpg"],
-            returncode=2,
-            stdout="",
-            stderr="gpg: decryption failed: No secret key\n",
-            hint="No matching private key is available in the current GPG keyring.",
-        )
-
-
-class _FailingPathExtendedRclone:
-    def __init__(self, value: str) -> None:
-        self.value = value
-
-    def from_cloud(
-        self,
-        *,
-        cloud: str,
-        remotepath: str,
-        unzip: bool,
-        decrypt: bool,
-        pwd: str | None,
-        overwrite: bool,
-        rel2home: bool,
-        os_specific: bool,
-        root: str,
-        strict: bool,
-    ) -> None:
-        raise RcloneCommandError(
-            command=["rclone", "copyto", f"{cloud}:{remotepath}", self.value, "--transfers=10"],
-            returncode=3,
-            stdout="",
-            stderr="Failed to copy: object not found\n",
-            hint="The requested remote path does not exist.",
-        )
 
 
 def test_cloud_copy_download_prints_gpg_failure_and_exits(
@@ -68,17 +13,30 @@ def test_cloud_copy_download_prints_gpg_failure_and_exits(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
 ) -> None:
-    fake_path_extended_module = ModuleType("machineconfig.utils.path_extended")
-    fake_path_extended_module.PathExtended = _FailingPathExtended  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "machineconfig.utils.path_extended", fake_path_extended_module)
-
-    fake_helpers2_module = ModuleType("machineconfig.scripts.python.helpers.helpers_cloud.helpers2")
-
     def fake_parse_cloud_source_target(**_: object) -> tuple[str, str, str]:
         return "demo", "demo:archive/plain.gpg", str(tmp_path.joinpath("plain.txt"))
 
-    fake_helpers2_module.parse_cloud_source_target = fake_parse_cloud_source_target  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_cloud.helpers2", fake_helpers2_module)
+    def fake_from_cloud(*, local_path: Path, cloud: str, remote_path: Path, transfers: int, verbose: bool) -> Path:
+        _ = cloud, remote_path, transfers, verbose
+        return local_path
+
+    def fake_decrypt_file_asymmetric(file_path: Path) -> Path:
+        raise GpgCommandError(
+            command=["gpg", "--batch", "--yes", "--decrypt", "--output", str(file_path.with_suffix("")), str(file_path)],
+            returncode=2,
+            stdout="",
+            stderr="gpg: decryption failed: No secret key\n",
+            hint="No matching private key is available in the current GPG keyring.",
+        )
+
+    monkeypatch.setattr(helpers2, "parse_cloud_source_target", fake_parse_cloud_source_target)
+    monkeypatch.setattr(cloud_copy.rclone_wrapper, "from_cloud", fake_from_cloud)
+    monkeypatch.setattr(cloud_copy, "decrypt_file_asymmetric", fake_decrypt_file_asymmetric)
+    monkeypatch.setattr(
+        cloud_copy,
+        "decrypt_file_symmetric",
+        lambda file_path, pwd: pytest.fail("decrypt_file_symmetric should not be used"),
+    )
 
     with pytest.raises(SystemExit) as exc_info:
         cloud_copy.main(
@@ -108,17 +66,20 @@ def test_cloud_copy_download_prints_rclone_failure_and_exits(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
 ) -> None:
-    fake_path_extended_module = ModuleType("machineconfig.utils.path_extended")
-    fake_path_extended_module.PathExtended = _FailingPathExtendedRclone  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "machineconfig.utils.path_extended", fake_path_extended_module)
-
-    fake_helpers2_module = ModuleType("machineconfig.scripts.python.helpers.helpers_cloud.helpers2")
-
     def fake_parse_cloud_source_target(**_: object) -> tuple[str, str, str]:
         return "demo", "demo:archive/plain.gpg", str(tmp_path.joinpath("plain.txt"))
 
-    fake_helpers2_module.parse_cloud_source_target = fake_parse_cloud_source_target  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_cloud.helpers2", fake_helpers2_module)
+    def fake_from_cloud(*, local_path: Path, cloud: str, remote_path: Path, transfers: int, verbose: bool) -> Path:
+        raise RcloneCommandError(
+            command=["rclone", "copyto", f"{cloud}:{remote_path.as_posix()}", str(local_path), "--transfers=10"],
+            returncode=3,
+            stdout="",
+            stderr="Failed to copy: object not found\n",
+            hint="The requested remote path does not exist.",
+        )
+
+    monkeypatch.setattr(helpers2, "parse_cloud_source_target", fake_parse_cloud_source_target)
+    monkeypatch.setattr(cloud_copy.rclone_wrapper, "from_cloud", fake_from_cloud)
 
     with pytest.raises(SystemExit) as exc_info:
         cloud_copy.main(

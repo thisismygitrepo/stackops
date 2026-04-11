@@ -1,12 +1,4 @@
 from machineconfig.utils.accessories import randstr
-from machineconfig.utils.io import (
-    decrypt_file_asymmetric,
-    decrypt_file_symmetric,
-    encrypt_file_asymmetric,
-    encrypt_file_symmetric,
-)
-from machineconfig.utils import rclone as rclone_utils
-
 from datetime import datetime
 import time
 from pathlib import Path
@@ -437,6 +429,18 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         target_path.mkdir(parents=True, exist_ok=True)
         return base
 
+    def _resolve_path(self, folder: OPLike, name: str | None, path: OPLike, default_name: str, rel2it: bool = False) -> "PathExtended":
+        """:param rel2it: `folder` or `path` are relative to `self` as opposed to cwd. This is used when resolving '../dir'"""
+        if path is not None:
+            path = PathExtended(self.joinpath(path).resolve() if rel2it else path).expanduser().resolve()
+            assert folder is None and name is None, "If `path` is passed, `folder` and `name` cannot be passed."
+            assert isinstance(path, PathExtended), "path should be a P object at this point"
+            assert not path.is_dir(), f"`path` passed is a directory! it must not be that. If this is meant, pass it with `folder` kwarg. `{path}`"
+            return path
+        name, folder = (default_name if name is None else str(name)), (self.parent if folder is None else folder)  # good for edge cases of path with single part.  # means same directory, just different name
+        return PathExtended(self.joinpath(folder).resolve() if rel2it else folder).expanduser().resolve() / name
+
+
     # ====================================== Compression & Encryption ===========================================
     def zip(
         self,
@@ -709,171 +713,3 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             raise ValueError(f"Cannot decompress file with unknown extension: {self}")
         return res
 
-    def _resolve_path(self, folder: OPLike, name: str | None, path: OPLike, default_name: str, rel2it: bool = False) -> "PathExtended":
-        """:param rel2it: `folder` or `path` are relative to `self` as opposed to cwd. This is used when resolving '../dir'"""
-        if path is not None:
-            path = PathExtended(self.joinpath(path).resolve() if rel2it else path).expanduser().resolve()
-            assert folder is None and name is None, "If `path` is passed, `folder` and `name` cannot be passed."
-            assert isinstance(path, PathExtended), "path should be a P object at this point"
-            assert not path.is_dir(), f"`path` passed is a directory! it must not be that. If this is meant, pass it with `folder` kwarg. `{path}`"
-            return path
-        name, folder = (default_name if name is None else str(name)), (self.parent if folder is None else folder)  # good for edge cases of path with single part.  # means same directory, just different name
-        return PathExtended(self.joinpath(folder).resolve() if rel2it else folder).expanduser().resolve() / name
-
-    def get_remote_path(self, root: str | None, os_specific: bool = False, rel2home: bool = True, strict: bool = True) -> "PathExtended":
-        import platform
-        tmp1: str = platform.system().lower() if os_specific else "generic_os"
-        if not rel2home:
-            path = self
-        else:
-            try:
-                path = PathExtended(self.expanduser().absolute().relative_to(Path.home()))
-            except ValueError as ve:
-                if strict:
-                    raise ve
-                path = self
-        if isinstance(root, str):  # the following is to avoid the confusing behaviour of A.joinpath(B) if B is absolute.
-            part1 = path.parts[0]
-            if part1 == "/":
-                sanitized_path = path[1:].as_posix()
-            else:
-                sanitized_path = path.as_posix()
-            return PathExtended(root + "/" + tmp1 + "/" + sanitized_path)
-        return tmp1 / path
-
-    def to_cloud(
-        self,
-        cloud: str,
-        remotepath: OPLike = None,
-
-        zip: bool = False,
-        encrypt: bool = False,
-        key: bytes | None = None,
-        pwd: str | None = None,
-
-        rel2home: bool = False,
-        strict: bool = True,
-        os_specific: bool = False,
-        root: str | None = "myhome",
-
-        share: bool = False,
-        verbose: bool = True,
-        transfers: int = 10,
-    ) -> "PathExtended":
-        to_del = []
-        localpath = self.expanduser().absolute() if not self.exists() else self
-        if zip:
-            localpath = localpath.zip(inplace=False)
-            to_del.append(localpath)
-        if encrypt:
-            if key is not None:
-                raise NotImplementedError("Key-based file encryption is not supported for cloud uploads.")
-            if pwd is None:
-                localpath = PathExtended(encrypt_file_asymmetric(file_path=localpath))
-            else:
-                localpath = PathExtended(encrypt_file_symmetric(file_path=localpath, pwd=pwd))
-            to_del.append(localpath)
-        if remotepath is None:
-            rp = localpath.get_remote_path(root=root, os_specific=os_specific, rel2home=rel2home, strict=strict)  # if rel2home else (P(root) / localpath if root is not None else localpath)
-        else:
-            rp = PathExtended(remotepath)
-        print(f"⬆️ UPLOADING {repr(localpath)} TO {cloud}:{rp.as_posix()}`") if verbose else None
-        rclone_utils.copyto(
-            in_path=localpath.as_posix(),
-            out_path=f"{cloud}:{rp.as_posix()}",
-            transfers=transfers,
-            show_command=verbose,
-            show_progress=verbose,
-        )
-
-        _ = [item.delete(sure=True) for item in to_del]
-        if verbose:
-            print(f"{'⬆️' * 5} UPLOAD COMPLETED.")
-        if share:
-            if verbose:
-                print("🔗 SHARING FILE")
-            link_p: "PathExtended" = PathExtended(
-                rclone_utils.link(target=f"{cloud}:{rp.as_posix()}", show_command=verbose)
-            )
-            return link_p
-        return self
-
-    def from_cloud(
-        self,
-        cloud: str,
-        remotepath: OPLike = None,
-        decrypt: bool = False,
-        unzip: bool = False,
-        key: bytes | None = None,
-        pwd: str | None = None,
-        rel2home: bool = False,
-        os_specific: bool = False,
-        strict: bool = True,
-        transfers: int = 10,
-        root: str | None = "myhome",
-        verbose: bool = True,
-        overwrite: bool = True,
-        merge: bool = False,
-    ):
-        if remotepath is None:
-            remotepath = self.get_remote_path(root=root, os_specific=os_specific, rel2home=rel2home, strict=strict)
-            remotepath += ".zip" if unzip else ""
-            remotepath += ".gpg" if decrypt else ""
-        else:
-            remotepath = PathExtended(remotepath)
-        localpath = self.expanduser().absolute()
-        localpath += ".zip" if unzip else ""
-        localpath += ".gpg" if decrypt else ""
-        rclone_utils.copyto(
-            in_path=f"{cloud}:{remotepath.as_posix()}",
-            out_path=localpath.as_posix(),
-            transfers=transfers,
-            show_command=verbose,
-            show_progress=verbose,
-        )
-        if decrypt:
-            if key is not None:
-                raise NotImplementedError("Key-based file encryption is not supported for cloud downloads.")
-            encrypted_path = localpath
-            if pwd is None:
-                localpath = PathExtended(decrypt_file_asymmetric(file_path=encrypted_path))
-            else:
-                localpath = PathExtended(decrypt_file_symmetric(file_path=encrypted_path, pwd=pwd))
-            encrypted_path.delete(sure=True, verbose=False)
-        if unzip:
-            localpath = localpath.unzip(inplace=True, verbose=True, overwrite=overwrite, content=True, merge=merge)
-        return localpath
-
-    def sync_to_cloud(self, cloud: str, sync_up: bool = False, sync_down: bool = False, os_specific: bool = False, rel2home: bool = True, transfers: int = 10, delete: bool = False, root: str | None = "myhome", verbose: bool = True):
-        tmp_path_obj = self.expanduser().absolute()
-        tmp_path_obj.parent.mkdir(parents=True, exist_ok=True)
-        tmp1, tmp2 = tmp_path_obj.as_posix(), self.get_remote_path(root=root, os_specific=os_specific).as_posix()
-        if sync_up:
-            source = tmp1
-            target = f"{cloud}:{tmp2 if rel2home else tmp1}"
-        else:
-            source = f"{cloud}:{tmp2 if rel2home else tmp1}"   # in bisync direction is irrelavent.
-            target = tmp1
-
-        if not sync_down and not sync_up:
-            _ = print(f"SYNCING 🔄️ {source} {'<>' * 7} {target}`") if verbose else None
-            rclone_utils.bisync(
-                source=source,
-                target=target,
-                transfers=transfers,
-                delete_during=delete,
-                show_command=verbose,
-                show_progress=verbose,
-            )
-        else:
-            print(f"SYNCING 🔄️ {source} {'>' * 15} {target}`")
-            rclone_utils.sync(
-                source=source,
-                target=target,
-                transfers=transfers,
-                delete_during=delete,
-                show_command=verbose,
-                show_progress=verbose,
-            )
-
-        return self

@@ -2,12 +2,88 @@
 CC
 """
 
+from pathlib import Path
+
+from machineconfig.utils.io import (
+    GpgCommandError,
+    decrypt_file_asymmetric,
+    decrypt_file_symmetric,
+    encrypt_file_asymmetric,
+    encrypt_file_symmetric,
+)
+from machineconfig.utils.path_extended import PathExtended
+import machineconfig.utils.rclone_wrapper as rclone_wrapper
+from machineconfig.utils.rclone import RcloneCommandError
 from machineconfig.utils.ve import CLOUD, read_default_cloud_config
 
 from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
 
 
 defaults = read_default_cloud_config()
+
+
+def _artifact_path(local_path: Path, zip_requested: bool, encrypt_requested: bool) -> Path:
+    suffix = ""
+    if zip_requested:
+        suffix += ".zip"
+    if encrypt_requested:
+        suffix += ".gpg"
+    return Path(f"{local_path}{suffix}")
+
+
+def _delete_temp_paths(paths: list[Path]) -> None:
+    for temp_path in paths:
+        PathExtended(temp_path).delete(sure=True, verbose=False)
+
+
+def _prepare_upload_path(
+    *,
+    local_path: Path,
+    zip_requested: bool,
+    encrypt_requested: bool,
+    pwd: str | None,
+) -> tuple[Path, list[Path]]:
+    upload_path = local_path.expanduser().absolute()
+    temp_paths: list[Path] = []
+    if zip_requested:
+        upload_path = Path(PathExtended(upload_path).zip(inplace=False))
+        temp_paths.append(upload_path)
+    if encrypt_requested:
+        if pwd is None:
+            upload_path = encrypt_file_asymmetric(file_path=upload_path)
+        else:
+            upload_path = encrypt_file_symmetric(file_path=upload_path, pwd=pwd)
+        temp_paths.append(upload_path)
+    return upload_path, temp_paths
+
+
+def _finalize_download_path(
+    *,
+    download_path: Path,
+    zip_requested: bool,
+    encrypt_requested: bool,
+    pwd: str | None,
+    overwrite: bool,
+) -> Path:
+    local_path = download_path
+    if encrypt_requested:
+        encrypted_path = local_path
+        if pwd is None:
+            local_path = decrypt_file_asymmetric(file_path=encrypted_path)
+        else:
+            local_path = decrypt_file_symmetric(file_path=encrypted_path, pwd=pwd)
+        PathExtended(encrypted_path).delete(sure=True, verbose=False)
+    if zip_requested:
+        local_path = Path(
+            PathExtended(local_path).unzip(
+                inplace=True,
+                verbose=True,
+                overwrite=overwrite,
+                content=True,
+                merge=False,
+            )
+        )
+    return local_path
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_chain(wait_fixed(1), wait_fixed(4), wait_fixed(9)))
@@ -87,9 +163,6 @@ def main(
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console
     from rich.panel import Panel
-    from machineconfig.utils.io import GpgCommandError
-    from machineconfig.utils.rclone import RcloneCommandError
-    from machineconfig.utils.path_extended import PathExtended
     from machineconfig.scripts.python.helpers.helpers_cloud.helpers2 import parse_cloud_source_target
     console = Console()
     console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
@@ -132,18 +205,27 @@ def main(
         raise SystemExit(1)
     if cloud in source:
         console.print(Panel(f"📥 DOWNLOADING FROM CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}", title="[bold blue]Download[/bold blue]", border_style="blue", width=152))
+        target_path = Path(target).expanduser().absolute()
+        remote_path = Path(source.replace(cloud + ":", ""))
+        download_path = _artifact_path(
+            local_path=target_path,
+            zip_requested=cloud_config_explicit["zip"],
+            encrypt_requested=cloud_config_explicit["encrypt"],
+        )
         try:
-            PathExtended(target).from_cloud(
+            rclone_wrapper.from_cloud(
+                local_path=download_path,
                 cloud=cloud,
-                remotepath=source.replace(cloud + ":", ""),
-                unzip=cloud_config_explicit["zip"],
-                decrypt=cloud_config_explicit["encrypt"],
+                remote_path=remote_path,
+                transfers=10,
+                verbose=True,
+            )
+            _finalize_download_path(
+                download_path=download_path,
+                zip_requested=cloud_config_explicit["zip"],
+                encrypt_requested=cloud_config_explicit["encrypt"],
                 pwd=cloud_config_explicit["pwd"],
                 overwrite=cloud_config_explicit["overwrite"],
-                rel2home=cloud_config_explicit["rel2home"],
-                os_specific=cloud_config_explicit["os_specific"],
-                root=cloud_config_explicit["root"],
-                strict=False,
             )
         except GpgCommandError as error:
             console.print(
@@ -169,19 +251,24 @@ def main(
 
     elif cloud in target:
         console.print(Panel(f"📤 UPLOADING TO CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}", title="[bold blue]Upload[/bold blue]", border_style="blue", width=152))
-
+        source_path = Path(source).expanduser().absolute()
+        remote_path = Path(target.replace(cloud + ":", ""))
+        temp_paths: list[Path] = []
+        share_url: str | None = None
         try:
-            res = PathExtended(source).to_cloud(
-                cloud=cloud,
-                remotepath=target.replace(cloud + ":", ""),
-                zip=cloud_config_explicit["zip"],
-                encrypt=cloud_config_explicit["encrypt"],
+            upload_path, temp_paths = _prepare_upload_path(
+                local_path=source_path,
+                zip_requested=cloud_config_explicit["zip"],
+                encrypt_requested=cloud_config_explicit["encrypt"],
                 pwd=cloud_config_explicit["pwd"],
-                rel2home=cloud_config_explicit["rel2home"],
-                root=cloud_config_explicit["root"],
-                os_specific=cloud_config_explicit["os_specific"],
-                strict=False,
+            )
+            share_url = rclone_wrapper.to_cloud(
+                local_path=upload_path,
+                cloud=cloud,
+                remote_path=remote_path,
                 share=cloud_config_explicit["share"],
+                verbose=True,
+                transfers=10,
             )
         except GpgCommandError as error:
             console.print(
@@ -203,16 +290,20 @@ def main(
                 )
             )
             raise SystemExit(1) from None
+        finally:
+            _delete_temp_paths(temp_paths)
         console.print(Panel("✅ Upload completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
 
         if cloud_config_explicit["share"]:
             fname = f".share_url_{cloud}"
-            if PathExtended(source).is_dir():
-                share_url_path = PathExtended(source).joinpath(fname)
+            if share_url is None:
+                raise RuntimeError("Share was requested but rclone did not return a share URL.")
+            if source_path.is_dir():
+                share_url_path = source_path.joinpath(fname)
             else:
-                share_url_path = PathExtended(source).with_suffix(fname)
-            share_url_path.write_text(res.as_url_str(), encoding="utf-8")
-            console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 URL file: {share_url_path}\n🌍 {res.as_url_str()}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
+                share_url_path = source_path.with_suffix(fname)
+            share_url_path.write_text(share_url, encoding="utf-8")
+            console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 URL file: {share_url_path}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
     else:
         console.print(Panel(f"❌ ERROR: Cloud '{cloud}' not found in source or target", title="[bold red]Error[/bold red]", border_style="red", width=152))
         raise SystemExit(1)

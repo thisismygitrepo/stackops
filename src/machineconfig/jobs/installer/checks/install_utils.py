@@ -14,6 +14,7 @@ from pathlib import Path
 from rich.console import Console
 
 from machineconfig.utils.path_extended import PathExtended
+from machineconfig.utils.rclone_wrapper import get_remote_path, to_cloud
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 # Constants
@@ -31,10 +32,22 @@ def _load_csv_report(path: Path) -> list[dict[str, str]]:
 def upload_app(path: PathExtended) -> str | None:
     """Uploads the app to cloud storage and returns the shareable link."""
     try:
-        link_path = path.to_cloud(CLOUD_STORAGE_NAME, rel2home=True, share=True, os_specific=True, verbose=False)
-        if link_path:
-             return str(link_path)
-        return None
+        local_path = path.expanduser().absolute()
+        remote_path = get_remote_path(
+            local_path=local_path,
+            root="myhome",
+            os_specific=True,
+            rel2home=True,
+            strict=True,
+        )
+        return to_cloud(
+            local_path=local_path,
+            cloud=CLOUD_STORAGE_NAME,
+            remote_path=remote_path,
+            share=True,
+            verbose=False,
+            transfers=10,
+        )
     except Exception as e:
         console.print(f"[red]Failed to upload {path}: {e}[/red]")
         return None
