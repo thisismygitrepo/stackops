@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import pickle
 import configparser
+import subprocess
 
 
 PathLike = Union[str, Path]
@@ -145,3 +146,117 @@ def decrypt(token: bytes, key: bytes | None = None, pwd: str | None = None, salt
         raise TypeError(f"❌ Key must be either str, P, Path, bytes or None. Recieved: {type(key)}")
     from cryptography.fernet import Fernet
     return Fernet(key=key_resolved).decrypt(token)
+
+
+def _ensure_file(path: PathLike) -> Path:
+    path_obj = Path(path).expanduser()
+    if not path_obj.exists():
+        raise FileNotFoundError(f"File not found: {path_obj}")
+    if not path_obj.is_file():
+        raise IsADirectoryError(f"Expected a file path, got: {path_obj}")
+    return path_obj.resolve()
+
+
+def _encrypted_gpg_path(path: Path) -> Path:
+    return path.with_name(f"{path.name}.gpg")
+
+
+def _decrypted_gpg_path(path: Path) -> Path:
+    if path.name.endswith(".gpg"):
+        return path.with_name(path.name.removesuffix(".gpg"))
+    return path.with_name(f"decrypted_{path.name}")
+
+
+def _run_gpg(command: list[str], pwd: str | None = None) -> None:
+    subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+        input=None if pwd is None else f"{pwd}\n",
+    )
+
+
+def encrypt_file_symmetric(file_path: PathLike, pwd: str) -> Path:
+    source = _ensure_file(file_path)
+    output_path = _encrypted_gpg_path(source)
+    _run_gpg(
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--pinentry-mode",
+            "loopback",
+            "--passphrase-fd",
+            "0",
+            "--symmetric",
+            "--cipher-algo",
+            "AES256",
+            "--output",
+            str(output_path),
+            str(source),
+        ],
+        pwd=pwd,
+    )
+    return output_path
+
+
+def encrypt_file_symmstric(file_path: PathLike, pwd: str) -> Path:
+    return encrypt_file_symmetric(file_path=file_path, pwd=pwd)
+
+
+def decrypt_file_symmetric(file_path: PathLike, pwd: str) -> Path:
+    source = _ensure_file(file_path)
+    output_path = _decrypted_gpg_path(source)
+    _run_gpg(
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--pinentry-mode",
+            "loopback",
+            "--passphrase-fd",
+            "0",
+            "--decrypt",
+            "--output",
+            str(output_path),
+            str(source),
+        ],
+        pwd=pwd,
+    )
+    return output_path
+
+
+def encrypt_file_asymmetric(file_path: PathLike) -> Path:
+    source = _ensure_file(file_path)
+    output_path = _encrypted_gpg_path(source)
+    _run_gpg(
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--default-recipient-self",
+            "--encrypt",
+            "--output",
+            str(output_path),
+            str(source),
+        ]
+    )
+    return output_path
+
+
+def decrypt_file_asymmetric(file_path: PathLike) -> Path:
+    source = _ensure_file(file_path)
+    output_path = _decrypted_gpg_path(source)
+    _run_gpg(
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--decrypt",
+            "--output",
+            str(output_path),
+            str(source),
+        ]
+    )
+    return output_path
