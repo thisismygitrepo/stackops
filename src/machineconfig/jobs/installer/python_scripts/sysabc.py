@@ -5,12 +5,16 @@ from typing import TYPE_CHECKING
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+import machineconfig.jobs.installer.linux_scripts as linux_scripts
+import machineconfig.jobs.installer.powershell_scripts as powershell_scripts
 from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
-from pathlib import Path
+from machineconfig.jobs.installer.linux_scripts import SYSABC_MACOS_PATH_REFERENCE, SYSABC_UBUNTU_PATH_REFERENCE
+from machineconfig.jobs.installer.powershell_scripts import SYSABC_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
@@ -28,18 +32,15 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     _ = version
     if platform.system() == "Windows":
         console.print("🪟 Installing ABC on Windows using winget...", style="bold")
-        from machineconfig.jobs.installer import powershell_scripts
-        script = Path(powershell_scripts.__path__[0]) / "sysabc.ps1"
+        script = get_path_reference_path(module=powershell_scripts, path_reference=SYSABC_PATH_REFERENCE)
         program = script.read_text(encoding="utf-8")
     elif platform.system() == "Linux":
         console.print("🐧 Installing ABC on Linux...", style="bold")
-        from machineconfig.jobs.installer import linux_scripts
-        script = Path(linux_scripts.__path__[0]) / "sysabc_ubuntu.sh"
+        script = get_path_reference_path(module=linux_scripts, path_reference=SYSABC_UBUNTU_PATH_REFERENCE)
         program = script.read_text(encoding="utf-8")
     elif platform.system() == "Darwin":
         console.print("🍎 Installing ABC on macOS...", style="bold")
-        from machineconfig.jobs.installer import linux_scripts
-        script = Path(linux_scripts.__path__[0]) / "sysabc_macos.sh"
+        script = get_path_reference_path(module=linux_scripts, path_reference=SYSABC_MACOS_PATH_REFERENCE)
         program = script.read_text(encoding="utf-8")
     else:
         error_msg = f"Unsupported platform: {platform.system()}"

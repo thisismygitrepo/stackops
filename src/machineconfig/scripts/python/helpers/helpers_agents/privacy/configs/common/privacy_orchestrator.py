@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.aichat as aichat_assets
+import machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.copilot as copilot_assets
+import machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.crush as crush_assets
+import machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.gemini as gemini_assets
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.auggie.auggie_privacy import secure_auggie_config
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.chatgpt.chatgpt_privacy import secure_chatgpt_cli
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.cline.cline_privacy import secure_cline_config
@@ -10,14 +14,16 @@ from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.kilocod
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.mods.mods_privacy import secure_mods_config
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.q.q_privacy import secure_q_cli
 from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.qwen.qwen_privacy import secure_qwen_config
+from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.aichat import CONFIG_PATH_REFERENCE as AICHAT_CONFIG_PATH_REFERENCE
+from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.copilot import CONFIG_PATH_REFERENCE as COPILOT_CONFIG_PATH_REFERENCE
+from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.crush import CRUSH_PATH_REFERENCE
+from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.gemini import SETTINGS_PATH_REFERENCE as GEMINI_SETTINGS_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root: str | None) -> None:
-    from machineconfig.utils.source_of_truth import LIBRARY_ROOT
-
-    root = LIBRARY_ROOT / "scripts/python/helpers_agents/privacy/configs"
-
-    gemini_settings_source = root.joinpath("gemini/settings.json")
+    root = Path(__file__).resolve().parent.parent
+    gemini_settings_source = get_path_reference_path(module=gemini_assets, path_reference=GEMINI_SETTINGS_PATH_REFERENCE)
     gemini_settings_target_global = Path.home().joinpath(".gemini/settings.json")
     if not gemini_settings_target_global.exists() or overwrite:
         gemini_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
@@ -43,7 +49,7 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
             if aider_settings_source.exists():
                 aider_settings_target_repo.write_text(aider_settings_source.read_text())
 
-    aichat_settings_source = root.joinpath("aichat/config.yaml")
+    aichat_settings_source = get_path_reference_path(module=aichat_assets, path_reference=AICHAT_CONFIG_PATH_REFERENCE)
     aichat_settings_target_global = Path.home().joinpath(".config/aichat/config.yaml")
     if not aichat_settings_target_global.exists() or overwrite:
         aichat_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
@@ -56,7 +62,7 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
             if aichat_settings_source.exists():
                 aichat_settings_target_repo.write_text(aichat_settings_source.read_text())
 
-    copilot_settings_source = root.joinpath("copilot/config.yml")
+    copilot_settings_source = get_path_reference_path(module=copilot_assets, path_reference=COPILOT_CONFIG_PATH_REFERENCE)
     copilot_settings_target_global = Path.home().joinpath(".config/gh-copilot/config.yml")
     if not copilot_settings_target_global.exists() or overwrite:
         copilot_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
@@ -69,7 +75,7 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
             if copilot_settings_source.exists():
                 copilot_settings_target_repo.write_text(copilot_settings_source.read_text())
 
-    crush_settings_source = root.joinpath("crush/crush.json")
+    crush_settings_source = get_path_reference_path(module=crush_assets, path_reference=CRUSH_PATH_REFERENCE)
     crush_settings_target_global = Path.home().joinpath(".config/crush/crush.json")
     if not crush_settings_target_global.exists() or overwrite:
         crush_settings_target_global.parent.mkdir(parents=True, exist_ok=True)

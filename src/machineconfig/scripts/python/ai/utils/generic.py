@@ -3,6 +3,9 @@ import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
+import machineconfig.scripts.python.ai.scripts as ai_script_assets
+from machineconfig.scripts.python.ai.scripts import LINT_AND_TYPE_CHECK_PS1_PATH_REFERENCE, LINT_AND_TYPE_CHECK_SH_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.source_of_truth import LIBRARY_ROOT
 
 
@@ -13,10 +16,15 @@ def create_dot_scripts(repo_root: Path) -> None:
     target_dir.mkdir(parents=True, exist_ok=True)
 
     script_names: list[str] = ["lint_and_type_check.py", "lint_and_type_check_models.py", "lint_and_type_check_dashboard.py"]
+    extra_script_paths: list[Path] = []
     if platform.system() == "Windows":
-        script_names.append("lint_and_type_check.ps1")
+        extra_script_paths.append(
+            get_path_reference_path(module=ai_script_assets, path_reference=LINT_AND_TYPE_CHECK_PS1_PATH_REFERENCE)
+        )
     elif platform.system() in ["Linux", "Darwin"]:
-        script_names.append("lint_and_type_check.sh")
+        extra_script_paths.append(
+            get_path_reference_path(module=ai_script_assets, path_reference=LINT_AND_TYPE_CHECK_SH_PATH_REFERENCE)
+        )
     else:
         raise NotImplementedError(f"Platform {platform.system()} is not supported.")
 
@@ -24,6 +32,11 @@ def create_dot_scripts(repo_root: Path) -> None:
         script_path = scripts_dir.joinpath(script_name)
         target_dir.joinpath(script_path.name).write_text(
             data=script_path.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+    for script_path in extra_script_paths:
+        target_dir.joinpath(script_path.name).write_text(
+            data=script_path.read_text(encoding="utf-8"),
+            encoding="utf-8",
         )
 
 

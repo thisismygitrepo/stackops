@@ -1,15 +1,17 @@
 from pathlib import Path
 
 from machineconfig.scripts.python.ai.utils.shared import get_generic_instructions_path
-from machineconfig.utils.source_of_truth import LIBRARY_ROOT
+import machineconfig.scripts.python.ai.solutions.copilot as copilot_assets
+from machineconfig.scripts.python.ai.solutions.copilot import PRIVACY_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 
 
 
 def build_configuration(repo_root: Path, add_private_config: bool, add_instructions: bool) -> None:
-    instructions_repository_dir = LIBRARY_ROOT.joinpath("scripts/python/ai/solutions/copilot/instructions")
-    agents_dir = LIBRARY_ROOT.joinpath("scripts/python/ai/solutions/copilot/agents")
-    prompts_dir = LIBRARY_ROOT.joinpath("scripts/python/ai/solutions/copilot/prompts")
-    privacy_path = LIBRARY_ROOT.joinpath("scripts/python/ai/solutions/copilot/privacy.md")
+    instructions_repository_dir = Path(copilot_assets.__file__).resolve().parent.joinpath("instructions")
+    agents_dir = Path(copilot_assets.__file__).resolve().parent.joinpath("agents")
+    prompts_dir = Path(copilot_assets.__file__).resolve().parent.joinpath("prompts")
+    privacy_path = get_path_reference_path(module=copilot_assets, path_reference=PRIVACY_PATH_REFERENCE)
 
     github_dir = repo_root.joinpath(".github")
     agents_target_dir = github_dir.joinpath("agents")

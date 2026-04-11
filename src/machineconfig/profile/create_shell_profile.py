@@ -2,9 +2,35 @@
 
 from pathlib import Path
 
+import machineconfig.settings.shells.bash as bash_shell_assets
+import machineconfig.settings.shells.nushell as nushell_assets
+import machineconfig.settings.shells.pwsh as pwsh_shell_assets
+import machineconfig.settings.shells.zsh as zsh_shell_assets
+from machineconfig.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
+from machineconfig.settings.shells.nushell import CONFIG_PATH_REFERENCE as NUSHELL_CONFIG_PATH_REFERENCE, ENV_PATH_REFERENCE as NUSHELL_ENV_PATH_REFERENCE
+from machineconfig.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
+from machineconfig.settings.shells.zsh import INIT_PATH_REFERENCE as ZSH_INIT_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_library_relative_path
 
-NUSHELL_CONFIG_SOURCE_LINE = """source ($nu.home-dir | path join ".config" "machineconfig" "settings" "shells" "nushell" "config.nu")"""
-NUSHELL_ENV_SOURCE_LINE = """source-env ($nu.home-dir | path join ".config" "machineconfig" "settings" "shells" "nushell" "env.nu")"""
+
+def _to_nushell_join_arguments(path: Path) -> str:
+    return " ".join(f'"{part}"' for part in path.parts)
+
+
+NUSHELL_CONFIG_RELATIVE_PATH = get_path_reference_library_relative_path(
+    module=nushell_assets,
+    path_reference=NUSHELL_CONFIG_PATH_REFERENCE,
+)
+NUSHELL_ENV_RELATIVE_PATH = get_path_reference_library_relative_path(
+    module=nushell_assets,
+    path_reference=NUSHELL_ENV_PATH_REFERENCE,
+)
+NUSHELL_CONFIG_SOURCE_LINE = (
+    f"""source ($nu.home-dir | path join ".config" "machineconfig" {_to_nushell_join_arguments(NUSHELL_CONFIG_RELATIVE_PATH)})"""
+)
+NUSHELL_ENV_SOURCE_LINE = (
+    f"""source-env ($nu.home-dir | path join ".config" "machineconfig" {_to_nushell_join_arguments(NUSHELL_ENV_RELATIVE_PATH)})"""
+)
 
 
 
@@ -87,15 +113,21 @@ def create_default_shell_profile() -> None:
     shell_name = ""
     if system == "Windows":
         shell_name = "pwsh"
-        init_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/pwsh/init.ps1")
+        init_script = PathExtended(CONFIG_ROOT).joinpath(
+            get_path_reference_library_relative_path(module=pwsh_shell_assets, path_reference=PWSH_INIT_PATH_REFERENCE)
+        )
         source_line = f""". {str(init_script.collapseuser(placeholder="$HOME"))}"""
     elif system == "Linux":
         shell_name = "bash"
-        init_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/bash/init.sh")
+        init_script = PathExtended(CONFIG_ROOT).joinpath(
+            get_path_reference_library_relative_path(module=bash_shell_assets, path_reference=BASH_INIT_PATH_REFERENCE)
+        )
         source_line = f"""source {str(init_script.collapseuser(placeholder="$HOME"))}"""
     elif system == "Darwin":
         shell_name = "zsh"
-        init_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/zsh/init.sh")
+        init_script = PathExtended(CONFIG_ROOT).joinpath(
+            get_path_reference_library_relative_path(module=zsh_shell_assets, path_reference=ZSH_INIT_PATH_REFERENCE)
+        )
         source_line = f"""source {str(init_script.collapseuser(placeholder="$HOME"))}"""
     else:
         raise ValueError(f"""Not implemented for this system {system}""")

@@ -1,7 +1,10 @@
 
 from pathlib import Path
 # import shlex
+import machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks as framework_assets
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AI_SPEC
+from machineconfig.scripts.python.helpers.helpers_agents.agentic_frameworks import FIRE_CRUSH_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def fire_crush(ai_spec: AI_SPEC, prompt_path: Path, repo_root: Path) -> str:
@@ -10,7 +13,7 @@ def fire_crush(ai_spec: AI_SPEC, prompt_path: Path, repo_root: Path) -> str:
 crush run {prompt_path}
 """
     assert ai_spec["api_spec"]["api_key"] is not None, "API key is required for Crush agent in docker mode."
-    json_path = Path(__file__).parent / "fire_crush.json"
+    json_path = get_path_reference_path(module=framework_assets, path_reference=FIRE_CRUSH_PATH_REFERENCE)
     json_template = json_path.read_text(encoding="utf-8")
     api_key = ai_spec["api_spec"]["api_key"]
     json_filled = json_template.replace("{api_key}", api_key)

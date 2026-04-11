@@ -3,29 +3,42 @@ from typing import Annotated
 
 import typer
 
+import machineconfig.jobs.installer as installer_assets
 from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from machineconfig.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_library_relative_path
 
 
 DEFAULT_INSTALLER_JOB_NAME = "updateInstallerData"
 UPDATE_INSTALLER_SEPARATOR = "    },\n    {"
-UPDATE_INSTALLER_PROMPT = """for each of the bellow, please check if its github repo, then, do the following
-make sure that file name patter are up to date and as per the release page
-
-modify the target file directly @ /home/alex/code/machineconfig/src/machineconfig/jobs/installer/installer_data.json
-but please only wokr on entries designated for you, ignore the rest because the file is too big, other agents are working on it now.
-
-Notes:
-* File pattern should  never be ..v{version}.. with v, even if they have that in release page, the v is implicit.
-* If file pattern is "<name>.py" then it is referencing a custom py script installer, in which case, please don't touch it, at all, no matter what.
-* If file pattern is a custom package installtion command, please don't touch it.
-* don't touch any other field other than thee file pattern.
-"""
 
 
 def get_developer_repo_root() -> Path:
     return Path.home().joinpath("code", "machineconfig")
+
+
+def _get_installer_data_repo_relative_path() -> Path:
+    return Path("src", "machineconfig").joinpath(
+        get_path_reference_library_relative_path(module=installer_assets, path_reference=INSTALLER_DATA_PATH_REFERENCE)
+    )
+
+
+def _get_update_installer_prompt() -> str:
+    installer_data_path = get_developer_repo_root().joinpath(_get_installer_data_repo_relative_path())
+    return f"""for each of the bellow, please check if its github repo, then, do the following
+make sure that file name patter are up to date and as per the release page
+
+modify the target file directly @ {installer_data_path}
+but please only wokr on entries designated for you, ignore the rest because the file is too big, other agents are working on it now.
+
+Notes:
+* File pattern should  never be ..v{{version}}.. with v, even if they have that in release page, the v is implicit.
+* If file pattern is "<name>.py" then it is referencing a custom py script installer, in which case, please don't touch it, at all, no matter what.
+* If file pattern is a custom package installtion command, please don't touch it.
+* don't touch any other field other than thee file pattern.
+"""
 
 
 def _resolve_prompt(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> str | None:
@@ -33,7 +46,7 @@ def _resolve_prompt(*, prompt: str | None, prompt_path: str | None, prompt_name:
         return prompt
     if prompt_path is not None or prompt_name is not None:
         return None
-    return UPDATE_INSTALLER_PROMPT
+    return _get_update_installer_prompt()
 
 
 def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> str | None:
@@ -47,7 +60,7 @@ def _resolve_context_path(*, context: str | None, context_path: str | None, repo
         return None
     if context_path is not None:
         return context_path
-    return str(repo_root.joinpath("src", "machineconfig", "jobs", "installer", "installer_data.json"))
+    return str(repo_root.joinpath(_get_installer_data_repo_relative_path()))
 
 
 def update_installer(

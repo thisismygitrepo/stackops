@@ -20,6 +20,9 @@ from machineconfig.scripts.python.helpers.helpers_agents.agents_rich_output impo
     show_generated_agents_table,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+import machineconfig.scripts.python.helpers.helpers_agents.templates as template_assets
+from machineconfig.scripts.python.helpers.helpers_agents.templates import PROMPT_PATH_REFERENCE, TEMPLATE_PS1_PATH_REFERENCE, TEMPLATE_SH_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def agents_create(
@@ -224,12 +227,11 @@ def collect(agent_dir: str, output_path: str, separator: str, pattern: str | Non
 def make_agents_command_template() -> None:
     """Create a template for fire agents."""
     from platform import system
-    import machineconfig.scripts.python.helpers.helpers_agents as module
 
     if system() == "Linux" or system() == "Darwin":
-        template_path = Path(module.__file__).parent / "templates/template.sh"
+        template_path = get_path_reference_path(module=template_assets, path_reference=TEMPLATE_SH_PATH_REFERENCE)
     elif system() == "Windows":
-        template_path = Path(module.__file__).parent / "templates/template.ps1"
+        template_path = get_path_reference_path(module=template_assets, path_reference=TEMPLATE_PS1_PATH_REFERENCE)
     else:
         raise ValueError(f"Unsupported OS: {system()}")
 
@@ -248,7 +250,7 @@ def make_agents_command_template() -> None:
         pattern=".py", repo=str(repo_root), strategy="name", output_path=str(save_path_root / "files.md"), split_every=None, split_to=None
     )
 
-    prompt_path = Path(module.__file__).parent / "templates/prompt.txt"
+    prompt_path = get_path_reference_path(module=template_assets, path_reference=PROMPT_PATH_REFERENCE)
     save_path_root.joinpath("prompt.txt").write_text(prompt_path.read_text(encoding="utf-8"), encoding="utf-8")
     print(f"Prompt template written to {save_path_root}")
 

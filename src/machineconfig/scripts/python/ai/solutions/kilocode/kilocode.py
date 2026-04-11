@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
 
+import machineconfig.scripts.python.ai.solutions.kilocode as kilocode_assets
 from machineconfig.scripts.python.ai.utils.shared import get_generic_instructions_path
+from machineconfig.scripts.python.ai.solutions.kilocode import PRIVACY_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def _write_json_if_missing(path: Path, content: dict[str, object]) -> None:
@@ -43,5 +46,5 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
     if add_private_config:
         _write_json_if_missing(path=repo_root.joinpath(".kilocode/mcp.json"), content={"mcpServers": {}})
         _write_text_if_missing(path=repo_root.joinpath(".kilocodeignore"), content=_default_kilocodeignore())
-        privacy_source = Path(__file__).with_name("privacy.md")
+        privacy_source = get_path_reference_path(module=kilocode_assets, path_reference=PRIVACY_PATH_REFERENCE)
         _write_text_if_missing(path=kilo_rules_dir.joinpath("privacy.md"), content=privacy_source.read_text(encoding="utf-8"))

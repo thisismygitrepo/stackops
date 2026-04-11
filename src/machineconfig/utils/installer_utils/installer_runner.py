@@ -20,12 +20,15 @@ from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PAC
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 from machineconfig.utils.files.read import read_json
+from machineconfig.utils.path_reference import get_path_reference_path
 
 from rich.console import Console
 from rich.panel import Panel
 import platform
 import tomllib
 from joblib import Parallel, delayed
+import machineconfig.jobs.installer as installer_assets
+from machineconfig.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
 
 
 def check_latest():
@@ -110,9 +113,9 @@ def get_installed_cli_apps():
 
 
 def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
-    import machineconfig.jobs.installer as module
-    from pathlib import Path
-    res_raw: InstallerDataFiles = read_json(Path(module.__file__).parent.joinpath("installer_data.json"))
+    res_raw: InstallerDataFiles = read_json(
+        get_path_reference_path(module=installer_assets, path_reference=INSTALLER_DATA_PATH_REFERENCE)
+    )
     res_all: list[InstallerData] = res_raw["installers"]
 
     acceptable_apps_names: list[str] | None = None

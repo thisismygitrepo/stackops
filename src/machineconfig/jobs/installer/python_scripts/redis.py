@@ -6,10 +6,13 @@ from typing import TYPE_CHECKING
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+import machineconfig.jobs.installer.linux_scripts as linux_scripts
 from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
+from machineconfig.jobs.installer.linux_scripts import REDIS_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 # config_dict: InstallerData = {"appName": "Redis", "repoURL": "CMD", "doc": "submillisecond fast key-value db"}
@@ -43,10 +46,10 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     elif platform.system() in ["Linux", "Darwin"]:
         system_name = "Linux" if platform.system() == "Linux" else "macOS"
         console.print(f"🐧 Installing Redis on {system_name} using installation script...", style="bold")
-        import machineconfig.jobs.installer as module
-        from pathlib import Path
         if platform.system() == "Linux":
-            program = Path(module.__file__).parent.joinpath("linux_scripts/redis.sh").read_text(encoding="utf-8")
+            program = get_path_reference_path(module=linux_scripts, path_reference=REDIS_PATH_REFERENCE).read_text(
+                encoding="utf-8"
+            )
         else:  # Darwin/macOS
             program = "brew install redis"
     else:

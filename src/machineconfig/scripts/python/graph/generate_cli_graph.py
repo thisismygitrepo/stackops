@@ -7,12 +7,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Sequence
 
+import machineconfig.scripts.python.graph as graph_assets
+from machineconfig.scripts.python.graph import CLI_GRAPH_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 SRC_ROOT = REPO_ROOT / "src"
 ROOT_MODULE = "machineconfig.scripts.python.mcfg_entry"
 ROOT_FACTORY = "get_app"
-DEFAULT_OUTPUT_PATH = Path(__file__).resolve().with_name("cli_graph.json")
+DEFAULT_OUTPUT_PATH = get_path_reference_path(module=graph_assets, path_reference=CLI_GRAPH_PATH_REFERENCE)
 
 
 @dataclass(frozen=True)

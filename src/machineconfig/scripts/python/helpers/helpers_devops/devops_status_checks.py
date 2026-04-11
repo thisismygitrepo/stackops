@@ -6,9 +6,14 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, TypedDict
 
+import machineconfig.settings.shells.bash as bash_shell_assets
+import machineconfig.settings.shells.pwsh as pwsh_shell_assets
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
 from machineconfig.utils.links import files_are_identical
+from machineconfig.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
+from machineconfig.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_library_relative_path
 
 
 def check_shell_profile_status() -> dict[str, Any]:
@@ -23,12 +28,16 @@ def check_shell_profile_status() -> dict[str, Any]:
         profile_content = profile_path.read_text(encoding="utf-8")
         system_name = platform.system()
         if system_name == "Windows":
-            init_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/pwsh/init.ps1")
+            init_script = PathExtended(CONFIG_ROOT).joinpath(
+                get_path_reference_library_relative_path(module=pwsh_shell_assets, path_reference=PWSH_INIT_PATH_REFERENCE)
+            )
             init_script_copy = PathExtended(CONFIG_ROOT).joinpath("profile/init.ps1").collapseuser()
             source_reference = f". {str(init_script.collapseuser()).replace('~', '$HOME')}"
             source_copy = f". {str(init_script_copy).replace('~', '$HOME')}"
         else:
-            init_script = PathExtended(CONFIG_ROOT).joinpath("settings/shells/bash/init.sh")
+            init_script = PathExtended(CONFIG_ROOT).joinpath(
+                get_path_reference_library_relative_path(module=bash_shell_assets, path_reference=BASH_INIT_PATH_REFERENCE)
+            )
             init_script_copy = PathExtended(CONFIG_ROOT).joinpath("profile/init.sh").collapseuser()
             source_reference = f"source {str(init_script.collapseuser()).replace('~', '$HOME')}"
             source_copy = f"source {str(init_script_copy).replace('~', '$HOME')}"

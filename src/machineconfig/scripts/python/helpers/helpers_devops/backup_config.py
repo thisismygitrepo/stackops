@@ -6,13 +6,15 @@ from typing import TypedDict, cast
 
 from rich.console import Console
 from rich.panel import Panel
+import machineconfig.profile as profile_assets
 import yaml
 
+from machineconfig.profile import MAPPER_DATA_PATH_REFERENCE
 from machineconfig.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
-from machineconfig.utils.source_of_truth import LIBRARY_ROOT
 from machineconfig.profile.create_links_export import REPO_LOOSE
+from machineconfig.utils.path_reference import get_path_reference_path
 
-LIBRARY_BACKUP_PATH = LIBRARY_ROOT.joinpath("profile/mapper_data.yaml")
+LIBRARY_BACKUP_PATH = get_path_reference_path(module=profile_assets, path_reference=MAPPER_DATA_PATH_REFERENCE)
 USER_BACKUP_PATH = Path.home().joinpath("dotfiles/machineconfig/mapper_data.yaml")
 DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 # Created by `devops data register`

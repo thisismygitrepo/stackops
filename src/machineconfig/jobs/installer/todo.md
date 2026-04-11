@@ -17,3 +17,14 @@ INSTALLER_TYPE_SCHEMA_PATH_REFERENCE = "./installer_type.schema.json"
 notice "_PATH_REFERENCE" please ensure that this is consistent across all names, and if not consistent add it please to noncompliant instances.
 additionally, if __init__.py does exist, then please check that it doen't have stale reference to a file that doens't exit
 if so, delete that path reference.
+
+
+# $caveman ultra. 
+ensure that for any python file, trying to reference any of those files (as a variable or path etc ...)
+Then that reference MUST occur via the corresponding variables defined in relevant __init__.py file next to that non-py file.
+the code must derive the full absolute path from the reference in init file + module path.
+
+The non-py files can be obtained by running this command:
+cd  ~/code/machineconfig/src/machineconfig fd -t f -E .venv -E docs -E tests -E '*.py'
+
+and your check for their reference must go through all py files.

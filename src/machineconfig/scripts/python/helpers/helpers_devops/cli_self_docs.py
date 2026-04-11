@@ -4,13 +4,18 @@ from pathlib import Path
 from typing import Literal
 
 import typer
+import machineconfig.scripts.python.graph as graph_assets
+from machineconfig.scripts.python.graph import CLI_GRAPH_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_library_relative_path
 
 
 DOCS_BIND_ADDRESS = "0.0.0.0"
 DOCS_PORT = 8000
 DOCS_SITE_PATH = "/machineconfig/"
 DOCS_CONFIG_FILE_NAME = "zensical.toml"
-CLI_GRAPH_RELATIVE_PATH = Path("src/machineconfig/scripts/python/graph/cli_graph.json")
+CLI_GRAPH_RELATIVE_PATH = Path("src", "machineconfig").joinpath(
+    get_path_reference_library_relative_path(module=graph_assets, path_reference=CLI_GRAPH_PATH_REFERENCE)
+)
 DOCS_ARTIFACT_TEMPLATE = "plotly_dark"
 
 

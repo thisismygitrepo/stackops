@@ -373,20 +373,29 @@ def _get_file_search_source_command(dotfiles: bool) -> str:
 def _run_text_search(rga: bool, directory: str | None, search_term: str) -> None:
     """Run text search using fzf with ripgrep."""
     import platform
-    from pathlib import Path
 
-    import machineconfig.scripts.python.helpers.helpers_seek as module
-    from machineconfig.scripts.python.helpers.helpers_seek import FZFG_LINUX_PATH_REFERENCE, FZFG_MACOS_PATH_REFERENCE, FZFG_WINDOWS_PATH_REFERENCE
+    import machineconfig.scripts.python.helpers.helpers_seek.scripts_linux as linux_scripts
+    import machineconfig.scripts.python.helpers.helpers_seek.scripts_macos as macos_scripts
+    import machineconfig.scripts.python.helpers.helpers_seek.scripts_windows as windows_scripts
 
+    from machineconfig.scripts.python.helpers.helpers_seek.scripts_linux import FZFG_PATH_REFERENCE as LINUX_FZFG_PATH_REFERENCE
+    from machineconfig.scripts.python.helpers.helpers_seek.scripts_macos import FZFG_PATH_REFERENCE as MACOS_FZFG_PATH_REFERENCE
+    from machineconfig.scripts.python.helpers.helpers_seek.scripts_windows import FZFG_PATH_REFERENCE as WINDOWS_FZFG_PATH_REFERENCE
+    from machineconfig.utils.path_reference import get_path_reference_path
     platform_name = platform.system()
-    root = Path(module.__file__).parent
 
     if platform_name == "Linux":
-        script = root.joinpath(FZFG_LINUX_PATH_REFERENCE).read_text(encoding="utf-8")
+        script = get_path_reference_path(module=linux_scripts, path_reference=LINUX_FZFG_PATH_REFERENCE).read_text(
+            encoding="utf-8"
+        )
     elif platform_name == "Windows":
-        script = root.joinpath(FZFG_WINDOWS_PATH_REFERENCE).read_text(encoding="utf-8")
+        script = get_path_reference_path(module=windows_scripts, path_reference=WINDOWS_FZFG_PATH_REFERENCE).read_text(
+            encoding="utf-8"
+        )
     elif platform_name == "Darwin":
-        script = root.joinpath(FZFG_MACOS_PATH_REFERENCE).read_text(encoding="utf-8")
+        script = get_path_reference_path(module=macos_scripts, path_reference=MACOS_FZFG_PATH_REFERENCE).read_text(
+            encoding="utf-8"
+        )
     else:
         raise RuntimeError("Unsupported platform")
     if rga:

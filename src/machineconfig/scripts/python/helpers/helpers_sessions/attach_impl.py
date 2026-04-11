@@ -4,12 +4,13 @@ import subprocess
 from pathlib import Path
 from typing import Literal, overload
 
-from machineconfig.settings.zellij import layouts
+import machineconfig.settings.zellij.layouts as layouts
+from machineconfig.settings.zellij.layouts import ST2_PATH_REFERENCE
+from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.installer_utils.installer_locator_utils import check_tool_exists
 from machineconfig.utils.options import choose_from_options
 
-root = layouts.__path__[0]
-STANDARD = Path(root).joinpath("st2.kdl")
+STANDARD = get_path_reference_path(module=layouts, path_reference=ST2_PATH_REFERENCE)
 
 NEW_SESSION_LABEL = "NEW SESSION"
 KILL_ALL_AND_NEW_LABEL = "KILL ALL SESSIONS & START NEW"
