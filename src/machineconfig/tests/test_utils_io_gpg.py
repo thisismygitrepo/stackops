@@ -14,10 +14,13 @@ class RunCall:
     capture_output: bool
     text: bool
     input_text: str | None
+    has_gpg_tty: bool
 
 
 def _install_fake_run(monkeypatch: pytest.MonkeyPatch) -> list[RunCall]:
     calls: list[RunCall] = []
+
+    monkeypatch.setattr(io_module, "build_gpg_environment", lambda: {})
 
     def fake_run(
         command: list[str],
@@ -26,6 +29,7 @@ def _install_fake_run(monkeypatch: pytest.MonkeyPatch) -> list[RunCall]:
         capture_output: bool,
         text: bool,
         input: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
         calls.append(
             RunCall(
@@ -34,6 +38,7 @@ def _install_fake_run(monkeypatch: pytest.MonkeyPatch) -> list[RunCall]:
                 capture_output=capture_output,
                 text=text,
                 input_text=input,
+                has_gpg_tty=False if env is None else "GPG_TTY" in env,
             )
         )
         return subprocess.CompletedProcess(command, 0, "", "")
@@ -70,10 +75,11 @@ def test_encrypt_file_symmetric_uses_gpg_loopback_passphrase(
                 str(result),
                 str(source.resolve()),
             ],
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             input_text="hunter2\n",
+            has_gpg_tty=False,
         )
     ]
 
@@ -104,10 +110,11 @@ def test_decrypt_file_symmetric_removes_gpg_suffix(
                 str(result),
                 str(source.resolve()),
             ],
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             input_text="hunter2\n",
+            has_gpg_tty=False,
         )
     ]
 
@@ -135,10 +142,11 @@ def test_encrypt_file_asymmetric_uses_default_recipient_self(
                 str(result),
                 str(source.resolve()),
             ],
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             input_text=None,
+            has_gpg_tty=False,
         )
     ]
 
@@ -165,9 +173,10 @@ def test_decrypt_file_asymmetric_uses_gpg_decrypt(
                 str(result),
                 str(source.resolve()),
             ],
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             input_text=None,
+            has_gpg_tty=False,
         )
     ]

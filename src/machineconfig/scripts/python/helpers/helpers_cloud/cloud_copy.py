@@ -17,7 +17,7 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
     from rich.progress import Progress
     import getpass
     import os
-    from machineconfig.utils.io import decrypt_file_symmetric
+    from machineconfig.utils.io import GpgCommandError, decrypt_file_symmetric
     from machineconfig.utils.path_extended import PathExtended
     console = Console()
     console.print(Panel("🚀 Secure File Downloader", title="[bold blue]Downloader[/bold blue]", border_style="blue"))
@@ -50,7 +50,17 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
         _task = progress.add_task("Decrypting... ", total=None)
         tmp_folder = PathExtended.tmpdir(prefix="tmp_unzip")
         try:
-            decrypted_path = PathExtended(decrypt_file_symmetric(file_path=url_obj, pwd=pwd))
+            try:
+                decrypted_path = PathExtended(decrypt_file_symmetric(file_path=url_obj, pwd=pwd))
+            except GpgCommandError as error:
+                console.print(
+                    Panel(
+                        f"URL: {url_obj}\n📂 Target folder: {folder_obj}\n\n{error}",
+                        title="[bold red]GPG Error[/bold red]",
+                        border_style="red",
+                    )
+                )
+                raise SystemExit(1) from None
             url_obj.delete(sure=True, verbose=False)
             res = decrypted_path.unzip(inplace=True, folder=tmp_folder)
             for x in res.glob("*"):
@@ -77,6 +87,7 @@ def main(
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console
     from rich.panel import Panel
+    from machineconfig.utils.io import GpgCommandError
     from machineconfig.utils.path_extended import PathExtended
     from machineconfig.scripts.python.helpers.helpers_cloud.helpers2 import parse_cloud_source_target
     console = Console()
@@ -120,18 +131,29 @@ def main(
         raise SystemExit(1)
     if cloud in source:
         console.print(Panel(f"📥 DOWNLOADING FROM CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}", title="[bold blue]Download[/bold blue]", border_style="blue", width=152))
-        PathExtended(target).from_cloud(
-            cloud=cloud,
-            remotepath=source.replace(cloud + ":", ""),
-            unzip=cloud_config_explicit["zip"],
-            decrypt=cloud_config_explicit["encrypt"],
-            pwd=cloud_config_explicit["pwd"],
-            overwrite=cloud_config_explicit["overwrite"],
-            rel2home=cloud_config_explicit["rel2home"],
-            os_specific=cloud_config_explicit["os_specific"],
-            root=cloud_config_explicit["root"],
-            strict=False,
-        )
+        try:
+            PathExtended(target).from_cloud(
+                cloud=cloud,
+                remotepath=source.replace(cloud + ":", ""),
+                unzip=cloud_config_explicit["zip"],
+                decrypt=cloud_config_explicit["encrypt"],
+                pwd=cloud_config_explicit["pwd"],
+                overwrite=cloud_config_explicit["overwrite"],
+                rel2home=cloud_config_explicit["rel2home"],
+                os_specific=cloud_config_explicit["os_specific"],
+                root=cloud_config_explicit["root"],
+                strict=False,
+            )
+        except GpgCommandError as error:
+            console.print(
+                Panel(
+                    f"☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}\n\n{error}",
+                    title="[bold red]GPG Error[/bold red]",
+                    border_style="red",
+                    width=152,
+                )
+            )
+            raise SystemExit(1) from None
         console.print(Panel("✅ Download completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
 
     elif cloud in target:

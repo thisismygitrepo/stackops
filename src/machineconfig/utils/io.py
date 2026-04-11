@@ -1,14 +1,89 @@
 
 from io import StringIO
-from typing import Any, Mapping, Union
 from pathlib import Path
-import json
-import pickle
+from typing import Any, Mapping, Union
 import configparser
+import json
+import os
+import pickle
+import shlex
 import subprocess
+import sys
 
 
 PathLike = Union[str, Path]
+
+
+class GpgCommandError(RuntimeError):
+    def __init__(
+        self,
+        *,
+        command: list[str],
+        returncode: int,
+        stdout: str,
+        stderr: str,
+        hint: str | None,
+    ) -> None:
+        self.command = tuple(command)
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+        self.hint = hint
+
+        details: list[str] = [
+            "GPG command failed.",
+            f"Command: {_format_command(command)}",
+            f"Exit code: {returncode}",
+            f"stderr:\n{_format_process_output(stderr)}",
+        ]
+        if stdout.strip() != "":
+            details.append(f"stdout:\n{_format_process_output(stdout)}")
+        if hint is not None:
+            details.append(f"Hint: {hint}")
+        super().__init__("\n\n".join(details))
+
+
+def _format_command(command: list[str]) -> str:
+    if os.name == "nt":
+        return subprocess.list2cmdline(command)
+    return shlex.join(command)
+
+
+def _format_process_output(output: str) -> str:
+    normalized = output.strip()
+    if normalized == "":
+        return "<empty>"
+    return normalized
+
+
+def _gpg_hint(stderr: str, pwd: str | None) -> str | None:
+    normalized = stderr.lower()
+    if pwd is None and "no secret key" in normalized:
+        return "No matching private key is available in the current GPG keyring. If this file was password-encrypted, rerun the command with --password so machineconfig uses loopback passphrase mode."
+    if pwd is None and (
+        "inappropriate ioctl for device" in normalized
+        or "no pinentry" in normalized
+        or "cannot open '/dev/tty'" in normalized
+        or "can't connect to the agent" in normalized
+    ):
+        return "GPG could not prompt for a passphrase in this terminal session. Ensure gpg-agent and pinentry are working, or rerun the command with --password if the file uses symmetric encryption."
+    if pwd is not None and ("bad session key" in normalized or "bad passphrase" in normalized):
+        return "The provided password was rejected by GPG. Verify --password and try again."
+    if pwd is not None and "no secret key" in normalized:
+        return "This file appears to require a private GPG key rather than the supplied password. Retry without --password if the file was encrypted for your keypair."
+    return None
+
+
+def build_gpg_environment() -> dict[str, str]:
+    env = dict(os.environ)
+    if env.get("GPG_TTY"):
+        return env
+    try:
+        if sys.stdin.isatty():
+            env["GPG_TTY"] = os.ttyname(sys.stdin.fileno())
+    except OSError:
+        return env
+    return env
 
 
 def _ensure_parent(path: PathLike) -> Path:
@@ -168,13 +243,26 @@ def _decrypted_gpg_path(path: Path) -> Path:
 
 
 def _run_gpg(command: list[str], pwd: str | None = None) -> None:
-    subprocess.run(
-        command,
-        check=True,
-        capture_output=True,
-        text=True,
-        input=None if pwd is None else f"{pwd}\n",
-    )
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            input=None if pwd is None else f"{pwd}\n",
+            env=build_gpg_environment(),
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError(f"GPG executable not found while running: {_format_command(command)}") from error
+
+    if completed.returncode != 0:
+        raise GpgCommandError(
+            command=command,
+            returncode=completed.returncode,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+            hint=_gpg_hint(stderr=completed.stderr, pwd=pwd),
+        )
 
 
 def encrypt_file_symmetric(file_path: PathLike, pwd: str) -> Path:

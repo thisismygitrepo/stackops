@@ -1733,7 +1733,6 @@ name = "machineconfig"
 version = "8.90"
 source = { editable = "." }
 dependencies = [
-    { name = "cryptography" },
     { name = "fire" },
     { name = "gitpython" },
     { name = "joblib" },
@@ -1824,7 +1823,6 @@ plot = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cryptography", specifier = ">=46.0.5" },
     { name = "fire", specifier = ">=0.7.1" },
     { name = "gitpython", specifier = ">=3.1.46" },
     { name = "joblib", specifier = ">=1.5.3" },
