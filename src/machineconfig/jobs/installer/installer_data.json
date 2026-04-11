@@ -1360,12 +1360,12 @@
         "amd64": {
           "windows": "poppler.py",
           "linux": "sudo nala install poppler-utils -y",
-          "darwin": "brew install --upgrade poppler"
+          "darwin": "brew install poppler"
         },
         "arm64": {
           "windows": "poppler.py",
           "linux": "sudo nala install poppler-utils -y",
-          "darwin": "brew install --upgrade poppler"
+          "darwin": "brew install poppler"
         }
       }
     },
