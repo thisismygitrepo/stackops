@@ -1,9 +1,21 @@
 from pathlib import Path
+import subprocess
 
 import pytest
 from typer.testing import CliRunner
 
+from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import DEFAULT_SEAPRATOR
 from machineconfig.scripts.python.helpers.helpers_devops import cli_self, cli_self_ai
+
+
+def _init_git_repo(repo_root: Path) -> None:
+    subprocess.run(
+        ["git", "init", "-q"],
+        cwd=repo_root,
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def test_self_help_shows_ai_only_for_developers(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -89,11 +101,28 @@ def test_update_installer_allows_overriding_default_sources_and_agent(tmp_path: 
     assert captured["output_path"] == str(custom_agents_dir.joinpath("layout.json"))
 
 
-def test_update_test_uses_embedded_defaults(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_update_test_uses_generated_repo_context(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     home_root = tmp_path.joinpath("home", "alex")
     repo_root = home_root.joinpath("code", "machineconfig")
     repo_root.mkdir(parents=True, exist_ok=True)
     repo_root.joinpath("pyproject.toml").write_text("[project]\nname = 'machineconfig'\n", encoding="utf-8")
+    repo_root.joinpath(".gitignore").write_text("ignored.py\nignored_dir/\n", encoding="utf-8")
+    repo_root.joinpath("pkg", "alpha.py").parent.mkdir(parents=True, exist_ok=True)
+    repo_root.joinpath("pkg", "alpha.py").write_text("alpha = 1\n", encoding="utf-8")
+    repo_root.joinpath("src", "keep.py").parent.mkdir(parents=True, exist_ok=True)
+    repo_root.joinpath("src", "keep.py").write_text("keep = 1\n", encoding="utf-8")
+    repo_root.joinpath("tests", "skip.py").parent.mkdir(parents=True, exist_ok=True)
+    repo_root.joinpath("tests", "skip.py").write_text("skip = True\n", encoding="utf-8")
+    repo_root.joinpath("src", "machineconfig", "tests", "skip_nested.py").parent.mkdir(parents=True, exist_ok=True)
+    repo_root.joinpath("src", "machineconfig", "tests", "skip_nested.py").write_text("skip_nested = True\n", encoding="utf-8")
+    repo_root.joinpath(".ai", "skip.py").parent.mkdir(parents=True, exist_ok=True)
+    repo_root.joinpath(".ai", "skip.py").write_text("skip_ai = True\n", encoding="utf-8")
+    repo_root.joinpath(".venv", "skip.py").parent.mkdir(parents=True, exist_ok=True)
+    repo_root.joinpath(".venv", "skip.py").write_text("skip_venv = True\n", encoding="utf-8")
+    repo_root.joinpath("ignored.py").write_text("ignored = True\n", encoding="utf-8")
+    repo_root.joinpath("ignored_dir", "skip.py").parent.mkdir(parents=True, exist_ok=True)
+    repo_root.joinpath("ignored_dir", "skip.py").write_text("ignored_dir = True\n", encoding="utf-8")
+    _init_git_repo(repo_root)
 
     captured: dict[str, object] = {}
 
@@ -107,12 +136,14 @@ def test_update_test_uses_embedded_defaults(tmp_path: Path, monkeypatch: pytest.
 
     job_name = "updateTests"
     agents_dir = repo_root.joinpath(".ai", "agents", job_name)
+    context_path = agents_dir.joinpath("context.md")
+    context_content = context_path.read_text(encoding="utf-8")
 
     assert captured["agent"] == "codex"
     assert captured["host"] == "local"
-    assert captured["context"] is None
-    assert captured["context_path"] == str(repo_root.joinpath(".ai", "todo"))
-    assert captured["separator"] == "    },\n    {"
+    assert captured["context"] == context_content
+    assert captured["context_path"] is None
+    assert captured["separator"] == DEFAULT_SEAPRATOR
     assert captured["agent_load"] == 10
     assert captured["prompt"] == cli_self_ai.UPDATE_TEST_PROMPT
     assert captured["prompt_path"] is None
@@ -121,3 +152,26 @@ def test_update_test_uses_embedded_defaults(tmp_path: Path, monkeypatch: pytest.
     assert captured["output_path"] == str(agents_dir.joinpath("layout.json"))
     assert captured["agents_dir"] == str(agents_dir)
     assert captured["interactive"] is False
+    expected_context_entries = ["pkg/alpha.py", "src/keep.py"]
+    assert context_content == DEFAULT_SEAPRATOR.join(expected_context_entries)
+    assert "alpha = 1" not in context_content
+    assert "keep = 1" not in context_content
+    assert "tests/skip.py" not in context_content
+    assert "src/machineconfig/tests/skip_nested.py" not in context_content
+    assert ".ai/skip.py" not in context_content
+    assert ".venv/skip.py" not in context_content
+    assert "ignored.py" not in context_content
+    assert "ignored_dir/skip.py" not in context_content
+
+
+def test_update_test_help_hides_generated_context_controls() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(cli_self_ai.get_app(), ["update-test", "--help"])
+
+    assert result.exit_code == 0
+    assert "Create an agents layout for writing tests from repo Python sources." in result.stdout
+    assert "Context as a direct string" not in result.stdout
+    assert "Context file or folder path" not in result.stdout
+    assert "Separator for context" not in result.stdout
+    assert ".ai/todo" not in result.stdout

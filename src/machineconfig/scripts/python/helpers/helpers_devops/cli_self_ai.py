@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
@@ -5,13 +6,14 @@ from typing import Annotated
 import typer
 
 from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
-from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
+from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai_context import build_repo_python_context
 
 
 DEFAULT_INSTALLER_JOB_NAME = "updateInstallerData"
 DEFAULT_TEST_JOB_NAME = "updateTests"
-DEFAULT_SEPARATOR = "    },\n    {"
+UPDATE_INSTALLER_SEPARATOR = "    },\n    {"
 UPDATE_INSTALLER_PROMPT = """for each of the bellow, please check if its github repo, then, do the following
 make sure that file name patter are up to date and as per the release page
 
@@ -46,6 +48,13 @@ class UpdateJobDefaults:
     prompt: str
 
 
+@dataclass(frozen=True)
+class ForcedContext:
+    content: str
+    output_path: Path
+    separator: str
+
+
 def get_developer_repo_root() -> Path:
     return Path.home().joinpath("code", "machineconfig")
 
@@ -75,8 +84,16 @@ def get_update_test_defaults(*, job_name: str) -> UpdateJobDefaults:
     repo_root = get_developer_repo_root()
     return _get_update_job_defaults(
         job_name=job_name,
-        context_path=repo_root.joinpath(".ai", "todo"),
+        context_path=repo_root.joinpath(".ai", "agents", job_name, "context.md"),
         prompt=UPDATE_TEST_PROMPT,
+    )
+
+
+def _build_update_test_forced_context(*, repo_root: Path, resolved_agents_dir: str) -> ForcedContext:
+    return ForcedContext(
+        content=build_repo_python_context(repo_root=repo_root, separator=DEFAULT_SEAPRATOR),
+        output_path=Path(resolved_agents_dir).joinpath("context.md"),
+        separator=DEFAULT_SEAPRATOR,
     )
 
 
@@ -139,7 +156,7 @@ def _run_update_job(
     host: HOST,
     context: str | None,
     context_path: str | None,
-    separator: str,
+    separator: str | None,
     agent_load: int,
     prompt: str | None,
     prompt_path: str | None,
@@ -149,11 +166,11 @@ def _run_update_job(
     output_path: str | None,
     agents_dir: str | None,
     interactive: bool,
+    forced_context_factory: Callable[[str], ForcedContext] | None = None,
 ) -> None:
     if not defaults.repo_root.joinpath("pyproject.toml").is_file():
         raise RuntimeError(f"Developer repo not found: {defaults.repo_root}")
 
-    resolved_context_path = _resolve_context_path(context=context, context_path=context_path, defaults=defaults)
     resolved_prompt = _resolve_prompt(
         prompt=prompt,
         prompt_path=prompt_path,
@@ -171,26 +188,42 @@ def _run_update_job(
         resolved_agents_dir=resolved_agents_dir,
         defaults=defaults,
     )
+    forced_context = None if forced_context_factory is None else forced_context_factory(resolved_agents_dir)
+    if forced_context is None:
+        if separator is None:
+            raise ValueError("separator is required when no forced context is provided")
+        resolved_context = context
+        resolved_context_path = _resolve_context_path(context=context, context_path=context_path, defaults=defaults)
+        resolved_separator = separator
+    else:
+        resolved_context = forced_context.content
+        resolved_context_path = None
+        resolved_separator = forced_context.separator
 
-    agents_create_impl(
-        agent=agent,
-        model=model,
-        agent_load=agent_load,
-        context=context,
-        context_path=resolved_context_path,
-        separator=separator,
-        prompt=resolved_prompt,
-        prompt_path=resolved_prompt_path,
-        prompt_name=prompt_name,
-        job_name=job_name,
-        join_prompt_and_context=join_prompt_and_context,
-        output_path=resolved_output_path,
-        agents_dir=resolved_agents_dir,
-        host=host,
-        reasoning_effort=reasoning_effort,
-        provider=provider,
-        interactive=interactive,
-    )
+    try:
+        agents_create_impl(
+            agent=agent,
+            model=model,
+            agent_load=agent_load,
+            context=resolved_context,
+            context_path=resolved_context_path,
+            separator=resolved_separator,
+            prompt=resolved_prompt,
+            prompt_path=resolved_prompt_path,
+            prompt_name=prompt_name,
+            job_name=job_name,
+            join_prompt_and_context=join_prompt_and_context,
+            output_path=resolved_output_path,
+            agents_dir=resolved_agents_dir,
+            host=host,
+            reasoning_effort=reasoning_effort,
+            provider=provider,
+            interactive=interactive,
+        )
+    finally:
+        if forced_context is not None:
+            forced_context.output_path.parent.mkdir(parents=True, exist_ok=True)
+            forced_context.output_path.write_text(forced_context.content, encoding="utf-8")
 
 
 def update_installer(
@@ -217,7 +250,7 @@ def update_installer(
     separator: Annotated[
         str,
         typer.Option("--separator", "-s", help="Separator for context. Supports escaped values like '\\n'."),
-    ] = DEFAULT_SEPARATOR,
+    ] = UPDATE_INSTALLER_SEPARATOR,
     agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of tasks per prompt.")] = 10,
     prompt: Annotated[str | None, typer.Option("--prompt", "-p", help="Prompt prefix as string.")] = None,
     prompt_path: Annotated[
@@ -278,22 +311,6 @@ def update_test(
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option("--provider", "-v", help="Provider to use (if the agent supports many).")] = None,
     host: Annotated[HOST, typer.Option("--host", "-h", help="Machine to run agents on.")] = "local",
-    context: Annotated[
-        str | None,
-        typer.Option("--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path."),
-    ] = None,
-    context_path: Annotated[
-        str | None,
-        typer.Option(
-            "--context-path",
-            "-C",
-            help="Context file or folder path. Defaults to .ai/todo when --context is omitted.",
-        ),
-    ] = None,
-    separator: Annotated[
-        str,
-        typer.Option("--separator", "-s", help="Separator for context. Supports escaped values like '\\n'."),
-    ] = DEFAULT_SEPARATOR,
     agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of tasks per prompt.")] = 10,
     prompt: Annotated[str | None, typer.Option("--prompt", "-p", help="Prompt prefix as string.")] = None,
     prompt_path: Annotated[
@@ -323,15 +340,16 @@ def update_test(
         typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters."),
     ] = False,
 ) -> None:
+    defaults = get_update_test_defaults(job_name=job_name)
     _run_update_job(
         agent=agent,
         model=model,
         reasoning_effort=reasoning_effort,
         provider=provider,
         host=host,
-        context=context,
-        context_path=context_path,
-        separator=separator,
+        context=None,
+        context_path=None,
+        separator=None,
         agent_load=agent_load,
         prompt=prompt,
         prompt_path=prompt_path,
@@ -341,7 +359,11 @@ def update_test(
         output_path=output_path,
         agents_dir=agents_dir,
         interactive=interactive,
-        defaults=get_update_test_defaults(job_name=job_name),
+        defaults=defaults,
+        forced_context_factory=lambda resolved_agents_dir: _build_update_test_forced_context(
+            repo_root=defaults.repo_root,
+            resolved_agents_dir=resolved_agents_dir,
+        ),
     )
 
 
@@ -356,7 +378,7 @@ def get_app() -> typer.Typer:
     cli_app.command(
         name="update-test",
         no_args_is_help=False,
-        help="🧪 <t> Create an agents layout for writing tests from .ai/todo.",
+        help="🧪 <t> Create an agents layout for writing tests from repo Python sources.",
     )(update_test)
     cli_app.command(name="t", no_args_is_help=False, hidden=True)(update_test)
     return cli_app
