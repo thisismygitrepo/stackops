@@ -11,7 +11,6 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
-from machineconfig.jobs.installer.linux_scripts import REDIS_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
@@ -47,7 +46,10 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         system_name = "Linux" if platform.system() == "Linux" else "macOS"
         console.print(f"🐧 Installing Redis on {system_name} using installation script...", style="bold")
         if platform.system() == "Linux":
-            program = get_path_reference_path(module=linux_scripts, path_reference=REDIS_PATH_REFERENCE).read_text(
+            program = get_path_reference_path(
+                module=linux_scripts,
+                path_reference=linux_scripts.REDIS_PATH_REFERENCE,
+            ).read_text(
                 encoding="utf-8"
             )
         else:  # Darwin/macOS

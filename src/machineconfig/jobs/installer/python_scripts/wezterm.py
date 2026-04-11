@@ -12,7 +12,6 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
-from machineconfig.jobs.installer.linux_scripts import WEZTERM_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
@@ -51,7 +50,10 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         )
 
         if platform.system() == "Linux":
-            program = get_path_reference_path(module=linux_scripts, path_reference=WEZTERM_PATH_REFERENCE).read_text(
+            program = get_path_reference_path(
+                module=linux_scripts,
+                path_reference=linux_scripts.WEZTERM_PATH_REFERENCE,
+            ).read_text(
                 encoding="utf-8"
             )
         else:  # Darwin/macOS

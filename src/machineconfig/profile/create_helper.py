@@ -3,7 +3,6 @@ from typing import Literal
 from pathlib import Path
 import shutil
 import machineconfig.scripts.nu as nu_scripts
-from machineconfig.scripts.nu import WRAP_MCFG_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.source_of_truth import LIBRARY_ROOT, CONFIG_ROOT
 
@@ -51,7 +50,10 @@ def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
             target_path = target.joinpath(relative_path)
             _copy_path(source=a_path, target=target_path, overwrite=True)
 
-        wrap_mcfg_source = get_path_reference_path(module=nu_scripts, path_reference=WRAP_MCFG_PATH_REFERENCE)
+        wrap_mcfg_source = get_path_reference_path(
+            module=nu_scripts,
+            path_reference=nu_scripts.WRAP_MCFG_PATH_REFERENCE,
+        )
         wrap_mcfg_target = CONFIG_ROOT.joinpath("scripts", "wrap_mcfg.nu")
 
         wrap_mcfg_target.parent.mkdir(parents=True, exist_ok=True)

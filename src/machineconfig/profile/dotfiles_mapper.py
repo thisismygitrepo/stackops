@@ -5,11 +5,13 @@ from typing import Literal, NotRequired, TypedDict
 import machineconfig.profile as profile_assets
 import yaml
 
-from machineconfig.profile import MAPPER_DOTFILES_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 
 
-LIBRARY_MAPPER_PATH = get_path_reference_path(module=profile_assets, path_reference=MAPPER_DOTFILES_PATH_REFERENCE)
+LIBRARY_MAPPER_PATH = get_path_reference_path(
+    module=profile_assets,
+    path_reference=profile_assets.MAPPER_DOTFILES_PATH_REFERENCE,
+)
 USER_MAPPER_PATH = Path.home().joinpath("dotfiles/machineconfig/mapper_dotfiles.yaml")
 DEFAULT_DOTFILE_MAPPER_HEADER = (
     "# User-defined config file mappings\n"

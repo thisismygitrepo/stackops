@@ -28,7 +28,6 @@ import platform
 import tomllib
 from joblib import Parallel, delayed
 import machineconfig.jobs.installer as installer_assets
-from machineconfig.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
 
 
 def check_latest():
@@ -114,7 +113,10 @@ def get_installed_cli_apps():
 
 def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
     res_raw: InstallerDataFiles = read_json(
-        get_path_reference_path(module=installer_assets, path_reference=INSTALLER_DATA_PATH_REFERENCE)
+        get_path_reference_path(
+            module=installer_assets,
+            path_reference=installer_assets.INSTALLER_DATA_PATH_REFERENCE,
+        )
     )
     res_all: list[InstallerData] = res_raw["installers"]
 

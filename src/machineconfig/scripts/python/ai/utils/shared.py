@@ -1,11 +1,13 @@
 from pathlib import Path
 import machineconfig.scripts.python.ai.solutions.copilot.instructions.python as copilot_instructions
 
-from machineconfig.scripts.python.ai.solutions.copilot.instructions.python import DEV_INSTRUCTIONS_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 
 def get_generic_instructions_path() -> Path:
-    path = get_path_reference_path(module=copilot_instructions, path_reference=DEV_INSTRUCTIONS_PATH_REFERENCE)
+    path = get_path_reference_path(
+        module=copilot_instructions,
+        path_reference=copilot_instructions.DEV_INSTRUCTIONS_PATH_REFERENCE,
+    )
     text = path.read_text(encoding="utf-8")
     import platform
     if platform.system().lower() == "windows":

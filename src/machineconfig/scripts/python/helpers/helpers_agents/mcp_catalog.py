@@ -15,7 +15,6 @@ from machineconfig.scripts.python.helpers.helpers_agents.mcp_types import (
 from machineconfig.utils.files.read import read_json
 from machineconfig.utils.path_reference import get_path_reference_path
 import machineconfig.jobs.agents.mcps as mcp_assets
-from machineconfig.jobs.agents.mcps import MCP_PATH_REFERENCE
 
 
 def parse_requested_mcp_names(raw_value: str) -> tuple[str, ...]:
@@ -45,7 +44,13 @@ def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
     return (
         {"scope": "private", "path": DOTFILES_MCFG_ROOT / "agents" / "mcps" / "mcp.json"},
         {"scope": "public", "path": CONFIG_ROOT / "agents" / "mcps" / "mcp.json"},
-        {"scope": "library", "path": get_path_reference_path(module=mcp_assets, path_reference=MCP_PATH_REFERENCE)},
+        {
+            "scope": "library",
+            "path": get_path_reference_path(
+                module=mcp_assets,
+                path_reference=mcp_assets.MCP_PATH_REFERENCE,
+            ),
+        },
     )
 
 

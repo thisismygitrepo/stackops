@@ -378,22 +378,28 @@ def _run_text_search(rga: bool, directory: str | None, search_term: str) -> None
     import machineconfig.scripts.python.helpers.helpers_seek.scripts_macos as macos_scripts
     import machineconfig.scripts.python.helpers.helpers_seek.scripts_windows as windows_scripts
 
-    from machineconfig.scripts.python.helpers.helpers_seek.scripts_linux import FZFG_PATH_REFERENCE as LINUX_FZFG_PATH_REFERENCE
-    from machineconfig.scripts.python.helpers.helpers_seek.scripts_macos import FZFG_PATH_REFERENCE as MACOS_FZFG_PATH_REFERENCE
-    from machineconfig.scripts.python.helpers.helpers_seek.scripts_windows import FZFG_PATH_REFERENCE as WINDOWS_FZFG_PATH_REFERENCE
     from machineconfig.utils.path_reference import get_path_reference_path
     platform_name = platform.system()
 
     if platform_name == "Linux":
-        script = get_path_reference_path(module=linux_scripts, path_reference=LINUX_FZFG_PATH_REFERENCE).read_text(
+        script = get_path_reference_path(
+            module=linux_scripts,
+            path_reference=linux_scripts.FZFG_PATH_REFERENCE,
+        ).read_text(
             encoding="utf-8"
         )
     elif platform_name == "Windows":
-        script = get_path_reference_path(module=windows_scripts, path_reference=WINDOWS_FZFG_PATH_REFERENCE).read_text(
+        script = get_path_reference_path(
+            module=windows_scripts,
+            path_reference=windows_scripts.FZFG_PATH_REFERENCE,
+        ).read_text(
             encoding="utf-8"
         )
     elif platform_name == "Darwin":
-        script = get_path_reference_path(module=macos_scripts, path_reference=MACOS_FZFG_PATH_REFERENCE).read_text(
+        script = get_path_reference_path(
+            module=macos_scripts,
+            path_reference=macos_scripts.FZFG_PATH_REFERENCE,
+        ).read_text(
             encoding="utf-8"
         )
     else:

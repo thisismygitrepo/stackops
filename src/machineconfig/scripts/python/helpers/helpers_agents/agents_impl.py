@@ -21,7 +21,6 @@ from machineconfig.scripts.python.helpers.helpers_agents.agents_rich_output impo
 )
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 import machineconfig.scripts.python.helpers.helpers_agents.templates as template_assets
-from machineconfig.scripts.python.helpers.helpers_agents.templates import PROMPT_PATH_REFERENCE, TEMPLATE_PS1_PATH_REFERENCE, TEMPLATE_SH_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 
 
@@ -229,9 +228,15 @@ def make_agents_command_template() -> None:
     from platform import system
 
     if system() == "Linux" or system() == "Darwin":
-        template_path = get_path_reference_path(module=template_assets, path_reference=TEMPLATE_SH_PATH_REFERENCE)
+        template_path = get_path_reference_path(
+            module=template_assets,
+            path_reference=template_assets.TEMPLATE_SH_PATH_REFERENCE,
+        )
     elif system() == "Windows":
-        template_path = get_path_reference_path(module=template_assets, path_reference=TEMPLATE_PS1_PATH_REFERENCE)
+        template_path = get_path_reference_path(
+            module=template_assets,
+            path_reference=template_assets.TEMPLATE_PS1_PATH_REFERENCE,
+        )
     else:
         raise ValueError(f"Unsupported OS: {system()}")
 
@@ -250,7 +255,10 @@ def make_agents_command_template() -> None:
         pattern=".py", repo=str(repo_root), strategy="name", output_path=str(save_path_root / "files.md"), split_every=None, split_to=None
     )
 
-    prompt_path = get_path_reference_path(module=template_assets, path_reference=PROMPT_PATH_REFERENCE)
+    prompt_path = get_path_reference_path(
+        module=template_assets,
+        path_reference=template_assets.PROMPT_PATH_REFERENCE,
+    )
     save_path_root.joinpath("prompt.txt").write_text(prompt_path.read_text(encoding="utf-8"), encoding="utf-8")
     print(f"Prompt template written to {save_path_root}")
 

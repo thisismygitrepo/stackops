@@ -6,12 +6,6 @@ from typing import Annotated, Literal
 
 import typer
 import machineconfig.scripts.python.helpers.helpers_devops.themes as theme_assets
-from machineconfig.scripts.python.helpers.helpers_devops.themes import (
-    CHOOSE_PWSH_THEME_PATH_REFERENCE,
-    CHOOSE_STARSHIP_THEME_PS1_PATH_REFERENCE,
-    CHOOSE_STARSHIP_THEME_SH_PATH_REFERENCE,
-    CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE,
-)
 from machineconfig.utils.path_reference import get_path_reference_path
 
 
@@ -38,21 +32,30 @@ def pwsh_theme() -> None:
     """🔗 Select powershell prompt theme."""
     from machineconfig.utils.code import exit_then_run_shell_file
 
-    script_path = get_path_reference_path(module=theme_assets, path_reference=CHOOSE_PWSH_THEME_PATH_REFERENCE)
+    script_path = get_path_reference_path(
+        module=theme_assets,
+        path_reference=theme_assets.CHOOSE_PWSH_THEME_PATH_REFERENCE,
+    )
     exit_then_run_shell_file(script_path=str(script_path), strict=False)
 
 
 def starship_theme() -> None:
     """🔗 Select starship prompt theme."""
     if platform.system() == "Windows":
-        script_path = get_path_reference_path(module=theme_assets, path_reference=CHOOSE_STARSHIP_THEME_PS1_PATH_REFERENCE)
+        script_path = get_path_reference_path(
+            module=theme_assets,
+            path_reference=theme_assets.CHOOSE_STARSHIP_THEME_PS1_PATH_REFERENCE,
+        )
         try:
             subprocess.run(["pwsh", "-File", str(script_path)], check=True)
         except FileNotFoundError:
             subprocess.run(["powershell", "-File", str(script_path)], check=True)
         return
 
-    script_path = get_path_reference_path(module=theme_assets, path_reference=CHOOSE_STARSHIP_THEME_SH_PATH_REFERENCE)
+    script_path = get_path_reference_path(
+        module=theme_assets,
+        path_reference=theme_assets.CHOOSE_STARSHIP_THEME_SH_PATH_REFERENCE,
+    )
     os.chmod(script_path, 0o755)
     subprocess.run(["bash", str(script_path)], check=True)
 
@@ -90,7 +93,10 @@ def configure_windows_terminal_theme() -> None:
         typer.echo("Error: Windows Terminal theme selection is only supported on Windows systems.", err=True)
         raise typer.Exit(code=1)
 
-    script_path = get_path_reference_path(module=theme_assets, path_reference=CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE)
+    script_path = get_path_reference_path(
+        module=theme_assets,
+        path_reference=theme_assets.CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE,
+    )
     try:
         subprocess.run(["pwsh", "-File", str(script_path)], check=True)
     except FileNotFoundError:

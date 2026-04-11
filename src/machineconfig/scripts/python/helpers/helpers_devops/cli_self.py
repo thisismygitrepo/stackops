@@ -6,9 +6,6 @@ import machineconfig.settings.shells.bash as bash_shell_assets
 import machineconfig.settings.shells.pwsh as pwsh_shell_assets
 import machineconfig.settings.shells.zsh as zsh_shell_assets
 from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
-from machineconfig.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
-from machineconfig.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
-from machineconfig.settings.shells.zsh import INIT_PATH_REFERENCE as ZSH_INIT_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 
 
@@ -39,21 +36,23 @@ def init(
         match which:
             case "init":
                 if platform.system() == "Darwin":
-                    init_path = get_path_reference_path(module=zsh_shell_assets, path_reference=ZSH_INIT_PATH_REFERENCE)
+                    init_path = get_path_reference_path(
+                        module=zsh_shell_assets,
+                        path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,
+                    )
                 else:
-                    init_path = get_path_reference_path(module=bash_shell_assets, path_reference=BASH_INIT_PATH_REFERENCE)
+                    init_path = get_path_reference_path(
+                        module=bash_shell_assets,
+                        path_reference=bash_shell_assets.INIT_PATH_REFERENCE,
+                    )
                 script = init_path.read_text(encoding="utf-8")
             case "ia":
                 import machineconfig.setup_linux.web_shortcuts as module
-                from machineconfig.setup_linux.web_shortcuts import INTERACTIVE_PATH_REFERENCE
-
-                script_path = get_path_reference_path(module=module, path_reference=INTERACTIVE_PATH_REFERENCE)
+                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case "live":
                 import machineconfig.setup_linux.web_shortcuts as module
-                from machineconfig.setup_linux.web_shortcuts import LIVE_FROM_GITHUB_PATH_REFERENCE
-
-                script_path = get_path_reference_path(module=module, path_reference=LIVE_FROM_GITHUB_PATH_REFERENCE)
+                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case _:
                 typer.echo("Unsupported shell script for Linux.")
@@ -62,19 +61,18 @@ def init(
     elif platform.system() == "Windows":
         match which:
             case "init":
-                init_path = get_path_reference_path(module=pwsh_shell_assets, path_reference=PWSH_INIT_PATH_REFERENCE)
+                init_path = get_path_reference_path(
+                    module=pwsh_shell_assets,
+                    path_reference=pwsh_shell_assets.INIT_PATH_REFERENCE,
+                )
                 script = init_path.read_text(encoding="utf-8")
             case "ia":
                 import machineconfig.setup_windows.web_shortcuts as module
-                from machineconfig.setup_windows.web_shortcuts import INTERACTIVE_PATH_REFERENCE
-
-                script_path = get_path_reference_path(module=module, path_reference=INTERACTIVE_PATH_REFERENCE)
+                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case "live":
                 import machineconfig.setup_windows.web_shortcuts as module
-                from machineconfig.setup_windows.web_shortcuts import LIVE_FROM_GITHUB_PATH_REFERENCE
-
-                script_path = get_path_reference_path(module=module, path_reference=LIVE_FROM_GITHUB_PATH_REFERENCE)
+                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
                 script = script_path.read_text(encoding="utf-8")
             case _:
                 typer.echo("Unsupported shell script for Windows.")

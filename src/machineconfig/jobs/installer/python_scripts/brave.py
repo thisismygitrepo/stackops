@@ -11,7 +11,6 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     
 )
 import machineconfig.jobs.installer.linux_scripts as linux_scripts
-from machineconfig.jobs.installer.linux_scripts import BRAVE_PATH_REFERENCE
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 from machineconfig.utils.path_reference import get_path_reference_path
 
@@ -42,7 +41,10 @@ winget install --no-upgrade --name "Brave"                        --Id "Brave.Br
         console.print(f"🐧 Installing Brave Browser on {system_name}...", style="bold")
 
         if platform.system() == "Linux":
-            program = get_path_reference_path(module=linux_scripts, path_reference=BRAVE_PATH_REFERENCE).read_text(encoding="utf-8")
+            program = get_path_reference_path(
+                module=linux_scripts,
+                path_reference=linux_scripts.BRAVE_PATH_REFERENCE,
+            ).read_text(encoding="utf-8")
         else:  # Darwin/macOS
             program = "brew install --cask brave-browser"
     else:

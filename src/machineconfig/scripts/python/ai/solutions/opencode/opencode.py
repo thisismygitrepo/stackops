@@ -3,7 +3,6 @@ from pathlib import Path
 
 import machineconfig.scripts.python.ai.solutions.opencode as opencode_assets
 from machineconfig.scripts.python.ai.utils.shared import get_generic_instructions_path
-from machineconfig.scripts.python.ai.solutions.opencode import OPENCODE_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 
 
@@ -23,7 +22,10 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
 
     if add_private_config:
         opencode_config = repo_root.joinpath(".opencode/opencode.jsonc")
-        library_config_path = get_path_reference_path(module=opencode_assets, path_reference=OPENCODE_PATH_REFERENCE)
+        library_config_path = get_path_reference_path(
+            module=opencode_assets,
+            path_reference=opencode_assets.OPENCODE_PATH_REFERENCE,
+        )
         # copy the library config to the repo
         opencode_config.parent.mkdir(parents=True, exist_ok=True)
         opencode_config.write_text(data=library_config_path.read_text(encoding="utf-8"), encoding="utf-8")

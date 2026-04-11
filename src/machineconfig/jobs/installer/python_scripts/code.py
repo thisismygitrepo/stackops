@@ -10,7 +10,6 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
-from machineconfig.jobs.installer.linux_scripts import VSCODE_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
@@ -30,7 +29,10 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     if platform.system() == "Linux":
         console.print("🐧 Installing VS Code on Linux using official script...", style="bold")
 
-        install_script = get_path_reference_path(module=linux_scripts, path_reference=VSCODE_PATH_REFERENCE).read_text(
+        install_script = get_path_reference_path(
+            module=linux_scripts,
+            path_reference=linux_scripts.VSCODE_PATH_REFERENCE,
+        ).read_text(
             encoding="utf-8"
         )
     elif platform.system() == "Darwin":

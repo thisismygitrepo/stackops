@@ -6,7 +6,6 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
-from machineconfig.jobs.installer.linux_scripts import CLOUDFLARE_WARP_CLI_PATH_REFERENCE
 from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
@@ -19,7 +18,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> st
     elif system == "Linux":
         program = get_path_reference_path(
             module=linux_scripts,
-            path_reference=CLOUDFLARE_WARP_CLI_PATH_REFERENCE,
+            path_reference=linux_scripts.CLOUDFLARE_WARP_CLI_PATH_REFERENCE,
         ).read_text(encoding="utf-8")
     elif system == "Darwin":
         program = "brew install --cask cloudflare-warp"

@@ -13,7 +13,6 @@ from rich.console import Console
 from rich.panel import Panel
 
 import machineconfig.jobs.installer.powershell_scripts as powershell_scripts
-from machineconfig.jobs.installer.powershell_scripts import INSTALL_FONTS_PATH_REFERENCE
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.installer_utils.installer_class import Installer
@@ -143,7 +142,7 @@ def install_nerd_fonts() -> None:
 
     raw_content = get_path_reference_path(
         module=powershell_scripts,
-        path_reference=INSTALL_FONTS_PATH_REFERENCE,
+        path_reference=powershell_scripts.INSTALL_FONTS_PATH_REFERENCE,
     ).read_text(encoding="utf-8").replace(r".\fonts-to-be-installed", str(folder))
     # PowerShell 5.1 can choke on certain unicode chars in some locales; keep ASCII only.
     content = "".join(ch for ch in raw_content if ord(ch) < 128)
