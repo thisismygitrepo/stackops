@@ -118,6 +118,8 @@ brew update
 
 echo "📥 Installing Docker CLI packages..."
 brew install docker docker-buildx docker-compose
+brew install colima
+colima start
 
 echo "✅ Docker installation completed"
 echo "ℹ️ This installs the Docker CLI only. You still need a reachable Docker daemon, such as a remote host or a separate local runtime."
