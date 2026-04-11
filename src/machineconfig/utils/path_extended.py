@@ -801,7 +801,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         cloud: str,
         remotepath: OPLike = None,
         zip: bool = False,
-        encrypt: bool = False,  # pylint: disable=W0621, W0622
+        encrypt: bool = False,
         key: bytes | None = None,
         pwd: str | None = None,
         rel2home: bool = False,

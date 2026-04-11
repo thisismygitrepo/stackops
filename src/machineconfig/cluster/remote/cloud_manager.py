@@ -6,20 +6,22 @@ import random
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 from rich.console import Console
 
-from machineconfig.utils.io import save_json, read_ini
-from machineconfig.utils.files.read import read_json
-from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 from machineconfig.cluster.remote.models import JOB_STATUS, LogEntry
+from machineconfig.utils import rclone as rclone_utils
+from machineconfig.utils.files.read import read_json
+from machineconfig.utils.io import read_ini, save_json
+from machineconfig.utils.source_of_truth import DEFAULTS_PATH
 
 
 LOCK_EXPIRY_SECONDS = 3600
 SERVER_INTERVAL_SECONDS = 300
 NUM_CLAIM_CHECKS = 3
 INTER_CHECK_INTERVAL_SECONDS = 15
+RCLONE_TRANSFERS: Final[int] = 10
 
 
 def _format_table_markdown(data: list[dict[str, object]]) -> str:
@@ -294,27 +296,58 @@ def _prepare_servers_report(workers_root: Path) -> list[dict[str, object]]:
 
 
 def _sync_from_cloud(cloud: str, path: Path) -> None:
-    import subprocess
+    path.parent.mkdir(parents=True, exist_ok=True)
     rel = _rel2home(path)
-    subprocess.run(["rclone", "copy", f"{cloud}:{rel}", str(path.parent)], capture_output=True, check=False)
+    try:
+        rclone_utils.copyto(
+            in_path=f"{cloud}:{rel}",
+            out_path=str(path),
+            transfers=RCLONE_TRANSFERS,
+            show_command=False,
+            show_progress=False,
+        )
+    except rclone_utils.RcloneCommandError as error:
+        if not rclone_utils.is_missing_remote_path_error(error):
+            raise
 
 
 def _sync_to_cloud(cloud: str, path: Path) -> None:
-    import subprocess
     rel = _rel2home(path)
-    subprocess.run(["rclone", "copy", str(path), f"{cloud}:{Path(rel).parent}"], capture_output=True, check=False)
+    rclone_utils.copyto(
+        in_path=str(path),
+        out_path=f"{cloud}:{rel}",
+        transfers=RCLONE_TRANSFERS,
+        show_command=False,
+        show_progress=False,
+    )
 
 
 def _sync_dir_from_cloud(cloud: str, directory: Path) -> None:
-    import subprocess
     rel = _rel2home(directory)
-    subprocess.run(["rclone", "sync", f"{cloud}:{rel}", str(directory)], capture_output=True, check=False)
+    try:
+        rclone_utils.sync(
+            source=f"{cloud}:{rel}",
+            target=str(directory),
+            transfers=RCLONE_TRANSFERS,
+            delete_during=False,
+            show_command=False,
+            show_progress=False,
+        )
+    except rclone_utils.RcloneCommandError as error:
+        if not rclone_utils.is_missing_remote_path_error(error):
+            raise
 
 
 def _sync_dir_to_cloud(cloud: str, directory: Path) -> None:
-    import subprocess
     rel = _rel2home(directory)
-    subprocess.run(["rclone", "sync", str(directory), f"{cloud}:{rel}"], capture_output=True, check=False)
+    rclone_utils.sync(
+        source=str(directory),
+        target=f"{cloud}:{rel}",
+        transfers=RCLONE_TRANSFERS,
+        delete_during=False,
+        show_command=False,
+        show_progress=False,
+    )
 
 
 def _rel2home(path: Path) -> str:
