@@ -5,7 +5,7 @@ from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai import upda
 
 
 def get_app() -> typer.Typer:
-    cli_app = typer.Typer(help="🤖 <a> Developer AI workflows.", no_args_is_help=True, add_help_option=True, add_completion=False)
+    cli_app = typer.Typer(help="🤖 <w> Developer AI workflows.", no_args_is_help=True, add_help_option=True, add_completion=False)
     cli_app.command(
         name="update-installer",
         no_args_is_help=False,

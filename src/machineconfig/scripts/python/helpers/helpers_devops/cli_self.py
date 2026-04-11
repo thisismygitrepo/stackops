@@ -323,7 +323,7 @@ def get_app() -> typer.Typer:
         )
         cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI graph assets.")
         cli_app.add_typer(cli_self_assets.get_app(), name="ba", help="Regenerate repo-local CLI graph assets.", hidden=True)
-        cli_app.add_typer(cli_self_ai_app.get_app(), name="ai", help="🤖 <a> Developer AI workflows.")
-        cli_app.add_typer(cli_self_ai_app.get_app(), name="a", help="Developer AI workflows.", hidden=True)
+        cli_app.add_typer(cli_self_ai_app.get_app(), name="workflows", help="🤖 <w> Developer AI workflows.")
+        cli_app.add_typer(cli_self_ai_app.get_app(), name="w", help="Developer AI workflows.", hidden=True)
 
     return cli_app

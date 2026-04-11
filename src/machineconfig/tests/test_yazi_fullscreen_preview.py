@@ -5,6 +5,19 @@ import pytest
 from machineconfig.settings.yazi.scripts import fullscreen_preview
 
 
+def test_describe_command_includes_action_tool_and_command() -> None:
+    description = fullscreen_preview.describe_command(
+        action="Display preview image",
+        command=["viu", "/tmp/example.png"],
+    )
+
+    assert description == (
+        "[yazi preview] action: Display preview image\n"
+        "[yazi preview] tool: viu\n"
+        "[yazi preview] command: viu /tmp/example.png\n"
+    )
+
+
 def test_build_pdf_render_command_uses_pdftoppm(tmp_path: Path) -> None:
     target_path = tmp_path.joinpath("example.pdf")
     target_path.write_bytes(b"%PDF-1.4\n")
@@ -41,6 +54,11 @@ def test_build_command_uses_viu_for_images(tmp_path: Path) -> None:
     assert command == ["viu", str(target_path)]
 
 
+def test_should_wait_for_return_only_for_viu() -> None:
+    assert fullscreen_preview.should_wait_for_return(["viu", "/tmp/example.png"]) is True
+    assert fullscreen_preview.should_wait_for_return(["bat", "/tmp/example.txt"]) is False
+
+
 def test_preview_target_routes_pdf_to_pdf_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     target_path = tmp_path.joinpath("example.pdf")
     target_path.write_bytes(b"%PDF-1.4\n")
@@ -64,10 +82,11 @@ def test_preview_target_routes_pdf_to_pdf_preview(tmp_path: Path, monkeypatch: p
 def test_preview_target_keeps_standard_mode_behavior_for_text(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     target_path = tmp_path.joinpath("example.txt")
     target_path.write_text("hello\n", encoding="utf-8")
-    captured: dict[str, list[str]] = {}
+    captured: dict[str, object] = {}
 
-    def fake_run_command(*, command: fullscreen_preview.Command) -> int:
+    def fake_run_command(*, command: fullscreen_preview.Command, action: str) -> int:
         captured["command"] = command
+        captured["action"] = action
         return 0
 
     monkeypatch.setattr(fullscreen_preview, "run_command", fake_run_command)
@@ -87,3 +106,4 @@ def test_preview_target_keeps_standard_mode_behavior_for_text(tmp_path: Path, mo
         "88",
         str(target_path),
     ]
+    assert captured["action"] == "Preview target file"

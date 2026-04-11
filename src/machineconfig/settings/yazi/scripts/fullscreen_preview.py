@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 from pathlib import Path
 import platform
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Final
+from typing import Callable, Final, cast
 
 type Command = list[str]
 
@@ -163,18 +164,82 @@ def build_command(target_path: Path, terminal_columns: int) -> Command:
             ]
 
 
-def run_command(command: Sequence[str]) -> int:
+def format_command(command: Sequence[str]) -> str:
+    tokens = list(command)
+    if platform.system().lower() == "windows":
+        return subprocess.list2cmdline(tokens)
+    return shlex.join(tokens)
+
+
+def describe_command(action: str, command: Sequence[str]) -> str:
+    tool_name = Path(command[0]).name
+    return (
+        f"""[yazi preview] action: {action}\n"""
+        f"""[yazi preview] tool: {tool_name}\n"""
+        f"""[yazi preview] command: {format_command(command)}\n"""
+    )
+
+
+def emit_command_description(action: str, command: Sequence[str]) -> None:
+    sys.stderr.write(describe_command(action=action, command=command))
+    sys.stderr.flush()
+
+
+def should_wait_for_return(command: Sequence[str]) -> bool:
+    return Path(command[0]).name.lower() == "viu"
+
+
+def read_exit_key() -> str:
+    if platform.system().lower() == "windows":
+        import msvcrt
+
+        getch = cast(Callable[[], bytes], getattr(msvcrt, "getch"))
+        pressed_key = getch()
+        if pressed_key in {b"\x00", b"\xe0"}:
+            _ = getch()
+        return pressed_key.decode("latin-1")
+
+    import termios
+    import tty
+
+    stdin_file_descriptor = sys.stdin.fileno()
+    previous_terminal_state = termios.tcgetattr(stdin_file_descriptor)
+    try:
+        tty.setraw(stdin_file_descriptor)
+        return sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(stdin_file_descriptor, termios.TCSADRAIN, previous_terminal_state)
+
+
+def wait_for_return_to_yazi() -> None:
+    if not sys.stdin.isatty():
+        return
+    sys.stderr.write("\n[yazi preview] press q or Esc to return to Yazi\n")
+    sys.stderr.flush()
+    while True:
+        pressed_key = read_exit_key()
+        if pressed_key.lower() == "q" or pressed_key == "\x1b":
+            break
+
+
+def run_command(command: Sequence[str], action: str) -> int:
+    emit_command_description(action=action, command=command)
     completed_process = subprocess.run(list(command), check=False)
+    if completed_process.returncode == 0 and should_wait_for_return(command):
+        wait_for_return_to_yazi()
     return completed_process.returncode
 
 
 def run_rendered_image_preview(render_command: Sequence[str], rendered_image_path: Path) -> int:
-    render_exit_code = run_command(command=render_command)
+    render_exit_code = run_command(command=render_command, action="Render preview image")
     if render_exit_code != 0:
         return render_exit_code
     if not rendered_image_path.is_file():
         raise FileNotFoundError(f"Expected rendered preview image at {rendered_image_path}")
-    return run_command(command=build_image_command(target_path=rendered_image_path))
+    return run_command(
+        command=build_image_command(target_path=rendered_image_path),
+        action="Display preview image",
+    )
 
 
 def run_pdf_preview(target_path: Path) -> int:
@@ -204,7 +269,10 @@ def preview_target(target_path: Path, terminal_columns: int) -> int:
         return run_pdf_preview(target_path=target_path)
     if suffix == SVG_SUFFIX:
         return run_svg_preview(target_path=target_path)
-    return run_command(command=build_command(target_path=target_path, terminal_columns=terminal_columns))
+    return run_command(
+        command=build_command(target_path=target_path, terminal_columns=terminal_columns),
+        action="Preview target file",
+    )
 
 
 def main(arguments: Sequence[str]) -> int:
