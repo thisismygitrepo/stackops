@@ -6,6 +6,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.agents_create_artifacts
     CreateContextDirectoryEntry,
     PromptSourceKind,
 )
+from machineconfig.scripts.python.helpers.helpers_agents.agents_rich_output import show_chunking_panel
 from machineconfig.scripts.python.helpers.helpers_agents.agents_run_context import resolve_named_prompts_yaml_entry
 
 
@@ -16,12 +17,24 @@ def _split_and_chunk_prompts(raw_material: str, separator: str, tasks_per_prompt
     if tasks_per_prompt <= 0:
         raise ValueError("--agent-load must be a positive integer")
     if tasks_per_prompt >= len(prompts):
-        print("No need to chunk prompts, as tasks_per_prompt >= total prompts.", f"({tasks_per_prompt} >= {len(prompts)})")
+        show_chunking_panel(
+            subject="prompts",
+            total_items=len(prompts),
+            tasks_per_prompt=tasks_per_prompt,
+            generated_agents=len(prompts),
+            was_chunked=False,
+        )
         return prompts
-    print(f"Chunking {len(prompts)} prompts into groups of {tasks_per_prompt} rows/tasks each.")
     grouped: list[str] = []
     for idx in range(0, len(prompts), tasks_per_prompt):
         grouped.append(separator.join(prompts[idx : idx + tasks_per_prompt]))
+    show_chunking_panel(
+        subject="prompts",
+        total_items=len(prompts),
+        tasks_per_prompt=tasks_per_prompt,
+        generated_agents=len(grouped),
+        was_chunked=True,
+    )
     return grouped
 
 
@@ -148,14 +161,26 @@ def resolve_context_input(
     if agent_load <= 0:
         raise ValueError("--agent-load must be a positive integer")
     if agent_load >= len(non_empty_materials):
-        print("No need to chunk prompts, as tasks_per_prompt >= total prompts.", f"({agent_load} >= {len(non_empty_materials)})")
+        show_chunking_panel(
+            subject="directory files",
+            total_items=len(non_empty_materials),
+            tasks_per_prompt=agent_load,
+            generated_agents=len(non_empty_materials),
+            was_chunked=False,
+        )
         prompt_materials = non_empty_materials
     else:
-        print(f"Chunking {len(non_empty_materials)} directory files into groups of {agent_load} rows/tasks each.")
         prompt_materials = [
             separator.join(non_empty_materials[idx : idx + agent_load])
             for idx in range(0, len(non_empty_materials), agent_load)
         ]
+        show_chunking_panel(
+            subject="directory files",
+            total_items=len(non_empty_materials),
+            tasks_per_prompt=agent_load,
+            generated_agents=len(prompt_materials),
+            was_chunked=True,
+        )
     return ResolvedContextInput(
         prompt_materials=prompt_materials,
         source_kind="directory_path",

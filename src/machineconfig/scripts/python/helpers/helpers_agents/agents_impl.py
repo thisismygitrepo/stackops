@@ -14,6 +14,11 @@ from machineconfig.scripts.python.helpers.helpers_agents.agents_create_inputs im
     resolve_prompt_input,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
+from machineconfig.scripts.python.helpers.helpers_agents.agents_rich_output import (
+    show_agents_create_overview,
+    show_created_artifacts_panel,
+    show_generated_agents_table,
+)
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -63,7 +68,11 @@ def agents_create(
             agents_dir=agents_dir,
         )
         return
-    from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_help_launch import prep_agent_launch, get_agents_launch_layout
+    from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_help_launch import (
+        get_agents_launch_layout,
+        get_prompt_directories,
+        prep_agent_launch,
+    )
     from machineconfig.utils.accessories import get_repo_root
     import json
 
@@ -80,8 +89,6 @@ def agents_create(
         elif provider != "openai":
             raise ValueError("Codex agent only works with openai provider.")
 
-    print(f"Operating @ {repo_root}")
-
     agents_dir_obj, job_name_resolved = resolve_agents_output_dir(
         repo_root=repo_root,
         agents_dir=agents_dir,
@@ -90,6 +97,19 @@ def agents_create(
     del job_name
     cleanup_existing_agents_dir = agents_dir is not None and agents_dir_obj.exists()
     del agents_dir
+
+    show_agents_create_overview(
+        repo_root=repo_root,
+        agents_dir=agents_dir_obj,
+        job_name=job_name_resolved,
+        agent=agent,
+        host=host,
+        provider=provider,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        agent_load=agent_load,
+        join_prompt_and_context=join_prompt_and_context,
+    )
 
     prompt_input = resolve_prompt_input(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
     context_input = resolve_context_input(
@@ -119,6 +139,8 @@ def agents_create(
         provider=provider,
         job_name=job_name_resolved,
     )
+    prompt_directories = get_prompt_directories(prompt_root=agents_dir_obj / "prompts")
+    show_generated_agents_table(repo_root=repo_root, prompt_dirs=prompt_directories)
     layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved)
 
     layout_output_path = Path(output_path) if output_path is not None else agents_dir_obj / "layout.json"
@@ -150,10 +172,14 @@ def agents_create(
         job_name=job_name_resolved,
         join_prompt_and_context=join_prompt_and_context,
     )
-    print(f"Created agents in {agents_dir_obj}")
-    print(f"Created layout in {layout_output_path}")
-    print(f"Stored create inputs in {create_artifacts.artifacts_dir}")
-    print(f"Stored recreate script in {create_artifacts.recreate_script_path}")
+    show_created_artifacts_panel(
+        repo_root=repo_root,
+        agents_dir=agents_dir_obj,
+        layout_output_path=layout_output_path.resolve(),
+        artifacts_dir=create_artifacts.artifacts_dir,
+        recreate_script_path=create_artifacts.recreate_script_path,
+        agent_count=len(prompt_directories),
+    )
 
 
 def collect(agent_dir: str, output_path: str, separator: str, pattern: str | None) -> None:

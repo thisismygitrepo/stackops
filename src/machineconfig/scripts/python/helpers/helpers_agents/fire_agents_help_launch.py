@@ -213,17 +213,9 @@ echo "---------END OF AGENT OUTPUT---------"
 
 
 def get_agents_launch_layout(session_root: Path, *, job_name: str) -> LayoutsFile:
+    prompt_directories = get_prompt_directories(prompt_root=session_root / "prompts")
     tab_config: list[TabConfig] = []
-    prompt_root = session_root / "prompts"
-    all_dirs_under_prompts = [d for d in prompt_root.iterdir() if d.is_dir()]
-
-    import re
-
-    all_dirs_under_prompts = sorted(
-        all_dirs_under_prompts, key=lambda path: [int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", path.name)]
-    )
-    print(all_dirs_under_prompts)
-    for a_prompt_dir in all_dirs_under_prompts:
+    for a_prompt_dir in prompt_directories:
         idx = a_prompt_dir.name.split("_")[-1]  # e.g., agent_0 -> 0
         agent_cmd_path = a_prompt_dir / AGENT_NAME_FORMATTER.format(idx=idx)
         fire_cmd = f"bash {shlex.quote(str(agent_cmd_path))}"
@@ -231,3 +223,13 @@ def get_agents_launch_layout(session_root: Path, *, job_name: str) -> LayoutsFil
     layout = LayoutConfig(layoutName=job_name, layoutTabs=tab_config)
     layouts_file: LayoutsFile = LayoutsFile(version="1.0", layouts=[layout])
     return layouts_file
+
+
+def get_prompt_directories(*, prompt_root: Path) -> list[Path]:
+    import re
+
+    prompt_directories = [path for path in prompt_root.iterdir() if path.is_dir()]
+    return sorted(
+        prompt_directories,
+        key=lambda path: [int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", path.name)],
+    )
