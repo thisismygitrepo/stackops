@@ -170,12 +170,12 @@
       "doc": "🧙‍♂️ Command-line image manipulation tool",
       "fileNamePattern": {
         "amd64": {
-          "linux": "ImageMagick-{version}-portable-Q16-x64.7z",
+          "linux": "ImageMagick-d4e4b2b-gcc-x86_64.AppImage",
           "windows": "ImageMagick-{version}-portable-Q16-x64.7z",
           "darwin": "brew install imagemagick"
         },
         "arm64": {
-          "linux": "ImageMagick-{version}-portable-Q16-arm64.7z",
+          "linux": null,
           "windows": "ImageMagick-{version}-Q16-arm64-dll.exe",
           "darwin": "brew install imagemagick"
         }
@@ -260,12 +260,12 @@
       "doc": "📊 btop is a resource monitor for Linux, FreeBSD and MacOS.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "btop-x86_64-linux-musl.tbz",
+          "linux": "btop-x86_64-unknown-linux-musl.tbz",
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": "btop-aarch64-linux-musl.tbz",
+          "linux": "btop-aarch64-unknown-linux-musl.tbz",
           "darwin": null,
           "windows": null
         }
@@ -337,7 +337,7 @@
           "windows": "process-compose_windows_amd64.zip"
         },
         "arm64": {
-          "linux": "process-compose_linux_arm.tar.gz",
+          "linux": "process-compose_linux_arm64.tar.gz",
           "darwin": "process-compose_darwin_arm64.tar.gz",
           "windows": "process-compose_windows_arm64.zip"
         }
@@ -352,7 +352,7 @@
         "amd64": {
           "linux": "zellij-x86_64-unknown-linux-musl.tar.gz",
           "darwin": "zellij-x86_64-apple-darwin.tar.gz",
-          "windows": null
+          "windows": "zellij-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": "zellij-aarch64-unknown-linux-musl.tar.gz",
@@ -663,7 +663,7 @@
         "arm64": {
           "linux": "bat-{version}-aarch64-unknown-linux-gnu.tar.gz",
           "darwin": "bat-{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "bat-{version}-x86_64-pc-windows-msvc.zip"
+          "windows": "bat-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -890,7 +890,7 @@
       "doc": "🔍 A fast and hackable fuzzy finder for the terminal.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "tv-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "linux": "tv-{version}-x86_64-unknown-linux-gnu.tar.gz",
           "darwin": "tv-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "tv-{version}-x86_64-pc-windows-msvc.zip"
         },
@@ -1041,7 +1041,7 @@
         "arm64": {
           "linux": "mcfly-{version}-aarch64-unknown-linux-musl.tar.gz",
           "darwin": "brew install mcfly",
-          "windows": "mcfly-{version}-aarch64-pc-windows-msvc.zip"
+          "windows": null
         }
       }
     },
@@ -1286,14 +1286,14 @@
       "doc": "🌐 upterm is a terminal multiplexer that allows you to share your terminal session over the web.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "uptermd_linux_amd64.tar.gz",
+          "linux": "upterm_linux_amd64.tar.gz",
           "darwin": "upterm_darwin_amd64.tar.gz",
-          "windows": null
+          "windows": "upterm_windows_amd64.tar.gz"
         },
         "arm64": {
-          "linux": "uptermd_linux_arm64.tar.gz",
+          "linux": "upterm_linux_arm64.tar.gz",
           "darwin": "upterm_darwin_arm64.tar.gz",
-          "windows": null
+          "windows": "upterm_windows_arm64.tar.gz"
         }
       }
     },
@@ -1310,8 +1310,8 @@
         },
         "arm64": {
           "linux": "viu-aarch64-unknown-linux-musl",
-          "darwin": "viu-x86_64-apple-darwin",
-          "windows": "viu-x86_64-pc-windows-msvc.exe"
+          "darwin": "viu-aarch64-apple-darwin",
+          "windows": null
         }
       }
     },
@@ -1401,7 +1401,7 @@
         "arm64": {
           "linux": "watchexec-{version}-aarch64-unknown-linux-gnu.tar.xz",
           "darwin": "watchexec-{version}-aarch64-apple-darwin.tar.xz",
-          "windows": "watchexec-{version}-x86_64-pc-windows-msvc.zip"
+          "windows": null
         }
       }
     },
@@ -1521,8 +1521,8 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "termusic-{version}-x86_64-linux.tar.xz",
-          "darwin": null,
-          "windows": null
+          "darwin": "termusic-{version}-x86_64-macos.tar.xz",
+          "windows": "termusic-{version}-x86_64-windows.zip"
         },
         "arm64": {
           "linux": null,
@@ -1557,12 +1557,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "transmission-{version}.tar.xz",
-          "darwin": null,
-          "windows": null
+          "darwin": "Transmission-{version}.dmg",
+          "windows": "transmission-{version}-x64.msi"
         },
         "arm64": {
           "linux": null,
-          "darwin": null,
+          "darwin": "Transmission-{version}.dmg",
           "windows": null
         }
       }
@@ -1831,7 +1831,7 @@
           "windows": "dbgate-windows-latest.zip"
         },
         "arm64": {
-          "linux": "dbgate-{version}-linux_arm64.tar.gz",
+          "linux": "dbgate-{version}-linux_arm64.AppImage",
           "darwin": "dbgate-{version}-mac_arm64.zip",
           "windows": "dbgate-windows-latest-arm64.exe"
         }
@@ -1845,12 +1845,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "rainfrog-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": null,
-          "windows": null
+          "darwin": "rainfrog-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "rainfrog-{version}-x86_64-pc-windows-msvc.tar.gz"
         },
         "arm64": {
           "linux": "rainfrog-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": null,
+          "darwin": "rainfrog-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -1977,7 +1977,7 @@
         "arm64": {
           "linux": "gonzo-{version}-linux-arm64.tar.gz",
           "darwin": "gonzo-{version}-darwin-arm64.tar.gz",
-          "windows": "gonzo-{version}-windows-arm64.zip"
+          "windows": null
         }
       }
     },
@@ -2187,7 +2187,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "obs-backgroundremoval-{version}-x86_64-linux-gnu.deb",
-          "windows": "obs-backgroundremoval-{version}-windows-x64-Installer.exe",
+          "windows": "obs-backgroundremoval-{version}-windows-x64.zip",
           "darwin": "obs-backgroundremoval-{version}-macos-universal.pkg"
         },
         "arm64": {
@@ -2276,14 +2276,14 @@
       "doc": "🌐 cli to get info of ips",
       "fileNamePattern": {
         "amd64": {
-          "linux": "{version}_linux_amd64.tar.gz",
-          "windows": "{version}_windows_amd64.zip",
-          "darwin": "{version}_darwin_amd64.tar.gz"
+          "linux": "ipinfo_{version}_linux_amd64.tar.gz",
+          "windows": "ipinfo_{version}_windows_amd64.zip",
+          "darwin": "ipinfo_{version}_darwin_amd64.tar.gz"
         },
         "arm64": {
-          "linux": "{version}_linux_arm64.tar.gz",
-          "windows": "{version}_windows_arm64.zip",
-          "darwin": "{version}_darwin_arm64.tar.gz"
+          "linux": "ipinfo_{version}_linux_arm64.tar.gz",
+          "windows": "ipinfo_{version}_windows_arm64.zip",
+          "darwin": "ipinfo_{version}_darwin_arm64.tar.gz"
         }
       }
     },
@@ -2386,7 +2386,7 @@
         "amd64": {
           "linux": "qrscan-{version}-x86_64-unknown-linux-gnu.tar.gz",
           "darwin": "qrscan-{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "qrscan-{version}-i686-pc-windows-msvc.zip"
+          "windows": "qrscan-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
           "linux": null,
@@ -2420,13 +2420,13 @@
       "doc": "📂 A TUI like winscp",
       "fileNamePattern": {
         "amd64": {
-          "linux": "termscp-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "linux": "termscp-{version}-x86_64-unknown-linux-gnu.tar.gz",
           "darwin": "termscp-{version}-x86_64-apple-darwin.tar.gz",
-          "windows": null
+          "windows": "termscp-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "termscp-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "darwin": "termscp-{version}-aarch64-apple-darwin.tar.gz",
+          "linux": "termscp-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "termscp-{version}-arm64-apple-darwin.tar.gz",
           "windows": null
         }
       }
@@ -2494,12 +2494,12 @@
         "amd64": {
           "linux": "cloudreve_{version}_linux_amd64.tar.gz",
           "darwin": "cloudreve_{version}_darwin_amd64.tar.gz",
-          "windows": null
+          "windows": "cloudreve_{version}_windows_amd64.zip"
         },
         "arm64": {
           "linux": "cloudreve_{version}_linux_arm64.tar.gz",
           "darwin": "cloudreve_{version}_darwin_arm64.tar.gz",
-          "windows": null
+          "windows": "cloudreve_{version}_windows_arm64.zip"
         }
       }
     },
@@ -2529,13 +2529,13 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "syncthing-linux-amd64-{version}.tar.gz",
-          "darwin": "syncthing-osx-amd64-{version}.tar.gz",
+          "darwin": "syncthing-macos-amd64-{version}.zip",
           "windows": "syncthing-windows-amd64-{version}.zip"
         },
         "arm64": {
           "linux": "syncthing-linux-arm64-{version}.tar.gz",
-          "darwin": "syncthing-osx-arm64-{version}.tar.gz",
-          "windows": null
+          "darwin": "syncthing-macos-arm64-{version}.zip",
+          "windows": "syncthing-windows-arm64-{version}.zip"
         }
       }
     },
@@ -2548,7 +2548,7 @@
         "amd64": {
           "linux": "istio-{version}-linux-amd64.tar.gz",
           "darwin": "istio-{version}-osx-amd64.tar.gz",
-          "windows": null
+          "windows": "istio-{version}-win-amd64.zip"
         },
         "arm64": {
           "linux": "istio-{version}-linux-arm64.tar.gz",
@@ -2690,12 +2690,12 @@
       "doc": "📊 Git repository summary on your terminal",
       "fileNamePattern": {
         "amd64": {
-          "linux": "onefetch-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "linux": "onefetch-linux.tar.gz",
           "darwin": "brew install onefetch",
-          "windows": "onefetch-{version}-x86_64-pc-windows-msvc.zip"
+          "windows": "onefetch-win.tar.gz"
         },
         "arm64": {
-          "linux": "onefetch-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "linux": null,
           "darwin": "brew install onefetch",
           "windows": null
         }
@@ -2816,14 +2816,14 @@
       "doc": "🕵️‍♂️ TUI for sniffing network traffic using eBPF on Linux",
       "fileNamePattern": {
         "amd64": {
-          "linux": "oryx-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "",
-          "windows": ""
+          "linux": "oryx-x86_64-unknown-linux-musl",
+          "darwin": null,
+          "windows": null
         },
         "arm64": {
-          "linux": "oryx-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "",
-          "windows": ""
+          "linux": "oryx-aarch64-unknown-linux-musl",
+          "darwin": null,
+          "windows": null
         }
       }
     },
@@ -2852,14 +2852,14 @@
       "doc": "📡 Terminal network scanner & diagnostic tool with TUI (v0.6.3)",
       "fileNamePattern": {
         "amd64": {
-          "linux": "netscanner-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "netscanner-{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "netscanner-{version}-x86_64-pc-windows-msvc.zip"
+          "linux": null,
+          "darwin": null,
+          "windows": null
         },
         "arm64": {
-          "linux": "netscanner-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "netscanner-{version}-aarch64-apple-darwin.tar.gz",
-          "windows": "netscanner-{version}-aarch64-pc-windows-msvc.zip"
+          "linux": null,
+          "darwin": null,
+          "windows": null
         }
       }
     },
@@ -2983,9 +2983,9 @@
           "windows": "nu-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
-          "windows": null
+          "linux": "nu-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "nu-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "nu-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -4417,12 +4417,12 @@
       "doc": "Terminal mail client",
       "fileNamePattern": {
         "amd64": {
-          "linux": "meli-{version}-linux-amd64.deb",
+          "linux": null,
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": "meli-{version}-linux-arm64.deb",
+          "linux": null,
           "darwin": null,
           "windows": null
         }
