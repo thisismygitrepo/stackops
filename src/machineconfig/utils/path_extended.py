@@ -709,56 +709,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             raise ValueError(f"Cannot decompress file with unknown extension: {self}")
         return res
 
-    # Legacy byte-based file encryption API intentionally disabled in favor of the
-    # GPG file helpers in machineconfig.utils.io.
-    # def encrypt(
-    #     self, key: bytes | None = None, pwd: str | None = None, folder: OPLike = None, name: str | None = None, path: OPLike = None, verbose: bool = True, suffix: str = ".enc", inplace: bool = False, orig: bool = False
-    # ) -> "PathExtended":
-    #     # see: https://stackoverflow.com/questions/42568262/how-to-encrypt-text-with-a-password-in-python & https://stackoverflow.com/questions/2490334/simple-way-to-encode-a-string-according-to-a-password"""
-    #     slf = self.expanduser().resolve()
-    #     path = self._resolve_path(folder, name, path, slf.name + suffix)
-    #     assert slf.is_file(), f"Cannot encrypt a directory. You might want to try `zip_n_encrypt`. {self}"
-    #     path.write_bytes(encrypt(msg=slf.read_bytes(), key=key, pwd=pwd))
-    #     msg = f"🔒🔑 ENCRYPTED: {repr(slf)} ==> {repr(path)}."
-    #     ret = self if orig else PathExtended(path)
-    #     delayed_msg = ""
-    #     if inplace:
-    #         self.delete(sure=True, verbose=False)
-    #         delayed_msg = f"DELETED 🗑️❌ {repr(self)}."
-    #     if verbose:
-    #         try:
-    #             print(msg)
-    #         except UnicodeEncodeError:
-    #             print("P._return warning: UnicodeEncodeError, could not print message.")
-    #     if verbose and delayed_msg != "":
-    #         try:
-    #             print(delayed_msg)
-    #         except UnicodeEncodeError:
-    #             print("P._return warning: UnicodeEncodeError, could not print message.")
-    #     return ret
-
-    # def decrypt(self, key: bytes | None = None, pwd: str | None = None, path: OPLike = None, folder: OPLike = None, name: str | None = None, verbose: bool = True, suffix: str = ".enc", inplace: bool = False) -> "PathExtended":
-    #     slf = self.expanduser().resolve()
-    #     path = self._resolve_path(folder=folder, name=name, path=path, default_name=slf.name.replace(suffix, "") if suffix in slf.name else "decrypted_" + slf.name)
-    #     path.write_bytes(decrypt(token=slf.read_bytes(), key=key, pwd=pwd))
-    #     msg = f"🔓🔑 DECRYPTED: {repr(slf)} ==> {repr(path)}."
-    #     ret = PathExtended(path)
-    #     delayed_msg = ""
-    #     if inplace:
-    #         self.delete(sure=True, verbose=False)
-    #         delayed_msg = f"DELETED 🗑️❌ {repr(self)}."
-    #     if verbose:
-    #         try:
-    #             print(msg)
-    #         except UnicodeEncodeError:
-    #             print("P._return warning: UnicodeEncodeError, could not print message.")
-    #     if verbose and delayed_msg != "":
-    #         try:
-    #             print(delayed_msg)
-    #         except UnicodeEncodeError:
-    #             print("P._return warning: UnicodeEncodeError, could not print message.")
-    #     return ret
-
     def _resolve_path(self, folder: OPLike, name: str | None, path: OPLike, default_name: str, rel2it: bool = False) -> "PathExtended":
         """:param rel2it: `folder` or `path` are relative to `self` as opposed to cwd. This is used when resolving '../dir'"""
         if path is not None:
@@ -772,7 +722,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
 
     def get_remote_path(self, root: str | None, os_specific: bool = False, rel2home: bool = True, strict: bool = True) -> "PathExtended":
         import platform
-
         tmp1: str = platform.system().lower() if os_specific else "generic_os"
         if not rel2home:
             path = self
@@ -783,10 +732,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
                 if strict:
                     raise ve
                 path = self
-        # if obfuscate:
-        #     msc.obfuscater import obfuscate as obfuscate_func
-        #     name = obfuscate_func(seed=P.home().joinpath('dotfiles/creds/data/obfuscation_seed').read_text(encoding="utf-8").rstrip(), data=path.name)
-        #     path = path.with_name(name=name)
         if isinstance(root, str):  # the following is to avoid the confusing behaviour of A.joinpath(B) if B is absolute.
             part1 = path.parts[0]
             if part1 == "/":
@@ -806,7 +751,6 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         pwd: str | None = None,
         rel2home: bool = False,
         strict: bool = True,
-        #  obfuscate: bool = False,
         share: bool = False,
         verbose: bool = True,
         os_specific: bool = False,
