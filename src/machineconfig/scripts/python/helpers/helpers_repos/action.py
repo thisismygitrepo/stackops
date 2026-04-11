@@ -20,7 +20,15 @@ def git_action(path: PathExtended, action: GitAction, mess: str | None, r: bool,
     except InvalidGitRepositoryError:
         pprint(f"⚠️ Skipping {path} because it is not a git repository.")
         if r:
-            results = [git_action(path=sub_path, action=action, mess=mess, r=r, auto_uv_sync=auto_uv_sync) for sub_path in path.search()]
+            results = (
+                [
+                    git_action(path=PathExtended(sub_path), action=action, mess=mess, r=r, auto_uv_sync=auto_uv_sync)
+                    for sub_path in path.glob("*")
+                    if not sub_path.name.startswith(".")
+                ]
+                if path.is_dir()
+                else []
+            )
             # For recursive calls, we need to aggregate results somehow
             # For now, return success if all recursive operations succeeded
             all_successful = all(result.success for result in results)

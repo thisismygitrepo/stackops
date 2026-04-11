@@ -38,8 +38,8 @@ def _normalize_app_names(app_names: list[str]) -> list[str]:
 
 
 def _build_version_lookup() -> dict[str, str]:
-    install_version_root_ext = PathExtended(INSTALL_VERSION_ROOT)
-    version_files = list(install_version_root_ext.search()) if install_version_root_ext.exists() else []
+    install_version_root = Path(INSTALL_VERSION_ROOT)
+    version_files = [version_file for version_file in install_version_root.glob("*") if version_file.is_file() and not version_file.name.startswith(".")] if install_version_root.exists() else []
     versions: dict[str, str] = {}
     for version_file in version_files:
         versions[version_file.stem] = version_file.read_text(encoding="utf-8").strip()

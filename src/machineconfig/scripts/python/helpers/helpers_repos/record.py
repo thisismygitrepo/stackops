@@ -120,7 +120,7 @@ def count_git_repositories(repos_root: str, r: bool) -> int:
     if path_obj.is_file():
         return 0
 
-    search_res = path_obj.search("*", files=False, folders=True)
+    search_res = [PathExtended(candidate) for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
     count = 0
 
     for a_search_res in search_res:
@@ -138,7 +138,7 @@ def count_total_directories(repos_root: str, r: bool) -> int:
     if path_obj.is_file():
         return 0
 
-    search_res = path_obj.search("*", files=False, folders=True)
+    search_res = [PathExtended(candidate) for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
     count = len(search_res)
 
     if r:
@@ -154,7 +154,7 @@ def record_repos_recursively(repos_root: str, r: bool, progress: Progress | None
     if path_obj.is_file():
         return []
 
-    search_res = path_obj.search("*", files=False, folders=True)
+    search_res = [PathExtended(candidate) for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
     res: list[RepoRecordDict] = []
 
     for a_search_res in search_res:

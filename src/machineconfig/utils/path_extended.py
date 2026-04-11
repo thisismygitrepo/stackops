@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import os
 from platform import system
-from typing import Any, Union, Callable, TypeAlias, Literal
+from typing import Any, Union, TypeAlias, Literal
 
 
 
@@ -143,7 +143,7 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
     def append(self, name: str = "", index: bool = False, suffix: str | None = None, verbose: bool = True, **kwargs: Any) -> "PathExtended":
         """Returns a new path object with the name appended to the stem of the path. If `index` is True, the name will be the index of the path in the parent directory."""
         if index:
-            appended_name = f"""{name}_{len(self.parent.search(f"*{self.name.split('.')[0]}*"))}"""
+            appended_name = f"""{name}_{len([candidate for candidate in self.parent.glob(f"*{self.name.split('.')[0]}*") if not candidate.name.startswith(".")])}"""
             return self.append(name=appended_name, index=False, verbose=verbose, suffix=suffix, **kwargs)
         full_name = name or ("_" + str(timestamp()))
         whatever = PathExtended(f"bruh{self}")
@@ -343,75 +343,20 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
             return self
 
     # ======================================== Folder management =======================================
-    def search(
-        self,
-        pattern: str = "*",
-        r: bool = False,
-        files: bool = True,
-        folders: bool = True,
-        compressed: bool = False,
-        dotfiles: bool = False,
-        filters_total: list[Callable[[Any], bool]] | None = None,
-        not_in: list[str] | None = None,
-        exts: list[str] | None = None,
-        win_order: bool = False,
-    ) -> list["PathExtended"]:
-        if isinstance(not_in, list):
-            filters_notin = [lambda x: all([str(a_not_in) not in str(x) for a_not_in in not_in])]
-        else:
-            filters_notin = []
-        if isinstance(exts, list):
-            filters_extension = [lambda x: any([ext in x.name for ext in exts])]
-        else:
-            filters_extension = []
-        filters_total = (filters_total or []) + filters_notin + filters_extension
-        if not files:
-            filters_total.append(lambda x: x.is_dir())
-        if not folders:
-            filters_total.append(lambda x: x.is_file())
-        slf = self.expanduser().resolve()
-        if ".zip" in str(slf) and compressed:  # the root (self) is itself a zip archive (as opposed to some search results are zip archives)
-            import zipfile
-            import fnmatch
-
-            root = slf.as_zip_path()
-            if not r:
-                raw = list(root.iterdir())
-            else:
-                raw = [root.joinpath(item) for item in zipfile.ZipFile(str(slf)).namelist()]
-            # res1 = raw.filter(lambda zip_path: fnmatch.fnmatch(zip_path.at, pattern))
-            res1 = [item for item in raw if fnmatch.fnmatch(item.at, pattern)]
-            # return res1.filter(lambda x: (folders or x.is_file()) and (files or x.is_dir()))
-            return [item for item in res1 if (folders or item.is_file()) and (files or item.is_dir())]  # pyright: ignore[reportReturnType]
-        elif dotfiles:
-            raw = list(slf.glob(pattern)) if not r else list(self.rglob(pattern))
-        else:
-            from glob import glob
-
-            if r:
-                raw = glob(str(slf / "**" / pattern), recursive=r)
-            else:
-                raw = glob(str(slf.joinpath(pattern)))  # glob ignroes dot and hidden files
-        raw = [PathExtended(item) for item in raw]
-        if ".zip" not in str(slf) and compressed:
-            compressed_results: list[list[PathExtended]] = [
-                PathExtended(comp_file).search(pattern=pattern, r=r, files=files, folders=folders, compressed=True, dotfiles=dotfiles, filters_total=filters_total, not_in=not_in, win_order=win_order) for comp_file in self.search("*.zip", r=r)
-            ]
-            from functools import reduce
-
-            nested_paths: list[PathExtended] = reduce(lambda x, y: x + y, compressed_results) if compressed_results else []
-            raw = raw + nested_paths
-        processed = []
-        for item in raw:
-            item_ = PathExtended(item)
-            if all([afilter(item_) for afilter in filters_total]):
-                processed.append(item_)
-        if not win_order:
-            return list(processed)
-        import re
-
-        processed.sort(key=lambda x: [int(k) if k.isdigit() else k for k in re.split("([0-9]+)", string=x.stem)])
-        return list(processed)
+    # def search(
+    #     self,
+    #     pattern: str = "*",
+    #     r: bool = False,
+    #     files: bool = True,
+    #     folders: bool = True,
+    #     compressed: bool = False,
+    #     dotfiles: bool = False,
+    #     filters_total: list[Callable[[Any], bool]] | None = None,
+    #     not_in: list[str] | None = None,
+    #     exts: list[str] | None = None,
+    #     win_order: bool = False,
+    # ) -> list["PathExtended"]:
+    #     Use pathlib.Path.glob(...) and pathlib.Path.rglob(...) directly at call sites.
 
     @staticmethod
     def tmpdir(prefix: str = "") -> "PathExtended":
@@ -712,4 +657,3 @@ class PathExtended(type(Path()), Path):  # type: ignore # pylint: disable=E0241
         else:
             raise ValueError(f"Cannot decompress file with unknown extension: {self}")
         return res
-
