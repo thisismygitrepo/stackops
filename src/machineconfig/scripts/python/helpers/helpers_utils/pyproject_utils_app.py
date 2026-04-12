@@ -2,99 +2,45 @@ from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
 import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-
-from machineconfig.utils.path_reference_validation import EXCLUDED_DIR_NAMES, PathReferenceAudit, audit_repository_path_references, format_path_reference_audit
 
 
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 TypeHintDependencyMode: TypeAlias = Literal["self-contained", "import"]
 
 
-def _build_reference_test_console() -> Console:
-    return Console()
 
 
-def _repo_relative_path(*, path: Path, repo_root: Path) -> str:
-    resolved_path = path.resolve(strict=False)
-    resolved_repo_root = repo_root.resolve(strict=False)
+def reference_test(
+    repo: Annotated[str, typer.Argument(..., help="Repository root or any path inside the repository.")],
+    search_root: Annotated[
+        str | None,
+        typer.Option(
+            "--search-root",
+            "-s",
+            help="Directory to scan for package __init__.py files. Relative values are resolved from the repository root.",
+        ),
+    ] = None,
+    verbose: Annotated[bool, typer.Option("--verbose", help="Print scan context and detailed rich audit tables.")] = False,
+) -> None:
+    from machineconfig.scripts.python.helpers.helpers_utils.path_reference_validation import audit_repository_path_references, format_path_reference_audit, build_reference_test_console, print_reference_test_summary, print_reference_test_verbose_details
+    from rich.panel import Panel
+    console = build_reference_test_console()
+    search_root_path = None if search_root is None else Path(search_root)
     try:
-        return resolved_path.relative_to(resolved_repo_root).as_posix()
-    except ValueError:
-        return resolved_path.as_posix()
+        audit = audit_repository_path_references(repo_path=Path(repo), search_root=search_root_path)
+    except ValueError as error:
+        console.print(Panel(f"❌ {error}", title="Reference Audit Error", border_style="red", expand=False))
+        raise typer.Exit(code=1) from error
 
-
-def _build_reference_test_summary_table(*, audit: PathReferenceAudit) -> Table:
-    table = Table(box=None, show_header=False, pad_edge=False)
-    table.add_column("Field", style="bold cyan")
-    table.add_column("Value", style="white")
-    table.add_row("📦 Repository", str(audit.repo_root))
-    table.add_row("🔎 Search Root", str(audit.search_root))
-    table.add_row("🧭 Packages", str(audit.scanned_init_files))
-    table.add_row("🔗 Declared Targets", str(audit.reference_count))
-    table.add_row("✅ Resolved Targets", str(audit.resolved_reference_count()))
-    table.add_row("⚠ Invalid Definitions", str(audit.invalid_count()))
-    table.add_row("❌ Missing Targets", str(audit.missing_count()))
-    return table
-
-
-def _build_invalid_reference_table(*, audit: PathReferenceAudit) -> Table | None:
-    if audit.invalid_count() == 0:
-        return None
-    table = Table(title="⚠ Invalid Definitions", header_style="bold yellow")
-    table.add_column("File", style="cyan")
-    table.add_column("Variable", style="magenta")
-    table.add_column("Reason", style="white")
-    for invalid_reference in audit.invalid_references:
-        table.add_row(
-            _repo_relative_path(path=invalid_reference.init_file, repo_root=audit.repo_root),
-            invalid_reference.variable_name,
-            invalid_reference.reason,
-        )
-    return table
-
-
-def _build_missing_reference_table(*, audit: PathReferenceAudit) -> Table | None:
-    if audit.missing_count() == 0:
-        return None
-    table = Table(title="❌ Missing Targets", header_style="bold red")
-    table.add_column("File", style="cyan")
-    table.add_column("Variable", style="magenta")
-    table.add_column("Target", style="yellow")
-    table.add_column("Resolved Path", style="white")
-    for missing_reference in audit.missing_references:
-        table.add_row(
-            _repo_relative_path(path=missing_reference.init_file, repo_root=audit.repo_root),
-            missing_reference.variable_name,
-            missing_reference.relative_path,
-            missing_reference.resolved_path.as_posix(),
-        )
-    return table
-
-
-def _print_reference_test_summary(*, console: Console, audit: PathReferenceAudit) -> None:
-    title = "✅ Reference Audit Passed" if not audit.has_failures() else "❌ Reference Audit Failed"
-    border_style = "green" if not audit.has_failures() else "red"
-    console.print(Panel(_build_reference_test_summary_table(audit=audit), title=title, border_style=border_style, expand=False))
-
-
-def _print_reference_test_verbose_details(*, console: Console, audit: PathReferenceAudit) -> None:
-    excluded_directories = ", ".join(sorted(EXCLUDED_DIR_NAMES))
-    console.print(Panel(excluded_directories, title="🧹 Excluded Directories", border_style="blue", expand=False))
-
-    invalid_table = _build_invalid_reference_table(audit=audit)
-    if invalid_table is None:
-        console.print(Panel("✅ No invalid _PATH_REFERENCE definitions found.", title="⚠ Invalid Definitions", border_style="green", expand=False))
-    else:
-        console.print(invalid_table)
-
-    missing_table = _build_missing_reference_table(audit=audit)
-    if missing_table is None:
-        console.print(Panel("✅ No missing _PATH_REFERENCE targets found.", title="❌ Missing Targets", border_style="green", expand=False))
-    else:
-        console.print(missing_table)
+    print_reference_test_summary(console=console, audit=audit)
+    if audit.has_failures():
+        if verbose:
+            print_reference_test_verbose_details(console=console, audit=audit)
+        else:
+            console.print(Panel(format_path_reference_audit(audit=audit), title="❌ Failure Details", border_style="red", expand=False))
+        raise typer.Exit(code=1)
+    if verbose:
+        print_reference_test_verbose_details(console=console, audit=audit)
 
 
 def upgrade_packages(
@@ -142,37 +88,6 @@ def type_hint(
         # generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)
         # print(f"Generated: {generated_file}")
         print(f"Generated: {output_file}")
-
-
-def reference_test(
-    repo: Annotated[str, typer.Argument(..., help="Repository root or any path inside the repository.")],
-    search_root: Annotated[
-        str | None,
-        typer.Option(
-            "--search-root",
-            "-s",
-            help="Directory to scan for package __init__.py files. Relative values are resolved from the repository root.",
-        ),
-    ] = None,
-    verbose: Annotated[bool, typer.Option("--verbose", help="Print scan context and detailed rich audit tables.")] = False,
-) -> None:
-    console = _build_reference_test_console()
-    search_root_path = None if search_root is None else Path(search_root)
-    try:
-        audit = audit_repository_path_references(repo_path=Path(repo), search_root=search_root_path)
-    except ValueError as error:
-        console.print(Panel(f"❌ {error}", title="Reference Audit Error", border_style="red", expand=False))
-        raise typer.Exit(code=1) from error
-
-    _print_reference_test_summary(console=console, audit=audit)
-    if audit.has_failures():
-        if verbose:
-            _print_reference_test_verbose_details(console=console, audit=audit)
-        else:
-            console.print(Panel(format_path_reference_audit(audit=audit), title="❌ Failure Details", border_style="red", expand=False))
-        raise typer.Exit(code=1)
-    if verbose:
-        _print_reference_test_verbose_details(console=console, audit=audit)
 
 
 def init_project(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from machineconfig.utils import path_reference_validation as module
+from machineconfig.scripts.python.helpers.helpers_utils import path_reference_validation as module
 
 
 def test_audit_repository_path_references_defaults_to_src_directory(tmp_path: Path) -> None:

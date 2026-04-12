@@ -5,6 +5,10 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
 from machineconfig.utils.accessories import get_repo_root
 
 
@@ -150,6 +154,81 @@ def _format_repo_relative(*, path: Path, repo_root: Path) -> str:
         return resolved_path.relative_to(resolved_repo_root).as_posix()
     except ValueError:
         return resolved_path.as_posix()
+
+
+def build_reference_test_console() -> Console:
+    return Console()
+
+
+def _build_reference_test_summary_table(*, audit: PathReferenceAudit) -> Table:
+    table = Table(box=None, show_header=False, pad_edge=False)
+    table.add_column("Field", style="bold cyan")
+    table.add_column("Value", style="white")
+    table.add_row("📦 Repository", str(audit.repo_root))
+    table.add_row("🔎 Search Root", str(audit.search_root))
+    table.add_row("🧭 Packages", str(audit.scanned_init_files))
+    table.add_row("🔗 Declared Targets", str(audit.reference_count))
+    table.add_row("✅ Resolved Targets", str(audit.resolved_reference_count()))
+    table.add_row("⚠ Invalid Definitions", str(audit.invalid_count()))
+    table.add_row("❌ Missing Targets", str(audit.missing_count()))
+    return table
+
+
+def _build_invalid_reference_table(*, audit: PathReferenceAudit) -> Table | None:
+    if audit.invalid_count() == 0:
+        return None
+    table = Table(title="⚠ Invalid Definitions", header_style="bold yellow")
+    table.add_column("File", style="cyan")
+    table.add_column("Variable", style="magenta")
+    table.add_column("Reason", style="white")
+    for invalid_reference in audit.invalid_references:
+        table.add_row(
+            _format_repo_relative(path=invalid_reference.init_file, repo_root=audit.repo_root),
+            invalid_reference.variable_name,
+            invalid_reference.reason,
+        )
+    return table
+
+
+def _build_missing_reference_table(*, audit: PathReferenceAudit) -> Table | None:
+    if audit.missing_count() == 0:
+        return None
+    table = Table(title="❌ Missing Targets", header_style="bold red")
+    table.add_column("File", style="cyan")
+    table.add_column("Variable", style="magenta")
+    table.add_column("Target", style="yellow")
+    table.add_column("Resolved Path", style="white")
+    for missing_reference in audit.missing_references:
+        table.add_row(
+            _format_repo_relative(path=missing_reference.init_file, repo_root=audit.repo_root),
+            missing_reference.variable_name,
+            missing_reference.relative_path,
+            missing_reference.resolved_path.as_posix(),
+        )
+    return table
+
+
+def print_reference_test_summary(*, console: Console, audit: PathReferenceAudit) -> None:
+    title = "✅ Reference Audit Passed" if not audit.has_failures() else "❌ Reference Audit Failed"
+    border_style = "green" if not audit.has_failures() else "red"
+    console.print(Panel(_build_reference_test_summary_table(audit=audit), title=title, border_style=border_style, expand=False))
+
+
+def print_reference_test_verbose_details(*, console: Console, audit: PathReferenceAudit) -> None:
+    excluded_directories = ", ".join(sorted(EXCLUDED_DIR_NAMES))
+    console.print(Panel(excluded_directories, title="🧹 Excluded Directories", border_style="blue", expand=False))
+
+    invalid_table = _build_invalid_reference_table(audit=audit)
+    if invalid_table is None:
+        console.print(Panel("✅ No invalid _PATH_REFERENCE definitions found.", title="⚠ Invalid Definitions", border_style="green", expand=False))
+    else:
+        console.print(invalid_table)
+
+    missing_table = _build_missing_reference_table(audit=audit)
+    if missing_table is None:
+        console.print(Panel("✅ No missing _PATH_REFERENCE targets found.", title="❌ Missing Targets", border_style="green", expand=False))
+    else:
+        console.print(missing_table)
 
 
 def resolve_repo_root(*, repo_path: Path) -> Path:
