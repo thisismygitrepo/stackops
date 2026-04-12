@@ -1,4 +1,5 @@
 from machineconfig.utils.path_extended import PathExtended
+from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.source_of_truth import WINDOWS_INSTALL_PATH, LINUX_INSTALL_PATH, INSTALL_VERSION_ROOT
 
 from pathlib import Path
@@ -50,7 +51,7 @@ def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: str 
 
     if delete:
         print("🗑️  Cleaning up temporary files...")
-        downloaded_file_path.delete(sure=True)
+        delete_path(downloaded_file_path, verbose=True)
         print("✅ Temporary files removed")
 
     print(f"{'=' * 80}")
@@ -122,7 +123,7 @@ def find_move_delete_linux(downloaded: PathExtended, tool_name: str | None, dele
 
     if delete:
         print("🗑️  Cleaning up temporary files...")
-        downloaded.delete(sure=True)
+        delete_path(downloaded, verbose=True)
         print("✅ Temporary files removed")
 
     exe_new_location = PathExtended(LINUX_INSTALL_PATH).joinpath(exe.name)

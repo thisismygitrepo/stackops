@@ -11,6 +11,7 @@ from machineconfig.utils.io import (
     encrypt_file_asymmetric,
     encrypt_file_symmetric,
 )
+from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.path_extended import PathExtended
 import machineconfig.utils.rclone_wrapper as rclone_wrapper
 from machineconfig.utils.rclone import RcloneCommandError
@@ -33,7 +34,7 @@ def _artifact_path(local_path: Path, zip_requested: bool, encrypt_requested: boo
 
 def _delete_temp_paths(paths: list[Path]) -> None:
     for temp_path in paths:
-        PathExtended(temp_path).delete(sure=True, verbose=False)
+        delete_path(temp_path, verbose=False)
 
 
 def _prepare_upload_path(
@@ -72,7 +73,7 @@ def _finalize_download_path(
             local_path = decrypt_file_asymmetric(file_path=encrypted_path)
         else:
             local_path = decrypt_file_symmetric(file_path=encrypted_path, pwd=pwd)
-        PathExtended(encrypted_path).delete(sure=True, verbose=False)
+        delete_path(encrypted_path, verbose=False)
     if zip_requested:
         local_path = Path(
             PathExtended(local_path).unzip(
@@ -137,14 +138,14 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
                     )
                 )
                 raise SystemExit(1) from None
-            url_obj.delete(sure=True, verbose=False)
+            delete_path(url_obj, verbose=False)
             res = decrypted_path.unzip(inplace=True, folder=tmp_folder)
             for x in res.glob("*"):
                 x.move(folder=folder_obj, overwrite=True)
         finally:
             # Clean up temporary folder
             if tmp_folder.exists():
-                tmp_folder.delete()
+                delete_path(tmp_folder, verbose=False)
 
 def main(
     source: str,

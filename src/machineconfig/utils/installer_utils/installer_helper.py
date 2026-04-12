@@ -1,4 +1,5 @@
 from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
+from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 from pathlib import Path
 from machineconfig.utils.path_extended import DECOMPRESS_SUPPORTED_FORMATS, PathExtended
@@ -126,17 +127,17 @@ def download_and_prepare(download_url: str) -> PathExtended:
     extracted_path = archive_path
     if extracted_path.is_file() and any(ext in archive_path.suffixes for ext in DECOMPRESS_SUPPORTED_FORMATS):
         extracted_path = archive_path.decompress()
-        archive_path.delete(sure=True)
+        delete_path(archive_path, verbose=True)
         if extracted_path.is_dir():
             nested_items = list(extracted_path.glob("*"))
             if len(nested_items) == 1:
                 nested_path = PathExtended(nested_items[0])
                 if nested_path.is_file() and any(ex in nested_path.suffixes for ex in DECOMPRESS_SUPPORTED_FORMATS):
                     extracted_path = nested_path.decompress()
-                    nested_path.delete(sure=True)
+                    delete_path(nested_path, verbose=True)
     elif extracted_path.is_dir() and len([p for p in extracted_path.rglob("*") if not p.name.startswith(".")]) == 1:
         only_file_in = next(extracted_path.glob("*"))
         if only_file_in.is_file() and any(ext in str(only_file_in) for ext in DECOMPRESS_SUPPORTED_FORMATS):  # further decompress
             extracted_path = only_file_in.decompress()
-            only_file_in.delete(sure=True)
+            delete_path(only_file_in, verbose=True)
     return extracted_path

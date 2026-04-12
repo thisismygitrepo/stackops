@@ -18,6 +18,7 @@ from machineconfig.utils.io import (
     encrypt_file_asymmetric,
     encrypt_file_symmetric,
 )
+from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.rclone import RcloneCommandError, is_missing_remote_path_error
 import machineconfig.utils.rclone_wrapper as rclone_wrapper
@@ -106,7 +107,7 @@ def _get_conflict_paths(repo: Repo) -> tuple[str, ...]:
 
 def _cleanup_temp_paths(paths: tuple[Path, ...]) -> None:
     for temp_path in paths:
-        PathExtended(temp_path).delete(sure=True, verbose=False)
+        delete_path(temp_path, verbose=False)
 
 
 def _get_repo_remote_archive_path(repo_root: Path) -> Path:
@@ -152,7 +153,7 @@ def _download_repo_archive(repo_remote_root: Path, cloud: str, remote_path: Path
         archive_path = decrypt_file_asymmetric(file_path=encrypted_archive_path)
     else:
         archive_path = decrypt_file_symmetric(file_path=encrypted_archive_path, pwd=pwd)
-    PathExtended(encrypted_archive_path).delete(sure=True, verbose=False)
+    delete_path(encrypted_archive_path, verbose=False)
     return Path(PathExtended(archive_path).unzip(inplace=True, verbose=True, overwrite=True, content=True, merge=False))
 
 
@@ -237,7 +238,7 @@ def main(
     local_relative_home = PathExtended(repo_local_root.expanduser().absolute().relative_to(Path.home()))
     PathExtended(CONFIG_ROOT).joinpath("remote").mkdir(parents=True, exist_ok=True)
     repo_remote_root = PathExtended(CONFIG_ROOT).joinpath("remote", local_relative_home)
-    repo_remote_root.delete(sure=True)
+    delete_path(repo_remote_root, verbose=True)
     remote_path = _get_repo_remote_archive_path(repo_root=repo_local_root)
     try:
         console.print(Panel("📥 DOWNLOADING REMOTE REPOSITORY", title_align="left", border_style="blue"))
@@ -270,7 +271,7 @@ def main(
 
     if merge_result.status == "success":
         console.print(Panel("✅ Pull succeeded!\n🧹 Removing originEnc remote and local copy\n📤 Pushing merged repository to cloud storage", title="Success", border_style="green"))
-        repo_remote_root.delete(sure=True)
+        delete_path(repo_remote_root, verbose=True)
         _remove_remote_if_present(repo=repo_local_obj, remote_name=REMOTE_NAME)
         _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
         return "success"

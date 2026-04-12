@@ -39,16 +39,17 @@ def _emit(message: str, verbose: bool) -> None:
         print("path_compression warning: UnicodeEncodeError, could not print message.")
 
 
-def _delete_path(target: Path, verbose: bool) -> None:
-    if not target.exists():
-        target.unlink(missing_ok=True)
-        _emit(f"❌ Could NOT DELETE nonexisting file {target!r}.", verbose)
+def delete_path(target: Path | str, *, verbose: bool) -> None:
+    target_path = Path(target).expanduser()
+    if not target_path.exists():
+        target_path.unlink(missing_ok=True)
+        _emit(f"❌ Could NOT DELETE nonexisting file {target_path!r}.", verbose)
         return
-    if target.is_file() or target.is_symlink():
-        target.unlink(missing_ok=True)
+    if target_path.is_file() or target_path.is_symlink():
+        target_path.unlink(missing_ok=True)
     else:
-        shutil.rmtree(target, ignore_errors=False)
-    _emit(f"🗑️ ❌ DELETED {target!r}.", verbose)
+        shutil.rmtree(target_path, ignore_errors=False)
+    _emit(f"🗑️ ❌ DELETED {target_path!r}.", verbose)
 
 
 def _resolve_output_path(source: Path, *, folder: Path | None, name: str | None, path: Path | None, default_name: str) -> Path:
@@ -67,7 +68,7 @@ def _resolve_output_path(source: Path, *, folder: Path | None, name: str | None,
 def _finalize_result(*, source: Path, result: Path, orig: bool, inplace: bool, verbose: bool, message: str) -> Path:
     _emit(message, verbose)
     if inplace:
-        _delete_path(source, verbose=False)
+        delete_path(source, verbose=False)
         _emit(f"DELETED 🗑️❌ {source!r}.", verbose)
     return source if orig else result
 
@@ -220,13 +221,13 @@ def unzip_path(
     with zipfile.ZipFile(archive_path, "r") as archive:
         if overwrite:
             if target_name is not None:
-                _delete_path(extraction_root / target_name, verbose=True)
+                delete_path(extraction_root / target_name, verbose=True)
             elif content:
                 top_level_entries = {Path(entry).parts[0] for entry in archive.namelist() if entry != "" and len(Path(entry).parts) > 0}
                 for entry in sorted(top_level_entries):
-                    _delete_path(extraction_root / entry, verbose=True)
+                    delete_path(extraction_root / entry, verbose=True)
             else:
-                _delete_path(destination_root, verbose=True)
+                delete_path(destination_root, verbose=True)
         password = None if pwd is None else pwd.encode()
         if target_name is None:
             archive.extractall(path=extraction_root, pwd=password)
@@ -350,6 +351,7 @@ def decompress_path(source: Path, *, folder: Path | None, name: str | None, path
 __all__ = [
     "DECOMPRESS_SUPPORTED_FORMATS",
     "FileMode",
+    "delete_path",
     "decompress_path",
     "unbz_path",
     "ungz_path",

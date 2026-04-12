@@ -4,6 +4,7 @@ Installers do not add runtime files to the machine, hence this script.
 
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.installer_utils.installer_locator_utils import WINDOWS_INSTALL_PATH
+from machineconfig.utils.path_compression import delete_path
 import platform
 from typing import TYPE_CHECKING
 
@@ -108,7 +109,7 @@ def main(
             )
         )
         print("\n🧹 [Step 5/5] Cleaning up temporary download files...")
-        downloaded.delete(sure=True)
+        delete_path(downloaded, verbose=True)
         print("   ✨ Cleanup complete.")
         return f"Error: Unsupported OS: {platform.system()}"
 
@@ -118,13 +119,13 @@ def main(
         hx_file.move(folder=target_bin_path, overwrite=True)
 
         # Always install contrib (regardless of install_lib flag) — treat it like the executable.
-        contrib_path.delete(sure=True, verbose=False)
+        delete_path(contrib_path, verbose=False)
         contrib.move(folder=target_config_dir, overwrite=True)
 
         # Install runtime only if install_lib is True. When copying runtime, copy all subfolders
         # except 'grammars' (for which we only copy the specific python.so file if present).
         if install_lib:
-            runtime_path.delete(sure=True, verbose=False)
+            delete_path(runtime_path, verbose=False)
             print(f"   ✨ Cleaned '{runtime_path}' and '{contrib_path}'.")
             target_runtime = target_config_dir.joinpath("runtime")
             target_runtime.mkdir(parents=True, exist_ok=True)
@@ -168,12 +169,12 @@ def main(
         hx_file.move(folder=target_bin_path, overwrite=True)
 
         # Always install contrib (regardless of install_lib flag)
-        contrib_path.delete(sure=True, verbose=False)
+        delete_path(contrib_path, verbose=False)
         contrib.move(folder=target_config_dir, overwrite=True)
 
         # Install runtime only if install_lib is True. Copy selectively as on POSIX.
         if install_lib:
-            runtime_path.delete(sure=True, verbose=False)
+            delete_path(runtime_path, verbose=False)
             print(f"   ✨ Cleaned '{runtime_path}' and '{contrib_path}'.")
             target_runtime = target_config_dir.joinpath("runtime")
             target_runtime.mkdir(parents=True, exist_ok=True)
@@ -213,12 +214,12 @@ def main(
             )
         )
         print("\n🧹 [Step 5/5] Cleaning up temporary download files...")
-        downloaded.delete(sure=True)
+        delete_path(downloaded, verbose=True)
         print("   ✨ Cleanup complete.")
         return f"Error: Unsupported OS: {platform.system()}"
 
     print("\n🧹 [Step 5/5] Cleaning up temporary download files...")
-    downloaded.delete(sure=True)
+    delete_path(downloaded, verbose=True)
     print("   ✨ Cleanup complete.")
 
     console.print(Panel("🎉 Installation Finished Successfully! 🎉", title="Finished", expand=False))

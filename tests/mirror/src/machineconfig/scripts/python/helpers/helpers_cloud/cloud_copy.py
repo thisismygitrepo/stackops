@@ -52,9 +52,6 @@ def test_finalize_download_path_decrypts_then_unzips(monkeypatch: pytest.MonkeyP
         def __init__(self, path: Path) -> None:
             self.path = path
 
-        def delete(self, *, sure: bool, verbose: bool) -> None:
-            calls.append(("delete", self.path, (sure, verbose)))
-
         def unzip(self, *, inplace: bool, verbose: bool, overwrite: bool, content: bool, merge: bool) -> str:
             calls.append(("unzip", self.path, (inplace, verbose, overwrite, content, merge)))
             return str(tmp_path.joinpath("payload"))
@@ -65,6 +62,7 @@ def test_finalize_download_path_decrypts_then_unzips(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(cloud_copy, "PathExtended", FakePathExtended)
     monkeypatch.setattr(cloud_copy, "decrypt_file_asymmetric", fake_decrypt_file_asymmetric)
+    monkeypatch.setattr(cloud_copy, "delete_path", lambda target, *, verbose: calls.append(("delete", Path(target), verbose)))
 
     result = cloud_copy._finalize_download_path(
         download_path=tmp_path.joinpath("payload.zip.gpg"), zip_requested=True, encrypt_requested=True, pwd=None, overwrite=True
@@ -73,7 +71,7 @@ def test_finalize_download_path_decrypts_then_unzips(monkeypatch: pytest.MonkeyP
     assert result == tmp_path.joinpath("payload")
     assert calls == [
         ("decrypt", tmp_path.joinpath("payload.zip.gpg"), None),
-        ("delete", tmp_path.joinpath("payload.zip.gpg"), (True, False)),
+        ("delete", tmp_path.joinpath("payload.zip.gpg"), False),
         ("unzip", tmp_path.joinpath("payload.zip"), (True, True, True, True, False)),
     ]
 

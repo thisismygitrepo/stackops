@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false, reportArgumentType=false
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -136,6 +137,7 @@ def test_download_repo_archive_restores_and_extracts(monkeypatch: pytest.MonkeyP
     FakePathExtended.deleted_paths = []
 
     monkeypatch.setattr(sync_module, "PathExtended", FakePathExtended)
+    monkeypatch.setattr(sync_module, "delete_path", lambda target, *, verbose: FakePathExtended.deleted_paths.append(Path(target)))
     monkeypatch.setattr(
         sync_module.rclone_wrapper,
         "from_cloud",

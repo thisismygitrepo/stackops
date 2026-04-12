@@ -1,5 +1,6 @@
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.io import encrypt_file_asymmetric
+from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.rclone_wrapper import get_remote_path, to_cloud
 import platform
 from pathlib import Path
@@ -26,7 +27,7 @@ def delete_remote_repo_copy_and_push_local(remote_repo: str, local_repo: str, cl
     console.print(Panel("🗑️  Deleting remote repo copy and pushing local copy", title="[bold blue]Repo Sync[/bold blue]", border_style="blue"))
     repo_sync_root = PathExtended(remote_repo).expanduser().absolute()
     repo_root_path = PathExtended(local_repo).expanduser().absolute()
-    repo_sync_root.delete(sure=True)
+    delete_path(repo_sync_root, verbose=True)
     print("🧹 Removed temporary remote copy")
     from git.remote import Remote
     from git.repo import Repo
@@ -50,8 +51,8 @@ def delete_remote_repo_copy_and_push_local(remote_repo: str, local_repo: str, cl
             transfers=10,
         )
     finally:
-        PathExtended(archive_path).delete(sure=True, verbose=False)
-        PathExtended(encrypted_archive_path).delete(sure=True, verbose=False)
+        delete_path(archive_path, verbose=False)
+        delete_path(encrypted_archive_path, verbose=False)
 
     console.print(Panel("✅ Repository successfully pushed to cloud", title="[bold green]Repo Sync[/bold green]", border_style="green"))
 

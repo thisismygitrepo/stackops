@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 import machineconfig.jobs.installer.powershell_scripts as powershell_scripts
+from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.installer_utils.installer_class import Installer
@@ -128,9 +129,9 @@ def install_nerd_fonts() -> None:
     folder, _version_to_be_installed = Installer(installer_data=nerd_fonts).binary_download(version=None)
 
     console.print("🧹 Cleaning up unnecessary files...")
-    [PathExtended(p).delete(sure=True) for p in folder.glob("*Windows*")]
-    [PathExtended(p).delete(sure=True) for p in folder.glob("*readme*")]
-    [PathExtended(p).delete(sure=True) for p in folder.glob("*LICENSE*")]
+    for pattern in ("*Windows*", "*readme*", "*LICENSE*"):
+        for candidate in folder.glob(pattern):
+            delete_path(candidate, verbose=True)
 
     print("Fonts to be installed:")
     for font in (list(folder.glob("*.ttf")) + list(folder.glob("*.otf"))):
@@ -156,9 +157,9 @@ def install_nerd_fonts() -> None:
     finally:
         console.print("🗑️  Cleaning up temporary files...")
         if folder.exists():
-            folder.delete(sure=True)
+            delete_path(folder, verbose=True)
         if file.exists():
-            file.delete(sure=True)
+            delete_path(file, verbose=True)
 
     console.print()
     render_banner("✅ Nerd Fonts installation complete! ✅", "Nerd Fonts Installer", "green", box.DOUBLE)

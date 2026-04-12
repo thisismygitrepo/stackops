@@ -6,6 +6,7 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
+from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
@@ -52,12 +53,12 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     extracted_root = _select_extracted_root(extracted_path=PathExtended(extracted_path))
     target_root = PathExtended.home().joinpath(".local/share/poppler")
     if target_root.exists():
-        target_root.delete(sure=True, verbose=False)
+        delete_path(target_root, verbose=False)
     if extracted_root.is_file():
         raise FileNotFoundError(f"Expected extracted directory, got file: {extracted_root}")
 
     extracted_root.copy(path=target_root, overwrite=True)
-    extracted_path.delete(sure=True, verbose=False)
+    delete_path(extracted_path, verbose=False)
 
 
 if __name__ == "__main__":
