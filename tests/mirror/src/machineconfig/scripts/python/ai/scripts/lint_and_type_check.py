@@ -22,7 +22,7 @@ COMPLETED_KIND = "completed"
 def _repo_root() -> Path:
     current_path = Path(__file__).resolve()
     for parent in current_path.parents:
-        if parent.joinpath("src", "machineconfig").exists():
+        if parent.joinpath("pyproject.toml").exists() and parent.joinpath("src", "machineconfig").exists():
             return parent
     raise AssertionError("repo root not found")
 
@@ -166,7 +166,7 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
 
     def write_start_failure(report_path: Path, title: str, command: list[str], error: OSError) -> None:
         report_path.write_text(
-            f"# {title}\n{' '.join(command)}\n{error.strerror}",
+            f"# {title}\n{" ".join(command)}\n{error.strerror}",
             encoding="utf-8",
         )
 
@@ -202,12 +202,7 @@ def _load_module(monkeypatch: pytest.MonkeyPatch, models_fixture: ModelsFixture,
 def test_run_cleanup_writes_log_and_uses_first_failure_exit_code(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     models_fixture = _build_models_fixture(base_dir=tmp_path)
     lint_module = _load_module(monkeypatch=monkeypatch, models_fixture=models_fixture, module_name="test_lint_script_cleanup")
-    results = iter(
-        [
-            CompletedRun(returncode=3, stdout="first output\n"),
-            CompletedRun(returncode=0, stdout="second output\n"),
-        ]
-    )
+    results = iter([CompletedRun(returncode=3, stdout="first output\n"), CompletedRun(returncode=0, stdout="second output\n")])
 
     def fake_run(command: list[str], stdout: object, stderr: object, text: bool, check: bool) -> CompletedRun:
         assert stdout == lint_module.subprocess.PIPE
@@ -218,7 +213,6 @@ def test_run_cleanup_writes_log_and_uses_first_failure_exit_code(tmp_path: Path,
 
     monkeypatch.setattr(lint_module.subprocess, "run", fake_run)
     console = Console(file=io.StringIO(), force_terminal=False, color_system=None)
-
     cleanup_result = lint_module.run_cleanup(console=console)
     cleanup_log = (models_fixture.reports_dir / "log_cleanup.md").read_text(encoding="utf-8")
 
@@ -239,9 +233,7 @@ def test_validate_environment_checks_marker_and_uv(tmp_path: Path, monkeypatch: 
         lint_module.validate_environment()
 
     assert exit_info.value.code == 1
-
     models_fixture.repo_marker.write_text("[project]\nname='demo'\n", encoding="utf-8")
-
     repo_root = lint_module.validate_environment()
 
     assert repo_root == tmp_path
@@ -259,7 +251,6 @@ def test_start_checker_processes_records_launch_failures(tmp_path: Path, monkeyp
         return FakeProcess()
 
     monkeypatch.setattr(lint_module.subprocess, "Popen", fake_popen)
-
     running_tools, completed_tools = lint_module.start_checker_processes()
 
     assert set(running_tools) == {"checker_b"}

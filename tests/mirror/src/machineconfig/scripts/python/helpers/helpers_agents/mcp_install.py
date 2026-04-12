@@ -392,9 +392,9 @@ def test_write_codex_config_replaces_existing_block_and_renders_bearer_token_aut
     text = path.read_text(encoding="utf-8")
 
     assert 'command = "old"' not in text
-    assert """[mcp_servers.alpha]\nurl = \"https://example.com/alpha\"\nbearer_token_env_var = \"API_TOKEN\""" in text
-    assert """[mcp_servers.beta]\ncommand = \"uvx\"\nargs = [\"serve\"]""" in text
-    assert """[other]\nvalue = 1""" in text
+    assert "[mcp_servers.alpha]\nurl = \"https://example.com/alpha\"\nbearer_token_env_var = \"API_TOKEN\"" in text
+    assert "[mcp_servers.beta]\ncommand = \"uvx\"\nargs = [\"serve\"]" in text
+    assert "[other]\nvalue = 1" in text
 
 
 def test_cline_writer_marks_disabled_http_servers_and_opencode_rejects_cwd(tmp_path: Path) -> None:

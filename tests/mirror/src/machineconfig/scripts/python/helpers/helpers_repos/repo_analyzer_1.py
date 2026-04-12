@@ -65,8 +65,8 @@ class FakeRepoForHistory:
         self.head = SimpleNamespace(reference=SimpleNamespace(name="develop"))
         self.refs = FakeRefs({"main"})
 
-    def iter_commits(self, _branch_name: str | None = None) -> list[FakeHistoryCommit]:
-        return self._commits
+    def iter_commits(self, _branch_name: str | None = None):
+        return iter(self._commits)
 
 
 def test_count_python_lines_counts_only_python_files() -> None:
@@ -139,4 +139,4 @@ def test_gitcs_viz_fetches_full_history_and_runs_half_year_windows(monkeypatch: 
     assert fetch_calls == [("--unshallow",)]
     assert len(commands) == 4
     assert commands[0] == ["gitcs", "-path", str(tmp_path.resolve()), "-since", "2022-01-01", "-until", "2022-06-30", "-email", "dev@example.com"]
-    assert commands[-1][5:9] == ["2023-07-01", "-until", "2023-12-31", "-email"]
+    assert commands[-1][4:8] == ["2023-07-01", "-until", "2023-12-31", "-email"]

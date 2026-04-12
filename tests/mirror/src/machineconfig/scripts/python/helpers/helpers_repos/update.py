@@ -76,7 +76,7 @@ def test_update_repository_detects_dependency_changes_and_runs_uv_sync(monkeypat
     home_path = tmp_path / "home"
     scripts_path = home_path / "scripts"
     linux_jobs_path = tmp_path / "machineconfig-demo" / "src" / "machineconfig" / "jobs" / "linux"
-    repo_path = linux_jobs_path.parents[4]
+    repo_path = linux_jobs_path.parents[3]
     scripts_path.mkdir(parents=True)
     linux_jobs_path.mkdir(parents=True)
     repo_path.joinpath("pyproject.toml").write_text("[project]\nname='demo'\n", encoding="utf-8")

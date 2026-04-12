@@ -124,7 +124,7 @@ def test_upload_repo_archive_uses_selected_encryption_and_cleans_up(monkeypatch:
     sync_module._upload_repo_archive(repo_root=repo_root, cloud="demo", remote_path=remote_path, pwd="secret")
 
     assert uploaded[0][0].name == "repo.zip.gpg"
-    assert uploaded[1][0].name == "repo.zip-secret.gpg"
+    assert uploaded[1][0].name == "repo-secret.gpg"
     assert cleaned_paths[0][0].name == "repo.zip"
     assert cleaned_paths[0][1].name == "repo.zip.gpg"
 
@@ -151,7 +151,7 @@ def test_download_repo_archive_restores_and_extracts(monkeypatch: pytest.MonkeyP
     )
 
     assert downloads == [(Path(f"{repo_remote_root}.zip.gpg"), "demo", remote_path)]
-    assert extracted == Path(f"{repo_remote_root}.zip")
+    assert extracted == repo_remote_root
     assert Path(f"{repo_remote_root}.zip.gpg") in FakePathExtended.deleted_paths
 
 

@@ -79,6 +79,7 @@ def test_record_a_repo_handles_unknown_commit_and_detached_head(monkeypatch: pyt
     fake_repo = FakeRepo(working_dir=repo_path, remotes=remotes, dirty=True)
 
     monkeypatch.setattr(git.repo, "Repo", lambda path, search_parent_directories: fake_repo)
+    monkeypatch.setattr(record_module.PathExtended, "home", classmethod(lambda cls: tmp_path))
 
     result = record_module.record_a_repo(
         path=cast(object, repo_path),

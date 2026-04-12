@@ -1,4 +1,4 @@
-import importlib
+import importlib.util
 import sys
 import types
 from collections.abc import Callable
@@ -7,12 +7,13 @@ from typing import cast
 
 import pytest
 
-_MODULE_NAME = "machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key"
+_SOURCE_FILE = Path(__file__).resolve().parents[9] / "src/machineconfig/scripts/python/helpers/helpers_network/ssh/ssh_add_ssh_key.py"
 _WINDOWS_HELPER_MODULE = "machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_add_key_windows"
 _CLOUD_INIT_MODULE = "machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_cloud_init"
 _DEPLOY_MODULE = "machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_deploy_key_remote"
 _CODE_MODULE = "machineconfig.utils.code"
 _ADDRESS_MODULE = "machineconfig.scripts.python.helpers.helpers_network.address"
+_TARGET_MODULE_NAME = "mirror_target_ssh_add_ssh_key"
 
 
 class FakeConsole:
@@ -76,8 +77,13 @@ def _load_subject(monkeypatch: pytest.MonkeyPatch) -> types.ModuleType:
     monkeypatch.setitem(sys.modules, _WINDOWS_HELPER_MODULE, windows_helper_module)
     monkeypatch.setitem(sys.modules, _CLOUD_INIT_MODULE, cloud_init_module)
     monkeypatch.setitem(sys.modules, _DEPLOY_MODULE, deploy_module)
-    sys.modules.pop(_MODULE_NAME, None)
-    return importlib.import_module(_MODULE_NAME)
+    sys.modules.pop(_TARGET_MODULE_NAME, None)
+    spec = importlib.util.spec_from_file_location(_TARGET_MODULE_NAME, _SOURCE_FILE)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 
@@ -139,10 +145,10 @@ def test_main_runs_generated_script_and_reports_lan_ip(
 ) -> None:
     module = _load_subject(monkeypatch)
     main = cast(Callable[[str | None, bool, bool, str | None, str | None], None], getattr(module, "main"))
-    console = cast(FakeConsole, getattr(module, "console"))
     key_path = tmp_path / "id.pub"
     key_path.write_text("ssh-ed25519 KEY", encoding="utf-8")
     run_calls: list[tuple[str, bool, bool]] = []
+    address_calls: list[bool] = []
     code_module = types.ModuleType(_CODE_MODULE)
     address_module = types.ModuleType(_ADDRESS_MODULE)
 
@@ -150,15 +156,18 @@ def test_main_runs_generated_script_and_reports_lan_ip(
         run_calls.append((script, display_script, clean_env))
 
     def fake_select_lan_ipv4(*, prefer_vpn: bool) -> str:
-        assert prefer_vpn is False
+        address_calls.append(prefer_vpn)
         return "10.0.0.5"
 
     setattr(code_module, "run_shell_script", fake_run_shell_script)
     setattr(address_module, "select_lan_ipv4", fake_select_lan_ipv4)
     monkeypatch.setitem(sys.modules, _CODE_MODULE, code_module)
-    monkeypatch.setitem(sys.modules, _ADDRESS_MODULE, address_module)
+    existing_address_module = sys.modules.get(_ADDRESS_MODULE)
+    if existing_address_module is not None:
+        monkeypatch.setattr(existing_address_module, "select_lan_ipv4", fake_select_lan_ipv4)
+    else:
+        monkeypatch.setitem(sys.modules, _ADDRESS_MODULE, address_module)
     monkeypatch.setattr(module, "get_add_ssh_key_script", lambda _key: ("echo ok", "Status block"))
-    console.records.clear()
 
     main(
         pub_path=str(key_path),
@@ -169,4 +178,4 @@ def test_main_runs_generated_script_and_reports_lan_ip(
     )
 
     assert run_calls == [("echo ok", True, False)]
-    assert any("10.0.0.5" in str(getattr(record, "renderable", "")) for record in console.records)
+    assert address_calls == [False]

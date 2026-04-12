@@ -21,7 +21,7 @@ COMPLETED_KIND = "completed"
 def _repo_root() -> Path:
     current_path = Path(__file__).resolve()
     for parent in current_path.parents:
-        if parent.joinpath("src", "machineconfig").exists():
+        if parent.joinpath("pyproject.toml").exists() and parent.joinpath("src", "machineconfig").exists():
             return parent
     raise AssertionError("repo root not found")
 
