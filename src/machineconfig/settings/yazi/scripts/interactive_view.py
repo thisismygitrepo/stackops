@@ -6,7 +6,7 @@ from typing import Final, NoReturn
 
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
-VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".csv", ".parquet", ".tsv", ".xlsx", ".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
+VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".json", ".parquet", ".tsv", ".xlsx", ".csv", ".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
 
 
 def split_marked_arguments(arguments: Sequence[str]) -> tuple[str | None, list[str]]:
