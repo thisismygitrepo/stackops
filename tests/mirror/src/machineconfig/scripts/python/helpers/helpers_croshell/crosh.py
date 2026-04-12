@@ -59,8 +59,7 @@ def test_get_read_python_file_pycode_extracts_tail_segment(
 ) -> None:
     script_path = tmp_path.joinpath("script.py")
     script_path.write_text(
-        "
-".join(
+        "\n".join(
             [
                 "prefix",
                 "except Exception: print(pycode)",

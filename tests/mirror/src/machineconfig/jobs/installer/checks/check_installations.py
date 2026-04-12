@@ -1,11 +1,17 @@
+# pyright: reportPrivateUsage=false
+
 from __future__ import annotations
 
 from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
 from machineconfig.jobs.installer.checks import check_installations
+
+if TYPE_CHECKING:
+    from machineconfig.utils.path_extended import PathExtended
 
 
 class FakeCollapsedPath:
@@ -119,7 +125,11 @@ def test_scan_apps_with_vt_returns_fallback_records_when_credentials_missing(mon
 
     monkeypatch.setattr(check_installations, "get_vt_client", fake_get_vt_client)
 
-    records = check_installations.scan_apps_with_vt([(FakeAppPath(Path("/tmp/alpha")), "1.0.0"), (FakeAppPath(Path("/tmp/beta")), None)])
+    apps_to_scan = cast(
+        "list[tuple[PathExtended, str | None]]",
+        [(cast("PathExtended", FakeAppPath(Path("/tmp/alpha"))), "1.0.0"), (cast("PathExtended", FakeAppPath(Path("/tmp/beta"))), None)],
+    )
+    records = check_installations.scan_apps_with_vt(apps_to_scan)
 
     assert [record["app_data"]["app_name"] for record in records] == ["alpha", "beta"]
     assert all(record["app_data"]["notes"] == "VirusTotal credentials missing." for record in records)
@@ -133,7 +143,7 @@ def test_write_reports_writes_app_and_engine_csvs(tmp_path: Path, monkeypatch: p
     monkeypatch.setattr(check_installations, "ENGINE_RESULTS_PATH", engine_results_path)
 
     scan_record = check_installations.build_scan_record(
-        app_path=FakeAppPath(Path("/tmp/tool")),
+        app_path=cast("PathExtended", FakeAppPath(Path("/tmp/tool"))),
         version="1.2.3",
         scan_time="2026-04-12 10:00",
         app_url="https://example.test/tool",
@@ -172,7 +182,7 @@ def test_scan_installed_apps_skips_writing_when_recording_disabled(monkeypatch: 
     monkeypatch.setattr(check_installations, "build_summary_group", lambda app_data_list: "summary")
 
     scan_record = check_installations.build_scan_record(
-        app_path=FakeAppPath(Path("/tmp/tool")),
+        app_path=cast("PathExtended", FakeAppPath(Path("/tmp/tool"))),
         version="1.0.0",
         scan_time="2026-04-12 10:30",
         app_url="",

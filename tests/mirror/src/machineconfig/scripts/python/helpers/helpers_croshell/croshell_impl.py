@@ -64,8 +64,7 @@ def test_croshell_jupyter_backend_writes_script_and_notebook(
         import_module: bool,
     ) -> str:
         _ = function, in_global, import_module
-        return "# inspect-script
-"
+        return "# inspect-script\n"
 
     def fake_randstr() -> str:
         return "fixed-id"

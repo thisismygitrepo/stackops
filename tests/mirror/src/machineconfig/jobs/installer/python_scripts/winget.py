@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from pathlib import Path
 import subprocess
 from typing import cast
@@ -14,7 +15,7 @@ def _installer_data() -> InstallerData:
 
 
 class JsonResponse:
-    def __init__(self, payload: dict[str, object], raise_error: bool) -> None:
+    def __init__(self, payload: Mapping[str, object], raise_error: bool) -> None:
         self._payload = payload
         self._raise_error = raise_error
 
@@ -22,7 +23,7 @@ class JsonResponse:
         if self._raise_error:
             raise requests.HTTPError("boom")
 
-    def json(self) -> dict[str, object]:
+    def json(self) -> Mapping[str, object]:
         return self._payload
 
 
@@ -114,7 +115,11 @@ def test_install_msix_package_returns_false_on_non_zero_exit(tmp_path: Path, mon
 
 def test_main_returns_early_when_winget_already_exists(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(winget, "is_winget_available", lambda: True)
-    monkeypatch.setattr(winget, "get_latest_winget_release_url", lambda: (_ for _ in ()).throw(AssertionError("should not fetch releases")))
+    monkeypatch.setattr(
+        winget,
+        "get_latest_winget_release_url",
+        lambda: (_ for _ in ()).throw(AssertionError("should not fetch releases")),
+    )
 
     assert winget.main(installer_data=_installer_data(), version=None, update=False) is True
 

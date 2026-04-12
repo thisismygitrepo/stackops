@@ -10,21 +10,28 @@ import pytest
 from machineconfig.scripts.python.helpers.helpers_devops import devops_status_checks as module
 
 
-def test_check_shell_profile_status_creates_missing_profile(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    import platform
+def install_profile_create_shell_profile_module(monkeypatch: pytest.MonkeyPatch, profile_path: Path) -> None:
+    import machineconfig.profile as profile_package
 
     profile_module = ModuleType("machineconfig.profile.create_shell_profile")
-    profile_path = tmp_path.joinpath("profiles/.bashrc")
-    init_script_relative_path = Path("shells/init.sh")
-    init_script_path = tmp_path.joinpath(init_script_relative_path)
-    init_script_path.parent.mkdir(parents=True)
-    init_script_path.write_text("echo init\n", encoding="utf-8")
 
     def fake_get_shell_profile_path() -> Path:
         return profile_path
 
     setattr(profile_module, "get_shell_profile_path", fake_get_shell_profile_path)
     monkeypatch.setitem(sys.modules, "machineconfig.profile.create_shell_profile", profile_module)
+    monkeypatch.setattr(profile_package, "create_shell_profile", profile_module, raising=False)
+
+
+def test_check_shell_profile_status_creates_missing_profile(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    import platform
+
+    profile_path = tmp_path.joinpath("profiles/.bashrc")
+    init_script_relative_path = Path("shells/init.sh")
+    init_script_path = tmp_path.joinpath(init_script_relative_path)
+    init_script_path.parent.mkdir(parents=True)
+    init_script_path.write_text("echo init\n", encoding="utf-8")
+    install_profile_create_shell_profile_module(monkeypatch, profile_path)
     monkeypatch.setattr(platform, "system", lambda: "Linux")
     monkeypatch.setattr(module, "CONFIG_ROOT", tmp_path)
     monkeypatch.setattr(module, "get_path_reference_library_relative_path", lambda *, module, path_reference: init_script_relative_path)
@@ -75,8 +82,20 @@ def test_check_repos_status_reports_missing_and_git_repos(monkeypatch: pytest.Mo
     assert result["configured"] is True
     assert result["count"] == 2
     assert result["repos"] == [
-        {"path": str(existing_repo), "name": existing_repo.name, "exists": True, "is_repo": True, "clean": True, "branch": "main"},
-        {"path": str(missing_repo), "name": missing_repo.name, "exists": False, "is_repo": False},
+        {
+            "path": str(existing_repo),
+            "name": existing_repo.name,
+            "exists": True,
+            "is_repo": True,
+            "clean": True,
+            "branch": "main",
+        },
+        {
+            "path": str(missing_repo),
+            "name": missing_repo.name,
+            "exists": False,
+            "is_repo": False,
+        },
     ]
 
 
@@ -124,6 +143,8 @@ def test_config_item_is_configured_for_identical_copy(monkeypatch: pytest.Monkey
 
 
 def test_check_config_files_status_aggregates_link_counts(monkeypatch: pytest.MonkeyPatch) -> None:
+    import machineconfig.profile as profile_package
+
     links_module = ModuleType("machineconfig.profile.create_links")
     public_item: module.ConfigStatusItem = {
         "config_file_default_path": "/tmp/public-linked",
@@ -140,13 +161,17 @@ def test_check_config_files_status_aggregates_link_counts(monkeypatch: pytest.Mo
 
     def fake_read_mapper(*, repo: str) -> dict[str, dict[str, list[module.ConfigStatusItem]]]:
         assert repo == "all"
-        return {"public": {"tool-a": [public_item]}, "private": {"tool-b": [private_item]}}
+        return {
+            "public": {"tool-a": [public_item]},
+            "private": {"tool-b": [private_item]},
+        }
 
     def fake_config_item_is_configured(config_item: module.ConfigStatusItem) -> bool:
         return config_item["config_file_default_path"].endswith("linked")
 
     setattr(links_module, "read_mapper", fake_read_mapper)
     monkeypatch.setitem(sys.modules, "machineconfig.profile.create_links", links_module)
+    monkeypatch.setattr(profile_package, "create_links", links_module, raising=False)
     monkeypatch.setattr(module, "_config_item_is_configured", fake_config_item_is_configured)
 
     result = module.check_config_files_status()
@@ -188,7 +213,10 @@ def test_check_backup_config_collects_named_entries(monkeypatch: pytest.MonkeyPa
 
     def fake_read_backup_config(*, repo: str) -> dict[str, dict[str, object]]:
         assert repo == "library"
-        return {"docs": {"daily": object()}, "media": {"photos": object(), "videos": object()}}
+        return {
+            "docs": {"daily": object()},
+            "media": {"photos": object(), "videos": object()},
+        }
 
     setattr(io_module, "read_ini", fake_read_ini)
     setattr(backup_module, "LIBRARY_BACKUP_PATH", backup_file)

@@ -1,12 +1,19 @@
+# pyright: reportPrivateUsage=false
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 import pytest
 import typer
 
 import machineconfig.utils.code as code_utils
 from machineconfig.jobs.installer.checks import check_installations, security_cli, security_helper
+
+if TYPE_CHECKING:
+    from rich.table import Table
 
 
 class FakeCollapsedPath:
@@ -55,7 +62,7 @@ def test_scan_routes_path_and_installed_app_modes(monkeypatch: pytest.MonkeyPatc
     calls: list[tuple[str, object, bool | None]] = []
     uv_calls: list[tuple[list[str], object]] = []
 
-    def fake_run_lambda_function(function: object, uv_with: list[str], uv_project_dir: object) -> None:
+    def fake_run_lambda_function(function: Callable[[], None], uv_with: list[str], uv_project_dir: object) -> None:
         uv_calls.append((uv_with, uv_project_dir))
         function()
 
@@ -80,7 +87,7 @@ def test_list_apps_renders_installed_apps_table(monkeypatch: pytest.MonkeyPatch)
 
     security_cli.list_apps("alpha")
 
-    table = fake_console.messages[0]
+    table = cast("Table", fake_console.messages[0])
     assert table.title == "Installed CLI Apps"
     assert len(table.rows) == 1
 
@@ -105,19 +112,17 @@ def test_upload_and_download_use_console_output(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_summary_delegates_to_stats_report(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured: list[str | None] = []
+    captured: list[dict[str, object]] = []
 
-    def fake_report(apps: str | None, view: str | None, format_type: str, summarize: bool) -> None:
-        assert apps is None
-        assert format_type == "table"
-        assert summarize is False
-        captured.append(view)
+    def fake_report(*args: object, **kwargs: object) -> None:
+        assert args == ()
+        captured.append(dict(kwargs))
 
     monkeypatch.setattr(security_cli, "report", fake_report)
 
     security_cli.summary()
 
-    assert captured == ["stats"]
+    assert captured == [{"view": "stats"}]
 
 
 def test_report_handles_options_csv_and_empty_stats(monkeypatch: pytest.MonkeyPatch) -> None:

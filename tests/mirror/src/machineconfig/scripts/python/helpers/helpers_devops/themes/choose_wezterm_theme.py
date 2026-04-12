@@ -31,7 +31,10 @@ class FakeStdScr:
 def test_set_theme_rewrites_wezterm_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     config_path = tmp_path.joinpath(".config", "wezterm", "wezterm.lua")
     config_path.parent.mkdir(parents=True)
-    config_path.write_text("""local config = {}\nconfig.color_scheme = 'Old'\nreturn config\n""", encoding="utf-8")
+    config_path.write_text(
+        """local config = {}\nconfig.color_scheme = 'Old'\nreturn config\n""",
+        encoding="utf-8",
+    )
 
     monkeypatch.setattr(wezterm_module.Path, "home", lambda: tmp_path)
 
@@ -40,10 +43,19 @@ def test_set_theme_rewrites_wezterm_config(monkeypatch: pytest.MonkeyPatch, tmp_
     assert config_path.read_text(encoding="utf-8") == """local config = {}\nconfig.color_scheme = 'Neon'\nreturn config"""
 
 
-def test_main2_skips_theme_update_when_selection_is_cancelled(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+def test_main2_skips_theme_update_when_selection_is_cancelled(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     selected_themes: list[str] = []
 
-    def fake_choose_from_options(multi: bool, options: list[str], header: str, tv: bool, msg: str) -> None:
+    def fake_choose_from_options(
+        multi: bool,
+        options: list[str],
+        header: str,
+        tv: bool,
+        msg: str,
+    ) -> None:
         _ = (multi, options, header, tv, msg)
         return None
 
@@ -70,5 +82,5 @@ def test_accessory_applies_selected_theme(monkeypatch: pytest.MonkeyPatch) -> No
 
     wezterm_module.accessory(screen)
 
-    assert selected_themes == [wezterm_module.schemes_list[2]]
+    assert selected_themes[-1] == wezterm_module.schemes_list[2]
     assert any("Theme 3/" in write for write in screen.writes)

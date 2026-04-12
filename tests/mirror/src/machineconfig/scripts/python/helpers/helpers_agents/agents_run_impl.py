@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 import machineconfig.scripts.python.helpers.helpers_agents.agents_run_impl as run_impl_module
-import machineconfig.utils.accessories as accessories
 
 
 def test_make_prompt_file_writes_context_and_prompt(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -13,7 +12,7 @@ def test_make_prompt_file_writes_context_and_prompt(tmp_path: Path, monkeypatch:
         return "prompt123"
 
     monkeypatch.setattr(run_impl_module.Path, "home", lambda: tmp_path)
-    monkeypatch.setattr(accessories, "randstr", fake_randstr)
+    monkeypatch.setattr(run_impl_module, "randstr", fake_randstr)
 
     prompt_file = run_impl_module._make_prompt_file(prompt="Do thing", context="Repo facts")
 

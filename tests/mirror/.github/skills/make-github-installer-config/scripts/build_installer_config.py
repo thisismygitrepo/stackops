@@ -110,7 +110,7 @@ def test_main_writes_output_payload_and_collects_missing_latest_checks(monkeypat
         assert repo_url == "https://github.com/acme/tool"
         return FakeRepoSpec(owner="acme", repo="tool")
 
-    def fake_fetch_repo_license(_spec: FakeRepoSpec) -> FakeResolvedLicense:
+    def fake_fetch_repo_license(spec: FakeRepoSpec) -> FakeResolvedLicense:
         return FakeResolvedLicense(value="MIT", source="github_api_spdx", warning=None)
 
     def fake_fetch_releases(spec: FakeRepoSpec, limit: int) -> list[FakeReleaseInfo]:
@@ -152,13 +152,13 @@ def test_main_raises_in_strict_mode_when_latest_assets_do_not_match(monkeypatch:
     namespace = _load_script_namespace()
     main = cast(Callable[[], None], namespace["main"])
 
-    def fake_parse_repo_url(_repo_url: str) -> FakeRepoSpec:
+    def fake_parse_repo_url(repo_url: str) -> FakeRepoSpec:
         return FakeRepoSpec(owner="acme", repo="tool")
 
-    def fake_fetch_repo_license(_spec: FakeRepoSpec) -> FakeResolvedLicense:
+    def fake_fetch_repo_license(spec: FakeRepoSpec) -> FakeResolvedLicense:
         return FakeResolvedLicense(value="MIT", source="github_api_spdx", warning=None)
 
-    def fake_fetch_releases(_spec: FakeRepoSpec, _limit: int) -> list[FakeReleaseInfo]:
+    def fake_fetch_releases(spec: FakeRepoSpec, limit: int) -> list[FakeReleaseInfo]:
         return _sample_releases()
 
     monkeypatch.setitem(main.__globals__, "parse_repo_url", fake_parse_repo_url)

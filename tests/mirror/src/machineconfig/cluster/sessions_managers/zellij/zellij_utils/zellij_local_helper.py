@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
+from typing import cast
 
 import pytest
 
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils import zellij_local_helper as subject
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
+
 
 
 def _make_layout_config(command: str) -> LayoutConfig:
@@ -37,7 +40,14 @@ class FakeChildProcess:
 
 class FakeTrackedProcess:
     def __init__(
-        self, pid: int, status: str, *, children: list[FakeChildProcess] | None = None, running: bool = True, rss: int = 0, created_at: float = 10.0
+        self,
+        pid: int,
+        status: str,
+        *,
+        children: list[FakeChildProcess] | None = None,
+        running: bool = True,
+        rss: int = 0,
+        created_at: float = 10.0,
     ) -> None:
         self.pid = pid
         self._status = status
@@ -67,12 +77,15 @@ class FakeIterProcess:
     info: dict[str, object]
 
 
+
 def test_normalize_cli_token_expands_home_and_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MCFG_TOKEN", "expanded")
+    normalize_cli_token = cast(Callable[[str], str], getattr(subject, "_normalize_cli_token"))
 
-    normalized = subject._normalize_cli_token("'~/bin/$MCFG_TOKEN'")
+    normalized = normalize_cli_token("'~/bin/$MCFG_TOKEN'")
 
     assert normalized == str(Path.home().joinpath("bin", "expanded"))
+
 
 
 def test_check_command_status_matches_live_direct_process(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -94,11 +107,13 @@ def test_check_command_status_matches_live_direct_process(monkeypatch: pytest.Mo
     monkeypatch.setattr(subject.psutil, "Process", lambda pid: tracked[pid])
 
     result = subject.check_command_status("worker", _make_layout_config("python worker.py --port 9000"))
+    memory_mb = result["processes"][0].get("memory_mb")
 
     assert result["status"] == "running"
     assert result["running"] is True
     assert result["processes"][0]["pid"] == 101
-    assert result["processes"][0]["memory_mb"] == 50.0
+    assert memory_mb == 50.0
+
 
 
 def test_check_command_status_filters_idle_wrapper_shells(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -125,6 +140,7 @@ def test_check_command_status_filters_idle_wrapper_shells(monkeypatch: pytest.Mo
     assert result["processes"] == []
 
 
+
 def test_check_zellij_session_status_handles_missing_binary(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_run(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
         raise FileNotFoundError
@@ -140,6 +156,7 @@ def test_check_zellij_session_status_handles_missing_binary(monkeypatch: pytest.
         "all_sessions": [],
         "error": "Zellij not found in PATH",
     }
+
 
 
 def test_get_layout_preview_uses_default_template() -> None:

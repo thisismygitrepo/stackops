@@ -10,6 +10,10 @@
         ".specify/scripts/bash/": true,
         ".specify/scripts/powershell/": true
     },
+    "python.analysis.exclude": [
+        "tests",
+        ".venv"
+    ],
     "yaml.schemas": {
         "src/machineconfig/profile/mapper_data.schema.json": "src/machineconfig/profile/mapper_data.yaml"
     }

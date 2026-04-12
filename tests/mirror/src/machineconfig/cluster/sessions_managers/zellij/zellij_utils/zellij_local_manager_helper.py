@@ -4,10 +4,15 @@ import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
 from machineconfig.cluster.sessions_managers.zellij.zellij_utils import zellij_local_manager_helper as helper
+
+if TYPE_CHECKING:
+    from machineconfig.cluster.sessions_managers.zellij.zellij_local import ZellijLayoutGenerator
+    from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 
 type LayoutConfigLike = dict[str, list[dict[str, str]]]
 
@@ -48,13 +53,14 @@ def test_attach_and_list_active_sessions(monkeypatch: pytest.MonkeyPatch) -> Non
         ),
         FakeManagedManager(session_name="beta", layout_config=None, layout_path="/tmp/beta.kdl"),
     ]
+    typed_managers = cast("list[ZellijLayoutGenerator]", managers)
 
-    assert helper.attach_to_session(managers, "alpha") == "zellij attach alpha"
-    all_commands = helper.attach_to_session(managers, None)
+    assert helper.attach_to_session(typed_managers, "alpha") == "zellij attach alpha"
+    all_commands = helper.attach_to_session(typed_managers, None)
     assert "# Attach to session 'alpha':" in all_commands
     assert "zellij attach beta" in all_commands
     with pytest.raises(ValueError):
-        helper.attach_to_session(managers, "missing")
+        helper.attach_to_session(typed_managers, "missing")
 
     def fake_run(args: list[str], capture_output: bool, text: bool, timeout: int) -> subprocess.CompletedProcess[str]:
         assert args == ["zellij", "list-sessions"]
@@ -65,7 +71,7 @@ def test_attach_and_list_active_sessions(monkeypatch: pytest.MonkeyPatch) -> Non
 
     monkeypatch.setattr(helper.subprocess, "run", fake_run)
 
-    assert helper.list_active_sessions(managers) == [
+    assert helper.list_active_sessions(typed_managers) == [
         {"session_name": "alpha", "is_active": True, "tab_count": 2, "tabs": ["one", "two"]},
         {"session_name": "beta", "is_active": False, "tab_count": 0, "tabs": []},
     ]
@@ -79,8 +85,10 @@ def test_save_and_load_manager_round_trip(tmp_path: Path, monkeypatch: pytest.Mo
         FakeManagedManager(session_name="alpha", layout_config={"layoutTabs": [{"tabName": "main"}]}, layout_path="/tmp/alpha.kdl"),
         FakeManagedManager(session_name="beta", layout_config={"layoutTabs": [{"tabName": "secondary"}]}, layout_path="/tmp/beta.kdl"),
     ]
+    typed_session_layouts = cast("list[LayoutConfig]", session_layouts)
+    typed_managers = cast("list[ZellijLayoutGenerator]", managers)
 
-    session_id = helper.save_manager(session_layouts, managers, session_name_prefix="demo", session_id="sess-1234")
+    session_id = helper.save_manager(typed_session_layouts, typed_managers, session_name_prefix="demo", session_id="sess-1234")
     assert session_id == "sess-1234"
     assert (tmp_path / "sess-1234" / "session_layouts.json").exists() is True
     assert (tmp_path / "sess-1234" / "metadata.json").exists() is True
@@ -102,6 +110,7 @@ def test_kill_all_sessions_collects_success_and_failure(monkeypatch: pytest.Monk
         FakeManagedManager(session_name="alpha", layout_config=None, layout_path="/tmp/alpha.kdl"),
         FakeManagedManager(session_name="broken", layout_config=None, layout_path="/tmp/broken.kdl"),
     ]
+    typed_managers = cast("list[ZellijLayoutGenerator]", managers)
 
     def fake_run(command: str, shell: bool, capture_output: bool, text: bool, timeout: int) -> subprocess.CompletedProcess[str]:
         assert shell is True
@@ -114,7 +123,7 @@ def test_kill_all_sessions_collects_success_and_failure(monkeypatch: pytest.Monk
 
     monkeypatch.setattr(helper.subprocess, "run", fake_run)
 
-    assert helper.kill_all_sessions(managers) == {
+    assert helper.kill_all_sessions(typed_managers) == {
         "alpha": {"success": True, "message": "Session killed"},
         "broken": {"success": False, "error": "boom"},
     }

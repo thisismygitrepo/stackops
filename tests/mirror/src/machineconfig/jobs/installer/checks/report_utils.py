@@ -1,4 +1,10 @@
+# pyright: reportPrivateUsage=false
+
 from __future__ import annotations
+
+from typing import cast
+
+from rich.text import Text
 
 from machineconfig.jobs.installer.checks import report_utils
 
@@ -60,17 +66,27 @@ def test_status_and_safety_labels_cover_runtime_thresholds() -> None:
         "app_path": "/tmp/pending",
         "app_url": "",
     }
-    clean_row = pending_row | {
-        "app_name": "clean",
-        "positive_pct": 0.0,
-        "verdict_engines": 4,
-        "total_engines": 4,
-        "harmless_engines": 4,
-        "notes": "All reporting engines returned a verdict.",
-    }
-    review_row = clean_row | {"app_name": "review", "positive_pct": 4.0, "flagged_engines": 1, "suspicious_engines": 1}
-    flagged_row = clean_row | {"app_name": "flagged", "positive_pct": 5.0, "flagged_engines": 2, "malicious_engines": 2}
-    no_verdict_row = pending_row | {"app_name": "no-verdict", "positive_pct": 0.0, "total_engines": 5}
+    clean_row = cast(
+        "report_utils.AppData",
+        pending_row
+        | {
+            "app_name": "clean",
+            "positive_pct": 0.0,
+            "verdict_engines": 4,
+            "total_engines": 4,
+            "harmless_engines": 4,
+            "notes": "All reporting engines returned a verdict.",
+        },
+    )
+    review_row = cast(
+        "report_utils.AppData",
+        clean_row | {"app_name": "review", "positive_pct": 4.0, "flagged_engines": 1, "suspicious_engines": 1},
+    )
+    flagged_row = cast(
+        "report_utils.AppData",
+        clean_row | {"app_name": "flagged", "positive_pct": 5.0, "flagged_engines": 2, "malicious_engines": 2},
+    )
+    no_verdict_row = cast("report_utils.AppData", pending_row | {"app_name": "no-verdict", "positive_pct": 0.0, "total_engines": 5})
 
     assert report_utils._get_row_status(pending_row) == "pending"
     assert report_utils._get_row_status(no_verdict_row) == "no_verdict"
@@ -123,7 +139,7 @@ def test_build_latest_scan_panel_and_engine_results_table() -> None:
     )
 
     assert waiting_panel.subtitle == "0/2 complete"
-    assert waiting_panel.renderable.plain.startswith("Waiting for the first completed scan")
+    assert cast(Text, waiting_panel.renderable).plain.startswith("Waiting for the first completed scan")
     assert latest_panel.title == "Latest Scan Result"
     assert latest_panel.subtitle == "1/2 complete"
     assert len(summary_group.renderables) == 2

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 import subprocess
 from typing import cast
@@ -11,19 +12,22 @@ from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
-def _installer_data() -> InstallerData:
-    return cast(InstallerData, {})
-
-
 def test_install_fonts_script_reference_exists() -> None:
-    script_path = get_path_reference_path(module=powershell_scripts, path_reference=powershell_scripts.INSTALL_FONTS_PATH_REFERENCE)
+    script_path = get_path_reference_path(
+        module=powershell_scripts,
+        path_reference=powershell_scripts.INSTALL_FONTS_PATH_REFERENCE,
+    )
 
     assert script_path.is_file()
     assert script_path.suffix == ".ps1"
 
 
 def test_missing_required_fonts_normalizes_names() -> None:
-    missing = helper._missing_required_fonts(["Cascadia_Code_NF", "Other Font"])
+    missing_required_fonts = cast(
+        Callable[[list[str]], list[str]],
+        getattr(helper, "_missing_required_fonts"),
+    )
+    missing = missing_required_fonts(["Cascadia_Code_NF", "Other Font"])
 
     assert missing == ["Caskaydia Cove Nerd Font family"]
 
@@ -83,7 +87,9 @@ def test_install_nerd_fonts_writes_ascii_script_and_cleans_up(tmp_path: Path, mo
 
     helper.install_nerd_fonts()
 
-    assert captured_commands == [f"powershell.exe -executionpolicy Bypass -nologo -noninteractive -File {expected_script_path}"]
+    assert captured_commands == [
+        f"powershell.exe -executionpolicy Bypass -nologo -noninteractive -File {expected_script_path}"
+    ]
     assert len(captured_script_contents) == 1
     assert captured_script_contents[0].isascii()
     assert str(downloaded_dir) in captured_script_contents[0]

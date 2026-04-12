@@ -18,11 +18,33 @@ def test_normalize_ps_json_handles_blank_dict_and_filtered_list() -> None:
 def test_list_windows_devices_combines_partition_and_volume_data(monkeypatch: pytest.MonkeyPatch) -> None:
     partition_json = json.dumps(
         [
-            {"DiskNumber": 1, "PartitionNumber": 2, "DriveLetter": "d", "Size": 2048, "Type": "Basic", "Guid": "vol-guid"},
-            {"DiskNumber": 3, "PartitionNumber": 4, "DriveLetter": "", "Size": 512, "Type": "Reserved"},
+            {
+                "DiskNumber": 1,
+                "PartitionNumber": 2,
+                "DriveLetter": "d",
+                "Size": 2048,
+                "Type": "Basic",
+                "Guid": "vol-guid",
+            },
+            {
+                "DiskNumber": 3,
+                "PartitionNumber": 4,
+                "DriveLetter": "",
+                "Size": 512,
+                "Type": "Reserved",
+            },
         ]
     )
-    volume_json = json.dumps([{"DriveLetter": "D", "FileSystemLabel": "DATA", "FileSystem": "NTFS", "Path": None}])
+    volume_json = json.dumps(
+        [
+            {
+                "DriveLetter": "D",
+                "FileSystemLabel": "DATA",
+                "FileSystem": "NTFS",
+                "Path": None,
+            }
+        ]
+    )
     commands: list[str] = []
 
     def fake_run_powershell(command: str) -> subprocess.CompletedProcess[str]:
@@ -53,7 +75,7 @@ def test_list_windows_devices_combines_partition_and_volume_data(monkeypatch: py
             device_path="vol-guid",
             device_type="part",
             label="DATA",
-            mount_point="D:\\",
+            mount_point="d:\\",
             fs_type="NTFS",
             size="2.0 KB",
             extra="Basic",
@@ -128,7 +150,9 @@ def test_mount_windows_validates_partition_details_and_builds_command(monkeypatc
 
     windows_module.mount_windows(entry, "z:\\mounted")
 
-    assert called_commands == ["Get-Partition -DiskNumber 7 -PartitionNumber 3 | Set-Partition -NewDriveLetter Z"]
+    assert called_commands == [
+        "Get-Partition -DiskNumber 7 -PartitionNumber 3 | Set-Partition -NewDriveLetter Z"
+    ]
     assert called_contexts == ["Set-Partition"]
 
     with pytest.raises(RuntimeError, match="Invalid drive letter"):

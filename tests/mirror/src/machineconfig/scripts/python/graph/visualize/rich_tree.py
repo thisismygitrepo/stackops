@@ -3,9 +3,14 @@ from __future__ import annotations
 from rich.text import Text
 from rich.tree import Tree
 import pytest
+from typing import Protocol, cast
 
 from machineconfig.scripts.python.graph.visualize import rich_tree
 from machineconfig.scripts.python.graph.visualize.graph_data import GraphNode
+
+
+class FormatLabelFn(Protocol):
+    def __call__(self, node: GraphNode, *, show_help: bool, show_aliases: bool) -> Text: ...
 
 
 class RecordingConsole:
@@ -55,6 +60,10 @@ def _build_root() -> GraphNode:
     )
 
 
+def _format_label() -> FormatLabelFn:
+    return cast(FormatLabelFn, getattr(rich_tree, "_format_label"))
+
+
 def test_format_label_includes_help_and_aliases() -> None:
     node = GraphNode(
         id="deploy",
@@ -68,8 +77,9 @@ def test_format_label_includes_help_and_aliases() -> None:
         children=[],
         leaf_count=1,
     )
+    format_label = _format_label()
 
-    label = rich_tree._format_label(node, show_help=True, show_aliases=True)
+    label = format_label(node, show_help=True, show_aliases=True)
 
     assert label.plain == "deploy - Ship release (aliases: ship, release)"
 

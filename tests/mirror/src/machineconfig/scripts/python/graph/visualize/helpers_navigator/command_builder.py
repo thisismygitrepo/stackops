@@ -5,8 +5,18 @@ from typing import cast
 
 from textual.widgets import Input
 
-from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_builder import CommandBuilderScreen
-from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import ArgumentInfo, CommandInfo
+from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_builder import (
+    CommandBuilderScreen,
+)
+from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import (
+    ArgumentInfo,
+    CommandInfo,
+)
+
+
+class CommandBuilderHarness(CommandBuilderScreen):
+    def build_command_for_test(self) -> str:
+        return self._build_command()
 
 
 @dataclass
@@ -28,7 +38,7 @@ def test_parse_arguments_extracts_options_flags_and_positionals() -> None:
         arguments=None,
     )
 
-    screen = CommandBuilderScreen(command_info)
+    screen = CommandBuilderHarness(command_info)
 
     assert [argument.name for argument in screen.arguments] == ["output", "force", "target"]
 
@@ -50,14 +60,37 @@ def test_build_command_uses_positional_flags_negated_flags_and_explicit_flag_val
         description="Render graph",
         command="graph render",
         arguments=[
-            ArgumentInfo(name="target", is_required=True, is_flag=False, is_positional=True, placeholder="target"),
-            ArgumentInfo(name="verbose", is_required=False, is_flag=True, flag="--verbose", negated_flag="--no-verbose"),
-            ArgumentInfo(name="confirm", is_required=False, is_flag=True, flag="--confirm"),
-            ArgumentInfo(name="format", is_required=False, is_flag=False, flag="--format", placeholder="format"),
+            ArgumentInfo(
+                name="target",
+                is_required=True,
+                is_flag=False,
+                is_positional=True,
+                placeholder="target",
+            ),
+            ArgumentInfo(
+                name="verbose",
+                is_required=False,
+                is_flag=True,
+                flag="--verbose",
+                negated_flag="--no-verbose",
+            ),
+            ArgumentInfo(
+                name="confirm",
+                is_required=False,
+                is_flag=True,
+                flag="--confirm",
+            ),
+            ArgumentInfo(
+                name="format",
+                is_required=False,
+                is_flag=False,
+                flag="--format",
+                placeholder="format",
+            ),
         ],
     )
 
-    screen = CommandBuilderScreen(command_info)
+    screen = CommandBuilderHarness(command_info)
     screen.input_widgets = cast(
         dict[str, Input],
         {
@@ -68,6 +101,6 @@ def test_build_command_uses_positional_flags_negated_flags_and_explicit_flag_val
         },
     )
 
-    built_command = screen._build_command()
+    built_command = screen.build_command_for_test()
 
     assert built_command == "graph render graph.json --no-verbose --force --format svg"

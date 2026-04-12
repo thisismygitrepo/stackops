@@ -77,7 +77,7 @@ def test_handle_highlight_updates_preview_and_status(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(app, "_preview", lambda: preview)
     monkeypatch.setattr(app, "_status", lambda: status)
-    app._env_lookup = {"HOME": "/tmp/home"}
+    setattr(app, "_env_lookup", {"HOME": "/tmp/home"})
 
     app.handle_highlight(event)
 
@@ -108,8 +108,8 @@ def test_action_copy_entry_copies_selected_value(monkeypatch: pytest.MonkeyPatch
     setattr(fake_pyperclip, "copy", fake_copy)
     monkeypatch.setitem(sys.modules, "pyperclip", fake_pyperclip)
     monkeypatch.setattr(app, "_status", lambda: status)
-    app._selected_key = "HOME"
-    app._env_lookup = {"HOME": "/tmp/home"}
+    setattr(app, "_selected_key", "HOME")
+    setattr(app, "_env_lookup", {"HOME": "/tmp/home"})
 
     app.action_copy_entry()
 

@@ -87,10 +87,10 @@ def test_main_writes_output_file_when_requested(monkeypatch: pytest.MonkeyPatch,
     main = cast(Callable[[], None], namespace["main"])
     output_path = tmp_path / "scan.json"
 
-    def fake_parse_repo_url(_repo_url: str) -> FakeRepoSpec:
+    def fake_parse_repo_url(repo_url: str) -> FakeRepoSpec:
         return FakeRepoSpec(owner="acme", repo="tool")
 
-    def fake_fetch_releases(_spec: FakeRepoSpec, _limit: int) -> list[FakeReleaseInfo]:
+    def fake_fetch_releases(spec: FakeRepoSpec, limit: int) -> list[FakeReleaseInfo]:
         return _sample_releases()
 
     monkeypatch.setitem(main.__globals__, "parse_repo_url", fake_parse_repo_url)

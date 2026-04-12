@@ -2,11 +2,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import sys
 from types import ModuleType
+from typing import cast
 
 from click import Command, Context
 import pytest
 from _pytest.capture import CaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
+import typer
 
 import machineconfig.scripts.python.fire_jobs as target
 
@@ -69,6 +71,10 @@ def _install_fire_job_modules(
     monkeypatch.setitem(sys.modules, impl_module.__name__, impl_module)
 
 
+def _ctx() -> typer.Context:
+    return cast(typer.Context, Context(Command("fire")))
+
+
 def test_fire_routes_explicit_arguments(monkeypatch: MonkeyPatch) -> None:
     parsed_fire_args = object()
     seen_calls: list[tuple[FakeFireJobArgs, object]] = []
@@ -83,7 +89,7 @@ def test_fire_routes_explicit_arguments(monkeypatch: MonkeyPatch) -> None:
     )
 
     target.fire(
-        ctx=Context(Command("fire")),
+        ctx=_ctx(),
         path="jobs.py",
         function="launch",
         frozen=True,
@@ -160,7 +166,7 @@ def test_fire_prints_runtime_errors_and_exits(
 
     with pytest.raises(SystemExit) as exc_info:
         target.fire(
-            ctx=Context(Command("fire")),
+            ctx=_ctx(),
             path=".",
             function=None,
             frozen=False,

@@ -2,13 +2,34 @@ from __future__ import annotations
 
 from rich.console import Console, RenderableType
 from rich.panel import Panel
+from rich.table import Table
+from pytest import MonkeyPatch
 
-from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_detail import CommandDetail
-from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import ArgumentInfo, CommandInfo
+from machineconfig.scripts.python.graph.visualize.helpers_navigator.command_detail import (
+    CommandDetail,
+)
+from machineconfig.scripts.python.graph.visualize.helpers_navigator.data_models import (
+    ArgumentInfo,
+    CommandInfo,
+)
 
 
-def test_update_command_renders_empty_state_and_group_panel(monkeypatch: object) -> None:
-    detail = CommandDetail(id="command-detail")
+class CommandDetailHarness(CommandDetail):
+    def render_command_for_test(self, command_info: CommandInfo) -> Panel:
+        return self._render_command(command_info)
+
+    def format_usage_for_test(self, command_info: CommandInfo) -> str:
+        return self._format_usage(command_info)
+
+    def build_options_table_for_test(self, arguments: list[ArgumentInfo]) -> Table:
+        return self._build_options_table(arguments)
+
+    def format_option_flags_for_test(self, argument: ArgumentInfo) -> str:
+        return self._format_option_flags(argument)
+
+
+def test_update_command_renders_empty_state_and_group_panel(monkeypatch: MonkeyPatch) -> None:
+    detail = CommandDetailHarness(id="command-detail")
     updates: list[RenderableType | str] = []
 
     def record_update(renderable: RenderableType | str) -> None:
@@ -33,7 +54,7 @@ def test_update_command_renders_empty_state_and_group_panel(monkeypatch: object)
 
 
 def test_render_command_formats_usage_and_options_table() -> None:
-    detail = CommandDetail(id="command-detail")
+    detail = CommandDetailHarness(id="command-detail")
     command_info = CommandInfo(
         name="render",
         description="Render graph",
@@ -41,7 +62,14 @@ def test_render_command_formats_usage_and_options_table() -> None:
         long_description="Render graph to file",
         module_path="machineconfig.graph.render",
         arguments=[
-            ArgumentInfo(name="target", is_required=True, is_flag=False, is_positional=True, placeholder="path", description="Target path"),
+            ArgumentInfo(
+                name="target",
+                is_required=True,
+                is_flag=False,
+                is_positional=True,
+                placeholder="path",
+                description="Target path",
+            ),
             ArgumentInfo(
                 name="verbose",
                 is_required=False,
@@ -64,10 +92,15 @@ def test_render_command_formats_usage_and_options_table() -> None:
             ),
         ],
     )
+    arguments = command_info.arguments
+    assert arguments is not None
 
     panel = detail._render_command(command_info)
     usage = detail._format_usage(command_info)
     options_table = detail._build_options_table(command_info.arguments or [])
+    panel = detail.render_command_for_test(command_info)
+    usage = detail.format_usage_for_test(command_info)
+    options_table = detail.build_options_table_for_test(arguments)
     console = Console(record=True, width=120)
     console.print(options_table)
     rendered_options = console.export_text()
@@ -76,6 +109,8 @@ def test_render_command_formats_usage_and_options_table() -> None:
     assert usage == "graph render [OPTIONS] PATH"
     assert detail._format_option_flags(command_info.arguments[1]) == "--verbose / --no-verbose, -v"
     assert detail._format_option_flags(command_info.arguments[2]) == "--format, -f"
+    assert detail.format_option_flags_for_test(arguments[1]) == "--verbose / --no-verbose, -v"
+    assert detail.format_option_flags_for_test(arguments[2]) == "--format, -f"
     assert "--help" in rendered_options
     assert "--verbose / --no-verbose" in rendered_options
     assert "--format, -f <KIND>" in rendered_options

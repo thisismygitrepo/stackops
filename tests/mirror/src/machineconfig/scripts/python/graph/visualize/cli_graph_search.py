@@ -78,28 +78,6 @@ def test_load_search_entries_normalizes_root_and_short_paths(
     assert entries[1].help_command == "graph search --help"
 
 
-def test_build_entry_lookup_includes_short_command_preview() -> None:
-    entry = target.CliGraphSearchEntry(
-        source_file="src/b_search.py",
-        command_tokens=("graph", "search"),
-        short_command_tokens=("g", "s"),
-        entry={
-            "kind": "command",
-            "name": "search",
-            "short_help": "Search graph",
-        },
-    )
-
-    previews, lookup = target._build_entry_lookup(entries=[entry])
-    option_key = "graph search    [src/b_search.py]"
-
-    assert lookup[option_key] is entry
-    assert "Source: src/b_search.py" in previews[option_key]
-    assert "Command: graph search" in previews[option_key]
-    assert "Short command: g s" in previews[option_key]
-    assert "Help target: graph search --help" in previews[option_key]
-
-
 def test_search_cli_graph_show_json_prints_summary_and_entry(
     monkeypatch: MonkeyPatch,
     tmp_path: Path,

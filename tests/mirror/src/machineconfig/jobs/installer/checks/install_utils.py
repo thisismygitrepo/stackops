@@ -1,12 +1,19 @@
+# pyright: reportPrivateUsage=false
+
 from __future__ import annotations
 
+from collections.abc import Callable
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
 from machineconfig.jobs.installer.checks import install_utils
+
+if TYPE_CHECKING:
+    from machineconfig.utils.path_extended import PathExtended
 
 
 class FakeConsole:
@@ -27,7 +34,7 @@ class FakeThreadPoolExecutor:
     def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, traceback: object | None) -> None:
         return None
 
-    def map(self, function: object, values: list[str]) -> list[bool]:
+    def map(self, function: Callable[[str], bool], values: list[str]) -> list[bool]:
         return [function(value) for value in values]
 
 
@@ -46,13 +53,15 @@ def test_upload_app_returns_share_link_and_handles_failure(tmp_path: Path, monke
 
     monkeypatch.setattr(install_utils, "get_remote_path", lambda **kwargs: Path("myhome/tool"))
     monkeypatch.setattr(install_utils, "to_cloud", lambda **kwargs: "https://example.test/share")
-    assert install_utils.upload_app(app_path) == "https://example.test/share"
+    typed_app_path = cast("PathExtended", app_path)
+
+    assert install_utils.upload_app(typed_app_path) == "https://example.test/share"
 
     def fail_remote_path(**kwargs: object) -> Path:
         raise RuntimeError(f"boom: {kwargs!r}")
 
     monkeypatch.setattr(install_utils, "get_remote_path", fail_remote_path)
-    assert install_utils.upload_app(app_path) is None
+    assert install_utils.upload_app(typed_app_path) is None
     assert any("Failed to upload" in str(message) for message in fake_console.messages)
 
 

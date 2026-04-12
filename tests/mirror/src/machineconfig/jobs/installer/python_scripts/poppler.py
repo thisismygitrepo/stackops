@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 from typing import cast
 
@@ -17,8 +18,12 @@ def test_select_extracted_root_prefers_single_child_directory(tmp_path: Path) ->
     extracted_path.mkdir()
     nested_dir = PathExtended(str(extracted_path / "release"))
     nested_dir.mkdir()
+    select_extracted_root = cast(
+        Callable[[PathExtended], PathExtended],
+        getattr(poppler, "_select_extracted_root"),
+    )
 
-    selected_path = poppler._select_extracted_root(extracted_path=extracted_path)
+    selected_path = select_extracted_root(extracted_path)
 
     assert selected_path == nested_dir
 

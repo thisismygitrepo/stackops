@@ -9,14 +9,31 @@ import typer
 from machineconfig.scripts.python.helpers.helpers_devops import cli_ssh as module
 
 
+def install_helpers_network_ssh_submodule(
+    monkeypatch: pytest.MonkeyPatch,
+    leaf_name: str,
+    leaf_module: ModuleType,
+) -> None:
+    import machineconfig.scripts.python.helpers as helpers_package
+
+    helpers_network_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network")
+    ssh_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network.ssh")
+    setattr(ssh_module, leaf_name, leaf_module)
+    setattr(helpers_network_module, "ssh", ssh_module)
+    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network", helpers_network_module)
+    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.ssh", ssh_module)
+    monkeypatch.setitem(sys.modules, f"machineconfig.scripts.python.helpers.helpers_network.ssh.{leaf_name}", leaf_module)
+    monkeypatch.setattr(helpers_package, "helpers_network", helpers_network_module, raising=False)
+
+
 def test_get_windows_ssh_server_install_script_switches_install_method() -> None:
     winget_script = module._get_windows_ssh_server_install_script(use_winget=True)
     capability_script = module._get_windows_ssh_server_install_script(use_winget=False)
 
     assert "winget install --no-upgrade --Id Microsoft.OpenSSH.Preview" in winget_script
-    assert "C:\\Program Files\\OpenSSH\\sshd.exe" in winget_script
+    assert 'C:\\Program Files\\OpenSSH\\sshd.exe' in winget_script
     assert "Add-WindowsCapability -Online -Name OpenSSH.Server" in capability_script
-    assert "$env:WINDIR\\System32\\OpenSSH\\sshd.exe" in capability_script
+    assert '$env:WINDIR\\System32\\OpenSSH\\sshd.exe' in capability_script
 
 
 def test_install_ssh_server_runs_linux_script(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -96,7 +113,7 @@ def test_add_ssh_key_forwards_arguments(monkeypatch: pytest.MonkeyPatch) -> None
         recorded_calls.append((pub_path, pub_choose, pub_val, from_github, remote))
 
     setattr(helper_module, "main", fake_main)
-    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key", helper_module)
+    install_helpers_network_ssh_submodule(monkeypatch, "ssh_add_ssh_key", helper_module)
 
     module.add_ssh_key(path="/tmp/key.pub", choose=True, value=False, github="alex", remote="root@host:22")
 
@@ -113,7 +130,7 @@ def test_debug_ssh_dispatches_to_linux_helper(monkeypatch: pytest.MonkeyPatch) -
         recorded_calls.append("linux")
 
     setattr(helper_module, "ssh_debug_linux", fake_ssh_debug_linux)
-    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux", helper_module)
+    install_helpers_network_ssh_submodule(monkeypatch, "ssh_debug_linux", helper_module)
     monkeypatch.setattr(platform, "system", lambda: "Linux")
 
     module.debug_ssh()

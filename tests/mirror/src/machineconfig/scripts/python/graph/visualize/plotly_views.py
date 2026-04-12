@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing import cast
+from typing import Protocol, cast
 
 import plotly
 import pytest
@@ -13,6 +13,20 @@ import machineconfig.scripts.python.graph.visualize.plotly_browser as plotly_bro
 from machineconfig.scripts.python.graph.visualize import plotly_views
 from machineconfig.scripts.python.graph.visualize.graph_data import GraphNode
 import machineconfig.utils.code as code_module
+
+
+class RenderPlotlyFn(Protocol):
+    def __call__(
+        self,
+        *,
+        view: str,
+        path: str | None,
+        output: str | None,
+        height: int,
+        width: int,
+        template: str,
+        max_depth: int | None,
+    ) -> None: ...
 
 
 class FakeTrace:
@@ -78,8 +92,13 @@ def _install_fake_graph_objects(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(plotly, "graph_objects", fake_graph_objects, raising=False)
 
 
+def _render_plotly() -> RenderPlotlyFn:
+    return cast(RenderPlotlyFn, getattr(plotly_views, "_render_plotly"))
+
+
 def test_render_plotly_rejects_unsupported_view(monkeypatch: pytest.MonkeyPatch) -> None:
     root = _build_graph_root()
+    render_plotly = _render_plotly()
 
     def fake_build_graph(path: str | None) -> GraphNode:
         _ = path
@@ -88,13 +107,24 @@ def test_render_plotly_rejects_unsupported_view(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(graph_data, "build_graph", fake_build_graph)
 
     with pytest.raises(ValueError, match="Unsupported view"):
-        plotly_views._render_plotly(view="radial", path=None, output=None, height=900, width=1200, template="plotly_dark", max_depth=None)
+        render_plotly(
+            view="radial",
+            path=None,
+            output=None,
+            height=900,
+            width=1200,
+            template="plotly_dark",
+            max_depth=None,
+        )
 
 
 def test_render_plotly_writes_static_image_for_image_output(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     root = _build_graph_root()
+    render_plotly = _render_plotly()
     output_path = tmp_path.joinpath("graph.png")
     image_calls: list[tuple[Path, int, int]] = []
 
@@ -110,8 +140,14 @@ def test_render_plotly_writes_static_image_for_image_output(
     monkeypatch.setattr(graph_data, "build_graph", fake_build_graph)
     monkeypatch.setattr(plotly_browser, "write_plotly_image", fake_write_plotly_image)
 
-    plotly_views._render_plotly(
-        view="treemap", path=None, output=output_path.as_posix(), height=410, width=510, template="plotly_white", max_depth=None
+    render_plotly(
+        view="treemap",
+        path=None,
+        output=output_path.as_posix(),
+        height=410,
+        width=510,
+        template="plotly_white",
+        max_depth=None,
     )
 
     figure = FakeFigure.created[-1]
@@ -124,8 +160,12 @@ def test_render_plotly_writes_static_image_for_image_output(
     assert f"Wrote {output_path}" in capsys.readouterr().out
 
 
-def test_render_plotly_writes_html_for_non_image_output(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_render_plotly_writes_html_for_non_image_output(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     root = _build_graph_root()
+    render_plotly = _render_plotly()
     output_path = tmp_path.joinpath("graph.html")
 
     def fake_build_graph(path: str | None) -> GraphNode:
@@ -140,8 +180,14 @@ def test_render_plotly_writes_html_for_non_image_output(monkeypatch: pytest.Monk
     monkeypatch.setattr(graph_data, "build_graph", fake_build_graph)
     monkeypatch.setattr(plotly_browser, "write_plotly_image", fail_write_plotly_image)
 
-    plotly_views._render_plotly(
-        view="icicle", path=None, output=output_path.as_posix(), height=300, width=400, template="plotly_dark", max_depth=None
+    render_plotly(
+        view="icicle",
+        path=None,
+        output=output_path.as_posix(),
+        height=300,
+        width=400,
+        template="plotly_dark",
+        max_depth=None,
     )
 
     figure = FakeFigure.created[-1]
@@ -153,10 +199,24 @@ def test_use_render_plotly_adds_runtime_dependencies_once(monkeypatch: pytest.Mo
     render_calls: list[tuple[str, str | None, str | None, int, int, str, int | None]] = []
     uv_calls: list[tuple[list[str], str | None]] = []
 
-    def fake_render_plotly(*, view: str, path: str | None, output: str | None, height: int, width: int, template: str, max_depth: int | None) -> None:
+    def fake_render_plotly(
+        *,
+        view: str,
+        path: str | None,
+        output: str | None,
+        height: int,
+        width: int,
+        template: str,
+        max_depth: int | None,
+    ) -> None:
         render_calls.append((view, path, output, height, width, template, max_depth))
 
-    def fake_run_lambda_function(lmb: object, uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> None:
+    def fake_run_lambda_function(
+        lmb: object,
+        uv_with: list[str] | None,
+        uv_project_dir: str | None,
+        uv_run_flags: str = "",
+    ) -> None:
         _ = uv_run_flags
         assert callable(lmb)
         assert uv_with is not None

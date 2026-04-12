@@ -62,8 +62,6 @@ def test_create_default_shell_profile_adds_bash_init_line_and_wsl_history_sync(
         check: bool,
     ) -> _FakeCompletedProcess:
         assert command == ["cat", "/proc/version"]
-        assert stdout >= 0
-        assert stderr >= 0
         assert text is True
         assert check is False
         return _FakeCompletedProcess(

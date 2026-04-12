@@ -96,18 +96,7 @@ def test_jupyter_to_markdown_normalizes_slide_breaks(
     presentation_dir = notebook_path.parent.joinpath("presentation")
     presentation_dir.mkdir(parents=True, exist_ok=True)
     presentation_dir.joinpath("slides_raw.md").write_text(
-        "first
-
-
-
-second
-
----
-
-
-
-third
-",
+        "first\n\n\n\nsecond\n\n---\n\n\n\nthird\n",
         encoding="utf-8",
     )
     commands: list[str] = []
@@ -121,16 +110,7 @@ third
     result = module.jupyter_to_markdown(notebook_path)
 
     assert result == presentation_dir
-    assert presentation_dir.joinpath("slides.md").read_text(encoding="utf-8") == "first
-
----
-
-second
-
----
-
-third
-"
+    assert presentation_dir.joinpath("slides.md").read_text(encoding="utf-8") == "first\n\n---\n\nsecond\n\n---\n\nthird\n"
     assert commands == [
         f"jupyter nbconvert --to markdown --no-prompt --no-input --output-dir {presentation_dir} --output slides_raw.md {notebook_path}",
         f"jupyter nbconvert --to html --no-prompt --no-input --output-dir {presentation_dir} {notebook_path}",
@@ -144,8 +124,7 @@ def test_main_copies_single_markdown_file_and_runs_slidev(
     module = _load_module(monkeypatch, tmp_path.joinpath("config"))
     report_dir = PathExtended(tmp_path.joinpath("report"))
     report_dir.mkdir(parents=True, exist_ok=True)
-    report_dir.joinpath("deck.md").write_text("# deck
-", encoding="utf-8")
+    report_dir.joinpath("deck.md").write_text("# deck\n", encoding="utf-8")
     subprocess_calls: list[SubprocessInvocation] = []
     printed_code: list[str] = []
     address_module = ModuleType("address")
@@ -196,8 +175,7 @@ def test_main_copies_single_markdown_file_and_runs_slidev(
     slides_path = module.SLIDEV_REPO.joinpath("slides.md")
 
     assert slides_path.exists()
-    assert slides_path.read_text(encoding="utf-8") == "# deck
-"
+    assert slides_path.read_text(encoding="utf-8") == "# deck\n"
     assert subprocess_calls == [
         SubprocessInvocation(
             args="bun run dev slides.md -- --remote",
