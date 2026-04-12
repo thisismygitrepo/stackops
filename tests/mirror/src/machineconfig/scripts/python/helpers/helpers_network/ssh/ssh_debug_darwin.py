@@ -30,14 +30,14 @@ def _build_path_class(root_dir: Path, home_dir: Path) -> type[object]:
     return MappedPath
 
 
-def test_ssh_debug_darwin_rejects_non_macos(monkeypatch: object) -> None:
+def test_ssh_debug_darwin_rejects_non_macos(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(target, "system", lambda: "Linux")
 
     with pytest.raises(NotImplementedError):
         target.ssh_debug_darwin()
 
 
-def test_ssh_debug_darwin_reports_missing_install_and_keys(monkeypatch: object, tmp_path: Path) -> None:
+def test_ssh_debug_darwin_reports_missing_install_and_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     root_dir = tmp_path.joinpath("root")
     home_dir = root_dir.joinpath("home", "tester")
     home_dir.mkdir(parents=True)
@@ -66,7 +66,7 @@ def test_ssh_debug_darwin_reports_missing_install_and_keys(monkeypatch: object, 
     assert root_dir.joinpath("tmp", "ssh_fix.sh").is_file()
 
 
-def test_ssh_debug_darwin_reads_main_config_and_listening_port(monkeypatch: object, tmp_path: Path) -> None:
+def test_ssh_debug_darwin_reads_main_config_and_listening_port(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     root_dir = tmp_path.joinpath("root")
     home_dir = root_dir.joinpath("home", "tester")
     ssh_dir = home_dir.joinpath(".ssh")

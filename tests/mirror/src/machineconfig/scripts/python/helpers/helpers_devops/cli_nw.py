@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from types import ModuleType
 
+import pytest
 import rich
 import rich.console
 from rich.console import Console
@@ -14,7 +15,11 @@ import machineconfig.utils.code as code_utils
 
 
 def _install_address_helper(
-    monkeypatch, *, public_ip: dict[str, str] | Exception, addresses: list[tuple[str, str]], selected_lan_ip: str | None
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    public_ip: dict[str, str] | Exception,
+    addresses: list[tuple[str, str]],
+    selected_lan_ip: str | None,
 ) -> None:
     package_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network")
     helper_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network.address")
@@ -31,18 +36,26 @@ def _install_address_helper(
         assert prefer_vpn is False
         return selected_lan_ip
 
-    helper_module.get_public_ip_address = get_public_ip_address
-    helper_module.get_all_ipv4_addresses = get_all_ipv4_addresses
-    helper_module.select_lan_ipv4 = select_lan_ipv4
-    package_module.address = helper_module
+    setattr(helper_module, "get_public_ip_address", get_public_ip_address)
+    setattr(helper_module, "get_all_ipv4_addresses", get_all_ipv4_addresses)
+    setattr(helper_module, "select_lan_ipv4", select_lan_ipv4)
+    setattr(package_module, "address", helper_module)
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network", package_module)
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.address", helper_module)
 
 
-def test_show_address_prints_public_and_selected_lan_ip(monkeypatch, capsys) -> None:
+def test_show_address_prints_public_and_selected_lan_ip(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     json_calls: list[dict[str, str]] = []
     record_console = Console(record=True, width=120)
-    _install_address_helper(monkeypatch, public_ip={"ip": "1.2.3.4"}, addresses=[("eth0", "192.168.1.20")], selected_lan_ip="192.168.1.20")
+    _install_address_helper(
+        monkeypatch,
+        public_ip={"ip": "1.2.3.4"},
+        addresses=[("eth0", "192.168.1.20")],
+        selected_lan_ip="192.168.1.20",
+    )
     monkeypatch.setattr(rich, "print_json", lambda *, data: json_calls.append(data))
     monkeypatch.setattr(rich.console, "Console", lambda: record_console)
 
@@ -55,9 +68,17 @@ def test_show_address_prints_public_and_selected_lan_ip(monkeypatch, capsys) -> 
     assert "Network Interfaces" in record_console.export_text()
 
 
-def test_show_address_handles_public_ip_lookup_failure(monkeypatch, capsys) -> None:
+def test_show_address_handles_public_ip_lookup_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     record_console = Console(record=True, width=120)
-    _install_address_helper(monkeypatch, public_ip=RuntimeError("boom"), addresses=[], selected_lan_ip=None)
+    _install_address_helper(
+        monkeypatch,
+        public_ip=RuntimeError("boom"),
+        addresses=[],
+        selected_lan_ip=None,
+    )
     monkeypatch.setattr(rich.console, "Console", lambda: record_console)
 
     cli_nw.show_address()
@@ -68,21 +89,37 @@ def test_show_address_handles_public_ip_lookup_failure(monkeypatch, capsys) -> N
     assert "No network interfaces found." in captured.out
 
 
-def test_vscode_share_share_local_builds_and_runs_serve_web_command(monkeypatch) -> None:
+def test_vscode_share_share_local_builds_and_runs_serve_web_command(monkeypatch: pytest.MonkeyPatch) -> None:
     printed_commands: list[str] = []
     executed_commands: list[str] = []
     shared_urls: list[tuple[str, str | None]] = []
 
     monkeypatch.setattr(cli_nw_vscode_share, "resolve_share_local_folder", lambda directory: "/tmp/workspace")
-    monkeypatch.setattr(cli_nw_vscode_share, "ensure_without_connection_token", lambda extra_args: "--without-connection-token --telemetry-level off")
-    monkeypatch.setattr(cli_nw_vscode_share, "print_serve_web_urls", lambda cmd, *, folder_path: shared_urls.append((cmd, folder_path)))
+    monkeypatch.setattr(
+        cli_nw_vscode_share,
+        "ensure_without_connection_token",
+        lambda extra_args: "--without-connection-token --telemetry-level off",
+    )
+    monkeypatch.setattr(
+        cli_nw_vscode_share,
+        "print_serve_web_urls",
+        lambda cmd, *, folder_path: shared_urls.append((cmd, folder_path)),
+    )
     monkeypatch.setattr(code_utils, "print_code", lambda code, **_kwargs: printed_commands.append(code))
     monkeypatch.setattr(code_utils, "exit_then_run_shell_script", lambda code: executed_commands.append(code))
 
-    cli_nw.vscode_share(action="share-local", name=None, path="base", host="0.0.0.0", directory=".", extra_args="--telemetry-level off")
+    cli_nw.vscode_share(
+        action="share-local",
+        name=None,
+        path="base",
+        host="0.0.0.0",
+        directory=".",
+        extra_args="--telemetry-level off",
+    )
 
     expected_command = (
-        "code serve-web --accept-server-license-terms --host 0.0.0.0 --server-base-path base --without-connection-token --telemetry-level off"
+        "code serve-web --accept-server-license-terms --host 0.0.0.0 --server-base-path base "
+        "--without-connection-token --telemetry-level off"
     )
 
     assert printed_commands == [expected_command]

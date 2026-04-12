@@ -5,6 +5,8 @@ from pathlib import Path
 import sys
 from types import ModuleType
 
+import pytest
+
 from machineconfig.scripts.python.helpers.helpers_repos import action as target
 from machineconfig.scripts.python.helpers.helpers_repos.action_helper import GitAction, GitOperationResult, GitOperationSummary
 from machineconfig.utils.path_extended import PathExtended
@@ -65,7 +67,7 @@ class FakeRepo:
 
 
 def _install_fake_git_modules(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
     repo_lookup: dict[str, FakeRepo],
 ) -> type[Exception]:
     class FakeInvalidGitRepositoryError(Exception):
@@ -80,10 +82,10 @@ def _install_fake_git_modules(
     git_module = ModuleType("git")
     exc_module = ModuleType("git.exc")
     repo_module = ModuleType("git.repo")
-    exc_module.InvalidGitRepositoryError = FakeInvalidGitRepositoryError
-    repo_module.Repo = repo_factory
-    git_module.exc = exc_module
-    git_module.repo = repo_module
+    setattr(exc_module, "InvalidGitRepositoryError", FakeInvalidGitRepositoryError)
+    setattr(repo_module, "Repo", repo_factory)
+    setattr(git_module, "exc", exc_module)
+    setattr(git_module, "repo", repo_module)
 
     monkeypatch.setitem(sys.modules, "git", git_module)
     monkeypatch.setitem(sys.modules, "git.exc", exc_module)
@@ -93,7 +95,7 @@ def _install_fake_git_modules(
 
 
 def test_git_action_commit_reports_clean_repository(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     repo_path = PathExtended(str(tmp_path.joinpath("repo")))
@@ -117,7 +119,7 @@ def test_git_action_commit_reports_clean_repository(
 
 
 def test_git_action_push_aggregates_remote_failures(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     repo_path = PathExtended(str(tmp_path.joinpath("repo")))
@@ -148,7 +150,7 @@ def test_git_action_push_aggregates_remote_failures(
 
 
 def test_perform_git_operations_updates_summary_counts(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     repos_root = PathExtended(str(tmp_path.joinpath("repos")))

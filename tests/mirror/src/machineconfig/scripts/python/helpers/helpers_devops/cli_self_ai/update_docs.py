@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -15,30 +17,41 @@ class CompletedProcessStub:
     stderr: str
 
 
-def test_list_git_visible_files_deduplicates_and_sorts(monkeypatch, tmp_path: Path) -> None:
+def test_list_git_visible_files_deduplicates_and_sorts(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     def fake_run(*_args: object, **_kwargs: object) -> CompletedProcessStub:
-        return CompletedProcessStub(returncode=0, stdout="\ndocs/cli/guide.md\ndocs/api/index.md\ndocs/cli/guide.md\n", stderr="")
+        return CompletedProcessStub(
+            returncode=0,
+            stdout="\ndocs/cli/guide.md\ndocs/api/index.md\ndocs/cli/guide.md\n",
+            stderr="",
+        )
 
     monkeypatch.setattr(update_docs_module.subprocess, "run", fake_run)
+    list_visible_files = cast(Callable[..., tuple[Path, ...]], getattr(update_docs_module, "_list_git_visible_files"))
 
-    result = update_docs_module._list_git_visible_files(repo_root=tmp_path)
+    result = list_visible_files(repo_root=tmp_path)
 
     assert result == (Path("docs/api/index.md"), Path("docs/cli/guide.md"))
 
 
-def test_build_docs_context_keeps_only_allowed_docs_paths(monkeypatch, tmp_path: Path) -> None:
+def test_build_docs_context_keeps_only_allowed_docs_paths(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         update_docs_module,
         "_list_git_visible_files",
-        lambda *, repo_root: (Path("docs/cli/devops.md"), Path("docs/api/index.md"), Path("docs/index.md"), Path("docs/assets/logo.svg")),
+        lambda *, repo_root: (
+            Path("docs/cli/devops.md"),
+            Path("docs/api/index.md"),
+            Path("docs/index.md"),
+            Path("docs/assets/logo.svg"),
+        ),
     )
+    build_docs_context = cast(Callable[..., str], getattr(update_docs_module, "_build_docs_context"))
 
-    result = update_docs_module._build_docs_context(repo_root=tmp_path)
+    result = build_docs_context(repo_root=tmp_path)
 
     assert result == update_docs_module.DEFAULT_SEAPRATOR.join(("docs/cli/devops.md", "docs/api/index.md"))
 
 
-def test_update_docs_writes_context_file_even_when_agent_creation_fails(monkeypatch, tmp_path: Path) -> None:
+def test_update_docs_writes_context_file_even_when_agent_creation_fails(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo_root = tmp_path
     repo_root.joinpath("pyproject.toml").write_text("", encoding="utf-8")
     captured: dict[str, object] = {}
@@ -58,5 +71,7 @@ def test_update_docs_writes_context_file_even_when_agent_creation_fails(monkeypa
 
     assert captured["context"] == "docs/cli/devops.md@-@docs/api/index.md"
     assert captured["prompt"] == update_docs_module.UPDATE_DOCS_PROMPT
-    assert captured["output_path"] == str(repo_root.joinpath(".ai", "agents", update_docs_module.DEFAULT_DOCS_JOB_NAME, "layout.json"))
+    assert captured["output_path"] == str(
+        repo_root.joinpath(".ai", "agents", update_docs_module.DEFAULT_DOCS_JOB_NAME, "layout.json")
+    )
     assert context_path.read_text(encoding="utf-8") == "docs/cli/devops.md@-@docs/api/index.md"

@@ -48,6 +48,7 @@ def test_croshell_jupyter_backend_writes_script_and_notebook(
 ) -> None:
     tmp_home = tmp_path.joinpath("home")
     tmp_home.mkdir()
+    tmp_home.joinpath("code/machineconfig").mkdir(parents=True)
     cwd = tmp_path.joinpath("cwd")
     cwd.mkdir()
     launches: list[LaunchInvocation] = []

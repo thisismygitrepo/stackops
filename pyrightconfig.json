@@ -2,14 +2,11 @@
   "venvPath": ".",
   "venv": ".venv",
   "exclude": [
-    "tests"
+    "tests",
+    ".venv"
   ],
   // "python.analysis.typeCheckingMode": "strict",
   // "typeCheckingMode": "strict",
-    "exclude": [
-      "tests",
-      ".venv"
-    ],
   "extraPaths": [],
   "typeCheckingMode": "strict",
   "reportMissingTypeStubs": "none",

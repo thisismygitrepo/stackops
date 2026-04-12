@@ -34,7 +34,7 @@ def _build_path_class(root_dir: Path, home_dir: Path) -> type[object]:
     return MappedPath
 
 
-def test_ssh_debug_windows_rejects_non_windows(monkeypatch: object) -> None:
+def test_ssh_debug_windows_rejects_non_windows(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(target, "system", lambda: "Linux")
 
     with pytest.raises(NotImplementedError):
@@ -42,7 +42,7 @@ def test_ssh_debug_windows_rejects_non_windows(monkeypatch: object) -> None:
 
 
 def test_ssh_debug_windows_uses_admin_authorized_keys_and_parses_config(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     root_dir = tmp_path.joinpath("root")

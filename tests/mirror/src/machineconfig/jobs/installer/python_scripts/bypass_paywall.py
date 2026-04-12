@@ -35,24 +35,37 @@ class _FakePathExtended:
         return self.raw_path
 
 
+
 def _build_installer_data() -> InstallerData:
     return {
         "appName": "bypass-paywalls-chrome",
         "license": "MIT",
         "doc": "Extension",
         "repoURL": "https://github.com/iamadamdev/bypass-paywalls-chrome",
-        "fileNamePattern": {"amd64": {"windows": None, "linux": None, "darwin": None}, "arm64": {"windows": None, "linux": None, "darwin": None}},
+        "fileNamePattern": {
+            "amd64": {"windows": None, "linux": None, "darwin": None},
+            "arm64": {"windows": None, "linux": None, "darwin": None},
+        },
     }
 
 
-def test_main_downloads_archive_and_unzips_into_c_drive(monkeypatch: pytest.MonkeyPatch) -> None:
+
+def test_main_downloads_archive_and_unzips_into_c_drive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(bypass_paywall_module, "PathExtended", _FakePathExtended)
     monkeypatch.setattr(bypass_paywall_module, "Console", _FakeConsole)
     _FakePathExtended.downloaded_urls.clear()
     _FakePathExtended.unzip_calls.clear()
 
-    result = bypass_paywall_module.main(_build_installer_data(), version=None, update=False)
+    result = bypass_paywall_module.main(
+        _build_installer_data(),
+        version=None,
+        update=False,
+    )
 
-    assert _FakePathExtended.downloaded_urls == ["https://github.com/iamadamdev/bypass-paywalls-chrome/archive/master.zip"]
-    assert _FakePathExtended.unzip_calls == [("C:\\", True)]
+    assert _FakePathExtended.downloaded_urls == [
+        "https://github.com/iamadamdev/bypass-paywalls-chrome/archive/master.zip"
+    ]
+    assert _FakePathExtended.unzip_calls == [("C:\\\\", True)]
     assert result == ""

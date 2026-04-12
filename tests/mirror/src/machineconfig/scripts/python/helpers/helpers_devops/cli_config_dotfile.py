@@ -1,6 +1,8 @@
+from collections.abc import Callable
 from pathlib import Path
 import shutil
 import subprocess
+from typing import cast
 import zipfile
 
 import pytest
@@ -12,7 +14,18 @@ import machineconfig.utils.io as io_module
 import machineconfig.utils.links as links_module
 
 
-def test_format_self_managed_mapper_path_uses_config_root_token(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+type FormatSelfManagedMapperPath = Callable[[Path], str]
+
+format_self_managed_mapper_path = cast(
+    FormatSelfManagedMapperPath,
+    getattr(cli_config_dotfile_module, "_format_self_managed_mapper_path"),
+)
+
+
+def test_format_self_managed_mapper_path_uses_config_root_token(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     config_root = tmp_path / "config-root"
     target_path = config_root / "dotfiles" / "mapper" / "bashrc"
     target_path.parent.mkdir(parents=True)
@@ -20,33 +33,50 @@ def test_format_self_managed_mapper_path_uses_config_root_token(tmp_path: Path, 
 
     monkeypatch.setattr(cli_config_dotfile_module, "CONFIG_ROOT", str(config_root))
 
-    assert cli_config_dotfile_module._format_self_managed_mapper_path(target_path) == "CONFIG_ROOT/dotfiles/mapper/bashrc"
+    assert format_self_managed_mapper_path(target_path) == "CONFIG_ROOT/dotfiles/mapper/bashrc"
 
 
-def test_backup_path_round_trip_for_non_shared_destination(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_backup_path_round_trip_for_non_shared_destination(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     home_path = tmp_path / "home"
     home_path.mkdir()
     original_path = home_path / "configs" / "nvim" / "init.lua"
     destination_root = tmp_path / "backup-root"
 
     monkeypatch.setenv("HOME", str(home_path))
-    monkeypatch.setattr(cli_config_dotfile_module, "BACKUP_ROOT_PRIVATE", tmp_path / "private-root")
-    monkeypatch.setattr(cli_config_dotfile_module, "BACKUP_ROOT_PUBLIC", tmp_path / "public-root")
+    monkeypatch.setattr(
+        cli_config_dotfile_module,
+        "BACKUP_ROOT_PRIVATE",
+        tmp_path / "private-root",
+    )
+    monkeypatch.setattr(
+        cli_config_dotfile_module,
+        "BACKUP_ROOT_PUBLIC",
+        tmp_path / "public-root",
+    )
 
     backup_path = cli_config_dotfile_module.get_backup_path(
-        orig_path=original_path, sensitivity="private", destination=str(destination_root), shared=False
+        orig_path=original_path,
+        sensitivity="private",
+        destination=str(destination_root),
+        shared=False,
     )
 
     assert backup_path == destination_root / "init.lua"
-    assert (
-        cli_config_dotfile_module.get_original_path_from_backup_path(
-            backup_path=backup_path, sensitivity="private", destination=str(destination_root), shared=False
-        )
-        == home_path / "init.lua"
-    )
+    assert cli_config_dotfile_module.get_original_path_from_backup_path(
+        backup_path=backup_path,
+        sensitivity="private",
+        destination=str(destination_root),
+        shared=False,
+    ) == home_path / "init.lua"
 
 
-def test_register_dotfile_uses_copy_map_without_recording(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_register_dotfile_uses_copy_map_without_recording(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     home_path = tmp_path / "home"
     home_path.mkdir()
     original_path = home_path / ".config" / "app.toml"
@@ -55,10 +85,26 @@ def test_register_dotfile_uses_copy_map_without_recording(tmp_path: Path, monkey
     private_root = tmp_path / "private-root"
     copy_calls: list[tuple[object, object, object]] = []
 
-    def fake_copy_map(config_file_default_path: object, config_file_self_managed_path: object, on_conflict: object) -> None:
-        copy_calls.append((config_file_default_path, config_file_self_managed_path, on_conflict))
+    def fake_copy_map(
+        config_file_default_path: object,
+        config_file_self_managed_path: object,
+        on_conflict: object,
+    ) -> None:
+        copy_calls.append(
+            (
+                config_file_default_path,
+                config_file_self_managed_path,
+                on_conflict,
+            )
+        )
 
-    def fail_record_mapping(orig_path: Path, new_path: Path, method: str, section: str, os_filter: str) -> None:
+    def fail_record_mapping(
+        orig_path: Path,
+        new_path: Path,
+        method: str,
+        section: str,
+        os_filter: str,
+    ) -> None:
         _ = orig_path, new_path, method, section, os_filter
         raise AssertionError("record_mapping should not run when record=False")
 
@@ -85,21 +131,35 @@ def test_register_dotfile_uses_copy_map_without_recording(tmp_path: Path, monkey
     assert str(copied_target).endswith("private-root/.config/app.toml")
 
 
-def test_edit_dotfile_creates_user_mapper_and_runs_editor(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_edit_dotfile_creates_user_mapper_and_runs_editor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     user_mapper_path = tmp_path / "mapper.yaml"
     editor_calls: list[list[str]] = []
 
-    def fake_write_dotfiles_mapper(path: Path, mapper: dict[str, object], header: str) -> None:
+    def fake_write_dotfiles_mapper(
+        path: Path,
+        mapper: dict[str, object],
+        header: str,
+    ) -> None:
         _ = mapper
         path.write_text(header, encoding="utf-8")
 
-    def fake_run(args: list[str], check: bool) -> subprocess.CompletedProcess[str]:
+    def fake_run(
+        args: list[str],
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
         _ = check
         editor_calls.append(args)
         return subprocess.CompletedProcess(args=args, returncode=0)
 
     monkeypatch.setattr(cli_config_dotfile_module, "USER_MAPPER_PATH", user_mapper_path)
-    monkeypatch.setattr(cli_config_dotfile_module, "write_dotfiles_mapper", fake_write_dotfiles_mapper)
+    monkeypatch.setattr(
+        cli_config_dotfile_module,
+        "write_dotfiles_mapper",
+        fake_write_dotfiles_mapper,
+    )
     monkeypatch.setattr(shutil, "which", lambda editor: f"/bin/{editor}")
     monkeypatch.setattr(subprocess, "run", fake_run)
 
@@ -109,7 +169,10 @@ def test_edit_dotfile_creates_user_mapper_and_runs_editor(tmp_path: Path, monkey
     assert editor_calls == [["/bin/hx", str(user_mapper_path)]]
 
 
-def test_import_dotfiles_downloads_decrypts_and_extracts_archive(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_import_dotfiles_downloads_decrypts_and_extracts_archive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     home_path = tmp_path / "home"
     home_path.mkdir()
     encrypted_path = tmp_path / "dotfiles.zip.gpg"
@@ -122,20 +185,39 @@ def test_import_dotfiles_downloads_decrypts_and_extracts_archive(tmp_path: Path,
         archive.write(payload_path, arcname="payload.txt")
 
     monkeypatch.setenv("HOME", str(home_path))
-    monkeypatch.setattr(download_module, "download", lambda url, decompress, output_dir: encrypted_path)
-    monkeypatch.setattr(io_module, "decrypt_file_symmetric", lambda file_path, pwd: decrypted_zip_path)
+    monkeypatch.setattr(
+        download_module,
+        "download",
+        lambda url, decompress, output_dir: encrypted_path,
+    )
+    monkeypatch.setattr(
+        io_module,
+        "decrypt_file_symmetric",
+        lambda file_path, pwd: decrypted_zip_path,
+    )
 
-    cli_config_dotfile_module.import_dotfiles(url="http://example.test/dotfiles.zip.gpg", pwd="secret", use_ssh=False)
+    cli_config_dotfile_module.import_dotfiles(
+        url="http://example.test/dotfiles.zip.gpg",
+        pwd="secret",
+        use_ssh=False,
+    )
 
     assert (home_path / "dotfiles" / "payload.txt").read_text(encoding="utf-8") == "payload"
     assert not decrypted_zip_path.exists()
 
 
-def test_register_dotfile_exits_when_neither_path_exists(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_register_dotfile_exits_when_neither_path_exists(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     home_path = tmp_path / "home"
     home_path.mkdir()
     monkeypatch.setenv("HOME", str(home_path))
-    monkeypatch.setattr(cli_config_dotfile_module, "BACKUP_ROOT_PRIVATE", tmp_path / "private-root")
+    monkeypatch.setattr(
+        cli_config_dotfile_module,
+        "BACKUP_ROOT_PRIVATE",
+        tmp_path / "private-root",
+    )
 
     with pytest.raises(typer.Exit) as exit_info:
         cli_config_dotfile_module.register_dotfile(

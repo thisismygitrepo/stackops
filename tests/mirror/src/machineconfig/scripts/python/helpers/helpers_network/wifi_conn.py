@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 
+import pytest
+
 from machineconfig.scripts.python.helpers.helpers_network import wifi_conn as target
 
 
@@ -10,7 +12,7 @@ def _noop_print(*_args: object, **_kwargs: object) -> None:
     return None
 
 
-def test_get_available_networks_deduplicates_windows_entries(monkeypatch: object) -> None:
+def test_get_available_networks_deduplicates_windows_entries(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_run(
         cmd: list[str],
         *,
@@ -55,7 +57,7 @@ SSID 2 : AirportWiFi
 
 
 def test_try_config_connection_reads_cwd_wifi_ini(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     home_dir = tmp_path.joinpath("home")
@@ -94,7 +96,7 @@ pwd = supersecret
     assert connect_calls == [("LabSSID", "supersecret")]
 
 
-def test_manual_network_selection_requires_non_empty_password(monkeypatch: object) -> None:
+def test_manual_network_selection_requires_non_empty_password(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(target, "display_and_select_network", lambda: {"ssid": "CafeWiFi", "signal": "61%"})
     monkeypatch.setattr(target.getpass, "getpass", lambda _prompt: "")
     monkeypatch.setattr(target.console, "print", _noop_print)
@@ -102,7 +104,7 @@ def test_manual_network_selection_requires_non_empty_password(monkeypatch: objec
     assert target.manual_network_selection() is False
 
 
-def test_create_new_connection_linux_replaces_existing_profile(monkeypatch: object) -> None:
+def test_create_new_connection_linux_replaces_existing_profile(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[str] = []
 
     def fake_run(

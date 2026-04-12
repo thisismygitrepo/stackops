@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import pytest
 from rich.panel import Panel
 
 from machineconfig.scripts.python.helpers.helpers_devops import devops_status_display as module
@@ -49,7 +50,14 @@ def test_display_config_files_status_uses_green_border_for_high_coverage(monkeyp
     fake_console = FakeConsole()
     monkeypatch.setattr(module, "console", fake_console)
 
-    module.display_config_files_status({"public_count": 4, "public_linked": 4, "private_count": 1, "private_linked": 1})
+    module.display_config_files_status(
+        {
+            "public_count": 4,
+            "public_linked": 4,
+            "private_count": 1,
+            "private_linked": 1,
+        }
+    )
 
     panel = fake_console.printed[0][0]
     assert isinstance(panel, Panel)
@@ -61,7 +69,12 @@ def test_display_tools_status_summarizes_group_totals(monkeypatch: pytest.Monkey
     fake_console = FakeConsole()
     monkeypatch.setattr(module, "console", fake_console)
 
-    module.display_tools_status({"core_tools": {"git": True, "fd": False}, "net_tools": {"curl": True, "wget": True}})
+    module.display_tools_status(
+        {
+            "core_tools": {"git": True, "fd": False},
+            "net_tools": {"curl": True, "wget": True},
+        }
+    )
 
     panel = fake_console.printed[0][0]
     assert isinstance(panel, Panel)

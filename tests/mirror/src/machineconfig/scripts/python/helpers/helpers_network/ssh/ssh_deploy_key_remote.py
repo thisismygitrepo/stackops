@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from machineconfig.scripts.python.helpers.helpers_network.ssh import ssh_deploy_key_remote as target
 
 
@@ -16,7 +18,7 @@ def _noop_print(*_args: object, **_kwargs: object) -> None:
     return None
 
 
-def test_deploy_key_to_remote_returns_false_when_pubkey_missing(monkeypatch: object, tmp_path: Path) -> None:
+def test_deploy_key_to_remote_returns_false_when_pubkey_missing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     ssh_init_calls: list[str] = []
 
     class FakeSSH:
@@ -43,7 +45,7 @@ def test_deploy_key_to_remote_returns_false_when_pubkey_missing(monkeypatch: obj
     assert ssh_init_calls == []
 
 
-def test_deploy_to_unix_remote_appends_missing_key(monkeypatch: object) -> None:
+def test_deploy_to_unix_remote_appends_missing_key(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[str] = []
 
     class FakeSSH:
@@ -60,14 +62,14 @@ def test_deploy_to_unix_remote_appends_missing_key(monkeypatch: object) -> None:
     monkeypatch.setattr(target.console, "print", _noop_print)
 
     fake_ssh = FakeSSH()
-    result = target._deploy_to_unix_remote(fake_ssh, "ssh-ed25519 AAAA test-key")
+    result = target._deploy_to_unix_remote(fake_ssh, "ssh-ed25519 AAAA test-key")  # pyright: ignore[reportPrivateUsage, reportArgumentType]
 
     assert result is True
     assert "base64 --decode" in commands[0]
     assert "authorized_keys" in commands[1]
 
 
-def test_deploy_to_windows_remote_reports_restart_needed(monkeypatch: object) -> None:
+def test_deploy_to_windows_remote_reports_restart_needed(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeSSH:
         def run_py_remotely(
             self,
@@ -86,10 +88,10 @@ def test_deploy_to_windows_remote_reports_restart_needed(monkeypatch: object) ->
 
     monkeypatch.setattr(target.console, "print", _noop_print)
 
-    assert target._deploy_to_windows_remote(FakeSSH(), "ssh-ed25519 AAAA test-key") == (True, True)
+    assert target._deploy_to_windows_remote(FakeSSH(), "ssh-ed25519 AAAA test-key") == (True, True)  # pyright: ignore[reportPrivateUsage, reportArgumentType]
 
 
-def test_deploy_key_to_remote_restarts_windows_service_when_needed(monkeypatch: object, tmp_path: Path) -> None:
+def test_deploy_key_to_remote_restarts_windows_service_when_needed(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     pubkey_path = tmp_path.joinpath("id_test.pub")
     pubkey_path.write_text("ssh-ed25519 AAAA test-key\n", encoding="utf-8")
     restart_calls: list[str] = []

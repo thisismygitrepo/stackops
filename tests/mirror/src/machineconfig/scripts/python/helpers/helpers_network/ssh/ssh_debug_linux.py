@@ -4,6 +4,8 @@ from pathlib import Path
 import sys
 import types
 
+import pytest
+
 from machineconfig.scripts.python.helpers.helpers_network.ssh import ssh_debug_linux as target
 
 
@@ -30,11 +32,11 @@ def _build_path_class(root_dir: Path, home_dir: Path) -> type[object]:
     return MappedPath
 
 
-def test_ssh_debug_linux_delegates_to_darwin(monkeypatch: object) -> None:
+def test_ssh_debug_linux_delegates_to_darwin(monkeypatch: pytest.MonkeyPatch) -> None:
     module_name = "machineconfig.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin"
     fake_module = types.ModuleType(module_name)
     fake_result = {"delegated": {"status": "ok", "message": "darwin"}}
-    fake_module.ssh_debug_darwin = lambda: fake_result
+    setattr(fake_module, "ssh_debug_darwin", lambda: fake_result)
 
     monkeypatch.setattr(target, "system", lambda: "Darwin")
     monkeypatch.setitem(sys.modules, module_name, fake_module)
@@ -42,7 +44,7 @@ def test_ssh_debug_linux_delegates_to_darwin(monkeypatch: object) -> None:
     assert target.ssh_debug_linux() == fake_result
 
 
-def test_ssh_debug_linux_applies_cloud_init_password_override(monkeypatch: object, tmp_path: Path) -> None:
+def test_ssh_debug_linux_applies_cloud_init_password_override(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     root_dir = tmp_path.joinpath("root")
     home_dir = root_dir.joinpath("home", "tester")
     ssh_dir = home_dir.joinpath(".ssh")

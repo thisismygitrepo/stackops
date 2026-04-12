@@ -128,6 +128,7 @@ def test_main_copies_single_markdown_file_and_runs_slidev(
     subprocess_calls: list[SubprocessInvocation] = []
     printed_code: list[str] = []
     address_module = ModuleType("address")
+    helpers_network_module = ModuleType("helpers_network")
 
     def select_lan_ipv4(prefer_vpn: bool) -> str | None:
         assert prefer_vpn is False
@@ -161,6 +162,12 @@ def test_main_copies_single_markdown_file_and_runs_slidev(
         return "demo-host"
 
     setattr(address_module, "select_lan_ipv4", select_lan_ipv4)
+    setattr(helpers_network_module, "address", address_module)
+    monkeypatch.setitem(
+        sys.modules,
+        "machineconfig.scripts.python.helpers.helpers_network",
+        helpers_network_module,
+    )
     monkeypatch.setitem(
         sys.modules,
         "machineconfig.scripts.python.helpers.helpers_network.address",

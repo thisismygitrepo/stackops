@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from machineconfig.scripts.python.helpers.helpers_network.ssh import ssh_cloud_init as target
 
 
@@ -20,7 +22,7 @@ def _build_path_class(root_dir: Path) -> type[object]:
     return MappedPath
 
 
-def test_check_cloud_init_overrides_collects_supported_keys(monkeypatch: object, tmp_path: Path) -> None:
+def test_check_cloud_init_overrides_collects_supported_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     root_dir = tmp_path.joinpath("root")
     conf_dir = root_dir.joinpath("etc", "ssh", "sshd_config.d")
     conf_dir.mkdir(parents=True)

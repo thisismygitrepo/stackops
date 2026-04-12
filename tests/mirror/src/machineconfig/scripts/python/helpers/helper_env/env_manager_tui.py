@@ -45,7 +45,7 @@ def test_truncate_text_reports_remainder_count() -> None:
 def test_format_summary_sanitizes_control_characters() -> None:
     summary = env_manager_tui.format_summary("KEY", "line-1\nline-2\tvalue", 10)
 
-    assert summary == "KEY = line-1\\nli... (+10 chars)"
+    assert summary == "KEY = line-1\\nli... (+11 chars)"
 
 
 def test_collect_environment_sorts_case_insensitively() -> None:

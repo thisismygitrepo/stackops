@@ -11,7 +11,7 @@ import machineconfig.scripts.python.helpers.helpers_devops.cli_repos as cli_repo
 import machineconfig.utils.code as code_utils
 
 
-def _install_git_module(monkeypatch, *, raise_on_repo: bool) -> None:
+def _install_git_module(monkeypatch: pytest.MonkeyPatch, *, raise_on_repo: bool) -> None:
     git_module = ModuleType("git")
 
     class InvalidGitRepositoryError(Exception):
@@ -23,12 +23,12 @@ def _install_git_module(monkeypatch, *, raise_on_repo: bool) -> None:
             if raise_on_repo:
                 raise InvalidGitRepositoryError("not a repo")
 
-    git_module.InvalidGitRepositoryError = InvalidGitRepositoryError
-    git_module.Repo = Repo
+    setattr(git_module, "InvalidGitRepositoryError", InvalidGitRepositoryError)
+    setattr(git_module, "Repo", Repo)
     monkeypatch.setitem(sys.modules, "git", git_module)
 
 
-def test_action_requires_at_least_one_selected_operation(capsys) -> None:
+def test_action_requires_at_least_one_selected_operation(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(typer.Exit) as exc_info:
         cli_repos.action(directory=None, recursive=False, auto_uv_sync=False, pull=False, commit=False, push=False)
 
@@ -38,7 +38,7 @@ def test_action_requires_at_least_one_selected_operation(capsys) -> None:
     assert "No action selected" in captured.out
 
 
-def test_clone_with_explicit_specs_path_calls_clone_repos(monkeypatch, tmp_path: Path) -> None:
+def test_clone_with_explicit_specs_path_calls_clone_repos(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     spec_path = tmp_path.joinpath("repos.json")
     spec_path.write_text("[]", encoding="utf-8")
     captured: dict[str, object] = {}
@@ -50,10 +50,16 @@ def test_clone_with_explicit_specs_path_calls_clone_repos(monkeypatch, tmp_path:
         captured["checkout_branch_flag"] = checkout_branch_flag
         captured["checkout_commit_flag"] = checkout_commit_flag
 
-    clone_module.clone_repos = clone_repos
+    setattr(clone_module, "clone_repos", clone_repos)
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_repos.clone", clone_module)
 
-    cli_repos.clone(directory=".", specs_path=spec_path.as_posix(), interactive=False, checkout_to_commit=True, checkout_to_branch=False)
+    cli_repos.clone(
+        directory=".",
+        specs_path=spec_path.as_posix(),
+        interactive=False,
+        checkout_to_commit=True,
+        checkout_to_branch=False,
+    )
 
     assert captured == {
         "spec_path": spec_path.expanduser().absolute(),
@@ -63,13 +69,23 @@ def test_clone_with_explicit_specs_path_calls_clone_repos(monkeypatch, tmp_path:
     }
 
 
-def test_clone_reports_missing_default_spec_path(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_clone_reports_missing_default_spec_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     config_module = ModuleType("machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile")
-    config_module.get_backup_path = lambda **_kwargs: tmp_path.joinpath("missing.json")
+    setattr(config_module, "get_backup_path", lambda **_kwargs: tmp_path.joinpath("missing.json"))
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_devops.cli_config_dotfile", config_module)
     monkeypatch.setattr(cli_repos, "_resolve_directory", lambda directory: tmp_path)
 
-    cli_repos.clone(directory=tmp_path.as_posix(), specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=False)
+    cli_repos.clone(
+        directory=tmp_path.as_posix(),
+        specs_path=None,
+        interactive=False,
+        checkout_to_commit=False,
+        checkout_to_branch=False,
+    )
 
     captured = capsys.readouterr()
 
@@ -77,7 +93,7 @@ def test_clone_reports_missing_default_spec_path(monkeypatch, tmp_path: Path, ca
     assert str(tmp_path.joinpath("missing.json")) in captured.out
 
 
-def test_cleanup_recursive_runs_cleanpy_for_each_git_directory(monkeypatch, tmp_path: Path) -> None:
+def test_cleanup_recursive_runs_cleanpy_for_each_git_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo_one = tmp_path.joinpath("repo-one")
     repo_two = tmp_path.joinpath("nested", "repo-two")
     repo_one.joinpath(".git").mkdir(parents=True)
@@ -95,7 +111,7 @@ def test_cleanup_recursive_runs_cleanpy_for_each_git_directory(monkeypatch, tmp_
     assert all("uv run --with cleanpy cleanpy ." in script for script in scripts)
 
 
-def test_config_linters_copies_requested_template(monkeypatch, tmp_path: Path) -> None:
+def test_config_linters_copies_requested_template(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     _install_git_module(monkeypatch, raise_on_repo=False)
 
     cli_repos.config_linters(directory=tmp_path.as_posix(), linter="ty")

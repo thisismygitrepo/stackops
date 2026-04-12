@@ -1,8 +1,19 @@
+from collections.abc import Callable
+from typing import cast
+
 import pytest
 import typer
 
 import machineconfig.scripts.python.helpers.helpers_devops.cli_config_mount as cli_config_mount_module
 from machineconfig.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
+
+
+type DisplayValue = Callable[[str | None], str]
+
+display_value = cast(
+    DisplayValue,
+    getattr(cli_config_mount_module, "_display_value"),
+)
 
 
 def _make_device(
@@ -35,7 +46,7 @@ def test_display_value_handles_missing_text(
     value: str | None,
     expected: str,
 ) -> None:
-    assert cli_config_mount_module._display_value(value) == expected
+    assert display_value(value) == expected
 
 
 def test_list_devices_reports_empty_result(

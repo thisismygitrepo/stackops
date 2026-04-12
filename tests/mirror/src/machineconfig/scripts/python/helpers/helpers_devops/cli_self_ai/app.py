@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from typer.testing import CliRunner
 
 import machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.app as cli_self_ai_app
@@ -16,7 +17,7 @@ def test_get_app_help_lists_workflow_commands() -> None:
     assert "update-docs" in result.stdout
 
 
-def test_update_docs_command_dispatches_to_bound_function(monkeypatch) -> None:
+def test_update_docs_command_dispatches_to_bound_function(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[str] = []
 
     def fake_update_docs() -> None:

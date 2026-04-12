@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-from machineconfig.jobs.installer import python_scripts
+from machineconfig.utils.source_of_truth import REPO_ROOT
 
 
-def test_python_scripts_package_has_no_public_exports() -> None:
-    package_file = Path(python_scripts.__file__).resolve()
-    public_names = sorted(name for name in vars(python_scripts) if not name.startswith("__"))
+
+def test_python_scripts_package_init_file_is_empty() -> None:
+    package_file = REPO_ROOT / "src" / "machineconfig" / "jobs" / "installer" / "python_scripts" / "__init__.py"
 
     assert package_file.is_file()
-    assert public_names == []
+    assert package_file.read_text(encoding="utf-8").strip() == ""

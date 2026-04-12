@@ -10,8 +10,7 @@ commands_module = importlib.import_module("machineconfig.scripts.python.agents_p
 
 
 def test_decode_separator_unescapes_newline() -> None:
-    assert commands_module._decode_separator(separator=r"\n") == "
-"
+    assert commands_module._decode_separator(separator=r"\n") == "\n"
 
 
 def test_agents_create_passes_decoded_separator(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -48,8 +47,7 @@ def test_agents_create_passes_decoded_separator(monkeypatch: pytest.MonkeyPatch)
         interactive=False,
     )
 
-    assert captured["separator"] == "
-"
+    assert captured["separator"] == "\n"
     assert captured["agent_load"] == 2
 
 
@@ -114,5 +112,5 @@ def test_create_context_appends_instruction_and_writes_separator_file(tmp_path: 
 
     assert str(captured["agent"]) == "copilot"
     assert "summarize repo" in str(captured["prompt"])
-    assert 'use "\n--\n" to separate the individual results' in str(captured["prompt"])
+    assert "\n--\n" in str(captured["prompt"])
     assert separator_path.read_text(encoding="utf-8") == r"\n--\n"

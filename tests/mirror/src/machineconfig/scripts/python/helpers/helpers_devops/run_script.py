@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 from click import Command, Context
+from click.exceptions import Exit
 import pytest
 import requests
 
@@ -26,7 +27,7 @@ def _context() -> Context:
 
 
 def test_run_py_script_requires_name_or_interactive(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(Exit) as exc_info:
         run_script_module.run_py_script(
             ctx=_context(),
             name="",
@@ -36,7 +37,7 @@ def test_run_py_script_requires_name_or_interactive(capsys: pytest.CaptureFixtur
             list_scripts=False,
         )
 
-    assert exc_info.value.code == 1
+    assert exc_info.value.exit_code == 1
     assert "You must provide a script name" in capsys.readouterr().out
 
 
@@ -93,6 +94,7 @@ def test_copy_script_to_local_fetches_script_and_uses_alias(monkeypatch: pytest.
 
     monkeypatch.setattr(requests, "get", fake_get)
     monkeypatch.setattr(source_of_truth, "CONFIG_ROOT", tmp_path)
+    tmp_path.joinpath("scripts_python").mkdir()
 
     run_script_module.copy_script_to_local(
         ctx=_context(),

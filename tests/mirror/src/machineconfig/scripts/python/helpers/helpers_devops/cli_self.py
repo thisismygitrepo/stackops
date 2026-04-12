@@ -15,7 +15,7 @@ import machineconfig.scripts.python.helpers.helpers_devops.cli_self as cli_self
 import machineconfig.utils.code as code_utils
 
 
-def _install_git_clone_module(monkeypatch, clone_calls: list[tuple[str, str]]) -> None:
+def _install_git_clone_module(monkeypatch: pytest.MonkeyPatch, clone_calls: list[tuple[str, str]]) -> None:
     git_module = ModuleType("git")
 
     class Repo:
@@ -24,20 +24,24 @@ def _install_git_clone_module(monkeypatch, clone_calls: list[tuple[str, str]]) -
             Path(to_path).mkdir(parents=True, exist_ok=True)
             clone_calls.append((url, to_path))
 
-    git_module.Repo = Repo
+    setattr(git_module, "Repo", Repo)
     monkeypatch.setitem(sys.modules, "git", git_module)
 
 
-def _install_dev_app_modules(monkeypatch) -> None:
+def _install_dev_app_modules(monkeypatch: pytest.MonkeyPatch) -> None:
     assets_module = ModuleType("machineconfig.scripts.python.helpers.helpers_devops.cli_self_assets")
     ai_app_module = ModuleType("machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.app")
-    assets_module.get_app = lambda: typer.Typer()
-    ai_app_module.get_app = lambda: typer.Typer()
+    setattr(assets_module, "get_app", lambda: typer.Typer())
+    setattr(ai_app_module, "get_app", lambda: typer.Typer())
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_devops.cli_self_assets", assets_module)
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.app", ai_app_module)
 
 
-def test_init_reads_linux_init_script_from_resolved_reference(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_init_reads_linux_init_script_from_resolved_reference(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     script_path = tmp_path.joinpath("init.sh")
     script_path.write_text("echo linux init", encoding="utf-8")
     monkeypatch.setattr(platform, "system", lambda: "Linux")
@@ -50,7 +54,7 @@ def test_init_reads_linux_init_script_from_resolved_reference(monkeypatch, tmp_p
     assert "echo linux init" in captured.out
 
 
-def test_update_runs_shell_script_and_copies_assets_on_linux(monkeypatch, tmp_path: Path) -> None:
+def test_update_runs_shell_script_and_copies_assets_on_linux(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home_path = tmp_path.joinpath("home")
     home_path.joinpath("code", "machineconfig").mkdir(parents=True)
     scripts: list[str] = []
@@ -68,7 +72,7 @@ def test_update_runs_shell_script_and_copies_assets_on_linux(monkeypatch, tmp_pa
     assert copies == ["copied"]
 
 
-def test_install_dev_clones_repo_before_running_uv_install(monkeypatch, tmp_path: Path) -> None:
+def test_install_dev_clones_repo_before_running_uv_install(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home_path = tmp_path.joinpath("home")
     home_path.mkdir()
     clone_calls: list[tuple[str, str]] = []
@@ -89,10 +93,10 @@ def test_install_dev_clones_repo_before_running_uv_install(monkeypatch, tmp_path
     assert len(scripts) == 1
     assert f"cd {str(expected_repo_path)}" in scripts[0]
     assert "uv sync" in scripts[0]
-    assert "uv tool install --upgrade --editable" in scripts[0]
+    assert 'uv tool install --upgrade --editable' in scripts[0]
 
 
-def test_readme_prefers_local_repo_file(monkeypatch, tmp_path: Path) -> None:
+def test_readme_prefers_local_repo_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home_path = tmp_path.joinpath("home")
     repo_root = home_path.joinpath("code", "machineconfig")
     repo_root.mkdir(parents=True)
@@ -107,7 +111,11 @@ def test_readme_prefers_local_repo_file(monkeypatch, tmp_path: Path) -> None:
     assert "Local README" in record_console.export_text()
 
 
-def test_build_docker_raises_when_script_missing(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_build_docker_raises_when_script_missing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     fake_module = ModuleType("machineconfig")
     fake_init = tmp_path.joinpath("pkg", "machineconfig", "__init__.py")
     fake_init.parent.mkdir(parents=True)
@@ -124,7 +132,7 @@ def test_build_docker_raises_when_script_missing(monkeypatch, tmp_path: Path, ca
     assert "Script not found" in captured.out
 
 
-def test_get_app_hides_dev_commands_without_developer_repo(monkeypatch) -> None:
+def test_get_app_hides_dev_commands_without_developer_repo(monkeypatch: pytest.MonkeyPatch) -> None:
     _install_dev_app_modules(monkeypatch)
     monkeypatch.setattr(cli_self, "_developer_repo_root", lambda: None)
     runner = CliRunner()
@@ -137,7 +145,7 @@ def test_get_app_hides_dev_commands_without_developer_repo(monkeypatch) -> None:
     assert "workflows" not in result.stdout
 
 
-def test_get_app_shows_dev_commands_with_developer_repo(monkeypatch, tmp_path: Path) -> None:
+def test_get_app_shows_dev_commands_with_developer_repo(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     _install_dev_app_modules(monkeypatch)
     monkeypatch.setattr(cli_self, "_developer_repo_root", lambda: tmp_path)
     runner = CliRunner()

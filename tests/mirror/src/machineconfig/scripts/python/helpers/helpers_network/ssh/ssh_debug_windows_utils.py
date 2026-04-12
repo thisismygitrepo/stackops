@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import subprocess
 
+import pytest
+
 from machineconfig.scripts.python.helpers.helpers_network.ssh import ssh_debug_windows_utils as target
 
 
-def test_run_powershell_returns_status_and_stripped_output(monkeypatch: object) -> None:
+def test_run_powershell_returns_status_and_stripped_output(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_run(_cmd: list[str], *, capture_output: bool, text: bool, check: bool) -> subprocess.CompletedProcess[str]:
         _ = (capture_output, text, check)
         return subprocess.CompletedProcess(args=["powershell"], returncode=0, stdout=" ready \n", stderr="")
@@ -15,7 +17,7 @@ def test_run_powershell_returns_status_and_stripped_output(monkeypatch: object) 
     assert target.run_powershell("Write-Output ready") == (True, "ready")
 
 
-def test_check_sshd_binary_exists_falls_back_to_get_command(monkeypatch: object) -> None:
+def test_check_sshd_binary_exists_falls_back_to_get_command(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePath:
         def __init__(self, value: str) -> None:
             self.value = value
@@ -32,7 +34,7 @@ def test_check_sshd_binary_exists_falls_back_to_get_command(monkeypatch: object)
     assert target.check_sshd_binary_exists() == (True, "C:/Custom/OpenSSH/sshd.exe")
 
 
-def test_detect_openssh_reports_capability_install(monkeypatch: object) -> None:
+def test_detect_openssh_reports_capability_install(monkeypatch: pytest.MonkeyPatch) -> None:
     existing_paths = {"C:/Windows/System32/OpenSSH/sshd.exe", "C:/ProgramData/ssh"}
 
     class FakePath:
@@ -57,7 +59,7 @@ def test_detect_openssh_reports_capability_install(monkeypatch: object) -> None:
     assert config_dir == FakePath("C:/ProgramData/ssh")
 
 
-def test_detect_openssh_reports_missing_install(monkeypatch: object) -> None:
+def test_detect_openssh_reports_missing_install(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePath:
         def __init__(self, value: str) -> None:
             self.value = value
