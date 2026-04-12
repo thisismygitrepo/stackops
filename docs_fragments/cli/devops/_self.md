@@ -506,12 +506,12 @@ This sub-app is only registered when `~/code/machineconfig` exists locally.
 
 ### readme
 
-Fetch the project README from GitHub and render it as rich Markdown in the terminal.
+Render the project README in the terminal. When `~/code/machineconfig` exists, it reads the local `README.md`; otherwise it fetches the upstream README from GitHub.
 
 ```bash
 devops self readme
 ```
 
-This is useful when the repo checkout is not open locally but you still want the current upstream README rendered in the terminal.
+This keeps local development checkouts authoritative while still working on machines that do not have the repo cloned.
 
 ---

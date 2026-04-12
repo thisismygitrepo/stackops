@@ -7,30 +7,17 @@ import typer
 from machineconfig.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
-from machineconfig.utils.source_of_truth import EXCLUDE_DIRS
 
 
-DEFAULT_TEST_JOB_NAME = "updateTests"
-UPDATE_TEST_PROMPT = """
-/caveman wenyan
-$caveman wenyan
-
-Please write test file for the following files.
-* 1 test file per py file.
-
-* Your tests should go under: $repo_root/tests/mirror/$same_file_path_relative_to_repo_root
-e.g. src/machineconfig/cluster/remote/file_manager.py
-should have its test file at tests/mirror/src/machineconfig/cluster/remote/file_manager.py
-
-* in your tests, you assume all types will be respected, so no need to experiment on that.
-In other words, you only test for things that the strict harsh static type analyzer is still not capable of catching,
-i.e. things that can only be determined at runtime. One example of these, if a file is reading another file,
-static type anaylzer dones't know that other config file being read exists, we only know at runtime.
-Especially if that config helper file should be withthin the repo itself, not passed by user,
-so it must exist otherwise the repo is broken out of the box. I hope this was clear enough.
+DEFAULT_DOCS_JOB_NAME = "updateDocs"
+UPDATE_DOCS_PROMPT = """Please update documentation for the following files.
+* Only edit files under docs/cli and docs/api.
+* Do not touch docs/index.md, docs/quickstart.md, docs/guide/**, Home, User Guide, or any other documentation tab.
+* Treat each context entry as a documentation file path that you should update directly.
+* Inspect the relevant Python sources and current CLI or API behavior as needed to keep those docs accurate.
+* Prefer the one current behavior implemented in the repo. Remove stale wording instead of documenting fallback or legacy behavior.
 """
-_ADDITIONAL_EXCLUDED_CONTEXT_PARTS = frozenset({"tests"})
-_EXCLUDED_CONTEXT_PARTS = frozenset(entry for entry in EXCLUDE_DIRS if "/" not in entry) | _ADDITIONAL_EXCLUDED_CONTEXT_PARTS
+_ALLOWED_DOCS_CONTEXT_ROOTS = (Path("docs", "cli"), Path("docs", "api"))
 
 
 def get_developer_repo_root() -> Path:
@@ -65,20 +52,20 @@ def _list_git_visible_files(*, repo_root: Path) -> tuple[Path, ...]:
     return tuple(sorted(visible_files, key=lambda path: path.as_posix()))
 
 
-def _should_include_python_context_path(*, relative_path: Path) -> bool:
-    if relative_path.suffix != ".py":
+def should_include_docs_context_path(*, relative_path: Path) -> bool:
+    if relative_path.suffix != ".md":
         return False
-    return not any(part in _EXCLUDED_CONTEXT_PARTS for part in relative_path.parts)
+    return any(relative_path.is_relative_to(allowed_root) for allowed_root in _ALLOWED_DOCS_CONTEXT_ROOTS)
 
 
-def _build_repo_python_context(*, repo_root: Path) -> str:
+def _build_docs_context(*, repo_root: Path) -> str:
     context_entries = [
         relative_path.as_posix()
         for relative_path in _list_git_visible_files(repo_root=repo_root)
-        if _should_include_python_context_path(relative_path=relative_path)
+        if should_include_docs_context_path(relative_path=relative_path)
     ]
     if len(context_entries) == 0:
-        raise RuntimeError(f"No Python context files found under {repo_root}")
+        raise RuntimeError(f"No docs context files found under {repo_root}")
     return DEFAULT_SEAPRATOR.join(context_entries)
 
 
@@ -87,7 +74,7 @@ def _resolve_prompt(*, prompt: str | None, prompt_path: str | None, prompt_name:
         return prompt
     if prompt_path is not None or prompt_name is not None:
         return None
-    return UPDATE_TEST_PROMPT
+    return UPDATE_DOCS_PROMPT
 
 
 def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> str | None:
@@ -96,7 +83,7 @@ def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_
     return prompt_path
 
 
-def update_test(
+def update_docs(
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = "codex",
     model: Annotated[str | None, typer.Option("--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
     reasoning_effort: Annotated[
@@ -112,11 +99,11 @@ def update_test(
         typer.Option(
             "--prompt-path",
             "-P",
-            help="Prompt file path. When omitted, update-test uses its embedded default prompt unless --prompt or --prompt-name is provided.",
+            help="Prompt file path. When omitted, update-docs uses its embedded default prompt unless --prompt or --prompt-name is provided.",
         ),
     ] = None,
     prompt_name: Annotated[str | None, typer.Option("--prompt-name", "-N", help="Prompt entry name from prompts YAML.")] = None,
-    job_name: Annotated[str, typer.Option("--job-name", "-n", help="Job label and default output directory stem.")] = DEFAULT_TEST_JOB_NAME,
+    job_name: Annotated[str, typer.Option("--job-name", "-n", help="Job label and default output directory stem.")] = DEFAULT_DOCS_JOB_NAME,
     join_prompt_and_context: Annotated[
         bool,
         typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context."),
@@ -140,7 +127,7 @@ def update_test(
 
     resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(".ai", "agents", job_name)
     resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath("layout.json")
-    context_content = _build_repo_python_context(repo_root=repo_root)
+    context_content = _build_docs_context(repo_root=repo_root)
     context_output_path = resolved_agents_dir.joinpath("context.md")
 
     try:

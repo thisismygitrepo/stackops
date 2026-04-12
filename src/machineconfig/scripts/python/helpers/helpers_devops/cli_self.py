@@ -217,19 +217,17 @@ def readme() -> None:
     from rich.markdown import Markdown
     import requests
 
-    # URL of the raw README.md file
-    url_readme = "https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md"
+    repo_root = Path.home().joinpath("code", "machineconfig")
+    if repo_root.exists():
+        markdown_text = repo_root.joinpath("README.md").read_text(encoding="utf-8")
+    else:
+        url_readme = "https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md"
+        response = requests.get(url_readme, timeout=10)
+        response.raise_for_status()
+        markdown_text = response.text
 
-    # Fetch the content
-    response = requests.get(url_readme, timeout=10)
-    response.raise_for_status()  # Raise an error for bad responses
-
-    # Parse markdown
-    md = Markdown(response.text)
-
-    # Render in terminal
     console = Console()
-    console.print(md)
+    console.print(Markdown(markdown_text))
 
 
 def buid_docker(variant: Annotated[Literal["slim", "ai"], typer.Argument(..., help="Variant to build: 'slim' or 'ai'")] = "slim") -> None:
