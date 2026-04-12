@@ -7,6 +7,28 @@ import pytest
 from machineconfig.utils import ve as ve_module
 
 
+def test_read_default_cloud_config_returns_fresh_defaults() -> None:
+    default_cloud_config = ve_module.read_default_cloud_config()
+    another_default_cloud_config = ve_module.read_default_cloud_config()
+
+    assert default_cloud_config == {
+        "cloud": "mycloud101",
+        "root": "myhome",
+        "rel2home": False,
+        "pwd": None,
+        "key": None,
+        "encrypt": False,
+        "os_specific": False,
+        "zip": False,
+        "share": False,
+        "overwrite": False,
+    }
+
+    default_cloud_config["cloud"] = "mutated"
+
+    assert another_default_cloud_config["cloud"] == "mycloud101"
+
+
 def test_get_ve_path_and_ipython_profile_reads_specs_from_nearest_config(
     tmp_path: Path,
 ) -> None:
@@ -27,6 +49,35 @@ specs:
 
     assert ve_path == "/tmp/project-venv"
     assert ipy_profile == "profile-main"
+
+
+def test_get_ve_path_and_ipython_profile_merges_missing_specs_from_parents(
+    tmp_path: Path,
+) -> None:
+    project_dir = tmp_path / "project"
+    package_dir = project_dir / "pkg"
+    nested_dir = package_dir / "module"
+    nested_dir.mkdir(parents=True)
+
+    (project_dir / ve_module.FILE_NAME).write_text(
+        """
+specs:
+  ipy_profile: profile-parent
+""".strip(),
+        encoding="utf-8",
+    )
+    (package_dir / ve_module.FILE_NAME).write_text(
+        """
+specs:
+  ve_path: /tmp/pkg-venv
+""".strip(),
+        encoding="utf-8",
+    )
+
+    ve_path, ipy_profile = ve_module.get_ve_path_and_ipython_profile(nested_dir)
+
+    assert ve_path == "/tmp/pkg-venv"
+    assert ipy_profile == "profile-parent"
 
 
 def test_get_ve_path_and_ipython_profile_uses_dotvenv_fallback(
