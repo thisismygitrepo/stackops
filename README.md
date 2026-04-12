@@ -20,23 +20,16 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 uv tool install --upgrade --python 3.14 machineconfig
 ```
 
-## Repo-local usage
-
-From a checkout of this repository, you can run the current CLI surface without installing globally:
-
-```bash
-UV_CACHE_DIR=/tmp/uv-cache uv run mcfg --help
-UV_CACHE_DIR=/tmp/uv-cache uv run devops --help
-```
 
 ## Quick init
 
+```shell
 devops install --group sysabc  # Install (if missing) package manager (apt, brew, winget)
 devops config copy-assets all  # copy config files to machine
 devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all  # link config files
 devops config terminal config-shell --which default  # add alias to shell
 devops install --group termabc  # install the basic terminal cli's
-
+```
 
 ## Author
 

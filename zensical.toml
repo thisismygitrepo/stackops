@@ -53,13 +53,7 @@ nav = [
       { "Code Generation and Command Launching" = "api/utils/code-generation.md" },
     ] },
   ] },
-  { Contributing = [
-    "contributing/index.md",
-    { "Development Setup" = "contributing/development.md" },
-    { "Code Style" = "contributing/code-style.md" },
-  ] },
   { Hierarchy = "hierarchy.md" },
-  { Changelog = "changelog.md" },
 ]
 
 [project.theme]

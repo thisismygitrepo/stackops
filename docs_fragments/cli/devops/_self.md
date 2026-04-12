@@ -468,7 +468,7 @@ Key options:
 Current behavior:
 
 - Prints `http://127.0.0.1:8000/machineconfig/` and, when available, the LAN preview URL.
-- With `--rebuild`, syncs the changelog and runs `zensical build` before `zensical serve`.
+- With `--rebuild`, runs `zensical build` before `zensical serve`.
 - With `--create-artifacts`, regenerates both `src/machineconfig/scripts/python/graph/cli_graph.json` and `docs/assets/devops-self-explore/sunburst.html`.
 - Serves on `0.0.0.0:8000`.
 
