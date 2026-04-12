@@ -84,11 +84,11 @@ run  = 'shell --block -- hx "$0"'
 desc = "edit the file with helix"
 [[mgr.prepend_keymap]]
 on   = "v"
-run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --python 3.14 "$HOME/AppData/Roaming/yazi/config/scripts/fullscreen_preview.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 "$HOME/AppData/Roaming/yazi/config/scripts/fullscreen_preview.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Open a standalone fullscreen preview"
 [[mgr.prepend_keymap]]
 on   = "V"
-run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --python 3.14 "$HOME/AppData/Roaming/yazi/config/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 "$HOME/AppData/Roaming/yazi/config/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Open an interactive file-specific viewer"
 [[mgr.prepend_keymap]]
 on   = "n"
@@ -97,7 +97,7 @@ desc = "nano the file to edit"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "c"]
-run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --python 3.14 "$HOME/AppData/Roaming/yazi/config/scripts/compress_selected.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 "$HOME/AppData/Roaming/yazi/config/scripts/compress_selected.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "compress with ouch"
 
 [[mgr.prepend_keymap]]
