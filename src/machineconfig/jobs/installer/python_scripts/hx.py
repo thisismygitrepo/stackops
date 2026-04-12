@@ -2,6 +2,7 @@
 Installers do not add runtime files to the machine, hence this script.
 """
 
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.installer_utils.installer_locator_utils import WINDOWS_INSTALL_PATH
 from machineconfig.utils.path_compression import delete_path
@@ -116,11 +117,11 @@ def main(
     if platform.system() in ["Linux", "Darwin"]:
         target_bin_path = PathExtended(LINUX_INSTALL_PATH)
         exe_name = "hx"
-        hx_file.move(folder=target_bin_path, overwrite=True)
+        path_core.move(hx_file, folder=target_bin_path, overwrite=True)
 
-        # Always install contrib (regardless of install_lib flag) — treat it like the executable.
+        # Always install contrib (regardless of install_lib flag) - treat it like the executable.
         delete_path(contrib_path, verbose=False)
-        contrib.move(folder=target_config_dir, overwrite=True)
+        path_core.move(contrib, folder=target_config_dir, overwrite=True)
 
         # Install runtime only if install_lib is True. When copying runtime, copy all subfolders
         # except 'grammars' (for which we only copy the specific python.so file if present).
@@ -141,17 +142,17 @@ def main(
                         lang_file = child.joinpath(f"{a_language}.so")
                         if lang_file.exists() and lang_file.is_file():
                             dest = target_runtime.joinpath("grammars")
-                            lang_file.copy(folder=dest, overwrite=True)
+                            path_core.copy(lang_file, folder=dest, overwrite=True)
                 else:
                     # copy the whole child (file or directory) into target_runtime
                     # for directories, copy will create target_runtime/<child.name>
                     try:
-                        child.copy(folder=target_runtime, overwrite=True)
+                        path_core.copy(child, folder=target_runtime, overwrite=True)
                     except Exception:
                         # fallback: try copying contents if it's a directory
                         if child.is_dir():
                             for sub in child.iterdir():
-                                sub.copy(folder=target_runtime.joinpath(child.name), overwrite=True)
+                                path_core.copy(sub, folder=target_runtime.joinpath(child.name), overwrite=True)
         system_name = "Linux" if platform.system() == "Linux" else "macOS"
         console.print(
             Panel(
@@ -166,11 +167,11 @@ def main(
     elif platform.system() == "Windows":
         target_bin_path = PathExtended(WINDOWS_INSTALL_PATH)
         exe_name = "hx.exe"
-        hx_file.move(folder=target_bin_path, overwrite=True)
+        path_core.move(hx_file, folder=target_bin_path, overwrite=True)
 
         # Always install contrib (regardless of install_lib flag)
         delete_path(contrib_path, verbose=False)
-        contrib.move(folder=target_config_dir, overwrite=True)
+        path_core.move(contrib, folder=target_config_dir, overwrite=True)
 
         # Install runtime only if install_lib is True. Copy selectively as on POSIX.
         if install_lib:
@@ -187,14 +188,14 @@ def main(
                         lang_file = child.joinpath(f"{a_language}.dll")
                         if lang_file.exists() and lang_file.is_file():
                             dest = target_runtime.joinpath("grammars")
-                            lang_file.copy(folder=dest, overwrite=True)
+                            path_core.copy(lang_file, folder=dest, overwrite=True)
                 else:
                     try:
-                        child.copy(folder=target_runtime, overwrite=True)
+                        path_core.copy(child, folder=target_runtime, overwrite=True)
                     except Exception:
                         if child.is_dir():
                             for sub in child.iterdir():
-                                sub.copy(folder=target_runtime.joinpath(child.name), overwrite=True)
+                                path_core.copy(sub, folder=target_runtime.joinpath(child.name), overwrite=True)
         console.print(
             Panel(
                 f"""✅ SUCCESS | Helix editor installed successfully on Windows!

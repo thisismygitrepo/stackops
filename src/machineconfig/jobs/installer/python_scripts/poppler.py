@@ -2,6 +2,7 @@ import platform
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import machineconfig.utils.path_core as path_core
 from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
@@ -57,7 +58,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     if extracted_root.is_file():
         raise FileNotFoundError(f"Expected extracted directory, got file: {extracted_root}")
 
-    extracted_root.copy(path=target_root, overwrite=True)
+    path_core.copy(extracted_root, path=target_root, overwrite=True)
     delete_path(extracted_path, verbose=False)
 
 

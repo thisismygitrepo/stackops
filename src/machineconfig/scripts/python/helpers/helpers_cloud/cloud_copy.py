@@ -4,6 +4,7 @@ CC
 
 from pathlib import Path
 
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.io import (
     GpgCommandError,
     decrypt_file_asymmetric,
@@ -141,7 +142,7 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
             delete_path(url_obj, verbose=False)
             res = decrypted_path.unzip(inplace=True, folder=tmp_folder)
             for x in res.glob("*"):
-                x.move(folder=folder_obj, overwrite=True)
+                path_core.move(x, folder=folder_obj, overwrite=True)
         finally:
             # Clean up temporary folder
             if tmp_folder.exists():

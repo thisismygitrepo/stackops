@@ -11,6 +11,7 @@ import platform
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import machineconfig.utils.path_core as path_core
 from rich.console import Console
 
 from machineconfig.utils.path_extended import PathExtended
@@ -103,7 +104,7 @@ def install_cli_app(app_url: str) -> bool:
             install_path.mkdir(parents=True, exist_ok=True)
             target = install_path / exe_path.name
             # Use shutil.move or PathExtended.move
-            exe_path.move(path=target, overwrite=True)
+            path_core.move(exe_path, path=target, overwrite=True)
             console.print(f"[green]Installed to {target}[/green]")
         
         return True

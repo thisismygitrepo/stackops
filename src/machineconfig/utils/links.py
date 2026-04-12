@@ -1,6 +1,7 @@
 from machineconfig.utils.path_extended import PathExtended, PLike
 from machineconfig.utils.path_compression import delete_path
 from pathlib import Path
+import machineconfig.utils.path_core as path_core
 from machineconfig.profile.create_links_export import ON_CONFLICT_STRICT
 from machineconfig.utils.accessories import randstr
 from rich.console import Console
@@ -62,9 +63,9 @@ def build_links(target_paths: list[tuple[PLike, str]], repo_root: PLike):
     """Build symboic links from various relevant paths (e.g. data) to `repo_root/links/<name>` to facilitate easy access from
     tree explorer of the IDE.
     """
-    target_dirs_filtered: list[tuple[PathExtended, str]] = []
+    target_dirs_filtered: list[tuple[Path, str]] = []
     for a_dir, a_name in target_paths:
-        a_dir_obj = PathExtended(a_dir).resolve()
+        a_dir_obj = path_core.resolve(PathExtended(a_dir))
         if not a_dir_obj.exists():
             a_dir_obj.mkdir(parents=True, exist_ok=True)
         target_dirs_filtered.append((a_dir_obj, a_name))
@@ -85,7 +86,7 @@ def build_links(target_paths: list[tuple[PLike, str]], repo_root: PLike):
     for a_target_path, a_name in target_dirs_filtered:
         links_path = links_dir.joinpath(a_name)
         if links_path.exists() or links_path.is_symlink():
-            if links_path.is_symlink() and links_path.resolve() == a_target_path.resolve():
+            if links_path.is_symlink() and path_core.resolve(links_path) == path_core.resolve(a_target_path):
                 continue
             links_path.unlink(missing_ok=True)
         try:
@@ -114,8 +115,11 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
     config_file_default_path = PathExtended(config_file_default_path).expanduser().absolute()
     config_file_self_managed_path = PathExtended(config_file_self_managed_path).expanduser().absolute()
     
-    if config_file_default_path.resolve() == config_file_self_managed_path.resolve():
-        raise ValueError(f"config_file_default_path and config_file_self_managed_path resolve to the same location: {config_file_default_path.resolve()}")
+    if path_core.resolve(config_file_default_path) == path_core.resolve(config_file_self_managed_path):
+        raise ValueError(
+            "config_file_default_path and config_file_self_managed_path resolve to the same location: "
+            f"{path_core.resolve(config_file_default_path)}"
+        )
     
     action_taken: ActionType = "linking"
     details = "Creating symlink"
@@ -133,7 +137,7 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
             if config_file_default_path.is_symlink():
                 # Check if symlink already points to correct target
                 try:
-                    if config_file_default_path.resolve() == config_file_self_managed_path.resolve():
+                    if path_core.resolve(config_file_default_path) == path_core.resolve(config_file_self_managed_path):
                         # Case: config_file_default_path exists AND config_file_self_managed_path exists AND config_file_default_path is a symlink pointing to config_file_self_managed_path
                         action_taken = "already_linked"
                         details = "Symlink already correctly points to target"
@@ -177,14 +181,14 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
                             details = "Overwriting self-managed config, moving default path to self-managed location"
                             console.print(Panel(f"📦 OVERWRITE SELF-MANAGED | Deleting {config_file_self_managed_path}, moving {config_file_default_path} to {config_file_self_managed_path}", title="Overwrite Self-Managed", expand=False))
                             delete_path(config_file_self_managed_path, verbose=True)
-                            config_file_default_path.move(path=config_file_self_managed_path)
+                            path_core.move(config_file_default_path, path=config_file_self_managed_path)
                         case "backup-self-managed":
                             backup_name = f"{config_file_self_managed_path}.orig_{randstr()}"
                             action_taken = "backing_up_target"
                             details = f"Backed up self-managed config to {backup_name}"
                             console.print(Panel(f"📦 BACKUP SELF-MANAGED | Moving {config_file_self_managed_path} to {backup_name}, moving {config_file_default_path} to {config_file_self_managed_path}", title="Backup Self-Managed", expand=False))
-                            config_file_self_managed_path.move(path=backup_name)
-                            config_file_default_path.move(path=config_file_self_managed_path)
+                            path_core.move(config_file_self_managed_path, path=backup_name)
+                            path_core.move(config_file_default_path, path=config_file_self_managed_path)
                         case "overwrite-default-path":
                             action_taken = "backupConfigDefaultPath"
                             details = "Overwriting default path, creating symlink to self-managed config"
@@ -195,7 +199,7 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
                             action_taken = "backupConfigDefaultPath"
                             details = f"Backed up default path to {backup_name}"
                             console.print(Panel(f"📦 BACKUP DEFAULT | Moving {config_file_default_path} to {backup_name}, creating symlink to {config_file_self_managed_path}", title="Backup Default", expand=False))
-                            config_file_default_path.move(path=backup_name)
+                            path_core.move(config_file_default_path, path=backup_name)
         else:
             # config_file_self_managed_path doesn't exist
             if config_file_default_path.is_symlink():
@@ -212,7 +216,7 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
                 action_taken = "move2selfManagedPath"
                 details = "Moved config_file_default_path to config_file_self_managed_path location, will create symlink"
                 console.print(Panel(f"📁 MOVING | Moving {config_file_default_path} to {config_file_self_managed_path}, then creating symlink", title="Moving", expand=False))
-                config_file_default_path.move(path=config_file_self_managed_path)
+                path_core.move(config_file_default_path, path=config_file_self_managed_path)
     else:
         # config_file_default_path doesn't exist
         if config_file_self_managed_path.exists():
@@ -243,8 +247,11 @@ def copy_map(config_file_default_path: PathExtended, config_file_self_managed_pa
     config_file_default_path = PathExtended(config_file_default_path).expanduser().absolute()
     config_file_self_managed_path = PathExtended(config_file_self_managed_path).expanduser().absolute()
     
-    if config_file_default_path.resolve() == config_file_self_managed_path.resolve():
-        raise ValueError(f"config_file_default_path and config_file_self_managed_path resolve to the same location: {config_file_default_path.resolve()}")
+    if path_core.resolve(config_file_default_path) == path_core.resolve(config_file_self_managed_path):
+        raise ValueError(
+            "config_file_default_path and config_file_self_managed_path resolve to the same location: "
+            f"{path_core.resolve(config_file_default_path)}"
+        )
     
     action_taken: ActionType = "copying"
     details = "Copying file"
@@ -261,7 +268,7 @@ def copy_map(config_file_default_path: PathExtended, config_file_self_managed_pa
             # Both files exist
             if config_file_default_path.is_symlink():
                 try:
-                    if config_file_default_path.resolve() == config_file_self_managed_path.resolve():
+                    if path_core.resolve(config_file_default_path) == path_core.resolve(config_file_self_managed_path):
                         action_taken = "already_linked"
                         details = "File at default path is already a symlink to self-managed config"
                         console.print(Panel(f"✅ ALREADY CORRECT | {config_file_default_path} already points to {config_file_self_managed_path}", title="Already Correct", expand=False))
@@ -302,14 +309,14 @@ def copy_map(config_file_default_path: PathExtended, config_file_self_managed_pa
                             details = "Overwriting self-managed config with default path content"
                             console.print(Panel(f"📦 OVERWRITE SELF-MANAGED | Deleting {config_file_self_managed_path}, moving {config_file_default_path} to {config_file_self_managed_path}", title="Overwrite Self-Managed", expand=False))
                             delete_path(config_file_self_managed_path, verbose=True)
-                            config_file_default_path.move(path=config_file_self_managed_path)
+                            path_core.move(config_file_default_path, path=config_file_self_managed_path)
                         case "backup-self-managed":
                             backup_name = f"{config_file_self_managed_path}.orig_{randstr()}"
                             action_taken = "backing_up_target"
                             details = f"Backed up self-managed config to {backup_name}"
                             console.print(Panel(f"📦 BACKUP SELF-MANAGED | Moving {config_file_self_managed_path} to {backup_name}, moving {config_file_default_path} to {config_file_self_managed_path}", title="Backup Self-Managed", expand=False))
-                            config_file_self_managed_path.move(path=backup_name)
-                            config_file_default_path.move(path=config_file_self_managed_path)
+                            path_core.move(config_file_self_managed_path, path=backup_name)
+                            path_core.move(config_file_default_path, path=config_file_self_managed_path)
                         case "overwrite-default-path":
                             action_taken = "backupConfigDefaultPath"
                             details = "Overwriting default path with self-managed config"
@@ -320,7 +327,7 @@ def copy_map(config_file_default_path: PathExtended, config_file_self_managed_pa
                             action_taken = "backupConfigDefaultPath"
                             details = f"Backed up default path to {backup_name}"
                             console.print(Panel(f"📦 BACKUP DEFAULT | Moving {config_file_default_path} to {backup_name}, will copy from {config_file_self_managed_path}", title="Backup Default", expand=False))
-                            config_file_default_path.move(path=backup_name)
+                            path_core.move(config_file_default_path, path=backup_name)
         case (True, False):
             # config_file_default_path exists, config_file_self_managed_path doesn't
             if config_file_default_path.is_symlink():
@@ -334,7 +341,7 @@ def copy_map(config_file_default_path: PathExtended, config_file_self_managed_pa
                 action_taken = "move2selfManagedPath"
                 details = "Moved config_file_default_path to config_file_self_managed_path location, will copy back"
                 console.print(Panel(f"📁 MOVING | Moving {config_file_default_path} to {config_file_self_managed_path}, then copying back", title="Moving", expand=False))
-                config_file_default_path.move(path=config_file_self_managed_path)
+                path_core.move(config_file_default_path, path=config_file_self_managed_path)
         case (False, True):
             # config_file_default_path doesn't exist, config_file_self_managed_path does
             action_taken = "new_link"
@@ -349,7 +356,7 @@ def copy_map(config_file_default_path: PathExtended, config_file_self_managed_pa
             config_file_self_managed_path.touch()
     
     try:
-        config_file_self_managed_path.copy(path=config_file_default_path, overwrite=True, verbose=True)
+        path_core.copy(config_file_self_managed_path, path=config_file_default_path, overwrite=True, verbose=True)
         return {"action": action_taken, "details": details}
     except Exception as ex:
         action_taken = "error"

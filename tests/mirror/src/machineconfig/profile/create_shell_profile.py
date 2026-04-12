@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
+import machineconfig.utils.path_core as path_core
 from machineconfig.profile import create_shell_profile as create_shell_profile_module
 from machineconfig.settings.shells import bash as bash_shell_assets
 from machineconfig.utils import source_of_truth as source_of_truth_module
-from machineconfig.utils.path_extended import PathExtended
 
 
 @dataclass(slots=True)
@@ -70,14 +70,14 @@ def test_create_default_shell_profile_adds_bash_init_line_and_wsl_history_sync(
             stderr="",
         )
 
-    expected_init_script = PathExtended(config_root).joinpath(
+    expected_init_script = config_root.joinpath(
         create_shell_profile_module.get_path_reference_library_relative_path(
             module=bash_shell_assets,
             path_reference=create_shell_profile_module.BASH_INIT_PATH_REFERENCE,
         )
     )
     expected_source_line = (
-        f"""source {expected_init_script.collapseuser(placeholder="$HOME")}"""
+        f"""source {path_core.collapseuser(expected_init_script, placeholder="$HOME")}"""
     )
 
     monkeypatch.setattr(create_shell_profile_module, "get_shell_profile_path", lambda: profile_path)

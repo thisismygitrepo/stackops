@@ -1,3 +1,4 @@
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.path_compression import delete_path
 from machineconfig.utils.source_of_truth import WINDOWS_INSTALL_PATH, LINUX_INSTALL_PATH, INSTALL_VERSION_ROOT
@@ -43,10 +44,10 @@ def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: str 
                     print(f"✅ Selected largest executable ({round(exe.stat().st_size / 1024, 1)} KB): {exe}")
         if rename_to and exe.name != rename_to:
             print(f"🏷️  Renaming '{exe.name}' to '{rename_to}'")
-            exe = exe.with_name(name=rename_to, inplace=True)
+            exe = path_core.with_name(exe, name=rename_to, inplace=True)
 
     print(f"📦 Moving executable to: {WINDOWS_INSTALL_PATH}")
-    exe_new_location = exe.move(folder=WINDOWS_INSTALL_PATH, overwrite=True)  # latest version overwrites older installation.
+    exe_new_location = path_core.move(exe, folder=WINDOWS_INSTALL_PATH, overwrite=True)  # latest version overwrites older installation.
     print(f"✅ Executable installed at: {exe_new_location}")
 
     if delete:
@@ -97,7 +98,7 @@ def find_move_delete_linux(downloaded: PathExtended, tool_name: str | None, dele
 
     if rename_to and exe.name != rename_to:
         print(f"🏷️  Renaming '{exe.name}' to '{rename_to}'")
-        exe = exe.with_name(name=rename_to, inplace=True)
+        exe = path_core.with_name(exe, name=rename_to, inplace=True)
 
     print("🔐 Setting executable permissions (chmod 777)...")
     exe.chmod(0o777)
@@ -119,7 +120,7 @@ def find_move_delete_linux(downloaded: PathExtended, tool_name: str | None, dele
             print(f"Return code: {result.returncode}")
             raise RuntimeError(f"Failed to move executable: {result.stderr or result.stdout}")
     else:
-        exe.move(folder=LINUX_INSTALL_PATH, overwrite=True)
+        path_core.move(exe, folder=LINUX_INSTALL_PATH, overwrite=True)
 
     if delete:
         print("🗑️  Cleaning up temporary files...")

@@ -5,6 +5,8 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import machineconfig.utils.path_core as path_core
+
 if TYPE_CHECKING:
     from rich.console import Console
 
@@ -112,12 +114,12 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
             if target == ES:
                 raise ValueError(f"""
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-┃ ❌ Configuration Error
-┃    Cannot use expand symbol `{ES}` in both source and target
-┃    This creates a cyclical inference dependency
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━""")
+            ┃ ❌ Configuration Error
+            ┃    Cannot use expand symbol `{ES}` in both source and target
+            ┃    This creates a cyclical inference dependency
+            ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━""")
             target_path_obj = PathExtended(target).expanduser().absolute()
-            resolved_source = target_path_obj.collapseuser().as_posix()
+            resolved_source = path_core.collapseuser(target_path_obj).as_posix()
             resolved_target = target
         else:
             resolved_source = ":".join(source.split(":")[1:])

@@ -1,5 +1,7 @@
-from machineconfig.utils.path_extended import PathExtended
 from pathlib import Path
+
+import machineconfig.utils.path_core as path_core
+from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.schemas.repos.repos_types import GitVersionInfo, RepoRecordDict, RepoRemote
 
 from machineconfig.utils.schemas.repos.repos_types import RepoRecordFile
@@ -110,7 +112,14 @@ def record_a_repo(path: PathExtended, search_parent_directories: bool, preferred
 
     version_info: GitVersionInfo = {"branch": current_branch, "commit": commit}
 
-    res: RepoRecordDict = {"name": repo_root.name, "parentDir": repo_root.parent.collapseuser().as_posix(), "currentBranch": current_branch, "remotes": remotes, "version": version_info, "isDirty": is_dirty}
+    res: RepoRecordDict = {
+        "name": repo_root.name,
+        "parentDir": path_core.collapseuser(repo_root.parent).as_posix(),
+        "currentBranch": current_branch,
+        "remotes": remotes,
+        "version": version_info,
+        "isDirty": is_dirty,
+    }
     return res
 
 

@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 import machineconfig.settings.shells.bash as bash_shell_assets
 import machineconfig.settings.shells.pwsh as pwsh_shell_assets
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
 from machineconfig.utils.links import files_are_identical
@@ -31,15 +32,15 @@ def check_shell_profile_status() -> dict[str, Any]:
             init_script = PathExtended(CONFIG_ROOT).joinpath(
                 get_path_reference_library_relative_path(module=pwsh_shell_assets, path_reference=PWSH_INIT_PATH_REFERENCE)
             )
-            init_script_copy = PathExtended(CONFIG_ROOT).joinpath("profile/init.ps1").collapseuser()
-            source_reference = f". {str(init_script.collapseuser()).replace('~', '$HOME')}"
+            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.ps1"))
+            source_reference = f". {str(path_core.collapseuser(init_script)).replace('~', '$HOME')}"
             source_copy = f". {str(init_script_copy).replace('~', '$HOME')}"
         else:
             init_script = PathExtended(CONFIG_ROOT).joinpath(
                 get_path_reference_library_relative_path(module=bash_shell_assets, path_reference=BASH_INIT_PATH_REFERENCE)
             )
-            init_script_copy = PathExtended(CONFIG_ROOT).joinpath("profile/init.sh").collapseuser()
-            source_reference = f"source {str(init_script.collapseuser()).replace('~', '$HOME')}"
+            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.sh"))
+            source_reference = f"source {str(path_core.collapseuser(init_script)).replace('~', '$HOME')}"
             source_copy = f"source {str(init_script_copy).replace('~', '$HOME')}"
 
         configured = source_reference in profile_content or source_copy in profile_content
@@ -156,7 +157,7 @@ def _config_item_is_configured(config_item: ConfigStatusItem) -> bool:
     if bool(config_item.get("contents")):
         return default_path.is_dir() and self_managed_path.is_dir()
     try:
-        if default_path.resolve() == self_managed_path.resolve():
+        if path_core.resolve(default_path) == path_core.resolve(self_managed_path):
             return True
     except OSError:
         return False

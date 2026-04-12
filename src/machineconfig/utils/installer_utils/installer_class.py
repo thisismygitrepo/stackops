@@ -1,3 +1,4 @@
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
 from machineconfig.utils.installer_utils.install_request_logic import (
     InstallTarget,
@@ -235,7 +236,7 @@ class Installer:
                         pprint(Panel(f"Expected exe name: [red]{exe_name}[/red] \nAttained name: [red]{exe.name.replace('.exe', '')}[/red]", title="exe name mismatch", subtitle=repo_url))
                         new_exe_name = exe_name + ".exe" if platform.system() == "Windows" else exe_name
                         print(f"🔄 Renaming to correct name: {new_exe_name}")
-                        exe.with_name(name=new_exe_name, inplace=True, overwrite=True)
+                        path_core.with_name(exe, name=new_exe_name, inplace=True, overwrite=True)
                     version_to_be_installed = "downloaded_binary"
                 elif downloaded_object.suffix in [".deb"]:
                     install_deb_package(downloaded_object)
@@ -268,7 +269,7 @@ class Installer:
                     pprint(Panel(f"Expected exe name: [red]{exe_name}[/red] \nAttained name: [red]{exe.name.replace('.exe', '')}[/red]", title="exe name mismatch", subtitle=repo_url))
                     new_exe_name = exe_name + ".exe" if platform.system() == "Windows" else exe_name
                     print(f"🔄 Renaming to correct name: {new_exe_name}")
-                    exe.with_name(name=new_exe_name, inplace=True, overwrite=True)
+                    path_core.with_name(exe, name=new_exe_name, inplace=True, overwrite=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).parent.mkdir(parents=True, exist_ok=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).write_text(version_to_be_installed or "unknown", encoding="utf-8")
     def binary_download(self, version: str | None) -> tuple[PathExtended, str]:

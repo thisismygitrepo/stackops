@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
 import typer
+import machineconfig.utils.path_core as path_core
 from machineconfig.jobs.installer.checks.security_helper import (
     ReportFormat,
     ReportView,
@@ -78,7 +79,7 @@ def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Ta
     table.add_column("Version", justify="right")
     table.add_column("Path")
     for app_path, version in apps_to_scan:
-        table.add_row(app_path.stem, version or "", app_path.collapseuser(strict=False).as_posix())
+        table.add_row(app_path.stem, version or "", path_core.collapseuser(app_path, strict=False).as_posix())
     return table
 
 

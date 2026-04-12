@@ -10,6 +10,7 @@ from machineconfig.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_
 from machineconfig.settings.shells.nushell import CONFIG_PATH_REFERENCE as NUSHELL_CONFIG_PATH_REFERENCE, ENV_PATH_REFERENCE as NUSHELL_ENV_PATH_REFERENCE
 from machineconfig.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
 from machineconfig.settings.shells.zsh import INIT_PATH_REFERENCE as ZSH_INIT_PATH_REFERENCE
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.path_reference import get_path_reference_library_relative_path
 
 
@@ -99,7 +100,6 @@ def create_default_shell_profile() -> None:
     from rich.console import Console
     from rich.panel import Panel
     from machineconfig.utils.source_of_truth import CONFIG_ROOT
-    from machineconfig.utils.path_extended import PathExtended
     system = platform.system()
     console = Console()
     if not shell_profile_path.exists():
@@ -113,22 +113,22 @@ def create_default_shell_profile() -> None:
     shell_name = ""
     if system == "Windows":
         shell_name = "pwsh"
-        init_script = PathExtended(CONFIG_ROOT).joinpath(
+        init_script = Path(CONFIG_ROOT).joinpath(
             get_path_reference_library_relative_path(module=pwsh_shell_assets, path_reference=PWSH_INIT_PATH_REFERENCE)
         )
-        source_line = f""". {str(init_script.collapseuser(placeholder="$HOME"))}"""
+        source_line = f""". {str(path_core.collapseuser(init_script, placeholder="$HOME"))}"""
     elif system == "Linux":
         shell_name = "bash"
-        init_script = PathExtended(CONFIG_ROOT).joinpath(
+        init_script = Path(CONFIG_ROOT).joinpath(
             get_path_reference_library_relative_path(module=bash_shell_assets, path_reference=BASH_INIT_PATH_REFERENCE)
         )
-        source_line = f"""source {str(init_script.collapseuser(placeholder="$HOME"))}"""
+        source_line = f"""source {str(path_core.collapseuser(init_script, placeholder="$HOME"))}"""
     elif system == "Darwin":
         shell_name = "zsh"
-        init_script = PathExtended(CONFIG_ROOT).joinpath(
+        init_script = Path(CONFIG_ROOT).joinpath(
             get_path_reference_library_relative_path(module=zsh_shell_assets, path_reference=ZSH_INIT_PATH_REFERENCE)
         )
-        source_line = f"""source {str(init_script.collapseuser(placeholder="$HOME"))}"""
+        source_line = f"""source {str(path_core.collapseuser(init_script, placeholder="$HOME"))}"""
     else:
         raise ValueError(f"""Not implemented for this system {system}""")
 

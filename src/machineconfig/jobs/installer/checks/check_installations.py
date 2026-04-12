@@ -14,6 +14,7 @@ from rich.console import Console, Group, RenderableType
 from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
+import machineconfig.utils.path_core as path_core
 from machineconfig.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH, upload_app
 from machineconfig.jobs.installer.checks.report_utils import (
     APP_METADATA_KEYS,
@@ -89,7 +90,7 @@ def _build_app_data(
         "other_engines": 0,
         "notes": fallback_notes,
         "scan_time": scan_time,
-        "app_path": app_path.collapseuser(strict=False).as_posix(),
+        "app_path": path_core.collapseuser(app_path, strict=False).as_posix(),
         "app_url": app_url,
     }
     if scan_summary is not None:

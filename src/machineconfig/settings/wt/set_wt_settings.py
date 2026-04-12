@@ -1,9 +1,10 @@
 """Set Windows Terminal Settings"""
 
 from machineconfig.utils.accessories import randstr
-from machineconfig.utils.path_extended import PathExtended
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.io import save_json
 from machineconfig.utils.files.read import read_json
+from machineconfig.utils.path_extended import PathExtended
 import platform
 
 # from uuid import uuid4
@@ -47,7 +48,7 @@ class TerminalSettings(object):
         self.path = PathExtended(tmp).joinpath(r"Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json")
         backup_name = f".orig_{randstr()}"
         console.print(f"📝 Creating backup of original settings as {backup_name}...")
-        self.path.copy(append=backup_name)
+        path_core.copy(self.path, append=backup_name)
         console.print(f"📂 Loading Windows Terminal settings from: {self.path}")
         self.dat: dict[str, Any] = read_json(self.path)
         # Use a plain Python list for profiles

@@ -2,6 +2,7 @@
 slidev
 """
 
+import machineconfig.utils.path_core as path_core
 from machineconfig.utils.source_of_truth import CONFIG_ROOT
 from machineconfig.utils.code import print_code
 from machineconfig.utils.path_extended import PathExtended
@@ -92,9 +93,9 @@ def main(
 
     print("📂 Copying files to Slidev repository...")
     for item in report_dir.glob("*"):
-        PathExtended(item).copy(folder=SLIDEV_REPO, overwrite=True)
+        path_core.copy(item, folder=SLIDEV_REPO, overwrite=True)
     if md_file.name != "slides.md":
-        SLIDEV_REPO.joinpath(md_file.name).with_name(name="slides.md", inplace=True, overwrite=True)
+        path_core.with_name(SLIDEV_REPO.joinpath(md_file.name), name="slides.md", inplace=True, overwrite=True)
 
     import machineconfig.scripts.python.helpers.helpers_network.address as helper
     local_ip_v4 = helper.select_lan_ipv4(prefer_vpn=False)
