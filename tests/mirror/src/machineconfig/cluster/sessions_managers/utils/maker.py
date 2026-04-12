@@ -5,11 +5,15 @@ import platform
 import sys
 from types import ModuleType
 
+import pytest
+
 from machineconfig.cluster.sessions_managers.utils import maker
 from machineconfig.utils.schemas.layouts.layout_types import TabConfig
 
 
-def test_get_fire_tab_using_uv_wraps_named_function() -> None:
+def test_get_fire_tab_using_uv_wraps_named_function(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     call_names: list[str] = []
     executed: list[str] = []
 
@@ -43,8 +47,8 @@ def test_get_fire_tab_using_uv_wraps_named_function() -> None:
     setattr(fake_meta, "lambda_to_python_script", fake_lambda_to_python_script)
     fake_code = ModuleType("machineconfig.utils.code")
     setattr(fake_code, "get_uv_command_executing_python_script", fake_uv_command)
-    sys.modules["machineconfig.utils.meta"] = fake_meta
-    sys.modules["machineconfig.utils.code"] = fake_code
+    monkeypatch.setitem(sys.modules, "machineconfig.utils.meta", fake_meta)
+    monkeypatch.setitem(sys.modules, "machineconfig.utils.code", fake_code)
 
     tab_config, artifact_path = maker.get_fire_tab_using_uv(
         func=sample_fn,
@@ -67,10 +71,16 @@ def test_get_fire_tab_using_uv_wraps_named_function() -> None:
     assert artifact_path == Path("/tmp/generated.py")
 
 
-def test_get_fire_tab_using_fire_builds_linux_command() -> None:
+def test_get_fire_tab_using_fire_builds_linux_command(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_source_of_truth = ModuleType("machineconfig.utils.source_of_truth")
     setattr(fake_source_of_truth, "CONFIG_ROOT", Path("/config"))
-    sys.modules["machineconfig.utils.source_of_truth"] = fake_source_of_truth
+    monkeypatch.setitem(
+        sys.modules,
+        "machineconfig.utils.source_of_truth",
+        fake_source_of_truth,
+    )
 
     def fake_system() -> str:
         return "Linux"
@@ -81,9 +91,9 @@ def test_get_fire_tab_using_fire_builds_linux_command() -> None:
     def fake_home() -> Path:
         return Path("/tmp/home")
 
-    platform.system = fake_system
-    inspect.getfile = fake_getfile
-    maker.Path.home = fake_home
+    monkeypatch.setattr(platform, "system", fake_system)
+    monkeypatch.setattr(inspect, "getfile", fake_getfile)
+    monkeypatch.setattr(maker.Path, "home", fake_home)
 
     def sample_fn() -> None:
         return None
@@ -103,7 +113,9 @@ def test_get_fire_tab_using_fire_builds_linux_command() -> None:
     }
 
 
-def test_make_layout_from_functions_uses_script_builder_and_appends_tabs() -> None:
+def test_make_layout_from_functions_uses_script_builder_and_appends_tabs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def one() -> None:
         return None
 
@@ -133,7 +145,7 @@ def test_make_layout_from_functions_uses_script_builder_and_appends_tabs() -> No
             Path(f"/tmp/{func.__name__}.py"),
         )
 
-    maker.get_fire_tab_using_uv = fake_get_fire_tab_using_uv
+    monkeypatch.setattr(maker, "get_fire_tab_using_uv", fake_get_fire_tab_using_uv)
 
     layout = maker.make_layout_from_functions(
         functions=[one, two],
@@ -172,7 +184,9 @@ def test_make_layout_from_functions_uses_script_builder_and_appends_tabs() -> No
     }
 
 
-def test_make_layout_from_functions_uses_fire_builder_when_requested() -> None:
+def test_make_layout_from_functions_uses_fire_builder_when_requested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def sample_fn() -> None:
         return None
 
@@ -189,7 +203,7 @@ def test_make_layout_from_functions_uses_fire_builder_when_requested() -> None:
             "tabWeight": tab_weight,
         }
 
-    maker.get_fire_tab_using_fire = fake_get_fire_tab_using_fire
+    monkeypatch.setattr(maker, "get_fire_tab_using_fire", fake_get_fire_tab_using_fire)
 
     layout = maker.make_layout_from_functions(
         functions=[sample_fn],

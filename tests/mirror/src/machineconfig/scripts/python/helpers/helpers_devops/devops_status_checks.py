@@ -34,6 +34,7 @@ def test_check_shell_profile_status_creates_missing_profile(monkeypatch: pytest.
     install_profile_create_shell_profile_module(monkeypatch, profile_path)
     monkeypatch.setattr(platform, "system", lambda: "Linux")
     monkeypatch.setattr(module, "CONFIG_ROOT", tmp_path)
+    monkeypatch.setattr(module.PathExtended, "collapseuser", lambda self: self)
     monkeypatch.setattr(module, "get_path_reference_library_relative_path", lambda *, module, path_reference: init_script_relative_path)
 
     result = module.check_shell_profile_status()

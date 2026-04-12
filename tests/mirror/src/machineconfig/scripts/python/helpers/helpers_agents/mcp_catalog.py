@@ -43,10 +43,7 @@ def test_ensure_mcp_catalog_exists_creates_template_only_for_missing_non_library
     private_location = _location("private", tmp_path / "private" / "mcp.json")
 
     assert module.ensure_mcp_catalog_exists(private_location) is True
-    assert private_location["path"].read_text(encoding="utf-8") == '{
-  "mcpServers": {}
-}
-'
+    assert private_location["path"].read_text(encoding="utf-8") == """{\n  \"mcpServers\": {}\n}\n"""
     assert module.ensure_mcp_catalog_exists(private_location) is False
 
     library_location = _location("library", tmp_path / "library" / "mcp.json")

@@ -181,9 +181,10 @@ def test_run_wt_layout_raises_on_subprocess_error(
     def fake_run(
         args: str,
         shell: bool,
-        _capture_output: bool,
-        _text: bool,
+        capture_output: bool,
+        text: bool,
     ) -> subprocess.CompletedProcess[str]:
+        _ = capture_output, text
         assert shell is True
         return subprocess.CompletedProcess(
             args=args,

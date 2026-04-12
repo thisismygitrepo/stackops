@@ -113,7 +113,7 @@ def test_resolve_conflicts_for_batch_skips_restarts_and_renames(
         backend: subject.BackendName,
         on_conflict: SessionConflictAction,
     ) -> list[dict[str, object]]:
-        assert requested_session_names == ["Beta", "Beta", "Gamma"]
+        assert requested_session_names == ["Alpha", "Beta", "Gamma"]
         assert backend == "windows-terminal"
         assert on_conflict == cast(SessionConflictAction, "rename")
         return launch_plan

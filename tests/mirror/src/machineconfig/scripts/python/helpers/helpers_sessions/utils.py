@@ -11,35 +11,71 @@ import pytest
 from machineconfig.scripts.python.helpers.helpers_sessions import utils as subject
 
 
-def install_module(monkeypatch: pytest.MonkeyPatch, name: str, module: ModuleType) -> None:
+def install_module(
+    monkeypatch: pytest.MonkeyPatch,
+    name: str,
+    module: ModuleType,
+) -> None:
     monkeypatch.setitem(sys.modules, name, module)
 
 
-def test_balance_load_writes_adjusted_layout_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_balance_load_writes_adjusted_layout_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     layout_path = tmp_path / "layout.json"
     layout_path.write_text(
-        json.dumps({"layouts": [{"layoutName": "alpha", "layoutTabs": [{"tabName": "one", "startDir": ".", "command": "echo"}]}]}), encoding="utf-8"
+        json.dumps(
+            {
+                "layouts": [
+                    {
+                        "layoutName": "alpha",
+                        "layoutTabs": [{"tabName": "one", "startDir": ".", "command": "echo"}],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
     )
     calls: list[str] = []
     load_balancer_module = ModuleType("machineconfig.cluster.sessions_managers.utils.load_balancer")
 
-    def limit_tab_num(layout_configs: list[dict[str, object]], max_thresh: int, threshold_type: str, breaking_method: str) -> list[dict[str, object]]:
+    def limit_tab_num(
+        layout_configs: list[dict[str, object]],
+        max_thresh: int,
+        threshold_type: str,
+        breaking_method: str,
+    ) -> list[dict[str, object]]:
         calls.append(f"{len(layout_configs)}:{max_thresh}:{threshold_type}:{breaking_method}")
         return [{"layoutName": "adjusted", "layoutTabs": []}]
 
-    load_balancer_module.limit_tab_num = limit_tab_num
-    install_module(monkeypatch, "machineconfig.cluster.sessions_managers.utils.load_balancer", load_balancer_module)
+    setattr(load_balancer_module, "limit_tab_num", limit_tab_num)
+    install_module(
+        monkeypatch,
+        "machineconfig.cluster.sessions_managers.utils.load_balancer",
+        load_balancer_module,
+    )
 
-    subject.balance_load(layout_path=str(layout_path), max_thresh=5, thresh_type="w", breaking_method="ct", output_path=None)
+    subject.balance_load(
+        layout_path=str(layout_path),
+        max_thresh=5,
+        thresh_type="w",
+        breaking_method="ct",
+        output_path=None,
+    )
 
     output_path = tmp_path / "layout_adjusted_5_w_ct.json"
     assert calls == ["1:5:weight:combineTabs"]
     assert output_path.exists()
-    assert json.loads(output_path.read_text(encoding="utf-8")) == {"layouts": [{"layoutName": "adjusted", "layoutTabs": []}]}
+    assert json.loads(output_path.read_text(encoding="utf-8")) == {
+        "layouts": [{"layoutName": "adjusted", "layoutTabs": []}]
+    }
 
 
 def test_create_template_writes_layout_and_refuses_overwrite(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     home_dir = tmp_path / "home"
     project_dir = home_dir / "project"

@@ -63,17 +63,11 @@ def test_get_machineconfig_version_falls_back_to_pyproject(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     repo_root = tmp_path / "repo"
-    module_path = (
-        repo_root
-        / "src"
-        / "machineconfig"
-        / "utils"
-        / "installer_utils"
-        / "installer_runner.py"
-    )
+    package_root = repo_root / "src" / "machineconfig"
+    module_path = package_root / "utils" / "installer_utils" / "installer_runner.py"
     module_path.parent.mkdir(parents=True)
     module_path.write_text("# test module path\n", encoding="utf-8")
-    (repo_root / "pyproject.toml").write_text(
+    (package_root / "pyproject.toml").write_text(
         '[project]\nversion = "9.9.9"\n',
         encoding="utf-8",
     )

@@ -42,7 +42,12 @@ def test_extract_url_prefers_json_fields() -> None:
 
 def test_extract_url_falls_back_to_plain_text_tokens() -> None:
     response = cast(
-        requests.Response, FakeResponse(headers={"content-type": "text/plain"}, text="done https://temp.sh/file.txt now", json_payload=None)
+        requests.Response,
+        FakeResponse(
+            headers={"content-type": "text/plain"},
+            text="done https://temp.sh/file.txt now",
+            json_payload=None,
+        ),
     )
 
     assert module._extract_url(response) == "https://temp.sh/file.txt"
@@ -51,7 +56,12 @@ def test_extract_url_falls_back_to_plain_text_tokens() -> None:
 def test_upload_file_handle_posts_expected_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     recorded_files: list[dict[str, tuple[str, object, str] | tuple[str, object]]] = []
 
-    def fake_post(*, url: str, files: dict[str, tuple[str, object, str] | tuple[str, object]], timeout: int) -> requests.Response:
+    def fake_post(
+        url: str,
+        *,
+        files: dict[str, tuple[str, object, str] | tuple[str, object]],
+        timeout: int,
+    ) -> requests.Response:
         assert url == module.UPLOAD_ENDPOINT
         assert timeout == module.REQUEST_TIMEOUT_SECONDS
         recorded_files.append(files)
@@ -73,7 +83,9 @@ def test_upload_file_handle_posts_expected_payload(monkeypatch: pytest.MonkeyPat
 
 
 def test_upload_file_converts_request_errors_to_typer_exit(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     file_path = tmp_path.joinpath("note.txt")
     file_path.write_text("hello", encoding="utf-8")

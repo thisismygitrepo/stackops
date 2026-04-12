@@ -2,6 +2,8 @@ import sys
 from types import ModuleType
 from typing import Literal
 
+import pytest
+
 from machineconfig.cluster.sessions_managers.utils import load_balancer
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig
 
@@ -20,7 +22,9 @@ def _layout() -> LayoutConfig:
     }
 
 
-def test_limit_tab_num_dispatches_to_matching_helper() -> None:
+def test_limit_tab_num_dispatches_to_matching_helper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     cases: list[tuple[ThresholdType, BreakingMethod]] = [
         ("number", "moreLayouts"),
         ("number", "combineTabs"),
@@ -42,10 +46,10 @@ def test_limit_tab_num_dispatches_to_matching_helper() -> None:
             calls.append(f"{threshold_type}:{breaking_method}")
             return layout_configs
 
-        load_balancer.restrict_num_tabs_helper1 = fake_helper
-        load_balancer.restrict_num_tabs_helper2 = fake_helper
-        load_balancer.restrict_num_tabs_helper3 = fake_helper
-        load_balancer.restrict_num_tabs_helper4 = fake_helper
+        monkeypatch.setattr(load_balancer, "restrict_num_tabs_helper1", fake_helper)
+        monkeypatch.setattr(load_balancer, "restrict_num_tabs_helper2", fake_helper)
+        monkeypatch.setattr(load_balancer, "restrict_num_tabs_helper3", fake_helper)
+        monkeypatch.setattr(load_balancer, "restrict_num_tabs_helper4", fake_helper)
 
         result = load_balancer.limit_tab_num(
             layout_configs=[_layout()],
@@ -105,7 +109,9 @@ def test_limit_tab_weight_splits_only_overweight_tabs() -> None:
     ]
 
 
-def test_run_executes_manager_lifecycle() -> None:
+def test_run_executes_manager_lifecycle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     lifecycle: list[str] = []
 
     class FakeManager:
@@ -133,9 +139,11 @@ def test_run_executes_manager_lifecycle() -> None:
 
     fake_module = ModuleType("zellij_local_manager")
     setattr(fake_module, "ZellijLocalManager", FakeManager)
-    sys.modules[
-        "machineconfig.cluster.sessions_managers.zellij.zellij_local_manager"
-    ] = fake_module
+    monkeypatch.setitem(
+        sys.modules,
+        "machineconfig.cluster.sessions_managers.zellij.zellij_local_manager",
+        fake_module,
+    )
 
     load_balancer.run(layouts=[_layout()], on_conflict="error")
 

@@ -9,7 +9,7 @@ from machineconfig.scripts.python.helpers.helpers_cloud import cloud_mount_zelli
 def test_kdl_escape_escapes_quotes_and_backslashes() -> None:
     value = 'cloud "A" \\ share'
 
-    assert cloud_mount_zellij._kdl_escape(value) == 'cloud \\\"A\\\" \\\\\\ share'
+    assert cloud_mount_zellij._kdl_escape(value) == 'cloud \\\"A\\\" \\\\ share'
 
 
 def test_build_zellij_layout_kdl_focuses_only_first_tab() -> None:
