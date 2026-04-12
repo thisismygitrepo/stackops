@@ -19,7 +19,45 @@ Recursively Searched Predefined Directories:
 
 
 import typer
+import platform
+from pathlib import Path
 from typing import Annotated, Literal
+
+
+IGNORED_SCRIPT_MATCH_DIR_NAMES: frozenset[str] = frozenset({
+    "__pycache__",
+    ".git",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "node_modules",
+})
+
+
+def _get_supported_script_suffixes(name: str) -> tuple[str, ...]:
+    if "." in name:
+        return (Path(name).suffix,)
+
+    match platform.system():
+        case "Windows":
+            return (".py", ".bat", ".cmd", ".ps1")
+        case "Darwin" | "Linux":
+            return ("", ".py", ".sh")
+        case _:
+            return (".py",)
+
+
+def _is_supported_script_match(file_path: Path, root: Path, supported_suffixes: frozenset[str]) -> bool:
+    if not file_path.is_file() or file_path.name == "__init__.py":
+        return False
+
+    relative_parts = file_path.relative_to(root).parts
+    if any(part in IGNORED_SCRIPT_MATCH_DIR_NAMES for part in relative_parts[:-1]):
+        return False
+
+    return file_path.suffix in supported_suffixes
 
 
 def run_py_script(ctx: typer.Context,
@@ -34,7 +72,6 @@ def run_py_script(ctx: typer.Context,
 
         exit_then_run_shell_script(script=name, strict=False)
         return
-    from pathlib import Path
     if list_scripts:
         from machineconfig.scripts.python.helpers.helpers_search.script_help import list_available_scripts
         list_available_scripts(where=where)
@@ -110,27 +147,29 @@ def run_py_script(ctx: typer.Context,
         case "custom" | "c":
             roots = get_custom_roots()
 
-    suffixes: list[str]
-    if "." in name:
-        suffixes = [""]
-    else:
-        import platform
-        if platform.system() == "Windows":
-            suffixes = [".py", ".bat", ".cmd", ".ps1"]
-        elif platform.system() == "Darwin" or platform.system() == "Linux":
-            suffixes = [""]  # files without suffix could be shell scripts, and that already cover files with .sh suffix without duplications
-        else:
-            suffixes = [".py"]
+    suffixes = _get_supported_script_suffixes(name=name)
+    exact_names = [name] if "." in name else [f"{name}{a_suffix}" for a_suffix in suffixes]
+    supported_suffixes = frozenset(suffixes)
 
     # Finding target file
     potential_matches: list[Path] = []
+    seen_matches: set[Path] = set()
     if target_file is None:
         for a_root in roots:
-            for a_suffix in suffixes:
-                if a_root.joinpath(f"{name}{a_suffix}").is_file():
-                    target_file = a_root.joinpath(f"{name}{a_suffix}")
+            for exact_name in exact_names:
+                exact_path = a_root.joinpath(exact_name)
+                if _is_supported_script_match(file_path=exact_path, root=a_root, supported_suffixes=supported_suffixes):
+                    target_file = exact_path
                     break  # perfect match
-                potential_matches += [a_file for a_file in a_root.rglob(f"*{name}*{a_suffix}") if a_file.is_file()]
+            if target_file is not None:
+                break
+            for a_file in sorted(a_root.rglob(f"*{name}*")):
+                if not _is_supported_script_match(file_path=a_file, root=a_root, supported_suffixes=supported_suffixes):
+                    continue
+                if a_file in seen_matches:
+                    continue
+                potential_matches.append(a_file)
+                seen_matches.add(a_file)
 
     if target_file is None:
         if len(potential_matches) == 1:

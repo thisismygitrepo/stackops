@@ -1,8 +1,9 @@
-# UNTESTED
 [metadata]
 name = "bash-history"
 description = "A channel to select from your bash history"
 requirements = ["bash"]
 
 [source]
-command = "awk 'NF { lines[NR] = $0 } END { for (i = NR; i >= 1; i--) { line = lines[i]; if (!(line in seen)) { seen[line] = 1; print line } } }' ${HISTFILE:-${HOME}/.bash_history}"
+command = "sed '1!G;h;$!d' ${HISTFILE:-${HOME}/.bash_history}"
+no_sort = true
+frecency = false

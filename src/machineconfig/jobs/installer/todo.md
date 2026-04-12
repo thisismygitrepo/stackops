@@ -1,12 +1,12 @@
 
-# udpate docs
-# curate list of files that we reference to create a test ensuring their existance
 
+# messy screen after tv use.
 › › in devops install when I go --interactive and get the tv option selection, when choosing and exiting, the screen is not cleared and we never go back to the
     orginal terminal, its all messy. the program completes fine, no errors and hands over back to python, but the screen is full with remnanets from tv selection
     stage. the ideal behaviour is that its not clearning the screen which deletes all the history and I can no longer scroll up to older stuff, but start a new
   screen and when exiting from it, we go back to the same old screen. with all history therein.
 
+# create refernce files
 # for each one of those files (non python)
 cd  ~/code/machineconfig/src/machineconfig fd -t f -E .venv -E docs -E tests -E '*.py'
 make sure there is __init__.py file next to them, and in that init file, put variable referencing those files
@@ -19,6 +19,7 @@ additionally, if __init__.py does exist, then please check that it doen't have s
 if so, delete that path reference.
 
 
+# use reference files:
 # $caveman ultra. 
 ensure that for any python file, trying to reference any of those files (as a variable or path etc ...)
 Then that reference MUST occur via the corresponding variables defined in relevant __init__.py file next to that non-py file.
@@ -28,3 +29,6 @@ The non-py files can be obtained by running this command:
 cd  ~/code/machineconfig/src/machineconfig fd -t f -E .venv -E docs -E tests -E '*.py'
 
 and your check for their reference must go through all py files.
+
+# update toml files
+cany ou ensure that my tv toml files are up to date? see if tv cli can dump new ones src/machineconfig/settings/television
