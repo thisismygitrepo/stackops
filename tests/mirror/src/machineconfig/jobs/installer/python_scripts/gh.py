@@ -57,7 +57,12 @@ def test_main_linux_runs_extension_install_and_auth(
 def test_main_rejects_unsupported_platform(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    InstallerSpy.instances.clear()
+    monkeypatch.setattr(gh_script, "Installer", InstallerSpy)
     monkeypatch.setattr(gh_script.platform, "system", lambda: "Plan9")
 
     with pytest.raises(NotImplementedError, match="Unsupported platform: Plan9"):
         gh_script.main(version=None)
+
+    assert len(InstallerSpy.instances) == 1
+    assert InstallerSpy.instances[0].installed_versions == [None]
