@@ -1,12 +1,23 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
 
 import machineconfig.jobs.installer.python_scripts.espanso as espanso_script
-from machineconfig.utils.schemas.installer.installer_types import InstallerData
+from machineconfig.utils.schemas.installer.installer_types import (
+    CPU_ARCHITECTURES,
+    OPERATING_SYSTEMS,
+    InstallerData,
+)
+
+
+type BuildInstallerDataFn = Callable[
+    [InstallerData, OPERATING_SYSTEMS, CPU_ARCHITECTURES, str | None],
+    InstallerData,
+]
 
 
 BASE_INSTALLER_DATA = cast(
@@ -37,12 +48,20 @@ class InstallerSpy:
         self.installed_versions.append(version)
 
 
+def _build_installer_data() -> BuildInstallerDataFn:
+    return cast(
+        BuildInstallerDataFn,
+        getattr(espanso_script, "_build_espanso_installer_data"),
+    )
+
+
 def test_build_installer_data_for_linux_wayland() -> None:
-    resolved = espanso_script._build_espanso_installer_data(
-        base_installer_data=BASE_INSTALLER_DATA,
-        os_name="linux",
-        arch="amd64",
-        xdg_session_type="wayland",
+    build_installer_data = _build_installer_data()
+    resolved = build_installer_data(
+        BASE_INSTALLER_DATA,
+        "linux",
+        "amd64",
+        "wayland",
     )
 
     assert resolved["repoURL"] == espanso_script.ESPANSO_REPO_URL
@@ -51,15 +70,17 @@ def test_build_installer_data_for_linux_wayland() -> None:
 
 
 def test_build_installer_data_requires_xdg_session_type_on_linux() -> None:
+    build_installer_data = _build_installer_data()
+
     with pytest.raises(
         RuntimeError,
         match="XDG_SESSION_TYPE must be set for Linux Espanso installations",
     ):
-        espanso_script._build_espanso_installer_data(
-            base_installer_data=BASE_INSTALLER_DATA,
-            os_name="linux",
-            arch="amd64",
-            xdg_session_type=None,
+        build_installer_data(
+            BASE_INSTALLER_DATA,
+            "linux",
+            "amd64",
+            None,
         )
 
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import cast
 
+import pytest
+
 import machineconfig.jobs.installer.python_scripts.goes as goes_script
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
