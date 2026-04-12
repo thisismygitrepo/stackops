@@ -2,10 +2,11 @@ from collections.abc import Sequence
 import os
 from pathlib import Path
 import sys
-from typing import NoReturn
+from typing import Final, NoReturn
 
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
+VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".csv", ".parquet", ".tsv", ".xlsx", ".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
 
 
 def split_marked_arguments(arguments: Sequence[str]) -> tuple[str | None, list[str]]:
@@ -40,7 +41,7 @@ def build_command(target_path: Path) -> list[str]:
     if not target_path.is_file():
         raise ValueError(f"Interactive view requires a file, got: {target_path}")
     match target_path.suffix.lower():
-        case ".csv":
+        case suffix if suffix in VISIDATA_SUFFIXES:
             return [str(Path.home() / ".config/machineconfig/scripts/wrap_mcfg"), "croshell", "-b", "v", str(target_path)]
         case _:
             raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")

@@ -32,7 +32,7 @@ ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
     ".zst",
 )
 SQLITE_SUFFIXES: Final[frozenset[str]] = frozenset({".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
-VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".parquet", ".tsv", ".xlsx"})
+VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".parquet", ".tsv", ".xlsx", ".csv", ".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
 IMAGE_SUFFIXES: Final[frozenset[str]] = frozenset({
     ".avif",
     ".bmp",
