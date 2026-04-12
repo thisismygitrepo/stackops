@@ -64,6 +64,9 @@ class FakePathExtended:
     def as_posix(self) -> str:
         return self.path.as_posix()
 
+    def __fspath__(self) -> str:
+        return self.path.as_posix()
+
     @property
     def parent(self) -> Path:
         return self.path.parent

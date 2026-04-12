@@ -119,7 +119,7 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
             ┃    This creates a cyclical inference dependency
             ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━""")
             target_path_obj = PathExtended(target).expanduser().absolute()
-            resolved_source = path_core.collapseuser(target_path_obj).as_posix()
+            resolved_source = path_core.collapseuser(target_path_obj, strict=False).as_posix()
             resolved_target = target
         else:
             resolved_source = ":".join(source.split(":")[1:])

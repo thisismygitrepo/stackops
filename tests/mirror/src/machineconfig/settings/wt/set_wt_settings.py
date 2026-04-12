@@ -31,13 +31,9 @@ class TerminalSettingsObject(Protocol):
 @dataclass(slots=True)
 class FakePath:
     value: str
-    copied_suffixes: list[str] = field(default_factory=list)
 
     def joinpath(self, suffix: str) -> "FakePath":
         return FakePath(value=f"{self.value}/{suffix}")
-
-    def copy(self, append: str) -> None:
-        self.copied_suffixes.append(append)
 
     def __str__(self) -> str:
         return self.value
@@ -73,6 +69,7 @@ def test_terminal_settings_updates_profiles_and_saves(monkeypatch: pytest.Monkey
     monkeypatch.setenv("LOCALAPPDATA", "/tmp/local-app-data")
     monkeypatch.setattr(module, "PathExtended", FakePath)
     monkeypatch.setattr(module, "randstr", lambda: "backup")
+    backup_calls: list[tuple[FakePath, str]] = []
 
     initial_data: dict[str, object] = {
         "profiles": {"list": [{"name": "PowerShell", "guid": "{pwsh-guid}"}, {"name": "Command Prompt", "guid": "{cmd-guid}"}], "defaults": {}},
@@ -87,6 +84,7 @@ def test_terminal_settings_updates_profiles_and_saves(monkeypatch: pytest.Monkey
     def fake_save_json(*, obj: dict[str, object], path: FakePath, indent: int) -> None:
         save_calls.append(SaveJsonCall(obj=obj, path=path, indent=indent))
 
+    monkeypatch.setattr(module.path_core, "copy", lambda path, *, append: backup_calls.append((path, append)))
     monkeypatch.setattr(module, "read_json", fake_read_json)
     monkeypatch.setattr(module, "save_json", fake_save_json)
 
@@ -97,7 +95,7 @@ def test_terminal_settings_updates_profiles_and_saves(monkeypatch: pytest.Monkey
     terminal_settings.make_powershell_default_profile()
     terminal_settings.save_terminal_settings()
 
-    assert terminal_settings.path.copied_suffixes == [".orig_backup"]
+    assert backup_calls == [(terminal_settings.path, ".orig_backup")]
     assert terminal_settings.dat["startOnUserLogin"] is True
     assert terminal_settings.dat["launchMode"] == "fullscreen"
     assert terminal_settings.dat["theme"] == "dark"

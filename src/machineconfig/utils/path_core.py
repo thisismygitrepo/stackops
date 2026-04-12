@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import shutil
 
 from machineconfig.utils.accessories import randstr
 
-type PathLike = str | Path
-type OptionalPathLike = str | Path | None
+type PathLike = str | os.PathLike[str]
+type OptionalPathLike = PathLike | None
 
 __all__ = ["collapseuser", "copy", "delete_path", "move", "resolve", "with_name"]
 

@@ -16,27 +16,6 @@ if TYPE_CHECKING:
     from rich.table import Table
 
 
-class FakeCollapsedPath:
-    def __init__(self, value: str) -> None:
-        self._value = value
-
-    def as_posix(self) -> str:
-        return self._value
-
-
-class FakeAppPath:
-    def __init__(self, path: Path) -> None:
-        self._path = path
-
-    @property
-    def stem(self) -> str:
-        return self._path.stem
-
-    def collapseuser(self, strict: bool) -> FakeCollapsedPath:
-        assert strict is False
-        return FakeCollapsedPath(self._path.as_posix())
-
-
 class FakeConsole:
     def __init__(self) -> None:
         self.messages: list[object] = []
@@ -83,7 +62,7 @@ def test_scan_routes_path_and_installed_app_modes(monkeypatch: pytest.MonkeyPatc
 def test_list_apps_renders_installed_apps_table(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_console = FakeConsole()
     monkeypatch.setattr(security_cli, "_console", lambda: fake_console)
-    monkeypatch.setattr(check_installations, "collect_apps_to_scan", lambda app_names: [(FakeAppPath(Path("/tmp/alpha")), "1.0.0")])
+    monkeypatch.setattr(check_installations, "collect_apps_to_scan", lambda app_names: [(Path("/tmp/alpha"), "1.0.0")])
 
     security_cli.list_apps("alpha")
 

@@ -32,15 +32,15 @@ def check_shell_profile_status() -> dict[str, Any]:
             init_script = PathExtended(CONFIG_ROOT).joinpath(
                 get_path_reference_library_relative_path(module=pwsh_shell_assets, path_reference=PWSH_INIT_PATH_REFERENCE)
             )
-            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.ps1"))
-            source_reference = f". {str(path_core.collapseuser(init_script)).replace('~', '$HOME')}"
+            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.ps1"), strict=False)
+            source_reference = f". {str(path_core.collapseuser(init_script, strict=False)).replace('~', '$HOME')}"
             source_copy = f". {str(init_script_copy).replace('~', '$HOME')}"
         else:
             init_script = PathExtended(CONFIG_ROOT).joinpath(
                 get_path_reference_library_relative_path(module=bash_shell_assets, path_reference=BASH_INIT_PATH_REFERENCE)
             )
-            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.sh"))
-            source_reference = f"source {str(path_core.collapseuser(init_script)).replace('~', '$HOME')}"
+            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.sh"), strict=False)
+            source_reference = f"source {str(path_core.collapseuser(init_script, strict=False)).replace('~', '$HOME')}"
             source_copy = f"source {str(init_script_copy).replace('~', '$HOME')}"
 
         configured = source_reference in profile_content or source_copy in profile_content

@@ -114,7 +114,7 @@ def record_a_repo(path: PathExtended, search_parent_directories: bool, preferred
 
     res: RepoRecordDict = {
         "name": repo_root.name,
-        "parentDir": path_core.collapseuser(repo_root.parent).as_posix(),
+        "parentDir": path_core.collapseuser(repo_root.parent, strict=False).as_posix(),
         "currentBranch": current_branch,
         "remotes": remotes,
         "version": version_info,
