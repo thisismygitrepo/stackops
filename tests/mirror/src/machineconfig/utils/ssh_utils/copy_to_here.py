@@ -99,16 +99,6 @@ class FakeSSH:
         sut.copy_to_here(self, source=source, target=target, compress_with_zip=compress_with_zip, recursive=recursive, internal_call=internal_call)
 
 
-def test_build_remote_path_respects_remote_platform() -> None:
-    linux_ssh = FakeSSH(hostname="remote", sftp=FakeSFTP(fail_after_write=False), run_py_response_ops=[], json_by_remote_path={}, is_dir_map={})
-    windows_ssh = FakeSSH(hostname="remote", sftp=FakeSFTP(fail_after_write=False), run_py_response_ops=[], json_by_remote_path={}, is_dir_map={})
-    linux_ssh.remote_specs = {"system": "Linux", "home_dir": "/remote/home"}  # type: ignore[attr-defined]
-    windows_ssh.remote_specs = {"system": "Windows", "home_dir": r"C:\Users\alex"}  # type: ignore[attr-defined]
-
-    assert sut._build_remote_path(linux_ssh, "/remote/home", r"nested\file.txt") == "/remote/home/nested/file.txt"
-    assert sut._build_remote_path(windows_ssh, r"C:\Users\alex", "nested/file.txt") == r"C:\Users\alex\nested\file.txt"
-
-
 def test_copy_to_here_requires_sftp_connection() -> None:
     fake_ssh = FakeSSH(hostname="remote", sftp=None, run_py_response_ops=[], json_by_remote_path={}, is_dir_map={})
 

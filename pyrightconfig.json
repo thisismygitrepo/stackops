@@ -1,6 +1,9 @@
 {
   "venvPath": ".",
   "venv": ".venv",
+  "exclude": [
+    "tests"
+  ],
   // "python.analysis.typeCheckingMode": "strict",
   // "typeCheckingMode": "strict",
   "extraPaths": [],

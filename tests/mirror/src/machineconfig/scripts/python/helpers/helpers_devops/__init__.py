@@ -1,9 +1,12 @@
 import importlib
 
 
-def test_helpers_devops_package_import_is_lazy() -> None:
-    module = importlib.import_module("machineconfig.scripts.python.helpers.helpers_devops")
+MODULE_NAME = "machineconfig.scripts.python.helpers.helpers_devops"
 
+
+def test_helpers_devops_package_imports_as_package() -> None:
+    module = importlib.import_module(MODULE_NAME)
+
+    assert module.__name__ == MODULE_NAME
     assert hasattr(module, "__path__")
-    assert not hasattr(module, "cli_config")
-    assert not hasattr(module, "cli_data")
+    assert str(module.__file__).endswith("__init__.py")

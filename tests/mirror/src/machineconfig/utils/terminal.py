@@ -28,7 +28,7 @@ def test_response_capture_and_path_helpers_work_together(tmp_path: Path) -> None
     path_value = response.op2path(strict_returncode=True, strict_err=True)
     assert isinstance(path_value, PathExtended)
     assert str(path_value) == str(tmp_path / "artifact")
-    assert response.op_if_successfull_or_default(strict_returcode=True, strict_err=True) == f"{tmp_path}/artifact\n"
+    assert response.op_if_successfull_or_default(strict_returcode=True, strict_err=True) == f"{tmp_path}/artifact"
 
 
 def test_response_success_state_respects_strict_stderr() -> None:

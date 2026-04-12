@@ -18,7 +18,10 @@ class _FakeCompletedProcess:
     stderr: str
 
 
-def test_create_nu_shell_profile_writes_managed_wrapper_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_nu_shell_profile_writes_managed_wrapper_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     config_dir = tmp_path / "nushell"
     copy_calls: list[str] = []
 
@@ -31,32 +34,53 @@ def test_create_nu_shell_profile_writes_managed_wrapper_files(tmp_path: Path, mo
     create_shell_profile_module.create_nu_shell_profile()
 
     assert copy_calls == ["settings", "scripts"]
-    assert config_dir.joinpath("config.nu").read_text(encoding="utf-8") == (create_shell_profile_module.NUSHELL_CONFIG_SOURCE_LINE + "\n")
-    assert config_dir.joinpath("env.nu").read_text(encoding="utf-8") == (create_shell_profile_module.NUSHELL_ENV_SOURCE_LINE + "\n")
+    assert config_dir.joinpath("config.nu").read_text(encoding="utf-8") == (
+        create_shell_profile_module.NUSHELL_CONFIG_SOURCE_LINE + "\n"
+    )
+    assert config_dir.joinpath("env.nu").read_text(encoding="utf-8") == (
+        create_shell_profile_module.NUSHELL_ENV_SOURCE_LINE + "\n"
+    )
 
 
-def test_create_default_shell_profile_adds_bash_init_line_and_wsl_history_sync(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_default_shell_profile_adds_bash_init_line_and_wsl_history_sync(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     profile_path = tmp_path / "home" / ".bashrc"
-    config_root = tmp_path / "config"
+    config_root = Path.home().joinpath(".config", "machineconfig-test")
     copy_calls: list[str] = []
 
     def fake_copy_assets_to_machine(which: str) -> None:
         copy_calls.append(which)
 
-    def fake_subprocess_run(command: list[str], *, stdout: int, stderr: int, text: bool, check: bool) -> _FakeCompletedProcess:
+    def fake_subprocess_run(
+        command: list[str],
+        *,
+        stdout: int,
+        stderr: int,
+        text: bool,
+        check: bool,
+    ) -> _FakeCompletedProcess:
         assert command == ["cat", "/proc/version"]
         assert stdout >= 0
         assert stderr >= 0
         assert text is True
         assert check is False
-        return _FakeCompletedProcess(returncode=0, stdout="Linux version 5.15.167.4-microsoft-standard-WSL2", stderr="")
+        return _FakeCompletedProcess(
+            returncode=0,
+            stdout="Linux version 5.15.167.4-microsoft-standard-WSL2",
+            stderr="",
+        )
 
     expected_init_script = PathExtended(config_root).joinpath(
         create_shell_profile_module.get_path_reference_library_relative_path(
-            module=bash_shell_assets, path_reference=create_shell_profile_module.BASH_INIT_PATH_REFERENCE
+            module=bash_shell_assets,
+            path_reference=create_shell_profile_module.BASH_INIT_PATH_REFERENCE,
         )
     )
-    expected_source_line = f"""source {expected_init_script.collapseuser(placeholder="$HOME")}"""
+    expected_source_line = (
+        f"""source {expected_init_script.collapseuser(placeholder="$HOME")}"""
+    )
 
     monkeypatch.setattr(create_shell_profile_module, "get_shell_profile_path", lambda: profile_path)
     monkeypatch.setattr("machineconfig.profile.create_helper.copy_assets_to_machine", fake_copy_assets_to_machine)

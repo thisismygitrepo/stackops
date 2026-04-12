@@ -94,7 +94,7 @@ def test_build_shell_script_includes_requested_repo_steps(tmp_path: Path) -> Non
     )
 
     build_shell_script = cast(
-        Callable[[JobParams, RemoteMachineConfig, FileManager], str],
+        Callable[..., str],
         getattr(remote_machine_module, "_build_shell_script"),
     )
     shell_script = build_shell_script(job_params=job_params, config=config, file_manager=file_manager)

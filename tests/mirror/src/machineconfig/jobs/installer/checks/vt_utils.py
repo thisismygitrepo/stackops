@@ -51,7 +51,10 @@ class _FakeScanClient:
         return response
 
 
-def test_get_vt_client_raises_when_token_file_missing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_get_vt_client_raises_when_token_file_missing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     fake_home = tmp_path / "home"
     fake_home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: fake_home)
@@ -60,11 +63,17 @@ def test_get_vt_client_raises_when_token_file_missing(monkeypatch: pytest.Monkey
         vt_utils.get_vt_client()
 
 
-def test_get_vt_client_reads_first_token_line(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_get_vt_client_reads_first_token_line(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     fake_home = tmp_path / "home"
     token_path = fake_home / "dotfiles" / "creds" / "tokens"
     token_path.mkdir(parents=True)
-    token_path.joinpath("virustotal").write_text("token-123\nignored-second-line\n", encoding="utf-8")
+    token_path.joinpath("virustotal").write_text(
+        "token-123\nignored-second-line\n",
+        encoding="utf-8",
+    )
     fake_vt_module = ModuleType("vt")
     setattr(fake_vt_module, "Client", _FakeVtClient)
 
@@ -77,57 +86,59 @@ def test_get_vt_client_reads_first_token_line(monkeypatch: pytest.MonkeyPatch, t
     assert client.token == "token-123"
 
 
-def test_normalize_scan_results_supports_mappings_and_objects() -> None:
-    mapping_results = {"alpha": {"category": "malicious", "result": "trojan"}}
-    object_results = [SimpleNamespace(category=_EnumLike("suspicious"), result=_EnumLike("heuristic"))]
-
-    normalized_mapping = vt_utils._normalize_scan_results(mapping_results)
-    normalized_objects = vt_utils._normalize_scan_results(object_results)
-
-    assert normalized_mapping == [{"engine_name": "alpha", "category": "malicious", "result": "trojan"}]
-    assert normalized_objects == [{"engine_name": "engine_001", "category": "suspicious", "result": "heuristic"}]
-
-
 def test_scan_file_skips_directories(tmp_path: Path) -> None:
     directory_path = tmp_path / "nested"
     directory_path.mkdir()
 
-    summary, results = vt_utils.scan_file(path=directory_path, client=cast("vt.Client", _UnusedClient()))
+    summary, results = vt_utils.scan_file(
+        path=directory_path,
+        client=cast("vt.Client", _UnusedClient()),
+    )
 
     assert summary is None
     assert results == []
 
 
-def test_scan_file_retries_then_returns_summary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_scan_file_retries_then_returns_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     file_path = tmp_path / "payload.bin"
     file_path.write_bytes(b"payload")
     sleep_calls: list[int] = []
     client = _FakeScanClient(
         responses=[
             RuntimeError("transient"),
-            SimpleNamespace(status="queued", results={}),
+            SimpleNamespace(status="queued", results=[]),
             SimpleNamespace(
                 status="completed",
-                results={
-                    "engine-a": {"category": "malicious", "result": "trojan"},
-                    "engine-b": {"category": "harmless", "result": None},
-                    "engine-c": {"category": "timeout", "result": None},
-                },
+                results=[
+                    SimpleNamespace(category=_EnumLike("malicious"), result=_EnumLike("trojan")),
+                    SimpleNamespace(category=_EnumLike("harmless"), result=None),
+                    SimpleNamespace(category=_EnumLike("timeout"), result=None),
+                ],
             ),
         ]
     )
 
     monkeypatch.setattr(vt_utils.time, "sleep", lambda seconds: sleep_calls.append(seconds))
 
-    summary, results = vt_utils.scan_file(path=file_path, client=cast("vt.Client", client))
+    summary, results = vt_utils.scan_file(
+        path=file_path,
+        client=cast("vt.Client", client),
+    )
 
     assert client.scanned_payloads == [b"payload"]
-    assert client.requested_paths == [("/analyses/{}", "analysis-123"), ("/analyses/{}", "analysis-123"), ("/analyses/{}", "analysis-123")]
+    assert client.requested_paths == [
+        ("/analyses/{}", "analysis-123"),
+        ("/analyses/{}", "analysis-123"),
+        ("/analyses/{}", "analysis-123"),
+    ]
     assert sleep_calls == [5, 10, 10]
     assert results == [
-        {"engine_name": "engine-a", "category": "malicious", "result": "trojan"},
-        {"engine_name": "engine-b", "category": "harmless", "result": None},
-        {"engine_name": "engine-c", "category": "timeout", "result": None},
+        {"engine_name": "engine_001", "category": "malicious", "result": "trojan"},
+        {"engine_name": "engine_002", "category": "harmless", "result": None},
+        {"engine_name": "engine_003", "category": "timeout", "result": None},
     ]
     assert summary == {
         "positive_pct": 50.0,

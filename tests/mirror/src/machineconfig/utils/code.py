@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import platform
 from pathlib import Path
 
 import pytest
@@ -20,7 +21,7 @@ def test_get_uv_command_executing_python_file_builds_expected_command(monkeypatc
         assert platform == "Linux"
         return "uv "
 
-    monkeypatch.setattr(code_utils.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
     monkeypatch.setattr(code_utils, "get_uv_command", fake_get_uv_command)
 
     command = code_utils.get_uv_command_executing_python_file(python_file="script.py", uv_with=deps, uv_project_dir="/repo", uv_run_flags="--quiet")

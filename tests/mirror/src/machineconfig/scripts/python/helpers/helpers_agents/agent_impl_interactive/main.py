@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false
 import sys
 from types import ModuleType
 

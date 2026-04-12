@@ -12,7 +12,7 @@ def _make_layout_config() -> LayoutConfig:
     return {
         "layoutName": "RemoteSession",
         "layoutTabs": [
-            {"tabName": 'Main "Tab"', "startDir": "/repo", "command": """python -c \"print('hello world')\"""},
+            {"tabName": 'Main "Tab"', "startDir": "/repo", "command": 'python -c "print(\'hello world\')"'},
             {"tabName": "Logs", "startDir": "/var/log", "command": "tail -f app.log"},
         ],
     }
@@ -26,11 +26,13 @@ class FakeConsole:
         self.messages.append(message)
 
 
+
 def test_parse_command_falls_back_when_shlex_rejects_input() -> None:
-    command, args = subject.LayoutGenerator.parse_command("""python \"unterminated""")
+    command, args = subject.LayoutGenerator.parse_command('python "unterminated')
 
     assert command == "python"
     assert args == ['"unterminated']
+
 
 
 def test_validate_tab_config_rejects_blank_runtime_values() -> None:
@@ -40,12 +42,14 @@ def test_validate_tab_config_rejects_blank_runtime_values() -> None:
         subject.LayoutGenerator.validate_tab_config(invalid_layout)
 
 
+
 def test_create_tab_section_escapes_names_and_arguments() -> None:
-    section = subject.LayoutGenerator.create_tab_section('Main "Tab"', "~", """python -c \"print('hello world')\"""")
+    section = subject.LayoutGenerator.create_tab_section('Main "Tab"', "~", 'python -c "print(\'hello world\')"')
 
     assert 'tab name="Main \\"Tab\\"" cwd="~"' in section
     assert 'pane command="python"' in section
     assert "args \"-c\" \"print('hello world')\"" in section
+
 
 
 def test_create_layout_file_returns_rendered_layout(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from types import ModuleType, SimpleNamespace
 from typing import cast
 
+import machineconfig.utils as machineconfig_utils_package
 import pytest
 import typer
 from typer.testing import CliRunner
@@ -19,7 +20,12 @@ class Invocation:
     kwargs: dict[str, object]
 
 
-def _register_callable_module(monkeypatch: pytest.MonkeyPatch, module_name: str, attr_name: str, calls: list[Invocation]) -> None:
+def _register_callable_module(
+    monkeypatch: pytest.MonkeyPatch,
+    module_name: str,
+    attr_name: str,
+    calls: list[Invocation],
+) -> None:
     fake_module = ModuleType(module_name)
 
     def fake_callable(*args: object, **kwargs: object) -> None:
@@ -29,7 +35,39 @@ def _register_callable_module(monkeypatch: pytest.MonkeyPatch, module_name: str,
     monkeypatch.setitem(sys.modules, module_name, fake_module)
 
 
-def _register_get_app_module(monkeypatch: pytest.MonkeyPatch, module_name: str, calls: list[Invocation]) -> None:
+def _register_nested_callable_module(
+    monkeypatch: pytest.MonkeyPatch,
+    package_name: str,
+    module_name: str,
+    attr_name: str,
+    calls: list[Invocation],
+) -> None:
+    package_module = ModuleType(package_name)
+    setattr(package_module, "__path__", [])
+
+    fake_module = ModuleType(f"{package_name}.{module_name}")
+
+    def fake_callable(*args: object, **kwargs: object) -> None:
+        calls.append(Invocation(args=args, kwargs=dict(kwargs)))
+
+    setattr(fake_module, attr_name, fake_callable)
+    setattr(package_module, module_name, fake_module)
+
+    monkeypatch.setattr(
+        machineconfig_utils_package,
+        "installer_utils",
+        package_module,
+        raising=False,
+    )
+    monkeypatch.setitem(sys.modules, package_name, package_module)
+    monkeypatch.setitem(sys.modules, f"{package_name}.{module_name}", fake_module)
+
+
+def _register_get_app_module(
+    monkeypatch: pytest.MonkeyPatch,
+    module_name: str,
+    calls: list[Invocation],
+) -> None:
     fake_module = ModuleType(module_name)
 
     def get_app() -> Callable[..., object]:
@@ -42,7 +80,9 @@ def _register_get_app_module(monkeypatch: pytest.MonkeyPatch, module_name: str, 
     monkeypatch.setitem(sys.modules, module_name, fake_module)
 
 
-def test_emoji_display_diagnostics_reports_width_and_variation_selector(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_emoji_display_diagnostics_reports_width_and_variation_selector(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_wcwidth = ModuleType("wcwidth")
     setattr(fake_wcwidth, "wcswidth", lambda _value: 2)
     monkeypatch.setitem(sys.modules, "wcwidth", fake_wcwidth)
@@ -61,29 +101,81 @@ def test_emoji_display_diagnostics_reports_width_and_variation_selector(monkeypa
 def test_inspect_devops_help_emojis_returns_expected_emoji_sequence() -> None:
     diagnostics = devops_module.inspect_devops_help_emojis()
 
-    assert [item["emoji"] for item in diagnostics] == ["🔧", "📁", "🔩", "💾", "🔧", "🌐", "🚀"]
+    assert [item["emoji"] for item in diagnostics] == [
+        "🔧",
+        "📁",
+        "🔩",
+        "💾",
+        "🔧",
+        "🌐",
+        "🚀",
+    ]
 
 
-def test_install_lazy_loads_installer_cli_and_forwards_arguments(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_install_lazy_loads_installer_cli_and_forwards_arguments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls: list[Invocation] = []
-    _register_callable_module(monkeypatch, "machineconfig.utils.installer_utils.installer_cli", "main_installer_cli", calls)
+    _register_nested_callable_module(
+        monkeypatch,
+        "machineconfig.utils.installer_utils",
+        "installer_cli",
+        "main_installer_cli",
+        calls,
+    )
 
-    devops_module.install(which="fd,rg", group=False, interactive=True, update=True, version="latest")
+    devops_module.install(
+        which="fd,rg",
+        group=False,
+        interactive=True,
+        update=True,
+        version="latest",
+    )
 
-    assert calls == [Invocation(args=(), kwargs={"which": "fd,rg", "group": False, "interactive": True, "update": True, "version": "latest"})]
+    assert calls == [
+        Invocation(
+            args=(),
+            kwargs={
+                "which": "fd,rg",
+                "group": False,
+                "interactive": True,
+                "update": True,
+                "version": "latest",
+            },
+        )
+    ]
 
 
 @pytest.mark.parametrize(
     ("callable_name", "module_name"),
     [
-        ("repos", "machineconfig.scripts.python.helpers.helpers_devops.cli_repos"),
-        ("config", "machineconfig.scripts.python.helpers.helpers_devops.cli_config"),
-        ("data", "machineconfig.scripts.python.helpers.helpers_devops.cli_data"),
-        ("self_cmd", "machineconfig.scripts.python.helpers.helpers_devops.cli_self"),
-        ("network", "machineconfig.scripts.python.helpers.helpers_devops.cli_nw"),
+        (
+            "repos",
+            "machineconfig.scripts.python.helpers.helpers_devops.cli_repos",
+        ),
+        (
+            "config",
+            "machineconfig.scripts.python.helpers.helpers_devops.cli_config",
+        ),
+        (
+            "data",
+            "machineconfig.scripts.python.helpers.helpers_devops.cli_data",
+        ),
+        (
+            "self_cmd",
+            "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+        ),
+        (
+            "network",
+            "machineconfig.scripts.python.helpers.helpers_devops.cli_nw",
+        ),
     ],
 )
-def test_context_commands_forward_context_args(monkeypatch: pytest.MonkeyPatch, callable_name: str, module_name: str) -> None:
+def test_context_commands_forward_context_args(
+    monkeypatch: pytest.MonkeyPatch,
+    callable_name: str,
+    module_name: str,
+) -> None:
     calls: list[Invocation] = []
     _register_get_app_module(monkeypatch, module_name, calls)
 
@@ -91,19 +183,48 @@ def test_context_commands_forward_context_args(monkeypatch: pytest.MonkeyPatch, 
     command = getattr(devops_module, callable_name)
     command(context)
 
-    assert calls == [Invocation(args=(["--flag", "value"],), kwargs={"standalone_mode": False})]
+    assert calls == [
+        Invocation(
+            args=(["--flag", "value"],),
+            kwargs={"standalone_mode": False},
+        )
+    ]
 
 
-def test_execute_lazy_loads_script_runner_and_forwards_arguments(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_execute_lazy_loads_script_runner_and_forwards_arguments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls: list[Invocation] = []
-    _register_callable_module(monkeypatch, "machineconfig.scripts.python.helpers.helpers_devops.run_script", "run_py_script", calls)
+    _register_callable_module(
+        monkeypatch,
+        "machineconfig.scripts.python.helpers.helpers_devops.run_script",
+        "run_py_script",
+        calls,
+    )
 
     context = cast(typer.Context, SimpleNamespace(args=[]))
 
-    devops_module.execute(ctx=context, name="build", where="custom", interactive=True, command=True, list_scripts=False)
+    devops_module.execute(
+        ctx=context,
+        name="build",
+        where="custom",
+        interactive=True,
+        command=True,
+        list_scripts=False,
+    )
 
     assert calls == [
-        Invocation(args=(), kwargs={"ctx": context, "name": "build", "where": "custom", "interactive": True, "command": True, "list_scripts": False})
+        Invocation(
+            args=(),
+            kwargs={
+                "ctx": context,
+                "name": "build",
+                "where": "custom",
+                "interactive": True,
+                "command": True,
+                "list_scripts": False,
+            },
+        )
     ]
 
 

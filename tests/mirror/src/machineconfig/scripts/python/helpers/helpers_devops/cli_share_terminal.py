@@ -34,6 +34,9 @@ class FakePopenProcess:
 
 
 def install_share_terminal_network_stub(monkeypatch: pytest.MonkeyPatch, lan_ip: str | None) -> None:
+    import machineconfig.scripts.python.helpers as helpers_package
+
+    helpers_network_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network")
     address_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network.address")
 
     def fake_select_lan_ipv4(*, prefer_vpn: bool) -> str | None:
@@ -41,7 +44,10 @@ def install_share_terminal_network_stub(monkeypatch: pytest.MonkeyPatch, lan_ip:
         return lan_ip
 
     setattr(address_module, "select_lan_ipv4", fake_select_lan_ipv4)
+    setattr(helpers_network_module, "address", address_module)
+    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network", helpers_network_module)
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.address", address_module)
+    monkeypatch.setattr(helpers_package, "helpers_network", helpers_network_module, raising=False)
 
 
 def test_share_terminal_reads_password_file_and_launches_ttyd(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -59,7 +65,7 @@ def test_share_terminal_reads_password_file_and_launches_ttyd(monkeypatch: pytes
     def fake_display_terminal_url(local_ip_v4: str, port: int, protocol: str = "http") -> None:
         displayed_urls.append((local_ip_v4, port, protocol))
 
-    def fake_popen(command: str, shell: bool) -> FakePopenProcess:
+    def fake_popen(command: str, *, shell: bool) -> FakePopenProcess:
         process = FakePopenProcess(command=command, shell=shell)
         processes.append(process)
         return process
@@ -68,7 +74,7 @@ def test_share_terminal_reads_password_file_and_launches_ttyd(monkeypatch: pytes
         raise KeyboardInterrupt
 
     monkeypatch.setattr(module, "display_terminal_url", fake_display_terminal_url)
-    monkeypatch.setattr(module.Path, "home", classmethod(lambda cls: home_dir))
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home_dir))
     monkeypatch.setattr(getpass, "getuser", lambda: "alex")
     monkeypatch.setattr(platform, "system", lambda: "Linux")
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
@@ -100,7 +106,7 @@ def test_share_terminal_reads_password_file_and_launches_ttyd(monkeypatch: pytes
 def test_share_terminal_requires_password_when_default_file_missing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home_dir = tmp_path.joinpath("home")
     home_dir.mkdir()
-    monkeypatch.setattr(module.Path, "home", classmethod(lambda cls: home_dir))
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home_dir))
 
     with pytest.raises(typer.Exit) as exc_info:
         module.share_terminal(

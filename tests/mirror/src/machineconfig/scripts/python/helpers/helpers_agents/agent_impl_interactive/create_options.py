@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false
 from dataclasses import dataclass
 from typing import cast, get_args
 

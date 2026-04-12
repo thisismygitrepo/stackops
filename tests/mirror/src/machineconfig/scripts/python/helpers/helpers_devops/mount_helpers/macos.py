@@ -53,7 +53,7 @@ def test_list_macos_devices_parses_partitions_and_whole_disks(monkeypatch: pytes
     }
     info_by_identifier: dict[str, dict[str, object]] = {
         "disk3s1": {"VolumeName": "Data", "FileSystemType": "apfs", "TotalSize": 2048, "MediaName": "SSD Partition", "MountPoint": "/Volumes/Data"},
-        "disk4": {"VolumeName": "External", "FilesystemType": "exfat", "TotalSize": 4096, "MediaName": "USB Disk", "MountPoint": None},
+        "disk4": {"VolumeName": "External", "FilesystemType": "exfat", "TotalSize": 4096, "MediaName": "USB Disk"},
     }
 
     def fake_run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
