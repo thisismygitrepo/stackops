@@ -90,3 +90,73 @@ def test_get_app_help_lists_core_commands() -> None:
     assert "init-project" in result.stdout
     assert "upgrade-packages" in result.stdout
     assert "type-hint" in result.stdout
+    assert "reference-test" in result.stdout
+
+
+def test_reference_test_help_lists_verbose_flag() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["reference-test", "--help"])
+
+    assert result.exit_code == 0
+    assert "--verbose" in result.stdout
+
+
+def test_reference_test_reports_success_for_repo_with_valid_targets(tmp_path: Path) -> None:
+    repo_root = tmp_path
+    package_dir = repo_root.joinpath("src", "pkg")
+    package_dir.mkdir(parents=True)
+    package_dir.joinpath("asset.txt").write_text("ok\n", encoding="utf-8")
+    package_dir.joinpath("__init__.py").write_text('ASSET_PATH_REFERENCE = "asset.txt"\n', encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["reference-test", str(repo_root)])
+
+    assert result.exit_code == 0
+    assert "✅ Reference Audit Passed" in result.output
+    assert "Resolved Targets" in result.output
+
+
+def test_reference_test_verbose_reports_rich_details_for_success(tmp_path: Path) -> None:
+    repo_root = tmp_path
+    package_dir = repo_root.joinpath("src", "pkg")
+    package_dir.mkdir(parents=True)
+    package_dir.joinpath("asset.txt").write_text("ok\n", encoding="utf-8")
+    package_dir.joinpath("__init__.py").write_text('ASSET_PATH_REFERENCE = "asset.txt"\n', encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["reference-test", str(repo_root), "--verbose"])
+
+    assert result.exit_code == 0
+    assert "🧹 Excluded Directories" in result.output
+    assert "✅ No invalid _PATH_REFERENCE definitions found." in result.output
+    assert "✅ No missing _PATH_REFERENCE targets found." in result.output
+
+
+def test_reference_test_reports_missing_targets(tmp_path: Path) -> None:
+    repo_root = tmp_path
+    package_dir = repo_root.joinpath("src", "pkg")
+    package_dir.mkdir(parents=True)
+    package_dir.joinpath("__init__.py").write_text('ASSET_PATH_REFERENCE = "missing.txt"\n', encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["reference-test", str(repo_root)])
+
+    assert result.exit_code == 1
+    assert "❌ Reference Audit Failed" in result.output
+    assert "❌ Failure Details" in result.output
+    assert "missing.txt" in result.output
+
+
+def test_reference_test_verbose_reports_rich_details_for_failures(tmp_path: Path) -> None:
+    repo_root = tmp_path
+    package_dir = repo_root.joinpath("src", "pkg")
+    package_dir.mkdir(parents=True)
+    package_dir.joinpath("__init__.py").write_text('ASSET_PATH_REFERENCE = "missing.txt"\n', encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["reference-test", str(repo_root), "--verbose"])
+
+    assert result.exit_code == 1
+    assert "❌ Missing Targets" in result.output
+    assert "missing.txt" in result.output

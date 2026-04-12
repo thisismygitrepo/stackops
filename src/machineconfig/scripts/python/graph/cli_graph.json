@@ -621,9 +621,8 @@
                     "        raise typer.Exit(code=1)",
                     "    repos_root = _resolve_directory(directory)",
                     "    from machineconfig.scripts.python.helpers.helpers_repos.action import perform_git_operations",
-                    "    from machineconfig.utils.path_extended import PathExtended",
                     "",
-                    "    perform_git_operations(repos_root=PathExtended(repos_root), pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)"
+                    "    perform_git_operations(repos_root=repos_root, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)"
                   ],
                   "name": "action",
                   "parameters": [
@@ -790,7 +789,7 @@
                     "",
                     "    from machineconfig.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.90\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig[plot]>=8.91\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -877,27 +876,27 @@
                     "            return \"\"",
                     "    else:",
                     "        cloud_resolved = cloud",
-                    "    repo_local_root = PathExtended.cwd() if repo == \".\" else PathExtended(repo).expanduser().absolute()",
+                    "    repo_local_root = Path.cwd() if repo == \".\" else Path(repo).expanduser().absolute()",
                     "    try:",
                     "        repo_local_obj = Repo(repo_local_root, search_parent_directories=True)",
                     "    except (InvalidGitRepositoryError, NoSuchPathError) as exc:",
                     "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"The specified path '{repo_local_root}' is not a valid git repository.\"",
                     "        typer.echo(msg)",
                     "        raise typer.Exit(code=1) from exc",
-                    "    repo_local_root = PathExtended(repo_local_obj.working_dir)  # cwd might have been in a sub directory of repo_root, so its better to redefine it.",
-                    "    local_relative_home = PathExtended(repo_local_root.expanduser().absolute().relative_to(Path.home()))",
-                    "    PathExtended(CONFIG_ROOT).joinpath(\"remote\").mkdir(parents=True, exist_ok=True)",
-                    "    repo_remote_root = PathExtended(CONFIG_ROOT).joinpath(\"remote\", local_relative_home)",
+                    "    repo_local_root = Path(repo_local_obj.working_dir)  # cwd might have been in a sub directory of repo_root, so its better to redefine it.",
+                    "    local_relative_home = repo_local_root.expanduser().absolute().relative_to(Path.home())",
+                    "    Path(CONFIG_ROOT).joinpath(\"remote\").mkdir(parents=True, exist_ok=True)",
+                    "    repo_remote_root = Path(CONFIG_ROOT).joinpath(\"remote\", local_relative_home)",
                     "    delete_path(repo_remote_root, verbose=True)",
+                    "    remote_path = _get_repo_remote_archive_path(repo_root=repo_local_root)",
                     "    try:",
                     "        console.print(Panel(\"📥 DOWNLOADING REMOTE REPOSITORY\", title_align=\"left\", border_style=\"blue\"))",
-                    "        remote_path = repo_local_root.get_remote_path(rel2home=True, os_specific=False, root=\"myhome\") + \".zip.enc\"",
-                    "        res = repo_remote_root.from_cloud(remotepath=remote_path, cloud=cloud_resolved, unzip=True, decrypt=True, rel2home=True, os_specific=False, pwd=pwd)",
-                    "        if res is None:",
-                    "            raise AssertionError(\"Remote repo does not exist.\")",
-                    "    except AssertionError:",
+                    "        _download_repo_archive(repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
+                    "    except RcloneCommandError as error:",
+                    "        if not is_missing_remote_path_error(error):",
+                    "            raise",
                     "        console.print(Panel(\"🆕 Remote repository doesn't exist\\n📤 Creating new remote and exiting...\", title_align=\"left\", border_style=\"green\"))",
-                    "        repo_local_root.to_cloud(cloud=cloud_resolved, zip=True, encrypt=True, rel2home=True, pwd=pwd, os_specific=False)",
+                    "        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
                     "        return \"\"",
                     "",
                     "    repo_remote_obj = Repo(repo_remote_root)",
@@ -923,7 +922,7 @@
                     "        console.print(Panel(\"✅ Pull succeeded!\\n🧹 Removing originEnc remote and local copy\\n📤 Pushing merged repository to cloud storage\", title=\"Success\", border_style=\"green\"))",
                     "        delete_path(repo_remote_root, verbose=True)",
                     "        _remove_remote_if_present(repo=repo_local_obj, remote_name=REMOTE_NAME)",
-                    "        repo_local_root.to_cloud(cloud=cloud_resolved, zip=True, encrypt=True, rel2home=True, pwd=pwd, os_specific=False)",
+                    "        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
                     "        return \"success\"",
                     "    if merge_result.status == \"git_error\":",
                     "        console.print(",
@@ -1723,7 +1722,7 @@
                     "    # from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from machineconfig.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.90\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"machineconfig>=8.91\"])",
                     "    from machineconfig.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -2248,8 +2247,6 @@
                     "    console = Console()",
                     "    orig_path = Path(file).expanduser().absolute()",
                     "    new_path = get_backup_path(orig_path=orig_path, sensitivity=sensitivity, destination=destination, shared=shared)",
-                    "    orig_path_extended = PathExtended(orig_path)",
-                    "    new_path_extended = PathExtended(new_path)",
                     "    if not orig_path.exists() and not new_path.exists():",
                     "        console.print(f\"[red]Error:[/] Neither original file nor self-managed file exists:\\n  Original: {orig_path}\\n  Self-managed: {new_path}\")",
                     "        raise typer.Exit(code=1)",
@@ -2257,14 +2254,14 @@
                     "    match method:",
                     "        case \"copy\" | \"c\":",
                     "            try:",
-                    "                copy_map(config_file_default_path=orig_path_extended, config_file_self_managed_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
+                    "                copy_map(config_file_default_path=orig_path, config_file_self_managed_path=new_path, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
                     "            except Exception as e:",
                     "                msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(e)",
                     "                typer.echo(msg)",
                     "                raise typer.Exit(code=1) from e",
                     "        case \"symlink\" | \"s\":",
                     "            try:",
-                    "                symlink_map(config_file_default_path=orig_path_extended, config_file_self_managed_path=new_path_extended, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
+                    "                symlink_map(config_file_default_path=orig_path, config_file_self_managed_path=new_path, on_conflict=ON_CONFLICT_MAPPER[on_conflict])",
                     "            except Exception as e:",
                     "                msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(e)",
                     "                typer.echo(msg)",
@@ -2653,17 +2650,12 @@
                     "    if dotfiles_zip.exists():",
                     "        dotfiles_zip.unlink()",
                     "    zipfile = shutil.make_archive(base_name=str(dotfiles_zip)[:-4], format=\"zip\", root_dir=str(dotfiles_dir), base_dir=\".\", verbose=False)",
-                    "    from machineconfig.utils.io import encrypt",
-                    "    zipfile_enc_bytes = encrypt(",
-                    "        msg=Path(zipfile).read_bytes(),",
-                    "        pwd=pwd,",
-                    "    )",
-                    "    Path(zipfile).unlink()",
-                    "    zipfile_enc_path = Path(rf\"{zipfile}.enc\")",
-                    "    if zipfile_enc_path.exists():",
-                    "        zipfile_enc_path.unlink()",
-                    "    zipfile_enc_path.write_bytes(zipfile_enc_bytes)",
-                    "    print(f\"✅ Dotfiles exported to: {zipfile_enc_path}\")",
+                    "    from machineconfig.utils.io import encrypt_file_symmetric",
+                    "",
+                    "    zipfile_path = Path(zipfile)",
+                    "    zipfile_encrypted_path = encrypt_file_symmetric(file_path=zipfile_path, pwd=pwd)",
+                    "    zipfile_path.unlink()",
+                    "    print(f\"✅ Dotfiles exported to: {zipfile_encrypted_path}\")",
                     "    if over_internet:",
                     "        # rm ~/dotfiles.zip || true",
                     "        # ouch c ~/dotfiles dotfiles.zip",
@@ -2682,7 +2674,7 @@
                     "",
                     "    display_with_flashy_style(msg=msg, title=\"Remote Machine Instructions\")",
                     "    cli_share_server.web_file_explorer(",
-                    "        path=str(zipfile_enc_path),",
+                    "        path=str(zipfile_encrypted_path),",
                     "        no_auth=True,",
                     "        port=port,",
                     "        # bind_address=\"",
@@ -2778,11 +2770,11 @@
                 "signature": {
                   "raw_lines": [
                     "def import_dotfiles(",
-                    "        url: Annotated[str | None, typer.Option(..., \"--url\", \"-u\", help=\"URL or local path to the encrypted dotfiles zip\")] = None,",
+                    "        url: Annotated[str | None, typer.Option(..., \"--url\", \"-u\", help=\"URL or local path to the encrypted dotfiles archive (.zip.gpg)\")] = None,",
                     "        pwd: Annotated[str | None, typer.Option(..., \"--pwd\", \"-p\", help=\"Password for zip decryption\")] = None,",
                     "        use_ssh: Annotated[bool, typer.Option(\"--use-ssh\", \"-s\", help=\"Use SSH-based transfer (scp) from a remote machine that has dotfiles.\")]=False,",
                     "        ):  ",
-                    "    # # INSECURE cd $HOME; uvx wormhole-magic receive dotfiles.zip.enc --accept-file",
+                    "    # # INSECURE cd $HOME; uvx wormhole-magic receive dotfiles.zip.gpg --accept-file",
                     "    # ☁️  [bold blue]Method 3: USING INTERNET SECURE SHARE[/bold blue]",
                     "    #     [dim]cd ~",
                     "    #     cloud copy SHARE_URL . --config ss[/dim]",
@@ -2807,17 +2799,11 @@
                     "    if downloaded_file is None or not downloaded_file.exists():",
                     "        print(f\"❌ Failed to download file from URL: {url}\")",
                     "        raise typer.Exit(code=1)",
-                    "    zipfile_enc_path = downloaded_file",
-                    "    from machineconfig.utils.io import decrypt",
-                    "    zipfile_bytes = decrypt(",
-                    "        token=zipfile_enc_path.read_bytes(),",
-                    "        pwd=pwd,",
-                    "    )",
-                    "    zipfile_path = Path(str(zipfile_enc_path)[:-4])",
-                    "    if zipfile_path.exists():",
-                    "        print(f\"⚠️  WARNING: Overwriting existing file: {zipfile_path}\")",
-                    "        zipfile_path.unlink()",
-                    "    zipfile_path.write_bytes(zipfile_bytes)",
+                    "    zipfile_encrypted_path = downloaded_file",
+                    "    from machineconfig.utils.io import decrypt_file_symmetric",
+                    "",
+                    "    assert pwd is not None, \"Password prompt should have produced a decryption password.\"",
+                    "    zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)",
                     "    print(f\"✅ Decrypted zip file saved to: {zipfile_path}\")",
                     "    import zipfile",
                     "    if Path.home().joinpath(\"dotfiles\").exists():",
@@ -2836,7 +2822,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--url', '-u', help='URL or local path to the encrypted dotfiles zip')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--url', '-u', help='URL or local path to the encrypted dotfiles archive (.zip.gpg)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2849,7 +2835,7 @@
                         "short_flags": [
                           "-u"
                         ],
-                        "help": "URL or local path to the encrypted dotfiles zip",
+                        "help": "URL or local path to the encrypted dotfiles archive (.zip.gpg)",
                         "default": "..."
                       }
                     },
@@ -3013,17 +2999,21 @@
                       "raw_lines": [
                         "def starship_theme() -> None:",
                         "    \"\"\"🔗 Select starship prompt theme.\"\"\"",
-                        "    themes_dir = Path(__file__).resolve().parent / \"themes\"",
-                        "",
                         "    if platform.system() == \"Windows\":",
-                        "        script_path = themes_dir / \"choose_starship_theme.ps1\"",
+                        "        script_path = get_path_reference_path(",
+                        "            module=theme_assets,",
+                        "            path_reference=theme_assets.CHOOSE_STARSHIP_THEME_PS1_PATH_REFERENCE,",
+                        "        )",
                         "        try:",
                         "            subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
                         "        except FileNotFoundError:",
                         "            subprocess.run([\"powershell\", \"-File\", str(script_path)], check=True)",
                         "        return",
                         "",
-                        "    script_path = themes_dir / \"choose_starship_theme.sh\"",
+                        "    script_path = get_path_reference_path(",
+                        "        module=theme_assets,",
+                        "        path_reference=theme_assets.CHOOSE_STARSHIP_THEME_SH_PATH_REFERENCE,",
+                        "    )",
                         "    os.chmod(script_path, 0o755)",
                         "    subprocess.run([\"bash\", str(script_path)], check=True)"
                       ],
@@ -3060,7 +3050,10 @@
                         "    \"\"\"🔗 Select powershell prompt theme.\"\"\"",
                         "    from machineconfig.utils.code import exit_then_run_shell_file",
                         "",
-                        "    script_path = Path(__file__).resolve().parent / \"themes\" / \"choose_pwsh_theme.ps1\"",
+                        "    script_path = get_path_reference_path(",
+                        "        module=theme_assets,",
+                        "        path_reference=theme_assets.CHOOSE_PWSH_THEME_PATH_REFERENCE,",
+                        "    )",
                         "    exit_then_run_shell_file(script_path=str(script_path), strict=False)"
                       ],
                       "name": "pwsh_theme",
@@ -3181,7 +3174,10 @@
                         "        typer.echo(\"Error: Windows Terminal theme selection is only supported on Windows systems.\", err=True)",
                         "        raise typer.Exit(code=1)",
                         "",
-                        "    script_path = Path(__file__).resolve().parent / \"themes\" / \"choose_windows_terminal_theme.ps1\"",
+                        "    script_path = get_path_reference_path(",
+                        "        module=theme_assets,",
+                        "        path_reference=theme_assets.CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE,",
+                        "    )",
                         "    try:",
                         "        subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
                         "    except FileNotFoundError:",
@@ -3900,9 +3896,7 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def install(",
-                    "    dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Clone repo and install from it instead of PyPI\")] = False,",
-                    "):",
+                    "def install(dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Clone repo and install from it instead of PyPI\")] = False):",
                     "    \"\"\"📋 install machineconfig locally for nightly updates.\"\"\"",
                     "    _install_machineconfig(dev=dev)"
                   ],
@@ -4059,8 +4053,7 @@
                     "    repos: Annotated[bool, typer.Option(\"--repos\", \"-r\", help=\"Show the configured repositories section.\")] = False,",
                     "    ssh: Annotated[bool, typer.Option(\"--ssh\", \"-h\", help=\"Show the SSH configuration section.\")] = False,",
                     "    configs: Annotated[",
-                    "        bool,",
-                    "        typer.Option(\"--configs\", \"--dotfiles\", \"--symlinks\", \"-c\", \"-d\", \"-l\", help=\"Show the linked config, dotfile, and symlink section.\"),",
+                    "        bool, typer.Option(\"--configs\", \"--dotfiles\", \"--symlinks\", \"-c\", \"-d\", \"-l\", help=\"Show the linked config, dotfile, and symlink section.\")",
                     "    ] = False,",
                     "    apps: Annotated[bool, typer.Option(\"--apps\", \"--tools\", \"-a\", \"-t\", help=\"Show the installed apps/tools section.\")] = False,",
                     "    backup: Annotated[bool, typer.Option(\"--backup\", \"-b\", help=\"Show the backup configuration section.\")] = False,",
@@ -4495,9 +4488,8 @@
                       "raw_lines": [
                         "def upload(path: Annotated[Path, typer.Argument(..., help=\"Path to a local file to upload\")]) -> None:",
                         "    from machineconfig.jobs.installer.checks.install_utils import upload_app",
-                        "    from machineconfig.utils.path_extended import PathExtended",
                         "",
-                        "    link = upload_app(PathExtended(path))",
+                        "    link = upload_app(path)",
                         "    if not link:",
                         "        raise typer.Exit(code=1)",
                         "    _console().print(link)"
@@ -4835,24 +4827,24 @@
                     "    if platform.system() == \"Linux\" or platform.system() == \"Darwin\":",
                     "        match which:",
                     "            case \"init\":",
-                    "                import machineconfig.settings as module",
-                    "",
                     "                if platform.system() == \"Darwin\":",
-                    "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"zsh\", \"init.sh\")",
+                    "                    init_path = get_path_reference_path(",
+                    "                        module=zsh_shell_assets,",
+                    "                        path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,",
+                    "                    )",
                     "                else:",
-                    "                    init_path = Path(module.__file__).parent.joinpath(\"shells\", \"bash\", \"init.sh\")",
+                    "                    init_path = get_path_reference_path(",
+                    "                        module=bash_shell_assets,",
+                    "                        path_reference=bash_shell_assets.INIT_PATH_REFERENCE,",
+                    "                    )",
                     "                script = init_path.read_text(encoding=\"utf-8\")",
                     "            case \"ia\":",
                     "                import machineconfig.setup_linux.web_shortcuts as module",
-                    "                from machineconfig.setup_linux.web_shortcuts import INTERACTIVE_PATH_REFERENCE",
-                    "",
-                    "                script_path = Path(module.__file__).parent.joinpath(INTERACTIVE_PATH_REFERENCE)",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case \"live\":",
                     "                import machineconfig.setup_linux.web_shortcuts as module",
-                    "                from machineconfig.setup_linux.web_shortcuts import LIVE_FROM_GITHUB_PATH_REFERENCE",
-                    "",
-                    "                script_path = Path(module.__file__).parent.joinpath(LIVE_FROM_GITHUB_PATH_REFERENCE)",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case _:",
                     "                typer.echo(\"Unsupported shell script for Linux.\")",
@@ -4861,21 +4853,18 @@
                     "    elif platform.system() == \"Windows\":",
                     "        match which:",
                     "            case \"init\":",
-                    "                import machineconfig.settings as module",
-                    "",
-                    "                init_path = Path(module.__file__).parent.joinpath(\"shells\", \"pwsh\", \"init.ps1\")",
+                    "                init_path = get_path_reference_path(",
+                    "                    module=pwsh_shell_assets,",
+                    "                    path_reference=pwsh_shell_assets.INIT_PATH_REFERENCE,",
+                    "                )",
                     "                script = init_path.read_text(encoding=\"utf-8\")",
                     "            case \"ia\":",
                     "                import machineconfig.setup_windows.web_shortcuts as module",
-                    "                from machineconfig.setup_windows.web_shortcuts import INTERACTIVE_PATH_REFERENCE",
-                    "",
-                    "                script_path = Path(module.__file__).parent.joinpath(INTERACTIVE_PATH_REFERENCE)",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case \"live\":",
                     "                import machineconfig.setup_windows.web_shortcuts as module",
-                    "                from machineconfig.setup_windows.web_shortcuts import LIVE_FROM_GITHUB_PATH_REFERENCE",
-                    "",
-                    "                script_path = Path(module.__file__).parent.joinpath(LIVE_FROM_GITHUB_PATH_REFERENCE)",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
                     "                script = script_path.read_text(encoding=\"utf-8\")",
                     "            case _:",
                     "                typer.echo(\"Unsupported shell script for Windows.\")",
@@ -5594,19 +5583,17 @@
                     "    from rich.markdown import Markdown",
                     "    import requests",
                     "",
-                    "    # URL of the raw README.md file",
-                    "    url_readme = \"https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md\"",
+                    "    repo_root = Path.home().joinpath(\"code\", \"machineconfig\")",
+                    "    if repo_root.exists():",
+                    "        markdown_text = repo_root.joinpath(\"README.md\").read_text(encoding=\"utf-8\")",
+                    "    else:",
+                    "        url_readme = \"https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/README.md\"",
+                    "        response = requests.get(url_readme, timeout=10)",
+                    "        response.raise_for_status()",
+                    "        markdown_text = response.text",
                     "",
-                    "    # Fetch the content",
-                    "    response = requests.get(url_readme, timeout=10)",
-                    "    response.raise_for_status()  # Raise an error for bad responses",
-                    "",
-                    "    # Parse markdown",
-                    "    md = Markdown(response.text)",
-                    "",
-                    "    # Render in terminal",
                     "    console = Console()",
-                    "    console.print(md)"
+                    "    console.print(Markdown(markdown_text))"
                   ],
                   "name": "readme",
                   "parameters": [],
@@ -5813,7 +5800,7 @@
                 "kind": "group",
                 "name": "build-assets",
                 "fullPath": "devops self build-assets",
-                "shortPath": "d s a",
+                "shortPath": "d s ba",
                 "help": "🗂 <a> Regenerate repo-local CLI graph assets.",
                 "source": {
                   "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
@@ -5831,7 +5818,7 @@
                     "kind": "command",
                     "name": "update-cli-graph",
                     "fullPath": "devops self build-assets update-cli-graph",
-                    "shortPath": "d s a g",
+                    "shortPath": "d s ba g",
                     "help": "🧩 <g> Regenerate the checked-in CLI graph snapshot.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_assets.py",
@@ -5865,7 +5852,7 @@
                     "kind": "command",
                     "name": "regenerate-charts",
                     "fullPath": "devops self build-assets regenerate-charts",
-                    "shortPath": "d s a c",
+                    "shortPath": "d s ba c",
                     "help": "☀ <c> Regenerate the checked-in sunburst HTML chart.",
                     "source": {
                       "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_assets.py",
@@ -5904,9 +5891,1333 @@
                 ],
                 "aliases": [
                   {
-                    "name": "a",
+                    "name": "ba",
                     "hidden": true,
                     "help": "Regenerate repo-local CLI graph assets."
+                  }
+                ]
+              },
+              {
+                "kind": "group",
+                "name": "workflows",
+                "fullPath": "devops self workflows",
+                "shortPath": "d s w",
+                "help": "🤖 <w> Developer AI workflows.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self",
+                  "dispatches_to": "machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.app.get_app"
+                },
+                "app": {
+                  "help": "🤖 <w> Developer AI workflows.",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "update-installer",
+                    "fullPath": "devops self workflows update-installer",
+                    "shortPath": "d s w u",
+                    "help": "🔄 <u> Create an agents layout for updating installer_data.json.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_ai/update_installer.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.update_installer",
+                      "callable": "update_installer"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def update_installer(",
+                        "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent type.\")] = \"codex\",",
+                        "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
+                        "    reasoning_effort: Annotated[",
+                        "        ReasoningEffort | None,",
+                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                        "    ] = None,",
+                        "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
+                        "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
+                        "    context: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--context\", \"-c\", help=\"Context as a direct string. Mutually exclusive with --context-path.\"),",
+                        "    ] = None,",
+                        "    context_path: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(",
+                        "            \"--context-path\",",
+                        "            \"-C\",",
+                        "            help=\"Context file or folder path. Defaults to src/machineconfig/jobs/installer/installer_data.json when --context is omitted.\",",
+                        "        ),",
+                        "    ] = None,",
+                        "    separator: Annotated[",
+                        "        str,",
+                        "        typer.Option(\"--separator\", \"-s\", help=\"Separator for context. Supports escaped values like '\\\\n'.\"),",
+                        "    ] = UPDATE_INSTALLER_SEPARATOR,",
+                        "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", help=\"Number of tasks per prompt.\")] = 10,",
+                        "    prompt: Annotated[str | None, typer.Option(\"--prompt\", \"-p\", help=\"Prompt prefix as string.\")] = None,",
+                        "    prompt_path: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(",
+                        "            \"--prompt-path\",",
+                        "            \"-P\",",
+                        "            help=\"Prompt file path. When omitted, update-installer uses its embedded default prompt unless --prompt or --prompt-name is provided.\",",
+                        "        ),",
+                        "    ] = None,",
+                        "    prompt_name: Annotated[str | None, typer.Option(\"--prompt-name\", \"-N\", help=\"Prompt entry name from prompts YAML.\")] = None,",
+                        "    job_name: Annotated[str, typer.Option(\"--job-name\", \"-n\", help=\"Job label and default output directory stem.\")] = DEFAULT_INSTALLER_JOB_NAME,",
+                        "    join_prompt_and_context: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--joined-prompt-context\", \"-j\", help=\"Join prompt file to the context.\"),",
+                        "    ] = False,",
+                        "    output_path: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--output-path\", \"-o\", help=\"Layout path. Defaults to <agents-dir>/layout.json.\"),",
+                        "    ] = None,",
+                        "    agents_dir: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--agents-dir\", \"-d\", help=\"Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>.\"),",
+                        "    ] = None,",
+                        "    interactive: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\"),",
+                        "    ] = False,",
+                        ") -> None:",
+                        "    repo_root = get_developer_repo_root()",
+                        "    if not repo_root.joinpath(\"pyproject.toml\").is_file():",
+                        "        raise RuntimeError(f\"Developer repo not found: {repo_root}\")",
+                        "",
+                        "    resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(\".ai\", \"agents\", job_name)",
+                        "    resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath(\"layout.json\")",
+                        "",
+                        "    agents_create_impl(",
+                        "        agent=agent,",
+                        "        model=model,",
+                        "        agent_load=agent_load,",
+                        "        context=context,",
+                        "        context_path=_resolve_context_path(context=context, context_path=context_path, repo_root=repo_root),",
+                        "        separator=separator,",
+                        "        prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "        prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "        prompt_name=prompt_name,",
+                        "        job_name=job_name,",
+                        "        join_prompt_and_context=join_prompt_and_context,",
+                        "        output_path=str(resolved_output_path),",
+                        "        agents_dir=str(resolved_agents_dir),",
+                        "        host=host,",
+                        "        reasoning_effort=reasoning_effort,",
+                        "        provider=provider,",
+                        "        interactive=interactive,",
+                        "    )"
+                      ],
+                      "name": "update_installer",
+                      "parameters": [
+                        {
+                          "name": "agent",
+                          "kind": "positional_or_keyword",
+                          "type": "AGENTS",
+                          "default": "codex",
+                          "required": false,
+                          "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent type.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agent",
+                              "-a"
+                            ],
+                            "long_flags": [
+                              "--agent"
+                            ],
+                            "short_flags": [
+                              "-a"
+                            ],
+                            "help": "Agent type."
+                          }
+                        },
+                        {
+                          "name": "model",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--model', '-m', help='Model to use, agent will use its default otherwise.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--model",
+                              "-m"
+                            ],
+                            "long_flags": [
+                              "--model"
+                            ],
+                            "short_flags": [
+                              "-m"
+                            ],
+                            "help": "Model to use, agent will use its default otherwise."
+                          }
+                        },
+                        {
+                          "name": "reasoning_effort",
+                          "kind": "positional_or_keyword",
+                          "type": "ReasoningEffort | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--reasoning-effort",
+                              "-r"
+                            ],
+                            "long_flags": [
+                              "--reasoning-effort"
+                            ],
+                            "short_flags": [
+                              "-r"
+                            ],
+                            "help": "Reasoning effort for codex agents. When omitted, codex uses its default."
+                          }
+                        },
+                        {
+                          "name": "provider",
+                          "kind": "positional_or_keyword",
+                          "type": "PROVIDER | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[PROVIDER | None, typer.Option('--provider', '-v', help='Provider to use (if the agent supports many).')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--provider",
+                              "-v"
+                            ],
+                            "long_flags": [
+                              "--provider"
+                            ],
+                            "short_flags": [
+                              "-v"
+                            ],
+                            "help": "Provider to use (if the agent supports many)."
+                          }
+                        },
+                        {
+                          "name": "host",
+                          "kind": "positional_or_keyword",
+                          "type": "HOST",
+                          "default": "local",
+                          "required": false,
+                          "annotation_raw": "Annotated[HOST, typer.Option('--host', '-h', help='Machine to run agents on.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--host",
+                              "-h"
+                            ],
+                            "long_flags": [
+                              "--host"
+                            ],
+                            "short_flags": [
+                              "-h"
+                            ],
+                            "help": "Machine to run agents on."
+                          }
+                        },
+                        {
+                          "name": "context",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--context', '-c', help='Context as a direct string. Mutually exclusive with --context-path.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--context",
+                              "-c"
+                            ],
+                            "long_flags": [
+                              "--context"
+                            ],
+                            "short_flags": [
+                              "-c"
+                            ],
+                            "help": "Context as a direct string. Mutually exclusive with --context-path."
+                          }
+                        },
+                        {
+                          "name": "context_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--context-path', '-C', help='Context file or folder path. Defaults to src/machineconfig/jobs/installer/installer_data.json when --context is omitted.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--context-path",
+                              "-C"
+                            ],
+                            "long_flags": [
+                              "--context-path"
+                            ],
+                            "short_flags": [
+                              "-C"
+                            ],
+                            "help": "Context file or folder path. Defaults to src/machineconfig/jobs/installer/installer_data.json when --context is omitted."
+                          }
+                        },
+                        {
+                          "name": "separator",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "UPDATE_INSTALLER_SEPARATOR",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('--separator', '-s', help=\"Separator for context. Supports escaped values like '\\\\n'.\")]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--separator",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--separator"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Separator for context. Supports escaped values like '\\n'."
+                          }
+                        },
+                        {
+                          "name": "agent_load",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 10,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', help='Number of tasks per prompt.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agent-load",
+                              "-l"
+                            ],
+                            "long_flags": [
+                              "--agent-load"
+                            ],
+                            "short_flags": [
+                              "-l"
+                            ],
+                            "help": "Number of tasks per prompt."
+                          }
+                        },
+                        {
+                          "name": "prompt",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt', '-p', help='Prompt prefix as string.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--prompt"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Prompt prefix as string."
+                          }
+                        },
+                        {
+                          "name": "prompt_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt-path', '-P', help='Prompt file path. When omitted, update-installer uses its embedded default prompt unless --prompt or --prompt-name is provided.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt-path",
+                              "-P"
+                            ],
+                            "long_flags": [
+                              "--prompt-path"
+                            ],
+                            "short_flags": [
+                              "-P"
+                            ],
+                            "help": "Prompt file path. When omitted, update-installer uses its embedded default prompt unless --prompt or --prompt-name is provided."
+                          }
+                        },
+                        {
+                          "name": "prompt_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt-name', '-N', help='Prompt entry name from prompts YAML.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt-name",
+                              "-N"
+                            ],
+                            "long_flags": [
+                              "--prompt-name"
+                            ],
+                            "short_flags": [
+                              "-N"
+                            ],
+                            "help": "Prompt entry name from prompts YAML."
+                          }
+                        },
+                        {
+                          "name": "job_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "DEFAULT_INSTALLER_JOB_NAME",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('--job-name', '-n', help='Job label and default output directory stem.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--job-name",
+                              "-n"
+                            ],
+                            "long_flags": [
+                              "--job-name"
+                            ],
+                            "short_flags": [
+                              "-n"
+                            ],
+                            "help": "Job label and default output directory stem."
+                          }
+                        },
+                        {
+                          "name": "join_prompt_and_context",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--joined-prompt-context', '-j', help='Join prompt file to the context.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--joined-prompt-context",
+                              "-j"
+                            ],
+                            "long_flags": [
+                              "--joined-prompt-context"
+                            ],
+                            "short_flags": [
+                              "-j"
+                            ],
+                            "help": "Join prompt file to the context."
+                          }
+                        },
+                        {
+                          "name": "output_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--output-path', '-o', help='Layout path. Defaults to <agents-dir>/layout.json.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output-path",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output-path"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Layout path. Defaults to <agents-dir>/layout.json."
+                          }
+                        },
+                        {
+                          "name": "agents_dir",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--agents-dir', '-d', help='Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agents-dir",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--agents-dir"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>."
+                          }
+                        },
+                        {
+                          "name": "interactive",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Whether to run in interactive mode, asking for missing parameters.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--interactive",
+                              "-i"
+                            ],
+                            "long_flags": [
+                              "--interactive"
+                            ],
+                            "short_flags": [
+                              "-i"
+                            ],
+                            "help": "Whether to run in interactive mode, asking for missing parameters."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "u",
+                        "hidden": true
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "update-test",
+                    "fullPath": "devops self workflows update-test",
+                    "shortPath": "d s w t",
+                    "help": "🧪 <t> Create an agents layout for writing tests from repo Python sources.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_ai/update_test.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.update_test",
+                      "callable": "update_test"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def update_test(",
+                        "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent type.\")] = \"codex\",",
+                        "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
+                        "    reasoning_effort: Annotated[",
+                        "        ReasoningEffort | None,",
+                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                        "    ] = None,",
+                        "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
+                        "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
+                        "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", help=\"Number of tasks per prompt.\")] = 10,",
+                        "    prompt: Annotated[str | None, typer.Option(\"--prompt\", \"-p\", help=\"Prompt prefix as string.\")] = None,",
+                        "    prompt_path: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(",
+                        "            \"--prompt-path\",",
+                        "            \"-P\",",
+                        "            help=\"Prompt file path. When omitted, update-test uses its embedded default prompt unless --prompt or --prompt-name is provided.\",",
+                        "        ),",
+                        "    ] = None,",
+                        "    prompt_name: Annotated[str | None, typer.Option(\"--prompt-name\", \"-N\", help=\"Prompt entry name from prompts YAML.\")] = None,",
+                        "    job_name: Annotated[str, typer.Option(\"--job-name\", \"-n\", help=\"Job label and default output directory stem.\")] = DEFAULT_TEST_JOB_NAME,",
+                        "    join_prompt_and_context: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--joined-prompt-context\", \"-j\", help=\"Join prompt file to the context.\"),",
+                        "    ] = False,",
+                        "    output_path: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--output-path\", \"-o\", help=\"Layout path. Defaults to <agents-dir>/layout.json.\"),",
+                        "    ] = None,",
+                        "    agents_dir: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--agents-dir\", \"-d\", help=\"Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>.\"),",
+                        "    ] = None,",
+                        "    interactive: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\"),",
+                        "    ] = False,",
+                        ") -> None:",
+                        "    repo_root = get_developer_repo_root()",
+                        "    if not repo_root.joinpath(\"pyproject.toml\").is_file():",
+                        "        raise RuntimeError(f\"Developer repo not found: {repo_root}\")",
+                        "",
+                        "    resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(\".ai\", \"agents\", job_name)",
+                        "    resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath(\"layout.json\")",
+                        "    context_content = _build_repo_python_context(repo_root=repo_root)",
+                        "    context_output_path = resolved_agents_dir.joinpath(\"context.md\")",
+                        "",
+                        "    try:",
+                        "        agents_create_impl(",
+                        "            agent=agent,",
+                        "            model=model,",
+                        "            agent_load=agent_load,",
+                        "            context=context_content,",
+                        "            context_path=None,",
+                        "            separator=DEFAULT_SEAPRATOR,",
+                        "            prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "            prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "            prompt_name=prompt_name,",
+                        "            job_name=job_name,",
+                        "            join_prompt_and_context=join_prompt_and_context,",
+                        "            output_path=str(resolved_output_path),",
+                        "            agents_dir=str(resolved_agents_dir),",
+                        "            host=host,",
+                        "            reasoning_effort=reasoning_effort,",
+                        "            provider=provider,",
+                        "            interactive=interactive,",
+                        "        )",
+                        "    finally:",
+                        "        context_output_path.parent.mkdir(parents=True, exist_ok=True)",
+                        "        context_output_path.write_text(context_content, encoding=\"utf-8\")"
+                      ],
+                      "name": "update_test",
+                      "parameters": [
+                        {
+                          "name": "agent",
+                          "kind": "positional_or_keyword",
+                          "type": "AGENTS",
+                          "default": "codex",
+                          "required": false,
+                          "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent type.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agent",
+                              "-a"
+                            ],
+                            "long_flags": [
+                              "--agent"
+                            ],
+                            "short_flags": [
+                              "-a"
+                            ],
+                            "help": "Agent type."
+                          }
+                        },
+                        {
+                          "name": "model",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--model', '-m', help='Model to use, agent will use its default otherwise.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--model",
+                              "-m"
+                            ],
+                            "long_flags": [
+                              "--model"
+                            ],
+                            "short_flags": [
+                              "-m"
+                            ],
+                            "help": "Model to use, agent will use its default otherwise."
+                          }
+                        },
+                        {
+                          "name": "reasoning_effort",
+                          "kind": "positional_or_keyword",
+                          "type": "ReasoningEffort | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--reasoning-effort",
+                              "-r"
+                            ],
+                            "long_flags": [
+                              "--reasoning-effort"
+                            ],
+                            "short_flags": [
+                              "-r"
+                            ],
+                            "help": "Reasoning effort for codex agents. When omitted, codex uses its default."
+                          }
+                        },
+                        {
+                          "name": "provider",
+                          "kind": "positional_or_keyword",
+                          "type": "PROVIDER | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[PROVIDER | None, typer.Option('--provider', '-v', help='Provider to use (if the agent supports many).')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--provider",
+                              "-v"
+                            ],
+                            "long_flags": [
+                              "--provider"
+                            ],
+                            "short_flags": [
+                              "-v"
+                            ],
+                            "help": "Provider to use (if the agent supports many)."
+                          }
+                        },
+                        {
+                          "name": "host",
+                          "kind": "positional_or_keyword",
+                          "type": "HOST",
+                          "default": "local",
+                          "required": false,
+                          "annotation_raw": "Annotated[HOST, typer.Option('--host', '-h', help='Machine to run agents on.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--host",
+                              "-h"
+                            ],
+                            "long_flags": [
+                              "--host"
+                            ],
+                            "short_flags": [
+                              "-h"
+                            ],
+                            "help": "Machine to run agents on."
+                          }
+                        },
+                        {
+                          "name": "agent_load",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 10,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', help='Number of tasks per prompt.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agent-load",
+                              "-l"
+                            ],
+                            "long_flags": [
+                              "--agent-load"
+                            ],
+                            "short_flags": [
+                              "-l"
+                            ],
+                            "help": "Number of tasks per prompt."
+                          }
+                        },
+                        {
+                          "name": "prompt",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt', '-p', help='Prompt prefix as string.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--prompt"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Prompt prefix as string."
+                          }
+                        },
+                        {
+                          "name": "prompt_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt-path', '-P', help='Prompt file path. When omitted, update-test uses its embedded default prompt unless --prompt or --prompt-name is provided.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt-path",
+                              "-P"
+                            ],
+                            "long_flags": [
+                              "--prompt-path"
+                            ],
+                            "short_flags": [
+                              "-P"
+                            ],
+                            "help": "Prompt file path. When omitted, update-test uses its embedded default prompt unless --prompt or --prompt-name is provided."
+                          }
+                        },
+                        {
+                          "name": "prompt_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt-name', '-N', help='Prompt entry name from prompts YAML.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt-name",
+                              "-N"
+                            ],
+                            "long_flags": [
+                              "--prompt-name"
+                            ],
+                            "short_flags": [
+                              "-N"
+                            ],
+                            "help": "Prompt entry name from prompts YAML."
+                          }
+                        },
+                        {
+                          "name": "job_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "DEFAULT_TEST_JOB_NAME",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('--job-name', '-n', help='Job label and default output directory stem.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--job-name",
+                              "-n"
+                            ],
+                            "long_flags": [
+                              "--job-name"
+                            ],
+                            "short_flags": [
+                              "-n"
+                            ],
+                            "help": "Job label and default output directory stem."
+                          }
+                        },
+                        {
+                          "name": "join_prompt_and_context",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--joined-prompt-context', '-j', help='Join prompt file to the context.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--joined-prompt-context",
+                              "-j"
+                            ],
+                            "long_flags": [
+                              "--joined-prompt-context"
+                            ],
+                            "short_flags": [
+                              "-j"
+                            ],
+                            "help": "Join prompt file to the context."
+                          }
+                        },
+                        {
+                          "name": "output_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--output-path', '-o', help='Layout path. Defaults to <agents-dir>/layout.json.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output-path",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output-path"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Layout path. Defaults to <agents-dir>/layout.json."
+                          }
+                        },
+                        {
+                          "name": "agents_dir",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--agents-dir', '-d', help='Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agents-dir",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--agents-dir"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>."
+                          }
+                        },
+                        {
+                          "name": "interactive",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Whether to run in interactive mode, asking for missing parameters.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--interactive",
+                              "-i"
+                            ],
+                            "long_flags": [
+                              "--interactive"
+                            ],
+                            "short_flags": [
+                              "-i"
+                            ],
+                            "help": "Whether to run in interactive mode, asking for missing parameters."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "t",
+                        "hidden": true
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "update-docs",
+                    "fullPath": "devops self workflows update-docs",
+                    "shortPath": "d s w d",
+                    "help": "📚 <d> Create an agents layout for updating CLI and API docs only.",
+                    "source": {
+                      "file": "src/machineconfig/scripts/python/helpers/helpers_devops/cli_self_ai/update_docs.py",
+                      "module": "machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.update_docs",
+                      "callable": "update_docs"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def update_docs(",
+                        "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent type.\")] = \"codex\",",
+                        "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
+                        "    reasoning_effort: Annotated[",
+                        "        ReasoningEffort | None,",
+                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                        "    ] = None,",
+                        "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
+                        "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
+                        "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", help=\"Number of tasks per prompt.\")] = 10,",
+                        "    prompt: Annotated[str | None, typer.Option(\"--prompt\", \"-p\", help=\"Prompt prefix as string.\")] = None,",
+                        "    prompt_path: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(",
+                        "            \"--prompt-path\",",
+                        "            \"-P\",",
+                        "            help=\"Prompt file path. When omitted, update-docs uses its embedded default prompt unless --prompt or --prompt-name is provided.\",",
+                        "        ),",
+                        "    ] = None,",
+                        "    prompt_name: Annotated[str | None, typer.Option(\"--prompt-name\", \"-N\", help=\"Prompt entry name from prompts YAML.\")] = None,",
+                        "    job_name: Annotated[str, typer.Option(\"--job-name\", \"-n\", help=\"Job label and default output directory stem.\")] = DEFAULT_DOCS_JOB_NAME,",
+                        "    join_prompt_and_context: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--joined-prompt-context\", \"-j\", help=\"Join prompt file to the context.\"),",
+                        "    ] = False,",
+                        "    output_path: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--output-path\", \"-o\", help=\"Layout path. Defaults to <agents-dir>/layout.json.\"),",
+                        "    ] = None,",
+                        "    agents_dir: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--agents-dir\", \"-d\", help=\"Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>.\"),",
+                        "    ] = None,",
+                        "    interactive: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\"),",
+                        "    ] = False,",
+                        ") -> None:",
+                        "    repo_root = get_developer_repo_root()",
+                        "    if not repo_root.joinpath(\"pyproject.toml\").is_file():",
+                        "        raise RuntimeError(f\"Developer repo not found: {repo_root}\")",
+                        "",
+                        "    resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(\".ai\", \"agents\", job_name)",
+                        "    resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath(\"layout.json\")",
+                        "    context_content = _build_docs_context(repo_root=repo_root)",
+                        "    context_output_path = resolved_agents_dir.joinpath(\"context.md\")",
+                        "",
+                        "    try:",
+                        "        agents_create_impl(",
+                        "            agent=agent,",
+                        "            model=model,",
+                        "            agent_load=agent_load,",
+                        "            context=context_content,",
+                        "            context_path=None,",
+                        "            separator=DEFAULT_SEAPRATOR,",
+                        "            prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "            prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "            prompt_name=prompt_name,",
+                        "            job_name=job_name,",
+                        "            join_prompt_and_context=join_prompt_and_context,",
+                        "            output_path=str(resolved_output_path),",
+                        "            agents_dir=str(resolved_agents_dir),",
+                        "            host=host,",
+                        "            reasoning_effort=reasoning_effort,",
+                        "            provider=provider,",
+                        "            interactive=interactive,",
+                        "        )",
+                        "    finally:",
+                        "        context_output_path.parent.mkdir(parents=True, exist_ok=True)",
+                        "        context_output_path.write_text(context_content, encoding=\"utf-8\")"
+                      ],
+                      "name": "update_docs",
+                      "parameters": [
+                        {
+                          "name": "agent",
+                          "kind": "positional_or_keyword",
+                          "type": "AGENTS",
+                          "default": "codex",
+                          "required": false,
+                          "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent type.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agent",
+                              "-a"
+                            ],
+                            "long_flags": [
+                              "--agent"
+                            ],
+                            "short_flags": [
+                              "-a"
+                            ],
+                            "help": "Agent type."
+                          }
+                        },
+                        {
+                          "name": "model",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--model', '-m', help='Model to use, agent will use its default otherwise.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--model",
+                              "-m"
+                            ],
+                            "long_flags": [
+                              "--model"
+                            ],
+                            "short_flags": [
+                              "-m"
+                            ],
+                            "help": "Model to use, agent will use its default otherwise."
+                          }
+                        },
+                        {
+                          "name": "reasoning_effort",
+                          "kind": "positional_or_keyword",
+                          "type": "ReasoningEffort | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--reasoning-effort",
+                              "-r"
+                            ],
+                            "long_flags": [
+                              "--reasoning-effort"
+                            ],
+                            "short_flags": [
+                              "-r"
+                            ],
+                            "help": "Reasoning effort for codex agents. When omitted, codex uses its default."
+                          }
+                        },
+                        {
+                          "name": "provider",
+                          "kind": "positional_or_keyword",
+                          "type": "PROVIDER | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[PROVIDER | None, typer.Option('--provider', '-v', help='Provider to use (if the agent supports many).')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--provider",
+                              "-v"
+                            ],
+                            "long_flags": [
+                              "--provider"
+                            ],
+                            "short_flags": [
+                              "-v"
+                            ],
+                            "help": "Provider to use (if the agent supports many)."
+                          }
+                        },
+                        {
+                          "name": "host",
+                          "kind": "positional_or_keyword",
+                          "type": "HOST",
+                          "default": "local",
+                          "required": false,
+                          "annotation_raw": "Annotated[HOST, typer.Option('--host', '-h', help='Machine to run agents on.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--host",
+                              "-h"
+                            ],
+                            "long_flags": [
+                              "--host"
+                            ],
+                            "short_flags": [
+                              "-h"
+                            ],
+                            "help": "Machine to run agents on."
+                          }
+                        },
+                        {
+                          "name": "agent_load",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 10,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', help='Number of tasks per prompt.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agent-load",
+                              "-l"
+                            ],
+                            "long_flags": [
+                              "--agent-load"
+                            ],
+                            "short_flags": [
+                              "-l"
+                            ],
+                            "help": "Number of tasks per prompt."
+                          }
+                        },
+                        {
+                          "name": "prompt",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt', '-p', help='Prompt prefix as string.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--prompt"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Prompt prefix as string."
+                          }
+                        },
+                        {
+                          "name": "prompt_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt-path', '-P', help='Prompt file path. When omitted, update-docs uses its embedded default prompt unless --prompt or --prompt-name is provided.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt-path",
+                              "-P"
+                            ],
+                            "long_flags": [
+                              "--prompt-path"
+                            ],
+                            "short_flags": [
+                              "-P"
+                            ],
+                            "help": "Prompt file path. When omitted, update-docs uses its embedded default prompt unless --prompt or --prompt-name is provided."
+                          }
+                        },
+                        {
+                          "name": "prompt_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--prompt-name', '-N', help='Prompt entry name from prompts YAML.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--prompt-name",
+                              "-N"
+                            ],
+                            "long_flags": [
+                              "--prompt-name"
+                            ],
+                            "short_flags": [
+                              "-N"
+                            ],
+                            "help": "Prompt entry name from prompts YAML."
+                          }
+                        },
+                        {
+                          "name": "job_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "DEFAULT_DOCS_JOB_NAME",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('--job-name', '-n', help='Job label and default output directory stem.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--job-name",
+                              "-n"
+                            ],
+                            "long_flags": [
+                              "--job-name"
+                            ],
+                            "short_flags": [
+                              "-n"
+                            ],
+                            "help": "Job label and default output directory stem."
+                          }
+                        },
+                        {
+                          "name": "join_prompt_and_context",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--joined-prompt-context', '-j', help='Join prompt file to the context.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--joined-prompt-context",
+                              "-j"
+                            ],
+                            "long_flags": [
+                              "--joined-prompt-context"
+                            ],
+                            "short_flags": [
+                              "-j"
+                            ],
+                            "help": "Join prompt file to the context."
+                          }
+                        },
+                        {
+                          "name": "output_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--output-path', '-o', help='Layout path. Defaults to <agents-dir>/layout.json.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output-path",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output-path"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Layout path. Defaults to <agents-dir>/layout.json."
+                          }
+                        },
+                        {
+                          "name": "agents_dir",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--agents-dir', '-d', help='Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--agents-dir",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--agents-dir"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Agent work directory. Defaults to $HOME/code/machineconfig/.ai/agents/<job-name>."
+                          }
+                        },
+                        {
+                          "name": "interactive",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Whether to run in interactive mode, asking for missing parameters.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--interactive",
+                              "-i"
+                            ],
+                            "long_flags": [
+                              "--interactive"
+                            ],
+                            "short_flags": [
+                              "-i"
+                            ],
+                            "help": "Whether to run in interactive mode, asking for missing parameters."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "d",
+                        "hidden": true
+                      }
+                    ]
+                  }
+                ],
+                "aliases": [
+                  {
+                    "name": "w",
+                    "hidden": true,
+                    "help": "Developer AI workflows."
                   }
                 ]
               }
@@ -14522,6 +15833,121 @@
                 "aliases": [
                   {
                     "name": "t",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "reference-test",
+                "fullPath": "utils pyproject reference-test",
+                "shortPath": "u p r",
+                "help": "🔎 <r> Validate _PATH_REFERENCE targets in a repository.",
+                "source": {
+                  "file": "src/machineconfig/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
+                  "module": "machineconfig.scripts.python.helpers.helpers_utils.pyproject_utils_app",
+                  "callable": "reference_test"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def reference_test(",
+                    "    repo: Annotated[str, typer.Argument(..., help=\"Repository root or any path inside the repository.\")],",
+                    "    search_root: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            \"--search-root\",",
+                    "            \"-s\",",
+                    "            help=\"Directory to scan for package __init__.py files. Relative values are resolved from the repository root.\",",
+                    "        ),",
+                    "    ] = None,",
+                    "    verbose: Annotated[bool, typer.Option(\"--verbose\", help=\"Print scan context and detailed rich audit tables.\")] = False,",
+                    ") -> None:",
+                    "    console = _build_reference_test_console()",
+                    "    search_root_path = None if search_root is None else Path(search_root)",
+                    "    try:",
+                    "        audit = audit_repository_path_references(repo_path=Path(repo), search_root=search_root_path)",
+                    "    except ValueError as error:",
+                    "        console.print(Panel(f\"❌ {error}\", title=\"Reference Audit Error\", border_style=\"red\", expand=False))",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    _print_reference_test_summary(console=console, audit=audit)",
+                    "    if audit.has_failures():",
+                    "        if verbose:",
+                    "            _print_reference_test_verbose_details(console=console, audit=audit)",
+                    "        else:",
+                    "            console.print(Panel(format_path_reference_audit(audit=audit), title=\"❌ Failure Details\", border_style=\"red\", expand=False))",
+                    "        raise typer.Exit(code=1)",
+                    "    if verbose:",
+                    "        _print_reference_test_verbose_details(console=console, audit=audit)"
+                  ],
+                  "name": "reference_test",
+                  "parameters": [
+                    {
+                      "name": "repo",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Repository root or any path inside the repository.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Repository root or any path inside the repository.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "search_root",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--search-root', '-s', help='Directory to scan for package __init__.py files. Relative values are resolved from the repository root.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--search-root",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--search-root"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Directory to scan for package __init__.py files. Relative values are resolved from the repository root."
+                      }
+                    },
+                    {
+                      "name": "verbose",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--verbose', help='Print scan context and detailed rich audit tables.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--verbose"
+                        ],
+                        "long_flags": [
+                          "--verbose"
+                        ],
+                        "short_flags": [],
+                        "help": "Print scan context and detailed rich audit tables."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "r",
                     "hidden": true
                   }
                 ]

@@ -35,6 +35,7 @@ Commands under `utils pyproject`:
 | `init-project` | Initialize a project with a uv environment and dev packages |
 | `upgrade-packages` | Upgrade project dependencies |
 | `type-hint` | Type-hint a file or project directory |
+| `reference-test` | Validate `_PATH_REFERENCE` targets in a repository |
 
 Commands under `utils file`:
 
@@ -57,6 +58,8 @@ utils --help
 utils machine --help
 utils machine mount --help
 utils pyproject init-project --help
+utils pyproject reference-test --help
+utils pyproject reference-test . --verbose
 utils file download --help
 ```
 
