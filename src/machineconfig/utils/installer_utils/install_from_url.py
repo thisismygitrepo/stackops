@@ -1,6 +1,7 @@
 
 
 import platform
+from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
 from machineconfig.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
@@ -11,7 +12,6 @@ from machineconfig.utils.installer_utils.github_release_bulk import (
     extract_release_info,
     AssetInfo,
 )
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ def _derive_tool_name(repo_name: str, asset_name: str | None) -> str | None:
     return None
 
 
-def _finalize_install(repo_name: str, asset_name: str | None, version: str, extracted_path: PathExtended, console: "Console") -> None:
+def _finalize_install(repo_name: str, asset_name: str | None, version: str, extracted_path: Path, console: "Console") -> None:
     from rich.panel import Panel
     if extracted_path.suffix == ".deb":
         install_deb_package(extracted_path)

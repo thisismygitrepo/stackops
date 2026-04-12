@@ -9,7 +9,6 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
 )
 from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.installer_utils.installer_class import Installer
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 
 
@@ -33,12 +32,12 @@ poppler_installer: InstallerData = {
 }
 
 
-def _select_extracted_root(extracted_path: PathExtended) -> PathExtended:
+def _select_extracted_root(extracted_path: Path) -> Path:
     if extracted_path.is_file():
         return extracted_path
     children = [child for child in extracted_path.iterdir() if child.name not in {".", ".."}]
     if len(children) == 1 and children[0].is_dir():
-        return PathExtended(children[0])
+        return children[0]
     return extracted_path
 
 
@@ -51,8 +50,8 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     extracted_path, _version_to_be_installed = installer.binary_download(version=version)
     _ = _version_to_be_installed
 
-    extracted_root = _select_extracted_root(extracted_path=PathExtended(extracted_path))
-    target_root = PathExtended.home().joinpath(".local/share/poppler")
+    extracted_root = _select_extracted_root(extracted_path=extracted_path)
+    target_root = Path.home().joinpath(".local/share/poppler")
     if target_root.exists():
         delete_path(target_root, verbose=False)
     if extracted_root.is_file():

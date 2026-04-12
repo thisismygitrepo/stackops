@@ -10,7 +10,6 @@ from machineconfig.utils.installer_utils.install_request_logic import (
 from machineconfig.jobs.installer.python_scripts.main_protocol import (
     load_installer_python_script_main,
 )
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT
 from machineconfig.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows, check_tool_exists
 from machineconfig.utils.schemas.installer.installer_types import (
@@ -272,7 +271,7 @@ class Installer:
                     path_core.with_name(exe, name=new_exe_name, inplace=True, overwrite=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).parent.mkdir(parents=True, exist_ok=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).write_text(version_to_be_installed or "unknown", encoding="utf-8")
-    def binary_download(self, version: str | None) -> tuple[PathExtended, str]:
+    def binary_download(self, version: str | None) -> tuple[Path, str]:
         exe_name = self._get_exe_name()
         repo_url = self.installer_data["repoURL"]
         # app_name = self.installer_data["appName"]

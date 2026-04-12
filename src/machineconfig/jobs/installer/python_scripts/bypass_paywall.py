@@ -1,7 +1,10 @@
 # import matplotlib.pyplot as plt
 
 # from platform import system
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+import machineconfig.utils.path_compression as path_compression
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -10,7 +13,7 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     
 )
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
-from machineconfig.utils.path_extended import PathExtended
+import machineconfig.utils.path_core as path_core
 
 
 # config_dict: InstallerData = {
@@ -34,10 +37,26 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> st
 
     _ = version
     folder = r"C:\\"
+    folder_path = Path(folder)
 
     console.print("📥 Downloading extension from GitHub repository...", style="bold")
-    PathExtended("https://github.com/iamadamdev/bypass-paywalls-chrome/archive/master.zip").download().unzip(folder=folder, content=True)
-    extension_folder = PathExtended(folder).joinpath("bypass-paywalls-chrome-master")
+    downloaded_archive = path_core.download("https://github.com/iamadamdev/bypass-paywalls-chrome/archive/master.zip", folder=folder_path)
+    path_compression.unzip_path(
+        downloaded_archive,
+        folder=folder_path,
+        path=None,
+        name=None,
+        verbose=True,
+        content=True,
+        inplace=False,
+        overwrite=False,
+        orig=False,
+        pwd=None,
+        tmp=False,
+        pattern=None,
+        merge=False,
+    )
+    extension_folder = folder_path.joinpath("bypass-paywalls-chrome-master")
 
     console.print(
         Panel.fit(

@@ -1,5 +1,4 @@
 import machineconfig.utils.path_core as path_core
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.source_of_truth import WINDOWS_INSTALL_PATH, LINUX_INSTALL_PATH, INSTALL_VERSION_ROOT
 
@@ -9,7 +8,7 @@ import platform
 import shutil
 
 
-def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: str | None, delete: bool, rename_to: str | None):
+def find_move_delete_windows(downloaded_file_path: Path, tool_name: str | None, delete: bool, rename_to: str | None):
     # print("🔍 PROCESSING WINDOWS EXECUTABLE 🔍")
     # if exe_name is not None and len(exe_name.split("+")) > 1:
     #     last_result = None
@@ -59,7 +58,7 @@ def find_move_delete_windows(downloaded_file_path: PathExtended, tool_name: str 
     return exe_new_location
 
 
-def find_move_delete_linux(downloaded: PathExtended, tool_name: str | None, delete: bool, rename_to: str | None):
+def find_move_delete_linux(downloaded: Path, tool_name: str | None, delete: bool, rename_to: str | None):
     # if len(tool_name.split("+")) > 1:
     #     last_result = None
     #     for a_binary in [x.strip() for x in tool_name.split("+") if x.strip() != ""]:
@@ -127,7 +126,7 @@ def find_move_delete_linux(downloaded: PathExtended, tool_name: str | None, dele
         delete_path(downloaded, verbose=True)
         print("✅ Temporary files removed")
 
-    exe_new_location = PathExtended(LINUX_INSTALL_PATH).joinpath(exe.name)
+    exe_new_location = Path(LINUX_INSTALL_PATH).joinpath(exe.name)
     print(f"✅ Executable installed at: {exe_new_location}")
     return exe_new_location
 

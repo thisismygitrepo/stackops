@@ -14,7 +14,6 @@ from pathlib import Path
 import machineconfig.utils.path_core as path_core
 from rich.console import Console
 
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.rclone_wrapper import get_remote_path, to_cloud
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
@@ -30,7 +29,7 @@ def _load_csv_report(path: Path) -> list[dict[str, str]]:
     csv_text = path.read_text(encoding="utf-8")
     return list(csv.DictReader(StringIO(csv_text)))
 
-def upload_app(path: PathExtended) -> str | None:
+def upload_app(path: Path) -> str | None:
     """Uploads the app to cloud storage and returns the shareable link."""
     try:
         local_path = path.expanduser().absolute()
@@ -53,7 +52,7 @@ def upload_app(path: PathExtended) -> str | None:
         console.print(f"[red]Failed to upload {path}: {e}[/red]")
         return None
 
-def download_google_drive_file(url: str) -> PathExtended:
+def download_google_drive_file(url: str) -> Path:
     """Downloads a file from Google Drive using gdown."""
     try:
         # Extract ID from URL
@@ -68,7 +67,7 @@ def download_google_drive_file(url: str) -> PathExtended:
             file_id = url
 
         # Create a temporary directory for download
-        output_dir = PathExtended.tmpdir(prefix="gdown_")
+        output_dir = path_core.tmpdir(prefix="gdown_")
         # gdown.download returns the output filename
         import gdown
         output_file = gdown.download(id=file_id, output=str(output_dir) + "/", quiet=False, fuzzy=True)
@@ -76,7 +75,7 @@ def download_google_drive_file(url: str) -> PathExtended:
         if not output_file:
             raise ValueError(f"Download failed for {url}")
             
-        return PathExtended(output_file)
+        return Path(output_file)
     except Exception as e:
         raise RuntimeError(f"Failed to download from Google Drive: {e}") from e
 

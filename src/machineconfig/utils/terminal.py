@@ -1,6 +1,6 @@
-from machineconfig.utils.path_extended import PathExtended
+from pathlib import Path
 import subprocess
-from typing import Any, BinaryIO, Union
+from typing import Any, BinaryIO
 from typing import Literal, TypeAlias
 from dataclasses import dataclass
 
@@ -54,9 +54,9 @@ class Response:
     def returncode(self) -> int:
         return self.output.returncode
 
-    def op2path(self, strict_returncode: bool = True, strict_err: bool = False) -> Union[PathExtended, None]:
+    def op2path(self, strict_returncode: bool = True, strict_err: bool = False) -> Path | None:
         if self.is_successful(strict_returcode=strict_returncode, strict_err=strict_err):
-            return PathExtended(self.op.rstrip())
+            return Path(self.op.rstrip())
         return None
 
     def op_if_successfull_or_default(self, strict_returcode: bool = True, strict_err: bool = False) -> str | None:

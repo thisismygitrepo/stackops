@@ -4,8 +4,8 @@ from machineconfig.utils.accessories import randstr
 import machineconfig.utils.path_core as path_core
 from machineconfig.utils.io import save_json
 from machineconfig.utils.files.read import read_json
-from machineconfig.utils.path_extended import PathExtended
 import platform
+from pathlib import Path
 
 # from uuid import uuid4
 import os
@@ -45,7 +45,7 @@ class TerminalSettings(object):
         if not isinstance(tmp, str):
             console.print("❌ ERROR: Could not find LOCALAPPDATA environment variable!")
             raise ValueError("Could not find LOCALAPPDATA environment variable.")
-        self.path = PathExtended(tmp).joinpath(r"Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json")
+        self.path = Path(tmp).joinpath(r"Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json")
         backup_name = f".orig_{randstr()}"
         console.print(f"📝 Creating backup of original settings as {backup_name}...")
         path_core.copy(self.path, append=backup_name)

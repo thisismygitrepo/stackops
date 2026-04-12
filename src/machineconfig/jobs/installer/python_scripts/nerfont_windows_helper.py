@@ -13,8 +13,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 import machineconfig.jobs.installer.powershell_scripts as powershell_scripts
-from machineconfig.utils.path_core import delete_path
-from machineconfig.utils.path_extended import PathExtended
+from machineconfig.utils.path_core import delete_path, tmpfile
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.path_reference import get_path_reference_path
@@ -138,8 +137,7 @@ def install_nerd_fonts() -> None:
         print(f" - {font}")
 
     console.print("⚙️  Installing fonts via PowerShell...")
-    file = PathExtended("~/tmp_results/tmp_files").expanduser().joinpath(f"{randstr()}.ps1")
-    file.parent.mkdir(parents=True, exist_ok=True)
+    file = tmpfile(name=randstr(), suffix=".ps1")
 
     raw_content = get_path_reference_path(
         module=powershell_scripts,

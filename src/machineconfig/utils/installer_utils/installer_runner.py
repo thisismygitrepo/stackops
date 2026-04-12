@@ -18,7 +18,6 @@ from machineconfig.utils.schemas.installer.installer_types import (
 )
 from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 from machineconfig.utils.path_core import delete_path
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 from machineconfig.utils.files.read import read_json
 from machineconfig.utils.path_reference import get_path_reference_path
@@ -92,16 +91,16 @@ def get_installed_cli_apps():
     print("🔍 LISTING INSTALLED CLI APPS 🔍")
     if platform.system() == "Windows":
         print("🪟 Searching for Windows executables...")
-        apps = [p for p in PathExtended(WINDOWS_INSTALL_PATH).glob("*.exe") if "notepad" not in str(p)]
+        apps = [p for p in Path(WINDOWS_INSTALL_PATH).glob("*.exe") if "notepad" not in str(p)]
     elif platform.system() in ["Linux", "Darwin"]:
         print(f"🐧 Searching for {platform.system()} executables...")
         if platform.system() == "Linux":
-            apps = list(PathExtended(LINUX_INSTALL_PATH).glob("*")) + list(PathExtended("/usr/local/bin").glob("*"))
+            apps = list(Path(LINUX_INSTALL_PATH).glob("*")) + list(Path("/usr/local/bin").glob("*"))
         else:  # Darwin/macOS
             apps = (
-                list(PathExtended(LINUX_INSTALL_PATH).glob("*"))
-                + list(PathExtended("/usr/local/bin").glob("*"))
-                + list(PathExtended("/opt/homebrew/bin").glob("*"))
+                list(Path(LINUX_INSTALL_PATH).glob("*"))
+                + list(Path("/usr/local/bin").glob("*"))
+                + list(Path("/opt/homebrew/bin").glob("*"))
             )
     else:
         error_msg = f"❌ ERROR: System {platform.system()} not supported"
@@ -158,7 +157,7 @@ def install_bulk(
     print("🚀 BULK INSTALLATION PROCESS 🚀")
     if fresh:
         print("🧹 Fresh install requested - clearing version cache...")
-        delete_path(PathExtended(INSTALL_VERSION_ROOT), verbose=True)
+        delete_path(Path(INSTALL_VERSION_ROOT), verbose=True)
     print("✅ Version cache cleared")
     if safe:
         pass
