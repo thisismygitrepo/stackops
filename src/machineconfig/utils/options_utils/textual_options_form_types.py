@@ -32,7 +32,7 @@ def resolve_uv_run_config(*, cwd: Path, module_file: Path) -> tuple[list[str], s
             continue
         if repo_root.joinpath("pyproject.toml").exists():
             return ["textual"], str(repo_root)
-    return ["textual", "machineconfig>=8.91"], None
+    return ["textual", "machineconfig>=8.92"], None
 
 
 def use_textual_options_form(
@@ -60,7 +60,7 @@ def use_textual_options_form(
 
     from machineconfig.utils.code import run_lambda_function
     uv_with, uv_project_dir = resolve_uv_run_config(cwd=Path.cwd(), module_file=Path(__file__).resolve())
-    # uv_with, uv_project_dir = ["textual", "machineconfig>=8.91"], None
+    # uv_with, uv_project_dir = ["textual", "machineconfig>=8.92"], None
     run_lambda_function(
         lambda: func(
             inputs=options,

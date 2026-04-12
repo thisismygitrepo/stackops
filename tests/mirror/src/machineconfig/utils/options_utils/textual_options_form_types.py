@@ -54,7 +54,7 @@ def test_resolve_uv_run_config_uses_fallback_when_repo_missing(
         module_file=tmp_path.joinpath("module.py"),
     )
 
-    assert uv_with == ["textual", "machineconfig>=8.91"]
+    assert uv_with == ["textual", "machineconfig>=8.92"]
     assert uv_project_dir is None
 
 
