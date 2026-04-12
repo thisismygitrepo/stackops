@@ -5,9 +5,7 @@ from typing import cast
 import pytest
 
 import machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.kilocode.kilocode_privacy as kilocode_privacy_module
-from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.kilocode.kilocode_privacy import (
-    secure_kilocode_config,
-)
+from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.kilocode.kilocode_privacy import secure_kilocode_config
 
 
 SECURE_SETTINGS: dict[str, bool | str] = {
@@ -32,15 +30,11 @@ def raise_os_error(_path: object, _mode: int) -> None:
     raise OSError("chmod failed")
 
 
-def test_secure_kilocode_config_merges_existing_settings_and_sets_permissions(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_kilocode_config_merges_existing_settings_and_sets_permissions(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(kilocode_privacy_module.Path, "home", lambda: tmp_path)
     config_file = tmp_path / ".config" / "kilocode" / "config.json"
     config_file.parent.mkdir(parents=True)
-    config_file.write_text(
-        json.dumps({"custom": 7, "telemetry": True}), encoding="utf-8"
-    )
+    config_file.write_text(json.dumps({"custom": 7, "telemetry": True}), encoding="utf-8")
 
     secure_kilocode_config()
 
@@ -50,9 +44,7 @@ def test_secure_kilocode_config_merges_existing_settings_and_sets_permissions(
     assert config_file.stat().st_mode & 0o777 == 0o600
 
 
-def test_secure_kilocode_config_ignores_invalid_json_and_chmod_failure(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_kilocode_config_ignores_invalid_json_and_chmod_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(kilocode_privacy_module.Path, "home", lambda: tmp_path)
     monkeypatch.setattr(kilocode_privacy_module.os, "chmod", raise_os_error)
     config_file = tmp_path / ".config" / "kilocode" / "config.json"

@@ -12,8 +12,6 @@ def test_command_status_runtime_schema_matches_expected_keys() -> None:
 
 def test_process_info_and_manager_data_keep_optional_fields_optional() -> None:
     assert subject.ProcessInfo.__required_keys__ == frozenset({"pid", "name", "cmdline", "status"})
-    assert subject.ProcessInfo.__optional_keys__ == frozenset(
-        {"cmdline_str", "create_time", "is_direct_command", "verified_alive", "memory_mb"}
-    )
+    assert subject.ProcessInfo.__optional_keys__ == frozenset({"cmdline_str", "create_time", "is_direct_command", "verified_alive", "memory_mb"})
     assert subject.ManagerData.__required_keys__ == frozenset({"session_name", "layout_config", "layout_path"})
     assert subject.StatusRow.__required_keys__ == frozenset({"session", "tab", "running", "command", "processes"})

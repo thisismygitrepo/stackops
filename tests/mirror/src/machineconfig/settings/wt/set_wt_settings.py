@@ -75,13 +75,7 @@ def test_terminal_settings_updates_profiles_and_saves(monkeypatch: pytest.Monkey
     monkeypatch.setattr(module, "randstr", lambda: "backup")
 
     initial_data: dict[str, object] = {
-        "profiles": {
-            "list": [
-                {"name": "PowerShell", "guid": "{pwsh-guid}"},
-                {"name": "Command Prompt", "guid": "{cmd-guid}"},
-            ],
-            "defaults": {},
-        },
+        "profiles": {"list": [{"name": "PowerShell", "guid": "{pwsh-guid}"}, {"name": "Command Prompt", "guid": "{cmd-guid}"}], "defaults": {}},
         "actions": [],
     }
     save_calls: list[SaveJsonCall] = []

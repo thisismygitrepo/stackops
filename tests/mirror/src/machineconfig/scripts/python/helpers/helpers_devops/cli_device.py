@@ -1,0 +1,89 @@
+from __future__ import annotations
+
+import getpass
+import sys
+from types import ModuleType
+
+import rich.console
+import rich.prompt
+from rich.console import Console
+
+import machineconfig.scripts.python.helpers.helpers_devops.cli_device as cli_device
+import machineconfig.utils.code as code_utils
+
+
+def _install_wifi_helper(monkeypatch, *, try_result: bool, manual_result: bool, state: dict[str, object]) -> None:
+    helper_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network.wifi_conn")
+
+    def display_available_networks() -> None:
+        state["display_count"] = int(state.get("display_count", 0)) + 1
+
+    def manual_network_selection() -> bool:
+        state["manual_count"] = int(state.get("manual_count", 0)) + 1
+        return manual_result
+
+    def try_config_connection(ssid: str) -> bool:
+        state["last_ssid"] = ssid
+        return try_result
+
+    helper_module.display_available_networks = display_available_networks
+    helper_module.manual_network_selection = manual_network_selection
+    helper_module.try_config_connection = try_config_connection
+    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.wifi_conn", helper_module)
+
+
+def test_bind_wsl_port_builds_portproxy_script(monkeypatch) -> None:
+    scripts: list[str] = []
+    monkeypatch.setattr(code_utils, "exit_then_run_shell_script", lambda script: scripts.append(script))
+
+    cli_device.bind_wsl_port(8080)
+
+    assert len(scripts) == 1
+    assert "listenport=8080" in scripts[0]
+    assert "connectport=8080" in scripts[0]
+
+
+def test_wifi_select_list_mode_only_displays_networks(monkeypatch) -> None:
+    state: dict[str, object] = {}
+    record_console = Console(record=True, width=120)
+    _install_wifi_helper(monkeypatch, try_result=False, manual_result=False, state=state)
+    monkeypatch.setattr(rich.console, "Console", lambda: record_console)
+
+    cli_device.wifi_select(ssid="Cafe", manual=False, list_=True)
+
+    assert state == {"display_count": 1}
+
+
+def test_wifi_select_falls_back_to_manual_selection(monkeypatch) -> None:
+    state: dict[str, object] = {}
+    record_console = Console(record=True, width=120)
+    _install_wifi_helper(monkeypatch, try_result=False, manual_result=True, state=state)
+    monkeypatch.setattr(rich.console, "Console", lambda: record_console)
+    monkeypatch.setattr(rich.prompt.Confirm, "ask", lambda *_args, **_kwargs: True)
+
+    cli_device.wifi_select(ssid="Cafe", manual=False, list_=False)
+
+    rendered = record_console.export_text()
+
+    assert state["last_ssid"] == "Cafe"
+    assert state["manual_count"] == 1
+    assert "Attempting to connect to configured network: Cafe" in rendered
+    assert "Successfully connected!" in rendered
+
+
+def test_reset_cloudflare_tunnel_background_mode_runs_confirmed_script(monkeypatch) -> None:
+    printed: list[str] = []
+    executed: list[str] = []
+    monkeypatch.setattr(getpass, "getuser", lambda: "alex")
+    monkeypatch.setattr(code_utils, "print_code", lambda code, **_kwargs: printed.append(code))
+    monkeypatch.setattr(code_utils, "exit_then_run_shell_script", lambda code: executed.append(code))
+    monkeypatch.setattr(cli_device.typer, "confirm", lambda *_args, **_kwargs: True)
+
+    cli_device.reset_cloudflare_tunnel(task="oneoff-background-process", tunnel_name="demo")
+
+    assert len(printed) == 1
+    assert len(executed) == 1
+    assert printed[0] == executed[0]
+    assert "systemd-run" in executed[0]
+    assert "User=alex" in executed[0]
+    assert "tunnel run demo" in executed[0]

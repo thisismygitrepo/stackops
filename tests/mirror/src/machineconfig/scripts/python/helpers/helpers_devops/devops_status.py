@@ -6,42 +6,19 @@ from machineconfig.scripts.python.helpers.helpers_devops import devops_status as
 
 
 def test_resolve_sections_returns_requested_order() -> None:
-    sections = module.resolve_sections(
-        machine=False,
-        shell=True,
-        repos=False,
-        ssh=True,
-        configs=False,
-        apps=True,
-        backup=False,
-    )
+    sections = module.resolve_sections(machine=False, shell=True, repos=False, ssh=True, configs=False, apps=True, backup=False)
 
     assert sections == ("shell", "ssh", "apps")
 
 
 def test_resolve_sections_returns_all_when_none_requested() -> None:
-    sections = module.resolve_sections(
-        machine=False,
-        shell=False,
-        repos=False,
-        ssh=False,
-        configs=False,
-        apps=False,
-        backup=False,
-    )
+    sections = module.resolve_sections(machine=False, shell=False, repos=False, ssh=False, configs=False, apps=False, backup=False)
 
     assert sections == module.ALL_STATUS_SECTIONS
 
 
-@pytest.mark.parametrize(
-    ("section", "handler_name"),
-    [("configs", "_run_configs_section"), ("backup", "_run_backup_section")],
-)
-def test_run_section_dispatches_to_handler(
-    monkeypatch: pytest.MonkeyPatch,
-    section: module.StatusSection,
-    handler_name: str,
-) -> None:
+@pytest.mark.parametrize(("section", "handler_name"), [("configs", "_run_configs_section"), ("backup", "_run_backup_section")])
+def test_run_section_dispatches_to_handler(monkeypatch: pytest.MonkeyPatch, section: module.StatusSection, handler_name: str) -> None:
     calls: list[str] = []
 
     def fake_handler() -> None:

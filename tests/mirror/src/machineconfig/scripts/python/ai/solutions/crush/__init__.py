@@ -7,14 +7,8 @@ from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def test_path_references_resolve_to_existing_crush_assets() -> None:
-    crush_config_path = get_path_reference_path(
-        module=crush_assets,
-        path_reference=crush_assets.CRUSH_PATH_REFERENCE,
-    )
-    privacy_path = get_path_reference_path(
-        module=crush_assets,
-        path_reference=crush_assets.PRIVACY_PATH_REFERENCE,
-    )
+    crush_config_path = get_path_reference_path(module=crush_assets, path_reference=crush_assets.CRUSH_PATH_REFERENCE)
+    privacy_path = get_path_reference_path(module=crush_assets, path_reference=crush_assets.PRIVACY_PATH_REFERENCE)
 
     crush_config = json.loads(crush_config_path.read_text(encoding="utf-8"))
 

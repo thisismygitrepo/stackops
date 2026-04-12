@@ -9,16 +9,5 @@ def test_repo_remote_and_git_version_info_require_expected_keys() -> None:
 
 
 def test_repo_record_shapes_expose_runtime_required_keys() -> None:
-    assert repos_types_module.RepoRecordDict.__required_keys__ == frozenset(
-        {
-            "name",
-            "parentDir",
-            "currentBranch",
-            "remotes",
-            "version",
-            "isDirty",
-        }
-    )
-    assert repos_types_module.RepoRecordFile.__required_keys__ == frozenset(
-        {"version", "repos"}
-    )
+    assert repos_types_module.RepoRecordDict.__required_keys__ == frozenset({"name", "parentDir", "currentBranch", "remotes", "version", "isDirty"})
+    assert repos_types_module.RepoRecordFile.__required_keys__ == frozenset({"version", "repos"})

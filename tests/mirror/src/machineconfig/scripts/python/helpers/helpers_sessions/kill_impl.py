@@ -12,29 +12,14 @@ import machineconfig.scripts.python.helpers.helpers_sessions.kill_impl as subjec
 @pytest.mark.parametrize(
     ("backend", "module_name"),
     [
-        (
-            "zellij",
-            "machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend",
-        ),
-        (
-            "tmux",
-            "machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend",
-        ),
+        ("zellij", "machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend"),
+        ("tmux", "machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend"),
     ],
 )
-def test_choose_kill_target_dispatches(
-    backend: Literal["zellij", "tmux"],
-    module_name: str,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_choose_kill_target_dispatches(backend: Literal["zellij", "tmux"], module_name: str, monkeypatch: pytest.MonkeyPatch) -> None:
     module = ModuleType(module_name)
 
-    def choose_kill_target(
-        *,
-        name: str | None,
-        kill_all: bool,
-        window: bool,
-    ) -> tuple[str, str | None]:
+    def choose_kill_target(*, name: str | None, kill_all: bool, window: bool) -> tuple[str, str | None]:
         assert kill_all is True
         assert window is False
         return (backend, name)
@@ -42,10 +27,7 @@ def test_choose_kill_target_dispatches(
     setattr(module, "choose_kill_target", choose_kill_target)
     monkeypatch.setitem(sys.modules, module_name, module)
 
-    assert subject.choose_kill_target(backend, "demo", kill_all=True, window=False) == (
-        backend,
-        "demo",
-    )
+    assert subject.choose_kill_target(backend, "demo", kill_all=True, window=False) == (backend, "demo")
 
 
 def test_choose_kill_target_rejects_unknown_backend() -> None:

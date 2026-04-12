@@ -38,11 +38,7 @@ def _asset_targets(home: Path, repo_root: Path) -> tuple[tuple[Path, Path, Path]
             home / ".gemini" / "settings.json",
             repo_root / ".gemini" / "settings.json",
         ),
-        (
-            root / "aider" / ".aider.conf.yml",
-            home / ".aider.conf.yml",
-            repo_root / ".aider.conf.yml",
-        ),
+        (root / "aider" / ".aider.conf.yml", home / ".aider.conf.yml", repo_root / ".aider.conf.yml"),
         (
             get_path_reference_path(module=aichat_assets, path_reference=aichat_assets.CONFIG_PATH_REFERENCE),
             home / ".config" / "aichat" / "config.yaml",
@@ -61,12 +57,11 @@ def _asset_targets(home: Path, repo_root: Path) -> tuple[tuple[Path, Path, Path]
     )
 
 
-def _patch_secure_helpers(
-    monkeypatch: pytest.MonkeyPatch, failing_helpers: frozenset[str]
-) -> list[str]:
+def _patch_secure_helpers(monkeypatch: pytest.MonkeyPatch, failing_helpers: frozenset[str]) -> list[str]:
     calls: list[str] = []
 
     for helper_name in HELPER_NAMES:
+
         def _make_helper(name: str) -> object:
             def _helper() -> None:
                 calls.append(name)
@@ -80,9 +75,7 @@ def _patch_secure_helpers(
     return calls
 
 
-def test_apply_max_privacy_copies_packaged_assets(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_apply_max_privacy_copies_packaged_assets(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home = tmp_path / "home"
     repo_root = tmp_path / "repo"
     repo_root.mkdir(parents=True)
@@ -100,9 +93,7 @@ def test_apply_max_privacy_copies_packaged_assets(
     assert helper_calls == list(HELPER_NAMES)
 
 
-def test_apply_max_privacy_preserves_existing_targets_when_overwrite_disabled(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_apply_max_privacy_preserves_existing_targets_when_overwrite_disabled(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home = tmp_path / "home"
     repo_root = tmp_path / "repo"
     repo_root.mkdir(parents=True)
@@ -123,18 +114,13 @@ def test_apply_max_privacy_preserves_existing_targets_when_overwrite_disabled(
         assert repo_target.read_text(encoding="utf-8") == "keep-repo"
 
 
-def test_apply_max_privacy_overwrites_existing_targets_and_continues_after_helper_failures(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_apply_max_privacy_overwrites_existing_targets_and_continues_after_helper_failures(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home = tmp_path / "home"
     repo_root = tmp_path / "repo"
     repo_root.mkdir(parents=True)
 
     _patch_home(monkeypatch=monkeypatch, home=home)
-    helper_calls = _patch_secure_helpers(
-        monkeypatch=monkeypatch,
-        failing_helpers=frozenset({"secure_cursor_cli", "secure_cline_config"}),
-    )
+    helper_calls = _patch_secure_helpers(monkeypatch=monkeypatch, failing_helpers=frozenset({"secure_cursor_cli", "secure_cline_config"}))
 
     gemini_source, global_target, repo_target = _asset_targets(home=home, repo_root=repo_root)[0]
     global_target.parent.mkdir(parents=True, exist_ok=True)

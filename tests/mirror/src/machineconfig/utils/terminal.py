@@ -9,12 +9,7 @@ from machineconfig.utils.terminal import Response
 
 
 def test_response_from_completed_process_preserves_io_and_strips_on_call() -> None:
-    completed_process = subprocess.CompletedProcess(
-        args="echo hi",
-        returncode=0,
-        stdout="value\n",
-        stderr="",
-    )
+    completed_process = subprocess.CompletedProcess(args="echo hi", returncode=0, stdout="value\n", stderr="")
 
     response = Response.from_completed_process(completed_process)
 
@@ -28,21 +23,12 @@ def test_response_capture_and_path_helpers_work_together(tmp_path: Path) -> None
     stdout = io.BytesIO(f"{tmp_path}/artifact\n".encode())
     stderr = io.BytesIO(b"")
 
-    response = Response(
-        stdin=stdin,
-        stdout=stdout,
-        stderr=stderr,
-        cmd="cmd",
-        desc="desc",
-    ).capture()
+    response = Response(stdin=stdin, stdout=stdout, stderr=stderr, cmd="cmd", desc="desc").capture()
 
     path_value = response.op2path(strict_returncode=True, strict_err=True)
     assert isinstance(path_value, PathExtended)
     assert str(path_value) == str(tmp_path / "artifact")
-    assert response.op_if_successfull_or_default(
-        strict_returcode=True,
-        strict_err=True,
-    ) == f"{tmp_path}/artifact\n"
+    assert response.op_if_successfull_or_default(strict_returcode=True, strict_err=True) == f"{tmp_path}/artifact\n"
 
 
 def test_response_success_state_respects_strict_stderr() -> None:

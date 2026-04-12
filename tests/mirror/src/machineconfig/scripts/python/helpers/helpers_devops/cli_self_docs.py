@@ -21,11 +21,7 @@ def test_get_docs_repo_root_returns_repo_when_sources_exist(monkeypatch: pytest.
     assert module.get_docs_repo_root() == tmp_path
 
 
-def test_get_docs_repo_root_exits_when_sources_missing(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
+def test_get_docs_repo_root_exits_when_sources_missing(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     import machineconfig.utils.source_of_truth as source_of_truth
 
     monkeypatch.setattr(source_of_truth, "REPO_ROOT", tmp_path)
@@ -38,12 +34,9 @@ def test_get_docs_repo_root_exits_when_sources_missing(
     assert "Could not find docs sources" in captured.err
 
 
-def test_write_cli_graph_snapshot_writes_json_payload(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
+def test_write_cli_graph_snapshot_writes_json_payload(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     generated_module = ModuleType("machineconfig.scripts.python.graph.generate_cli_graph")
+    tmp_path.joinpath("generated").mkdir()
 
     def fake_build_cli_graph() -> dict[str, object]:
         return {"commands": ["status"]}
@@ -60,22 +53,13 @@ def test_write_cli_graph_snapshot_writes_json_payload(
 
 
 def test_render_docs_artifact_creates_parent_and_calls_plotly(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     plotly_views_module = ModuleType("machineconfig.scripts.python.graph.visualize.plotly_views")
     recorded_calls: list[dict[str, object]] = []
 
     def fake_use_render_plotly(
-        *,
-        view: str,
-        output: str,
-        template: str,
-        path: str | None,
-        max_depth: int | None,
-        uv_with: str | None,
-        uv_project_dir: str | None,
+        *, view: str, output: str, template: str, path: str | None, max_depth: int | None, uv_with: str | None, uv_project_dir: str | None
     ) -> None:
         recorded_calls.append(
             {

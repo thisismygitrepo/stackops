@@ -25,9 +25,7 @@ def test_extract_helpers_parse_release_metadata_from_html() -> None:
     assert github_release_scraper.extract_published_at(html) == "2024-05-06T07:08:09Z"
 
 
-def test_fetch_expanded_assets_deduplicates_download_urls(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_fetch_expanded_assets_deduplicates_download_urls(monkeypatch: pytest.MonkeyPatch) -> None:
     html = """
     <a href="/owner/repo/releases/download/v1/tool.tar.gz">
       <span class="Truncate-text text-bold">tool.tar.gz</span>
@@ -44,12 +42,7 @@ def test_fetch_expanded_assets_deduplicates_download_urls(
 
     monkeypatch.setattr(github_release_scraper.requests, "get", fake_get)
 
-    assets = github_release_scraper.fetch_expanded_assets(
-        "owner",
-        "repo",
-        "v1",
-        {"User-Agent": "test"},
-    )
+    assets = github_release_scraper.fetch_expanded_assets("owner", "repo", "v1", {"User-Agent": "test"})
 
     assert assets == [
         {
@@ -64,9 +57,7 @@ def test_fetch_expanded_assets_deduplicates_download_urls(
     ]
 
 
-def test_scrape_github_release_page_returns_release_payload(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_scrape_github_release_page_returns_release_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     requested_urls: list[str] = []
 
     def fake_get(url: str, *args: object, **kwargs: object) -> FakeHtmlResponse:
@@ -81,22 +72,12 @@ def test_scrape_github_release_page_returns_release_payload(
             """,
         )
 
-    def fake_fetch_assets(
-        username: str,
-        repo_name: str,
-        tag_name: str,
-        headers: dict[str, str],
-    ) -> list[dict[str, object]]:
+    def fake_fetch_assets(username: str, repo_name: str, tag_name: str, headers: dict[str, str]) -> list[dict[str, object]]:
         assert username == "owner"
         assert repo_name == "repo"
         assert tag_name == "v2.0.0"
         assert "User-Agent" in headers
-        return [
-            {
-                "name": "tool.tar.gz",
-                "browser_download_url": "https://downloads.example/tool.tar.gz",
-            }
-        ]
+        return [{"name": "tool.tar.gz", "browser_download_url": "https://downloads.example/tool.tar.gz"}]
 
     monkeypatch.setattr(github_release_scraper.requests, "get", fake_get)
     monkeypatch.setattr(github_release_scraper, "fetch_expanded_assets", fake_fetch_assets)
@@ -108,10 +89,5 @@ def test_scrape_github_release_page_returns_release_payload(
         "tag_name": "v2.0.0",
         "name": "Stable",
         "published_at": "2024-06-01T00:00:00Z",
-        "assets": [
-            {
-                "name": "tool.tar.gz",
-                "browser_download_url": "https://downloads.example/tool.tar.gz",
-            }
-        ],
+        "assets": [{"name": "tool.tar.gz", "browser_download_url": "https://downloads.example/tool.tar.gz"}],
     }

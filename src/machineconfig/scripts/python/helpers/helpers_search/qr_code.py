@@ -48,6 +48,7 @@ def _generate_svg(
     from xml.etree import ElementTree as ET
 
     import qrcode
+    import qrcode.image.svg
     svg_root = ET.Element(
         "svg",
         xmlns="http://www.w3.org/2000/svg",

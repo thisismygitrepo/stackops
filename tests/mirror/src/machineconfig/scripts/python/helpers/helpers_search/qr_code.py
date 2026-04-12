@@ -43,14 +43,7 @@ def test_generate_qrcode_grid_writes_png_with_expected_dimensions(tmp_path: Path
     output_path = tmp_path / "nested" / "codes.png"
 
     returned_path = generate_qrcode_grid(
-        strings=["one", "two"],
-        output_path=str(output_path),
-        per_row=1,
-        qr_size=40,
-        label_height=20,
-        padding=10,
-        label_max_chars=10,
-        format="png",
+        strings=["one", "two"], output_path=str(output_path), per_row=1, qr_size=40, label_height=20, padding=10, label_max_chars=10, format="png"
     )
 
     assert returned_path == str(output_path)

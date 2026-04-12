@@ -14,39 +14,23 @@ def test_strip_ansi_codes_and_natural_sort_key() -> None:
     raw = "\x1b[31mTab10\x1b[0m next"
 
     assert subject.strip_ansi_codes(raw) == "Tab10 next"
-    assert sorted(["tab10", "tab2", "Tab1"], key=subject.natural_sort_key) == [
-        "Tab1",
-        "tab2",
-        "tab10",
-    ]
+    assert sorted(["tab10", "tab2", "Tab1"], key=subject.natural_sort_key) == ["Tab1", "tab2", "tab10"]
 
 
 def test_run_command_captures_process_result() -> None:
-    result = subject.run_command(
-        [
-            sys.executable,
-            "-c",
-            "import sys; print('ok'); sys.stderr.write('warn\\n'); raise SystemExit(3)",
-        ]
-    )
+    result = subject.run_command([sys.executable, "-c", "import sys; print('ok'); sys.stderr.write('warn\\n'); raise SystemExit(3)"])
 
     assert result.returncode == 3
     assert result.stdout == "ok\n"
     assert result.stderr == "warn\n"
 
 
-def test_interactive_choose_with_preview_uses_tv_preview(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_interactive_choose_with_preview_uses_tv_preview(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, object] = {}
     module = ModuleType("machineconfig.utils.options_utils.tv_options")
 
     def choose_from_dict_with_preview(
-        *,
-        options_to_preview_mapping: dict[str, str],
-        extension: str,
-        multi: bool,
-        preview_size_percent: float,
+        *, options_to_preview_mapping: dict[str, str], extension: str, multi: bool, preview_size_percent: float
     ) -> list[str] | str:
         captured["mapping"] = options_to_preview_mapping
         captured["extension"] = extension
@@ -63,32 +47,17 @@ def test_interactive_choose_with_preview_uses_tv_preview(
 
     monkeypatch.setattr(subject, "choose_from_options", fail_choose_from_options)
 
-    chosen = subject.interactive_choose_with_preview(
-        msg="pick",
-        options_to_preview_mapping={"alpha": "A", "beta": "B"},
-        multi=True,
-    )
+    chosen = subject.interactive_choose_with_preview(msg="pick", options_to_preview_mapping={"alpha": "A", "beta": "B"}, multi=True)
 
     assert chosen == ["beta", "alpha"]
-    assert captured == {
-        "mapping": {"alpha": "A", "beta": "B"},
-        "extension": "md",
-        "multi": True,
-        "preview_size_percent": 70.0,
-    }
+    assert captured == {"mapping": {"alpha": "A", "beta": "B"}, "extension": "md", "multi": True, "preview_size_percent": 70.0}
 
 
-def test_interactive_choose_with_preview_falls_back_when_preview_errors(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_interactive_choose_with_preview_falls_back_when_preview_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     module = ModuleType("machineconfig.utils.options_utils.tv_options")
 
     def choose_from_dict_with_preview(
-        *,
-        options_to_preview_mapping: dict[str, str],
-        extension: str,
-        multi: bool,
-        preview_size_percent: float,
+        *, options_to_preview_mapping: dict[str, str], extension: str, multi: bool, preview_size_percent: float
     ) -> list[str] | str:
         _ = options_to_preview_mapping, extension, multi, preview_size_percent
         raise RuntimeError("preview unavailable")
@@ -105,51 +74,23 @@ def test_interactive_choose_with_preview_falls_back_when_preview_errors(
 
     monkeypatch.setattr(subject, "choose_from_options", fake_choose_from_options)
 
-    chosen = subject.interactive_choose_with_preview(
-        msg="pick",
-        options_to_preview_mapping={"alpha": "A"},
-        multi=True,
-    )
+    chosen = subject.interactive_choose_with_preview(msg="pick", options_to_preview_mapping={"alpha": "A"}, multi=True)
 
     assert chosen == []
-    assert captured == {
-        "msg": "pick",
-        "multi": True,
-        "options": ["alpha"],
-        "tv": True,
-        "custom_input": False,
-    }
+    assert captured == {"msg": "pick", "multi": True, "options": ["alpha"], "tv": True, "custom_input": False}
 
 
-def test_choose_session_dispatches_to_requested_backend(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    zellij_module = ModuleType(
-        "machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend"
-    )
-    tmux_module = ModuleType(
-        "machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend"
-    )
+def test_choose_session_dispatches_to_requested_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+    zellij_module = ModuleType("machineconfig.scripts.python.helpers.helpers_sessions._zellij_backend")
+    tmux_module = ModuleType("machineconfig.scripts.python.helpers.helpers_sessions._tmux_backend")
 
-    def choose_zellij(
-        *,
-        name: str | None,
-        new_session: bool,
-        kill_all: bool,
-        window: bool,
-    ) -> tuple[str, str | None]:
+    def choose_zellij(*, name: str | None, new_session: bool, kill_all: bool, window: bool) -> tuple[str, str | None]:
         assert new_session is True
         assert kill_all is False
         assert window is True
         return ("zellij", name)
 
-    def choose_tmux(
-        *,
-        name: str | None,
-        new_session: bool,
-        kill_all: bool,
-        window: bool,
-    ) -> tuple[str, str | None]:
+    def choose_tmux(*, name: str | None, new_session: bool, kill_all: bool, window: bool) -> tuple[str, str | None]:
         assert new_session is False
         assert kill_all is True
         assert window is False
@@ -164,14 +105,8 @@ def test_choose_session_dispatches_to_requested_backend(
     monkeypatch.setitem(sys.modules, zellij_module.__name__, zellij_module)
     monkeypatch.setitem(sys.modules, tmux_module.__name__, tmux_module)
 
-    assert subject.choose_session("zellij", "alpha", True, False, window=True) == (
-        "zellij",
-        "alpha",
-    )
-    assert subject.choose_session("tmux", "beta", False, True, window=False) == (
-        "tmux",
-        "beta",
-    )
+    assert subject.choose_session("zellij", "alpha", True, False, window=True) == ("zellij", "alpha")
+    assert subject.choose_session("tmux", "beta", False, True, window=False) == ("tmux", "beta")
     assert subject.get_session_tabs() == [("demo", "tab-1")]
 
 

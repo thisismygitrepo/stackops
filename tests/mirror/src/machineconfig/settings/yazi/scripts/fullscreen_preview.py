@@ -16,12 +16,7 @@ def test_resolve_target_prefers_hovered_path_over_selected_path(tmp_path: Path) 
     selected_path.write_text("selected", encoding="utf-8")
 
     resolved_path = fullscreen_preview.resolve_target(
-        [
-            fullscreen_preview.HOVERED_MARKER,
-            str(hovered_path),
-            fullscreen_preview.SELECTED_MARKER,
-            str(selected_path),
-        ]
+        [fullscreen_preview.HOVERED_MARKER, str(hovered_path), fullscreen_preview.SELECTED_MARKER, str(selected_path)]
     )
 
     assert resolved_path == hovered_path.resolve()
@@ -30,50 +25,18 @@ def test_resolve_target_prefers_hovered_path_over_selected_path(tmp_path: Path) 
 @pytest.mark.parametrize(
     ("filename", "expected_command"),
     [
-        (
-            "notes.md",
-            ["glow", "--pager", "--width", "88", "--style", "dark"],
-        ),
-        (
-            "table.csv",
-            ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--csv", "--pager", "--width", "88"],
-        ),
-        (
-            "records.json",
-            ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--json", "--pager", "--width", "88"],
-        ),
-        (
-            "warehouse.duckdb",
-            ["rainfrog", "--driver", "duckdb", "--database"],
-        ),
-        (
-            "cache.sqlite3",
-            ["rainfrog", "--driver", "sqlite", "--database"],
-        ),
-        (
-            "sheet.parquet",
-            ["uvx", "--from", "visidata", "--with", "pyarrow", "vd"],
-        ),
-        (
-            "bundle.tar.gz",
-            ["sh", "-c", 'ouch list "$1" | ${PAGER:-less -R}', "sh"],
-        ),
-        (
-            "image.png",
-            ["viu"],
-        ),
-        (
-            "plain.txt",
-            ["bat", "--paging=always", "--style=plain", "--color=always", "--terminal-width", "88"],
-        ),
+        ("notes.md", ["glow", "--pager", "--width", "88", "--style", "dark"]),
+        ("table.csv", ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--csv", "--pager", "--width", "88"]),
+        ("records.json", ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--json", "--pager", "--width", "88"]),
+        ("warehouse.duckdb", ["rainfrog", "--driver", "duckdb", "--database"]),
+        ("cache.sqlite3", ["rainfrog", "--driver", "sqlite", "--database"]),
+        ("sheet.parquet", ["uvx", "--from", "visidata", "--with", "pyarrow", "vd"]),
+        ("bundle.tar.gz", ["sh", "-c", 'ouch list "$1" | ${PAGER:-less -R}', "sh"]),
+        ("image.png", ["viu"]),
+        ("plain.txt", ["bat", "--paging=always", "--style=plain", "--color=always", "--terminal-width", "88"]),
     ],
 )
-def test_build_command_dispatches_by_suffix(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    filename: str,
-    expected_command: list[str],
-) -> None:
+def test_build_command_dispatches_by_suffix(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, filename: str, expected_command: list[str]) -> None:
     monkeypatch.setattr(fullscreen_preview.platform, "system", lambda: "Linux")
     target_path = tmp_path.joinpath(filename)
     target_path.write_text("content", encoding="utf-8")
@@ -110,10 +73,7 @@ def test_platform_specific_archive_and_pager_commands(monkeypatch: pytest.Monkey
     assert fullscreen_preview.build_pager_command() == ["less", "-R"]
 
 
-def test_preview_target_dispatches_pdf_svg_and_generic_paths(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
+def test_preview_target_dispatches_pdf_svg_and_generic_paths(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     pdf_path = tmp_path.joinpath("doc.pdf")
     pdf_path.write_text("pdf", encoding="utf-8")
     svg_path = tmp_path.joinpath("image.svg")
@@ -148,17 +108,10 @@ def test_preview_target_dispatches_pdf_svg_and_generic_paths(
     assert fullscreen_preview.preview_target(target_path=pdf_path, terminal_columns=91) == 11
     assert fullscreen_preview.preview_target(target_path=svg_path, terminal_columns=91) == 22
     assert fullscreen_preview.preview_target(target_path=text_path, terminal_columns=91) == 33
-    assert calls == [
-        ("pdf", pdf_path),
-        ("svg", svg_path),
-        ("generic", ["bat", str(text_path)]),
-    ]
+    assert calls == [("pdf", pdf_path), ("svg", svg_path), ("generic", ["bat", str(text_path)])]
 
 
-def test_run_rendered_image_preview_requires_render_output(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
+def test_run_rendered_image_preview_requires_render_output(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     render_calls: list[tuple[list[str], str]] = []
     render_command = ["resvg", "input.svg", "preview.png"]
     rendered_image_path = tmp_path.joinpath("preview.png")
@@ -170,26 +123,14 @@ def test_run_rendered_image_preview_requires_render_output(
     monkeypatch.setattr(fullscreen_preview, "run_command", fake_run_command)
 
     with pytest.raises(FileNotFoundError, match="Expected rendered preview image"):
-        fullscreen_preview.run_rendered_image_preview(
-            render_command=render_command,
-            rendered_image_path=rendered_image_path,
-        )
+        fullscreen_preview.run_rendered_image_preview(render_command=render_command, rendered_image_path=rendered_image_path)
 
     assert render_calls == [(render_command, "Render preview image")]
 
 
-@pytest.mark.parametrize(
-    ("error", "expected_code"),
-    [
-        (ValueError("bad markers"), 1),
-        (FileNotFoundError("missing tool"), 127),
-    ],
-)
+@pytest.mark.parametrize(("error", "expected_code"), [(ValueError("bad markers"), 1), (FileNotFoundError("missing tool"), 127)])
 def test_main_maps_errors_to_exit_codes(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-    error: Exception,
-    expected_code: int,
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception, expected_code: int
 ) -> None:
     def fake_resolve_target(arguments: Sequence[str]) -> Path:
         raise error

@@ -20,9 +20,7 @@ class _FakeVirtualMemory:
     percent: float
 
 
-def test_scan_hardware_uses_logical_cores_and_default_frequency_when_probe_fails(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_scan_hardware_uses_logical_cores_and_default_frequency_when_probe_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     scanner = analyzer_module.SystemScanner()
 
     def fake_cpu_count(logical: bool = True) -> int | None:
@@ -40,11 +38,7 @@ def test_scan_hardware_uses_logical_cores_and_default_frequency_when_probe_fails
     monkeypatch.setattr(analyzer_module.psutil, "cpu_freq", fake_cpu_frequency)
     monkeypatch.setattr(analyzer_module.psutil, "virtual_memory", fake_virtual_memory)
     monkeypatch.setattr(analyzer_module.platform, "machine", lambda: "x86_64")
-    monkeypatch.setattr(
-        analyzer_module.SystemScanner,
-        "_detect_cpu_model",
-        staticmethod(lambda: "Fake CPU"),
-    )
+    monkeypatch.setattr(analyzer_module.SystemScanner, "_detect_cpu_model", staticmethod(lambda: "Fake CPU"))
 
     scanner.scan_hardware()
 

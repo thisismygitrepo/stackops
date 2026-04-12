@@ -20,9 +20,7 @@ def _get_module_path(test_file: Path) -> Path:
 def test_path_references_target_existing_files() -> None:
     module_path = _get_module_path(test_file=Path(__file__).resolve())
     namespace: dict[str, object] = runpy.run_path(str(module_path))
-    expected_references: tuple[tuple[str, str], ...] = (
-        ("GROMIT_MPX_PATH_REFERENCE", "gromit-mpx.cfg"),
-    )
+    expected_references: tuple[tuple[str, str], ...] = (("GROMIT_MPX_PATH_REFERENCE", "gromit-mpx.cfg"),)
 
     for variable_name, expected_relative_path in expected_references:
         path_reference_object = namespace[variable_name]

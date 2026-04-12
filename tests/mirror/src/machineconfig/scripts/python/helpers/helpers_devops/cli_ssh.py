@@ -14,9 +14,9 @@ def test_get_windows_ssh_server_install_script_switches_install_method() -> None
     capability_script = module._get_windows_ssh_server_install_script(use_winget=False)
 
     assert "winget install --no-upgrade --Id Microsoft.OpenSSH.Preview" in winget_script
-    assert 'C:\\Program Files\\OpenSSH\\sshd.exe' in winget_script
+    assert "C:\\Program Files\\OpenSSH\\sshd.exe" in winget_script
     assert "Add-WindowsCapability -Online -Name OpenSSH.Server" in capability_script
-    assert '$env:WINDIR\\System32\\OpenSSH\\sshd.exe' in capability_script
+    assert "$env:WINDIR\\System32\\OpenSSH\\sshd.exe" in capability_script
 
 
 def test_install_ssh_server_runs_linux_script(monkeypatch: pytest.MonkeyPatch) -> None:

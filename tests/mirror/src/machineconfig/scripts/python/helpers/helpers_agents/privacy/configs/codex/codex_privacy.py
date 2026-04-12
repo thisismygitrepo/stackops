@@ -11,9 +11,7 @@ def _patch_home(monkeypatch: pytest.MonkeyPatch, home: Path) -> None:
     monkeypatch.setattr(codex_privacy.pathlib.Path, "home", lambda: home)
 
 
-def test_secure_codex_configs_writes_global_and_repo_configs(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_codex_configs_writes_global_and_repo_configs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home = tmp_path / "home"
     workspace = tmp_path / "workspace"
     workspace.joinpath(".codex").mkdir(parents=True)
@@ -37,9 +35,7 @@ def test_secure_codex_configs_writes_global_and_repo_configs(
     assert chmod_calls == [global_config, local_config]
 
 
-def test_secure_codex_configs_skips_repo_config_without_existing_directory(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_codex_configs_skips_repo_config_without_existing_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home = tmp_path / "home"
     workspace = tmp_path / "workspace"
     workspace.mkdir(parents=True)

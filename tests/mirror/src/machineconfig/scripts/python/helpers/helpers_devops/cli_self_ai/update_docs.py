@@ -17,11 +17,7 @@ class CompletedProcessStub:
 
 def test_list_git_visible_files_deduplicates_and_sorts(monkeypatch, tmp_path: Path) -> None:
     def fake_run(*_args: object, **_kwargs: object) -> CompletedProcessStub:
-        return CompletedProcessStub(
-            returncode=0,
-            stdout="\ndocs/cli/guide.md\ndocs/api/index.md\ndocs/cli/guide.md\n",
-            stderr="",
-        )
+        return CompletedProcessStub(returncode=0, stdout="\ndocs/cli/guide.md\ndocs/api/index.md\ndocs/cli/guide.md\n", stderr="")
 
     monkeypatch.setattr(update_docs_module.subprocess, "run", fake_run)
 
@@ -34,17 +30,12 @@ def test_build_docs_context_keeps_only_allowed_docs_paths(monkeypatch, tmp_path:
     monkeypatch.setattr(
         update_docs_module,
         "_list_git_visible_files",
-        lambda *, repo_root: (
-            Path("docs/cli/devops.md"),
-            Path("docs/api/index.md"),
-            Path("docs/index.md"),
-            Path("docs/assets/logo.svg"),
-        ),
+        lambda *, repo_root: (Path("docs/cli/devops.md"), Path("docs/api/index.md"), Path("docs/index.md"), Path("docs/assets/logo.svg")),
     )
 
     result = update_docs_module._build_docs_context(repo_root=tmp_path)
 
-    assert result == "docs/cli/devops.md@-@docs/api/index.md"
+    assert result == update_docs_module.DEFAULT_SEAPRATOR.join(("docs/cli/devops.md", "docs/api/index.md"))
 
 
 def test_update_docs_writes_context_file_even_when_agent_creation_fails(monkeypatch, tmp_path: Path) -> None:
@@ -67,7 +58,5 @@ def test_update_docs_writes_context_file_even_when_agent_creation_fails(monkeypa
 
     assert captured["context"] == "docs/cli/devops.md@-@docs/api/index.md"
     assert captured["prompt"] == update_docs_module.UPDATE_DOCS_PROMPT
-    assert captured["output_path"] == str(
-        repo_root.joinpath(".ai", "agents", update_docs_module.DEFAULT_DOCS_JOB_NAME, "layout.json")
-    )
+    assert captured["output_path"] == str(repo_root.joinpath(".ai", "agents", update_docs_module.DEFAULT_DOCS_JOB_NAME, "layout.json"))
     assert context_path.read_text(encoding="utf-8") == "docs/cli/devops.md@-@docs/api/index.md"

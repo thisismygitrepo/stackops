@@ -42,10 +42,7 @@ class InstallerSpy:
         return (type(self).archive, "24.03.0")
 
 
-def test_main_raises_when_download_missing_hx_executable(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_raises_when_download_missing_hx_executable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     download_root = tmp_path / "helix-download"
     download_root.mkdir()
     (download_root / "README.txt").write_text("missing executable", encoding="utf-8")
@@ -57,10 +54,6 @@ def test_main_raises_when_download_missing_hx_executable(
     monkeypatch.setattr(hx_script.platform, "system", lambda: "Linux")
 
     with pytest.raises(FileNotFoundError, match="Could not find 'hx' executable"):
-        hx_script.main(
-            installer_data=DUMMY_INSTALLER_DATA,
-            version=None,
-            update=False,
-        )
+        hx_script.main(installer_data=DUMMY_INSTALLER_DATA, version=None, update=False)
 
     assert InstallerSpy.versions == [None]

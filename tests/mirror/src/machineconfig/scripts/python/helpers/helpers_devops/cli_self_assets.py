@@ -47,13 +47,7 @@ def test_regenerate_charts_uses_sunburst_artifact(monkeypatch: pytest.MonkeyPatc
     module.regenerate_charts()
 
     assert recorded_calls == [
-        (
-            repo_root,
-            module.cli_self_docs.DocsArtifactSpec(
-                view="sunburst",
-                output_relative_path=module.SUNBURST_OUTPUT_RELATIVE_PATH,
-            ),
-        )
+        (repo_root, module.cli_self_docs.DocsArtifactSpec(view="sunburst", output_relative_path=module.SUNBURST_OUTPUT_RELATIVE_PATH))
     ]
 
 

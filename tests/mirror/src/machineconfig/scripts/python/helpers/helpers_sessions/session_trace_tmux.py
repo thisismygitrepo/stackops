@@ -7,26 +7,13 @@ import pytest
 import machineconfig.scripts.python.helpers.helpers_sessions.session_trace_tmux as subject
 
 
-@pytest.mark.parametrize(
-    ("raw_value", "expected"),
-    [
-        ("7", 7),
-        (" -2 ", -2),
-        ("oops", None),
-        ("--1", None),
-        ("", None),
-    ],
-)
+@pytest.mark.parametrize(("raw_value", "expected"), [("7", 7), (" -2 ", -2), ("oops", None), ("--1", None), ("", None)])
 def test_parse_exit_code(raw_value: str, expected: int | None) -> None:
     assert subject._parse_exit_code(raw_value) == expected
 
 
 def test_build_missing_snapshot_matches_session_missing_until() -> None:
-    snapshot = subject.build_missing_snapshot(
-        session_name="demo",
-        until="session-missing",
-        session_error="gone",
-    )
+    snapshot = subject.build_missing_snapshot(session_name="demo", until="session-missing", session_error="gone")
 
     assert snapshot.session_exists is False
     assert snapshot.total_targets == 1
@@ -35,14 +22,8 @@ def test_build_missing_snapshot_matches_session_missing_until() -> None:
     assert snapshot.session_error == "gone"
 
 
-def test_evaluate_trace_snapshot_counts_categories_and_matches(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def fake_classify_pane_status(
-        pane: dict[str, str],
-        *,
-        pane_process_label_finder: object,
-    ) -> tuple[str, str]:
+def test_evaluate_trace_snapshot_counts_categories_and_matches(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_classify_pane_status(pane: dict[str, str], *, pane_process_label_finder: object) -> tuple[str, str]:
         _ = pane_process_label_finder
         match pane["pane_index"]:
             case "0":
@@ -61,30 +42,10 @@ def test_evaluate_trace_snapshot_counts_categories_and_matches(
         windows=[{"window_index": "1", "window_name": "main"}],
         panes_by_window={
             "1": [
-                {
-                    "pane_index": "0",
-                    "pane_cwd": "",
-                    "pane_active": "1",
-                    "pane_dead_status": "",
-                },
-                {
-                    "pane_index": "1",
-                    "pane_cwd": "/work",
-                    "pane_active": "",
-                    "pane_dead_status": "",
-                },
-                {
-                    "pane_index": "2",
-                    "pane_cwd": "/logs",
-                    "pane_active": "",
-                    "pane_dead_status": "7",
-                },
-                {
-                    "pane_index": "3",
-                    "pane_cwd": "/tmp",
-                    "pane_active": "",
-                    "pane_dead_status": "oops",
-                },
+                {"pane_index": "0", "pane_cwd": "", "pane_active": "1", "pane_dead_status": ""},
+                {"pane_index": "1", "pane_cwd": "/work", "pane_active": "", "pane_dead_status": ""},
+                {"pane_index": "2", "pane_cwd": "/logs", "pane_active": "", "pane_dead_status": "7"},
+                {"pane_index": "3", "pane_cwd": "/tmp", "pane_active": "", "pane_dead_status": "oops"},
             ]
         },
         until="all-exited",
@@ -108,14 +69,8 @@ def test_evaluate_trace_snapshot_counts_categories_and_matches(
     assert snapshot.pane_warning == "warn"
 
 
-def test_load_trace_snapshot_returns_missing_snapshot_when_session_absent(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        subject,
-        "check_tmux_session_status",
-        lambda *, session_name: {"session_exists": False, "error": f"{session_name} missing"},
-    )
+def test_load_trace_snapshot_returns_missing_snapshot_when_session_absent(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subject, "check_tmux_session_status", lambda *, session_name: {"session_exists": False, "error": f"{session_name} missing"})
 
     snapshot = subject.load_trace_snapshot("demo", "idle-shell", None)
 
@@ -124,38 +79,19 @@ def test_load_trace_snapshot_returns_missing_snapshot_when_session_absent(
     assert snapshot.criterion_satisfied is False
 
 
-def test_load_trace_snapshot_uses_collected_snapshot(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        subject,
-        "check_tmux_session_status",
-        lambda *, session_name: {"session_exists": True, "name": session_name},
-    )
+def test_load_trace_snapshot_uses_collected_snapshot(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subject, "check_tmux_session_status", lambda *, session_name: {"session_exists": True, "name": session_name})
     monkeypatch.setattr(
         subject,
         "collect_session_snapshot",
         lambda *, session_name, run_command_fn: (
             [{"window_index": "1", "window_name": session_name}],
-            {
-                "1": [
-                    {
-                        "pane_index": "0",
-                        "pane_cwd": "/repo",
-                        "pane_active": "1",
-                        "pane_dead_status": "",
-                    }
-                ]
-            },
+            {"1": [{"pane_index": "0", "pane_cwd": "/repo", "pane_active": "1", "pane_dead_status": ""}]},
             "minor warning",
         ),
     )
 
-    def fake_classify_pane_status(
-        pane: dict[str, str],
-        *,
-        pane_process_label_finder: object,
-    ) -> tuple[str, str]:
+    def fake_classify_pane_status(pane: dict[str, str], *, pane_process_label_finder: object) -> tuple[str, str]:
         _ = pane, pane_process_label_finder
         return ("bash", "idle shell")
 

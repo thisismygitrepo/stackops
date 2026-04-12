@@ -24,10 +24,7 @@ class RunCall:
     kwargs: dict[str, object]
 
 
-def test_install_linux_moves_appimage_and_writes_desktop_entry(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_install_linux_moves_appimage_and_writes_desktop_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     home_dir = tmp_path / "home"
     downloads_dir = home_dir / "Downloads"
     downloads_dir.mkdir(parents=True)
@@ -60,27 +57,11 @@ def test_install_linux_moves_appimage_and_writes_desktop_entry(
     assert "Exec=" + str(installed_binary) in desktop_file.read_text(encoding="utf-8")
     assert "Icon=cursor" in desktop_file.read_text(encoding="utf-8")
     assert chmod_calls
-    assert run_calls == [
-        RunCall(
-            args=(
-                ["update-desktop-database", str(home_dir / ".local/share/applications")],
-            ),
-            kwargs={"check": False},
-        )
-    ]
+    assert run_calls == [RunCall(args=(["update-desktop-database", str(home_dir / ".local/share/applications")],), kwargs={"check": False})]
 
 
-def test_main_unsupported_platform_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_unsupported_platform_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cursor_script.platform, "system", lambda: "Darwin")
 
-    with pytest.raises(
-        OSError,
-        match="Unsupported operating system: Darwin",
-    ):
-        cursor_script.main(
-            installer_data=DUMMY_INSTALLER_DATA,
-            version=None,
-            update=False,
-        )
+    with pytest.raises(OSError, match="Unsupported operating system: Darwin"):
+        cursor_script.main(installer_data=DUMMY_INSTALLER_DATA, version=None, update=False)

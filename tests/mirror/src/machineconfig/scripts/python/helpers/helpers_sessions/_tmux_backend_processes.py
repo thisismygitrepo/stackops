@@ -47,9 +47,7 @@ class FakeProcess:
         return descendants
 
 
-def test_find_meaningful_pane_process_label_prefers_non_shell_descendant(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_find_meaningful_pane_process_label_prefers_non_shell_descendant(monkeypatch: pytest.MonkeyPatch) -> None:
     root = FakeProcess(100, "bash", ["bash"], "sleeping", 1.0, None, [])
     shell = FakeProcess(101, "bash", ["bash"], "sleeping", 2.0, root, [])
     editor = FakeProcess(102, "vim", ["vim", "/tmp/todo.txt"], "running", 3.0, shell, [])
@@ -89,49 +87,19 @@ def test_classify_pane_status_handles_dead_shell_running_and_unknown() -> None:
         return "pytest worker"
 
     dead = tmux_processes.classify_pane_status(
-        {
-            "pane_command": "bash",
-            "pane_dead": "dead",
-            "pane_dead_status": "3",
-            "pane_pid": "100",
-        },
-        pane_process_label_finder=fake_child_label,
+        {"pane_command": "bash", "pane_dead": "dead", "pane_dead_status": "3", "pane_pid": "100"}, pane_process_label_finder=fake_child_label
     )
     shell_running = tmux_processes.classify_pane_status(
-        {
-            "pane_command": "bash",
-            "pane_dead": "",
-            "pane_dead_status": "",
-            "pane_pid": "100",
-        },
-        pane_process_label_finder=fake_child_label,
+        {"pane_command": "bash", "pane_dead": "", "pane_dead_status": "", "pane_pid": "100"}, pane_process_label_finder=fake_child_label
     )
     shell_idle = tmux_processes.classify_pane_status(
-        {
-            "pane_command": "zsh",
-            "pane_dead": "",
-            "pane_dead_status": "",
-            "pane_pid": "100",
-        },
-        pane_process_label_finder=lambda _: None,
+        {"pane_command": "zsh", "pane_dead": "", "pane_dead_status": "", "pane_pid": "100"}, pane_process_label_finder=lambda _: None
     )
     command_running = tmux_processes.classify_pane_status(
-        {
-            "pane_command": "vim",
-            "pane_dead": "",
-            "pane_dead_status": "",
-            "pane_pid": "100",
-        },
-        pane_process_label_finder=fake_child_label,
+        {"pane_command": "vim", "pane_dead": "", "pane_dead_status": "", "pane_pid": "100"}, pane_process_label_finder=fake_child_label
     )
     unknown = tmux_processes.classify_pane_status(
-        {
-            "pane_command": "",
-            "pane_dead": "",
-            "pane_dead_status": "",
-            "pane_pid": "100",
-        },
-        pane_process_label_finder=fake_child_label,
+        {"pane_command": "", "pane_dead": "", "pane_dead_status": "", "pane_pid": "100"}, pane_process_label_finder=fake_child_label
     )
 
     assert dead == ("bash", "exited (code 3)")

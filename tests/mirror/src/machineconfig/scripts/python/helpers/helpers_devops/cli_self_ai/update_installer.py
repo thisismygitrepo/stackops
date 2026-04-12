@@ -34,6 +34,4 @@ def test_update_installer_uses_default_prompt_and_context_path(monkeypatch, tmp_
     assert captured["context"] is None
     assert captured["context_path"] == str(repo_root.joinpath(relative_path))
     assert captured["prompt"] == update_installer_module._get_update_installer_prompt()
-    assert captured["output_path"] == str(
-        repo_root.joinpath(".ai", "agents", update_installer_module.DEFAULT_INSTALLER_JOB_NAME, "layout.json")
-    )
+    assert captured["output_path"] == str(repo_root.joinpath(".ai", "agents", update_installer_module.DEFAULT_INSTALLER_JOB_NAME, "layout.json"))

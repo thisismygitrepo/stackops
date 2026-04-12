@@ -26,33 +26,9 @@ def _find_repo_root(start: Path) -> Path:
 
 
 def test_randstr_respects_requested_character_sets() -> None:
-    lowercase_value = randstr(
-        length=64,
-        lower=True,
-        upper=False,
-        digits=False,
-        punctuation=False,
-        safe=False,
-        noun=False,
-    )
-    digits_value = randstr(
-        length=64,
-        lower=False,
-        upper=False,
-        digits=True,
-        punctuation=False,
-        safe=False,
-        noun=False,
-    )
-    safe_value = randstr(
-        length=16,
-        lower=False,
-        upper=False,
-        digits=False,
-        punctuation=False,
-        safe=True,
-        noun=False,
-    )
+    lowercase_value = randstr(length=64, lower=True, upper=False, digits=False, punctuation=False, safe=False, noun=False)
+    digits_value = randstr(length=64, lower=False, upper=False, digits=True, punctuation=False, safe=False, noun=False)
+    safe_value = randstr(length=16, lower=False, upper=False, digits=False, punctuation=False, safe=True, noun=False)
 
     assert len(lowercase_value) == 64
     assert set(lowercase_value) <= set(string.ascii_lowercase)
@@ -64,67 +40,28 @@ def test_randstr_respects_requested_character_sets() -> None:
 
 def test_split_timeframe_requires_exactly_one_strategy() -> None:
     with pytest.raises(ValueError):
-        split_timeframe(
-            start_dt="2024-01-01T00:00:00",
-            end_dt="2024-01-01T00:10:00",
-            resolution_ms=1000,
-            to=None,
-            every_ms=None,
-        )
+        split_timeframe(start_dt="2024-01-01T00:00:00", end_dt="2024-01-01T00:10:00", resolution_ms=1000, to=None, every_ms=None)
 
     with pytest.raises(ValueError):
-        split_timeframe(
-            start_dt="2024-01-01T00:00:00",
-            end_dt="2024-01-01T00:10:00",
-            resolution_ms=1000,
-            to=2,
-            every_ms=300000,
-        )
+        split_timeframe(start_dt="2024-01-01T00:00:00", end_dt="2024-01-01T00:10:00", resolution_ms=1000, to=2, every_ms=300000)
 
 
 def test_split_timeframe_splits_fixed_count_with_resolution_gap() -> None:
-    result = split_timeframe(
-        start_dt="2024-01-01T00:00:00",
-        end_dt="2024-01-01T00:10:00",
-        resolution_ms=1000,
-        to=2,
-        every_ms=None,
-    )
+    result = split_timeframe(start_dt="2024-01-01T00:00:00", end_dt="2024-01-01T00:10:00", resolution_ms=1000, to=2, every_ms=None)
 
     assert result == [
-        (
-            datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 0, 4, 59, tzinfo=timezone.utc),
-        ),
-        (
-            datetime(2024, 1, 1, 0, 5, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 0, 10, tzinfo=timezone.utc),
-        ),
+        (datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc), datetime(2024, 1, 1, 0, 4, 59, tzinfo=timezone.utc)),
+        (datetime(2024, 1, 1, 0, 5, tzinfo=timezone.utc), datetime(2024, 1, 1, 0, 10, tzinfo=timezone.utc)),
     ]
 
 
 def test_split_timeframe_splits_by_interval_until_end() -> None:
-    result = split_timeframe(
-        start_dt="2024-01-01T00:00:00",
-        end_dt="2024-01-01T00:05:00",
-        resolution_ms=1000,
-        to=None,
-        every_ms=120000,
-    )
+    result = split_timeframe(start_dt="2024-01-01T00:00:00", end_dt="2024-01-01T00:05:00", resolution_ms=1000, to=None, every_ms=120000)
 
     assert result == [
-        (
-            datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 0, 1, 59, tzinfo=timezone.utc),
-        ),
-        (
-            datetime(2024, 1, 1, 0, 2, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 0, 3, 59, tzinfo=timezone.utc),
-        ),
-        (
-            datetime(2024, 1, 1, 0, 4, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 0, 5, tzinfo=timezone.utc),
-        ),
+        (datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc), datetime(2024, 1, 1, 0, 1, 59, tzinfo=timezone.utc)),
+        (datetime(2024, 1, 1, 0, 2, tzinfo=timezone.utc), datetime(2024, 1, 1, 0, 3, 59, tzinfo=timezone.utc)),
+        (datetime(2024, 1, 1, 0, 4, tzinfo=timezone.utc), datetime(2024, 1, 1, 0, 5, tzinfo=timezone.utc)),
     ]
 
 
@@ -148,23 +85,9 @@ def test_get_repr_formats_values_with_optional_quotes() -> None:
 
 
 def test_human_friendly_dict_formats_supported_runtime_values() -> None:
-    result = human_friendly_dict(
-        d={
-            "ratio": 1.234,
-            "enabled": True,
-            "disabled": False,
-            "timestamp_ms": 1704067200000,
-            "raw": "keep-me",
-        }
-    )
+    result = human_friendly_dict(d={"ratio": 1.234, "enabled": True, "disabled": False, "timestamp_ms": 1704067200000, "raw": "keep-me"})
 
-    assert result == {
-        "ratio": "1.23",
-        "enabled": "✓",
-        "disabled": "✗",
-        "timestamp_ms": "2024-01-01 00:00",
-        "raw": "keep-me",
-    }
+    assert result == {"ratio": "1.23", "enabled": "✓", "disabled": "✗", "timestamp_ms": "2024-01-01 00:00", "raw": "keep-me"}
 
 
 def test_get_repo_root_finds_repository_and_rejects_non_repo(tmp_path: Path) -> None:

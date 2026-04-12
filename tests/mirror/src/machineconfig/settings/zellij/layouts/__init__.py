@@ -17,11 +17,5 @@ def test_layout_assets_exist() -> None:
     assert module_file is not None
     module_dir = Path(module_file).resolve().parent
 
-    for relative_path in (
-        HIST_PATH_REFERENCE,
-        PANES_PATH_REFERENCE,
-        STACKED_PANES_PATH_REFERENCE,
-        ST_PATH_REFERENCE,
-        ST2_PATH_REFERENCE,
-    ):
+    for relative_path in (HIST_PATH_REFERENCE, PANES_PATH_REFERENCE, STACKED_PANES_PATH_REFERENCE, ST_PATH_REFERENCE, ST2_PATH_REFERENCE):
         assert module_dir.joinpath(relative_path).is_file()

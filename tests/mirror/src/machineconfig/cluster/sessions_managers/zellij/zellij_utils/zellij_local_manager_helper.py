@@ -44,9 +44,7 @@ def test_list_saved_sessions_and_delete_session(tmp_path: Path, monkeypatch: pyt
 def test_attach_and_list_active_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
     managers = [
         FakeManagedManager(
-            session_name="alpha",
-            layout_config={"layoutTabs": [{"tabName": "one"}, {"tabName": "two"}]},
-            layout_path="/tmp/alpha.kdl",
+            session_name="alpha", layout_config={"layoutTabs": [{"tabName": "one"}, {"tabName": "two"}]}, layout_path="/tmp/alpha.kdl"
         ),
         FakeManagedManager(session_name="beta", layout_config=None, layout_path="/tmp/beta.kdl"),
     ]
@@ -68,39 +66,18 @@ def test_attach_and_list_active_sessions(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(helper.subprocess, "run", fake_run)
 
     assert helper.list_active_sessions(managers) == [
-        {
-            "session_name": "alpha",
-            "is_active": True,
-            "tab_count": 2,
-            "tabs": ["one", "two"],
-        },
-        {
-            "session_name": "beta",
-            "is_active": False,
-            "tab_count": 0,
-            "tabs": [],
-        },
+        {"session_name": "alpha", "is_active": True, "tab_count": 2, "tabs": ["one", "two"]},
+        {"session_name": "beta", "is_active": False, "tab_count": 0, "tabs": []},
     ]
 
 
 def test_save_and_load_manager_round_trip(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(helper, "TMP_SERIALIZATION_DIR", tmp_path)
 
-    session_layouts: list[dict[str, object]] = [
-        {"layoutName": "alpha-layout"},
-        {"layoutName": "beta-layout"},
-    ]
+    session_layouts: list[dict[str, object]] = [{"layoutName": "alpha-layout"}, {"layoutName": "beta-layout"}]
     managers = [
-        FakeManagedManager(
-            session_name="alpha",
-            layout_config={"layoutTabs": [{"tabName": "main"}]},
-            layout_path="/tmp/alpha.kdl",
-        ),
-        FakeManagedManager(
-            session_name="beta",
-            layout_config={"layoutTabs": [{"tabName": "secondary"}]},
-            layout_path="/tmp/beta.kdl",
-        ),
+        FakeManagedManager(session_name="alpha", layout_config={"layoutTabs": [{"tabName": "main"}]}, layout_path="/tmp/alpha.kdl"),
+        FakeManagedManager(session_name="beta", layout_config={"layoutTabs": [{"tabName": "secondary"}]}, layout_path="/tmp/beta.kdl"),
     ]
 
     session_id = helper.save_manager(session_layouts, managers, session_name_prefix="demo", session_id="sess-1234")

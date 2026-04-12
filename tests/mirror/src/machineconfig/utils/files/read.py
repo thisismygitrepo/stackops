@@ -25,11 +25,7 @@ def test_read_json_allows_c_style_comments_without_stripping_urls(tmp_path: Path
     parsed = cast(dict[str, object], read_json(json_path))
     parsed_via_dispatch = cast(dict[str, object], read_file(json_path))
 
-    assert parsed == {
-        "url": "https://example.com/api//v1",
-        "enabled": True,
-        "name": "tool",
-    }
+    assert parsed == {"url": "https://example.com/api//v1", "enabled": True, "name": "tool"}
     assert parsed_via_dispatch == parsed
 
 

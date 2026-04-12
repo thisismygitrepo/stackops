@@ -20,11 +20,7 @@ def _load_globalize_module() -> ModuleType:
     original_sys_path = sys.path[:]
 
     try:
-        sys.path = [
-            entry
-            for entry in sys.path
-            if Path(entry or ".").resolve() != shadow_parent
-        ]
+        sys.path = [entry for entry in sys.path if Path(entry or ".").resolve() != shadow_parent]
         sys.modules.pop("marimo", None)
         sys.modules.pop("machineconfig.settings.marimo.snippets.globalize", None)
         return importlib.import_module("machineconfig.settings.marimo.snippets.globalize")
@@ -47,9 +43,4 @@ def test_globalize_app_registers_expected_cells() -> None:
     assert len(cell_data) == 3
     assert 'mo.md(r"""# Globalize Lambda to Python Script""")' in codes
     assert "import marimo as mo" in codes
-    assert any(
-        "lambda_to_python_script" in code
-        and "in_global=True" in code
-        and "import_module=False" in code
-        for code in codes
-    )
+    assert any("lambda_to_python_script" in code and "in_global=True" in code and "import_module=False" in code for code in codes)

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 
 from machineconfig.cluster.remote.distribute import (
     Cluster,
@@ -8,7 +10,6 @@ from machineconfig.cluster.remote.distribute import (
     MachineLoadCalculator,
     MachineSpecs,
     ThreadLoadCalculator,
-    _get_cluster_path,
 )
 from machineconfig.cluster.remote.models import RemoteMachineConfig, WorkloadParams
 
@@ -69,10 +70,11 @@ def test_machine_load_calculator_assigns_final_remainder_to_last_machine() -> No
 def test_cluster_save_and_load_round_trip(tmp_path: Path) -> None:
     cluster = Cluster.__new__(Cluster)
     cluster.job_id = "job-123"
-    cluster.root_dir = _get_cluster_path(job_id=cluster.job_id, base_dir=str(tmp_path))
+    cluster.root_dir = tmp_path / f"job_id__{cluster.job_id}"
     cluster.results_downloaded = True
     cluster.description = "demo cluster"
-    cluster.func_kwargs = {"threshold": 3}
+    func_kwargs: dict[str, object] = {"threshold": 3}
+    cluster.func_kwargs = func_kwargs
     cluster.func = None
     cluster.ssh_connections = []
     cluster.config = RemoteMachineConfig(job_id="job-123", base_dir=str(tmp_path), description="demo cluster")
@@ -114,7 +116,8 @@ def test_cluster_save_and_load_round_trip(tmp_path: Path) -> None:
     cluster.machine_load_calc = MachineLoadCalculator(max_num=10, load_criterion=LoadCriterion.cpu_norm)
     cluster.machine_load_calc.load_ratios = [0.6]
 
-    saved_path = cluster._save()
+    save_method = cast(Callable[[], Path], getattr(cluster, "_save"))
+    saved_path = save_method()
     loaded = Cluster.load(job_id=cluster.job_id, base_dir=str(tmp_path))
 
     assert saved_path == cluster.root_dir / "cluster.json"

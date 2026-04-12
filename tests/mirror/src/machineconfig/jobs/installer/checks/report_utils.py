@@ -35,12 +35,7 @@ def test_build_app_metadata_row_and_engine_rows() -> None:
         "notes": "clean",
     }
     assert report_utils.build_engine_report_rows(app_data, [{"engine_name": "EngineA", "category": "harmless", "result": "ok"}]) == [
-        {
-            "app_name": "alpha",
-            "engine_name": "EngineA",
-            "engine_category": "harmless",
-            "engine_result": "ok",
-        }
+        {"app_name": "alpha", "engine_name": "EngineA", "engine_category": "harmless", "engine_result": "ok"}
     ]
 
 

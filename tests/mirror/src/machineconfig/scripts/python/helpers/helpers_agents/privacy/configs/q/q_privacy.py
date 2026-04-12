@@ -6,9 +6,7 @@ from typing import cast
 import pytest
 
 import machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.q.q_privacy as q_privacy_module
-from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.q.q_privacy import (
-    secure_q_cli,
-)
+from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.q.q_privacy import secure_q_cli
 
 
 SECURE_SETTINGS: dict[str, bool] = {
@@ -38,14 +36,10 @@ def fake_which(_executable: str) -> str:
     return "/usr/bin/fake"
 
 
-def test_secure_q_cli_updates_all_known_config_files_and_syncs_cli(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_q_cli_updates_all_known_config_files_and_syncs_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     recorded_calls: list[tuple[str, ...]] = []
 
-    def fake_run(
-        args: list[str], stdout: object, stderr: object, check: bool
-    ) -> subprocess.CompletedProcess[list[str]]:
+    def fake_run(args: list[str], stdout: object, stderr: object, check: bool) -> subprocess.CompletedProcess[list[str]]:
         recorded_calls.append(tuple(args))
         return subprocess.CompletedProcess(args=args, returncode=0)
 
@@ -55,9 +49,7 @@ def test_secure_q_cli_updates_all_known_config_files_and_syncs_cli(
 
     merged_file = tmp_path / CONFIG_RELATIVE_PATHS[0]
     merged_file.parent.mkdir(parents=True)
-    merged_file.write_text(
-        json.dumps({"custom": "keep", "telemetry.enabled": True}), encoding="utf-8"
-    )
+    merged_file.write_text(json.dumps({"custom": "keep", "telemetry.enabled": True}), encoding="utf-8")
     invalid_file = tmp_path / CONFIG_RELATIVE_PATHS[1]
     invalid_file.parent.mkdir(parents=True)
     invalid_file.write_text("{not valid json", encoding="utf-8")
@@ -76,23 +68,15 @@ def test_secure_q_cli_updates_all_known_config_files_and_syncs_cli(
     assert ("kiro", "settings", "telemetry.disabled", "true") in recorded_calls
 
 
-def test_secure_q_cli_ignores_cli_sync_failures(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_q_cli_ignores_cli_sync_failures(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     recorded_calls: list[tuple[str, ...]] = []
 
-    def fake_run(
-        args: list[str], stdout: object, stderr: object, check: bool
-    ) -> subprocess.CompletedProcess[list[str]]:
+    def fake_run(args: list[str], stdout: object, stderr: object, check: bool) -> subprocess.CompletedProcess[list[str]]:
         recorded_calls.append(tuple(args))
         raise OSError("run failed")
 
     monkeypatch.setattr(q_privacy_module.Path, "home", lambda: tmp_path)
-    monkeypatch.setattr(
-        q_privacy_module.shutil,
-        "which",
-        lambda executable: "/usr/bin/q" if executable == "q" else None,
-    )
+    monkeypatch.setattr(q_privacy_module.shutil, "which", lambda executable: "/usr/bin/q" if executable == "q" else None)
     monkeypatch.setattr(q_privacy_module.subprocess, "run", fake_run)
 
     secure_q_cli()

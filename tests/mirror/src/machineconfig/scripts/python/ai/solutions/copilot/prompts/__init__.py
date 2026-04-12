@@ -5,13 +5,9 @@ from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def test_path_references_resolve_to_existing_prompt_assets() -> None:
-    pyright_fix_path = get_path_reference_path(
-        module=copilot_prompts,
-        path_reference=copilot_prompts.PYRIGHT_FIX_PATH_REFERENCE,
-    )
+    pyright_fix_path = get_path_reference_path(module=copilot_prompts, path_reference=copilot_prompts.PYRIGHT_FIX_PATH_REFERENCE)
     research_report_path = get_path_reference_path(
-        module=copilot_prompts,
-        path_reference=copilot_prompts.RESEARCH_REPORT_SKELETON_PROMPT_PATH_REFERENCE,
+        module=copilot_prompts, path_reference=copilot_prompts.RESEARCH_REPORT_SKELETON_PROMPT_PATH_REFERENCE
     )
 
     assert pyright_fix_path.name == "pyright_fix.md"

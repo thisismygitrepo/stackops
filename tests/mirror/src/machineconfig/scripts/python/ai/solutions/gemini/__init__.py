@@ -7,14 +7,8 @@ from machineconfig.utils.path_reference import get_path_reference_path
 
 
 def test_gemini_path_references_resolve_to_existing_assets() -> None:
-    instructions_path = get_path_reference_path(
-        module=gemini_assets,
-        path_reference=gemini_assets.INSTRUCTIONS_PATH_REFERENCE,
-    )
-    settings_path = get_path_reference_path(
-        module=gemini_assets,
-        path_reference=gemini_assets.SETTINGS_PATH_REFERENCE,
-    )
+    instructions_path = get_path_reference_path(module=gemini_assets, path_reference=gemini_assets.INSTRUCTIONS_PATH_REFERENCE)
+    settings_path = get_path_reference_path(module=gemini_assets, path_reference=gemini_assets.SETTINGS_PATH_REFERENCE)
 
     assert instructions_path.is_file()
     assert instructions_path.name == gemini_assets.INSTRUCTIONS_PATH_REFERENCE

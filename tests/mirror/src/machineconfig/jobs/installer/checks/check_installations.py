@@ -119,12 +119,7 @@ def test_scan_apps_with_vt_returns_fallback_records_when_credentials_missing(mon
 
     monkeypatch.setattr(check_installations, "get_vt_client", fake_get_vt_client)
 
-    records = check_installations.scan_apps_with_vt(
-        [
-            (FakeAppPath(Path("/tmp/alpha")), "1.0.0"),
-            (FakeAppPath(Path("/tmp/beta")), None),
-        ]
-    )
+    records = check_installations.scan_apps_with_vt([(FakeAppPath(Path("/tmp/alpha")), "1.0.0"), (FakeAppPath(Path("/tmp/beta")), None)])
 
     assert [record["app_data"]["app_name"] for record in records] == ["alpha", "beta"]
     assert all(record["app_data"]["notes"] == "VirusTotal credentials missing." for record in records)
@@ -157,10 +152,7 @@ def test_write_reports_writes_app_and_engine_csvs(tmp_path: Path, monkeypatch: p
             "other_engines": 0,
             "notes": "clean",
         },
-        scan_results=[
-            {"engine_name": "A", "category": "harmless", "result": "ok"},
-            {"engine_name": "B", "category": "undetected", "result": None},
-        ],
+        scan_results=[{"engine_name": "A", "category": "harmless", "result": "ok"}, {"engine_name": "B", "category": "undetected", "result": None}],
         fallback_notes="fallback",
     )
 

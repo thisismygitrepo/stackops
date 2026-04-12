@@ -38,9 +38,7 @@ def test_extract_github_repos_from_json_filters_non_github_and_duplicates(tmp_pa
     assert result == {"https://github.com/example/tool"}
 
 
-def test_fetch_github_release_data_falls_back_to_scraper_on_http_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_fetch_github_release_data_falls_back_to_scraper_on_http_error(monkeypatch: pytest.MonkeyPatch) -> None:
     scraper_calls: list[tuple[str, str, str | None]] = []
 
     def fake_get(url: str, *args: object, **kwargs: object) -> FakeApiResponse:
@@ -61,16 +59,11 @@ def test_fetch_github_release_data_falls_back_to_scraper_on_http_error(
     assert scraper_calls == [("owner", "repo", "v1.2.3")]
 
 
-def test_fetch_github_release_data_falls_back_to_scraper_on_rate_limit_message(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_fetch_github_release_data_falls_back_to_scraper_on_rate_limit_message(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_get(url: str, *args: object, **kwargs: object) -> FakeApiResponse:
         assert url.endswith("/releases/latest")
         _ = args, kwargs
-        return FakeApiResponse(
-            status_code=200,
-            payload={"message": "API rate limit exceeded for 203.0.113.10."},
-        )
+        return FakeApiResponse(status_code=200, payload={"message": "API rate limit exceeded for 203.0.113.10."})
 
     def fake_scraper(username: str, repo_name: str, version: str | None) -> dict[str, object]:
         return {"tag_name": "v9.9.9", "repo": f"{username}/{repo_name}", "version": version or "latest"}
@@ -89,12 +82,7 @@ def test_extract_release_info_normalizes_missing_asset_fields() -> None:
             "tag_name": "v1.0.0",
             "name": "Release 1",
             "published_at": "2024-01-02T03:04:05Z",
-            "assets": [
-                {
-                    "name": "tool.tar.gz",
-                    "browser_download_url": "https://downloads.example/tool.tar.gz",
-                }
-            ],
+            "assets": [{"name": "tool.tar.gz", "browser_download_url": "https://downloads.example/tool.tar.gz"}],
         }
     )
 

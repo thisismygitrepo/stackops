@@ -14,10 +14,7 @@ def _resolve_profile_asset(path_reference: str) -> Path:
 
 
 def test_packaged_yaml_mapper_files_exist_and_load_as_mappings() -> None:
-    for path_reference in (
-        profile_assets.MAPPER_DATA_PATH_REFERENCE,
-        profile_assets.MAPPER_DOTFILES_PATH_REFERENCE,
-    ):
+    for path_reference in (profile_assets.MAPPER_DATA_PATH_REFERENCE, profile_assets.MAPPER_DOTFILES_PATH_REFERENCE):
         asset_path = _resolve_profile_asset(path_reference)
         loaded_obj = yaml.safe_load(asset_path.read_text(encoding="utf-8"))
 
@@ -27,10 +24,7 @@ def test_packaged_yaml_mapper_files_exist_and_load_as_mappings() -> None:
 
 
 def test_packaged_json_schema_files_exist_and_load_as_objects() -> None:
-    for path_reference in (
-        profile_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE,
-        profile_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE,
-    ):
+    for path_reference in (profile_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE, profile_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE):
         asset_path = _resolve_profile_asset(path_reference)
         loaded_obj = json.loads(asset_path.read_text(encoding="utf-8"))
 

@@ -29,9 +29,7 @@ def test_read_default_cloud_config_returns_fresh_defaults() -> None:
     assert another_default_cloud_config["cloud"] == "mycloud101"
 
 
-def test_get_ve_path_and_ipython_profile_reads_specs_from_nearest_config(
-    tmp_path: Path,
-) -> None:
+def test_get_ve_path_and_ipython_profile_reads_specs_from_nearest_config(tmp_path: Path) -> None:
     project_dir = tmp_path / "project"
     nested_dir = project_dir / "pkg" / "module"
     nested_dir.mkdir(parents=True)
@@ -51,9 +49,7 @@ specs:
     assert ipy_profile == "profile-main"
 
 
-def test_get_ve_path_and_ipython_profile_merges_missing_specs_from_parents(
-    tmp_path: Path,
-) -> None:
+def test_get_ve_path_and_ipython_profile_merges_missing_specs_from_parents(tmp_path: Path) -> None:
     project_dir = tmp_path / "project"
     package_dir = project_dir / "pkg"
     nested_dir = package_dir / "module"
@@ -80,9 +76,7 @@ specs:
     assert ipy_profile == "profile-parent"
 
 
-def test_get_ve_path_and_ipython_profile_uses_dotvenv_fallback(
-    tmp_path: Path,
-) -> None:
+def test_get_ve_path_and_ipython_profile_uses_dotvenv_fallback(tmp_path: Path) -> None:
     project_dir = tmp_path / "project"
     nested_dir = project_dir / "pkg" / "module"
     nested_dir.mkdir(parents=True)
@@ -94,9 +88,7 @@ def test_get_ve_path_and_ipython_profile_uses_dotvenv_fallback(
     assert ipy_profile is None
 
 
-def test_get_ve_path_and_ipython_profile_returns_none_when_no_sources_exist(
-    tmp_path: Path,
-) -> None:
+def test_get_ve_path_and_ipython_profile_returns_none_when_no_sources_exist(tmp_path: Path) -> None:
     nested_dir = tmp_path / "project" / "pkg" / "module"
     nested_dir.mkdir(parents=True)
 
@@ -107,10 +99,7 @@ def test_get_ve_path_and_ipython_profile_returns_none_when_no_sources_exist(
 
 
 @pytest.mark.parametrize(("platform_name"), [("Linux"), ("Darwin")])
-def test_get_ve_activate_line_for_posix_platforms(
-    monkeypatch: pytest.MonkeyPatch,
-    platform_name: str,
-) -> None:
+def test_get_ve_activate_line_for_posix_platforms(monkeypatch: pytest.MonkeyPatch, platform_name: str) -> None:
     monkeypatch.setattr("platform.system", lambda: platform_name)
 
     activate_line = ve_module.get_ve_activate_line("/tmp/venv")
@@ -118,10 +107,7 @@ def test_get_ve_activate_line_for_posix_platforms(
     assert activate_line == ". /tmp/venv/bin/activate"
 
 
-def test_get_ve_activate_line_for_windows(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
+def test_get_ve_activate_line_for_windows(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home_dir = tmp_path / "home"
     ve_root = home_dir / "venvs" / "proj"
     ve_root.mkdir(parents=True)
@@ -134,9 +120,7 @@ def test_get_ve_activate_line_for_windows(
     assert activate_line == ". $HOME/venvs/proj/Scripts/activate.ps1"
 
 
-def test_get_ve_activate_line_rejects_unknown_platform(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_get_ve_activate_line_rejects_unknown_platform(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("platform.system", lambda: "Plan9")
 
     with pytest.raises(NotImplementedError, match="Platform Plan9 not supported"):

@@ -10,10 +10,7 @@ def _decode_encoded_command(parts: list[str]) -> str:
 
 
 def test_build_tmux_exit_mode_command_wraps_back_to_shell_script() -> None:
-    command = session_exit_mode.build_tmux_exit_mode_command(
-        command="python app.py",
-        exit_mode="backToShell",
-    )
+    command = session_exit_mode.build_tmux_exit_mode_command(command="python app.py", exit_mode="backToShell")
 
     parts = shlex.split(command)
 
@@ -22,11 +19,7 @@ def test_build_tmux_exit_mode_command_wraps_back_to_shell_script() -> None:
 
 
 def test_build_powershell_exit_mode_command_parts_back_to_shell_uses_no_exit() -> None:
-    parts = session_exit_mode.build_powershell_exit_mode_command_parts(
-        command="Write-Host 'hi'",
-        exit_mode="backToShell",
-        shell_name="pwsh",
-    )
+    parts = session_exit_mode.build_powershell_exit_mode_command_parts(command="Write-Host 'hi'", exit_mode="backToShell", shell_name="pwsh")
     decoded_script = _decode_encoded_command(parts)
 
     assert parts[0:4] == ["pwsh", "-NoLogo", "-NoProfile", "-NoExit"]
@@ -35,11 +28,7 @@ def test_build_powershell_exit_mode_command_parts_back_to_shell_uses_no_exit() -
 
 
 def test_build_powershell_exit_mode_command_parts_kill_window_exits() -> None:
-    parts = session_exit_mode.build_powershell_exit_mode_command_parts(
-        command="Write-Host done",
-        exit_mode="killWindow",
-        shell_name="powershell",
-    )
+    parts = session_exit_mode.build_powershell_exit_mode_command_parts(command="Write-Host done", exit_mode="killWindow", shell_name="powershell")
     decoded_script = _decode_encoded_command(parts)
 
     assert "-NoExit" not in parts
@@ -47,10 +36,7 @@ def test_build_powershell_exit_mode_command_parts_kill_window_exits() -> None:
 
 
 def test_build_tmux_exit_mode_command_terminate_contains_restart_prompt() -> None:
-    command = session_exit_mode.build_tmux_exit_mode_command(
-        command="python worker.py",
-        exit_mode="terminate",
-    )
+    command = session_exit_mode.build_tmux_exit_mode_command(command="python worker.py", exit_mode="terminate")
     script_body = shlex.split(command)[2]
 
     assert "while true; do" in script_body

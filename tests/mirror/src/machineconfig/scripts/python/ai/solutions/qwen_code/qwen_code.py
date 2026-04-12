@@ -10,11 +10,7 @@ def test_build_configuration_writes_qwen_markdown_when_requested(tmp_path: Path)
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
 
-    qwen_code_module.build_configuration(
-        repo_root=repo_root,
-        add_private_config=True,
-        add_instructions=True,
-    )
+    qwen_code_module.build_configuration(repo_root=repo_root, add_private_config=True, add_instructions=True)
 
     instructions_text = get_generic_instructions_path().read_text(encoding="utf-8")
 
@@ -25,10 +21,6 @@ def test_build_configuration_skips_qwen_files_when_instructions_disabled(tmp_pat
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
 
-    qwen_code_module.build_configuration(
-        repo_root=repo_root,
-        add_private_config=True,
-        add_instructions=False,
-    )
+    qwen_code_module.build_configuration(repo_root=repo_root, add_private_config=True, add_instructions=False)
 
     assert list(repo_root.iterdir()) == []

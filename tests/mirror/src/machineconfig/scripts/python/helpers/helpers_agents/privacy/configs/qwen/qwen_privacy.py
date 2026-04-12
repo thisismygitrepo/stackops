@@ -5,14 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.qwen import (
-    qwen_privacy,
-)
+from machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.qwen import qwen_privacy
 
 
-def test_secure_qwen_config_creates_expected_defaults(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_qwen_config_creates_expected_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     class FakePath:
         @staticmethod
         def home() -> Path:
@@ -26,18 +22,12 @@ def test_secure_qwen_config_creates_expected_defaults(
     content = json.loads(config_file.read_text(encoding="utf-8"))
 
     assert content["privacy"]["usageStatisticsEnabled"] is False
-    assert content["telemetry"] == {
-        "enabled": False,
-        "logPrompts": False,
-        "target": "local",
-    }
+    assert content["telemetry"] == {"enabled": False, "logPrompts": False, "target": "local"}
     assert content["general"]["disableAutoUpdate"] is True
     assert content["general"]["checkpointing"]["enabled"] is False
 
 
-def test_secure_qwen_config_recovers_from_invalid_json(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_qwen_config_recovers_from_invalid_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     class FakePath:
         @staticmethod
         def home() -> Path:

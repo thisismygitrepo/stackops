@@ -27,9 +27,7 @@ class InstallerSpy:
         self.installed_versions.append(version)
 
 
-def test_main_linux_runs_extension_install_and_auth(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_linux_runs_extension_install_and_auth(monkeypatch: pytest.MonkeyPatch) -> None:
     InstallerSpy.instances.clear()
     run_calls: list[RunCall] = []
 
@@ -54,9 +52,7 @@ def test_main_linux_runs_extension_install_and_auth(
     assert run_calls[0].kwargs == {"shell": True, "text": True, "check": True}
 
 
-def test_main_rejects_unsupported_platform(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_rejects_unsupported_platform(monkeypatch: pytest.MonkeyPatch) -> None:
     InstallerSpy.instances.clear()
     monkeypatch.setattr(gh_script, "Installer", InstallerSpy)
     monkeypatch.setattr(gh_script.platform, "system", lambda: "Plan9")

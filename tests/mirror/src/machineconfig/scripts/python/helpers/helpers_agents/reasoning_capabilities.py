@@ -26,6 +26,4 @@ def test_resolve_reasoning_validates_agent_capabilities() -> None:
     with pytest.raises(ValueError) as exc_info:
         reasoning_capabilities.resolve_reasoning(shortcut="x", agent="claude")
 
-    assert str(exc_info.value) == (
-        "agent 'claude' does not support 'x'; supported values: l=low, m=medium, h=high"
-    )
+    assert str(exc_info.value) == ("agent 'claude' does not support 'x'; supported values: l=low, m=medium, h=high")

@@ -55,7 +55,14 @@ def test_check_command_status_returns_unknown_for_missing_tab() -> None:
 def test_basic_process_check_reports_running_processes() -> None:
     remote_executor = FakeRemoteExecutor(
         "srv-1",
-        [subprocess.CompletedProcess(args=["ssh"], returncode=0, stdout='[{"pid": 42, "name": "python", "cmdline": ["python", "worker.py"], "status": "running"}]', stderr="")],
+        [
+            subprocess.CompletedProcess(
+                args=["ssh"],
+                returncode=0,
+                stdout='[{"pid": 42, "name": "python", "cmdline": ["python", "worker.py"], "status": "running"}]',
+                stderr="",
+            )
+        ],
     )
     monitor = subject.ProcessMonitor(remote_executor)
 
@@ -127,10 +134,7 @@ def test_check_all_commands_status_uses_verified_checks(monkeypatch: pytest.Monk
     calls: list[tuple[str, bool]] = []
 
     def fake_check_command_status(
-        self: subject.ProcessMonitor,
-        tab_name: str,
-        layout_config: LayoutConfig,
-        use_verification: bool,
+        self: subject.ProcessMonitor, tab_name: str, layout_config: LayoutConfig, use_verification: bool
     ) -> subject.CommandStatus:
         calls.append((tab_name, use_verification))
         return {"status": "running", "running": True, "processes": [], "command": tab_name, "tab_name": tab_name}

@@ -64,11 +64,7 @@ def test_get_execution_line_renders_parallel_try_wrapper() -> None:
     )
     workload_params = WorkloadParams.default()
 
-    execution_line = params.get_execution_line(
-        workload_params=workload_params,
-        parallelize=True,
-        wrap_in_try_except=True,
-    )
+    execution_line = params.get_execution_line(workload_params=workload_params, parallelize=True, wrap_in_try_except=True)
 
     assert "from pkg.task import run_task as func" in execution_line
     assert "ProcessPoolExecutor" in execution_line
@@ -84,11 +80,7 @@ def test_script_execution_line_uses_exec_and_installable_checks_setup_py(tmp_pat
     params.file_path_rh = str(tmp_path / "script.py")
     params.func_module = "script"
 
-    execution_line = params.get_execution_line(
-        workload_params=None,
-        parallelize=False,
-        wrap_in_try_except=False,
-    )
+    execution_line = params.get_execution_line(workload_params=None, parallelize=False, wrap_in_try_except=False)
 
     assert "exec(Path(r'" in execution_line
     assert params.is_installable() is True

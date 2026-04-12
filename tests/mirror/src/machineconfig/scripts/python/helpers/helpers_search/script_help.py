@@ -50,9 +50,7 @@ def test_list_available_scripts_groups_public_files_by_extension(
     assert "plain" in output
 
 
-def test_list_available_scripts_reports_dynamic_fetch_failure(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_list_available_scripts_reports_dynamic_fetch_failure(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     fake_requests = ModuleType("requests")
 
     class FakeResponse:

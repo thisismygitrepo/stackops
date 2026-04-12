@@ -9,9 +9,7 @@ from machineconfig.scripts.python.ai.utils.shared import get_generic_instruction
 def test_build_configuration_writes_crush_markdown_when_instructions_enabled(tmp_path: Path) -> None:
     build_configuration(repo_root=tmp_path, add_private_config=False, add_instructions=True)
 
-    assert tmp_path.joinpath("CRUSH.md").read_text(encoding="utf-8") == get_generic_instructions_path().read_text(
-        encoding="utf-8"
-    )
+    assert tmp_path.joinpath("CRUSH.md").read_text(encoding="utf-8") == get_generic_instructions_path().read_text(encoding="utf-8")
 
 
 def test_build_configuration_does_not_create_private_crush_files(tmp_path: Path) -> None:

@@ -21,9 +21,6 @@ def _referenced_paths() -> tuple[tuple[str, Path], tuple[str, Path], tuple[str, 
 
 
 @pytest.mark.parametrize(("reference_name", "referenced_path"), _referenced_paths())
-def test_nushell_path_references_point_to_shipped_files(
-    reference_name: str,
-    referenced_path: Path,
-) -> None:
+def test_nushell_path_references_point_to_shipped_files(reference_name: str, referenced_path: Path) -> None:
     assert referenced_path.is_file(), reference_name
     assert referenced_path.read_text(encoding="utf-8").strip(), reference_name

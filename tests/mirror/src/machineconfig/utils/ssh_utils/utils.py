@@ -68,12 +68,7 @@ class FakeSSH:
         local_path.write_text(self.downloaded_json, encoding="utf-8")
 
     def run_shell_cmd_on_remote(
-        self,
-        command: str,
-        verbose_output: bool,
-        description: str,
-        strict_stderr: bool,
-        strict_return_code: bool,
+        self, command: str, verbose_output: bool, description: str, strict_stderr: bool, strict_return_code: bool
     ) -> FakeRunShellResponse:
         _ = verbose_output, description, strict_stderr, strict_return_code
         self.shell_commands.append(command)
@@ -96,18 +91,8 @@ def _make_path_factory(mappings: dict[str, Path]) -> Callable[..., Path]:
 
 
 def test_build_remote_path_and_normalization_follow_remote_platform() -> None:
-    linux_ssh = FakeSSH(
-        remote_specs={"system": "Linux", "home_dir": "/remote/home"},
-        sftp=None,
-        run_py_response_op="",
-        downloaded_json="true",
-    )
-    windows_ssh = FakeSSH(
-        remote_specs={"system": "Windows", "home_dir": r"C:\Users\alex"},
-        sftp=None,
-        run_py_response_op="",
-        downloaded_json="true",
-    )
+    linux_ssh = FakeSSH(remote_specs={"system": "Linux", "home_dir": "/remote/home"}, sftp=None, run_py_response_op="", downloaded_json="true")
+    windows_ssh = FakeSSH(remote_specs={"system": "Windows", "home_dir": r"C:\Users\alex"}, sftp=None, run_py_response_op="", downloaded_json="true")
 
     assert sut._build_remote_path(linux_ssh, "/remote/home", r"nested\file.txt") == "/remote/home/nested/file.txt"
     assert sut._build_remote_path(windows_ssh, r"C:\Users\alex", "nested/file.txt") == r"C:\Users\alex\nested\file.txt"
@@ -116,18 +101,8 @@ def test_build_remote_path_and_normalization_follow_remote_platform() -> None:
 
 
 def test_expand_remote_path_handles_home_absolute_and_relative_paths() -> None:
-    linux_ssh = FakeSSH(
-        remote_specs={"system": "Linux", "home_dir": "/remote/home"},
-        sftp=None,
-        run_py_response_op="",
-        downloaded_json="true",
-    )
-    windows_ssh = FakeSSH(
-        remote_specs={"system": "Windows", "home_dir": r"C:\Users\alex"},
-        sftp=None,
-        run_py_response_op="",
-        downloaded_json="true",
-    )
+    linux_ssh = FakeSSH(remote_specs={"system": "Linux", "home_dir": "/remote/home"}, sftp=None, run_py_response_op="", downloaded_json="true")
+    windows_ssh = FakeSSH(remote_specs={"system": "Windows", "home_dir": r"C:\Users\alex"}, sftp=None, run_py_response_op="", downloaded_json="true")
 
     assert sut.expand_remote_path(linux_ssh, "~/docs/file.txt") == "/remote/home/docs/file.txt"
     assert sut.expand_remote_path(linux_ssh, "docs\\file.txt") == "/remote/home/docs/file.txt"
@@ -137,17 +112,11 @@ def test_expand_remote_path_handles_home_absolute_and_relative_paths() -> None:
     assert sut.expand_remote_path(windows_ssh, "docs/file.txt") == r"C:\Users\alex\docs\file.txt"
 
 
-def test_check_remote_is_dir_reads_boolean_json_and_cleans_temp_file(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_check_remote_is_dir_reads_boolean_json_and_cleans_temp_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(sut, "randstr", lambda: "fixed")
     fake_ssh = FakeSSH(
-        remote_specs={"system": "Linux", "home_dir": "/remote/home"},
-        sftp=None,
-        run_py_response_op="/remote/result.json",
-        downloaded_json="true",
+        remote_specs={"system": "Linux", "home_dir": "/remote/home"}, sftp=None, run_py_response_op="/remote/result.json", downloaded_json="true"
     )
 
     result = sut.check_remote_is_dir(fake_ssh, source_path="~/data")
@@ -158,51 +127,28 @@ def test_check_remote_is_dir_reads_boolean_json_and_cleans_temp_file(
     assert not local_json_path.exists()
 
 
-def test_check_remote_is_dir_rejects_empty_remote_response(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_check_remote_is_dir_rejects_empty_remote_response(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(sut, "randstr", lambda: "fixed")
-    fake_ssh = FakeSSH(
-        remote_specs={"system": "Linux", "home_dir": "/remote/home"},
-        sftp=None,
-        run_py_response_op="",
-        downloaded_json="true",
-    )
+    fake_ssh = FakeSSH(remote_specs={"system": "Linux", "home_dir": "/remote/home"}, sftp=None, run_py_response_op="", downloaded_json="true")
 
     with pytest.raises(RuntimeError, match="no response from remote"):
         sut.check_remote_is_dir(fake_ssh, source_path="~/data")
 
 
-def test_create_dir_and_check_if_exists_uploads_script_and_runs_remote_python(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_create_dir_and_check_if_exists_uploads_script_and_runs_remote_python(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(sut, "randstr", lambda: "fixed")
     monkeypatch.setattr(sut, "lambda_to_python_script", lambda fn, in_global, import_module: "print('ok')")
     monkeypatch.setattr(sut, "get_uv_command", lambda platform: "uv")
 
     fake_sftp = FakeSFTP()
-    fake_ssh = FakeSSH(
-        remote_specs={"system": "Linux", "home_dir": "/remote/home"},
-        sftp=fake_sftp,
-        run_py_response_op="",
-        downloaded_json="true",
-    )
+    fake_ssh = FakeSSH(remote_specs={"system": "Linux", "home_dir": "/remote/home"}, sftp=fake_sftp, run_py_response_op="", downloaded_json="true")
 
-    sut.create_dir_and_check_if_exists(
-        fake_ssh,
-        path_rel2home="folder/file.txt",
-        overwrite_existing=True,
-    )
+    sut.create_dir_and_check_if_exists(fake_ssh, path_rel2home="folder/file.txt", overwrite_existing=True)
 
     assert fake_sftp.put_calls == [
-        PutCall(
-            localpath=str(tmp_path / sut.DEFAULT_PICKLE_SUBDIR / "create_target_dir_fixed.py"),
-            remotepath="/remote/home/.tmp_pyfile.py",
-        )
+        PutCall(localpath=str(tmp_path / sut.DEFAULT_PICKLE_SUBDIR / "create_target_dir_fixed.py"), remotepath="/remote/home/.tmp_pyfile.py")
     ]
     assert fake_ssh.shell_commands == ["uv run python .tmp_pyfile.py"]
     assert fake_ssh.last_shell_response is not None

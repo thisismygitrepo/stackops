@@ -18,9 +18,7 @@ class RunCall:
     kwargs: dict[str, object]
 
 
-def test_main_linux_runs_lunarvim_installer(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_linux_runs_lunarvim_installer(monkeypatch: pytest.MonkeyPatch) -> None:
     run_calls: list[RunCall] = []
 
     def fake_run(*args: object, **kwargs: object) -> int:
@@ -30,11 +28,7 @@ def test_main_linux_runs_lunarvim_installer(
     monkeypatch.setattr(lvim_script.platform, "system", lambda: "Linux")
     monkeypatch.setattr(lvim_script.subprocess, "run", fake_run)
 
-    lvim_script.main(
-        installer_data=DUMMY_INSTALLER_DATA,
-        version="1.4.0",
-        update=False,
-    )
+    lvim_script.main(installer_data=DUMMY_INSTALLER_DATA, version="1.4.0", update=False)
 
     assert len(run_calls) == 1
     program = run_calls[0].args[0]
@@ -44,14 +38,8 @@ def test_main_linux_runs_lunarvim_installer(
     assert run_calls[0].kwargs == {"shell": True, "check": True}
 
 
-def test_main_rejects_unsupported_platform(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_rejects_unsupported_platform(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(lvim_script.platform, "system", lambda: "Plan9")
 
     with pytest.raises(NotImplementedError, match="Unsupported platform: Plan9"):
-        lvim_script.main(
-            installer_data=DUMMY_INSTALLER_DATA,
-            version=None,
-            update=False,
-        )
+        lvim_script.main(installer_data=DUMMY_INSTALLER_DATA, version=None, update=False)

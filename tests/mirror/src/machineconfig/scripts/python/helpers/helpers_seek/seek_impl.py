@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 import platform
 import sys
 from types import ModuleType
-from typing import TypedDict
+from typing import TypeAlias, TypedDict, cast
 
 import pytest
 
 import machineconfig.scripts.python.helpers.helpers_seek.seek_impl as seek_impl
 
 
-class SymbolInfo(TypedDict):
+class RuntimeSymbolInfo(TypedDict):
     type: str
     name: str
     path: str
@@ -32,8 +33,22 @@ class TtyStdin:
         return True
 
 
+BuildAstOptionLookup: TypeAlias = Callable[[list[RuntimeSymbolInfo]], tuple[dict[str, str], dict[str, RuntimeSymbolInfo]]]
+BuildAstOutputPayload: TypeAlias = Callable[[RuntimeSymbolInfo], dict[str, str | int]]
+PrependDirectoryChange: TypeAlias = Callable[[str, str | None, str], str]
+SetInitialQuery: TypeAlias = Callable[[str, str, str], str]
+GetFzfQueryArgument: TypeAlias = Callable[[str, str], str]
+
+
+build_ast_option_lookup = cast(BuildAstOptionLookup, getattr(seek_impl, "_build_ast_option_lookup"))
+build_ast_output_payload = cast(BuildAstOutputPayload, getattr(seek_impl, "_build_ast_output_payload"))
+prepend_directory_change = cast(PrependDirectoryChange, getattr(seek_impl, "_prepend_directory_change"))
+set_initial_query = cast(SetInitialQuery, getattr(seek_impl, "_set_initial_query"))
+get_fzf_query_argument = cast(GetFzfQueryArgument, getattr(seek_impl, "_get_fzf_query_argument"))
+
+
 def test_ast_option_helpers_build_lookup_and_payload() -> None:
-    symbol: SymbolInfo = {
+    symbol: RuntimeSymbolInfo = {
         "type": "function",
         "name": "demo",
         "path": "pkg.demo",
@@ -44,13 +59,13 @@ def test_ast_option_helpers_build_lookup_and_payload() -> None:
         "body": "def demo() -> None:\n    pass",
     }
 
-    options_to_preview_mapping, symbol_lookup = seek_impl._build_ast_option_lookup(symbols=[symbol])
+    options_to_preview_mapping, symbol_lookup = build_ast_option_lookup([symbol])
     option_key = "pkg.demo    [pkg/demo.py:12]"
 
     assert option_key in options_to_preview_mapping
     assert "def demo() -> None:" in options_to_preview_mapping[option_key]
     assert symbol_lookup[option_key] == symbol
-    assert seek_impl._build_ast_output_payload(symbol=symbol) == {
+    assert build_ast_output_payload(symbol) == {
         "type": "function",
         "name": "demo",
         "path": "pkg.demo",
@@ -62,23 +77,17 @@ def test_ast_option_helpers_build_lookup_and_payload() -> None:
 
 
 def test_shell_helpers_quote_for_linux_and_windows() -> None:
-    linux_script = seek_impl._prepend_directory_change(script="echo hi", directory="/tmp/alpha beta", platform_name="Linux")
-    windows_script = seek_impl._prepend_directory_change(
-        script="Write-Output hi", directory="C:/Users/alex/rock'n", platform_name="Windows"
-    )
-    linux_query_script = seek_impl._set_initial_query(
-        script='INITIAL_QUERY=""\necho hi', search_term="alpha beta", platform_name="Linux"
-    )
-    windows_query_script = seek_impl._set_initial_query(
-        script="$initialQuery = ''\nWrite-Output hi", search_term="rock'n", platform_name="Windows"
-    )
+    linux_script = prepend_directory_change("echo hi", "/tmp/alpha beta", "Linux")
+    windows_script = prepend_directory_change("Write-Output hi", "C:/Users/alex/rock'n", "Windows")
+    linux_query_script = set_initial_query('INITIAL_QUERY=""\necho hi', "alpha beta", "Linux")
+    windows_query_script = set_initial_query("$initialQuery = ''\nWrite-Output hi", "rock'n", "Windows")
 
     assert linux_script.startswith("cd '/tmp/alpha beta'\n")
     assert windows_script.startswith("Set-Location -LiteralPath 'C:/Users/alex/rock''n'\n")
     assert "INITIAL_QUERY='alpha beta'" in linux_query_script
     assert "$initialQuery = 'rock''n'" in windows_query_script
-    assert seek_impl._get_fzf_query_argument(search_term="alpha beta", platform_name="Linux") == "--query 'alpha beta'"
-    assert seek_impl._get_fzf_query_argument(search_term="rock'n", platform_name="Windows") == "--query 'rock''n'"
+    assert get_fzf_query_argument("alpha beta", "Linux") == "--query 'alpha beta'"
+    assert get_fzf_query_argument("rock'n", "Windows") == "--query 'rock''n'"
 
 
 def test_search_file_with_context_builds_linux_script_with_cleanup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -203,13 +212,7 @@ def test_seek_runs_context_search_for_file_input(tmp_path: Path, monkeypatch: py
         install_dependencies=False,
     )
 
-    assert captured == {
-        "path": str(target_file),
-        "is_temp_file": False,
-        "edit": True,
-        "script": "echo scripted",
-        "strict": False,
-    }
+    assert captured == {"path": str(target_file), "is_temp_file": False, "edit": True, "script": "echo scripted", "strict": False}
 
 
 def test_seek_dispatches_to_text_search_for_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

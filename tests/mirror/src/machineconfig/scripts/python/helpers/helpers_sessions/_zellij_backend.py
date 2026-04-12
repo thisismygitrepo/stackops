@@ -14,11 +14,7 @@ def _completed_process(stdout: str, returncode: int, stderr: str) -> CompletedPr
 def test_choose_session_rejects_current_session(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_run_command(args: list[str]) -> CompletedProcess[str]:
         assert args == ["zellij", "list-sessions"]
-        return _completed_process(
-            stdout="proj [Created just-now] (current)\nother [Created earlier]\n",
-            returncode=0,
-            stderr="",
-        )
+        return _completed_process(stdout="proj [Created just-now] (current)\nother [Created earlier]\n", returncode=0, stderr="")
 
     monkeypatch.setattr(zellij_backend, "run_command", fake_run_command)
 
@@ -35,29 +31,16 @@ def test_choose_session_window_uses_only_active_sessions(monkeypatch: pytest.Mon
         return _completed_process(stdout="live\narchive EXITED\n", returncode=0, stderr="")
 
     def fake_build_window_target_options(
-        active_sessions: list[str],
-        read_session_metadata_fn: object,
-        get_live_tab_names_fn: object,
-        quote_fn: object,
+        active_sessions: list[str], read_session_metadata_fn: object, get_live_tab_names_fn: object, quote_fn: object
     ) -> tuple[dict[str, str], dict[str, str]]:
         del read_session_metadata_fn, get_live_tab_names_fn, quote_fn
         captured_active_sessions.extend(active_sessions)
         return (
-            {
-                "[live] 1:code": "ATTACH CODE",
-                "[live] 1:code / Pane #1": "ATTACH PANE",
-            },
-            {
-                "[live] 1:code": "preview-tab",
-                "[live] 1:code / Pane #1": "preview-pane",
-            },
+            {"[live] 1:code": "ATTACH CODE", "[live] 1:code / Pane #1": "ATTACH PANE"},
+            {"[live] 1:code": "preview-tab", "[live] 1:code / Pane #1": "preview-pane"},
         )
 
-    def fake_choose(
-        msg: str,
-        options_to_preview_mapping: dict[str, str],
-        multi: bool = False,
-    ) -> str | None:
+    def fake_choose(msg: str, options_to_preview_mapping: dict[str, str], multi: bool = False) -> str | None:
         assert msg == "Choose a Zellij tab or pane to attach to:"
         assert not multi
         assert "[live] 1:code / Pane #1" in options_to_preview_mapping
@@ -79,10 +62,7 @@ def test_get_session_tabs_ignores_exited_sessions(monkeypatch: pytest.MonkeyPatc
         return _completed_process(stdout="one\nold EXITED\ntwo\n", returncode=0, stderr="")
 
     def fake_get_live_tab_names(session_name: str) -> list[str]:
-        return {
-            "one": ["code", "logs"],
-            "two": ["shell"],
-        }[session_name]
+        return {"one": ["code", "logs"], "two": ["shell"]}[session_name]
 
     monkeypatch.setattr(zellij_backend, "run_command", fake_run_command)
     monkeypatch.setattr(zellij_backend, "_get_live_tab_names", fake_get_live_tab_names)
@@ -107,11 +87,7 @@ def test_choose_kill_target_window_marks_session_state_and_deduplicates(monkeypa
         return raw_line == "old"
 
     def fake_kill_script_for_target(
-        session_name: str,
-        quote_fn: object,
-        tab_name: str | None = None,
-        pane_focus_commands: list[str] | None = None,
-        kill_pane: bool = False,
+        session_name: str, quote_fn: object, tab_name: str | None = None, pane_focus_commands: list[str] | None = None, kill_pane: bool = False
     ) -> str:
         del quote_fn, tab_name, pane_focus_commands, kill_pane
         return f"KILL {session_name}"
@@ -120,33 +96,18 @@ def test_choose_kill_target_window_marks_session_state_and_deduplicates(monkeypa
         return f"preview:{raw_line}"
 
     def fake_build_kill_target_options(
-        active_sessions: list[str],
-        read_session_metadata_fn: object,
-        get_live_tab_names_fn: object,
-        quote_fn: object,
+        active_sessions: list[str], read_session_metadata_fn: object, get_live_tab_names_fn: object, quote_fn: object
     ) -> tuple[dict[str, str], dict[str, str]]:
         del read_session_metadata_fn, get_live_tab_names_fn, quote_fn
         assert active_sessions == ["live"]
-        return (
-            {"[live] 1:code": "TAB live"},
-            {"[live] 1:code": "preview-tab"},
-        )
+        return ({"[live] 1:code": "TAB live"}, {"[live] 1:code": "preview-tab"})
 
-    def fake_choose(
-        msg: str,
-        options_to_preview_mapping: dict[str, str],
-        multi: bool = False,
-    ) -> list[str]:
+    def fake_choose(msg: str, options_to_preview_mapping: dict[str, str], multi: bool = False) -> list[str]:
         assert msg == "Choose a Zellij session, tab, or pane to kill:"
         assert multi
         assert "[live] SESSION (current)" in options_to_preview_mapping
         assert "[old] SESSION (exited)" in options_to_preview_mapping
-        return [
-            "[live] SESSION (current)",
-            "[live] 1:code",
-            "[live] 1:code",
-            "[old] SESSION (exited)",
-        ]
+        return ["[live] SESSION (current)", "[live] 1:code", "[live] 1:code", "[old] SESSION (exited)"]
 
     monkeypatch.setattr(zellij_backend, "run_command", fake_run_command)
     monkeypatch.setattr(zellij_backend, "_session_name", fake_session_name)

@@ -38,9 +38,7 @@ def test_secure_cursor_cli_creates_platform_specific_settings_file(
     assert settings_data["extensions.autoUpdate"] is False
 
 
-def test_secure_cursor_cli_strips_comments_and_preserves_existing_keys(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_secure_cursor_cli_strips_comments_and_preserves_existing_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     home = tmp_path / "home"
     settings_file = home / ".config" / "Cursor" / "User" / "settings.json"
     settings_file.parent.mkdir(parents=True, exist_ok=True)

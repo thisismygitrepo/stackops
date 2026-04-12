@@ -31,26 +31,24 @@ def test_build_configuration_writes_private_assets_into_github_directory(tmp_pat
     assert agents_dir.joinpath("Thinking-Beast-Mode.agent.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
         "agents", "Thinking-Beast-Mode.agent.md"
     ).read_text(encoding="utf-8")
-    assert agents_dir.joinpath("Ultimate-Transparent-Thinking-Beast-Mode.agent.md").read_text(
-        encoding="utf-8"
-    ) == _copilot_root().joinpath("agents", "Ultimate-Transparent-Thinking-Beast-Mode.agent.md").read_text(
+    assert agents_dir.joinpath("Ultimate-Transparent-Thinking-Beast-Mode.agent.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
+        "agents", "Ultimate-Transparent-Thinking-Beast-Mode.agent.md"
+    ).read_text(encoding="utf-8")
+    assert agents_dir.joinpath("__init__.agent.md").read_text(encoding="utf-8") == _copilot_root().joinpath("agents", "__init__.py").read_text(
         encoding="utf-8"
     )
-    assert agents_dir.joinpath("__init__.agent.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
-        "agents", "__init__.py"
-    ).read_text(encoding="utf-8")
     assert agents_dir.joinpath("deepResearch.agent.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
         "agents", "deepResearch.agent.md"
     ).read_text(encoding="utf-8")
-    assert prompts_dir.joinpath("__init__.prompt.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
-        "prompts", "__init__.py"
-    ).read_text(encoding="utf-8")
+    assert prompts_dir.joinpath("__init__.prompt.md").read_text(encoding="utf-8") == _copilot_root().joinpath("prompts", "__init__.py").read_text(
+        encoding="utf-8"
+    )
     assert prompts_dir.joinpath("pyright_fix.prompt.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
         "prompts", "pyright_fix.md"
     ).read_text(encoding="utf-8")
-    assert prompts_dir.joinpath("research-report-skeleton.prompt.md").read_text(
-        encoding="utf-8"
-    ) == _copilot_root().joinpath("prompts", "research-report-skeleton.prompt.md").read_text(encoding="utf-8")
+    assert prompts_dir.joinpath("research-report-skeleton.prompt.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
+        "prompts", "research-report-skeleton.prompt.md"
+    ).read_text(encoding="utf-8")
     assert not tmp_path.joinpath(".github", "instructions").exists()
 
 
@@ -70,11 +68,11 @@ def test_build_configuration_writes_instruction_assets_and_generic_instructions(
     assert instructions_dir.joinpath("watch_exec.instructions.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
         "instructions", "python", "watch_exec.prompt.md"
     ).read_text(encoding="utf-8")
-    assert instructions_dir.joinpath("copilot-cli-security.instructions.md").read_text(
+    assert instructions_dir.joinpath("copilot-cli-security.instructions.md").read_text(encoding="utf-8") == _copilot_root().joinpath(
+        "privacy.md"
+    ).read_text(encoding="utf-8")
+    assert tmp_path.joinpath(".github", "copilot-instructions.md").read_text(encoding="utf-8") == get_generic_instructions_path().read_text(
         encoding="utf-8"
-    ) == _copilot_root().joinpath("privacy.md").read_text(encoding="utf-8")
-    assert tmp_path.joinpath(".github", "copilot-instructions.md").read_text(
-        encoding="utf-8"
-    ) == get_generic_instructions_path().read_text(encoding="utf-8")
+    )
     assert not tmp_path.joinpath(".github", "agents").exists()
     assert not tmp_path.joinpath(".github", "prompts").exists()

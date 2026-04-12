@@ -17,8 +17,11 @@ WRITE_TEXT_IF_MISSING = cast(Callable[[Path, str], None], getattr(FORGE_MODULE, 
 
 
 def test_default_forge_yaml_contains_schema_url() -> None:
-    assert DEFAULT_FORGE_YAML() == f"""# yaml-language-server: $schema={FORGE_SCHEMA_URL}
+    assert (
+        DEFAULT_FORGE_YAML()
+        == f"""# yaml-language-server: $schema={FORGE_SCHEMA_URL}
 """
+    )
 
 
 def test_write_text_if_missing_creates_parent_and_preserves_existing_content(tmp_path: Path) -> None:
@@ -42,9 +45,7 @@ def test_write_json_if_missing_creates_parent_and_preserves_existing_content(tmp
 def test_build_configuration_writes_agents_and_private_files(tmp_path: Path) -> None:
     build_configuration(repo_root=tmp_path, add_private_config=True, add_instructions=True)
 
-    assert tmp_path.joinpath("AGENTS.md").read_text(encoding="utf-8") == get_generic_instructions_path().read_text(
-        encoding="utf-8"
-    )
+    assert tmp_path.joinpath("AGENTS.md").read_text(encoding="utf-8") == get_generic_instructions_path().read_text(encoding="utf-8")
     assert tmp_path.joinpath("forge.yaml").read_text(encoding="utf-8") == DEFAULT_FORGE_YAML()
     assert json.loads(tmp_path.joinpath(".mcp.json").read_text(encoding="utf-8")) == {"mcpServers": {}}
 

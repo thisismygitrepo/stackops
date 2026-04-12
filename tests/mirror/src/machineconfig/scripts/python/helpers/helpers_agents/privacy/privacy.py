@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import runpy
+import importlib.util
 import sys
+from pathlib import Path
 from types import ModuleType
 
 import pytest
@@ -36,9 +37,7 @@ STUB_IMPORTS: dict[str, str] = {
 }
 
 
-def test_main_exports_expected_names_and_invokes_orchestrator(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_exports_expected_names_and_invokes_orchestrator(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[bool, object | None]] = []
 
     def _noop() -> None:
@@ -55,7 +54,12 @@ def test_main_exports_expected_names_and_invokes_orchestrator(
             setattr(module, attribute_name, _noop)
         monkeypatch.setitem(sys.modules, module_name, module)
 
-    globals_dict = runpy.run_module(MODULE_NAME, run_name="__main__")
+    spec = importlib.util.find_spec(MODULE_NAME)
+    assert spec is not None
+    assert spec.origin is not None
+    module_path = Path(spec.origin)
+    globals_dict: dict[str, object] = {"__name__": "__main__", "__file__": str(module_path), "__package__": MODULE_NAME.rpartition(".")[0]}
+    exec(module_path.read_text(encoding="utf-8"), globals_dict)
 
     exported_names = globals_dict["__all__"]
     assert isinstance(exported_names, list)

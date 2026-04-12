@@ -5,9 +5,7 @@ from pathlib import Path
 
 
 def test_qwen_package_contains_privacy_module() -> None:
-    module = importlib.import_module(
-        "machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.qwen"
-    )
+    module = importlib.import_module("machineconfig.scripts.python.helpers.helpers_agents.privacy.configs.qwen")
     package_init = Path(module.__file__ or "")
 
     assert package_init.name == "__init__.py"

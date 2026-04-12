@@ -1,0 +1,92 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from types import ModuleType
+
+import pytest
+from typer.testing import CliRunner
+
+from machineconfig.scripts.python.helpers.helpers_utils import pyproject_utils_app as module
+
+
+def _install_module(monkeypatch: pytest.MonkeyPatch, module_name: str, attrs: dict[str, object]) -> None:
+    fake_module = ModuleType(module_name)
+    for attr_name, attr_value in attrs.items():
+        setattr(fake_module, attr_name, attr_value)
+    monkeypatch.setitem(sys.modules, module_name, fake_module)
+
+
+def test_type_hint_rejects_missing_path(capsys: pytest.CaptureFixture[str]) -> None:
+    missing_path = Path("/tmp/machineconfig-pyproject-utils-app-missing")
+
+    with pytest.raises(module.typer.Exit) as excinfo:
+        module.type_hint(path=str(missing_path), dependency="self-contained")
+
+    captured = capsys.readouterr()
+    assert excinfo.value.exit_code == 1
+    assert "does not exist" in captured.err
+
+
+def test_type_hint_scans_project_root_and_skips_venv(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    project_root = tmp_path
+    project_root.joinpath("pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    source_dtypes = project_root.joinpath("pkg", "dtypes.py")
+    source_dtypes.parent.mkdir(parents=True)
+    source_dtypes.write_text("VALUE = 1\n", encoding="utf-8")
+    venv_dtypes = project_root.joinpath(".venv", "pkg", "dtypes.py")
+    venv_dtypes.parent.mkdir(parents=True)
+    venv_dtypes.write_text("VALUE = 2\n", encoding="utf-8")
+
+    module.type_hint(path=str(project_root), dependency="import")
+
+    captured = capsys.readouterr()
+    assert str(source_dtypes.resolve()) in captured.out
+    assert str(source_dtypes.with_name("dtypes_names.py").resolve()) in captured.out
+    assert str(venv_dtypes.resolve()) not in captured.out
+
+
+def test_upgrade_packages_resolves_paths_and_forwards_clean_groups(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    calls: dict[str, object] = {}
+
+    def fake_clean_dependency_groups(project_root: Path, group_names: list[str]) -> None:
+        calls["clean"] = (project_root, group_names.copy())
+
+    def fake_generate_uv_add_commands(pyproject_path: Path, output_path: Path) -> None:
+        calls["generate"] = (pyproject_path, output_path)
+
+    _install_module(
+        monkeypatch,
+        "machineconfig.utils.upgrade_packages",
+        {"clean_dependency_groups": fake_clean_dependency_groups, "generate_uv_add_commands": fake_generate_uv_add_commands},
+    )
+
+    module.upgrade_packages(root=str(tmp_path), clean_group=["dev", "plot"])
+
+    root_resolved = tmp_path.resolve()
+    assert calls["clean"] == (root_resolved, ["dev", "plot"])
+    assert calls["generate"] == (root_resolved.joinpath("pyproject.toml"), root_resolved.joinpath("pyproject_init.sh"))
+
+
+def test_init_project_delegates_to_helper_impl(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_init_project(*, name: str | None, tmp_dir: bool, python: str, libraries: str | None, group: str | None) -> None:
+        calls.append({"name": name, "tmp_dir": tmp_dir, "python": python, "libraries": libraries, "group": group})
+
+    _install_module(monkeypatch, "machineconfig.scripts.python.helpers.helpers_utils.python", {"init_project": fake_init_project})
+
+    module.init_project(name="demo", tmp_dir=True, python="3.14", libraries="rich textual", group="l")
+
+    assert calls == [{"name": "demo", "tmp_dir": True, "python": "3.14", "libraries": "rich textual", "group": "l"}]
+
+
+def test_get_app_help_lists_core_commands() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["--help"])
+
+    assert result.exit_code == 0
+    assert "init-project" in result.stdout
+    assert "upgrade-packages" in result.stdout
+    assert "type-hint" in result.stdout

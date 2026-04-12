@@ -7,27 +7,13 @@ from typing import ClassVar, cast
 import pytest
 
 import machineconfig.jobs.installer.python_scripts.espanso as espanso_script
-from machineconfig.utils.schemas.installer.installer_types import (
-    CPU_ARCHITECTURES,
-    OPERATING_SYSTEMS,
-    InstallerData,
-)
+from machineconfig.utils.schemas.installer.installer_types import CPU_ARCHITECTURES, OPERATING_SYSTEMS, InstallerData
 
 
-type BuildInstallerDataFn = Callable[
-    [InstallerData, OPERATING_SYSTEMS, CPU_ARCHITECTURES, str | None],
-    InstallerData,
-]
+type BuildInstallerDataFn = Callable[[InstallerData, OPERATING_SYSTEMS, CPU_ARCHITECTURES, str | None], InstallerData]
 
 
-BASE_INSTALLER_DATA = cast(
-    InstallerData,
-    {
-        "appName": "espanso",
-        "license": "GPL",
-        "doc": "expander",
-    },
-)
+BASE_INSTALLER_DATA = cast(InstallerData, {"appName": "espanso", "license": "GPL", "doc": "expander"})
 
 
 @dataclass(frozen=True)
@@ -49,20 +35,12 @@ class InstallerSpy:
 
 
 def _build_installer_data() -> BuildInstallerDataFn:
-    return cast(
-        BuildInstallerDataFn,
-        getattr(espanso_script, "_build_espanso_installer_data"),
-    )
+    return cast(BuildInstallerDataFn, getattr(espanso_script, "_build_espanso_installer_data"))
 
 
 def test_build_installer_data_for_linux_wayland() -> None:
     build_installer_data = _build_installer_data()
-    resolved = build_installer_data(
-        BASE_INSTALLER_DATA,
-        "linux",
-        "amd64",
-        "wayland",
-    )
+    resolved = build_installer_data(BASE_INSTALLER_DATA, "linux", "amd64", "wayland")
 
     assert resolved["repoURL"] == espanso_script.ESPANSO_REPO_URL
     assert resolved["fileNamePattern"]["amd64"]["linux"] == "espanso-debian-wayland-amd64.deb"
@@ -72,21 +50,11 @@ def test_build_installer_data_for_linux_wayland() -> None:
 def test_build_installer_data_requires_xdg_session_type_on_linux() -> None:
     build_installer_data = _build_installer_data()
 
-    with pytest.raises(
-        RuntimeError,
-        match="XDG_SESSION_TYPE must be set for Linux Espanso installations",
-    ):
-        build_installer_data(
-            BASE_INSTALLER_DATA,
-            "linux",
-            "amd64",
-            None,
-        )
+    with pytest.raises(RuntimeError, match="XDG_SESSION_TYPE must be set for Linux Espanso installations"):
+        build_installer_data(BASE_INSTALLER_DATA, "linux", "amd64", None)
 
 
-def test_main_linux_wayland_runs_installer_and_postinstall_config(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_linux_wayland_runs_installer_and_postinstall_config(monkeypatch: pytest.MonkeyPatch) -> None:
     InstallerSpy.instances.clear()
     run_calls: list[RunCall] = []
 
@@ -100,11 +68,7 @@ def test_main_linux_wayland_runs_installer_and_postinstall_config(
     monkeypatch.setattr(espanso_script.subprocess, "run", fake_run)
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
 
-    espanso_script.main(
-        installer_data=BASE_INSTALLER_DATA,
-        version="1.0.0",
-        update=False,
-    )
+    espanso_script.main(installer_data=BASE_INSTALLER_DATA, version="1.0.0", update=False)
 
     assert len(InstallerSpy.instances) == 1
     assert InstallerSpy.instances[0].installer_data["fileNamePattern"]["amd64"]["linux"] == "espanso-debian-wayland-amd64.deb"

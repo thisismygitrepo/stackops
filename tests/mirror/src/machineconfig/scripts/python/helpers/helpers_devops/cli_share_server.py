@@ -10,13 +10,12 @@ import typer
 from machineconfig.scripts.python.helpers.helpers_devops import cli_share_server as module
 
 
-def install_web_file_explorer_stubs(
-    monkeypatch: pytest.MonkeyPatch,
-    lan_ip: str | None,
-    recorded_scripts: list[str],
-) -> list[str]:
+def install_web_file_explorer_stubs(monkeypatch: pytest.MonkeyPatch, lan_ip: str | None, recorded_scripts: list[str]) -> list[str]:
+    import machineconfig.scripts.python.helpers as helpers_package
+
     installer_calls: list[str] = []
     installer_module = ModuleType("machineconfig.utils.installer_utils.installer_cli")
+    helpers_network_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network")
     address_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network.address")
     code_module = ModuleType("machineconfig.utils.code")
 
@@ -35,10 +34,13 @@ def install_web_file_explorer_stubs(
 
     setattr(installer_module, "install_if_missing", fake_install_if_missing)
     setattr(address_module, "select_lan_ipv4", fake_select_lan_ipv4)
+    setattr(helpers_network_module, "address", address_module)
     setattr(code_module, "exit_then_run_shell_script", fake_exit_then_run_shell_script)
     monkeypatch.setitem(sys.modules, "machineconfig.utils.installer_utils.installer_cli", installer_module)
+    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network", helpers_network_module)
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.address", address_module)
     monkeypatch.setitem(sys.modules, "machineconfig.utils.code", code_module)
+    monkeypatch.setattr(helpers_package, "helpers_network", helpers_network_module, raising=False)
     return installer_calls
 
 
@@ -77,7 +79,7 @@ def test_web_file_explorer_reads_default_password_file(monkeypatch: pytest.Monke
 
     recorded_scripts: list[str] = []
     install_web_file_explorer_stubs(monkeypatch, "10.0.0.7", recorded_scripts)
-    monkeypatch.setattr(module, "display_with_flashy_style", lambda *, msg: None, raising=False)
+    monkeypatch.setattr(module, "display_with_flashy_style", lambda *, msg, title: None)
     home_dir = tmp_path.joinpath("home")
     password_file = home_dir.joinpath("dotfiles/creds/passwords/quick_password")
     password_file.parent.mkdir(parents=True)

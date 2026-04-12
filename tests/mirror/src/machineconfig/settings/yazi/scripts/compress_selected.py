@@ -9,14 +9,7 @@ from machineconfig.settings.yazi.scripts import compress_selected
 
 def test_split_marked_arguments_extracts_hovered_and_selected_paths() -> None:
     hovered_path, selected_paths = compress_selected.split_marked_arguments(
-        [
-            "ignored",
-            compress_selected.HOVERED_MARKER,
-            "/tmp/hovered.txt",
-            compress_selected.SELECTED_MARKER,
-            "/tmp/first.txt",
-            "/tmp/second.txt",
-        ]
+        ["ignored", compress_selected.HOVERED_MARKER, "/tmp/hovered.txt", compress_selected.SELECTED_MARKER, "/tmp/first.txt", "/tmp/second.txt"]
     )
 
     assert hovered_path == "/tmp/hovered.txt"
@@ -27,23 +20,8 @@ def test_split_marked_arguments_extracts_hovered_and_selected_paths() -> None:
     ("arguments", "message"),
     [
         (["ignored"], "Missing Yazi argument markers."),
-        (
-            [
-                compress_selected.SELECTED_MARKER,
-                "/tmp/file.txt",
-                compress_selected.HOVERED_MARKER,
-            ],
-            "Yazi argument markers are out of order.",
-        ),
-        (
-            [
-                compress_selected.HOVERED_MARKER,
-                "/tmp/a.txt",
-                "/tmp/b.txt",
-                compress_selected.SELECTED_MARKER,
-            ],
-            "Expected at most one hovered path.",
-        ),
+        ([compress_selected.SELECTED_MARKER, "/tmp/file.txt", compress_selected.HOVERED_MARKER], "Yazi argument markers are out of order."),
+        ([compress_selected.HOVERED_MARKER, "/tmp/a.txt", "/tmp/b.txt", compress_selected.SELECTED_MARKER], "Expected at most one hovered path."),
     ],
 )
 def test_split_marked_arguments_rejects_invalid_marker_layout(arguments: list[str], message: str) -> None:
@@ -53,12 +31,7 @@ def test_split_marked_arguments_rejects_invalid_marker_layout(arguments: list[st
 
 def test_resolve_targets_prefers_selected_paths_over_hovered_path() -> None:
     targets = compress_selected.resolve_targets(
-        [
-            compress_selected.HOVERED_MARKER,
-            "/tmp/hovered.txt",
-            compress_selected.SELECTED_MARKER,
-            "/tmp/selected.txt",
-        ]
+        [compress_selected.HOVERED_MARKER, "/tmp/hovered.txt", compress_selected.SELECTED_MARKER, "/tmp/selected.txt"]
     )
 
     assert targets == ["/tmp/selected.txt"]
@@ -66,28 +39,14 @@ def test_resolve_targets_prefers_selected_paths_over_hovered_path() -> None:
 
 def test_build_command_uses_working_directory_name_for_multi_file_archive() -> None:
     command = compress_selected.build_command(
-        arguments=[
-            compress_selected.HOVERED_MARKER,
-            compress_selected.SELECTED_MARKER,
-            "/tmp/one.txt",
-            "/tmp/two.txt",
-        ],
+        arguments=[compress_selected.HOVERED_MARKER, compress_selected.SELECTED_MARKER, "/tmp/one.txt", "/tmp/two.txt"],
         working_directory="/tmp/workspace",
     )
 
-    assert command == [
-        "ouch",
-        "compress",
-        "/tmp/one.txt",
-        "/tmp/two.txt",
-        "/tmp/workspace/workspace.zip",
-    ]
+    assert command == ["ouch", "compress", "/tmp/one.txt", "/tmp/two.txt", "/tmp/workspace/workspace.zip"]
 
 
-def test_main_maps_runtime_failures_to_exit_codes(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
+def test_main_maps_runtime_failures_to_exit_codes(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     bad_arguments_exit_code = compress_selected.main(arguments=["missing-markers"])
 
     assert bad_arguments_exit_code == 1
@@ -102,11 +61,7 @@ def test_main_maps_runtime_failures_to_exit_codes(
     monkeypatch.setattr(compress_selected, "exec_command", fake_exec_command)
 
     missing_tool_exit_code = compress_selected.main(
-        arguments=[
-            compress_selected.HOVERED_MARKER,
-            "/tmp/hovered.txt",
-            compress_selected.SELECTED_MARKER,
-        ]
+        arguments=[compress_selected.HOVERED_MARKER, "/tmp/hovered.txt", compress_selected.SELECTED_MARKER]
     )
 
     assert missing_tool_exit_code == 127

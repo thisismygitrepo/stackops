@@ -18,9 +18,7 @@ class RunCall:
     kwargs: dict[str, object]
 
 
-def test_main_runs_expected_install_script(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_runs_expected_install_script(monkeypatch: pytest.MonkeyPatch) -> None:
     run_calls: list[RunCall] = []
 
     def fake_run(*args: object, **kwargs: object) -> int:

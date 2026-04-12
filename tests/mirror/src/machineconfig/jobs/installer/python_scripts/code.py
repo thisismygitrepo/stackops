@@ -21,10 +21,7 @@ class ShellScriptCall:
     clean_env: bool
 
 
-def test_main_linux_reads_repo_script_and_runs_it(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_linux_reads_repo_script_and_runs_it(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     install_script_path = tmp_path / "install.sh"
     install_script_path.write_text("echo linux\n", encoding="utf-8")
     calls: list[ShellScriptCall] = []
@@ -34,35 +31,19 @@ def test_main_linux_reads_repo_script_and_runs_it(
         return install_script_path
 
     def fake_run_shell_script(script: str, display_script: bool, clean_env: bool) -> None:
-        calls.append(
-            ShellScriptCall(
-                script=script,
-                display_script=display_script,
-                clean_env=clean_env,
-            )
-        )
+        calls.append(ShellScriptCall(script=script, display_script=display_script, clean_env=clean_env))
 
     monkeypatch.setattr(vscode_code.platform, "system", lambda: "Linux")
     monkeypatch.setattr(vscode_code, "get_path_reference_path", fake_get_path_reference_path)
     monkeypatch.setattr(code_utils, "run_shell_script", fake_run_shell_script)
 
-    vscode_code.main(
-        installer_data=DUMMY_INSTALLER_DATA,
-        version=None,
-        update=False,
-    )
+    vscode_code.main(installer_data=DUMMY_INSTALLER_DATA, version=None, update=False)
 
     assert calls == [ShellScriptCall(script="echo linux\n", display_script=True, clean_env=False)]
 
 
-def test_main_unsupported_platform_raises(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_unsupported_platform_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(vscode_code.platform, "system", lambda: "Plan9")
 
     with pytest.raises(NotImplementedError, match="Unsupported platform: Plan9"):
-        vscode_code.main(
-            installer_data=DUMMY_INSTALLER_DATA,
-            version="1.0.0",
-            update=False,
-        )
+        vscode_code.main(installer_data=DUMMY_INSTALLER_DATA, version="1.0.0", update=False)

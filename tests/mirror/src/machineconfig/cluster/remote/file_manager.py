@@ -23,13 +23,7 @@ def _patch_file_manager_paths(monkeypatch: pytest.MonkeyPatch, root: Path) -> tu
 
 
 def test_from_json_file_round_trip_and_get_fire_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    fm = FileManager(
-        job_id="job-1",
-        remote_machine_type="Linux",
-        lock_resources=True,
-        max_simultaneous_jobs=2,
-        base=str(tmp_path),
-    )
+    fm = FileManager(job_id="job-1", remote_machine_type="Linux", lock_resources=True, max_simultaneous_jobs=2, base=str(tmp_path))
     payload_path = tmp_path / "file_manager.json"
     save_json(obj=fm.to_dict(), path=payload_path, indent=2, verbose=False)
 
@@ -42,13 +36,7 @@ def test_from_json_file_round_trip_and_get_fire_command(tmp_path: Path, monkeypa
 
 
 def test_get_job_status_marks_failed_when_running_pid_missing(tmp_path: Path) -> None:
-    fm = FileManager(
-        job_id="job-2",
-        remote_machine_type="Linux",
-        lock_resources=True,
-        max_simultaneous_jobs=1,
-        base=str(tmp_path),
-    )
+    fm = FileManager(job_id="job-2", remote_machine_type="Linux", lock_resources=True, max_simultaneous_jobs=1, base=str(tmp_path))
     log_dir = fm.execution_log_dir
     log_dir.mkdir(parents=True, exist_ok=True)
     (log_dir / "status.txt").write_text("running", encoding="utf-8")
@@ -59,30 +47,13 @@ def test_get_job_status_marks_failed_when_running_pid_missing(tmp_path: Path) ->
     assert (log_dir / "status.txt").read_text(encoding="utf-8") == "failed"
 
 
-def test_unlock_resources_removes_running_job_and_appends_history(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-+) -> None:
+def test_unlock_resources_removes_running_job_and_appends_history(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     running_path, _queue_path, history_path = _patch_file_manager_paths(monkeypatch=monkeypatch, root=tmp_path)
-    fm = FileManager(
-        job_id="job-3",
-        remote_machine_type="Linux",
-        lock_resources=True,
-        max_simultaneous_jobs=1,
-        base=str(tmp_path),
-    )
+    fm = FileManager(job_id="job-3", remote_machine_type="Linux", lock_resources=True, max_simultaneous_jobs=1, base=str(tmp_path))
     fm.submission_time = datetime(2024, 1, 1, tzinfo=UTC)
     start_time = datetime(2024, 1, 1, 0, 5, tzinfo=UTC)
     save_json(
-        obj=[
-            JobStatus(
-                pid=123,
-                job_id="job-3",
-                status="locked",
-                submission_time=fm.submission_time,
-                start_time=start_time,
-            ).to_dict()
-        ],
+        obj=[JobStatus(pid=123, job_id="job-3", status="locked", submission_time=fm.submission_time, start_time=start_time).to_dict()],
         path=running_path,
         indent=2,
         verbose=False,

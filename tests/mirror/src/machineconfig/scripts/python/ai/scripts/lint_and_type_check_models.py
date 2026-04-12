@@ -29,58 +29,26 @@ def test_read_report_stats_and_write_start_failure_use_filesystem_state(tmp_path
     assert stats.byte_count == report_path.stat().st_size
 
     failure_path = tmp_path / "failure.md"
-    models_module.write_start_failure(
-        report_path=failure_path,
-        title="Ruff Linter",
-        command=("uv", "run", "ruff"),
-        error=OSError("boom"),
-    )
+    models_module.write_start_failure(report_path=failure_path, title="Ruff Linter", command=("uv", "run", "ruff"), error=OSError("boom"))
 
-    assert failure_path.read_text(encoding="utf-8") == (
-        "# Ruff Linter\n\n"
-        "- Command: `uv run ruff`\n"
-        "- Start failure: `boom`\n\n"
-    )
+    assert failure_path.read_text(encoding="utf-8") == ("# Ruff Linter\n\n- Command: `uv run ruff`\n- Start failure: `boom`\n\n")
 
 
 def test_result_models_derive_runtime_status_fields() -> None:
-    spec = models_module.ToolSpec(
-        slug="ruff",
-        title="Ruff Linter",
-        report_path=Path(".ai/linters/issues_ruff.md"),
-        command=("uv", "run", "ruff"),
-    )
+    spec = models_module.ToolSpec(slug="ruff", title="Ruff Linter", report_path=Path(".ai/linters/issues_ruff.md"), command=("uv", "run", "ruff"))
     report_stats = models_module.ReportStats(line_count=3, byte_count=42)
 
     cleanup_result = models_module.CleanupResult(
-        exit_code=0,
-        started_at=2.0,
-        finished_at=4.5,
-        report_path=Path(".ai/linters/cleanup.md"),
-        report_stats=report_stats,
+        exit_code=0, started_at=2.0, finished_at=4.5, report_path=Path(".ai/linters/cleanup.md"), report_stats=report_stats
     )
     failed_cleanup_result = models_module.CleanupResult(
-        exit_code=1,
-        started_at=2.0,
-        finished_at=5.0,
-        report_path=Path(".ai/linters/cleanup.md"),
-        report_stats=report_stats,
+        exit_code=1, started_at=2.0, finished_at=5.0, report_path=Path(".ai/linters/cleanup.md"), report_stats=report_stats
     )
     completed_tool_result = models_module.ToolResult(
-        spec=spec,
-        exit_code=1,
-        started_at=10.0,
-        finished_at=13.5,
-        report_stats=report_stats,
-        result_kind=models_module.COMPLETED_KIND,
+        spec=spec, exit_code=1, started_at=10.0, finished_at=13.5, report_stats=report_stats, result_kind=models_module.COMPLETED_KIND
     )
     failed_tool_result = models_module.ToolResult(
-        spec=spec,
-        exit_code=1,
-        started_at=10.0,
-        finished_at=11.0,
-        report_stats=report_stats,
-        result_kind=models_module.START_FAILED_KIND,
+        spec=spec, exit_code=1, started_at=10.0, finished_at=11.0, report_stats=report_stats, result_kind=models_module.START_FAILED_KIND
     )
 
     assert cleanup_result.duration_seconds == 2.5

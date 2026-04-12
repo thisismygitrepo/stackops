@@ -24,9 +24,7 @@ class PrintedCode:
     desc: str
 
 
-def test_main_linux_uses_linux_script_and_raises_on_nonzero_exit(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_linux_uses_linux_script_and_raises_on_nonzero_exit(monkeypatch: pytest.MonkeyPatch) -> None:
     printed: list[PrintedCode] = []
     shell_calls: list[tuple[str, bool, bool]] = []
 
@@ -42,11 +40,7 @@ def test_main_linux_uses_linux_script_and_raises_on_nonzero_exit(
     monkeypatch.setattr(docker_script, "run_shell_script", fake_run_shell_script)
 
     with pytest.raises(RuntimeError, match="Docker installation failed with exit code 7"):
-        docker_script.main(
-            installer_data=DUMMY_INSTALLER_DATA,
-            version=None,
-            update=False,
-        )
+        docker_script.main(installer_data=DUMMY_INSTALLER_DATA, version=None, update=False)
 
     assert len(printed) == 1
     assert printed[0].lexer == "shell"
@@ -55,17 +49,8 @@ def test_main_linux_uses_linux_script_and_raises_on_nonzero_exit(
     assert shell_calls == [(printed[0].code, True, False)]
 
 
-def test_main_windows_is_not_supported(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_main_windows_is_not_supported(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(docker_script.platform, "system", lambda: "Windows")
 
-    with pytest.raises(
-        NotImplementedError,
-        match="Docker installation is not supported on Windows",
-    ):
-        docker_script.main(
-            installer_data=DUMMY_INSTALLER_DATA,
-            version="latest",
-            update=False,
-        )
+    with pytest.raises(NotImplementedError, match="Docker installation is not supported on Windows"):
+        docker_script.main(installer_data=DUMMY_INSTALLER_DATA, version="latest", update=False)

@@ -10,12 +10,7 @@ from machineconfig.cluster.sessions_managers.zellij.zellij_utils import remote_e
 def test_run_command_uses_ssh_with_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[list[str], bool, bool, int | None]] = []
 
-    def fake_run(
-        args: list[str],
-        capture_output: bool = False,
-        text: bool = False,
-        timeout: int | None = None,
-    ) -> subprocess.CompletedProcess[str]:
+    def fake_run(args: list[str], capture_output: bool = False, text: bool = False, timeout: int | None = None) -> subprocess.CompletedProcess[str]:
         calls.append((args, capture_output, text, timeout))
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="alex\n", stderr="")
 

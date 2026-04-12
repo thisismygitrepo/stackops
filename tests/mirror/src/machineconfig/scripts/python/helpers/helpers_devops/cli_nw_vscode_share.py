@@ -11,6 +11,7 @@ import machineconfig.scripts.python.helpers.helpers_devops.cli_nw_vscode_share a
 
 
 def _install_address_helper(monkeypatch, addresses: list[tuple[str, str]] | Exception) -> None:
+    package_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network")
     helper_module = ModuleType("machineconfig.scripts.python.helpers.helpers_network.address")
 
     def get_all_ipv4_addresses() -> list[tuple[str, str]]:
@@ -19,6 +20,8 @@ def _install_address_helper(monkeypatch, addresses: list[tuple[str, str]] | Exce
         return addresses
 
     helper_module.get_all_ipv4_addresses = get_all_ipv4_addresses
+    package_module.address = helper_module
+    monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network", package_module)
     monkeypatch.setitem(sys.modules, "machineconfig.scripts.python.helpers.helpers_network.address", helper_module)
 
 
@@ -53,10 +56,7 @@ def test_print_serve_web_urls_lists_all_reachable_urls(monkeypatch) -> None:
     monkeypatch.setattr(cli_nw_vscode_share.platform, "node", lambda: "hostbox")
     _install_address_helper(monkeypatch, [("lo", "127.0.0.1"), ("eth0", "192.168.1.5")])
 
-    cli_nw_vscode_share.print_serve_web_urls(
-        "code serve-web --host 0.0.0.0 --port 8123 --server-base-path dev",
-        folder_path="/tmp/work tree",
-    )
+    cli_nw_vscode_share.print_serve_web_urls("code serve-web --host 0.0.0.0 --port 8123 --server-base-path dev", folder_path="/tmp/work tree")
 
     rendered = record_console.export_text()
 

@@ -13,21 +13,16 @@ def test_should_include_python_context_path_excludes_tests_and_non_python_files(
     assert not update_test_module._should_include_python_context_path(relative_path=Path("src/machineconfig/app.md"))
 
 
-def test_build_repo_python_context_joins_sorted_python_paths(monkeypatch, tmp_path: Path) -> None:
+def test_build_repo_python_context_joins_visible_python_paths(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         update_test_module,
         "_list_git_visible_files",
-        lambda *, repo_root: (
-            Path("src/machineconfig/b.py"),
-            Path("tests/test_skip.py"),
-            Path("src/machineconfig/a.py"),
-            Path("docs/index.md"),
-        ),
+        lambda *, repo_root: (Path("src/machineconfig/b.py"), Path("tests/test_skip.py"), Path("src/machineconfig/a.py"), Path("docs/index.md")),
     )
 
     result = update_test_module._build_repo_python_context(repo_root=tmp_path)
 
-    assert result == "src/machineconfig/b.py@-@src/machineconfig/a.py"
+    assert result == update_test_module.DEFAULT_SEAPRATOR.join(("src/machineconfig/b.py", "src/machineconfig/a.py"))
 
 
 def test_update_test_writes_context_file_even_when_agent_creation_fails(monkeypatch, tmp_path: Path) -> None:
