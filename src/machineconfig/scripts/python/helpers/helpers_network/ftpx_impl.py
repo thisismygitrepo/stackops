@@ -10,7 +10,6 @@ import machineconfig.utils.path_core as path_core
 if TYPE_CHECKING:
     from rich.console import Console
 
-    from machineconfig.utils.path_extended import PathExtended
     from machineconfig.utils.ssh import SSH
 
 
@@ -98,7 +97,6 @@ def _handle_win_transfer(source: str, target: str, overwrite_existing: bool, win
 
 def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, str, bool]:
     """Resolve source and target paths, determine machine and direction."""
-    from machineconfig.utils.path_extended import PathExtended
     from machineconfig.scripts.python.helpers.helpers_cloud.helpers2 import ES
 
     resolved_source: str | None = None
@@ -117,8 +115,8 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
             ┃ ❌ Configuration Error
             ┃    Cannot use expand symbol `{ES}` in both source and target
             ┃    This creates a cyclical inference dependency
-            ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━""")
-            target_path_obj = PathExtended(target).expanduser().absolute()
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━""")
+            target_path_obj = Path(target).expanduser().absolute()
             resolved_source = path_core.collapseuser(target_path_obj, strict=False).as_posix()
             resolved_target = target
         else:
@@ -126,7 +124,7 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
             if target == ES:
                 resolved_target = None
             else:
-                resolved_target = PathExtended(target).expanduser().absolute().as_posix()
+                resolved_target = Path(target).expanduser().absolute().as_posix()
 
     elif ":" in target and (target[1] != ":" if len(target) > 1 else True):
         source_is_remote = False
@@ -147,7 +145,7 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
             if source == ES:
                 resolved_source = None
             else:
-                resolved_source = PathExtended(source).expanduser().absolute().as_posix()
+                resolved_source = Path(source).expanduser().absolute().as_posix()
     else:
         raise ValueError("""
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -191,9 +189,8 @@ def _create_ssh_connection(machine: str, console: Console) -> SSH:
 
 def _handle_cloud_transfer(
     ssh: SSH, resolved_source: str | None, resolved_target: str | None, console: Console
-) -> PathExtended | None:
+) -> Path | None:
     """Handle cloud transfer mode."""
-    from machineconfig.utils.path_extended import PathExtended
     from rich.panel import Panel
 
     if resolved_source is None or resolved_target is None:
@@ -209,7 +206,7 @@ def _handle_cloud_transfer(
     )
     console.print(Panel.fit("⬇️  Cloud transfer mode — downloading from cloud to local...", title="Cloud Download", border_style="cyan"))
     ssh.run_shell_cmd_on_local(command=f"cloud copy :^ {resolved_target}")
-    return PathExtended(resolved_target)
+    return Path(resolved_target)
 
 
 def _handle_direct_transfer(
@@ -221,7 +218,7 @@ def _handle_direct_transfer(
     recursive: bool,
     overwrite_existing: bool,
     console: Console,
-) -> PathExtended | None:
+) -> Path | None:
     """Handle direct SSH transfer."""
     from rich.panel import Panel
 
@@ -249,9 +246,7 @@ def _handle_direct_transfer(
         if resolved_target is None:
             received_file = None
         else:
-            from machineconfig.utils.path_extended import PathExtended
-
-            received_file = PathExtended(resolved_target).expanduser().absolute()
+            received_file = Path(resolved_target).expanduser().absolute()
     else:
         assert resolved_source is not None, "❌ Path Error: Target must be a remote path (machine:path)"
         target_display = resolved_target or "<auto>"

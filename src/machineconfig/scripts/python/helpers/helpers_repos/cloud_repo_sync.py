@@ -19,7 +19,7 @@ from machineconfig.utils.io import (
     encrypt_file_symmetric,
 )
 from machineconfig.utils.path_core import delete_path
-from machineconfig.utils.path_extended import PathExtended
+import machineconfig.utils.path_compression as path_compression
 from machineconfig.utils.rclone import RcloneCommandError, is_missing_remote_path_error
 import machineconfig.utils.rclone_wrapper as rclone_wrapper
 from machineconfig.utils.ssh_utils.abc import MACHINECONFIG_VERSION
@@ -122,7 +122,18 @@ def _get_repo_remote_archive_path(repo_root: Path) -> Path:
 
 
 def _upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> None:
-    archive_path = Path(PathExtended(repo_root).zip(inplace=False))
+    archive_path = path_compression.zip_path(
+        repo_root,
+        path=None,
+        folder=None,
+        name=None,
+        arcname=None,
+        inplace=False,
+        verbose=True,
+        content=False,
+        orig=False,
+        mode="w",
+    )
     if pwd is None:
         encrypted_archive_path = encrypt_file_asymmetric(file_path=archive_path)
     else:
@@ -154,10 +165,24 @@ def _download_repo_archive(repo_remote_root: Path, cloud: str, remote_path: Path
     else:
         archive_path = decrypt_file_symmetric(file_path=encrypted_archive_path, pwd=pwd)
     delete_path(encrypted_archive_path, verbose=False)
-    return Path(PathExtended(archive_path).unzip(inplace=True, verbose=True, overwrite=True, content=True, merge=False))
+    return path_compression.unzip_path(
+        archive_path,
+        folder=None,
+        path=None,
+        name=None,
+        verbose=True,
+        content=True,
+        inplace=True,
+        overwrite=True,
+        orig=False,
+        pwd=None,
+        tmp=False,
+        pattern=None,
+        merge=False,
+    )
 
 
-def _merge_remote_copy(repo: Repo, remote_path: PathExtended, console: Console) -> MergeAttemptResult:
+def _merge_remote_copy(repo: Repo, remote_path: Path, console: Console) -> MergeAttemptResult:
     _print_section(console=console, title="PULLING LATEST FROM REMOTE")
     print(f"-> Trying to removing {REMOTE_NAME} remote from local repo if it exists.")
     _remove_remote_if_present(repo=repo, remote_name=REMOTE_NAME)
@@ -227,17 +252,17 @@ def main(
             return ""
     else:
         cloud_resolved = cloud
-    repo_local_root = PathExtended.cwd() if repo == "." else PathExtended(repo).expanduser().absolute()
+    repo_local_root = Path.cwd() if repo == "." else Path(repo).expanduser().absolute()
     try:
         repo_local_obj = Repo(repo_local_root, search_parent_directories=True)
     except (InvalidGitRepositoryError, NoSuchPathError) as exc:
         msg = typer.style("Error: ", fg=typer.colors.RED) + f"The specified path '{repo_local_root}' is not a valid git repository."
         typer.echo(msg)
         raise typer.Exit(code=1) from exc
-    repo_local_root = PathExtended(repo_local_obj.working_dir)  # cwd might have been in a sub directory of repo_root, so its better to redefine it.
-    local_relative_home = PathExtended(repo_local_root.expanduser().absolute().relative_to(Path.home()))
-    PathExtended(CONFIG_ROOT).joinpath("remote").mkdir(parents=True, exist_ok=True)
-    repo_remote_root = PathExtended(CONFIG_ROOT).joinpath("remote", local_relative_home)
+    repo_local_root = Path(repo_local_obj.working_dir)  # cwd might have been in a sub directory of repo_root, so its better to redefine it.
+    local_relative_home = repo_local_root.expanduser().absolute().relative_to(Path.home())
+    Path(CONFIG_ROOT).joinpath("remote").mkdir(parents=True, exist_ok=True)
+    repo_remote_root = Path(CONFIG_ROOT).joinpath("remote", local_relative_home)
     delete_path(repo_remote_root, verbose=True)
     remote_path = _get_repo_remote_archive_path(repo_root=repo_local_root)
     try:

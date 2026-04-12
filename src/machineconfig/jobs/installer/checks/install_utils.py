@@ -102,7 +102,7 @@ def install_cli_app(app_url: str) -> bool:
             install_path = Path(WINDOWS_INSTALL_PATH)
             install_path.mkdir(parents=True, exist_ok=True)
             target = install_path / exe_path.name
-            # Use shutil.move or PathExtended.move
+            # Use shutil.move or path_core.move
             path_core.move(exe_path, path=target, overwrite=True)
             console.print(f"[green]Installed to {target}[/green]")
         

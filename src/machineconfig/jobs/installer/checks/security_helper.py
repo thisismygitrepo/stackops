@@ -284,16 +284,14 @@ def build_report_options_text() -> str:
 def scan_single_path(path: Path, record: bool) -> None:
     from machineconfig.jobs.installer.checks.check_installations import build_scan_record, write_reports
     from machineconfig.jobs.installer.checks.vt_utils import get_vt_client, scan_file
-    from machineconfig.utils.path_extended import PathExtended
 
-    path_extended = PathExtended(path)
     from rich.console import Console
     import typer
     from datetime import datetime
     console = Console()
     try:
         with get_vt_client() as client:
-            scan_summary, scan_results = scan_file(path_extended, client)
+            scan_summary, scan_results = scan_file(path, client)
 
     except FileNotFoundError as e:
         console.print(f"[bold red]{e}[/bold red]")
@@ -315,7 +313,7 @@ def scan_single_path(path: Path, record: bool) -> None:
         return
 
     scan_record = build_scan_record(
-        app_path=path_extended,
+        app_path=path,
         version=None,
         scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
         app_url="",

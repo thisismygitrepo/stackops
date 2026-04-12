@@ -1,5 +1,4 @@
-from machineconfig.utils.path_extended import PathExtended, PLike
-from machineconfig.utils.path_core import delete_path
+from machineconfig.utils.path_core import PathLike, delete_path
 from pathlib import Path
 import machineconfig.utils.path_core as path_core
 from machineconfig.profile.create_links_export import ON_CONFLICT_STRICT
@@ -48,9 +47,9 @@ class OperationRecord(TypedDict):
     status: str
 
 
-def files_are_identical(file1: PathExtended, file2: PathExtended) -> bool:
+def files_are_identical(file1: Path, file2: Path) -> bool:
     """Check if two files are identical by comparing their SHA256 hashes."""
-    def get_file_hash(path: PathExtended) -> str:
+    def get_file_hash(path: Path) -> str:
         return hashlib.sha256(path.read_bytes()).hexdigest()
 
     try:
@@ -59,13 +58,13 @@ def files_are_identical(file1: PathExtended, file2: PathExtended) -> bool:
         return False
 
 
-def build_links(target_paths: list[tuple[PLike, str]], repo_root: PLike):
+def build_links(target_paths: list[tuple[PathLike, str]], repo_root: PathLike):
     """Build symboic links from various relevant paths (e.g. data) to `repo_root/links/<name>` to facilitate easy access from
     tree explorer of the IDE.
     """
     target_dirs_filtered: list[tuple[Path, str]] = []
     for a_dir, a_name in target_paths:
-        a_dir_obj = path_core.resolve(PathExtended(a_dir))
+        a_dir_obj = path_core.resolve(a_dir)
         if not a_dir_obj.exists():
             a_dir_obj.mkdir(parents=True, exist_ok=True)
         target_dirs_filtered.append((a_dir_obj, a_name))
@@ -75,8 +74,8 @@ def build_links(target_paths: list[tuple[PLike, str]], repo_root: PLike):
     repo = git.Repo(repo_root, search_parent_directories=True)
     root_maybe = repo.working_tree_dir
     assert root_maybe is not None
-    repo_root_obj = PathExtended(root_maybe)
-    tmp_results_root = PathExtended.home().joinpath("tmp_results", "tmp_data", repo_root_obj.name)
+    repo_root_obj = Path(root_maybe)
+    tmp_results_root = Path.home().joinpath("tmp_results", "tmp_data", repo_root_obj.name)
     tmp_results_root.mkdir(parents=True, exist_ok=True)
     target_dirs_filtered.append((tmp_results_root, "tmp_results"))
 
@@ -90,7 +89,7 @@ def build_links(target_paths: list[tuple[PLike, str]], repo_root: PLike):
                 continue
             links_path.unlink(missing_ok=True)
         try:
-            links_path.symlink_to(target=a_target_path)
+            path_core.symlink_to(links_path, target=a_target_path, verbose=False)
         except OSError as ex:
             console.print(Panel(f"❌ Failed to create symlink {links_path} -> {a_target_path}: {ex}", title="Symlink Error", expand=False))
 
@@ -112,8 +111,8 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
     Note: `config_file_default_path` is the default system location, `config_file_self_managed_path` is the self-managed config location
 
     """
-    config_file_default_path = PathExtended(config_file_default_path).expanduser().absolute()
-    config_file_self_managed_path = PathExtended(config_file_self_managed_path).expanduser().absolute()
+    config_file_default_path = Path(config_file_default_path).expanduser().absolute()
+    config_file_self_managed_path = Path(config_file_self_managed_path).expanduser().absolute()
     
     if path_core.resolve(config_file_default_path) == path_core.resolve(config_file_self_managed_path):
         raise ValueError(
@@ -234,7 +233,7 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
     
     # Create the symlink
     try:
-        PathExtended(config_file_default_path).symlink_to(target=config_file_self_managed_path, verbose=True, overwrite=False)
+        path_core.symlink_to(config_file_default_path, target=config_file_self_managed_path, verbose=True, overwrite=False)
         return {"action": action_taken, "details": details}
     except Exception as ex:
         action_taken = "error"
@@ -243,9 +242,9 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
         return {"action": action_taken, "details": details}
 
 
-def copy_map(config_file_default_path: PathExtended, config_file_self_managed_path: PathExtended, on_conflict: ON_CONFLICT_STRICT) -> OperationResult:
-    config_file_default_path = PathExtended(config_file_default_path).expanduser().absolute()
-    config_file_self_managed_path = PathExtended(config_file_self_managed_path).expanduser().absolute()
+def copy_map(config_file_default_path: Path, config_file_self_managed_path: Path, on_conflict: ON_CONFLICT_STRICT) -> OperationResult:
+    config_file_default_path = Path(config_file_default_path).expanduser().absolute()
+    config_file_self_managed_path = Path(config_file_self_managed_path).expanduser().absolute()
     
     if path_core.resolve(config_file_default_path) == path_core.resolve(config_file_self_managed_path):
         raise ValueError(

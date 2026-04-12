@@ -28,7 +28,6 @@ from machineconfig.jobs.installer.checks.report_utils import (
 )
 from machineconfig.jobs.installer.checks.vt_utils import ScanResult, ScanSummary, get_vt_client, scan_file
 from machineconfig.utils.installer_utils.installer_runner import get_installed_cli_apps
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import INSTALL_VERSION_ROOT
 
 console = Console()
@@ -47,14 +46,14 @@ def _build_version_lookup() -> dict[str, str]:
     return versions
 
 
-def collect_apps_to_scan(app_names: list[str] | None) -> list[tuple[PathExtended, str | None]]:
+def collect_apps_to_scan(app_names: list[str] | None) -> list[tuple[Path, str | None]]:
     with console.status("[bold green]Gathering installed applications...[/bold green]"):
         apps_paths = get_installed_cli_apps()
         if app_names is not None:
             normalized = set(_normalize_app_names(app_names))
             apps_paths = [app_path for app_path in apps_paths if app_path.stem.lower() in normalized]
         versions = _build_version_lookup()
-        apps_to_scan: list[tuple[PathExtended, str | None]] = []
+        apps_to_scan: list[tuple[Path, str | None]] = []
         for app_path in apps_paths:
             version = versions.get(app_path.stem)
             apps_to_scan.append((app_path, version))
@@ -66,7 +65,7 @@ def _build_scan_progress_renderable(progress: Progress, last_scanned: AppData | 
 
 
 def _build_app_data(
-    app_path: PathExtended,
+    app_path: Path,
     version: str | None,
     scan_time: str,
     app_url: str,
@@ -111,7 +110,7 @@ def _build_app_data(
 
 
 def build_scan_record(
-    app_path: PathExtended,
+    app_path: Path,
     version: str | None,
     scan_time: str,
     app_url: str,
@@ -134,7 +133,7 @@ def _extract_app_data(scan_records: list[ScannedAppRecord]) -> list[AppData]:
     return [scan_record["app_data"] for scan_record in scan_records]
 
 
-def scan_apps_with_vt(apps_to_scan: list[tuple[PathExtended, str | None]]) -> list[ScannedAppRecord]:
+def scan_apps_with_vt(apps_to_scan: list[tuple[Path, str | None]]) -> list[ScannedAppRecord]:
     scan_records: list[ScannedAppRecord] = []
     if not apps_to_scan:
         return scan_records

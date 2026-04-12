@@ -43,7 +43,7 @@ def install_gource_windows(version: str | None = None) -> None:
     if platform.system() != "Windows":
         raise OSError(f"This installer is for Windows only. Current OS: {platform.system()}")
 
-    from machineconfig.utils.path_extended import PathExtended
+    from machineconfig.utils.path_core import download
     from machineconfig.utils.source_of_truth import INSTALL_TMP_DIR
 
     print("\n" + "=" * 80)
@@ -55,7 +55,7 @@ def install_gource_windows(version: str | None = None) -> None:
     install_dir = get_gource_install_dir()
 
     print(f"📥 Downloading portable Gource from: {portable_url}")
-    downloaded_zip = PathExtended(portable_url).download(folder=INSTALL_TMP_DIR)
+    downloaded_zip = download(portable_url, folder=INSTALL_TMP_DIR)
     print(f"✅ Downloaded to: {downloaded_zip}")
 
     print(f"\n� Extracting to: {install_dir}")

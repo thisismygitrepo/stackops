@@ -20,8 +20,6 @@ if TYPE_CHECKING:
     from rich.console import Console
     from rich.table import Table
 
-    from machineconfig.utils.path_extended import PathExtended
-
 
 @cache
 def _console() -> Console:
@@ -71,7 +69,7 @@ def scan(
     run_lambda_function(lambda: run_scan(apps=apps, path=path, record=record), uv_with=["vt-py"], uv_project_dir=None)
 
 
-def _build_apps_table(apps_to_scan: list[tuple[PathExtended, str | None]]) -> Table:
+def _build_apps_table(apps_to_scan: list[tuple[Path, str | None]]) -> Table:
     from rich.table import Table
 
     table = Table(title="Installed CLI Apps", show_lines=False)
@@ -93,9 +91,8 @@ def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-se
 
 def upload(path: Annotated[Path, typer.Argument(..., help="Path to a local file to upload")]) -> None:
     from machineconfig.jobs.installer.checks.install_utils import upload_app
-    from machineconfig.utils.path_extended import PathExtended
 
-    link = upload_app(PathExtended(path))
+    link = upload_app(path)
     if not link:
         raise typer.Exit(code=1)
     _console().print(link)

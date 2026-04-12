@@ -4,6 +4,8 @@ This script Takes away all config files from the computer, place them in one dir
 
 """
 
+from pathlib import Path
+
 from machineconfig.utils.links import ActionType, OperationRecord, OperationResult
 from rich.console import Console
 from rich.panel import Panel
@@ -11,7 +13,6 @@ from rich.pretty import Pretty
 from rich.text import Text
 from rich.table import Table
 
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.links import symlink_map, copy_map
 from machineconfig.profile.create_links_export import DIRECTION_STRICT, ON_CONFLICT_STRICT
 from machineconfig.profile.dotfiles_mapper import (
@@ -66,12 +67,12 @@ def _parse_os_field(os_field: OsField) -> set[OsName]:
     return set(os_field)
 
 
-def _resolve_self_managed_path(path_value: str) -> PathExtended:
-    return PathExtended(path_value.replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())).expanduser().absolute()
+def _resolve_self_managed_path(path_value: str) -> Path:
+    return Path(path_value.replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())).expanduser().absolute()
 
 
 def _is_public_self_managed_path(path_value: str) -> bool:
-    config_root = PathExtended(CONFIG_ROOT).expanduser().absolute()
+    config_root = Path(CONFIG_ROOT).expanduser().absolute()
     resolved_path = _resolve_self_managed_path(path_value)
     return resolved_path == config_root or resolved_path.is_relative_to(config_root)
 
@@ -137,8 +138,8 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
     return {"public": public, "private": private}
 
 
-def _resolve_mapper_paths(a_mapper: ConfigMapper) -> tuple[PathExtended, PathExtended]:
-    config_file_default_path = PathExtended(a_mapper["config_file_default_path"]).expanduser().absolute()
+def _resolve_mapper_paths(a_mapper: ConfigMapper) -> tuple[Path, Path]:
+    config_file_default_path = Path(a_mapper["config_file_default_path"]).expanduser().absolute()
     config_file_self_managed_path = _resolve_self_managed_path(a_mapper["config_file_self_managed_path"])
     return config_file_default_path, config_file_self_managed_path
 
@@ -150,11 +151,11 @@ def _get_source_label(direction: DIRECTION_STRICT) -> Literal["default", "self-m
 
 
 def _iter_operation_paths(
-    config_file_default_path: PathExtended,
-    config_file_self_managed_path: PathExtended,
+    config_file_default_path: Path,
+    config_file_self_managed_path: Path,
     contents: bool,
     direction: DIRECTION_STRICT,
-) -> list[tuple[PathExtended, PathExtended]]:
+) -> list[tuple[Path, Path]]:
     source_root = config_file_default_path if direction == "up" else config_file_self_managed_path
     source_label = _get_source_label(direction)
     if not source_root.exists():
@@ -174,8 +175,8 @@ def _iter_operation_paths(
 
 
 def _run_directional_operation(
-    config_file_default_path: PathExtended,
-    config_file_self_managed_path: PathExtended,
+    config_file_default_path: Path,
+    config_file_self_managed_path: Path,
     on_conflict: ON_CONFLICT_STRICT,
     method: Literal["symlink", "copy"],
     direction: DIRECTION_STRICT,
@@ -204,8 +205,8 @@ def _append_operation_record(
     *,
     program_name: str,
     file_key: str,
-    config_file_default_path: PathExtended,
-    config_file_self_managed_path: PathExtended,
+    config_file_default_path: Path,
+    config_file_self_managed_path: Path,
     operation: str,
     action: ActionType,
     details: str,
@@ -382,7 +383,7 @@ def apply_mapper(
         import csv
         from datetime import datetime
 
-        csv_dir = PathExtended(CONFIG_ROOT).joinpath("symlink_operations")
+        csv_dir = Path(CONFIG_ROOT).joinpath("symlink_operations")
         csv_dir.mkdir(parents=True, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

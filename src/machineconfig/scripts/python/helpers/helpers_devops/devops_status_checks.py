@@ -9,7 +9,6 @@ from typing import Any, TypedDict
 import machineconfig.settings.shells.bash as bash_shell_assets
 import machineconfig.settings.shells.pwsh as pwsh_shell_assets
 import machineconfig.utils.path_core as path_core
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
 from machineconfig.utils.links import files_are_identical
 from machineconfig.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
@@ -29,17 +28,17 @@ def check_shell_profile_status() -> dict[str, Any]:
         profile_content = profile_path.read_text(encoding="utf-8")
         system_name = platform.system()
         if system_name == "Windows":
-            init_script = PathExtended(CONFIG_ROOT).joinpath(
+            init_script = Path(CONFIG_ROOT).joinpath(
                 get_path_reference_library_relative_path(module=pwsh_shell_assets, path_reference=PWSH_INIT_PATH_REFERENCE)
             )
-            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.ps1"), strict=False)
+            init_script_copy = path_core.collapseuser(Path(CONFIG_ROOT).joinpath("profile/init.ps1"), strict=False)
             source_reference = f". {str(path_core.collapseuser(init_script, strict=False)).replace('~', '$HOME')}"
             source_copy = f". {str(init_script_copy).replace('~', '$HOME')}"
         else:
-            init_script = PathExtended(CONFIG_ROOT).joinpath(
+            init_script = Path(CONFIG_ROOT).joinpath(
                 get_path_reference_library_relative_path(module=bash_shell_assets, path_reference=BASH_INIT_PATH_REFERENCE)
             )
-            init_script_copy = path_core.collapseuser(PathExtended(CONFIG_ROOT).joinpath("profile/init.sh"), strict=False)
+            init_script_copy = path_core.collapseuser(Path(CONFIG_ROOT).joinpath("profile/init.sh"), strict=False)
             source_reference = f"source {str(path_core.collapseuser(init_script, strict=False)).replace('~', '$HOME')}"
             source_copy = f"source {str(init_script_copy).replace('~', '$HOME')}"
 
@@ -104,7 +103,7 @@ def check_repos_status() -> dict[str, Any]:
 
 def check_ssh_status() -> dict[str, Any]:
     """Check SSH configuration status."""
-    ssh_dir = PathExtended.home().joinpath(".ssh")
+    ssh_dir = Path.home().joinpath(".ssh")
     if not ssh_dir.exists():
         return {"ssh_dir_exists": False, "keys": [], "config_exists": False, "authorized_keys_exists": False, "known_hosts_exists": False}
 
@@ -142,9 +141,9 @@ class ConfigStatusItem(TypedDict):
     copy: bool | None
 
 
-def _resolve_config_paths(config_item: ConfigStatusItem) -> tuple[PathExtended, PathExtended]:
-    default_path = PathExtended(config_item["config_file_default_path"]).expanduser()
-    self_managed_path = PathExtended(
+def _resolve_config_paths(config_item: ConfigStatusItem) -> tuple[Path, Path]:
+    default_path = Path(config_item["config_file_default_path"]).expanduser()
+    self_managed_path = Path(
         config_item["config_file_self_managed_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())
     ).expanduser()
     return default_path, self_managed_path

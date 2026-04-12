@@ -1,8 +1,8 @@
 from machineconfig.scripts.python.helpers.helpers_repos.action_helper import GitAction, GitOperationResult, GitOperationSummary, print_git_operations_summary
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.accessories import randstr
 from machineconfig.scripts.python.helpers.helpers_repos.update import update_repository
 
+from pathlib import Path
 from typing import Dict, Any, List, cast
 import concurrent.futures
 import os
@@ -10,7 +10,7 @@ import os
 from rich import print as pprint
 
 
-def git_action(path: PathExtended, action: GitAction, mess: str | None, r: bool, auto_uv_sync: bool) -> GitOperationResult:
+def git_action(path: Path, action: GitAction, mess: str | None, r: bool, auto_uv_sync: bool) -> GitOperationResult:
     """Perform git actions using Python instead of shell scripts. Returns detailed operation result."""
     from git.exc import InvalidGitRepositoryError
     from git.repo import Repo
@@ -22,7 +22,7 @@ def git_action(path: PathExtended, action: GitAction, mess: str | None, r: bool,
         if r:
             results = (
                 [
-                    git_action(path=PathExtended(sub_path), action=action, mess=mess, r=r, auto_uv_sync=auto_uv_sync)
+                    git_action(path=Path(sub_path), action=action, mess=mess, r=r, auto_uv_sync=auto_uv_sync)
                     for sub_path in path.glob("*")
                     if not sub_path.name.startswith(".")
                 ]
@@ -111,7 +111,7 @@ def git_action(path: PathExtended, action: GitAction, mess: str | None, r: bool,
     return GitOperationResult(repo_path=path, action=action.value, success=False, message="Unknown error", remote_count=remote_count)
 
 
-def perform_git_operations(repos_root: PathExtended, pull: bool, commit: bool, push: bool, recursive: bool, auto_uv_sync: bool) -> None:
+def perform_git_operations(repos_root: Path, pull: bool, commit: bool, push: bool, recursive: bool, auto_uv_sync: bool) -> None:
     """Perform git operations on all repositories and provide detailed summary."""
     print(f"\n🔄 Performing Git actions on repositories @ `{repos_root}`...")
     summary = GitOperationSummary()
@@ -127,7 +127,7 @@ def perform_git_operations(repos_root: PathExtended, pull: bool, commit: bool, p
     # Collect all candidate paths first
     paths = list(repos_root.glob("*"))
 
-    def _process_path(a_path: PathExtended) -> Dict[str, Any]:
+    def _process_path(a_path: Path) -> Dict[str, Any]:
         """Worker that processes a single path and returns metadata and results."""
         from git.exc import InvalidGitRepositoryError
         from git.repo import Repo
@@ -171,7 +171,7 @@ def perform_git_operations(repos_root: PathExtended, pull: bool, commit: bool, p
         future_to_path = {exc.submit(_process_path, p): p for p in paths}
         for fut in concurrent.futures.as_completed(future_to_path):
             payload = fut.result()
-            a_path = cast(PathExtended, payload.get("path"))
+            a_path = cast(Path, payload.get("path"))
             summary.total_paths_processed += 1
 
             if not payload.get("is_git"):

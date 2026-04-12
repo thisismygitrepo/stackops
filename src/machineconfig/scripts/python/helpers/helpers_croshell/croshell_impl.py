@@ -184,9 +184,6 @@ def _build_preprogram() -> str:
             else:
                 # print(todays_date)
                 print_logo("Machineconfig")
-            # print_logo("Machineconfig")
-            from machineconfig.utils.path_extended import PathExtended
-            _ = PathExtended
         except ImportError:
             print("Croshell: machineconfig is not installed in the current environment.")
             print("Skipping logo printing and some utilities. Some features may not work as expected.")

@@ -32,9 +32,8 @@ def action(
         raise typer.Exit(code=1)
     repos_root = _resolve_directory(directory)
     from machineconfig.scripts.python.helpers.helpers_repos.action import perform_git_operations
-    from machineconfig.utils.path_extended import PathExtended
 
-    perform_git_operations(repos_root=PathExtended(repos_root), pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
+    perform_git_operations(repos_root=repos_root, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
 
 
 def capture(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:

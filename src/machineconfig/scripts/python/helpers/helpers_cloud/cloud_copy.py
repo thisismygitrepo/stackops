@@ -4,6 +4,7 @@ CC
 
 from pathlib import Path
 
+import machineconfig.utils.path_compression as path_compression
 import machineconfig.utils.path_core as path_core
 from machineconfig.utils.io import (
     GpgCommandError,
@@ -13,7 +14,6 @@ from machineconfig.utils.io import (
     encrypt_file_symmetric,
 )
 from machineconfig.utils.path_core import delete_path
-from machineconfig.utils.path_extended import PathExtended
 import machineconfig.utils.rclone_wrapper as rclone_wrapper
 from machineconfig.utils.rclone import RcloneCommandError
 from machineconfig.utils.ve import CLOUD, read_default_cloud_config
@@ -48,7 +48,18 @@ def _prepare_upload_path(
     upload_path = local_path.expanduser().absolute()
     temp_paths: list[Path] = []
     if zip_requested:
-        upload_path = Path(PathExtended(upload_path).zip(inplace=False))
+        upload_path = path_compression.zip_path(
+            upload_path,
+            path=None,
+            folder=None,
+            name=None,
+            arcname=None,
+            inplace=False,
+            verbose=True,
+            content=False,
+            orig=False,
+            mode="w",
+        )
         temp_paths.append(upload_path)
     if encrypt_requested:
         if pwd is None:
@@ -76,14 +87,20 @@ def _finalize_download_path(
             local_path = decrypt_file_symmetric(file_path=encrypted_path, pwd=pwd)
         delete_path(encrypted_path, verbose=False)
     if zip_requested:
-        local_path = Path(
-            PathExtended(local_path).unzip(
-                inplace=True,
-                verbose=True,
-                overwrite=overwrite,
-                content=True,
-                merge=False,
-            )
+        local_path = path_compression.unzip_path(
+            local_path,
+            folder=None,
+            path=None,
+            name=None,
+            verbose=True,
+            content=True,
+            inplace=True,
+            overwrite=overwrite,
+            orig=False,
+            pwd=None,
+            tmp=False,
+            pattern=None,
+            merge=False,
         )
     return local_path
 
@@ -96,10 +113,9 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
     import getpass
     import os
     from machineconfig.utils.io import GpgCommandError, decrypt_file_symmetric
-    from machineconfig.utils.path_extended import PathExtended
     console = Console()
     console.print(Panel("🚀 Secure File Downloader", title="[bold blue]Downloader[/bold blue]", border_style="blue"))
-    folder_obj = PathExtended.cwd() if folder is None else PathExtended(folder)
+    folder_obj = Path.cwd() if folder is None else Path(folder).expanduser()
     print(f"📂 Target folder: {folder_obj}")
 
     if os.environ.get("DECRYPTION_PASSWORD") is not None:
@@ -119,17 +135,19 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
     console.print(Panel("📡 Downloading from URL...", title="[bold blue]Download[/bold blue]", border_style="blue"))
     with Progress(transient=True) as progress:
         _task = progress.add_task("Downloading... ", total=None)
-        url_obj = PathExtended(url).download(folder=folder_obj)
+        if url is None:
+            raise ValueError("Share URL is required.")
+        url_obj = path_core.download(url, folder=folder_obj)
 
     console.print(Panel(f"📥 Downloaded file: {url_obj}", title="[bold green]Success[/bold green]", border_style="green"))
 
     console.print(Panel("🔐 Decrypting and extracting...", title="[bold blue]Processing[/bold blue]", border_style="blue"))
     with Progress(transient=True) as progress:
         _task = progress.add_task("Decrypting... ", total=None)
-        tmp_folder = PathExtended.tmpdir(prefix="tmp_unzip")
+        tmp_folder = path_core.tmpdir(prefix="tmp_unzip")
         try:
             try:
-                decrypted_path = PathExtended(decrypt_file_symmetric(file_path=url_obj, pwd=pwd))
+                decrypted_path = Path(decrypt_file_symmetric(file_path=url_obj, pwd=pwd))
             except GpgCommandError as error:
                 console.print(
                     Panel(
@@ -140,7 +158,21 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
                 )
                 raise SystemExit(1) from None
             delete_path(url_obj, verbose=False)
-            res = decrypted_path.unzip(inplace=True, folder=tmp_folder)
+            res = path_compression.unzip_path(
+                decrypted_path,
+                folder=tmp_folder,
+                path=None,
+                name=None,
+                verbose=True,
+                content=False,
+                inplace=True,
+                overwrite=False,
+                orig=False,
+                pwd=None,
+                tmp=False,
+                pattern=None,
+                merge=False,
+            )
             for x in res.glob("*"):
                 path_core.move(x, folder=folder_obj, overwrite=True)
         finally:

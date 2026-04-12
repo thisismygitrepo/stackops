@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import machineconfig.utils.path_core as path_core
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.schemas.repos.repos_types import GitVersionInfo, RepoRecordDict, RepoRemote
 
 from machineconfig.utils.schemas.repos.repos_types import RepoRecordFile
@@ -21,7 +20,7 @@ def build_tree_structure(repos: list[RepoRecordDict], repos_root: Path) -> str:
     repos_root_abs = repos_root.expanduser().absolute()
 
     for repo in repos:
-        parent_path = PathExtended(repo["parentDir"]).expanduser().absolute()
+        parent_path = Path(repo["parentDir"]).expanduser().absolute()
         try:
             relative_path = parent_path.relative_to(repos_root_abs)
             relative_str = str(relative_path) if str(relative_path) != "." else ""
@@ -82,11 +81,11 @@ def build_tree_structure(repos: list[RepoRecordDict], repos_root: Path) -> str:
     return "\n".join(tree_lines)
 
 
-def record_a_repo(path: PathExtended, search_parent_directories: bool, preferred_remote: str | None) -> RepoRecordDict:
+def record_a_repo(path: Path, search_parent_directories: bool, preferred_remote: str | None) -> RepoRecordDict:
     from git.repo import Repo
 
     repo = Repo(path, search_parent_directories=search_parent_directories)  # get list of remotes using git python
-    repo_root = PathExtended(repo.working_dir).absolute()
+    repo_root = Path(repo.working_dir).absolute()
     # remotes: = {remote.name: remote.url for remote in repo.remotes}
     remotes: list[RepoRemote] = [{"name": remote.name, "url": remote.url} for remote in repo.remotes]
     if preferred_remote is not None:
@@ -125,11 +124,11 @@ def record_a_repo(path: PathExtended, search_parent_directories: bool, preferred
 
 def count_git_repositories(repos_root: str, r: bool) -> int:
     """Count total git repositories for accurate progress tracking."""
-    path_obj = PathExtended(repos_root).expanduser().absolute()
+    path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
         return 0
 
-    search_res = [PathExtended(candidate) for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
+    search_res = [candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
     count = 0
 
     for a_search_res in search_res:
@@ -143,11 +142,11 @@ def count_git_repositories(repos_root: str, r: bool) -> int:
 
 def count_total_directories(repos_root: str, r: bool) -> int:
     """Count total directories to scan for accurate progress tracking."""
-    path_obj = PathExtended(repos_root).expanduser().absolute()
+    path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
         return 0
 
-    search_res = [PathExtended(candidate) for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
+    search_res = [candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
     count = len(search_res)
 
     if r:
@@ -159,11 +158,11 @@ def count_total_directories(repos_root: str, r: bool) -> int:
 
 
 def record_repos_recursively(repos_root: str, r: bool, progress: Progress | None, scan_task_id: TaskID | None, process_task_id: TaskID | None) -> list[RepoRecordDict]:
-    path_obj = PathExtended(repos_root).expanduser().absolute()
+    path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
         return []
 
-    search_res = [PathExtended(candidate) for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
+    search_res = [candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
     res: list[RepoRecordDict] = []
 
     for a_search_res in search_res:
@@ -265,7 +264,7 @@ def main_record(repos_root_str: str | None) -> Path:
         shared=False,
     )
     save_json(obj=res, path=spec_path_self_managed, indent=4)
-    pprint(f"📁 Result saved at {PathExtended(spec_path_self_managed)}")
+    pprint(f"📁 Result saved at {Path(spec_path_self_managed)}")
 
     # record_mapping(
     #     orig_path=spec_path_default,

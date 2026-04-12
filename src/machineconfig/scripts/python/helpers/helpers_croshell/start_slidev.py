@@ -2,10 +2,11 @@
 slidev
 """
 
+from pathlib import Path
+
 import machineconfig.utils.path_core as path_core
 from machineconfig.utils.source_of_truth import CONFIG_ROOT
 from machineconfig.utils.code import print_code
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.terminal import Response
 from typing import Annotated
 import typer
@@ -14,7 +15,7 @@ import platform
 
 PORT_DEFAULT = 3030
 
-SLIDEV_REPO = PathExtended(CONFIG_ROOT).joinpath(".cache/slidev")
+SLIDEV_REPO = Path(CONFIG_ROOT).joinpath(".cache/slidev")
 if not SLIDEV_REPO.joinpath("components").exists():
     print("📦 Initializing Slidev repository...")
     subprocess.run(f"cd {SLIDEV_REPO.parent};npm init slidev@latest", check=False, shell=True, text=True)
@@ -31,7 +32,7 @@ def _execute_with_shell(command: str) -> Response:
     return response
 
 
-def jupyter_to_markdown(file: PathExtended):
+def jupyter_to_markdown(file: Path):
     op_dir = file.parent.joinpath("presentation")
     print("📝 Converting Jupyter notebook to markdown...")
 
@@ -72,12 +73,12 @@ def main(
 
     if jupyter_file is not None:
         print("📓 Jupyter file provided. Converting to markdown...")
-        report_dir = jupyter_to_markdown(PathExtended(jupyter_file))
+        report_dir = jupyter_to_markdown(Path(jupyter_file))
     else:
         if directory is None:
-            report_dir = PathExtended.cwd()
+            report_dir = Path.cwd()
         else:
-            report_dir = PathExtended(directory)
+            report_dir = Path(directory)
 
     assert report_dir.exists(), f"❌ Directory {report_dir} does not exist."
     assert report_dir.is_dir(), f"❌ {report_dir} is not a directory."

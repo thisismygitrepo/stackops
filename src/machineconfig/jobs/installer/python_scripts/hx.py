@@ -3,10 +3,10 @@ Installers do not add runtime files to the machine, hence this script.
 """
 
 import machineconfig.utils.path_core as path_core
-from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.installer_utils.installer_locator_utils import WINDOWS_INSTALL_PATH
 from machineconfig.utils.path_core import delete_path
 import platform
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from machineconfig.jobs.installer.python_scripts.main_protocol import (
@@ -91,14 +91,14 @@ def main(
 
     print("\n🗑️  [Step 3/5] Cleaning up previous installation (if any)...")
     if platform.system() in ["Linux", "Darwin"]:
-        runtime_path = PathExtended.home().joinpath(".config/helix/runtime")
-        contrib_path = PathExtended.home().joinpath(".config/helix/contrib")
-        target_config_dir = PathExtended.home().joinpath(".config/helix").expanduser()
+        runtime_path = Path.home().joinpath(".config/helix/runtime")
+        contrib_path = Path.home().joinpath(".config/helix/contrib")
+        target_config_dir = Path.home().joinpath(".config/helix").expanduser()
         target_config_dir.mkdir(parents=True, exist_ok=True)
     elif platform.system() == "Windows":
-        runtime_path = PathExtended.home().joinpath("AppData/Roaming/helix/runtime")
-        contrib_path = PathExtended.home().joinpath("AppData/Roaming/helix/contrib")
-        target_config_dir = PathExtended.home().joinpath("AppData/Roaming/helix").expanduser()
+        runtime_path = Path.home().joinpath("AppData/Roaming/helix/runtime")
+        contrib_path = Path.home().joinpath("AppData/Roaming/helix/contrib")
+        target_config_dir = Path.home().joinpath("AppData/Roaming/helix").expanduser()
         target_config_dir.mkdir(parents=True, exist_ok=True)
     else:
         console.print(
@@ -115,7 +115,7 @@ def main(
         return f"Error: Unsupported OS: {platform.system()}"
 
     if platform.system() in ["Linux", "Darwin"]:
-        target_bin_path = PathExtended(LINUX_INSTALL_PATH)
+        target_bin_path = Path(LINUX_INSTALL_PATH)
         exe_name = "hx"
         path_core.move(hx_file, folder=target_bin_path, overwrite=True)
 
@@ -165,7 +165,7 @@ def main(
             )
         )
     elif platform.system() == "Windows":
-        target_bin_path = PathExtended(WINDOWS_INSTALL_PATH)
+        target_bin_path = Path(WINDOWS_INSTALL_PATH)
         exe_name = "hx.exe"
         path_core.move(hx_file, folder=target_bin_path, overwrite=True)
 
