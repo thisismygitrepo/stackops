@@ -18,7 +18,7 @@ from machineconfig.utils.io import (
     encrypt_file_asymmetric,
     encrypt_file_symmetric,
 )
-from machineconfig.utils.path_compression import delete_path
+from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.rclone import RcloneCommandError, is_missing_remote_path_error
 import machineconfig.utils.rclone_wrapper as rclone_wrapper

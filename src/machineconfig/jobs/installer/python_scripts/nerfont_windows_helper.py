@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 import machineconfig.jobs.installer.powershell_scripts as powershell_scripts
-from machineconfig.utils.path_compression import delete_path
+from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.installer_utils.installer_class import Installer

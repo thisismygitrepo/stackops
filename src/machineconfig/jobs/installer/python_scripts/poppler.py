@@ -7,7 +7,7 @@ from machineconfig.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
     
 )
-from machineconfig.utils.path_compression import delete_path
+from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.installer_utils.installer_class import Installer
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.schemas.installer.installer_types import InstallerData

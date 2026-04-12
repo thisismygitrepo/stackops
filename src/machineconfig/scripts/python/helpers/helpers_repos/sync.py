@@ -1,6 +1,6 @@
 from machineconfig.utils.path_extended import PathExtended
 from machineconfig.utils.io import encrypt_file_asymmetric
-from machineconfig.utils.path_compression import delete_path
+from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.rclone_wrapper import get_remote_path, to_cloud
 import platform
 from pathlib import Path

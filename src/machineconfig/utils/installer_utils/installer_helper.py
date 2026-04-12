@@ -1,5 +1,5 @@
 from machineconfig.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
-from machineconfig.utils.path_compression import delete_path
+from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.schemas.installer.installer_types import InstallerData
 from pathlib import Path
 from machineconfig.utils.path_extended import DECOMPRESS_SUPPORTED_FORMATS, PathExtended

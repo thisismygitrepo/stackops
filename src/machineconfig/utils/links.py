@@ -1,5 +1,5 @@
 from machineconfig.utils.path_extended import PathExtended, PLike
-from machineconfig.utils.path_compression import delete_path
+from machineconfig.utils.path_core import delete_path
 from pathlib import Path
 import machineconfig.utils.path_core as path_core
 from machineconfig.profile.create_links_export import ON_CONFLICT_STRICT

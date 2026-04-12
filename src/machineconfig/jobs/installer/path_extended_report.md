@@ -10,6 +10,7 @@ Methodology:
 Summary:
 - Confirmed external call sites: `122`
 - Public methods with at least one external use: `13 / 25`
+- Table below omits public methods with zero confirmed external uses.
 
 | Rank | Method | Uses | Files |
 | ---: | --- | ---: | ---: |
@@ -26,15 +27,3 @@ Summary:
 | 11 | `symlink_to` | 2 | 1 |
 | 12 | `tmpdir` | 2 | 2 |
 | 13 | `unbz` | 1 | 1 |
-| 14 | `append` | 0 | 0 |
-| 15 | `rel2home` | 0 | 0 |
-| 16 | `split` | 0 | 0 |
-| 17 | `size` | 0 | 0 |
-| 18 | `clickable` | 0 | 0 |
-| 19 | `as_url_str` | 0 | 0 |
-| 20 | `as_zip_path` | 0 | 0 |
-| 21 | `tmpfile` | 0 | 0 |
-| 22 | `tmp` | 0 | 0 |
-| 23 | `untar` | 0 | 0 |
-| 24 | `ungz` | 0 | 0 |
-| 25 | `unxz` | 0 | 0 |

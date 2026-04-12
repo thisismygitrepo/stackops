@@ -1,6 +1,6 @@
 import machineconfig.utils.path_core as path_core
 from machineconfig.utils.path_extended import PathExtended
-from machineconfig.utils.path_compression import delete_path
+from machineconfig.utils.path_core import delete_path
 from machineconfig.utils.source_of_truth import WINDOWS_INSTALL_PATH, LINUX_INSTALL_PATH, INSTALL_VERSION_ROOT
 
 from pathlib import Path

@@ -4,12 +4,11 @@ from pathlib import Path
 import shutil
 
 from machineconfig.utils.accessories import randstr
-from machineconfig.utils.path_compression import delete_path
 
 type PathLike = str | Path
 type OptionalPathLike = str | Path | None
 
-__all__ = ["collapseuser", "copy", "move", "resolve", "with_name"]
+__all__ = ["collapseuser", "copy", "delete_path", "move", "resolve", "with_name"]
 
 
 def _emit(message: str, *, verbose: bool) -> None:
@@ -19,6 +18,19 @@ def _emit(message: str, *, verbose: bool) -> None:
         print(message)
     except UnicodeEncodeError:
         print("path_core warning: UnicodeEncodeError, could not print message.")
+
+
+def delete_path(target: PathLike, *, verbose: bool) -> None:
+    target_path = Path(target).expanduser()
+    if not target_path.exists():
+        target_path.unlink(missing_ok=True)
+        _emit(f"❌ Could NOT DELETE nonexisting file {target_path!r}.", verbose=verbose)
+        return
+    if target_path.is_file() or target_path.is_symlink():
+        target_path.unlink(missing_ok=True)
+    else:
+        shutil.rmtree(target_path, ignore_errors=False)
+    _emit(f"🗑️ ❌ DELETED {target_path!r}.", verbose=verbose)
 
 
 def _home_path() -> Path:

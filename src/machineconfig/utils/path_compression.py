@@ -4,13 +4,13 @@ import bz2
 import gzip
 import lzma
 from pathlib import Path
-import shutil
 import tarfile
 from typing import Literal
 import zipfile
 
 from machineconfig.utils.accessories import randstr
 from machineconfig.utils.code import run_lambda_function
+from machineconfig.utils.path_core import delete_path
 
 type FileMode = Literal["r", "w", "x", "a"]
 
@@ -37,19 +37,6 @@ def _emit(message: str, verbose: bool) -> None:
         print(message)
     except UnicodeEncodeError:
         print("path_compression warning: UnicodeEncodeError, could not print message.")
-
-
-def delete_path(target: Path | str, *, verbose: bool) -> None:
-    target_path = Path(target).expanduser()
-    if not target_path.exists():
-        target_path.unlink(missing_ok=True)
-        _emit(f"❌ Could NOT DELETE nonexisting file {target_path!r}.", verbose)
-        return
-    if target_path.is_file() or target_path.is_symlink():
-        target_path.unlink(missing_ok=True)
-    else:
-        shutil.rmtree(target_path, ignore_errors=False)
-    _emit(f"🗑️ ❌ DELETED {target_path!r}.", verbose)
 
 
 def _resolve_output_path(source: Path, *, folder: Path | None, name: str | None, path: Path | None, default_name: str) -> Path:
@@ -351,7 +338,6 @@ def decompress_path(source: Path, *, folder: Path | None, name: str | None, path
 __all__ = [
     "DECOMPRESS_SUPPORTED_FORMATS",
     "FileMode",
-    "delete_path",
     "decompress_path",
     "unbz_path",
     "ungz_path",

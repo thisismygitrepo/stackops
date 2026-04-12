@@ -7,6 +7,15 @@ import pytest
 import machineconfig.utils.path_core as path_core
 
 
+def test_delete_path_removes_existing_file(tmp_path: Path) -> None:
+    target = tmp_path.joinpath("remove.txt")
+    target.write_text("bye", encoding="utf-8")
+
+    path_core.delete_path(target, verbose=False)
+
+    assert not target.exists()
+
+
 def test_copy_to_same_path_uses_generated_copy_name(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
