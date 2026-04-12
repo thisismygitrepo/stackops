@@ -127,7 +127,7 @@ def download_and_prepare(download_url: str) -> Path:
     downloaded_object = download(download_url, output_dir=str(INSTALL_TMP_DIR))
     if downloaded_object is None:
         raise ValueError(f"Failed to download from URL: {download_url}")
-    archive_path = downloaded_object
+    archive_path = Path(downloaded_object).expanduser()
     extracted_path = archive_path
     if extracted_path.is_file() and _is_supported_archive(archive_path):
         extracted_path = decompress_path(archive_path, folder=None, name=None, path=None, inplace=False, orig=False, verbose=True)

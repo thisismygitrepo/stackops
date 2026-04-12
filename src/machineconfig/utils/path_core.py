@@ -13,6 +13,9 @@ from machineconfig.utils.accessories import randstr
 
 type PathLike = str | os.PathLike[str]
 type OptionalPathLike = PathLike | None
+type RequestParamScalar = str | int | float
+type RequestParamValue = RequestParamScalar | list[RequestParamScalar] | tuple[RequestParamScalar, ...]
+type RequestParams = str | bytes | dict[str, RequestParamValue | None] | list[tuple[str, RequestParamScalar]] | tuple[tuple[str, RequestParamScalar], ...]
 
 __all__ = [
     "PathLike",
@@ -185,7 +188,7 @@ def download(
     name: str | None = None,
     allow_redirects: bool = True,
     timeout: int | None = None,
-    params: object | None = None,
+    params: RequestParams | None = None,
 ) -> Path:
     import requests
 

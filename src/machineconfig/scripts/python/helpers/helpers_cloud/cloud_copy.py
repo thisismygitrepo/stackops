@@ -135,8 +135,6 @@ def get_securely_shared_file(url: str | None, folder: str | None) -> None:
     console.print(Panel("📡 Downloading from URL...", title="[bold blue]Download[/bold blue]", border_style="blue"))
     with Progress(transient=True) as progress:
         _task = progress.add_task("Downloading... ", total=None)
-        if url is None:
-            raise ValueError("Share URL is required.")
         url_obj = path_core.download(url, folder=folder_obj)
 
     console.print(Panel(f"📥 Downloaded file: {url_obj}", title="[bold green]Success[/bold green]", border_style="green"))
