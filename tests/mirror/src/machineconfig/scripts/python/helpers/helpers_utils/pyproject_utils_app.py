@@ -234,6 +234,7 @@ def test_get_app_help_lists_core_commands() -> None:
     assert "upgrade-packages" in result.stdout
     assert "type-hint" in result.stdout
     assert "type-check" in result.stdout
+    assert "type-fix" in result.stdout
     assert "reference-test" in result.stdout
 
 
@@ -245,6 +246,25 @@ def test_type_check_help_lists_exclude_flag() -> None:
     assert result.exit_code == 0
     assert "--exclude" in result.stdout
     assert "-x" in result.stdout
+
+
+def test_type_fix_help_lists_checker_options() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["type-fix", "--help"])
+
+    assert result.exit_code == 0
+    assert "--which-checker" in result.stdout
+    assert "--agent-load" in result.stdout
+
+
+def test_type_fix_hidden_alias_is_wired() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(module.get_app(), ["f", "--help"])
+
+    assert result.exit_code == 0
+    assert "--which-checker" in result.stdout
 
 
 def test_reference_test_help_lists_verbose_flag() -> None:

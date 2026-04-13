@@ -16,6 +16,10 @@ ignore=
 # DEFAULT: []
 ignore-patterns=
 
+# Add files or directories matching the regex patterns to the blacklist. The
+# regex matches against paths and lets us ignore only the repo-root tests dir.
+ignore-paths=^(\./)?tests($|/)
+
 # Pickle collected data for later comparisons.
 # DEFAULT: True
 persistent=yes
@@ -87,4 +91,3 @@ evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / stateme
 
 # Disable metrics calculation and display
 score=no
-

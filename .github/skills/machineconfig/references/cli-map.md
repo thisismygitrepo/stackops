@@ -148,7 +148,10 @@ utils
 ├─ pyproject
 │  ├─ init-project
 │  ├─ upgrade-packages
-│  └─ type-hint
+│  ├─ type-hint
+│  ├─ type-check
+│  ├─ type-fix
+│  └─ reference-test
 └─ file
    ├─ edit
    ├─ download

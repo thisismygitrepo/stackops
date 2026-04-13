@@ -6,48 +6,53 @@ from machineconfig.scripts.python.agents_parallel_commands import agents_create 
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from machineconfig.scripts.python.terminal import run as terminal_run_command
 
-WHICH_CHECKER: TypeAlias = Literal["mypy", "ruff", "pylint", "pyright", "ty", "pyrefly"]
+
+CheckerName: TypeAlias = Literal["mypy", "ruff", "pylint", "pyright", "ty", "pyrefly"]
 DIAGNOSTIC_SEPARATOR = "### Diagnostic"
 PROMPT = "please fix those, but don't be so pedantic because the linter and type checker are not perfect and occasionally give false positives"
 
 
-def _get_issues_path(*, which_checker: WHICH_CHECKER) -> str:
-    return f"./.ai/linters/issues_{which_checker}.md"
+def _get_issues_path(*, checker_name: CheckerName) -> str:
+    return f"./.ai/linters/issues_{checker_name}.md"
 
 
-def _get_job_name(*, which_checker: WHICH_CHECKER) -> str:
-    return f"fix_{which_checker}_issues"
+def _get_job_name(*, checker_name: CheckerName) -> str:
+    return f"fix_{checker_name}_issues"
 
 
-def _get_layout_path(*, which_checker: WHICH_CHECKER) -> str:
-    return f"./.ai/agents/{_get_job_name(which_checker=which_checker)}/layout.json"
+def _get_layout_path(*, checker_name: CheckerName) -> str:
+    return f"./.ai/agents/{_get_job_name(checker_name=checker_name)}/layout.json"
 
 
-def launch_fix_types(
+def launch_type_fix(
     ctx: typer.Context,
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = "codex",
     agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of diagnostics per prompt.")] = 10,
     which_checker: Annotated[
-        WHICH_CHECKER,
+        CheckerName,
         typer.Option("--which-checker", "--which", "-w", help="Which issues_<checker>.md file under ./.ai/linters to process."),
     ] = "mypy",
     max_tabs: Annotated[
         int,
-        typer.Option("--max-tabs", "--max-tabs-per-layout", "-T", help="Maximum tabs allowed in the generated layout."),
+        typer.Option("--max-agents", "-m", help="Maximum agents allowed in the generated layout."),
     ] = 50,
 ) -> None:
-    job_name = _get_job_name(which_checker=which_checker)
+    job_name = _get_job_name(checker_name=which_checker)
     agents_create_command(
         agent=agent,
-        context_path=_get_issues_path(which_checker=which_checker),
+        context_path=_get_issues_path(checker_name=which_checker),
         separator=DIAGNOSTIC_SEPARATOR,
         agent_load=agent_load,
         prompt=PROMPT,
         job_name=job_name,
     )
+    proceed = typer.confirm(f"Agents layout for fixing {which_checker} issues created. Do you want to run it now?", default=True)
+    if not proceed:
+        typer.echo("Agents not luanched.")
+        return
     terminal_run_command(
         ctx=ctx,
-        layouts_file=_get_layout_path(which_checker=which_checker),
+        layouts_file=_get_layout_path(checker_name=which_checker),
         max_tabs=max_tabs,
         on_conflict="restart",
     )
@@ -55,10 +60,10 @@ def launch_fix_types(
 
 def get_app() -> typer.Typer:
     cli_app = typer.Typer(
-        help="🛠 <f> Create and run the fix-types workflow from ./.ai/linters issues files.",
-        no_args_is_help=False,
+        help="🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
+        no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
     )
-    cli_app.callback(invoke_without_command=True)(launch_fix_types)
+    cli_app.callback(invoke_without_command=True)(launch_type_fix)
     return cli_app

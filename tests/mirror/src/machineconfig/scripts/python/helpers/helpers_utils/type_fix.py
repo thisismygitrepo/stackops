@@ -1,11 +1,10 @@
-from __future__ import annotations
-
+import pytest
 from typer.testing import CliRunner
 
-import machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.fix_types as fix_types_module
+import machineconfig.scripts.python.helpers.helpers_utils.type_fix as type_fix_module
 
 
-def test_launch_fix_types_matches_manual_workflow_defaults(monkeypatch) -> None:
+def test_launch_type_fix_matches_manual_workflow_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     captured_create: dict[str, object] = {}
     captured_run: dict[str, object] = {}
 
@@ -15,11 +14,11 @@ def test_launch_fix_types_matches_manual_workflow_defaults(monkeypatch) -> None:
     def fake_terminal_run_command(**kwargs: object) -> None:
         captured_run.update(kwargs)
 
-    monkeypatch.setattr(fix_types_module, "agents_create_command", fake_agents_create_command)
-    monkeypatch.setattr(fix_types_module, "terminal_run_command", fake_terminal_run_command)
+    monkeypatch.setattr(type_fix_module, "agents_create_command", fake_agents_create_command)
+    monkeypatch.setattr(type_fix_module, "terminal_run_command", fake_terminal_run_command)
     runner = CliRunner()
 
-    result = runner.invoke(fix_types_module.get_app(), [])
+    result = runner.invoke(type_fix_module.get_app(), [])
 
     assert result.exit_code == 0
     assert captured_create == {
@@ -27,7 +26,7 @@ def test_launch_fix_types_matches_manual_workflow_defaults(monkeypatch) -> None:
         "context_path": "./.ai/linters/issues_mypy.md",
         "separator": "### Diagnostic",
         "agent_load": 10,
-        "prompt": fix_types_module.PROMPT,
+        "prompt": type_fix_module.PROMPT,
         "job_name": "fix_mypy_issues",
     }
     assert captured_run["layouts_file"] == "./.ai/agents/fix_mypy_issues/layout.json"
@@ -35,7 +34,7 @@ def test_launch_fix_types_matches_manual_workflow_defaults(monkeypatch) -> None:
     assert captured_run["on_conflict"] == "restart"
 
 
-def test_launch_fix_types_passes_overrides_to_wrapped_commands(monkeypatch) -> None:
+def test_launch_type_fix_passes_overrides_to_wrapped_commands(monkeypatch: pytest.MonkeyPatch) -> None:
     captured_create: dict[str, object] = {}
     captured_run: dict[str, object] = {}
 
@@ -45,12 +44,12 @@ def test_launch_fix_types_passes_overrides_to_wrapped_commands(monkeypatch) -> N
     def fake_terminal_run_command(**kwargs: object) -> None:
         captured_run.update(kwargs)
 
-    monkeypatch.setattr(fix_types_module, "agents_create_command", fake_agents_create_command)
-    monkeypatch.setattr(fix_types_module, "terminal_run_command", fake_terminal_run_command)
+    monkeypatch.setattr(type_fix_module, "agents_create_command", fake_agents_create_command)
+    monkeypatch.setattr(type_fix_module, "terminal_run_command", fake_terminal_run_command)
     runner = CliRunner()
 
     result = runner.invoke(
-        fix_types_module.get_app(),
+        type_fix_module.get_app(),
         ["--agent", "copilot", "--agent-load", "4", "--which-checker", "pyright", "--max-tabs", "80"],
     )
 

@@ -15,7 +15,7 @@ Top-level sub-apps:
 | Sub-app | Purpose |
 |---------|---------|
 | `machine` | Process, environment, machine specs, and local device helpers |
-| `pyproject` | Project bootstrap, dependency maintenance, and type-hint generation |
+| `pyproject` | Project bootstrap, dependency maintenance, and typing workflows |
 | `file` | File editing, downloading, PDF tools, and database viewing |
 
 Commands under `utils machine`:
@@ -35,6 +35,8 @@ Commands under `utils pyproject`:
 | `init-project` | Initialize a project with a uv environment and dev packages |
 | `upgrade-packages` | Upgrade project dependencies |
 | `type-hint` | Type-hint a file or project directory |
+| `type-check` | Run the lint-and-type-check suite for a repository |
+| `type-fix` | Create and run the type-fix workflow from `./.ai/linters` issue files |
 | `reference-test` | Validate `_PATH_REFERENCE` targets in a repository |
 
 Commands under `utils file`:
@@ -58,6 +60,8 @@ utils --help
 utils machine --help
 utils machine mount --help
 utils pyproject init-project --help
+utils pyproject type-check --help
+utils pyproject type-fix --help
 utils pyproject reference-test --help
 utils pyproject reference-test . --verbose
 utils file download --help
