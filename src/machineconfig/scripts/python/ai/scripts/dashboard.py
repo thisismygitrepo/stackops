@@ -8,7 +8,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeEl
 from rich.table import Table
 from rich.text import Text
 
-from lint_and_type_check_models import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+from models import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
     CHECKER_SPECS,
     CLEANUP_COMMANDS,
     DONE_LABEL,

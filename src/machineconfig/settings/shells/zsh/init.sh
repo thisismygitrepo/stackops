@@ -45,6 +45,9 @@ alias r='wrap_in_shell_script croshell'
 alias u='wrap_in_shell_script utils'
 alias s='wrap_in_shell_script seek'
 
+alias ax='codex --dangerously-bypass-approvals-and-sandbox'
+alias ac='copilot --yolo'
+
 # alias gcs='gh copilot suggest -t shell'
 # alias gcg='gh copilot suggest -t git'
 # alias gce='gh copilot explain'

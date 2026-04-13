@@ -33,6 +33,10 @@ Add-ToPathIfNotAlready -Directories @(
     "C:\Program Files\Git\bin"  # gives sh.exe bash.exe & git.exe
 )
 
+Set-Alias -Name ax -Value "codex --dangerously-bypass-approvals-and-sandbox" -Option AllScope
+Set-Alias -Name ac -Value "copilot --yolo" -Option AllScope
+
+
 # sources  ================================================================
 if (Test-Path "$CONFIG_ROOT\scripts\wrap_mcfg.ps1") {
     . $CONFIG_ROOT\settings\broot\brootcd.ps1

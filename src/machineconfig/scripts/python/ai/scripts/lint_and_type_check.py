@@ -17,7 +17,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
-from lint_and_type_check_models import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+from models import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
     CHECKER_REFRESH_SECONDS,
     CHECKER_SPECS,
     CLEANUP_COMMANDS,
