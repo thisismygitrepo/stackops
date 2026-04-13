@@ -5,22 +5,24 @@
 			"label": "lint_and_type_check",
 			"type": "shell",
 			"linux": {
-				"command": "bash",
+				"command": "uv",
 				"args": [
-					"./.ai/scripts/lint_and_type_check.sh"
+					"run",
+					"./scripts/type_checking/lint_and_type_check.py"
 				]
 			},
 			"osx": {
-				"command": "bash",
+				"command": "uv",
 				"args": [
-					"./.ai/scripts/lint_and_type_check.sh"
+					"run",
+					"./scripts/type_checking/lint_and_type_check.py"
 				]
 			},
 			"windows": {
-				"command": "pwsh",
+				"command": "uv",
 				"args": [
-					"-File",
-					"./.ai/scripts/lint_and_type_check.ps1"
+					"run",
+					".\\scripts\\type_checking\\lint_and_type_check.py"
 				]
 			},
 			"presentation": {

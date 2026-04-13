@@ -2,6 +2,7 @@ from pathlib import Path
 from collections.abc import Sequence
 from time import perf_counter
 
+import machineconfig.scripts.python.ai.scripts.paths as ai_script_paths
 from machineconfig.scripts.python.ai.utils import generic
 from machineconfig.scripts.python.ai.solutions.claude import claude
 from machineconfig.scripts.python.ai.solutions.cline import cline
@@ -126,8 +127,10 @@ def add_ai_configs(
         print("[init-config] creating common scaffold")
         dot_ai_dir = repo_root.joinpath(".ai")
         dot_ai_dir.mkdir(parents=True, exist_ok=True)
-        dot_scripts_dir = repo_root.joinpath(".scripts")
-        dot_scripts_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = repo_root.joinpath(
+            ai_script_paths.TYPE_CHECKING_SCRIPTS_DIRECTORY.parent
+        )
+        scripts_dir.mkdir(parents=True, exist_ok=True)
         generic.create_dot_scripts(repo_root=repo_root)
         common_scaffold_elapsed = perf_counter() - phase_started
         total_elapsed_after_common_scaffold = perf_counter() - started_at

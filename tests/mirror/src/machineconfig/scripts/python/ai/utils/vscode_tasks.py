@@ -1,10 +1,14 @@
-from __future__ import annotations
-
 import json
 from pathlib import Path
 from typing import cast
 
+import machineconfig.scripts.python.ai.scripts.paths as ai_script_paths
 import machineconfig.scripts.python.ai.utils.vscode_tasks as vscode_tasks_module
+
+POSIX_LINT_AND_TYPE_CHECK_PATH = (
+    "./" + ai_script_paths.LINT_AND_TYPE_CHECK_REPO_RELATIVE_PATH.as_posix()
+)
+WINDOWS_LINT_AND_TYPE_CHECK_PATH = ".\\" + ai_script_paths.LINT_AND_TYPE_CHECK_REPO_RELATIVE_PATH.as_posix().replace("/", "\\")
 
 
 def _read_tasks_config(repo_root: Path) -> dict[str, object]:
@@ -21,7 +25,9 @@ def test_add_lint_and_type_check_task_creates_tasks_file(tmp_path: Path) -> None
     assert tasks_config["version"] == "2.0.0"
     assert len(tasks) == 1
     assert lint_task["label"] == "lint_and_type_check"
-    assert lint_task["linux"] == {"command": "bash", "args": ["./.ai/scripts/lint_and_type_check.sh"]}
+    assert lint_task["linux"] == {"command": "uv", "args": ["run", POSIX_LINT_AND_TYPE_CHECK_PATH]}
+    assert lint_task["osx"] == {"command": "uv", "args": ["run", POSIX_LINT_AND_TYPE_CHECK_PATH]}
+    assert lint_task["windows"] == {"command": "uv", "args": ["run", WINDOWS_LINT_AND_TYPE_CHECK_PATH]}
 
 
 def test_add_lint_and_type_check_task_replaces_existing_duplicate_label(tmp_path: Path) -> None:

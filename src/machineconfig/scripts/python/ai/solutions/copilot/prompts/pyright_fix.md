@@ -11,6 +11,6 @@ When creating the tasks, try to keep issues related to one pyfile in one task, s
 
 once you solved them, you will have 2 months break from work.
 
-Start by runing `./.ai/scripts/lint_and_type_check.sh` to generate $PYRIGHT_ISSUES_FILE only once.
+Start by runing `uv run ./scripts/type_checking/lint_and_type_check.py` to generate $PYRIGHT_ISSUES_FILE only once.
 
 

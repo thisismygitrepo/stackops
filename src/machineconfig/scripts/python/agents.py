@@ -155,7 +155,7 @@ def init_config(
     ] = "",
     add_config: Annotated[bool, typer.Option("--add-config", "-c", help="Create private agent config files/directories")] = True,
     add_instructions: Annotated[bool, typer.Option("--add-instructions", "-i", help="Create agent instructions files (e.g. AGENTS.md)")] = True,
-    add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai/.scripts scaffold")] = False,
+    add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
     add_to_gitignore: Annotated[
         bool, typer.Option("--add-gitignore", "-g", help="Track all files touched by init-config and add them to .gitignore")

@@ -3,44 +3,19 @@ import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
+import machineconfig.scripts.python.ai.scripts.paths as ai_script_paths
 from machineconfig.utils.source_of_truth import LIBRARY_ROOT
-# import machineconfig.scripts.python.ai.scripts as ai_script_assets
-# from machineconfig.utils.path_reference import get_path_reference_path
 
 def create_dot_scripts(repo_root: Path) -> None:
     scripts_dir = LIBRARY_ROOT.joinpath("scripts/python/ai/scripts")
-    target_dir = repo_root.joinpath(".ai/scripts")
+    target_dir = repo_root.joinpath(ai_script_paths.TYPE_CHECKING_SCRIPTS_DIRECTORY)
     shutil.rmtree(target_dir, ignore_errors=True)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    script_names: list[str] = ["lint_and_type_check.py", "models.py", "dashboard.py"]
-    extra_script_paths: list[Path] = []
-    # if platform.system() == "Windows":
-    #     extra_script_paths.append(
-    #         get_path_reference_path(
-    #             module=ai_script_assets,
-    #             path_reference=ai_script_assets.LINT_AND_TYPE_CHECK_PS1_PATH_REFERENCE,
-    #         )
-    #     )
-    # elif platform.system() in ["Linux", "Darwin"]:
-    #     extra_script_paths.append(
-    #         get_path_reference_path(
-    #             module=ai_script_assets,
-    #             path_reference=ai_script_assets.LINT_AND_TYPE_CHECK_SH_PATH_REFERENCE,
-    #         )
-    #     )
-    # else:
-    #     raise NotImplementedError(f"Platform {platform.system()} is not supported.")
-
-    for script_name in script_names:
+    for script_name in ai_script_paths.TYPE_CHECKING_SCRIPT_PATH_REFERENCES:
         script_path = scripts_dir.joinpath(script_name)
         target_dir.joinpath(script_path.name).write_text(
             data=script_path.read_text(encoding="utf-8"), encoding="utf-8"
-        )
-    for script_path in extra_script_paths:
-        target_dir.joinpath(script_path.name).write_text(
-            data=script_path.read_text(encoding="utf-8"),
-            encoding="utf-8",
         )
 
 

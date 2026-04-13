@@ -36,7 +36,7 @@ applyTo: "**/*.py"
 * when finished, run a linting static analysis check against files you touched, Any fix any mistakes.
 * Please run `uv run -m pyright $file_touched` and address all issues.
 * For all type checkers and linters, like mypy, pyright, pyrefly and pylint, there are config files at different levels of the repo all the way up to home directory level. You don't need to worry about them, just be mindful that they exist. The tools themselves will respect the configs therein.
-* If you want to run all linters and pycheckers agains the entire project to make sure everything is clean, I prepared a nice shell script, you can run it from the repo root as `./.ai/scripts/lint_and_type_check.sh`. It will produce markdown files that are you are meant to look at @ ./.ai/linters/*.md
+* If you want to run all linters and pycheckers agains the entire project to make sure everything is clean, I prepared a shared type-checking script, you can run it from the repo root as `uv run ./scripts/type_checking/lint_and_type_check.py`. It will produce markdown files that are you are meant to look at @ ./.ai/linters/*.md
 * Rust-inspired style, e.g.
 
 ```python

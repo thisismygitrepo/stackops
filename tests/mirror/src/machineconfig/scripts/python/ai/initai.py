@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+import machineconfig.scripts.python.ai.scripts.paths as ai_script_paths
 initai_module = importlib.import_module("machineconfig.scripts.python.ai.initai")
 
 
@@ -84,5 +85,5 @@ def test_add_ai_configs_creates_scaffold_and_tracks_touched_files(tmp_path: Path
     assert vscode_calls == [tmp_path]
     assert gitignore_calls == [(tmp_path, False, ("new.txt",))]
     assert (tmp_path / ".ai").is_dir()
-    assert (tmp_path / ".scripts").is_dir()
+    assert tmp_path.joinpath(ai_script_paths.TYPE_CHECKING_SCRIPTS_DIRECTORY.parent).is_dir()
     assert (tmp_path / ".gitignore").exists()
