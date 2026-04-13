@@ -7,6 +7,8 @@ from typing import cast
 
 import pytest
 from git.exc import GitCommandError
+from git.remote import Remote
+from git.repo import Repo
 from rich.console import Console
 
 from machineconfig.scripts.python.helpers.helpers_repos import cloud_repo_sync as sync_module
@@ -94,14 +96,14 @@ def test_get_remote_reference_name_returns_matching_branch() -> None:
         ],
     )
 
-    assert sync_module._get_remote_reference_name(remote=cast(object, remote), branch_name="master") == "originEnc/master"
+    assert sync_module._get_remote_reference_name(remote=cast(Remote, remote), branch_name="master") == "originEnc/master"
 
 
 def test_get_remote_reference_name_raises_for_missing_branch() -> None:
     remote = FakeRemote(name="originEnc", refs=[FakeRemoteReference(remote_head="dev", name="originEnc/dev")])
 
     with pytest.raises(RuntimeError, match="Remote branch 'master' was not fetched"):
-        sync_module._get_remote_reference_name(remote=cast(object, remote), branch_name="master")
+        sync_module._get_remote_reference_name(remote=cast(Remote, remote), branch_name="master")
 
 
 def test_upload_repo_archive_uses_selected_encryption_and_cleans_up(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -168,8 +170,8 @@ def test_merge_remote_copy_returns_success_or_conflict(monkeypatch: pytest.Monke
     )
 
     success = sync_module._merge_remote_copy(
-        repo=cast(object, success_repo),
-        remote_path=cast(object, tmp_path / "remote"),
+        repo=cast(Repo, success_repo),
+        remote_path=tmp_path / "remote",
         console=Console(),
     )
 
@@ -188,8 +190,8 @@ def test_merge_remote_copy_returns_success_or_conflict(monkeypatch: pytest.Monke
     )
 
     conflict = sync_module._merge_remote_copy(
-        repo=cast(object, conflict_repo),
-        remote_path=cast(object, tmp_path / "remote"),
+        repo=cast(Repo, conflict_repo),
+        remote_path=tmp_path / "remote",
         console=Console(),
     )
 

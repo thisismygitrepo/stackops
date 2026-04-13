@@ -1,0 +1,86 @@
+{
+  "$schema": "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/schemas/settings.schema.json",
+  "general": {
+    "preferredEditor": "vim",
+    "defaultApprovalMode": "default"
+  },
+  "ui": {
+    "theme": "Default",
+    "showLineNumbers": true
+  },
+  "model": {
+    "name": "gemini-2.5-flash",
+    "compressionThreshold": 0.5
+  },
+  "context": {
+    "fileName": [
+      "GEMINI.md",
+      "AGENTS.md"
+    ],
+    "includeDirectories": [],
+    "fileFiltering": {
+      "respectGitIgnore": true,
+      "respectGeminiIgnore": true,
+      "enableRecursiveFileSearch": true,
+      "enableFuzzySearch": true,
+      "customIgnoreFilePaths": []
+    }
+  },
+  "tools": {
+    "sandbox": false,
+    "core": [
+      "list_directory",
+      "read_file",
+      "write_file",
+      "read_many_files",
+      "glob",
+      "search_file_content",
+      "replace",
+      "run_shell_command",
+      "web_fetch",
+      "google_web_search",
+      "ask_user",
+      "save_memory",
+      "write_todos",
+      "activate_skill"
+    ],
+    "exclude": [],
+    "useRipgrep": true,
+    "truncateToolOutputThreshold": 40000,
+    "disableLLMCorrection": true,
+    "shell": {
+      "enableInteractiveShell": true,
+      "showColor": false
+    }
+  },
+  "mcp": {
+    "allowed": [],
+    "excluded": []
+  },
+  "mcpServers": {},
+  "privacy": {
+    "usageStatisticsEnabled": false
+  },
+  "telemetry": {
+    "enabled": false,
+    "target": "local",
+    "logPrompts": false,
+    "useCollector": false
+  },
+  "security": {
+    "auth": {
+      "selectedType": "gemini-api-key"
+    },
+    "environmentVariableRedaction": {
+      "enabled": true,
+      "allowed": [],
+      "blocked": []
+    },
+    "enablePermanentToolApproval": false
+  },
+  "advanced": {
+    "bugCommand": {
+      "urlTemplate": "https://github.com/google-gemini/gemini-cli/issues/new?template=bug_report.yml&title={title}&info={info}"
+    }
+  }
+}

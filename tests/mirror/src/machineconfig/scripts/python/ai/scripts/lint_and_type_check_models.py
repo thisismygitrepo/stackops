@@ -72,7 +72,10 @@ def test_checker_specs_request_structured_output() -> None:
 
     assert "--outputjson" in checker_commands["pyright"]
     assert checker_commands["mypy"][checker_commands["mypy"].index("-O") + 1] == "json"
+    assert checker_commands["mypy"][checker_commands["mypy"].index("--exclude") + 1] == r"(^|/|\\)gromit-mpx($|/|\\)"
     assert "--output-format=json2" in checker_commands["pylint"]
+    assert "--no-progress-bar" not in checker_commands["pyrefly"]
+    assert "--summary=none" in checker_commands["pyrefly"]
     assert checker_commands["pyrefly"][checker_commands["pyrefly"].index("--output-format") + 1] == "json"
     assert checker_commands["ty"][checker_commands["ty"].index("--output-format") + 1] == "gitlab"
     assert checker_commands["ruff"][checker_commands["ruff"].index("--output-format") + 1] == "json"
@@ -142,3 +145,30 @@ def test_format_tool_report_recovers_json_after_prefix_lines() -> None:
     assert "warning: prefix line" in report
     assert "## Diagnostics" in report
     assert "No diagnostics reported." in report
+
+
+def test_format_tool_report_splits_json_stream_diagnostics_into_sections() -> None:
+    spec = models_module.ToolSpec(
+        slug="mypy",
+        title="MyPy Type Checker",
+        report_path=Path(".ai/linters/issues_mypy.md"),
+        command=("uv", "run", "mypy"),
+        output_format="json",
+    )
+
+    report = models_module.format_tool_report(
+        spec=spec,
+        exit_code=1,
+        raw_output=(
+            "warning: prefix line\n"
+            '{"file": "demo.py", "line": -1, "message": "context", "severity": "note"}\n'
+            '{"file": "demo.py", "line": 1, "message": "boom", "severity": "error"}\n'
+        ),
+    )
+
+    assert "## Prefix" in report
+    assert "warning: prefix line" in report
+    assert "- Diagnostic entries: `2`" in report
+    assert "### Diagnostic 1" in report
+    assert "### Diagnostic 2" in report
+    assert '"severity": "error"' in report

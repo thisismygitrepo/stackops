@@ -3,10 +3,9 @@ import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
-import machineconfig.scripts.python.ai.scripts as ai_script_assets
-from machineconfig.utils.path_reference import get_path_reference_path
 from machineconfig.utils.source_of_truth import LIBRARY_ROOT
-
+# import machineconfig.scripts.python.ai.scripts as ai_script_assets
+# from machineconfig.utils.path_reference import get_path_reference_path
 
 def create_dot_scripts(repo_root: Path) -> None:
     scripts_dir = LIBRARY_ROOT.joinpath("scripts/python/ai/scripts")

@@ -31,6 +31,7 @@ JSON_ENTRY_KEYS: Final[tuple[str, ...]] = (
     "violations",
     "errors",
 )
+MYPY_EXCLUDE_PATTERN: Final[str] = r"(^|/|\\)gromit-mpx($|/|\\)"
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,7 +133,19 @@ CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = (
         slug="mypy",
         title="MyPy Type Checker",
         report_path=REPORTS_DIR / "issues_mypy.md",
-        command=("uv", "run", "--frozen", "--with", "mypy", "mypy", "-O", "json", "."),
+        command=(
+            "uv",
+            "run",
+            "--frozen",
+            "--with",
+            "mypy",
+            "mypy",
+            "-O",
+            "json",
+            ".",
+            "--exclude",
+            MYPY_EXCLUDE_PATTERN,
+        ),
         output_format="json",
     ),
     ToolSpec(
@@ -168,7 +181,6 @@ CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = (
             "pyrefly",
             "pyrefly",
             "check",
-            "--no-progress-bar",
             "--summary=none",
             "--output-format",
             "json",
@@ -257,30 +269,16 @@ def format_json_tool_report(spec: ToolSpec, exit_code: int, raw_output: str) -> 
         lines.append("No output was emitted.")
         lines.append("")
         return "\n".join(lines) + "\n"
-    prefix_text = ""
     try:
-        payload = json.loads(stripped_output)
+        prefix_text, payload = parse_json_output(raw_output=raw_output)
     except json.JSONDecodeError as error:
-        recovered_prefix, recovered_payload = split_json_prefix(raw_output)
-        if recovered_payload is None:
-            lines.append(f"- JSON parse failure: `{error.msg}`")
-            lines.append("")
-            lines.append("## Raw Output")
-            lines.append("")
-            append_code_block(lines=lines, language="text", content=raw_output)
-            lines.append("")
-            return "\n".join(lines) + "\n"
-        prefix_text = recovered_prefix
-        try:
-            payload = json.loads(recovered_payload)
-        except json.JSONDecodeError as recovered_error:
-            lines.append(f"- JSON parse failure: `{recovered_error.msg}`")
-            lines.append("")
-            lines.append("## Raw Output")
-            lines.append("")
-            append_code_block(lines=lines, language="text", content=raw_output)
-            lines.append("")
-            return "\n".join(lines) + "\n"
+        lines.append(f"- JSON parse failure: `{error.msg}`")
+        lines.append("")
+        lines.append("## Raw Output")
+        lines.append("")
+        append_code_block(lines=lines, language="text", content=raw_output)
+        lines.append("")
+        return "\n".join(lines) + "\n"
 
     entry_key, entries = extract_json_entries(payload)
     if entries is None:
@@ -363,6 +361,37 @@ def split_json_prefix(raw_output: str) -> tuple[str, str | None]:
             payload_text = "\n".join(lines[index:]).strip()
             return prefix_text, payload_text
     return "", None
+
+
+def parse_json_output(raw_output: str) -> tuple[str, object]:
+    stripped_output = raw_output.strip()
+    try:
+        return "", parse_json_stream(raw_output=stripped_output)
+    except json.JSONDecodeError as error:
+        prefix_text, payload_text = split_json_prefix(raw_output)
+        if payload_text is None:
+            raise error
+        return prefix_text, parse_json_stream(raw_output=payload_text)
+
+
+def parse_json_stream(raw_output: str) -> object:
+    stripped_output = raw_output.strip()
+    if stripped_output == "":
+        raise json.JSONDecodeError("Expecting value", raw_output, 0)
+    decoder = json.JSONDecoder()
+    decoded_items: list[object] = []
+    index = 0
+    while index < len(stripped_output):
+        while index < len(stripped_output) and stripped_output[index].isspace():
+            index += 1
+        if index >= len(stripped_output):
+            break
+        payload, end_index = decoder.raw_decode(stripped_output, index)
+        decoded_items.append(payload)
+        index = end_index
+    if len(decoded_items) == 1:
+        return decoded_items[0]
+    return decoded_items
 
 
 def extract_json_entries(payload: object) -> tuple[str | None, tuple[object, ...] | None]:

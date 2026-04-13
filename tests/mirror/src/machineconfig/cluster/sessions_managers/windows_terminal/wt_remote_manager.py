@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -135,9 +136,10 @@ def test_start_status_and_remote_overview_handle_failures(monkeypatch: pytest.Mo
         machine2wt_tabs={"srv-a": {"api": ("~/repo", "python api.py")}, "srv-b": {"jobs": ("~/jobs", "python jobs.py")}}, session_name_prefix="Jobs"
     )
 
-    manager.managers[1].session_manager.start_error = "cannot start"
-    manager.managers[1].process_monitor.raise_error = "process boom"
-    manager.managers[1].remote_executor.raise_windows_info_error = "remote boom"
+    broken_manager = cast(FakeWTRemoteLayoutGenerator, manager.managers[1])
+    broken_manager.session_manager.start_error = "cannot start"
+    broken_manager.process_monitor.raise_error = "process boom"
+    broken_manager.remote_executor.raise_windows_info_error = "remote boom"
 
     start_results = manager.start_all_sessions()
     status = manager.check_all_sessions_status()
