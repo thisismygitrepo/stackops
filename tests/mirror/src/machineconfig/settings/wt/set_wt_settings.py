@@ -4,7 +4,7 @@ import importlib
 import platform
 import sys
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from types import ModuleType
 from typing import Protocol, cast
 

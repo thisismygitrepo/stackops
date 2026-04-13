@@ -14,24 +14,24 @@ def create_dot_scripts(repo_root: Path) -> None:
     shutil.rmtree(target_dir, ignore_errors=True)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    script_names: list[str] = ["lint_and_type_check.py", "lint_and_type_check_models.py", "lint_and_type_check_dashboard.py"]
+    script_names: list[str] = ["lint_and_type_check.py", "models.py", "dashboard.py"]
     extra_script_paths: list[Path] = []
-    if platform.system() == "Windows":
-        extra_script_paths.append(
-            get_path_reference_path(
-                module=ai_script_assets,
-                path_reference=ai_script_assets.LINT_AND_TYPE_CHECK_PS1_PATH_REFERENCE,
-            )
-        )
-    elif platform.system() in ["Linux", "Darwin"]:
-        extra_script_paths.append(
-            get_path_reference_path(
-                module=ai_script_assets,
-                path_reference=ai_script_assets.LINT_AND_TYPE_CHECK_SH_PATH_REFERENCE,
-            )
-        )
-    else:
-        raise NotImplementedError(f"Platform {platform.system()} is not supported.")
+    # if platform.system() == "Windows":
+    #     extra_script_paths.append(
+    #         get_path_reference_path(
+    #             module=ai_script_assets,
+    #             path_reference=ai_script_assets.LINT_AND_TYPE_CHECK_PS1_PATH_REFERENCE,
+    #         )
+    #     )
+    # elif platform.system() in ["Linux", "Darwin"]:
+    #     extra_script_paths.append(
+    #         get_path_reference_path(
+    #             module=ai_script_assets,
+    #             path_reference=ai_script_assets.LINT_AND_TYPE_CHECK_SH_PATH_REFERENCE,
+    #         )
+    #     )
+    # else:
+    #     raise NotImplementedError(f"Platform {platform.system()} is not supported.")
 
     for script_name in script_names:
         script_path = scripts_dir.joinpath(script_name)

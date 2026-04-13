@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 import io
 from pathlib import Path
 from types import MethodType
-import subprocess
 
 import getpass
 import pytest

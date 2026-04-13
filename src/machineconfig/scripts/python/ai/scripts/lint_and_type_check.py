@@ -32,6 +32,7 @@ from models import (  # type: ignore[import-not-found] # sibling script, resolve
     CleanupResult,
     RunningTool,
     ToolResult,
+    format_tool_report,
     format_bytes,
     format_duration,
     format_share,
@@ -39,7 +40,7 @@ from models import (  # type: ignore[import-not-found] # sibling script, resolve
     relative_path,
     write_start_failure,
 )
-from lint_and_type_check_dashboard import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+from dashboard import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
     build_command_preview,
     build_final_summary,
     build_live_renderable,
@@ -136,7 +137,15 @@ def finish_ready_processes(
             continue
         running_tool.report_handle.flush()
         running_tool.report_handle.seek(0)
-        running_tool.spec.report_path.write_text(running_tool.report_handle.read(), encoding="utf-8")
+        raw_output = running_tool.report_handle.read()
+        running_tool.spec.report_path.write_text(
+            format_tool_report(
+                spec=running_tool.spec,
+                exit_code=exit_code,
+                raw_output=raw_output,
+            ),
+            encoding="utf-8",
+        )
         running_tool.report_handle.close()
         finished_at = time.monotonic()
         completed_tools[slug] = ToolResult(
@@ -157,11 +166,20 @@ def terminate_running_tools(running_tools: dict[str, RunningTool]) -> None:
         if running_tool.process.poll() is None:
             running_tool.process.terminate()
     for running_tool in running_tools.values():
-        if running_tool.process.poll() is None:
-            running_tool.process.wait(timeout=5)
+        exit_code = running_tool.process.poll()
+        if exit_code is None:
+            exit_code = running_tool.process.wait(timeout=5)
         running_tool.report_handle.flush()
         running_tool.report_handle.seek(0)
-        running_tool.spec.report_path.write_text(running_tool.report_handle.read(), encoding="utf-8")
+        raw_output = running_tool.report_handle.read()
+        running_tool.spec.report_path.write_text(
+            format_tool_report(
+                spec=running_tool.spec,
+                exit_code=exit_code,
+                raw_output=raw_output,
+            ),
+            encoding="utf-8",
+        )
         running_tool.report_handle.close()
 
 

@@ -144,25 +144,26 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
         CheckerSpec(slug="checker_b", title="Checker B", command=["checker-b"], report_path=reports_dir / "checker_b.md"),
     )
     module = types.ModuleType("lint_and_type_check_models")
-    module.CHECKER_REFRESH_SECONDS = 0.0
-    module.CHECKER_SPECS = checker_specs
-    module.CLEANUP_COMMANDS = (["cleanup-one"], ["cleanup-two"])
-    module.COMPLETED_KIND = COMPLETED_KIND
-    module.FAILURE_LABEL = FAILURE_LABEL
-    module.ISSUES_LABEL = ISSUES_LABEL
-    module.REPORTS_DIR = reports_dir
-    module.REPO_MARKER = repo_marker
-    module.START_FAILED_KIND = START_FAILED_KIND
-    module.SUCCESS_LABEL = SUCCESS_LABEL
-    module.SUMMARY_PATH = summary_path
-    module.CleanupResult = CleanupResult
-    module.RunningTool = RunningTool
-    module.ToolResult = ToolResult
-    module.format_bytes = lambda size: f"{size} B"
-    module.format_duration = lambda seconds: f"{seconds:.2f}s"
-    module.format_share = lambda duration, total: "0.00%" if total == 0 else f"{(duration / total) * 100:.2f}%"
-    module.read_report_stats = _read_report_stats
-    module.relative_path = lambda path: str(path.relative_to(base_dir))
+    setattr(module, "CHECKER_REFRESH_SECONDS", 0.0)
+    setattr(module, "CHECKER_SPECS", checker_specs)
+    setattr(module, "CLEANUP_COMMANDS", (["cleanup-one"], ["cleanup-two"]))
+    setattr(module, "COMPLETED_KIND", COMPLETED_KIND)
+    setattr(module, "FAILURE_LABEL", FAILURE_LABEL)
+    setattr(module, "ISSUES_LABEL", ISSUES_LABEL)
+    setattr(module, "REPORTS_DIR", reports_dir)
+    setattr(module, "REPO_MARKER", repo_marker)
+    setattr(module, "START_FAILED_KIND", START_FAILED_KIND)
+    setattr(module, "SUCCESS_LABEL", SUCCESS_LABEL)
+    setattr(module, "SUMMARY_PATH", summary_path)
+    setattr(module, "CleanupResult", CleanupResult)
+    setattr(module, "RunningTool", RunningTool)
+    setattr(module, "ToolResult", ToolResult)
+    setattr(module, "format_bytes", lambda size: f"{size} B")
+    setattr(module, "format_duration", lambda seconds: f"{seconds:.2f}s")
+    setattr(module, "format_share", lambda duration, total: "0.00%" if total == 0 else f"{(duration / total) * 100:.2f}%")
+    setattr(module, "format_tool_report", lambda spec, exit_code, raw_output: f"# {spec.title}\n\n- Exit code: {exit_code}\n\n{raw_output}")
+    setattr(module, "read_report_stats", _read_report_stats)
+    setattr(module, "relative_path", lambda path: str(path.relative_to(base_dir)))
 
     def write_start_failure(report_path: Path, title: str, command: list[str], error: OSError) -> None:
         report_path.write_text(
@@ -170,7 +171,7 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
             encoding="utf-8",
         )
 
-    module.write_start_failure = write_start_failure
+    setattr(module, "write_start_failure", write_start_failure)
     return ModelsFixture(
         module=module,
         checker_specs=checker_specs,
@@ -182,11 +183,13 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
 
 def _load_module(monkeypatch: pytest.MonkeyPatch, models_fixture: ModelsFixture, module_name: str) -> types.ModuleType:
     dashboard_module = types.ModuleType("lint_and_type_check_dashboard")
-    dashboard_module.build_command_preview = lambda: "preview"
-    dashboard_module.build_final_summary = lambda cleanup_result, checker_results, wall_started_at: "summary"
-    dashboard_module.build_live_renderable = lambda repo_root, cleanup_result, running_tools, completed_tools, wall_started_at: "live"
+    setattr(dashboard_module, "build_command_preview", lambda: "preview")
+    setattr(dashboard_module, "build_final_summary", lambda cleanup_result, checker_results, wall_started_at: "summary")
+    setattr(dashboard_module, "build_live_renderable", lambda repo_root, cleanup_result, running_tools, completed_tools, wall_started_at: "live")
 
+    monkeypatch.setitem(sys.modules, "models", models_fixture.module)
     monkeypatch.setitem(sys.modules, "lint_and_type_check_models", models_fixture.module)
+    monkeypatch.setitem(sys.modules, "dashboard", dashboard_module)
     monkeypatch.setitem(sys.modules, "lint_and_type_check_dashboard", dashboard_module)
 
     spec = importlib.util.spec_from_file_location(module_name, LINT_SCRIPT_PATH)
@@ -256,3 +259,35 @@ def test_start_checker_processes_records_launch_failures(tmp_path: Path, monkeyp
     assert set(running_tools) == {"checker_b"}
     assert completed_tools["checker_a"].result_kind == START_FAILED_KIND
     assert "boom" in models_fixture.checker_specs[0].report_path.read_text(encoding="utf-8")
+
+
+def test_finish_ready_processes_formats_captured_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    models_fixture = _build_models_fixture(base_dir=tmp_path)
+    lint_module = _load_module(monkeypatch=monkeypatch, models_fixture=models_fixture, module_name="test_lint_script_finish")
+
+    class FinishedProcess:
+        def poll(self) -> int | None:
+            return 1
+
+        def terminate(self) -> None:
+            return None
+
+        def wait(self, timeout: float) -> int:
+            return 1
+
+    running_tools = {
+        "checker_a": RunningTool(
+            spec=models_fixture.checker_specs[0],
+            process=FinishedProcess(),
+            report_handle=io.StringIO('[{"message":"boom"}]'),
+            started_at=10.0,
+        )
+    }
+    completed_tools: dict[str, ToolResult] = {}
+
+    lint_module.finish_ready_processes(running_tools=running_tools, completed_tools=completed_tools)
+
+    report_text = models_fixture.checker_specs[0].report_path.read_text(encoding="utf-8")
+    assert report_text.startswith("# Checker A")
+    assert "- Exit code: 1" in report_text
+    assert '[{"message":"boom"}]' in report_text

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from machineconfig.scripts.python.ai.scripts import lint_and_type_check_models as models_module
+from machineconfig.scripts.python.ai.scripts import models as models_module
 
 
 def test_format_helpers_cover_runtime_branches() -> None:
@@ -35,7 +35,13 @@ def test_read_report_stats_and_write_start_failure_use_filesystem_state(tmp_path
 
 
 def test_result_models_derive_runtime_status_fields() -> None:
-    spec = models_module.ToolSpec(slug="ruff", title="Ruff Linter", report_path=Path(".ai/linters/issues_ruff.md"), command=("uv", "run", "ruff"))
+    spec = models_module.ToolSpec(
+        slug="ruff",
+        title="Ruff Linter",
+        report_path=Path(".ai/linters/issues_ruff.md"),
+        command=("uv", "run", "ruff"),
+        output_format="json",
+    )
     report_stats = models_module.ReportStats(line_count=3, byte_count=42)
 
     cleanup_result = models_module.CleanupResult(
@@ -59,3 +65,80 @@ def test_result_models_derive_runtime_status_fields() -> None:
     assert completed_tool_result.status == models_module.ISSUES_LABEL
     assert failed_tool_result.run_state == models_module.ERROR_LABEL
     assert failed_tool_result.status == models_module.FAILURE_LABEL
+
+
+def test_checker_specs_request_structured_output() -> None:
+    checker_commands = {spec.slug: spec.command for spec in models_module.CHECKER_SPECS}
+
+    assert "--outputjson" in checker_commands["pyright"]
+    assert checker_commands["mypy"][checker_commands["mypy"].index("-O") + 1] == "json"
+    assert "--output-format=json2" in checker_commands["pylint"]
+    assert checker_commands["pyrefly"][checker_commands["pyrefly"].index("--output-format") + 1] == "json"
+    assert checker_commands["ty"][checker_commands["ty"].index("--output-format") + 1] == "gitlab"
+    assert checker_commands["ruff"][checker_commands["ruff"].index("--output-format") + 1] == "json"
+
+
+def test_format_tool_report_splits_json_diagnostics_into_sections() -> None:
+    spec = models_module.ToolSpec(
+        slug="pyright",
+        title="Pyright Type Checker",
+        report_path=Path(".ai/linters/issues_pyright.md"),
+        command=("uv", "run", "pyright"),
+        output_format="json",
+    )
+
+    report = models_module.format_tool_report(
+        spec=spec,
+        exit_code=1,
+        raw_output=(
+            '{"summary": {"errorCount": 1}, "generalDiagnostics": ['
+            '{"file": "demo.py", "severity": "error", "message": "boom"}]}'
+        ),
+    )
+
+    assert "- Diagnostic entries: `1`" in report
+    assert "## Metadata" in report
+    assert "## Diagnostics" in report
+    assert "### Diagnostic 1" in report
+    assert '"file": "demo.py"' in report
+
+
+def test_format_tool_report_falls_back_to_raw_text_on_invalid_json() -> None:
+    spec = models_module.ToolSpec(
+        slug="pyright",
+        title="Pyright Type Checker",
+        report_path=Path(".ai/linters/issues_pyright.md"),
+        command=("uv", "run", "pyright"),
+        output_format="json",
+    )
+
+    report = models_module.format_tool_report(
+        spec=spec,
+        exit_code=2,
+        raw_output="not json",
+    )
+
+    assert "JSON parse failure" in report
+    assert "## Raw Output" in report
+    assert "not json" in report
+
+
+def test_format_tool_report_recovers_json_after_prefix_lines() -> None:
+    spec = models_module.ToolSpec(
+        slug="ruff",
+        title="Ruff Linter",
+        report_path=Path(".ai/linters/issues_ruff.md"),
+        command=("uv", "run", "ruff"),
+        output_format="json",
+    )
+
+    report = models_module.format_tool_report(
+        spec=spec,
+        exit_code=0,
+        raw_output="warning: prefix line\n[]\n",
+    )
+
+    assert "## Prefix" in report
+    assert "warning: prefix line" in report
+    assert "## Diagnostics" in report
+    assert "No diagnostics reported." in report

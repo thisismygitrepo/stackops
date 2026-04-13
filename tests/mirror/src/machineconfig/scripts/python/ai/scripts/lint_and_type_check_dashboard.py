@@ -26,7 +26,7 @@ def _repo_root() -> Path:
     raise AssertionError("repo root not found")
 
 
-DASHBOARD_SCRIPT_PATH = _repo_root() / "src" / "machineconfig" / "scripts" / "python" / "ai" / "scripts" / "lint_and_type_check_dashboard.py"
+DASHBOARD_SCRIPT_PATH = _repo_root() / "src" / "machineconfig" / "scripts" / "python" / "ai" / "scripts" / "dashboard.py"
 
 
 @dataclass(slots=True)
@@ -117,24 +117,24 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
         CheckerSpec(slug="checker_b", title="Checker B", command=["checker-b"], report_path=reports_dir / "checker_b.md"),
     )
     module = types.ModuleType("lint_and_type_check_models")
-    module.CHECKER_SPECS = checker_specs
-    module.CLEANUP_COMMANDS = (["cleanup-one"], ["cleanup-two"])
-    module.DONE_LABEL = DONE_LABEL
-    module.ERROR_LABEL = ERROR_LABEL
-    module.FAILURE_LABEL = FAILURE_LABEL
-    module.ISSUES_LABEL = ISSUES_LABEL
-    module.RUNNING_LABEL = RUNNING_LABEL
-    module.SUCCESS_LABEL = SUCCESS_LABEL
-    module.SUMMARY_PATH = summary_path
-    module.CleanupResult = CleanupResult
-    module.RunningTool = RunningTool
-    module.ToolResult = ToolResult
-    module.format_bytes = lambda size: f"{size} B"
-    module.format_command = lambda command: " ".join(command)
-    module.format_duration = lambda seconds: f"{seconds:.2f}s"
-    module.format_share = lambda duration, total: "0.00%" if total == 0 else f"{(duration / total) * 100:.2f}%"
-    module.read_report_stats = _read_report_stats
-    module.relative_path = lambda path: str(path.relative_to(base_dir))
+    setattr(module, "CHECKER_SPECS", checker_specs)
+    setattr(module, "CLEANUP_COMMANDS", (["cleanup-one"], ["cleanup-two"]))
+    setattr(module, "DONE_LABEL", DONE_LABEL)
+    setattr(module, "ERROR_LABEL", ERROR_LABEL)
+    setattr(module, "FAILURE_LABEL", FAILURE_LABEL)
+    setattr(module, "ISSUES_LABEL", ISSUES_LABEL)
+    setattr(module, "RUNNING_LABEL", RUNNING_LABEL)
+    setattr(module, "SUCCESS_LABEL", SUCCESS_LABEL)
+    setattr(module, "SUMMARY_PATH", summary_path)
+    setattr(module, "CleanupResult", CleanupResult)
+    setattr(module, "RunningTool", RunningTool)
+    setattr(module, "ToolResult", ToolResult)
+    setattr(module, "format_bytes", lambda size: f"{size} B")
+    setattr(module, "format_command", lambda command: " ".join(command))
+    setattr(module, "format_duration", lambda seconds: f"{seconds:.2f}s")
+    setattr(module, "format_share", lambda duration, total: "0.00%" if total == 0 else f"{(duration / total) * 100:.2f}%")
+    setattr(module, "read_report_stats", _read_report_stats)
+    setattr(module, "relative_path", lambda path: str(path.relative_to(base_dir)))
     return ModelsFixture(module=module, checker_specs=checker_specs, summary_path=summary_path)
 
 
@@ -143,6 +143,7 @@ def _load_module(models_fixture: ModelsFixture, module_name: str) -> types.Modul
     if spec is None or spec.loader is None:
         raise AssertionError("failed to load dashboard script")
     module = importlib.util.module_from_spec(spec)
+    sys.modules["models"] = models_fixture.module
     sys.modules["lint_and_type_check_models"] = models_fixture.module
     loader = spec.loader
     assert isinstance(loader, importlib.abc.Loader)
