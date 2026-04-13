@@ -12,6 +12,7 @@ def test_get_app_help_lists_workflow_commands() -> None:
     result = runner.invoke(cli_self_ai_app.get_app(), ["--help"])
 
     assert result.exit_code == 0
+    assert "fix-types" in result.stdout
     assert "update-installer" in result.stdout
     assert "update-test" in result.stdout
     assert "update-docs" in result.stdout

@@ -1,6 +1,8 @@
-from __future__ import annotations
-
+import importlib
+import json
 from pathlib import Path
+
+import pytest
 
 from machineconfig.scripts.python.ai.scripts import models as models_module
 
@@ -79,6 +81,79 @@ def test_checker_specs_request_structured_output() -> None:
     assert checker_commands["pyrefly"][checker_commands["pyrefly"].index("--output-format") + 1] == "json"
     assert checker_commands["ty"][checker_commands["ty"].index("--output-format") + 1] == "gitlab"
     assert checker_commands["ruff"][checker_commands["ruff"].index("--output-format") + 1] == "json"
+
+
+def test_checker_specs_append_environment_excludes_and_generate_pyright_override(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    pyright_config_path = tmp_path / "pyrightconfig.json"
+    pyright_config_path.write_text(
+        (
+            "{\n"
+            "  \"venvPath\": \".\",\n"
+            "  \"exclude\": [\n"
+            "    \"tests\",\n"
+            "  ],\n"
+            "  // comment preserved by jsonc stripping\n"
+            "}\n"
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(
+        models_module.TYPE_CHECK_EXCLUDES_ENV_VAR,
+        json.dumps(["src/generated", "tests"]),
+    )
+    reloaded_module = importlib.reload(models_module)
+    generated_pattern = r"(^|/|\\)src(/|\\)generated($|/|\\)"
+    tests_pattern = r"(^|/|\\)tests($|/|\\)"
+    try:
+        checker_commands = {
+            spec.slug: spec.command for spec in reloaded_module.CHECKER_SPECS
+        }
+        cleanup_commands = reloaded_module.CLEANUP_COMMANDS
+        pyright_override_path = tmp_path / ".machineconfig.pyright.type-check.json"
+        pyright_override = json.loads(
+            pyright_override_path.read_text(encoding="utf-8")
+        )
+
+        assert checker_commands["pyright"][
+            checker_commands["pyright"].index("--project") + 1
+        ] == str(reloaded_module.PYRIGHT_CONFIG_OVERRIDE_PATH)
+        assert pyright_override == {
+            "extends": "./pyrightconfig.json",
+            "exclude": ["tests", "src/generated"],
+        }
+        assert checker_commands["mypy"][
+            checker_commands["mypy"].index("--exclude") + 1
+        ] == r"(^|/|\\)gromit-mpx($|/|\\)"
+        assert generated_pattern in checker_commands["mypy"]
+        assert tests_pattern in checker_commands["mypy"]
+        assert checker_commands["pylint"][
+            checker_commands["pylint"].index("--ignore-paths") + 1
+        ] == f"(?:{generated_pattern})|(?:{tests_pattern})"
+        assert checker_commands["pyrefly"][
+            checker_commands["pyrefly"].index("--project-excludes") + 1
+        ] == "src/generated"
+        assert checker_commands["ty"][
+            checker_commands["ty"].index("--exclude") + 1
+        ] == "src/generated"
+        assert "--force-exclude" in checker_commands["ty"]
+        assert checker_commands["ruff"][
+            checker_commands["ruff"].index("--extend-exclude") + 1
+        ] == "src/generated"
+        assert "--force-exclude" in checker_commands["ruff"]
+        assert cleanup_commands[0][
+            cleanup_commands[0].index("--exclude") + 1
+        ] == generated_pattern
+        assert cleanup_commands[2][
+            cleanup_commands[2].index("--extend-exclude") + 1
+        ] == "src/generated"
+    finally:
+        monkeypatch.delenv(
+            models_module.TYPE_CHECK_EXCLUDES_ENV_VAR, raising=False
+        )
+        importlib.reload(models_module)
 
 
 def test_format_tool_report_splits_json_diagnostics_into_sections() -> None:

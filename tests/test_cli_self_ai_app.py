@@ -13,6 +13,7 @@ def test_workflow_help_lists_update_docs_command() -> None:
     result = runner.invoke(get_app(), ["--help"])
 
     assert result.exit_code == 0
+    assert "fix-types" in result.stdout
     assert "update-docs" in result.stdout
     assert "Create an agents layout for updating CLI and API" in result.stdout
     assert "docs only." in result.stdout

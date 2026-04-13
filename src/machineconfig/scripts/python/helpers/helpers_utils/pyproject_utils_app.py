@@ -1,3 +1,5 @@
+import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
@@ -10,6 +12,7 @@ from machineconfig.utils.path_reference import get_path_reference_path
 
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 TypeHintDependencyMode: TypeAlias = Literal["self-contained", "import"]
+TYPE_CHECK_EXCLUDES_ENV_VAR = "MACHINECONFIG_TYPE_CHECK_EXCLUDES"
 
 
 def _resolve_pyproject_root(path: Path) -> Path:
@@ -25,6 +28,60 @@ def _resolve_pyproject_root(path: Path) -> Path:
     )
 
 
+def _resolve_type_check_excluded_directory(repo_root: Path, excluded_directory: str) -> str:
+    candidate_path = Path(excluded_directory).expanduser()
+    if candidate_path.is_absolute() is False:
+        candidate_path = repo_root.joinpath(candidate_path)
+    candidate_path_resolved = candidate_path.resolve()
+    if candidate_path_resolved.exists() is False:
+        raise ValueError(
+            f"Excluded directory '{excluded_directory}' does not exist."
+        )
+    if candidate_path_resolved.is_dir() is False:
+        raise ValueError(
+            f"Excluded directory '{excluded_directory}' is not a directory."
+        )
+    try:
+        relative_directory = candidate_path_resolved.relative_to(repo_root)
+    except ValueError as error:
+        raise ValueError(
+            f"Excluded directory '{excluded_directory}' must be inside '{repo_root}'."
+        ) from error
+    if relative_directory == Path("."):
+        raise ValueError("Excluded directory cannot be the repository root.")
+    return relative_directory.as_posix()
+
+
+def _resolve_type_check_excluded_directories(
+    repo_root: Path, excluded_directories: list[str] | None
+) -> tuple[str, ...]:
+    if excluded_directories is None:
+        return ()
+    normalized_directories: list[str] = []
+    seen_directories: set[str] = set()
+    for excluded_directory in excluded_directories:
+        normalized_directory = _resolve_type_check_excluded_directory(
+            repo_root=repo_root, excluded_directory=excluded_directory
+        )
+        if normalized_directory in seen_directories:
+            continue
+        seen_directories.add(normalized_directory)
+        normalized_directories.append(normalized_directory)
+    return tuple(normalized_directories)
+
+
+def _build_type_check_environment(
+    excluded_directories: tuple[str, ...],
+) -> dict[str, str] | None:
+    if len(excluded_directories) == 0:
+        return None
+    environment = os.environ.copy()
+    environment[TYPE_CHECK_EXCLUDES_ENV_VAR] = json.dumps(
+        list(excluded_directories)
+    )
+    return environment
+
+
 def type_check(
     repo: Annotated[
         str,
@@ -32,9 +89,20 @@ def type_check(
             help="Repository root or any path inside the repository to lint and type check."
         ),
     ] = ".",
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--exclude",
+            "-x",
+            help="Directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.",
+        ),
+    ] = None,
 ) -> None:
     try:
         repo_root = _resolve_pyproject_root(Path(repo))
+        excluded_directories = _resolve_type_check_excluded_directories(
+            repo_root=repo_root, excluded_directories=exclude
+        )
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
@@ -54,6 +122,7 @@ def type_check(
             ["uv", "run", str(script_path)],
             cwd=repo_root,
             check=False,
+            env=_build_type_check_environment(excluded_directories),
         )
     except FileNotFoundError as error:
         typer.echo("Error: uv is required but was not found on PATH.", err=True)
