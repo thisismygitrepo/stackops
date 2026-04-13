@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -81,6 +82,75 @@ def test_init_project_delegates_to_helper_impl(monkeypatch: pytest.MonkeyPatch) 
     assert calls == [{"name": "demo", "tmp_dir": True, "python": "3.14", "libraries": "rich textual", "group": "l"}]
 
 
+def test_type_check_resolves_repo_root_and_runs_lint_script(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo_root = tmp_path
+    nested_dir = repo_root.joinpath("pkg", "nested")
+    nested_dir.mkdir(parents=True)
+    repo_root.joinpath("pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    script_path = repo_root.joinpath("lint_and_type_check.py")
+    script_path.write_text("print('ok')\n", encoding="utf-8")
+    calls: dict[str, object] = {}
+
+    def fake_get_path_reference_path(module_obj: ModuleType, path_reference: str) -> Path:
+        calls["path_reference"] = (module_obj, path_reference)
+        return script_path
+
+    def fake_run(command: list[str], cwd: Path, check: bool) -> subprocess.CompletedProcess[str]:
+        calls["run"] = {"command": command.copy(), "cwd": cwd, "check": check}
+        return subprocess.CompletedProcess(args=command, returncode=0)
+
+    monkeypatch.setattr(module, "get_path_reference_path", fake_get_path_reference_path)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.type_check(repo=str(nested_dir))
+
+    assert calls["path_reference"] == (
+        module.ai_scripts,
+        module.ai_scripts.LINT_AND_TYPE_CHECK_PATH_REFERENCE,
+    )
+    assert calls["run"] == {
+        "command": ["uv", "run", str(script_path)],
+        "cwd": repo_root.resolve(),
+        "check": False,
+    }
+
+
+def test_type_check_rejects_path_without_pyproject(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    repo_root = tmp_path.joinpath("no-pyproject")
+    repo_root.mkdir()
+
+    with pytest.raises(module.typer.Exit) as excinfo:
+        module.type_check(repo=str(repo_root))
+
+    captured = capsys.readouterr()
+    assert excinfo.value.exit_code == 1
+    assert "Could not find pyproject.toml" in captured.err
+
+
+def test_type_check_propagates_subprocess_exit_code(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo_root = tmp_path
+    repo_root.joinpath("pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    script_path = repo_root.joinpath("lint_and_type_check.py")
+    script_path.write_text("print('ok')\n", encoding="utf-8")
+
+    def fake_get_path_reference_path(_module_obj: ModuleType, _path_reference: str) -> Path:
+        return script_path
+
+    def fake_run(command: list[str], cwd: Path, check: bool) -> subprocess.CompletedProcess[str]:
+        assert command == ["uv", "run", str(script_path)]
+        assert cwd == repo_root.resolve()
+        assert check is False
+        return subprocess.CompletedProcess(args=command, returncode=7)
+
+    monkeypatch.setattr(module, "get_path_reference_path", fake_get_path_reference_path)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    with pytest.raises(module.typer.Exit) as excinfo:
+        module.type_check(repo=str(repo_root))
+
+    assert excinfo.value.exit_code == 7
+
+
 def test_get_app_help_lists_core_commands() -> None:
     runner = CliRunner()
 
@@ -90,6 +160,7 @@ def test_get_app_help_lists_core_commands() -> None:
     assert "init-project" in result.stdout
     assert "upgrade-packages" in result.stdout
     assert "type-hint" in result.stdout
+    assert "type-check" in result.stdout
     assert "reference-test" in result.stdout
 
 

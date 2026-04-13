@@ -1,14 +1,65 @@
+import subprocess
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
 import typer
+
+import machineconfig.scripts.python.ai.scripts as ai_scripts
+from machineconfig.utils.path_reference import get_path_reference_path
 
 
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 TypeHintDependencyMode: TypeAlias = Literal["self-contained", "import"]
 
 
+def _resolve_pyproject_root(path: Path) -> Path:
+    path_resolved = path.expanduser().resolve()
+    if path_resolved.exists() is False:
+        raise ValueError(f"The provided path '{path}' does not exist.")
+    search_root = path_resolved if path_resolved.is_dir() else path_resolved.parent
+    for current in [search_root, *search_root.parents]:
+        if current.joinpath("pyproject.toml").exists():
+            return current
+    raise ValueError(
+        f"Could not find pyproject.toml at or above '{path_resolved}'."
+    )
 
+
+def type_check(
+    repo: Annotated[
+        str,
+        typer.Argument(
+            help="Repository root or any path inside the repository to lint and type check."
+        ),
+    ] = ".",
+) -> None:
+    try:
+        repo_root = _resolve_pyproject_root(Path(repo))
+    except ValueError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    script_path = get_path_reference_path(
+        ai_scripts, ai_scripts.LINT_AND_TYPE_CHECK_PATH_REFERENCE
+    )
+    if script_path.exists() is False:
+        typer.echo(
+            f"Error: Machineconfig type-check script not found at '{script_path}'.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        completed = subprocess.run(
+            ["uv", "run", str(script_path)],
+            cwd=repo_root,
+            check=False,
+        )
+    except FileNotFoundError as error:
+        typer.echo("Error: uv is required but was not found on PATH.", err=True)
+        raise typer.Exit(code=1) from error
+    if completed.returncode != 0:
+        raise typer.Exit(code=completed.returncode)
 
 def reference_test(
     repo: Annotated[str, typer.Argument(..., help="Repository root or any path inside the repository.")],
@@ -124,6 +175,8 @@ def get_app() -> typer.Typer:
     pyproject_app.command(name="up", no_args_is_help=False, hidden=True)(upgrade_packages)
     pyproject_app.command(name="type-hint", no_args_is_help=True, help="✐ <t> Type hint a file or project directory.")(type_hint)
     pyproject_app.command(name="t", no_args_is_help=True, hidden=True)(type_hint)
+    pyproject_app.command(name="type-check", no_args_is_help=False, help="🧪 <c> Run the lint-and-type-check suite for a repository.")(type_check)
+    pyproject_app.command(name="c", no_args_is_help=False, hidden=True)(type_check)
     pyproject_app.command(name="reference-test", no_args_is_help=True, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
     pyproject_app.command(name="r", no_args_is_help=True, hidden=True)(reference_test)
     return pyproject_app
