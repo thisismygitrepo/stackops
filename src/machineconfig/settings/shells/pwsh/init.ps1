@@ -33,8 +33,8 @@ Add-ToPathIfNotAlready -Directories @(
     "C:\Program Files\Git\bin"  # gives sh.exe bash.exe & git.exe
 )
 
-Set-Alias -Name ax -Value "codex --dangerously-bypass-approvals-and-sandbox" -Option AllScope
-Set-Alias -Name ac -Value "copilot --yolo" -Option AllScope
+function xx { codex --dangerously-bypass-approvals-and-sandbox @args }
+function xc { copilot --yolo @args }
 
 
 # sources  ================================================================
