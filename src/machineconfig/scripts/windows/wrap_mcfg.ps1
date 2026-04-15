@@ -58,6 +58,7 @@ function wrap_in_shell_script {
 
 # Call the function with any arguments passed to the script
 if ($args.Count -gt 0) {
-    wrap_in_shell_script @args
+    $command = $args[0]
+    $arguments = if ($args.Count -gt 1) { $args[1..($args.Count - 1)] } else { @() }
+    wrap_in_shell_script -Command $command -Arguments $arguments
 }
-
