@@ -3,7 +3,10 @@ import subprocess
 import sys
 from types import ModuleType
 
+import click
 import pytest
+import typer
+from typer.testing import CliRunner
 
 from machineconfig.cluster.sessions_managers import session_conflict
 
@@ -171,6 +174,62 @@ def test_build_session_launch_plan_rejects_merge_on_unsupported_backend() -> Non
             backend="zellij",
             on_conflict="mergeNewWindowsSkipMatchingWindows",
         )
+
+
+def test_build_session_launch_plan_raises_click_friendly_value_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_list_existing_sessions(
+        _backend: session_conflict.SessionBackend,
+    ) -> set[str]:
+        return {"main"}
+
+    monkeypatch.setattr(
+        session_conflict,
+        "list_existing_sessions",
+        fake_list_existing_sessions,
+    )
+
+    with pytest.raises(session_conflict.SessionConflictError, match="already exists") as exc_info:
+        session_conflict.build_session_launch_plan(
+            requested_session_names=["main"],
+            backend="tmux",
+            on_conflict="error",
+        )
+
+    assert isinstance(exc_info.value, ValueError)
+    assert isinstance(exc_info.value, click.ClickException)
+
+
+def test_build_session_launch_plan_error_renders_without_traceback_in_typer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_list_existing_sessions(
+        _backend: session_conflict.SessionBackend,
+    ) -> set[str]:
+        return {"main"}
+
+    app = typer.Typer()
+
+    @app.command()
+    def demo() -> None:
+        session_conflict.build_session_launch_plan(
+            requested_session_names=["main"],
+            backend="tmux",
+            on_conflict="error",
+        )
+
+    monkeypatch.setattr(
+        session_conflict,
+        "list_existing_sessions",
+        fake_list_existing_sessions,
+    )
+
+    result = CliRunner().invoke(app, [])
+
+    assert result.exit_code == 1
+    assert "already exists" in result.output
+    assert "Traceback" not in result.output
 
 
 def test_kill_existing_session_tmux_invokes_expected_command(

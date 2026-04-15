@@ -4,6 +4,8 @@ import json
 import subprocess
 from typing import Literal, NotRequired, TypedDict
 
+import click
+
 
 SessionBackend = Literal["zellij", "tmux", "windows-terminal"]
 SessionConflictActionLoose = Literal[
@@ -58,6 +60,12 @@ class SessionLaunchPlan(TypedDict):
     restart_required: bool
     conflict_source: NotRequired[ConflictSource]
     skip_launch: NotRequired[bool]
+
+
+class SessionConflictError(click.ClickException, ValueError):
+    def __init__(self, message: str) -> None:
+        ValueError.__init__(self, message)
+        click.ClickException.__init__(self, message)
 
 
 
@@ -201,7 +209,7 @@ def build_session_launch_plan(
         and backend not in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS
     ):
         supported_backends_text = ", ".join(sorted(MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS))
-        raise ValueError(
+        raise SessionConflictError(
             f"{on_conflict} is only supported for {supported_backends_text} backends."
         )
     existing_sessions = list_existing_sessions(backend)
@@ -262,18 +270,18 @@ def build_session_launch_plan(
                 continue
             case "error":
                 if conflict_with_planned:
-                    raise ValueError(
+                    raise SessionConflictError(
                         f"Duplicate target session '{requested_name}' detected in the selected layouts. "
                         f"{_duplicate_conflict_hint(backend)}"
                     )
                 if conflict_with_existing:
-                    raise ValueError(
+                    raise SessionConflictError(
                         f"Session '{requested_name}' already exists. "
                         f"{_existing_conflict_hint(backend)}"
                     )
             case "restart":
                 if conflict_with_planned:
-                    raise ValueError(
+                    raise SessionConflictError(
                         f"Duplicate target session '{requested_name}' detected in the selected layouts. "
                         f"{_duplicate_conflict_hint(backend)}"
                     )
@@ -310,7 +318,7 @@ def build_session_launch_plan(
                         suffix += 1
                     continue
             case _:
-                raise ValueError(f"Unsupported on_conflict policy: {on_conflict}")
+                raise SessionConflictError(f"Unsupported on_conflict policy: {on_conflict}")
 
         plans.append(
             _build_launch_plan(
