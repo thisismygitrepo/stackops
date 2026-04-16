@@ -11,6 +11,7 @@ from machineconfig.scripts.python.helpers.helpers_agents.agents_create_artifacts
 from machineconfig.scripts.python.helpers.helpers_agents.agents_create_inputs import (
     resolve_context_input,
     resolve_agents_output_dir,
+    resolve_agents_workspace_root,
     resolve_prompt_input,
 )
 from machineconfig.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
@@ -83,7 +84,9 @@ def agents_create(
 
     repo_root = get_repo_root(Path.cwd())
     if repo_root is None:
-        raise RuntimeError("💥 Could not determine the repository root. Please run this script from within a git repository.")
+        repo_root = Path.cwd().resolve()
+    else:
+        repo_root = repo_root.resolve()
 
     if agent == "codex":
         if provider is None:
@@ -96,12 +99,16 @@ def agents_create(
         agents_dir=agents_dir,
         job_name=job_name,
     )
+    workspace_root = resolve_agents_workspace_root(
+        preferred_root=repo_root,
+        agents_dir_obj=agents_dir_obj,
+    )
     del job_name
     cleanup_existing_agents_dir = agents_dir is not None and agents_dir_obj.exists()
     del agents_dir
 
     show_agents_create_overview(
-        repo_root=repo_root,
+        repo_root=workspace_root,
         agents_dir=agents_dir_obj,
         job_name=job_name_resolved,
         agent=agent,
@@ -129,7 +136,7 @@ def agents_create(
 
     agent_selected = agent
     prep_agent_launch(
-        repo_root=repo_root,
+        repo_root=workspace_root,
         agents_dir=agents_dir_obj,
         prompts_material=context_input.prompt_materials,
         join_prompt_and_context=join_prompt_and_context,
@@ -142,14 +149,18 @@ def agents_create(
         job_name=job_name_resolved,
     )
     prompt_directories = get_prompt_directories(prompt_root=agents_dir_obj / "prompts")
-    show_generated_agents_table(repo_root=repo_root, prompt_dirs=prompt_directories)
-    layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved)
+    show_generated_agents_table(repo_root=workspace_root, prompt_dirs=prompt_directories)
+    layoutfile = get_agents_launch_layout(
+        session_root=agents_dir_obj,
+        job_name=job_name_resolved,
+        start_dir=workspace_root,
+    )
 
     layout_output_path = Path(output_path) if output_path is not None else agents_dir_obj / "layout.json"
     layout_output_path.parent.mkdir(parents=True, exist_ok=True)
     layout_output_path.write_text(data=json.dumps(layoutfile, indent=4), encoding="utf-8")
     create_artifacts = write_create_artifacts(
-        repo_root=repo_root,
+        repo_root=workspace_root,
         agents_dir=agents_dir_obj,
         layout_output_path=layout_output_path.resolve(),
         agent=agent_selected,
@@ -175,7 +186,7 @@ def agents_create(
         join_prompt_and_context=join_prompt_and_context,
     )
     show_created_artifacts_panel(
-        repo_root=repo_root,
+        repo_root=workspace_root,
         agents_dir=agents_dir_obj,
         layout_output_path=layout_output_path.resolve(),
         artifacts_dir=create_artifacts.artifacts_dir,

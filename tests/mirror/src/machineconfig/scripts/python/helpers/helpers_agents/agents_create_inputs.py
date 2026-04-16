@@ -58,3 +58,29 @@ def test_resolve_agents_output_dir_uses_trimmed_job_name_and_randstr(tmp_path: P
     assert generated_name == "abc123"
     assert explicit_dir == (tmp_path / "custom-agents").resolve().absolute()
     assert explicit_name == "named-job"
+
+
+def test_resolve_agents_workspace_root_prefers_explicit_agents_dir_when_outside_root(tmp_path: Path) -> None:
+    preferred_root = tmp_path / "repo"
+    preferred_root.mkdir()
+    external_agents_dir = tmp_path / "scratch" / "agents"
+
+    resolved_workspace_root = inputs_module.resolve_agents_workspace_root(
+        preferred_root=preferred_root,
+        agents_dir_obj=external_agents_dir,
+    )
+
+    assert resolved_workspace_root == external_agents_dir.resolve()
+
+
+def test_resolve_agents_workspace_root_keeps_repo_root_for_default_agents_dir(tmp_path: Path) -> None:
+    preferred_root = tmp_path / "repo"
+    agents_dir = preferred_root / ".ai" / "agents" / "job"
+    preferred_root.mkdir()
+
+    resolved_workspace_root = inputs_module.resolve_agents_workspace_root(
+        preferred_root=preferred_root,
+        agents_dir_obj=agents_dir,
+    )
+
+    assert resolved_workspace_root == preferred_root.resolve()

@@ -69,10 +69,23 @@ def test_get_agents_launch_layout_sorts_agents_numerically(tmp_path: Path) -> No
         agent_dir.mkdir(parents=True)
         (agent_dir / f"{name}_cmd.sh").write_text("echo run\n", encoding="utf-8")
 
-    layout = launch_module.get_agents_launch_layout(session_root, job_name="job")
+    layout = launch_module.get_agents_launch_layout(session_root, job_name="job", start_dir=tmp_path)
 
     tab_names = [tab["tabName"] for tab in layout["layouts"][0]["layoutTabs"]]
     commands = [tab["command"] for tab in layout["layouts"][0]["layoutTabs"]]
     assert tab_names == ["Agent1", "Agent2", "Agent10"]
     assert commands[0].endswith("agent_1/agent_1_cmd.sh")
     assert layout["layouts"][0]["layoutTabs"][0]["startDir"] == str(tmp_path)
+
+
+def test_get_agents_launch_layout_uses_supplied_start_dir(tmp_path: Path) -> None:
+    session_root = tmp_path / "external" / "job"
+    start_dir = tmp_path / "workspace"
+    start_dir.mkdir()
+    agent_dir = session_root / "prompts" / "agent_0"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "agent_0_cmd.sh").write_text("echo run\n", encoding="utf-8")
+
+    layout = launch_module.get_agents_launch_layout(session_root, job_name="job", start_dir=start_dir)
+
+    assert layout["layouts"][0]["layoutTabs"][0]["startDir"] == str(start_dir.resolve())

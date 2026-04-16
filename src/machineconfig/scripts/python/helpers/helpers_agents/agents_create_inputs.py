@@ -206,3 +206,13 @@ def resolve_agents_output_dir(*, repo_root: Path, agents_dir: str | None, job_na
     else:
         job_name_resolved = job_name.strip()
     return agents_dir_obj, job_name_resolved
+
+
+def resolve_agents_workspace_root(*, preferred_root: Path, agents_dir_obj: Path) -> Path:
+    preferred_root_resolved = preferred_root.expanduser().resolve()
+    agents_dir_resolved = agents_dir_obj.expanduser().resolve()
+    try:
+        agents_dir_resolved.relative_to(preferred_root_resolved)
+    except ValueError:
+        return agents_dir_resolved
+    return preferred_root_resolved
