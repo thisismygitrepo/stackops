@@ -278,7 +278,10 @@ def add_mcp(
 
 def make_todo_files(
     pattern: Annotated[str, typer.Argument(help="Pattern or keyword to match files by")] = ".py",
-    repo: Annotated[str, typer.Argument(help="Repository path. Can be any directory within a git repository.")] = ".",
+    repo: Annotated[
+        str,
+        typer.Argument(help="Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned."),
+    ] = ".",
     strategy: Annotated[
         Literal["name", "keywords"],
         typer.Option("-s", "--strategy", help="Strategy to filter files: 'name' for filename matching, 'keywords' for content matching"),
@@ -292,7 +295,7 @@ def make_todo_files(
     ] = None,
     split_to: Annotated[int | None, typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
 ) -> None:
-    """Generate checklist with Python and shell script files in the repository filtered by pattern."""
+    """Generate checklist with Python and shell script files in the repository or workspace filtered by pattern."""
     from machineconfig.scripts.python.ai.utils.generate_files import make_todo_files as impl
 
     impl(

@@ -6,8 +6,9 @@ from typing import Annotated, Literal
 from rich.console import Console
 from rich.panel import Panel
 import typer
-import subprocess
 import shutil
+
+from machineconfig.utils.accessories import get_repo_root
 
 
 def get_python_files(repo_root: Path, exclude_init: bool = False) -> list[str]:
@@ -76,19 +77,16 @@ def count_lines(file_path: Path) -> int:
         return 0
 
 
-def is_git_repository(path: Path) -> bool:
-    """Check if the given path is part of a git repository."""
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
-            cwd=path,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        return result.returncode == 0
-    except (subprocess.SubprocessError, FileNotFoundError):
-        return False
+def resolve_scan_root(path: Path) -> Path:
+    """Resolve a repo path to its git root, or keep a plain workspace directory as-is."""
+    resolved_path = path.expanduser().resolve(strict=False)
+    if not resolved_path.exists():
+        raise ValueError(f"Path does not exist: {resolved_path}")
+    candidate_path = resolved_path.parent if resolved_path.is_file() else resolved_path
+    repo_root = get_repo_root(candidate_path)
+    if repo_root is not None:
+        return repo_root.resolve(strict=False)
+    return candidate_path
 
 
 def filter_files_by_name(files: list[str], pattern: str) -> list[str]:
@@ -247,7 +245,10 @@ def create_repo_symlinks(repo_root: Path) -> None:
 
 def make_todo_files(
     pattern: Annotated[str, typer.Argument(help="Pattern or keyword to match files by")],
-    repo: Annotated[str, typer.Argument(help="Repository path. Can be any directory within a git repository.")] = str(Path.cwd()),
+    repo: Annotated[
+        str,
+        typer.Argument(help="Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned."),
+    ] = str(Path.cwd()),
     strategy: Annotated[Literal["name", "keywords"], typer.Option("-s", "--strategy", help="Strategy to filter files: 'name' for filename matching, 'keywords' for content matching")] = "name",
     exclude_init: Annotated[bool, typer.Option("-x", "--exclude-init", help="Exclude __init__.py files from the checklist")] = True,
     include_line_count: Annotated[bool, typer.Option("-l", "--line-count", help="Include line count column in the output")] = False,
@@ -256,11 +257,12 @@ def make_todo_files(
     split_every: Annotated[int | None, typer.Option("--split-every", "-e", help="Split output into multiple files, each containing at most this many results")] = None,
     split_to: Annotated[int | None, typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
 ) -> None:
-    """Generate checklist with Python and shell script files in the repository filtered by pattern."""
-    repo_path = Path(repo).expanduser().absolute()
-    if not is_git_repository(repo_path):
-        console = Console()
-        console.print(Panel(f"❌ ERROR | Not a git repository or not in a git repository: {repo_path}", border_style="bold red", expand=False))
+    """Generate checklist with Python and shell script files in the repository or workspace filtered by pattern."""
+    console = Console()
+    try:
+        repo_path = resolve_scan_root(Path(repo))
+    except ValueError as error:
+        console.print(Panel(f"❌ ERROR | {error}", border_style="bold red", expand=False))
         raise typer.Exit(code=1)
 
     # Delete .ai/todo directory at the start
@@ -285,7 +287,7 @@ def make_todo_files(
         python_files = filter_files_by_content(repo_path, python_files, pattern)
         shell_files = filter_files_by_content(repo_path, shell_files, pattern)
 
-    print(f"Repo path: {repo_path}")
+    print(f"Scan path: {repo_path}")
     print(f"Strategy: {strategy}")
     print(f"Pattern: {pattern}")
     print(f"Format: {format_type}")
