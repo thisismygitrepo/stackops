@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 import os
 from pathlib import Path
@@ -173,7 +173,7 @@ def _is_snap_browser_wrapper(*, browser_path: Path) -> bool:
 
 
 @contextmanager
-def _override_browser_path(*, browser_path: Path) -> Iterator[None]:
+def _override_browser_path(*, browser_path: Path) -> Generator[None, None, None]:
     previous_browser_path = os.environ.get("BROWSER_PATH")
     os.environ["BROWSER_PATH"] = str(browser_path)
     try:

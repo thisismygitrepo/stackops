@@ -57,11 +57,6 @@ def delete_path(target: PathLike, *, verbose: bool) -> None:
         shutil.rmtree(target_path, ignore_errors=False)
     _emit(f"🗑️ ❌ DELETED {target_path!r}.", verbose=verbose)
 
-
-def _home_path() -> Path:
-    return Path.home()
-
-
 def _is_user_admin() -> bool:
     if os.name == "nt":
         import ctypes
@@ -94,7 +89,7 @@ def collapseuser(path: PathLike, *, strict: bool = True, placeholder: str = "~")
     path_obj = Path(path)
     if str(path_obj).startswith(placeholder):
         return path_obj
-    home_path = _home_path()
+    home_path = Path.home()
     resolved_path = resolve(path_obj.expanduser().absolute(), strict=strict)
     try:
         relative_path = resolved_path.relative_to(home_path)
