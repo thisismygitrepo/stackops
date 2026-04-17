@@ -21,12 +21,11 @@ def test_resolve_target_prefers_single_selected_file_over_hovered_file(tmp_path:
     assert resolved_path == selected_path.resolve()
 
 
-@pytest.mark.parametrize("filename", ["table.csv", "table.db", "table.sqlite"])
-def test_build_command_uses_wrap_mcfg_for_visidata_targets(
+def test_build_command_uses_wrap_mcfg_for_tabular_targets(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
-    filename: str,
 ) -> None:
+    filename = "table.csv"
     target_path = tmp_path.joinpath(filename)
     target_path.write_text("a,b\n1,2\n", encoding="utf-8")
     monkeypatch.setattr(interactive_view.Path, "home", lambda: Path("/home/tester"))
@@ -34,6 +33,28 @@ def test_build_command_uses_wrap_mcfg_for_visidata_targets(
     command = interactive_view.build_command(target_path=target_path)
 
     assert command == ["/home/tester/.config/machineconfig/scripts/wrap_mcfg", "croshell", "-b", "v", str(target_path)]
+
+
+@pytest.mark.parametrize(
+    ("filename", "expected_command"),
+    [
+        ("table.duckdb", ["harlequin", "--adapter", "duckdb", "--read-only"]),
+        ("table.db", ["harlequin", "--adapter", "sqlite", "--read-only"]),
+        ("table.sqlite", ["harlequin", "--adapter", "sqlite", "--read-only"]),
+    ],
+)
+def test_build_command_uses_read_only_harlequin_for_local_databases(
+    tmp_path: Path,
+    filename: str,
+    expected_command: list[str],
+) -> None:
+    target_path = tmp_path.joinpath(filename)
+    target_path.write_text("x", encoding="utf-8")
+
+    command = interactive_view.build_command(target_path=target_path)
+
+    assert command[:-1] == expected_command
+    assert command[-1] == str(target_path)
 
 
 @pytest.mark.parametrize(

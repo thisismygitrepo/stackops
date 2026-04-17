@@ -14,6 +14,7 @@ HOVERED_MARKER: Final[str] = "__YAZI_HOVERED__"
 SELECTED_MARKER: Final[str] = "__YAZI_SELECTED__"
 PDF_SUFFIX: Final[str] = ".pdf"
 SVG_SUFFIX: Final[str] = ".svg"
+DUCKDB_SUFFIXES: Final[frozenset[str]] = frozenset({".duckdb", ".ddb"})
 ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
     ".7z",
     ".bz2",
@@ -114,6 +115,16 @@ def build_svg_render_command(target_path: Path, output_path: Path) -> Command:
     return ["resvg", str(target_path), str(output_path)]
 
 
+def build_database_command(target_path: Path) -> Command:
+    suffix = target_path.suffix.lower()
+    path_string = str(target_path)
+    if suffix in DUCKDB_SUFFIXES:
+        return ["harlequin", "--adapter", "duckdb", "--read-only", path_string]
+    if suffix in SQLITE_SUFFIXES:
+        return ["harlequin", "--adapter", "sqlite", "--read-only", path_string]
+    raise ValueError(f"Unsupported database suffix for fullscreen preview: {suffix}")
+
+
 def build_command(target_path: Path, terminal_columns: int) -> Command:
     if not target_path.is_file():
         raise ValueError(f"Standalone fullscreen preview requires a file, got: {target_path}")
@@ -148,10 +159,8 @@ def build_command(target_path: Path, terminal_columns: int) -> Command:
                 str(terminal_columns),
                 path_string,
             ]
-        case ".duckdb":
-            return ["rainfrog", "--driver", "duckdb", "--database", path_string]
-        case _ if suffix in SQLITE_SUFFIXES:
-            return ["rainfrog", "--driver", "sqlite", "--database", path_string]
+        case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
+            return build_database_command(target_path=target_path)
         case _ if suffix in VISIDATA_SUFFIXES:
             return ["uvx", "--from", "visidata", "--with", "pyarrow", "vd", path_string]
         case _ if is_archive_path(target_path):

@@ -6,7 +6,9 @@ from typing import Final, NoReturn
 
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
-VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".json", ".parquet", ".tsv", ".xlsx", ".csv", ".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
+DUCKDB_SUFFIXES: Final[frozenset[str]] = frozenset({".duckdb", ".ddb"})
+SQLITE_SUFFIXES: Final[frozenset[str]] = frozenset({".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
+VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".json", ".parquet", ".tsv", ".xlsx", ".csv"})
 
 
 def split_marked_arguments(arguments: Sequence[str]) -> tuple[str | None, list[str]]:
@@ -37,10 +39,23 @@ def resolve_target(arguments: Sequence[str]) -> Path:
     return Path(hovered_path).resolve()
 
 
+def build_database_command(target_path: Path) -> list[str]:
+    suffix = target_path.suffix.lower()
+    path_string = str(target_path)
+    if suffix in DUCKDB_SUFFIXES:
+        return ["harlequin", "--adapter", "duckdb", "--read-only", path_string]
+    if suffix in SQLITE_SUFFIXES:
+        return ["harlequin", "--adapter", "sqlite", "--read-only", path_string]
+    raise ValueError(f"No database view command is configured for {target_path.suffix or 'files without an extension'}.")
+
+
 def build_command(target_path: Path) -> list[str]:
     if not target_path.is_file():
         raise ValueError(f"Interactive view requires a file, got: {target_path}")
-    match target_path.suffix.lower():
+    suffix = target_path.suffix.lower()
+    match suffix:
+        case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
+            return build_database_command(target_path=target_path)
         case suffix if suffix in VISIDATA_SUFFIXES:
             return [str(Path.home() / ".config/machineconfig/scripts/wrap_mcfg"), "croshell", "-b", "v", str(target_path)]
         case _:

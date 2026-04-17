@@ -57,8 +57,11 @@ def compress_pdf(
 
 def read_db_cli_tui(
     path: Annotated[str | None, typer.Argument(..., help="The path to the file-based db")] = None,
-    backend: Annotated[DatabaseBackend, typer.Option("--backend", "-b", help="The TUI database client to use.")] = "rainfrog",
-    read_only: Annotated[bool, typer.Option("--read-only", "-r", help="Open the database in read-only mode (if supported by backend).")] = False,
+    backend: Annotated[DatabaseBackend, typer.Option("--backend", "-b", help="The TUI database client to use.")] = "harlequin",
+    read_only: Annotated[
+        bool,
+        typer.Option("--read-only/--read-write", "-r/-w", help="Open the database in read-only mode (if supported by backend)."),
+    ] = True,
     theme: Annotated[str | None, typer.Option("--theme", "-t", help="Theme to use (if supported by backend).")] = None,
     limit: Annotated[int | None, typer.Option("--limit", "-l", help="Maximum number of rows to load (if supported by backend).")] = None,
 ) -> None:

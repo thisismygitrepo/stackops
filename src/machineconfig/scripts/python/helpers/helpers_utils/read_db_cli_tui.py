@@ -34,6 +34,7 @@ LOOSE2STRICT: dict[BACKEND_LOOSE, BACKEND] = {
 MULTI_DB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin"})
 # backends that can natively handle duckdb connection strings
 DUCKDB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin", "rainfrog", "usql"})
+READ_ONLY_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin", "lazysql"})
 
 DUCKDB_EXTS: frozenset[str] = frozenset({".duckdb", ".ddb"})
 SQLITE_EXTS: frozenset[str] = frozenset({".sqlite", ".sqlite3", ".db", ".db3", ".s3db", ".sl3"})
@@ -68,6 +69,41 @@ def _rainfrog_command(path: Path | None) -> list[str]:
     return [*command, "--url", str(path)]
 
 
+def _database_family(path: Path) -> Literal["duckdb", "sqlite", "other"]:
+    suffix = path.suffix.lower()
+    if suffix in DUCKDB_EXTS:
+        return "duckdb"
+    if suffix in SQLITE_EXTS:
+        return "sqlite"
+    return "other"
+
+
+def _harlequin_adapter(resolved: list[Path]) -> Literal["duckdb", "sqlite"] | None:
+    if not resolved:
+        return None
+    families = {_database_family(path) for path in resolved}
+    if families == {"duckdb"}:
+        return "duckdb"
+    if families == {"sqlite"}:
+        return "sqlite"
+    raise ValueError(f"Harlequin requires all opened local database files to use the same engine, got: {sorted(families)}")
+
+
+def _harlequin_command(resolved: list[Path], read_only: bool, theme: str | None, limit: int | None) -> list[str]:
+    command = ["harlequin"]
+    adapter = _harlequin_adapter(resolved)
+    if adapter is not None:
+        command.extend(["--adapter", adapter])
+    if read_only and resolved:
+        command.append("--read-only")
+    if theme is not None:
+        command.extend(["--theme", theme])
+    if limit is not None:
+        command.extend(["--limit", str(limit)])
+    command.extend(str(path) for path in resolved)
+    return command
+
+
 def _launch_interactive_command(command: list[str]) -> None:
     executable = command[0]
     if shutil.which(executable) is None:
@@ -93,13 +129,26 @@ def _validate_backend(backend: BACKEND, resolved: list[Path]) -> None:
         )
 
 
+def _validate_read_only_support(backend: BACKEND, read_only: bool, resolved: list[Path]) -> None:
+    if not read_only or not resolved:
+        return
+    if backend in READ_ONLY_CAPABLE:
+        return
+    read_only_capable_list = ", ".join(sorted(READ_ONLY_CAPABLE))
+    raise ValueError(
+        f"Backend '{backend}' does not provide a verified read-only mode for local database files.\n"
+        f"Read-only-capable backends: {read_only_capable_list}\n"
+        f"Files: {[str(path) for path in resolved]}"
+    )
+
+
 def app(
     path: str | None = None,
     find: str | None = None,
     find_root: str | None = None,
     recursive: bool = False,
     backend: BACKEND_LOOSE = "harlequin",
-    read_only: bool = False,
+    read_only: bool = True,
     theme: str | None = None,
     limit: int | None = None,
 ) -> None:
@@ -126,6 +175,7 @@ def app(
 
     if resolved:
         _validate_backend(backend_strict, resolved)
+        _validate_read_only_support(backend_strict, read_only, resolved)
 
     command: list[str]
     match backend_strict:
@@ -148,14 +198,7 @@ def app(
             if resolved:
                 command.append(_url_for(resolved[0]))
         case "harlequin":
-            command = ["harlequin"]
-            if read_only:
-                command.append("--read-only")
-            if theme is not None:
-                command.extend(["--theme", theme])
-            if limit is not None:
-                command.extend(["--limit", str(limit)])
-            command.extend(str(p) for p in resolved)
+            command = _harlequin_command(resolved=resolved, read_only=read_only, theme=theme, limit=limit)
         case "sqlit":
             command = ["sqlit"]
             if theme is not None:

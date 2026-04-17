@@ -50,16 +50,49 @@ def test_app_builds_harlequin_command_for_multiple_matches(tmp_path: Path, monke
 
     module.app(find="*.duckdb", find_root=str(tmp_path), recursive=True, backend="harlequin", read_only=True, theme="nord", limit=25)
 
-    assert commands == [["harlequin", "--read-only", "--theme", "nord", "--limit", "25", str(first.resolve()), str(second.resolve())]]
+    assert commands == [
+        [
+            "harlequin",
+            "--adapter",
+            "duckdb",
+            "--read-only",
+            "--theme",
+            "nord",
+            "--limit",
+            "25",
+            str(first.resolve()),
+            str(second.resolve()),
+        ]
+    ]
 
 
-def test_app_builds_rainfrog_command_for_sqlite_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_app_defaults_to_harlequin_read_only_for_sqlite_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     sqlite_path = tmp_path.joinpath("demo.sqlite")
     sqlite_path.write_text("", encoding="utf-8")
     commands: list[list[str]] = []
 
     monkeypatch.setattr(module, "_launch_interactive_command", lambda command: commands.append(command.copy()))
 
-    module.app(path=str(sqlite_path), backend="rainfrog")
+    module.app(path=str(sqlite_path))
+
+    assert commands == [["harlequin", "--adapter", "sqlite", "--read-only", str(sqlite_path.resolve())]]
+
+
+def test_app_rejects_unverified_read_only_backend_for_local_files(tmp_path: Path) -> None:
+    sqlite_path = tmp_path.joinpath("demo.sqlite")
+    sqlite_path.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="does not provide a verified read-only mode"):
+        module.app(path=str(sqlite_path), backend="rainfrog")
+
+
+def test_app_allows_explicit_read_write_rainfrog_for_sqlite_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    sqlite_path = tmp_path.joinpath("demo.sqlite")
+    sqlite_path.write_text("", encoding="utf-8")
+    commands: list[list[str]] = []
+
+    monkeypatch.setattr(module, "_launch_interactive_command", lambda command: commands.append(command.copy()))
+
+    module.app(path=str(sqlite_path), backend="rainfrog", read_only=False)
 
     assert commands == [["rainfrog", "--driver", "sqlite", "--database", str(sqlite_path.resolve())]]

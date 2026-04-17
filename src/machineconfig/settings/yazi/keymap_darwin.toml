@@ -170,10 +170,10 @@ desc = "Scroll one column to the right"
 
 [[mgr.prepend_keymap]]
 on = ["g", "o"]
-run = "plugin duckdb -open"
-desc = "open with duckdb"
+run = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/open_db_readonly.py" "$0"'
+desc = "open with duckdb (read-only)"
 
 [[mgr.prepend_keymap]]
 on = ["g", "u"]
-run = "plugin duckdb -ui"
-desc = "open with duckdb ui"
+run = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/open_db_readonly.py" --ui "$0"'
+desc = "open with duckdb ui (read-only target)"
