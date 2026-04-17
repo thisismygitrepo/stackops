@@ -35,6 +35,7 @@ MULTI_DB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin"})
 # backends that can natively handle duckdb connection strings
 DUCKDB_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin", "rainfrog", "usql"})
 READ_ONLY_CAPABLE: frozenset[BACKEND] = frozenset({"harlequin", "lazysql"})
+SQLITE_URL_READ_ONLY_CAPABLE: frozenset[BACKEND] = frozenset({"rainfrog"})
 
 DUCKDB_EXTS: frozenset[str] = frozenset({".duckdb", ".ddb"})
 SQLITE_EXTS: frozenset[str] = frozenset({".sqlite", ".sqlite3", ".db", ".db3", ".s3db", ".sl3"})
@@ -57,7 +58,12 @@ def _url_for(p: Path) -> str:
     return f"{prefix}{p}"
 
 
-def _rainfrog_command(path: Path | None) -> list[str]:
+def _rainfrog_sqlite_read_only_url(path: Path) -> str:
+    file_uri_path = path.resolve().as_uri().removeprefix("file://")
+    return f"""sqlite://{file_uri_path}?mode=ro"""
+
+
+def _rainfrog_command(path: Path | None, read_only: bool) -> list[str]:
     command = ["rainfrog"]
     if path is None:
         return command
@@ -65,6 +71,8 @@ def _rainfrog_command(path: Path | None) -> list[str]:
     if suffix in DUCKDB_EXTS:
         return [*command, "--driver", "duckdb", "--database", str(path)]
     if suffix in SQLITE_EXTS:
+        if read_only:
+            return [*command, "--url", _rainfrog_sqlite_read_only_url(path)]
         return [*command, "--driver", "sqlite", "--database", str(path)]
     return [*command, "--url", str(path)]
 
@@ -134,10 +142,15 @@ def _validate_read_only_support(backend: BACKEND, read_only: bool, resolved: lis
         return
     if backend in READ_ONLY_CAPABLE:
         return
-    read_only_capable_list = ", ".join(sorted(READ_ONLY_CAPABLE))
+    if backend in SQLITE_URL_READ_ONLY_CAPABLE:
+        families = {_database_family(path) for path in resolved}
+        if families == {"sqlite"}:
+            return
+    read_only_capable_list = ", ".join(sorted(READ_ONLY_CAPABLE | SQLITE_URL_READ_ONLY_CAPABLE))
     raise ValueError(
-        f"Backend '{backend}' does not provide a verified read-only mode for local database files.\n"
+        f"Backend '{backend}' does not provide a verified read-only mode for the requested local database files.\n"
         f"Read-only-capable backends: {read_only_capable_list}\n"
+        f"Rainfrog read-only support is limited to local SQLite files opened via URL mode.\n"
         f"Files: {[str(path) for path in resolved]}"
     )
 
@@ -180,7 +193,7 @@ def app(
     command: list[str]
     match backend_strict:
         case "rainfrog":
-            command = _rainfrog_command(resolved[0] if resolved else None)
+            command = _rainfrog_command(resolved[0] if resolved else None, read_only=read_only)
         case "lazysql":
             command = ["lazysql"]
             if read_only:

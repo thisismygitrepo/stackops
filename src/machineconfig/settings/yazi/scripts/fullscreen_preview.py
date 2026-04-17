@@ -115,13 +115,18 @@ def build_svg_render_command(target_path: Path, output_path: Path) -> Command:
     return ["resvg", str(target_path), str(output_path)]
 
 
+def build_rainfrog_sqlite_read_only_url(target_path: Path) -> str:
+    file_uri_path = target_path.resolve().as_uri().removeprefix("file://")
+    return f"""sqlite://{file_uri_path}?mode=ro"""
+
+
 def build_database_command(target_path: Path) -> Command:
     suffix = target_path.suffix.lower()
     path_string = str(target_path)
     if suffix in DUCKDB_SUFFIXES:
         return ["harlequin", "--adapter", "duckdb", "--read-only", path_string]
     if suffix in SQLITE_SUFFIXES:
-        return ["harlequin", "--adapter", "sqlite", "--read-only", path_string]
+        return ["rainfrog", "--url", build_rainfrog_sqlite_read_only_url(target_path=target_path)]
     raise ValueError(f"Unsupported database suffix for fullscreen preview: {suffix}")
 
 

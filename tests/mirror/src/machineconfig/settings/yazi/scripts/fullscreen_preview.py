@@ -28,8 +28,6 @@ def test_resolve_target_prefers_hovered_path_over_selected_path(tmp_path: Path) 
         ("notes.md", ["glow", "--pager", "--width", "88", "--style", "dark"]),
         ("table.csv", ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--csv", "--pager", "--width", "88"]),
         ("records.json", ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--json", "--pager", "--width", "88"]),
-        ("warehouse.duckdb", ["harlequin", "--adapter", "duckdb", "--read-only"]),
-        ("cache.sqlite3", ["harlequin", "--adapter", "sqlite", "--read-only"]),
         ("sheet.parquet", ["uvx", "--from", "visidata", "--with", "pyarrow", "vd"]),
         ("bundle.tar.gz", ["sh", "-c", 'ouch list "$1" | ${PAGER:-less -R}', "sh"]),
         ("image.png", ["viu"]),
@@ -45,6 +43,27 @@ def test_build_command_dispatches_by_suffix(monkeypatch: pytest.MonkeyPatch, tmp
 
     assert command[:-1] == expected_command
     assert command[-1] == str(target_path)
+
+
+def test_build_command_uses_read_only_harlequin_for_duckdb_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(fullscreen_preview.platform, "system", lambda: "Linux")
+    target_path = tmp_path.joinpath("warehouse.duckdb")
+    target_path.write_text("content", encoding="utf-8")
+
+    command = fullscreen_preview.build_command(target_path=target_path, terminal_columns=88)
+
+    assert command == ["harlequin", "--adapter", "duckdb", "--read-only", str(target_path)]
+
+
+def test_build_command_uses_read_only_rainfrog_url_for_sqlite_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(fullscreen_preview.platform, "system", lambda: "Linux")
+    target_path = tmp_path.joinpath("cache.sqlite3")
+    target_path.write_text("content", encoding="utf-8")
+
+    command = fullscreen_preview.build_command(target_path=target_path, terminal_columns=88)
+
+    expected_url = f"""sqlite://{target_path.resolve().as_uri().removeprefix("file://")}?mode=ro"""
+    assert command == ["rainfrog", "--url", expected_url]
 
 
 def test_platform_specific_archive_and_pager_commands(monkeypatch: pytest.MonkeyPatch) -> None:

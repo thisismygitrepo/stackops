@@ -78,12 +78,25 @@ def test_app_defaults_to_harlequin_read_only_for_sqlite_file(tmp_path: Path, mon
     assert commands == [["harlequin", "--adapter", "sqlite", "--read-only", str(sqlite_path.resolve())]]
 
 
-def test_app_rejects_unverified_read_only_backend_for_local_files(tmp_path: Path) -> None:
+def test_app_builds_read_only_rainfrog_url_for_sqlite_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     sqlite_path = tmp_path.joinpath("demo.sqlite")
     sqlite_path.write_text("", encoding="utf-8")
+    commands: list[list[str]] = []
 
-    with pytest.raises(ValueError, match="does not provide a verified read-only mode"):
-        module.app(path=str(sqlite_path), backend="rainfrog")
+    monkeypatch.setattr(module, "_launch_interactive_command", lambda command: commands.append(command.copy()))
+
+    module.app(path=str(sqlite_path), backend="rainfrog", read_only=True)
+
+    expected_url = f"""sqlite://{sqlite_path.resolve().as_uri().removeprefix("file://")}?mode=ro"""
+    assert commands == [["rainfrog", "--url", expected_url]]
+
+
+def test_app_rejects_rainfrog_read_only_for_duckdb_files(tmp_path: Path) -> None:
+    duckdb_path = tmp_path.joinpath("demo.duckdb")
+    duckdb_path.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Rainfrog read-only support is limited to local SQLite files"):
+        module.app(path=str(duckdb_path), backend="rainfrog", read_only=True)
 
 
 def test_app_allows_explicit_read_write_rainfrog_for_sqlite_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
