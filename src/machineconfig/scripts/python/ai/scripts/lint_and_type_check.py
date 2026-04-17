@@ -17,34 +17,43 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
-from models import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-    CHECKER_REFRESH_SECONDS,
-    CHECKER_SPECS,
-    CLEANUP_COMMANDS,
-    COMPLETED_KIND,
-    FAILURE_LABEL,
-    ISSUES_LABEL,
-    REPORTS_DIR,
-    REPO_MARKER,
-    START_FAILED_KIND,
-    SUCCESS_LABEL,
-    SUMMARY_PATH,
-    CleanupResult,
-    RunningTool,
-    ToolResult,
-    format_tool_report,
-    format_bytes,
-    format_duration,
-    format_share,
-    read_report_stats,
-    relative_path,
-    write_start_failure,
-)
-from dashboard import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-    build_command_preview,
-    build_final_summary,
-    build_live_renderable,
-)
+try:
+    import dashboard as dashboard_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+    import models as models_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+except ModuleNotFoundError:
+    from machineconfig.scripts.python.ai.scripts import (
+        dashboard as dashboard_module,
+        models as models_module,
+    )
+
+
+CHECKER_REFRESH_SECONDS = models_module.CHECKER_REFRESH_SECONDS
+CHECKER_SPECS = models_module.CHECKER_SPECS
+CLEANUP_COMMANDS = models_module.CLEANUP_COMMANDS
+COMPLETED_KIND = models_module.COMPLETED_KIND
+DiagnosticSummary = models_module.DiagnosticSummary
+FAILURE_LABEL = models_module.FAILURE_LABEL
+ISSUES_LABEL = models_module.ISSUES_LABEL
+REPORTS_DIR = models_module.REPORTS_DIR
+REPO_MARKER = models_module.REPO_MARKER
+START_FAILED_KIND = models_module.START_FAILED_KIND
+SUCCESS_LABEL = models_module.SUCCESS_LABEL
+SUMMARY_PATH = models_module.SUMMARY_PATH
+CleanupResult = models_module.CleanupResult
+RunningTool = models_module.RunningTool
+ToolResult = models_module.ToolResult
+build_diagnostic_summary = models_module.build_diagnostic_summary
+format_tool_report = models_module.format_tool_report
+format_bytes = models_module.format_bytes
+format_diagnostic_distribution = models_module.format_diagnostic_distribution
+format_duration = models_module.format_duration
+format_share = models_module.format_share
+read_report_stats = models_module.read_report_stats
+relative_path = models_module.relative_path
+write_start_failure = models_module.write_start_failure
+build_command_preview = dashboard_module.build_command_preview
+build_final_summary = dashboard_module.build_final_summary
+build_live_renderable = dashboard_module.build_live_renderable
 
 
 def run_cleanup(console: Console) -> CleanupResult:
@@ -91,6 +100,9 @@ def run_cleanup(console: Console) -> CleanupResult:
 def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolResult]]:
     running_tools: dict[str, RunningTool] = {}
     completed_tools: dict[str, ToolResult] = {}
+    unavailable_summary = DiagnosticSummary(
+        total_count=0, classifier="unknown", buckets=()
+    )
     for spec in CHECKER_SPECS:
         spec.report_path.unlink(missing_ok=True)
         spec.report_path.write_text("", encoding="utf-8")
@@ -115,6 +127,7 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
                 started_at=started_at,
                 finished_at=finished_at,
                 report_stats=read_report_stats(spec.report_path),
+                diagnostic_summary=unavailable_summary,
                 result_kind=START_FAILED_KIND,
             )
             continue
@@ -154,6 +167,9 @@ def finish_ready_processes(
             started_at=running_tool.started_at,
             finished_at=finished_at,
             report_stats=read_report_stats(running_tool.spec.report_path),
+            diagnostic_summary=build_diagnostic_summary(
+                tool_slug=running_tool.spec.slug, raw_output=raw_output
+            ),
             result_kind=COMPLETED_KIND,
         )
         finished_slugs.append(slug)
@@ -230,6 +246,26 @@ def write_summary(
             f"| {result.spec.title} | {result.run_state} | {result.status} | {result.exit_code} | {format_duration(result.duration_seconds)} | "
             f"{format_share(result.duration_seconds, checker_sum)} | {result.report_stats.line_count} | "
             f"{format_bytes(result.report_stats.byte_count)} | `{relative_path(result.spec.report_path)}` |"
+        )
+    lines.extend(
+        (
+            "",
+            "## Diagnostic Distribution",
+            "",
+            "| Tool | Outcome | Diagnostics | By | Distribution |",
+            "| --- | --- | ---: | --- | --- |",
+        )
+    )
+    for result in checker_results:
+        diagnostic_count = str(result.diagnostic_summary.total_count)
+        classifier = result.diagnostic_summary.classifier
+        distribution = format_diagnostic_distribution(result.diagnostic_summary)
+        if result.result_kind == START_FAILED_KIND:
+            diagnostic_count = "-"
+            classifier = "-"
+            distribution = "start failure"
+        lines.append(
+            f"| {result.spec.title} | {result.status} | {diagnostic_count} | {classifier} | {distribution} |"
         )
     SUMMARY_PATH.write_text(data="\n".join(lines) + "\n", encoding="utf-8")
 
@@ -321,7 +357,7 @@ def main() -> int:
         Text(f"Reports written under {relative_path(REPORTS_DIR)}", style="bold cyan")
     )
     if cleanup_result.exit_code != 0 or any(
-        result.exit_code != 0 for result in checker_results
+        result.status != SUCCESS_LABEL for result in checker_results
     ):
         return 1
     return 0

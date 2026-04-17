@@ -8,26 +8,32 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeEl
 from rich.table import Table
 from rich.text import Text
 
-from models import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-    CHECKER_SPECS,
-    CLEANUP_COMMANDS,
-    DONE_LABEL,
-    ERROR_LABEL,
-    FAILURE_LABEL,
-    ISSUES_LABEL,
-    RUNNING_LABEL,
-    SUCCESS_LABEL,
-    SUMMARY_PATH,
-    CleanupResult,
-    RunningTool,
-    ToolResult,
-    format_bytes,
-    format_command,
-    format_duration,
-    format_share,
-    read_report_stats,
-    relative_path,
-)
+try:
+    import models as models_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+except ModuleNotFoundError:
+    from machineconfig.scripts.python.ai.scripts import models as models_module
+
+
+CHECKER_SPECS = models_module.CHECKER_SPECS
+CLEANUP_COMMANDS = models_module.CLEANUP_COMMANDS
+DONE_LABEL = models_module.DONE_LABEL
+ERROR_LABEL = models_module.ERROR_LABEL
+FAILURE_LABEL = models_module.FAILURE_LABEL
+ISSUES_LABEL = models_module.ISSUES_LABEL
+RUNNING_LABEL = models_module.RUNNING_LABEL
+START_FAILED_KIND = models_module.START_FAILED_KIND
+SUCCESS_LABEL = models_module.SUCCESS_LABEL
+SUMMARY_PATH = models_module.SUMMARY_PATH
+CleanupResult = models_module.CleanupResult
+RunningTool = models_module.RunningTool
+ToolResult = models_module.ToolResult
+format_bytes = models_module.format_bytes
+format_command = models_module.format_command
+format_diagnostic_distribution = models_module.format_diagnostic_distribution
+format_duration = models_module.format_duration
+format_share = models_module.format_share
+read_report_stats = models_module.read_report_stats
+relative_path = models_module.relative_path
 
 
 def build_command_preview() -> RenderableType:
@@ -221,6 +227,28 @@ def build_final_summary(
             relative_path(result.spec.report_path),
         )
 
+    diagnostics_table = Table(box=box.SIMPLE_HEAVY, expand=True)
+    diagnostics_table.add_column("Tool", style="bold")
+    diagnostics_table.add_column("Outcome", justify="center")
+    diagnostics_table.add_column("Diagnostics", justify="right")
+    diagnostics_table.add_column("By", justify="center")
+    diagnostics_table.add_column("Distribution", overflow="fold")
+    for result in checker_results:
+        diagnostic_count = str(result.diagnostic_summary.total_count)
+        classifier = result.diagnostic_summary.classifier
+        distribution = format_diagnostic_distribution(result.diagnostic_summary)
+        if result.result_kind == START_FAILED_KIND:
+            diagnostic_count = "-"
+            classifier = "-"
+            distribution = "start failure"
+        diagnostics_table.add_row(
+            result.spec.title,
+            checker_status_text(result),
+            diagnostic_count,
+            classifier,
+            distribution,
+        )
+
     border_style = "green"
     if cleanup_result.exit_code != 0 or error_count > 0:
         border_style = "red"
@@ -229,4 +257,5 @@ def build_final_summary(
     return Group(
         Panel(summary_grid, title="Summary", border_style=border_style),
         Panel(table, title="Timings", border_style=border_style),
+        Panel(diagnostics_table, title="Diagnostics", border_style=border_style),
     )

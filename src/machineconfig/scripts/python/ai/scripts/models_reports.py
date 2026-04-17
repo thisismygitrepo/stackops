@@ -1,18 +1,20 @@
 import json
 from pathlib import Path
-from typing import Final
 
-from models import ReportStats, ToolSpec  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-
-
-JSON_ENTRY_KEYS: Final[tuple[str, ...]] = (
-    "generalDiagnostics",
-    "diagnostics",
-    "messages",
-    "results",
-    "violations",
-    "errors",
-)
+try:
+    from models import ReportStats, ToolSpec  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+    from models_json import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+        extract_json_entries,
+        extract_json_metadata,
+        parse_json_output,
+    )
+except ModuleNotFoundError:
+    from machineconfig.scripts.python.ai.scripts.models import ReportStats, ToolSpec
+    from machineconfig.scripts.python.ai.scripts.models_json import (
+        extract_json_entries,
+        extract_json_metadata,
+        parse_json_output,
+    )
 
 
 def format_duration(seconds: float) -> str:
@@ -59,7 +61,7 @@ def _format_json_tool_report(spec: ToolSpec, exit_code: int, raw_output: str) ->
         lines.append("")
         return "\n".join(lines) + "\n"
     try:
-        prefix_text, payload = _parse_json_output(raw_output=raw_output)
+        parsed_output = parse_json_output(raw_output=raw_output)
     except json.JSONDecodeError as error:
         lines.append(f"- JSON parse failure: `{error.msg}`")
         lines.append("")
@@ -69,7 +71,9 @@ def _format_json_tool_report(spec: ToolSpec, exit_code: int, raw_output: str) ->
         lines.append("")
         return "\n".join(lines) + "\n"
 
-    entry_key, entries = _extract_json_entries(payload)
+    prefix_text = parsed_output.prefix_text
+    payload = parsed_output.payload
+    entry_key, entries = extract_json_entries(payload)
     if entries is None:
         lines.append("- Diagnostic entries: `0`")
         lines.append("")
@@ -93,7 +97,7 @@ def _format_json_tool_report(spec: ToolSpec, exit_code: int, raw_output: str) ->
         lines.append("")
         _append_code_block(lines=lines, language="text", content=prefix_text)
         lines.append("")
-    metadata = _extract_json_metadata(payload=payload, entry_key=entry_key)
+    metadata = extract_json_metadata(payload=payload, entry_key=entry_key)
     if metadata is not None:
         lines.append("## Metadata")
         lines.append("")
@@ -145,73 +149,6 @@ def _append_code_block(lines: list[str], language: str, content: str) -> None:
     lines.append(f"```{language}")
     lines.extend(content.splitlines())
     lines.append("```")
-
-
-def _split_json_prefix(raw_output: str) -> tuple[str, str | None]:
-    lines = raw_output.splitlines()
-    for index, line in enumerate(lines):
-        stripped_line = line.lstrip()
-        if stripped_line.startswith("{") or stripped_line.startswith("["):
-            prefix_text = "\n".join(lines[:index]).strip()
-            payload_text = "\n".join(lines[index:]).strip()
-            return prefix_text, payload_text
-    return "", None
-
-
-def _parse_json_output(raw_output: str) -> tuple[str, object]:
-    stripped_output = raw_output.strip()
-    try:
-        return "", _parse_json_stream(raw_output=stripped_output)
-    except json.JSONDecodeError as error:
-        prefix_text, payload_text = _split_json_prefix(raw_output)
-        if payload_text is None:
-            raise error
-        return prefix_text, _parse_json_stream(raw_output=payload_text)
-
-
-def _parse_json_stream(raw_output: str) -> object:
-    stripped_output = raw_output.strip()
-    if stripped_output == "":
-        raise json.JSONDecodeError("Expecting value", raw_output, 0)
-    decoder = json.JSONDecoder()
-    decoded_items: list[object] = []
-    index = 0
-    while index < len(stripped_output):
-        while index < len(stripped_output) and stripped_output[index].isspace():
-            index += 1
-        if index >= len(stripped_output):
-            break
-        payload, end_index = decoder.raw_decode(stripped_output, index)
-        decoded_items.append(payload)
-        index = end_index
-    if len(decoded_items) == 1:
-        return decoded_items[0]
-    return decoded_items
-
-
-def _extract_json_entries(payload: object) -> tuple[str | None, tuple[object, ...] | None]:
-    if isinstance(payload, list):
-        return None, tuple(payload)
-    if isinstance(payload, dict):
-        for key in JSON_ENTRY_KEYS:
-            candidate = payload.get(key)
-            if isinstance(candidate, list):
-                return key, tuple(candidate)
-    return None, None
-
-
-def _extract_json_metadata(
-    payload: object, entry_key: str | None
-) -> dict[str, object] | None:
-    if not isinstance(payload, dict):
-        return None
-    metadata: dict[str, object] = {}
-    for key, value in payload.items():
-        if isinstance(key, str) and key != entry_key:
-            metadata[key] = value
-    if metadata:
-        return metadata
-    return None
 
 
 def read_report_stats(report_path: Path) -> ReportStats:

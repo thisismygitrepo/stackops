@@ -43,6 +43,19 @@ class ReportStats:
 
 
 @dataclass(slots=True)
+class DiagnosticBucket:
+    label: str
+    count: int
+
+
+@dataclass(slots=True)
+class DiagnosticSummary:
+    total_count: int
+    classifier: str
+    buckets: tuple[DiagnosticBucket, ...]
+
+
+@dataclass(slots=True)
 class CheckerSpec:
     slug: str
     title: str
@@ -82,6 +95,7 @@ class ToolResult:
     started_at: float
     finished_at: float
     report_stats: ReportStats
+    diagnostic_summary: DiagnosticSummary
     result_kind: str
 
     @property
@@ -90,11 +104,13 @@ class ToolResult:
 
     @property
     def status(self) -> str:
+        if self.result_kind == START_FAILED_KIND:
+            return FAILURE_LABEL
+        if self.diagnostic_summary.total_count > 0:
+            return ISSUES_LABEL
         if self.exit_code == 0:
             return SUCCESS_LABEL
-        if self.exit_code == 2:
-            return ISSUES_LABEL
-        return FAILURE_LABEL
+        return ISSUES_LABEL
 
     @property
     def run_state(self) -> str:
@@ -156,9 +172,12 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
     setattr(module, "SUCCESS_LABEL", SUCCESS_LABEL)
     setattr(module, "SUMMARY_PATH", summary_path)
     setattr(module, "CleanupResult", CleanupResult)
+    setattr(module, "DiagnosticSummary", DiagnosticSummary)
     setattr(module, "RunningTool", RunningTool)
     setattr(module, "ToolResult", ToolResult)
+    setattr(module, "build_diagnostic_summary", lambda tool_slug, raw_output: DiagnosticSummary(total_count=1 if raw_output.strip() != "" else 0, classifier="rule", buckets=(DiagnosticBucket(label=tool_slug, count=1),) if raw_output.strip() != "" else ()))
     setattr(module, "format_bytes", lambda size: f"{size} B")
+    setattr(module, "format_diagnostic_distribution", lambda summary: "none" if summary.total_count == 0 else ", ".join(f"{bucket.label} {bucket.count}" for bucket in summary.buckets))
     setattr(module, "format_duration", lambda seconds: f"{seconds:.2f}s")
     setattr(module, "format_share", lambda duration, total: "0.00%" if total == 0 else f"{(duration / total) * 100:.2f}%")
     setattr(module, "format_tool_report", lambda spec, exit_code, raw_output: f"# {spec.title}\n\n- Exit code: {exit_code}\n\n{raw_output}")
@@ -291,3 +310,62 @@ def test_finish_ready_processes_formats_captured_output(tmp_path: Path, monkeypa
     assert report_text.startswith("# Checker A")
     assert "- Exit code: 1" in report_text
     assert '[{"message":"boom"}]' in report_text
+    assert completed_tools["checker_a"].diagnostic_summary.total_count == 1
+
+
+def test_write_summary_appends_diagnostic_distribution_table(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    models_fixture = _build_models_fixture(base_dir=tmp_path)
+    lint_module = _load_module(
+        monkeypatch=monkeypatch,
+        models_fixture=models_fixture,
+        module_name="test_lint_script_write_summary",
+    )
+    cleanup_result = CleanupResult(
+        exit_code=0,
+        started_at=1.0,
+        finished_at=2.0,
+        report_path=models_fixture.reports_dir / "cleanup.md",
+        report_stats=ReportStats(line_count=1, byte_count=4),
+    )
+    checker_results = (
+        ToolResult(
+            spec=models_fixture.checker_specs[0],
+            exit_code=0,
+            started_at=2.0,
+            finished_at=4.0,
+            report_stats=ReportStats(line_count=1, byte_count=8),
+            diagnostic_summary=DiagnosticSummary(
+                total_count=0, classifier="unknown", buckets=()
+            ),
+            result_kind=COMPLETED_KIND,
+        ),
+        ToolResult(
+            spec=models_fixture.checker_specs[1],
+            exit_code=0,
+            started_at=2.0,
+            finished_at=5.0,
+            report_stats=ReportStats(line_count=2, byte_count=16),
+            diagnostic_summary=DiagnosticSummary(
+                total_count=3,
+                classifier="rule",
+                buckets=(
+                    DiagnosticBucket(label="F401", count=2),
+                    DiagnosticBucket(label="UP006", count=1),
+                ),
+            ),
+            result_kind=COMPLETED_KIND,
+        ),
+    )
+
+    lint_module.write_summary(
+        cleanup_result=cleanup_result,
+        checker_results=checker_results,
+        wall_started_at=1.0,
+    )
+    summary_text = models_fixture.summary_path.read_text(encoding="utf-8")
+
+    assert "## Diagnostic Distribution" in summary_text
+    assert "| Tool | Outcome | Diagnostics | By | Distribution |" in summary_text
+    assert "| Checker B | issues | 3 | rule | F401 2, UP006 1 |" in summary_text

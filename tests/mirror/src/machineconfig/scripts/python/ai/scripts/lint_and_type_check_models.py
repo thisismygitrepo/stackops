@@ -7,6 +7,12 @@ import pytest
 from machineconfig.scripts.python.ai.scripts import models as models_module
 
 
+def _summary_bucket_map(
+    summary: models_module.DiagnosticSummary,
+) -> dict[str, int]:
+    return {bucket.label: bucket.count for bucket in summary.buckets}
+
+
 def test_format_helpers_cover_runtime_branches() -> None:
     assert models_module.format_duration(12.345) == "12.35s"
     assert models_module.format_duration(90.5) == "1m 30.50s"
@@ -20,7 +26,8 @@ def test_format_helpers_cover_runtime_branches() -> None:
 
 def test_read_report_stats_and_write_start_failure_use_filesystem_state(tmp_path: Path) -> None:
     missing_stats = models_module.read_report_stats(tmp_path / "missing.md")
-    assert missing_stats == models_module.ReportStats(line_count=0, byte_count=0)
+    assert missing_stats.line_count == 0
+    assert missing_stats.byte_count == 0
 
     report_path = tmp_path / "report.md"
     report_path.write_text("one\ntwo\n", encoding="utf-8")
@@ -52,11 +59,44 @@ def test_result_models_derive_runtime_status_fields() -> None:
     failed_cleanup_result = models_module.CleanupResult(
         exit_code=1, started_at=2.0, finished_at=5.0, report_path=Path(".ai/linters/cleanup.md"), report_stats=report_stats
     )
+    empty_summary = models_module.DiagnosticSummary(
+        total_count=0,
+        classifier="unknown",
+        buckets=(),
+    )
+    issue_summary = models_module.DiagnosticSummary(
+        total_count=2,
+        classifier="check",
+        buckets=(
+            models_module.DiagnosticBucket(label="invalid-return-type", count=2),
+        ),
+    )
     completed_tool_result = models_module.ToolResult(
-        spec=spec, exit_code=1, started_at=10.0, finished_at=13.5, report_stats=report_stats, result_kind=models_module.COMPLETED_KIND
+        spec=spec,
+        exit_code=1,
+        started_at=10.0,
+        finished_at=13.5,
+        report_stats=report_stats,
+        diagnostic_summary=issue_summary,
+        result_kind=models_module.COMPLETED_KIND,
+    )
+    zero_exit_issue_result = models_module.ToolResult(
+        spec=spec,
+        exit_code=0,
+        started_at=10.0,
+        finished_at=14.0,
+        report_stats=report_stats,
+        diagnostic_summary=issue_summary,
+        result_kind=models_module.COMPLETED_KIND,
     )
     failed_tool_result = models_module.ToolResult(
-        spec=spec, exit_code=1, started_at=10.0, finished_at=11.0, report_stats=report_stats, result_kind=models_module.START_FAILED_KIND
+        spec=spec,
+        exit_code=1,
+        started_at=10.0,
+        finished_at=11.0,
+        report_stats=report_stats,
+        diagnostic_summary=empty_summary,
+        result_kind=models_module.START_FAILED_KIND,
     )
 
     assert cleanup_result.duration_seconds == 2.5
@@ -65,8 +105,90 @@ def test_result_models_derive_runtime_status_fields() -> None:
     assert completed_tool_result.duration_seconds == 3.5
     assert completed_tool_result.run_state == models_module.DONE_LABEL
     assert completed_tool_result.status == models_module.ISSUES_LABEL
+    assert zero_exit_issue_result.status == models_module.ISSUES_LABEL
     assert failed_tool_result.run_state == models_module.ERROR_LABEL
     assert failed_tool_result.status == models_module.FAILURE_LABEL
+
+
+@pytest.mark.parametrize(
+    ("tool_slug", "raw_output", "expected_classifier", "expected_total", "expected_counts"),
+    (
+        (
+            "pyright",
+            (
+                '{"summary": {"errorCount": 2, "warningCount": 1, "informationCount": 0}, '
+                '"generalDiagnostics": [{"severity": "error"}]}'
+            ),
+            "severity",
+            3,
+            {"error": 2, "warning": 1},
+        ),
+        (
+            "mypy",
+            (
+                '{"file": "demo.py", "message": "ctx", "severity": "note"}\n'
+                '{"file": "demo.py", "message": "boom", "severity": "error", "code": "attr-defined"}\n'
+                '{"file": "demo.py", "message": "zap", "severity": "error", "code": "return-value"}\n'
+            ),
+            "code",
+            3,
+            {"note": 1, "attr-defined": 1, "return-value": 1},
+        ),
+        (
+            "pylint",
+            (
+                '{"statistics": {"messageTypeCount": {"fatal": 0, "error": 2, "warning": 1, "refactor": 0, "convention": 0, "info": 0}}, '
+                '"messages": [{"type": "error"}]}'
+            ),
+            "type",
+            3,
+            {"error": 2, "warning": 1},
+        ),
+        (
+            "pyrefly",
+            (
+                '[{"name": "bad-return", "severity": "error"}, '
+                '{"name": "bad-argument-type", "severity": "error"}, '
+                '{"name": "bad-return", "severity": "error"}]'
+            ),
+            "name",
+            3,
+            {"bad-return": 2, "bad-argument-type": 1},
+        ),
+        (
+            "ty",
+            (
+                '[{"check_name": "invalid-return-type", "severity": "minor"}, '
+                '{"check_name": "invalid-argument-type", "severity": "minor"}, '
+                '{"check_name": "invalid-return-type", "severity": "minor"}]'
+            ),
+            "check",
+            3,
+            {"invalid-return-type": 2, "invalid-argument-type": 1},
+        ),
+        (
+            "ruff",
+            '[{"code": "F401"}, {"code": "UP006"}, {"code": "F401"}]',
+            "rule",
+            3,
+            {"F401": 2, "UP006": 1},
+        ),
+    ),
+)
+def test_build_diagnostic_summary_handles_each_checker_shape(
+    tool_slug: str,
+    raw_output: str,
+    expected_classifier: str,
+    expected_total: int,
+    expected_counts: dict[str, int],
+) -> None:
+    summary = models_module.build_diagnostic_summary(
+        tool_slug=tool_slug, raw_output=raw_output
+    )
+
+    assert summary.classifier == expected_classifier
+    assert summary.total_count == expected_total
+    assert _summary_bucket_map(summary) == expected_counts
 
 
 def test_checker_specs_request_structured_output() -> None:

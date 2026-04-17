@@ -3,6 +3,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Literal, TextIO, TypeAlias
 
+try:
+    import models_diagnostics as models_diagnostics_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+except ModuleNotFoundError:
+    from machineconfig.scripts.python.ai.scripts import (
+        models_diagnostics as models_diagnostics_module,
+    )
+
+
+DiagnosticBucket = models_diagnostics_module.DiagnosticBucket
+DiagnosticSummary = models_diagnostics_module.DiagnosticSummary
+build_diagnostic_summary = models_diagnostics_module.build_diagnostic_summary
+format_diagnostic_distribution = (
+    models_diagnostics_module.format_diagnostic_distribution
+)
+
 
 REPO_MARKER: Final[Path] = Path("pyproject.toml")
 REPORTS_DIR: Final[Path] = Path(".ai/linters")
@@ -64,6 +79,7 @@ class ToolResult:
     started_at: float
     finished_at: float
     report_stats: ReportStats
+    diagnostic_summary: DiagnosticSummary
     result_kind: ToolResultKind
 
     @property
@@ -80,6 +96,8 @@ class ToolResult:
     def status(self) -> ToolOutcome:
         if self.result_kind == START_FAILED_KIND:
             return FAILURE_LABEL
+        if self.diagnostic_summary.total_count > 0:
+            return ISSUES_LABEL
         if self.exit_code == 0:
             return SUCCESS_LABEL
         return ISSUES_LABEL
@@ -93,21 +111,31 @@ class RunningTool:
     started_at: float
 
 
-from models_config import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-    build_checker_specs,
-    build_cleanup_commands,
-    load_type_check_excluded_directories,
+try:
+    import models_config as models_config_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+    import models_reports as models_reports_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+except ModuleNotFoundError:
+    from machineconfig.scripts.python.ai.scripts import (
+        models_config as models_config_module,
+        models_reports as models_reports_module,
+    )
+
+
+PYRIGHT_CONFIG_OVERRIDE_PATH = models_config_module.PYRIGHT_CONFIG_OVERRIDE_PATH
+TYPE_CHECK_EXCLUDES_ENV_VAR = models_config_module.TYPE_CHECK_EXCLUDES_ENV_VAR
+build_checker_specs = models_config_module.build_checker_specs
+build_cleanup_commands = models_config_module.build_cleanup_commands
+load_type_check_excluded_directories = (
+    models_config_module.load_type_check_excluded_directories
 )
-from models_reports import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-    format_bytes,
-    format_command,
-    format_duration,
-    format_share,
-    format_tool_report,
-    read_report_stats,
-    relative_path,
-    write_start_failure,
-)
+format_bytes = models_reports_module.format_bytes
+format_command = models_reports_module.format_command
+format_duration = models_reports_module.format_duration
+format_share = models_reports_module.format_share
+format_tool_report = models_reports_module.format_tool_report
+read_report_stats = models_reports_module.read_report_stats
+relative_path = models_reports_module.relative_path
+write_start_failure = models_reports_module.write_start_failure
 
 
 TYPE_CHECK_EXCLUDED_DIRECTORIES: Final[tuple[str, ...]] = (
@@ -129,20 +157,26 @@ __all__ = (
     "ERROR_LABEL",
     "FAILURE_LABEL",
     "ISSUES_LABEL",
+    "PYRIGHT_CONFIG_OVERRIDE_PATH",
     "REPO_MARKER",
     "REPORTS_DIR",
     "RUNNING_LABEL",
     "START_FAILED_KIND",
     "SUCCESS_LABEL",
     "SUMMARY_PATH",
+    "TYPE_CHECK_EXCLUDES_ENV_VAR",
     "TYPE_CHECK_EXCLUDED_DIRECTORIES",
     "CleanupResult",
+    "DiagnosticBucket",
+    "DiagnosticSummary",
     "ReportStats",
     "RunningTool",
     "ToolResult",
     "ToolSpec",
+    "build_diagnostic_summary",
     "format_bytes",
     "format_command",
+    "format_diagnostic_distribution",
     "format_duration",
     "format_share",
     "format_tool_report",

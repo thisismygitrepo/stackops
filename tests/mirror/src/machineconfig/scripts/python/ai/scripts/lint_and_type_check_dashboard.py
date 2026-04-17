@@ -36,6 +36,19 @@ class ReportStats:
 
 
 @dataclass(slots=True)
+class DiagnosticBucket:
+    label: str
+    count: int
+
+
+@dataclass(slots=True)
+class DiagnosticSummary:
+    total_count: int
+    classifier: str
+    buckets: tuple[DiagnosticBucket, ...]
+
+
+@dataclass(slots=True)
 class CheckerSpec:
     slug: str
     title: str
@@ -75,6 +88,7 @@ class ToolResult:
     started_at: float
     finished_at: float
     report_stats: ReportStats
+    diagnostic_summary: DiagnosticSummary
     result_kind: str
 
     @property
@@ -83,11 +97,13 @@ class ToolResult:
 
     @property
     def status(self) -> str:
+        if self.result_kind == START_FAILED_KIND:
+            return FAILURE_LABEL
+        if self.diagnostic_summary.total_count > 0:
+            return ISSUES_LABEL
         if self.exit_code == 0:
             return SUCCESS_LABEL
-        if self.exit_code == 2:
-            return ISSUES_LABEL
-        return FAILURE_LABEL
+        return ISSUES_LABEL
 
     @property
     def run_state(self) -> str:
@@ -124,6 +140,7 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
     setattr(module, "FAILURE_LABEL", FAILURE_LABEL)
     setattr(module, "ISSUES_LABEL", ISSUES_LABEL)
     setattr(module, "RUNNING_LABEL", RUNNING_LABEL)
+    setattr(module, "START_FAILED_KIND", START_FAILED_KIND)
     setattr(module, "SUCCESS_LABEL", SUCCESS_LABEL)
     setattr(module, "SUMMARY_PATH", summary_path)
     setattr(module, "CleanupResult", CleanupResult)
@@ -131,6 +148,7 @@ def _build_models_fixture(base_dir: Path) -> ModelsFixture:
     setattr(module, "ToolResult", ToolResult)
     setattr(module, "format_bytes", lambda size: f"{size} B")
     setattr(module, "format_command", lambda command: " ".join(command))
+    setattr(module, "format_diagnostic_distribution", lambda summary: "none" if summary.total_count == 0 else ", ".join(f"{bucket.label} {bucket.count}" for bucket in summary.buckets))
     setattr(module, "format_duration", lambda seconds: f"{seconds:.2f}s")
     setattr(module, "format_share", lambda duration, total: "0.00%" if total == 0 else f"{(duration / total) * 100:.2f}%")
     setattr(module, "read_report_stats", _read_report_stats)
@@ -160,6 +178,9 @@ def test_checker_state_and_status_text_cover_runtime_states(tmp_path: Path) -> N
         started_at=1.0,
         finished_at=3.0,
         report_stats=ReportStats(line_count=1, byte_count=4),
+        diagnostic_summary=DiagnosticSummary(
+            total_count=0, classifier="unknown", buckets=()
+        ),
         result_kind=COMPLETED_KIND,
     )
     failed_start_result = ToolResult(
@@ -168,6 +189,9 @@ def test_checker_state_and_status_text_cover_runtime_states(tmp_path: Path) -> N
         started_at=1.0,
         finished_at=2.0,
         report_stats=ReportStats(line_count=1, byte_count=4),
+        diagnostic_summary=DiagnosticSummary(
+            total_count=0, classifier="unknown", buckets=()
+        ),
         result_kind=START_FAILED_KIND,
     )
 
@@ -210,14 +234,25 @@ def test_build_final_summary_renders_totals_and_summary_path(tmp_path: Path) -> 
             started_at=2.0,
             finished_at=5.0,
             report_stats=ReportStats(line_count=1, byte_count=4),
+            diagnostic_summary=DiagnosticSummary(
+                total_count=0, classifier="unknown", buckets=()
+            ),
             result_kind=COMPLETED_KIND,
         ),
         ToolResult(
             spec=models_fixture.checker_specs[1],
-            exit_code=2,
+            exit_code=0,
             started_at=2.0,
             finished_at=6.0,
             report_stats=ReportStats(line_count=2, byte_count=8),
+            diagnostic_summary=DiagnosticSummary(
+                total_count=3,
+                classifier="rule",
+                buckets=(
+                    DiagnosticBucket(label="F401", count=2),
+                    DiagnosticBucket(label="UP006", count=1),
+                ),
+            ),
             result_kind=COMPLETED_KIND,
         ),
     )
@@ -237,3 +272,5 @@ def test_build_final_summary_renders_totals_and_summary_path(tmp_path: Path) -> 
     assert "tools with issues: 1/2" in output
     assert "summary file: reports/summary.md" in output
     assert "Checker B" in output
+    assert "Diagnostics" in output
+    assert "F401 2, UP006 1" in output

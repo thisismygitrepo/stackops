@@ -6,7 +6,10 @@ import tomllib
 from pathlib import Path
 from typing import Final
 
-from models import REPORTS_DIR, ToolSpec  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+try:
+    from models import REPORTS_DIR, ToolSpec  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+except ModuleNotFoundError:
+    from machineconfig.scripts.python.ai.scripts.models import REPORTS_DIR, ToolSpec
 
 
 TYPE_CHECK_EXCLUDES_ENV_VAR: Final[str] = "MACHINECONFIG_TYPE_CHECK_EXCLUDES"
