@@ -53,10 +53,16 @@ ON_CONFLICT_UP_COPY_MAP: dict[ON_CONFLICT_STRICT, ON_CONFLICT_STRICT] = {
 
 def _normalize_os_name(value: str) -> OsName:
     token = value.strip().lower()
-    if token not in VALID_OS_VALUES:
-        expected_values = ", ".join(sorted(VALID_OS_VALUES))
-        raise ValueError(f"Unsupported operating system: {value!r}. Expected one of: {expected_values}.")
-    return token
+    match token:
+        case "darwin":
+            return "darwin"
+        case "linux":
+            return "linux"
+        case "windows":
+            return "windows"
+        case _:
+            expected_values = ", ".join(sorted(VALID_OS_VALUES))
+            raise ValueError(f"Unsupported operating system: {value!r}. Expected one of: {expected_values}.")
 
 
 def _normalize_repo_name(value: str) -> str:

@@ -5,7 +5,7 @@ Report Utilities
 This module provides functionality to generate reports for installed applications.
 """
 
-from typing import Literal, TypedDict
+from typing import Literal, TypeAlias, TypedDict
 
 from rich import box
 from rich.console import Console, Group
@@ -17,6 +17,8 @@ from rich.text import Text
 from machineconfig.jobs.installer.checks.vt_utils import ScanResult
 
 console = Console()
+
+RowStatus: TypeAlias = Literal["pending", "no_verdict", "clean", "review", "flagged"]
 
 APP_METADATA_KEYS: tuple[str, ...] = (
     "app_name",
@@ -137,7 +139,7 @@ def _build_verdict_ratio(row: AppData) -> str:
     return f"{row['flagged_engines']}/{row['verdict_engines']}"
 
 
-def _get_row_status(row: AppData) -> Literal["pending", "no_verdict", "clean", "review", "flagged"]:
+def _get_row_status(row: AppData) -> RowStatus:
     if row["positive_pct"] is None:
         return "pending"
     if row["verdict_engines"] == 0:
@@ -150,7 +152,8 @@ def _get_row_status(row: AppData) -> Literal["pending", "no_verdict", "clean", "
 
 
 def _build_safety_label(row: AppData) -> str:
-    match _get_row_status(row):
+    row_status = _get_row_status(row)
+    match row_status:
         case "pending":
             return "Pending"
         case "no_verdict":
@@ -161,10 +164,12 @@ def _build_safety_label(row: AppData) -> str:
             return f"Review {_build_verdict_ratio(row)} ({row['positive_pct']:.1f}%)"
         case "flagged":
             return f"Flagged {_build_verdict_ratio(row)} ({row['positive_pct']:.1f}%)"
+    raise AssertionError(f"Unhandled row status: {row_status}")
 
 
 def _build_safety_cell(row: AppData) -> Text:
-    match _get_row_status(row):
+    row_status = _get_row_status(row)
+    match row_status:
         case "pending":
             return Text(_build_safety_label(row), style="bold yellow")
         case "no_verdict":
@@ -175,10 +180,12 @@ def _build_safety_cell(row: AppData) -> Text:
             return Text(_build_safety_label(row), style="bold yellow")
         case "flagged":
             return Text(_build_safety_label(row), style="bold red")
+    raise AssertionError(f"Unhandled row status: {row_status}")
 
 
 def _build_latest_scan_border_style(row: AppData) -> str:
-    match _get_row_status(row):
+    row_status = _get_row_status(row)
+    match row_status:
         case "pending":
             return "yellow"
         case "no_verdict":
@@ -189,6 +196,7 @@ def _build_latest_scan_border_style(row: AppData) -> str:
             return "yellow"
         case "flagged":
             return "red"
+    raise AssertionError(f"Unhandled row status: {row_status}")
 
 
 def _build_verdicts_cell(row: AppData) -> Text:

@@ -37,6 +37,17 @@ class _LoadedManagerData(TypedDict):
     exit_mode: SessionExitMode
 
 
+def _parse_exit_mode(exit_mode: object, fallback: SessionExitMode) -> SessionExitMode:
+    match exit_mode:
+        case "backToShell":
+            return "backToShell"
+        case "killWindow":
+            return "killWindow"
+        case "terminate":
+            return "terminate"
+        case _:
+            return fallback
+
 
 class WTLocalManager:
     """Manages multiple local Windows Terminal sessions and monitors their tabs and processes."""
@@ -261,7 +272,7 @@ class WTLocalManager:
         metadata_data = load_json_file(session_dir / "metadata.json", "Metadata file") if (session_dir / "metadata.json").exists() else {}
         metadata = metadata_data if isinstance(metadata_data, dict) else {}
         session_name_prefix = metadata.get("session_name_prefix", None)
-        exit_mode = metadata.get("exit_mode", "backToShell")
+        exit_mode = _parse_exit_mode(metadata.get("exit_mode"), "backToShell")
         instance = WTLocalManager(
             session_layouts=session_layouts,
             session_name_prefix=session_name_prefix,

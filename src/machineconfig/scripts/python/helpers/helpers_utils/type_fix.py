@@ -9,7 +9,9 @@ from machineconfig.scripts.python.terminal import run as terminal_run_command
 
 CheckerName: TypeAlias = Literal["mypy", "ruff", "pylint", "pyright", "ty", "pyrefly"]
 DIAGNOSTIC_SEPARATOR = "### Diagnostic"
-PROMPT = "please fix those, but don't be so pedantic because the linter and type checker are not perfect and occasionally give false positives"
+PROMPT = """please fix those, but don't be so pedantic because the linter and type checker are not perfect and occasionally give false positives
+in which case it is okay to ignore them and leave code as is, if you felt like that.
+"""
 
 
 def _get_issues_path(*, checker_name: CheckerName) -> str:

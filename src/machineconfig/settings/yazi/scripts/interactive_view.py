@@ -62,8 +62,10 @@ def build_command(target_path: Path) -> list[str]:
             raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")
 
 
-def exec_command(command: Sequence[str]) -> NoReturn:
-    os.execvp(command[0], list(command))
+def exec_command(command: list[str]) -> NoReturn:
+    executable = command[0]
+    remaining_arguments = tuple(command[1:])
+    os.execlp(executable, executable, *remaining_arguments)
 
 
 def main(arguments: Sequence[str]) -> int:

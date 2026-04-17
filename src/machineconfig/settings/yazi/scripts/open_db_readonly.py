@@ -51,8 +51,10 @@ def parse_arguments(arguments: Sequence[str]) -> tuple[Path, bool]:
     return Path(positional_arguments[0]).resolve(), launch_ui
 
 
-def exec_command(command: Sequence[str]) -> NoReturn:
-    os.execvp(command[0], list(command))
+def exec_command(command: list[str]) -> NoReturn:
+    executable = command[0]
+    remaining_arguments = tuple(command[1:])
+    os.execlp(executable, executable, *remaining_arguments)
 
 
 def main(arguments: Sequence[str]) -> int:

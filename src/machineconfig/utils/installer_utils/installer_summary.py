@@ -22,6 +22,7 @@ def format_installation_result(result: InstallationResult) -> str:
             return f"""📦️ {result["emoji"]} {result["exeName"]} updated from {result["oldVersion"]} ➡️ TO ➡️  {result["newVersion"]}"""
         case "failed":
             return f"""📦️ {result["emoji"]} Failed to install `{result["appName"]}` with error: {result["error"]}"""
+    raise AssertionError(f"Unexpected installation result kind: {result['kind']}")
 
 
 def bucket_installation_results(results: list[InstallationResult]) -> InstallationResultBuckets:

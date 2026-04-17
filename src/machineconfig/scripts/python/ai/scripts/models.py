@@ -1,7 +1,7 @@
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Literal, TextIO, TypeAlias
+from typing import Final, Literal, TextIO, TypeAlias, cast
 
 try:
     import models_diagnostics as models_diagnostics_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
@@ -144,8 +144,8 @@ TYPE_CHECK_EXCLUDED_DIRECTORIES: Final[tuple[str, ...]] = (
 CLEANUP_COMMANDS: Final[tuple[tuple[str, ...], ...]] = build_cleanup_commands(
     TYPE_CHECK_EXCLUDED_DIRECTORIES
 )
-CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = build_checker_specs(
-    TYPE_CHECK_EXCLUDED_DIRECTORIES
+CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = cast(
+    tuple[ToolSpec, ...], build_checker_specs(TYPE_CHECK_EXCLUDED_DIRECTORIES)
 )
 
 __all__ = (

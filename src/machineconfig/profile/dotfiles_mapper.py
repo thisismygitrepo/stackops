@@ -58,9 +58,15 @@ def _require_bool(value: object, *, context: str) -> bool:
 
 def _require_os_name(value: object, *, context: str) -> OsName:
     token = _require_str(value, context=context).strip().lower()
-    if token not in VALID_OS_VALUES:
-        raise ValueError(f"{context} must be one of: {', '.join(ALL_OS_VALUES)}.")
-    return token
+    match token:
+        case "darwin":
+            return "darwin"
+        case "linux":
+            return "linux"
+        case "windows":
+            return "windows"
+        case _:
+            raise ValueError(f"{context} must be one of: {', '.join(ALL_OS_VALUES)}.")
 
 
 def _normalize_os_values(raw_values: list[object], *, context: str) -> OsField:

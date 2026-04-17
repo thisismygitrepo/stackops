@@ -46,8 +46,10 @@ def build_command(arguments: Sequence[str], working_directory: str) -> list[str]
     return ["ouch", "compress", *target_paths, archive_path]
 
 
-def exec_command(command: Sequence[str]) -> NoReturn:
-    os.execvp(command[0], list(command))
+def exec_command(command: list[str]) -> NoReturn:
+    executable = command[0]
+    remaining_arguments = tuple(command[1:])
+    os.execlp(executable, executable, *remaining_arguments)
 
 
 def main(arguments: Sequence[str]) -> int:

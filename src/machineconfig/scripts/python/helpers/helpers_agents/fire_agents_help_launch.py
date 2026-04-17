@@ -14,6 +14,13 @@ from machineconfig.scripts.python.helpers.helpers_agents.reasoning_capabilities 
 from machineconfig.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig
 
 
+JURISDICTION_SUFFIX = r"""
+
+You don't need to do any other work beside the content of this material file.
+And be mindful that other agents might be operating at the same time in the same place, and they are assigned other bits of work.
+Don't be surprised if you saw progressing changes in other places. We try to minimize conflict that arise from multiple agents working on exact same problem, unaware of each other, so, it shoulnd't happen in 99% of cases.
+"""
+
 def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -> str:
     try:
         return str(prompt_material_path.relative_to(repo_root))
@@ -81,16 +88,12 @@ def prep_agent_launch(
         prompt_path = prompt_root / f"agent_{idx}_prompt.txt"
         if join_prompt_and_context:
             prompt_material_path = prompt_path
-            prompt_path.write_text(prompt_prefix + """\nPlease only look @ the following:\n""" + a_prompt_material, encoding="utf-8")
+            prompt_path.write_text(prompt_prefix + """\nPlease only look at:\n""" + a_prompt_material + JURISDICTION_SUFFIX, encoding="utf-8")
         else:
             prompt_material_path = prompt_root / f"agent_{idx}_material.txt"
             prompt_material_path.write_text(a_prompt_material, encoding="utf-8")
             material_reference = _format_material_reference(prompt_material_path=prompt_material_path, repo_root=repo_root)
-            prompt_path.write_text(
-                prompt_prefix
-                + f"""\nPlease only look @ {material_reference}. You don't need to do any other work beside the content of this material file.""",
-                encoding="utf-8",
-            )
+            prompt_path.write_text(prompt_prefix + f"""\nPlease only look at:\n{material_reference}.""" + JURISDICTION_SUFFIX, encoding="utf-8",)
 
         agent_cmd_launch_path = prompt_root / AGENT_NAME_FORMATTER.format(idx=idx)  # e.g., agent_0_cmd.sh
         random_sleep_time = random.uniform(0, 3)

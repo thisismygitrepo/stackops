@@ -154,6 +154,8 @@ def build_uv_remove_command(cleanup_target: CleanupTarget) -> list[str]:
             if cleanup_target.group_name == "dev":
                 return ["uv", "remove", "--dev", *cleanup_target.packages, "--no-sync"]
             return ["uv", "remove", "--group", cleanup_target.group_name, *cleanup_target.packages, "--no-sync"]
+        case _:
+            raise ValueError(f"Unsupported cleanup target kind: {cleanup_target.kind}")
 
 
 def get_main_dependencies(pyproject_data: PyprojectTable) -> list[str]:

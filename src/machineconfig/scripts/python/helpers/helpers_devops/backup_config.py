@@ -84,9 +84,15 @@ def _require_os_name(value: object, *, item_name: str, os_field: object) -> OsNa
     if not isinstance(value, str):
         raise ValueError(f"Backup entry '{item_name}' has an invalid 'os' value: {os_field!r}.")
     token = normalize_os_name(value)
-    if token not in VALID_OS:
-        raise ValueError(f"Backup entry '{item_name}' has an invalid 'os' value: {os_field!r}.")
-    return token
+    match token:
+        case "darwin":
+            return "darwin"
+        case "linux":
+            return "linux"
+        case "windows":
+            return "windows"
+        case _:
+            raise ValueError(f"Backup entry '{item_name}' has an invalid 'os' value: {os_field!r}.")
 
 
 def _parse_os_field(os_field: object, item_name: str) -> set[OsName]:
