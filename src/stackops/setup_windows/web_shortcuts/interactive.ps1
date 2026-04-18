@@ -4,15 +4,15 @@
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_windows/uv.ps1" | iex
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_mcfg.ps1" | iex
 
-function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" devops $args }
-function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" cloud $args }
-function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" agents $args }
-function sessions { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" sessions $args }
-function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" fire $args }
-function croshell { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" croshell $args }
-function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" utils $args }
-function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" terminal $args }
-function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.92" seek @args }
+function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" devops $args }
+function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" cloud $args }
+function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" agents $args }
+function sessions { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" sessions $args }
+function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" fire $args }
+function croshell { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" croshell $args }
+function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" utils $args }
+function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" terminal $args }
+function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" seek @args }
 
 function d { wrap_in_shell_script devops @args }
 function c { wrap_in_shell_script cloud @args }
