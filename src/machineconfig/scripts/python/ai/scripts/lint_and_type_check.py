@@ -4,6 +4,7 @@
 # ///
 
 
+import os
 import shutil
 import subprocess
 import sys
@@ -56,15 +57,23 @@ build_final_summary = dashboard_module.build_final_summary
 build_live_renderable = dashboard_module.build_live_renderable
 
 
+def build_subprocess_environment() -> dict[str, str]:
+    subprocess_environment = dict(os.environ)
+    subprocess_environment.pop("VIRTUAL_ENV", None)
+    return subprocess_environment
+
+
 def run_cleanup(console: Console) -> CleanupResult:
     cleanup_path = REPORTS_DIR / "log_cleanup.md"
     started_at = time.monotonic()
     exit_code = 0
     cleanup_chunks: list[str] = []
+    subprocess_environment = build_subprocess_environment()
     for command in CLEANUP_COMMANDS:
         cleanup_chunks.append(f"$ {' '.join(command)}\n")
         completed = subprocess.run(
             command,
+            env=subprocess_environment,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -103,6 +112,7 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
     unavailable_summary = DiagnosticSummary(
         total_count=0, classifier="unknown", buckets=()
     )
+    subprocess_environment = build_subprocess_environment()
     for spec in CHECKER_SPECS:
         spec.report_path.unlink(missing_ok=True)
         spec.report_path.write_text("", encoding="utf-8")
@@ -110,7 +120,10 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
         started_at = time.monotonic()
         try:
             process = subprocess.Popen(
-                spec.command, stdout=report_handle, stderr=subprocess.STDOUT
+                spec.command,
+                env=subprocess_environment,
+                stdout=report_handle,
+                stderr=subprocess.STDOUT,
             )
         except OSError as error:
             report_handle.close()

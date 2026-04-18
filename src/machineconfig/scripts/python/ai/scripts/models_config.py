@@ -16,7 +16,7 @@ TYPE_CHECK_EXCLUDES_ENV_VAR: Final[str] = "MACHINECONFIG_TYPE_CHECK_EXCLUDES"
 MYPY_EXCLUDE_PATTERN: Final[str] = r"(^|/|\\)gromit-mpx($|/|\\)"
 PYRIGHT_CONFIG_PATH: Final[Path] = Path("pyrightconfig.json")
 PYPROJECT_PATH: Final[Path] = Path("pyproject.toml")
-PYRIGHT_CONFIG_OVERRIDE_PATH: Final[Path] = Path(".machineconfig.pyright.type-check.json")
+PYRIGHT_CONFIG_OVERRIDE_PATH: Final[Path] = Path(".pyright.type-check.override.json")
 
 
 def _remove_generated_file(path: Path) -> None:

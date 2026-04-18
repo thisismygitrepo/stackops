@@ -234,7 +234,7 @@ def test_checker_specs_append_environment_excludes_and_generate_pyright_override
             spec.slug: spec.command for spec in reloaded_module.CHECKER_SPECS
         }
         cleanup_commands = reloaded_module.CLEANUP_COMMANDS
-        pyright_override_path = tmp_path / ".machineconfig.pyright.type-check.json"
+        pyright_override_path = tmp_path / ".pyright.type-check.override.json"
         pyright_override = json.loads(
             pyright_override_path.read_text(encoding="utf-8")
         )

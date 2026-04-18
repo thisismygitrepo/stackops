@@ -1,6 +1,7 @@
 import importlib.abc
 import importlib.util
 import io
+import os
 import sys
 import types
 from dataclasses import dataclass
@@ -225,12 +226,23 @@ def test_run_cleanup_writes_log_and_uses_first_failure_exit_code(tmp_path: Path,
     models_fixture = _build_models_fixture(base_dir=tmp_path)
     lint_module = _load_module(monkeypatch=monkeypatch, models_fixture=models_fixture, module_name="test_lint_script_cleanup")
     results = iter([CompletedRun(returncode=3, stdout="first output\n"), CompletedRun(returncode=0, stdout="second output\n")])
+    monkeypatch.setenv("VIRTUAL_ENV", "/tmp/outer-env")
+    monkeypatch.setenv("UNCHANGED_ENV", "keep-me")
 
-    def fake_run(command: list[str], stdout: object, stderr: object, text: bool, check: bool) -> CompletedRun:
+    def fake_run(
+        command: list[str],
+        env: dict[str, str],
+        stdout: object,
+        stderr: object,
+        text: bool,
+        check: bool,
+    ) -> CompletedRun:
         assert stdout == lint_module.subprocess.PIPE
         assert stderr == lint_module.subprocess.STDOUT
         assert text is True
         assert check is False
+        assert env["UNCHANGED_ENV"] == "keep-me"
+        assert "VIRTUAL_ENV" not in env
         return next(results)
 
     monkeypatch.setattr(lint_module.subprocess, "run", fake_run)
@@ -265,9 +277,15 @@ def test_validate_environment_checks_marker_and_uv(tmp_path: Path, monkeypatch: 
 def test_start_checker_processes_records_launch_failures(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     models_fixture = _build_models_fixture(base_dir=tmp_path)
     lint_module = _load_module(monkeypatch=monkeypatch, models_fixture=models_fixture, module_name="test_lint_script_start")
+    monkeypatch.setenv("VIRTUAL_ENV", "/tmp/outer-env")
+    monkeypatch.setenv("UNCHANGED_ENV", "keep-me")
 
-    def fake_popen(command: list[str], stdout: io.TextIOBase, stderr: object) -> FakeProcess:
+    def fake_popen(
+        command: list[str], env: dict[str, str], stdout: io.TextIOBase, stderr: object
+    ) -> FakeProcess:
         assert stderr == lint_module.subprocess.STDOUT
+        assert env["UNCHANGED_ENV"] == "keep-me"
+        assert "VIRTUAL_ENV" not in env
         if command[0] == "checker-a":
             raise OSError(2, "boom", "checker-a")
         return FakeProcess()
@@ -278,6 +296,23 @@ def test_start_checker_processes_records_launch_failures(tmp_path: Path, monkeyp
     assert set(running_tools) == {"checker_b"}
     assert completed_tools["checker_a"].result_kind == START_FAILED_KIND
     assert "boom" in models_fixture.checker_specs[0].report_path.read_text(encoding="utf-8")
+
+
+def test_build_subprocess_environment_strips_virtual_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    models_fixture = _build_models_fixture(base_dir=tmp_path)
+    lint_module = _load_module(
+        monkeypatch=monkeypatch,
+        models_fixture=models_fixture,
+        module_name="test_lint_script_subprocess_environment",
+    )
+    monkeypatch.setenv("VIRTUAL_ENV", "/tmp/outer-env")
+    monkeypatch.setenv("UNCHANGED_ENV", "keep-me")
+
+    subprocess_environment = lint_module.build_subprocess_environment()
+
+    assert subprocess_environment["UNCHANGED_ENV"] == "keep-me"
+    assert "VIRTUAL_ENV" not in subprocess_environment
+    assert os.environ["VIRTUAL_ENV"] == "/tmp/outer-env"
 
 
 def test_finish_ready_processes_formats_captured_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
