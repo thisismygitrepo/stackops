@@ -36,12 +36,8 @@ def _resolve_type_check_excluded_directory(
     if candidate_path.is_absolute() is False:
         candidate_path = repo_root.joinpath(candidate_path)
     candidate_path_absolute = Path(os.path.abspath(candidate_path))
-    if candidate_path_absolute.exists() is False:
-        return None
     if candidate_path_absolute.is_dir() is False:
-        raise ValueError(
-            f"Excluded directory '{excluded_directory}' is not a directory."
-        )
+        return None
     try:
         relative_directory = candidate_path_absolute.relative_to(repo_root)
     except ValueError as error:
@@ -59,20 +55,20 @@ def _resolve_type_check_excluded_directories(
     if excluded_directories is None:
         return (), ()
     normalized_directories: list[str] = []
-    missing_directories: list[str] = []
+    skipped_directories: list[str] = []
     seen_directories: set[str] = set()
     for excluded_directory in excluded_directories:
         normalized_directory = _resolve_type_check_excluded_directory(
             repo_root=repo_root, excluded_directory=excluded_directory
         )
         if normalized_directory is None:
-            missing_directories.append(excluded_directory)
+            skipped_directories.append(excluded_directory)
             continue
         if normalized_directory in seen_directories:
             continue
         seen_directories.add(normalized_directory)
         normalized_directories.append(normalized_directory)
-    return tuple(normalized_directories), tuple(missing_directories)
+    return tuple(normalized_directories), tuple(skipped_directories)
 
 
 def _build_type_check_environment(
@@ -109,16 +105,16 @@ def type_check(
         repo_root = _resolve_pyproject_root(Path(repo))
         (
             excluded_directories,
-            missing_excluded_directories,
+            skipped_excluded_directories,
         ) = _resolve_type_check_excluded_directories(
             repo_root=repo_root, excluded_directories=exclude
         )
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
-    for missing_excluded_directory in missing_excluded_directories:
+    for skipped_excluded_directory in skipped_excluded_directories:
         typer.echo(
-            f"Warning: Skipping missing excluded directory '{missing_excluded_directory}'.",
+            f"Warning: Skipping excluded path '{skipped_excluded_directory}' because it is not an existing directory.",
             err=True,
         )
 

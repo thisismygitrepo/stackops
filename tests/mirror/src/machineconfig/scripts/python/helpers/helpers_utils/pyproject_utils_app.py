@@ -246,7 +246,53 @@ def test_type_check_warns_and_skips_missing_excluded_directory(
     assert calls["cwd"] == repo_root.resolve()
     assert calls["check"] is False
     assert calls["env"] is None
-    assert "Warning: Skipping missing excluded directory './tests'." in captured.err
+    assert (
+        "Warning: Skipping excluded path './tests' because it is not an existing directory."
+        in captured.err
+    )
+
+
+def test_type_check_warns_and_skips_excluded_path_that_is_a_file(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repo_root = tmp_path
+    repo_root.joinpath("pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    repo_root.joinpath(".codex").write_text("not a directory\n", encoding="utf-8")
+    script_path = repo_root.joinpath("lint_and_type_check.py")
+    script_path.write_text("print('ok')\n", encoding="utf-8")
+    calls: dict[str, object] = {}
+
+    def fake_get_path_reference_path(_module_obj: ModuleType, _path_reference: str) -> Path:
+        return script_path
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        check: bool,
+        env: dict[str, str] | None,
+    ) -> subprocess.CompletedProcess[str]:
+        calls["command"] = command.copy()
+        calls["cwd"] = cwd
+        calls["check"] = check
+        calls["env"] = env
+        return subprocess.CompletedProcess(args=command, returncode=0)
+
+    monkeypatch.setattr(module, "get_path_reference_path", fake_get_path_reference_path)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.type_check(repo=str(repo_root), exclude=[".codex"])
+
+    captured = capsys.readouterr()
+    assert calls["command"] == ["uv", "run", str(script_path)]
+    assert calls["cwd"] == repo_root.resolve()
+    assert calls["check"] is False
+    assert calls["env"] is None
+    assert (
+        "Warning: Skipping excluded path '.codex' because it is not an existing directory."
+        in captured.err
+    )
 
 
 def test_type_check_accepts_symlinked_excluded_directory_inside_repo(
