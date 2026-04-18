@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "stackops"
 version = "8.92"
-description = "Dotfiles management package"
+description = "Developer Stack Manager"
 readme = "README.md"
 license = {text = "Apache 2.0"}
 authors = [

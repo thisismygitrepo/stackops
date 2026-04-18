@@ -287,7 +287,6 @@ class ZellijLocalManager:
 
         Args:
             wait_ms: How long to wait between checks in milliseconds
-            kill_sessions_on_completion: If True, kill all managed zellij sessions when monitoring stops
         """
 
         runtime_seconds_by_key: dict[tuple[str, str], float] = {}

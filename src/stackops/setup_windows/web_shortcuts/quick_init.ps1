@@ -2,7 +2,7 @@
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_windows/uv.ps1" | iex
 # irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_mcfg.ps1" | iex
 
-uv tool install --upgrade  --python 3.14 stackops
+uv tool install --upgrade --python 3.14 stackops
 
 devops install --group sysabc
 
