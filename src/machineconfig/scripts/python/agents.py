@@ -33,11 +33,32 @@ def _join_prompt_parts(prompt_parts: Sequence[str]) -> str:
     return prompt_text
 
 
-def _resolve_prompt_path(prompt_parts: Sequence[str]) -> Path:
-    prompt_path = Path(_join_prompt_parts(prompt_parts=prompt_parts)).expanduser()
+def _resolve_prompt_path(prompt_path: Path) -> Path:
+    prompt_path = prompt_path.expanduser().resolve()
     if not prompt_path.is_file():
         raise typer.BadParameter(f"""prompt file does not exist: {prompt_path}""")
     return prompt_path
+
+
+def _read_prompt_file_text(prompt_path: Path) -> str:
+    try:
+        return prompt_path.read_text(encoding="utf-8")
+    except OSError as error:
+        strerror = error.strerror or "unknown error"
+        raise typer.BadParameter(f"""failed to read prompt file {str(prompt_path)!r}: {strerror}""") from error
+
+
+def _compose_ask_prompt_text(prompt_parts: Sequence[str], file_prompt: Path | None) -> str:
+    prompt_text = _join_prompt_parts(prompt_parts=prompt_parts)
+    if file_prompt is None:
+        return prompt_text
+    resolved_prompt_path = _resolve_prompt_path(prompt_path=file_prompt)
+    prompt_file_text = _read_prompt_file_text(prompt_path=resolved_prompt_path)
+    return f"""{prompt_text}
+
+--- BEGIN FILE {resolved_prompt_path} ---
+{prompt_file_text}
+--- END FILE {resolved_prompt_path} ---"""
 
 
 def _build_exec_prefix(reasoning_effort: ReasoningEffort) -> list[str]:
@@ -393,7 +414,7 @@ def run_prompt(
 def ask(
     prompt: Annotated[
         list[str],
-        typer.Argument(help="Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set"),
+        typer.Argument(help="Prompt text to pass to the selected agent."),
     ],
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = "codex",
     reasoning: Annotated[
@@ -401,22 +422,14 @@ def ask(
         typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP),
     ] = None,
     file_prompt: Annotated[
-        bool,
-        typer.Option("--file-prompt", "-f", help="Treat PROMPT as a file path and pass its contents to the selected agent"),
-    ] = False,
+        Path | None,
+        typer.Option("--file-prompt", "-f", help="Append the contents of this file to PROMPT before asking the selected agent."),
+    ] = None,
 ) -> None:
     """Ask a selected agent directly."""
     reasoning_shortcut, prompt_parts = _split_legacy_ask_reasoning(agent=agent, reasoning=reasoning, prompt_parts=prompt)
     reasoning_effort = _resolve_ask_reasoning(agent=agent, reasoning=reasoning_shortcut)
-    if file_prompt:
-        prompt_path = _resolve_prompt_path(prompt_parts=prompt_parts)
-        try:
-            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))
-        except ValueError as error:
-            raise typer.BadParameter(str(error)) from error
-        raise typer.Exit(code=return_code)
-
-    prompt_text = _join_prompt_parts(prompt_parts=prompt_parts)
+    prompt_text = _compose_ask_prompt_text(prompt_parts=prompt_parts, file_prompt=file_prompt)
     prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)
     try:
         try:

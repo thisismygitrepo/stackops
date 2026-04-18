@@ -51,6 +51,7 @@ For quick one-shot asks, `ask` accepts `--agent`, and `--reasoning` is supported
 agents ask --reasoning h "inspect the repo"
 agents ask --agent copilot --reasoning h "inspect the repo"
 agents ask --agent gemini "summarize the current module"
+agents ask "summarize this" --file-prompt ./README.md
 ```
 
 ---

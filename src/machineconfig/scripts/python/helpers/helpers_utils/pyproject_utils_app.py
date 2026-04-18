@@ -100,7 +100,7 @@ def type_check(
     ] = None,
 ) -> None:
     if exclude is None:
-        exclude = ["tests", ".github", ".codex", ".ai", ".venv"]
+        exclude = ["tests", ".github", ".codex", ".ai", ".links", ".venv"]
     try:
         repo_root = _resolve_pyproject_root(Path(repo))
         (
