@@ -29,21 +29,21 @@ def _resolve_pyproject_root(path: Path) -> Path:
     )
 
 
-def _resolve_type_check_excluded_directory(repo_root: Path, excluded_directory: str) -> str:
+def _resolve_type_check_excluded_directory(
+    repo_root: Path, excluded_directory: str
+) -> str | None:
     candidate_path = Path(excluded_directory).expanduser()
     if candidate_path.is_absolute() is False:
         candidate_path = repo_root.joinpath(candidate_path)
-    candidate_path_resolved = candidate_path.resolve()
-    if candidate_path_resolved.exists() is False:
-        raise ValueError(
-            f"Excluded directory '{excluded_directory}' does not exist."
-        )
-    if candidate_path_resolved.is_dir() is False:
+    candidate_path_absolute = Path(os.path.abspath(candidate_path))
+    if candidate_path_absolute.exists() is False:
+        return None
+    if candidate_path_absolute.is_dir() is False:
         raise ValueError(
             f"Excluded directory '{excluded_directory}' is not a directory."
         )
     try:
-        relative_directory = candidate_path_resolved.relative_to(repo_root)
+        relative_directory = candidate_path_absolute.relative_to(repo_root)
     except ValueError as error:
         raise ValueError(
             f"Excluded directory '{excluded_directory}' must be inside '{repo_root}'."
@@ -55,20 +55,24 @@ def _resolve_type_check_excluded_directory(repo_root: Path, excluded_directory: 
 
 def _resolve_type_check_excluded_directories(
     repo_root: Path, excluded_directories: list[str] | None
-) -> tuple[str, ...]:
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
     if excluded_directories is None:
-        return ()
+        return (), ()
     normalized_directories: list[str] = []
+    missing_directories: list[str] = []
     seen_directories: set[str] = set()
     for excluded_directory in excluded_directories:
         normalized_directory = _resolve_type_check_excluded_directory(
             repo_root=repo_root, excluded_directory=excluded_directory
         )
+        if normalized_directory is None:
+            missing_directories.append(excluded_directory)
+            continue
         if normalized_directory in seen_directories:
             continue
         seen_directories.add(normalized_directory)
         normalized_directories.append(normalized_directory)
-    return tuple(normalized_directories)
+    return tuple(normalized_directories), tuple(missing_directories)
 
 
 def _build_type_check_environment(
@@ -103,12 +107,20 @@ def type_check(
         exclude = ["tests", ".github", ".codex", ".ai", ".venv"]
     try:
         repo_root = _resolve_pyproject_root(Path(repo))
-        excluded_directories = _resolve_type_check_excluded_directories(
+        (
+            excluded_directories,
+            missing_excluded_directories,
+        ) = _resolve_type_check_excluded_directories(
             repo_root=repo_root, excluded_directories=exclude
         )
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
+    for missing_excluded_directory in missing_excluded_directories:
+        typer.echo(
+            f"Warning: Skipping missing excluded directory '{missing_excluded_directory}'.",
+            err=True,
+        )
 
     script_path = get_path_reference_path(
         ai_scripts, ai_scripts.LINT_AND_TYPE_CHECK_PATH_REFERENCE

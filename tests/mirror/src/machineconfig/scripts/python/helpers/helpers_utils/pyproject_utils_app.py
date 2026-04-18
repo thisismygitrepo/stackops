@@ -210,18 +210,87 @@ def test_type_check_normalizes_excluded_directories_into_environment(
     assert environment[module.TYPE_CHECK_EXCLUDES_ENV_VAR] == '["tests", "src/generated"]'
 
 
-def test_type_check_rejects_missing_excluded_directory(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+def test_type_check_warns_and_skips_missing_excluded_directory(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     repo_root = tmp_path
     repo_root.joinpath("pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    script_path = repo_root.joinpath("lint_and_type_check.py")
+    script_path.write_text("print('ok')\n", encoding="utf-8")
+    calls: dict[str, object] = {}
 
-    with pytest.raises(module.typer.Exit) as excinfo:
-        module.type_check(repo=str(repo_root), exclude=["./tests"])
+    def fake_get_path_reference_path(_module_obj: ModuleType, _path_reference: str) -> Path:
+        return script_path
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        check: bool,
+        env: dict[str, str] | None,
+    ) -> subprocess.CompletedProcess[str]:
+        calls["command"] = command.copy()
+        calls["cwd"] = cwd
+        calls["check"] = check
+        calls["env"] = env
+        return subprocess.CompletedProcess(args=command, returncode=0)
+
+    monkeypatch.setattr(module, "get_path_reference_path", fake_get_path_reference_path)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.type_check(repo=str(repo_root), exclude=["./tests"])
 
     captured = capsys.readouterr()
-    assert excinfo.value.exit_code == 1
-    assert "Excluded directory './tests' does not exist." in captured.err
+    assert calls["command"] == ["uv", "run", str(script_path)]
+    assert calls["cwd"] == repo_root.resolve()
+    assert calls["check"] is False
+    assert calls["env"] is None
+    assert "Warning: Skipping missing excluded directory './tests'." in captured.err
+
+
+def test_type_check_accepts_symlinked_excluded_directory_inside_repo(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    repo_root = tmp_path
+    repo_root.joinpath("pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    external_venv = tmp_path.parent.joinpath("external-venv")
+    external_venv.mkdir(exist_ok=True)
+    symlinked_venv = repo_root.joinpath(".venv")
+    try:
+        symlinked_venv.symlink_to(external_venv, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"symlink creation unavailable: {error}")
+    script_path = repo_root.joinpath("lint_and_type_check.py")
+    script_path.write_text("print('ok')\n", encoding="utf-8")
+    calls: dict[str, object] = {}
+
+    def fake_get_path_reference_path(_module_obj: ModuleType, _path_reference: str) -> Path:
+        return script_path
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        check: bool,
+        env: dict[str, str] | None,
+    ) -> subprocess.CompletedProcess[str]:
+        calls["command"] = command.copy()
+        calls["cwd"] = cwd
+        calls["check"] = check
+        calls["env"] = env
+        return subprocess.CompletedProcess(args=command, returncode=0)
+
+    monkeypatch.setattr(module, "get_path_reference_path", fake_get_path_reference_path)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.type_check(repo=str(repo_root), exclude=[".venv"])
+
+    environment = calls["env"]
+    assert isinstance(environment, dict)
+    assert calls["command"] == ["uv", "run", str(script_path)]
+    assert calls["cwd"] == repo_root.resolve()
+    assert calls["check"] is False
+    assert environment[module.TYPE_CHECK_EXCLUDES_ENV_VAR] == '[".venv"]'
 
 
 def test_get_app_help_lists_core_commands() -> None:
