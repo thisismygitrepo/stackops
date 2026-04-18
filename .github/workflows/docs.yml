@@ -50,7 +50,7 @@ jobs:
         run: uv sync --group dev
 
       - name: Build site
-        run: uv run python -m machineconfig.scripts.python.helpers.helpers_devops.docs_changelog && rm -rf site && uv run zensical build
+        run: uv run python -m stackops.scripts.python.helpers.helpers_devops.docs_changelog && rm -rf site && uv run zensical build
 
       - name: Archive Pages artifact
         run: |

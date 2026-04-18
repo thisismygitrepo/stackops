@@ -20,7 +20,7 @@ You need to configure a PyPI API token as a GitHub secret:
 1. **Generate PyPI API Token**:
    - Go to [PyPI Account Settings](https://pypi.org/manage/account/token/)
    - Click "Add API Token"
-   - Set token name (e.g., "GitHub Actions - machineconfig")
+   - Set token name (e.g., "GitHub Actions - stackops")
    - Set scope to "Entire account" or limit to your package
    - Copy the generated token (starts with `pypi-`)
 

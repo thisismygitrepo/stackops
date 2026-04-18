@@ -1,10 +1,10 @@
 [project]
-site_name = "Machineconfig"
+site_name = "StackOps"
 site_description = "A CLI-based cross-platform Stack Manager - Package Manager, Configuration Manager, Automation Tool, Dotfiles Manager, and more"
 site_author = "Alex Al-Saffar"
-site_url = "https://thisismygitrepo.github.io/machineconfig/"
-repo_name = "thisismygitrepo/machineconfig"
-repo_url = "https://github.com/thisismygitrepo/machineconfig"
+site_url = "https://thisismygitrepo.github.io/stackops/"
+repo_name = "thisismygitrepo/stackops"
+repo_url = "https://github.com/thisismygitrepo/stackops"
 edit_uri = "edit/main/docs/"
 copyright = """
 Copyright &copy; 2026 Alex Al-Saffar
@@ -117,11 +117,11 @@ generator = false
 
 [[project.extra.social]]
 icon = "fontawesome/brands/github"
-link = "https://github.com/thisismygitrepo/machineconfig"
+link = "https://github.com/thisismygitrepo/stackops"
 
 [[project.extra.social]]
 icon = "fontawesome/brands/python"
-link = "https://pypi.org/project/machineconfig/"
+link = "https://pypi.org/project/stackops/"
 
 [project.plugins.mkdocstrings]
 default_handler = "python"
@@ -192,7 +192,7 @@ pygments_lang_class = true
 normalize_issue_symbols = true
 repo_url_shorthand = true
 user = "thisismygitrepo"
-repo = "machineconfig"
+repo = "stackops"
 
 [project.markdown_extensions.pymdownx.mark]
 

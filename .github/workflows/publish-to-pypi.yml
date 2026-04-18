@@ -97,12 +97,12 @@ jobs:
           
           Install with:
           ```bash
-          pip install machineconfig==${{ needs.check-version.outputs.current-version }}
+          pip install stackops==${{ needs.check-version.outputs.current-version }}
           ```
           
           Or with uv:
           ```bash
-          uv add machineconfig==${{ needs.check-version.outputs.current-version }}
+          uv add stackops==${{ needs.check-version.outputs.current-version }}
           ```
         files: |
           dist/*
@@ -149,4 +149,4 @@ jobs:
         uv sync --no-dev
         source .venv/bin/activate
         uv pip install dist/*.whl
-        python -c "import machineconfig; print('✅ Package imports successfully')"
+        python -c "import stackops; print('✅ Package imports successfully')"

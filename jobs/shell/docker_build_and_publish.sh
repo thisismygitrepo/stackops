@@ -16,7 +16,7 @@ if [ "$VARIANT" != "slim" ] && [ "$VARIANT" != "ai" ]; then
     exit 1
 fi
 
-IMAGE_NAME="machineconfig-$VARIANT"
+IMAGE_NAME="stackops-$VARIANT"
 DOCKERFILE_PATH="./jobs/dockers/Dockerfile_$VARIANT"
 DATE=$(date +%y-%m)
 

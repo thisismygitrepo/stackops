@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from machineconfig.scripts.python.helpers.helpers_utils.path_reference_validation import audit_repository_path_references, format_path_reference_audit
+from stackops.scripts.python.helpers.helpers_utils.path_reference_validation import audit_repository_path_references, format_path_reference_audit
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

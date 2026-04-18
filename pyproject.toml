@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 # build-backend = "hatchling.build"
 
 [project]
-name = "machineconfig"
+name = "stackops"
 version = "8.92"
 description = "Dotfiles management package"
 readme = "README.md"
@@ -42,20 +42,20 @@ plot = [
 
 
 [project.urls]
-"Homepage" = "https://github.com/thisismygitrepo/machineconfig"
-"Bug Tracker" = "https://github.com/thisismygitrepo/machineconfig/issues"
+"Homepage" = "https://github.com/thisismygitrepo/stackops"
+"Bug Tracker" = "https://github.com/thisismygitrepo/stackops/issues"
 
 [project.scripts]
-devops = "machineconfig.scripts.python.devops:main"
-cloud = "machineconfig.scripts.python.cloud:main"
-fire = "machineconfig.scripts.python.fire_jobs:main"
-agents = "machineconfig.scripts.python.agents:main"
-terminal = "machineconfig.scripts.python.terminal:main"
-croshell = "machineconfig.scripts.python.croshell:main"
-utils = "machineconfig.scripts.python.utils:main"
-mcfg = "machineconfig.scripts.python.mcfg_entry:main"
-machineconfig = "machineconfig.scripts.python.mcfg_entry:main"
-seek = "machineconfig.scripts.python.seek:main"
+devops = "stackops.scripts.python.devops:main"
+cloud = "stackops.scripts.python.cloud:main"
+fire = "stackops.scripts.python.fire_jobs:main"
+agents = "stackops.scripts.python.agents:main"
+terminal = "stackops.scripts.python.terminal:main"
+croshell = "stackops.scripts.python.croshell:main"
+utils = "stackops.scripts.python.utils:main"
+mcfg = "stackops.scripts.python.mcfg_entry:main"
+stackops = "stackops.scripts.python.mcfg_entry:main"
+seek = "stackops.scripts.python.seek:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -66,7 +66,7 @@ license-files = []
 where = ["src"]
 
 [tool.setuptools.package-data]
-machineconfig = ["**/*.toml", "**/*.md", "**/*.sh", "**/*.ps1", "**/*.txt"]
+stackops = ["**/*.toml", "**/*.md", "**/*.sh", "**/*.ps1", "**/*.txt"]
 
 [dependency-groups]
 dev = [
@@ -144,7 +144,7 @@ plot = [
 
 
 [tool.pycrucible]
-entry = "src/machineconfig/scripts/python/devops.py"
+entry = "src/stackops/scripts/python/devops.py"
 [tool.pycrucible.options]
 debug = false
 extract_to_temp = false

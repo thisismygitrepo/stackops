@@ -10,18 +10,18 @@ hide:
 
 <div align="center" markdown>
 
-# **Machineconfig**
+# **StackOps**
 
 ### Cross-platform CLI for Stack Management, Setup & Maintenance
 
-[![PyPI version](https://img.shields.io/pypi/v/machineconfig.svg)](https://pypi.org/project/machineconfig/)
-[![Python versions](https://img.shields.io/pypi/pyversions/machineconfig.svg)](https://pypi.org/project/machineconfig/)
-[![License](https://img.shields.io/github/license/thisismygitrepo/machineconfig.svg)](https://github.com/thisismygitrepo/machineconfig/blob/main/LICENSE)
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thisismygitrepo/machineconfig)](https://github.com/thisismygitrepo/machineconfig/commits)
+[![PyPI version](https://img.shields.io/pypi/v/stackops.svg)](https://pypi.org/project/stackops/)
+[![Python versions](https://img.shields.io/pypi/pyversions/stackops.svg)](https://pypi.org/project/stackops/)
+[![License](https://img.shields.io/github/license/thisismygitrepo/stackops.svg)](https://github.com/thisismygitrepo/stackops/blob/main/LICENSE)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thisismygitrepo/stackops)](https://github.com/thisismygitrepo/stackops/commits)
 
 [Install with uv](installation.md){ .md-button .md-button--primary }
 [Quickstart](quickstart.md){ .md-button }
-[View on GitHub](https://github.com/thisismygitrepo/machineconfig){ .md-button }
+[View on GitHub](https://github.com/thisismygitrepo/stackops){ .md-button }
 
 `1 command + 5 minutes`: from a naked, minimal, freshly purchased/formatted machine to the usable-ready machine that you have been optimizing for 10 years, all your digitial life, sorted out, by 100s of scripts that configure your machine.
 
@@ -44,7 +44,7 @@ hide:
 
 ✅ This covers `100%` of your digital footprint.
 
-Machineconfig does not invent anything, it simply manages the stack that you are comfortable with.
+StackOps does not invent anything, it simply manages the stack that you are comfortable with.
 
 
 ---
@@ -55,7 +55,7 @@ Machineconfig does not invent anything, it simply manages the stack that you are
 
     ---
 
-    Install Machineconfig and verify the active command surface.
+    Install StackOps and verify the active command surface.
 
     [:octicons-arrow-right-24: Installation](installation.md)
 

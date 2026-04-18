@@ -1,0 +1,360 @@
+"""Repos CLI powered by Typer.
+
+# TODO use gh api user --jq '.login' to get the username and use it to clone the repos.
+in the event that username@github.com is not mentioned in the remote url.
+
+"""
+
+from pathlib import Path
+from typing import Annotated
+import typer
+from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
+
+
+def _resolve_directory(directory: str | None) -> Path:
+    if directory is None:
+        directory = Path.cwd().as_posix()
+        typer.echo(f"📁 Using directory: {directory}")
+    return Path(directory).expanduser().absolute().resolve()
+
+
+def action(
+    directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
+    recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
+    auto_uv_sync: Annotated[bool, typer.Option("--uv-sync/--no-uv-sync", "-u/-ns", help="Automatic uv sync after pulls.")] = False,
+    pull: Annotated[bool, typer.Option("--pull", "-P", help="↓ Pull changes across repositories.")] = False,
+    commit: Annotated[bool, typer.Option("--commit", "-c", help="💾 Commit changes across repositories.")] = False,
+    push: Annotated[bool, typer.Option("--push", "-p", help="🚀 Push changes across repositories.")] = False,
+) -> None:
+    """🔄 Run pull/commit/push actions across repositories based on flags."""
+    if not pull and not commit and not push:
+        typer.echo("❌ No action selected. Use at least one of --pull, --commit, or --push.")
+        raise typer.Exit(code=1)
+    repos_root = _resolve_directory(directory)
+    from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations
+
+    perform_git_operations(repos_root=repos_root, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
+
+
+def capture(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+    """📝 Record repositories into a repos.json specification."""
+    from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos
+
+    save_path = record_repos(repos_root_str=directory)
+    print(f"\n✅ Saved repository specification to {save_path}")
+
+
+def clone(
+    directory: Annotated[str, typer.Argument(help="📁 Directory containing repo(s).")] = ".",
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
+    interactive: Annotated[bool, typer.Option("--interactive/--no-interactive", "-i/-ni", help="Select interactively.")] = False,
+    checkout_to_commit: Annotated[
+        bool, typer.Option("--checkout-to-commit", "-ctc", help="Check out specific commits listed in the specification.")
+    ] = False,
+    checkout_to_branch: Annotated[
+        bool, typer.Option("--checkout-to-branch", "-ctb", help="Check out to the main branch defined in the specification.")
+    ] = False,
+) -> None:
+    """📥 Clone repositories described by a repos.json specification."""
+    if checkout_to_commit and checkout_to_branch:
+        typer.echo("❌ Choose only one checkout mode: --checkout-to-commit or --checkout-to-branch.")
+        raise typer.Exit(code=1)
+
+    checkout_branch_flag = checkout_to_branch
+    checkout_commit_flag = checkout_to_commit
+
+    if interactive:
+        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import (
+            BACKUP_ROOT_PRIVATE,
+            BACKUP_ROOT_PUBLIC,
+            get_original_path_from_backup_path,
+        )
+
+        results_public = list(BACKUP_ROOT_PUBLIC.rglob("repos.json"))
+        results_private = list(BACKUP_ROOT_PRIVATE.rglob("repos.json"))
+        if len(results_public) + len(results_private) == 0:
+            print("❌ No repos.json specifications found in backup directories.")
+            return
+        from stackops.utils.options import choose_from_options
+
+        chosen_files = choose_from_options(
+            options=[str(p) for p in results_public + results_private],
+            msg="Select a repos.json specification to clone from:",
+            multi=True,
+            tv=True,
+            preview="bat",
+        )
+        if chosen_files is None or len(chosen_files) == 0:
+            print("❓ Selection cancelled. No repositories were cloned.")
+            return
+        for file in chosen_files:
+            if str(file).startswith(str(BACKUP_ROOT_PRIVATE)):
+                original_path = get_original_path_from_backup_path(Path(file), sensitivity="private", destination=None, shared=False)
+            else:
+                original_path = get_original_path_from_backup_path(Path(file), sensitivity="public", destination=None, shared=False)
+            typer.echo("\n📥 Cloning or checking out repositories...")
+            dir_obj = _resolve_directory(str(original_path))
+            spec_path_default = dir_obj.joinpath("repos.json")
+            from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path
+
+            spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
+            from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
+
+            clone_repos(
+                spec_path=spec_path_self_managed,
+                preferred_remote=None,
+                checkout_branch_flag=checkout_branch_flag,
+                checkout_commit_flag=checkout_commit_flag,
+            )
+        return
+    if specs_path is not None:
+        spec_path_self_managed = Path(specs_path).expanduser().absolute()
+    else:
+        dir_obj = _resolve_directory(directory)
+        spec_path_default = dir_obj.joinpath("repos.json")
+        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path
+
+        spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
+        if not spec_path_self_managed.exists():
+            print(f"❌ Specification file not found: {spec_path_self_managed}. Ensure this file exists or provide it explicitly using --specs-path.")
+            return
+    from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
+
+    clone_repos(
+        spec_path=spec_path_self_managed, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag
+    )
+
+
+def checkout_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+    """🔀 Check out specific commits listed in the specification."""
+    clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=True, checkout_to_branch=False)
+
+
+def checkout_to_branch_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+    """🔀 Check out to the main branch defined in the specification."""
+    clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True)
+
+
+def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]):
+    # def func(repo_path: str):
+    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
+    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)
+    # from stackops.utils.code import run_lambda_function
+    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops>=8.92"])
+    from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
+
+    try:
+        repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)
+    except Exception as e:
+        typer.echo(f"❌ Error counting lines in repo {repo_path}: {e}")
+
+
+def print_python_files_by_size(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]):
+    # def func(repo_path: str):
+    #     from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import print_python_files_by_size_impl
+    #     print_python_files_by_size_impl(repo_path=repo_path)
+    # from stackops.utils.code import run_lambda_function
+    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops[plot]>=8.92"])
+    from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import print_python_files_by_size_impl
+
+    print_python_files_by_size_impl(repo_path=repo_path)
+
+
+def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]):
+    def func(repo_path: str):
+        from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
+
+        analyze_over_time(repo_path=repo_path)
+
+    from stackops.utils.code import run_lambda_function
+
+    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops[plot]>=8.92", "polars"])
+    # from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
+    # analyze_over_time(repo_path=repo_path)
+
+
+def gource_viz(
+    repo: Annotated[str, typer.Option(..., "--repo", "-r", help="Path to git repository to visualize")] = ".",
+    output_file: Annotated[
+        Path | None, typer.Option(..., "--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")
+    ] = None,
+    resolution: Annotated[str, typer.Option(..., "--resolution", "-res", help="Video resolution (e.g., 1920x1080, 1280x720)")] = "1920x1080",
+    seconds_per_day: Annotated[float, typer.Option(..., "--seconds-per-day", "-spd", help="Speed of simulation (lower = faster)")] = 0.1,
+    auto_skip_seconds: Annotated[
+        float, typer.Option(..., "--auto-skip-seconds", "-as", help="Skip to next entry if nothing happens for X seconds")
+    ] = 1.0,
+    title: Annotated[str | None, typer.Option(..., "--title", "-t", help="Title for the visualization")] = None,
+    hide_items: Annotated[
+        list[str] | None,
+        typer.Option(
+            ..., "--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames"
+        ),
+    ] = None,
+    key_items: Annotated[bool, typer.Option(..., "--key", "-k", help="Show file extension key")] = False,
+    fullscreen: Annotated[bool, typer.Option(..., "--fullscreen", "-f", help="Run in fullscreen mode")] = False,
+    viewport: Annotated[str | None, typer.Option(..., "--viewport", "-v", help="Camera viewport (e.g., '1000x1000')")] = None,
+    start_date: Annotated[str | None, typer.Option(..., "--start-date", help="Start date (YYYY-MM-DD)")] = None,
+    stop_date: Annotated[str | None, typer.Option(..., "--stop-date", help="Stop date (YYYY-MM-DD)")] = None,
+    user_image_dir: Annotated[Path | None, typer.Option(..., "--user-image-dir", help="Directory with user avatar images")] = None,
+    max_files: Annotated[int, typer.Option(..., "--max-files", help="Maximum number of files to show (0 = no limit)")] = 0,
+    max_file_lag: Annotated[float, typer.Option(..., "--max-file-lag", help="Max time files remain on screen after last change")] = 5.0,
+    file_idle_time: Annotated[int, typer.Option(..., "--file-idle-time", help="Time in seconds files remain idle before being removed")] = 0,
+    framerate: Annotated[int, typer.Option(..., "--framerate", help="Frames per second for video output")] = 60,
+    background_color: Annotated[str, typer.Option(..., "--background-color", help="Background color in hex (e.g., 000000 for black)")] = "000000",
+    font_size: Annotated[int, typer.Option(..., "--font-size", help="Font size")] = 22,
+    camera_mode: Annotated[str, typer.Option(..., "--camera-mode", help="Camera mode: overview or track")] = "overview",
+    self: Annotated[bool, typer.Option(..., "--self", help="Clone stackops repository and act on it")] = False,
+) -> None:
+    """🎬 Visualize repository activity using Gource."""
+    from stackops.scripts.python.helpers.helpers_repos.grource import visualize
+
+    if self:
+        repo_path = Path.home().joinpath("stackops")
+        if not repo_path.exists():
+            import git
+
+            repo_url = "https://github.com/thisismygitrepo/stackops.git"
+            git.Repo.clone_from(repo_url, to_path=repo_path.as_posix())
+            repo = repo_path.as_posix()
+    visualize(
+        repo=repo,
+        output_file=output_file,
+        resolution=resolution,
+        seconds_per_day=seconds_per_day,
+        auto_skip_seconds=auto_skip_seconds,
+        title=title,
+        hide_items=hide_items,
+        key_items=key_items,
+        fullscreen=fullscreen,
+        viewport=viewport,
+        start_date=start_date,
+        stop_date=stop_date,
+        user_image_dir=user_image_dir,
+        max_files=max_files,
+        max_file_lag=max_file_lag,
+        file_idle_time=file_idle_time,
+        framerate=framerate,
+        background_color=background_color,
+        font_size=font_size,
+        camera_mode=camera_mode,
+    )
+
+
+def cleanup(
+    repo: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
+    recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
+) -> None:
+    """🧹 Clean repository directories from cache files."""
+    if repo is None:
+        repo = Path.cwd().as_posix()
+
+    arg_path = Path(repo).expanduser().absolute()
+    from git import Repo, InvalidGitRepositoryError
+
+    if not recursive:
+        # Check if the directory is a git repo
+        try:
+            Repo(str(arg_path), search_parent_directories=False)
+        except InvalidGitRepositoryError:
+            typer.echo(f"❌ {arg_path} is not a git repository. Use -r flag for recursive cleanup.")
+            return
+        # Run cleanup on this repo
+        repos_to_clean = [arg_path]
+    else:
+        # Find all git repos recursively under the directory
+        git_dirs = list(arg_path.rglob(".git"))
+        repos_to_clean = [git_dir.parent for git_dir in git_dirs if git_dir.is_dir()]
+        if not repos_to_clean:
+            typer.echo(f"❌ No git repositories found under {arg_path}")
+            return
+
+    for repo_path in repos_to_clean:
+        typer.echo(f"🧹 Cleaning {repo_path}")
+        script = rf"""
+cd "{repo_path}"
+uv run --with cleanpy cleanpy .
+# mcinit .
+# find "." -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" \) -not -path "*/\.*" -not -path "*/__pycache__/*" -print0 | xargs -0 sed -i 's/[[:space:]]*$//'
+"""
+        from stackops.utils.code import run_shell_script
+
+        run_shell_script(script, display_script=True, clean_env=False)
+
+
+def config_linters(
+    directory: Annotated[str, typer.Argument(help="📁 Git repository directory to configure.")] = ".",
+    linter: Annotated[str | None, typer.Option("--linter", "-t", help="Linter to configure: ruff, mypy, pylint, flake8, ty.")] = None,
+) -> None:
+    """🧰 Add linter config files to a git repository."""
+    target_dir = Path(directory).expanduser().absolute().resolve()
+
+    from git import Repo, InvalidGitRepositoryError
+
+    try:
+        Repo(str(target_dir), search_parent_directories=True)
+    except InvalidGitRepositoryError as exc:
+        typer.echo(f"❌ {target_dir} is not within a git repository. Pass a path inside a git repo and retry.")
+        raise typer.Exit(code=1) from exc
+
+    templates_dir = Path(__file__).resolve().parents[4].joinpath("settings", "linters")
+    if not templates_dir.exists():
+        typer.echo(f"❌ Linter template directory not found: {templates_dir}")
+        raise typer.Exit(code=1)
+
+    linter_to_file: dict[str, str] = {"flake8": ".flake8", "mypy": ".mypy.ini", "pylint": ".pylintrc", "ruff": ".ruff.toml", "ty": "ty.toml"}
+    available_linters: list[str] = sorted(linter_to_file.keys())
+
+    if linter is not None and linter not in linter_to_file:
+        typer.echo(f"❌ Unsupported linter '{linter}'. Choose one of: {', '.join(available_linters)}")
+        raise typer.Exit(code=1)
+
+    selected_linters: list[str]
+    if linter is not None:
+        selected_linters = [linter]
+    else:
+        selected_linters = available_linters
+
+    for selected_linter in selected_linters:
+        file_name = linter_to_file[selected_linter]
+        source = templates_dir.joinpath(file_name)
+        destination = target_dir.joinpath(file_name)
+        destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        typer.echo(f"✅ Added {file_name} to {target_dir}")
+
+
+def get_app():
+    repos_apps = typer.Typer(help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False)
+
+    repos_apps.command(name="sync", help="📥 <s> Clone repositories described by a repos.json specification", no_args_is_help=True)(clone)
+    repos_apps.command(name="s", help="Clone repositories described by a repos.json specification", hidden=True, no_args_is_help=True)(clone)
+
+    repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
+    repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
+
+    repos_apps.command(name="checkout-to-commit", help="🔀 [ctc] Deprecated: use sync --checkout-to-commit", hidden=True)(checkout_command)
+    repos_apps.command(name="ctc", help="Check out specific commits listed in the specification", hidden=True)(checkout_command)
+
+    repos_apps.command(name="checkout-to-branch", help="🔀 [ctb] Deprecated: use sync --checkout-to-branch", hidden=True)(checkout_to_branch_command)
+    repos_apps.command(name="ctb", help="Check out to the main branch defined in the specification", hidden=True)(checkout_to_branch_command)
+
+    repos_apps.command(name="action", help="🔄 <a> Run pull/commit/push actions across repositories", no_args_is_help=True)(action)
+    repos_apps.command(name="a", help="Run pull/commit/push actions across repositories", hidden=True, no_args_is_help=True)(action)
+    repos_apps.command(name="analyze", help="📊 <z> Analyze repository development over time")(analyze_repo_development)
+    repos_apps.command(name="z", help="Analyze repository development over time", hidden=True)(analyze_repo_development)
+
+    repos_apps.command(name="guard", help="🔐 <g> Securely sync git repository to/from cloud with encryption")(secure_repo_main)
+    repos_apps.command(name="g", help="Securely sync git repository to/from cloud with encryption", hidden=True)(secure_repo_main)
+
+    repos_apps.command(name="viz", help="🎬 <v> Visualize repository activity using Gource")(gource_viz)
+    repos_apps.command(name="v", help="Visualize repository activity using Gource", hidden=True)(gource_viz)
+
+    repos_apps.command(name="count-lines", help="📄 <l> Count python lines of code in current repo + historical edits.")(count_lines_in_repo)
+    repos_apps.command(name="lc", help="Count python lines of code in current repo + historical edits.", hidden=True)(count_lines_in_repo)
+
+    repos_apps.command(name="config-linters", help="🧰 <l> Add linter config files to a git repository", no_args_is_help=True)(config_linters)
+    repos_apps.command(name="l", help="Add linter config files to a git repository", hidden=True, no_args_is_help=True)(config_linters)
+
+    repos_apps.command(name="cleanup", help="🧹 <n> Clean repository directories from cache files")(cleanup)
+    repos_apps.command(name="n", help="Clean repository directories from cache files", hidden=True)(cleanup)
+
+    return repos_apps

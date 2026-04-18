@@ -1,0 +1,133 @@
+
+from pathlib import Path, PurePosixPath, PureWindowsPath
+from stackops.utils.accessories import randstr
+from stackops.utils.meta import lambda_to_python_script
+from stackops.utils.ssh_utils.abc import STACKOPS_VERSION, DEFAULT_PICKLE_SUBDIR
+from stackops.utils.code import get_uv_command
+from typing import Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from stackops.utils.ssh import SSH
+
+
+def _build_remote_path(self: "SSH", home_dir: str, rel_path: str) -> str:
+    if self.remote_specs["system"] == "Windows":
+        return str(PureWindowsPath(home_dir) / rel_path)
+    return str(PurePosixPath(home_dir) / PurePosixPath(rel_path.replace("\\", "/")))
+
+
+def _normalize_rel_path_for_remote(self: "SSH", rel_path: str) -> str:
+    if self.remote_specs["system"] == "Windows":
+        return str(PureWindowsPath(rel_path))
+    return rel_path.replace("\\", "/")
+
+
+def create_dir_and_check_if_exists(self: "SSH", path_rel2home: str, overwrite_existing: bool) -> None:
+    """Helper to create a directory on remote machine and return its path."""
+    path_rel2home_normalized = _normalize_rel_path_for_remote(self, path_rel2home)
+    def create_target_dir(target_rel2home: str, overwrite: bool):
+        from pathlib import Path
+        import shutil
+        target_path_abs = Path(target_rel2home).expanduser()
+        if not target_path_abs.is_absolute():
+            target_path_abs = Path.home().joinpath(target_path_abs)
+        if overwrite and target_path_abs.exists():
+            if str(target_path_abs) == str(Path.home()):
+                raise RuntimeError("Refusing to overwrite home directory!")
+            if target_path_abs.is_dir():
+                shutil.rmtree(target_path_abs)
+            else:
+                target_path_abs.unlink()
+        print(f"Creating directory for path: {target_path_abs}")
+        target_path_abs.parent.mkdir(parents=True, exist_ok=True)
+    command = lambda_to_python_script(
+        lambda: create_target_dir(target_rel2home=path_rel2home_normalized, overwrite=overwrite_existing),
+        in_global=True, import_module=False
+    )
+    tmp_py_file = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/create_target_dir_{randstr()}.py")
+    tmp_py_file.parent.mkdir(parents=True, exist_ok=True)
+    tmp_py_file.write_text(command, encoding="utf-8")
+    assert self.sftp is not None
+    tmp_remote_path = ".tmp_pyfile.py"
+    remote_tmp_full = _build_remote_path(self, self.remote_specs["home_dir"], tmp_remote_path)
+    self.sftp.put(localpath=str(tmp_py_file), remotepath=remote_tmp_full)
+    resp = self.run_shell_cmd_on_remote(
+        command=f"""{get_uv_command(platform=self.remote_specs['system'])} run python {tmp_remote_path}""",
+        verbose_output=False,
+        description=f"Creating target dir {path_rel2home}",
+        strict_stderr=True,
+        strict_return_code=True,
+    )
+    resp.print(desc=f"Created target dir {path_rel2home}")
+
+
+def check_remote_is_dir(self: "SSH", source_path: Union[str, Path]) -> bool:
+    """Helper to check if a remote path is a directory."""
+
+    def check_is_dir(path_to_check: str, json_output_path: str) -> bool:
+        from pathlib import Path
+        import json
+
+        is_directory = Path(path_to_check).expanduser().absolute().is_dir()
+        json_result_path = Path(json_output_path)
+        json_result_path.parent.mkdir(parents=True, exist_ok=True)
+        json_result_path.write_text(json.dumps(is_directory, indent=2), encoding="utf-8")
+        print(json_result_path.as_posix())
+        return is_directory
+
+    remote_json_output = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/return_{randstr()}.json").as_posix()
+    command = lambda_to_python_script(
+        lambda: check_is_dir(path_to_check=str(source_path), json_output_path=remote_json_output),
+        in_global=True, import_module=False
+    )
+    response = self.run_py_remotely(
+        python_code=command,
+        uv_with=[STACKOPS_VERSION],
+        uv_project_dir=None,
+        description=f"Check if source `{source_path}` is a dir",
+        verbose_output=False,
+        strict_stderr=False,
+        strict_return_code=False,
+    )
+    remote_json_path = response.op.strip()
+    if not remote_json_path:
+        raise RuntimeError(f"Failed to check if {source_path} is directory - no response from remote")
+
+    local_json = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/local_{randstr()}.json")
+    self.simple_sftp_get(remote_path=remote_json_path, local_path=local_json)
+    import json
+
+    try:
+        result = json.loads(local_json.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, FileNotFoundError) as err:
+        raise RuntimeError(f"Failed to check if {source_path} is directory - invalid JSON response: {err}") from err
+    finally:
+        if local_json.exists():
+            local_json.unlink()
+    assert isinstance(result, bool), f"Failed to check if {source_path} is directory"
+    return result
+
+def expand_remote_path(self: "SSH", source_path: Union[str, Path]) -> str:
+    """Helper to expand a path on the remote machine."""
+
+    source_text = str(source_path)
+    if source_text.startswith("~"):
+        rel_path = source_text[1:].lstrip("/\\")
+        return _build_remote_path(self, self.remote_specs["home_dir"], rel_path)
+
+    if self.remote_specs["system"] == "Windows":
+        windows_path = PureWindowsPath(source_text)
+        if windows_path.is_absolute():
+            return str(windows_path)
+        return _build_remote_path(self, self.remote_specs["home_dir"], source_text)
+
+    posix_path = source_text.replace("\\", "/")
+    if posix_path.startswith("/"):
+        return posix_path
+    return _build_remote_path(self, self.remote_specs["home_dir"], posix_path)
+
+    
+
+
+if __name__ == "__main__":
+    from stackops.utils.ssh import SSH

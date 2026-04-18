@@ -4,8 +4,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.app import get_app
-from machineconfig.scripts.python.helpers.helpers_devops.cli_self_ai.update_docs import should_include_docs_context_path
+from stackops.scripts.python.helpers.helpers_devops.cli_self_ai.app import get_app
+from stackops.scripts.python.helpers.helpers_devops.cli_self_ai.update_docs import should_include_docs_context_path
 
 
 def test_workflow_help_lists_update_docs_command() -> None:

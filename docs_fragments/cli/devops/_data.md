@@ -57,7 +57,7 @@ devops data sync up --cloud myremote --which dotfiles.bashrc,history.shell
 
 ### register
 
-Add or update one entry inside the user backup configuration file at `~/dotfiles/machineconfig/mapper_data.toml`.
+Add or update one entry inside the user backup configuration file at `~/dotfiles/stackops/mapper_data.toml`.
 
 ```bash
 devops data register [OPTIONS] PATH_LOCAL
@@ -69,7 +69,7 @@ Key options from current help:
 |--------|-------------|
 | `--group`, `-g` | Target group/table name inside the config file |
 | `--name`, `-n` | Override the generated entry name |
-| `--path-cloud`, `-C` | Override the remote path; omit it to let machineconfig deduce one |
+| `--path-cloud`, `-C` | Override the remote path; omit it to let stackops deduce one |
 | `--zip`, `-z` | Zip before upload |
 | `--encrypt`, `-e` | Encrypt before upload |
 | `--rel2home`, `-r` | Store the local path relative to your home directory |

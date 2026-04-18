@@ -11,7 +11,7 @@ type CpuArchitecture = Literal["amd64", "arm64"]
 type LicenseSource = Literal["user", "github_api_name", "github_api_spdx", "fallback"]
 
 GITHUB_API_BASE: str = "https://api.github.com"
-USER_AGENT: str = "machineconfig-skill/make-github-installer-config"
+USER_AGENT: str = "stackops-skill/make-github-installer-config"
 
 
 @dataclass(frozen=True, slots=True)

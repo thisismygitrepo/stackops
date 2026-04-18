@@ -1,0 +1,5 @@
+LINT_AND_TYPE_CHECK_PATH_REFERENCE = "lint_and_type_check.py"
+MODEL_PATH_REFERENCE = "models.py"
+DASHBOARD_PATH_REFERENCE = "dashboard.py"
+COMMAND_RUNNER_PS1_PATH_REFERENCE = "command_runner.ps1"
+COMMAND_RUNNER_SH_PATH_REFERENCE = "command_runner.sh"

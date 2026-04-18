@@ -1,6 +1,6 @@
 # Installation
 
-Machineconfig supports Python 3.13+ and is easiest to install with [uv](https://docs.astral.sh/uv/).
+StackOps supports Python 3.13+ and is easiest to install with [uv](https://docs.astral.sh/uv/).
 
 ## Install with uv
 
@@ -18,10 +18,10 @@ Machineconfig supports Python 3.13+ and is easiest to install with [uv](https://
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
     ```
 
-### 2. Install Machineconfig
+### 2. Install StackOps
 
 ```bash
-uv tool install --upgrade --python 3.14 machineconfig
+uv tool install --upgrade --python 3.14 stackops
 ```
 
 This should give entrypoints: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`
@@ -34,6 +34,6 @@ devops --help
 ## Upgrade or remove
 
 ```bash
-uv tool upgrade machineconfig
-uv tool uninstall machineconfig
+uv tool upgrade stackops
+uv tool uninstall stackops
 ```

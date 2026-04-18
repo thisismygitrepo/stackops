@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = REPO_ROOT.joinpath("src", "machineconfig")
+SRC_ROOT = REPO_ROOT.joinpath("src", "stackops")
 BODY_FIELD_NAMES = frozenset({"body", "orelse", "finalbody"})
 FD_COMMAND = ("fd", "-t", "f", "-E", ".venv", "-E", "docs", "-E", "tests", "-E", "*.py")
 PATH_REFERENCE_HELPERS = frozenset({"get_path_reference_path", "get_path_reference_library_relative_path"})

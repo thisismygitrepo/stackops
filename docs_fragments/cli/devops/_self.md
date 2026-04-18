@@ -6,24 +6,24 @@ Self management commands.
 devops self [SUBCOMMAND] [ARGS]...
 ```
 
-Manage machineconfig itself: upgrades, bootstrap scripts, install flows, docs preview, CLI graph exploration, and repo-local developer utilities.
+Manage stackops itself: upgrades, bootstrap scripts, install flows, docs preview, CLI graph exploration, and repo-local developer utilities.
 
 Current `devops self --help` exposes:
 
 | Command | Description | Availability |
 |---------|-------------|--------------|
-| `install` | Install machineconfig locally, optionally from a development checkout | Always |
-| `update` | Upgrade machineconfig, refresh packaged assets, and optionally relink public configs | Always |
+| `install` | Install stackops locally, optionally from a development checkout | Always |
+| `update` | Upgrade stackops, refresh packaged assets, and optionally relink public configs | Always |
 | `status` | Inspect machine, shell, repo, SSH, config, app, or backup state | Always |
 | `config` | Run the interactive machine configuration flow | Always |
 | `security` | Run security and installer-audit helpers | Always |
 | `init` | Print or run packaged init/setup scripts | Always |
 | `explore` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
 | `readme` | Fetch and render the project README in the terminal | Always |
-| `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/machineconfig` exists |
+| `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/stackops` exists |
 | `build-installer` | Export installation files for an offline installer image | Always |
-| `build-docker` | Build Docker images from the repo script | Only when `~/code/machineconfig` exists |
-| `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/machineconfig` exists |
+| `build-docker` | Build Docker images from the repo script | Only when `~/code/stackops` exists |
+| `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/stackops` exists |
 
 The nested help screens render shortened usage such as `Usage: devops update ...`, but the full entrypoints remain `devops self ...` and `devops self security ...`.
 
@@ -43,8 +43,8 @@ Key options from current help:
 
 Current behavior:
 
-- If `~/code/machineconfig` exists, the command runs `uv self update`, `git pull`, and reinstalls the repo checkout as an editable tool.
-- Otherwise it updates `uv` and upgrades the installed `machineconfig` tool package.
+- If `~/code/stackops` exists, the command runs `uv self update`, `git pull`, and reinstalls the repo checkout as an editable tool.
+- Otherwise it updates `uv` and upgrades the installed `stackops` tool package.
 - After the update succeeds, it copies packaged scripts and settings onto the current machine.
 - On non-Windows platforms, `--link-public-configs` additionally re-links the public config set.
 
@@ -109,7 +109,7 @@ Without flags, the command prints the full report.
 
 ### install
 
-Install machineconfig locally, optionally from a local development checkout.
+Install stackops locally, optionally from a local development checkout.
 
 ```bash
 devops self install [OPTIONS]
@@ -123,7 +123,7 @@ Key options from current help:
 
 Current behavior:
 
-- `--dev` clones `~/code/machineconfig` first when that checkout does not already exist, then installs it editable.
+- `--dev` clones `~/code/stackops` first when that checkout does not already exist, then installs it editable.
 - Without a local checkout, the default path installs the published tool package.
 
 Examples:
@@ -316,7 +316,7 @@ Example:
 devops self build-docker ai
 ```
 
-This command is only registered when `~/code/machineconfig` exists locally.
+This command is only registered when `~/code/stackops` exists locally.
 
 ### security
 
@@ -422,7 +422,7 @@ Key option:
 
 | Option | Description |
 |--------|-------------|
-| `--github-token` | GitHub token, also read from `MACHINECONFIG_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` |
+| `--github-token` | GitHub token, also read from `STACKOPS_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` |
 
 #### report
 
@@ -467,9 +467,9 @@ Key options:
 
 Current behavior:
 
-- Prints `http://127.0.0.1:8000/machineconfig/` and, when available, the LAN preview URL.
+- Prints `http://127.0.0.1:8000/stackops/` and, when available, the LAN preview URL.
 - With `--rebuild`, runs `zensical build` before `zensical serve`.
-- With `--create-artifacts`, regenerates both `src/machineconfig/scripts/python/graph/cli_graph.json` and `docs/assets/devops-self-explore/sunburst.html`.
+- With `--create-artifacts`, regenerates both `src/stackops/scripts/python/graph/cli_graph.json` and `docs/assets/devops-self-explore/sunburst.html`.
 - Serves on `0.0.0.0:8000`.
 
 Examples:
@@ -492,7 +492,7 @@ Current `devops self build-assets --help` exposes:
 
 | Command | Description |
 |---------|-------------|
-| `update-cli-graph` | Rewrite `src/machineconfig/scripts/python/graph/cli_graph.json` from the current Typer source |
+| `update-cli-graph` | Rewrite `src/stackops/scripts/python/graph/cli_graph.json` from the current Typer source |
 | `regenerate-charts` | Rewrite `docs/assets/devops-self-explore/sunburst.html` from the current graph snapshot |
 
 Examples:
@@ -502,11 +502,11 @@ devops self build-assets update-cli-graph
 devops self build-assets regenerate-charts
 ```
 
-This sub-app is only registered when `~/code/machineconfig` exists locally.
+This sub-app is only registered when `~/code/stackops` exists locally.
 
 ### readme
 
-Render the project README in the terminal. When `~/code/machineconfig` exists, it reads the local `README.md`; otherwise it fetches the upstream README from GitHub.
+Render the project README in the terminal. When `~/code/stackops` exists, it reads the local `README.md`; otherwise it fetches the upstream README from GitHub.
 
 ```bash
 devops self readme

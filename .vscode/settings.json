@@ -15,6 +15,6 @@
         ".venv"
     ],
     "yaml.schemas": {
-        "src/machineconfig/profile/mapper_data.schema.json": "src/machineconfig/profile/mapper_data.yaml"
+        "src/stackops/profile/mapper_data.schema.json": "src/stackops/profile/mapper_data.yaml"
     }
 }

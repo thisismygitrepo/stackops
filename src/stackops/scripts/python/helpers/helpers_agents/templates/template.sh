@@ -1,0 +1,32 @@
+
+#!/bin/bash
+# set -e # Exit immediately if a command exits with a non-zero status.
+
+
+REPO_ROOT="$HOME/code/stackops"
+
+JOB_NAME="agentsTrial"
+CONTEXT_PATH="$REPO_ROOT/.ai/agents/template/files.md"
+PROMPT_PATH="$REPO_ROOT/.ai/agents/template/prompt.txt"
+AGENTS_DIR="$REPO_ROOT/.ai/agents/template/$JOB_NAME"
+rm -rfd "$AGENTS_DIR" || true
+
+agents parallel create \
+    --agent codex \
+    --model gpt-5.3-codex \
+    --provider openai \
+    --agent-load 5 \
+    --context-path $CONTEXT_PATH \
+    --prompt-path $PROMPT_PATH \
+    --job-name $JOB_NAME \
+    --agents-dir $AGENTS_DIR \
+    --separator $'\n'
+
+sessions balance-load "$AGENTS_DIR/layout.json" \
+    --max-threshold 4 \
+    --breaking-method moreLayouts \
+    --threshold-type number \
+    --output-path "$AGENTS_DIR/layout_balanced.json"
+
+echo """Please run like this `sessions run --layouts-file "$AGENTS_DIR/layout_balanced.json" --kill-upon-completion`"""
+echo """Then, do this `agents parallel collect $AGENTS_DIR "$REPO_ROOT/.ai/agents/$JOB_NAME/collected.txt"` """

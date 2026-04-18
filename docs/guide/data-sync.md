@@ -1,6 +1,6 @@
 # Data Sync
 
-Machineconfig currently splits data movement into two layers:
+StackOps currently splits data movement into two layers:
 
 - `devops data` for repeatable, named backup entries stored in the backup config
 - `cloud` for direct source/target copy, sync, mount, and SSH file transfer

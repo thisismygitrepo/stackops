@@ -1,5 +1,5 @@
 
-FROM statistician/machineconfig-slim:latest
+FROM statistician/stackops-slim:latest
 
 
 # Set bash as default shell

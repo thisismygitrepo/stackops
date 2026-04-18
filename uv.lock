@@ -1858,7 +1858,7 @@ wheels = [
 ]
 
 [[package]]
-name = "machineconfig"
+name = "stackops"
 version = "8.92"
 source = { editable = "." }
 dependencies = [

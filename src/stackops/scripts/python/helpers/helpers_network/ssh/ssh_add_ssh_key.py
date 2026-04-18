@@ -1,0 +1,229 @@
+r"""
+
+On windows:
+
+$sshfile = "$env:USERPROFILE/.ssh/id_rsa"
+Set-Service ssh-agent -StartupType Manual  # allow the service to be started manually
+ssh-agent  # start the service
+ssh-add.exe $sshfile # add the key to the agent
+
+# copy ssh key:
+# This is the Windows equivalent of copy-ssh-id on Linux.
+# Just like the original function, it is a convenient way of doing two things in one go:
+# 1- copy a certain public key to the remote machine.
+#    scp ~/.ssh/id_rsa.pub $remote_user@$remote_host:~/.ssh/authorized_keys
+# 2- Store the value on the remote in a file called .ssh/authorized_keys
+#    ssh $remote_user@$remote_host "echo $public_key >> ~/.ssh/authorized_keys"
+# Idea from: https://www.chrisjhart.com/Windows-10-ssh-copy-id/
+
+Automatic order of identity (private key) files used by ssh:
+~/.ssh/id_ed25519
+~/.ssh/id_ecdsa
+~/.ssh/id_ecdsa_sk
+~/.ssh/id_rsa
+~/.ssh/id_dsa (deprecated, usually disabled)
+
+Common pitfalls:
+🚫 Wrong line endings (LF/CRLF) in config files
+🌐 Network port conflicts (try 2222 -> 2223) between WSL and Windows
+sudo service ssh restart
+sudo service ssh status
+sudo nano /etc/ssh/sshd_config
+
+"""
+
+from platform import system
+from pathlib import Path
+from rich.console import Console
+from rich.panel import Panel
+from rich import box
+import sys
+
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_key_windows import add_ssh_key_windows
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_cloud_init import check_cloud_init_overrides, generate_cloud_init_fix_script
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_deploy_key_remote import deploy_key_to_remote, deploy_multiple_keys_to_remote
+
+
+console = Console()
+POSIX_SYSTEMS: tuple[str, str] = ("Linux", "Darwin")
+
+
+def get_add_ssh_key_script(path_to_key: Path) -> tuple[str, str]:
+    """Returns (program_script, status_message) tuple. For Windows, program_script is empty because we handle it in Python."""
+    os_name = system()
+    if os_name in POSIX_SYSTEMS:
+        authorized_keys = Path.home().joinpath(".ssh/authorized_keys")
+        os_icon, os_label = "🐧", "Linux/macOS"
+    elif os_name == "Windows":
+        authorized_keys = Path("C:/ProgramData/ssh/administrators_authorized_keys")
+        os_icon, os_label = "🪟", "Windows"
+    else:
+        raise NotImplementedError("Only Linux, macOS and Windows are supported")
+
+    status_lines: list[str] = [f"{os_icon} {os_label} │ Auth file: {authorized_keys}"]
+    program = ""
+
+    if authorized_keys.exists():
+        keys_text = authorized_keys.read_text(encoding="utf-8").split("\n")
+        key_count = len([k for k in keys_text if k.strip()])
+        status_lines.append(f"🔑 Existing keys: {key_count}")
+        if path_to_key.read_text(encoding="utf-8") in authorized_keys.read_text(encoding="utf-8"):
+            status_lines.append(f"⚠️  Key [yellow]{path_to_key.name}[/yellow] already authorized, skipping")
+        else:
+            status_lines.append(f"➕ Adding: [green]{path_to_key.name}[/green]")
+            if os_name in POSIX_SYSTEMS:
+                program = f"cat {path_to_key} >> ~/.ssh/authorized_keys"
+            elif os_name == "Windows":
+                add_ssh_key_windows(path_to_key)
+            else:
+                raise NotImplementedError
+    else:
+        status_lines.append(f"📝 Creating auth file with: [green]{path_to_key.name}[/green]")
+        if os_name in POSIX_SYSTEMS:
+            program = f"cat {path_to_key} > ~/.ssh/authorized_keys"
+        else:
+            add_ssh_key_windows(path_to_key)
+
+    if os_name in POSIX_SYSTEMS:
+        override_files, auth_overrides = check_cloud_init_overrides()
+        if override_files:
+            status_lines.append("\n⚠️  [yellow]Cloud-init override files detected:[/yellow]")
+            for of in override_files:
+                status_lines.append(f"   • {of.name}")
+        blocking_overrides: list[str] = []
+        for key, (file_path, value) in auth_overrides.items():
+            if key == "PubkeyAuthentication" and value == "no":
+                blocking_overrides.append(f"   ❌ {key}={value} in {file_path.name} - [red]blocks key auth![/red]")
+            elif key == "PasswordAuthentication" and value == "no":
+                blocking_overrides.append(f"   ⚠️  {key}={value} in {file_path.name}")
+        if blocking_overrides:
+            status_lines.extend(blocking_overrides)
+        cloud_init_fix = generate_cloud_init_fix_script(auth_overrides)
+        if cloud_init_fix:
+            program += f"\n# === Fix cloud-init SSH overrides ===\n{cloud_init_fix}\n"
+        program += """
+sudo chmod 700 ~/.ssh
+sudo chmod 644 ~/.ssh/authorized_keys
+sudo chmod 644 ~/.ssh/*.pub
+sudo service ssh --full-restart
+# from superuser.com/questions/215504/permissions-on-private-key-in-ssh-folder
+"""
+    return program, "\n".join(status_lines)
+
+
+def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str | None) -> None:
+    info_lines: list[str] = []
+    program = ""
+    status_msg = ""
+
+    key_paths: list[Path] = []
+
+    if pub_path:
+        key_path = Path(pub_path).expanduser().absolute()
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        if not key_path.exists():
+            console.print(Panel(f"❌ Key path does not exist: {key_path}", title="[bold red]Error[/bold red]", border_style="red"))
+            sys.exit(1)
+        key_paths.append(key_path)
+        info_lines.append(f"📄 Source: Local file │ {key_path}")
+
+    elif pub_choose:
+        pub_keys_all = list(Path.home().joinpath(".ssh").glob("*.pub"))
+        if not pub_keys_all:
+            console.print(Panel("⚠️  No public keys found in ~/.ssh", title="[bold yellow]Warning[/bold yellow]", border_style="yellow"))
+            return
+        info_lines.append(f"📄 Source: Local ~/.ssh │ Found {len(pub_keys_all)} key(s)")
+        from stackops.utils.options import choose_from_options
+
+        options_str = choose_from_options(options=[str(x) for x in pub_keys_all], msg="Select public key(s) to authorize", multi=True, tv=True)
+        if options_str is None or len(options_str) == 0:
+            console.print(Panel("❓ Key selection cancelled.", title="[bold yellow]Cancelled[/bold yellow]", border_style="yellow"))
+            return
+        key_paths = [Path(x) for x in options_str]
+
+    elif pub_val:
+        key_filename = input("📝 File name (default: my_pasted_key.pub): ") or "my_pasted_key.pub"
+        key_path = Path.home().joinpath(f".ssh/{key_filename}")
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        key_path.write_text(input("🔑 Paste the public key here: "), encoding="utf-8")
+        key_paths.append(key_path)
+        info_lines.append(f"📄 Source: Pasted │ Saved to {key_path}")
+
+    elif from_github:
+        import requests
+
+        response = requests.get(f"https://api.github.com/users/{from_github}/keys", timeout=10)
+        if response.status_code != 200:
+            console.print(
+                Panel(
+                    f"❌ GitHub API error for user '{from_github}' │ Status: {response.status_code}",
+                    title="[bold red]Error[/bold red]",
+                    border_style="red",
+                )
+            )
+            sys.exit(1)
+        keys = response.json()
+        if not keys:
+            console.print(
+                Panel(f"⚠️  No public keys found for GitHub user: {from_github}", title="[bold yellow]Warning[/bold yellow]", border_style="yellow")
+            )
+            return
+        key_path = Path.home().joinpath(f".ssh/{from_github}_github_keys.pub")
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        key_path.write_text("\n".join([key["key"] for key in keys]), encoding="utf-8")
+        key_paths.append(key_path)
+        info_lines.append(f"📄 Source: GitHub @{from_github} │ {len(keys)} key(s) → {key_path}")
+
+    else:
+        console.print(Panel("❌ No key source specified.", title="[bold red]Error[/bold red]", border_style="red"))
+        sys.exit(1)
+
+    if not key_paths:
+        console.print(Panel("❌ No keys selected", title="[bold red]Error[/bold red]", border_style="red"))
+        sys.exit(1)
+
+    if remote is not None:
+        if len(key_paths) == 1:
+            success = deploy_key_to_remote(remote_target=remote, pubkey_path=key_paths[0], password=None)
+        else:
+            success = deploy_multiple_keys_to_remote(remote_target=remote, pubkey_paths=key_paths, password=None)
+        if not success:
+            sys.exit(1)
+        return
+
+    programs: list[str] = []
+    statuses: list[str] = []
+    for key in key_paths:
+        p, s = get_add_ssh_key_script(key)
+        programs.append(p)
+        statuses.append(s)
+    program = "\n\n\n".join(programs)
+    status_msg = "\n".join(statuses)
+
+    combined_info = "\n".join(info_lines + [""] + status_msg.split("\n"))
+    console.print(Panel(combined_info, title="[bold blue]🔑 SSH Key Authorization[/bold blue]", border_style="blue"))
+
+    if program.strip():
+        from stackops.utils.code import run_shell_script
+
+        run_shell_script(script=program, display_script=True, clean_env=False)
+
+    import stackops.scripts.python.helpers.helpers_network.address as helper
+
+    res = helper.select_lan_ipv4(prefer_vpn=False)
+    if res is None:
+        console.print(Panel("❌ Could not determine local LAN IPv4 address", title="[bold red]Error[/bold red]", border_style="red"))
+        sys.exit(1)
+
+    console.print(
+        Panel(
+            f"✅ Complete │ This machine accessible at: [green]{res}[/green]",
+            title="[bold green]SSH Key Authorization[/bold green]",
+            border_style="green",
+            box=box.DOUBLE_EDGE,
+        )
+    )
+
+
+if __name__ == "__main__":
+    pass

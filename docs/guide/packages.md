@@ -6,7 +6,7 @@ The current package installation workflow is centered on `devops install`.
 
 ## Overview
 
-Machineconfig keeps package installation behind one command surface:
+StackOps keeps package installation behind one command surface:
 
 ```bash
 devops install --help

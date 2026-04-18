@@ -4,4 +4,4 @@
 
 docs:
 	pip install .[docs]
-	pdoc machineconfig --output-dir docs
+	pdoc stackops --output-dir docs

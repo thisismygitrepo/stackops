@@ -1,0 +1,4 @@
+interface:
+  display_name: "StackOps"
+  short_description: "Use stackops CLI and library"
+  default_prompt: "Teach and use direct stackops commands through nested Typer apps."

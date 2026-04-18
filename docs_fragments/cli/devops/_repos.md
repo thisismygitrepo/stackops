@@ -44,8 +44,8 @@ Key options from current help:
 Important behavior from the implementation:
 
 - `--checkout-to-commit` and `--checkout-to-branch` are mutually exclusive
-- Without `--specs-path`, machineconfig derives the expected `repos.json` from the target directory
-- With `--interactive`, machineconfig searches backed-up `repos.json` files and lets you choose which one to apply
+- Without `--specs-path`, stackops derives the expected `repos.json` from the target directory
+- With `--interactive`, stackops searches backed-up `repos.json` files and lets you choose which one to apply
 
 Examples:
 
@@ -109,7 +109,7 @@ devops repos action ~/code --recursive --pull
 devops repos action ~/code --recursive --pull --uv-sync
 
 # Commit and push one repo
-devops repos action ~/code/machineconfig --commit --push
+devops repos action ~/code/stackops --commit --push
 ```
 
 ### analyze
@@ -125,7 +125,7 @@ This delegates to the plotting-oriented repository analyzer.
 Example:
 
 ```bash
-devops repos analyze ~/code/machineconfig
+devops repos analyze ~/code/stackops
 ```
 
 ### guard
@@ -170,7 +170,7 @@ Commonly used options from current help:
 | `--start-date` | Lower date bound |
 | `--stop-date` | Upper date bound |
 | `--title`, `-t` | Visualization title |
-| `--self` | Clone and visualize the machineconfig repository |
+| `--self` | Clone and visualize the stackops repository |
 
 The current help also exposes additional rendering controls for hidden layers, viewport, avatars, file limits, framerate, background color, and camera mode.
 
@@ -178,10 +178,10 @@ Examples:
 
 ```bash
 # Interactive visualization
-devops repos viz --repo ~/code/machineconfig
+devops repos viz --repo ~/code/stackops
 
 # Render to video
-devops repos viz --repo ~/code/machineconfig --output machineconfig.mp4 --resolution 1280x720
+devops repos viz --repo ~/code/stackops --output stackops.mp4 --resolution 1280x720
 ```
 
 ### count-lines
@@ -195,7 +195,7 @@ devops repos count-lines REPO_PATH
 Example:
 
 ```bash
-devops repos count-lines ~/code/machineconfig
+devops repos count-lines ~/code/stackops
 ```
 
 ### config-linters
@@ -212,7 +212,7 @@ Key options from current help:
 |--------|-------------|
 | `--linter`, `-t` | Restrict the copy to `ruff`, `mypy`, `pylint`, `flake8`, or `ty` |
 
-Without `--linter`, machineconfig copies the full supported set of linter config files.
+Without `--linter`, stackops copies the full supported set of linter config files.
 
 Examples:
 
@@ -235,13 +235,13 @@ Key options from current help:
 |--------|-------------|
 | `--recursive`, `-r` | Recurse into nested repositories under the given directory |
 
-Without `--recursive`, the target must already be a git repository. With `--recursive`, machineconfig searches for nested `.git` directories and cleans each repository it finds.
+Without `--recursive`, the target must already be a git repository. With `--recursive`, stackops searches for nested `.git` directories and cleans each repository it finds.
 
 Examples:
 
 ```bash
 # Clean one repo
-devops repos cleanup ~/code/machineconfig
+devops repos cleanup ~/code/stackops
 
 # Clean every repo below a root directory
 devops repos cleanup ~/code --recursive
