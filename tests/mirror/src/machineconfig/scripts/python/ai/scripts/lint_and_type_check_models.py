@@ -369,3 +369,32 @@ def test_format_tool_report_splits_json_stream_diagnostics_into_sections() -> No
     assert "### Diagnostic 1" in report
     assert "### Diagnostic 2" in report
     assert '"severity": "error"' in report
+
+
+def test_format_tool_report_preserves_unicode_in_json_diagnostics() -> None:
+    spec = models_module.ToolSpec(
+        slug="pyright",
+        title="Pyright Type Checker",
+        report_path=Path(".ai/linters/issues_pyright.md"),
+        command=("uv", "run", "pyright"),
+        output_format="json",
+    )
+
+    report = models_module.format_tool_report(
+        spec=spec,
+        exit_code=1,
+        raw_output=json.dumps(
+            {
+                "generalDiagnostics": [
+                    {
+                        "severity": "error",
+                        "message": f"indent{chr(160)}kept",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+    assert "\\u00a0" not in report
+    assert f"indent{chr(160)}kept" in report

@@ -85,7 +85,9 @@ def _format_json_tool_report(spec: ToolSpec, exit_code: int, raw_output: str) ->
         lines.append("## Payload")
         lines.append("")
         _append_code_block(
-            lines=lines, language="json", content=json.dumps(payload, indent=2)
+            lines=lines,
+            language="json",
+            content=json.dumps(payload, indent=2, ensure_ascii=False),
         )
         lines.append("")
         return "\n".join(lines) + "\n"
@@ -102,7 +104,9 @@ def _format_json_tool_report(spec: ToolSpec, exit_code: int, raw_output: str) ->
         lines.append("## Metadata")
         lines.append("")
         _append_code_block(
-            lines=lines, language="json", content=json.dumps(metadata, indent=2)
+            lines=lines,
+            language="json",
+            content=json.dumps(metadata, indent=2, ensure_ascii=False),
         )
         lines.append("")
     lines.append("## Diagnostics")
@@ -115,7 +119,9 @@ def _format_json_tool_report(spec: ToolSpec, exit_code: int, raw_output: str) ->
         lines.append(f"### Diagnostic {index}")
         lines.append("")
         _append_code_block(
-            lines=lines, language="json", content=json.dumps(entry, indent=2)
+            lines=lines,
+            language="json",
+            content=json.dumps(entry, indent=2, ensure_ascii=False),
         )
         lines.append("")
     return "\n".join(lines) + "\n"
