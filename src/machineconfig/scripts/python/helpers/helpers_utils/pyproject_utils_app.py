@@ -100,7 +100,7 @@ def type_check(
     ] = None,
 ) -> None:
     if exclude is None:
-        exclude = ["tests", ".github", ".codex", ".ai"]
+        exclude = ["tests", ".github", ".codex", ".ai", ".venv"]
     try:
         repo_root = _resolve_pyproject_root(Path(repo))
         excluded_directories = _resolve_type_check_excluded_directories(
