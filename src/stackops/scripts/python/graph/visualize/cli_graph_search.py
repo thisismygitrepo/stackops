@@ -152,7 +152,7 @@ def _node_summary(node: JsonObject) -> str:
 
 
 def _normalize_command_tokens(tokens: list[str]) -> tuple[str, ...]:
-    if tokens and tokens[0] == "mcfg":
+    if tokens and tokens[0] == "stackops":
         normalized_tokens = tokens[1:]
     else:
         normalized_tokens = tokens

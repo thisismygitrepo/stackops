@@ -8,7 +8,7 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from stackops.scripts.python import mcfg_entry as module
+from stackops.scripts.python import stackops_entry as module
 
 
 def _install_module(monkeypatch: pytest.MonkeyPatch, module_name: str, attrs: dict[str, object]) -> None:

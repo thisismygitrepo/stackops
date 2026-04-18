@@ -28,7 +28,6 @@ def test_uv_helper_functions_parse_python_and_filter_links(tmp_path: Path) -> No
     )
     (tool_root / "bin" / "python").symlink_to(python_root / "bin" / "python3.14")
     (install_path / "stackops").symlink_to(tool_root / "bin" / "stackops")
-    (install_path / "mcfg").symlink_to(install_path / "stackops")
     outside = tmp_path / "outside"
     outside.write_text("x", encoding="utf-8")
     (install_path / "outside").symlink_to(outside)
@@ -38,7 +37,7 @@ def test_uv_helper_functions_parse_python_and_filter_links(tmp_path: Path) -> No
     assert offline._collect_uv_tool_links(
         install_path=install_path,
         tool_root=tool_root,
-    ) == ["stackops", "mcfg"]
+    ) == ["stackops"]
 
 
 def test_export_creates_linux_archive_with_uv_bundle(

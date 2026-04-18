@@ -1,6 +1,6 @@
 #!/bin/bash
 . <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_linux/uv.sh")
-. <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/linux/wrap_mcfg")
+. <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/linux/wrap_stackops")
 
 alias devops='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" devops'
 alias cloud='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" cloud'
@@ -20,6 +20,6 @@ alias u='wrap_in_shell_script utils'
 alias t='wrap_in_shell_script terminal'
 alias s='wrap_in_shell_script seek'
 
-echo "mcfg command aliases are now defined in this shell session."
+echo "stackops command aliases are now defined in this shell session."
 
 d self config

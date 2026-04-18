@@ -3,9 +3,9 @@
 StackOps currently exposes two entry styles:
 
 - standalone commands such as `devops`, `fire`, and `seek`
-- umbrella wrappers: `mcfg` and `stackops`
+- umbrella wrapper: `stackops`
 
-For day-to-day use, prefer the standalone command when you already know which tool you want. Use `mcfg` or `stackops` when you want one top-level CLI that routes into the same command tree.
+For day-to-day use, prefer the standalone command when you already know which tool you want. Use `stackops` when you want one top-level CLI that routes into the same command tree.
 
 ---
 
@@ -26,12 +26,11 @@ For day-to-day use, prefer the standalone command when you already know which to
 
 ## Umbrella entrypoints
 
-`mcfg` and `stackops` are lazy-loading wrappers around the same top-level command families:
+`stackops` is a lazy-loading wrapper around the same top-level command families:
 
 ```bash
-mcfg --help
 stackops --help
-mcfg devops --help
+stackops devops --help
 stackops agents --help
 ```
 
@@ -59,6 +58,5 @@ cloud --help
 croshell --help
 fire --help
 seek --help
-mcfg --help
 stackops --help
 ```

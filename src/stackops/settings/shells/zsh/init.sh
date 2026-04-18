@@ -27,7 +27,7 @@ add_to_path_if_not_already \
 # . $CONFIG_ROOT/settings/lf/linux/exe/lfcd.sh
 # . $CONFIG_ROOT/settings/tere/terecd.sh
 . $CONFIG_ROOT/settings/yazi/shell/yazi_cd.sh
-. $CONFIG_ROOT/scripts/wrap_mcfg
+. $CONFIG_ROOT/scripts/wrap_stackops
 
 # check if file in ~/dotfiles/stackops/init_linux.sh exists and source it
 if [ -f "$HOME/dotfiles/stackops/init_linux.sh" ]; then

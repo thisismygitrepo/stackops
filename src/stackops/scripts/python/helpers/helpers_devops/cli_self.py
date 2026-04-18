@@ -139,12 +139,12 @@ def _install_stackops(dev: bool) -> None:
     from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function, get_uv_command
     import platform
 
-    mcfg_path = Path.home().joinpath("code/stackops")
-    if dev and not mcfg_path.exists():
+    stackops_path = Path.home().joinpath("code/stackops")
+    if dev and not stackops_path.exists():
         import git
 
-        mcfg_path.parent.mkdir(parents=True, exist_ok=True)
-        git.Repo.clone_from("https://github.com/thisismygitrepo/stackops.git", str(mcfg_path))
+        stackops_path.parent.mkdir(parents=True, exist_ok=True)
+        git.Repo.clone_from("https://github.com/thisismygitrepo/stackops.git", str(stackops_path))
 
     uv_command = get_uv_command(platform=platform.system())
 
@@ -158,11 +158,11 @@ def _install_stackops(dev: bool) -> None:
         uv_with=["stackops"],
         uv_project_dir=None,
     )
-    if mcfg_path.exists():
+    if stackops_path.exists():
         exit_then_run_shell_script(f"""
-cd {str(mcfg_path)}
+cd {str(stackops_path)}
 {uv_command} sync
-{uv_command} tool install --upgrade --editable "{str(mcfg_path)}"
+{uv_command} tool install --upgrade --editable "{str(stackops_path)}"
 {uv_command2}
 """)
     else:

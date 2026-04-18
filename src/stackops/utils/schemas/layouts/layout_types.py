@@ -64,7 +64,7 @@ def substitute_home(tabs: list[TabConfig]) -> list["TabConfig"]:
     from pathlib import Path
     json_str = json.dumps(tabs)
     json_str = json_str.replace("~", str(Path.home())).replace("$HOME", str(Path.home()))
-    json_str = json_str.replace("""command": "f """, """command": "~/.config/stackops/scripts/wrap_mcfg fire """)
-    json_str = json_str.replace("""command": "t """, """command": "~/.config/stackops/scripts/wrap_mcfg terminal """)
-    json_str = json_str.replace("""command": "s """, """command": "~/.config/stackops/scripts/wrap_mcfg seek """)
+    json_str = json_str.replace("""command": "f """, """command": "~/.config/stackops/scripts/wrap_stackops fire """)
+    json_str = json_str.replace("""command": "t """, """command": "~/.config/stackops/scripts/wrap_stackops terminal """)
+    json_str = json_str.replace("""command": "s """, """command": "~/.config/stackops/scripts/wrap_stackops seek """)
     return json.loads(json_str)

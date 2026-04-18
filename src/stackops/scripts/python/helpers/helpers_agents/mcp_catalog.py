@@ -39,10 +39,10 @@ def parse_requested_mcp_names(raw_value: str) -> tuple[str, ...]:
 
 
 def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_MCFG_ROOT
+    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT
 
     return (
-        {"scope": "private", "path": DOTFILES_MCFG_ROOT / "agents" / "mcps" / "mcp.json"},
+        {"scope": "private", "path": DOTFILES_STACKOPS_ROOT / "agents" / "mcps" / "mcp.json"},
         {"scope": "public", "path": CONFIG_ROOT / "agents" / "mcps" / "mcp.json"},
         {
             "scope": "library",

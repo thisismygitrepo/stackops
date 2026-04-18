@@ -21,7 +21,7 @@ def test_resolve_target_prefers_single_selected_file_over_hovered_file(tmp_path:
     assert resolved_path == selected_path.resolve()
 
 
-def test_build_command_uses_wrap_mcfg_for_tabular_targets(
+def test_build_command_uses_wrap_stackops_for_tabular_targets(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -32,7 +32,7 @@ def test_build_command_uses_wrap_mcfg_for_tabular_targets(
 
     command = interactive_view.build_command(target_path=target_path)
 
-    assert command == ["/home/tester/.config/stackops/scripts/wrap_mcfg", "croshell", "-b", "v", str(target_path)]
+    assert command == ["/home/tester/.config/stackops/scripts/wrap_stackops", "croshell", "-b", "v", str(target_path)]
 
 
 @pytest.mark.parametrize(
@@ -78,7 +78,7 @@ def test_build_command_uses_read_only_harlequin_for_local_databases(
                 str(tmp_path.joinpath("selected.csv")),
             ],
             127,
-            "wrap_mcfg",
+            "wrap_stackops",
         ),
     ],
 )

@@ -79,10 +79,10 @@ class FakeIterProcess:
 
 
 def test_normalize_cli_token_expands_home_and_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MCFG_TOKEN", "expanded")
+    monkeypatch.setenv("STACKOPS_TOKEN", "expanded")
     normalize_cli_token = cast(Callable[[str], str], getattr(subject, "_normalize_cli_token"))
 
-    normalized = normalize_cli_token("'~/bin/$MCFG_TOKEN'")
+    normalized = normalize_cli_token("'~/bin/$STACKOPS_TOKEN'")
 
     assert normalized == str(Path.home().joinpath("bin", "expanded"))
 

@@ -27,7 +27,7 @@ def _graph_payload() -> JsonObject:
     return {
         "root": {
             "kind": "root",
-            "name": "mcfg",
+            "name": "stackops",
             "children": [
                 {
                     "kind": "group",

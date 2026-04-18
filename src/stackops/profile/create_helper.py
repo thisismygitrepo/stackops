@@ -50,14 +50,14 @@ def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
             target_path = target.joinpath(relative_path)
             _copy_path(source=a_path, target=target_path, overwrite=True)
 
-        wrap_mcfg_source = get_path_reference_path(
+        wrap_stackops_source = get_path_reference_path(
             module=nu_scripts,
-            path_reference=nu_scripts.WRAP_MCFG_PATH_REFERENCE,
+            path_reference=nu_scripts.WRAP_STACKOPS_PATH_REFERENCE,
         )
-        wrap_mcfg_target = CONFIG_ROOT.joinpath("scripts", "wrap_mcfg.nu")
+        wrap_stackops_target = CONFIG_ROOT.joinpath("scripts", "wrap_stackops.nu")
 
-        wrap_mcfg_target.parent.mkdir(parents=True, exist_ok=True)
-        _copy_path(source=wrap_mcfg_source, target=wrap_mcfg_target, overwrite=True)
+        wrap_stackops_target.parent.mkdir(parents=True, exist_ok=True)
+        _copy_path(source=wrap_stackops_source, target=wrap_stackops_target, overwrite=True)
 
         if system_name == "linux":
             from rich.console import Console

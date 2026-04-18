@@ -66,7 +66,7 @@ def test_select_from_options_builds_temp_channel_and_returns_selected_key(
     assert result == "script.py"
     assert "size = 90" in captured["channel"]
     assert 'BAT_THEME = "ansi"' in captured["channel"]
-    assert 'MCFG_PREVIEW_WIDTH = "104"' in captured["channel"]
+    assert 'STACKOPS_PREVIEW_WIDTH = "104"' in captured["channel"]
     assert captured["previews"].splitlines()[0].endswith("\tmd")
     assert captured["previews"].splitlines()[1].endswith("\tpy")
     assert fake_xdg.joinpath("television", "cable", "temp_options.toml").exists() is False

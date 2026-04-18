@@ -120,10 +120,10 @@ def _collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str,
 
 
 def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
-    from stackops.utils.source_of_truth import DOTFILES_MCFG_ROOT, CONFIG_ROOT, LIBRARY_ROOT
+    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, CONFIG_ROOT, LIBRARY_ROOT
     from stackops.scripts.python.helpers.helpers_search.script_help import get_custom_roots
 
-    private_prompts = DOTFILES_MCFG_ROOT / "agents" / "prompts" / "prompts.yaml"
+    private_prompts = DOTFILES_STACKOPS_ROOT / "agents" / "prompts" / "prompts.yaml"
     public_prompts = CONFIG_ROOT / "agents" / "prompts" / "prompts.yaml"
     library_prompts = LIBRARY_ROOT / "agents" / "prompts" / "prompts.yaml"
 

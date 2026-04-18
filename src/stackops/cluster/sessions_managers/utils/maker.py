@@ -25,16 +25,16 @@ def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str,
     import inspect
     from stackops.utils.source_of_truth import CONFIG_ROOT
     import platform
-    wrap_mcfg: str
+    wrap_stackops: str
     if platform.system().lower() == "windows":
-        wrap_mcfg = f'& "{CONFIG_ROOT / "scripts/wrap_mcfg.ps1"}"'
+        wrap_stackops = f'& "{CONFIG_ROOT / "scripts/wrap_stackops.ps1"}"'
     elif platform.system().lower() == "linux" or platform.system().lower() == "darwin":
-        wrap_mcfg = str(CONFIG_ROOT / "scripts/wrap_mcfg")
+        wrap_stackops = str(CONFIG_ROOT / "scripts/wrap_stackops")
     else:
         raise ValueError(f"Unsupported platform: {platform.system()}")
     path = Path(inspect.getfile(func))
     path_relative = path.relative_to(Path.home())
-    command_to_run = f"""{wrap_mcfg} fire {fire_flags} {path_relative} {func.__name__} """
+    command_to_run = f"""{wrap_stackops} fire {fire_flags} {path_relative} {func.__name__} """
     tab_config: TabConfig = {
         "command": command_to_run,
         "startDir": start_dir,

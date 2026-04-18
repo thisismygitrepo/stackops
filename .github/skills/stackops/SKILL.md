@@ -24,7 +24,7 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 
 4. Map command to implementation.
 - Use `references/source-map.md` to jump directly to the file that registers/implements the command.
-- Remember `mcfg_entry.py` is a lazy dispatcher; most behavior lives in helper modules.
+- Remember `stackops_entry.py` is a lazy dispatcher; most behavior lives in helper modules.
 
 5. Run safely.
 - Commands under install/update/network/config may mutate system state.

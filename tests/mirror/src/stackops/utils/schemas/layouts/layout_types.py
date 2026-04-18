@@ -47,7 +47,7 @@ def test_substitute_home_expands_tab_paths_and_shorthand_commands() -> None:
     substituted = layout_types_module.substitute_home(tabs)
 
     assert substituted == [
-        {"tabName": "fire", "startDir": f"{home}/work", "command": "~/.config/stackops/scripts/wrap_mcfg fire launch"},
-        {"tabName": "seek", "startDir": f"{home}/research", "command": "~/.config/stackops/scripts/wrap_mcfg seek query", "tabWeight": 2},
-        {"tabName": "term", "startDir": "/tmp", "command": "~/.config/stackops/scripts/wrap_mcfg terminal shell"},
+        {"tabName": "fire", "startDir": f"{home}/work", "command": "~/.config/stackops/scripts/wrap_stackops fire launch"},
+        {"tabName": "seek", "startDir": f"{home}/research", "command": "~/.config/stackops/scripts/wrap_stackops seek query", "tabWeight": 2},
+        {"tabName": "term", "startDir": "/tmp", "command": "~/.config/stackops/scripts/wrap_stackops terminal shell"},
     ]

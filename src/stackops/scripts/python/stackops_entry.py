@@ -1,7 +1,7 @@
 """Fast-loading CLI entry point using lazy imports.
 
 Submodules are only imported when their commands are actually invoked, not at startup.
-This makes `mcfg --help` much faster by avoiding loading heavy dependencies.
+This makes `stackops --help` much faster by avoiding loading heavy dependencies.
 """
 from typing import Annotated
 import typer

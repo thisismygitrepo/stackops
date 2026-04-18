@@ -53,8 +53,7 @@ agents = "stackops.scripts.python.agents:main"
 terminal = "stackops.scripts.python.terminal:main"
 croshell = "stackops.scripts.python.croshell:main"
 utils = "stackops.scripts.python.utils:main"
-mcfg = "stackops.scripts.python.mcfg_entry:main"
-stackops = "stackops.scripts.python.mcfg_entry:main"
+stackops = "stackops.scripts.python.stackops_entry:main"
 seek = "stackops.scripts.python.seek:main"
 
 [tool.setuptools]

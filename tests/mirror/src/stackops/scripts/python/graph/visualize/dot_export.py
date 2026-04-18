@@ -6,8 +6,8 @@ from stackops.scripts.python.graph.visualize.graph_data import GraphNode
 
 def _sample_graph() -> GraphNode:
     return GraphNode(
-        id="mcfg",
-        name="mcfg",
+        id="stackops",
+        name="stackops",
         kind="root",
         command="",
         description="StackOps CLI",
@@ -16,7 +16,7 @@ def _sample_graph() -> GraphNode:
         depth=0,
         children=[
             GraphNode(
-                id="mcfg graph",
+                id="stackops graph",
                 name="graph",
                 kind="group",
                 command="graph",
@@ -26,7 +26,7 @@ def _sample_graph() -> GraphNode:
                 depth=1,
                 children=[
                     GraphNode(
-                        id="mcfg graph search",
+                        id="stackops graph search",
                         name='search "nodes"',
                         kind="command",
                         command="graph search",
@@ -44,10 +44,10 @@ def _sample_graph() -> GraphNode:
 def test_build_dot_respects_max_depth_and_edges() -> None:
     dot_text = target.build_dot(_sample_graph(), max_depth=1, include_help=False)
 
-    assert '"mcfg"' in dot_text
-    assert '"mcfg graph"' in dot_text
-    assert '"mcfg" -> "mcfg graph";' in dot_text
-    assert '"mcfg graph search"' not in dot_text
+    assert '"stackops"' in dot_text
+    assert '"stackops graph"' in dot_text
+    assert '"stackops" -> "stackops graph";' in dot_text
+    assert '"stackops graph search"' not in dot_text
 
 
 def test_build_dot_escapes_special_characters_and_truncates_help() -> None:

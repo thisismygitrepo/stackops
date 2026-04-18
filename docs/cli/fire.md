@@ -140,7 +140,7 @@ fire nested/tool.py -r -P
 ## Notes
 
 - `--ve` is still exposed in the CLI help, but the current route implementation does not use it when building the command. Environment discovery currently comes from repo-root handling and `.ve.yaml` / `.venv` discovery instead.
-- `mcfg fire` and `stackops fire` route into the same command family, but `fire --help` is the best source for the direct entrypoint's full option surface.
+- `stackops fire` routes into the same command family, but `fire --help` is the best source for the direct entrypoint's full option surface.
 
 ---
 

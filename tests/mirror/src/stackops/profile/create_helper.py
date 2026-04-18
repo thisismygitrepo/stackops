@@ -44,7 +44,7 @@ def test_copy_assets_to_machine_for_scripts_copies_all_packaged_files_and_wrap_s
     library_root = tmp_path / "library"
     config_root = tmp_path / "config"
     scripts_root = library_root / "scripts" / "linux"
-    wrap_script_path = tmp_path / "wrap_mcfg.nu"
+    wrap_script_path = tmp_path / "wrap_stackops.nu"
     scripts_root.joinpath("bin").mkdir(parents=True)
     scripts_root.joinpath("bin", "alpha.sh").write_text("echo alpha", encoding="utf-8")
     scripts_root.joinpath("beta.txt").write_text("beta", encoding="utf-8")
@@ -75,6 +75,6 @@ def test_copy_assets_to_machine_for_scripts_copies_all_packaged_files_and_wrap_s
 
     copied_targets = {target.relative_to(config_root) for _, target, _ in copy_calls}
 
-    assert copied_targets == {Path("scripts/bin/alpha.sh"), Path("scripts/beta.txt"), Path("scripts/wrap_mcfg.nu")}
+    assert copied_targets == {Path("scripts/bin/alpha.sh"), Path("scripts/beta.txt"), Path("scripts/wrap_stackops.nu")}
     assert all(overwrite for _, _, overwrite in copy_calls)
     assert chmod_calls == [f"chmod +x {config_root.joinpath('scripts')} -R"]

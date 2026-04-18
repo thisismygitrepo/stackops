@@ -2,7 +2,7 @@
 # Short @ bit.ly/cfgwindows
 
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_windows/uv.ps1" | iex
-irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_mcfg.ps1" | iex
+irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_stackops.ps1" | iex
 
 function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" devops $args }
 function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.93" cloud $args }
@@ -24,6 +24,6 @@ function u { wrap_in_shell_script utils @args }
 function t { wrap_in_shell_script terminal @args }
 function p { wrap_in_shell_script seek @args }
 
-Write-Host "mcfg command aliases are now defined in this PowerShell session."
+Write-Host "stackops command aliases are now defined in this PowerShell session."
 
 d self config

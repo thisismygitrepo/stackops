@@ -11,7 +11,7 @@ def _write_graph(tmp_path: Path) -> Path:
             {
                 "root": {
                     "kind": "root",
-                    "name": "mcfg",
+                    "name": "stackops",
                     "help": "StackOps CLI",
                     "children": [
                         {
@@ -49,7 +49,7 @@ def test_build_graph_builds_aliases_descriptions_and_leaf_counts(
     search = group.children[0]
     dot = group.children[1]
 
-    assert graph.id == "mcfg"
+    assert graph.id == "stackops"
     assert graph.leaf_count == 2
     assert group.aliases == ["g"]
     assert group.description == "Graph tools"
@@ -63,8 +63,8 @@ def test_iter_nodes_walks_preorder(tmp_path: Path) -> None:
     ids = [node.id for node, _parent in target.iter_nodes(graph)]
 
     assert ids == [
-        "mcfg",
-        "mcfg graph",
-        "mcfg graph search",
-        "mcfg graph dot",
+        "stackops",
+        "stackops graph",
+        "stackops graph search",
+        "stackops graph dot",
     ]

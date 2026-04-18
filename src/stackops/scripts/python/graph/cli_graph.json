@@ -21,24 +21,24 @@
     }
   },
   "meta": {
-    "root_entrypoint": "src/stackops/scripts/python/mcfg_entry.py",
+    "root_entrypoint": "src/stackops/scripts/python/stackops_entry.py",
     "notes": [
       "Graph derived from static source inspection of Typer app factories and lazy wrapper dispatchers.",
       "Aliases are recorded on each node with hidden flags; no standalone alias nodes.",
-      "fullPath and shortPath are root-relative command strings, excluding the 'mcfg' entry token.",
+      "fullPath and shortPath are root-relative command strings, excluding the 'stackops' entry token.",
       "Signature objects preserve raw lines while parsing Annotated/Option/Argument metadata into structured parameters."
     ]
   },
   "root": {
     "kind": "root",
-    "name": "mcfg",
+    "name": "stackops",
     "fullPath": "",
     "shortPath": "",
     "help": "StackOps CLI - Manage your machine configurations and workflows",
     "source": {
-      "file": "src/stackops/scripts/python/mcfg_entry.py",
-      "module": "stackops.scripts.python.mcfg_entry",
-      "app_factory": "stackops.scripts.python.mcfg_entry.get_app"
+      "file": "src/stackops/scripts/python/stackops_entry.py",
+      "module": "stackops.scripts.python.stackops_entry",
+      "app_factory": "stackops.scripts.python.stackops_entry.get_app"
     },
     "app": {
       "help": "StackOps CLI - Manage your machine configurations and workflows",
@@ -54,8 +54,8 @@
         "shortPath": "d",
         "help": "<d> DevOps related commands",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "dispatches_to": "stackops.scripts.python.devops.get_app",
           "callable": "devops"
         },
@@ -789,7 +789,7 @@
                     "",
                     "    from stackops.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.91\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.93\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1722,7 +1722,7 @@
                     "    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from stackops.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.91\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.93\"])",
                     "    from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -9824,8 +9824,8 @@
         "shortPath": "c",
         "help": "<c> Cloud management commands",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "dispatches_to": "stackops.scripts.python.cloud.get_app",
           "callable": "cloud"
         },
@@ -10768,8 +10768,8 @@
         "shortPath": "t",
         "help": "<t> Terminal and layout management",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "dispatches_to": "stackops.scripts.python.terminal.get_app",
           "callable": "terminal"
         },
@@ -12819,8 +12819,8 @@
         "shortPath": "a",
         "help": "<a> 🤖 AI Agents management commands",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "dispatches_to": "stackops.scripts.python.agents.get_app",
           "callable": "agents"
         },
@@ -13678,7 +13678,7 @@
                 "    ] = \"\",",
                 "    add_config: Annotated[bool, typer.Option(\"--add-config\", \"-c\", help=\"Create private agent config files/directories\")] = True,",
                 "    add_instructions: Annotated[bool, typer.Option(\"--add-instructions\", \"-i\", help=\"Create agent instructions files (e.g. AGENTS.md)\")] = True,",
-                "    add_scripts: Annotated[bool, typer.Option(\"--include-scripts\", \"-s\", help=\"Create shared .ai/.scripts scaffold\")] = False,",
+                "    add_scripts: Annotated[bool, typer.Option(\"--include-scripts\", \"-s\", help=\"Create shared .ai and scripts/type_checking scaffold\")] = False,",
                 "    add_vscode_tasks: Annotated[bool, typer.Option(\"--add-vscode-tasks\", \"-l\", help=\"Add VS Code lint/type-check task only\")] = False,",
                 "    add_to_gitignore: Annotated[",
                 "        bool, typer.Option(\"--add-gitignore\", \"-g\", help=\"Track all files touched by init-config and add them to .gitignore\")",
@@ -13804,7 +13804,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--include-scripts', '-s', help='Create shared .ai/.scripts scaffold')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--include-scripts', '-s', help='Create shared .ai and scripts/type_checking scaffold')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -13817,7 +13817,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Create shared .ai/.scripts scaffold"
+                    "help": "Create shared .ai and scripts/type_checking scaffold"
                   }
                 },
                 {
@@ -14105,7 +14105,7 @@
             "name": "make-todo",
             "fullPath": "agents make-todo",
             "shortPath": "a d",
-            "help": "Generate checklist with Python and shell script files in the repository filtered by pattern.",
+            "help": "Generate checklist with Python and shell script files in the repository or workspace filtered by pattern.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
@@ -14115,7 +14115,10 @@
               "raw_lines": [
                 "def make_todo_files(",
                 "    pattern: Annotated[str, typer.Argument(help=\"Pattern or keyword to match files by\")] = \".py\",",
-                "    repo: Annotated[str, typer.Argument(help=\"Repository path. Can be any directory within a git repository.\")] = \".\",",
+                "    repo: Annotated[",
+                "        str,",
+                "        typer.Argument(help=\"Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned.\"),",
+                "    ] = \".\",",
                 "    strategy: Annotated[",
                 "        Literal[\"name\", \"keywords\"],",
                 "        typer.Option(\"-s\", \"--strategy\", help=\"Strategy to filter files: 'name' for filename matching, 'keywords' for content matching\"),",
@@ -14129,7 +14132,7 @@
                 "    ] = None,",
                 "    split_to: Annotated[int | None, typer.Option(\"--split-to\", \"-t\", help=\"Split output into exactly this many files\")] = None,",
                 ") -> None:",
-                "    \"\"\"Generate checklist with Python and shell script files in the repository filtered by pattern.\"\"\"",
+                "    \"\"\"Generate checklist with Python and shell script files in the repository or workspace filtered by pattern.\"\"\"",
                 "    from stackops.scripts.python.ai.utils.generate_files import make_todo_files as impl",
                 "",
                 "    impl(",
@@ -14167,13 +14170,13 @@
                   "type": "str",
                   "default": ".",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Argument(help='Repository path. Can be any directory within a git repository.')]",
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Repository path. Can be any directory within a git repository."
+                    "help": "Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned."
                   }
                 },
                 {
@@ -14337,7 +14340,7 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Generate checklist with Python and shell script files in the repository filtered by pattern.",
+            "doc": "Generate checklist with Python and shell script files in the repository or workspace filtered by pattern.",
             "aliases": [
               {
                 "name": "d",
@@ -14735,7 +14738,7 @@
                 "def ask(",
                 "    prompt: Annotated[",
                 "        list[str],",
-                "        typer.Argument(help=\"Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set\"),",
+                "        typer.Argument(help=\"Prompt text to pass to the selected agent.\"),",
                 "    ],",
                 "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to ask directly.\")] = \"codex\",",
                 "    reasoning: Annotated[",
@@ -14743,22 +14746,14 @@
                 "        typer.Option(\"--reasoning\", \"-r\", help=_ASK_REASONING_HELP),",
                 "    ] = None,",
                 "    file_prompt: Annotated[",
-                "        bool,",
-                "        typer.Option(\"--file-prompt\", \"-f\", help=\"Treat PROMPT as a file path and pass its contents to the selected agent\"),",
-                "    ] = False,",
+                "        Path | None,",
+                "        typer.Option(\"--file-prompt\", \"-f\", help=\"Append the contents of this file to PROMPT before asking the selected agent.\"),",
+                "    ] = None,",
                 ") -> None:",
                 "    \"\"\"Ask a selected agent directly.\"\"\"",
                 "    reasoning_shortcut, prompt_parts = _split_legacy_ask_reasoning(agent=agent, reasoning=reasoning, prompt_parts=prompt)",
                 "    reasoning_effort = _resolve_ask_reasoning(agent=agent, reasoning=reasoning_shortcut)",
-                "    if file_prompt:",
-                "        prompt_path = _resolve_prompt_path(prompt_parts=prompt_parts)",
-                "        try:",
-                "            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))",
-                "        except ValueError as error:",
-                "            raise typer.BadParameter(str(error)) from error",
-                "        raise typer.Exit(code=return_code)",
-                "",
-                "    prompt_text = _join_prompt_parts(prompt_parts=prompt_parts)",
+                "    prompt_text = _compose_ask_prompt_text(prompt_parts=prompt_parts, file_prompt=file_prompt)",
                 "    prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)",
                 "    try:",
                 "        try:",
@@ -14777,13 +14772,13 @@
                   "type": "list[str]",
                   "default": null,
                   "required": true,
-                  "annotation_raw": "Annotated[list[str], typer.Argument(help='Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set')]",
+                  "annotation_raw": "Annotated[list[str], typer.Argument(help='Prompt text to pass to the selected agent.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Prompt text to pass to the selected agent, or a prompt file path when --file-prompt is set"
+                    "help": "Prompt text to pass to the selected agent."
                   }
                 },
                 {
@@ -14832,10 +14827,10 @@
                 {
                   "name": "file_prompt",
                   "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
+                  "type": "Path | None",
+                  "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--file-prompt', '-f', help='Treat PROMPT as a file path and pass its contents to the selected agent')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--file-prompt', '-f', help='Append the contents of this file to PROMPT before asking the selected agent.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -14848,7 +14843,7 @@
                     "short_flags": [
                       "-f"
                     ],
-                    "help": "Treat PROMPT as a file path and pass its contents to the selected agent"
+                    "help": "Append the contents of this file to PROMPT before asking the selected agent."
                   }
                 }
               ],
@@ -15008,8 +15003,8 @@
         "shortPath": "u",
         "help": "<u> Utility commands",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "dispatches_to": "stackops.scripts.python.utils.get_app",
           "callable": "utils"
         },
@@ -15839,6 +15834,154 @@
               },
               {
                 "kind": "command",
+                "name": "type-check",
+                "fullPath": "utils pyproject type-check",
+                "shortPath": "u p c",
+                "help": "🧪 <c> Run the lint-and-type-check suite for a repository.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app",
+                  "callable": "type_check"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def type_check(",
+                    "    repo: Annotated[",
+                    "        str,",
+                    "        typer.Argument(",
+                    "            help=\"Repository root or any path inside the repository to lint and type check.\"",
+                    "        ),",
+                    "    ] = \".\",",
+                    "    exclude: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Option(",
+                    "            \"--exclude\",",
+                    "            \"-x\",",
+                    "            help=\"Directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.\",",
+                    "        ),",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    if exclude is None:",
+                    "        exclude = [\"tests\", \".github\", \".codex\", \".ai\", \".links\", \".venv\"]",
+                    "    try:",
+                    "        repo_root = _resolve_pyproject_root(Path(repo))",
+                    "        (",
+                    "            excluded_directories,",
+                    "            skipped_excluded_directories,",
+                    "        ) = _resolve_type_check_excluded_directories(",
+                    "            repo_root=repo_root, excluded_directories=exclude",
+                    "        )",
+                    "    except ValueError as error:",
+                    "        typer.echo(f\"Error: {error}\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    for skipped_excluded_directory in skipped_excluded_directories:",
+                    "        typer.echo(",
+                    "            f\"Warning: Skipping excluded path '{skipped_excluded_directory}' because it is not an existing directory.\",",
+                    "            err=True,",
+                    "        )",
+                    "",
+                    "    script_path = get_path_reference_path(",
+                    "        ai_scripts, ai_scripts.LINT_AND_TYPE_CHECK_PATH_REFERENCE",
+                    "    )",
+                    "    if script_path.exists() is False:",
+                    "        typer.echo(",
+                    "            f\"Error: StackOps type-check script not found at '{script_path}'.\",",
+                    "            err=True,",
+                    "        )",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    try:",
+                    "        completed = subprocess.run(",
+                    "            [\"uv\", \"run\", str(script_path)],",
+                    "            cwd=repo_root,",
+                    "            check=False,",
+                    "            env=_build_type_check_environment(excluded_directories),",
+                    "        )",
+                    "    except FileNotFoundError as error:",
+                    "        typer.echo(\"Error: uv is required but was not found on PATH.\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    if completed.returncode != 0:",
+                    "        raise typer.Exit(code=completed.returncode)"
+                  ],
+                  "name": "type_check",
+                  "parameters": [
+                    {
+                      "name": "repo",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": ".",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Repository root or any path inside the repository to lint and type check.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Repository root or any path inside the repository to lint and type check."
+                      }
+                    },
+                    {
+                      "name": "exclude",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--exclude', '-x', help='Directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--exclude",
+                          "-x"
+                        ],
+                        "long_flags": [
+                          "--exclude"
+                        ],
+                        "short_flags": [
+                          "-x"
+                        ],
+                        "help": "Directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "c",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "group",
+                "name": "type-fix",
+                "fullPath": "utils pyproject type-fix",
+                "shortPath": "u p f",
+                "help": "🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app",
+                  "dispatches_to": "stackops.scripts.python.helpers.helpers_utils.type_fix.get_app"
+                },
+                "app": {
+                  "help": "🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [],
+                "aliases": [
+                  {
+                    "name": "f",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "reference-test",
                 "fullPath": "utils pyproject reference-test",
                 "shortPath": "u p r",
@@ -15862,7 +16005,9 @@
                     "    ] = None,",
                     "    verbose: Annotated[bool, typer.Option(\"--verbose\", help=\"Print scan context and detailed rich audit tables.\")] = False,",
                     ") -> None:",
-                    "    console = _build_reference_test_console()",
+                    "    from stackops.scripts.python.helpers.helpers_utils.path_reference_validation import audit_repository_path_references, format_path_reference_audit, build_reference_test_console, print_reference_test_summary, print_reference_test_verbose_details",
+                    "    from rich.panel import Panel",
+                    "    console = build_reference_test_console()",
                     "    search_root_path = None if search_root is None else Path(search_root)",
                     "    try:",
                     "        audit = audit_repository_path_references(repo_path=Path(repo), search_root=search_root_path)",
@@ -15870,15 +16015,15 @@
                     "        console.print(Panel(f\"❌ {error}\", title=\"Reference Audit Error\", border_style=\"red\", expand=False))",
                     "        raise typer.Exit(code=1) from error",
                     "",
-                    "    _print_reference_test_summary(console=console, audit=audit)",
+                    "    print_reference_test_summary(console=console, audit=audit)",
                     "    if audit.has_failures():",
                     "        if verbose:",
-                    "            _print_reference_test_verbose_details(console=console, audit=audit)",
+                    "            print_reference_test_verbose_details(console=console, audit=audit)",
                     "        else:",
                     "            console.print(Panel(format_path_reference_audit(audit=audit), title=\"❌ Failure Details\", border_style=\"red\", expand=False))",
                     "        raise typer.Exit(code=1)",
                     "    if verbose:",
-                    "        _print_reference_test_verbose_details(console=console, audit=audit)"
+                    "        print_reference_test_verbose_details(console=console, audit=audit)"
                   ],
                   "name": "reference_test",
                   "parameters": [
@@ -16441,8 +16586,11 @@
                   "raw_lines": [
                     "def read_db_cli_tui(",
                     "    path: Annotated[str | None, typer.Argument(..., help=\"The path to the file-based db\")] = None,",
-                    "    backend: Annotated[DatabaseBackend, typer.Option(\"--backend\", \"-b\", help=\"The TUI database client to use.\")] = \"rainfrog\",",
-                    "    read_only: Annotated[bool, typer.Option(\"--read-only\", \"-r\", help=\"Open the database in read-only mode (if supported by backend).\")] = False,",
+                    "    backend: Annotated[DatabaseBackend, typer.Option(\"--backend\", \"-b\", help=\"The TUI database client to use.\")] = \"harlequin\",",
+                    "    read_only: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--read-only/--read-write\", \"-r/-w\", help=\"Open the database in read-only mode (if supported by backend).\"),",
+                    "    ] = True,",
                     "    theme: Annotated[str | None, typer.Option(\"--theme\", \"-t\", help=\"Theme to use (if supported by backend).\")] = None,",
                     "    limit: Annotated[int | None, typer.Option(\"--limit\", \"-l\", help=\"Maximum number of rows to load (if supported by backend).\")] = None,",
                     ") -> None:",
@@ -16472,7 +16620,7 @@
                       "name": "backend",
                       "kind": "positional_or_keyword",
                       "type": "DatabaseBackend",
-                      "default": "rainfrog",
+                      "default": "harlequin",
                       "required": false,
                       "annotation_raw": "Annotated[DatabaseBackend, typer.Option('--backend', '-b', help='The TUI database client to use.')]",
                       "typer": {
@@ -16494,20 +16642,22 @@
                       "name": "read_only",
                       "kind": "positional_or_keyword",
                       "type": "bool",
-                      "default": false,
+                      "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--read-only', '-r', help='Open the database in read-only mode (if supported by backend).')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--read-only/--read-write', '-r/-w', help='Open the database in read-only mode (if supported by backend).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--read-only",
-                          "-r"
+                          "--read-only/--read-write",
+                          "-r/-w"
                         ],
                         "long_flags": [
-                          "--read-only"
+                          "--read-only",
+                          "--read-write"
                         ],
                         "short_flags": [
-                          "-r"
+                          "-r",
+                          "-w"
                         ],
                         "help": "Open the database in read-only mode (if supported by backend)."
                       }
@@ -16604,8 +16754,8 @@
         "shortPath": "s",
         "help": "<s> Search across files, text matches, and code symbols",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "dispatches_to": "stackops.scripts.python.seek.get_app",
           "callable": "seek"
         },
@@ -16901,8 +17051,8 @@
         "shortPath": "f",
         "help": "<f> Fire and manage jobs",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "callable": "fire"
         },
         "signature": {
@@ -17470,8 +17620,8 @@
         "shortPath": "r",
         "help": "<r> Cross-shell command execution",
         "source": {
-          "file": "src/stackops/scripts/python/mcfg_entry.py",
-          "module": "stackops.scripts.python.mcfg_entry",
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
           "callable": "croshell"
         },
         "signature": {

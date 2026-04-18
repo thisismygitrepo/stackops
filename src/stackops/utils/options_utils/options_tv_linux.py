@@ -101,9 +101,9 @@ fi
 preview_content="$(printf '%s' "${encoded_preview}" | base64 --decode)"
 
 preview_ext_from_row="$(awk -F '\t' -v idx="${idx}" '($1==idx){print $3; exit}' "${previews_file}" || true)"
-preview_ext="${MCFG_PREVIEW_EXT:-${preview_ext_from_row}}"
-preview_width="${MCFG_PREVIEW_WIDTH:-}"
-preview_size_pct="${MCFG_PREVIEW_SIZE_PCT:-}"
+preview_ext="${STACKOPS_PREVIEW_EXT:-${preview_ext_from_row}}"
+preview_width="${STACKOPS_PREVIEW_WIDTH:-}"
+preview_size_pct="${STACKOPS_PREVIEW_SIZE_PCT:-}"
 
 if [[ -z "${preview_width}" && -n "${COLUMNS:-}" ]]; then
     if [[ "${preview_size_pct}" =~ ^[0-9]+$ ]]; then
@@ -139,12 +139,12 @@ fi
         preview_script.chmod(0o755)
         preview_env: dict[str, str] = {
             "BAT_THEME": "ansi",
-            "MCFG_PREVIEW_SIZE_PCT": str(preview_panel_size),
+            "STACKOPS_PREVIEW_SIZE_PCT": str(preview_panel_size),
         }
         if normalized_extension is not None:
-            preview_env["MCFG_PREVIEW_EXT"] = normalized_extension
+            preview_env["STACKOPS_PREVIEW_EXT"] = normalized_extension
         if preview_width > 0:
-            preview_env["MCFG_PREVIEW_WIDTH"] = str(preview_width)
+            preview_env["STACKOPS_PREVIEW_WIDTH"] = str(preview_width)
         preview_env_line = _toml_inline_table(preview_env)
         channel_config = f"""[metadata]
 name = "temp_options"

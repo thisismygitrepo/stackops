@@ -21,9 +21,9 @@ The schema lives in `stackops.utils.schemas.layouts.layout_types`.
 - `serialize_layouts_to_file(layouts, version, path)` writes a new layout file with `"$schema": "https://bit.ly/cfglayout"`.
 - If the target file already exists, `serialize_layouts_to_file()` replaces layouts that share the same `layoutName` and appends new ones.
 - `substitute_home(tabs)` expands `~` and `$HOME` and rewrites shorthand command prefixes:
-  - `f ...` -> `~/.config/stackops/scripts/wrap_mcfg fire ...`
-  - `t ...` -> `~/.config/stackops/scripts/wrap_mcfg terminal ...`
-  - `s ...` -> `~/.config/stackops/scripts/wrap_mcfg seek ...`
+  - `f ...` -> `~/.config/stackops/scripts/wrap_stackops fire ...`
+  - `t ...` -> `~/.config/stackops/scripts/wrap_stackops terminal ...`
+  - `s ...` -> `~/.config/stackops/scripts/wrap_stackops seek ...`
 
 The current schema key is `layoutTabs`. There is no alternate `tabs` field in the typed definitions.
 
@@ -38,13 +38,13 @@ The current schema key is `layoutTabs`. There is no alternate `tabs` field in th
 | Helper | Purpose |
 | --- | --- |
 | `get_fire_tab_using_uv()` | Generates Python source from a callable, writes a temporary script, and returns the tab config plus the generated file path |
-| `get_fire_tab_using_fire()` | Builds a `wrap_mcfg fire ...` command for an importable callable |
+| `get_fire_tab_using_fire()` | Builds a `wrap_stackops fire ...` command for an importable callable |
 | `make_layout_from_functions()` | Builds a `LayoutConfig` from functions plus any extra tabs you want to append |
 
 `make_layout_from_functions()` accepts both launch styles through `method`:
 
 - `"script"` to execute generated Python through `uv`
-- `"fire"` to use the `wrap_mcfg fire` entrypoint
+- `"fire"` to use the `wrap_stackops fire` entrypoint
 
 Its `flags` parameter is passed through to the selected launch mode as either `uv_run_flags` or `fire_flags`.
 

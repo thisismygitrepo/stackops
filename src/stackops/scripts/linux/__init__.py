@@ -1,1 +1,1 @@
-WRAP_MCFG_PATH_REFERENCE = "wrap_mcfg"
+WRAP_STACKOPS_PATH_REFERENCE = "wrap_stackops"

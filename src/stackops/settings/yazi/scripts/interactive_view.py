@@ -57,7 +57,7 @@ def build_command(target_path: Path) -> list[str]:
         case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
             return build_database_command(target_path=target_path)
         case suffix if suffix in VISIDATA_SUFFIXES:
-            return [str(Path.home() / ".config/stackops/scripts/wrap_mcfg"), "croshell", "-b", "v", str(target_path)]
+            return [str(Path.home() / ".config/stackops/scripts/wrap_stackops"), "croshell", "-b", "v", str(target_path)]
         case _:
             raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")
 

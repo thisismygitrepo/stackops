@@ -12,7 +12,7 @@ from stackops.utils.path_reference import get_path_reference_path
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 SRC_ROOT = REPO_ROOT / "src"
-ROOT_MODULE = "stackops.scripts.python.mcfg_entry"
+ROOT_MODULE = "stackops.scripts.python.stackops_entry"
 ROOT_FACTORY = "get_app"
 DEFAULT_OUTPUT_PATH = get_path_reference_path(
     module=graph_assets,
@@ -121,7 +121,7 @@ def build_cli_graph() -> dict[str, Any]:
 
     root_node: dict[str, Any] = {
         "kind": "root",
-        "name": "mcfg",
+        "name": "stackops",
         "fullPath": "",
         "shortPath": "",
         "help": root_model.app_config.get("help") or "StackOps CLI",
@@ -171,7 +171,7 @@ def build_cli_graph() -> dict[str, Any]:
             "notes": [
                 "Graph derived from static source inspection of Typer app factories and lazy wrapper dispatchers.",
                 "Aliases are recorded on each node with hidden flags; no standalone alias nodes.",
-                "fullPath and shortPath are root-relative command strings, excluding the 'mcfg' entry token.",
+                "fullPath and shortPath are root-relative command strings, excluding the 'stackops' entry token.",
                 "Signature objects preserve raw lines while parsing Annotated/Option/Argument metadata into structured parameters.",
             ],
         },

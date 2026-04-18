@@ -57,7 +57,7 @@ def test_build_cli_graph_returns_root_payload() -> None:
 
     assert payload["schema"]["version"] == "1.0"
     assert root["kind"] == "root"
-    assert root["name"] == "mcfg"
+    assert root["name"] == "stackops"
     assert root["source"]["module"] == target.ROOT_MODULE
     assert isinstance(root["children"], list)
     assert len(root["children"]) > 0

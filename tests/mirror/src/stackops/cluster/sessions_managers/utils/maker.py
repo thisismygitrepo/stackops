@@ -106,7 +106,7 @@ def test_get_fire_tab_using_fire_builds_linux_command(
     )
 
     assert tab_config == {
-        "command": "/config/scripts/wrap_mcfg fire --trace work/tool.py sample_fn ",
+        "command": "/config/scripts/wrap_stackops fire --trace work/tool.py sample_fn ",
         "startDir": "/work/app",
         "tabName": "sample_fn",
         "tabWeight": 2,
