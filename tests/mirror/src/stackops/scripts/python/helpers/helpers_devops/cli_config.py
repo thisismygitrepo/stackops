@@ -50,7 +50,7 @@ def test_copy_assets_dispatches_requested_groups(monkeypatch: pytest.MonkeyPatch
     assert calls == ["scripts", "settings", "scripts", "settings"]
 
 
-def test_init_reads_linux_init_script_from_resolved_reference(
+def test_dump_config_reads_linux_init_script_from_resolved_reference(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -60,7 +60,7 @@ def test_init_reads_linux_init_script_from_resolved_reference(
     monkeypatch.setattr(platform, "system", lambda: "Linux")
     monkeypatch.setattr(cli_config_module, "get_path_reference_path", lambda **_kwargs: script_path)
 
-    cli_config_module.init(which="init", run=False)
+    cli_config_module.dump_config(which="init", run=False)
 
     captured = capsys.readouterr()
 
@@ -73,8 +73,7 @@ def test_get_app_help_lists_primary_subcommands() -> None:
     result = runner.invoke(cli_config_module.get_app(), ["--help"])
 
     assert result.exit_code == 0
-    assert "config" in result.stdout
-    assert "init" in result.stdout
+    assert "Define and manage configurations" not in result.stdout
     assert "copy-assets" in result.stdout
     assert "dump" in result.stdout
     assert "terminal" in result.stdout

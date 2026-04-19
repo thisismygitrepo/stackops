@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypeAlias
 
 import typer
 
@@ -12,27 +12,25 @@ from stackops.profile import create_links_export
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.ve import read_default_cloud_config
 
+InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
+DumpConfigKind: TypeAlias = Literal["ve", "init", "ia", "live"]
+
 
 def config() -> None:
-    """🤖 <m> INTERACTIVE configuration of machine."""
+    """🤖 <I> interactive configuration of machine."""
     from stackops.scripts.python.helpers.helpers_devops.interactive import main
 
     main()
 
 
-def init(
-    which: Annotated[
-        Literal["init", "ia", "live"], typer.Argument(..., help="Comma-separated list of script names to run all initialization scripts.")
-    ] = "init",
-    run: Annotated[bool, typer.Option("--run/--no-run", "-r/-nr", help="Run the script after displaying it.")] = False,
-) -> None:
+def _read_init_script(which: InitScriptKind) -> str:
     import platform
 
-    script = ""
-    if platform.system() == "Linux" or platform.system() == "Darwin":
+    platform_name = platform.system()
+    if platform_name == "Linux" or platform_name == "Darwin":
         match which:
             case "init":
-                if platform.system() == "Darwin":
+                if platform_name == "Darwin":
                     init_path = get_path_reference_path(
                         module=zsh_shell_assets,
                         path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,
@@ -42,45 +40,43 @@ def init(
                         module=bash_shell_assets,
                         path_reference=bash_shell_assets.INIT_PATH_REFERENCE,
                     )
-                script = init_path.read_text(encoding="utf-8")
+                return init_path.read_text(encoding="utf-8")
             case "ia":
                 import stackops.setup_linux.web_shortcuts as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
+                return script_path.read_text(encoding="utf-8")
             case "live":
                 import stackops.setup_linux.web_shortcuts as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
-            case _:
-                typer.echo("Unsupported shell script for Linux.")
-                raise typer.Exit(code=1)
+                return script_path.read_text(encoding="utf-8")
 
-    elif platform.system() == "Windows":
+    elif platform_name == "Windows":
         match which:
             case "init":
                 init_path = get_path_reference_path(
                     module=pwsh_shell_assets,
                     path_reference=pwsh_shell_assets.INIT_PATH_REFERENCE,
                 )
-                script = init_path.read_text(encoding="utf-8")
+                return init_path.read_text(encoding="utf-8")
             case "ia":
                 import stackops.setup_windows.web_shortcuts as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
+                return script_path.read_text(encoding="utf-8")
             case "live":
                 import stackops.setup_windows.web_shortcuts as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
-            case _:
-                typer.echo("Unsupported shell script for Windows.")
-                raise typer.Exit(code=1)
+                return script_path.read_text(encoding="utf-8")
     else:
         typer.echo("Unsupported platform for init scripts.")
         raise typer.Exit(code=1)
+
+
+def _dump_init_script(which: InitScriptKind, run: bool) -> None:
+    script = _read_init_script(which=which)
     if run:
         from stackops.utils.code import exit_then_run_shell_script
 
@@ -89,11 +85,21 @@ def init(
         print(script)
 
 
-def dump_config(which: Annotated[Literal["ve"], typer.Option(..., "--which", "-w", help="Which config to dump")]) -> None:
-    """🔗 Dump example configuration files."""
+def dump_config(
+    which: Annotated[DumpConfigKind, typer.Option(..., "--which", "-w", help="Which config or init script to dump")],
+    run: Annotated[bool, typer.Option("--run/--no-run", "-r/-nr", help="Run an init script after displaying it.")] = False,
+) -> None:
+    """🔗 Dump example configuration files and init scripts."""
     match which:
         case "ve":
+            if run:
+                msg = typer.style("Error: ", fg=typer.colors.RED) + "--run is only valid when dumping init scripts."
+                typer.echo(msg)
+                raise typer.Exit(code=1)
             _dump_ve_config()
+            return
+        case "init" | "ia" | "live":
+            _dump_init_script(which=which, run=run)
             return
     msg = typer.style("Error: ", fg=typer.colors.RED) + f"Unknown config type: {which}"
     typer.echo(msg)
@@ -156,12 +162,6 @@ def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all",
 def get_app() -> typer.Typer:
     config_apps = typer.Typer(help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
 
-    config_apps.command("config", no_args_is_help=False, help="🤖 <m> Interactive configuration of machine.")(config)
-    config_apps.command("m", no_args_is_help=False, help="Interactive configuration of machine.", hidden=True)(config)
-
-    config_apps.command("init", no_args_is_help=False, help="🦐 <I> Define and manage configurations.")(init)
-    config_apps.command("I", no_args_is_help=False, help="Define and manage configurations.", hidden=True)(init)
-
     config_apps.command("sync", no_args_is_help=True, help="🔄 <s> Sync dotfiles.")(create_links_export.main_from_parser)
     config_apps.command("s", no_args_is_help=True, help="Sync dotfiles.", hidden=True)(create_links_export.main_from_parser)
 
@@ -182,10 +182,13 @@ def get_app() -> typer.Typer:
     config_apps.add_typer(cli_config_terminal.get_app(), name="terminal", help="🐚 <t> Configure your terminal profile.")
     config_apps.add_typer(cli_config_terminal.get_app(), name="t", help="🐚 <t> Configure your terminal profile.", hidden=True)
 
+    config_apps.command("interactive", no_args_is_help=False, help="🤖 <I> Interactive configuration of machine.")(config)
+    config_apps.command("I", no_args_is_help=False, help="Interactive configuration of machine.", hidden=True)(config)
+
     config_apps.command("copy-assets", no_args_is_help=True, help="📋 <c> Copy asset files from library to machine.", hidden=False)(copy_assets)
     config_apps.command("c", no_args_is_help=True, help="Copy asset files from library to machine.", hidden=True)(copy_assets)
 
-    config_apps.command("dump", no_args_is_help=True, help="📦 <d> Dump example configuration files.")(dump_config)
-    config_apps.command("d", no_args_is_help=True, help="Dump example configuration files.", hidden=True)(dump_config)
+    config_apps.command("dump", no_args_is_help=True, help="📦 <d> Dump example configuration files and init scripts.")(dump_config)
+    config_apps.command("d", no_args_is_help=True, help="Dump example configuration files and init scripts.", hidden=True)(dump_config)
 
     return config_apps
