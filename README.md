@@ -1,35 +1,131 @@
-# 🗜 StackOps
+<div align="center">
+
+<h1>🗜 StackOps</h1>
+
+<strong>Bootstrap and maintain a development machine from one CLI.</strong>
+
+<p>
+  <a href="https://thisismygitrepo.github.io/stackops/"><img alt="Docs" src="https://img.shields.io/badge/docs-online-2f6f6f"></a>
+  <a href="https://pypi.org/project/stackops/"><img alt="PyPI package" src="https://img.shields.io/pypi/v/stackops?color=2f6f6f"></a>
+  <img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB">
+  <img alt="Installed with uv" src="https://img.shields.io/badge/install-uv-f05d23">
+</p>
+
+</div>
 
 StackOps is a cross-platform CLI for bootstrapping and maintaining a development machine. It groups package installation, config syncing, data syncing, session automation, and helper utilities into one install.
 
 See the [online docs](https://thisismygitrepo.github.io/stackops/) for full usage and reference material.
 
-## Install with `uv`
+## Install
 
-### Linux / macOS
+Choose your platform and run the commands in order.
+
+<details open>
+<summary><strong>macOS</strong></summary>
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install --upgrade --python 3.14 stackops
+stackops --help
 ```
 
-### Windows
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
 
 ```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
 uv tool install --upgrade --python 3.14 stackops
+stackops --help
 ```
 
+</details>
 
-## Quick init
+<details>
+<summary><strong>Linux</strong></summary>
 
-```shell
-devops install --group sysabc  # Install (if missing) package manager (apt, brew, winget)
-devops config copy-assets all  # copy config files to machine
-devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all  # link config files
-devops config terminal config-shell --which default  # add alias to shell
-devops install --group termabc  # install the basic terminal cli's
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install --upgrade --python 3.14 stackops
+stackops --help
 ```
+
+</details>
+
+If `uv` is not found after installing it, open a new terminal and run the install command again.
+
+## Quick Init
+
+Run these once StackOps is installed:
+
+<details open>
+<summary><strong>macOS / Linux</strong></summary>
+
+```bash
+devops install --group sysabc
+devops config copy-assets all
+devops config sync down \
+  --sensitivity public \
+  --method copy \
+  --on-conflict overwrite-default-path \
+  --which all
+devops config terminal config-shell --which default
+devops install --group termabc
+```
+
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
+
+```powershell
+devops install --group sysabc
+devops config copy-assets all
+devops config sync down `
+  --sensitivity public `
+  --method copy `
+  --on-conflict overwrite-default-path `
+  --which all
+devops config terminal config-shell --which default
+devops install --group termabc
+```
+
+</details>
+
+## CLI Map
+
+<table>
+  <thead>
+    <tr>
+      <th>Command</th>
+      <th>Use it for</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>devops</code></td>
+      <td>Machine bootstrap, package groups, and config workflows.</td>
+    </tr>
+    <tr>
+      <td><code>stackops</code></td>
+      <td>Main StackOps entrypoint and help surface.</td>
+    </tr>
+    <tr>
+      <td><code>cloud</code></td>
+      <td>Cloud sync and remote storage helpers.</td>
+    </tr>
+    <tr>
+      <td><code>terminal</code></td>
+      <td>Terminal and shell configuration helpers.</td>
+    </tr>
+    <tr>
+      <td><code>agents</code></td>
+      <td>Agent setup and automation commands.</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Author
 
