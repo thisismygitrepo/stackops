@@ -12,56 +12,25 @@ Current `devops config --help` exposes:
 
 | Command | Description |
 |---------|-------------|
-| `config` | Run the interactive machine configuration flow |
-| `init` | Print or run packaged init/setup scripts |
+| `interactive` | Run the interactive machine configuration flow |
 | `sync` | Apply dotfile mappings with `symlink` or `copy` |
 | `register` | Register a file or directory into the user mapper |
 | `edit` | Open the library or user `mapper.toml` |
 | `export-dotfiles` | Export `~/dotfiles` for machine migration |
 | `import-dotfiles` | Import an exported dotfiles archive |
 | `copy-assets` | Copy packaged scripts and settings onto the machine |
-| `dump` | Write example configuration files such as `.ve.example.yaml` |
+| `dump` | Write example configuration files or print/run packaged init/setup scripts |
 | `terminal` | Shell profile and terminal theme commands |
 
-### config
+### interactive
 
 Run the guided machine configuration flow.
 
 ```bash
-devops config config
+devops config interactive
 ```
 
 This launches the interactive setup helper instead of performing a direct install.
-
-### init
-
-Print one of the packaged init/setup scripts, or execute it immediately with `--run`.
-
-```bash
-devops config init [OPTIONS] [WHICH]
-```
-
-Supported `WHICH` values from current help:
-
-| Value | Meaning |
-|-------|---------|
-| `init` | Print the shell init script for the current platform |
-| `ia` | Print the interactive setup bootstrap script |
-| `live` | Print the live-from-GitHub bootstrap script |
-
-Key option:
-
-| Option | Description |
-|--------|-------------|
-| `--run`, `-r` | Run the selected script instead of printing it |
-
-Examples:
-
-```bash
-devops config init
-devops config init ia
-devops config init live --run
-```
 
 ### sync
 
@@ -181,13 +150,29 @@ devops config copy-assets all
 
 ### dump
 
-Write example configuration files into the current directory.
+Write example configuration files into the current directory, or print one of the packaged init/setup scripts.
 
 ```bash
 devops config dump --which ve
+devops config dump --which init
+devops config dump --which ia
+devops config dump --which live --run
 ```
 
-At the moment, `ve` writes `.ve.example.yaml` in the current working directory.
+Supported `--which` values from current help:
+
+| Value | Meaning |
+|-------|---------|
+| `ve` | Write `.ve.example.yaml` in the current working directory |
+| `init` | Print the shell init script for the current platform |
+| `ia` | Print the interactive setup bootstrap script |
+| `live` | Print the live-from-GitHub bootstrap script |
+
+Key option:
+
+| Option | Description |
+|--------|-------------|
+| `--run`, `-r` | Run the selected init/setup script instead of printing it |
 
 ### terminal
 

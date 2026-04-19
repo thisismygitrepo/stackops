@@ -93,8 +93,7 @@ Use `devops data sync --help` when you want backup-style synchronization of data
 
 Beyond sync, register, edit, export, and import, `devops config --help` also lists:
 
-- `config`
-- `init`
+- `interactive`
 - `copy-assets`
 - `dump`
 - `terminal`

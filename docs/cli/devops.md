@@ -64,8 +64,7 @@ These are the child commands exposed by the current live help.
 
 `config`:
 
-- `config`
-- `init`
+- `interactive`
 - `sync`
 - `register`
 - `edit`

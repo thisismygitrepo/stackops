@@ -2005,178 +2005,6 @@
             "children": [
               {
                 "kind": "command",
-                "name": "config",
-                "fullPath": "devops config config",
-                "shortPath": "d c m",
-                "help": "🤖 <m> Interactive configuration of machine.",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "config"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def config() -> None:",
-                    "    \"\"\"🤖 <m> INTERACTIVE configuration of machine.\"\"\"",
-                    "    from stackops.scripts.python.helpers.helpers_devops.interactive import main",
-                    "",
-                    "    main()"
-                  ],
-                  "name": "config",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🤖 <m> INTERACTIVE configuration of machine.",
-                "aliases": [
-                  {
-                    "name": "m",
-                    "hidden": true,
-                    "help": "Interactive configuration of machine."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "init",
-                "fullPath": "devops config init",
-                "shortPath": "d c I",
-                "help": "🦐 <I> Define and manage configurations.",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
-                  "callable": "init"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def init(",
-                    "    which: Annotated[",
-                    "        Literal[\"init\", \"ia\", \"live\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
-                    "    ] = \"init\",",
-                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
-                    ") -> None:",
-                    "    import platform",
-                    "",
-                    "    script = \"\"",
-                    "    if platform.system() == \"Linux\" or platform.system() == \"Darwin\":",
-                    "        match which:",
-                    "            case \"init\":",
-                    "                if platform.system() == \"Darwin\":",
-                    "                    init_path = get_path_reference_path(",
-                    "                        module=zsh_shell_assets,",
-                    "                        path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,",
-                    "                    )",
-                    "                else:",
-                    "                    init_path = get_path_reference_path(",
-                    "                        module=bash_shell_assets,",
-                    "                        path_reference=bash_shell_assets.INIT_PATH_REFERENCE,",
-                    "                    )",
-                    "                script = init_path.read_text(encoding=\"utf-8\")",
-                    "            case \"ia\":",
-                    "                import stackops.setup_linux.web_shortcuts as module",
-                    "",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case \"live\":",
-                    "                import stackops.setup_linux.web_shortcuts as module",
-                    "",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case _:",
-                    "                typer.echo(\"Unsupported shell script for Linux.\")",
-                    "                raise typer.Exit(code=1)",
-                    "",
-                    "    elif platform.system() == \"Windows\":",
-                    "        match which:",
-                    "            case \"init\":",
-                    "                init_path = get_path_reference_path(",
-                    "                    module=pwsh_shell_assets,",
-                    "                    path_reference=pwsh_shell_assets.INIT_PATH_REFERENCE,",
-                    "                )",
-                    "                script = init_path.read_text(encoding=\"utf-8\")",
-                    "            case \"ia\":",
-                    "                import stackops.setup_windows.web_shortcuts as module",
-                    "",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case \"live\":",
-                    "                import stackops.setup_windows.web_shortcuts as module",
-                    "",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case _:",
-                    "                typer.echo(\"Unsupported shell script for Windows.\")",
-                    "                raise typer.Exit(code=1)",
-                    "    else:",
-                    "        typer.echo(\"Unsupported platform for init scripts.\")",
-                    "        raise typer.Exit(code=1)",
-                    "    if run:",
-                    "        from stackops.utils.code import exit_then_run_shell_script",
-                    "",
-                    "        exit_then_run_shell_script(script, strict=True)",
-                    "    else:",
-                    "        print(script)"
-                  ],
-                  "name": "init",
-                  "parameters": [
-                    {
-                      "name": "which",
-                      "kind": "positional_or_keyword",
-                      "type": "Literal['init', 'ia', 'live']",
-                      "default": "init",
-                      "required": false,
-                      "annotation_raw": "Annotated[Literal['init', 'ia', 'live'], typer.Argument(..., help='Comma-separated list of script names to run all initialization scripts.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Comma-separated list of script names to run all initialization scripts.",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "run",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run the script after displaying it.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--run/--no-run",
-                          "-r/-nr"
-                        ],
-                        "long_flags": [
-                          "--run",
-                          "--no-run"
-                        ],
-                        "short_flags": [
-                          "-r",
-                          "-nr"
-                        ],
-                        "help": "Run the script after displaying it."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "aliases": [
-                  {
-                    "name": "I",
-                    "hidden": true,
-                    "help": "Define and manage configurations."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
                 "name": "sync",
                 "fullPath": "devops config sync",
                 "shortPath": "d c s",
@@ -3387,6 +3215,41 @@
               },
               {
                 "kind": "command",
+                "name": "interactive",
+                "fullPath": "devops config interactive",
+                "shortPath": "d c I",
+                "help": "🤖 <I> Interactive configuration of machine.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
+                  "callable": "config"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def config() -> None:",
+                    "    \"\"\"🤖 <I> interactive configuration of machine.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops.interactive import main",
+                    "",
+                    "    main()"
+                  ],
+                  "name": "config",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "🤖 <I> interactive configuration of machine.",
+                "aliases": [
+                  {
+                    "name": "I",
+                    "hidden": true,
+                    "help": "Interactive configuration of machine."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "copy-assets",
                 "fullPath": "devops config copy-assets",
                 "shortPath": "d c c",
@@ -3454,7 +3317,7 @@
                 "name": "dump",
                 "fullPath": "devops config dump",
                 "shortPath": "d c d",
-                "help": "📦 <d> Dump example configuration files.",
+                "help": "📦 <d> Dump example configuration files and init scripts.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
@@ -3462,11 +3325,21 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def dump_config(which: Annotated[Literal[\"ve\"], typer.Option(..., \"--which\", \"-w\", help=\"Which config to dump\")]) -> None:",
-                    "    \"\"\"🔗 Dump example configuration files.\"\"\"",
+                    "def dump_config(",
+                    "    which: Annotated[DumpConfigKind, typer.Option(..., \"--which\", \"-w\", help=\"Which config or init script to dump\")],",
+                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run an init script after displaying it.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"🔗 Dump example configuration files and init scripts.\"\"\"",
                     "    match which:",
                     "        case \"ve\":",
+                    "            if run:",
+                    "                msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"--run is only valid when dumping init scripts.\"",
+                    "                typer.echo(msg)",
+                    "                raise typer.Exit(code=1)",
                     "            _dump_ve_config()",
+                    "            return",
+                    "        case \"init\" | \"ia\" | \"live\":",
+                    "            _dump_init_script(which=which, run=run)",
                     "            return",
                     "    msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Unknown config type: {which}\"",
                     "    typer.echo(msg)"
@@ -3476,10 +3349,10 @@
                     {
                       "name": "which",
                       "kind": "positional_or_keyword",
-                      "type": "Literal['ve']",
+                      "type": "DumpConfigKind",
                       "default": null,
                       "required": true,
-                      "annotation_raw": "Annotated[Literal['ve'], typer.Option(..., '--which', '-w', help='Which config to dump')]",
+                      "annotation_raw": "Annotated[DumpConfigKind, typer.Option(..., '--which', '-w', help='Which config or init script to dump')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3492,8 +3365,32 @@
                         "short_flags": [
                           "-w"
                         ],
-                        "help": "Which config to dump",
+                        "help": "Which config or init script to dump",
                         "default": "..."
+                      }
+                    },
+                    {
+                      "name": "run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run an init script after displaying it.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--run/--no-run",
+                          "-r/-nr"
+                        ],
+                        "long_flags": [
+                          "--run",
+                          "--no-run"
+                        ],
+                        "short_flags": [
+                          "-r",
+                          "-nr"
+                        ],
+                        "help": "Run an init script after displaying it."
                       }
                     }
                   ],
@@ -3502,12 +3399,12 @@
                 "typer": {
                   "no_args_is_help": true
                 },
-                "doc": "🔗 Dump example configuration files.",
+                "doc": "🔗 Dump example configuration files and init scripts.",
                 "aliases": [
                   {
                     "name": "d",
                     "hidden": true,
-                    "help": "Dump example configuration files."
+                    "help": "Dump example configuration files and init scripts."
                   }
                 ]
               }

@@ -26,4 +26,4 @@ function p { wrap_in_shell_script seek @args }
 
 Write-Host "stackops command aliases are now defined in this PowerShell session."
 
-d config config
+d config interactive
