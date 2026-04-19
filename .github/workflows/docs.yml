@@ -13,9 +13,6 @@ on:
       - '.github/workflows/docs.yml'
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 permissions:
   contents: read
   pages: write
@@ -28,6 +25,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PAGES_ADMIN_TOKEN: ${{ secrets.PAGES_ADMIN_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -42,34 +41,49 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Check GitHub Pages status
+        id: pages-status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1; then
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Enable and configure GitHub Pages
+        if: ${{ steps.pages-status.outputs.enabled == 'false' && env.PAGES_ADMIN_TOKEN != '' }}
+        uses: actions/configure-pages@v6.0.0
+        with:
+          token: ${{ env.PAGES_ADMIN_TOKEN }}
+          enablement: true
 
       - name: Configure GitHub Pages
+        if: ${{ steps.pages-status.outputs.enabled == 'true' }}
         uses: actions/configure-pages@v6.0.0
 
+      - name: Explain missing GitHub Pages setup
+        if: ${{ steps.pages-status.outputs.enabled == 'false' && env.PAGES_ADMIN_TOKEN == '' }}
+        run: |
+          echo "GitHub Pages is not enabled for this repository." >&2
+          echo "Enable it in Settings > Pages > Build and deployment > Source > GitHub Actions." >&2
+          echo "Alternatively, add a PAGES_ADMIN_TOKEN repository secret with Pages write and Administration write permissions." >&2
+          exit 1
+
       - name: Install dependencies
-        run: uv sync --group dev
+        run: uv sync --group dev --frozen
 
       - name: Build site
-        run: uv run python -m stackops.scripts.python.helpers.helpers_devops.docs_changelog && rm -rf site && uv run zensical build
-
-      - name: Archive Pages artifact
-        run: |
-          tar \
-            --dereference --hard-dereference \
-            --directory site \
-            -cvf "${RUNNER_TEMP}/github-pages.tar" \
-            --exclude=.git \
-            --exclude=.github \
-            --exclude=".[^/]*" \
-            .
+        run: rm -rf site && uv run zensical build
 
       - name: Upload Pages artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-pages-artifact@v4
         with:
-          name: github-pages
-          path: ${{ runner.temp }}/github-pages.tar
-          retention-days: 1
-          if-no-files-found: error
+          path: site
 
   deploy:
     runs-on: ubuntu-latest

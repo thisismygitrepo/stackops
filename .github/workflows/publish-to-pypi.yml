@@ -7,6 +7,9 @@ on:
     branches: [ main ]
     # For testing the workflow on PRs, but won't publish
 
+permissions:
+  contents: read
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
@@ -15,7 +18,7 @@ jobs:
       current-version: ${{ steps.check-version.outputs.current-version }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0  # Fetch full history to compare versions
 
@@ -51,17 +54,22 @@ jobs:
     needs: check-version
     runs-on: ubuntu-latest
     if: needs.check-version.outputs.version-changed == 'true' && github.event_name == 'push'
+    permissions:
+      contents: write
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
+
+    - name: Setup Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v7
       with:
         enable-cache: true
-
-    # - name: Set up Python
 
     - name: Clean previous build artifacts
       run: |
@@ -82,8 +90,12 @@ jobs:
       env:
         PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
       run: |
+        if [ -z "$PYPI_TOKEN" ]; then
+          echo "PYPI_TOKEN repository secret is required for publishing." >&2
+          exit 1
+        fi
         echo "🚀 Publishing to PyPI..."
-        uv publish --token $PYPI_TOKEN
+        uv publish --token "$PYPI_TOKEN"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -118,10 +130,15 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
+
+    - name: Setup Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v7
       with:
         enable-cache: true
 
