@@ -21,8 +21,13 @@ See the [online docs](https://thisismygitrepo.github.io/stackops/) for full usag
 
 Choose your platform and run the commands in order.
 
-<details open>
-<summary><strong>macOS</strong></summary>
+<p>
+  <a href="#install-linux"><kbd>Linux</kbd></a>
+  <a href="#install-macos"><kbd>macOS</kbd></a>
+  <a href="#install-windows-powershell"><kbd>Windows PowerShell</kbd></a>
+</p>
+
+<h3 id="install-linux">Linux</h3>
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -30,10 +35,15 @@ uv tool install --upgrade --python 3.14 stackops
 stackops --help
 ```
 
-</details>
+<h3 id="install-macos">macOS</h3>
 
-<details>
-<summary><strong>Windows PowerShell</strong></summary>
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install --upgrade --python 3.14 stackops
+stackops --help
+```
+
+<h3 id="install-windows-powershell">Windows PowerShell</h3>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
@@ -41,27 +51,19 @@ uv tool install --upgrade --python 3.14 stackops
 stackops --help
 ```
 
-</details>
-
-<details>
-<summary><strong>Linux</strong></summary>
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv tool install --upgrade --python 3.14 stackops
-stackops --help
-```
-
-</details>
-
 If `uv` is not found after installing it, open a new terminal and run the install command again.
 
 ## Quick Init
 
 Run these once StackOps is installed:
 
-<details open>
-<summary><strong>macOS / Linux</strong></summary>
+<p>
+  <a href="#quick-init-linux"><kbd>Linux</kbd></a>
+  <a href="#quick-init-macos"><kbd>macOS</kbd></a>
+  <a href="#quick-init-windows-powershell"><kbd>Windows PowerShell</kbd></a>
+</p>
+
+<h3 id="quick-init-linux">Linux</h3>
 
 ```bash
 devops install --group sysabc
@@ -75,10 +77,21 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-</details>
+<h3 id="quick-init-macos">macOS</h3>
 
-<details>
-<summary><strong>Windows PowerShell</strong></summary>
+```bash
+devops install --group sysabc
+devops config copy-assets all
+devops config sync down \
+  --sensitivity public \
+  --method copy \
+  --on-conflict overwrite-default-path \
+  --which all
+devops config terminal config-shell --which default
+devops install --group termabc
+```
+
+<h3 id="quick-init-windows-powershell">Windows PowerShell</h3>
 
 ```powershell
 devops install --group sysabc
@@ -91,8 +104,6 @@ devops config sync down `
 devops config terminal config-shell --which default
 devops install --group termabc
 ```
-
-</details>
 
 ## CLI Map
 

@@ -14,48 +14,71 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     outputs:
-      version-changed: ${{ steps.check-version.outputs.changed }}
+      publish-needed: ${{ steps.check-version.outputs.publish-needed }}
+      package-name: ${{ steps.check-version.outputs.package-name }}
       current-version: ${{ steps.check-version.outputs.current-version }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
-      with:
-        fetch-depth: 0  # Fetch full history to compare versions
 
-    - name: Check if version changed
+    - name: Setup Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: true
+
+    - name: Check if current version needs publishing
       id: check-version
       run: |
-        # Get current version from pyproject.toml
-        CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
-        echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-        
-        # Check if this is the first commit or if we should compare versions
-        if git rev-parse HEAD~1 >/dev/null 2>&1; then
-          # Get previous version from the previous commit
-          PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | grep '^version = ' | sed 's/version = "\(.*\)"/\1/' || echo "")
-          
-          echo "Current version: $CURRENT_VERSION"
-          echo "Previous version: $PREVIOUS_VERSION"
-          
-          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ] && [ -n "$PREVIOUS_VERSION" ]; then
-            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "Version unchanged: $CURRENT_VERSION"
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-        else
-          # First commit, assume we want to publish
-          echo "First commit, will publish version: $CURRENT_VERSION"
-          echo "changed=true" >> $GITHUB_OUTPUT
-        fi
+        uv run --no-sync python - <<'PY'
+        import json
+        import os
+        import tomllib
+        import urllib.error
+        import urllib.parse
+        import urllib.request
+        from pathlib import Path
+
+        output_path = Path(os.environ["GITHUB_OUTPUT"])
+        pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+        project = pyproject["project"]
+        package_name = project["name"]
+        current_version = project["version"]
+
+        package_url = urllib.parse.quote(package_name, safe="")
+        pypi_url = f"""https://pypi.org/pypi/{package_url}/json"""
+
+        try:
+            with urllib.request.urlopen(pypi_url, timeout=20) as response:
+                releases = json.load(response)["releases"]
+                publish_needed = current_version not in releases
+        except urllib.error.HTTPError as error:
+            if error.code != 404:
+                raise
+            publish_needed = True
+
+        with output_path.open("a") as output_file:
+            output_file.write(f"""package-name={package_name}\n""")
+            output_file.write(f"""current-version={current_version}\n""")
+            output_file.write(f"""publish-needed={str(publish_needed).lower()}\n""")
+
+        if publish_needed:
+            print(f"""{package_name} {current_version} is not on PyPI yet.""")
+        else:
+            print(f"""{package_name} {current_version} is already on PyPI.""")
+        PY
 
   build-and-publish:
     needs: check-version
     runs-on: ubuntu-latest
-    if: needs.check-version.outputs.version-changed == 'true' && github.event_name == 'push'
+    if: needs.check-version.outputs.publish-needed == 'true' && github.event_name == 'push'
     permissions:
       contents: write
+      id-token: write
     
     steps:
     - name: Checkout code
@@ -90,12 +113,13 @@ jobs:
       env:
         PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
       run: |
-        if [ -z "$PYPI_TOKEN" ]; then
-          echo "PYPI_TOKEN repository secret is required for publishing." >&2
-          exit 1
+        if [ -n "$PYPI_TOKEN" ]; then
+          echo "🚀 Publishing to PyPI with PYPI_TOKEN..."
+          uv publish --token "$PYPI_TOKEN"
+        else
+          echo "🚀 Publishing to PyPI with trusted publishing..."
+          uv publish --trusted-publishing always
         fi
-        echo "🚀 Publishing to PyPI..."
-        uv publish --token "$PYPI_TOKEN"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -109,12 +133,12 @@ jobs:
           
           Install with:
           ```bash
-          pip install stackops==${{ needs.check-version.outputs.current-version }}
+          pip install ${{ needs.check-version.outputs.package-name }}==${{ needs.check-version.outputs.current-version }}
           ```
           
           Or with uv:
           ```bash
-          uv add stackops==${{ needs.check-version.outputs.current-version }}
+          uv add ${{ needs.check-version.outputs.package-name }}==${{ needs.check-version.outputs.current-version }}
           ```
         files: |
           dist/*
@@ -126,7 +150,7 @@ jobs:
   test-build:
     needs: check-version
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && needs.check-version.outputs.version-changed == 'false')
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && needs.check-version.outputs.publish-needed == 'false')
     
     steps:
     - name: Checkout code
