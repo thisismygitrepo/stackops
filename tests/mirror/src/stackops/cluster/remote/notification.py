@@ -1,4 +1,4 @@
-from __future__ import annotations
+
 
 from stackops.cluster.remote.models import EmailParams
 from stackops.cluster.remote.notification import render_notification_block

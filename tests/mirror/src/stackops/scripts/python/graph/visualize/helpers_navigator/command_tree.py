@@ -1,4 +1,4 @@
-from __future__ import annotations
+
 
 from pytest import MonkeyPatch
 

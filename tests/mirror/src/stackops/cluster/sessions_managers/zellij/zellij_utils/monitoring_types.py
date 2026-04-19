@@ -1,4 +1,4 @@
-from __future__ import annotations
+
 
 from stackops.cluster.sessions_managers.zellij.zellij_utils import monitoring_types as subject
 

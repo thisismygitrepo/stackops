@@ -3,7 +3,7 @@
 ## Good first commands (install System ABC's, configure cli's & init the shell profile)
 
 
-You interactively start with `devops self config`, which gives selection menu:
+You interactively start with `devops config config`, which gives selection menu:
 
 ![Quick Start walkthrough](assets/quick_start.png)
 

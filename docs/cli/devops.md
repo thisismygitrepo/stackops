@@ -64,6 +64,8 @@ These are the child commands exposed by the current live help.
 
 `config`:
 
+- `config`
+- `init`
 - `sync`
 - `register`
 - `edit`
@@ -84,9 +86,7 @@ These are the child commands exposed by the current live help.
 - `install`
 - `update`
 - `status`
-- `config`
 - `security`
-- `init`
 - `explore`
 - `readme`
 - `docs`

@@ -6,7 +6,7 @@ Self management commands.
 devops self [SUBCOMMAND] [ARGS]...
 ```
 
-Manage stackops itself: upgrades, bootstrap scripts, install flows, docs preview, CLI graph exploration, and repo-local developer utilities.
+Manage stackops itself: upgrades, install flows, docs preview, CLI graph exploration, and repo-local developer utilities.
 
 Current `devops self --help` exposes:
 
@@ -15,9 +15,7 @@ Current `devops self --help` exposes:
 | `install` | Install stackops locally, optionally from a development checkout | Always |
 | `update` | Upgrade stackops, refresh packaged assets, and optionally relink public configs | Always |
 | `status` | Inspect machine, shell, repo, SSH, config, app, or backup state | Always |
-| `config` | Run the interactive machine configuration flow | Always |
 | `security` | Run security and installer-audit helpers | Always |
-| `init` | Print or run packaged init/setup scripts | Always |
 | `explore` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
 | `readme` | Fetch and render the project README in the terminal | Always |
 | `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/stackops` exists |
@@ -53,36 +51,6 @@ Examples:
 ```bash
 devops self update
 devops self update --link-public-configs
-```
-
-### init
-
-Print one of the packaged init/setup scripts, or execute it immediately with `--run`.
-
-```bash
-devops self init [OPTIONS] [WHICH]
-```
-
-Supported `WHICH` values from current help:
-
-| Value | Meaning |
-|-------|---------|
-| `init` | Print the shell init script for the current platform |
-| `ia` | Print the interactive setup bootstrap script |
-| `live` | Print the live-from-GitHub bootstrap script |
-
-Key option:
-
-| Option | Description |
-|--------|-------------|
-| `--run`, `-r` | Run the selected script instead of printing it |
-
-Examples:
-
-```bash
-devops self init
-devops self init ia
-devops self init live --run
 ```
 
 ### status
@@ -132,16 +100,6 @@ Examples:
 devops self install
 devops self install --dev
 ```
-
-### config
-
-Run the interactive machine configuration flow.
-
-```bash
-devops self config
-```
-
-This launches the guided setup helper instead of performing a direct install.
 
 ### build-installer
 

@@ -1,6 +1,6 @@
 """Generated mock layouts for experimenting with sessions commands."""
 
-from __future__ import annotations
+
 
 import base64
 from dataclasses import dataclass

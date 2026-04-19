@@ -1,4 +1,4 @@
-from __future__ import annotations
+
 
 from stackops.scripts.python.helpers.helpers_sessions import _zellij_backend_focus as focus_backend
 

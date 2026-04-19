@@ -1,6 +1,6 @@
 # pyright: reportPrivateUsage=false
 
-from __future__ import annotations
+
 
 from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path

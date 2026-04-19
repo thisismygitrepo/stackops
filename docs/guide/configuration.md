@@ -8,6 +8,8 @@ Configuration and dotfiles workflows now live under `devops config ...`.
 
 Use the `devops config` command group for machine-facing configuration tasks such as:
 
+- guided machine setup
+- packaged init/setup script output
 - shell profile setup
 - dotfiles registration and synchronization
 - theme selection for supported tools
@@ -75,7 +77,7 @@ For machine migration or archive-style workflows, use:
 - `devops config export-dotfiles`
 - `devops config import-dotfiles`
 
-These commands replace the older init, push, backup, and restore flow.
+These commands replace the older push, backup, and restore flow.
 
 ---
 
@@ -91,6 +93,8 @@ Use `devops data sync --help` when you want backup-style synchronization of data
 
 Beyond sync, register, edit, export, and import, `devops config --help` also lists:
 
+- `config`
+- `init`
 - `copy-assets`
 - `dump`
 - `terminal`

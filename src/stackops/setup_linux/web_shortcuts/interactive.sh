@@ -22,4 +22,4 @@ alias s='wrap_in_shell_script seek'
 
 echo "stackops command aliases are now defined in this shell session."
 
-d self config
+d config config

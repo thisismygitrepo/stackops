@@ -6,12 +6,14 @@ Configuration management.
 devops config [SUBCOMMAND] [ARGS]...
 ```
 
-Manage dotfiles, packaged assets, example config generation, and terminal profile/theme setup.
+Manage guided setup, init scripts, dotfiles, packaged assets, example config generation, and terminal profile/theme setup.
 
 Current `devops config --help` exposes:
 
 | Command | Description |
 |---------|-------------|
+| `config` | Run the interactive machine configuration flow |
+| `init` | Print or run packaged init/setup scripts |
 | `sync` | Apply dotfile mappings with `symlink` or `copy` |
 | `register` | Register a file or directory into the user mapper |
 | `edit` | Open the library or user `mapper.toml` |
@@ -20,6 +22,46 @@ Current `devops config --help` exposes:
 | `copy-assets` | Copy packaged scripts and settings onto the machine |
 | `dump` | Write example configuration files such as `.ve.example.yaml` |
 | `terminal` | Shell profile and terminal theme commands |
+
+### config
+
+Run the guided machine configuration flow.
+
+```bash
+devops config config
+```
+
+This launches the interactive setup helper instead of performing a direct install.
+
+### init
+
+Print one of the packaged init/setup scripts, or execute it immediately with `--run`.
+
+```bash
+devops config init [OPTIONS] [WHICH]
+```
+
+Supported `WHICH` values from current help:
+
+| Value | Meaning |
+|-------|---------|
+| `init` | Print the shell init script for the current platform |
+| `ia` | Print the interactive setup bootstrap script |
+| `live` | Print the live-from-GitHub bootstrap script |
+
+Key option:
+
+| Option | Description |
+|--------|-------------|
+| `--run`, `-r` | Run the selected script instead of printing it |
+
+Examples:
+
+```bash
+devops config init
+devops config init ia
+devops config init live --run
+```
 
 ### sync
 

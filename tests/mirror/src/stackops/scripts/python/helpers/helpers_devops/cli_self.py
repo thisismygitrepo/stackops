@@ -1,4 +1,4 @@
-from __future__ import annotations
+
 
 import platform
 import sys
@@ -35,23 +35,6 @@ def _install_dev_app_modules(monkeypatch: pytest.MonkeyPatch) -> None:
     setattr(ai_app_module, "get_app", lambda: typer.Typer())
     monkeypatch.setitem(sys.modules, "stackops.scripts.python.helpers.helpers_devops.cli_self_assets", assets_module)
     monkeypatch.setitem(sys.modules, "stackops.scripts.python.helpers.helpers_devops.cli_self_ai.app", ai_app_module)
-
-
-def test_init_reads_linux_init_script_from_resolved_reference(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    script_path = tmp_path.joinpath("init.sh")
-    script_path.write_text("echo linux init", encoding="utf-8")
-    monkeypatch.setattr(platform, "system", lambda: "Linux")
-    monkeypatch.setattr(cli_self, "get_path_reference_path", lambda **_kwargs: script_path)
-
-    cli_self.init(which="init", run=False)
-
-    captured = capsys.readouterr()
-
-    assert "echo linux init" in captured.out
 
 
 def test_update_runs_shell_script_and_copies_assets_on_linux(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -140,6 +123,8 @@ def test_get_app_hides_dev_commands_without_developer_repo(monkeypatch: pytest.M
     result = runner.invoke(cli_self.get_app(), ["--help"])
 
     assert result.exit_code == 0
+    assert " config " not in result.stdout
+    assert " init " not in result.stdout
     assert " docs " not in result.stdout
     assert "build-docker" not in result.stdout
     assert "workflows" not in result.stdout

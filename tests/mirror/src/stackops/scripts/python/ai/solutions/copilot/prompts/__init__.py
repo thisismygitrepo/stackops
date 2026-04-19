@@ -1,4 +1,4 @@
-from __future__ import annotations
+
 
 from stackops.scripts.python.ai.solutions.copilot import prompts as copilot_prompts
 from stackops.utils.path_reference import get_path_reference_path

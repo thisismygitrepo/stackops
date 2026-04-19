@@ -1,3 +1,4 @@
+import platform
 from pathlib import Path
 
 import pytest
@@ -49,12 +50,31 @@ def test_copy_assets_dispatches_requested_groups(monkeypatch: pytest.MonkeyPatch
     assert calls == ["scripts", "settings", "scripts", "settings"]
 
 
+def test_init_reads_linux_init_script_from_resolved_reference(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    script_path = tmp_path.joinpath("init.sh")
+    script_path.write_text("echo linux init", encoding="utf-8")
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    monkeypatch.setattr(cli_config_module, "get_path_reference_path", lambda **_kwargs: script_path)
+
+    cli_config_module.init(which="init", run=False)
+
+    captured = capsys.readouterr()
+
+    assert "echo linux init" in captured.out
+
+
 def test_get_app_help_lists_primary_subcommands() -> None:
     runner = CliRunner()
 
     result = runner.invoke(cli_config_module.get_app(), ["--help"])
 
     assert result.exit_code == 0
+    assert "config" in result.stdout
+    assert "init" in result.stdout
     assert "copy-assets" in result.stdout
     assert "dump" in result.stdout
     assert "terminal" in result.stdout

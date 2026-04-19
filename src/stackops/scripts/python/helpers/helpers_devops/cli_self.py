@@ -1,12 +1,9 @@
-import typer
 from pathlib import Path
 from typing import Annotated, Literal
 
-import stackops.settings.shells.bash as bash_shell_assets
-import stackops.settings.shells.pwsh as pwsh_shell_assets
-import stackops.settings.shells.zsh as zsh_shell_assets
+import typer
+
 from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
-from stackops.utils.path_reference import get_path_reference_path
 
 
 def _developer_repo_root() -> Path | None:
@@ -23,79 +20,12 @@ def copy_both_assets() -> None:
     create_helper.copy_assets_to_machine(which="settings")
 
 
-def init(
-    which: Annotated[
-        Literal["init", "ia", "live"], typer.Argument(..., help="Comma-separated list of script names to run all initialization scripts.")
-    ] = "init",
-    run: Annotated[bool, typer.Option("--run/--no-run", "-r/-nr", help="Run the script after displaying it.")] = False,
-) -> None:
-    import platform
-
-    script = ""
-    if platform.system() == "Linux" or platform.system() == "Darwin":
-        match which:
-            case "init":
-                if platform.system() == "Darwin":
-                    init_path = get_path_reference_path(
-                        module=zsh_shell_assets,
-                        path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,
-                    )
-                else:
-                    init_path = get_path_reference_path(
-                        module=bash_shell_assets,
-                        path_reference=bash_shell_assets.INIT_PATH_REFERENCE,
-                    )
-                script = init_path.read_text(encoding="utf-8")
-            case "ia":
-                import stackops.setup_linux.web_shortcuts as module
-                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
-            case "live":
-                import stackops.setup_linux.web_shortcuts as module
-                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
-            case _:
-                typer.echo("Unsupported shell script for Linux.")
-                raise typer.Exit(code=1)
-
-    elif platform.system() == "Windows":
-        match which:
-            case "init":
-                init_path = get_path_reference_path(
-                    module=pwsh_shell_assets,
-                    path_reference=pwsh_shell_assets.INIT_PATH_REFERENCE,
-                )
-                script = init_path.read_text(encoding="utf-8")
-            case "ia":
-                import stackops.setup_windows.web_shortcuts as module
-                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
-            case "live":
-                import stackops.setup_windows.web_shortcuts as module
-                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
-                script = script_path.read_text(encoding="utf-8")
-            case _:
-                typer.echo("Unsupported shell script for Windows.")
-                raise typer.Exit(code=1)
-                # return
-    else:
-        # raise NotImplementedError("Unsupported platform")
-        typer.echo("Unsupported platform for init scripts.")
-        raise typer.Exit(code=1)
-    if run:
-        from stackops.utils.code import exit_then_run_shell_script
-
-        exit_then_run_shell_script(script, strict=True)
-    else:
-        print(script)
-
-
 def update(
     link_public_configs: Annotated[
         bool,
         typer.Option("--link-public-configs/--no-link-public-configs", "-b/-nb", help="Link public configs after update (overwrites your configs!)"),
     ] = False,
-):
+) -> None:
     """🔄 UPDATE uv and stackops"""
     if Path.home().joinpath("code", "stackops").exists():
         shell_script = """
@@ -172,7 +102,7 @@ cd {str(stackops_path)}
 """)
 
 
-def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False):
+def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False) -> None:
     """📋 install stackops locally for nightly updates."""
     _install_stackops(dev=dev)
 
@@ -182,13 +112,6 @@ def export() -> None:
     from stackops.utils.installer_utils import installer_offline
 
     installer_offline.export()
-
-
-def interactive() -> None:
-    """🤖 <c> INTERACTIVE configuration of machine."""
-    from stackops.scripts.python.helpers.helpers_devops.interactive import main
-
-    main()
 
 
 def status(
@@ -296,14 +219,9 @@ def get_app() -> typer.Typer:
     cli_app.command(name="u", no_args_is_help=False, hidden=True)(update)
     cli_app.command(name="status", no_args_is_help=False, help="📊 <s> STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.")(status)
     cli_app.command(name="s", no_args_is_help=False, help="STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.", hidden=True)(status)
-    cli_app.command(name="config", no_args_is_help=False, help="🤖 <c> interactive configuration of machine.")(interactive)
-    cli_app.command(name="c", no_args_is_help=False, help="INTERACTIVE configuration of machine.", hidden=True)(interactive)
 
     cli_app.command(name="security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
     cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
-
-    cli_app.command(name="init", no_args_is_help=False, help="🦐 <t> Define and manage configurations")(init)
-    cli_app.command(name="t", no_args_is_help=False, hidden=True)(init)
 
     cli_app.command(name="explore", help="🧭 <x> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore)
     cli_app.command(name="x", hidden=True, context_settings=ctx_settings)(explore)

@@ -1,4 +1,4 @@
-from __future__ import annotations
+
 
 from stackops.scripts import windows as module
 

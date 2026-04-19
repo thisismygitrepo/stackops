@@ -2005,6 +2005,178 @@
             "children": [
               {
                 "kind": "command",
+                "name": "config",
+                "fullPath": "devops config config",
+                "shortPath": "d c m",
+                "help": "🤖 <m> Interactive configuration of machine.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
+                  "callable": "config"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def config() -> None:",
+                    "    \"\"\"🤖 <m> INTERACTIVE configuration of machine.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops.interactive import main",
+                    "",
+                    "    main()"
+                  ],
+                  "name": "config",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "🤖 <m> INTERACTIVE configuration of machine.",
+                "aliases": [
+                  {
+                    "name": "m",
+                    "hidden": true,
+                    "help": "Interactive configuration of machine."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "init",
+                "fullPath": "devops config init",
+                "shortPath": "d c I",
+                "help": "🦐 <I> Define and manage configurations.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
+                  "callable": "init"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def init(",
+                    "    which: Annotated[",
+                    "        Literal[\"init\", \"ia\", \"live\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
+                    "    ] = \"init\",",
+                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
+                    ") -> None:",
+                    "    import platform",
+                    "",
+                    "    script = \"\"",
+                    "    if platform.system() == \"Linux\" or platform.system() == \"Darwin\":",
+                    "        match which:",
+                    "            case \"init\":",
+                    "                if platform.system() == \"Darwin\":",
+                    "                    init_path = get_path_reference_path(",
+                    "                        module=zsh_shell_assets,",
+                    "                        path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,",
+                    "                    )",
+                    "                else:",
+                    "                    init_path = get_path_reference_path(",
+                    "                        module=bash_shell_assets,",
+                    "                        path_reference=bash_shell_assets.INIT_PATH_REFERENCE,",
+                    "                    )",
+                    "                script = init_path.read_text(encoding=\"utf-8\")",
+                    "            case \"ia\":",
+                    "                import stackops.setup_linux.web_shortcuts as module",
+                    "",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case \"live\":",
+                    "                import stackops.setup_linux.web_shortcuts as module",
+                    "",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case _:",
+                    "                typer.echo(\"Unsupported shell script for Linux.\")",
+                    "                raise typer.Exit(code=1)",
+                    "",
+                    "    elif platform.system() == \"Windows\":",
+                    "        match which:",
+                    "            case \"init\":",
+                    "                init_path = get_path_reference_path(",
+                    "                    module=pwsh_shell_assets,",
+                    "                    path_reference=pwsh_shell_assets.INIT_PATH_REFERENCE,",
+                    "                )",
+                    "                script = init_path.read_text(encoding=\"utf-8\")",
+                    "            case \"ia\":",
+                    "                import stackops.setup_windows.web_shortcuts as module",
+                    "",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case \"live\":",
+                    "                import stackops.setup_windows.web_shortcuts as module",
+                    "",
+                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
+                    "                script = script_path.read_text(encoding=\"utf-8\")",
+                    "            case _:",
+                    "                typer.echo(\"Unsupported shell script for Windows.\")",
+                    "                raise typer.Exit(code=1)",
+                    "    else:",
+                    "        typer.echo(\"Unsupported platform for init scripts.\")",
+                    "        raise typer.Exit(code=1)",
+                    "    if run:",
+                    "        from stackops.utils.code import exit_then_run_shell_script",
+                    "",
+                    "        exit_then_run_shell_script(script, strict=True)",
+                    "    else:",
+                    "        print(script)"
+                  ],
+                  "name": "init",
+                  "parameters": [
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['init', 'ia', 'live']",
+                      "default": "init",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['init', 'ia', 'live'], typer.Argument(..., help='Comma-separated list of script names to run all initialization scripts.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Comma-separated list of script names to run all initialization scripts.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run the script after displaying it.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--run/--no-run",
+                          "-r/-nr"
+                        ],
+                        "long_flags": [
+                          "--run",
+                          "--no-run"
+                        ],
+                        "short_flags": [
+                          "-r",
+                          "-nr"
+                        ],
+                        "help": "Run the script after displaying it."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "I",
+                    "hidden": true,
+                    "help": "Define and manage configurations."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "sync",
                 "fullPath": "devops config sync",
                 "shortPath": "d c s",
@@ -3896,7 +4068,7 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def install(dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Clone repo and install from it instead of PyPI\")] = False):",
+                    "def install(dev: Annotated[bool, typer.Option(\"--dev\", \"-d\", help=\"Clone repo and install from it instead of PyPI\")] = False) -> None:",
                     "    \"\"\"📋 install stackops locally for nightly updates.\"\"\"",
                     "    _install_stackops(dev=dev)"
                   ],
@@ -3924,7 +4096,8 @@
                         "help": "Clone repo and install from it instead of PyPI"
                       }
                     }
-                  ]
+                  ],
+                  "return": "None"
                 },
                 "typer": {
                   "no_args_is_help": false
@@ -3956,7 +4129,7 @@
                     "        bool,",
                     "        typer.Option(\"--link-public-configs/--no-link-public-configs\", \"-b/-nb\", help=\"Link public configs after update (overwrites your configs!)\"),",
                     "    ] = False,",
-                    "):",
+                    ") -> None:",
                     "    \"\"\"🔄 UPDATE uv and stackops\"\"\"",
                     "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
                     "        shell_script = \"\"\"",
@@ -4021,7 +4194,8 @@
                         "help": "Link public configs after update (overwrites your configs!)"
                       }
                     }
-                  ]
+                  ],
+                  "return": "None"
                 },
                 "typer": {
                   "no_args_is_help": false
@@ -4247,41 +4421,6 @@
                     "name": "s",
                     "hidden": true,
                     "help": "STATUS of machine, shell profile, apps, symlinks, dotfiles, etc."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "config",
-                "fullPath": "devops self config",
-                "shortPath": "d s c",
-                "help": "🤖 <c> interactive configuration of machine.",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_self",
-                  "callable": "interactive"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def interactive() -> None:",
-                    "    \"\"\"🤖 <c> INTERACTIVE configuration of machine.\"\"\"",
-                    "    from stackops.scripts.python.helpers.helpers_devops.interactive import main",
-                    "",
-                    "    main()"
-                  ],
-                  "name": "interactive",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "🤖 <c> INTERACTIVE configuration of machine.",
-                "aliases": [
-                  {
-                    "name": "c",
-                    "hidden": true,
-                    "help": "INTERACTIVE configuration of machine."
                   }
                 ]
               },
@@ -4799,140 +4938,6 @@
                     "name": "y",
                     "hidden": true,
                     "help": "🔐 <y> Security related CLI tools."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "init",
-                "fullPath": "devops self init",
-                "shortPath": "d s t",
-                "help": "🦐 <t> Define and manage configurations",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_self",
-                  "callable": "init"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def init(",
-                    "    which: Annotated[",
-                    "        Literal[\"init\", \"ia\", \"live\"], typer.Argument(..., help=\"Comma-separated list of script names to run all initialization scripts.\")",
-                    "    ] = \"init\",",
-                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run the script after displaying it.\")] = False,",
-                    ") -> None:",
-                    "    import platform",
-                    "",
-                    "    script = \"\"",
-                    "    if platform.system() == \"Linux\" or platform.system() == \"Darwin\":",
-                    "        match which:",
-                    "            case \"init\":",
-                    "                if platform.system() == \"Darwin\":",
-                    "                    init_path = get_path_reference_path(",
-                    "                        module=zsh_shell_assets,",
-                    "                        path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,",
-                    "                    )",
-                    "                else:",
-                    "                    init_path = get_path_reference_path(",
-                    "                        module=bash_shell_assets,",
-                    "                        path_reference=bash_shell_assets.INIT_PATH_REFERENCE,",
-                    "                    )",
-                    "                script = init_path.read_text(encoding=\"utf-8\")",
-                    "            case \"ia\":",
-                    "                import stackops.setup_linux.web_shortcuts as module",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case \"live\":",
-                    "                import stackops.setup_linux.web_shortcuts as module",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case _:",
-                    "                typer.echo(\"Unsupported shell script for Linux.\")",
-                    "                raise typer.Exit(code=1)",
-                    "",
-                    "    elif platform.system() == \"Windows\":",
-                    "        match which:",
-                    "            case \"init\":",
-                    "                init_path = get_path_reference_path(",
-                    "                    module=pwsh_shell_assets,",
-                    "                    path_reference=pwsh_shell_assets.INIT_PATH_REFERENCE,",
-                    "                )",
-                    "                script = init_path.read_text(encoding=\"utf-8\")",
-                    "            case \"ia\":",
-                    "                import stackops.setup_windows.web_shortcuts as module",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case \"live\":",
-                    "                import stackops.setup_windows.web_shortcuts as module",
-                    "                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)",
-                    "                script = script_path.read_text(encoding=\"utf-8\")",
-                    "            case _:",
-                    "                typer.echo(\"Unsupported shell script for Windows.\")",
-                    "                raise typer.Exit(code=1)",
-                    "                # return",
-                    "    else:",
-                    "        # raise NotImplementedError(\"Unsupported platform\")",
-                    "        typer.echo(\"Unsupported platform for init scripts.\")",
-                    "        raise typer.Exit(code=1)",
-                    "    if run:",
-                    "        from stackops.utils.code import exit_then_run_shell_script",
-                    "",
-                    "        exit_then_run_shell_script(script, strict=True)",
-                    "    else:",
-                    "        print(script)"
-                  ],
-                  "name": "init",
-                  "parameters": [
-                    {
-                      "name": "which",
-                      "kind": "positional_or_keyword",
-                      "type": "Literal['init', 'ia', 'live']",
-                      "default": "init",
-                      "required": false,
-                      "annotation_raw": "Annotated[Literal['init', 'ia', 'live'], typer.Argument(..., help='Comma-separated list of script names to run all initialization scripts.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Comma-separated list of script names to run all initialization scripts.",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "run",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run the script after displaying it.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--run/--no-run",
-                          "-r/-nr"
-                        ],
-                        "long_flags": [
-                          "--run",
-                          "--no-run"
-                        ],
-                        "short_flags": [
-                          "-r",
-                          "-nr"
-                        ],
-                        "help": "Run the script after displaying it."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "aliases": [
-                  {
-                    "name": "t",
-                    "hidden": true
                   }
                 ]
               },
