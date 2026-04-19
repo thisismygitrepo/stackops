@@ -87,7 +87,7 @@ def _dump_init_script(which: InitScriptKind, run: bool) -> None:
 
 def dump_config(
     which: Annotated[DumpConfigKind, typer.Option(..., "--which", "-w", help="Which config or init script to dump")],
-    run: Annotated[bool, typer.Option("--run/--no-run", "-r/-nr", help="Run an init script after displaying it.")] = False,
+    run: Annotated[bool, typer.Option("--run/--no-run", "-r/-nr", help="Run an init script instead of printing it.")] = False,
 ) -> None:
     """🔗 Dump example configuration files and init scripts."""
     match which:

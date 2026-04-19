@@ -3327,7 +3327,7 @@
                   "raw_lines": [
                     "def dump_config(",
                     "    which: Annotated[DumpConfigKind, typer.Option(..., \"--which\", \"-w\", help=\"Which config or init script to dump\")],",
-                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run an init script after displaying it.\")] = False,",
+                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run an init script instead of printing it.\")] = False,",
                     ") -> None:",
                     "    \"\"\"🔗 Dump example configuration files and init scripts.\"\"\"",
                     "    match which:",
@@ -3375,7 +3375,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run an init script after displaying it.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run an init script instead of printing it.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3390,7 +3390,7 @@
                           "-r",
                           "-nr"
                         ],
-                        "help": "Run an init script after displaying it."
+                        "help": "Run an init script instead of printing it."
                       }
                     }
                   ],
