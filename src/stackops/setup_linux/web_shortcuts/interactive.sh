@@ -2,14 +2,14 @@
 . <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_linux/uv.sh")
 . <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/linux/wrap_stackops")
 
-alias devops='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" devops'
-alias cloud='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" cloud'
-alias agents='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" agents'
-alias fire='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" fire'
-alias croshell='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" croshell'
-alias utils='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" utils'
-alias terminal='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.93" terminal'
-seek() { "$HOME/.local/bin/uvx" --python 3.14 --from "stackops>=8.93" seek "$@"; }
+alias devops='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.94" devops'
+alias cloud='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.94" cloud'
+alias agents='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.94" agents'
+alias fire='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.94" fire'
+alias croshell='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.94" croshell'
+alias utils='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.94" utils'
+alias terminal='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.94" terminal'
+seek() { "$HOME/.local/bin/uvx" --python 3.14 --from "stackops>=8.94" seek "$@"; }
 
 alias d='wrap_in_shell_script devops'
 alias c='wrap_in_shell_script cloud'

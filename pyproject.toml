@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stackops"
-version = "8.93"
+version = "8.94"
 description = "Developer Stack Manager"
 readme = "README.md"
 license = {text = "Apache 2.0"}
