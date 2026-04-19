@@ -47,6 +47,10 @@ _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
     "auggie": AgentReasoningSupport(efforts=(), note=None),
     "warp-cli": AgentReasoningSupport(efforts=(), note=None),
     "droid": AgentReasoningSupport(efforts=(), note=None),
+    "pi": AgentReasoningSupport(
+        efforts=("none", "low", "medium", "high", "xhigh"),
+        note="StackOps none maps to Pi --thinking off",
+    ),
 }
 
 

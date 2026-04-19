@@ -10,6 +10,10 @@ def test_reasoning_help_formats_shortcuts_and_notes() -> None:
         reasoning_capabilities.reasoning_help(agent="codex")
         == "n=none, l=low, m=medium, h=high, x=xhigh; actual model support can be a narrower subset"
     )
+    assert (
+        reasoning_capabilities.reasoning_help(agent="pi")
+        == "n=none, l=low, m=medium, h=high, x=xhigh; StackOps none maps to Pi --thinking off"
+    )
     assert reasoning_capabilities.reasoning_help(agent="cursor-agent") == ""
 
 
@@ -22,6 +26,7 @@ def test_reasoning_support_returns_declared_efforts() -> None:
 
 def test_resolve_reasoning_validates_agent_capabilities() -> None:
     assert reasoning_capabilities.resolve_reasoning(shortcut="x", agent="codex") == "xhigh"
+    assert reasoning_capabilities.resolve_reasoning(shortcut="n", agent="pi") == "none"
 
     with pytest.raises(ValueError) as exc_info:
         reasoning_capabilities.resolve_reasoning(shortcut="x", agent="claude")

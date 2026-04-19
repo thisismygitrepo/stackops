@@ -49,11 +49,33 @@ def test_build_ask_command_rejects_reasoning_for_unsupported_agent() -> None:
         agents_module.build_ask_command(agent="claude", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="low")
 
 
+def test_build_ask_command_allows_pi_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
+    recorded: dict[str, object] = {}
+
+    def fake_build_agent_command(agent: str, prompt_file: Path, reasoning_effort: str | None) -> str:
+        recorded["agent"] = agent
+        recorded["prompt_file"] = prompt_file
+        recorded["reasoning_effort"] = reasoning_effort
+        return "pi --thinking high -p prompt"
+
+    monkeypatch.setattr(agents_module, "build_agent_command", fake_build_agent_command)
+
+    command = agents_module.build_ask_command(agent="pi", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="high")
+
+    assert command == "pi --thinking high -p prompt"
+    assert recorded == {"agent": "pi", "prompt_file": Path("/tmp/prompt.md"), "reasoning_effort": "high"}
+
+
 def test_split_legacy_ask_reasoning_only_consumes_shortcuts_for_supported_agents() -> None:
     shortcut, prompt_parts = agents_module._split_legacy_ask_reasoning(agent="codex", reasoning=None, prompt_parts=["m", "explain", "this"])
 
     assert shortcut == "m"
     assert prompt_parts == ["explain", "this"]
+
+    pi_shortcut, pi_prompt_parts = agents_module._split_legacy_ask_reasoning(agent="pi", reasoning=None, prompt_parts=["h", "solve"])
+
+    assert pi_shortcut == "h"
+    assert pi_prompt_parts == ["solve"]
 
     unsupported_shortcut, unsupported_prompt_parts = agents_module._split_legacy_ask_reasoning(
         agent="claude", reasoning=None, prompt_parts=["m", "keep", "all"]

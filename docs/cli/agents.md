@@ -44,6 +44,7 @@ Examples:
 agents parallel --help
 agents parallel create --help
 agents parallel create --agent codex --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs
+agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
 agents parallel create-context --job-name updateDocs "Collect the repo context for this doc task"
 agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 ```
@@ -55,7 +56,7 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 `run-prompt` is the structured workflow entrypoint. It supports:
 
 - `--agent`
-- `--reasoning-effort` for codex agents
+- `--reasoning-effort` for codex and pi agents
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
 - `--where` to choose catalog locations for context YAML lookup
@@ -66,6 +67,7 @@ Examples:
 ```bash
 agents run-prompt --agent codex --reasoning-effort high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --context-name docs.cli --where all "update the assigned docs"
+agents run-prompt --agent pi --reasoning-effort high --context-path ./context.md "inspect this repo"
 agents run-prompt --show-format
 ```
 
@@ -73,7 +75,7 @@ agents run-prompt --show-format
 
 - default agent is `codex`
 - `--reasoning` accepts `n`, `l`, `m`, `h`, `x`
-- that shortcut is only supported for `codex` and `copilot`
+- that shortcut is only supported for `codex`, `copilot`, and `pi`
 - `--file-prompt` appends the file contents into the final prompt with explicit `BEGIN FILE` and `END FILE` markers
 
 Examples:
@@ -81,6 +83,7 @@ Examples:
 ```bash
 agents ask --agent codex --reasoning h "inspect the repo"
 agents ask --agent copilot --reasoning m "summarize the current module"
+agents ask --agent pi --reasoning h "inspect the repo"
 agents ask "summarize this file" --file-prompt ./README.md
 ```
 
@@ -92,7 +95,7 @@ agents ask "summarize this file" --file-prompt ./README.md
 
 ```bash
 agents make-config --root .
-agents make-config --root . --agent codex,copilot --include-scripts --add-gitignore
+agents make-config --root . --agent codex,copilot,pi --include-scripts --add-gitignore
 ```
 
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. Notes:
@@ -103,7 +106,7 @@ agents make-config --root . --agent codex,copilot --include-scripts --add-gitign
 
 ```bash
 agents add-mcp --help
-agents add-mcp postgres,filesystem --agent codex,copilot --scope local
+agents add-mcp postgres,filesystem --agent codex,copilot,pi --scope local
 agents add-mcp --edit --where library
 ```
 

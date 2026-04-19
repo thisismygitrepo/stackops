@@ -8,14 +8,28 @@ from stackops.scripts.python.helpers.helpers_agents import fire_agents_helper_ty
 def test_public_literals_and_prompt_separator_remain_stable() -> None:
     assert "codex" in get_args(module.AGENTS)
     assert "warp-cli" in get_args(module.AGENTS)
+    assert "pi" in get_args(module.AGENTS)
     assert get_args(module.PROVIDER) == (
         "azure",
+        "azure-openai-responses",
         "google",
         "aws",
+        "amazon-bedrock",
         "openai",
         "anthropic",
         "openrouter",
         "xai",
+        "mistral",
+        "groq",
+        "cerebras",
+        "vercel-ai-gateway",
+        "zai",
+        "opencode",
+        "opencode-go",
+        "huggingface",
+        "kimi-coding",
+        "minimax",
+        "minimax-cn",
     )
     assert get_args(module.ReasoningEffort) == ("none", "low", "medium", "high", "xhigh")
     assert "keyword_search" in get_args(module.SEARCH_STRATEGIES)

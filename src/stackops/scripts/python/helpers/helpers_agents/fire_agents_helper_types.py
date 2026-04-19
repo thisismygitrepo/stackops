@@ -31,10 +31,30 @@ AGENTS: TypeAlias = Literal[
     "auggie",
     "warp-cli",
     "droid",
+    "pi",
 ]
 HOST: TypeAlias = Literal["local", "docker"]
 PROVIDER: TypeAlias = Literal[
-    "azure", "google", "aws", "openai", "anthropic", "openrouter", "xai"
+    "azure",
+    "azure-openai-responses",
+    "google",
+    "aws",
+    "amazon-bedrock",
+    "openai",
+    "anthropic",
+    "openrouter",
+    "xai",
+    "mistral",
+    "groq",
+    "cerebras",
+    "vercel-ai-gateway",
+    "zai",
+    "opencode",
+    "opencode-go",
+    "huggingface",
+    "kimi-coding",
+    "minimax",
+    "minimax-cn",
 ]
 ReasoningEffort: TypeAlias = Literal["none", "low", "medium", "high", "xhigh"]
 DEFAULT_SEAPRATOR = "\n@-@\n"

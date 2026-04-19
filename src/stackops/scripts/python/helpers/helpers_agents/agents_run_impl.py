@@ -67,6 +67,16 @@ def _build_codex_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_wind
     return f" -c {config_value}"
 
 
+def _build_pi_thinking_arg(reasoning_effort: ReasoningEffort | None, is_windows: bool) -> str:
+    if reasoning_effort is None:
+        return ""
+    if reasoning_effort == "none":
+        thinking_level = "off"
+    else:
+        thinking_level = reasoning_effort
+    return f" --thinking {_quote_for_shell(thinking_level, is_windows=is_windows)}"
+
+
 def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
     is_windows = system() == "Windows"
     prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
@@ -74,8 +84,8 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
     repo_root = get_repo_root(Path.cwd())
     agent_launch_prefix = resolve_agent_launch_prefix(agent=agent, repo_root=repo_root)
     agent_launch_prefix_q = _format_shell_args(agent_launch_prefix, is_windows=is_windows)
-    if reasoning_effort is not None and agent != "codex":
-        raise ValueError("--reasoning-effort is only supported for --agent codex")
+    if reasoning_effort is not None and agent not in {"codex", "pi"}:
+        raise ValueError("--reasoning-effort is only supported for --agent codex or --agent pi")
 
     if is_windows:
         prompt_content_expr = f"(Get-Content -Raw {prompt_file_q})"
@@ -114,6 +124,9 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
             return f"{agent_cli} agent run --prompt {prompt_content_expr}"
         case "droid":
             return f"{agent_cli} exec -f {prompt_file_q}"
+        case "pi":
+            thinking_arg = _build_pi_thinking_arg(reasoning_effort=reasoning_effort, is_windows=is_windows)
+            return f"{agent_cli}{thinking_arg} -p {prompt_content_expr}"
         case "cursor-agent":
             return f"{agent_cli} -p {prompt_content_expr} --output-format text"
 

@@ -14,7 +14,7 @@ def agents_create(
     model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
     reasoning_effort: Annotated[
         ReasoningEffort | None,
-        typer.Option(..., "--reasoning-effort", "-r", help="Reasoning effort for codex agents. When omitted, codex uses its default."),
+        typer.Option(..., "--reasoning-effort", "-r", help="Reasoning effort for codex and pi agents. When omitted, the agent uses its default."),
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
     host: Annotated[HOST, typer.Option(..., "--host", "-h", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",

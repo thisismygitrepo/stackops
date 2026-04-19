@@ -161,6 +161,7 @@ def test_resolve_agent_launch_prefix_uses_repo_cline_directory_only_when_present
         ("warp-cli", Path(".warp/mcp.json")),
         ("droid", Path(".factory/settings.json")),
         ("crush", Path(".crush.json")),
+        ("pi", Path(".pi/mcp.json")),
     ],
 )
 def test_resolve_install_path_local_layout(
@@ -199,6 +200,7 @@ def test_resolve_install_path_local_requires_repository_context(tmp_path: Path) 
         ("warp-cli", Path(".local/share/warp/mcp.json")),
         ("droid", Path(".factory/settings.json")),
         ("crush", Path(".config/crush/crush.json")),
+        ("pi", Path(".pi/agent/mcp.json")),
     ],
 )
 def test_resolve_install_path_global_linux_layout(
@@ -248,6 +250,7 @@ def test_resolve_install_path_global_uses_platform_specific_locations(
         ("opencode", "global", "opencode", None),
         ("cline", "global", "cline", None),
         ("crush", "global", "crush", None),
+        ("pi", "global", "pi", None),
     ],
 )
 def test_install_resolved_mcp_servers_dispatches_to_expected_writer(
@@ -302,6 +305,10 @@ def test_install_resolved_mcp_servers_dispatches_to_expected_writer(
         assert path == install_path
         record.append(("crush", None))
 
+    def fake_pi(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
+        assert path == install_path
+        record.append(("pi", None))
+
     monkeypatch.setattr(module, "resolve_install_path", fake_resolve_install_path)
     monkeypatch.setattr(module, "_write_codex_config", fake_codex)
     monkeypatch.setattr(module, "_write_copilot_workspace_config", fake_copilot_workspace)
@@ -311,6 +318,7 @@ def test_install_resolved_mcp_servers_dispatches_to_expected_writer(
     monkeypatch.setattr(module, "_write_opencode_config", fake_opencode)
     monkeypatch.setattr(module, "_write_cline_mcp_settings", fake_cline)
     monkeypatch.setattr(module, "_write_crush_config", fake_crush)
+    monkeypatch.setattr(module, "_write_pi_mcp_adapter_config", fake_pi)
 
     returned_path = module.install_resolved_mcp_servers(
         agent=agent,
@@ -373,6 +381,34 @@ def test_write_settings_with_mcp_servers_merges_entries_and_can_enable_mcp(tmp_p
     assert remote["url"] == "https://example.com/remote"
     assert remote["headers"] == {"Authorization": "Bearer $TOKEN"}
     assert remote["description"] == "remote"
+
+
+def test_write_pi_mcp_adapter_config_uses_project_mcp_shape(tmp_path: Path) -> None:
+    path = tmp_path / "mcp.json"
+
+    module._write_pi_mcp_adapter_config(
+        path=path,
+        resolved_servers=(
+            _stdio_server("local", True, "/repo", "local server"),
+            _http_server("remote", False, {"Authorization": "Bearer $TOKEN"}, "remote server"),
+        ),
+    )
+
+    root = _read_json_object(path)
+    mcp_servers = cast(dict[str, object], root["mcpServers"])
+    local = cast(dict[str, object], mcp_servers["local"])
+    remote = cast(dict[str, object], mcp_servers["remote"])
+
+    assert local == {
+        "command": "uvx",
+        "args": ["serve"],
+        "env": {"TOKEN": "value"},
+        "cwd": "/repo",
+    }
+    assert remote == {
+        "url": "https://example.com/remote",
+        "headers": {"Authorization": "Bearer $TOKEN"},
+    }
 
 
 def test_write_codex_config_replaces_existing_block_and_renders_bearer_token_auth(tmp_path: Path) -> None:

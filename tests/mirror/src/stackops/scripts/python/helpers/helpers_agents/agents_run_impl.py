@@ -48,7 +48,16 @@ def test_build_agent_command_supports_codex_and_rejects_reasoning_for_other_agen
     assert 'model_reasoning_effort="high"' in codex_command
     assert f"< {prompt_file}" in codex_command
 
-    with pytest.raises(ValueError, match="only supported for --agent codex"):
+    pi_command = run_impl_module.build_agent_command(
+        agent="pi",
+        prompt_file=prompt_file,
+        reasoning_effort="none",
+    )
+
+    assert "pi --thinking off -p" in pi_command
+    assert f"$(cat {prompt_file})" in pi_command
+
+    with pytest.raises(ValueError, match="only supported for --agent codex or --agent pi"):
         run_impl_module.build_agent_command(
             agent="qwen",
             prompt_file=prompt_file,

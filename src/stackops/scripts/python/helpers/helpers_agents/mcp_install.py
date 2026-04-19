@@ -93,6 +93,8 @@ def install_resolved_mcp_servers(
             _write_cline_mcp_settings(path=path, resolved_servers=resolved_servers)
         case "crush":
             _write_crush_config(path=path, resolved_servers=resolved_servers)
+        case "pi":
+            _write_pi_mcp_adapter_config(path=path, resolved_servers=resolved_servers)
     return path
 
 
@@ -137,6 +139,8 @@ def resolve_install_path(
                 return repo_root / ".factory" / "settings.json"
             case "crush":
                 return repo_root / ".crush.json"
+            case "pi":
+                return repo_root / ".pi" / "mcp.json"
 
     match agent:
         case "codex":
@@ -175,6 +179,8 @@ def resolve_install_path(
             if system() == "Windows":
                 return home_dir / "AppData" / "Local" / "crush" / "crush.json"
             return home_dir / ".config" / "crush" / "crush.json"
+        case "pi":
+            return home_dir / ".pi" / "agent" / "mcp.json"
 
 
 def _load_json_object(*, path: Path) -> dict[str, object]:
@@ -242,6 +248,38 @@ def _write_mcp_servers_file(*, path: Path, resolved_servers: tuple[ResolvedMcpSe
     mcp_servers = _ensure_object_member(root=root, key="mcpServers", path=path)
     for resolved_server in resolved_servers:
         mcp_servers[resolved_server["name"]] = _resolved_server_to_generic_entry(resolved_server=resolved_server)
+    _write_json_object(path=path, root=root)
+
+
+def _resolved_server_to_pi_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
+    definition = resolved_server["definition"]
+    if definition["transport"] == "stdio":
+        command = definition["command"]
+        if command is None:
+            raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a command")
+        entry: dict[str, object] = {
+            "command": command,
+            "args": list(definition["args"]),
+        }
+        if len(definition["env"]) > 0:
+            entry["env"] = dict(definition["env"])
+        if definition["cwd"] is not None:
+            entry["cwd"] = definition["cwd"]
+    else:
+        url = definition["url"]
+        if url is None:
+            raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a URL")
+        entry = {"url": url}
+        if len(definition["headers"]) > 0:
+            entry["headers"] = dict(definition["headers"])
+    return entry
+
+
+def _write_pi_mcp_adapter_config(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
+    root = _load_json_object(path=path)
+    mcp_servers = _ensure_object_member(root=root, key="mcpServers", path=path)
+    for resolved_server in resolved_servers:
+        mcp_servers[resolved_server["name"]] = _resolved_server_to_pi_entry(resolved_server=resolved_server)
     _write_json_object(path=path, root=root)
 
 

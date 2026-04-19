@@ -55,11 +55,37 @@ def test_prep_agent_launch_writes_prompt_material_and_launcher(tmp_path: Path, m
     material_text = (prompt_root / "agent_0_material.txt").read_text(encoding="utf-8")
     launcher_text = (prompt_root / "agent_0_cmd.sh").read_text(encoding="utf-8")
 
-    assert "Please only look @ .ai/agents/job/prompts/agent_0/agent_0_material.txt." in prompt_text
+    assert "Please only look at:\n.ai/agents/job/prompts/agent_0/agent_0_material.txt." in prompt_text
     assert material_text == "first material"
     assert 'export FIRE_AGENTS_PROMPT_FILE="' in launcher_text
     assert "Sleeping for 0.00 seconds" in launcher_text
     assert "cursor-agent --run" in launcher_text
+
+
+def test_prep_agent_launch_uses_pi_specific_launcher(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo_root = tmp_path / "repo"
+    agents_dir = repo_root / ".ai" / "agents" / "job"
+    repo_root.mkdir()
+
+    monkeypatch.setattr(launch_module.random, "uniform", lambda _start, _end: 0.0)
+
+    launch_module.prep_agent_launch(
+        repo_root=repo_root,
+        agents_dir=agents_dir,
+        prompts_material=["first material"],
+        prompt_prefix="Prefix text",
+        join_prompt_and_context=False,
+        machine="local",
+        model="gpt-5.4",
+        reasoning_effort="high",
+        provider="openai",
+        agent="pi",
+        job_name="job",
+    )
+
+    launcher_text = (agents_dir / "prompts" / "agent_0" / "agent_0_cmd.sh").read_text(encoding="utf-8")
+
+    assert "pi --provider openai --model gpt-5.4 --thinking high -p" in launcher_text
 
 
 def test_get_agents_launch_layout_sorts_agents_numerically(tmp_path: Path) -> None:

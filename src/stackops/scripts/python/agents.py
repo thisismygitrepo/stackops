@@ -21,9 +21,9 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
     resolve_reasoning,
 )
 
-_ASK_REASONING_AGENTS: Final[tuple[AGENTS, ...]] = ("codex", "copilot")
+_ASK_REASONING_AGENTS: Final[tuple[AGENTS, ...]] = ("codex", "copilot", "pi")
 _ASK_REASONING_SHORTCUTS: Final[tuple[str, ...]] = cast(tuple[str, ...], get_args(ReasoningShortcut))
-_ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex and copilot"
+_ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
 
 
 def _join_prompt_parts(prompt_parts: Sequence[str]) -> str:
@@ -100,7 +100,7 @@ def _build_copilot_ask_command(prompt_file: Path, reasoning_effort: ReasoningEff
 
 def build_ask_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
     if reasoning_effort is not None and agent not in _ASK_REASONING_AGENTS:
-        raise ValueError("--reasoning is only supported for --agent codex or --agent copilot")
+        raise ValueError("--reasoning is only supported for --agent codex, --agent copilot, or --agent pi")
     if agent == "copilot":
         return _build_copilot_ask_command(prompt_file=prompt_file, reasoning_effort=reasoning_effort)
     return build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
@@ -160,7 +160,7 @@ def _resolve_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None) -
     if reasoning is None:
         return None
     if agent not in _ASK_REASONING_AGENTS:
-        raise typer.BadParameter("--reasoning is only supported for --agent codex or --agent copilot")
+        raise typer.BadParameter("--reasoning is only supported for --agent codex, --agent copilot, or --agent pi")
     try:
         return resolve_reasoning(shortcut=reasoning, agent=agent)
     except ValueError as error:
@@ -344,7 +344,7 @@ def run_prompt(
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
     reasoning_effort: Annotated[
         ReasoningEffort | None,
-        typer.Option(..., "--reasoning-effort", "-r", help="Reasoning effort for codex agents. When omitted, codex uses its default."),
+        typer.Option(..., "--reasoning-effort", "-r", help="Reasoning effort for codex and pi agents. When omitted, the agent uses its default."),
     ] = None,
     context: Annotated[str | None, typer.Option(..., "--context", "-c", help="Context string. Mutually exclusive with --context-path.")] = None,
     context_path: Annotated[

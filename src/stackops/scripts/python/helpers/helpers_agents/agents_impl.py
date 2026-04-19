@@ -79,8 +79,8 @@ def agents_create(
     from stackops.utils.accessories import get_repo_root
     import json
 
-    if agent != "codex" and reasoning_effort is not None:
-        raise ValueError("--reasoning-effort is only supported for --agent codex")
+    if agent not in {"codex", "pi"} and reasoning_effort is not None:
+        raise ValueError("--reasoning-effort is only supported for --agent codex or --agent pi")
 
     repo_root = get_repo_root(Path.cwd())
     if repo_root is None:
