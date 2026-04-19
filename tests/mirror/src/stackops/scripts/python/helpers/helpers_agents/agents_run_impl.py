@@ -14,7 +14,7 @@ def test_make_prompt_file_writes_context_and_prompt(tmp_path: Path, monkeypatch:
     monkeypatch.setattr(run_impl_module.Path, "home", lambda: tmp_path)
     monkeypatch.setattr(run_impl_module, "randstr", fake_randstr)
 
-    prompt_file = run_impl_module._make_prompt_file(prompt="Do thing", context="Repo facts")
+    prompt_file = run_impl_module.make_prompt_file(prompt="Do thing", context="Repo facts")
 
     assert prompt_file == tmp_path / "tmp_results" / "tmp_files" / "agents" / "run_prompt_prompt123.md"
     payload = prompt_file.read_text(encoding="utf-8")

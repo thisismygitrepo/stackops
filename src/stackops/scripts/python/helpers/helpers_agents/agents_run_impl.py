@@ -31,7 +31,7 @@ def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
     return " " + " ".join(_quote_for_shell(value, is_windows=is_windows) for value in values)
 
 
-def _make_prompt_file(prompt: str, context: str) -> Path:
+def make_prompt_file(prompt: str, context: str) -> Path:
     prompt_file = Path.home().joinpath("tmp_results", "tmp_files", "agents", f"run_prompt_{randstr()}.md")
     prompt_file.parent.mkdir(parents=True, exist_ok=True)
     payload = f"""# Context
@@ -166,7 +166,7 @@ def run(
         return
     resolved_context = resolve_context(context=context, context_path=context_path, prompts_yaml_path=prompts_yaml_path, context_name=context_name, where=where)
     prompt_text = prompt if prompt is not None else ""
-    prompt_file = _make_prompt_file(prompt=prompt_text, context=resolved_context)
+    prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context)
     _print_prompt_file_preview(prompt_file=prompt_file)
     command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
 
