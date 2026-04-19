@@ -3314,6 +3314,24 @@
       }
     },
     {
+      "appName": "orca",
+      "license": "MIT",
+      "repoURL": "https://github.com/stablyai/orca",
+      "doc": "Orca is the next-gen IDE for building with coding agents",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "orca_{version}_amd64.deb",
+          "darwin": "Orca-{version}-mac.zip",
+          "windows": "orca-windows-setup.exe"
+        },
+        "arm64": {
+          "linux": null,
+          "darwin": "Orca-{version}-arm64-mac.zip",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "openclaw",
       "license": "MIT",
       "repoURL": "CMD",

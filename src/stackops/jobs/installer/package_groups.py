@@ -25,6 +25,7 @@ AGENTS = [
     "cursor-cli",
     "droid",
     "pi",
+    "orca",
     "kilocode",
     "cline",
     "auggie",
