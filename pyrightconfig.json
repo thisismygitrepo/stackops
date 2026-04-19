@@ -3,7 +3,8 @@
   "venv": ".venv",
   "exclude": [
     "tests",
-    ".venv"
+    ".venv",
+    ".ai"
   ],
   // "python.analysis.typeCheckingMode": "strict",
   // "typeCheckingMode": "strict",
