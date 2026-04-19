@@ -24,6 +24,7 @@ AGENTS = [
     "qwen-code",
     "cursor-cli",
     "droid",
+    "pi",
     "kilocode",
     "cline",
     "auggie",

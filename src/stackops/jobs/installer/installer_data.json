@@ -3296,6 +3296,24 @@
       }
     },
     {
+      "appName": "pi",
+      "license": "MIT",
+      "repoURL": "https://github.com/badlogic/pi-mono",
+      "doc": "AI agent toolkit: coding agent CLI, unified LLM API, TUI and web UI libraries.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g @mariozechner/pi-coding-agent",
+          "darwin": "bun install -g @mariozechner/pi-coding-agent",
+          "windows": "bun install -g @mariozechner/pi-coding-agent"
+        },
+        "arm64": {
+          "linux": "bun install -g @mariozechner/pi-coding-agent",
+          "darwin": "bun install -g @mariozechner/pi-coding-agent",
+          "windows": "bun install -g @mariozechner/pi-coding-agent"
+        }
+      }
+    },
+    {
       "appName": "openclaw",
       "license": "MIT",
       "repoURL": "CMD",
