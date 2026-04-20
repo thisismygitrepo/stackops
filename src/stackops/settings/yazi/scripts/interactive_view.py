@@ -37,10 +37,10 @@ def resolve_target(arguments: Sequence[str]) -> Path:
     hovered_path, selected_paths = split_marked_arguments(arguments)
     if selected_paths:
         if len(selected_paths) != 1:
-            raise ValueError("Interactive view requires exactly one selected file.")
+            raise ValueError("Interactive view requires exactly one selected path.")
         return Path(selected_paths[0]).resolve()
     if hovered_path is None:
-        raise ValueError("No hovered file or selected file was provided.")
+        raise ValueError("No hovered path or selected path was provided.")
     return Path(hovered_path).resolve()
 
 
@@ -55,8 +55,10 @@ def build_database_command(target_path: Path) -> list[str]:
 
 
 def build_command(target_path: Path) -> list[str]:
+    if target_path.is_dir():
+        return [sys.executable, str(Path(__file__).with_name("serve_browser_file.py")), str(target_path)]
     if not target_path.is_file():
-        raise ValueError(f"Interactive view requires a file, got: {target_path}")
+        raise ValueError(f"Interactive view requires a file or directory, got: {target_path}")
     suffix = target_path.suffix.lower()
     match suffix:
         case _ if suffix in BROWSER_FILE_SUFFIXES:

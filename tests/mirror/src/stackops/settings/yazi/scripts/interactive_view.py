@@ -19,3 +19,12 @@ def test_build_command_routes_browser_files_to_browser_server(tmp_path: Path, fi
     command = interactive_view.build_command(target_path=target_path)
 
     assert command == [sys.executable, str(Path(interactive_view.__file__).with_name("serve_browser_file.py")), str(target_path)]
+
+
+def test_build_command_routes_directory_to_browser_server(tmp_path: Path) -> None:
+    target_path = tmp_path.joinpath("gallery")
+    target_path.mkdir()
+
+    command = interactive_view.build_command(target_path=target_path)
+
+    assert command == [sys.executable, str(Path(interactive_view.__file__).with_name("serve_browser_file.py")), str(target_path)]
