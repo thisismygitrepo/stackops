@@ -1,11 +1,6 @@
 """Agents management commands - lazy loading subcommands."""
 
-from collections.abc import Sequence
 from pathlib import Path
-from platform import system
-import shlex
-import subprocess
-from tempfile import NamedTemporaryFile
 from typing import Annotated, Final, Literal, cast, get_args
 
 import typer
@@ -13,158 +8,10 @@ import typer
 from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
-from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
-    ReasoningEffort,
-    ReasoningShortcut,
-    resolve_reasoning,
-)
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 
-_ASK_REASONING_AGENTS: Final[tuple[AGENTS, ...]] = ("codex", "copilot", "pi")
-_ASK_REASONING_SHORTCUTS: Final[tuple[str, ...]] = cast(tuple[str, ...], get_args(ReasoningShortcut))
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
-
-
-def _join_prompt_parts(prompt_parts: Sequence[str]) -> str:
-    prompt_text = " ".join(prompt_parts).strip()
-    if prompt_text == "":
-        raise typer.BadParameter("""prompt must not be empty""")
-    return prompt_text
-
-
-def _resolve_prompt_path(prompt_path: Path) -> Path:
-    prompt_path = prompt_path.expanduser().resolve()
-    if not prompt_path.is_file():
-        raise typer.BadParameter(f"""prompt file does not exist: {prompt_path}""")
-    return prompt_path
-
-
-def _read_prompt_file_text(prompt_path: Path) -> str:
-    try:
-        return prompt_path.read_text(encoding="utf-8")
-    except OSError as error:
-        strerror = error.strerror or "unknown error"
-        raise typer.BadParameter(f"""failed to read prompt file {str(prompt_path)!r}: {strerror}""") from error
-
-
-def _compose_ask_prompt_text(prompt_parts: Sequence[str], file_prompt: Path | None) -> str:
-    prompt_text = _join_prompt_parts(prompt_parts=prompt_parts)
-    if file_prompt is None:
-        return prompt_text
-    resolved_prompt_path = _resolve_prompt_path(prompt_path=file_prompt)
-    prompt_file_text = _read_prompt_file_text(prompt_path=resolved_prompt_path)
-    return f"""{prompt_text}
-
---- BEGIN FILE {resolved_prompt_path} ---
-{prompt_file_text}
---- END FILE {resolved_prompt_path} ---"""
-
-
-def _build_exec_prefix(reasoning_effort: ReasoningEffort) -> list[str]:
-    return [
-        "codex",
-        "--dangerously-bypass-approvals-and-sandbox",
-        "exec",
-        "-c",
-        f'model_reasoning_effort="{reasoning_effort}"',
-    ]
-
-
-def build_prompt_command(reasoning_effort: ReasoningEffort, prompt: str) -> list[str]:
-    return [*_build_exec_prefix(reasoning_effort=reasoning_effort), prompt]
-
-
-def build_file_prompt_command(reasoning_effort: ReasoningEffort) -> list[str]:
-    return [*_build_exec_prefix(reasoning_effort=reasoning_effort), "-"]
-
-
-def _quote_for_shell(value: str, *, is_windows: bool) -> str:
-    if is_windows:
-        return "'" + value.replace("'", "''") + "'"
-    return shlex.quote(value)
-
-
-def _build_copilot_ask_command(prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
-    is_windows = system() == "Windows"
-    prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
-    if is_windows:
-        prompt_content_expr = f"(Get-Content -Raw {prompt_file_q})"
-    else:
-        prompt_content_expr = f'"$(cat {prompt_file_q})"'
-    reasoning_arg = ""
-    if reasoning_effort is not None:
-        reasoning_arg = f" --reasoning-effort {reasoning_effort}"
-    return f"copilot{reasoning_arg} -p {prompt_content_expr} --yolo"
-
-
-def build_ask_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
-    if reasoning_effort is not None and agent not in _ASK_REASONING_AGENTS:
-        raise ValueError("--reasoning is only supported for --agent codex, --agent copilot, or --agent pi")
-    if agent == "copilot":
-        return _build_copilot_ask_command(prompt_file=prompt_file, reasoning_effort=reasoning_effort)
-    return build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
-
-
-def _run_subprocess(command: Sequence[str], stdin_text: str | None) -> int:
-    try:
-        completed_process = subprocess.run(command, check=False, input=stdin_text, text=stdin_text is not None)
-    except FileNotFoundError as error:
-        filename = error.filename or command[0]
-        strerror = error.strerror or "unknown error"
-        typer.echo(f"""Failed to execute {filename!r}: {strerror}""", err=True)
-        return 1
-    return completed_process.returncode
-
-
-def run_command(command: Sequence[str]) -> int:
-    return _run_subprocess(command=command, stdin_text=None)
-
-
-def run_shell_command(command_line: str) -> int:
-    if system() == "Windows":
-        return _run_subprocess(command=["powershell", "-NoProfile", "-Command", command_line], stdin_text=None)
-    return _run_subprocess(command=["bash", "-lc", command_line], stdin_text=None)
-
-
-def run_command_with_prompt_file(command: Sequence[str], prompt_path: Path) -> int:
-    try:
-        return _run_subprocess(command=command, stdin_text=prompt_path.read_text(encoding="utf-8"))
-    except OSError as error:
-        strerror = error.strerror or "unknown error"
-        typer.echo(f"""Failed to read prompt file {str(prompt_path)!r}: {strerror}""", err=True)
-        return 1
-
-
-def _write_temporary_prompt_file(prompt_text: str) -> Path:
-    with NamedTemporaryFile("w", encoding="utf-8", suffix=".md", prefix="agents_ask_", delete=False) as prompt_file:
-        prompt_file.write(prompt_text)
-        return Path(prompt_file.name)
-
-
-def _split_legacy_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None, prompt_parts: Sequence[str]) -> tuple[ReasoningShortcut | None, list[str]]:
-    normalized_prompt_parts = list(prompt_parts)
-    if reasoning is not None:
-        return reasoning, normalized_prompt_parts
-    if agent not in _ASK_REASONING_AGENTS:
-        return None, normalized_prompt_parts
-    if len(normalized_prompt_parts) <= 1:
-        return None, normalized_prompt_parts
-    first_prompt_part = normalized_prompt_parts[0]
-    if first_prompt_part not in _ASK_REASONING_SHORTCUTS:
-        return None, normalized_prompt_parts
-    return cast(ReasoningShortcut, first_prompt_part), normalized_prompt_parts[1:]
-
-
-def _resolve_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None) -> ReasoningEffort | None:
-    if reasoning is None:
-        return None
-    if agent not in _ASK_REASONING_AGENTS:
-        raise typer.BadParameter("--reasoning is only supported for --agent codex, --agent copilot, or --agent pi")
-    try:
-        return resolve_reasoning(shortcut=reasoning, agent=agent)
-    except ValueError as error:
-        raise typer.BadParameter(str(error)) from error
 
 
 def init_config(
@@ -186,8 +33,6 @@ def init_config(
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import init_config as impl
 
     try:
-        from typing import cast
-
         if agents:
             frameworks__ = tuple(agent.strip() for agent in agents.split(",") if agent.strip())
             resolved: tuple[AGENTS, ...] = cast(tuple[AGENTS, ...], frameworks__)
@@ -209,21 +54,15 @@ def init_config(
 
 def add_mcp(
     requested_mcp_servers: Annotated[
-        str | None,
-        typer.Argument(help="MCP servers/tools to resolve from stackops MCP catalogs (comma-separated)."),
+        str | None, typer.Argument(help="MCP servers/tools to resolve from stackops MCP catalogs (comma-separated).")
     ] = None,
     agents: Annotated[
-        str,
-        typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}"),
+        str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
     ] = "",
     scope: Annotated[
-        MCP_INSTALL_SCOPE,
-        typer.Option("--scope", "-s", help="Install MCP config into repo-local or user-global agent config."),
+        MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config into repo-local or user-global agent config.")
     ] = "local",
-    where: Annotated[
-        MCP_CATALOG_WHERE,
-        typer.Option(..., "--where", "-w", help="Where to resolve or edit MCP catalog files."),
-    ] = "all",
+    where: Annotated[MCP_CATALOG_WHERE, typer.Option(..., "--where", "-w", help="Where to resolve or edit MCP catalog files.")] = "all",
     edit: Annotated[
         bool,
         typer.Option(
@@ -235,64 +74,10 @@ def add_mcp(
     ] = False,
 ) -> None:
     """Resolve MCP servers from stackops catalogs, or open catalog files for editing."""
-    from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import (
-        collect_available_mcp_names,
-        edit_mcp_catalog,
-        ensure_mcp_catalog_exists,
-        format_resolved_mcp_servers,
-        parse_requested_mcp_names,
-        resolve_mcp_catalog_locations,
-        resolve_requested_mcp_servers,
-    )
-    from stackops.scripts.python.helpers.helpers_agents.mcp_install import (
-        choose_requested_mcp_names,
-        install_resolved_mcp_servers,
-        parse_requested_agents,
-    )
-    from stackops.utils.accessories import get_repo_root
-
     try:
-        search_locations = resolve_mcp_catalog_locations(where=where)
-        if edit:
-            created_catalog_paths: list[Path] = []
-            for location in search_locations:
-                if ensure_mcp_catalog_exists(location=location):
-                    created_catalog_paths.append(location["path"])
-            for created_catalog_path in created_catalog_paths:
-                typer.echo(f"Created MCP catalog template at: {created_catalog_path}")
+        from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl
 
-            editable_catalog_paths = tuple(location["path"] for location in search_locations if location["path"].exists() and location["path"].is_file())
-            if len(editable_catalog_paths) == 0:
-                searched = ", ".join(str(location["path"]) for location in search_locations)
-                raise ValueError(f"No MCP catalog files found for --where '{where}'. Searched: {searched}")
-            for catalog_path in editable_catalog_paths:
-                edit_mcp_catalog(path=catalog_path)
-
-        if requested_mcp_servers is None:
-            if edit:
-                return
-            if len(collect_available_mcp_names(locations=search_locations)) == 0:
-                raise ValueError("No MCP servers are available to choose from in the selected catalog locations")
-            requested_mcp_names = choose_requested_mcp_names(locations=search_locations)
-        else:
-            requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
-
-        resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
-        selected_agents = parse_requested_agents(raw_value=agents)
-        repo_root = get_repo_root(Path.cwd()) if scope == "local" else None
-        if scope == "local" and repo_root is None:
-            raise ValueError("Local MCP installation requires running the command inside a git repository")
-
-        typer.echo(f"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}")
-        for selected_agent in selected_agents:
-            install_path = install_resolved_mcp_servers(
-                agent=selected_agent,
-                scope=scope,
-                resolved_servers=resolved_mcp_servers,
-                repo_root=repo_root,
-                home_dir=Path.home(),
-            )
-            typer.echo(f"{selected_agent}: {install_path}")
+        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, where=where, edit=edit, report=typer.echo)
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
@@ -300,8 +85,7 @@ def add_mcp(
 def make_todo_files(
     pattern: Annotated[str, typer.Argument(help="Pattern or keyword to match files by")] = ".py",
     repo: Annotated[
-        str,
-        typer.Argument(help="Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned."),
+        str, typer.Argument(help="Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned.")
     ] = ".",
     strategy: Annotated[
         Literal["name", "keywords"],
@@ -412,32 +196,21 @@ def run_prompt(
 
 
 def ask(
-    prompt: Annotated[
-        list[str],
-        typer.Argument(help="Prompt text to pass to the selected agent."),
-    ],
-    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = "codex",
-    reasoning: Annotated[
-        ReasoningShortcut | None,
-        typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP),
-    ] = None,
+    prompt: Annotated[list[str], typer.Argument(help="Prompt text to pass to the selected agent.")],
+    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = "pi",
+    reasoning: Annotated[ReasoningShortcut | None, typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP)] = None,
     file_prompt: Annotated[
-        Path | None,
-        typer.Option("--file-prompt", "-f", help="Append the contents of this file to PROMPT before asking the selected agent."),
+        Path | None, typer.Option("--file-prompt", "-f", help="Append the contents of this file to PROMPT before asking the selected agent.")
     ] = None,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Skip the Rich preflight summary and stream agent output directly.")] = False,
 ) -> None:
     """Ask a selected agent directly."""
-    reasoning_shortcut, prompt_parts = _split_legacy_ask_reasoning(agent=agent, reasoning=reasoning, prompt_parts=prompt)
-    reasoning_effort = _resolve_ask_reasoning(agent=agent, reasoning=reasoning_shortcut)
-    prompt_text = _compose_ask_prompt_text(prompt_parts=prompt_parts, file_prompt=file_prompt)
-    prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)
     try:
-        try:
-            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))
-        except ValueError as error:
-            raise typer.BadParameter(str(error)) from error
-    finally:
-        prompt_path.unlink(missing_ok=True)
+        from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl
+
+        return_code = impl(prompt_parts=prompt, agent=agent, reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
     raise typer.Exit(code=return_code)
 
 
@@ -450,34 +223,20 @@ def add_skill(
     ] = None,
 ) -> None:
     """Add a skill to an agent in a directory."""
-    opensource_skills = {"agent-browser": "bunx skills add vercel-labs/agent-browser"}
-    if directory:
-        agent_dir = Path(directory).expanduser().resolve()
-        if not agent_dir.is_dir():
-            typer.echo(f"Provided directory '{directory}' does not exist or is not a directory.")
-            raise typer.Exit(1)
-    else:
-        agent_dir = Path.cwd()
-    if skill_name in opensource_skills:
-        from stackops.utils.code import exit_then_run_shell_script
+    try:
+        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
-        command = opensource_skills[skill_name]
-        command = f"""
-cd {agent_dir}
-{command}
-"""
-        exit_then_run_shell_script(command, strict=False)
-    else:
-        typer.echo(f"Skill '{skill_name}' is not recognized. Please provide a valid skill name.")
+        message = impl(skill_name=skill_name, directory=directory)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    if message is not None:
+        typer.echo(message)
 
 
 def get_app() -> typer.Typer:
     agents_app = typer.Typer(help="🤖 AI Agents management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     agents_app.add_typer(
-        get_parallel_app(),
-        name="parallel",
-        help="🧵 <p> Parallel agent workflow commands",
-        short_help="<p> Parallel agent workflow commands",
+        get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="<p> Parallel agent workflow commands"
     )
     agents_app.add_typer(get_parallel_app(), name="p", help="Parallel agent workflow commands", hidden=True)
     agents_app.command(
