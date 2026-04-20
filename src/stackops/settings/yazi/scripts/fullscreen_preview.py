@@ -166,7 +166,7 @@ def build_command(target_path: Path, terminal_columns: int) -> Command:
                 path_string,
             ]
         case _ if suffix in HTML_SUFFIXES:
-            return [sys.executable, str(Path(__file__).with_name("serve_html.py")), path_string]
+            return [sys.executable, str(Path(__file__).with_name("serve_browser_file.py")), path_string]
         case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
             return build_database_command(target_path=target_path)
         case _ if suffix in VISIDATA_SUFFIXES:

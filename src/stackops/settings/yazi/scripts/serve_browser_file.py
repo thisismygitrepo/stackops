@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import argparse
 import functools
 import html
@@ -7,19 +5,21 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import platform
 import socket
+from socketserver import BaseServer
 import sys
 import threading
-from typing import Final
+from typing import Callable, Final, cast
 from urllib.parse import quote
 import webbrowser
 
 DEFAULT_HOST: Final[str] = "0.0.0.0"
 DEFAULT_PORT: Final[int] = 0
-HTML_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm"})
+BROWSER_FILE_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm", ".pdf"})
+SUPPORTED_FILE_DESCRIPTION: Final[str] = ", ".join(sorted(BROWSER_FILE_SUFFIXES))
 
 
-def is_html_file(path: Path) -> bool:
-    return path.is_file() and path.suffix.lower() in HTML_SUFFIXES
+def is_browser_file(path: Path) -> bool:
+    return path.is_file() and path.suffix.lower() in BROWSER_FILE_SUFFIXES
 
 
 def find_free_port(host: str) -> int:
@@ -33,7 +33,7 @@ def get_lan_addresses() -> list[str]:
     hostname = socket.gethostname()
     try:
         for result in socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM):
-            address = result[4][0]
+            address = cast(str, result[4][0])
             if not address.startswith("127."):
                 addresses.add(address)
     except socket.gaierror:
@@ -59,15 +59,15 @@ def make_file_url(host: str, port: int, target_path: Path, root: Path) -> str:
 
 
 def make_index_html(root: Path, target_path: Path) -> bytes:
-    html_files = sorted(path for path in root.iterdir() if is_html_file(path))
-    items = []
-    for path in html_files:
+    browser_files = sorted(path for path in root.iterdir() if is_browser_file(path))
+    items: list[str] = []
+    for path in browser_files:
         relative_name = path.name
         href = quote(relative_name)
         label = html.escape(relative_name)
         marker = " (selected)" if path.resolve() == target_path.resolve() else ""
         items.append(f'<li><a href="/{href}">{label}</a>{html.escape(marker)}</li>')
-    list_markup = "\n".join(items) or "<li>No HTML files found.</li>"
+    list_markup = "\n".join(items) or "<li>No browser-viewable files found.</li>"
     body = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -99,11 +99,19 @@ def make_index_html(root: Path, target_path: Path) -> bytes:
     return body.encode("utf-8")
 
 
-class HtmlDirectoryHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args: object, root: Path, target_path: Path, **kwargs: object) -> None:
+class BrowserFileDirectoryHandler(SimpleHTTPRequestHandler):
+    def __init__(
+        self,
+        request: socket.socket | tuple[bytes, socket.socket],
+        client_address: tuple[str, int],
+        server: BaseServer,
+        *,
+        root: Path,
+        target_path: Path,
+    ) -> None:
         self._root = root
         self._target_path = target_path
-        super().__init__(*args, directory=str(root), **kwargs)
+        super().__init__(request, client_address, server, directory=str(root))
 
     def do_GET(self) -> None:
         if self.path == "/favicon.ico":
@@ -119,6 +127,7 @@ class HtmlDirectoryHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def log_message(self, format: str, *args: object) -> None:
+        del format, args
         return
 
 
@@ -126,9 +135,10 @@ def read_exit_key() -> str:
     if platform.system().lower() == "windows":
         import msvcrt
 
-        pressed_key = msvcrt.getch()
+        getch = cast(Callable[[], bytes], getattr(msvcrt, "getch"))
+        pressed_key = getch()
         if pressed_key in {b"\x00", b"\xe0"}:
-            _ = msvcrt.getch()
+            _ = getch()
         return pressed_key.decode("latin-1")
 
     import termios
@@ -154,14 +164,14 @@ def wait_for_return_to_yazi() -> None:
             return
 
 
-def serve_html(target_path: Path, host: str, port: int, open_browser: bool) -> None:
+def serve_browser_file(target_path: Path, host: str, port: int, open_browser: bool) -> None:
     target_path = target_path.resolve()
-    if not is_html_file(target_path):
-        raise ValueError(f"Expected an HTML file, got: {target_path}")
+    if not is_browser_file(target_path):
+        raise ValueError(f"Expected a browser-viewable file ({SUPPORTED_FILE_DESCRIPTION}), got: {target_path}")
 
     root = target_path.parent
     selected_port = port or find_free_port(host)
-    handler = functools.partial(HtmlDirectoryHandler, root=root, target_path=target_path)
+    handler = functools.partial(BrowserFileDirectoryHandler, root=root, target_path=target_path)
     server = ThreadingHTTPServer((host, selected_port), handler)
     local_url = make_file_url(host=host, port=selected_port, target_path=target_path, root=root)
 
@@ -173,7 +183,7 @@ def serve_html(target_path: Path, host: str, port: int, open_browser: bool) -> N
     if open_browser:
         webbrowser.open(local_url)
 
-    server_thread = threading.Thread(target=server.serve_forever, name="stackops-yazi-html-server", daemon=True)
+    server_thread = threading.Thread(target=server.serve_forever, name="stackops-yazi-browser-file-server", daemon=True)
     server_thread.start()
     try:
         wait_for_return_to_yazi()
@@ -186,8 +196,8 @@ def serve_html(target_path: Path, host: str, port: int, open_browser: bool) -> N
 
 
 def parse_arguments(arguments: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Serve an HTML file without creating local temp files.")
-    parser.add_argument("target", type=Path, help="HTML file to serve")
+    parser = argparse.ArgumentParser(description="Serve a local HTML or PDF file in the browser.")
+    parser.add_argument("target", type=Path, help="HTML or PDF file to serve")
     parser.add_argument("--host", default=DEFAULT_HOST, help="Bind address. Defaults to 0.0.0.0 for LAN access.")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Port to bind. Defaults to a free port.")
     parser.add_argument("--no-browser", action="store_true", help="Print URLs without opening the default browser.")
@@ -197,7 +207,7 @@ def parse_arguments(arguments: list[str] | None = None) -> argparse.Namespace:
 def main(arguments: list[str] | None = None) -> int:
     args = parse_arguments(arguments)
     try:
-        serve_html(
+        serve_browser_file(
             target_path=args.target,
             host=args.host,
             port=args.port,
