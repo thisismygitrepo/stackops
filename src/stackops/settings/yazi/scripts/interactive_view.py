@@ -4,6 +4,8 @@ from pathlib import Path
 import sys
 from typing import Final, NoReturn
 
+type Command = list[str]
+
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
 DUCKDB_SUFFIXES: Final[frozenset[str]] = frozenset({".duckdb", ".ddb"})
@@ -12,6 +14,7 @@ BROWSER_IMAGE_SUFFIXES: Final[frozenset[str]] = frozenset(
     {".apng", ".avif", ".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
 )
 BROWSER_FILE_SUFFIXES: Final[frozenset[str]] = BROWSER_DOCUMENT_SUFFIXES | BROWSER_IMAGE_SUFFIXES
+MARKDOWN_SUFFIXES: Final[frozenset[str]] = frozenset({".md", ".markdown"})
 SQLITE_SUFFIXES: Final[frozenset[str]] = frozenset({".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
 VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".json", ".parquet", ".tsv", ".xlsx", ".csv"})
 
@@ -44,7 +47,7 @@ def resolve_target(arguments: Sequence[str]) -> Path:
     return Path(hovered_path).resolve()
 
 
-def build_database_command(target_path: Path) -> list[str]:
+def build_database_command(target_path: Path) -> Command:
     suffix = target_path.suffix.lower()
     path_string = str(target_path)
     if suffix in DUCKDB_SUFFIXES:
@@ -54,7 +57,11 @@ def build_database_command(target_path: Path) -> list[str]:
     raise ValueError(f"No database view command is configured for {target_path.suffix or 'files without an extension'}.")
 
 
-def build_command(target_path: Path) -> list[str]:
+def build_markdown_command(target_path: Path) -> Command:
+    return ["glow", "--tui", str(target_path)]
+
+
+def build_command(target_path: Path) -> Command:
     if target_path.is_dir():
         return [sys.executable, str(Path(__file__).with_name("serve_browser_file.py")), str(target_path)]
     if not target_path.is_file():
@@ -63,6 +70,8 @@ def build_command(target_path: Path) -> list[str]:
     match suffix:
         case _ if suffix in BROWSER_FILE_SUFFIXES:
             return [sys.executable, str(Path(__file__).with_name("serve_browser_file.py")), str(target_path)]
+        case _ if suffix in MARKDOWN_SUFFIXES:
+            return build_markdown_command(target_path=target_path)
         case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
             return build_database_command(target_path=target_path)
         case suffix if suffix in VISIDATA_SUFFIXES:
@@ -71,7 +80,7 @@ def build_command(target_path: Path) -> list[str]:
             raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")
 
 
-def exec_command(command: list[str]) -> NoReturn:
+def exec_command(command: Command) -> NoReturn:
     executable = command[0]
     remaining_arguments = tuple(command[1:])
     os.execlp(executable, executable, *remaining_arguments)

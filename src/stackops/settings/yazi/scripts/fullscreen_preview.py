@@ -49,6 +49,7 @@ IMAGE_SUFFIXES: Final[frozenset[str]] = frozenset({
     ".tiff",
     ".webp",
 })
+MARKDOWN_SUFFIXES: Final[frozenset[str]] = frozenset({".md", ".markdown"})
 
 
 def split_marked_arguments(arguments: Sequence[str]) -> tuple[str | None, list[str]]:
@@ -102,6 +103,23 @@ def build_image_command(target_path: Path) -> Command:
     return ["viu", str(target_path)]
 
 
+def build_markdown_command(target_path: Path, terminal_columns: int) -> Command:
+    path_string = str(target_path)
+    width_string = str(terminal_columns)
+    if platform.system().lower() == "windows":
+        return [
+            "powershell",
+            "-NoLogo",
+            "-NoProfile",
+            "-Command",
+            "$env:CLICOLOR_FORCE='1'; glow --width $args[0] --style dark -- $args[1] | more.com",
+            "--",
+            width_string,
+            path_string,
+        ]
+    return ["glow", "--pager", "--width", width_string, "--style", "dark", path_string]
+
+
 def build_pdf_text_command(target_path: Path, output_path: Path) -> Command:
     return ["pdftotext", "-layout", "-nopgbrk", "-q", "--", str(target_path), str(output_path)]
 
@@ -137,8 +155,8 @@ def build_command(target_path: Path, terminal_columns: int) -> Command:
     suffix = target_path.suffix.lower()
     path_string = str(target_path)
     match suffix:
-        case ".md":
-            return ["glow", "--pager", "--width", str(terminal_columns), "--style", "dark", path_string]
+        case _ if suffix in MARKDOWN_SUFFIXES:
+            return build_markdown_command(target_path=target_path, terminal_columns=terminal_columns)
         case ".csv":
             return [
                 "uvx",
