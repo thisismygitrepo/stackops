@@ -3322,7 +3322,7 @@
         "amd64": {
           "linux": "orca_{version}_amd64.deb",
           "darwin": "Orca-{version}-mac.zip",
-          "windows": "orca-windows-setup.exe"
+          "windows": "orca.py"
         },
         "arm64": {
           "linux": null,
