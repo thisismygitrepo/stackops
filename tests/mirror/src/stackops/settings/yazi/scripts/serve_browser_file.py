@@ -21,14 +21,17 @@ def test_make_file_url_uses_loopback_for_wildcard_bind(tmp_path: Path) -> None:
 def test_make_index_html_lists_browser_files_only(tmp_path: Path) -> None:
     html_path = tmp_path.joinpath("report.html")
     pdf_path = tmp_path.joinpath("report.pdf")
+    image_path = tmp_path.joinpath("photo.webp")
     html_path.write_text("<!doctype html>", encoding="utf-8")
     pdf_path.write_bytes(b"%PDF-1.7\n")
+    image_path.write_bytes(b"image")
     tmp_path.joinpath("notes.txt").write_text("notes", encoding="utf-8")
 
     body = serve_browser_file.make_index_html(root=tmp_path, target_path=pdf_path).decode("utf-8")
 
     assert "report.html" in body
     assert "report.pdf" in body
+    assert "photo.webp" in body
     assert "notes.txt" not in body
     assert "(selected)" in body
 

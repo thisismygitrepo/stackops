@@ -7,7 +7,11 @@ from typing import Final, NoReturn
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
 DUCKDB_SUFFIXES: Final[frozenset[str]] = frozenset({".duckdb", ".ddb"})
-BROWSER_FILE_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm", ".pdf"})
+BROWSER_DOCUMENT_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm", ".pdf"})
+BROWSER_IMAGE_SUFFIXES: Final[frozenset[str]] = frozenset(
+    {".apng", ".avif", ".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
+)
+BROWSER_FILE_SUFFIXES: Final[frozenset[str]] = BROWSER_DOCUMENT_SUFFIXES | BROWSER_IMAGE_SUFFIXES
 SQLITE_SUFFIXES: Final[frozenset[str]] = frozenset({".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
 VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".json", ".parquet", ".tsv", ".xlsx", ".csv"})
 

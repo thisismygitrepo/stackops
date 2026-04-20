@@ -14,7 +14,11 @@ import webbrowser
 
 DEFAULT_HOST: Final[str] = "0.0.0.0"
 DEFAULT_PORT: Final[int] = 0
-BROWSER_FILE_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm", ".pdf"})
+BROWSER_DOCUMENT_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm", ".pdf"})
+BROWSER_IMAGE_SUFFIXES: Final[frozenset[str]] = frozenset(
+    {".apng", ".avif", ".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
+)
+BROWSER_FILE_SUFFIXES: Final[frozenset[str]] = BROWSER_DOCUMENT_SUFFIXES | BROWSER_IMAGE_SUFFIXES
 SUPPORTED_FILE_DESCRIPTION: Final[str] = ", ".join(sorted(BROWSER_FILE_SUFFIXES))
 
 
@@ -196,8 +200,8 @@ def serve_browser_file(target_path: Path, host: str, port: int, open_browser: bo
 
 
 def parse_arguments(arguments: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Serve a local HTML or PDF file in the browser.")
-    parser.add_argument("target", type=Path, help="HTML or PDF file to serve")
+    parser = argparse.ArgumentParser(description="Serve a local browser-viewable file.")
+    parser.add_argument("target", type=Path, help="Browser-viewable file to serve")
     parser.add_argument("--host", default=DEFAULT_HOST, help="Bind address. Defaults to 0.0.0.0 for LAN access.")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Port to bind. Defaults to a free port.")
     parser.add_argument("--no-browser", action="store_true", help="Print URLs without opening the default browser.")
