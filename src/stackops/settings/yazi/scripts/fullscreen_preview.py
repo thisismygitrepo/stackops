@@ -15,6 +15,7 @@ SELECTED_MARKER: Final[str] = "__YAZI_SELECTED__"
 PDF_SUFFIX: Final[str] = ".pdf"
 SVG_SUFFIX: Final[str] = ".svg"
 DUCKDB_SUFFIXES: Final[frozenset[str]] = frozenset({".duckdb", ".ddb"})
+HTML_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm"})
 ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
     ".7z",
     ".bz2",
@@ -164,6 +165,8 @@ def build_command(target_path: Path, terminal_columns: int) -> Command:
                 str(terminal_columns),
                 path_string,
             ]
+        case _ if suffix in HTML_SUFFIXES:
+            return [sys.executable, str(Path(__file__).with_name("serve_html.py")), path_string]
         case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
             return build_database_command(target_path=target_path)
         case _ if suffix in VISIDATA_SUFFIXES:

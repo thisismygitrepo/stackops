@@ -28,6 +28,7 @@ def test_resolve_target_prefers_hovered_path_over_selected_path(tmp_path: Path) 
         ("notes.md", ["glow", "--pager", "--width", "88", "--style", "dark"]),
         ("table.csv", ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--csv", "--pager", "--width", "88"]),
         ("records.json", ["uvx", "--from", "rich-cli", "rich", "--force-terminal", "--json", "--pager", "--width", "88"]),
+        ("report.html", [fullscreen_preview.sys.executable, str(Path(fullscreen_preview.__file__).with_name("serve_html.py"))]),
         ("sheet.parquet", ["uvx", "--from", "visidata", "--with", "pyarrow", "vd"]),
         ("bundle.tar.gz", ["sh", "-c", 'ouch list "$1" | ${PAGER:-less -R}', "sh"]),
         ("image.png", ["viu"]),

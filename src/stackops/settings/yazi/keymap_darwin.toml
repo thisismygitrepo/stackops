@@ -85,7 +85,7 @@ desc = "Open a standalone fullscreen preview"
 [[mgr.prepend_keymap]]
 on   = "V"
 run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
-desc = "Open an interactive file-specific viewer"
+desc = "Open an interactive file-specific viewer, serving HTML over the network"
 [[mgr.prepend_keymap]]
 on   = "n"
 run  = 'shell --block -- nano "$0"'

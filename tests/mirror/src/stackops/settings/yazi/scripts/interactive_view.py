@@ -35,6 +35,20 @@ def test_build_command_uses_wrap_stackops_for_tabular_targets(
     assert command == ["/home/tester/.config/stackops/scripts/wrap_stackops", "croshell", "-b", "v", str(target_path)]
 
 
+@pytest.mark.parametrize("filename", ["report.html", "report.htm"])
+def test_build_command_uses_html_server_for_html_targets(tmp_path: Path, filename: str) -> None:
+    target_path = tmp_path.joinpath(filename)
+    target_path.write_text("<!doctype html>", encoding="utf-8")
+
+    command = interactive_view.build_command(target_path=target_path)
+
+    assert command == [
+        interactive_view.sys.executable,
+        str(Path(interactive_view.__file__).with_name("serve_html.py")),
+        str(target_path),
+    ]
+
+
 @pytest.mark.parametrize(
     ("filename", "expected_command"),
     [
