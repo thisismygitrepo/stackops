@@ -3195,13 +3195,13 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g agent-browser;  bun install -g playwright install-deps chromium",
-          "windows": "bun install -g agent-browser",
-          "darwin": "bun install -g agent-browser"
+          "windows": "bun install -g agent-browser; bun install -g playwright install-deps chromium",
+          "darwin": "bun install -g agent-browser; bun install -g playwright install-deps chromium"
         },
         "arm64": {
-          "linux": "bun install -g agent-browser",
-          "windows": "bun install -g agent-browser",
-          "darwin": "bun install -g agent-browser"
+          "linux": "bun install -g agent-browser; bun install -g playwright install-deps chromium",
+          "windows": "bun install -g agent-browser; bun install -g playwright install-deps chromium",
+          "darwin": "bun install -g agent-browser; bun install -g playwright install-deps chromium"
         }
       }
     },

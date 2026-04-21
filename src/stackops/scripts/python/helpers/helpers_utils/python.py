@@ -108,11 +108,10 @@ def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str 
 
 def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
     from stackops.scripts.python.helpers import helper_env as navigator
-
     if which in {"PATH", "p"}:
-        path = Path(navigator.__file__).resolve().parent.joinpath("path_manager_tui.py")
+        path = Path(navigator.__file__).resolve().parent.joinpath(navigator.PATH_MANAGER_TUI_PATH_REFERENCE)
     else:
-        path = Path(navigator.__file__).resolve().parent.joinpath("env_manager_tui.py")
+        path = Path(navigator.__file__).resolve().parent.joinpath(navigator.ENV_MANAGER_TUI_PATH_REFERENCE)
     from stackops.utils.code import run_shell_script, get_uv_command_executing_python_script
 
     uv_with = ["textual"]

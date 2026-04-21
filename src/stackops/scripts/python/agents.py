@@ -5,6 +5,7 @@ from typing import Annotated, Final, Literal, cast, get_args
 
 import typer
 
+from stackops.scripts.python.agents_browser import get_app as get_browser_app
 from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
@@ -239,26 +240,32 @@ def get_app() -> typer.Typer:
         get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="<p> Parallel agent workflow commands"
     )
     agents_app.add_typer(get_parallel_app(), name="p", help="Parallel agent workflow commands", hidden=True)
-    agents_app.command(
-        "make-config", no_args_is_help=True, help=init_config.__doc__, short_help="<g> Initialize AI configurations in the current repository"
-    )(init_config)
-    agents_app.command("g", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
+    agents_app.add_typer(
+        get_browser_app(), name="browser", help="🌐 <b> Browser automation commands for agents", short_help="<b> Browser automation commands"
+    )
+    agents_app.add_typer(get_browser_app(), name="b", help="Browser automation commands for agents", hidden=True)
+
     agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries and install them for agents")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)
-    agents_app.command("make-todo", no_args_is_help=True, short_help="<d> Generate a markdown file listing all Python files in the repo")(
+    agents_app.command(name="add-skill", no_args_is_help=True, short_help="<s> Add a skill to an agent")(add_skill)
+    agents_app.command(name="s", no_args_is_help=True, hidden=True)(add_skill)
+    agents_app.command("add-todo", no_args_is_help=True, short_help="<d> Generate a markdown file listing all Python files in the repo")(
         make_todo_files
     )
     agents_app.command("d", no_args_is_help=True, hidden=True)(make_todo_files)
-    agents_app.command(name="make-symlinks", no_args_is_help=True, short_help="<l> Create symlinks to the current repo in ~/code_copies/")(
+    agents_app.command(name="add-symlinks", no_args_is_help=True, short_help="<l> Create symlinks to the current repo in ~/code_copies/")(
         create_symlink_command
     )
     agents_app.command(name="l", no_args_is_help=True, hidden=True)(create_symlink_command)
+    agents_app.command(
+        "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<g> Initialize AI configurations in the current repository"
+    )(init_config)
+    agents_app.command("g", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
+
     agents_app.command(name="run-prompt", no_args_is_help=True, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=True, hidden=True)(run_prompt)
     agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
-    agents_app.command(name="add-skill", no_args_is_help=True, short_help="<s> Add a skill to an agent")(add_skill)
-    agents_app.command(name="s", no_args_is_help=True, hidden=True)(add_skill)
     return agents_app
 
 
