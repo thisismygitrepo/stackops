@@ -1,11 +1,9 @@
 import io
 from pathlib import Path
-import shlex
 from rich.text import Text
 from rich.panel import Panel
 from rich.console import Console
 import subprocess
-import tempfile
 from typing import Union, Iterable, overload, Literal, cast
 
 
@@ -126,16 +124,7 @@ tv  {preview_line} --no-sort --ansi --input-position top{input_header_arg} --sou
         # print(f"tv output file: {tv_out_path}")
         from stackops.utils.code import run_shell_script
 
-        if platform.system() == "Windows":
-            res = run_shell_script(tv_cmd, display_script=False, clean_env=False)
-        else:
-            with tempfile.TemporaryDirectory(prefix="tv_config_") as tv_config_dir:
-                tv_config_home = Path(tv_config_dir)
-                tv_cable_dir = tv_config_home / "television" / "cable"
-                tv_cable_dir.mkdir(parents=True, exist_ok=True)
-                tv_script = f"""export XDG_CONFIG_HOME={shlex.quote(str(tv_config_home))}
-{tv_cmd}"""
-                res = run_shell_script(tv_script, display_script=False, clean_env=False)
+        res = run_shell_script(tv_cmd, display_script=False, clean_env=False)
 
         # If tv returned a non-zero code and there is no output file, treat it as an error.
         if res.returncode != 0 and not tv_out_path.exists():
