@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+from typing import Final
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
     McpCatalogFile,
@@ -15,6 +16,8 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
 from stackops.utils.files.read import read_json
 from stackops.utils.path_reference import get_path_reference_path
 import stackops.jobs.agents.mcps as mcp_assets
+
+_HOME_PLACEHOLDER: Final[str] = "{home}"
 
 
 def parse_requested_mcp_names(raw_value: str) -> tuple[str, ...]:
@@ -128,6 +131,18 @@ def _validate_string_map(raw_value: object, *, field_name: str, server_name: str
     return values
 
 
+def _expand_runtime_placeholders(value: str) -> str:
+    return value.replace(_HOME_PLACEHOLDER, Path.home().as_posix())
+
+
+def _expand_runtime_placeholders_in_list(values: Sequence[str]) -> list[str]:
+    return [_expand_runtime_placeholders(value) for value in values]
+
+
+def _expand_runtime_placeholders_in_map(values: dict[str, str]) -> dict[str, str]:
+    return {key: _expand_runtime_placeholders(value) for key, value in values.items()}
+
+
 def _load_mcp_catalog(path: Path) -> McpCatalogFile:
     raw_catalog_object: object = read_json(path)
     if not isinstance(raw_catalog_object, dict):
@@ -197,12 +212,12 @@ def _normalize_server_definition(raw_definition: McpServerDefinitionRaw, *, serv
             raise ValueError(f"MCP catalog entry '{server_name}' in {path} cannot define 'headers' for stdio transport")
         return {
             "transport": "stdio",
-            "command": raw_definition["command"],
-            "args": raw_definition["args"] if "args" in raw_definition else [],
-            "env": raw_definition["env"] if "env" in raw_definition else {},
+            "command": _expand_runtime_placeholders(raw_definition["command"]),
+            "args": _expand_runtime_placeholders_in_list(raw_definition["args"] if "args" in raw_definition else []),
+            "env": _expand_runtime_placeholders_in_map(raw_definition["env"] if "env" in raw_definition else {}),
             "url": None,
             "headers": {},
-            "cwd": raw_definition["cwd"] if "cwd" in raw_definition else None,
+            "cwd": _expand_runtime_placeholders(raw_definition["cwd"]) if "cwd" in raw_definition else None,
             "description": description,
             "enabled": enabled,
         }
@@ -219,8 +234,8 @@ def _normalize_server_definition(raw_definition: McpServerDefinitionRaw, *, serv
         "command": None,
         "args": [],
         "env": {},
-        "url": url,
-        "headers": raw_definition["headers"] if "headers" in raw_definition else {},
+        "url": _expand_runtime_placeholders(url),
+        "headers": _expand_runtime_placeholders_in_map(raw_definition["headers"] if "headers" in raw_definition else {}),
         "cwd": None,
         "description": description,
         "enabled": enabled,

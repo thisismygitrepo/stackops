@@ -3,14 +3,21 @@ from dataclasses import dataclass
 from pathlib import Path
 import platform
 import subprocess
+from typing import assert_never
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     AGENT_BROWSER_INSTALLER_NAME,
     AGENT_BROWSER_SKILL_REPO,
+    BROWSER_MCP_ROOT,
     BROWSING_ROOT,
     BrowserName,
+    BrowserTechName,
     REMOTE_DEBUGGING_LAN,
     REMOTE_DEBUGGING_LOCALHOST,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_guides import (
+    get_browser_tech_mcp_servers,
+    write_browser_tech_files,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_resolution import (
     build_browser_launch_command,
@@ -24,6 +31,15 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_resolution im
 class BrowserSkillInstallResult:
     install_root: Path
     command: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class BrowserTechInstallResult:
+    which: BrowserTechName
+    install_root: Path
+    commands: tuple[tuple[str, ...], ...]
+    guide_paths: tuple[Path, ...]
+    mcp_servers: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -48,6 +64,32 @@ def install_agent_browser_skill() -> BrowserSkillInstallResult:
     command = ("bunx", "skills", "add", AGENT_BROWSER_SKILL_REPO)
     _run_required_command(command=command, cwd=install_root)
     return BrowserSkillInstallResult(install_root=install_root, command=command)
+
+
+def install_browser_tech(*, which: BrowserTechName) -> BrowserTechInstallResult:
+    match which:
+        case "agent-browser":
+            result = install_agent_browser_skill()
+            guide_paths = write_browser_tech_files(which=which, install_root=result.install_root)
+            return BrowserTechInstallResult(
+                which=which,
+                install_root=result.install_root,
+                commands=(result.command,),
+                guide_paths=guide_paths,
+                mcp_servers=(),
+            )
+        case "chrome-devtools-mcp" | "playwright-mcp":
+            install_root = BROWSER_MCP_ROOT.expanduser().joinpath(which)
+            guide_paths = write_browser_tech_files(which=which, install_root=install_root)
+            return BrowserTechInstallResult(
+                which=which,
+                install_root=install_root,
+                commands=(),
+                guide_paths=guide_paths,
+                mcp_servers=get_browser_tech_mcp_servers(which=which),
+            )
+        case _:
+            assert_never(which)
 
 
 def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None, lan: bool) -> BrowserLaunchResult:

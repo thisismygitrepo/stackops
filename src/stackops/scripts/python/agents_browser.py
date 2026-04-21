@@ -2,22 +2,40 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName, DEFAULT_BROWSER_PORT
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName, BrowserTechName, DEFAULT_BROWSER_PORT
 
 
-def install_skill() -> None:
-    """Install agent-browser and add the Vercel agent-browser skill."""
+def install_tech(
+    which: Annotated[
+        BrowserTechName,
+        typer.Option(
+            "--which",
+            "-w",
+            help="Browser automation technology to install or prepare.",
+            case_sensitive=False,
+            show_choices=True,
+        ),
+    ] = "agent-browser",
+) -> None:
+    """Install or prepare browser automation technology for agents."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_agent_browser_skill
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech
 
-        result = install_agent_browser_skill()
+        result = install_browser_tech(which=which)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
-    typer.echo(f"Installed agent-browser skill in: {result.install_root}")
-    typer.echo(f"Ran: {' '.join(result.command)}")
+
+    typer.echo(f"Prepared {result.which} in: {result.install_root}")
+    for command in result.commands:
+        typer.echo(f"Ran: {' '.join(command)}")
+    for guide_path in result.guide_paths:
+        typer.echo(f"Wrote: {guide_path}")
+    if len(result.mcp_servers) > 0:
+        typer.echo(f"MCP catalog servers: {', '.join(result.mcp_servers)}")
+        typer.echo(f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent codex --scope local")
 
 
 def launch_browser(
@@ -58,8 +76,8 @@ def launch_browser(
 
 def get_app() -> typer.Typer:
     browser_app = typer.Typer(help="🌐 <b> Browser automation commands for agents", no_args_is_help=True, add_help_option=True, add_completion=False)
-    browser_app.command(name="install-skill", no_args_is_help=False, short_help="<i> Install the agent-browser skill")(install_skill)
-    browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_skill)
+    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser automation tech")(install_tech)
+    browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch Chrome or Brave for CDP automation")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
     return browser_app

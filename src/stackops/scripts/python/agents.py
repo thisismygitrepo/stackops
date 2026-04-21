@@ -10,6 +10,7 @@ from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_SCOPE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
@@ -217,7 +218,10 @@ def ask(
 
 def add_skill(
     skill_name: Annotated[str, typer.Argument(help="Name of the skill to add.")],
-    _agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to add the skill to.")] = "copilot",
+    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to add the skill to.")] = "copilot",
+    scope: Annotated[
+        SKILL_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install the skill into the repo-local or user-global agent skill directory.")
+    ] = "local",
     directory: Annotated[
         str | None,
         typer.Option(..., "--directory", "-d", help="Directory to add the skill to. If not provided, defaults to current working directory."),
@@ -227,11 +231,9 @@ def add_skill(
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
-        message = impl(skill_name=skill_name, directory=directory)
+        impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
-    if message is not None:
-        typer.echo(message)
 
 
 def get_app() -> typer.Typer:

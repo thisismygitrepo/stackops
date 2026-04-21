@@ -789,7 +789,7 @@
                     "",
                     "    from stackops.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.93\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.95\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1722,7 +1722,7 @@
                     "    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from stackops.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.93\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.95\"])",
                     "    from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
                     "    try:",
@@ -5835,7 +5835,7 @@
                         "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                         "    reasoning_effort: Annotated[",
                         "        ReasoningEffort | None,",
-                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                         "    ] = None,",
                         "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
                         "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
@@ -5963,7 +5963,7 @@
                           "type": "ReasoningEffort | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -5976,7 +5976,7 @@
                             "short_flags": [
                               "-r"
                             ],
-                            "help": "Reasoning effort for codex agents. When omitted, codex uses its default."
+                            "help": "Reasoning effort for codex and pi agents. When omitted, the agent uses its default."
                           }
                         },
                         {
@@ -6318,7 +6318,7 @@
                         "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                         "    reasoning_effort: Annotated[",
                         "        ReasoningEffort | None,",
-                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                         "    ] = None,",
                         "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
                         "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
@@ -6436,7 +6436,7 @@
                           "type": "ReasoningEffort | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -6449,7 +6449,7 @@
                             "short_flags": [
                               "-r"
                             ],
-                            "help": "Reasoning effort for codex agents. When omitted, codex uses its default."
+                            "help": "Reasoning effort for codex and pi agents. When omitted, the agent uses its default."
                           }
                         },
                         {
@@ -6725,7 +6725,7 @@
                         "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                         "    reasoning_effort: Annotated[",
                         "        ReasoningEffort | None,",
-                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                         "    ] = None,",
                         "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
                         "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
@@ -6843,7 +6843,7 @@
                           "type": "ReasoningEffort | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -6856,7 +6856,7 @@
                             "short_flags": [
                               "-r"
                             ],
-                            "help": "Reasoning effort for codex agents. When omitted, codex uses its default."
+                            "help": "Reasoning effort for codex and pi agents. When omitted, the agent uses its default."
                           }
                         },
                         {
@@ -12756,7 +12756,7 @@
                 "name": "create",
                 "fullPath": "agents parallel create",
                 "shortPath": "a p c",
-                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, google, aws, openai, anthropic, openrouter, xai\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid\n",
+                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid, pi\n",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_parallel_commands.py",
                   "module": "stackops.scripts.python.agents_parallel_commands",
@@ -12769,7 +12769,7 @@
                     "    model: Annotated[str | None, typer.Option(..., \"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                     "    reasoning_effort: Annotated[",
                     "        ReasoningEffort | None,",
-                    "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                    "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Provider to use (if agent support many)\")] = None,",
                     "    host: Annotated[HOST, typer.Option(..., \"--host\", \"-h\", help=f\"Machine to run agents on. One of {', '.join(get_args(HOST))}\")] = \"local\",",
@@ -12887,7 +12887,7 @@
                       "type": "ReasoningEffort | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -12900,7 +12900,7 @@
                         "short_flags": [
                           "-r"
                         ],
-                        "help": "Reasoning effort for codex agents. When omitted, codex uses its default.",
+                        "help": "Reasoning effort for codex and pi agents. When omitted, the agent uses its default.",
                         "default": "..."
                       }
                     },
@@ -13237,7 +13237,7 @@
                   {
                     "name": "c",
                     "hidden": true,
-                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, google, aws, openai, anthropic, openrouter, xai\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid\n"
+                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: cursor-agent, gemini, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, warp-cli, droid, pi\n"
                   }
                 ]
               },
@@ -13559,226 +13559,266 @@
             ]
           },
           {
-            "kind": "command",
-            "name": "make-config",
-            "fullPath": "agents make-config",
-            "shortPath": "a g",
-            "help": "Initialize AI configurations in the current repository.",
+            "kind": "group",
+            "name": "browser",
+            "fullPath": "agents browser",
+            "shortPath": "a b",
+            "help": "🌐 <b> Browser automation commands for agents",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
-              "callable": "init_config"
+              "dispatches_to": "stackops.scripts.python.agents_browser.get_app"
             },
-            "signature": {
-              "raw_lines": [
-                "def init_config(",
-                "    root: Annotated[",
-                "        str, typer.Option(..., \"--root\", \"-r\", help=\"Root directory of the repository to initialize AI configs in. Defaults to current directory.\")",
-                "    ],",
-                "    agents: Annotated[",
-                "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")",
-                "    ] = \"\",",
-                "    add_config: Annotated[bool, typer.Option(\"--add-config\", \"-c\", help=\"Create private agent config files/directories\")] = True,",
-                "    add_instructions: Annotated[bool, typer.Option(\"--add-instructions\", \"-i\", help=\"Create agent instructions files (e.g. AGENTS.md)\")] = True,",
-                "    add_scripts: Annotated[bool, typer.Option(\"--include-scripts\", \"-s\", help=\"Create shared .ai and scripts/type_checking scaffold\")] = False,",
-                "    add_vscode_tasks: Annotated[bool, typer.Option(\"--add-vscode-tasks\", \"-l\", help=\"Add VS Code lint/type-check task only\")] = False,",
-                "    add_to_gitignore: Annotated[",
-                "        bool, typer.Option(\"--add-gitignore\", \"-g\", help=\"Track all files touched by init-config and add them to .gitignore\")",
-                "    ] = False,",
-                ") -> None:",
-                "    \"\"\"Initialize AI configurations in the current repository.\"\"\"",
-                "    from stackops.scripts.python.helpers.helpers_agents.agents_impl import init_config as impl",
-                "",
-                "    try:",
-                "        from typing import cast",
-                "",
-                "        if agents:",
-                "            frameworks__ = tuple(agent.strip() for agent in agents.split(\",\") if agent.strip())",
-                "            resolved: tuple[AGENTS, ...] = cast(tuple[AGENTS, ...], frameworks__)",
-                "        else:",
-                "            resolved = cast(tuple[AGENTS, ...], get_args(AGENTS))",
-                "",
-                "        impl(",
-                "            root=root,",
-                "            frameworks=resolved,",
-                "            include_common=add_scripts,",
-                "            add_all_configs_to_gitignore=add_to_gitignore,",
-                "            add_lint_task=add_vscode_tasks,",
-                "            add_config=add_config,",
-                "            add_instructions=add_instructions,",
-                "        )",
-                "    except ValueError as e:",
-                "        raise typer.BadParameter(str(e)) from e"
-              ],
-              "name": "init_config",
-              "parameters": [
-                {
-                  "name": "root",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": null,
-                  "required": true,
-                  "annotation_raw": "Annotated[str, typer.Option(..., '--root', '-r', help='Root directory of the repository to initialize AI configs in. Defaults to current directory.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--root",
-                      "-r"
-                    ],
-                    "long_flags": [
-                      "--root"
-                    ],
-                    "short_flags": [
-                      "-r"
-                    ],
-                    "help": "Root directory of the repository to initialize AI configs in. Defaults to current directory.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "agents",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": "",
-                  "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--agent",
-                      "-a"
-                    ],
-                    "long_flags": [
-                      "--agent"
-                    ],
-                    "short_flags": [
-                      "-a"
-                    ]
-                  }
-                },
-                {
-                  "name": "add_config",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": true,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--add-config', '-c', help='Create private agent config files/directories')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--add-config",
-                      "-c"
-                    ],
-                    "long_flags": [
-                      "--add-config"
-                    ],
-                    "short_flags": [
-                      "-c"
-                    ],
-                    "help": "Create private agent config files/directories"
-                  }
-                },
-                {
-                  "name": "add_instructions",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": true,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--add-instructions', '-i', help='Create agent instructions files (e.g. AGENTS.md)')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--add-instructions",
-                      "-i"
-                    ],
-                    "long_flags": [
-                      "--add-instructions"
-                    ],
-                    "short_flags": [
-                      "-i"
-                    ],
-                    "help": "Create agent instructions files (e.g. AGENTS.md)"
-                  }
-                },
-                {
-                  "name": "add_scripts",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--include-scripts', '-s', help='Create shared .ai and scripts/type_checking scaffold')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--include-scripts",
-                      "-s"
-                    ],
-                    "long_flags": [
-                      "--include-scripts"
-                    ],
-                    "short_flags": [
-                      "-s"
-                    ],
-                    "help": "Create shared .ai and scripts/type_checking scaffold"
-                  }
-                },
-                {
-                  "name": "add_vscode_tasks",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--add-vscode-tasks', '-l', help='Add VS Code lint/type-check task only')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--add-vscode-tasks",
-                      "-l"
-                    ],
-                    "long_flags": [
-                      "--add-vscode-tasks"
-                    ],
-                    "short_flags": [
-                      "-l"
-                    ],
-                    "help": "Add VS Code lint/type-check task only"
-                  }
-                },
-                {
-                  "name": "add_to_gitignore",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--add-gitignore', '-g', help='Track all files touched by init-config and add them to .gitignore')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--add-gitignore",
-                      "-g"
-                    ],
-                    "long_flags": [
-                      "--add-gitignore"
-                    ],
-                    "short_flags": [
-                      "-g"
-                    ],
-                    "help": "Track all files touched by init-config and add them to .gitignore"
-                  }
-                }
-              ],
-              "return": "None"
+            "app": {
+              "help": "🌐 <b> Browser automation commands for agents",
+              "no_args_is_help": true,
+              "add_help_option": true,
+              "add_completion": false
             },
-            "short_help": "<g> Initialize AI configurations in the current repository",
-            "typer": {
-              "no_args_is_help": true
-            },
-            "doc": "Initialize AI configurations in the current repository.",
+            "children": [
+              {
+                "kind": "command",
+                "name": "install-tech",
+                "fullPath": "agents browser install-tech",
+                "shortPath": "a b i",
+                "help": "Install or prepare browser automation technology for agents.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "install_tech"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def install_tech(",
+                    "    which: Annotated[",
+                    "        BrowserTechName,",
+                    "        typer.Option(",
+                    "            \"--which\",",
+                    "            \"-w\",",
+                    "            help=\"Browser automation technology to install or prepare.\",",
+                    "            case_sensitive=False,",
+                    "            show_choices=True,",
+                    "        ),",
+                    "    ] = \"agent-browser\",",
+                    ") -> None:",
+                    "    \"\"\"Install or prepare browser automation technology for agents.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech",
+                    "",
+                    "        result = install_browser_tech(which=which)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    typer.echo(f\"Prepared {result.which} in: {result.install_root}\")",
+                    "    for command in result.commands:",
+                    "        typer.echo(f\"Ran: {' '.join(command)}\")",
+                    "    for guide_path in result.guide_paths:",
+                    "        typer.echo(f\"Wrote: {guide_path}\")",
+                    "    if len(result.mcp_servers) > 0:",
+                    "        typer.echo(f\"MCP catalog servers: {', '.join(result.mcp_servers)}\")",
+                    "        typer.echo(f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent codex --scope local\")"
+                  ],
+                  "name": "install_tech",
+                  "parameters": [
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "BrowserTechName",
+                      "default": "agent-browser",
+                      "required": false,
+                      "annotation_raw": "Annotated[BrowserTechName, typer.Option('--which', '-w', help='Browser automation technology to install or prepare.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--which",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--which"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Browser automation technology to install or prepare."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<i> Install browser automation tech",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Install or prepare browser automation technology for agents.",
+                "aliases": [
+                  {
+                    "name": "i",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "launch-browser",
+                "fullPath": "agents browser launch-browser",
+                "shortPath": "a b l",
+                "help": "Launch Chrome or Brave with CDP enabled for agent-browser.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "launch_browser"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def launch_browser(",
+                    "    port: Annotated[int, typer.Option(\"--port\", \"-p\", help=\"Chrome DevTools Protocol remote debugging port.\")] = DEFAULT_BROWSER_PORT,",
+                    "    browser: Annotated[",
+                    "        BrowserName,",
+                    "        typer.Option(\"--browser\", \"-b\", help=\"Browser executable to launch.\", case_sensitive=False, show_choices=True),",
+                    "    ] = \"chrome\",",
+                    "    profile: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            \"--profile\",",
+                    "            \"-r\",",
+                    "            help=\"Profile name under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile.\",",
+                    "        ),",
+                    "    ] = None,",
+                    "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Bind CDP to 0.0.0.0 instead of localhost.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"Launch Chrome or Brave with CDP enabled for agent-browser.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import launch_browser as launch_browser_impl",
+                    "",
+                    "        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    typer.echo(f\"Launched {result.browser}: pid={result.process_id}\")",
+                    "    typer.echo(f\"Executable: {result.browser_path}\")",
+                    "    typer.echo(f\"CDP: {result.host}:{result.port}\")",
+                    "    typer.echo(f\"Profile: {result.profile_path}\")",
+                    "    typer.echo(f\"Prompt: {result.prompt_path}\")",
+                    "    if lan:",
+                    "        typer.echo(\"CDP is bound to 0.0.0.0; use this only on a trusted network.\")"
+                  ],
+                  "name": "launch_browser",
+                  "parameters": [
+                    {
+                      "name": "port",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_BROWSER_PORT",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--port', '-p', help='Chrome DevTools Protocol remote debugging port.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--port",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--port"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Chrome DevTools Protocol remote debugging port."
+                      }
+                    },
+                    {
+                      "name": "browser",
+                      "kind": "positional_or_keyword",
+                      "type": "BrowserName",
+                      "default": "chrome",
+                      "required": false,
+                      "annotation_raw": "Annotated[BrowserName, typer.Option('--browser', '-b', help='Browser executable to launch.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--browser",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--browser"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Browser executable to launch."
+                      }
+                    },
+                    {
+                      "name": "profile",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--profile', '-r', help='Profile name under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--profile",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--profile"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Profile name under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile."
+                      }
+                    },
+                    {
+                      "name": "lan",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--lan', '-l', help='Bind CDP to 0.0.0.0 instead of localhost.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--lan",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--lan"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Bind CDP to 0.0.0.0 instead of localhost."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<l> Launch Chrome or Brave for CDP automation",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Launch Chrome or Brave with CDP enabled for agent-browser.",
+                "aliases": [
+                  {
+                    "name": "l",
+                    "hidden": true
+                  }
+                ]
+              }
+            ],
             "aliases": [
               {
-                "name": "g",
+                "name": "b",
                 "hidden": true,
-                "help": "Initialize AI configurations in the current repository."
+                "help": "Browser automation commands for agents"
               }
             ]
           },
@@ -13797,21 +13837,15 @@
               "raw_lines": [
                 "def add_mcp(",
                 "    requested_mcp_servers: Annotated[",
-                "        str | None,",
-                "        typer.Argument(help=\"MCP servers/tools to resolve from stackops MCP catalogs (comma-separated).\"),",
+                "        str | None, typer.Argument(help=\"MCP servers/tools to resolve from stackops MCP catalogs (comma-separated).\")",
                 "    ] = None,",
                 "    agents: Annotated[",
-                "        str,",
-                "        typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\"),",
+                "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")",
                 "    ] = \"\",",
                 "    scope: Annotated[",
-                "        MCP_INSTALL_SCOPE,",
-                "        typer.Option(\"--scope\", \"-s\", help=\"Install MCP config into repo-local or user-global agent config.\"),",
+                "        MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP config into repo-local or user-global agent config.\")",
                 "    ] = \"local\",",
-                "    where: Annotated[",
-                "        MCP_CATALOG_WHERE,",
-                "        typer.Option(..., \"--where\", \"-w\", help=\"Where to resolve or edit MCP catalog files.\"),",
-                "    ] = \"all\",",
+                "    where: Annotated[MCP_CATALOG_WHERE, typer.Option(..., \"--where\", \"-w\", help=\"Where to resolve or edit MCP catalog files.\")] = \"all\",",
                 "    edit: Annotated[",
                 "        bool,",
                 "        typer.Option(",
@@ -13823,64 +13857,10 @@
                 "    ] = False,",
                 ") -> None:",
                 "    \"\"\"Resolve MCP servers from stackops catalogs, or open catalog files for editing.\"\"\"",
-                "    from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import (",
-                "        collect_available_mcp_names,",
-                "        edit_mcp_catalog,",
-                "        ensure_mcp_catalog_exists,",
-                "        format_resolved_mcp_servers,",
-                "        parse_requested_mcp_names,",
-                "        resolve_mcp_catalog_locations,",
-                "        resolve_requested_mcp_servers,",
-                "    )",
-                "    from stackops.scripts.python.helpers.helpers_agents.mcp_install import (",
-                "        choose_requested_mcp_names,",
-                "        install_resolved_mcp_servers,",
-                "        parse_requested_agents,",
-                "    )",
-                "    from stackops.utils.accessories import get_repo_root",
-                "",
                 "    try:",
-                "        search_locations = resolve_mcp_catalog_locations(where=where)",
-                "        if edit:",
-                "            created_catalog_paths: list[Path] = []",
-                "            for location in search_locations:",
-                "                if ensure_mcp_catalog_exists(location=location):",
-                "                    created_catalog_paths.append(location[\"path\"])",
-                "            for created_catalog_path in created_catalog_paths:",
-                "                typer.echo(f\"Created MCP catalog template at: {created_catalog_path}\")",
+                "        from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl",
                 "",
-                "            editable_catalog_paths = tuple(location[\"path\"] for location in search_locations if location[\"path\"].exists() and location[\"path\"].is_file())",
-                "            if len(editable_catalog_paths) == 0:",
-                "                searched = \", \".join(str(location[\"path\"]) for location in search_locations)",
-                "                raise ValueError(f\"No MCP catalog files found for --where '{where}'. Searched: {searched}\")",
-                "            for catalog_path in editable_catalog_paths:",
-                "                edit_mcp_catalog(path=catalog_path)",
-                "",
-                "        if requested_mcp_servers is None:",
-                "            if edit:",
-                "                return",
-                "            if len(collect_available_mcp_names(locations=search_locations)) == 0:",
-                "                raise ValueError(\"No MCP servers are available to choose from in the selected catalog locations\")",
-                "            requested_mcp_names = choose_requested_mcp_names(locations=search_locations)",
-                "        else:",
-                "            requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)",
-                "",
-                "        resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)",
-                "        selected_agents = parse_requested_agents(raw_value=agents)",
-                "        repo_root = get_repo_root(Path.cwd()) if scope == \"local\" else None",
-                "        if scope == \"local\" and repo_root is None:",
-                "            raise ValueError(\"Local MCP installation requires running the command inside a git repository\")",
-                "",
-                "        typer.echo(f\"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}\")",
-                "        for selected_agent in selected_agents:",
-                "            install_path = install_resolved_mcp_servers(",
-                "                agent=selected_agent,",
-                "                scope=scope,",
-                "                resolved_servers=resolved_mcp_servers,",
-                "                repo_root=repo_root,",
-                "                home_dir=Path.home(),",
-                "            )",
-                "            typer.echo(f\"{selected_agent}: {install_path}\")",
+                "        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, where=where, edit=edit, report=typer.echo)",
                 "    except ValueError as e:",
                 "        raise typer.BadParameter(str(e)) from e"
               ],
@@ -14004,8 +13984,117 @@
           },
           {
             "kind": "command",
-            "name": "make-todo",
-            "fullPath": "agents make-todo",
+            "name": "add-skill",
+            "fullPath": "agents add-skill",
+            "shortPath": "a s",
+            "help": "Add a skill to an agent in a directory.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "callable": "add_skill"
+            },
+            "signature": {
+              "raw_lines": [
+                "def add_skill(",
+                "    skill_name: Annotated[str, typer.Argument(help=\"Name of the skill to add.\")],",
+                "    _agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to add the skill to.\")] = \"copilot\",",
+                "    directory: Annotated[",
+                "        str | None,",
+                "        typer.Option(..., \"--directory\", \"-d\", help=\"Directory to add the skill to. If not provided, defaults to current working directory.\"),",
+                "    ] = None,",
+                ") -> None:",
+                "    \"\"\"Add a skill to an agent in a directory.\"\"\"",
+                "    try:",
+                "        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl",
+                "",
+                "        message = impl(skill_name=skill_name, directory=directory)",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error",
+                "    if message is not None:",
+                "        typer.echo(message)"
+              ],
+              "name": "add_skill",
+              "parameters": [
+                {
+                  "name": "skill_name",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Name of the skill to add.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Name of the skill to add."
+                  }
+                },
+                {
+                  "name": "_agent",
+                  "kind": "positional_or_keyword",
+                  "type": "AGENTS",
+                  "default": "copilot",
+                  "required": false,
+                  "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent to add the skill to.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Agent to add the skill to.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "directory",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--directory', '-d', help='Directory to add the skill to. If not provided, defaults to current working directory.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--directory",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--directory"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Directory to add the skill to. If not provided, defaults to current working directory.",
+                    "default": "..."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<s> Add a skill to an agent",
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "Add a skill to an agent in a directory.",
+            "aliases": [
+              {
+                "name": "s",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "add-todo",
+            "fullPath": "agents add-todo",
             "shortPath": "a d",
             "help": "Generate checklist with Python and shell script files in the repository or workspace filtered by pattern.",
             "source": {
@@ -14018,8 +14107,7 @@
                 "def make_todo_files(",
                 "    pattern: Annotated[str, typer.Argument(help=\"Pattern or keyword to match files by\")] = \".py\",",
                 "    repo: Annotated[",
-                "        str,",
-                "        typer.Argument(help=\"Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned.\"),",
+                "        str, typer.Argument(help=\"Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned.\")",
                 "    ] = \".\",",
                 "    strategy: Annotated[",
                 "        Literal[\"name\", \"keywords\"],",
@@ -14252,8 +14340,8 @@
           },
           {
             "kind": "command",
-            "name": "make-symlinks",
-            "fullPath": "agents make-symlinks",
+            "name": "add-symlinks",
+            "fullPath": "agents add-symlinks",
             "shortPath": "a l",
             "help": "Create symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}.",
             "source": {
@@ -14303,6 +14391,228 @@
           },
           {
             "kind": "command",
+            "name": "add-config",
+            "fullPath": "agents add-config",
+            "shortPath": "a g",
+            "help": "Initialize AI configurations in the current repository.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "callable": "init_config"
+            },
+            "signature": {
+              "raw_lines": [
+                "def init_config(",
+                "    root: Annotated[",
+                "        str, typer.Option(..., \"--root\", \"-r\", help=\"Root directory of the repository to initialize AI configs in. Defaults to current directory.\")",
+                "    ],",
+                "    agents: Annotated[",
+                "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")",
+                "    ] = \"\",",
+                "    add_config: Annotated[bool, typer.Option(\"--add-config\", \"-c\", help=\"Create private agent config files/directories\")] = True,",
+                "    add_instructions: Annotated[bool, typer.Option(\"--add-instructions\", \"-i\", help=\"Create agent instructions files (e.g. AGENTS.md)\")] = True,",
+                "    add_scripts: Annotated[bool, typer.Option(\"--include-scripts\", \"-s\", help=\"Create shared .ai and scripts/type_checking scaffold\")] = False,",
+                "    add_vscode_tasks: Annotated[bool, typer.Option(\"--add-vscode-tasks\", \"-l\", help=\"Add VS Code lint/type-check task only\")] = False,",
+                "    add_to_gitignore: Annotated[",
+                "        bool, typer.Option(\"--add-gitignore\", \"-g\", help=\"Track all files touched by init-config and add them to .gitignore\")",
+                "    ] = False,",
+                ") -> None:",
+                "    \"\"\"Initialize AI configurations in the current repository.\"\"\"",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_impl import init_config as impl",
+                "",
+                "    try:",
+                "        if agents:",
+                "            frameworks__ = tuple(agent.strip() for agent in agents.split(\",\") if agent.strip())",
+                "            resolved: tuple[AGENTS, ...] = cast(tuple[AGENTS, ...], frameworks__)",
+                "        else:",
+                "            resolved = cast(tuple[AGENTS, ...], get_args(AGENTS))",
+                "",
+                "        impl(",
+                "            root=root,",
+                "            frameworks=resolved,",
+                "            include_common=add_scripts,",
+                "            add_all_configs_to_gitignore=add_to_gitignore,",
+                "            add_lint_task=add_vscode_tasks,",
+                "            add_config=add_config,",
+                "            add_instructions=add_instructions,",
+                "        )",
+                "    except ValueError as e:",
+                "        raise typer.BadParameter(str(e)) from e"
+              ],
+              "name": "init_config",
+              "parameters": [
+                {
+                  "name": "root",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "Annotated[str, typer.Option(..., '--root', '-r', help='Root directory of the repository to initialize AI configs in. Defaults to current directory.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--root",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--root"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Root directory of the repository to initialize AI configs in. Defaults to current directory.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "agents",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ]
+                  }
+                },
+                {
+                  "name": "add_config",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": true,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--add-config', '-c', help='Create private agent config files/directories')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--add-config",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--add-config"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Create private agent config files/directories"
+                  }
+                },
+                {
+                  "name": "add_instructions",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": true,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--add-instructions', '-i', help='Create agent instructions files (e.g. AGENTS.md)')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--add-instructions",
+                      "-i"
+                    ],
+                    "long_flags": [
+                      "--add-instructions"
+                    ],
+                    "short_flags": [
+                      "-i"
+                    ],
+                    "help": "Create agent instructions files (e.g. AGENTS.md)"
+                  }
+                },
+                {
+                  "name": "add_scripts",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--include-scripts', '-s', help='Create shared .ai and scripts/type_checking scaffold')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--include-scripts",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--include-scripts"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Create shared .ai and scripts/type_checking scaffold"
+                  }
+                },
+                {
+                  "name": "add_vscode_tasks",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--add-vscode-tasks', '-l', help='Add VS Code lint/type-check task only')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--add-vscode-tasks",
+                      "-l"
+                    ],
+                    "long_flags": [
+                      "--add-vscode-tasks"
+                    ],
+                    "short_flags": [
+                      "-l"
+                    ],
+                    "help": "Add VS Code lint/type-check task only"
+                  }
+                },
+                {
+                  "name": "add_to_gitignore",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--add-gitignore', '-g', help='Track all files touched by init-config and add them to .gitignore')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--add-gitignore",
+                      "-g"
+                    ],
+                    "long_flags": [
+                      "--add-gitignore"
+                    ],
+                    "short_flags": [
+                      "-g"
+                    ],
+                    "help": "Track all files touched by init-config and add them to .gitignore"
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<g> Initialize AI configurations in the current repository",
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "Initialize AI configurations in the current repository.",
+            "aliases": [
+              {
+                "name": "g",
+                "hidden": true,
+                "help": "Initialize AI configurations in the current repository."
+              }
+            ]
+          },
+          {
+            "kind": "command",
             "name": "run-prompt",
             "fullPath": "agents run-prompt",
             "shortPath": "a r",
@@ -14319,7 +14629,7 @@
                 "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = \"copilot\",",
                 "    reasoning_effort: Annotated[",
                 "        ReasoningEffort | None,",
-                "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex agents. When omitted, codex uses its default.\"),",
+                "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                 "    ] = None,",
                 "    context: Annotated[str | None, typer.Option(..., \"--context\", \"-c\", help=\"Context string. Mutually exclusive with --context-path.\")] = None,",
                 "    context_path: Annotated[",
@@ -14431,7 +14741,7 @@
                   "type": "ReasoningEffort | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex agents. When omitted, codex uses its default.')]",
+                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -14444,7 +14754,7 @@
                     "short_flags": [
                       "-r"
                     ],
-                    "help": "Reasoning effort for codex agents. When omitted, codex uses its default.",
+                    "help": "Reasoning effort for codex and pi agents. When omitted, the agent uses its default.",
                     "default": "..."
                   }
                 },
@@ -14638,32 +14948,21 @@
             "signature": {
               "raw_lines": [
                 "def ask(",
-                "    prompt: Annotated[",
-                "        list[str],",
-                "        typer.Argument(help=\"Prompt text to pass to the selected agent.\"),",
-                "    ],",
-                "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to ask directly.\")] = \"codex\",",
-                "    reasoning: Annotated[",
-                "        ReasoningShortcut | None,",
-                "        typer.Option(\"--reasoning\", \"-r\", help=_ASK_REASONING_HELP),",
-                "    ] = None,",
+                "    prompt: Annotated[list[str], typer.Argument(help=\"Prompt text to pass to the selected agent.\")],",
+                "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to ask directly.\")] = \"pi\",",
+                "    reasoning: Annotated[ReasoningShortcut | None, typer.Option(\"--reasoning\", \"-r\", help=_ASK_REASONING_HELP)] = None,",
                 "    file_prompt: Annotated[",
-                "        Path | None,",
-                "        typer.Option(\"--file-prompt\", \"-f\", help=\"Append the contents of this file to PROMPT before asking the selected agent.\"),",
+                "        Path | None, typer.Option(\"--file-prompt\", \"-f\", help=\"Append the contents of this file to PROMPT before asking the selected agent.\")",
                 "    ] = None,",
+                "    quiet: Annotated[bool, typer.Option(\"--quiet\", \"-q\", help=\"Skip the Rich preflight summary and stream agent output directly.\")] = False,",
                 ") -> None:",
                 "    \"\"\"Ask a selected agent directly.\"\"\"",
-                "    reasoning_shortcut, prompt_parts = _split_legacy_ask_reasoning(agent=agent, reasoning=reasoning, prompt_parts=prompt)",
-                "    reasoning_effort = _resolve_ask_reasoning(agent=agent, reasoning=reasoning_shortcut)",
-                "    prompt_text = _compose_ask_prompt_text(prompt_parts=prompt_parts, file_prompt=file_prompt)",
-                "    prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)",
                 "    try:",
-                "        try:",
-                "            return_code = run_shell_command(command_line=build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort))",
-                "        except ValueError as error:",
-                "            raise typer.BadParameter(str(error)) from error",
-                "    finally:",
-                "        prompt_path.unlink(missing_ok=True)",
+                "        from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl",
+                "",
+                "        return_code = impl(prompt_parts=prompt, agent=agent, reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error",
                 "    raise typer.Exit(code=return_code)"
               ],
               "name": "ask",
@@ -14687,7 +14986,7 @@
                   "name": "agent",
                   "kind": "positional_or_keyword",
                   "type": "AGENTS",
-                  "default": "codex",
+                  "default": "pi",
                   "required": false,
                   "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent to ask directly.')]",
                   "typer": {
@@ -14747,6 +15046,28 @@
                     ],
                     "help": "Append the contents of this file to PROMPT before asking the selected agent."
                   }
+                },
+                {
+                  "name": "quiet",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--quiet', '-q', help='Skip the Rich preflight summary and stream agent output directly.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--quiet",
+                      "-q"
+                    ],
+                    "long_flags": [
+                      "--quiet"
+                    ],
+                    "short_flags": [
+                      "-q"
+                    ],
+                    "help": "Skip the Rich preflight summary and stream agent output directly."
+                  }
                 }
               ],
               "return": "None"
@@ -14759,126 +15080,6 @@
             "aliases": [
               {
                 "name": "a",
-                "hidden": true
-              }
-            ]
-          },
-          {
-            "kind": "command",
-            "name": "add-skill",
-            "fullPath": "agents add-skill",
-            "shortPath": "a s",
-            "help": "Add a skill to an agent in a directory.",
-            "source": {
-              "file": "src/stackops/scripts/python/agents.py",
-              "module": "stackops.scripts.python.agents",
-              "callable": "add_skill"
-            },
-            "signature": {
-              "raw_lines": [
-                "def add_skill(",
-                "    skill_name: Annotated[str, typer.Argument(help=\"Name of the skill to add.\")],",
-                "    _agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to add the skill to.\")] = \"copilot\",",
-                "    directory: Annotated[",
-                "        str | None,",
-                "        typer.Option(..., \"--directory\", \"-d\", help=\"Directory to add the skill to. If not provided, defaults to current working directory.\"),",
-                "    ] = None,",
-                ") -> None:",
-                "    \"\"\"Add a skill to an agent in a directory.\"\"\"",
-                "    opensource_skills = {\"agent-browser\": \"bunx skills add vercel-labs/agent-browser\"}",
-                "    if directory:",
-                "        agent_dir = Path(directory).expanduser().resolve()",
-                "        if not agent_dir.is_dir():",
-                "            typer.echo(f\"Provided directory '{directory}' does not exist or is not a directory.\")",
-                "            raise typer.Exit(1)",
-                "    else:",
-                "        agent_dir = Path.cwd()",
-                "    if skill_name in opensource_skills:",
-                "        from stackops.utils.code import exit_then_run_shell_script",
-                "",
-                "        command = opensource_skills[skill_name]",
-                "        command = f\"\"\"",
-                "cd {agent_dir}",
-                "{command}",
-                "\"\"\"",
-                "        exit_then_run_shell_script(command, strict=False)",
-                "    else:",
-                "        typer.echo(f\"Skill '{skill_name}' is not recognized. Please provide a valid skill name.\")"
-              ],
-              "name": "add_skill",
-              "parameters": [
-                {
-                  "name": "skill_name",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": null,
-                  "required": true,
-                  "annotation_raw": "Annotated[str, typer.Argument(help='Name of the skill to add.')]",
-                  "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Name of the skill to add."
-                  }
-                },
-                {
-                  "name": "_agent",
-                  "kind": "positional_or_keyword",
-                  "type": "AGENTS",
-                  "default": "copilot",
-                  "required": false,
-                  "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent to add the skill to.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--agent",
-                      "-a"
-                    ],
-                    "long_flags": [
-                      "--agent"
-                    ],
-                    "short_flags": [
-                      "-a"
-                    ],
-                    "help": "Agent to add the skill to.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "directory",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--directory', '-d', help='Directory to add the skill to. If not provided, defaults to current working directory.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--directory",
-                      "-d"
-                    ],
-                    "long_flags": [
-                      "--directory"
-                    ],
-                    "short_flags": [
-                      "-d"
-                    ],
-                    "help": "Directory to add the skill to. If not provided, defaults to current working directory.",
-                    "default": "..."
-                  }
-                }
-              ],
-              "return": "None"
-            },
-            "short_help": "<s> Add a skill to an agent",
-            "typer": {
-              "no_args_is_help": true
-            },
-            "doc": "Add a skill to an agent in a directory.",
-            "aliases": [
-              {
-                "name": "s",
                 "hidden": true
               }
             ]

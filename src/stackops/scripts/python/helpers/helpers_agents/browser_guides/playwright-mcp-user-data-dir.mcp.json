@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "playwright-user-data-dir": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--executable-path",
+        "/absolute/path/to/chrome-or-brave",
+        "--user-data-dir",
+        "{home}/data/browsers-profiles/mcp/playwright-custom"
+      ]
+    }
+  }
+}

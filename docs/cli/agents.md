@@ -114,9 +114,31 @@ agents add-mcp --edit --where library
 
 ---
 
+## Browser Automation
+
+`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. The direct MCP entries use explicit StackOps profile directories under `~/data/browsers-profiles/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles.
+
+```bash
+agents browser install-tech
+agents browser install-tech --which chrome-devtools-mcp
+agents browser install-tech --which playwright-mcp
+agents add-mcp chrome-devtools --agent codex --scope local
+agents add-mcp chrome-devtools-browser-url --agent codex --scope local
+agents add-mcp playwright --agent codex --scope local
+agents add-mcp playwright-cdp --agent codex --scope local
+```
+
+`agents browser launch-browser` launches Chrome or Brave with a dedicated CDP profile for tools that connect to an already running browser:
+
+```bash
+agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
+```
+
+---
+
 ## `add-skill`
 
-`add-skill` exists, but the current implementation only recognizes a small built-in mapping. At the moment, the shipped mapping includes `agent-browser`; unknown skill names exit with an error instead of searching for alternatives.
+`add-skill` exists, but the current implementation only recognizes a small built-in mapping. At the moment, the shipped mapping includes `agent-browser`; unknown skill names exit with an error instead of searching for alternatives. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
 
 ---
 
@@ -131,4 +153,5 @@ agents make-todo --help
 agents run-prompt --help
 agents ask --help
 agents add-skill --help
+agents browser install-tech --help
 ```
