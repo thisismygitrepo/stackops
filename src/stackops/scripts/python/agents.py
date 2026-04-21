@@ -56,13 +56,13 @@ def init_config(
 
 def add_mcp(
     requested_mcp_servers: Annotated[
-        str | None, typer.Argument(help="MCP servers/tools to resolve from stackops MCP catalogs (comma-separated).")
+        str | None, typer.Argument(help="MCP server names or supported agent skills to resolve from stackops catalogs (comma-separated).")
     ] = None,
     agents: Annotated[
         str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
     ] = "",
     scope: Annotated[
-        MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config into repo-local or user-global agent config.")
+        MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config or skill files into repo-local or user-global agent config.")
     ] = "local",
     where: Annotated[MCP_CATALOG_WHERE, typer.Option(..., "--where", "-w", help="Where to resolve or edit MCP catalog files.")] = "all",
     edit: Annotated[
@@ -75,7 +75,7 @@ def add_mcp(
         ),
     ] = False,
 ) -> None:
-    """Resolve MCP servers from stackops catalogs, or open catalog files for editing."""
+    """Resolve MCP servers from stackops catalogs, install supported agent skills, or edit catalogs."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl
 
@@ -247,7 +247,7 @@ def get_app() -> typer.Typer:
     )
     agents_app.add_typer(get_browser_app(), name="b", help="Browser automation commands for agents", hidden=True)
 
-    agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries and install them for agents")(add_mcp)
+    agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries or supported skills")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)
     agents_app.command(name="add-skill", no_args_is_help=True, short_help="<s> Add a skill to an agent")(add_skill)
     agents_app.command(name="s", no_args_is_help=True, hidden=True)(add_skill)

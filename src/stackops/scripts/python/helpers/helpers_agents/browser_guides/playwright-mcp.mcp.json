@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "playwright": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@playwright/mcp@latest",
         "--user-data-dir",
         "{home}/data/browsers-profiles/mcp/playwright"

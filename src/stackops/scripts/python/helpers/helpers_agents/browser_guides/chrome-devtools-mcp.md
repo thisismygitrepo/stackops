@@ -23,9 +23,8 @@ The standard MCP config is in `chrome-devtools-mcp.mcp.json`. It lets the MCP se
 {
   "mcpServers": {
     "chrome-devtools": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "chrome-devtools-mcp@latest",
         "--user-data-dir={home}/data/browsers-profiles/mcp/chrome-devtools"
       ]
@@ -46,9 +45,8 @@ The MCP args must point at the same port:
 {
   "mcpServers": {
     "chrome-devtools-browser-url": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "chrome-devtools-mcp@latest",
         "--browser-url=http://127.0.0.1:9222"
       ]

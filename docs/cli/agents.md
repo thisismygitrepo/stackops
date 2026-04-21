@@ -98,15 +98,17 @@ agents make-config --root .
 agents make-config --root . --agent codex,copilot,pi --include-scripts --add-gitignore
 ```
 
-`add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. Notes:
+`add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
 
 - `--scope local` requires running inside a git repository
 - `--where` selects catalog locations
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
+- `caveman` is a skill/plugin, not an MCP server; `add-mcp caveman` delegates to the same installer as `add-skill caveman`
 
 ```bash
 agents add-mcp --help
 agents add-mcp postgres,filesystem --agent codex,copilot,pi --scope local
+agents add-mcp caveman --agent codex --scope local
 agents add-mcp --edit --where library
 ```
 
@@ -138,7 +140,12 @@ agents browser launch-browser --browser chrome --port 9222 --profile playwright-
 
 ## `add-skill`
 
-`add-skill` exists, but the current implementation only recognizes a small built-in mapping. At the moment, the shipped mapping includes `agent-browser`; unknown skill names exit with an error instead of searching for alternatives. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` installs supported open agent skills through the skills CLI. The shipped mapping includes `agent-browser` and `caveman`; unknown skill names exit with an error instead of searching for alternatives. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+
+```bash
+agents add-skill caveman --agent codex --scope local
+agents add-skill caveman --agent copilot --scope global
+```
 
 ---
 

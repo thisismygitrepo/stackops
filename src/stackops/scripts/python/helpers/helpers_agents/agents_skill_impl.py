@@ -70,7 +70,7 @@ def build_agent_skill_install_commands(
                     f"Supported StackOps agents: {', '.join(supported_agent_skill_agents())}"
                 )
 
-            command = ["npx", "skills", "add", source, "--agent", skills_cli_agent_name, "--yes"]
+            command = ["bunx", "skills", "add", source, "--agent", skills_cli_agent_name, "--yes"]
             if scope == "global":
                 command.append("--global")
             commands.append(tuple(command))

@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "playwright-extension": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@playwright/mcp@latest",
         "--extension"
       ]

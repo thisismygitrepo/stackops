@@ -17,6 +17,11 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_install import (
     parse_requested_agents,
 )
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
+    build_agent_skill_install_commands,
+    is_supported_agent_skill_name,
+    run_agent_skill_install_commands,
+)
 from stackops.utils.accessories import get_repo_root
 
 Reporter = Callable[[str], None]
@@ -49,6 +54,23 @@ def add_mcp(
         requested_mcp_names = choose_requested_mcp_names(locations=search_locations)
     else:
         requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
+
+    requested_skill_names = tuple(
+        requested_mcp_name for requested_mcp_name in requested_mcp_names if is_supported_agent_skill_name(skill_name=requested_mcp_name)
+    )
+    if len(requested_skill_names) > 0:
+        if len(requested_skill_names) != len(requested_mcp_names):
+            raise ValueError("Do not mix MCP server names and agent skill names in one add-mcp invocation")
+
+        selected_agents = parse_requested_agents(raw_value=agents)
+        repo_root = get_repo_root(Path.cwd()) if scope == "local" else None
+        if scope == "local" and repo_root is None:
+            raise ValueError("Local skill installation requires running the command inside a git repository")
+        install_root = repo_root if repo_root is not None else Path.cwd()
+        commands = build_agent_skill_install_commands(skill_names=requested_skill_names, agents=selected_agents, scope=scope)
+        report(f"Installing agent skills through skills CLI: {', '.join(requested_skill_names)}")
+        run_agent_skill_install_commands(install_root=install_root, commands=commands)
+        return
 
     resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
     selected_agents = parse_requested_agents(raw_value=agents)

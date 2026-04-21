@@ -34,7 +34,6 @@
       "type": "local",
       "command": [
         "bunx",
-        "-y",
         "@modelcontextprotocol/server-everything"
       ],
       "enabled": false

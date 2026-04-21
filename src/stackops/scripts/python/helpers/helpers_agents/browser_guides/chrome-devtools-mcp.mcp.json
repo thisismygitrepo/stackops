@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "chrome-devtools": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "chrome-devtools-mcp@latest",
         "--user-data-dir={home}/data/browsers-profiles/mcp/chrome-devtools"
       ]

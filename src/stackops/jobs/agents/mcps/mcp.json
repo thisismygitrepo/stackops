@@ -2,27 +2,24 @@
   "$schema": "./mcp.schema.json",
   "mcpServers": {
     "chrome-devtools": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "chrome-devtools-mcp@latest",
         "--user-data-dir={home}/data/browsers-profiles/mcp/chrome-devtools"
       ],
       "description": "Chrome DevTools MCP server with an explicit StackOps user data directory."
     },
     "chrome-devtools-browser-url": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "chrome-devtools-mcp@latest",
         "--browser-url=http://127.0.0.1:9222"
       ],
       "description": "Chrome DevTools MCP server attached to a running Chrome endpoint. Launch Chrome through StackOps so the endpoint uses a custom user data directory."
     },
     "playwright": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@playwright/mcp@latest",
         "--user-data-dir",
         "{home}/data/browsers-profiles/mcp/playwright"
@@ -30,9 +27,8 @@
       "description": "Playwright MCP server with an explicit StackOps user data directory."
     },
     "playwright-cdp": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@playwright/mcp@latest",
         "--cdp-endpoint",
         "http://127.0.0.1:9222"
@@ -40,9 +36,8 @@
       "description": "Playwright MCP server attached to a running Chromium CDP endpoint. Launch the browser through StackOps so the endpoint uses a custom user data directory."
     },
     "playwright-extension": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@playwright/mcp@latest",
         "--extension"
       ],

@@ -18,9 +18,8 @@ The standard config is in `playwright-mcp.mcp.json`. When StackOps writes this f
 {
   "mcpServers": {
     "playwright": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@playwright/mcp@latest",
         "--user-data-dir",
         "{home}/data/browsers-profiles/mcp/playwright"
@@ -50,9 +49,8 @@ Edit the CDP config if you choose a different port:
 {
   "mcpServers": {
     "playwright-cdp": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
-        "-y",
         "@playwright/mcp@latest",
         "--cdp-endpoint",
         "http://127.0.0.1:9222"
