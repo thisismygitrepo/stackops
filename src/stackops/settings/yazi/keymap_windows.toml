@@ -80,7 +80,7 @@ desc = "bat the file"
 
 [[mgr.prepend_keymap]]
 on   = "e"
-run  = 'shell --block -- hx "$0"'
+run  = 'shell --block -- hx "%h"'
 desc = "edit the file with helix"
 [[mgr.prepend_keymap]]
 on   = "v"
