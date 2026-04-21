@@ -165,11 +165,11 @@ size = {preview_panel_size}
         channel_path = tempdir / "temp_options.toml"
         channel_path.write_text(channel_config, encoding="utf-8")
         env = os.environ.copy()
-        tv_config_dir = pathlib.Path.home() / ".config" / "television"
-        if not tv_config_dir.exists():
-            tv_config_dir = pathlib.Path(os.getenv("XDG_CONFIG_HOME", str(pathlib.Path.home() / ".config"))) / "television"
+        tv_config_home = tempdir / "xdg_config"
+        tv_config_dir = tv_config_home / "television"
         cable_dir = tv_config_dir / "cable"
         cable_dir.mkdir(parents=True, exist_ok=True)
+        env["XDG_CONFIG_HOME"] = str(tv_config_home)
         temp_channel_link = cable_dir / "temp_options.toml"
         if temp_channel_link.exists() or temp_channel_link.is_symlink():
             temp_channel_link.unlink()
