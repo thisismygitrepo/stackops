@@ -58,8 +58,8 @@ def launch_browser(
 
 def get_app() -> typer.Typer:
     browser_app = typer.Typer(help="🌐 <b> Browser automation commands for agents", no_args_is_help=True, add_help_option=True, add_completion=False)
-    browser_app.command(name="install-skill", no_args_is_help=False, short_help="<s> Install the agent-browser skill")(install_skill)
-    browser_app.command(name="s", no_args_is_help=False, hidden=True)(install_skill)
-    browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<i> Launch Chrome or Brave for CDP automation")(launch_browser)
-    browser_app.command(name="i", no_args_is_help=False, hidden=True)(launch_browser)
+    browser_app.command(name="install-skill", no_args_is_help=False, short_help="<i> Install the agent-browser skill")(install_skill)
+    browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_skill)
+    browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch Chrome or Brave for CDP automation")(launch_browser)
+    browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
     return browser_app
