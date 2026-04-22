@@ -70,9 +70,6 @@ def choose_session(
 
     if len(sessions) == 0:
         return ("run_script", "tmux new-session")
-    if not window and len(sessions) == 1:
-        return ("run_script", build_tmux_attach_or_switch_command(session_name=sessions[0]))
-
     if window:
         option_to_script, options_to_preview_mapping = build_window_target_options(
             sessions=sessions,
