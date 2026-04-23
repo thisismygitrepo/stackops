@@ -65,9 +65,6 @@ alias xc='copilot --yolo'
 #   gh copilot explain "Input command is: $x The output is this: $y"
 # }
 
-# https://github.com/atuinsh/atuin
-# eval "$(atuin init bash)"
-
 # source /home/alex/.config/broot/launcher/bash/br
 # eval "$(thefuck --alias)"
 # from https://github.com/ajeetdsouza/zoxide
@@ -79,6 +76,8 @@ eval "$(starship init bash)"
 if command -v mcfly &> /dev/null; then
     eval "$(mcfly init bash)"
 elif command -v atuin &> /dev/null; then
+    # https://github.com/atuinsh/atuin
+    # [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
     eval "$(atuin init bash --disable-up-arrow)"
 else
     # eval "$(tv init bash)"
