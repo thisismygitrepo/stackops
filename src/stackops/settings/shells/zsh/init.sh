@@ -75,7 +75,7 @@ eval "$(starship init zsh)"
 if command -v mcfly &> /dev/null; then
     eval "$(mcfly init zsh)"
 elif command -v atuin &> /dev/null; then
-    eval "$(atuin init zsh)"
+    eval "$(atuin init zsh --disable-up-arrow)"
 else
     tv_shell_history() {
         local current_prompt="$LBUFFER"

@@ -79,7 +79,7 @@ eval "$(starship init bash)"
 if command -v mcfly &> /dev/null; then
     eval "$(mcfly init bash)"
 elif command -v atuin &> /dev/null; then
-    eval "$(atuin init bash)"
+    eval "$(atuin init bash --disable-up-arrow)"
 else
     # eval "$(tv init bash)"
     tv_shell_history() {
