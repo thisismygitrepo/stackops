@@ -2,7 +2,6 @@ from pathlib import Path
 
 from stackops.scripts.python.ai.utils.shared import get_generic_instructions_path
 import stackops.scripts.python.ai.solutions.copilot as copilot_assets
-from stackops.utils.path_reference import get_path_reference_path
 
 
 
@@ -10,10 +9,6 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
     instructions_repository_dir = Path(copilot_assets.__file__).resolve().parent.joinpath("instructions")
     agents_dir = Path(copilot_assets.__file__).resolve().parent.joinpath("agents")
     prompts_dir = Path(copilot_assets.__file__).resolve().parent.joinpath("prompts")
-    privacy_path = get_path_reference_path(
-        module=copilot_assets,
-        path_reference=copilot_assets.PRIVACY_PATH_REFERENCE,
-    )
 
     github_dir = repo_root.joinpath(".github")
     agents_target_dir = github_dir.joinpath("agents")
@@ -53,9 +48,6 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
                 target_name = f"{instruction.name.split('.')[0]}.instructions.md"
             instruction_target = instructions_target_dir.joinpath(target_name)
             instruction_target.write_text(data=instruction.read_text(encoding="utf-8"), encoding="utf-8")
-
-        privacy_instructions_target = instructions_target_dir.joinpath("copilot-cli-security.instructions.md")
-        privacy_instructions_target.write_text(data=privacy_path.read_text(encoding="utf-8"), encoding="utf-8")
 
         generic_instructions_path = get_generic_instructions_path()
         github_dir.joinpath("copilot-instructions.md").write_text(data=generic_instructions_path.read_text(encoding="utf-8"), encoding="utf-8")

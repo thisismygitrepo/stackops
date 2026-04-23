@@ -1,1 +1,0 @@
-PRIVACY_PATH_REFERENCE = "privacy.md"
