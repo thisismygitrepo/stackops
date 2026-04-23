@@ -43,6 +43,17 @@
       ],
       "description": "Playwright MCP server attached through the browser extension. Use a StackOps-launched custom browser profile for profile isolation."
     },
+    "postgres": {
+      "command": "uvx",
+      "args": [
+        "postgres-mcp",
+        "--access-mode=unrestricted"
+      ],
+      "env": {
+        "DATABASE_URI": "postgresql://username:password@localhost:5432/dbname"
+      },
+      "description": "PostgreSQL MCP server. Replace DATABASE_URI with the target PostgreSQL connection string before use."
+    },
     "tmux": {
       "command": "~/.local/bin/tmux-mcp-rs"
     }

@@ -1,12 +1,12 @@
 {
-  "mcpServers": {
+  "servers": {
     "postgres": {
+      "type": "stdio",
       "command": "uvx",
       "args": [
         "postgres-mcp",
         "--access-mode=unrestricted"
       ],
-      "enabled": true,
       "env": {
         "DATABASE_URI": "postgresql://username:password@localhost:5432/dbname"
       },

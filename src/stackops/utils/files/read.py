@@ -23,18 +23,8 @@ def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
     try:
         mydict = json.loads(Path(path).read_text(encoding="utf-8"), **kwargs)
     except Exception:
-        def remove_c_style_comments(text: str) -> str:
-            import re
-            url_pattern = r'https?://[^\s]*'
-            urls = re.findall(url_pattern, text)
-            url_map = {url: f"__URL{index}__" for index, url in enumerate(urls)}
-            for url, placeholder in url_map.items():
-                text = text.replace(url, placeholder)
-            text = re.sub(r'//.*', '', text)
-            text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
-            for url, placeholder in url_map.items():
-                text = text.replace(placeholder, url)
-            return text
+        from stackops.utils.io import remove_c_style_comments
+
         mydict = json.loads(remove_c_style_comments(Path(path).read_text(encoding="utf-8")), **kwargs)
     _ = r
     return mydict

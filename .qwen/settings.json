@@ -12,5 +12,8 @@
       },
       "description": "PostgreSQL MCP server. Replace DATABASE_URI with the target PostgreSQL connection string before use."
     }
+  },
+  "mcp": {
+    "enabled": true
   }
 }

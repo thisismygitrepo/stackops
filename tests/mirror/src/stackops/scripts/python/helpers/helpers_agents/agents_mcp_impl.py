@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
+import json
 from pathlib import Path
 
 import pytest
@@ -51,3 +52,53 @@ def test_add_mcp_rejects_mixed_mcp_and_skill_names() -> None:
             edit=False,
             report=lambda _message: None,
         )
+
+
+def test_add_mcp_installs_postgres_from_library_catalog(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    reports: list[str] = []
+
+    def fake_get_repo_root(_path: Path) -> Path:
+        return tmp_path
+
+    monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
+
+    agents_mcp_impl.add_mcp(
+        requested_mcp_servers="postgres",
+        agents="codex",
+        scope="local",
+        where="library",
+        edit=False,
+        report=reports.append,
+    )
+
+    install_path = tmp_path / ".codex" / "config.toml"
+    config_text = install_path.read_text(encoding="utf-8")
+
+    assert reports == ["Installing: postgres (library)", f"codex: {install_path}"]
+    assert "[mcp_servers.postgres]" in config_text
+    assert 'command = "uvx"' in config_text
+    assert 'args = ["postgres-mcp", "--access-mode=unrestricted"]' in config_text
+    assert "[mcp_servers.postgres.env]" in config_text
+    assert 'DATABASE_URI = "postgresql://username:password@localhost:5432/dbname"' in config_text
+
+
+def test_add_mcp_installs_postgres_for_default_agents(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def fake_get_repo_root(_path: Path) -> Path:
+        return tmp_path
+
+    monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
+
+    agents_mcp_impl.add_mcp(
+        requested_mcp_servers="postgres",
+        agents="",
+        scope="local",
+        where="library",
+        edit=False,
+        report=lambda _message: None,
+    )
+
+    shared_mcp_config: object = json.loads(tmp_path.joinpath(".mcp.json").read_text(encoding="utf-8"))
+
+    assert isinstance(shared_mcp_config, dict)
+    assert "mcpServers" in shared_mcp_config
+    assert tmp_path.joinpath(".codex/config.toml").is_file()
