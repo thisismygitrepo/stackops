@@ -148,6 +148,68 @@ def test_add_mcp_installs_postgres_from_multi_repo_workspace(monkeypatch: pytest
     assert "[mcp_servers.postgres]" in config_text
 
 
+def test_add_mcp_installs_postgres_for_copilot_cli_local(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    reports: list[str] = []
+
+    def fake_get_repo_root(_path: Path) -> Path:
+        return tmp_path
+
+    monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
+
+    agents_mcp_impl.add_mcp(
+        requested_mcp_servers="postgres",
+        agents="copilot",
+        scope="local",
+        where="library",
+        edit=False,
+        report=reports.append,
+    )
+
+    install_path = tmp_path / ".github" / "mcp.json"
+    config: object = json.loads(install_path.read_text(encoding="utf-8"))
+
+    assert reports == ["Installing: postgres (library)", f"copilot: {install_path}"]
+    assert not tmp_path.joinpath(".vscode/mcp.json").exists()
+    assert isinstance(config, dict)
+    mcp_servers = config["mcpServers"]
+    assert isinstance(mcp_servers, dict)
+    postgres_server = mcp_servers["postgres"]
+    assert isinstance(postgres_server, dict)
+    assert postgres_server["type"] == "local"
+    assert postgres_server["command"] == "uvx"
+    assert postgres_server["args"] == ["postgres-mcp", "--access-mode=unrestricted"]
+    assert postgres_server["tools"] == ["*"]
+
+
+def test_add_mcp_installs_postgres_for_copilot_cli_global_copilot_home(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    reports: list[str] = []
+    copilot_home = tmp_path / "copilot-home"
+    monkeypatch.setenv("COPILOT_HOME", str(copilot_home))
+
+    agents_mcp_impl.add_mcp(
+        requested_mcp_servers="postgres",
+        agents="copilot",
+        scope="global",
+        where="library",
+        edit=False,
+        report=reports.append,
+    )
+
+    install_path = copilot_home / "mcp-config.json"
+    config: object = json.loads(install_path.read_text(encoding="utf-8"))
+
+    assert reports == ["Installing: postgres (library)", f"copilot: {install_path}"]
+    assert isinstance(config, dict)
+    mcp_servers = config["mcpServers"]
+    assert isinstance(mcp_servers, dict)
+    postgres_server = mcp_servers["postgres"]
+    assert isinstance(postgres_server, dict)
+    assert postgres_server["type"] == "local"
+    assert postgres_server["tools"] == ["*"]
+
+
 def test_add_mcp_rejects_plain_directory_for_local_scope(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     def fake_get_repo_root(_path: Path) -> Path | None:
         return None

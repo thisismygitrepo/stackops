@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from platform import system
 import re
@@ -77,10 +78,7 @@ def install_resolved_mcp_servers(
         case "codex":
             _write_codex_config(path=path, resolved_servers=resolved_servers)
         case "copilot":
-            if scope == "local":
-                _write_copilot_workspace_config(path=path, resolved_servers=resolved_servers)
-            else:
-                _write_copilot_user_config(path=path, resolved_servers=resolved_servers)
+            _write_copilot_cli_config(path=path, resolved_servers=resolved_servers)
         case "claude" | "cursor-agent" | "forge" | "kilocode" | "warp-cli":
             _write_mcp_servers_file(path=path, resolved_servers=resolved_servers)
         case "gemini" | "qwen":
@@ -112,7 +110,7 @@ def resolve_install_path(
             case "codex":
                 return repo_root / ".codex" / "config.toml"
             case "copilot":
-                return repo_root / ".vscode" / "mcp.json"
+                return repo_root / ".github" / "mcp.json"
             case "claude":
                 return repo_root / ".mcp.json"
             case "forge":
@@ -146,7 +144,7 @@ def resolve_install_path(
         case "codex":
             return home_dir / ".codex" / "config.toml"
         case "copilot":
-            return home_dir / ".copilot" / "mcp-config.json"
+            return _resolve_copilot_cli_user_config_path(home_dir=home_dir)
         case "claude":
             return home_dir / ".claude.json"
         case "forge":
@@ -181,6 +179,13 @@ def resolve_install_path(
             return home_dir / ".config" / "crush" / "crush.json"
         case "pi":
             return home_dir / ".pi" / "agent" / "mcp.json"
+
+
+def _resolve_copilot_cli_user_config_path(*, home_dir: Path) -> Path:
+    copilot_home = os.environ.get("COPILOT_HOME")
+    if copilot_home is not None and copilot_home.strip() != "":
+        return Path(copilot_home).expanduser() / "mcp-config.json"
+    return home_dir / ".copilot" / "mcp-config.json"
 
 
 def _load_json_object(*, path: Path) -> dict[str, object]:
@@ -299,49 +304,43 @@ def _write_settings_with_mcp_servers(
     _write_json_object(path=path, root=root)
 
 
-def _resolved_server_to_copilot_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
+def _resolved_server_to_copilot_cli_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
     definition = resolved_server["definition"]
+    tools: list[str] = ["*"] if definition["enabled"] else []
     if definition["transport"] == "stdio":
         command = definition["command"]
         if command is None:
             raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a command")
         entry: dict[str, object] = {
-            "type": "stdio",
+            "type": "local",
             "command": command,
             "args": list(definition["args"]),
+            "tools": tools,
         }
         if len(definition["env"]) > 0:
             entry["env"] = dict(definition["env"])
         if definition["cwd"] is not None:
             entry["cwd"] = definition["cwd"]
-    else:
-        url = definition["url"]
-        if url is None:
-            raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a URL")
-        entry = {
-            "type": "http",
-            "url": url,
-        }
-        if len(definition["headers"]) > 0:
-            entry["headers"] = dict(definition["headers"])
-    if definition["description"] is not None:
-        entry["description"] = definition["description"]
+        return entry
+
+    url = definition["url"]
+    if url is None:
+        raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a URL")
+    entry = {
+        "type": "http",
+        "url": url,
+        "tools": tools,
+    }
+    if len(definition["headers"]) > 0:
+        entry["headers"] = dict(definition["headers"])
     return entry
 
 
-def _write_copilot_workspace_config(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
-    root = _load_json_object(path=path)
-    servers = _ensure_object_member(root=root, key="servers", path=path)
-    for resolved_server in resolved_servers:
-        servers[resolved_server["name"]] = _resolved_server_to_copilot_entry(resolved_server=resolved_server)
-    _write_json_object(path=path, root=root)
-
-
-def _write_copilot_user_config(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
+def _write_copilot_cli_config(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
     root = _load_json_object(path=path)
     mcp_servers = _ensure_object_member(root=root, key="mcpServers", path=path)
     for resolved_server in resolved_servers:
-        mcp_servers[resolved_server["name"]] = _resolved_server_to_copilot_entry(resolved_server=resolved_server)
+        mcp_servers[resolved_server["name"]] = _resolved_server_to_copilot_cli_entry(resolved_server=resolved_server)
     _write_json_object(path=path, root=root)
 
 
