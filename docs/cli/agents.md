@@ -103,7 +103,7 @@ agents make-config --root . --agent codex,copilot,pi --include-scripts --add-git
 - `--scope local` installs into the enclosing git repository; when run from a multi-repo workspace root, it installs into that workspace directory
 - `--where` selects catalog locations
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
-- `copilot` means GitHub Copilot CLI. Local MCP config is written to `.github/mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
+- `copilot` means GitHub Copilot CLI. Local MCP config is written to `.mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
 - `caveman` is a skill/plugin, not an MCP server; `add-mcp caveman` delegates to the same installer as `add-skill caveman`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 

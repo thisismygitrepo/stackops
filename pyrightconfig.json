@@ -4,7 +4,8 @@
   "exclude": [
     "tests",
     ".venv",
-    ".ai"
+    ".ai",
+    ".agents",
   ],
   // "python.analysis.typeCheckingMode": "strict",
   // "typeCheckingMode": "strict",

@@ -110,7 +110,7 @@ def resolve_install_path(
             case "codex":
                 return repo_root / ".codex" / "config.toml"
             case "copilot":
-                return repo_root / ".github" / "mcp.json"
+                return repo_root / ".mcp.json"
             case "claude":
                 return repo_root / ".mcp.json"
             case "forge":

@@ -165,10 +165,11 @@ def test_add_mcp_installs_postgres_for_copilot_cli_local(monkeypatch: pytest.Mon
         report=reports.append,
     )
 
-    install_path = tmp_path / ".github" / "mcp.json"
+    install_path = tmp_path / ".mcp.json"
     config: object = json.loads(install_path.read_text(encoding="utf-8"))
 
     assert reports == ["Installing: postgres (library)", f"copilot: {install_path}"]
+    assert not tmp_path.joinpath(".github/mcp.json").exists()
     assert not tmp_path.joinpath(".vscode/mcp.json").exists()
     assert isinstance(config, dict)
     mcp_servers = config["mcpServers"]
