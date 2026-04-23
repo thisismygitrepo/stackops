@@ -100,7 +100,7 @@ agents make-config --root . --agent codex,copilot,pi --include-scripts --add-git
 
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
 
-- `--scope local` requires running inside a git repository
+- `--scope local` installs into the enclosing git repository; when run from a multi-repo workspace root, it installs into that workspace directory
 - `--where` selects catalog locations
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
 - `caveman` is a skill/plugin, not an MCP server; `add-mcp caveman` delegates to the same installer as `add-skill caveman`

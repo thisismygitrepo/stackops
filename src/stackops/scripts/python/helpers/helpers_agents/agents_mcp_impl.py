@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from pathlib import Path
+from typing import Final
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import (
     collect_available_mcp_names,
@@ -25,6 +26,32 @@ from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
 from stackops.utils.accessories import get_repo_root
 
 Reporter = Callable[[str], None]
+_WORKSPACE_REPO_MARKER: Final[str] = ".git"
+_WORKSPACE_REPO_MINIMUM: Final[int] = 2
+_LOCAL_INSTALL_ROOT_REQUIREMENT: Final[str] = "running inside a git repository or from a workspace directory containing multiple git repositories"
+
+
+def resolve_local_install_root(*, current_dir: Path) -> Path | None:
+    repo_root = get_repo_root(current_dir)
+    if repo_root is not None:
+        return repo_root
+
+    workspace_root = current_dir.expanduser().resolve()
+    if not workspace_root.is_dir():
+        return None
+
+    try:
+        child_paths = tuple(workspace_root.iterdir())
+    except OSError as error:
+        raise ValueError(f"Cannot inspect local install directory: {workspace_root}") from error
+
+    nested_repo_count = 0
+    for child_path in child_paths:
+        if child_path.is_dir() and child_path.joinpath(_WORKSPACE_REPO_MARKER).exists():
+            nested_repo_count += 1
+            if nested_repo_count >= _WORKSPACE_REPO_MINIMUM:
+                return workspace_root
+    return None
 
 
 def add_mcp(
@@ -63,9 +90,9 @@ def add_mcp(
             raise ValueError("Do not mix MCP server names and agent skill names in one add-mcp invocation")
 
         selected_agents = parse_requested_agents(raw_value=agents)
-        repo_root = get_repo_root(Path.cwd()) if scope == "local" else None
+        repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
         if scope == "local" and repo_root is None:
-            raise ValueError("Local skill installation requires running the command inside a git repository")
+            raise ValueError(f"Local skill installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
         install_root = repo_root if repo_root is not None else Path.cwd()
         commands = build_agent_skill_install_commands(skill_names=requested_skill_names, agents=selected_agents, scope=scope)
         report(f"Installing agent skills through skills CLI: {', '.join(requested_skill_names)}")
@@ -74,9 +101,9 @@ def add_mcp(
 
     resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
     selected_agents = parse_requested_agents(raw_value=agents)
-    repo_root = get_repo_root(Path.cwd()) if scope == "local" else None
+    repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
     if scope == "local" and repo_root is None:
-        raise ValueError("Local MCP installation requires running the command inside a git repository")
+        raise ValueError(f"Local MCP installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
 
     report(f"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}")
     for selected_agent in selected_agents:
