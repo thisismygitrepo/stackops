@@ -3,6 +3,8 @@ from pathlib import Path
 import shlex
 from typing import Final, Literal, TypeAlias
 
+from stackops.utils.options import choose_from_options
+
 SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 
@@ -19,6 +21,15 @@ def is_supported_agent_skill_name(*, skill_name: str) -> bool:
 
 def supported_agent_skill_names() -> tuple[str, ...]:
     return tuple(_OPEN_SOURCE_SKILL_SOURCES)
+
+
+def choose_requested_skill_name() -> str:
+    selection = choose_from_options(
+        options=supported_agent_skill_names(), msg="Choose skill to install", multi=False, custom_input=False, header="Agent Skills", tv=True
+    )
+    if selection is None:
+        raise ValueError("Selection cancelled for agent skill")
+    return selection
 
 
 def resolve_agent_skill_install_root(*, directory: str | None) -> Path:
@@ -72,8 +83,9 @@ def run_agent_skill_install_commands(*, install_root: Path, commands: Sequence[t
     exit_then_run_shell_script(script=render_agent_skill_install_script(install_root=install_root, commands=commands), strict=False)
 
 
-def add_skill(*, skill_name: str, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None) -> None:
+def add_skill(*, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None) -> None:
     install_root = resolve_agent_skill_install_root(directory=directory)
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
-    commands = build_agent_skill_install_commands(skill_names=(skill_name,), agent_targets=agent_targets, scope=scope)
+    resolved_skill_name = choose_requested_skill_name() if skill_name is None else skill_name
+    commands = build_agent_skill_install_commands(skill_names=(resolved_skill_name,), agent_targets=agent_targets, scope=scope)
     run_agent_skill_install_commands(install_root=install_root, commands=commands)

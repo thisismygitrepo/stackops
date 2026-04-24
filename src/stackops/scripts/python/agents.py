@@ -217,7 +217,7 @@ def ask(
 
 
 def add_skill(
-    skill_name: Annotated[str, typer.Argument(help="Name of the skill to add.")],
+    skill_name: Annotated[str | None, typer.Argument(help="Name of the skill to add. If omitted, opens an interactive picker.")] = None,
     agent: Annotated[
         str | None,
         typer.Option(
@@ -257,8 +257,8 @@ def get_app() -> typer.Typer:
 
     agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries or supported skills")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)
-    agents_app.command(name="add-skill", no_args_is_help=True, short_help="<s> Add a skill to an agent")(add_skill)
-    agents_app.command(name="s", no_args_is_help=True, hidden=True)(add_skill)
+    agents_app.command(name="add-skill", short_help="<s> Add a skill to an agent")(add_skill)
+    agents_app.command(name="s", hidden=True)(add_skill)
     agents_app.command("add-todo", no_args_is_help=True, short_help="<d> Generate a markdown file listing all Python files in the repo")(
         make_todo_files
     )

@@ -142,9 +142,10 @@ agents browser launch-browser --browser chrome --port 9222 --profile playwright-
 
 ## `add-skill`
 
-`add-skill` installs supported open agent skills through `bunx skills@latest add`. The shipped source aliases are `agent-browser`, `caveman`, and `grill-me`; unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping, and omitting it lets the upstream tool choose or prompt for agent targets. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` installs supported open agent skills through `bunx skills@latest add`. The shipped source aliases are `agent-browser`, `caveman`, and `grill-me`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping, and omitting it lets the upstream tool choose or prompt for agent targets. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
 
 ```bash
+agents add-skill --scope local
 agents add-skill grill-me --scope local
 agents add-skill caveman --agent codex --scope local
 agents add-skill caveman --agent github-copilot --scope global
