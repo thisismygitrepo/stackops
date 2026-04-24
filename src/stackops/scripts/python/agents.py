@@ -7,6 +7,7 @@ import typer
 
 from stackops.scripts.python.agents_browser import get_app as get_browser_app
 from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
+from stackops.scripts.python.helpers.helpers_agents.agents_run_context import PROMPTS_WHERE
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
@@ -155,7 +156,7 @@ def run_prompt(
         ),
     ] = None,
     where: Annotated[
-        Literal["all", "a", "private", "p", "public", "b", "library", "l", "custom", "c"],
+        PROMPTS_WHERE,
         typer.Option(..., "--where", "-w", help="Where to look for context YAML files when --context-yaml-path is not provided."),
     ] = "all",
     show_prompts_yaml_format: Annotated[

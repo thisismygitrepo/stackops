@@ -62,7 +62,8 @@ def add_mcp(
     if edit:
         created_catalog_paths: list[Path] = []
         for location in search_locations:
-            if ensure_mcp_catalog_exists(location=location):
+            should_create_or_validate = location["scope"] != "repo" or location["path"].exists() or where in ("repo", "r")
+            if should_create_or_validate and ensure_mcp_catalog_exists(location=location):
                 created_catalog_paths.append(location["path"])
         for created_catalog_path in created_catalog_paths:
             report(f"Created MCP catalog template at: {created_catalog_path}")

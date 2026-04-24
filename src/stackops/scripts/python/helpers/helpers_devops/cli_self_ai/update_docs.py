@@ -26,11 +26,7 @@ def get_developer_repo_root() -> Path:
 
 def _list_git_visible_files(*, repo_root: Path) -> tuple[Path, ...]:
     completed_process = subprocess.run(
-        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--full-name"],
-        cwd=repo_root,
-        capture_output=True,
-        text=True,
-        check=False,
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--full-name"], cwd=repo_root, capture_output=True, text=True, check=False
     )
     if completed_process.returncode != 0:
         stderr = completed_process.stderr.strip()
@@ -104,21 +100,13 @@ def update_docs(
     ] = None,
     prompt_name: Annotated[str | None, typer.Option("--prompt-name", "-N", help="Prompt entry name from prompts YAML.")] = None,
     job_name: Annotated[str, typer.Option("--job-name", "-n", help="Job label and default output directory stem.")] = DEFAULT_DOCS_JOB_NAME,
-    join_prompt_and_context: Annotated[
-        bool,
-        typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context."),
-    ] = False,
-    output_path: Annotated[
-        str | None,
-        typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json."),
-    ] = None,
+    join_prompt_and_context: Annotated[bool, typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
+    output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json.")] = None,
     agents_dir: Annotated[
-        str | None,
-        typer.Option("--agents-dir", "-d", help="Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>."),
+        str | None, typer.Option("--agents-dir", "-d", help="Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>.")
     ] = None,
     interactive: Annotated[
-        bool,
-        typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters."),
+        bool, typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
     ] = False,
 ) -> None:
     repo_root = get_developer_repo_root()

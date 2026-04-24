@@ -7,6 +7,8 @@ Recursively Searched Predefined Directories:
 
 * 'private' : $HOME/dotfiles/scripts
 
+* 'repo'    : <current-git-repo>/.stackops/scripts
+
 * 'public'  : $HOME/.config/stackops/scripts
 
 * 'library' : $STACKOPS_LIBRARY_ROOT/jobs/scripts
@@ -21,7 +23,9 @@ Recursively Searched Predefined Directories:
 import typer
 import platform
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated
+
+from stackops.scripts.python.helpers.helpers_search.script_help import WHERE
 
 
 IGNORED_SCRIPT_MATCH_DIR_NAMES: frozenset[str] = frozenset({
@@ -62,7 +66,7 @@ def _is_supported_script_match(file_path: Path, root: Path, supported_suffixes: 
 
 def run_py_script(ctx: typer.Context,
                   name: Annotated[str, typer.Argument(help="Name of script to run, e.g., 'a' for a.py, or command to execute")] = "",
-                  where: Annotated[Literal["all", "a", "private", "p", "public", "b", "library", "l", "dynamic", "d", "custom", "c"], typer.Option("--where", "-w", help="Where to look for the script")] = "all",
+                  where: Annotated[WHERE, typer.Option("--where", "-w", help="Where to look for the script")] = "all",
                   interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
                   command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
@@ -116,6 +120,7 @@ def run_py_script(ctx: typer.Context,
             print(f"❌ Error: File '{name}' is not a recognized script type. Supported types are {'.py', '.sh', '.ps1', '.bat', '.cmd', ''}.")
             raise typer.Exit(code=1)
 
+    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
     from stackops.utils.source_of_truth import DEFAULTS_PATH, SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY
 
     def get_custom_roots() -> list[Path]:
@@ -136,6 +141,11 @@ def run_py_script(ctx: typer.Context,
     match where:
         case "all" | "a":
             roots = [SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY] + get_custom_roots()
+            repo_scripts = current_repo_stackops_path(path_kind="scripts")
+            if repo_scripts is not None:
+                roots = [repo_scripts] + roots
+        case "repo" | "r":
+            roots = [require_current_repo_stackops_path(path_kind="scripts")]
         case "private" | "p":
             roots = [SCRIPTS_ROOT_PRIVATE]
         case "public" | "b":

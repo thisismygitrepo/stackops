@@ -5,7 +5,7 @@ import shutil
 import subprocess
 
 
-PROMPTS_WHERE = Literal["all", "a", "private", "p", "public", "b", "library", "l", "custom", "c"]
+PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "custom", "c"]
 
 
 def _value_to_text(value: Any) -> str:
@@ -122,7 +122,9 @@ def _collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str,
 def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, CONFIG_ROOT, LIBRARY_ROOT
     from stackops.scripts.python.helpers.helpers_search.script_help import get_custom_roots
+    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
+    repo_prompts = current_repo_stackops_path(path_kind="prompts_yaml")
     private_prompts = DOTFILES_STACKOPS_ROOT / "agents" / "prompts" / "prompts.yaml"
     public_prompts = CONFIG_ROOT / "agents" / "prompts" / "prompts.yaml"
     library_prompts = LIBRARY_ROOT / "agents" / "prompts" / "prompts.yaml"
@@ -131,7 +133,12 @@ def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str,
 
     match where:
         case "all" | "a":
-            return [("private", private_prompts), ("public", public_prompts), ("library", library_prompts)] + custom_prompts
+            locations = [("private", private_prompts), ("public", public_prompts), ("library", library_prompts)] + custom_prompts
+            if repo_prompts is None:
+                return locations
+            return [("repo", repo_prompts)] + locations
+        case "repo" | "r":
+            return [("repo", require_current_repo_stackops_path(path_kind="prompts_yaml"))]
         case "private" | "p":
             return [("private", private_prompts)]
         case "public" | "b":

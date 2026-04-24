@@ -147,7 +147,7 @@ def run(
     created_yaml_paths: list[Path] = []
     for location_name, yaml_path in yaml_locations:
         # Keep previous behavior: always scaffold the default private path when available.
-        should_create = prompts_yaml_path is not None or location_name == "private"
+        should_create = prompts_yaml_path is not None or location_name == "private" or (where in ("repo", "r") and location_name == "repo")
         if should_create and ensure_prompts_yaml_exists(yaml_path=yaml_path):
             created_yaml_paths.append(yaml_path)
     if len(created_yaml_paths) > 0:

@@ -1,8 +1,10 @@
 """devops with emojis - lazy loading subcommands."""
 
-from typing import Annotated, Callable, Literal, TypedDict
+from typing import Annotated, Callable, TypedDict
 
 import typer
+
+from stackops.scripts.python.helpers.helpers_search.script_help import WHERE
 
 
 class EmojiDisplayDiagnostic(TypedDict):
@@ -98,7 +100,7 @@ def execute(
     ctx: typer.Context,
     name: Annotated[str, typer.Argument(help="Name of script to run, e.g., 'a' for a.py, or command to execute")] = "",
     where: Annotated[
-        Literal["all", "a", "private", "p", "public", "b", "library", "l", "dynamic", "d", "custom", "c"],
+        WHERE,
         typer.Option("--where", "-w", help="Where to look for the script"),
     ] = "all",
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,

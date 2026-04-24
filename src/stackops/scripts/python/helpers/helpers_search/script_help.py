@@ -2,9 +2,10 @@
 from typing import Literal, TypeAlias
 from pathlib import Path
 from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, DEFAULTS_PATH
+from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
 
-WHERE: TypeAlias = Literal["all", "a", "private", "p", "public", "b", "library", "l", "dynamic", "d", "custom", "c"]
+WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "dynamic", "d", "custom", "c"]
 
 
 def get_custom_roots(option: Literal["scripts", "prompts"]) -> list[Path]:
@@ -24,6 +25,7 @@ def get_custom_roots(option: Literal["scripts", "prompts"]) -> list[Path]:
 
 def list_available_scripts(where: WHERE) -> None:
     from pathlib import Path
+    repo_root = current_repo_stackops_path(path_kind="scripts")
     private_root = Path.home().joinpath("dotfiles/scripts")
     public_root = CONFIG_ROOT.joinpath("scripts")
     library_root = LIBRARY_ROOT.joinpath("jobs", "scripts")
@@ -31,8 +33,12 @@ def list_available_scripts(where: WHERE) -> None:
     match where:
         case "all" | "a":
             locations = {"private": private_root, "public": public_root, "library": library_root}
+            if repo_root is not None:
+                locations = {"repo": repo_root, **locations}
             for idx, custom in enumerate(get_custom_roots("scripts")): locations[f"custom_{idx}"] = custom
             locations["dynamic"] = "https://github.com/thisismygitrepo/stackops/tree/main/src/stackops/jobs/scripts_dynamic"
+        case "repo" | "r":
+            locations = {"repo": require_current_repo_stackops_path(path_kind="scripts")}
         case "private" | "p":
             locations = {"private": private_root}
         case "public" | "b":

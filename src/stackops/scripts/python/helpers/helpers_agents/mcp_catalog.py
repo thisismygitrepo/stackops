@@ -15,6 +15,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
 )
 from stackops.utils.files.read import read_json
 from stackops.utils.path_reference import get_path_reference_path
+from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 import stackops.jobs.agents.mcps as mcp_assets
 
 _HOME_PLACEHOLDER: Final[str] = "{home}"
@@ -44,17 +45,25 @@ def parse_requested_mcp_names(raw_value: str) -> tuple[str, ...]:
 def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT
 
-    return (
-        {"scope": "private", "path": DOTFILES_STACKOPS_ROOT / "agents" / "mcps" / "mcp.json"},
-        {"scope": "public", "path": CONFIG_ROOT / "agents" / "mcps" / "mcp.json"},
-        {
-            "scope": "library",
-            "path": get_path_reference_path(
-                module=mcp_assets,
-                path_reference=mcp_assets.MCP_PATH_REFERENCE,
-            ),
-        },
+    locations: list[McpCatalogLocation] = []
+    repo_catalog_path = current_repo_stackops_path(path_kind="mcp_json")
+    if repo_catalog_path is not None:
+        locations.append({"scope": "repo", "path": repo_catalog_path})
+
+    locations.extend(
+        [
+            {"scope": "private", "path": DOTFILES_STACKOPS_ROOT / "agents" / "mcps" / "mcp.json"},
+            {"scope": "public", "path": CONFIG_ROOT / "agents" / "mcps" / "mcp.json"},
+            {
+                "scope": "library",
+                "path": get_path_reference_path(
+                    module=mcp_assets,
+                    path_reference=mcp_assets.MCP_PATH_REFERENCE,
+                ),
+            },
+        ]
     )
+    return tuple(locations)
 
 
 def resolve_mcp_catalog_locations(where: MCP_CATALOG_WHERE) -> tuple[McpCatalogLocation, ...]:
@@ -62,12 +71,14 @@ def resolve_mcp_catalog_locations(where: MCP_CATALOG_WHERE) -> tuple[McpCatalogL
     match where:
         case "all" | "a":
             return locations
+        case "repo" | "r":
+            return ({"scope": "repo", "path": require_current_repo_stackops_path(path_kind="mcp_json")},)
         case "private" | "p":
-            return (locations[0],)
+            return tuple(location for location in locations if location["scope"] == "private")
         case "public" | "b":
-            return (locations[1],)
+            return tuple(location for location in locations if location["scope"] == "public")
         case "library" | "l":
-            return (locations[2],)
+            return tuple(location for location in locations if location["scope"] == "library")
 
 
 def _mcp_catalog_template() -> str:
