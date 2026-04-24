@@ -104,7 +104,7 @@ agents make-config --root . --agent codex,copilot,pi --include-scripts --add-git
 - `--where` selects catalog locations
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
 - `copilot` means GitHub Copilot CLI. Local MCP config is written to `.mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
-- `caveman` is a skill/plugin, not an MCP server; `add-mcp caveman` delegates to the same installer as `add-skill caveman`
+- `caveman` and `grill-me` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
 ```bash
@@ -142,11 +142,12 @@ agents browser launch-browser --browser chrome --port 9222 --profile playwright-
 
 ## `add-skill`
 
-`add-skill` installs supported open agent skills through the skills CLI. The shipped mapping includes `agent-browser` and `caveman`; unknown skill names exit with an error instead of searching for alternatives. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` installs supported open agent skills through `bunx skills@latest add`. The shipped source aliases are `agent-browser`, `caveman`, and `grill-me`; unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping, and omitting it lets the upstream tool choose or prompt for agent targets. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
 
 ```bash
+agents add-skill grill-me --scope local
 agents add-skill caveman --agent codex --scope local
-agents add-skill caveman --agent copilot --scope global
+agents add-skill caveman --agent github-copilot --scope global
 ```
 
 ---

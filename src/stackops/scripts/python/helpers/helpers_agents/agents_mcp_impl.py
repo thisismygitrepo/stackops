@@ -21,6 +21,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
     build_agent_skill_install_commands,
     is_supported_agent_skill_name,
+    parse_requested_skill_agent_targets,
     run_agent_skill_install_commands,
 )
 from stackops.utils.accessories import get_repo_root
@@ -89,12 +90,12 @@ def add_mcp(
         if len(requested_skill_names) != len(requested_mcp_names):
             raise ValueError("Do not mix MCP server names and agent skill names in one add-mcp invocation")
 
-        selected_agents = parse_requested_agents(raw_value=agents)
         repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
         if scope == "local" and repo_root is None:
             raise ValueError(f"Local skill installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
         install_root = repo_root if repo_root is not None else Path.cwd()
-        commands = build_agent_skill_install_commands(skill_names=requested_skill_names, agents=selected_agents, scope=scope)
+        agent_targets = parse_requested_skill_agent_targets(raw_value=agents)
+        commands = build_agent_skill_install_commands(skill_names=requested_skill_names, agent_targets=agent_targets, scope=scope)
         report(f"Installing agent skills through skills CLI: {', '.join(requested_skill_names)}")
         run_agent_skill_install_commands(install_root=install_root, commands=commands)
         return

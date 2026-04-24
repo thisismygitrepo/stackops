@@ -38,18 +38,11 @@ def test_add_mcp_routes_caveman_to_agent_skill_installer(monkeypatch: pytest.Mon
     monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
     monkeypatch.setattr(agents_mcp_impl, "run_agent_skill_install_commands", fake_run_agent_skill_install_commands)
 
-    agents_mcp_impl.add_mcp(
-        requested_mcp_servers="caveman",
-        agents="codex",
-        scope="local",
-        where="library",
-        edit=False,
-        report=reports.append,
-    )
+    agents_mcp_impl.add_mcp(requested_mcp_servers="caveman", agents="codex", scope="local", where="library", edit=False, report=reports.append)
 
     assert reports == ["Installing agent skills through skills CLI: caveman"]
     assert capture.install_root == tmp_path
-    assert capture.commands == (("bunx", "skills", "add", "JuliusBrussee/caveman", "--agent", "codex", "--yes"),)
+    assert capture.commands == (("bunx", "skills@latest", "add", "JuliusBrussee/caveman", "--yes", "--agent", "codex"),)
 
 
 def test_add_mcp_routes_skill_install_to_multi_repo_workspace(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -68,29 +61,17 @@ def test_add_mcp_routes_skill_install_to_multi_repo_workspace(monkeypatch: pytes
     monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
     monkeypatch.setattr(agents_mcp_impl, "run_agent_skill_install_commands", fake_run_agent_skill_install_commands)
 
-    agents_mcp_impl.add_mcp(
-        requested_mcp_servers="caveman",
-        agents="codex",
-        scope="local",
-        where="library",
-        edit=False,
-        report=reports.append,
-    )
+    agents_mcp_impl.add_mcp(requested_mcp_servers="caveman", agents="codex", scope="local", where="library", edit=False, report=reports.append)
 
     assert reports == ["Installing agent skills through skills CLI: caveman"]
     assert capture.install_root == workspace_path
-    assert capture.commands == (("bunx", "skills", "add", "JuliusBrussee/caveman", "--agent", "codex", "--yes"),)
+    assert capture.commands == (("bunx", "skills@latest", "add", "JuliusBrussee/caveman", "--yes", "--agent", "codex"),)
 
 
 def test_add_mcp_rejects_mixed_mcp_and_skill_names() -> None:
     with pytest.raises(ValueError, match="Do not mix MCP server names and agent skill names"):
         agents_mcp_impl.add_mcp(
-            requested_mcp_servers="caveman,tmux",
-            agents="codex",
-            scope="local",
-            where="library",
-            edit=False,
-            report=lambda _message: None,
+            requested_mcp_servers="caveman,tmux", agents="codex", scope="local", where="library", edit=False, report=lambda _message: None
         )
 
 
@@ -102,14 +83,7 @@ def test_add_mcp_installs_postgres_from_library_catalog(monkeypatch: pytest.Monk
 
     monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
 
-    agents_mcp_impl.add_mcp(
-        requested_mcp_servers="postgres",
-        agents="codex",
-        scope="local",
-        where="library",
-        edit=False,
-        report=reports.append,
-    )
+    agents_mcp_impl.add_mcp(requested_mcp_servers="postgres", agents="codex", scope="local", where="library", edit=False, report=reports.append)
 
     install_path = tmp_path / ".codex" / "config.toml"
     config_text = install_path.read_text(encoding="utf-8")
@@ -132,14 +106,7 @@ def test_add_mcp_installs_postgres_from_multi_repo_workspace(monkeypatch: pytest
     monkeypatch.chdir(workspace_path)
     monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
 
-    agents_mcp_impl.add_mcp(
-        requested_mcp_servers="postgres",
-        agents="codex",
-        scope="local",
-        where="library",
-        edit=False,
-        report=reports.append,
-    )
+    agents_mcp_impl.add_mcp(requested_mcp_servers="postgres", agents="codex", scope="local", where="library", edit=False, report=reports.append)
 
     install_path = workspace_path / ".codex" / "config.toml"
     config_text = install_path.read_text(encoding="utf-8")
@@ -156,14 +123,7 @@ def test_add_mcp_installs_postgres_for_copilot_cli_local(monkeypatch: pytest.Mon
 
     monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
 
-    agents_mcp_impl.add_mcp(
-        requested_mcp_servers="postgres",
-        agents="copilot",
-        scope="local",
-        where="library",
-        edit=False,
-        report=reports.append,
-    )
+    agents_mcp_impl.add_mcp(requested_mcp_servers="postgres", agents="copilot", scope="local", where="library", edit=False, report=reports.append)
 
     install_path = tmp_path / ".mcp.json"
     config: object = json.loads(install_path.read_text(encoding="utf-8"))
@@ -182,21 +142,12 @@ def test_add_mcp_installs_postgres_for_copilot_cli_local(monkeypatch: pytest.Mon
     assert postgres_server["tools"] == ["*"]
 
 
-def test_add_mcp_installs_postgres_for_copilot_cli_global_copilot_home(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_add_mcp_installs_postgres_for_copilot_cli_global_copilot_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     reports: list[str] = []
     copilot_home = tmp_path / "copilot-home"
     monkeypatch.setenv("COPILOT_HOME", str(copilot_home))
 
-    agents_mcp_impl.add_mcp(
-        requested_mcp_servers="postgres",
-        agents="copilot",
-        scope="global",
-        where="library",
-        edit=False,
-        report=reports.append,
-    )
+    agents_mcp_impl.add_mcp(requested_mcp_servers="postgres", agents="copilot", scope="global", where="library", edit=False, report=reports.append)
 
     install_path = copilot_home / "mcp-config.json"
     config: object = json.loads(install_path.read_text(encoding="utf-8"))
@@ -220,12 +171,7 @@ def test_add_mcp_rejects_plain_directory_for_local_scope(monkeypatch: pytest.Mon
 
     with pytest.raises(ValueError, match="workspace directory containing multiple git repositories"):
         agents_mcp_impl.add_mcp(
-            requested_mcp_servers="postgres",
-            agents="codex",
-            scope="local",
-            where="library",
-            edit=False,
-            report=lambda _message: None,
+            requested_mcp_servers="postgres", agents="codex", scope="local", where="library", edit=False, report=lambda _message: None
         )
 
 
@@ -235,14 +181,7 @@ def test_add_mcp_installs_postgres_for_default_agents(monkeypatch: pytest.Monkey
 
     monkeypatch.setattr(agents_mcp_impl, "get_repo_root", fake_get_repo_root)
 
-    agents_mcp_impl.add_mcp(
-        requested_mcp_servers="postgres",
-        agents="",
-        scope="local",
-        where="library",
-        edit=False,
-        report=lambda _message: None,
-    )
+    agents_mcp_impl.add_mcp(requested_mcp_servers="postgres", agents="", scope="local", where="library", edit=False, report=lambda _message: None)
 
     shared_mcp_config: object = json.loads(tmp_path.joinpath(".mcp.json").read_text(encoding="utf-8"))
 

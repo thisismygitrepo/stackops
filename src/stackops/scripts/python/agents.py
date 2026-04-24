@@ -218,7 +218,15 @@ def ask(
 
 def add_skill(
     skill_name: Annotated[str, typer.Argument(help="Name of the skill to add.")],
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to add the skill to.")] = "copilot",
+    agent: Annotated[
+        str | None,
+        typer.Option(
+            ...,
+            "--agent",
+            "-a",
+            help="Optional upstream skills CLI agent target, passed through without StackOps mapping. Comma-separated values are accepted.",
+        ),
+    ] = None,
     scope: Annotated[
         SKILL_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install the skill into the repo-local or user-global agent skill directory.")
     ] = "local",
@@ -227,7 +235,7 @@ def add_skill(
         typer.Option(..., "--directory", "-d", help="Directory to add the skill to. If not provided, defaults to current working directory."),
     ] = None,
 ) -> None:
-    """Add a skill to an agent in a directory."""
+    """Add a skill through the upstream skills CLI."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 

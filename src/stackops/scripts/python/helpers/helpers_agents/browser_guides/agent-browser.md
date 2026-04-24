@@ -5,7 +5,7 @@ Verified: 2026-04-21.
 `agent-browser` is the direct CLI path for browser automation. StackOps installs the npm package through the normal installer catalog and adds the Vercel skill with:
 
 ```bash
-bunx skills add vercel-labs/agent-browser
+bunx skills@latest add vercel-labs/agent-browser
 ```
 
 Install it from StackOps:
