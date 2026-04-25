@@ -117,7 +117,8 @@ devops execute [OPTIONS] [NAME]
 Current behavior:
 
 - `NAME` can be a predefined script name or a raw command string
-- `--where` selects search locations: `all`, `private`, `public`, `library`, `dynamic`, or `custom`
+- `--where` selects search locations: `all`, `repo`, `private`, `public`, `library`, `dynamic`, or `custom`
+- `--where repo` searches `<git-root>/.stackops/scripts`
 - `--interactive` enables interactive selection
 - `--command` runs the input as a command
 - `--list` prints the available scripts

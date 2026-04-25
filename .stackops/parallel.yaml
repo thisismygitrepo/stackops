@@ -1,0 +1,21 @@
+# parallel.yaml used by `agents parallel run-parallel`
+# Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
+# Each run entry uses the same option names as `agents parallel create`.
+default:
+  agent: codex
+  model: null
+  reasoning_effort: high
+  provider: openai
+  host: local
+  context: null
+  context_path: ./.ai/agents/default/context.md
+  separator: "\n@-@\n"
+  agent_load: 3
+  prompt: null
+  prompt_path: ./.ai/prompts/default.md
+  prompt_name: null
+  job_name: default
+  join_prompt_and_context: false
+  output_path: null
+  agents_dir: null
+  interactive: false

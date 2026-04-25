@@ -33,10 +33,36 @@ Current subcommands:
 | --- | --- |
 | `create` | Build an agent layout file with prompt/context splitting and output paths |
 | `create-context` | Ask one agent to persist a shared `context.md` for a job |
+| `run-parallel` | Run a named parallel workflow from `parallel.yaml`, with `create` option overrides |
 | `collect` | Concatenate collected agent material files into one output file |
 | `make-template` | Print a starter template for fire-agent usage |
 
 `agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning-effort`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--separator`, `--agents-dir`, `--output-path`, and `--interactive`.
+
+`agents parallel run-parallel` reads named entries from `parallel.yaml`. By default it searches `.stackops/parallel.yaml`, then StackOps private/public/library locations. Use `--parallel-yaml-path` for an explicit file, `--show-format` to print the standard, and `--edit` to open the YAML. Every `create` option can be overridden on the command line.
+
+Standard `parallel.yaml` shape:
+
+```yaml
+default:
+  agent: codex
+  model: null
+  reasoning_effort: high
+  provider: openai
+  host: local
+  context: null
+  context_path: ./.ai/agents/default/context.md
+  separator: "\n@-@\n"
+  agent_load: 3
+  prompt: null
+  prompt_path: ./.ai/prompts/default.md
+  prompt_name: null
+  job_name: default
+  join_prompt_and_context: false
+  output_path: null
+  agents_dir: null
+  interactive: false
+```
 
 Examples:
 
@@ -45,6 +71,8 @@ agents parallel --help
 agents parallel create --help
 agents parallel create --agent codex --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs
 agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
+agents parallel run-parallel default --where repo --agent-load 5
+agents parallel run-parallel docs.update --parallel-yaml-path ./.ai/parallel.yaml --agent pi --reasoning-effort high
 agents parallel create-context --job-name updateDocs "Collect the repo context for this doc task"
 agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 ```
@@ -59,8 +87,10 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 - `--reasoning-effort` for codex and pi agents
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
-- `--where` to choose catalog locations for context YAML lookup
+- `--where` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, `library`, or `custom`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
+
+For `run-prompt`, `--where repo` resolves to `<git-root>/.stackops/prompts.yaml`.
 
 Examples:
 
@@ -101,11 +131,13 @@ agents make-config --root . --agent codex,copilot,pi --include-scripts --add-git
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
 
 - `--scope local` installs into the enclosing git repository; when run from a multi-repo workspace root, it installs into that workspace directory
-- `--where` selects catalog locations
+- `--where` selects catalog locations: `all`, `repo`, `private`, `public`, or `library`
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
 - `copilot` means GitHub Copilot CLI. Local MCP config is written to `.mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
 - `caveman` and `grill-me` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
+
+For `add-mcp`, `--where repo` resolves to `<git-root>/.stackops/mcp.json`.
 
 ```bash
 agents add-mcp --help

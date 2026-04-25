@@ -5,6 +5,7 @@ from typing import get_args
 import typer
 
 from stackops.scripts.python.agents_parallel_commands import agents_create, collect, create_context, make_agents_command_template
+from stackops.scripts.python.agents_parallel_run_command import run_parallel
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, PROVIDER
 
 
@@ -37,6 +38,12 @@ AGENT options: {", ".join(get_args(AGENTS))}
         short_help="<x> Run prompt and ask agent to persist context",
     )(create_context)
     parallel_app.command(name="x", no_args_is_help=True, hidden=True)(create_context)
+    parallel_app.command(
+        name="run-parallel",
+        no_args_is_help=False,
+        short_help="<r> Run named parallel workflow from YAML",
+    )(run_parallel)
+    parallel_app.command(name="r", no_args_is_help=False, hidden=True)(run_parallel)
     parallel_app.command(
         "collect",
         no_args_is_help=True,

@@ -10,7 +10,7 @@ devops execute [OPTIONS] [NAME]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--where` | `-w` | Script location: `all`, `private`, `public`, `library`, `dynamic`, `custom` |
+| `--where` | `-w` | Script location: `all`, `repo`, `private`, `public`, `library`, `dynamic`, `custom` |
 | `--interactive` | `-i` | Interactive selection of scripts |
 | `--command` | `-c` | Run as command |
 | `--list` | `-l` | List available scripts |
@@ -31,6 +31,7 @@ devops e -i
 
 # Run from specific location
 devops execute my_script --where private
+devops execute my_script --where repo
 ```
 
 ---

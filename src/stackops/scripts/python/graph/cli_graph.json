@@ -6741,21 +6741,13 @@
                         "    ] = None,",
                         "    prompt_name: Annotated[str | None, typer.Option(\"--prompt-name\", \"-N\", help=\"Prompt entry name from prompts YAML.\")] = None,",
                         "    job_name: Annotated[str, typer.Option(\"--job-name\", \"-n\", help=\"Job label and default output directory stem.\")] = DEFAULT_DOCS_JOB_NAME,",
-                        "    join_prompt_and_context: Annotated[",
-                        "        bool,",
-                        "        typer.Option(\"--joined-prompt-context\", \"-j\", help=\"Join prompt file to the context.\"),",
-                        "    ] = False,",
-                        "    output_path: Annotated[",
-                        "        str | None,",
-                        "        typer.Option(\"--output-path\", \"-o\", help=\"Layout path. Defaults to <agents-dir>/layout.json.\"),",
-                        "    ] = None,",
+                        "    join_prompt_and_context: Annotated[bool, typer.Option(\"--joined-prompt-context\", \"-j\", help=\"Join prompt file to the context.\")] = False,",
+                        "    output_path: Annotated[str | None, typer.Option(\"--output-path\", \"-o\", help=\"Layout path. Defaults to <agents-dir>/layout.json.\")] = None,",
                         "    agents_dir: Annotated[",
-                        "        str | None,",
-                        "        typer.Option(\"--agents-dir\", \"-d\", help=\"Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>.\"),",
+                        "        str | None, typer.Option(\"--agents-dir\", \"-d\", help=\"Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>.\")",
                         "    ] = None,",
                         "    interactive: Annotated[",
-                        "        bool,",
-                        "        typer.Option(\"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\"),",
+                        "        bool, typer.Option(\"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\")",
                         "    ] = False,",
                         ") -> None:",
                         "    repo_root = get_developer_repo_root()",
@@ -9561,7 +9553,7 @@
                 "    ctx: typer.Context,",
                 "    name: Annotated[str, typer.Argument(help=\"Name of script to run, e.g., 'a' for a.py, or command to execute\")] = \"\",",
                 "    where: Annotated[",
-                "        Literal[\"all\", \"a\", \"private\", \"p\", \"public\", \"b\", \"library\", \"l\", \"dynamic\", \"d\", \"custom\", \"c\"],",
+                "        WHERE,",
                 "        typer.Option(\"--where\", \"-w\", help=\"Where to look for the script\"),",
                 "    ] = \"all\",",
                 "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Interactive selection of scripts to run\")] = False,",
@@ -9601,10 +9593,10 @@
                 {
                   "name": "where",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['all', 'a', 'private', 'p', 'public', 'b', 'library', 'l', 'dynamic', 'd', 'custom', 'c']",
+                  "type": "WHERE",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['all', 'a', 'private', 'p', 'public', 'b', 'library', 'l', 'dynamic', 'd', 'custom', 'c'], typer.Option('--where', '-w', help='Where to look for the script')]",
+                  "annotation_raw": "Annotated[WHERE, typer.Option('--where', '-w', help='Where to look for the script')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -13400,6 +13392,635 @@
               },
               {
                 "kind": "command",
+                "name": "run-parallel",
+                "fullPath": "agents parallel run-parallel",
+                "shortPath": "a p r",
+                "help": "Run a named parallel agent workflow from YAML, with create-option overrides.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_parallel_run_command.py",
+                  "module": "stackops.scripts.python.agents_parallel_run_command",
+                  "callable": "run_parallel"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def run_parallel(",
+                    "    config_name: Annotated[str | None, typer.Argument(help=\"Parallel YAML run name. Supports dot paths, e.g. docs.update.\")] = None,",
+                    "    parallel_yaml_path: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            ...,",
+                    "            \"--parallel-yaml-path\",",
+                    "            \"-y\",",
+                    "            help=\"YAML file containing named parallel runs. Auto-created with a template if missing.\",",
+                    "        ),",
+                    "    ] = None,",
+                    "    where: Annotated[",
+                    "        PARALLEL_RUNS_WHERE,",
+                    "        typer.Option(..., \"--where\", \"-w\", help=\"Where to look for parallel YAML files when --parallel-yaml-path is not provided.\"),",
+                    "    ] = \"all\",",
+                    "    show_parallel_yaml_format: Annotated[",
+                    "        bool,",
+                    "        typer.Option(..., \"--show-format\", \"-Y\", help=\"Show parallel YAML format guidance and resolved file paths.\"),",
+                    "    ] = False,",
+                    "    edit: Annotated[",
+                    "        bool,",
+                    "        typer.Option(..., \"--edit\", \"-e\", help=\"Open parallel YAML in an editor (hx preferred, nano fallback).\"),",
+                    "    ] = False,",
+                    "    agent: Annotated[AGENTS | None, typer.Option(..., \"--agent\", \"-a\", help=\"Override agent type.\")] = None,",
+                    "    model: Annotated[str | None, typer.Option(..., \"--model\", \"-m\", help=\"Override model.\")] = None,",
+                    "    reasoning_effort: Annotated[",
+                    "        ReasoningEffort | None,",
+                    "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Override reasoning effort for codex and pi agents.\"),",
+                    "    ] = None,",
+                    "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Override provider.\")] = None,",
+                    "    host: Annotated[HOST | None, typer.Option(..., \"--host\", \"-h\", help=f\"Override machine. One of {', '.join(get_args(HOST))}\")] = None,",
+                    "    context: Annotated[",
+                    "        str | None, typer.Option(..., \"--context\", \"-c\", help=\"Override context as a direct string. Mutually exclusive with --context-path.\")",
+                    "    ] = None,",
+                    "    context_path: Annotated[str | None, typer.Option(..., \"--context-path\", \"-C\", help=\"Override context file/folder path.\")] = None,",
+                    "    separator: Annotated[",
+                    "        str | None, typer.Option(..., \"--separator\", \"-s\", help=\"Override separator for context. Supports escaped values like '\\\\n'.\")",
+                    "    ] = None,",
+                    "    agent_load: Annotated[int | None, typer.Option(..., \"--agent-load\", \"-l\", help=\"Override number of tasks per prompt.\")] = None,",
+                    "    prompt: Annotated[str | None, typer.Option(..., \"--prompt\", \"-p\", help=\"Override prompt prefix as string.\")] = None,",
+                    "    prompt_path: Annotated[str | None, typer.Option(..., \"--prompt-path\", \"-P\", help=\"Override prompt file path.\")] = None,",
+                    "    prompt_name: Annotated[str | None, typer.Option(..., \"--prompt-name\", \"-N\", help=\"Override prompt entry name from prompts YAML.\")] = None,",
+                    "    job_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(..., \"--job-name\", \"-n\", help=\"Override job label. Also used as generated layout name and default output directory.\"),",
+                    "    ] = None,",
+                    "    join_prompt_and_context: Annotated[",
+                    "        bool | None,",
+                    "        typer.Option(",
+                    "            ...,",
+                    "            \"--joined-prompt-context/--no-joined-prompt-context\",",
+                    "            \"-j/-J\",",
+                    "            help=\"Override whether to join prompt file to the context.\",",
+                    "        ),",
+                    "    ] = None,",
+                    "    output_path: Annotated[str | None, typer.Option(..., \"--output-path\", \"-o\", help=\"Override layout.json output path.\")] = None,",
+                    "    agents_dir: Annotated[str | None, typer.Option(..., \"--agents-dir\", \"-d\", help=\"Override exact directory to store agent files in.\")] = None,",
+                    "    interactive: Annotated[",
+                    "        bool | None,",
+                    "        typer.Option(..., \"--interactive/--no-interactive\", \"-i/-I\", help=\"Override whether to run create in interactive mode.\"),",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    \"\"\"Run a named parallel agent workflow from YAML, with create-option overrides.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_impl import run_parallel_from_yaml",
+                    "",
+                    "    try:",
+                    "        run_parallel_from_yaml(",
+                    "            config_name=config_name,",
+                    "            parallel_yaml_path=parallel_yaml_path,",
+                    "            where=where,",
+                    "            overrides=ParallelCreateValues(",
+                    "                agent=agent,",
+                    "                model=model,",
+                    "                reasoning_effort=reasoning_effort,",
+                    "                provider=provider,",
+                    "                host=host,",
+                    "                context=context,",
+                    "                context_path=context_path,",
+                    "                separator=separator,",
+                    "                agent_load=agent_load,",
+                    "                prompt=prompt,",
+                    "                prompt_path=prompt_path,",
+                    "                prompt_name=prompt_name,",
+                    "                job_name=job_name,",
+                    "                join_prompt_and_context=join_prompt_and_context,",
+                    "                output_path=output_path,",
+                    "                agents_dir=agents_dir,",
+                    "                interactive=interactive,",
+                    "            ),",
+                    "            edit=edit,",
+                    "            show_parallel_yaml_format=show_parallel_yaml_format,",
+                    "        )",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error))",
+                    "        raise typer.Exit(1) from error"
+                  ],
+                  "name": "run_parallel",
+                  "parameters": [
+                    {
+                      "name": "config_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Parallel YAML run name. Supports dot paths, e.g. docs.update.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Parallel YAML run name. Supports dot paths, e.g. docs.update."
+                      }
+                    },
+                    {
+                      "name": "parallel_yaml_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--parallel-yaml-path', '-y', help='YAML file containing named parallel runs. Auto-created with a template if missing.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--parallel-yaml-path",
+                          "-y"
+                        ],
+                        "long_flags": [
+                          "--parallel-yaml-path"
+                        ],
+                        "short_flags": [
+                          "-y"
+                        ],
+                        "help": "YAML file containing named parallel runs. Auto-created with a template if missing.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "where",
+                      "kind": "positional_or_keyword",
+                      "type": "PARALLEL_RUNS_WHERE",
+                      "default": "all",
+                      "required": false,
+                      "annotation_raw": "Annotated[PARALLEL_RUNS_WHERE, typer.Option(..., '--where', '-w', help='Where to look for parallel YAML files when --parallel-yaml-path is not provided.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--where",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--where"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Where to look for parallel YAML files when --parallel-yaml-path is not provided.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "show_parallel_yaml_format",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--show-format', '-Y', help='Show parallel YAML format guidance and resolved file paths.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--show-format",
+                          "-Y"
+                        ],
+                        "long_flags": [
+                          "--show-format"
+                        ],
+                        "short_flags": [
+                          "-Y"
+                        ],
+                        "help": "Show parallel YAML format guidance and resolved file paths.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "edit",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Open parallel YAML in an editor (hx preferred, nano fallback).')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--edit",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--edit"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "Open parallel YAML in an editor (hx preferred, nano fallback).",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "agent",
+                      "kind": "positional_or_keyword",
+                      "type": "AGENTS | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[AGENTS | None, typer.Option(..., '--agent', '-a', help='Override agent type.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agent",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--agent"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Override agent type.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "model",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--model', '-m', help='Override model.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--model",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--model"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Override model.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "reasoning_effort",
+                      "kind": "positional_or_keyword",
+                      "type": "ReasoningEffort | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Override reasoning effort for codex and pi agents.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--reasoning-effort",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--reasoning-effort"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Override reasoning effort for codex and pi agents.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "provider",
+                      "kind": "positional_or_keyword",
+                      "type": "PROVIDER | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[PROVIDER | None, typer.Option(..., '--provider', '-v', help='Override provider.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--provider",
+                          "-v"
+                        ],
+                        "long_flags": [
+                          "--provider"
+                        ],
+                        "short_flags": [
+                          "-v"
+                        ],
+                        "help": "Override provider.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "host",
+                      "kind": "positional_or_keyword",
+                      "type": "HOST | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[HOST | None, typer.Option(..., '--host', '-h', help=f\"Override machine. One of {', '.join(get_args(HOST))}\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--host",
+                          "-h"
+                        ],
+                        "long_flags": [
+                          "--host"
+                        ],
+                        "short_flags": [
+                          "-h"
+                        ],
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "context",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--context', '-c', help='Override context as a direct string. Mutually exclusive with --context-path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--context",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--context"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "Override context as a direct string. Mutually exclusive with --context-path.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "context_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--context-path', '-C', help='Override context file/folder path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--context-path",
+                          "-C"
+                        ],
+                        "long_flags": [
+                          "--context-path"
+                        ],
+                        "short_flags": [
+                          "-C"
+                        ],
+                        "help": "Override context file/folder path.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "separator",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--separator', '-s', help=\"Override separator for context. Supports escaped values like '\\\\n'.\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--separator",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--separator"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Override separator for context. Supports escaped values like '\\n'.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "agent_load",
+                      "kind": "positional_or_keyword",
+                      "type": "int | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[int | None, typer.Option(..., '--agent-load', '-l', help='Override number of tasks per prompt.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agent-load",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--agent-load"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Override number of tasks per prompt.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "prompt",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--prompt', '-p', help='Override prompt prefix as string.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--prompt",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--prompt"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Override prompt prefix as string.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "prompt_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--prompt-path', '-P', help='Override prompt file path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--prompt-path",
+                          "-P"
+                        ],
+                        "long_flags": [
+                          "--prompt-path"
+                        ],
+                        "short_flags": [
+                          "-P"
+                        ],
+                        "help": "Override prompt file path.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "prompt_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--prompt-name', '-N', help='Override prompt entry name from prompts YAML.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--prompt-name",
+                          "-N"
+                        ],
+                        "long_flags": [
+                          "--prompt-name"
+                        ],
+                        "short_flags": [
+                          "-N"
+                        ],
+                        "help": "Override prompt entry name from prompts YAML.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "job_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--job-name', '-n', help='Override job label. Also used as generated layout name and default output directory.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--job-name",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--job-name"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Override job label. Also used as generated layout name and default output directory.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "join_prompt_and_context",
+                      "kind": "positional_or_keyword",
+                      "type": "bool | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool | None, typer.Option(..., '--joined-prompt-context/--no-joined-prompt-context', '-j/-J', help='Override whether to join prompt file to the context.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--joined-prompt-context/--no-joined-prompt-context",
+                          "-j/-J"
+                        ],
+                        "long_flags": [
+                          "--joined-prompt-context",
+                          "--no-joined-prompt-context"
+                        ],
+                        "short_flags": [
+                          "-j",
+                          "-J"
+                        ],
+                        "help": "Override whether to join prompt file to the context.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "output_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--output-path', '-o', help='Override layout.json output path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--output-path",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--output-path"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "Override layout.json output path.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "agents_dir",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--agents-dir', '-d', help='Override exact directory to store agent files in.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agents-dir",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--agents-dir"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Override exact directory to store agent files in.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool | None, typer.Option(..., '--interactive/--no-interactive', '-i/-I', help='Override whether to run create in interactive mode.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive/--no-interactive",
+                          "-i/-I"
+                        ],
+                        "long_flags": [
+                          "--interactive",
+                          "--no-interactive"
+                        ],
+                        "short_flags": [
+                          "-i",
+                          "-I"
+                        ],
+                        "help": "Override whether to run create in interactive mode.",
+                        "default": "..."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<r> Run named parallel workflow from YAML",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Run a named parallel agent workflow from YAML, with create-option overrides.",
+                "aliases": [
+                  {
+                    "name": "r",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "collect",
                 "fullPath": "agents parallel collect",
                 "shortPath": "a p T",
@@ -13827,7 +14448,7 @@
             "name": "add-mcp",
             "fullPath": "agents add-mcp",
             "shortPath": "a m",
-            "help": "Resolve MCP servers from stackops catalogs, or open catalog files for editing.",
+            "help": "Resolve MCP servers from stackops catalogs, install supported agent skills, or edit catalogs.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
@@ -13837,13 +14458,13 @@
               "raw_lines": [
                 "def add_mcp(",
                 "    requested_mcp_servers: Annotated[",
-                "        str | None, typer.Argument(help=\"MCP servers/tools to resolve from stackops MCP catalogs (comma-separated).\")",
+                "        str | None, typer.Argument(help=\"MCP server names or supported agent skills to resolve from stackops catalogs (comma-separated).\")",
                 "    ] = None,",
                 "    agents: Annotated[",
                 "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")",
                 "    ] = \"\",",
                 "    scope: Annotated[",
-                "        MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP config into repo-local or user-global agent config.\")",
+                "        MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP config or skill files into repo-local or user-global agent config.\")",
                 "    ] = \"local\",",
                 "    where: Annotated[MCP_CATALOG_WHERE, typer.Option(..., \"--where\", \"-w\", help=\"Where to resolve or edit MCP catalog files.\")] = \"all\",",
                 "    edit: Annotated[",
@@ -13856,7 +14477,7 @@
                 "        ),",
                 "    ] = False,",
                 ") -> None:",
-                "    \"\"\"Resolve MCP servers from stackops catalogs, or open catalog files for editing.\"\"\"",
+                "    \"\"\"Resolve MCP servers from stackops catalogs, install supported agent skills, or edit catalogs.\"\"\"",
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl",
                 "",
@@ -13872,13 +14493,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='MCP servers/tools to resolve from stackops MCP catalogs (comma-separated).')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='MCP server names or supported agent skills to resolve from stackops catalogs (comma-separated).')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "MCP servers/tools to resolve from stackops MCP catalogs (comma-separated)."
+                    "help": "MCP server names or supported agent skills to resolve from stackops catalogs (comma-separated)."
                   }
                 },
                 {
@@ -13908,7 +14529,7 @@
                   "type": "MCP_INSTALL_SCOPE",
                   "default": "local",
                   "required": false,
-                  "annotation_raw": "Annotated[MCP_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install MCP config into repo-local or user-global agent config.')]",
+                  "annotation_raw": "Annotated[MCP_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install MCP config or skill files into repo-local or user-global agent config.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -13921,7 +14542,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Install MCP config into repo-local or user-global agent config."
+                    "help": "Install MCP config or skill files into repo-local or user-global agent config."
                   }
                 },
                 {
@@ -13973,8 +14594,8 @@
               ],
               "return": "None"
             },
-            "short_help": "<m> Resolve catalog MCP entries and install them for agents",
-            "doc": "Resolve MCP servers from stackops catalogs, or open catalog files for editing.",
+            "short_help": "<m> Resolve catalog MCP entries or supported skills",
+            "doc": "Resolve MCP servers from stackops catalogs, install supported agent skills, or edit catalogs.",
             "aliases": [
               {
                 "name": "m",
@@ -13987,7 +14608,7 @@
             "name": "add-skill",
             "fullPath": "agents add-skill",
             "shortPath": "a s",
-            "help": "Add a skill to an agent in a directory.",
+            "help": "Add a skill through the upstream skills CLI.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
@@ -13996,47 +14617,56 @@
             "signature": {
               "raw_lines": [
                 "def add_skill(",
-                "    skill_name: Annotated[str, typer.Argument(help=\"Name of the skill to add.\")],",
-                "    _agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to add the skill to.\")] = \"copilot\",",
+                "    skill_name: Annotated[str | None, typer.Argument(help=\"Name of the skill to add. If omitted, opens an interactive picker.\")] = None,",
+                "    agent: Annotated[",
+                "        str | None,",
+                "        typer.Option(",
+                "            ...,",
+                "            \"--agent\",",
+                "            \"-a\",",
+                "            help=\"Optional upstream skills CLI agent target, passed through without StackOps mapping. Comma-separated values are accepted.\",",
+                "        ),",
+                "    ] = None,",
+                "    scope: Annotated[",
+                "        SKILL_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install the skill into the repo-local or user-global agent skill directory.\")",
+                "    ] = \"local\",",
                 "    directory: Annotated[",
                 "        str | None,",
                 "        typer.Option(..., \"--directory\", \"-d\", help=\"Directory to add the skill to. If not provided, defaults to current working directory.\"),",
                 "    ] = None,",
                 ") -> None:",
-                "    \"\"\"Add a skill to an agent in a directory.\"\"\"",
+                "    \"\"\"Add a skill through the upstream skills CLI.\"\"\"",
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl",
                 "",
-                "        message = impl(skill_name=skill_name, directory=directory)",
+                "        impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory)",
                 "    except ValueError as error:",
-                "        raise typer.BadParameter(str(error)) from error",
-                "    if message is not None:",
-                "        typer.echo(message)"
+                "        raise typer.BadParameter(str(error)) from error"
               ],
               "name": "add_skill",
               "parameters": [
                 {
                   "name": "skill_name",
                   "kind": "positional_or_keyword",
-                  "type": "str",
+                  "type": "str | None",
                   "default": null,
-                  "required": true,
-                  "annotation_raw": "Annotated[str, typer.Argument(help='Name of the skill to add.')]",
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the skill to add. If omitted, opens an interactive picker.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the skill to add."
+                    "help": "Name of the skill to add. If omitted, opens an interactive picker."
                   }
                 },
                 {
-                  "name": "_agent",
+                  "name": "agent",
                   "kind": "positional_or_keyword",
-                  "type": "AGENTS",
-                  "default": "copilot",
+                  "type": "str | None",
+                  "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent to add the skill to.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--agent', '-a', help='Optional upstream skills CLI agent target, passed through without StackOps mapping. Comma-separated values are accepted.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -14049,8 +14679,30 @@
                     "short_flags": [
                       "-a"
                     ],
-                    "help": "Agent to add the skill to.",
+                    "help": "Optional upstream skills CLI agent target, passed through without StackOps mapping. Comma-separated values are accepted.",
                     "default": "..."
+                  }
+                },
+                {
+                  "name": "scope",
+                  "kind": "positional_or_keyword",
+                  "type": "SKILL_INSTALL_SCOPE",
+                  "default": "local",
+                  "required": false,
+                  "annotation_raw": "Annotated[SKILL_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install the skill into the repo-local or user-global agent skill directory.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--scope",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--scope"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Install the skill into the repo-local or user-global agent skill directory."
                   }
                 },
                 {
@@ -14080,10 +14732,7 @@
               "return": "None"
             },
             "short_help": "<s> Add a skill to an agent",
-            "typer": {
-              "no_args_is_help": true
-            },
-            "doc": "Add a skill to an agent in a directory.",
+            "doc": "Add a skill through the upstream skills CLI.",
             "aliases": [
               {
                 "name": "s",
@@ -14654,7 +15303,7 @@
                 "        ),",
                 "    ] = None,",
                 "    where: Annotated[",
-                "        Literal[\"all\", \"a\", \"private\", \"p\", \"public\", \"b\", \"library\", \"l\", \"custom\", \"c\"],",
+                "        PROMPTS_WHERE,",
                 "        typer.Option(..., \"--where\", \"-w\", help=\"Where to look for context YAML files when --context-yaml-path is not provided.\"),",
                 "    ] = \"all\",",
                 "    show_prompts_yaml_format: Annotated[",
@@ -14853,10 +15502,10 @@
                 {
                   "name": "where",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['all', 'a', 'private', 'p', 'public', 'b', 'library', 'l', 'custom', 'c']",
+                  "type": "PROMPTS_WHERE",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['all', 'a', 'private', 'p', 'public', 'b', 'library', 'l', 'custom', 'c'], typer.Option(..., '--where', '-w', help='Where to look for context YAML files when --context-yaml-path is not provided.')]",
+                  "annotation_raw": "Annotated[PROMPTS_WHERE, typer.Option(..., '--where', '-w', help='Where to look for context YAML files when --context-yaml-path is not provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
