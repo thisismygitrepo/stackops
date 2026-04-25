@@ -11,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_devops import cli_config_terminal
 from stackops.profile import create_links_export
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.ve import read_default_cloud_config
+from stackops.utils.ve_schema import ensure_ve_yaml_schema_exists, ve_yaml_header_for_path
 
 InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
 DumpConfigKind: TypeAlias = Literal["ve", "init", "ia", "live"]
@@ -117,8 +118,8 @@ def _dump_ve_config() -> None:
             return "true" if value else "false"
         return f'"{value}"'
 
-    yaml_content = f"""# Virtual Environment Configuration File
-# This file configures the virtual environment and cloud sync settings for this project
+    output_path = Path.cwd() / ".ve.example.yaml"
+    yaml_content = f"""{ve_yaml_header_for_path(yaml_path=output_path)}
 specs:
   ve_path: ".venv"  # Path to the virtual environment directory (e.g., /home/user/projects/myproject/.venv or ~/venvs/myproject)
   ipy_profile: null  # IPython profile name to use when launching IPython (e.g., myprofile creates/uses ~/.ipython/profile_myprofile)
@@ -134,7 +135,7 @@ cloud:
   share: {to_yaml_value(cloud_defaults["share"])}  # Enable sharing/public access
   overwrite: {to_yaml_value(cloud_defaults["overwrite"])}  # Overwrite existing files during sync
 """
-    output_path = Path.cwd() / ".ve.example.yaml"
+    ensure_ve_yaml_schema_exists(yaml_path=output_path)
     output_path.write_text(yaml_content, encoding="utf-8")
     msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {output_path}"
     typer.echo(msg)

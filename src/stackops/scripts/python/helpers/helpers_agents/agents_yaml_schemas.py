@@ -1,12 +1,10 @@
-import json
 from pathlib import Path
 from typing import Final, Literal, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, ReasoningEffort
+from stackops.utils.yaml_schema import JsonObject, JsonValue, ensure_yaml_schema_exists
 
 
-type JsonValue = str | int | float | bool | None | list[JsonValue] | dict[str, JsonValue]
-type JsonObject = dict[str, JsonValue]
 type StackopsYamlSchemaKind = Literal["prompts", "parallel"]
 
 PARALLEL_CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(
@@ -32,29 +30,11 @@ PARALLEL_CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(
 )
 
 _JSON_SCHEMA_DRAFT: Final[str] = "http://json-schema.org/draft-07/schema#"
-_SCHEMA_FILE_SUFFIX: Final[str] = ".schema.json"
-
-
-def stackops_yaml_schema_path(*, yaml_path: Path) -> Path:
-    return yaml_path.with_name(f"{yaml_path.stem}{_SCHEMA_FILE_SUFFIX}")
-
-
-def yaml_language_server_schema_comment(*, yaml_path: Path) -> str:
-    schema_path = stackops_yaml_schema_path(yaml_path=yaml_path)
-    return f"# yaml-language-server: $schema=./{schema_path.name}"
 
 
 def ensure_stackops_yaml_schema_exists(*, yaml_path: Path, schema_kind: StackopsYamlSchemaKind) -> bool:
-    schema_path = stackops_yaml_schema_path(yaml_path=yaml_path)
-    if schema_path.exists():
-        if not schema_path.is_file():
-            raise ValueError(f"StackOps YAML schema path exists but is not a file: {schema_path}")
-        return False
-
-    schema_path.parent.mkdir(parents=True, exist_ok=True)
     schema = _stackops_yaml_schema(schema_kind=schema_kind)
-    schema_path.write_text(json.dumps(schema, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return True
+    return ensure_yaml_schema_exists(yaml_path=yaml_path, schema=schema, schema_label=f"StackOps {schema_kind} YAML")
 
 
 def _stackops_yaml_schema(*, schema_kind: StackopsYamlSchemaKind) -> JsonObject:
@@ -125,6 +105,7 @@ def _parallel_yaml_schema() -> JsonObject:
             },
             "runEntry": {
                 "type": "object",
+                "minProperties": 1,
                 "additionalProperties": False,
                 "properties": {
                     "agent": _enum_or_null_schema(

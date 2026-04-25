@@ -4,10 +4,8 @@ import json
 import shutil
 import subprocess
 
-from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import (
-    ensure_stackops_yaml_schema_exists,
-    yaml_language_server_schema_comment,
-)
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
+from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
 PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "custom", "c"]

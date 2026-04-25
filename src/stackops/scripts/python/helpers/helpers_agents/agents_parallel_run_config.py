@@ -5,10 +5,10 @@ from typing import Final, Literal, TypeAlias
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import (
     PARALLEL_CREATE_CONFIG_KEYS,
     ensure_stackops_yaml_schema_exists,
-    yaml_language_server_schema_comment,
 )
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
 PARALLEL_RUNS_WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
