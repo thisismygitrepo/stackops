@@ -122,17 +122,17 @@ update-docs:
     assert yaml_mapping["custom"] == {"agent": "copilot", "prompt": "keep"}
 
     update_test_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-test")
-    assert update_test_entry["context_path"] == "./.ai/parallel-workflows/updateTests/context.md"
+    assert "context" not in update_test_entry
+    assert "context_path" not in update_test_entry
     assert update_test_entry["agents_dir"] == "./.ai/agents/updateTests"
     assert update_test_entry["output_path"] == "./.ai/agents/updateTests/layout.json"
     assert update_test_entry["agent_load"] == 10
     assert update_test_entry["prompt"] == update_test.UPDATE_TEST_PROMPT
-    assert (tmp_path / ".ai" / "parallel-workflows" / "updateTests" / "context.md").read_text(encoding="utf-8") == python_context
 
     update_docs_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-docs")
     assert update_docs_entry["prompt"] == update_docs.UPDATE_DOCS_PROMPT
-    assert update_docs_entry["context_path"] == "./.ai/parallel-workflows/updateDocs/context.md"
-    assert (tmp_path / ".ai" / "parallel-workflows" / "updateDocs" / "context.md").read_text(encoding="utf-8") == docs_context
+    assert "context" not in update_docs_entry
+    assert "context_path" not in update_docs_entry
 
     update_installer_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-installer")
     assert update_installer_entry["context_path"] == "./src/stackops/jobs/installer/installer_data.json"

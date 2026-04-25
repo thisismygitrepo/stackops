@@ -25,8 +25,6 @@ update-installer:
   reasoning_effort: null
   provider: null
   host: local
-  context: null
-  context_path: ./src/stackops/jobs/installer/installer_data.json
   separator: '    },\n    {'
   agent_load: 10
   prompt: 'for each of the bellow, please check if its github repo, then, do the following
@@ -61,14 +59,14 @@ update-installer:
   output_path: ./.ai/agents/updateInstallerData/layout.json
   agents_dir: ./.ai/agents/updateInstallerData
   interactive: false
+  context: null
+  context_path: ./src/stackops/jobs/installer/installer_data.json
 update-test:
   agent: codex
   model: null
   reasoning_effort: null
   provider: null
   host: local
-  context: null
-  context_path: ./.ai/parallel-workflows/updateTests/context.md
   separator: \n@-@\n
   agent_load: 10
   prompt: '
@@ -122,8 +120,6 @@ update-docs:
   reasoning_effort: null
   provider: null
   host: local
-  context: null
-  context_path: ./.ai/parallel-workflows/updateDocs/context.md
   separator: \n@-@\n
   agent_load: 10
   prompt: 'Please update documentation for the following files.

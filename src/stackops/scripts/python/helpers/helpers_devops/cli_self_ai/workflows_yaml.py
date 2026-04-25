@@ -55,19 +55,19 @@ def _build_workflow_entries(*, repo_root: Path) -> dict[str, ParallelWorkflowEnt
             repo_root=repo_root,
             workflow_module=update_installer,
             workflow_function=update_installer.update_installer,
-            context_output_job_name=None,
+            include_captured_context=False,
         ),
         "update-test": _build_captured_workflow_entry(
             repo_root=repo_root,
             workflow_module=update_test,
             workflow_function=update_test.update_test,
-            context_output_job_name=update_test.DEFAULT_TEST_JOB_NAME,
+            include_captured_context=False,
         ),
         "update-docs": _build_captured_workflow_entry(
             repo_root=repo_root,
             workflow_module=update_docs,
             workflow_function=update_docs.update_docs,
-            context_output_job_name=update_docs.DEFAULT_DOCS_JOB_NAME,
+            include_captured_context=False,
         ),
     }
 
@@ -77,23 +77,21 @@ def _build_captured_workflow_entry(
     repo_root: Path,
     workflow_module: WorkflowModule,
     workflow_function: Callable[[], None],
-    context_output_job_name: str | None,
+    include_captured_context: bool,
 ) -> ParallelWorkflowEntry:
     captured_values = capture_agents_create_values(workflow_module=workflow_module, workflow_function=workflow_function)
     job_name = _require_string(value=captured_values.job_name, field_name="job_name")
     context_path = _resolve_context_path(
         repo_root=repo_root,
         captured_values=captured_values,
-        context_output_job_name=context_output_job_name,
+        include_captured_context=include_captured_context,
     )
-    return {
+    entry: ParallelWorkflowEntry = {
         "agent": captured_values.agent,
         "model": captured_values.model,
         "reasoning_effort": captured_values.reasoning_effort,
         "provider": captured_values.provider,
         "host": captured_values.host,
-        "context": None,
-        "context_path": context_path,
         "separator": _yaml_separator_value(separator=_require_string(value=captured_values.separator, field_name="separator")),
         "agent_load": captured_values.agent_load,
         "prompt": captured_values.prompt,
@@ -105,17 +103,22 @@ def _build_captured_workflow_entry(
         "agents_dir": _normalize_cli_path(repo_root=repo_root, raw_path=captured_values.agents_dir),
         "interactive": captured_values.interactive,
     }
+    if context_path is not None:
+        entry["context"] = None
+        entry["context_path"] = context_path
+    return entry
 
 
 def _resolve_context_path(
     *,
     repo_root: Path,
     captured_values: ParallelCreateValues,
-    context_output_job_name: str | None,
-) -> str:
+    include_captured_context: bool,
+) -> str | None:
     if captured_values.context is not None:
-        job_name = _require_string(value=context_output_job_name, field_name="context_output_job_name")
-        return _write_generated_context(repo_root=repo_root, job_name=job_name, context=captured_values.context)
+        if include_captured_context:
+            return captured_values.context
+        return None
 
     context_path = _require_string(value=captured_values.context_path, field_name="context_path")
     normalized_path = _normalize_cli_path(repo_root=repo_root, raw_path=context_path)
@@ -139,13 +142,6 @@ def _normalize_cli_path(*, repo_root: Path, raw_path: str | None) -> str | None:
         return _repo_relative_cli_path(repo_root=repo_root, target_path=path.resolve())
     except ValueError:
         return str(path)
-
-
-def _write_generated_context(*, repo_root: Path, job_name: str, context: str) -> str:
-    context_path = repo_root / ".ai" / "parallel-workflows" / job_name / "context.md"
-    context_path.parent.mkdir(parents=True, exist_ok=True)
-    context_path.write_text(context, encoding="utf-8")
-    return _repo_relative_cli_path(repo_root=repo_root, target_path=context_path)
 
 
 def _repo_relative_cli_path(*, repo_root: Path, target_path: Path) -> str:
