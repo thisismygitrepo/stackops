@@ -9,7 +9,7 @@ default:
   host: local
   context: null
   context_path: ./.ai/agents/default/context.md
-  separator: "\n@-@\n"
+  separator: \n@-@\n
   agent_load: 3
   prompt: null
   prompt_path: ./.ai/prompts/default.md
@@ -18,4 +18,135 @@ default:
   join_prompt_and_context: false
   output_path: null
   agents_dir: null
+  interactive: false
+update-installer:
+  agent: codex
+  model: null
+  reasoning_effort: null
+  provider: null
+  host: local
+  context: null
+  context_path: ./src/stackops/jobs/installer/installer_data.json
+  separator: '    },\n    {'
+  agent_load: 10
+  prompt: 'for each of the bellow, please check if its github repo, then, do the following
+
+    make sure that file name patter are up to date and as per the release page
+
+
+    modify the target file directly @ /home/alex/code/stackops/src/stackops/jobs/installer/installer_data.json
+
+    but please only wokr on entries designated for you, ignore the rest because the
+    file is too big, other agents are working on it now.
+
+
+    Notes:
+
+    * File pattern should  never be ..v{version}.. with v, even if they have that
+    in release page, the v is implicit.
+
+    * If file pattern is "<name>.py" then it is referencing a custom py script installer,
+    in which case, please don''t touch it, at all, no matter what.
+
+    * If file pattern is a custom package installtion command, please don''t touch
+    it.
+
+    * don''t touch any other field other than thee file pattern.
+
+    '
+  prompt_path: null
+  prompt_name: null
+  job_name: updateInstallerData
+  join_prompt_and_context: false
+  output_path: ./.ai/agents/updateInstallerData/layout.json
+  agents_dir: ./.ai/agents/updateInstallerData
+  interactive: false
+update-test:
+  agent: codex
+  model: null
+  reasoning_effort: null
+  provider: null
+  host: local
+  context: null
+  context_path: ./.ai/parallel-workflows/updateTests/context.md
+  separator: \n@-@\n
+  agent_load: 10
+  prompt: '
+
+    /caveman wenyan
+
+    $caveman wenyan
+
+
+    Please write test file for the following files.
+
+    * 1 test file per py file.
+
+
+    * Your tests should go under: $repo_root/tests/mirror/$same_file_path_relative_to_repo_root
+
+    e.g. src/stackops/cluster/remote/file_manager.py
+
+    should have its test file at tests/mirror/src/stackops/cluster/remote/file_manager.py
+
+
+    * in your tests, you assume all types will be respected, so no need to experiment
+    on that.
+
+    In other words, you only test for things that the strict harsh static type analyzer
+    is still not capable of catching,
+
+    i.e. things that can only be determined at runtime. One example of these, if a
+    file is reading another file,
+
+    static type anaylzer dones''t know that other config file being read exists, we
+    only know at runtime.
+
+    Especially if that config helper file should be withthin the repo itself, not
+    passed by user,
+
+    so it must exist otherwise the repo is broken out of the box. I hope this was
+    clear enough.
+
+    '
+  prompt_path: null
+  prompt_name: null
+  job_name: updateTests
+  join_prompt_and_context: false
+  output_path: ./.ai/agents/updateTests/layout.json
+  agents_dir: ./.ai/agents/updateTests
+  interactive: false
+update-docs:
+  agent: codex
+  model: null
+  reasoning_effort: null
+  provider: null
+  host: local
+  context: null
+  context_path: ./.ai/parallel-workflows/updateDocs/context.md
+  separator: \n@-@\n
+  agent_load: 10
+  prompt: 'Please update documentation for the following files.
+
+    * Only edit files under docs/cli and docs/api.
+
+    * Do not touch docs/index.md, docs/quickstart.md, docs/guide/**, Home, User Guide,
+    or any other documentation tab.
+
+    * Treat each context entry as a documentation file path that you should update
+    directly.
+
+    * Inspect the relevant Python sources and current CLI or API behavior as needed
+    to keep those docs accurate.
+
+    * Prefer the one current behavior implemented in the repo. Remove stale wording
+    instead of documenting fallback or legacy behavior.
+
+    '
+  prompt_path: null
+  prompt_name: null
+  job_name: updateDocs
+  join_prompt_and_context: false
+  output_path: ./.ai/agents/updateDocs/layout.json
+  agents_dir: ./.ai/agents/updateDocs
   interactive: false
