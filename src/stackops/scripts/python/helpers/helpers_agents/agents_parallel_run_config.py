@@ -2,6 +2,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Literal, TypeAlias
 
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import (
+    PARALLEL_CREATE_CONFIG_KEYS,
+    ensure_stackops_yaml_schema_exists,
+    yaml_language_server_schema_comment,
+)
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -9,27 +14,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 PARALLEL_RUNS_WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 _PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 _REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
-CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(
-    {
-        "agent",
-        "model",
-        "reasoning_effort",
-        "provider",
-        "host",
-        "context",
-        "context_path",
-        "separator",
-        "agent_load",
-        "prompt",
-        "prompt_path",
-        "prompt_name",
-        "job_name",
-        "join_prompt_and_context",
-        "output_path",
-        "agents_dir",
-        "interactive",
-    }
-)
+CREATE_CONFIG_KEYS: Final[frozenset[str]] = PARALLEL_CREATE_CONFIG_KEYS
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,9 +123,19 @@ def decode_separator_value(*, separator: str) -> str:
 
 
 def parallel_yaml_template() -> str:
-    return """# parallel.yaml used by `agents parallel run-parallel`
+    return parallel_yaml_template_for_path(yaml_path=Path(_PARALLEL_YAML_FILE_NAME))
+
+
+def parallel_yaml_header_for_path(*, yaml_path: Path) -> str:
+    return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
+# parallel.yaml used by `agents parallel run-parallel`
 # Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
 # Each run entry uses the same option names as `agents parallel create`.
+"""
+
+
+def parallel_yaml_template_for_path(*, yaml_path: Path) -> str:
+    return f"""{parallel_yaml_header_for_path(yaml_path=yaml_path)}
 default:
   agent: codex
   model: null
@@ -194,12 +189,13 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALL
 
 
 def ensure_parallel_yaml_exists(*, yaml_path: Path) -> bool:
+    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="parallel")
     if yaml_path.exists():
         if not yaml_path.is_file():
             raise ValueError(f"parallel YAML path exists but is not a file: {yaml_path}")
         return False
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
-    yaml_path.write_text(parallel_yaml_template(), encoding="utf-8")
+    yaml_path.write_text(parallel_yaml_template_for_path(yaml_path=yaml_path), encoding="utf-8")
     return True
 
 

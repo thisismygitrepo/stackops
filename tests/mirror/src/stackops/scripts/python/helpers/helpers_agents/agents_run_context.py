@@ -36,3 +36,15 @@ def test_resolve_prompts_yaml_paths_rejects_repo_outside_git_repo(monkeypatch: p
 
     with pytest.raises(ValueError, match="--where repo requires running inside a git repository"):
         agents_run_context.resolve_prompts_yaml_paths(prompts_yaml_path=None, where="repo")
+
+
+def test_ensure_prompts_yaml_exists_creates_sibling_schema(tmp_path: Path) -> None:
+    yaml_path = tmp_path / "custom.prompts.yaml"
+
+    created = agents_run_context.ensure_prompts_yaml_exists(yaml_path=yaml_path)
+
+    assert created
+    schema_path = tmp_path / "custom.prompts.schema.json"
+    assert schema_path.is_file()
+    assert yaml_path.read_text(encoding="utf-8").startswith("# yaml-language-server: $schema=./custom.prompts.schema.json\n")
+    assert '"StackOps prompts.yaml"' in schema_path.read_text(encoding="utf-8")

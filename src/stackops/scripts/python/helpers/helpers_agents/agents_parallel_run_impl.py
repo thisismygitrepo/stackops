@@ -9,9 +9,11 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config i
     ensure_parallel_yaml_exists,
     merge_parallel_create_values,
     parallel_yaml_format_explanation,
+    ResolvedParallelCreateValues,
     resolve_parallel_yaml_paths,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_yaml import select_parallel_create_values_from_locations
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 
 
 def run_parallel_from_yaml(
@@ -42,11 +44,12 @@ def run_parallel_from_yaml(
         return
 
     yaml_entries = _read_existing_parallel_yaml_entries(yaml_locations=yaml_locations)
-    _selected_name, base_values = select_parallel_create_values_from_locations(
+    selected_name, base_values = select_parallel_create_values_from_locations(
         yaml_entries=yaml_entries,
         requested_name=config_name,
     )
     resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
+    _require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
 
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
 
@@ -71,6 +74,15 @@ def run_parallel_from_yaml(
     )
 
 
+def _require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedParallelCreateValues) -> None:
+    if resolved.context is not None or resolved.context_path is not None:
+        return
+    raise ValueError(
+        f"Parallel run '{selected_name}' does not define context or context_path. "
+        "Add context_path to the YAML entry, or pass --context-path PATH when running it."
+    )
+
+
 def edit_parallel_yaml(*, yaml_path: Path) -> None:
     editor = shutil.which("hx")
     if editor is None:
@@ -79,6 +91,7 @@ def edit_parallel_yaml(*, yaml_path: Path) -> None:
         raise ValueError("No supported editor found. Install 'hx' or 'nano', or run without --edit")
 
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="parallel")
     result = subprocess.run([editor, str(yaml_path)], check=False)
     if result.returncode != 0:
         raise RuntimeError(f"Editor exited with status code {result.returncode}")

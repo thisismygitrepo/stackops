@@ -3,16 +3,17 @@ from pathlib import Path
 
 import yaml
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ParallelCreateValues, parallel_yaml_template
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
+    ParallelCreateValues,
+    parallel_yaml_header_for_path,
+    parallel_yaml_template,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs, update_installer, update_test
 from stackops.scripts.python.helpers.helpers_devops.cli_self_ai.workflow_capture import WorkflowModule, capture_agents_create_values
 from stackops.utils.accessories import get_repo_root
 
 
-_PARALLEL_YAML_HEADER = """# parallel.yaml used by `agents parallel run-parallel`
-# Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
-# Each run entry uses the same option names as `agents parallel create`.
-"""
 type ParallelWorkflowEntry = dict[str, object]
 
 
@@ -22,7 +23,8 @@ def write_workflows_to_yaml() -> Path:
     yaml_mapping = _load_parallel_yaml_mapping(yaml_path=yaml_path)
     yaml_mapping.update(_build_workflow_entries(repo_root=repo_root))
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
-    yaml_path.write_text(_render_parallel_yaml(yaml_mapping=yaml_mapping), encoding="utf-8")
+    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="parallel")
+    yaml_path.write_text(_render_parallel_yaml(yaml_path=yaml_path, yaml_mapping=yaml_mapping), encoding="utf-8")
     return yaml_path
 
 
@@ -153,10 +155,10 @@ def _yaml_separator_value(*, separator: str) -> str:
     return separator.encode("unicode_escape").decode("ascii")
 
 
-def _render_parallel_yaml(*, yaml_mapping: dict[str, object]) -> str:
+def _render_parallel_yaml(*, yaml_path: Path, yaml_mapping: dict[str, object]) -> str:
     normalized_mapping = _normalize_separator_values(yaml_mapping=yaml_mapping)
     yaml_body = yaml.safe_dump(normalized_mapping, sort_keys=False, default_flow_style=False)
-    return f"{_PARALLEL_YAML_HEADER}{yaml_body}"
+    return f"{parallel_yaml_header_for_path(yaml_path=yaml_path)}{yaml_body}"
 
 
 def _normalize_separator_values(*, yaml_mapping: dict[str, object]) -> dict[str, object]:

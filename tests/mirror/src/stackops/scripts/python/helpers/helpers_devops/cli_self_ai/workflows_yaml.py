@@ -118,6 +118,10 @@ update-docs:
     written_path = workflows_yaml.write_workflows_to_yaml()
 
     assert written_path == parallel_yaml_path
+    assert (tmp_path / ".stackops" / "parallel.schema.json").is_file()
+    assert parallel_yaml_path.read_text(encoding="utf-8").startswith(
+        "# yaml-language-server: $schema=./parallel.schema.json\n"
+    )
     yaml_mapping = _read_yaml_mapping(parallel_yaml_path)
     assert yaml_mapping["custom"] == {"agent": "copilot", "prompt": "keep"}
 

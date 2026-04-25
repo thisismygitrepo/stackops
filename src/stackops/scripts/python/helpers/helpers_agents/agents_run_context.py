@@ -4,6 +4,11 @@ import json
 import shutil
 import subprocess
 
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import (
+    ensure_stackops_yaml_schema_exists,
+    yaml_language_server_schema_comment,
+)
+
 
 PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "custom", "c"]
 
@@ -212,7 +217,12 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
 
 
 def _prompts_yaml_template() -> str:
-    return """# prompts.yaml used by `agents run`
+    return _prompts_yaml_template_for_path(yaml_path=Path("prompts.yaml"))
+
+
+def _prompts_yaml_template_for_path(*, yaml_path: Path) -> str:
+    return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
+# prompts.yaml used by `agents run`
 # Top-level keys show up in interactive selection.
 # Nested keys can be selected via --context-name with dot-path syntax (example: team.backend).
 # Values should be prompt/context text (plain strings or multiline `|` blocks).
@@ -227,12 +237,13 @@ team:
 
 
 def ensure_prompts_yaml_exists(yaml_path: Path) -> bool:
+    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="prompts")
     if yaml_path.exists():
         if not yaml_path.is_file():
             raise ValueError(f"prompts YAML path exists but is not a file: {yaml_path}")
         return False
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
-    yaml_path.write_text(_prompts_yaml_template(), encoding="utf-8")
+    yaml_path.write_text(_prompts_yaml_template_for_path(yaml_path=yaml_path), encoding="utf-8")
     return True
 
 
@@ -253,6 +264,7 @@ def edit_prompts_yaml(yaml_path: Path) -> None:
         raise ValueError("No supported editor found. Install 'hx' or 'nano', or run without --edit")
 
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="prompts")
     result = subprocess.run([editor, str(yaml_path)], check=False)
     if result.returncode != 0:
         raise RuntimeError(f"Editor exited with status code {result.returncode}")

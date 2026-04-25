@@ -60,6 +60,20 @@ def test_resolve_parallel_yaml_paths_rejects_repo_outside_git_repo(monkeypatch: 
         agents_parallel_run_config.resolve_parallel_yaml_paths(parallel_yaml_path=None, where="repo")
 
 
+def test_ensure_parallel_yaml_exists_creates_sibling_schema(tmp_path: Path) -> None:
+    yaml_path = tmp_path / "custom.parallel.yaml"
+
+    created = agents_parallel_run_config.ensure_parallel_yaml_exists(yaml_path=yaml_path)
+
+    assert created
+    schema_path = tmp_path / "custom.parallel.schema.json"
+    assert schema_path.is_file()
+    assert yaml_path.read_text(encoding="utf-8").startswith(
+        "# yaml-language-server: $schema=./custom.parallel.schema.json\n"
+    )
+    assert '"StackOps parallel.yaml"' in schema_path.read_text(encoding="utf-8")
+
+
 def test_merge_parallel_create_values_applies_overrides_and_decodes_separator() -> None:
     overrides = ParallelCreateValues(
         agent="copilot",
