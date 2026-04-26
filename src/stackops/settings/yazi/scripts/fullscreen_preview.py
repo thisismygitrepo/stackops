@@ -188,7 +188,7 @@ def build_command(target_path: Path, terminal_columns: int) -> Command:
         case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
             return build_database_command(target_path=target_path)
         case _ if suffix in VISIDATA_SUFFIXES:
-            return ["uvx", "--from", "visidata", "--with", "pyarrow", "vd", path_string]
+            return ["uvx", "--from", "visidata", "--with", "pyarrow,openpyxl", "vd", path_string]
         case _ if is_archive_path(target_path):
             return build_archive_command(target_path)
         case _ if suffix in IMAGE_SUFFIXES:

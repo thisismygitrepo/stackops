@@ -207,7 +207,7 @@ def _build_fire_line(
     if backend == "visidata":
         if file_obj.suffix == ".json":
             return f"""uv run {uv_python_line} {user_uv_with_line} {uv_project_line} --with visidata vd "{str(file_obj)}" """
-        return f"""uv run {uv_python_line} {user_uv_with_line} {uv_project_line} --with visidata,pyarrow vd "{str(file_obj)}" """
+        return f"""uv run {uv_python_line} {user_uv_with_line} {uv_project_line} --with visidata,pyarrow,openpyxl vd "{str(file_obj)}" """
 
     if backend == "marimo":
         if Path.home().joinpath("code/stackops").exists():
