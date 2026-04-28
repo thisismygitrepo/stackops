@@ -2209,7 +2209,7 @@
           "darwin": "rustdesk-{version}-x86_64.dmg"
         },
         "arm64": {
-          "linux": "rustdesk-{version}-aarch64.AppImage",
+          "linux": "rustdesk-{version}-aarch64.deb",
           "windows": null,
           "darwin": "rustdesk-{version}-aarch64.dmg"
         }
