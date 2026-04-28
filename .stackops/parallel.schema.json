@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StackOps parallel.yaml",
+  "description": "Named parallel agent workflow entries used by `agents parallel run-parallel`.",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/definitions/parallelNode"
+  },
+  "definitions": {
+    "parallelNode": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/runEntry"
+        },
+        {
+          "$ref": "#/definitions/runGroup"
+        }
+      ]
+    },
+    "runGroup": {
+      "type": "object",
+      "propertyNames": {
+        "not": {
+          "enum": [
+            "agent",
+            "agent_load",
+            "agents_dir",
+            "context",
+            "context_path",
+            "host",
+            "interactive",
+            "job_name",
+            "join_prompt_and_context",
+            "model",
+            "output_path",
+            "prompt",
+            "prompt_name",
+            "prompt_path",
+            "provider",
+            "reasoning_effort",
+            "separator"
+          ]
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/parallelNode"
+      }
+    },
+    "runEntry": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "description": "Agent implementation passed to `agents parallel create`.",
+          "enum": [
+            "cursor-agent",
+            "gemini",
+            "claude",
+            "qwen",
+            "copilot",
+            "codex",
+            "forge",
+            "crush",
+            "q",
+            "opencode",
+            "kilocode",
+            "cline",
+            "auggie",
+            "warp-cli",
+            "droid",
+            "pi",
+            null
+          ]
+        },
+        "model": {
+          "description": "Optional model name passed to the selected agent.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reasoning_effort": {
+          "description": "Optional reasoning effort passed to agents that support it.",
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            null
+          ]
+        },
+        "provider": {
+          "description": "Optional provider passed to agents that support it.",
+          "enum": [
+            "azure",
+            "azure-openai-responses",
+            "google",
+            "aws",
+            "amazon-bedrock",
+            "openai",
+            "anthropic",
+            "openrouter",
+            "xai",
+            "mistral",
+            "groq",
+            "cerebras",
+            "vercel-ai-gateway",
+            "zai",
+            "opencode",
+            "opencode-go",
+            "huggingface",
+            "kimi-coding",
+            "minimax",
+            "minimax-cn",
+            null
+          ]
+        },
+        "host": {
+          "description": "Execution host for generated agent commands.",
+          "enum": [
+            "local",
+            "docker",
+            null
+          ]
+        },
+        "context": {
+          "description": "Inline context shared with generated agent prompts.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context_path": {
+          "description": "Path to a context file.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "separator": {
+          "description": "Escaped separator used to split context chunks.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agent_load": {
+          "description": "Number of parallel agents to generate.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "prompt": {
+          "description": "Inline prompt sent to each generated agent.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "prompt_path": {
+          "description": "Path to a prompt file.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "prompt_name": {
+          "description": "Named prompt from prompts.yaml.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "job_name": {
+          "description": "Name of the generated agent job directory.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "join_prompt_and_context": {
+          "description": "Whether to combine prompt and context before splitting work.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "output_path": {
+          "description": "Path where generated layout JSON is written.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agents_dir": {
+          "description": "Directory where generated agent files are written.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "interactive": {
+          "description": "Whether to run the interactive create flow after resolving this entry.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

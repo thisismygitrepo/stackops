@@ -19,6 +19,8 @@ default:
   output_path: null
   agents_dir: null
   interactive: false
+
+
 update-installer:
   agent: codex
   model: null
@@ -27,31 +29,26 @@ update-installer:
   host: local
   separator: '    },\n    {'
   agent_load: 10
-  prompt: 'for each of the bellow, please check if its github repo, then, do the following
+  prompt: |
+    for each of the bellow, please check if its github repo, then, do the following
+    make sure that file name pattern are up to date and as per the release page of that repo (if it has one)
 
-    make sure that file name patter are up to date and as per the release page
-
-
-    modify the target file directly @ /home/alex/code/stackops/src/stackops/jobs/installer/installer_data.json
-
-    but please only wokr on entries designated for you, ignore the rest because the
+    modify the target file directly @ ./src/stackops/jobs/installer/installer_data.json
+    but please only work on entries designated for you, ignore the rest because the
     file is too big, other agents are working on it now.
 
 
     Notes:
 
-    * File pattern should  never be ..v{version}.. with v, even if they have that
-    in release page, the v is implicit.
+    * File pattern should  never be ..v{version}.. with v, even if they have that in release page, the v is implicit.
 
     * If file pattern is "<name>.py" then it is referencing a custom py script installer,
     in which case, please don''t touch it, at all, no matter what.
 
-    * If file pattern is a custom package installtion command, please don''t touch
-    it.
+    * If file pattern is a custom package installtion command, please dont touch it.
 
-    * don''t touch any other field other than thee file pattern.
+    * don't touch any other field other than thee file pattern fields in the targetted installer data json file.
 
-    '
   prompt_path: null
   prompt_name: null
   job_name: updateInstallerData
@@ -61,6 +58,9 @@ update-installer:
   interactive: false
   context: null
   context_path: ./src/stackops/jobs/installer/installer_data.json
+
+
+
 update-test:
   agent: codex
   model: null
@@ -69,7 +69,7 @@ update-test:
   host: local
   separator: \n@-@\n
   agent_load: 10
-  prompt: '
+  prompt: |
 
     /caveman wenyan
 
@@ -106,7 +106,6 @@ update-test:
     so it must exist otherwise the repo is broken out of the box. I hope this was
     clear enough.
 
-    '
   prompt_path: null
   prompt_name: null
   job_name: updateTests
@@ -122,7 +121,8 @@ update-docs:
   host: local
   separator: \n@-@\n
   agent_load: 10
-  prompt: 'Please update documentation for the following files.
+  prompt: |
+    Please update documentation for the following files.
 
     * Only edit files under docs/cli and docs/api.
 
@@ -138,7 +138,7 @@ update-docs:
     * Prefer the one current behavior implemented in the repo. Remove stale wording
     instead of documenting fallback or legacy behavior.
 
-    '
+
   prompt_path: null
   prompt_name: null
   job_name: updateDocs

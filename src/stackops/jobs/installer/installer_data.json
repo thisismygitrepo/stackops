@@ -170,7 +170,7 @@
       "doc": "🧙‍♂️ Command-line image manipulation tool",
       "fileNamePattern": {
         "amd64": {
-          "linux": "ImageMagick-d4e4b2b-gcc-x86_64.AppImage",
+          "linux": "ImageMagick-9fbd2b7-gcc-x86_64.AppImage",
           "windows": "ImageMagick-{version}-portable-Q16-x64.7z",
           "darwin": "brew install imagemagick"
         },
@@ -801,7 +801,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "delta-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "delta-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": null,
           "windows": "delta-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
@@ -855,7 +855,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "fd-{version}-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "fd-{version}-x86_64-apple-darwin.tar.gz",
+          "darwin": null,
           "windows": "fd-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
@@ -2276,14 +2276,14 @@
       "doc": "🌐 cli to get info of ips",
       "fileNamePattern": {
         "amd64": {
-          "linux": "ipinfo_{version}_linux_amd64.tar.gz",
-          "windows": "ipinfo_{version}_windows_amd64.zip",
-          "darwin": "ipinfo_{version}_darwin_amd64.tar.gz"
+          "linux": "{version}_linux_amd64.tar.gz",
+          "windows": "{version}_windows_amd64.zip",
+          "darwin": "{version}_darwin_amd64.tar.gz"
         },
         "arm64": {
-          "linux": "ipinfo_{version}_linux_arm64.tar.gz",
-          "windows": "ipinfo_{version}_windows_arm64.zip",
-          "darwin": "ipinfo_{version}_darwin_arm64.tar.gz"
+          "linux": "{version}_linux_arm64.tar.gz",
+          "windows": "{version}_windows_arm64.zip",
+          "darwin": "{version}_darwin_arm64.tar.gz"
         }
       }
     },
@@ -2426,8 +2426,8 @@
         },
         "arm64": {
           "linux": "termscp-{version}-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "termscp-{version}-arm64-apple-darwin.tar.gz",
-          "windows": null
+          "darwin": "termscp-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "termscp-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
