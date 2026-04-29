@@ -56,6 +56,24 @@
       }
     },
     {
+      "appName": "mise",
+      "license": "MIT License",
+      "repoURL": "https://github.com/jdx/mise",
+      "doc": "Dev tools, env vars, and tasks in one CLI.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "mise-{version}-linux-x64",
+          "windows": "mise-{version}-windows-x64.exe",
+          "darwin": "mise-{version}-macos-x64"
+        },
+        "arm64": {
+          "linux": "mise-{version}-linux-arm64",
+          "windows": "mise-{version}-windows-arm64.exe",
+          "darwin": "mise-{version}-macos-arm64"
+        }
+      }
+    },
+    {
       "appName": "scrcpy",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/Genymobile/scrcpy",
@@ -3062,6 +3080,24 @@
       }
     },
     {
+      "appName": "zed",
+      "license": "AGPL-3.0-or-later, GPL-3.0-or-later, Apache-2.0",
+      "repoURL": "https://github.com/zed-industries/zed",
+      "doc": "High-performance, multiplayer code editor from the creators of Atom and Tree-sitter.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true",
+          "windows": "winget install --no-upgrade -e --id ZedIndustries.Zed --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "darwin": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true"
+        },
+        "arm64": {
+          "linux": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true",
+          "windows": "winget install --no-upgrade -e --id ZedIndustries.Zed --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "darwin": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true"
+        }
+      }
+    },
+    {
       "appName": "aider",
       "license": "Apache License 2.0",
       "repoURL": "CMD",
@@ -3076,6 +3112,24 @@
           "linux": "uv tool install --force --python python3.13 aider-chat@latest",
           "windows": "uv tool install --force --python python3.13 aider-chat@latest",
           "darwin": "uv tool install --force --python python3.13 aider-chat@latest"
+        }
+      }
+    },
+    {
+      "appName": "bd",
+      "license": "MIT License",
+      "repoURL": "https://github.com/gastownhall/beads",
+      "doc": "Beads, a distributed graph issue tracker and memory layer for coding agents.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "beads_{version}_linux_amd64.tar.gz",
+          "windows": "beads_{version}_windows_amd64.zip",
+          "darwin": "beads_{version}_darwin_amd64.tar.gz"
+        },
+        "arm64": {
+          "linux": "beads_{version}_linux_arm64.tar.gz",
+          "windows": "beads_{version}_windows_arm64.zip",
+          "darwin": "beads_{version}_darwin_arm64.tar.gz"
         }
       }
     },

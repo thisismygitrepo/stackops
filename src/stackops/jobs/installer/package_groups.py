@@ -29,7 +29,7 @@ AGENTS = [
     "kilocode",
     "cline",
     "auggie",
-    "agentofempires", "agent-deck", "agenthand"
+    "agentofempires", "agent-deck", "agenthand", "beads", "symphony"
     # "codex",
     # "gorilla",
     # "ollama",
@@ -60,6 +60,7 @@ PACKAGES_BROWSERS = [
 PACKAGES_CODE_EDITORS = [
     "code",
     "hx",
+    "zed",
     # "cursor",
     # "lvim",
 ]
