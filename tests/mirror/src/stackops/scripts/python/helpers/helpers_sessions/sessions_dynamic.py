@@ -92,3 +92,75 @@ def test_run_dynamic_waits_two_seconds_before_first_completion_check(
     )
 
     assert observed_check_times == [102.0, 107.0]
+
+
+def test_run_dynamic_records_completion_duration_for_recently_completed_tabs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    current_time = 100.0
+    captured_completed_tasks: list[list[sessions_dynamic.DynamicTabTask]] = []
+
+    def fake_monotonic() -> float:
+        return current_time
+
+    def fake_sleep(seconds: float) -> None:
+        nonlocal current_time
+        current_time += seconds
+
+    def fake_create_display(**kwargs: object) -> dict[str, object]:
+        completed_tasks = kwargs["completed_tasks"]
+        assert isinstance(completed_tasks, list)
+        captured_completed_tasks.append([dict(task) for task in completed_tasks])
+        return kwargs
+
+    monkeypatch.setattr(sessions_dynamic, "monotonic", fake_monotonic)
+    monkeypatch.setattr(sessions_dynamic.time, "sleep", fake_sleep)
+    monkeypatch.setattr(sessions_dynamic, "Live", _DummyLive)
+    monkeypatch.setattr(sessions_dynamic, "Console", _DummyConsole)
+    monkeypatch.setattr(sessions_dynamic, "Panel", lambda *args, **kwargs: {"args": args, "kwargs": kwargs})
+    monkeypatch.setattr(sessions_dynamic, "build_dashboard", lambda display: display)
+    monkeypatch.setattr(sessions_dynamic, "create_display", fake_create_display)
+    monkeypatch.setattr(sessions_dynamic, "update_dashboard", lambda live, display: None)
+    monkeypatch.setattr(sessions_dynamic, "format_duration", lambda seconds: f"{seconds:.0f}s")
+    monkeypatch.setattr(sessions_dynamic, "_validate_backend", lambda backend: "tmux")
+    monkeypatch.setattr(
+        sessions_dynamic,
+        "_start_backend_session",
+        lambda backend, layout_name, initial_layout, initial_tasks, on_conflict: (
+            ["dynamic-session"],
+            {"dynamic-session": {"success": True}},
+        ),
+    )
+    monkeypatch.setattr(
+        sessions_dynamic,
+        "_spawn_backend_tab",
+        lambda backend, session_name, task: None,
+    )
+    monkeypatch.setattr(
+        sessions_dynamic,
+        "_close_backend_tab",
+        lambda backend, session_name, runtime_tab_name: None,
+    )
+    monkeypatch.setattr(
+        sessions_dynamic,
+        "_is_dynamic_task_running",
+        lambda backend, session_name, task: False,
+    )
+
+    layout = {
+        "layoutName": "demo-layout",
+        "layoutTabs": [
+            {"tabName": "first-tab", "startDir": "/workspace", "command": "uv run first.py"},
+        ],
+    }
+
+    sessions_dynamic.run_dynamic(
+        layout=layout,
+        max_parallel_tabs=1,
+        kill_finished_tabs=False,
+        backend="tmux",
+        on_conflict="error",
+        poll_seconds=5.0,
+    )
+
+    assert captured_completed_tasks[-1][0]["completion_duration_seconds"] == 2.0

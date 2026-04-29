@@ -157,6 +157,9 @@ def run_dynamic(
         if len(session_names) != 1:
             raise ValueError("Expected exactly one session for dynamic tab runner.")
         session_name = session_names[0]
+        initial_started_at = monotonic()
+        for task in initial_tasks:
+            task["started_at_seconds"] = initial_started_at
 
         active_tasks: dict[str, DynamicTabTask] = {task["runtime_tab_name"]: task for task in initial_tasks}
         completed_count = 0
@@ -200,6 +203,7 @@ def run_dynamic(
             time.sleep(INITIAL_COMPLETION_POLL_DELAY_SECONDS)
 
         while len(active_tasks) > 0:
+            checked_at = monotonic()
             finished_names: list[str] = []
             for runtime_tab_name, task in list(active_tasks.items()):
                 if not _is_dynamic_task_running(backend=backend_resolved, session_name=session_name, task=task):
@@ -208,6 +212,9 @@ def run_dynamic(
             started_count = 0
             for runtime_tab_name in finished_names:
                 finished_task = active_tasks.pop(runtime_tab_name)
+                task_started_at = finished_task.get("started_at_seconds")
+                if task_started_at is not None:
+                    finished_task["completion_duration_seconds"] = max(0.0, checked_at - task_started_at)
                 completed_tasks.append(finished_task)
                 completed_count += 1
                 if kill_finished_tabs:
@@ -216,6 +223,7 @@ def run_dynamic(
                 if len(pending_tasks) > 0:
                     next_task = pending_tasks.popleft()
                     _spawn_backend_tab(backend=backend_resolved, session_name=session_name, task=next_task)
+                    next_task["started_at_seconds"] = monotonic()
                     active_tasks[next_task["runtime_tab_name"]] = next_task
                     started_count += 1
 

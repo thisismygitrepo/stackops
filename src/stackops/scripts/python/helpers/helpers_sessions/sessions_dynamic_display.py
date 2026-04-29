@@ -23,6 +23,8 @@ class DynamicTabTask(TypedDict):
     index: int
     runtime_tab_name: str
     tab: TabConfig
+    started_at_seconds: NotRequired[float]
+    completion_duration_seconds: NotRequired[float]
 
 
 class DynamicStartResult(TypedDict):
@@ -82,13 +84,6 @@ def _phase_style(phase: DynamicRunPhase) -> str:
             return "green"
 
 
-def _short_display_text(value: str, max_length: int) -> str:
-    compact_value = " ".join(value.split())
-    if len(compact_value) <= max_length:
-        return compact_value
-    return f"{compact_value[: max_length - 3]}..."
-
-
 def _build_progress(total_count: int, completed_count: int) -> Progress:
     progress = Progress(
         TextColumn("[bold cyan]Tabs"), BarColumn(bar_width=None), MofNCompleteColumn(), TextColumn("{task.percentage:>3.0f}%"), expand=True
@@ -119,19 +114,14 @@ def _build_active_tasks_table(active_tasks: tuple[DynamicTabTask, ...]) -> Table
     table.add_column("#", justify="right", style="cyan", no_wrap=True)
     table.add_column("Status", style="cyan", no_wrap=True)
     table.add_column("Runtime Tab", style="white", overflow="fold")
-    table.add_column("Directory", style="dim", overflow="fold")
-    table.add_column("Command", style="white", overflow="fold")
     if len(active_tasks) == 0:
-        table.add_row("n/a", "idle", "No active tabs.", "n/a", "n/a", style="dim")
+        table.add_row("n/a", "idle", "No active tabs.", style="dim")
         return table
     for task in active_tasks:
-        tab = task["tab"]
         table.add_row(
             str(task["index"] + 1),
             "active",
             task["runtime_tab_name"],
-            _short_display_text(value=tab["startDir"], max_length=72),
-            _short_display_text(value=tab["command"], max_length=96),
         )
     return table
 
@@ -140,14 +130,14 @@ def _build_recent_completed_table(recent_completed_tasks: tuple[DynamicTabTask, 
     table = Table(title="Recently Completed Tabs", box=box.SIMPLE, expand=True)
     table.add_column("#", justify="right", style="green", no_wrap=True)
     table.add_column("Runtime Tab", style="green", overflow="fold")
-    table.add_column("Directory", style="dim", overflow="fold")
+    table.add_column("Duration", style="cyan", no_wrap=True)
     if len(recent_completed_tasks) == 0:
         table.add_row("n/a", "No completed tabs yet.", "n/a", style="dim")
         return table
     for task in recent_completed_tasks:
-        tab = task["tab"]
-        directory_text = _short_display_text(value=tab["startDir"], max_length=72)
-        table.add_row(str(task["index"] + 1), task["runtime_tab_name"], directory_text)
+        completion_duration_seconds = task.get("completion_duration_seconds")
+        duration_text = "n/a" if completion_duration_seconds is None else format_duration(seconds=completion_duration_seconds)
+        table.add_row(str(task["index"] + 1), task["runtime_tab_name"], duration_text)
     return table
 
 
