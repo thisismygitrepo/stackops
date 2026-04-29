@@ -210,14 +210,14 @@ def _merge_remote_copy(repo: Repo, remote_path: Path, console: Console) -> Merge
 
 def main(
     repo: Annotated[str, typer.Argument(..., help="Path to the local repository. Defaults to current working directory.")],
-    cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
+    cloud: Annotated[str | None, typer.Option(..., "--cloud", "-C", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
     on_conflict: Annotated[Literal["ask", "a",
                                    "push-local-merge", "p",
                                    "overwrite-local", "o",
                                    "stop-on-conflict", "s",
                                    "remove-rclone-conflict", "r"
-                                    ], typer.Option(..., "--on-conflict", "-o", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
+                                    ], typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", help="Password for encryption/decryption of the remote repository.")] = None,
 ) -> str | None:
     on_conflict_mapper: dict[str, Literal["ask", "push-local-merge", "overwrite-local", "stop-on-conflict", "remove-rclone-conflict"]] = {

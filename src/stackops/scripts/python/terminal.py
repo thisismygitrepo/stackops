@@ -49,7 +49,7 @@ def run(
     ctx: typer.Context,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
-    choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-c", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
+    choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
     sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between launching layouts")] = 1.0,
 
@@ -58,7 +58,7 @@ def run(
 
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
+    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
     exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,

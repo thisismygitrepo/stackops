@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from time import monotonic
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, NotRequired, TypeAlias, TypedDict
 
 from rich import box
 from rich.console import Group, RenderableType
@@ -23,6 +23,12 @@ class DynamicTabTask(TypedDict):
     index: int
     runtime_tab_name: str
     tab: TabConfig
+
+
+class DynamicStartResult(TypedDict):
+    success: bool
+    message: NotRequired[str]
+    error: NotRequired[str]
 
 
 @dataclass(frozen=True, slots=True)

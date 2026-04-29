@@ -179,7 +179,7 @@ def get_original_path_from_backup_path(backup_path: Path, sensitivity: Literal["
 def register_dotfile(
     file: Annotated[str, typer.Argument(help="file/folder path.")],
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "copy",
-    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-o", help="Action to take on conflict")] = "throw-error",
+    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict")] = "throw-error",
     sensitivity: Annotated[Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the config file.")] = "private",
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")] = None,
     section: Annotated[str, typer.Option("--section", "-se", help="Section name in mapper_dotfiles.yaml to record this mapping.")] = "default",

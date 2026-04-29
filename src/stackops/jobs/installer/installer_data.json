@@ -3087,12 +3087,12 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true",
-          "windows": "winget install --no-upgrade -e --id ZedIndustries.Zed --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade -e --id ZedIndustries.Zed --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true"
         },
         "arm64": {
           "linux": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true",
-          "windows": "winget install --no-upgrade -e --id ZedIndustries.Zed --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade -e --id ZedIndustries.Zed --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true"
         }
       }
