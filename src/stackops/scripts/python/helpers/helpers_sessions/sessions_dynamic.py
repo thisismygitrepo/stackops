@@ -23,6 +23,8 @@ from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display i
 )
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
+INITIAL_COMPLETION_POLL_DELAY_SECONDS = 2.0
+
 
 def _build_runtime_tab_name(original_tab_name: str, index: int) -> str:
     return f"{original_tab_name}__dynamic_{index + 1}"
@@ -176,6 +178,26 @@ def run_dynamic(
                 message="Monitoring active tabs.",
             ),
         )
+        if len(active_tasks) > 0:
+            update_dashboard(
+                live=live,
+                display=create_display(
+                    layout_name=layout["layoutName"],
+                    backend=backend_resolved,
+                    session_name=session_name,
+                    phase="monitoring",
+                    max_parallel_tabs=max_parallel_tabs,
+                    total_count=total_count,
+                    completed_count=completed_count,
+                    pending_count=len(pending_tasks),
+                    active_tasks=tuple(active_tasks.values()),
+                    completed_tasks=completed_tasks,
+                    poll_seconds=poll_seconds,
+                    started_at=started_at,
+                    message=f"Waiting {INITIAL_COMPLETION_POLL_DELAY_SECONDS:0.1f}s before the first completion check.",
+                ),
+            )
+            time.sleep(INITIAL_COMPLETION_POLL_DELAY_SECONDS)
 
         while len(active_tasks) > 0:
             finished_names: list[str] = []
