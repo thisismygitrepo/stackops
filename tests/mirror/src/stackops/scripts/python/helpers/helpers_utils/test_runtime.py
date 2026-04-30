@@ -26,26 +26,71 @@ def test_collect_python_files_skips_hidden_paths_and_venv(tmp_path: Path) -> Non
     ]
 
 
-def test_write_context_file_uses_repo_relative_paths(tmp_path: Path) -> None:
+def test_write_context_file_uses_repo_relative_paths(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo_root = tmp_path / "repo"
     search_root = repo_root / "src"
     search_root.mkdir(parents=True)
     search_root.joinpath("app.py").write_text("""print("app")\n""", encoding="utf-8")
     search_root.joinpath("pkg").mkdir()
     search_root.joinpath("pkg/mod.py").write_text("""print("mod")\n""", encoding="utf-8")
+    repo_root.joinpath("tests").mkdir()
+    repo_root.joinpath("tests/test_app.py").write_text("""print("ignore")\n""", encoding="utf-8")
     context_path = repo_root / ".ai" / "agents" / test_runtime.JOB_NAME / "context.md"
-
-    file_count = test_runtime._write_context_file(
-        repo_root=repo_root,
+    monkeypatch.setattr(test_runtime, "get_repo_root", lambda _path: repo_root)
+    build_result = test_runtime._write_context_file(
+        workspace_root=repo_root,
         search_root=search_root,
         context_path=context_path,
     )
 
-    assert file_count == 2
+    assert build_result.file_count == 2
+    assert build_result.repo_count == 1
     context_chunks = context_path.read_text(encoding="utf-8").split(test_runtime.FILE_SEPARATOR)
-    assert len(context_chunks) == 2
-    assert "repo_relative_path: src/app.py" in context_chunks[0]
-    assert "repo_relative_path: src/pkg/mod.py" in context_chunks[1]
+    assert context_chunks == ["src/app.py", "src/pkg/mod.py"]
+
+
+def test_write_context_file_supports_multi_repo_workspace(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    workspace_root = tmp_path / "workspace"
+    api_repo = workspace_root / "api"
+    web_repo = workspace_root / "web"
+    api_repo.joinpath(".git").mkdir(parents=True)
+    web_repo.joinpath(".git").mkdir(parents=True)
+    api_repo.joinpath("src").mkdir()
+    web_repo.joinpath("pkg").mkdir()
+    api_repo.joinpath("tests").mkdir()
+    web_repo.joinpath("tests").mkdir()
+    api_repo.joinpath("src/service.py").write_text("""print("api")\n""", encoding="utf-8")
+    web_repo.joinpath("pkg/view.py").write_text("""print("web")\n""", encoding="utf-8")
+    api_repo.joinpath("tests/test_service.py").write_text("""print("ignore api test")\n""", encoding="utf-8")
+    web_repo.joinpath("tests/test_view.py").write_text("""print("ignore web test")\n""", encoding="utf-8")
+    workspace_root.joinpath("scratch.py").write_text("""print("skip")\n""", encoding="utf-8")
+    context_path = workspace_root / ".ai" / "agents" / test_runtime.JOB_NAME / "context.md"
+
+    def fake_get_repo_root(path: Path) -> Path | None:
+        resolved_path = path.resolve()
+        if resolved_path == api_repo or api_repo in resolved_path.parents:
+            return api_repo
+        if resolved_path == web_repo or web_repo in resolved_path.parents:
+            return web_repo
+        return None
+
+    monkeypatch.setattr(test_runtime, "get_repo_root", fake_get_repo_root)
+
+    build_result = test_runtime._write_context_file(
+        workspace_root=workspace_root,
+        search_root=workspace_root,
+        context_path=context_path,
+    )
+
+    context_text = context_path.read_text(encoding="utf-8")
+
+    assert build_result.file_count == 2
+    assert build_result.repo_count == 2
+    assert context_text.split(test_runtime.FILE_SEPARATOR) == [
+        "api/src/service.py",
+        "web/pkg/view.py",
+    ]
+    assert "scratch.py" not in context_text
 
 
 def test_launch_test_runtime_builds_context_and_runs_agents(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -55,6 +100,8 @@ def test_launch_test_runtime_builds_context_and_runs_agents(monkeypatch: pytest.
     search_root.joinpath("feature.py").write_text("""print("feature")\n""", encoding="utf-8")
     search_root.joinpath("pkg").mkdir()
     search_root.joinpath("pkg/logic.py").write_text("""print("logic")\n""", encoding="utf-8")
+    repo_root.joinpath("tests").mkdir()
+    repo_root.joinpath("tests/test_logic.py").write_text("""print("ignore")\n""", encoding="utf-8")
     monkeypatch.chdir(search_root)
 
     captured_agents_create: dict[str, object] = {}
@@ -81,17 +128,19 @@ def test_launch_test_runtime_builds_context_and_runs_agents(monkeypatch: pytest.
     assert captured_agents_create["agent_load"] == 2
     assert captured_agents_create["job_name"] == test_runtime.JOB_NAME
     assert captured_agents_create["separator"] == test_runtime.FILE_SEPARATOR
-    assert captured_agents_create["prompt"] == test_runtime._build_prompt(repo_name=repo_root.name)
+    assert captured_agents_create["prompt"] == test_runtime._build_prompt()
     raw_context_path = captured_agents_create["context_path"]
     assert isinstance(raw_context_path, str)
     context_path = Path(raw_context_path)
     assert context_path.is_file()
     context_text = context_path.read_text(encoding="utf-8")
-    assert "repo_relative_path: src/feature.py" in context_text
-    assert "repo_relative_path: src/pkg/logic.py" in context_text
+    assert context_text.split(test_runtime.FILE_SEPARATOR) == [
+        "src/feature.py",
+        "src/pkg/logic.py",
+    ]
     assert captured_terminal_run == {
         "ctx": ctx,
-        "layouts_file": test_runtime._get_layout_path(repo_root=repo_root),
+        "layouts_file": test_runtime._get_layout_path(workspace_root=repo_root),
         "max_tabs": 4,
         "on_conflict": "restart",
     }

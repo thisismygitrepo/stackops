@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
 
@@ -10,10 +11,15 @@ from stackops.utils.accessories import get_repo_root
 
 
 JOB_NAME = "test_runtime"
-FILE_SEPARATOR = "\n\n======== PYTHON FILE CONTEXT ========\n\n"
-PROMPT_TEMPLATE = """for the following py files, please create a test under tests/runtime_tests/<file-path-relative-to-repo-root> inside the {repo_name} repository.
+FILE_SEPARATOR = "\n\n"
+_WORKSPACE_REPO_MARKER = ".git"
+_WORKSPACE_REPO_MINIMUM = 2
+_WORKSPACE_ROOT_REQUIREMENT = "inside a git repository or from a workspace directory containing multiple git repositories"
+PROMPT_TEMPLATE = """for the following py files, please create a test under <repo-name>/tests/runtime_tests/<file-path-relative-to-repo-root>.
 
-Use each file's repo_relative_path value to mirror the path under tests/runtime_tests/.
+The material contains only Python file paths relative to the current workspace root. Inspect those files directly.
+
+For each listed path, determine the git repository that contains it, then create the test under <that-repo>/tests/runtime_tests/<file-path-relative-to-that-repo-root>.
 
 However, only create such file if you see there is something that must be satisfied and tested for at runtime.
 
@@ -25,12 +31,40 @@ If there is nothing to be checked at runtime, then skip the file and don't write
 """
 
 
-def _get_context_path(*, repo_root: Path) -> Path:
-    return repo_root / ".ai" / "agents" / JOB_NAME / "context.md"
+@dataclass(frozen=True, slots=True)
+class ContextBuildResult:
+    file_count: int
+    repo_count: int
 
 
-def _get_layout_path(*, repo_root: Path) -> str:
-    return str(repo_root / ".ai" / "agents" / JOB_NAME / "layout.json")
+def _get_context_path(*, workspace_root: Path) -> Path:
+    return workspace_root / ".ai" / "agents" / JOB_NAME / "context.md"
+
+
+def _get_layout_path(*, workspace_root: Path) -> str:
+    return str(workspace_root / ".ai" / "agents" / JOB_NAME / "layout.json")
+
+
+def _resolve_workspace_root(*, current_dir: Path) -> Path | None:
+    repo_root = get_repo_root(current_dir)
+    if repo_root is not None:
+        return repo_root
+
+    if not current_dir.is_dir():
+        return None
+
+    try:
+        child_paths = tuple(current_dir.iterdir())
+    except OSError as error:
+        raise ValueError(f"Cannot inspect workspace directory: {current_dir}") from error
+
+    nested_repo_count = 0
+    for child_path in child_paths:
+        if child_path.is_dir() and child_path.joinpath(_WORKSPACE_REPO_MARKER).exists():
+            nested_repo_count += 1
+            if nested_repo_count >= _WORKSPACE_REPO_MINIMUM:
+                return current_dir
+    return None
 
 
 def _should_exclude_path(*, relative_path: Path) -> bool:
@@ -46,33 +80,44 @@ def _collect_python_files(*, search_root: Path) -> list[Path]:
     return sorted(python_files, key=lambda file_path: file_path.relative_to(search_root).as_posix())
 
 
-def _build_context_entry(*, repo_root: Path, search_root: Path, file_path: Path) -> str:
-    repo_relative_path = file_path.relative_to(repo_root).as_posix()
-    scope_relative_path = file_path.relative_to(search_root).as_posix()
-    source_text = file_path.read_text(encoding="utf-8")
-    return f"""repo_relative_path: {repo_relative_path}
-scope_relative_path: {scope_relative_path}
------ BEGIN PYTHON SOURCE -----
-{source_text}
------ END PYTHON SOURCE -----"""
+def _build_context_entry(*, workspace_root: Path, file_path: Path) -> str:
+    return file_path.relative_to(workspace_root).as_posix()
 
 
-def _write_context_file(*, repo_root: Path, search_root: Path, context_path: Path) -> int:
+def _is_repo_test_file(*, repo_root: Path, file_path: Path) -> bool:
+    return file_path.relative_to(repo_root).parts[:1] == ("tests",)
+
+
+def _write_context_file(*, workspace_root: Path, search_root: Path, context_path: Path) -> ContextBuildResult:
     python_files = _collect_python_files(search_root=search_root)
     if len(python_files) == 0:
         raise RuntimeError("No Python files found under the current directory after excluding hidden paths and .venv.")
 
+    context_entries: list[str] = []
+    repo_roots: set[Path] = set()
+    for file_path in python_files:
+        repo_root = get_repo_root(file_path)
+        if repo_root is None:
+            continue
+        repo_root_resolved = repo_root.resolve()
+        try:
+            repo_root_resolved.relative_to(workspace_root)
+        except ValueError:
+            continue
+        if _is_repo_test_file(repo_root=repo_root_resolved, file_path=file_path):
+            continue
+        repo_roots.add(repo_root_resolved)
+        context_entries.append(_build_context_entry(workspace_root=workspace_root, file_path=file_path))
+    if len(context_entries) == 0:
+        raise RuntimeError("No Python files found inside git repositories under the current directory.")
+
     context_path.parent.mkdir(parents=True, exist_ok=True)
-    context_entries = [
-        _build_context_entry(repo_root=repo_root, search_root=search_root, file_path=file_path)
-        for file_path in python_files
-    ]
     context_path.write_text(FILE_SEPARATOR.join(context_entries), encoding="utf-8")
-    return len(python_files)
+    return ContextBuildResult(file_count=len(context_entries), repo_count=len(repo_roots))
 
 
-def _build_prompt(*, repo_name: str) -> str:
-    return PROMPT_TEMPLATE.format(repo_name=repo_name)
+def _build_prompt() -> str:
+    return PROMPT_TEMPLATE
 
 
 def launch_test_runtime(
@@ -85,25 +130,31 @@ def launch_test_runtime(
     ] = 50,
 ) -> None:
     search_root = Path.cwd().resolve()
-    repo_root = get_repo_root(search_root)
-    if repo_root is None:
-        typer.echo("💥 Could not determine the repository root. Please run this command from within a git repository.", err=True)
+    try:
+        workspace_root = _resolve_workspace_root(current_dir=search_root)
+    except ValueError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=1) from error
+    if workspace_root is None:
+        typer.echo(f"💥 Could not determine a valid workspace root. Please run this command {_WORKSPACE_ROOT_REQUIREMENT}.", err=True)
         raise typer.Exit(code=1)
 
-    context_path = _get_context_path(repo_root=repo_root)
+    context_path = _get_context_path(workspace_root=workspace_root)
     try:
-        file_count = _write_context_file(repo_root=repo_root, search_root=search_root, context_path=context_path)
+        build_result = _write_context_file(workspace_root=workspace_root, search_root=search_root, context_path=context_path)
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
-    typer.echo(f"Prepared runtime-test context for {file_count} Python files from {search_root}.")
+    typer.echo(
+        f"Prepared runtime-test context for {build_result.file_count} Python files across {build_result.repo_count} repositories from {search_root}."
+    )
 
     agents_create_command(
         agent=agent,
         context_path=str(context_path),
         separator=FILE_SEPARATOR,
         agent_load=agent_load,
-        prompt=_build_prompt(repo_name=repo_root.name),
+        prompt=_build_prompt(),
         job_name=JOB_NAME,
     )
     proceed = typer.confirm("Agents layout for runtime test generation created. Do you want to run it now?", default=True)
@@ -112,7 +163,7 @@ def launch_test_runtime(
         return
     terminal_run_command(
         ctx=ctx,
-        layouts_file=_get_layout_path(repo_root=repo_root),
+        layouts_file=_get_layout_path(workspace_root=workspace_root),
         max_tabs=max_tabs,
         on_conflict="restart",
     )
