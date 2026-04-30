@@ -254,18 +254,20 @@ def get_app() -> typer.Typer:
     pyproject_app.command(name="upgrade-packages", no_args_is_help=False, help="↑ <a> Upgrade project dependencies.")(upgrade_packages)
     pyproject_app.command(name="a", no_args_is_help=False, hidden=True)(upgrade_packages)
     pyproject_app.command(name="up", no_args_is_help=False, hidden=True)(upgrade_packages)
+
     pyproject_app.command(name="type-hint", no_args_is_help=True, help="✐ <t> Type hint a file or project directory.")(type_hint)
     pyproject_app.command(name="t", no_args_is_help=True, hidden=True)(type_hint)
     pyproject_app.command(name="type-check", no_args_is_help=False, help="🧪 <c> Run the lint-and-type-check suite for a repository.")(type_check)
     pyproject_app.command(name="c", no_args_is_help=False, hidden=True)(type_check)
     pyproject_app.add_typer(type_fix_module.get_app(), name="type-fix", help="🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.")
     pyproject_app.add_typer(type_fix_module.get_app(), name="f", hidden=True)
+
     pyproject_app.add_typer(
         test_runtime_module.get_app(),
         name="test-runtime",
-        help="🧪 <tr> Create and run the runtime-test workflow for Python files under the current directory.",
+        help="🧪 <R> Create and run the runtime-test workflow for Python files under the current directory.",
     )
     pyproject_app.add_typer(test_runtime_module.get_app(), name="tr", hidden=True)
-    pyproject_app.command(name="reference-test", no_args_is_help=True, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
+    pyproject_app.command(name="test-reference", no_args_is_help=True, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
     pyproject_app.command(name="r", no_args_is_help=True, hidden=True)(reference_test)
     return pyproject_app
