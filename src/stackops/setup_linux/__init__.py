@@ -1,2 +1,0 @@
-APPS_DESKTOP_PATH_REFERENCE = "apps_desktop.sh"
-UV_PATH_REFERENCE = "uv.sh"

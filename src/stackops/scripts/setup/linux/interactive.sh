@@ -1,4 +1,5 @@
 #!/bin/bash
+
 . <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_linux/uv.sh")
 . <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/linux/wrap_stackops")
 

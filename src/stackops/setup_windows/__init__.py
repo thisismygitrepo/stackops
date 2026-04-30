@@ -1,1 +1,0 @@
-UV_PATH_REFERENCE = "uv.ps1"

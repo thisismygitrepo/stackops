@@ -1,3 +1,4 @@
+UV_PATH_REFERENCE = "uv.ps1"
 INTERACTIVE_PATH_REFERENCE = "interactive.ps1"
 LIVE_FROM_GITHUB_PATH_REFERENCE = "live_from_github.ps1"
 QUICK_INIT_PATH_REFERENCE = "quick_init.ps1"

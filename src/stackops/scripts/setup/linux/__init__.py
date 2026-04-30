@@ -1,2 +1,4 @@
+APPS_DESKTOP_PATH_REFERENCE = "apps_desktop.sh"
+UV_PATH_REFERENCE = "uv.sh"
 INTERACTIVE_PATH_REFERENCE = "interactive.sh"
 LIVE_FROM_GITHUB_PATH_REFERENCE = "live_from_github.sh"

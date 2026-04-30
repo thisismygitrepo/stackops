@@ -43,12 +43,12 @@ def _read_init_script(which: InitScriptKind) -> str:
                     )
                 return init_path.read_text(encoding="utf-8")
             case "ia":
-                import stackops.setup_linux.web_shortcuts as module
+                import stackops.scripts.setup.linux as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
                 return script_path.read_text(encoding="utf-8")
             case "live":
-                import stackops.setup_linux.web_shortcuts as module
+                import stackops.scripts.setup.linux as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
                 return script_path.read_text(encoding="utf-8")
@@ -62,12 +62,12 @@ def _read_init_script(which: InitScriptKind) -> str:
                 )
                 return init_path.read_text(encoding="utf-8")
             case "ia":
-                import stackops.setup_windows.web_shortcuts as module
+                import stackops.scripts.setup.windows as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
                 return script_path.read_text(encoding="utf-8")
             case "live":
-                import stackops.setup_windows.web_shortcuts as module
+                import stackops.scripts.setup.windows as module
 
                 script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
                 return script_path.read_text(encoding="utf-8")
