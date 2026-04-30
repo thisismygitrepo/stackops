@@ -7,6 +7,7 @@ from typing import Annotated, Literal, TypeAlias
 import typer
 
 import stackops.scripts.python.ai.scripts as ai_scripts
+from stackops.scripts.python.helpers.helpers_utils import test_runtime as test_runtime_module
 from stackops.scripts.python.helpers.helpers_utils import type_fix as type_fix_module
 from stackops.utils.path_reference import get_path_reference_path
 
@@ -259,6 +260,12 @@ def get_app() -> typer.Typer:
     pyproject_app.command(name="c", no_args_is_help=False, hidden=True)(type_check)
     pyproject_app.add_typer(type_fix_module.get_app(), name="type-fix", help="🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.")
     pyproject_app.add_typer(type_fix_module.get_app(), name="f", hidden=True)
+    pyproject_app.add_typer(
+        test_runtime_module.get_app(),
+        name="test-runtime",
+        help="🧪 <tr> Create and run the runtime-test workflow for Python files under the current directory.",
+    )
+    pyproject_app.add_typer(test_runtime_module.get_app(), name="tr", hidden=True)
     pyproject_app.command(name="reference-test", no_args_is_help=True, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
     pyproject_app.command(name="r", no_args_is_help=True, hidden=True)(reference_test)
     return pyproject_app
