@@ -1,4 +1,7 @@
 
+# Short @ https://bit.ly/cfgwq
+# Short @ https://bit.ly/sopswq
+
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/setup/windows/uv.ps1" | iex
 # irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_stackops.ps1" | iex
 

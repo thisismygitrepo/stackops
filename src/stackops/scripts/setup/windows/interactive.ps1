@@ -1,8 +1,12 @@
 
 # Short @ bit.ly/cfgwindows
+# Short @ bit.ly/sopsw
 
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/setup/windows/uv.ps1" | iex
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_stackops.ps1" | iex
+
+# live from github version
+# function stackops { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "git+https://github.com/thisismygitrepo/stackops" stackops $args }
 
 function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.95" devops $args }
 function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.95" cloud $args }
@@ -26,4 +30,4 @@ function p { wrap_in_shell_script seek @args }
 
 Write-Host "stackops command aliases are now defined in this PowerShell session."
 
-d config interactive
+devops config interactive
