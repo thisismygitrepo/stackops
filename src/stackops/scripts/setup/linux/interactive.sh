@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_linux/uv.sh")
+. <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/setup/linux/uv.sh")
 . <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/linux/wrap_stackops")
 
 alias devops='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.95" devops'
@@ -23,4 +23,4 @@ alias s='wrap_in_shell_script seek'
 
 echo "stackops command aliases are now defined in this shell session."
 
-d config interactive
+devops config interactive

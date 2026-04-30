@@ -1,7 +1,7 @@
 
 # Short @ bit.ly/cfgwindows
 
-irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/setup_windows/uv.ps1" | iex
+irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/setup/windows/uv.ps1" | iex
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_stackops.ps1" | iex
 
 function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.95" devops $args }
