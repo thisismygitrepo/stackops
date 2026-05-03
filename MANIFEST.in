@@ -1,7 +1,5 @@
 
-graft ./src/stackops/settings/*
-graft ./src/stackops/jobs/*
-graft ./src/stackops/profile/*
-graft ./src/stackops/scripts/*
-graft ./src/stackops/setup_linux
-graft ./src/stackops/setup_windows
+graft src/stackops/settings
+graft src/stackops/jobs
+graft src/stackops/profile
+graft src/stackops/scripts
