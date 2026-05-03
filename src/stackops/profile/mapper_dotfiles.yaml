@@ -310,7 +310,7 @@ yazi:
     os:
     - linux
     - darwin
-television:
+tv:
   cable_linux:
     original: ~/.config/television/cable
     self_managed: CONFIG_ROOT/settings/television/cable_unix
@@ -324,7 +324,6 @@ television:
     contents: true
     os:
     - windows
-tv:
   config_linux:
     original: ~/.config/television/config.toml
     self_managed: CONFIG_ROOT/settings/tv/config.toml
