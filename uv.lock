@@ -3971,7 +3971,7 @@ wheels = [
 
 [[package]]
 name = "stackops"
-version = "8.96"
+version = "8.97"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
