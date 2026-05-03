@@ -3802,18 +3802,18 @@
     {
       "appName": "gh",
       "license": "MIT License",
-      "repoURL": "CMD",
+      "repoURL": "https://github.com/cli/cli",
       "doc": "GitHub CLI",
       "fileNamePattern": {
         "amd64": {
-          "windows": "gh.py",
-          "linux": "gh.py",
-          "darwin": "gh.py"
+          "linux": "gh_{version}_linux_amd64.tar.gz",
+          "darwin": "gh_{version}_macOS_amd64.zip",
+          "windows": "gh_{version}_windows_amd64.msi"
         },
         "arm64": {
-          "windows": "gh.py",
-          "linux": "gh.py",
-          "darwin": "gh.py"
+          "linux": "gh_{version}_linux_arm64.tar.gz",
+          "darwin": "gh_{version}_macOS_arm64.zip",
+          "windows": "gh_{version}_windows_arm64.msi"
         }
       }
     },
