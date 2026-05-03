@@ -209,7 +209,6 @@ PACKAGES_SYSTEM_MONITORS = [
 
 # Search & Archive Tools - File and content search utilities, archive management
 PACKAGES_FILE = [
-
     "nerdfont",
     "fd",
     "fzf",
@@ -245,18 +244,18 @@ NETWORK = [
     "topgrade",
     "speedtest",
     "rclone",
-
 ]
 
 # Terminal & Shell Enhancements - Terminal multiplexers, shell history, and prompts
 PACKAGES_TERMINAL_SHELL = [
     "zellij",
+    "tmux",
     "mprocs",
     "mcfly",
-    "atuin",
+    # "atuin",
     "starship",
-    "gotty",
-    "ttyd",
+    # "gotty",
+    # "ttyd",
     "cb"
 ]
 

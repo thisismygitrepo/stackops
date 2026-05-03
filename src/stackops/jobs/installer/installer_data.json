@@ -386,12 +386,12 @@
       "doc": "🖥️ Terminal multiplexer",
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install tmux -y",
+          "linux": "sudo nala install tmux -y; cd ~; git clone --single-branch https://github.com/gpakosz/.tmux.git; ln -s -f .tmux/.tmux.conf; cp .tmux/.tmux.conf.local .",
           "windows": null,
           "darwin": "brew install tmux"
         },
         "arm64": {
-          "linux": "sudo nala install tmux -y",
+          "linux": "sudo nala install tmux -y; cd ~; git clone --single-branch https://github.com/gpakosz/.tmux.git; ln -s -f .tmux/.tmux.conf; cp .tmux/.tmux.conf.local .",
           "windows": null,
           "darwin": "brew install tmux"
         }
