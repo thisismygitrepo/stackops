@@ -49,18 +49,18 @@ def run(
     ctx: typer.Context,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
+
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
     sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between launching layouts")] = 1.0,
-
-    parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
     max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A Sanity checker that throws an error if any layout exceeds the maximum number of tabs to launch.")] = 25,
-
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
+    monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
+    parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
+
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
     on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
     exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
-    monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 
@@ -72,6 +72,8 @@ def run(
     mergeNewWindowsSkipMatchingWindows. Those two merge policies are
     supported for tmux and Windows Terminal.
     Use `run-all` for the paced whole-file dynamic scheduler.
+
+    The type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.
     """
     on_conflict = SessionConflictActionLoose2Strict[on_conflict]
     from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
@@ -106,10 +108,9 @@ def run_all(
     on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.")] = "error",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
-    """Dynamically run every tab from every layout in a layout configuration file.
-
-    This merges the whole file into one paced run and keeps at most
-    --max-parallel-tabs tabs active at a time.
+    """Run every tab from every layout in a layout configuration file at a controlled pace.
+    New tab kicks in as soon as another tab finishes, keeping the total number of active tabs under the specified maximum.
+    Use this if problem is embarresingly parallel and is only constrained by resources.
     """
     from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl
     on_conflict = SessionConflictActionLoose2Strict[on_conflict]
