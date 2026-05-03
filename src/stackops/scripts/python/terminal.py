@@ -98,12 +98,12 @@ def run_all(
     ctx: typer.Context,
     *,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    test_layout: Annotated[bool, typer.Option(..., "--test-layout", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
-    max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
-    poll_seconds: Annotated[float, typer.Option("--poll-seconds", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
-    kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", help="Close each tab once its command is finished.")] = False,
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-T", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
+    max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
+    poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
+    kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-o", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.")] = "error",
+    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.")] = "error",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
     """Dynamically run every tab from every layout in a layout configuration file.
