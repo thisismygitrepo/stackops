@@ -15,9 +15,14 @@ from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut, resolve_reasoning
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
+    ReasoningEffort,
+    ReasoningShortcut,
+    normalize_reasoning_effort,
+    reasoning_support,
+    resolve_reasoning,
+)
 
-ASK_REASONING_AGENTS: Final[tuple[AGENTS, ...]] = ("codex", "copilot", "pi")
 _ASK_REASONING_SHORTCUTS: Final[tuple[str, ...]] = cast(tuple[str, ...], get_args(ReasoningShortcut))
 
 
@@ -76,11 +81,10 @@ def _build_copilot_ask_command(prompt_file: Path, reasoning_effort: ReasoningEff
 
 
 def build_ask_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
-    if reasoning_effort is not None and agent not in ASK_REASONING_AGENTS:
-        raise ValueError("--reasoning is only supported for --agent codex, --agent copilot, or --agent pi")
+    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
     if agent == "copilot":
-        return _build_copilot_ask_command(prompt_file=prompt_file, reasoning_effort=reasoning_effort)
-    return build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
+        return _build_copilot_ask_command(prompt_file=prompt_file, reasoning_effort=normalized_reasoning_effort)
+    return build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=normalized_reasoning_effort)
 
 
 def _run_subprocess(command: Sequence[str], stdin_text: str | None) -> int:
@@ -112,7 +116,7 @@ def _split_legacy_ask_reasoning(
     normalized_prompt_parts = list(prompt_parts)
     if reasoning is not None:
         return reasoning, normalized_prompt_parts
-    if agent not in ASK_REASONING_AGENTS:
+    if len(reasoning_support(agent=agent).efforts) == 0:
         return None, normalized_prompt_parts
     if len(normalized_prompt_parts) <= 1:
         return None, normalized_prompt_parts
@@ -125,7 +129,7 @@ def _split_legacy_ask_reasoning(
 def _resolve_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None) -> ReasoningEffort | None:
     if reasoning is None:
         return None
-    if agent not in ASK_REASONING_AGENTS:
+    if len(reasoning_support(agent=agent).efforts) == 0:
         raise ValueError("--reasoning is only supported for --agent codex, --agent copilot, or --agent pi")
     return resolve_reasoning(shortcut=reasoning, agent=agent)
 

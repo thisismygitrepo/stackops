@@ -20,7 +20,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
     show_created_artifacts_panel,
     show_generated_agents_table,
 )
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, normalize_reasoning_effort
 import stackops.scripts.python.helpers.helpers_agents.templates as template_assets
 from stackops.utils.path_reference import get_path_reference_path
 
@@ -50,13 +50,14 @@ def agents_create(
     interactive: bool,
 ) -> None:
     """Create agents layout file, ready to run."""
+    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
         main(
             agent=agent,
             host=host,
             model=model,
-            reasoning_effort=reasoning_effort,
+            reasoning_effort=normalized_reasoning_effort,
             provider=provider,
             agent_load=agent_load,
             context=context,
@@ -78,9 +79,6 @@ def agents_create(
     )
     from stackops.utils.accessories import get_repo_root
     import json
-
-    if agent not in {"codex", "pi"} and reasoning_effort is not None:
-        raise ValueError("--reasoning-effort is only supported for --agent codex or --agent pi")
 
     repo_root = get_repo_root(Path.cwd())
     if repo_root is None:
@@ -115,7 +113,7 @@ def agents_create(
         host=host,
         provider=provider,
         model=model,
-        reasoning_effort=reasoning_effort,
+        reasoning_effort=normalized_reasoning_effort,
         agent_load=agent_load,
         join_prompt_and_context=join_prompt_and_context,
     )
@@ -144,7 +142,7 @@ def agents_create(
         machine=host,
         agent=agent_selected,
         model=model,
-        reasoning_effort=reasoning_effort,
+        reasoning_effort=normalized_reasoning_effort,
         provider=provider,
         job_name=job_name_resolved,
     )
@@ -166,7 +164,7 @@ def agents_create(
         agent=agent_selected,
         host=host,
         model=model,
-        reasoning_effort=reasoning_effort,
+        reasoning_effort=normalized_reasoning_effort,
         provider=provider,
         agent_load=agent_load,
         separator=separator,

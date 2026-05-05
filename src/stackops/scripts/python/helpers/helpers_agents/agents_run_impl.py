@@ -15,7 +15,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
 )
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, normalize_reasoning_effort
 from stackops.utils.accessories import get_repo_root
 
 
@@ -77,6 +77,12 @@ def _build_pi_thinking_arg(reasoning_effort: ReasoningEffort | None, is_windows:
     return f" --thinking {_quote_for_shell(thinking_level, is_windows=is_windows)}"
 
 
+def _build_copilot_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_windows: bool) -> str:
+    if reasoning_effort is None:
+        return ""
+    return f" --reasoning-effort {_quote_for_shell(reasoning_effort, is_windows=is_windows)}"
+
+
 def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
     is_windows = system() == "Windows"
     prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
@@ -84,8 +90,7 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
     repo_root = get_repo_root(Path.cwd())
     agent_launch_prefix = resolve_agent_launch_prefix(agent=agent, repo_root=repo_root)
     agent_launch_prefix_q = _format_shell_args(agent_launch_prefix, is_windows=is_windows)
-    if reasoning_effort is not None and agent not in {"codex", "pi"}:
-        raise ValueError("--reasoning-effort is only supported for --agent codex or --agent pi")
+    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
 
     if is_windows:
         prompt_content_expr = f"(Get-Content -Raw {prompt_file_q})"
@@ -94,9 +99,10 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
 
     match agent:
         case "copilot":
-            return f"{agent_cli} -p {prompt_content_expr} --yolo"
+            reasoning_arg = _build_copilot_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=is_windows)
+            return f"{agent_cli}{reasoning_arg} -p {prompt_content_expr} --yolo"
         case "codex":
-            reasoning_arg = _build_codex_reasoning_arg(reasoning_effort=reasoning_effort, is_windows=is_windows)
+            reasoning_arg = _build_codex_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=is_windows)
             if is_windows:
                 return f"Get-Content -Raw {prompt_file_q} | {agent_cli} exec{reasoning_arg} -"
             return f"{agent_cli} exec{reasoning_arg} - < {prompt_file_q}"
@@ -125,7 +131,7 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
         case "droid":
             return f"{agent_cli} exec -f {prompt_file_q}"
         case "pi":
-            thinking_arg = _build_pi_thinking_arg(reasoning_effort=reasoning_effort, is_windows=is_windows)
+            thinking_arg = _build_pi_thinking_arg(reasoning_effort=normalized_reasoning_effort, is_windows=is_windows)
             return f"{agent_cli}{thinking_arg} -p {prompt_content_expr}"
         case "cursor-agent":
             return f"{agent_cli} -p {prompt_content_expr} --output-format text"

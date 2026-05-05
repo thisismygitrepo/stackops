@@ -70,6 +70,7 @@ Examples:
 agents parallel --help
 agents parallel create --help
 agents parallel create --agent codex --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs
+agents parallel create --agent copilot --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
 agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
 agents parallel run-parallel default --where repo --agent-load 5
 agents parallel run-parallel docs.update --parallel-yaml-path ./.ai/parallel.yaml --agent pi --reasoning-effort high
@@ -84,7 +85,7 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 `run-prompt` is the structured workflow entrypoint. It supports:
 
 - `--agent`
-- `--reasoning-effort` for codex and pi agents
+- `--reasoning-effort` for codex, copilot, and pi agents; unsupported agents ignore it
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
 - `--where` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, `library`, or `custom`
@@ -96,6 +97,7 @@ Examples:
 
 ```bash
 agents run-prompt --agent codex --reasoning-effort high --context-path ./context.md "inspect this repo"
+agents run-prompt --agent copilot --reasoning-effort high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --context-name docs.cli --where all "update the assigned docs"
 agents run-prompt --agent pi --reasoning-effort high --context-path ./context.md "inspect this repo"
 agents run-prompt --show-format

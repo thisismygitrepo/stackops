@@ -15,6 +15,33 @@ from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKI
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
+_AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
+_INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
+_INIT_CONFIG_AGENT_HELP: Final[str] = (
+    f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
+    f"{','.join(_AGENT_VALUES)}"
+)
+
+
+def _parse_init_config_agents(*, raw_value: str) -> tuple[AGENTS, ...]:
+    parts = [part.strip() for part in raw_value.split(",")]
+    if any(part == "" for part in parts):
+        raise ValueError("Agent names must be a comma-separated list without empty entries")
+    if _INIT_CONFIG_ALL_AGENTS in parts:
+        if len(parts) != 1:
+            raise ValueError("Do not mix 'all' with specific agent names")
+        return _AGENT_VALUES
+
+    resolved_agents: list[AGENTS] = []
+    seen_agents: set[str] = set()
+    for part in parts:
+        if part not in _AGENT_VALUES:
+            raise ValueError(f"Unsupported agent: {part}. Supported agents: all, {', '.join(_AGENT_VALUES)}")
+        if part in seen_agents:
+            continue
+        seen_agents.add(part)
+        resolved_agents.append(part)
+    return tuple(resolved_agents)
 
 
 def init_config(
@@ -22,8 +49,8 @@ def init_config(
         str, typer.Option(..., "--root", "-r", help="Root directory of the repository to initialize AI configs in. Defaults to current directory.")
     ],
     agents: Annotated[
-        str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
-    ] = "",
+        str, typer.Option(..., "--agent", "-a", help=_INIT_CONFIG_AGENT_HELP)
+    ],
     add_config: Annotated[bool, typer.Option("--add-config", "-c", help="Create private agent config files/directories")] = True,
     add_instructions: Annotated[bool, typer.Option("--add-instructions", "-i", help="Create agent instructions files (e.g. AGENTS.md)")] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
@@ -36,11 +63,7 @@ def init_config(
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import init_config as impl
 
     try:
-        if agents:
-            frameworks__ = tuple(agent.strip() for agent in agents.split(",") if agent.strip())
-            resolved: tuple[AGENTS, ...] = cast(tuple[AGENTS, ...], frameworks__)
-        else:
-            resolved = cast(tuple[AGENTS, ...], get_args(AGENTS))
+        resolved = _parse_init_config_agents(raw_value=agents)
 
         impl(
             root=root,
@@ -131,7 +154,12 @@ def run_prompt(
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
     reasoning_effort: Annotated[
         ReasoningEffort | None,
-        typer.Option(..., "--reasoning-effort", "-r", help="Reasoning effort for codex and pi agents. When omitted, the agent uses its default."),
+        typer.Option(
+            ...,
+            "--reasoning-effort",
+            "-r",
+            help="Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.",
+        ),
     ] = None,
     context: Annotated[str | None, typer.Option(..., "--context", "-c", help="Context string. Mutually exclusive with --context-path.")] = None,
     context_path: Annotated[

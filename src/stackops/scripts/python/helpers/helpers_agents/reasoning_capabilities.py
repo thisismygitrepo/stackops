@@ -28,10 +28,7 @@ _SHORTCUT_BY_EFFORT: Final[dict[ReasoningEffort, ReasoningShortcut]] = {
 _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
     "cursor-agent": AgentReasoningSupport(efforts=(), note=None),
     "gemini": AgentReasoningSupport(efforts=(), note=None),
-    "claude": AgentReasoningSupport(
-        efforts=("low", "medium", "high"),
-        note="actual support depends on the selected Claude model",
-    ),
+    "claude": AgentReasoningSupport(efforts=(), note=None),
     "qwen": AgentReasoningSupport(efforts=(), note=None),
     "copilot": AgentReasoningSupport(efforts=("low", "medium", "high", "xhigh"), note=None),
     "codex": AgentReasoningSupport(
@@ -68,6 +65,15 @@ def reasoning_help(agent: AGENTS) -> str:
 
 def reasoning_support(agent: AGENTS) -> AgentReasoningSupport:
     return _AGENT_REASONING_SUPPORT[agent]
+
+
+def normalize_reasoning_effort(*, agent: AGENTS, reasoning_effort: ReasoningEffort | None) -> ReasoningEffort | None:
+    if reasoning_effort is None:
+        return None
+    support = reasoning_support(agent=agent)
+    if reasoning_effort in support.efforts:
+        return reasoning_effort
+    return None
 
 
 def resolve_reasoning(shortcut: ReasoningShortcut, agent: AGENTS) -> ReasoningEffort:
