@@ -5835,7 +5835,7 @@
                         "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                         "    reasoning_effort: Annotated[",
                         "        ReasoningEffort | None,",
-                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
+                        "        typer.Option(\"--reasoning\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                         "    ] = None,",
                         "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
                         "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
@@ -5963,15 +5963,15 @@
                           "type": "ReasoningEffort | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--reasoning-effort",
+                              "--reasoning",
                               "-r"
                             ],
                             "long_flags": [
-                              "--reasoning-effort"
+                              "--reasoning"
                             ],
                             "short_flags": [
                               "-r"
@@ -6318,7 +6318,7 @@
                         "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                         "    reasoning_effort: Annotated[",
                         "        ReasoningEffort | None,",
-                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
+                        "        typer.Option(\"--reasoning\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                         "    ] = None,",
                         "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
                         "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
@@ -6436,15 +6436,15 @@
                           "type": "ReasoningEffort | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--reasoning-effort",
+                              "--reasoning",
                               "-r"
                             ],
                             "long_flags": [
-                              "--reasoning-effort"
+                              "--reasoning"
                             ],
                             "short_flags": [
                               "-r"
@@ -6725,7 +6725,7 @@
                         "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                         "    reasoning_effort: Annotated[",
                         "        ReasoningEffort | None,",
-                        "        typer.Option(\"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
+                        "        typer.Option(\"--reasoning\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                         "    ] = None,",
                         "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
                         "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
@@ -6835,15 +6835,15 @@
                           "type": "ReasoningEffort | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
+                          "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option('--reasoning', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--reasoning-effort",
+                              "--reasoning",
                               "-r"
                             ],
                             "long_flags": [
-                              "--reasoning-effort"
+                              "--reasoning"
                             ],
                             "short_flags": [
                               "-r"
@@ -12761,7 +12761,7 @@
                     "    model: Annotated[str | None, typer.Option(..., \"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                     "    reasoning_effort: Annotated[",
                     "        ReasoningEffort | None,",
-                    "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
+                    "        typer.Option(..., \"--reasoning\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Provider to use (if agent support many)\")] = None,",
                     "    host: Annotated[HOST, typer.Option(..., \"--host\", \"-h\", help=f\"Machine to run agents on. One of {', '.join(get_args(HOST))}\")] = \"local\",",
@@ -12879,15 +12879,15 @@
                       "type": "ReasoningEffort | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
+                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--reasoning-effort",
+                          "--reasoning",
                           "-r"
                         ],
                         "long_flags": [
-                          "--reasoning-effort"
+                          "--reasoning"
                         ],
                         "short_flags": [
                           "-r"
@@ -13430,7 +13430,7 @@
                     "    model: Annotated[str | None, typer.Option(..., \"--model\", \"-m\", help=\"Override model.\")] = None,",
                     "    reasoning_effort: Annotated[",
                     "        ReasoningEffort | None,",
-                    "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Override reasoning effort for codex and pi agents.\"),",
+                    "        typer.Option(..., \"--reasoning\", \"-r\", help=\"Override reasoning effort for codex and pi agents.\"),",
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Override provider.\")] = None,",
                     "    host: Annotated[HOST | None, typer.Option(..., \"--host\", \"-h\", help=f\"Override machine. One of {', '.join(get_args(HOST))}\")] = None,",
@@ -13662,15 +13662,15 @@
                       "type": "ReasoningEffort | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Override reasoning effort for codex and pi agents.')]",
+                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Override reasoning effort for codex and pi agents.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--reasoning-effort",
+                          "--reasoning",
                           "-r"
                         ],
                         "long_flags": [
-                          "--reasoning-effort"
+                          "--reasoning"
                         ],
                         "short_flags": [
                           "-r"
@@ -15278,7 +15278,7 @@
                 "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = \"copilot\",",
                 "    reasoning_effort: Annotated[",
                 "        ReasoningEffort | None,",
-                "        typer.Option(..., \"--reasoning-effort\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
+                "        typer.Option(..., \"--reasoning\", \"-r\", help=\"Reasoning effort for codex and pi agents. When omitted, the agent uses its default.\"),",
                 "    ] = None,",
                 "    context: Annotated[str | None, typer.Option(..., \"--context\", \"-c\", help=\"Context string. Mutually exclusive with --context-path.\")] = None,",
                 "    context_path: Annotated[",
@@ -15390,15 +15390,15 @@
                   "type": "ReasoningEffort | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning-effort', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
+                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex and pi agents. When omitted, the agent uses its default.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--reasoning-effort",
+                      "--reasoning",
                       "-r"
                     ],
                     "long_flags": [
-                      "--reasoning-effort"
+                      "--reasoning"
                     ],
                     "short_flags": [
                       "-r"

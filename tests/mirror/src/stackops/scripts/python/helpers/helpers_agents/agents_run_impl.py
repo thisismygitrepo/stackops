@@ -11,7 +11,7 @@ def test_build_agent_command_adds_reasoning_for_copilot(monkeypatch: pytest.Monk
 
     command = build_agent_command(agent="copilot", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="high")
 
-    assert "--reasoning-effort high" in command
+    assert "--reasoning high" in command
 
 
 def test_build_agent_command_ignores_unsupported_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -20,4 +20,4 @@ def test_build_agent_command_ignores_unsupported_reasoning(monkeypatch: pytest.M
 
     command = build_agent_command(agent="claude", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="high")
 
-    assert "--reasoning-effort" not in command
+    assert "--reasoning" not in command

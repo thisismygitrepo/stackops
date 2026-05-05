@@ -36,7 +36,7 @@ def run_parallel(
     model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Override model.")] = None,
     reasoning_effort: Annotated[
         ReasoningEffort | None,
-        typer.Option(..., "--reasoning-effort", "-r", help="Override reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it."),
+        typer.Option(..., "--reasoning", "-r", help="Override reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it."),
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Override provider.")] = None,
     host: Annotated[HOST | None, typer.Option(..., "--host", "-h", help=f"Override machine. One of {', '.join(get_args(HOST))}")] = None,

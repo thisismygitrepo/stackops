@@ -123,7 +123,7 @@ def _build_recreate_command_args(
     if model is not None:
         command.extend(["--model", model])
     if reasoning_effort is not None:
-        command.extend(["--reasoning-effort", reasoning_effort])
+        command.extend(["--reasoning", reasoning_effort])
     if provider is not None:
         command.extend(["--provider", provider])
     if join_prompt_and_context:

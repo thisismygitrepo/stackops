@@ -80,7 +80,7 @@ def _build_pi_thinking_arg(reasoning_effort: ReasoningEffort | None, is_windows:
 def _build_copilot_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_windows: bool) -> str:
     if reasoning_effort is None:
         return ""
-    return f" --reasoning-effort {_quote_for_shell(reasoning_effort, is_windows=is_windows)}"
+    return f" --reasoning {_quote_for_shell(reasoning_effort, is_windows=is_windows)}"
 
 
 def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:

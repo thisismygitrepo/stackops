@@ -156,7 +156,7 @@ def run_prompt(
         ReasoningEffort | None,
         typer.Option(
             ...,
-            "--reasoning-effort",
+            "--reasoning",
             "-r",
             help="Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.",
         ),

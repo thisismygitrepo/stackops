@@ -76,7 +76,7 @@ def _build_copilot_ask_command(prompt_file: Path, reasoning_effort: ReasoningEff
         prompt_content_expr = f'"$(cat {prompt_file_q})"'
     reasoning_arg = ""
     if reasoning_effort is not None:
-        reasoning_arg = f" --reasoning-effort {reasoning_effort}"
+        reasoning_arg = f" --reasoning {reasoning_effort}"
     return f"copilot{reasoning_arg} -p {prompt_content_expr} --yolo"
 
 
