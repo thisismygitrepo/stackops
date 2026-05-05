@@ -16,6 +16,7 @@ def test_workflow_help_lists_update_docs_command() -> None:
     assert "update-docs" in result.stdout
     assert "Create an agents layout for updating CLI and API" in result.stdout
     assert "docs only." in result.stdout
+    assert "update-logic" in result.stdout
 
 
 def test_update_docs_context_is_limited_to_cli_and_api_docs() -> None:

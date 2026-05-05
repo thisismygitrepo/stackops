@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs, update_installer, update_test, workflows_yaml
+from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs, update_installer, update_logic, update_test, workflows_yaml
 
 
 def _read_yaml_mapping(path: Path) -> dict[str, object]:
@@ -43,6 +43,7 @@ update-docs:
 
     python_context = "src/stackops/a.py\n@-@\nsrc/stackops/b.py"
     docs_context = "docs/cli/agents.md\n@-@\ndocs/api/index.md"
+    logic_context = "file: src/stackops/scripts/python/devops.py\ncommand: devops install"
 
     def fake_get_repo_root(_path: Path) -> Path:
         return tmp_path
@@ -110,10 +111,32 @@ update-docs:
             interactive=False,
         )
 
+    def fake_update_logic() -> None:
+        update_logic.agents_create_impl(
+            agent="codex",
+            model=None,
+            agent_load=10,
+            context=logic_context,
+            context_path=None,
+            separator="\n@-@\n",
+            prompt=update_logic.UPDATE_LOGIC_PROMPT,
+            prompt_path=None,
+            prompt_name=None,
+            job_name=update_logic.DEFAULT_LOGIC_JOB_NAME,
+            join_prompt_and_context=False,
+            output_path=str(tmp_path / ".ai" / "agents" / update_logic.DEFAULT_LOGIC_JOB_NAME / "layout.json"),
+            agents_dir=str(tmp_path / ".ai" / "agents" / update_logic.DEFAULT_LOGIC_JOB_NAME),
+            host="local",
+            reasoning_effort=None,
+            provider=None,
+            interactive=False,
+        )
+
     monkeypatch.setattr(workflows_yaml, "get_repo_root", fake_get_repo_root)
     monkeypatch.setattr(update_installer, "update_installer", fake_update_installer)
     monkeypatch.setattr(update_test, "update_test", fake_update_test)
     monkeypatch.setattr(update_docs, "update_docs", fake_update_docs)
+    monkeypatch.setattr(update_logic, "update_logic", fake_update_logic)
 
     written_path = workflows_yaml.write_workflows_to_yaml()
 
@@ -137,6 +160,11 @@ update-docs:
     assert update_docs_entry["prompt"] == update_docs.UPDATE_DOCS_PROMPT
     assert "context" not in update_docs_entry
     assert "context_path" not in update_docs_entry
+
+    update_logic_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-logic")
+    assert update_logic_entry["prompt"] == update_logic.UPDATE_LOGIC_PROMPT
+    assert "context" not in update_logic_entry
+    assert "context_path" not in update_logic_entry
 
     update_installer_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-installer")
     assert update_installer_entry["context_path"] == "./src/stackops/jobs/installer/installer_data.json"

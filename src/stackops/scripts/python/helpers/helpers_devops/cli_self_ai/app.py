@@ -2,6 +2,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs as update_docs_module
 from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_installer as update_installer_module
+from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_logic as update_logic_module
 from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_test as update_test_module
 
 
@@ -25,4 +26,10 @@ def get_app() -> typer.Typer:
         help="📚 <d> Create an agents layout for updating CLI and API docs only.",
     )(update_docs_module.update_docs)
     cli_app.command(name="d", no_args_is_help=False, hidden=True)(update_docs_module.update_docs)
+    cli_app.command(
+        name="update-logic",
+        no_args_is_help=False,
+        help="🧠 <l> Create an agents layout for checking CLI command logic.",
+    )(update_logic_module.update_logic)
+    cli_app.command(name="l", no_args_is_help=False, hidden=True)(update_logic_module.update_logic)
     return cli_app

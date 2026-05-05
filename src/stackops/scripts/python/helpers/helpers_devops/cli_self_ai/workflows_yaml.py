@@ -9,7 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config i
     parallel_yaml_template,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
-from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs, update_installer, update_test
+from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs, update_installer, update_logic, update_test
 from stackops.scripts.python.helpers.helpers_devops.cli_self_ai.workflow_capture import WorkflowModule, capture_agents_create_values
 from stackops.utils.accessories import get_repo_root
 
@@ -69,6 +69,12 @@ def _build_workflow_entries(*, repo_root: Path) -> dict[str, ParallelWorkflowEnt
             repo_root=repo_root,
             workflow_module=update_docs,
             workflow_function=update_docs.update_docs,
+            include_captured_context=False,
+        ),
+        "update-logic": _build_captured_workflow_entry(
+            repo_root=repo_root,
+            workflow_module=update_logic,
+            workflow_function=update_logic.update_logic,
             include_captured_context=False,
         ),
     }
