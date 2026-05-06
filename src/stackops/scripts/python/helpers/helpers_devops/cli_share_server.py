@@ -109,7 +109,7 @@ def web_file_explorer(
             """trap 'kill "$server_pid" 2>/dev/null' INT TERM EXIT""",
             "sleep 1",
             """if ! kill -0 "$server_pid" 2>/dev/null; then""",
-            """    wait "$server_pid"""",
+                """    wait "$server_pid""",
             "    exit $?",
             "fi",
             shlex.join(["ngrok", "http", str(selected_port)]),
