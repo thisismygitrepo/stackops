@@ -12,7 +12,7 @@ PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
 def tree(
     show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", help="Include help text in labels")] = True,
     show_aliases: Annotated[bool, typer.Option("--show-aliases/--no-show-aliases", help="Include aliases in labels")] = False,
-    max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the tree")] = None,
+    max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
 ) -> None:
     """Render a rich tree view in the terminal."""
     def func(show_help: bool, show_aliases: bool, max_depth: int | None) -> None:
@@ -24,10 +24,10 @@ def tree(
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
     if Path.home().joinpath("code", "stackops").exists():
-        uv_with: list[str] = ["plotly", "kaleido"]
+        uv_with: list[str] = ["rich"]
         uv_project_dir = str(Path.home().joinpath("code", "stackops"))
     else:
-        uv_with = [STACKOPS_VERSION, "plotly", "kaleido"]
+        uv_with = [STACKOPS_VERSION, "rich"]
         uv_project_dir = None
 
     shell_script, _pyfile = get_shell_script_running_lambda_function(
@@ -153,6 +153,10 @@ def search(
 ) -> None:
     """🔎 Search cli_graph.json entries and run --help for the selected command or group."""
     def func(graph_path_str: str | None, show_json: bool) -> None:
+        from pathlib import Path
+
+        import typer
+
         from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
         from stackops.scripts.python.graph.visualize.cli_graph_search import search_cli_graph
 
@@ -160,7 +164,6 @@ def search(
         return_code = search_cli_graph(graph_path=graph_file, show_json=show_json)
         if return_code != 0:
             raise typer.Exit(code=return_code)
-            
 
     from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script

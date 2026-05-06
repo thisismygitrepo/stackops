@@ -16,21 +16,21 @@ def _resolve_session_backend(
         case "zellij" | "z":
             if system == "windows":
                 typer.echo("Error: Zellij is not supported on Windows.", err=True, color=True)
-                raise typer.Exit()
+                raise typer.Exit(code=1)
             return "zellij"
         case "tmux" | "t":
             if system == "windows":
                 typer.echo("Error: tmux is not supported on Windows.", err=True, color=True)
-                raise typer.Exit()
+                raise typer.Exit(code=1)
             return "tmux"
         case "auto" | "a":
             if system == "windows":
                 typer.echo("Error: tmux/zellij are not supported on Windows.", err=True, color=True)
-                raise typer.Exit()
+                raise typer.Exit(code=1)
             return "zellij"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
-            raise typer.Exit()
+            raise typer.Exit(code=1)
 
 
 def balance_load(
@@ -42,7 +42,11 @@ def balance_load(
 ) -> None:
     """Adjust layout file to limit max tabs per layout, etc."""
     from stackops.scripts.python.helpers.helpers_sessions.utils import balance_load as impl
-    impl(layout_path=layout_path, max_thresh=max_thresh, thresh_type=thresh_type, breaking_method=breaking_method, output_path=output_path)
+    try:
+        impl(layout_path=layout_path, max_thresh=max_thresh, thresh_type=thresh_type, breaking_method=breaking_method, output_path=output_path)
+    except ValueError as error:
+        typer.echo(f"Error: {error}", err=True, color=True)
+        raise typer.Exit(code=1) from error
 
 
 def run(
@@ -112,8 +116,15 @@ def run_all(
     New tab kicks in as soon as another tab finishes, keeping the total number of active tabs under the specified maximum.
     Use this if problem is embarresingly parallel and is only constrained by resources.
     """
-    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl
+    if max_parallel_tabs < 1:
+        typer.echo("Error: --max-parallel-tabs must be at least 1.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if poll_seconds <= 0.0:
+        typer.echo("Error: --poll-seconds must be greater than 0.", err=True, color=True)
+        raise typer.Exit(code=1)
+
     on_conflict = SessionConflictActionLoose2Strict[on_conflict]
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl
     impl(
         ctx=ctx,
         layouts_file=layouts_file,
@@ -155,17 +166,17 @@ def kill_session_target(
     """Choose one or more session targets to kill."""
     if kill_all and name is not None:
         typer.echo("Error: --all cannot be used together with NAME.", err=True, color=True)
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     if kill_all and window:
         typer.echo("Error: --all cannot be used together with --window.", err=True, color=True)
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     backend_resolved = _resolve_session_backend(backend)
     from stackops.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl
 
     action, payload = impl(backend=backend_resolved, name=name, kill_all=kill_all, window=window)
     if action == "error":
         typer.echo(payload, err=True, color=True)
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     if action == "run_script" and payload:
         from stackops.utils.code import exit_then_run_shell_script
 
@@ -180,8 +191,8 @@ def get_session_tabs() -> list[tuple[str, str]]:
     print(result)
     return result
 def create_template(
-    name: Annotated[str | None, typer.Argument(..., help="Name of the layout template to create")] = None,
-    num_tabs: Annotated[int, typer.Option(..., "--num-tabs", "-t", help="Number of tabs to include in the template")] = 3,
+    name: Annotated[str | None, typer.Argument(help="Name of the layout template to create")] = None,
+    num_tabs: Annotated[int, typer.Option(..., "--num-tabs", "-t", min=1, help="Number of tabs to include in the template")] = 3,
 ) -> None:
     """Create a layout template file."""
     from stackops.scripts.python.helpers.helpers_sessions.utils import create_template as impl
@@ -223,10 +234,10 @@ def summarize(
 
     json_str = layout_path_obj.read_text(encoding="utf-8")
     try:
-        layout_file = json.loads(json_str)
+        layout_file_obj: object = json.loads(json_str)
     except Exception:
         try:
-            layout_file = json.loads(remove_c_style_comments(json_str))
+            layout_file_obj = json.loads(remove_c_style_comments(json_str))
         except Exception as e:
             console.print(
                 Panel(
@@ -237,10 +248,11 @@ def summarize(
             )
             raise typer.Exit(code=1) from e
 
-    if not isinstance(layout_file, dict):
+    if not isinstance(layout_file_obj, dict):
         console.print(Panel("❌ Layout file root must be a JSON object.", title="Error", border_style="red"))
         raise typer.Exit(code=1)
 
+    layout_file: dict[object, object] = layout_file_obj
     layouts_raw = layout_file.get("layouts")
     if not isinstance(layouts_raw, list):
         console.print(Panel("❌ Missing or invalid 'layouts' array.", title="Error", border_style="red"))
@@ -248,14 +260,27 @@ def summarize(
 
     rows: list[tuple[int, str, int]] = []
     total_tabs = 0
-    for index, a_layout in enumerate(layouts_raw, start=1):
-        if isinstance(a_layout, dict):
-            layout_name = str(a_layout.get("layoutName", f"layout#{index}"))
-            layout_tabs = a_layout.get("layoutTabs")
-            tab_count = len(layout_tabs) if isinstance(layout_tabs, list) else 0
+    for index, layout_raw in enumerate(layouts_raw, start=1):
+        if not isinstance(layout_raw, dict):
+            console.print(Panel(f"❌ Layout #{index} must be a JSON object.", title="Error", border_style="red"))
+            raise typer.Exit(code=1)
+
+        layout: dict[object, object] = layout_raw
+        layout_name_raw = layout.get("layoutName")
+        if layout_name_raw is None:
+            layout_name = f"layout#{index}"
+        elif isinstance(layout_name_raw, str):
+            layout_name = layout_name_raw
         else:
-            layout_name = f"invalid-layout#{index}"
-            tab_count = 0
+            console.print(Panel(f"❌ Layout #{index} has invalid 'layoutName'.", title="Error", border_style="red"))
+            raise typer.Exit(code=1)
+
+        layout_tabs = layout.get("layoutTabs")
+        if not isinstance(layout_tabs, list):
+            console.print(Panel(f"❌ Layout '{layout_name}' is missing a valid 'layoutTabs' array.", title="Error", border_style="red"))
+            raise typer.Exit(code=1)
+
+        tab_count = len(layout_tabs)
         rows.append((index, layout_name, tab_count))
         total_tabs += tab_count
 
@@ -295,6 +320,16 @@ def trace(
 ) -> None:
     """Trace a tmux session until every target matches a strict stop criterion."""
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import trace_session as impl
+
+    if every <= 0:
+        typer.echo("Error: --every must be greater than 0.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if until == "exit-code" and exit_code is None:
+        typer.echo("Error: --exit-code is required when --until exit-code is selected.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if until != "exit-code" and exit_code is not None:
+        typer.echo("Error: --exit-code can only be used with --until exit-code.", err=True, color=True)
+        raise typer.Exit(code=1)
 
     impl(
         session_name=session_name,

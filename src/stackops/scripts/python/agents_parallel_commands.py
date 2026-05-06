@@ -30,7 +30,7 @@ def agents_create(
         str | None, typer.Option(..., "--context-path", "-C", help="Path to the context file/folder, defaults to .ai/todo/")
     ] = None,
     separator: Annotated[str, typer.Option(..., "--separator", "-s", help="Separator for context. Supports escaped values like '\\n'.")] = DEFAULT_SEAPRATOR,
-    agent_load: Annotated[int, typer.Option(..., "--agent-load", "-l", help="Number of tasks per prompt")] = 3,
+    agent_load: Annotated[int, typer.Option(..., "--agent-load", "-l", min=1, help="Number of tasks per prompt")] = 3,
     prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
     prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
     prompt_name: Annotated[str | None, typer.Option(..., "--prompt-name", "-N", help="Prompt entry name from prompts YAML")] = None,
@@ -87,14 +87,18 @@ def agents_create(
 def collect(
     agent_dir: Annotated[str, typer.Argument(..., help="Path to the agent directory containing the prompts folder")],
     output_path: Annotated[str, typer.Argument(..., help="Path to write the concatenated material files")],
-    separator: Annotated[str, typer.Option(..., help="Separator to use when concatenating material files")] = "\n",
+    separator: Annotated[
+        str,
+        typer.Option(..., help="Separator to use when concatenating material files. Supports escaped values like '\\n'."),
+    ] = "\n",
     pattern: Annotated[str | None, typer.Option(..., help="Pattern to match material files (e.g., 'res.txt')")] = None,
 ) -> None:
     """Collect all material files from an agent directory and concatenate them."""
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import collect as impl
 
     try:
-        impl(agent_dir=agent_dir, output_path=output_path, separator=separator, pattern=pattern)
+        normalized_separator = _decode_separator(separator=separator)
+        impl(agent_dir=agent_dir, output_path=output_path, separator=normalized_separator, pattern=pattern)
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
@@ -160,4 +164,4 @@ def create_context(
 
     separator_path = Path(".ai") / "agents" / job_name / "separator.txt"
     separator_path.parent.mkdir(parents=True, exist_ok=True)
-    separator_path.write_text(separator, encoding="utf-8")
+    separator_path.write_text(normalized_separator, encoding="utf-8")

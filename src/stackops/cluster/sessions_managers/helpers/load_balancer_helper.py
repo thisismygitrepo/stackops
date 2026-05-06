@@ -4,13 +4,24 @@ from stackops.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig
 from typing import Literal
 
 
+def _get_positive_tab_weight(tab: TabConfig) -> int:
+    tab_weight = tab.get("tabWeight", 1)
+    if tab_weight < 1:
+        raise ValueError(f"Tab '{tab['tabName']}' has invalid tabWeight ({tab_weight}); expected a positive integer.")
+    return tab_weight
+
+
 def split_tabs_by_weight(tabs: list[TabConfig], max_weight: int) -> list[list[TabConfig]]:
     """Split tabs into chunks where each chunk's total weight <= max_weight."""
+    if max_weight < 1:
+        raise ValueError(f"max_weight must be at least 1, got {max_weight}.")
     chunks: list[list[TabConfig]] = []
     current_chunk: list[TabConfig] = []
     current_weight = 0
     for tab in tabs:
-        tab_weight = tab.get("tabWeight", 1)
+        tab_weight = _get_positive_tab_weight(tab)
+        if tab_weight > max_weight:
+            raise ValueError(f"Tab '{tab['tabName']}' has tabWeight {tab_weight}, which exceeds max_thresh {max_weight}.")
         if current_weight + tab_weight > max_weight and current_chunk:
             chunks.append(current_chunk)
             current_chunk = [tab]
@@ -27,6 +38,8 @@ def split_tabs_by_weight(tabs: list[TabConfig], max_weight: int) -> list[list[Ta
 
 def combine_tabs_into_super_tabs(tabs: list[TabConfig], num_super_tabs: int) -> list[TabConfig]:
     """Combine tabs into num_super_tabs super tabs with combined commands."""
+    if num_super_tabs < 1:
+        raise ValueError(f"num_super_tabs must be at least 1, got {num_super_tabs}.")
     if len(tabs) <= num_super_tabs:
         return tabs  # No need to combine
     
@@ -41,7 +54,7 @@ def combine_tabs_into_super_tabs(tabs: list[TabConfig], num_super_tabs: int) -> 
             # Use startDir of the first tab
             start_dir = group[0]["startDir"]
             # Sum weights
-            total_weight = sum(tab.get("tabWeight", 1) for tab in group)
+            total_weight = sum(_get_positive_tab_weight(tab) for tab in group)
             super_tabs.append({
                 "tabName": combined_name,
                 "startDir": start_dir,
@@ -62,7 +75,7 @@ def combine_tabs_by_weight_into_super_tabs(tabs: list[TabConfig], max_weight: in
             combined_command = "; ".join(tab["command"] for tab in group)
             combined_name = f"super_tab_{idx+1}"
             start_dir = group[0]["startDir"]
-            total_weight = sum(tab.get("tabWeight", 1) for tab in group)
+            total_weight = sum(_get_positive_tab_weight(tab) for tab in group)
             super_tabs.append({
                 "tabName": combined_name,
                 "startDir": start_dir,
@@ -112,7 +125,7 @@ def restrict_num_tabs_helper3(layout_configs: list[LayoutConfig], max_thresh: in
     """When threshold is exceeded, create more layouts with max_thresh total weight each."""
     new_layout_configs: list[LayoutConfig] = []
     for a_layout_config in layout_configs:
-        layout_weight = sum(tab.get("tabWeight", 1) for tab in a_layout_config["layoutTabs"])
+        layout_weight = sum(_get_positive_tab_weight(tab) for tab in a_layout_config["layoutTabs"])
         if layout_weight > max_thresh:
             print(f"Layout '{a_layout_config['layoutName']}' has too much weight ({layout_weight} > {max_thresh}). Splitting into multiple layouts.")
             tab_chunks = split_tabs_by_weight(a_layout_config["layoutTabs"], max_weight=max_thresh)
@@ -131,7 +144,7 @@ def restrict_num_tabs_helper4(layout_configs: list[LayoutConfig], max_thresh: in
     """When threshold is exceeded, combine tabs into super tabs with weight <= max_thresh."""
     new_layout_configs: list[LayoutConfig] = []
     for a_layout_config in layout_configs:
-        layout_weight = sum(tab.get("tabWeight", 1) for tab in a_layout_config["layoutTabs"])
+        layout_weight = sum(_get_positive_tab_weight(tab) for tab in a_layout_config["layoutTabs"])
         if layout_weight > max_thresh:
             print(f"Layout '{a_layout_config['layoutName']}' has too much weight ({layout_weight} > {max_thresh}). Combining into super tabs with weight <= {max_thresh}.")
             super_tabs = combine_tabs_by_weight_into_super_tabs(a_layout_config["layoutTabs"], max_weight=max_thresh)

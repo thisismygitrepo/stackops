@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, TypeAlias
+from typing import Annotated, Literal, Never, TypeAlias
 
 import typer
 
@@ -65,6 +65,10 @@ DIRECTION_MAP: dict[DIRECTION_LOOSE, DIRECTION_STRICT] = {
 }
 
 
+def _exit_with_error(message: str) -> Never:
+    typer.echo(typer.style("Error: ", fg=typer.colors.RED) + message)
+    raise SystemExit(1)
+
 
 def main_from_parser(
     direction: Annotated[
@@ -86,9 +90,10 @@ def main_from_parser(
     repo_key = REPO_MAP[repo]
     mapper_full_obj = read_mapper(repo=repo_key)
     mapper_full: dict[str, list[ConfigMapper]]
-    if sensitivity in {"private", "p"}:
+    sensitivity_key = SENSITIVITY_MAP[sensitivity]
+    if sensitivity_key == "private":
         mapper_full = mapper_full_obj["private"]
-    elif sensitivity in {"public", "b"}:
+    elif sensitivity_key == "public":
         mapper_full = mapper_full_obj["public"]
     else:
         mapper_full = {**mapper_full_obj["private"], **mapper_full_obj["public"]}
@@ -99,22 +104,26 @@ def main_from_parser(
         options_with_preview: dict[str, str] = {key: pprint.pformat(value, width=88, sort_dicts=True) for key, value in mapper_full.items()}
         items_chosen = choose_from_dict_with_preview(options_with_preview, extension="yaml", multi=True, preview_size_percent=75.0)
     else:
-        if which == "all":
+        which_stripped = which.strip()
+        if which_stripped == "all":
             items_chosen = list(mapper_full.keys())
         else:
-            items_chosen = which.split(",")
-    items_objections: dict[str, list[ConfigMapper]] = {item: mapper_full[item] for item in items_chosen if item in mapper_full}
-    if len(items_objections) == 0:
-        msg = typer.style("Error: ", fg=typer.colors.RED) + "No valid items selected."
-        typer.echo(msg)
-        raise typer.Exit(code=1)
+            items_chosen = [item.strip() for item in which_stripped.split(",")]
+            if "" in items_chosen:
+                _exit_with_error("--which contains an empty item.")
+            unknown_items = [item for item in items_chosen if item not in mapper_full]
+            if len(unknown_items) > 0:
+                _exit_with_error(f"Unknown --which item(s): {', '.join(unknown_items)}")
+    items_objects: dict[str, list[ConfigMapper]] = {item: mapper_full[item] for item in items_chosen}
+    if len(items_objects) == 0:
+        _exit_with_error("No valid items selected.")
 
-    method = METHOD_MAP[method]
+    method_key = METHOD_MAP[method]
     from stackops.profile.create_links import apply_mapper
 
     apply_mapper(
-        mapper_data=items_objections,
+        mapper_data=items_objects,
         on_conflict=ON_CONFLICT_MAPPER[on_conflict],
-        method=method,
+        method=method_key,
         direction=DIRECTION_MAP[direction],
     )

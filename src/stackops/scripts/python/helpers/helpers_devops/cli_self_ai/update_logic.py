@@ -59,8 +59,10 @@ def _collect_command_context_entries(*, node: JsonObject) -> tuple[CommandLogicC
         collected_entries.append(CommandLogicContextEntry(source_file=source_file, command_name=command_name))
 
     children = node.get("children")
-    if not isinstance(children, list):
+    if children is None:
         return tuple(collected_entries)
+    if not isinstance(children, list):
+        raise ValueError("CLI graph node children must be a list when defined")
 
     for child in children:
         child_node = _as_json_object(child)
@@ -111,7 +113,7 @@ def update_logic(
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option("--provider", "-v", help="Provider to use (if the agent supports many).")] = None,
     host: Annotated[HOST, typer.Option("--host", "-h", help="Machine to run agents on.")] = "local",
-    agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of tasks per prompt.")] = 10,
+    agent_load: Annotated[int, typer.Option("--agent-load", "-l", min=1, help="Number of tasks per prompt.")] = 10,
     prompt: Annotated[str | None, typer.Option("--prompt", "-p", help="Prompt prefix as string.")] = None,
     prompt_path: Annotated[
         str | None,

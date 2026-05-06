@@ -235,9 +235,9 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
     interface = _inspect_aoe_add_interface(options.aoe_bin) if _command_exists(options.aoe_bin) else AoeAddInterface(style="legacy")
 
     pending_commands: list[tuple[str, str, list[str]]] = []
+    used_titles: dict[str, int] = {}
     for layout in layouts_selected:
         group = layout["layoutName"]
-        used_titles: dict[str, int] = {}
         for tab_index, tab in enumerate(layout["layoutTabs"]):
             title = _resolve_unique_title(title=_default_title(tab=tab, tab_index=tab_index), used_titles=used_titles)
             pending_commands.append(

@@ -1,13 +1,14 @@
+from contextlib import chdir
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 import stackops.jobs.installer as installer_assets
+from stackops.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
 from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
-from stackops.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
 from stackops.utils.path_reference import get_path_reference_library_relative_path
 
 
@@ -27,19 +28,25 @@ def _get_installer_data_repo_relative_path() -> Path:
 
 def _get_update_installer_prompt() -> str:
     installer_data_path = get_developer_repo_root().joinpath(_get_installer_data_repo_relative_path())
-    return f"""for each of the bellow, please check if its github repo, then, do the following
-make sure that file name patter are up to date and as per the release page
+    return f"""For each assigned entry below, if repoURL is a GitHub repository, verify the release asset filename patterns.
+Make sure fileNamePattern values match the current GitHub release assets.
 
 modify the target file directly @ {installer_data_path}
-but please only wokr on entries designated for you, ignore the rest because the file is too big, other agents are working on it now.
+Only work on entries assigned to you. Ignore the rest because other agents may be editing the same target file.
 
 Notes:
-* File pattern should  never be ..v{{version}}.. with v, even if they have that in release page, the v is implicit.
-* If file pattern is "<name>.py" then it is referencing a custom py script installer, in which case, please don't touch it, at all, no matter what.
-* If file pattern is a custom package installtion command, please don't touch it.
-* don't touch any other field other than thee file pattern.
-* If availale, prefer musl over gnu built binaries because glibc versioning is problematic.
+* File patterns should never include a literal v before {{version}}, even if release assets include that v; the installer checks tag names with and without the leading v.
+* If a fileNamePattern value is "<name>.py", it references a custom Python installer script. Do not touch it.
+* If a fileNamePattern value is a custom package installation command, do not touch it.
+* Do not touch any field other than fileNamePattern.
+* If available, prefer musl over gnu Linux binaries because glibc versioning is problematic.
 """
+
+
+def _ensure_prompt_override_is_unambiguous(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> None:
+    provided_prompt_overrides = sum(value is not None for value in (prompt, prompt_path, prompt_name))
+    if provided_prompt_overrides > 1:
+        raise ValueError("Provide at most one of --prompt, --prompt-path, or --prompt-name")
 
 
 def _resolve_prompt(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> str | None:
@@ -54,6 +61,11 @@ def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_
     if prompt is not None or prompt_name is not None:
         return None
     return prompt_path
+
+
+def _ensure_context_input_is_unambiguous(*, context: str | None, context_path: str | None) -> None:
+    if context is not None and context_path is not None:
+        raise ValueError("Provide at most one of --context or --context-path")
 
 
 def _resolve_context_path(*, context: str | None, context_path: str | None, repo_root: Path) -> str | None:
@@ -125,26 +137,29 @@ def update_installer(
     repo_root = get_developer_repo_root()
     if not repo_root.joinpath("pyproject.toml").is_file():
         raise RuntimeError(f"Developer repo not found: {repo_root}")
+    _ensure_prompt_override_is_unambiguous(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
+    _ensure_context_input_is_unambiguous(context=context, context_path=context_path)
 
     resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(".ai", "agents", job_name)
     resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath("layout.json")
 
-    agents_create_impl(
-        agent=agent,
-        model=model,
-        agent_load=agent_load,
-        context=context,
-        context_path=_resolve_context_path(context=context, context_path=context_path, repo_root=repo_root),
-        separator=separator,
-        prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-        prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-        prompt_name=prompt_name,
-        job_name=job_name,
-        join_prompt_and_context=join_prompt_and_context,
-        output_path=str(resolved_output_path),
-        agents_dir=str(resolved_agents_dir),
-        host=host,
-        reasoning_effort=reasoning_effort,
-        provider=provider,
-        interactive=interactive,
-    )
+    with chdir(repo_root):
+        agents_create_impl(
+            agent=agent,
+            model=model,
+            agent_load=agent_load,
+            context=context,
+            context_path=_resolve_context_path(context=context, context_path=context_path, repo_root=repo_root),
+            separator=separator,
+            prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
+            prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
+            prompt_name=prompt_name,
+            job_name=job_name,
+            join_prompt_and_context=join_prompt_and_context,
+            output_path=str(resolved_output_path),
+            agents_dir=str(resolved_agents_dir),
+            host=host,
+            reasoning_effort=reasoning_effort,
+            provider=provider,
+            interactive=interactive,
+        )

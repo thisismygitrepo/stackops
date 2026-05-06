@@ -205,7 +205,7 @@ LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
 UV_BUNDLE_DIR="$SCRIPT_DIR/uv_bundle"
 UV_MANIFEST="$UV_BUNDLE_DIR/uv_manifest.env"
 UV_LINKS="$UV_BUNDLE_DIR/uv_links.txt"
-UV_FALLBACK_LINKS="devops cloud agents terminal ftpx fire croshell utils seek explore stackops"
+UV_FALLBACK_LINKS="devops cloud agents terminal fire croshell utils seek explore stackops"
 
 if [ -d "$BINS_DIR" ]; then
     mkdir -p "$INSTALL_PATH"

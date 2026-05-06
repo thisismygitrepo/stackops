@@ -26,40 +26,35 @@ MountBackendOption: TypeAlias = Literal["mount", "dislocker", "udisksctl"]
 
 
 def kill_process(
-    interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactively choose the process to kill")] = True,
     search_by: Annotated[
         ProcessSearchField,
-        typer.Option(..., "--filter-by", "-f", help="Field used to search/filter processes in interactive mode."),
+        typer.Option(..., "--filter-by", "-f", help="Field used to search/filter processes."),
     ] = "command",
 ) -> None:
     from stackops.utils.procs import ProcessManager
 
-    if interactive:
-        proc = ProcessManager()
-        match search_by:
-            case "command" | "c":
-                search_field = "command"
-            case "ports" | "p":
-                search_field = "ports"
-            case "name" | "n":
-                search_field = "name"
-            case "pid" | "P":
-                search_field = "pid"
-            case "username" | "u":
-                search_field = "username"
-            case "status" | "s":
-                search_field = "status"
-            case "memory" | "m":
-                search_field = "memory"
-            case "cpu" | "C":
-                search_field = "cpu"
-            case _:
-                typer.echo(f"Invalid search_by value: {search_by}", err=True)
-                raise typer.Exit(code=1)
-        proc.choose_and_kill(search_by=search_field)
-        return
-
-    _ = ProcessManager
+    proc = ProcessManager()
+    match search_by:
+        case "command" | "c":
+            search_field = "command"
+        case "ports" | "p":
+            search_field = "ports"
+        case "name" | "n":
+            search_field = "name"
+        case "pid" | "P":
+            search_field = "pid"
+        case "username" | "u":
+            search_field = "username"
+        case "status" | "s":
+            search_field = "status"
+        case "memory" | "m":
+            search_field = "memory"
+        case "cpu" | "C":
+            search_field = "cpu"
+        case _:
+            typer.echo(f"Invalid search_by value: {search_by}", err=True)
+            raise typer.Exit(code=1)
+    proc.choose_and_kill(search_by=search_field)
 
 
 def tui_env(

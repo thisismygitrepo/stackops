@@ -113,11 +113,11 @@ def share_terminal(
     display_terminal_url(local_ip_v4, port, protocol)
     
     # Build ttyd command with SSL options
-    ssl_args = ""
+    ssl_args: list[str] = []
     if ssl:
-        ssl_args = f"--ssl --ssl-cert {ssl_cert} --ssl-key {ssl_key}"
+        ssl_args = ["--ssl", "--ssl-cert", ssl_cert, "--ssl-key", ssl_key]
         if ssl_ca:
-            ssl_args += f" --ssl-ca {ssl_ca}"
+            ssl_args.extend(["--ssl-ca", ssl_ca])
 
     if start_command is None:
         import platform
@@ -126,18 +126,32 @@ def share_terminal(
         else:
             start_command = "bash"
 
-    import contextlib
+    import shlex
     import subprocess
     import time
 
-    ttyd_cmd = f"ttyd --writable -t enableSixel=true {ssl_args} --port {port} --credential \"{username}:{password}\" -t 'theme={{\"background\": \"black\"}}' {start_command}"
-    with contextlib.ExitStack() as exit_stack:
-        ttyd_process = exit_stack.enter_context(subprocess.Popen(ttyd_cmd, shell=True))
-        processes = [ttyd_process]
+    ttyd_cmd = ["ttyd", "--writable", "-t", "enableSixel=true", *ssl_args, "--port", str(port)]
+    if not no_auth:
+        if password is None:
+            print("❌ Error: Password not provided.")
+            raise typer.Exit(code=1)
+        ttyd_cmd.extend(["--credential", f"{username}:{password}"])
+    ttyd_cmd.extend(["-t", """theme={"background": "black"}""", *shlex.split(start_command)])
+
+    processes: dict[str, subprocess.Popen[bytes]] = {}
+    try:
+        try:
+            processes["ttyd"] = subprocess.Popen(ttyd_cmd)
+        except FileNotFoundError:
+            print("❌ Error: ttyd was not found. Use --install-dep to install missing dependencies.")
+            raise typer.Exit(code=1) from None
 
         if over_internet:
-            ngrok_process = exit_stack.enter_context(subprocess.Popen(f"ngrok http {port}", shell=True))
-            processes.append(ngrok_process)
+            try:
+                processes["ngrok"] = subprocess.Popen(["ngrok", "http", str(port)])
+            except FileNotFoundError:
+                print("❌ Error: ngrok was not found. Use --install-dep to install missing dependencies.")
+                raise typer.Exit(code=1) from None
             time.sleep(3)
             try:
                 import requests
@@ -149,18 +163,24 @@ def share_terminal(
             except Exception as e:
                 print(f"Could not retrieve ngrok URL: {e}")
 
-        try:
-            while True:
-                print("Terminal server is running. Press Ctrl+C to stop.")
-                time.sleep(2)
-        except KeyboardInterrupt:
-            print("\nTerminating processes...")
-            for p in processes:
-                p.terminate()
-                p.wait()
+        while True:
+            exited_processes = [f"{name} (exit code {process.returncode})" for name, process in processes.items() if process.poll() is not None]
+            if exited_processes:
+                print(f"❌ Error: Process exited unexpectedly: {', '.join(exited_processes)}")
+                raise typer.Exit(code=1)
+            print("Terminal server is running. Press Ctrl+C to stop.")
+            time.sleep(2)
+    except KeyboardInterrupt:
+        print("\nTerminating processes...")
+    finally:
+        for process in processes.values():
+            if process.poll() is None:
+                process.terminate()
+        for process in processes.values():
+            process.wait()
 
 
-def main_with_parser():
+def main_with_parser() -> None:
     typer.run(share_terminal)
 
 

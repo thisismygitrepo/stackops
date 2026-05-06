@@ -1,11 +1,12 @@
+from ipaddress import ip_address
 from typing import Annotated, Literal
 
 import typer
 
 
 def switch_public_ip_address(
-    wait_seconds: Annotated[float, typer.Option(..., "--wait", "-w", help="Seconds to wait between steps")] = 2.0,
-    max_trials: Annotated[int, typer.Option(..., "--max-trials", "-m", help="Max number of switch attempts")] = 10,
+    wait_seconds: Annotated[float, typer.Option(..., "--wait", "-w", min=0.0, help="Seconds to wait between steps")] = 2.0,
+    max_trials: Annotated[int, typer.Option(..., "--max-trials", "-m", min=1, help="Max number of switch attempts")] = 10,
     target_ip: Annotated[
         list[str] | None, typer.Option(..., "--target-ip", "-t", help="Acceptable target IPs, if current IP matches any, no switch needed")
     ] = None,
@@ -16,11 +17,21 @@ def switch_public_ip_address(
     helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)
 
 
-def bind_wsl_port(port: Annotated[int, typer.Option(..., "--port", "-p", help="Port number to bind")]) -> None:
+def bind_wsl_port(port: Annotated[int, typer.Option(..., "--port", "-p", min=1, max=65535, help="Port number to bind")]) -> None:
     code = f"""
+wsl_ip="$(hostname -I | tr ' ' '\\n' | grep -E '^[0-9]+([.][0-9]+){{3}}$' | head -n 1)"
+if [ -z "$wsl_ip" ]; then
+  echo "Could not detect a WSL IPv4 address."
+  exit 1
+fi
 
-$wsl_ip = (wsl.exe hostname -I).Trim().Split(' ')[0]
-netsh interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0 connectport={port} connectaddress=$wsl_ip
+if ! command -v netsh.exe >/dev/null 2>&1; then
+  echo "netsh.exe is not available. Run this command from WSL on Windows."
+  exit 1
+fi
+
+netsh.exe interface portproxy delete v4tov4 listenport={port} listenaddress=0.0.0.0 >/dev/null 2>&1
+netsh.exe interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0 connectport={port} connectaddress="$wsl_ip"
 
 """
     from stackops.utils.code import exit_then_run_shell_script
@@ -147,11 +158,12 @@ sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service instal
 
 
 def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., "--ip", help="IP address(es) to exclude from WARP (Comma separated)")]) -> None:
-    ips = ip.split(",")
-    res = ""
+    ips = [ip_address(an_ip.strip()) for an_ip in ip.split(",") if an_ip.strip()]
+    if len(ips) == 0:
+        raise typer.BadParameter("Provide at least one IP address.")
+
+    res = "\n".join(f"sudo warp-cli tunnel ip add {an_ip}" for an_ip in ips)
     for an_ip in ips:
-        res += f"""sudo warp-cli tunnel ip add {an_ip}
-"""
         print(f"Adding IP exclusion to WARP for: {an_ip}")
     code = f"""
 {res}
@@ -171,8 +183,8 @@ def get_app() -> typer.Typer:
     device_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
     device_app.command(name="s", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
 
-    device_app.command(name="wifi-select", no_args_is_help=True, help="📶 <w> WiFi connection utility.")(wifi_select)
-    device_app.command(name="w", no_args_is_help=True, hidden=True)(wifi_select)
+    device_app.command(name="wifi-select", no_args_is_help=False, help="📶 <w> WiFi connection utility.")(wifi_select)
+    device_app.command(name="w", no_args_is_help=False, hidden=True)(wifi_select)
 
     device_app.command(name="bind-wsl-port", help="🔌 <b> Bind WSL port to Windows host", no_args_is_help=True)(bind_wsl_port)
     device_app.command(name="b", help="Bind WSL port to Windows host", hidden=True, no_args_is_help=True)(bind_wsl_port)

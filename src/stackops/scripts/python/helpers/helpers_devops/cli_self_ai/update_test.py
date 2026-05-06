@@ -82,18 +82,18 @@ def _build_repo_python_context(*, repo_root: Path) -> str:
     return DEFAULT_SEAPRATOR.join(context_entries)
 
 
-def _resolve_prompt(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> str | None:
-    if prompt is not None:
-        return prompt
-    if prompt_path is not None or prompt_name is not None:
-        return None
-    return UPDATE_TEST_PROMPT
-
-
-def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> str | None:
-    if prompt is not None or prompt_name is not None:
-        return None
-    return prompt_path
+def _resolve_prompt_options(
+    *,
+    prompt: str | None,
+    prompt_path: str | None,
+    prompt_name: str | None,
+) -> tuple[str | None, str | None, str | None]:
+    prompt_source_count = sum(source is not None for source in (prompt, prompt_path, prompt_name))
+    if prompt_source_count > 1:
+        raise typer.BadParameter("Use only one of --prompt, --prompt-path, or --prompt-name.")
+    if prompt_source_count == 0:
+        return UPDATE_TEST_PROMPT, None, None
+    return prompt, prompt_path, prompt_name
 
 
 def update_test(
@@ -146,6 +146,11 @@ def update_test(
     resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath("layout.json")
     context_content = _build_repo_python_context(repo_root=repo_root)
     context_output_path = resolved_agents_dir.joinpath("context.md")
+    resolved_prompt, resolved_prompt_path, resolved_prompt_name = _resolve_prompt_options(
+        prompt=prompt,
+        prompt_path=prompt_path,
+        prompt_name=prompt_name,
+    )
 
     try:
         agents_create_impl(
@@ -155,9 +160,9 @@ def update_test(
             context=context_content,
             context_path=None,
             separator=DEFAULT_SEAPRATOR,
-            prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-            prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-            prompt_name=prompt_name,
+            prompt=resolved_prompt,
+            prompt_path=resolved_prompt_path,
+            prompt_name=resolved_prompt_name,
             job_name=job_name,
             join_prompt_and_context=join_prompt_and_context,
             output_path=str(resolved_output_path),

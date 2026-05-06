@@ -3,6 +3,11 @@ import typer
 from typing import Annotated, Literal
 
 
+def _quote_powershell_argument(value: str) -> str:
+    escaped_value = value.replace("'", "''")
+    return f"""'{escaped_value}'"""
+
+
 def share_file_receive(code_args: Annotated[list[str], typer.Argument(help="Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'")],
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
     ) -> None:
@@ -16,6 +21,7 @@ Usage examples:
         from stackops.utils.installer_utils.installer_cli import install_if_missing
         install_if_missing(which="croc", binary_name=None, verbose=True)
     import platform
+    import shlex
     import sys
 
     is_windows = platform.system() == "Windows"
@@ -32,42 +38,41 @@ Usage examples:
         except Exception:
             pass
 
-    # Join all arguments
     input_str = " ".join(code_args)
-    tokens = input_str.split()
+    try:
+        tokens = shlex.split(input_str)
+    except ValueError as exc:
+        typer.echo(f"❌ Error: Could not parse croc receive code from input: {input_str}", err=True)
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
 
-    # Parse input to extract relay server and secret code
     relay_server: str | None = None
     secret_code: str | None = None
 
-    # Remove 'croc' and 'export' from tokens if present
-    tokens = [t for t in tokens if t not in ['croc', 'export']]
+    tokens = [token for token in tokens if token not in ["--", "croc", "export"]]
 
-    # Look for --relay flag and capture next token
-    relay_idx = -1
+    relay_indexes: set[int] = set()
     for i, token in enumerate(tokens):
-        if token == '--relay' and i + 1 < len(tokens):
+        if token == "--relay":
+            if i + 1 >= len(tokens) or tokens[i + 1].startswith("-"):
+                typer.echo("❌ Error: --relay requires a relay server.", err=True)
+                raise typer.Exit(code=1)
             relay_server = tokens[i + 1]
-            relay_idx = i
+            relay_indexes = {i, i + 1}
             break
 
-    # Look for CROC_SECRET= prefix in any token
     for token in tokens:
-        if token.startswith('CROC_SECRET='):
-            secret_code = token.split('=', 1)[1].strip('"').strip("'")
+        if token.startswith("CROC_SECRET="):
+            secret_code = token.split("=", 1)[1].strip('"').strip("'")
             break
 
-    # If no secret code found yet, look for tokens with dashes (typical pattern: number-word-word-word)
-    # Skip relay server and relay flag
     if not secret_code:
         for i, token in enumerate(tokens):
-            if '-' in token and not token.startswith('-') and token != relay_server:
-                if relay_idx >= 0 and i in (relay_idx, relay_idx + 1):
-                    continue  # Skip relay server parts
+            if i not in relay_indexes and not token.startswith("-") and not token.startswith("CROC_SECRET="):
                 secret_code = token
                 break
 
-    if not secret_code and not relay_server:
+    if not secret_code:
         typer.echo(f"❌ Error: Could not parse croc receive code from input: {input_str}", err=True)
         typer.echo("Usage:", err=True)
         typer.echo("  devops network receive 7121-donor-olympic-bicycle", err=True)
@@ -77,24 +82,21 @@ Usage examples:
     # Build the appropriate script for current OS
     if is_windows:
         # Windows PowerShell format: croc --relay server:port secret-code --yes
-        relay_arg = f"--relay {relay_server}" if relay_server else ""
-        code_arg = f"{secret_code}" if secret_code else ""
+        relay_arg = f"--relay {_quote_powershell_argument(relay_server)}" if relay_server else ""
+        code_arg = _quote_powershell_argument(secret_code)
         script = f"""croc {relay_arg} {code_arg} --yes""".strip()
     else:
         # Linux/macOS Bash format: CROC_SECRET="secret-code" croc --relay server:port --yes
-        relay_arg = f"--relay {relay_server}" if relay_server else ""
-        if secret_code:
-            script = f"""export CROC_SECRET="{secret_code}"
+        relay_arg = f"--relay {shlex.quote(relay_server)}" if relay_server else ""
+        script = f"""export CROC_SECRET={shlex.quote(secret_code)}
 croc {relay_arg} --yes""".strip()
-        else:
-            script = f"""croc {relay_arg} --yes""".strip()
 
     from stackops.utils.code import exit_then_run_shell_script, print_code
-    print_code(code=script, desc="🚀 Receiving file with croc", lexer="bash" if platform.system() != "Windows" else "powershell")
+    print_code(code=script, desc="🚀 Receiving file with croc", lexer="powershell" if is_windows else "bash")
     exit_then_run_shell_script(script=script, strict=False)
 
 
-def share_file_send(path: Annotated[str, typer.Argument(help="Path to the file or directory to send")],
+def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the file or directory to send. Required unless --text is provided.")] = None,
                     zip_folder: Annotated[bool, typer.Option("--zip", help="Zip folder before sending")] = False,
                     code: Annotated[str | None, typer.Option("--code", "-c", help="Codephrase used to connect to relay")] = None,
                     text: Annotated[str | None, typer.Option("--text", "-t", help="Send some text")] = None,
@@ -102,19 +104,45 @@ def share_file_send(path: Annotated[str, typer.Argument(help="Path to the file o
                     backend: Annotated[Literal["wormhole", "w", "croc", "c"], typer.Option("--backend", "-b", help="Backend to use")] = "croc",
                     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
                     ) -> None:
-    """Send a file using croc with relay server."""
+    """Send a file, directory, or text."""
     import platform
+    import shlex
+
+    if text is None and path is None:
+        typer.echo("❌ Error: Provide a path or --text.", err=True)
+        raise typer.Exit(code=1)
+    if text is not None and path is not None:
+        typer.echo("❌ Error: Provide either a path or --text, not both.", err=True)
+        raise typer.Exit(code=1)
+    if text is not None and zip_folder:
+        typer.echo("❌ Error: --zip can only be used when sending a file or directory.", err=True)
+        raise typer.Exit(code=1)
+    if qrcode and backend in ("wormhole", "w"):
+        typer.echo("❌ Error: --qrcode is only supported with the croc backend.", err=True)
+        raise typer.Exit(code=1)
+
+    is_windows = platform.system() == "Windows"
+    send_target = "text" if text is not None else path
+    receive_hint: str
+    print_desc: str
+
+    def quote_shell_arg(value: str) -> str:
+        if is_windows:
+            return _quote_powershell_argument(value)
+        return shlex.quote(value)
 
     match backend:
         case "wormhole" | "w":
-            if code is None: code_line = ""
-            else: code_line = f"--code {code}"
-            if text is not None: text_line = f"--text '{text}'"
-            else: text_line = f"'{path}'"
-            script = f"""
-uvx magic-wormhole send {code_line} {text_line}
-"""
-            print(f"🚀 Sending file: {path}. Use: uvx magic-wormhole receive ")
+            command_parts = ["uvx", "--from", "magic-wormhole", "wormhole", "send"]
+            if code is not None:
+                command_parts.extend(["--code", quote_shell_arg(code)])
+            if text is not None:
+                command_parts.extend(["--text", quote_shell_arg(text)])
+            elif path is not None:
+                command_parts.append(quote_shell_arg(path))
+            script = " ".join(command_parts)
+            receive_hint = "uvx --from magic-wormhole wormhole receive"
+            print_desc = "🚀 sending file with magic-wormhole"
         case "croc" | "c":
             if install_missing_dependencies:
                 from stackops.utils.installer_utils.installer_cli import install_if_missing
@@ -128,28 +156,34 @@ uvx magic-wormhole send {code_line} {text_line}
                 raise typer.Exit(code=1)
             local_ip_v4 = res
             relay_port = "443"
-            is_windows = platform.system() == "Windows"
-            # Build command parts
-            relay_arg = f"--relay {local_ip_v4}:{relay_port} --ip {local_ip_v4}:{relay_port}"
-            zip_arg = "--zip" if zip_folder else ""
-            text_arg = f"--text '{text}'" if text else ""
-            qrcode_arg = "--qrcode" if qrcode else ""
-            path_arg = f"{path}" if not text else ""
+            relay_endpoint = f"{local_ip_v4}:{relay_port}"
+            command_parts = ["croc", "--relay", relay_endpoint, "--ip", relay_endpoint, "send"]
+            if is_windows and code is not None:
+                command_parts.extend(["--code", quote_shell_arg(code)])
+            if zip_folder:
+                command_parts.append("--zip")
+            if qrcode:
+                command_parts.append("--qrcode")
+            if text is not None:
+                command_parts.extend(["--text", quote_shell_arg(text)])
+            elif path is not None:
+                command_parts.append(quote_shell_arg(path))
 
             if is_windows:
                 # Windows PowerShell format
-                code_arg = f"--code {code}" if code else ""
-                script = f"""croc {relay_arg} send {zip_arg} {code_arg} {qrcode_arg} {text_arg} {path_arg}"""
+                script = " ".join(command_parts)
             else:
                 # Linux/macOS Bash format
-                if code:
-                    script = f"""
-export CROC_SECRET="{code}"
-croc {relay_arg} send {zip_arg} {qrcode_arg} {text_arg} {path_arg}"""
+                croc_command = " ".join(command_parts)
+                if code is not None:
+                    script = f"""export CROC_SECRET={shlex.quote(code)}
+{croc_command}"""
                 else:
-                    script = f"""croc {relay_arg} send {zip_arg} {qrcode_arg} {text_arg} {path_arg}"""
+                    script = croc_command
+            receive_hint = "devops network receive"
+            print_desc = "🚀 sending file with croc"
 
-    typer.echo(f"🚀 Sending file: {path}. Use: devops network receive")
+    typer.echo(f"🚀 Sending {send_target}. Use: {receive_hint}")
     from stackops.utils.code import exit_then_run_shell_script, print_code
-    print_code(code=script, desc="🚀 sending file with croc", lexer="bash" if platform.system() != "Windows" else "powershell")
+    print_code(code=script, desc=print_desc, lexer="powershell" if is_windows else "bash")
     exit_then_run_shell_script(script=script, strict=False)

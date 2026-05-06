@@ -1,21 +1,21 @@
 import typer
 import shutil
 import subprocess
-from typing import Annotated, Literal
+from typing import Annotated, Literal, assert_never
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
 from stackops.profile.create_links_export import REPO_LOOSE
 
 
 def sync(
-    direction: Annotated[Literal["up", "u", "down", "d"], typer.Argument(..., help="Direction of sync: backup or retrieve")],
+    direction: Annotated[Literal["up", "u", "down", "d"], typer.Argument(..., help="'up'/'u' backs up; 'down'/'d' retrieves.")],
     cloud: Annotated[str | None, typer.Option("--cloud", "-c", help="☁ Cloud configuration name (rclone config name)")] = None,
     which: Annotated[
-        str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to BACKUP (from mapper_data.yaml), or 'all' for all items")
+        str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper_data.yaml), or 'all' for all items")
     ] = None,
-    repo: Annotated[REPO_LOOSE, typer.Option("--repo", "-r", help="📁 Which backup configuration to use: 'library' or 'user'")] = "all",
+    repo: Annotated[REPO_LOOSE, typer.Option("--repo", "-r", help="📁 Which backup configuration to use: 'library', 'user', or 'all'")] = "all",
     # interactive: Annotated[bool, typer.Option("--interactive", "-i", help="🤔 Prompt the selection of which items to process")] = False,
-)-> None:
+) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve
     match direction:
         case "up" | "u":
@@ -38,8 +38,8 @@ def register_data(
     group: Annotated[str, typer.Option("--group", "-g", help="Group name in mapper_data.yaml.")] = "default",
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper_data.yaml.")] = None,
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
-    zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z/-nz", help="Zip before uploading.")] = False,
-    encrypt: Annotated[bool, typer.Option("--encrypt/--no-encrypt", "-e/-ne", help="Encrypt before uploading.")] = False,
+    zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z/-nz", help="Zip before uploading.")] = True,
+    encrypt: Annotated[bool, typer.Option("--encrypt/--no-encrypt", "-e/-ne", help="Encrypt before uploading.")] = True,
     rel2home: Annotated[bool | None, typer.Option("--rel2home/--no-rel2home", "-r/-nr", help="Treat the local path as relative to home.")] = None,
     os: Annotated[str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")] = DEFAULT_OS_FILTER,
 ) -> None:
@@ -67,19 +67,31 @@ def edit_data(
         typer.Option("--repo", "-r", help="📁 Which backup configuration file to edit: 'user' or 'library'."),
     ] = "user",
 ) -> None:
-    from stackops.profile.create_links_export import REPO_MAP
     from stackops.scripts.python.helpers.helpers_devops.backup_config import (
         LIBRARY_BACKUP_PATH,
         USER_BACKUP_PATH,
         DEFAULT_BACKUP_HEADER,
     )
 
-    repo_key = REPO_MAP[repo]
+    repo_key: Literal["library", "user"]
+    match repo:
+        case "library" | "l":
+            repo_key = "library"
+        case "user" | "u":
+            repo_key = "user"
+        case _:
+            assert_never(repo)
+
     if repo_key == "user":
         file_path = USER_BACKUP_PATH
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        if not file_path.exists():
-            file_path.write_text(DEFAULT_BACKUP_HEADER, encoding="utf-8")
+        try:
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            if not file_path.exists():
+                file_path.write_text(DEFAULT_BACKUP_HEADER, encoding="utf-8")
+        except OSError as exc:
+            msg = typer.style("Error: ", fg=typer.colors.RED) + f"Could not prepare user backup file {file_path}: {exc}"
+            typer.echo(msg)
+            raise typer.Exit(code=1) from exc
     else:
         file_path = LIBRARY_BACKUP_PATH
         if not file_path.exists():
@@ -93,11 +105,17 @@ def edit_data(
         typer.echo(msg)
         raise typer.Exit(code=1)
 
-    result = subprocess.run([editor_bin, str(file_path)], check=False)
+    try:
+        result = subprocess.run([editor_bin, str(file_path)], check=False)
+    except OSError as exc:
+        msg = typer.style("Error: ", fg=typer.colors.RED) + f"Could not start editor '{editor}': {exc}"
+        typer.echo(msg)
+        raise typer.Exit(code=1) from exc
+
     if result.returncode != 0:
         msg = typer.style("Error: ", fg=typer.colors.RED) + f"Editor exited with status code {result.returncode}."
         typer.echo(msg)
-        raise typer.Exit(code=result.returncode)
+        raise typer.Exit(code=result.returncode if result.returncode > 0 else 1)
 
 
 def get_app() -> typer.Typer:
@@ -109,7 +127,7 @@ def get_app() -> typer.Typer:
         add_completion=False,
     )
 
-    app.command(name="sync", no_args_is_help=True, hidden=False, help="🔄 <s> Sync (backup) files and directories to cloud storage using rclone.")(
+    app.command(name="sync", no_args_is_help=True, hidden=False, help="🔄 <s> Back up or retrieve files and directories using rclone.")(
         sync
     )
 

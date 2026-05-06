@@ -35,7 +35,7 @@ def balance_load(
     )
     layoutfile["layouts"] = new_layouts
     target_file = (
-        Path(output_path)
+        Path(output_path).expanduser().absolute()
         if output_path is not None
         else layout_path_obj.parent / f"{layout_path_obj.stem}_adjusted_{max_thresh}_{thresh_type}_{breaking_method}.json"
     )

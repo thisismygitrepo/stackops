@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
@@ -116,7 +117,7 @@ def _dump_ve_config() -> None:
             return "null"
         if isinstance(value, bool):
             return "true" if value else "false"
-        return f'"{value}"'
+        return json.dumps(value)
 
     output_path = Path.cwd() / ".ve.example.yaml"
     yaml_content = f"""{ve_yaml_header_for_path(yaml_path=output_path)}

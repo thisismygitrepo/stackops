@@ -28,8 +28,8 @@ def action(
 ) -> None:
     """🔄 Run pull/commit/push actions across repositories based on flags."""
     if not pull and not commit and not push:
-        typer.echo("❌ No action selected. Use at least one of --pull, --commit, or --push.")
-        raise typer.Exit(code=1)
+        typer.echo("❌ No action selected. Use at least one of --pull, --commit, or --push.", err=True)
+        raise SystemExit(1)
     repos_root = _resolve_directory(directory)
     from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations
 
@@ -117,7 +117,7 @@ def clone(
         spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
         if not spec_path_self_managed.exists():
             print(f"❌ Specification file not found: {spec_path_self_managed}. Ensure this file exists or provide it explicitly using --specs-path.")
-            return
+            raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
 
     clone_repos(
@@ -135,7 +135,7 @@ def checkout_to_branch_command(directory: Annotated[str | None, typer.Argument(h
     clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True)
 
 
-def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]):
+def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(help="Path to the git repository")] = ".") -> None:
     # def func(repo_path: str):
     # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
     # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)
@@ -143,10 +143,12 @@ def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(..., help="Path
     # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops>=8.98"])
     from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
 
+    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
     try:
-        repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)
-    except Exception as e:
-        typer.echo(f"❌ Error counting lines in repo {repo_path}: {e}")
+        repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix())
+    except Exception as exc:
+        typer.echo(f"❌ Error counting lines in repo {resolved_repo_path}: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 def print_python_files_by_size(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]):
@@ -160,15 +162,23 @@ def print_python_files_by_size(repo_path: Annotated[str, typer.Argument(..., hel
     print_python_files_by_size_impl(repo_path=repo_path)
 
 
-def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]):
-    def func(repo_path: str):
+def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]) -> None:
+    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
+    if not resolved_repo_path.exists():
+        typer.echo(f"❌ Repository path does not exist: {resolved_repo_path}")
+        raise typer.Exit(code=1)
+    if not resolved_repo_path.is_dir():
+        typer.echo(f"❌ Repository path is not a directory: {resolved_repo_path}")
+        raise typer.Exit(code=1)
+
+    def func(repo_path: str) -> None:
         from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
 
         analyze_over_time(repo_path=repo_path)
 
     from stackops.utils.code import run_lambda_function
 
-    run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops[plot]>=8.98", "polars"])
+    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=["stackops[plot]>=8.98", "polars"])
     # from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
     # analyze_over_time(repo_path=repo_path)
 
@@ -215,7 +225,7 @@ def gource_viz(
 
             repo_url = "https://github.com/thisismygitrepo/stackops.git"
             git.Repo.clone_from(repo_url, to_path=repo_path.as_posix())
-            repo = repo_path.as_posix()
+        repo = repo_path.as_posix()
     visualize(
         repo=repo,
         output_file=output_file,
@@ -245,11 +255,20 @@ def cleanup(
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
 ) -> None:
     """🧹 Clean repository directories from cache files."""
+    from shlex import quote
+
     if repo is None:
         repo = Path.cwd().as_posix()
 
-    arg_path = Path(repo).expanduser().absolute()
-    from git import Repo, InvalidGitRepositoryError
+    arg_path = Path(repo).expanduser().absolute().resolve()
+    if not arg_path.exists():
+        typer.echo(f"❌ Path does not exist: {arg_path}")
+        raise typer.Exit(code=1)
+    if not arg_path.is_dir():
+        typer.echo(f"❌ Path is not a directory: {arg_path}")
+        raise typer.Exit(code=1)
+
+    from git import InvalidGitRepositoryError, Repo
 
     if not recursive:
         # Check if the directory is a git repo
@@ -257,22 +276,22 @@ def cleanup(
             Repo(str(arg_path), search_parent_directories=False)
         except InvalidGitRepositoryError:
             typer.echo(f"❌ {arg_path} is not a git repository. Use -r flag for recursive cleanup.")
-            return
+            raise typer.Exit(code=1)
         # Run cleanup on this repo
         repos_to_clean = [arg_path]
     else:
         # Find all git repos recursively under the directory
         git_dirs = list(arg_path.rglob(".git"))
-        repos_to_clean = [git_dir.parent for git_dir in git_dirs if git_dir.is_dir()]
+        repos_to_clean = [git_dir.parent for git_dir in git_dirs if git_dir.is_dir() or git_dir.is_file()]
         if not repos_to_clean:
             typer.echo(f"❌ No git repositories found under {arg_path}")
-            return
+            raise typer.Exit(code=1)
 
     for repo_path in repos_to_clean:
         typer.echo(f"🧹 Cleaning {repo_path}")
         script = rf"""
-cd "{repo_path}"
-uv run --with cleanpy cleanpy .
+cd {quote(repo_path.as_posix())}
+uv run --no-project --with cleanpy cleanpy .
 # mcinit .
 # find "." -type f \( -name "*.py" -o -name "*.md" -o -name "*.json" \) -not -path "*/\.*" -not -path "*/__pycache__/*" -print0 | xargs -0 sed -i 's/[[:space:]]*$//'
 """
@@ -291,11 +310,16 @@ def config_linters(
     from git import Repo, InvalidGitRepositoryError
 
     try:
-        Repo(str(target_dir), search_parent_directories=True)
+        repo = Repo(str(target_dir), search_parent_directories=True)
     except InvalidGitRepositoryError as exc:
         typer.echo(f"❌ {target_dir} is not within a git repository. Pass a path inside a git repo and retry.")
         raise typer.Exit(code=1) from exc
 
+    if repo.working_tree_dir is None:
+        typer.echo(f"❌ {target_dir} is inside a bare git repository. Pass a working tree path and retry.")
+        raise typer.Exit(code=1)
+
+    repo_root = Path(repo.working_tree_dir).resolve()
     templates_dir = Path(__file__).resolve().parents[4].joinpath("settings", "linters")
     if not templates_dir.exists():
         typer.echo(f"❌ Linter template directory not found: {templates_dir}")
@@ -317,9 +341,12 @@ def config_linters(
     for selected_linter in selected_linters:
         file_name = linter_to_file[selected_linter]
         source = templates_dir.joinpath(file_name)
-        destination = target_dir.joinpath(file_name)
+        if not source.exists():
+            typer.echo(f"❌ Linter template not found: {source}")
+            raise typer.Exit(code=1)
+        destination = repo_root.joinpath(file_name)
         destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-        typer.echo(f"✅ Added {file_name} to {target_dir}")
+        typer.echo(f"✅ Added {file_name} to {repo_root}")
 
 
 def get_app():
@@ -351,8 +378,8 @@ def get_app():
     repos_apps.command(name="count-lines", help="📄 <l> Count python lines of code in current repo + historical edits.")(count_lines_in_repo)
     repos_apps.command(name="lc", help="Count python lines of code in current repo + historical edits.", hidden=True)(count_lines_in_repo)
 
-    repos_apps.command(name="config-linters", help="🧰 <l> Add linter config files to a git repository", no_args_is_help=True)(config_linters)
-    repos_apps.command(name="l", help="Add linter config files to a git repository", hidden=True, no_args_is_help=True)(config_linters)
+    repos_apps.command(name="config-linters", help="🧰 <l> Add linter config files to a git repository")(config_linters)
+    repos_apps.command(name="l", help="Add linter config files to a git repository", hidden=True)(config_linters)
 
     repos_apps.command(name="cleanup", help="🧹 <n> Clean repository directories from cache files")(cleanup)
     repos_apps.command(name="n", help="Clean repository directories from cache files", hidden=True)(cleanup)

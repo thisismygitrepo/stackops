@@ -3,7 +3,9 @@
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 from typing import Annotated, Literal
+import zipfile
 
 import typer
 
@@ -288,16 +290,15 @@ def export_dotfiles(
         pwd: Annotated[str, typer.Argument(..., help="Password for zip encryption")],
         over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Use internet-based transfer (wormhole-magic)")] = False,
         over_ssh: Annotated[bool, typer.Option("--over-ssh", "-s", help="Use SSH-based transfer (scp) to a remote machine")] = False,
-        ):
+        ) -> None:
     """🔗 Export dotfiles for migration to new machine."""
-    if over_ssh:
-        code_sample = """ftpx ~/dotfiles user@remote_host:^ -z"""
-        print("🔗 Exporting dotfiles via SSH-based transfer (scp).")
-        print(f"💡 Run the following command on your local machine to copy dotfiles to the remote machine:\n{code_sample}")
-        remote_address = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles to ")
-        code_concrete = f"fptx ~/dotfiles {remote_address}:^ -z"
-        from stackops.utils.code import run_shell_script
-        run_shell_script(code_concrete, display_script=True, clean_env=False)
+    if over_internet and over_ssh:
+        print("❌ Choose only one transfer mode: --over-internet or --over-ssh.")
+        raise typer.Exit(code=1)
+    if over_internet:
+        print("❌ Internet-based transfer is not yet implemented.")
+        raise typer.Exit(code=1)
+
     dotfiles_dir = Path.home().joinpath("dotfiles")
     if not dotfiles_dir.exists() or not dotfiles_dir.is_dir():
         print(f"❌ Dotfiles directory does not exist: {dotfiles_dir}")
@@ -312,11 +313,15 @@ def export_dotfiles(
     zipfile_encrypted_path = encrypt_file_symmetric(file_path=zipfile_path, pwd=pwd)
     zipfile_path.unlink()
     print(f"✅ Dotfiles exported to: {zipfile_encrypted_path}")
-    if over_internet:
-        # rm ~/dotfiles.zip || true
-        # ouch c ~/dotfiles dotfiles.zip
-        # # INSECURE OVER INTERNET: uvx wormhole-magic send ~/dotfiles.zip
-        raise NotImplementedError("Internet-based transfer not yet implemented.")
+    if over_ssh:
+        code_sample = """ftpx ~/dotfiles.zip.gpg user@remote_host:^"""
+        print("🔗 Exporting dotfiles via SSH-based transfer (scp).")
+        print(f"💡 Run the following command on your local machine to copy dotfiles to the remote machine:\n{code_sample}")
+        remote_address = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles to ")
+        code_concrete = f"ftpx {zipfile_encrypted_path} {remote_address}:^"
+        from stackops.utils.code import run_shell_script
+        run_shell_script(code_concrete, display_script=True, clean_env=False)
+        return
     # devops network share-server --no-auth ./dotfiles.zip
     from stackops.scripts.python.helpers.helpers_devops import cli_share_server
     from stackops.scripts.python.helpers.helpers_network.address import select_lan_ipv4
@@ -337,11 +342,26 @@ d c i -u http://{localipv4}:{port} -p {pwd}
     )
 
 
+def _validate_dotfiles_archive(zip_ref: zipfile.ZipFile, destination: Path) -> None:
+    destination_resolved = destination.resolve(strict=False)
+    for zip_member in zip_ref.infolist():
+        member_path = Path(zip_member.filename)
+        if zip_member.filename == "" or member_path.is_absolute() or ".." in member_path.parts:
+            raise ValueError(f"Unsafe path in dotfiles archive: {zip_member.filename}")
+        extracted_path = destination.joinpath(zip_member.filename).resolve(strict=False)
+        if extracted_path != destination_resolved and not extracted_path.is_relative_to(destination_resolved):
+            raise ValueError(f"Unsafe path in dotfiles archive: {zip_member.filename}")
+
+    corrupt_member = zip_ref.testzip()
+    if corrupt_member is not None:
+        raise ValueError(f"Corrupt file in dotfiles archive: {corrupt_member}")
+
+
 def import_dotfiles(
         url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles archive (.zip.gpg)")] = None,
         pwd: Annotated[str | None, typer.Option(..., "--pwd", "-p", help="Password for zip decryption")] = None,
         use_ssh: Annotated[bool, typer.Option("--use-ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles.")]=False,
-        ):  
+        ) -> None:
     # # INSECURE cd $HOME; uvx wormhole-magic receive dotfiles.zip.gpg --accept-file
     # ☁️  [bold blue]Method 3: USING INTERNET SECURE SHARE[/bold blue]
     #     [dim]cd ~
@@ -373,13 +393,27 @@ def import_dotfiles(
     assert pwd is not None, "Password prompt should have produced a decryption password."
     zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)
     print(f"✅ Decrypted zip file saved to: {zipfile_path}")
-    import zipfile
-    if Path.home().joinpath("dotfiles").exists():
-        print(f"⚠️  WARNING: Overwriting existing directory: {Path.home().joinpath('dotfiles')}")
-        shutil.rmtree(Path.home().joinpath("dotfiles"))
-    with zipfile.ZipFile(zipfile_path, 'r') as zip_ref:
-        zip_ref.extractall(Path.home().joinpath("dotfiles"))
-    print(f"✅ Dotfiles extracted to: {Path.home().joinpath('dotfiles')}")
+    dotfiles_path = Path.home().joinpath("dotfiles")
+    with tempfile.TemporaryDirectory(prefix=".stackops-dotfiles-import-", dir=dotfiles_path.parent) as temp_dir:
+        extracted_dotfiles_path = Path(temp_dir).joinpath("dotfiles")
+        extracted_dotfiles_path.mkdir()
+        try:
+            with zipfile.ZipFile(zipfile_path, "r") as zip_ref:
+                _validate_dotfiles_archive(zip_ref=zip_ref, destination=extracted_dotfiles_path)
+                zip_ref.extractall(extracted_dotfiles_path)
+        except (zipfile.BadZipFile, ValueError) as e:
+            msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
+            typer.echo(msg)
+            raise typer.Exit(code=1) from e
+        if dotfiles_path.exists():
+            if not dotfiles_path.is_dir() or dotfiles_path.is_symlink():
+                msg = typer.style("Error: ", fg=typer.colors.RED) + f"Refusing to overwrite non-directory path: {dotfiles_path}"
+                typer.echo(msg)
+                raise typer.Exit(code=1)
+            print(f"⚠️  WARNING: Overwriting existing directory: {dotfiles_path}")
+            shutil.rmtree(dotfiles_path)
+        shutil.move(str(extracted_dotfiles_path), str(dotfiles_path))
+    print(f"✅ Dotfiles extracted to: {dotfiles_path}")
     zipfile_path.unlink()
 
 

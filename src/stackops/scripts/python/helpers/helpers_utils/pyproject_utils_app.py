@@ -14,7 +14,63 @@ from stackops.utils.path_reference import get_path_reference_path
 
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 TypeHintDependencyMode: TypeAlias = Literal["self-contained", "import"]
+InitProjectGroupKey: TypeAlias = Literal["p", "t", "types", "l", "i", "d"]
 TYPE_CHECK_EXCLUDES_ENV_VAR = "STACKOPS_TYPE_CHECK_EXCLUDES"
+DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES: tuple[str, ...] = (
+    "tests",
+    ".github",
+    ".codex",
+    ".ai",
+    ".links",
+    ".venv",
+)
+INIT_PROJECT_GROUP_KEYS: tuple[InitProjectGroupKey, ...] = (
+    "p",
+    "t",
+    "types",
+    "l",
+    "i",
+    "d",
+)
+
+
+def _normalize_init_project_groups(group: str | None) -> str | None:
+    if group is None:
+        return None
+    group_keys = [group_key.strip() for group_key in group.split(",")]
+    normalized_group_keys = [
+        group_key for group_key in group_keys if group_key != ""
+    ]
+    invalid_group_keys = [
+        group_key
+        for group_key in normalized_group_keys
+        if group_key not in INIT_PROJECT_GROUP_KEYS
+    ]
+    if len(invalid_group_keys) > 0:
+        invalid_groups = ", ".join(invalid_group_keys)
+        valid_groups = ", ".join(INIT_PROJECT_GROUP_KEYS)
+        raise ValueError(
+            f"Unknown package group(s): {invalid_groups}. Valid groups: {valid_groups}."
+        )
+    seen_group_keys: set[str] = set()
+    unique_group_keys: list[str] = []
+    for group_key in normalized_group_keys:
+        if group_key in seen_group_keys:
+            continue
+        seen_group_keys.add(group_key)
+        unique_group_keys.append(group_key)
+    if len(unique_group_keys) == 0:
+        return None
+    return ",".join(unique_group_keys)
+
+
+def _normalize_init_project_libraries(libraries: str | None) -> str | None:
+    if libraries is None:
+        return None
+    libraries_stripped = libraries.strip()
+    if libraries_stripped == "":
+        return None
+    return libraries_stripped
 
 
 def _resolve_pyproject_root(path: Path) -> Path:
@@ -74,9 +130,7 @@ def _resolve_type_check_excluded_directories(
 
 def _build_type_check_environment(
     excluded_directories: tuple[str, ...],
-) -> dict[str, str] | None:
-    if len(excluded_directories) == 0:
-        return None
+) -> dict[str, str]:
     environment = os.environ.copy()
     environment[TYPE_CHECK_EXCLUDES_ENV_VAR] = json.dumps(
         list(excluded_directories)
@@ -96,12 +150,14 @@ def type_check(
         typer.Option(
             "--exclude",
             "-x",
-            help="Directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.",
+            help="Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.",
         ),
     ] = None,
 ) -> None:
     if exclude is None:
-        exclude = ["tests", ".github", ".codex", ".ai", ".links", ".venv"]
+        exclude = list(DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES)
+    else:
+        exclude = [*DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES, *exclude]
     try:
         repo_root = _resolve_pyproject_root(Path(repo))
         (
@@ -143,7 +199,12 @@ def type_check(
         raise typer.Exit(code=completed.returncode)
 
 def reference_test(
-    repo: Annotated[str, typer.Argument(..., help="Repository root or any path inside the repository.")],
+    repo: Annotated[
+        str,
+        typer.Argument(
+            help="Repository root or any path inside the repository."
+        ),
+    ] = ".",
     search_root: Annotated[
         str | None,
         typer.Option(
@@ -154,8 +215,16 @@ def reference_test(
     ] = None,
     verbose: Annotated[bool, typer.Option("--verbose", help="Print scan context and detailed rich audit tables.")] = False,
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_utils.path_reference_validation import audit_repository_path_references, format_path_reference_audit, build_reference_test_console, print_reference_test_summary, print_reference_test_verbose_details
     from rich.panel import Panel
+
+    from stackops.scripts.python.helpers.helpers_utils.path_reference_validation import (
+        audit_repository_path_references,
+        build_reference_test_console,
+        format_path_reference_audit,
+        print_reference_test_summary,
+        print_reference_test_verbose_details,
+    )
+
     console = build_reference_test_console()
     search_root_path = None if search_root is None else Path(search_root)
     try:
@@ -176,7 +245,12 @@ def reference_test(
 
 
 def upgrade_packages(
-    root: Annotated[str, typer.Argument(help="Root directory of the project")] = ".",
+    root: Annotated[
+        str,
+        typer.Argument(
+            help="Project root or any path inside the project."
+        ),
+    ] = ".",
     clean_group: Annotated[
         list[str] | None,
         typer.Option(
@@ -188,10 +262,26 @@ def upgrade_packages(
 ) -> None:
     from stackops.utils.upgrade_packages import clean_dependency_groups, generate_uv_add_commands
 
-    root_resolved = Path(root).expanduser().resolve()
-    if clean_group:
-        clean_dependency_groups(project_root=root_resolved, group_names=clean_group)
-    generate_uv_add_commands(pyproject_path=root_resolved / "pyproject.toml", output_path=root_resolved / "pyproject_init.sh")
+    try:
+        project_root = _resolve_pyproject_root(Path(root))
+        if clean_group:
+            clean_dependency_groups(project_root=project_root, group_names=clean_group)
+        generate_uv_add_commands(
+            pyproject_path=project_root / "pyproject.toml",
+            output_path=project_root / "pyproject_init.sh",
+        )
+    except ValueError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    except FileNotFoundError as error:
+        typer.echo(f"Error: Required file or command was not found: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    except subprocess.CalledProcessError as error:
+        typer.echo(
+            f"Error: uv remove failed with exit code {error.returncode}.",
+            err=True,
+        )
+        raise typer.Exit(code=error.returncode) from error
 
 
 def type_hint(
@@ -201,25 +291,25 @@ def type_hint(
         typer.Option(..., "--dependency", "-d", help="Generated file is self contained or performs imports"),
     ] = "self-contained",
 ) -> None:
-    # from stackops.type_hinting.typedict.generators import generate_names_file
-
-    path_resolved = Path(path).resolve()
-    if not path_resolved.exists():
+    path_resolved = Path(path).expanduser().resolve()
+    if path_resolved.exists() is False:
         typer.echo(f"Error: The provided path '{path}' does not exist.", err=True)
         raise typer.Exit(code=1)
     if path_resolved.is_file():
         modules = [path_resolved]
     else:
-        if not (path_resolved / "pyproject.toml").exists():
+        if path_resolved.joinpath("pyproject.toml").exists() is False:
             typer.echo("Error: Provided directory path is not a project root (missing pyproject.toml).", err=True)
             raise typer.Exit(code=1)
-        modules = [file for file in path_resolved.rglob("dtypes.py") if ".venv" not in str(file)]
-    for input_file in modules:
-        print(f"Worked on: {input_file}")
-        output_file = input_file.parent.joinpath(f"{input_file.stem}_names.py")
-        # generated_file = generate_names_file(input_file, output_file, search_paths=None, dependency=dependency)
-        # print(f"Generated: {generated_file}")
-        print(f"Generated: {output_file}")
+        modules = [file for file in path_resolved.rglob("dtypes.py") if ".venv" not in file.parts]
+    if len(modules) == 0:
+        typer.echo("Error: No dtypes.py files were found under the provided project root.", err=True)
+        raise typer.Exit(code=1)
+    typer.echo(
+        f"Error: Type-hint generation is not available for dependency mode '{dependency}' because the generator implementation is missing.",
+        err=True,
+    )
+    raise typer.Exit(code=1)
 
 
 def init_project(
@@ -235,12 +325,24 @@ def init_project(
     ] = None,
     group: Annotated[
         str | None,
-        typer.Option("--group", "-g", help="group of packages names (no separation) p:plot, t:types, l:linting, i:interactive, d:data"),
+        typer.Option("--group", "-g", help="Comma-separated package group keys: p=plot, t/types=typing stubs, l=linting, i=interactive, d=data."),
     ] = "p,t,l,i,d",
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.python import init_project as impl
 
-    impl(name=name, tmp_dir=tmp_dir, python=python, libraries=libraries, group=group)
+    try:
+        normalized_group = _normalize_init_project_groups(group=group)
+    except ValueError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    normalized_libraries = _normalize_init_project_libraries(libraries=libraries)
+    impl(
+        name=name,
+        tmp_dir=tmp_dir,
+        python=python,
+        libraries=normalized_libraries,
+        group=normalized_group,
+    )
 
 
 def get_app() -> typer.Typer:
@@ -268,6 +370,6 @@ def get_app() -> typer.Typer:
         help="🧪 <R> Create and run the runtime-test workflow for Python files under the current directory.",
     )
     pyproject_app.add_typer(test_runtime_module.get_app(), name="tr", hidden=True)
-    pyproject_app.command(name="test-reference", no_args_is_help=True, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
-    pyproject_app.command(name="r", no_args_is_help=True, hidden=True)(reference_test)
+    pyproject_app.command(name="test-reference", no_args_is_help=False, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
+    pyproject_app.command(name="r", no_args_is_help=False, hidden=True)(reference_test)
     return pyproject_app

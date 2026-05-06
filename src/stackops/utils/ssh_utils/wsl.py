@@ -93,10 +93,12 @@ def open_wsl_port(ports_spec: str) -> None:
     script = f"New-NetFirewallRule -DisplayName '{rule_name}' -Direction Inbound -LocalPort {ps_array} -Protocol TCP -Action Allow"
     print(f"🔥 Opening firewall for ports: {description}...")
     result = subprocess.run(["powershell.exe", "-NoLogo", "-NoProfile", "-Command", script], capture_output=True, text=True)
-    if result.returncode == 0:
-        print(f"✅ Firewall rule created for ports: {description}")
-    else:
-        print(f"❌ Failed to create firewall rule: {result.stderr.strip()}")
+    if result.returncode != 0:
+        error_output = result.stderr.strip() or result.stdout.strip()
+        if error_output:
+            raise RuntimeError(f"Failed to create firewall rule for ports {description}: {error_output}")
+        raise RuntimeError(f"Failed to create firewall rule for ports {description} with exit code {result.returncode}")
+    print(f"✅ Firewall rule created for ports: {description}")
 
 
 def change_ssh_port(port: int) -> None:

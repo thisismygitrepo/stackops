@@ -50,13 +50,15 @@ mprocs "echo 'see {DEFAULT_MOUNT}/{cloud} for the mounted cloud'; rclone about {
 def mount(
     cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
     destination: Annotated[str | None, typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
-    network: Annotated[str | None, typer.Option(..., "--network", "-n", help="mount network drive")] = None,
+    network: Annotated[str | None, typer.Option(..., "--network", "-n", help="Windows network mount target, for example X:")] = None,
     zellij_session: Annotated[str | None, typer.Option(None, "--zellij-session", "-z", help="zellij session name for Linux/macOS")] = None,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
-    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose cloud interactively from config.")] = True,
+    interactive: Annotated[bool, typer.Option("--interactive/--no-interactive", "-i/-I", help="Choose cloud interactively from config.")] = True,
 ) -> None:
-    if interactive:
-        pass
+    if cloud is None and not interactive:
+        print("❌ Error: --cloud is required when --no-interactive is set")
+        raise typer.Exit(code=1)
+
     from stackops.utils.options import choose_from_options
     from pathlib import Path
     import platform
@@ -90,6 +92,9 @@ def mount(
 
     if network and len(clouds) > 1:
         print("❌ Error: Network mode supports only one cloud at a time")
+        raise typer.Exit(code=1)
+    if network is not None and destination is not None:
+        print("❌ Error: --destination cannot be used with --network")
         raise typer.Exit(code=1)
 
     mount_locations: dict[str, str] = {}
@@ -127,7 +132,7 @@ def mount(
 
     elif network and system_name == "Windows":
         only_cloud = clouds[0]
-        mount_locations[only_cloud] = "X: --network-mode"
+        mount_locations[only_cloud] = f"{network} --network-mode"
         print(f"🔌 Setting up network mount at {mount_locations[only_cloud]}")
     else:
         print("❌ Error: Network mount only supported on Windows")
@@ -140,8 +145,8 @@ def mount(
     console.print(Panel(f"🚀 Preparing mount command(s):\n{mount_command_info}", border_style="blue"))
 
     if system_name == "Windows":
-        if backend not in ["auto", "a"]:
-            print("❌ Error: --backend is only available on Linux/macOS for cloud mount")
+        if backend in ["zellij", "z"]:
+            print("❌ Error: zellij backend is only available on Linux/macOS for cloud mount")
             raise typer.Exit(code=1)
         if len(clouds) > 1:
             print("❌ Error: Multiple clouds in one command is only supported on Linux/macOS")

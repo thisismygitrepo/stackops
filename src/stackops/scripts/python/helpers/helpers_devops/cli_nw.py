@@ -1,5 +1,7 @@
-import typer
+import shlex
 from typing import Annotated, Literal
+
+import typer
 
 from stackops.scripts.python.helpers.helpers_devops import (
     cli_device,
@@ -74,7 +76,7 @@ def vscode_share(
     If you need more functionality, consult VS Code Tunnels docs: https://code.visualstudio.com/docs/remote/tunnels
     """
     accept = "--accept-server-license-terms"
-    name_part = f"--name {name}" if name else ""
+    name_part = f"--name {shlex.quote(name)}" if name else ""
     extra = extra_args or ""
     action_normalized = {"r": "run", "i": "install-service", "u": "uninstall-service", "l": "share-local"}.get(action, action)
     match action_normalized:
@@ -82,10 +84,10 @@ def vscode_share(
             cmd = f"code tunnel {name_part} {accept} {extra}".strip()
             desc = "Run a one-off VS Code tunnel (foreground)"
         case "install-service" | "i":
-            cmd = f"code tunnel service install {accept} {name_part}".strip()
+            cmd = f"code tunnel service install {accept} {name_part} {extra}".strip()
             desc = "Install code tunnel as a service"
         case "uninstall-service" | "u":
-            cmd = "code tunnel service uninstall"
+            cmd = f"code tunnel service uninstall {extra}".strip()
             desc = "Uninstall code tunnel service"
         case "share-local" | "l":
             from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import (
@@ -93,11 +95,12 @@ def vscode_share(
                 resolve_share_local_folder,
             )
 
-            host_part = f"--host {host}" if host else ""
-            server_base_path_part = f"--server-base-path {path}" if path else ""
+            host_part = f"--host {shlex.quote(host)}" if host else ""
+            server_base_path_part = f"--server-base-path {shlex.quote(path)}" if path else ""
             directory = resolve_share_local_folder(directory)
+            directory_part = shlex.quote(str(directory))
             extra = ensure_without_connection_token(extra)
-            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {extra}".strip()
+            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {directory_part} {extra}".strip()
             desc = "Run local VS Code web server (serve-web)"
         case _:
             print(f"Unknown action: {action_normalized}")

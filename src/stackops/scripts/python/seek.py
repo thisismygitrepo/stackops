@@ -1,11 +1,21 @@
 """seek - StackOps search helper."""
 
-import typer
+from pathlib import Path
 from typing import Annotated
+
+import typer
+
+
+def _resolve_seek_arguments(first_argument: str, search_term: str) -> tuple[str, str]:
+    if search_term != "":
+        return first_argument, search_term
+    if first_argument == "." or Path(first_argument).exists():
+        return first_argument, search_term
+    return ".", first_argument
 
 
 def seek(
-    path: Annotated[str, typer.Argument(help="The directory/file to search")] = ".",
+    path_or_search_term: Annotated[str, typer.Argument(help="The directory/file to search, or the search term when no matching path exists")] = ".",
     search_term: Annotated[str, typer.Argument(help="Initial search term to seed the interactive search")] = "",
     ast: Annotated[bool, typer.Option(..., "--ast", "-a", help="The abstract syntax tree search/ tree sitter search of symbols")] = False,
     symantic: Annotated[bool, typer.Option(..., "--symantic", "-s", help="The symantic search of symbols")] = False,
@@ -18,9 +28,12 @@ def seek(
 ) -> None:
     """seek across files, text matches, and code symbols."""
     from stackops.scripts.python.helpers.helpers_seek.seek_impl import seek as impl
+
+    path, resolved_search_term = _resolve_seek_arguments(first_argument=path_or_search_term, search_term=search_term)
+
     impl(
         path=path,
-        search_term=search_term,
+        search_term=resolved_search_term,
         ast=ast,
         symantic=symantic,
         extension=extension,

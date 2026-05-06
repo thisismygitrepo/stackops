@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import platform
 import subprocess
-from typing import Annotated, Literal
+from typing import Annotated, Literal, assert_never
 
 import typer
 import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
@@ -24,8 +24,7 @@ def configure_shell_profile(
         case "default" | "d":
             create_default_shell_profile()
             return
-    msg = typer.style("Error: ", fg=typer.colors.RED) + f"Unknown shell profile type: {which}"
-    typer.echo(msg)
+    assert_never(which)
 
 
 def pwsh_theme() -> None:
@@ -56,7 +55,6 @@ def starship_theme() -> None:
         module=theme_assets,
         path_reference=theme_assets.CHOOSE_STARSHIP_THEME_SH_PATH_REFERENCE,
     )
-    os.chmod(script_path, 0o755)
     subprocess.run(["bash", str(script_path)], check=True)
 
 

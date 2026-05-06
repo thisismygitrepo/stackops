@@ -10,6 +10,8 @@ class COMMAND_SPLITTER(Protocol):
 
 
 def limit_tab_num(layout_configs: list[LayoutConfig], max_thresh: int, threshold_type: Literal["number", "weight"], breaking_method: Literal["moreLayouts", "combineTabs"]) -> list[LayoutConfig]:
+    if max_thresh < 1:
+        raise ValueError(f"max_thresh must be at least 1, got {max_thresh}.")
     match threshold_type, breaking_method:
         case "number", "moreLayouts":
             return restrict_num_tabs_helper1(layout_configs=layout_configs, max_thresh=max_thresh, threshold_type="number", breaking_method="moreLayouts")

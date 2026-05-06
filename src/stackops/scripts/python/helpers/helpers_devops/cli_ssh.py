@@ -5,23 +5,23 @@ from typing import Annotated
 def install_ssh_server() -> None:
     """📡 Install SSH server"""
     import platform
-    if platform.system() == "Windows":
-        script = _get_windows_ssh_server_install_script()
-    elif platform.system() == "Linux" or platform.system() == "Darwin":
-        script = """
-sudo nala install openssh-server -y || true  # try to install first
-# sudo nala purge openssh-server -y
-# sudo nala install openssh-server -y
-echo "✅ FINISHED installing openssh-server."
-"""
+    system = platform.system()
+    if system == "Windows":
+        script = _get_windows_ssh_server_install_script(use_winget=True)
+    elif system == "Linux":
+        script = _get_linux_ssh_server_install_script()
+    elif system == "Darwin":
+        script = _get_macos_ssh_server_install_script()
     else:
-        print(f"❌ Error: Platform {platform.system()} is not supported.")
+        print(f"❌ Error: Platform {system} is not supported.")
         raise typer.Exit(code=1)
     from stackops.utils.code import run_shell_script
     run_shell_script(script=script, display_script=True, clean_env=False)
 
 
-def change_ssh_port(port: Annotated[int, typer.Option(..., "--port", "-p", help="SSH port to use")] = 2222) -> None:
+def change_ssh_port(
+    port: Annotated[int, typer.Option("--port", "-p", help="SSH port to use", min=1, max=65535)] = 2222,
+) -> None:
     """🔌 Change SSH port (Linux/WSL only, default: 2222)"""
     import platform
     if platform.system() != "Linux":
@@ -31,7 +31,27 @@ def change_ssh_port(port: Annotated[int, typer.Option(..., "--port", "-p", help=
     _change_ssh_port(port=port)
 
 
-def _get_windows_ssh_server_install_script(use_winget: bool = True) -> str:
+def _get_linux_ssh_server_install_script() -> str:
+    return """
+set -eu
+if ! command -v nala >/dev/null 2>&1; then
+    echo "❌ Error: nala is required to install openssh-server."
+    exit 1
+fi
+sudo nala install openssh-server -y
+echo "✅ FINISHED installing openssh-server."
+"""
+
+
+def _get_macos_ssh_server_install_script() -> str:
+    return """
+set -eu
+sudo systemsetup -setremotelogin on
+echo "✅ FINISHED enabling SSH server."
+"""
+
+
+def _get_windows_ssh_server_install_script(use_winget: bool) -> str:
     install_winget = r'''
     Write-Host "Installing OpenSSH via winget..." -ForegroundColor Cyan
     winget install --no-upgrade --Id Microsoft.OpenSSH.Preview --source winget --accept-package-agreements --accept-source-agreements
@@ -129,6 +149,13 @@ def add_ssh_key(
     remote: Annotated[str | None, typer.Option(..., "--remote", "-r", help="Deploy to remote machine (config-name or user@host:port)")] = None,
 ) -> None:
     """🔑 Add SSH public key to this machine (or remote with --remote)."""
+    source_count = sum([path is not None, choose, value, github is not None])
+    if source_count != 1:
+        print("❌ Error: choose exactly one key source: --path, --choose, --value, or --github.")
+        import sys
+
+        sys.exit(1)
+
     import stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key as helper
     helper.main(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote)
 

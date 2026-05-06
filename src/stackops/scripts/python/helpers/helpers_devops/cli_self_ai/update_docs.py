@@ -79,6 +79,20 @@ def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_
     return prompt_path
 
 
+def _validate_update_docs_options(*, agent_load: int, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> None:
+    if agent_load < 1:
+        raise typer.BadParameter("--agent-load must be at least 1.")
+
+    prompt_sources = [
+        option_name
+        for option_name, option_value in (("--prompt", prompt), ("--prompt-path", prompt_path), ("--prompt-name", prompt_name))
+        if option_value is not None
+    ]
+    if len(prompt_sources) > 1:
+        prompt_source_list = ", ".join(prompt_sources)
+        raise typer.BadParameter(f"Use only one prompt source, got: {prompt_source_list}.")
+
+
 def update_docs(
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = "codex",
     model: Annotated[str | None, typer.Option("--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
@@ -92,7 +106,7 @@ def update_docs(
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option("--provider", "-v", help="Provider to use (if the agent supports many).")] = None,
     host: Annotated[HOST, typer.Option("--host", "-h", help="Machine to run agents on.")] = "local",
-    agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of tasks per prompt.")] = 10,
+    agent_load: Annotated[int, typer.Option("--agent-load", "-l", min=1, help="Number of tasks per prompt.")] = 10,
     prompt: Annotated[str | None, typer.Option("--prompt", "-p", help="Prompt prefix as string.")] = None,
     prompt_path: Annotated[
         str | None,
@@ -113,6 +127,8 @@ def update_docs(
         bool, typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
     ] = False,
 ) -> None:
+    _validate_update_docs_options(agent_load=agent_load, prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
+
     repo_root = get_developer_repo_root()
     if not repo_root.joinpath("pyproject.toml").is_file():
         raise RuntimeError(f"Developer repo not found: {repo_root}")

@@ -236,18 +236,24 @@ def make_agents_command_template() -> None:
     """Create a template for fire agents."""
     from platform import system
 
-    if system() == "Linux" or system() == "Darwin":
-        template_path = get_path_reference_path(
-            module=template_assets,
-            path_reference=template_assets.TEMPLATE_SH_PATH_REFERENCE,
-        )
-    elif system() == "Windows":
-        template_path = get_path_reference_path(
-            module=template_assets,
-            path_reference=template_assets.TEMPLATE_PS1_PATH_REFERENCE,
-        )
-    else:
-        raise ValueError(f"Unsupported OS: {system()}")
+    os_name = system()
+    match os_name:
+        case "Linux" | "Darwin":
+            template_path = get_path_reference_path(
+                module=template_assets,
+                path_reference=template_assets.TEMPLATE_SH_PATH_REFERENCE,
+            )
+            template_filename = "template_fire_agents.sh"
+            template_label = "shell"
+        case "Windows":
+            template_path = get_path_reference_path(
+                module=template_assets,
+                path_reference=template_assets.TEMPLATE_PS1_PATH_REFERENCE,
+            )
+            template_filename = "template_fire_agents.ps1"
+            template_label = "PowerShell"
+        case _:
+            raise ValueError(f"Unsupported OS: {os_name}")
 
     from stackops.utils.accessories import get_repo_root
     repo_root = get_repo_root(Path.cwd())
@@ -256,8 +262,9 @@ def make_agents_command_template() -> None:
 
     save_path_root = repo_root / ".ai" / "agents" / "template"
     save_path_root.mkdir(parents=True, exist_ok=True)
-    save_path_root.joinpath("template_fire_agents.sh").write_text(template_path.read_text(encoding="utf-8"), encoding="utf-8")
-    print(f"Template bash script written to {save_path_root}")
+    save_path = save_path_root / template_filename
+    save_path.write_text(template_path.read_text(encoding="utf-8"), encoding="utf-8")
+    print(f"Template {template_label} script written to {save_path}")
 
     from stackops.scripts.python.ai.utils.generate_files import make_todo_files
     make_todo_files(

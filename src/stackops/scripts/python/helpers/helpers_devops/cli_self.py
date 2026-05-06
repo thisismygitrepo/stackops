@@ -20,6 +20,15 @@ def copy_both_assets() -> None:
     create_helper.copy_assets_to_machine(which="settings")
 
 
+def copy_assets_and_link_public_configs() -> None:
+    copy_both_assets()
+    from stackops.profile import create_links_export
+
+    create_links_export.main_from_parser(
+        direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all"
+    )
+
+
 def update(
     link_public_configs: Annotated[
         bool,
@@ -27,12 +36,13 @@ def update(
     ] = False,
 ) -> None:
     """🔄 UPDATE uv and stackops"""
-    if Path.home().joinpath("code", "stackops").exists():
+    developer_repo_root = _developer_repo_root()
+    if developer_repo_root is not None:
         shell_script = """
 uv self update
-cd ~/code/stackops
-git pull
-uv tool install --no-cache --upgrade --editable $HOME/code/stackops
+cd "$HOME/code/stackops"
+git pull --ff-only
+uv tool install --no-cache --upgrade --editable "$HOME/code/stackops"
     """
     else:
         shell_script = """
@@ -45,31 +55,35 @@ uv tool install --no-cache --upgrade stackops
         from stackops.utils.code import exit_then_run_shell_script, get_uv_command_executing_python_script
         from stackops.utils.meta import lambda_to_python_script
 
-        python_script = lambda_to_python_script(
-            lambda: copy_both_assets(),  # pylint: disable=unnecessary-lambda
-            in_global=True,
-            import_module=False,
-        )
+        if link_public_configs:
+            python_script = lambda_to_python_script(
+                lambda: copy_assets_and_link_public_configs(),  # pylint: disable=unnecessary-lambda
+                in_global=True,
+                import_module=False,
+            )
+        else:
+            python_script = lambda_to_python_script(
+                lambda: copy_both_assets(),  # pylint: disable=unnecessary-lambda
+                in_global=True,
+                import_module=False,
+            )
         uv_command, _py_file = get_uv_command_executing_python_script(python_script=python_script, uv_with=["stackops"], uv_project_dir=None)
         exit_then_run_shell_script(shell_script + "\n" + uv_command, strict=True)
     else:
         from stackops.utils.code import run_shell_script
 
         run_shell_script(shell_script, display_script=True, clean_env=False)
-        copy_both_assets()
         if link_public_configs:
-            from stackops.profile import create_links_export
-
-            create_links_export.main_from_parser(
-                direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all"
-            )
+            copy_assets_and_link_public_configs()
+        else:
+            copy_both_assets()
 
 
 def _install_stackops(dev: bool) -> None:
     from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function, get_uv_command
     import platform
 
-    stackops_path = Path.home().joinpath("code/stackops")
+    stackops_path = Path.home().joinpath("code", "stackops")
     if dev and not stackops_path.exists():
         import git
 
@@ -88,18 +102,22 @@ def _install_stackops(dev: bool) -> None:
         uv_with=["stackops"],
         uv_project_dir=None,
     )
-    if stackops_path.exists():
+    if dev:
+        if not stackops_path.joinpath("pyproject.toml").is_file():
+            typer.echo(f"Cannot install editable stackops from {str(stackops_path)} because pyproject.toml is missing.")
+            raise typer.Exit(code=1)
+
         exit_then_run_shell_script(f"""
-cd {str(stackops_path)}
+cd "{str(stackops_path)}"
 {uv_command} sync
 {uv_command} tool install --upgrade --editable "{str(stackops_path)}"
 {uv_command2}
-""")
+""", strict=True)
     else:
         exit_then_run_shell_script(rf"""
 {uv_command} tool install --upgrade "{STACKOPS_VERSION}"
 {uv_command2}
-""")
+""", strict=True)
 
 
 def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False) -> None:
@@ -138,12 +156,13 @@ def status(
 def readme() -> None:
     from rich.console import Console
     from rich.markdown import Markdown
-    import requests
 
-    repo_root = Path.home().joinpath("code", "stackops")
-    if repo_root.exists():
+    repo_root = _developer_repo_root()
+    if repo_root is not None:
         markdown_text = repo_root.joinpath("README.md").read_text(encoding="utf-8")
     else:
+        import requests
+
         url_readme = "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/README.md"
         response = requests.get(url_readme, timeout=10)
         response.raise_for_status()
@@ -153,24 +172,23 @@ def readme() -> None:
     console.print(Markdown(markdown_text))
 
 
-def buid_docker(variant: Annotated[Literal["slim", "ai"], typer.Argument(..., help="Variant to build: 'slim' or 'ai'")] = "slim") -> None:
-    """🧱 `buid_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
-    import stackops
+def build_docker(variant: Annotated[Literal["slim", "ai"], typer.Argument(help="Variant to build: 'slim' or 'ai'")] = "slim") -> None:
+    """🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
+    repo_root = _developer_repo_root()
+    if repo_root is None:
+        typer.echo("❌ Developer repo not found: ~/code/stackops")
+        raise typer.Exit(code=1)
 
-    script_path = Path(stackops.__file__).resolve().parent.parent.parent.joinpath("jobs", "shell", "docker_build_and_publish.sh")
-    if not script_path.exists():
+    script_path = repo_root.joinpath("jobs", "shell", "docker_build_and_publish.sh")
+    if not script_path.is_file():
         typer.echo(f"❌ Script not found: {str(script_path)}")
         raise typer.Exit(code=1)
 
-    # shell_cmd = f'VARIANT="{variant}" && bash "{str(script_path)}"'\
-    from stackops.utils.source_of_truth import REPO_ROOT
-
     shell_cmd = f"""
 export VARIANT="{variant}"
-cd "{str(REPO_ROOT)}"
+cd "{str(repo_root)}"
 bash "{str(script_path)}"
 """
-    # Use exit_then_run_shell_script for interactive runs (keeps tty), otherwise run shell script non-interactively
     from stackops.utils.code import exit_then_run_shell_script
 
     exit_then_run_shell_script(shell_cmd, strict=True)
@@ -239,10 +257,10 @@ def get_app() -> typer.Typer:
 
     if developer_repo_root is not None:
         cli_app.command(name="build-docker", no_args_is_help=False, help="🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)")(
-            buid_docker
+            build_docker
         )
         cli_app.command(name="d", no_args_is_help=False, help="Build docker images (wraps jobs/shell/docker_build_and_publish.sh)", hidden=True)(
-            buid_docker
+            build_docker
         )
         cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI graph assets.")
         cli_app.add_typer(cli_self_assets.get_app(), name="ba", help="Regenerate repo-local CLI graph assets.", hidden=True)
