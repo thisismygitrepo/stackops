@@ -143,7 +143,7 @@ def build_database_command(target_path: Path) -> Command:
     suffix = target_path.suffix.lower()
     path_string = str(target_path)
     if suffix in DUCKDB_SUFFIXES:
-        return ["harlequin", "--adapter", "duckdb", "--read-only", path_string]
+        return ["rainfrog", "--driver", "duckdb", "--database", path_string]
     if suffix in SQLITE_SUFFIXES:
         return ["rainfrog", "--url", build_rainfrog_sqlite_read_only_url(target_path=target_path)]
     raise ValueError(f"Unsupported database suffix for fullscreen preview: {suffix}")

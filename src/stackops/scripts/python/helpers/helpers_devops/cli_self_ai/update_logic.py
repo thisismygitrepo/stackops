@@ -11,10 +11,9 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 DEFAULT_LOGIC_JOB_NAME = "updateLogic"
-UPDATE_LOGIC_PROMPT = """Please check the logic of the command below, and fix if you found anything not tight, inconsistent, fail mode etc.
-* Each context entry contains only a repo-relative file path and a root-relative command name.
-* Use those two fields to find and tighten the implementation directly.
-* Prefer one strict behavior. Tighten weak failure modes instead of adding fallback behavior.
+UPDATE_LOGIC_PROMPT = """
+Please check the logic of the command below, and fix if you found anything not tight, inconsistent, fail mode etc.
+If code is okay for reasonable use cases, just leave it without change, you don't have to be very fussy. I dont want unnecessary complexity.
 """
 
 type JsonObject = dict[str, object]

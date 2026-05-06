@@ -31,6 +31,15 @@ def test_build_command_routes_markdown_to_glow_tui(tmp_path: Path, file_name: st
     assert command == ["glow", "--tui", str(target_path)]
 
 
+def test_build_command_routes_duckdb_files_to_harlequin(tmp_path: Path) -> None:
+    target_path = tmp_path.joinpath("catalog.duckdb")
+    target_path.write_bytes(b"DUCK")
+
+    command = interactive_view.build_command(target_path=target_path)
+
+    assert command == ["harlequin", "--adapter", "duckdb", "--read-only", str(target_path)]
+
+
 def test_build_command_routes_directory_to_browser_server(tmp_path: Path) -> None:
     target_path = tmp_path.joinpath("gallery")
     target_path.mkdir()

@@ -45,3 +45,12 @@ def test_build_markdown_command_uses_glow_pager_on_unix(
     command = fullscreen_preview.build_command(target_path=target_path, terminal_columns=122)
 
     assert command == ["glow", "--pager", "--width", "122", "--style", "dark", str(target_path)]
+
+
+def test_build_command_routes_duckdb_files_to_rainfrog(tmp_path: Path) -> None:
+    target_path = tmp_path.joinpath("catalog.duckdb")
+    target_path.write_bytes(b"DUCK")
+
+    command = fullscreen_preview.build_command(target_path=target_path, terminal_columns=122)
+
+    assert command == ["rainfrog", "--driver", "duckdb", "--database", str(target_path)]
