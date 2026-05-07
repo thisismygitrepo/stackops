@@ -24,7 +24,7 @@ class AgentsCreateImpl(Protocol):
         output_path: str | None,
         agents_dir: str | None,
         host: HOST,
-        reasoning_effort: ReasoningEffort | None,
+        reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
         interactive: bool,
     ) -> None: ...
@@ -53,7 +53,7 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
         output_path: str | None,
         agents_dir: str | None,
         host: HOST,
-        reasoning_effort: ReasoningEffort | None,
+        reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
         interactive: bool,
     ) -> None:
@@ -61,7 +61,7 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
         captured_values = ParallelCreateValues(
             agent=agent,
             model=model,
-            reasoning_effort=reasoning_effort,
+            reasoning_effort=reasoning,
             provider=provider,
             host=host,
             context=context,

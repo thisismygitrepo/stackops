@@ -1,11 +1,15 @@
+import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Literal, TypeAlias
 
-from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import (
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import (
+    PARALLEL_CREATE_COMMAND_NAME,
     PARALLEL_CREATE_CONFIG_KEYS,
-    ensure_stackops_yaml_schema_exists,
+    PARALLEL_RUN_COMMAND_NAME,
+    PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.yaml_schema import yaml_language_server_schema_comment
@@ -134,34 +138,15 @@ def parallel_yaml_template() -> str:
 
 def parallel_yaml_header_for_path(*, yaml_path: Path) -> str:
     return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
-# parallel.yaml used by `agents parallel run-parallel`
+# parallel.yaml used by `{PARALLEL_RUN_COMMAND_NAME}`
 # Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
-# Each run entry uses the same option names as `agents parallel create`.
+# Each run entry uses the same option names as `{PARALLEL_CREATE_COMMAND_NAME}`.
 """
 
 
 def parallel_yaml_template_for_path(*, yaml_path: Path) -> str:
-    return f"""{parallel_yaml_header_for_path(yaml_path=yaml_path)}
-default:
-  agent: codex
-  model: null
-  reasoning_effort: high
-  provider: openai
-  host: local
-  context: null
-  context_path: ./.ai/agents/default/context.md
-  separator: "\\n@-@\\n"
-  agent_load: 3
-  prompt: null
-  prompt_path: ./.ai/prompts/default.md
-  prompt_name: null
-  job_name: default
-  join_prompt_and_context: false
-  run: false
-  output_path: null
-  agents_dir: null
-  interactive: false
-"""
+    yaml_body = yaml.safe_dump({"default": PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY}, sort_keys=False, default_flow_style=False)
+    return f"{parallel_yaml_header_for_path(yaml_path=yaml_path)}{yaml_body}"
 
 
 def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE) -> list[tuple[str, Path]]:

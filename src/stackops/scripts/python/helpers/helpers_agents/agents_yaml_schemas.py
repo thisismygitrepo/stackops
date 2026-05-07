@@ -1,34 +1,16 @@
 from pathlib import Path
 from typing import Final, Literal, get_args
 
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import (
+    PARALLEL_CREATE_COMMAND_NAME,
+    PARALLEL_CREATE_CONFIG_KEYS,
+    PARALLEL_RUN_COMMAND_NAME,
+)
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 from stackops.utils.yaml_schema import JsonObject, JsonValue, ensure_yaml_schema_exists
 
 
 type StackopsYamlSchemaKind = Literal["prompts", "parallel"]
-
-PARALLEL_CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(
-    {
-        "agent",
-        "model",
-        "reasoning_effort",
-        "provider",
-        "host",
-        "context",
-        "context_path",
-        "separator",
-        "agent_load",
-        "prompt",
-        "prompt_path",
-        "prompt_name",
-        "job_name",
-        "join_prompt_and_context",
-        "run",
-        "output_path",
-        "agents_dir",
-        "interactive",
-    }
-)
 
 _JSON_SCHEMA_DRAFT: Final[str] = "http://json-schema.org/draft-07/schema#"
 
@@ -89,7 +71,7 @@ def _parallel_yaml_schema() -> JsonObject:
     return {
         "$schema": _JSON_SCHEMA_DRAFT,
         "title": "StackOps parallel.yaml",
-        "description": "Named parallel agent workflow entries used by `agents parallel run-parallel`.",
+        "description": f"Named parallel agent workflow entries used by `{PARALLEL_RUN_COMMAND_NAME}`.",
         "type": "object",
         "additionalProperties": {"$ref": "#/definitions/parallelNode"},
         "definitions": {
@@ -111,12 +93,12 @@ def _parallel_yaml_schema() -> JsonObject:
                 "properties": {
                     "agent": _enum_or_null_schema(
                         values=_literal_values(raw_values=get_args(AGENTS)),
-                        description="Agent implementation passed to `agents parallel create`.",
+                        description=f"Agent implementation passed to `{PARALLEL_CREATE_COMMAND_NAME}`.",
                     ),
                     "model": _nullable_string_schema(description="Optional model name passed to the selected agent."),
-                    "reasoning_effort": _enum_or_null_schema(
+                    "reasoning": _enum_or_null_schema(
                         values=_literal_values(raw_values=get_args(ReasoningEffort)),
-                        description="Optional reasoning effort passed to agents that support it.",
+                        description="Optional reasoning value passed to agents that support it.",
                     ),
                     "provider": _enum_or_null_schema(
                         values=_literal_values(raw_values=get_args(PROVIDER)),

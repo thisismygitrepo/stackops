@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Final, cast, get_args
 
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
     CREATE_CONFIG_KEYS,
     ParallelCreateValues,
@@ -21,25 +22,46 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
         joined_keys = ", ".join(unknown_keys)
         raise ValueError(f"Unknown keys in parallel run '{entry_name}': {joined_keys}")
 
+    parsed_entry: ParallelCreateYamlEntry = {
+        "agent": _optional_agent(mapping=raw_mapping, key="agent"),
+        "model": _optional_string(mapping=raw_mapping, key="model"),
+        "reasoning": _optional_reasoning(mapping=raw_mapping, key="reasoning"),
+        "provider": _optional_provider(mapping=raw_mapping, key="provider"),
+        "host": _optional_host(mapping=raw_mapping, key="host"),
+        "context": _optional_string(mapping=raw_mapping, key="context"),
+        "context_path": _optional_string(mapping=raw_mapping, key="context_path"),
+        "separator": _optional_string(mapping=raw_mapping, key="separator"),
+        "agent_load": _optional_int(mapping=raw_mapping, key="agent_load"),
+        "prompt": _optional_string(mapping=raw_mapping, key="prompt"),
+        "prompt_path": _optional_string(mapping=raw_mapping, key="prompt_path"),
+        "prompt_name": _optional_string(mapping=raw_mapping, key="prompt_name"),
+        "job_name": _optional_string(mapping=raw_mapping, key="job_name"),
+        "join_prompt_and_context": _optional_bool(mapping=raw_mapping, key="join_prompt_and_context"),
+        "run": _optional_bool(mapping=raw_mapping, key="run"),
+        "output_path": _optional_string(mapping=raw_mapping, key="output_path"),
+        "agents_dir": _optional_string(mapping=raw_mapping, key="agents_dir"),
+        "interactive": _optional_bool(mapping=raw_mapping, key="interactive"),
+    }
+
     return ParallelCreateValues(
-        agent=_optional_agent(mapping=raw_mapping, key="agent"),
-        model=_optional_string(mapping=raw_mapping, key="model"),
-        reasoning_effort=_optional_reasoning_effort(mapping=raw_mapping, key="reasoning_effort"),
-        provider=_optional_provider(mapping=raw_mapping, key="provider"),
-        host=_optional_host(mapping=raw_mapping, key="host"),
-        context=_optional_string(mapping=raw_mapping, key="context"),
-        context_path=_optional_string(mapping=raw_mapping, key="context_path"),
-        separator=_optional_string(mapping=raw_mapping, key="separator"),
-        agent_load=_optional_int(mapping=raw_mapping, key="agent_load"),
-        prompt=_optional_string(mapping=raw_mapping, key="prompt"),
-        prompt_path=_optional_string(mapping=raw_mapping, key="prompt_path"),
-        prompt_name=_optional_string(mapping=raw_mapping, key="prompt_name"),
-        job_name=_optional_string(mapping=raw_mapping, key="job_name"),
-        join_prompt_and_context=_optional_bool(mapping=raw_mapping, key="join_prompt_and_context"),
-        run=_optional_bool(mapping=raw_mapping, key="run"),
-        output_path=_optional_string(mapping=raw_mapping, key="output_path"),
-        agents_dir=_optional_string(mapping=raw_mapping, key="agents_dir"),
-        interactive=_optional_bool(mapping=raw_mapping, key="interactive"),
+        agent=parsed_entry["agent"],
+        model=parsed_entry["model"],
+        reasoning_effort=parsed_entry["reasoning"],
+        provider=parsed_entry["provider"],
+        host=parsed_entry["host"],
+        context=parsed_entry["context"],
+        context_path=parsed_entry["context_path"],
+        separator=parsed_entry["separator"],
+        agent_load=parsed_entry["agent_load"],
+        prompt=parsed_entry["prompt"],
+        prompt_path=parsed_entry["prompt_path"],
+        prompt_name=parsed_entry["prompt_name"],
+        job_name=parsed_entry["job_name"],
+        join_prompt_and_context=parsed_entry["join_prompt_and_context"],
+        run=parsed_entry["run"],
+        output_path=parsed_entry["output_path"],
+        agents_dir=parsed_entry["agents_dir"],
+        interactive=parsed_entry["interactive"],
     )
 
 
@@ -230,7 +252,7 @@ def _optional_provider(*, mapping: Mapping[str, object], key: str) -> PROVIDER |
     return cast(PROVIDER, value)
 
 
-def _optional_reasoning_effort(*, mapping: Mapping[str, object], key: str) -> ReasoningEffort | None:
+def _optional_reasoning(*, mapping: Mapping[str, object], key: str) -> ReasoningEffort | None:
     value = _optional_string(mapping=mapping, key=key)
     if value is None:
         return None
