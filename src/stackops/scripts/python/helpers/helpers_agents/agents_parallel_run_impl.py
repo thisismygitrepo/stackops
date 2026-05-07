@@ -111,14 +111,8 @@ def _ensure_writable_parallel_yaml_files(
     *, yaml_locations: list[tuple[str, Path]], parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE
 ) -> list[Path]:
     created_yaml_paths: list[Path] = []
-    has_existing_yaml = any(yaml_path.exists() and yaml_path.is_file() for _location_name, yaml_path in yaml_locations)
     for location_name, yaml_path in yaml_locations:
-        should_create = (
-            parallel_yaml_path is not None
-            or (where in ("all", "a") and not has_existing_yaml and location_name == "repo")
-            or (where in ("repo", "r") and location_name == "repo")
-            or (where in ("private", "p", "public", "b") and location_name in ("private", "public"))
-        )
+        should_create = _should_scaffold_parallel_yaml(location_name=location_name, parallel_yaml_path=parallel_yaml_path, where=where)
         if should_create and ensure_parallel_yaml_exists(yaml_path=yaml_path):
             created_yaml_paths.append(yaml_path)
     return created_yaml_paths
@@ -168,3 +162,17 @@ def _select_parallel_yaml_entry_target(*, yaml_locations: list[tuple[str, Path]]
         if yaml_path.exists() and yaml_path.is_file():
             return yaml_path
     return yaml_locations[0][1]
+
+
+def _should_scaffold_parallel_yaml(*, location_name: str, parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE) -> bool:
+    if parallel_yaml_path is not None:
+        return True
+    match where:
+        case "all" | "a" | "repo" | "r":
+            return location_name == "repo"
+        case "private" | "p":
+            return location_name == "private"
+        case "public" | "b":
+            return location_name == "public"
+        case "library" | "l":
+            return False

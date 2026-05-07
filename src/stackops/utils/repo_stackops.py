@@ -6,10 +6,11 @@ from stackops.utils.accessories import get_repo_root
 
 REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
 REPO_PROMPTS_YAML_FILE_NAME: Final[str] = "prompts.yaml"
+REPO_PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 REPO_MCP_JSON_FILE_NAME: Final[str] = "mcp.json"
 REPO_SCRIPTS_DIRECTORY_NAME: Final[str] = "scripts"
 
-RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "mcp_json", "scripts"]
+RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "parallel_yaml", "mcp_json", "scripts"]
 
 
 def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
@@ -21,6 +22,8 @@ def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
     match path_kind:
         case "prompts_yaml":
             return stackops_root / REPO_PROMPTS_YAML_FILE_NAME
+        case "parallel_yaml":
+            return stackops_root / REPO_PARALLEL_YAML_FILE_NAME
         case "mcp_json":
             return stackops_root / REPO_MCP_JSON_FILE_NAME
         case "scripts":

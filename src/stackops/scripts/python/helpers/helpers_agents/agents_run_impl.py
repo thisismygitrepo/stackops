@@ -157,8 +157,7 @@ def run(
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
     created_yaml_paths: list[Path] = []
     for location_name, yaml_path in yaml_locations:
-        # Keep previous behavior: always scaffold the default private path when available.
-        should_create = prompts_yaml_path is not None or location_name == "private" or (where in ("repo", "r") and location_name == "repo")
+        should_create = _should_scaffold_prompts_yaml(location_name=location_name, prompts_yaml_path=prompts_yaml_path, where=where)
         if should_create and ensure_prompts_yaml_exists(yaml_path=yaml_path):
             created_yaml_paths.append(yaml_path)
     if len(created_yaml_paths) > 0:
@@ -183,3 +182,17 @@ def run(
 
     from stackops.utils.code import exit_then_run_shell_script
     exit_then_run_shell_script(script=command_line, strict=False)
+
+
+def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str | None, where: PROMPTS_WHERE) -> bool:
+    if prompts_yaml_path is not None:
+        return True
+    match where:
+        case "all" | "a" | "repo" | "r":
+            return location_name == "repo"
+        case "private" | "p":
+            return location_name == "private"
+        case "public" | "b":
+            return location_name == "public"
+        case "library" | "l" | "custom" | "c":
+            return False

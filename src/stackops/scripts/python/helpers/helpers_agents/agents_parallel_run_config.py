@@ -18,7 +18,6 @@ from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 PARALLEL_RUNS_WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 ParallelYamlEntry: TypeAlias = tuple[str, Path, object]
 _PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
-_REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
 CREATE_CONFIG_KEYS: Final[frozenset[str]] = PARALLEL_CREATE_CONFIG_KEYS
 
 
@@ -153,11 +152,10 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALL
     if parallel_yaml_path is not None:
         return [("explicit", Path(parallel_yaml_path).expanduser().resolve())]
 
-    from stackops.utils.accessories import get_repo_root
+    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
 
-    repo_root = get_repo_root(Path.cwd())
-    repo_yaml = None if repo_root is None else repo_root.resolve() / _REPO_STACKOPS_DIRECTORY_NAME / _PARALLEL_YAML_FILE_NAME
+    repo_yaml = current_repo_stackops_path(path_kind="parallel_yaml")
     private_yaml = DOTFILES_STACKOPS_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     public_yaml = CONFIG_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     library_yaml = LIBRARY_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
@@ -169,9 +167,7 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALL
                 return paths
             return [("repo", repo_yaml)] + paths
         case "repo" | "r":
-            if repo_yaml is None:
-                raise ValueError("--where repo requires running inside a git repository")
-            return [("repo", repo_yaml)]
+            return [("repo", require_current_repo_stackops_path(path_kind="parallel_yaml"))]
         case "private" | "p":
             return [("private", private_yaml)]
         case "public" | "b":
