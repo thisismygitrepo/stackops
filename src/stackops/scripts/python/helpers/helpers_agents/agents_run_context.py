@@ -96,7 +96,7 @@ def _resolve_named_yaml_entry(raw_data: Any, entry_name: str, *, entry_label: st
     return _format_prompt_entry(cursor)
 
 
-def _collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str, str]:
+def collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str, str]:
     candidates: dict[str, str] = {}
     if not isinstance(raw_data, dict):
         return candidates
@@ -113,7 +113,7 @@ def _collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str,
             # Allow selecting dictionaries that contain concrete fields (not only nested namespaces).
             if any(not isinstance(child, dict) for child in value.values()):
                 candidates[dotted_key] = _format_prompt_entry(value)
-            nested_candidates = _collect_named_yaml_candidates(raw_data=value, prefix=dotted_key)
+            nested_candidates = collect_named_yaml_candidates(raw_data=value, prefix=dotted_key)
             for nested_key, nested_value in nested_candidates.items():
                 candidates[nested_key] = nested_value
             continue
@@ -127,7 +127,7 @@ def _preview_prompt_entry_from_path(*, preview: str, yaml_path: Path) -> str:
     return f"source_yaml: {yaml_path}\n\n{preview}"
 
 
-def _build_named_prompt_selection_maps(
+def build_named_prompt_selection_maps(
     existing_yaml_locations: list[tuple[str, Path]],
 ) -> tuple[dict[str, str], dict[str, str]]:
     candidate_name_counts: dict[str, int] = {}
@@ -137,13 +137,13 @@ def _build_named_prompt_selection_maps(
 
         yaml_data = read_yaml(yaml_path)
         yaml_data_by_location.append((location_name, yaml_path, yaml_data))
-        for candidate_name in _collect_named_yaml_candidates(raw_data=yaml_data):
+        for candidate_name in collect_named_yaml_candidates(raw_data=yaml_data):
             candidate_name_counts[candidate_name] = candidate_name_counts.get(candidate_name, 0) + 1
 
     preview_map: dict[str, str] = {}
     value_map: dict[str, str] = {}
     for location_name, yaml_path, yaml_data in yaml_data_by_location:
-        entry_candidates = _collect_named_yaml_candidates(raw_data=yaml_data)
+        entry_candidates = collect_named_yaml_candidates(raw_data=yaml_data)
         for candidate_name, candidate_preview in entry_candidates.items():
             label = candidate_name
             if candidate_name_counts[candidate_name] > 1:
@@ -243,7 +243,7 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
     if found_entry is not None:
         return found_entry
 
-    fuzzy_preview_map, fuzzy_value_map = _build_named_prompt_selection_maps(existing_yaml_locations=existing_yaml_locations)
+    fuzzy_preview_map, fuzzy_value_map = build_named_prompt_selection_maps(existing_yaml_locations=existing_yaml_locations)
 
     searched = ", ".join(str(yaml_path) for _, yaml_path in existing_yaml_locations)
     if len(fuzzy_preview_map) == 0:
