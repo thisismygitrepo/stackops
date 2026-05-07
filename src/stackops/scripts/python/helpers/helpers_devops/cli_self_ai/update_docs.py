@@ -155,7 +155,7 @@ def update_docs(
             output_path=str(resolved_output_path),
             agents_dir=str(resolved_agents_dir),
             host=host,
-            reasoning_effort=reasoning_effort,
+            reasoning=reasoning_effort,
             provider=provider,
             interactive=interactive,
             run=run,

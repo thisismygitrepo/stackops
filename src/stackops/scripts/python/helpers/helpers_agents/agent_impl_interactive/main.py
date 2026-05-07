@@ -207,7 +207,7 @@ def main(
         agent=collected.agent,
         host=collected.host,
         model=collected.model,
-        reasoning_effort=collected.reasoning_effort,
+        reasoning=collected.reasoning_effort,
         provider=collected.provider,
         agent_load=collected.agent_load,
         context=collected.context,

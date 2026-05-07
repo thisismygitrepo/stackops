@@ -12,6 +12,7 @@ from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
 PARALLEL_RUNS_WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+ParallelYamlEntry: TypeAlias = tuple[str, Path, object]
 _PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 _REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
 CREATE_CONFIG_KEYS: Final[frozenset[str]] = PARALLEL_CREATE_CONFIG_KEYS

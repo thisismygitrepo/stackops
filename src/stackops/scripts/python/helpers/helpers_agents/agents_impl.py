@@ -45,13 +45,13 @@ def agents_create(
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
-    reasoning_effort: ReasoningEffort | None,
+    reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
 
     interactive: bool,
 ) -> None:
     """Create agents layout file, ready to run."""
-    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
+    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
         main(

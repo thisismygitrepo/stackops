@@ -63,7 +63,7 @@ def agents_create(
             agent=agent,
             host=host,
             model=model,
-            reasoning_effort=reasoning_effort,
+            reasoning=reasoning_effort,
             provider=provider,
             context=context,
             context_path=context_path,

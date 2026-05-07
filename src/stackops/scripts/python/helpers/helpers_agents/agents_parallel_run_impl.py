@@ -5,6 +5,7 @@ from pathlib import Path
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
     PARALLEL_RUNS_WHERE,
     ParallelCreateValues,
+    ParallelYamlEntry,
     empty_parallel_create_values,
     ensure_parallel_yaml_exists,
     merge_parallel_create_values,
@@ -56,7 +57,7 @@ def run_parallel_from_yaml(
     agents_create(
         agent=resolved.agent,
         model=resolved.model,
-        reasoning_effort=resolved.reasoning_effort,
+        reasoning=resolved.reasoning_effort,
         provider=resolved.provider,
         host=resolved.host,
         context=resolved.context,
@@ -130,14 +131,14 @@ def _edit_existing_parallel_yaml_files(*, yaml_locations: list[tuple[str, Path]]
         edit_parallel_yaml(yaml_path=yaml_path)
 
 
-def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path]]) -> list[tuple[str, object]]:
+def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path]]) -> list[ParallelYamlEntry]:
     from stackops.utils.files.read import read_yaml
 
-    yaml_entries: list[tuple[str, object]] = []
+    yaml_entries: list[ParallelYamlEntry] = []
     for location_name, yaml_path in yaml_locations:
         if yaml_path.exists() and yaml_path.is_file():
             raw_data: object = read_yaml(yaml_path)
-            yaml_entries.append((location_name, raw_data))
+            yaml_entries.append((location_name, yaml_path, raw_data))
     if len(yaml_entries) == 0:
         searched = "\n".join(str(yaml_path) for _location_name, yaml_path in yaml_locations)
         raise ValueError(f"No parallel YAML files found. Searched:\n{searched}")
