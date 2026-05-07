@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
 from stackops.scripts.python.helpers.helpers_agents import agents_run_context
 from stackops.utils.options_utils import tv_options
@@ -120,3 +121,20 @@ def test_resolve_named_prompts_yaml_entry_fuzzy_picker_shows_source_yaml(monkeyp
     assert selected == "repo prompt"
     assert "source_yaml: " in captured_options["backend@repo"]
     assert str(repo_yaml) in captured_options["backend@repo"]
+
+
+def test_ensure_prompts_yaml_exists_creates_single_entry_example(tmp_path: Path) -> None:
+    yaml_path = tmp_path / ".stackops" / "prompts.yaml"
+
+    created = agents_run_context.ensure_prompts_yaml_exists(yaml_path=yaml_path)
+
+    assert created is True
+    yaml_text = yaml_path.read_text(encoding="utf-8")
+    assert yaml_text.startswith("# yaml-language-server: $schema=./prompts.schema.json\n")
+    assert "entryExample: {prompt: replace me, description: short label}\n" in yaml_text
+    assert "default: |\n" not in yaml_text
+    assert "team:\n" not in yaml_text
+    loaded_yaml = yaml.safe_load(yaml_text)
+    assert isinstance(loaded_yaml, dict)
+    assert loaded_yaml["entryExample"]["prompt"] == "replace me"
+    assert loaded_yaml["entryExample"]["description"] == "short label"

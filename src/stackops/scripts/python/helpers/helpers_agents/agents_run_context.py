@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Final, Literal
 import json
 import shutil
 import subprocess
@@ -10,6 +10,7 @@ from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "custom", "c"]
 PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
+_PROMPTS_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 
 
 def _value_to_text(value: Any) -> str:
@@ -269,17 +270,11 @@ def _prompts_yaml_template() -> str:
 
 def _prompts_yaml_template_for_path(*, yaml_path: Path) -> str:
     return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
-# prompts.yaml used by `agents run`
+# prompts.yaml used by `agents run-prompt`
 # Top-level keys show up in interactive selection.
 # Nested keys can be selected via --context-name with dot-path syntax (example: team.backend).
-# Values should be prompt/context text (plain strings or multiline `|` blocks).
-default: |
-  You are a helpful assistant.
-team:
-  backend: |
-    You are helping with backend engineering tasks.
-  frontend: |
-    You are helping with frontend engineering tasks.
+# Each entry can be a plain string or an object with prompt metadata.
+{_PROMPTS_YAML_TEMPLATE_ENTRY_NAME}: {{prompt: replace me, description: short label}}
 """
 
 

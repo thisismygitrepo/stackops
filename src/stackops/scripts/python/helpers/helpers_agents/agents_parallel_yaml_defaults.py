@@ -6,6 +6,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 PARALLEL_CREATE_COMMAND_NAME: Final[str] = "agents parallel create"
 PARALLEL_RUN_COMMAND_NAME: Final[str] = "agents parallel run-parallel"
+PARALLEL_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 _ESCAPED_DEFAULT_SEPARATOR: Final[str] = DEFAULT_SEAPRATOR.encode("unicode_escape").decode("ascii")
 
 
@@ -34,14 +35,14 @@ PARALLEL_CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(ParallelCreateYam
 PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY: Final[ParallelCreateYamlEntry] = {
     "agent": "codex",
     "model": None,
-    "reasoning": "high",
-    "provider": "openai",
+    "reasoning": None,
+    "provider": None,
     "host": "local",
-    "context": "no context",
+    "context": None,
     "context_path": None,
     "separator": _ESCAPED_DEFAULT_SEPARATOR,
-    "agent_load": 1,
-    "prompt": "go",
+    "agent_load": 3,
+    "prompt": None,
     "prompt_path": None,
     "prompt_name": None,
     "job_name": "AI_Agents",

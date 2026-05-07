@@ -17,11 +17,11 @@ def test_ensure_parallel_yaml_entry_exists_adds_top_level_entry(tmp_path: Path) 
     assert "reasoning:\n" not in yaml_text
     loaded_yaml = yaml.safe_load(yaml_text)
     assert isinstance(loaded_yaml, dict)
-    assert loaded_yaml["demo"]["reasoning"] == "high"
-    assert loaded_yaml["demo"]["agent_load"] == 1
-    assert loaded_yaml["demo"]["context"] == "no context"
+    assert loaded_yaml["demo"]["reasoning"] is None
+    assert loaded_yaml["demo"]["agent_load"] == 3
+    assert loaded_yaml["demo"]["context"] is None
     assert loaded_yaml["demo"]["context_path"] is None
-    assert loaded_yaml["demo"]["prompt"] == "go"
+    assert loaded_yaml["demo"]["prompt"] is None
     assert loaded_yaml["demo"]["prompt_path"] is None
 
 
@@ -51,10 +51,10 @@ other:
     loaded_yaml = yaml.safe_load(yaml_text)
     assert isinstance(loaded_yaml, dict)
     assert loaded_yaml["docs"]["update"]["job_name"] == "AI_Agents"
-    assert loaded_yaml["docs"]["update"]["agent_load"] == 1
-    assert loaded_yaml["docs"]["update"]["context"] == "no context"
+    assert loaded_yaml["docs"]["update"]["agent_load"] == 3
+    assert loaded_yaml["docs"]["update"]["context"] is None
     assert loaded_yaml["docs"]["update"]["context_path"] is None
-    assert loaded_yaml["docs"]["update"]["prompt"] == "go"
+    assert loaded_yaml["docs"]["update"]["prompt"] is None
     assert loaded_yaml["docs"]["update"]["prompt_path"] is None
 
 
@@ -73,8 +73,8 @@ def test_add_parallel_yaml_entry_generates_unique_placeholder_names(tmp_path: Pa
     first_entry_name = agents_parallel_add_entry.add_parallel_yaml_entry(yaml_path=yaml_path, entry_name=None)
     second_entry_name = agents_parallel_add_entry.add_parallel_yaml_entry(yaml_path=yaml_path, entry_name=None)
 
-    assert first_entry_name == "new_entry"
-    assert second_entry_name == "new_entry_2"
+    assert first_entry_name == "entryExample"
+    assert second_entry_name == "entryExample_2"
     yaml_text = yaml_path.read_text(encoding="utf-8")
-    assert "new_entry:\n  agent: codex\n" in yaml_text
-    assert "new_entry_2:\n  agent: codex\n" in yaml_text
+    assert "entryExample:\n  agent: codex\n" in yaml_text
+    assert "entryExample_2:\n  agent: codex\n" in yaml_text

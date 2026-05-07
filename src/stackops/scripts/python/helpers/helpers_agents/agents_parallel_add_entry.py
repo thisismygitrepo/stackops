@@ -3,12 +3,16 @@ from pathlib import Path
 
 import yaml
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ensure_parallel_yaml_exists
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ensure_parallel_yaml_exists, parallel_yaml_header_for_path
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import (
+    PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY,
+    PARALLEL_YAML_TEMPLATE_ENTRY_NAME,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 
 
 def add_parallel_yaml_entry(*, yaml_path: Path, entry_name: str | None) -> str:
-    ensure_parallel_yaml_exists(yaml_path=yaml_path)
+    _ensure_parallel_yaml_file_exists_for_add_entry(yaml_path=yaml_path)
     yaml_text = yaml_path.read_text(encoding="utf-8")
     raw_data = yaml.safe_load(yaml_text)
     resolved_entry_name = _resolve_added_entry_name(raw_data=raw_data, requested_entry_name=entry_name)
@@ -38,6 +42,16 @@ def ensure_parallel_yaml_entry_exists(*, yaml_path: Path, entry_name: str) -> bo
     return True
 
 
+def _ensure_parallel_yaml_file_exists_for_add_entry(*, yaml_path: Path) -> None:
+    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="parallel")
+    if yaml_path.exists():
+        if not yaml_path.is_file():
+            raise ValueError(f"parallel YAML path exists but is not a file: {yaml_path}")
+        return
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    yaml_path.write_text(parallel_yaml_header_for_path(yaml_path=yaml_path), encoding="utf-8")
+
+
 def _entry_name_segments(*, entry_name: str) -> list[str]:
     entry_segments = [segment.strip() for segment in entry_name.split(".") if segment.strip() != ""]
     if len(entry_segments) == 0:
@@ -51,10 +65,10 @@ def _resolve_added_entry_name(*, raw_data: object, requested_entry_name: str | N
 
     raw_mapping = _root_yaml_mapping(raw_data=raw_data)
     candidate_index = 1
-    candidate_name = "new_entry"
+    candidate_name = PARALLEL_YAML_TEMPLATE_ENTRY_NAME
     while candidate_name in raw_mapping:
         candidate_index += 1
-        candidate_name = f"new_entry_{candidate_index}"
+        candidate_name = f"{PARALLEL_YAML_TEMPLATE_ENTRY_NAME}_{candidate_index}"
     return candidate_name
 
 
@@ -67,6 +81,8 @@ def _root_yaml_mapping(*, raw_data: object) -> Mapping[str, object]:
 
 
 def _existing_prefix_length(*, raw_data: object, entry_segments: list[str], entry_name: str) -> int:
+    if raw_data is None:
+        return 0
     cursor = raw_data
     for index, entry_segment in enumerate(entry_segments):
         if not isinstance(cursor, Mapping):

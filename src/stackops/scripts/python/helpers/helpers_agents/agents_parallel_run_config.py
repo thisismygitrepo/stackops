@@ -8,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
     PARALLEL_CREATE_CONFIG_KEYS,
     PARALLEL_RUN_COMMAND_NAME,
     PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY,
+    PARALLEL_YAML_TEMPLATE_ENTRY_NAME,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
@@ -144,7 +145,7 @@ def parallel_yaml_header_for_path(*, yaml_path: Path) -> str:
 
 
 def parallel_yaml_template_for_path(*, yaml_path: Path) -> str:
-    yaml_body = yaml.safe_dump({"default": PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY}, sort_keys=False, default_flow_style=False)
+    yaml_body = yaml.safe_dump({PARALLEL_YAML_TEMPLATE_ENTRY_NAME: PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY}, sort_keys=False, default_flow_style=False)
     return f"{parallel_yaml_header_for_path(yaml_path=yaml_path)}{yaml_body}"
 
 
