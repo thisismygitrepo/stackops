@@ -82,16 +82,13 @@ def update_installer(
     reasoning_effort: Annotated[
         ReasoningEffort | None,
         typer.Option(
-            "--reasoning",
-            "-r",
-            help="Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.",
+            "--reasoning", "-r", help="Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default."
         ),
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option("--provider", "-v", help="Provider to use (if the agent supports many).")] = None,
     host: Annotated[HOST, typer.Option("--host", "-h", help="Machine to run agents on.")] = "local",
     context: Annotated[
-        str | None,
-        typer.Option("--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path."),
+        str | None, typer.Option("--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path.")
     ] = None,
     context_path: Annotated[
         str | None,
@@ -102,8 +99,7 @@ def update_installer(
         ),
     ] = None,
     separator: Annotated[
-        str,
-        typer.Option("--separator", "-s", help="Separator for context. Supports escaped values like '\\n'."),
+        str, typer.Option("--separator", "-s", help="Separator for context. Supports escaped values like '\\n'.")
     ] = UPDATE_INSTALLER_SEPARATOR,
     agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of tasks per prompt.")] = 10,
     prompt: Annotated[str | None, typer.Option("--prompt", "-p", help="Prompt prefix as string.")] = None,
@@ -117,22 +113,14 @@ def update_installer(
     ] = None,
     prompt_name: Annotated[str | None, typer.Option("--prompt-name", "-N", help="Prompt entry name from prompts YAML.")] = None,
     job_name: Annotated[str, typer.Option("--job-name", "-n", help="Job label and default output directory stem.")] = DEFAULT_INSTALLER_JOB_NAME,
-    join_prompt_and_context: Annotated[
-        bool,
-        typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context."),
-    ] = False,
+    join_prompt_and_context: Annotated[bool, typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
     run: Annotated[bool, typer.Option("--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
-    output_path: Annotated[
-        str | None,
-        typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json."),
-    ] = None,
+    output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json.")] = None,
     agents_dir: Annotated[
-        str | None,
-        typer.Option("--agents-dir", "-d", help="Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>."),
+        str | None, typer.Option("--agents-dir", "-d", help="Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>.")
     ] = None,
     interactive: Annotated[
-        bool,
-        typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters."),
+        bool, typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
     ] = False,
 ) -> None:
     repo_root = get_developer_repo_root()
