@@ -162,4 +162,5 @@ def update_installer(
             reasoning_effort=reasoning_effort,
             provider=provider,
             interactive=interactive,
+            run=False,
         )

@@ -170,6 +170,7 @@ def update_logic(
             reasoning_effort=reasoning_effort,
             provider=provider,
             interactive=interactive,
+            run=False,
         )
     finally:
         context_output_path.parent.mkdir(parents=True, exist_ok=True)

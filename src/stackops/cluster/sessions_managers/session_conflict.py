@@ -12,15 +12,15 @@ SessionConflictActionLoose = Literal[
     "restart", "r",
     "rename", "n",
     "error", "e",
-    "mergeNewWindowsOverwriteMatchingWindows", "m",
-    "mergeNewWindowsSkipMatchingWindows", "s",
+    "mergeOverwrite", "m",
+    "mergeSkip", "s",
 ]
 SessionConflictAction = Literal[
     "restart",
     "rename",
     "error",
-    "mergeNewWindowsOverwriteMatchingWindows",
-    "mergeNewWindowsSkipMatchingWindows",
+    "mergeOverwrite",
+    "mergeSkip",
 ]
 SessionConflictActionLoose2Strict: dict[SessionConflictActionLoose, SessionConflictAction] = {
     "restart": "restart",
@@ -29,10 +29,10 @@ SessionConflictActionLoose2Strict: dict[SessionConflictActionLoose, SessionConfl
     "n": "rename",
     "error": "error",
     "e": "error",
-    "mergeNewWindowsOverwriteMatchingWindows": "mergeNewWindowsOverwriteMatchingWindows",
-    "m": "mergeNewWindowsOverwriteMatchingWindows",
-    "mergeNewWindowsSkipMatchingWindows": "mergeNewWindowsSkipMatchingWindows",
-    "s": "mergeNewWindowsSkipMatchingWindows",
+    "mergeOverwrite": "mergeOverwrite",
+    "m": "mergeOverwrite",
+    "mergeSkip": "mergeSkip",
+    "s": "mergeSkip",
 }
 
 ConflictSource = Literal["existing", "duplicate"]
@@ -41,14 +41,14 @@ SUPPORTED_SESSION_CONFLICT_ACTIONS = frozenset(
         "restart",
         "rename",
         "error",
-        "mergeNewWindowsOverwriteMatchingWindows",
-        "mergeNewWindowsSkipMatchingWindows",
+        "mergeOverwrite",
+        "mergeSkip",
     }
 )
 MERGE_NEW_WINDOWS_SESSION_CONFLICT_ACTIONS = frozenset(
     {
-        "mergeNewWindowsOverwriteMatchingWindows",
-        "mergeNewWindowsSkipMatchingWindows",
+        "mergeOverwrite",
+        "mergeSkip",
     }
 )
 MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS = frozenset({"tmux", "windows-terminal"})
@@ -103,8 +103,8 @@ def _existing_conflict_hint(backend: SessionBackend) -> str:
     if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
         return (
             "Use --on-conflict restart, --on-conflict rename, "
-            "--on-conflict mergeNewWindowsOverwriteMatchingWindows, or "
-            "--on-conflict mergeNewWindowsSkipMatchingWindows."
+            "--on-conflict mergeOverwrite, or "
+            "--on-conflict mergeSkip."
         )
     return "Use --on-conflict restart or --on-conflict rename."
 
@@ -113,8 +113,8 @@ def _duplicate_conflict_hint(backend: SessionBackend) -> str:
     if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
         return (
             "Use unique layout names, --on-conflict rename, "
-            "--on-conflict mergeNewWindowsOverwriteMatchingWindows, or "
-            "--on-conflict mergeNewWindowsSkipMatchingWindows."
+            "--on-conflict mergeOverwrite, or "
+            "--on-conflict mergeSkip."
         )
     return "Use unique layout names or --on-conflict rename."
 
@@ -226,7 +226,7 @@ def build_session_launch_plan(
         )
 
         match on_conflict:
-            case "mergeNewWindowsOverwriteMatchingWindows":
+            case "mergeOverwrite":
                 should_restart_existing = (
                     backend == "windows-terminal"
                     and conflict_with_existing
@@ -245,7 +245,7 @@ def build_session_launch_plan(
                 )
                 planned_sessions.add(requested_name)
                 continue
-            case "mergeNewWindowsSkipMatchingWindows":
+            case "mergeSkip":
                 if backend == "windows-terminal" and conflict_with_existing:
                     plans.append(
                         _build_launch_plan(

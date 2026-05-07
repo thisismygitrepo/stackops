@@ -23,8 +23,8 @@ class TmuxSessionStatus(TypedDict):
 
 
 TmuxMergeConflictAction = Literal[
-    "mergeNewWindowsOverwriteMatchingWindows",
-    "mergeNewWindowsSkipMatchingWindows",
+    "mergeOverwrite",
+    "mergeSkip",
 ]
 
 
@@ -238,7 +238,7 @@ def build_tmux_merge_commands(
         window_exists = window_name in existing_window_names
 
         match on_conflict:
-            case "mergeNewWindowsSkipMatchingWindows":
+            case "mergeSkip":
                 if window_exists:
                     continue
                 commands.extend(
@@ -259,7 +259,7 @@ def build_tmux_merge_commands(
                             exit_mode=exit_mode,
                         )
                     )
-            case "mergeNewWindowsOverwriteMatchingWindows":
+            case "mergeOverwrite":
                 if window_exists:
                     commands.extend(
                         _build_replace_window_commands(

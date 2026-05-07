@@ -27,8 +27,8 @@ from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types imp
 console = Console()
 TMUX_MERGE_CONFLICT_ACTIONS = frozenset(
     {
-        "mergeNewWindowsOverwriteMatchingWindows",
-        "mergeNewWindowsSkipMatchingWindows",
+        "mergeOverwrite",
+        "mergeSkip",
     }
 )
 
@@ -146,7 +146,7 @@ class TmuxLayoutGenerator:
 
         if session_exists and on_conflict in TMUX_MERGE_CONFLICT_ACTIONS:
             match on_conflict:
-                case "mergeNewWindowsOverwriteMatchingWindows":
+                case "mergeOverwrite":
                     console.print(
                         f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
                         f"[yellow]'{self.session_name}'[/yellow] [yellow]and overwriting matching windows.[/yellow]"
@@ -154,10 +154,10 @@ class TmuxLayoutGenerator:
                     script_content = build_tmux_merge_script(
                         layout_config=self.layout_config,
                         session_name=self.session_name,
-                        on_conflict="mergeNewWindowsOverwriteMatchingWindows",
+                        on_conflict="mergeOverwrite",
                         exit_mode=self.exit_mode,
                     )
-                case "mergeNewWindowsSkipMatchingWindows":
+                case "mergeSkip":
                     console.print(
                         f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
                         f"[yellow]'{self.session_name}'[/yellow] [yellow]and skipping matching windows.[/yellow]"
@@ -165,7 +165,7 @@ class TmuxLayoutGenerator:
                     script_content = build_tmux_merge_script(
                         layout_config=self.layout_config,
                         session_name=self.session_name,
-                        on_conflict="mergeNewWindowsSkipMatchingWindows",
+                        on_conflict="mergeSkip",
                         exit_mode=self.exit_mode,
                     )
                 case _:

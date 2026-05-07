@@ -31,8 +31,8 @@ The session-manager layer takes `LayoutConfig` objects and turns them into runni
 | `error` | Fail if a requested session already exists or if two requested layouts target the same name |
 | `restart` | Reuse the requested name and restart an existing session when necessary |
 | `rename` | Keep the requested name as a base and allocate `name_1`, `name_2`, and so on |
-| `mergeNewWindowsOverwriteMatchingWindows` | Keep the requested session name and merge new windows into an existing tmux or Windows Terminal session, overwriting matching windows where supported |
-| `mergeNewWindowsSkipMatchingWindows` | Keep the requested session name and merge only missing windows where supported |
+| `mergeOverwrite` | Keep the requested session name and merge new windows into an existing tmux or Windows Terminal session, overwriting matching windows where supported |
+| `mergeSkip` | Keep the requested session name and merge only missing windows where supported |
 
 The two merge actions are only valid for the `tmux` and `windows-terminal` backends.
 

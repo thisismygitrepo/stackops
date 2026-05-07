@@ -49,7 +49,7 @@ def run_parallel_from_yaml(
         requested_name=config_name,
     )
     resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
-    _require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
+    require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
 
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
 
@@ -75,7 +75,7 @@ def run_parallel_from_yaml(
     )
 
 
-def _require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedParallelCreateValues) -> None:
+def require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedParallelCreateValues) -> None:
     if resolved.context is not None or resolved.context_path is not None:
         return
     raise ValueError(

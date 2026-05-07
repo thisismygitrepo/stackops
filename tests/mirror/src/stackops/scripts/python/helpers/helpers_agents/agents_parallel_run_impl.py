@@ -29,7 +29,7 @@ def _resolved_values_without_context() -> ResolvedParallelCreateValues:
 
 def test_require_explicit_parallel_context_rejects_missing_context() -> None:
     with pytest.raises(ValueError, match="Parallel run 'update-docs' does not define context or context_path"):
-        agents_parallel_run_impl._require_explicit_parallel_context(
+        agents_parallel_run_impl.require_explicit_parallel_context(
             selected_name="update-docs",
             resolved=_resolved_values_without_context(),
         )
@@ -58,7 +58,7 @@ def test_require_explicit_parallel_context_accepts_context_path() -> None:
         interactive=resolved.interactive,
     )
 
-    agents_parallel_run_impl._require_explicit_parallel_context(
+    agents_parallel_run_impl.require_explicit_parallel_context(
         selected_name="update-docs",
         resolved=resolved_with_context_path,
     )
