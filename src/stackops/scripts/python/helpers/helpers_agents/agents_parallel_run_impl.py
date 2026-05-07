@@ -68,6 +68,7 @@ def run_parallel_from_yaml(
         prompt_name=resolved.prompt_name,
         job_name=resolved.job_name,
         join_prompt_and_context=resolved.join_prompt_and_context,
+        run=resolved.run,
         output_path=resolved.output_path,
         agents_dir=resolved.agents_dir,
         interactive=resolved.interactive,

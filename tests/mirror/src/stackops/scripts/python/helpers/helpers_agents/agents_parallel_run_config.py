@@ -22,6 +22,7 @@ def _base_values() -> ParallelCreateValues:
         prompt_name=None,
         job_name="base_job",
         join_prompt_and_context=False,
+        run=False,
         output_path=None,
         agents_dir=None,
         interactive=False,
@@ -90,6 +91,7 @@ def test_merge_parallel_create_values_applies_overrides_and_decodes_separator() 
         prompt_name=None,
         job_name="override_job",
         join_prompt_and_context=True,
+        run=True,
         output_path="./layout.json",
         agents_dir="./agents",
         interactive=True,
@@ -106,6 +108,7 @@ def test_merge_parallel_create_values_applies_overrides_and_decodes_separator() 
     assert resolved.prompt_path == "./prompt.md"
     assert resolved.job_name == "override_job"
     assert resolved.join_prompt_and_context
+    assert resolved.run
     assert resolved.output_path == "./layout.json"
     assert resolved.agents_dir == "./agents"
     assert resolved.interactive
@@ -127,6 +130,7 @@ def test_merge_parallel_create_values_rejects_non_positive_agent_load() -> None:
         prompt_name=None,
         job_name=None,
         join_prompt_and_context=None,
+        run=None,
         output_path=None,
         agents_dir=None,
         interactive=None,

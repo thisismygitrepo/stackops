@@ -17,6 +17,7 @@ from stackops.utils.options_utils.textual_options_form_types import (
 
 EditableCreateOption: TypeAlias = Literal[
     "join_prompt_and_context",
+    "run",
     "output_path",
     "agents_dir",
     "host",
@@ -31,6 +32,7 @@ EditableCreateOption: TypeAlias = Literal[
 @dataclass(frozen=True, slots=True)
 class InteractiveCreateReviewOptions:
     join_prompt_and_context: bool
+    run: bool
     output_path: str | None
     agents_dir: str | None
     host: HOST
@@ -44,6 +46,7 @@ class InteractiveCreateReviewOptions:
 @dataclass(frozen=True, slots=True)
 class _CreateOptionsFormSelection:
     join_prompt_and_context: bool
+    run: bool
     output_path: str | None
     agents_dir: str | None
     host: HOST
@@ -121,6 +124,7 @@ def _build_review_option_labels(
     *,
     agent: AGENTS,
     join_prompt_and_context: bool,
+    run: bool,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -132,6 +136,7 @@ def _build_review_option_labels(
 ) -> dict[EditableCreateOption, str]:
     return {
         "join_prompt_and_context": f"join_prompt_and_context = {join_prompt_and_context}",
+        "run": f"run = {run}",
         "output_path": f"output_path = {_format_output_path_value(output_path)}",
         "agents_dir": f"agents_dir = {_format_agents_dir_value(agents_dir)}",
         "host": f"host = {host}",
@@ -168,6 +173,7 @@ def _build_create_options_form(
     *,
     agent: AGENTS,
     join_prompt_and_context: bool,
+    run: bool,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -189,6 +195,7 @@ def _build_create_options_form(
     review_options = _build_review_option_labels(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -202,6 +209,10 @@ def _build_create_options_form(
         review_options["join_prompt_and_context"]: _select_option_spec(
             default=join_prompt_and_context,
             options=_to_option_values([join_prompt_and_context, not join_prompt_and_context]),
+        ),
+        review_options["run"]: _select_option_spec(
+            default=run,
+            options=_to_option_values([run, not run]),
         ),
         review_options["output_path"]: _text_option_spec(
             default=output_path,
@@ -305,6 +316,7 @@ def _collect_create_options_form_selection(
     *,
     agent: AGENTS,
     join_prompt_and_context: bool,
+    run: bool,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -317,6 +329,7 @@ def _collect_create_options_form_selection(
     review_options = _build_review_option_labels(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -332,6 +345,7 @@ def _collect_create_options_form_selection(
             options=_build_create_options_form(
                 agent=agent,
                 join_prompt_and_context=join_prompt_and_context,
+                run=run,
                 output_path=output_path,
                 agents_dir=agents_dir,
                 host=host,
@@ -346,6 +360,7 @@ def _collect_create_options_form_selection(
         raise ValueError("Selection cancelled for create options") from exc
     return _CreateOptionsFormSelection(
         join_prompt_and_context=_require_bool_value(selected_values=selected_values, key=review_options["join_prompt_and_context"]),
+        run=_require_bool_value(selected_values=selected_values, key=review_options["run"]),
         output_path=_require_optional_text_value(selected_values=selected_values, key=review_options["output_path"]),
         agents_dir=_require_optional_text_value(selected_values=selected_values, key=review_options["agents_dir"]),
         host=_require_choice(selected_values=selected_values, key=review_options["host"], options=cast(tuple[HOST, ...], get_args(HOST))),
@@ -361,6 +376,7 @@ def collect_reviewed_create_options(
     *,
     agent: AGENTS,
     join_prompt_and_context: bool,
+    run: bool,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -377,6 +393,7 @@ def collect_reviewed_create_options(
     selection = _collect_create_options_form_selection(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -389,6 +406,7 @@ def collect_reviewed_create_options(
 
     return InteractiveCreateReviewOptions(
         join_prompt_and_context=selection.join_prompt_and_context,
+        run=selection.run,
         output_path=selection.output_path,
         agents_dir=selection.agents_dir,
         host=selection.host,

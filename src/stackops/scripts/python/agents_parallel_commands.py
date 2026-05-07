@@ -44,6 +44,7 @@ def agents_create(
         ),
     ] = "AI_Agents",
     join_prompt_and_context: Annotated[bool, typer.Option(..., "--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
+    run: Annotated[bool, typer.Option(..., "--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
     output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Path to write the layout.json file")] = None,
     agents_dir: Annotated[
         str | None,
@@ -73,6 +74,7 @@ def agents_create(
             prompt_name=prompt_name,
             job_name=job_name,
             join_prompt_and_context=join_prompt_and_context,
+            run=run,
             output_path=output_path,
             agents_dir=agents_dir,
             interactive=interactive,

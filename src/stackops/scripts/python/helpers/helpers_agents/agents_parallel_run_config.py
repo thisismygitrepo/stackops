@@ -33,6 +33,7 @@ class ParallelCreateValues:
     prompt_name: str | None
     job_name: str | None
     join_prompt_and_context: bool | None
+    run: bool | None
     output_path: str | None
     agents_dir: str | None
     interactive: bool | None
@@ -54,6 +55,7 @@ class ResolvedParallelCreateValues:
     prompt_name: str | None
     job_name: str
     join_prompt_and_context: bool
+    run: bool
     output_path: str | None
     agents_dir: str | None
     interactive: bool
@@ -75,6 +77,7 @@ def empty_parallel_create_values() -> ParallelCreateValues:
         prompt_name=None,
         job_name=None,
         join_prompt_and_context=None,
+        run=None,
         output_path=None,
         agents_dir=None,
         interactive=None,
@@ -90,6 +93,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
     join_prompt_and_context = (
         overrides.join_prompt_and_context if overrides.join_prompt_and_context is not None else base.join_prompt_and_context
     )
+    run = overrides.run if overrides.run is not None else base.run
     interactive = overrides.interactive if overrides.interactive is not None else base.interactive
     if agent_load is not None and agent_load <= 0:
         raise ValueError("agent_load must be a positive integer")
@@ -109,6 +113,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         prompt_name=overrides.prompt_name if overrides.prompt_name is not None else base.prompt_name,
         job_name="AI_Agents" if job_name is None else job_name,
         join_prompt_and_context=False if join_prompt_and_context is None else join_prompt_and_context,
+        run=False if run is None else run,
         output_path=overrides.output_path if overrides.output_path is not None else base.output_path,
         agents_dir=overrides.agents_dir if overrides.agents_dir is not None else base.agents_dir,
         interactive=False if interactive is None else interactive,
@@ -151,6 +156,7 @@ default:
   prompt_name: null
   job_name: default
   join_prompt_and_context: false
+  run: false
   output_path: null
   agents_dir: null
   interactive: false

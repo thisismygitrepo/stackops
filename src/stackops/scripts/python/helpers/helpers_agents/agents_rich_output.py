@@ -62,6 +62,7 @@ def build_agents_create_overview_panel(
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
     join_prompt_and_context: bool,
+    run: bool,
 ) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
@@ -76,6 +77,7 @@ def build_agents_create_overview_panel(
     table.add_row("Reasoning", _optional_label(value=reasoning_effort))
     table.add_row("Rows per agent", str(agent_load))
     table.add_row("Prompt mode", "joined prompt/context" if join_prompt_and_context else "separate prompt/material")
+    table.add_row("Run after create", str(run))
     return Panel(table, title="Agent Create", border_style="blue")
 
 
@@ -91,6 +93,7 @@ def show_agents_create_overview(
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
     join_prompt_and_context: bool,
+    run: bool,
 ) -> None:
     _CONSOLE.print(
         build_agents_create_overview_panel(
@@ -104,6 +107,7 @@ def show_agents_create_overview(
             reasoning_effort=reasoning_effort,
             agent_load=agent_load,
             join_prompt_and_context=join_prompt_and_context,
+            run=run,
         )
     )
 

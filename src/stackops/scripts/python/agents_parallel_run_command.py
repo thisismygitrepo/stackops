@@ -64,6 +64,10 @@ def run_parallel(
             help="Override whether to join prompt file to the context.",
         ),
     ] = None,
+    run: Annotated[
+        bool | None,
+        typer.Option(..., "--run/--no-run", help="Override whether to immediately launch the generated layout through terminal run."),
+    ] = None,
     output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Override layout.json output path.")] = None,
     agents_dir: Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Override exact directory to store agent files in.")] = None,
     interactive: Annotated[
@@ -94,6 +98,7 @@ def run_parallel(
                 prompt_name=prompt_name,
                 job_name=job_name,
                 join_prompt_and_context=join_prompt_and_context,
+                run=run,
                 output_path=output_path,
                 agents_dir=agents_dir,
                 interactive=interactive,

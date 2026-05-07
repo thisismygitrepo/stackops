@@ -23,6 +23,7 @@ PARALLEL_CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(
         "prompt_name",
         "job_name",
         "join_prompt_and_context",
+        "run",
         "output_path",
         "agents_dir",
         "interactive",
@@ -139,6 +140,10 @@ def _parallel_yaml_schema() -> JsonObject:
                     "job_name": _nullable_string_schema(description="Name of the generated agent job directory."),
                     "join_prompt_and_context": {
                         "description": "Whether to combine prompt and context before splitting work.",
+                        "type": ["boolean", "null"],
+                    },
+                    "run": {
+                        "description": "Whether to immediately launch the generated layout through terminal run.",
                         "type": ["boolean", "null"],
                     },
                     "output_path": _nullable_string_schema(description="Path where generated layout JSON is written."),

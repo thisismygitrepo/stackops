@@ -124,8 +124,8 @@ def share_terminal(
             resolved_ssl_cert = ssl_cert
             resolved_ssl_key = ssl_key
             ssl_args = ["--ssl", "--ssl-cert", resolved_ssl_cert, "--ssl-key", resolved_ssl_key]
-        if ssl_ca:
-            ssl_args.extend(["--ssl-ca", ssl_ca])
+            if ssl_ca:
+                ssl_args.extend(["--ssl-ca", ssl_ca])
 
     if start_command is None:
         import platform

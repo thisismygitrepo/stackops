@@ -31,6 +31,7 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
         prompt_name=_optional_string(mapping=raw_mapping, key="prompt_name"),
         job_name=_optional_string(mapping=raw_mapping, key="job_name"),
         join_prompt_and_context=_optional_bool(mapping=raw_mapping, key="join_prompt_and_context"),
+        run=_optional_bool(mapping=raw_mapping, key="run"),
         output_path=_optional_string(mapping=raw_mapping, key="output_path"),
         agents_dir=_optional_string(mapping=raw_mapping, key="agents_dir"),
         interactive=_optional_bool(mapping=raw_mapping, key="interactive"),
