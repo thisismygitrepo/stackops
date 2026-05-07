@@ -9,6 +9,7 @@ from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
 PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "custom", "c"]
+PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
 
 
 def _value_to_text(value: Any) -> str:
@@ -122,6 +123,63 @@ def _collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str,
     return candidates
 
 
+def _preview_prompt_entry_from_path(*, preview: str, yaml_path: Path) -> str:
+    return f"source_yaml: {yaml_path}\n\n{preview}"
+
+
+def _build_named_prompt_selection_maps(
+    existing_yaml_locations: list[tuple[str, Path]],
+) -> tuple[dict[str, str], dict[str, str]]:
+    candidate_name_counts: dict[str, int] = {}
+    yaml_data_by_location: list[tuple[str, Path, Any]] = []
+    for location_name, yaml_path in existing_yaml_locations:
+        from stackops.utils.files.read import read_yaml
+
+        yaml_data = read_yaml(yaml_path)
+        yaml_data_by_location.append((location_name, yaml_path, yaml_data))
+        for candidate_name in _collect_named_yaml_candidates(raw_data=yaml_data):
+            candidate_name_counts[candidate_name] = candidate_name_counts.get(candidate_name, 0) + 1
+
+    preview_map: dict[str, str] = {}
+    value_map: dict[str, str] = {}
+    for location_name, yaml_path, yaml_data in yaml_data_by_location:
+        entry_candidates = _collect_named_yaml_candidates(raw_data=yaml_data)
+        for candidate_name, candidate_preview in entry_candidates.items():
+            label = candidate_name
+            if candidate_name_counts[candidate_name] > 1:
+                label = f"{candidate_name}@{location_name}"
+            preview_map[label] = _preview_prompt_entry_from_path(preview=candidate_preview, yaml_path=yaml_path)
+            value_map[label] = candidate_preview
+    return preview_map, value_map
+
+
+def _build_prompt_selection_maps(
+    existing_yaml_locations: list[tuple[str, Path]],
+) -> tuple[dict[str, str], dict[str, str]]:
+    option_name_counts: dict[str, int] = {}
+    yaml_data_by_location: list[tuple[str, Path, Any]] = []
+    for location_name, yaml_path in existing_yaml_locations:
+        from stackops.utils.files.read import read_yaml
+
+        yaml_data = read_yaml(yaml_path)
+        yaml_data_by_location.append((location_name, yaml_path, yaml_data))
+        file_preview_map, _file_context_map = _extract_yaml_options(yaml_data)
+        for option_name in file_preview_map:
+            option_name_counts[option_name] = option_name_counts.get(option_name, 0) + 1
+
+    preview_map: dict[str, str] = {}
+    context_map: dict[str, str] = {}
+    for location_name, yaml_path, yaml_data in yaml_data_by_location:
+        file_preview_map, file_context_map = _extract_yaml_options(yaml_data)
+        for option_name, preview in file_preview_map.items():
+            label = option_name
+            if option_name_counts[option_name] > 1:
+                label = f"{option_name}@{location_name}"
+            preview_map[label] = _preview_prompt_entry_from_path(preview=preview, yaml_path=yaml_path)
+            context_map[label] = file_context_map[option_name]
+    return preview_map, context_map
+
+
 def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, CONFIG_ROOT, LIBRARY_ROOT
     from stackops.scripts.python.helpers.helpers_search.script_help import get_custom_roots
@@ -159,7 +217,6 @@ def resolve_prompts_yaml_paths(prompts_yaml_path: str | None, where: PROMPTS_WHE
 
 
 def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_name: str, where: PROMPTS_WHERE, entry_label: str) -> str:
-    from stackops.utils.files.read import read_yaml
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
@@ -175,6 +232,8 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
 
     found_entry = None
     for _, yaml_path in existing_yaml_locations:
+        from stackops.utils.files.read import read_yaml
+
         yaml_data = read_yaml(yaml_path)
         try:
             found_entry = _resolve_named_yaml_entry(raw_data=yaml_data, entry_name=entry_name, entry_label=entry_label)
@@ -184,17 +243,7 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
     if found_entry is not None:
         return found_entry
 
-    fuzzy_preview_map: dict[str, str] = {}
-    fuzzy_value_map: dict[str, str] = {}
-    for location_name, yaml_path in existing_yaml_locations:
-        yaml_data = read_yaml(yaml_path)
-        entry_candidates = _collect_named_yaml_candidates(raw_data=yaml_data)
-        for candidate_name, candidate_preview in entry_candidates.items():
-            label = f"{location_name}.{candidate_name}" if where in ("all", "a") else candidate_name
-            if label in fuzzy_preview_map:
-                label = f"{label}@{yaml_path.name}"
-            fuzzy_preview_map[label] = candidate_preview
-            fuzzy_value_map[label] = candidate_preview
+    fuzzy_preview_map, fuzzy_value_map = _build_named_prompt_selection_maps(existing_yaml_locations=existing_yaml_locations)
 
     searched = ", ".join(str(yaml_path) for _, yaml_path in existing_yaml_locations)
     if len(fuzzy_preview_map) == 0:
@@ -207,7 +256,7 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
         options_to_preview_mapping=fuzzy_preview_map,
         extension="yaml",
         multi=False,
-        preview_size_percent=45.0,
+        preview_size_percent=PROMPTS_PREVIEW_SIZE_PERCENT,
     )
     if chosen_key is None:
         raise ValueError(f"{entry_label} '{entry_name}' was not found in prompts YAML files: {searched} (interactive selection canceled)")
@@ -297,8 +346,6 @@ def resolve_context(
             entry_label="Context name",
         )
 
-    from stackops.utils.files.read import read_yaml
-
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
     if prompts_yaml_path is not None and len(yaml_locations) == 1:
         ensure_prompts_yaml_exists(yaml_path=yaml_locations[0][1])
@@ -310,22 +357,17 @@ def resolve_context(
         searched = ", ".join(str(yaml_path) for _, yaml_path in yaml_locations)
         raise ValueError(f"No prompts YAML files found for --where '{where}'. Searched: {searched}")
 
-    preview_map: dict[str, str] = {}
-    context_map: dict[str, str] = {}
-    for location_name, yaml_path in existing_yaml_locations:
-        yaml_data = read_yaml(yaml_path)
-        file_preview_map, file_context_map = _extract_yaml_options(yaml_data)
-        for key, preview in file_preview_map.items():
-            label = f"{location_name}.{key}" if where in ("all", "a") else key
-            if label in preview_map:
-                label = f"{label}@{yaml_path.name}"
-            preview_map[label] = preview
-            context_map[label] = file_context_map[key]
+    preview_map, context_map = _build_prompt_selection_maps(existing_yaml_locations=existing_yaml_locations)
     if len(preview_map) == 0:
         searched = ", ".join(str(yaml_path) for _, yaml_path in existing_yaml_locations)
         raise ValueError(f"No prompt entries found in prompts YAML files: {searched}")
 
-    chosen_key = choose_from_dict_with_preview(options_to_preview_mapping=preview_map, extension="yaml", multi=False, preview_size_percent=45.0)
+    chosen_key = choose_from_dict_with_preview(
+        options_to_preview_mapping=preview_map,
+        extension="yaml",
+        multi=False,
+        preview_size_percent=PROMPTS_PREVIEW_SIZE_PERCENT,
+    )
     if chosen_key is None:
         raise SystemExit(1)
     return context_map[chosen_key]
