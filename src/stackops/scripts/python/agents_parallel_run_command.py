@@ -15,7 +15,7 @@ def run_parallel(
         str | None,
         typer.Option(
             ...,
-            "--parallel-yaml-path",
+            "--yaml-path",
             "-y",
             help="YAML file containing named parallel runs. Auto-created with a template if missing.",
         ),
@@ -59,20 +59,20 @@ def run_parallel(
         bool | None,
         typer.Option(
             ...,
-            "--joined-prompt-context/--no-joined-prompt-context",
-            "-j/-J",
+            "--joined-prompt-context",
+            "-j",
             help="Override whether to join prompt file to the context.",
         ),
-    ] = None,
+    ] = True,
     run: Annotated[
         bool | None,
-        typer.Option(..., "--run/--no-run", help="Override whether to immediately launch the generated layout through terminal run."),
-    ] = None,
+        typer.Option(..., "--run", "-R", help="Override whether to immediately launch the generated layout through terminal run."),
+    ] = False,
     output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Override layout.json output path.")] = None,
     agents_dir: Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Override exact directory to store agent files in.")] = None,
     interactive: Annotated[
         bool | None,
-        typer.Option(..., "--interactive/--no-interactive", "-i/-I", help="Override whether to run create in interactive mode."),
+        typer.Option(..., "--interactive", "-i", help="Override whether to run create in interactive mode."),
     ] = None,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
