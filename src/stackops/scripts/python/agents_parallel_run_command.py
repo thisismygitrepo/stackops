@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 def run_parallel(
-    config_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Supports dot paths, e.g. docs.update.")] = None,
+    run_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Supports dot paths, e.g. docs.update.")] = None,
     parallel_yaml_path: Annotated[
         str | None,
         typer.Option(
@@ -31,6 +31,15 @@ def run_parallel(
     edit: Annotated[
         bool,
         typer.Option(..., "--edit", "-e", help="Open parallel YAML in an editor (hx preferred, nano fallback)."),
+    ] = False,
+    add_entry: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--add-entry",
+            "-A",
+            help="Append one default template entry to parallel YAML and open that file. If RUN_NAME is provided, use it as the new entry name.",
+        ),
     ] = False,
     agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help="Override agent type.")] = None,
     model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Override model.")] = None,
@@ -80,7 +89,7 @@ def run_parallel(
 
     try:
         run_parallel_from_yaml(
-            config_name=config_name,
+            config_name=run_name,
             parallel_yaml_path=parallel_yaml_path,
             where=where,
             overrides=ParallelCreateValues(
@@ -104,6 +113,7 @@ def run_parallel(
                 interactive=interactive,
             ),
             edit=edit,
+            add_entry=add_entry,
             show_parallel_yaml_format=show_parallel_yaml_format,
         )
     except ValueError as error:

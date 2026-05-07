@@ -24,6 +24,7 @@ def run_parallel_from_yaml(
     where: PARALLEL_RUNS_WHERE,
     overrides: ParallelCreateValues,
     edit: bool,
+    add_entry: bool,
     show_parallel_yaml_format: bool,
 ) -> None:
     yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, where=where)
@@ -33,6 +34,13 @@ def run_parallel_from_yaml(
         where=where,
     )
     _report_created_yaml_paths(created_yaml_paths=created_yaml_paths)
+    if add_entry:
+        _add_parallel_yaml_entry(yaml_locations=yaml_locations, config_name=config_name)
+        if show_parallel_yaml_format:
+            import typer
+
+            typer.echo(parallel_yaml_format_explanation(yaml_paths=yaml_locations))
+        return
     if edit:
         _edit_existing_parallel_yaml_files(yaml_locations=yaml_locations)
     if show_parallel_yaml_format:
@@ -41,7 +49,7 @@ def run_parallel_from_yaml(
         typer.echo(parallel_yaml_format_explanation(yaml_paths=yaml_locations))
 
     empty_overrides = empty_parallel_create_values()
-    if (edit or show_parallel_yaml_format or len(created_yaml_paths) > 0) and config_name is None and overrides == empty_overrides:
+    if (edit or add_entry or show_parallel_yaml_format or len(created_yaml_paths) > 0) and config_name is None and overrides == empty_overrides:
         return
 
     yaml_entries = _read_existing_parallel_yaml_entries(yaml_locations=yaml_locations)
@@ -116,6 +124,16 @@ def _ensure_writable_parallel_yaml_files(
     return created_yaml_paths
 
 
+def _add_parallel_yaml_entry(*, yaml_locations: list[tuple[str, Path]], config_name: str | None) -> None:
+    import typer
+    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry import add_parallel_yaml_entry
+
+    target_yaml_path = _select_parallel_yaml_entry_target(yaml_locations=yaml_locations)
+    added_entry_name = add_parallel_yaml_entry(yaml_path=target_yaml_path, entry_name=config_name)
+    typer.echo(f"Added parallel YAML entry '{added_entry_name}' to: {target_yaml_path}")
+    edit_parallel_yaml(yaml_path=target_yaml_path)
+
+
 def _report_created_yaml_paths(*, created_yaml_paths: list[Path]) -> None:
     if len(created_yaml_paths) == 0:
         return
@@ -143,3 +161,10 @@ def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path
         searched = "\n".join(str(yaml_path) for _location_name, yaml_path in yaml_locations)
         raise ValueError(f"No parallel YAML files found. Searched:\n{searched}")
     return yaml_entries
+
+
+def _select_parallel_yaml_entry_target(*, yaml_locations: list[tuple[str, Path]]) -> Path:
+    for _location_name, yaml_path in yaml_locations:
+        if yaml_path.exists() and yaml_path.is_file():
+            return yaml_path
+    return yaml_locations[0][1]
