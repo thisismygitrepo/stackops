@@ -14,3 +14,8 @@ def test_parallel_yaml_template_uses_reasoning_key_and_runtime_defaults(tmp_path
     assert "reasoning:" in yaml_text
     assert "reasoning_effort:" not in yaml_text
     assert "job_name: AI_Agents" in yaml_text
+    assert "context: no context" in yaml_text
+    assert "context_path: null" in yaml_text
+    assert "agent_load: 1" in yaml_text
+    assert "prompt: go" in yaml_text
+    assert "prompt_path: null" in yaml_text

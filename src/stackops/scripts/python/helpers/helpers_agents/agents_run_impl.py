@@ -15,7 +15,11 @@ from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
 )
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, normalize_reasoning_effort
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
+    ReasoningEffort,
+    copilot_reasoning_args,
+    normalize_reasoning_effort,
+)
 from stackops.utils.accessories import get_repo_root
 
 
@@ -78,9 +82,10 @@ def _build_pi_thinking_arg(reasoning_effort: ReasoningEffort | None, is_windows:
 
 
 def _build_copilot_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_windows: bool) -> str:
-    if reasoning_effort is None:
+    copilot_reasoning = copilot_reasoning_args(reasoning_effort=reasoning_effort)
+    if len(copilot_reasoning) == 0:
         return ""
-    return f" --reasoning {_quote_for_shell(reasoning_effort, is_windows=is_windows)}"
+    return f" {copilot_reasoning[0]} {_quote_for_shell(copilot_reasoning[1], is_windows=is_windows)}"
 
 
 def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:

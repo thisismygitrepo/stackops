@@ -47,17 +47,17 @@ Standard `parallel.yaml` shape:
 default:
   agent: codex
   model: null
-  reasoning_effort: high
+  reasoning: high
   provider: openai
   host: local
-  context: null
-  context_path: ./.ai/agents/default/context.md
+  context: no context
+  context_path: null
   separator: "\n@-@\n"
-  agent_load: 3
-  prompt: null
-  prompt_path: ./.ai/prompts/default.md
+  agent_load: 1
+  prompt: go
+  prompt_path: null
   prompt_name: null
-  job_name: default
+  job_name: AI_Agents
   join_prompt_and_context: false
   output_path: null
   agents_dir: null

@@ -18,6 +18,11 @@ def test_ensure_parallel_yaml_entry_exists_adds_top_level_entry(tmp_path: Path) 
     loaded_yaml = yaml.safe_load(yaml_text)
     assert isinstance(loaded_yaml, dict)
     assert loaded_yaml["demo"]["reasoning"] == "high"
+    assert loaded_yaml["demo"]["agent_load"] == 1
+    assert loaded_yaml["demo"]["context"] == "no context"
+    assert loaded_yaml["demo"]["context_path"] is None
+    assert loaded_yaml["demo"]["prompt"] == "go"
+    assert loaded_yaml["demo"]["prompt_path"] is None
 
 
 def test_ensure_parallel_yaml_entry_exists_adds_nested_entry_without_rewriting_siblings(tmp_path: Path) -> None:
@@ -46,6 +51,11 @@ other:
     loaded_yaml = yaml.safe_load(yaml_text)
     assert isinstance(loaded_yaml, dict)
     assert loaded_yaml["docs"]["update"]["job_name"] == "AI_Agents"
+    assert loaded_yaml["docs"]["update"]["agent_load"] == 1
+    assert loaded_yaml["docs"]["update"]["context"] == "no context"
+    assert loaded_yaml["docs"]["update"]["context_path"] is None
+    assert loaded_yaml["docs"]["update"]["prompt"] == "go"
+    assert loaded_yaml["docs"]["update"]["prompt_path"] is None
 
 
 def test_ensure_parallel_yaml_entry_exists_is_noop_for_existing_entry(tmp_path: Path) -> None:

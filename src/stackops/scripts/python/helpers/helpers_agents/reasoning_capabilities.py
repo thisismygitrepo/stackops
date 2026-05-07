@@ -76,6 +76,12 @@ def normalize_reasoning_effort(*, agent: AGENTS, reasoning_effort: ReasoningEffo
     return None
 
 
+def copilot_reasoning_args(*, reasoning_effort: ReasoningEffort | None) -> tuple[str, ...]:
+    if reasoning_effort is None:
+        return ()
+    return ("--reasoning-effort", reasoning_effort)
+
+
 def resolve_reasoning(shortcut: ReasoningShortcut, agent: AGENTS) -> ReasoningEffort:
     effort = _EFFORT_BY_SHORTCUT[shortcut]
     support = reasoning_support(agent=agent)

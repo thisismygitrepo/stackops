@@ -52,6 +52,17 @@ def build_tmux_attach_or_switch_command(session_name: str) -> str:
     )
 
 
+def build_tmux_new_session_command() -> str:
+    return (
+        'if [ -n "${TMUX:-}" ]; then '
+        """new_session_name=$(tmux new-session -d -P -F '#{session_name}') && """
+        'tmux switch-client -t "$new_session_name"; '
+        "else "
+        "tmux new-session; "
+        "fi"
+    )
+
+
 def validate_layout_config(layout_config: LayoutConfig) -> None:
     if not layout_config["layoutTabs"]:
         raise ValueError("Layout must contain at least one tab")

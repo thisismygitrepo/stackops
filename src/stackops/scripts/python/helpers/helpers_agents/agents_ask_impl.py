@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from pathlib import Path
 from platform import system
-import shlex
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
@@ -61,29 +60,8 @@ def _compose_ask_prompt_text(prompt_parts: Sequence[str], file_prompt: Path | No
 --- END FILE {resolved_prompt_path} ---"""
 
 
-def _quote_for_shell(value: str, *, is_windows: bool) -> str:
-    if is_windows:
-        return "'" + value.replace("'", "''") + "'"
-    return shlex.quote(value)
-
-
-def _build_copilot_ask_command(prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
-    is_windows = system() == "Windows"
-    prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
-    if is_windows:
-        prompt_content_expr = f"(Get-Content -Raw {prompt_file_q})"
-    else:
-        prompt_content_expr = f'"$(cat {prompt_file_q})"'
-    reasoning_arg = ""
-    if reasoning_effort is not None:
-        reasoning_arg = f" --reasoning {reasoning_effort}"
-    return f"copilot{reasoning_arg} -p {prompt_content_expr} --yolo"
-
-
 def build_ask_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
-    if agent == "copilot":
-        return _build_copilot_ask_command(prompt_file=prompt_file, reasoning_effort=normalized_reasoning_effort)
     return build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=normalized_reasoning_effort)
 
 
