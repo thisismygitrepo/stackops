@@ -129,6 +129,7 @@ def update_logic(
         bool,
         typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context."),
     ] = False,
+    run: Annotated[bool, typer.Option("--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
     output_path: Annotated[
         str | None,
         typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json."),
@@ -170,7 +171,7 @@ def update_logic(
             reasoning_effort=reasoning_effort,
             provider=provider,
             interactive=interactive,
-            run=False,
+            run=run,
         )
     finally:
         context_output_path.parent.mkdir(parents=True, exist_ok=True)

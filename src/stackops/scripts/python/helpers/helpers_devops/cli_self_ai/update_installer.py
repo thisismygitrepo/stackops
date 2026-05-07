@@ -121,6 +121,7 @@ def update_installer(
         bool,
         typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context."),
     ] = False,
+    run: Annotated[bool, typer.Option("--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
     output_path: Annotated[
         str | None,
         typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json."),
@@ -162,5 +163,5 @@ def update_installer(
             reasoning_effort=reasoning_effort,
             provider=provider,
             interactive=interactive,
-            run=False,
+            run=run,
         )
