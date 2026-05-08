@@ -64,7 +64,7 @@ desc = "Search then edit"
 [[mgr.prepend_keymap]]
 on   = ["p", "s"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -s "$0"'
-desc = "Symantic search"
+desc = "Semantic search"
 [[mgr.prepend_keymap]]
 on   = ["p", "a"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -a "$0"'

@@ -21,7 +21,7 @@ def test_seek_passes_max_files_to_impl(monkeypatch: pytest.MonkeyPatch) -> None:
         path: str,
         search_term: str,
         ast: bool,
-        symantic: bool,
+        semantic: bool,
         max_files: int,
         extension: str | None,
         file: bool,
@@ -30,12 +30,12 @@ def test_seek_passes_max_files_to_impl(monkeypatch: pytest.MonkeyPatch) -> None:
         edit: bool,
         install_dependencies: bool,
     ) -> None:
-        _ = path, search_term, ast, symantic, extension, file, dotfiles, rga, edit, install_dependencies
+        _ = path, search_term, ast, semantic, extension, file, dotfiles, rga, edit, install_dependencies
         captured_limits.append(max_files)
 
     monkeypatch.setattr("stackops.scripts.python.helpers.helpers_seek.seek_impl.seek", fake_seek)
 
-    result = CliRunner().invoke(seek_app.get_app(), ["--symantic", "-m", "900"])
+    result = CliRunner().invoke(seek_app.get_app(), ["--semantic", "-m", "900"])
 
     assert result.exit_code == 0
     assert captured_limits == [900]

@@ -11,7 +11,7 @@ def seek(
     path: str,
     search_term: str,
     ast: bool,
-    symantic: bool,
+    semantic: bool,
     max_files: int,
     extension: str | None,
     file: bool,
@@ -25,9 +25,9 @@ def seek(
     if install_dependencies:
         _install_dependencies()
         return
-    if symantic:
+    if semantic:
         _ = extension
-        _run_symantic_search(path=path, query=search_term, extension=extension, max_files=max_files)
+        _run_semantic_search(path=path, query=search_term, extension=extension, max_files=max_files)
         return
     if ast:
         _run_ast_search(path=path)
@@ -155,22 +155,22 @@ tv `
     return code
 
 
-def _build_symantic_limit_message(text_file_count: int, max_files: int) -> str:
+def _build_semantic_limit_message(text_file_count: int, max_files: int) -> str:
     return (
         f"⚠️ Found {text_file_count} text files, which exceeds the current --max-files limit of {max_files}. "
         "Use --max-files N (or 0 to disable the limit) to search more files, or provide a more specific path or file extension filter."
     )
 
 
-def _run_symantic_search(path: str, query: str, extension: str | None, max_files: int) -> None:
-    """Run symantic search."""
+def _run_semantic_search(path: str, query: str, extension: str | None, max_files: int) -> None:
+    """Run semantic search."""
     from stackops.utils.installer_utils.installer_cli import install_if_missing
 
     install_if_missing(which="semtools", binary_name=None, verbose=True)
     if query == "":
-        # print("❓ No search term provided for symantic search.")
+        # print("❓ No search term provided for semantic search.")
         # return
-        query = input("Enter search term for symantic search: ")
+        query = input("Enter search term for semantic search: ")
 
     from pathlib import Path
 
@@ -192,7 +192,7 @@ def _run_symantic_search(path: str, query: str, extension: str | None, max_files
 
     from typing import TypedDict
 
-    class SymanticSearchResult(TypedDict):
+    class SemanticSearchResult(TypedDict):
         filename: str
         start_line_number: int
         end_line_number: int
@@ -200,7 +200,7 @@ def _run_symantic_search(path: str, query: str, extension: str | None, max_files
         distance: float
         content: str
 
-    def symantic_search(query: str, text_files: list[str]) -> list[SymanticSearchResult]:
+    def semantic_search(query: str, text_files: list[str]) -> list[SemanticSearchResult]:
         # semtools search "hi" ./devcontainer.json --json
         import random
 
@@ -208,7 +208,7 @@ def _run_symantic_search(path: str, query: str, extension: str | None, max_files
         import string
 
         random_suffix += "".join(random.choices(string.ascii_letters + string.digits, k=8))
-        results_file = Path.home().joinpath("tmp_results", "tmp_text", "symantic_search", "results_" + random_suffix + ".json")
+        results_file = Path.home().joinpath("tmp_results", "tmp_text", "semantic_search", "results_" + random_suffix + ".json")
         results_file.parent.mkdir(parents=True, exist_ok=True)
         command = f"""semtools search "{query}" {" ".join(text_files)} --json --top-k 5 --n-lines 10 > {results_file}"""
         import subprocess
@@ -217,13 +217,13 @@ def _run_symantic_search(path: str, query: str, extension: str | None, max_files
         import json
 
         results_json = results_file.read_text(encoding="utf-8")
-        results: list[SymanticSearchResult] = json.loads(results_json)["results"]
+        results: list[SemanticSearchResult] = json.loads(results_json)["results"]
         return results
 
     if max_files != 0 and len(text_files) > max_files:
-        print(_build_symantic_limit_message(text_file_count=len(text_files), max_files=max_files))
+        print(_build_semantic_limit_message(text_file_count=len(text_files), max_files=max_files))
         return
-    results = symantic_search(query=query, text_files=text_files)
+    results = semantic_search(query=query, text_files=text_files)
 
     results_as_dict = {
         res["content"]: res["content"]

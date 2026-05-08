@@ -24,7 +24,7 @@ seek [OPTIONS] [PATH] [SEARCH_TERM]
 The current implementation resolves modes in this order:
 
 1. `--install-req`
-2. `--symantic`
+2. `--semantic`
 3. `--ast`
 4. `--file`
 5. default text search
@@ -38,7 +38,7 @@ That means `seek path query --file --ast` will still take the AST path, and `--i
 | Option | Short | Description |
 | --- | --- | --- |
 | `--ast` | `-a` | Run AST or tree-sitter symbol search |
-| `--symantic` | `-s` | Run the semantic-symbol helper workflow |
+| `--semantic` | `-s` | Run the semantic-symbol helper workflow |
 | `--extension TEXT` | `-E` | Filter file discovery by extension such as `.py` |
 | `--file` | `-f` | File search mode |
 | `--dotfiles` | `-d` | Toggle the dotfile-inclusive file-search path |
@@ -84,9 +84,9 @@ When standard input is piped in and `PATH` is a directory, `seek` captures stdin
 - end line
 - docstring
 
-### `--symantic`
+### `--semantic`
 
-`--symantic` runs the semantic helper workflow:
+`--semantic` runs the semantic helper workflow:
 
 - prompts for a query if `SEARCH_TERM` is empty
 - limits the search set with `--extension` when provided
@@ -127,7 +127,7 @@ seek src --file --edit
 seek src --ast
 
 # Semantic helper search
-seek src parser --symantic --extension .py
+seek src parser --semantic --extension .py
 
 # ripgrep-all text search
 seek docs invoice --rga

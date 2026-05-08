@@ -16,7 +16,7 @@ command show stats and rop index
 
 learn from my style of building apps like this #file:seek.py 
 
-and add option when building index to say --symantic (means use ai locall embedding to build the index)
+and add option when building index to say --semantic (means use ai locall embedding to build the index)
 
 in all cases we should be able to pass
 MEILI_URL="http://localhost:7700" (default)

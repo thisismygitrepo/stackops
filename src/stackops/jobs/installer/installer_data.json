@@ -1121,7 +1121,7 @@
       "appName": "meilisearch",
       "license": "MIT AND BUSL-1.1",
       "repoURL": "https://github.com/meilisearch/meilisearch",
-      "doc": "🔍 symantic search at lightening speed",
+      "doc": "🔍 semantic search at lightening speed",
       "fileNamePattern": {
         "amd64": {
           "linux": "meilisearch-linux-amd64",
