@@ -44,23 +44,23 @@ run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire "$0"'
 desc = "Run fire on hovered file"
 
 [[mgr.prepend_keymap]]
-on   = ["P", "c"]
+on   = ["p", "c"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek "$0"'
 desc = "Search contents"
 [[mgr.prepend_keymap]]
-on   = ["P", "f"]
+on   = ["p", "f"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -f "$0"'
 desc = "Search files"
 [[mgr.prepend_keymap]]
-on   = ["P", "e"]
+on   = ["p", "e"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -e "$0"'
 desc = "Search then edit"
 [[mgr.prepend_keymap]]
-on   = ["P", "s"]
+on   = ["p", "s"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -s "$0"'
 desc = "Symantic search"
 [[mgr.prepend_keymap]]
-on   = ["P", "a"]
+on   = ["p", "a"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -a "$0"'
 desc = "Symbol search"
 

@@ -12,6 +12,7 @@ def seek(
     search_term: str,
     ast: bool,
     symantic: bool,
+    symantic_max_files: int,
     extension: str | None,
     file: bool,
     dotfiles: bool,
@@ -26,7 +27,7 @@ def seek(
         return
     if symantic:
         _ = extension
-        _run_symantic_search(path=path, query=search_term, extension=extension)
+        _run_symantic_search(path=path, query=search_term, extension=extension, symantic_max_files=symantic_max_files)
         return
     if ast:
         _run_ast_search(path=path)
@@ -74,6 +75,7 @@ def _install_dependencies() -> None:
     install_if_missing(which="fd", binary_name=None, verbose=True)
     install_if_missing(which="rg", binary_name=None, verbose=True)
     install_if_missing(which="rga", binary_name=None, verbose=True)
+    install_if_missing(which="semtools", binary_name=None, verbose=True)
 
 
 def search_file_with_context(path: str, is_temp_file: bool, edit: bool) -> str:
@@ -153,8 +155,18 @@ tv `
     return code
 
 
-def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
+def _build_symantic_limit_message(text_file_count: int, symantic_max_files: int) -> str:
+    return (
+        f"⚠️ Found {text_file_count} text files, which exceeds the current --symantic-max-files limit of {symantic_max_files}. "
+        "Use --symantic-max-files N (or 0 to disable the limit) to search more files, or provide a more specific path or file extension filter."
+    )
+
+
+def _run_symantic_search(path: str, query: str, extension: str | None, symantic_max_files: int) -> None:
     """Run symantic search."""
+    from stackops.utils.installer_utils.installer_cli import install_if_missing
+
+    install_if_missing(which="semtools", binary_name=None, verbose=True)
     if query == "":
         # print("❓ No search term provided for symantic search.")
         # return
@@ -204,16 +216,13 @@ def _run_symantic_search(path: str, query: str, extension: str | None) -> None:
         subprocess.run(command, shell=True, check=True)
         import json
 
-        with open(results_file, "r", encoding="utf-8") as f:
-            results_json = f.read()
+        results_json = results_file.read_text(encoding="utf-8")
         results: list[SymanticSearchResult] = json.loads(results_json)["results"]
         return results
 
-    if len(text_files) > 50:
-        print(
-            f"⚠️ Found {len(text_files)} text files, which may take a while to search through symantically. Consider providing a more specific path or file extension filter."
-        )
-        return None
+    if symantic_max_files != 0 and len(text_files) > symantic_max_files:
+        print(_build_symantic_limit_message(text_file_count=len(text_files), symantic_max_files=symantic_max_files))
+        return
     results = symantic_search(query=query, text_files=text_files)
 
     results_as_dict = {
