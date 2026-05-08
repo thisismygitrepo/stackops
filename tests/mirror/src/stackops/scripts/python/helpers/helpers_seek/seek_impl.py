@@ -19,10 +19,10 @@ def test_run_symantic_search_stops_at_configured_limit(
 
     monkeypatch.setattr("stackops.utils.installer_utils.installer_cli.install_if_missing", _fake_install_if_missing)
 
-    seek_impl._run_symantic_search(path=str(tmp_path), query="hello", extension=".py", symantic_max_files=2)
+    seek_impl._run_symantic_search(path=str(tmp_path), query="hello", extension=".py", max_files=2)
 
     captured = capsys.readouterr()
-    assert "--symantic-max-files limit of 2" in captured.out
+    assert "--max-files limit of 2" in captured.out
 
 
 def test_run_symantic_search_allows_disabling_limit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -74,7 +74,7 @@ def test_run_symantic_search_allows_disabling_limit(tmp_path: Path, monkeypatch:
     monkeypatch.setattr("subprocess.run", fake_run)
     monkeypatch.setattr("stackops.utils.options_utils.tv_options.choose_from_dict_with_preview", fake_choose_from_dict_with_preview)
 
-    seek_impl._run_symantic_search(path=str(tmp_path), query="hello", extension=".py", symantic_max_files=0)
+    seek_impl._run_symantic_search(path=str(tmp_path), query="hello", extension=".py", max_files=0)
 
     assert len(captured_options) == 1
     assert """print("hello")""" in captured_options[0]

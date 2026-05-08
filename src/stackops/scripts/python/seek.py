@@ -19,22 +19,22 @@ def seek(
     search_term: Annotated[str, typer.Argument(help="Initial search term to seed the interactive search")] = "",
     ast: Annotated[bool, typer.Option(..., "--ast", "-a", help="The abstract syntax tree search/ tree sitter search of symbols")] = False,
     symantic: Annotated[bool, typer.Option(..., "--symantic", "-s", help="The symantic search of symbols")] = False,
-    symantic_max_files: Annotated[
-        int,
-        typer.Option(
-            ...,
-            "--symantic-max-files",
-            "--semantic-max-files",
-            help="Maximum number of files to include in --symantic search. Use 0 to disable the limit.",
-            min=0,
-        ),
-    ] = 50,
     extension: Annotated[str | None, typer.Option(..., "--extension", "-E", help="File extension to filter by (e.g., .py, .js)")] = None,
     file: Annotated[bool, typer.Option(..., "--file", "-f", help="File search using fzf")] = False,
     dotfiles: Annotated[bool, typer.Option(..., "--dotfiles", "-d", help="Include dotfiles in search")] = False,
     rga: Annotated[bool, typer.Option(..., "--rga", "-A", help="Use ripgrep-all for searching all (non text files) instead of ripgrep")] = False,
     edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open selection in editor (helix)")] = False,
     install_dependencies: Annotated[bool, typer.Option(..., "--install-req", "-i", help="Install required dependencies if missing")] = False,
+    max_files: Annotated[
+        int,
+        typer.Option(
+            ...,
+            "--max-files",
+            "-m",
+            help="Maximum files for --symantic search. Use 0 to disable the limit.",
+            min=0,
+        ),
+    ] = 50,
 ) -> None:
     """seek across files, text matches, and code symbols."""
     from stackops.scripts.python.helpers.helpers_seek.seek_impl import seek as impl
@@ -46,7 +46,7 @@ def seek(
         search_term=resolved_search_term,
         ast=ast,
         symantic=symantic,
-        symantic_max_files=symantic_max_files,
+        max_files=max_files,
         extension=extension,
         file=file,
         dotfiles=dotfiles,

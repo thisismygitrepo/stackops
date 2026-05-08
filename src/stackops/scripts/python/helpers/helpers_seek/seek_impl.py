@@ -12,7 +12,7 @@ def seek(
     search_term: str,
     ast: bool,
     symantic: bool,
-    symantic_max_files: int,
+    max_files: int,
     extension: str | None,
     file: bool,
     dotfiles: bool,
@@ -27,7 +27,7 @@ def seek(
         return
     if symantic:
         _ = extension
-        _run_symantic_search(path=path, query=search_term, extension=extension, symantic_max_files=symantic_max_files)
+        _run_symantic_search(path=path, query=search_term, extension=extension, max_files=max_files)
         return
     if ast:
         _run_ast_search(path=path)
@@ -155,14 +155,14 @@ tv `
     return code
 
 
-def _build_symantic_limit_message(text_file_count: int, symantic_max_files: int) -> str:
+def _build_symantic_limit_message(text_file_count: int, max_files: int) -> str:
     return (
-        f"⚠️ Found {text_file_count} text files, which exceeds the current --symantic-max-files limit of {symantic_max_files}. "
-        "Use --symantic-max-files N (or 0 to disable the limit) to search more files, or provide a more specific path or file extension filter."
+        f"⚠️ Found {text_file_count} text files, which exceeds the current --max-files limit of {max_files}. "
+        "Use --max-files N (or 0 to disable the limit) to search more files, or provide a more specific path or file extension filter."
     )
 
 
-def _run_symantic_search(path: str, query: str, extension: str | None, symantic_max_files: int) -> None:
+def _run_symantic_search(path: str, query: str, extension: str | None, max_files: int) -> None:
     """Run symantic search."""
     from stackops.utils.installer_utils.installer_cli import install_if_missing
 
@@ -220,8 +220,8 @@ def _run_symantic_search(path: str, query: str, extension: str | None, symantic_
         results: list[SymanticSearchResult] = json.loads(results_json)["results"]
         return results
 
-    if symantic_max_files != 0 and len(text_files) > symantic_max_files:
-        print(_build_symantic_limit_message(text_file_count=len(text_files), symantic_max_files=symantic_max_files))
+    if max_files != 0 and len(text_files) > max_files:
+        print(_build_symantic_limit_message(text_file_count=len(text_files), max_files=max_files))
         return
     results = symantic_search(query=query, text_files=text_files)
 
