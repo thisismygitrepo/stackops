@@ -1,23 +1,22 @@
 from pathlib import Path
 
-import pytest
-
-from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
+from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
 
 
-def test_build_agent_command_adds_reasoning_for_copilot(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("stackops.scripts.python.helpers.helpers_agents.agents_run_impl.resolve_agent_launch_prefix", lambda agent, repo_root: [])
-    monkeypatch.setattr("stackops.scripts.python.helpers.helpers_agents.agents_run_impl.get_repo_root", lambda _path: None)
+def test_build_agent_command_translates_copilot_reasoning_flag() -> None:
+    command_line = agents_run_impl.build_agent_command(agent="copilot", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="high")
 
-    command = build_agent_command(agent="copilot", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="high")
-
-    assert "--reasoning high" in command
+    assert "--reasoning-effort high" in command_line
+    assert "--reasoning high" not in command_line
 
 
-def test_build_agent_command_ignores_unsupported_reasoning(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("stackops.scripts.python.helpers.helpers_agents.agents_run_impl.resolve_agent_launch_prefix", lambda agent, repo_root: [])
-    monkeypatch.setattr("stackops.scripts.python.helpers.helpers_agents.agents_run_impl.get_repo_root", lambda _path: None)
+def test_should_scaffold_prompts_yaml_prefers_repo_for_default_all() -> None:
+    assert agents_run_impl._should_scaffold_prompts_yaml(location_name="repo", prompts_yaml_path=None, where="all") is True
+    assert agents_run_impl._should_scaffold_prompts_yaml(location_name="private", prompts_yaml_path=None, where="all") is False
 
-    command = build_agent_command(agent="claude", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="high")
 
-    assert "--reasoning" not in command
+def test_should_scaffold_prompts_yaml_only_creates_requested_non_repo_locations() -> None:
+    assert agents_run_impl._should_scaffold_prompts_yaml(location_name="private", prompts_yaml_path=None, where="private") is True
+    assert agents_run_impl._should_scaffold_prompts_yaml(location_name="public", prompts_yaml_path=None, where="public") is True
+    assert agents_run_impl._should_scaffold_prompts_yaml(location_name="library", prompts_yaml_path=None, where="library") is False
+    assert agents_run_impl._should_scaffold_prompts_yaml(location_name="repo", prompts_yaml_path="custom.yaml", where="all") is True

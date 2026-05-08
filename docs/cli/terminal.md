@@ -52,7 +52,7 @@ terminal run [OPTIONS]
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
 | `--backend` | `-b` | `tmux`, `zellij`, `windows-terminal`, or `auto` |
-| `--on-conflict` | `-o` | `error`, `restart`, `rename`, `mergeNewWindowsOverwriteMatchingWindows`, or `mergeNewWindowsSkipMatchingWindows` |
+| `--on-conflict` | `-o` | `error`, `restart`, `rename`, `mergeOverwrite`, or `mergeSkip` |
 | `--exit` | `-e` | `backToShell`, `terminate`, or `killWindow` after each command exits |
 | `--monitor` | `-m` | Monitor launched sessions for completion |
 | `--kill-upon-completion` | `-k` | Kill sessions after monitored completion |

@@ -63,7 +63,7 @@ def run(
     parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
 
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux and Windows Terminal.")] = "error",
+    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal.")] = "error",
     exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
@@ -72,8 +72,8 @@ def run(
     """Launch selected layouts from a layout configuration file.
 
     Use --on-conflict to choose behavior when a target session already exists:
-    error, restart, rename, mergeNewWindowsOverwriteMatchingWindows, or
-    mergeNewWindowsSkipMatchingWindows. Those two merge policies are
+    error, restart, rename, mergeOverwrite, or
+    mergeSkip. Those two merge policies are
     supported for tmux and Windows Terminal.
     Use `run-all` for the paced whole-file dynamic scheduler.
 
@@ -109,7 +109,7 @@ def run_all(
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeNewWindowsOverwriteMatchingWindows and mergeNewWindowsSkipMatchingWindows are supported for tmux.")] = "error",
+    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.")] = "error",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
     """Run every tab from every layout in a layout configuration file at a controlled pace.

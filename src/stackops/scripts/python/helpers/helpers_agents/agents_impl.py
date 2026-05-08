@@ -41,16 +41,17 @@ def agents_create(
     job_name: str | None,
 
     join_prompt_and_context: bool,
+    run: bool,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
-    reasoning_effort: ReasoningEffort | None,
+    reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
 
     interactive: bool,
 ) -> None:
     """Create agents layout file, ready to run."""
-    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
+    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
         main(
@@ -68,6 +69,7 @@ def agents_create(
             prompt_name=prompt_name,
             job_name=job_name,
             join_prompt_and_context=join_prompt_and_context,
+            run=run,
             output_path=output_path,
             agents_dir=agents_dir,
         )
@@ -116,6 +118,7 @@ def agents_create(
         reasoning_effort=normalized_reasoning_effort,
         agent_load=agent_load,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
     )
 
     prompt_input = resolve_prompt_input(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
@@ -182,6 +185,7 @@ def agents_create(
         ),
         job_name=job_name_resolved,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
     )
     show_created_artifacts_panel(
         repo_root=workspace_root,
@@ -190,6 +194,33 @@ def agents_create(
         artifacts_dir=create_artifacts.artifacts_dir,
         recreate_script_path=create_artifacts.recreate_script_path,
         agent_count=len(prompt_directories),
+    )
+    if run:
+        _run_generated_layout(layout_output_path=layout_output_path.resolve())
+
+
+def _run_generated_layout(*, layout_output_path: Path) -> None:
+    import typer
+    from typer.main import get_command
+
+    from stackops.scripts.python.terminal import get_app, run as terminal_run
+
+    terminal_run(
+        ctx=typer.Context(get_command(get_app())),
+        layouts_file=str(layout_output_path),
+        test_layout=False,
+        choose_layouts=None,
+        choose_tabs=None,
+        sleep_inbetween=1.0,
+        max_tabs=100,
+        max_layouts=25,
+        monitor=False,
+        parallel_layouts=None,
+        backend="tmux",
+        on_conflict="restart",
+        exit_mode="backToShell",
+        kill_upon_completion=False,
+        subsitute_home=False,
     )
 
 

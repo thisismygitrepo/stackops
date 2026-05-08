@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=./parallel.schema.json
+
 # parallel.yaml used by `agents parallel run-parallel`
 # Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
 # Each run entry uses the same option names as `agents parallel create`.
@@ -7,12 +9,12 @@ default:
   reasoning_effort: high
   provider: openai
   host: local
-  context: null
-  context_path: ./.ai/agents/default/context.md
+  context: no context
+  context_path: null
   separator: \n@-@\n
-  agent_load: 3
-  prompt: null
-  prompt_path: ./.ai/prompts/default.md
+  agent_load: 1
+  prompt: go
+  prompt_path: null
   prompt_name: null
   job_name: default
   join_prompt_and_context: false

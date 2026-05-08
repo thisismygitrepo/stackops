@@ -10,12 +10,12 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 def run_parallel(
-    config_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Supports dot paths, e.g. docs.update.")] = None,
+    run_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Supports dot paths, e.g. docs.update.")] = None,
     parallel_yaml_path: Annotated[
         str | None,
         typer.Option(
             ...,
-            "--parallel-yaml-path",
+            "--yaml-path",
             "-y",
             help="YAML file containing named parallel runs. Auto-created with a template if missing.",
         ),
@@ -31,6 +31,15 @@ def run_parallel(
     edit: Annotated[
         bool,
         typer.Option(..., "--edit", "-e", help="Open parallel YAML in an editor (hx preferred, nano fallback)."),
+    ] = False,
+    add_entry: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--add-entry",
+            "-A",
+            help="Append one default template entry to parallel YAML and open that file. If RUN_NAME is provided, use it as the new entry name.",
+        ),
     ] = False,
     agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help="Override agent type.")] = None,
     model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Override model.")] = None,
@@ -59,16 +68,20 @@ def run_parallel(
         bool | None,
         typer.Option(
             ...,
-            "--joined-prompt-context/--no-joined-prompt-context",
-            "-j/-J",
+            "--joined-prompt-context",
+            "-j",
             help="Override whether to join prompt file to the context.",
         ),
-    ] = None,
+    ] = True,
+    run: Annotated[
+        bool | None,
+        typer.Option(..., "--run", "-R", help="Override whether to immediately launch the generated layout through terminal run."),
+    ] = False,
     output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Override layout.json output path.")] = None,
     agents_dir: Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Override exact directory to store agent files in.")] = None,
     interactive: Annotated[
         bool | None,
-        typer.Option(..., "--interactive/--no-interactive", "-i/-I", help="Override whether to run create in interactive mode."),
+        typer.Option(..., "--interactive", "-i", help="Override whether to run create in interactive mode."),
     ] = None,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
@@ -76,7 +89,7 @@ def run_parallel(
 
     try:
         run_parallel_from_yaml(
-            config_name=config_name,
+            config_name=run_name,
             parallel_yaml_path=parallel_yaml_path,
             where=where,
             overrides=ParallelCreateValues(
@@ -94,11 +107,13 @@ def run_parallel(
                 prompt_name=prompt_name,
                 job_name=job_name,
                 join_prompt_and_context=join_prompt_and_context,
+                run=run,
                 output_path=output_path,
                 agents_dir=agents_dir,
                 interactive=interactive,
             ),
             edit=edit,
+            add_entry=add_entry,
             show_parallel_yaml_format=show_parallel_yaml_format,
         )
     except ValueError as error:

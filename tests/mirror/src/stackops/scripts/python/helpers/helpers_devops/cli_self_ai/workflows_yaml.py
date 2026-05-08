@@ -61,10 +61,11 @@ update-docs:
             prompt_name=None,
             job_name=update_installer.DEFAULT_INSTALLER_JOB_NAME,
             join_prompt_and_context=False,
+            run=False,
             output_path=str(tmp_path / ".ai" / "agents" / update_installer.DEFAULT_INSTALLER_JOB_NAME / "layout.json"),
             agents_dir=str(tmp_path / ".ai" / "agents" / update_installer.DEFAULT_INSTALLER_JOB_NAME),
             host="local",
-            reasoning_effort=None,
+            reasoning=None,
             provider=None,
             interactive=False,
         )
@@ -82,10 +83,11 @@ update-docs:
             prompt_name=None,
             job_name=update_test.DEFAULT_TEST_JOB_NAME,
             join_prompt_and_context=False,
+            run=False,
             output_path=str(tmp_path / ".ai" / "agents" / update_test.DEFAULT_TEST_JOB_NAME / "layout.json"),
             agents_dir=str(tmp_path / ".ai" / "agents" / update_test.DEFAULT_TEST_JOB_NAME),
             host="local",
-            reasoning_effort=None,
+            reasoning=None,
             provider=None,
             interactive=False,
         )
@@ -103,10 +105,11 @@ update-docs:
             prompt_name=None,
             job_name=update_docs.DEFAULT_DOCS_JOB_NAME,
             join_prompt_and_context=False,
+            run=False,
             output_path=str(tmp_path / ".ai" / "agents" / update_docs.DEFAULT_DOCS_JOB_NAME / "layout.json"),
             agents_dir=str(tmp_path / ".ai" / "agents" / update_docs.DEFAULT_DOCS_JOB_NAME),
             host="local",
-            reasoning_effort=None,
+            reasoning=None,
             provider=None,
             interactive=False,
         )
@@ -124,10 +127,11 @@ update-docs:
             prompt_name=None,
             job_name=update_logic.DEFAULT_LOGIC_JOB_NAME,
             join_prompt_and_context=False,
+            run=False,
             output_path=str(tmp_path / ".ai" / "agents" / update_logic.DEFAULT_LOGIC_JOB_NAME / "layout.json"),
             agents_dir=str(tmp_path / ".ai" / "agents" / update_logic.DEFAULT_LOGIC_JOB_NAME),
             host="local",
-            reasoning_effort=None,
+            reasoning=None,
             provider=None,
             interactive=False,
         )
@@ -151,6 +155,7 @@ update-docs:
     update_test_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-test")
     assert "context" not in update_test_entry
     assert "context_path" not in update_test_entry
+    assert "reasoning" in update_test_entry
     assert update_test_entry["agents_dir"] == "./.ai/agents/updateTests"
     assert update_test_entry["output_path"] == "./.ai/agents/updateTests/layout.json"
     assert update_test_entry["agent_load"] == 10

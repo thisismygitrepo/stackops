@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./prompts.schema.json
+# prompts.yaml used by `agents run`
+# Top-level keys show up in interactive selection.
+# Nested keys can be selected via --context-name with dot-path syntax (example: team.backend).
+# Values should be prompt/context text (plain strings or multiline `|` blocks).
+default: |
+  You are a helpful assistant.
+team:
+  backend: |
+    You are helping with backend engineering tasks.
+  frontend: |
+    You are helping with frontend engineering tasks.

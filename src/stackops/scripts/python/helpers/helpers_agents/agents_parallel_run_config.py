@@ -1,19 +1,24 @@
+import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Literal, TypeAlias
 
-from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import (
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import (
+    PARALLEL_CREATE_COMMAND_NAME,
     PARALLEL_CREATE_CONFIG_KEYS,
-    ensure_stackops_yaml_schema_exists,
+    PARALLEL_RUN_COMMAND_NAME,
+    PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY,
+    PARALLEL_YAML_TEMPLATE_ENTRY_NAME,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
 PARALLEL_RUNS_WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+ParallelYamlEntry: TypeAlias = tuple[str, Path, object]
 _PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
-_REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
 CREATE_CONFIG_KEYS: Final[frozenset[str]] = PARALLEL_CREATE_CONFIG_KEYS
 
 
@@ -33,6 +38,7 @@ class ParallelCreateValues:
     prompt_name: str | None
     job_name: str | None
     join_prompt_and_context: bool | None
+    run: bool | None
     output_path: str | None
     agents_dir: str | None
     interactive: bool | None
@@ -54,6 +60,7 @@ class ResolvedParallelCreateValues:
     prompt_name: str | None
     job_name: str
     join_prompt_and_context: bool
+    run: bool
     output_path: str | None
     agents_dir: str | None
     interactive: bool
@@ -75,6 +82,7 @@ def empty_parallel_create_values() -> ParallelCreateValues:
         prompt_name=None,
         job_name=None,
         join_prompt_and_context=None,
+        run=None,
         output_path=None,
         agents_dir=None,
         interactive=None,
@@ -90,6 +98,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
     join_prompt_and_context = (
         overrides.join_prompt_and_context if overrides.join_prompt_and_context is not None else base.join_prompt_and_context
     )
+    run = overrides.run if overrides.run is not None else base.run
     interactive = overrides.interactive if overrides.interactive is not None else base.interactive
     if agent_load is not None and agent_load <= 0:
         raise ValueError("agent_load must be a positive integer")
@@ -109,6 +118,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         prompt_name=overrides.prompt_name if overrides.prompt_name is not None else base.prompt_name,
         job_name="AI_Agents" if job_name is None else job_name,
         join_prompt_and_context=False if join_prompt_and_context is None else join_prompt_and_context,
+        run=False if run is None else run,
         output_path=overrides.output_path if overrides.output_path is not None else base.output_path,
         agents_dir=overrides.agents_dir if overrides.agents_dir is not None else base.agents_dir,
         interactive=False if interactive is None else interactive,
@@ -128,44 +138,25 @@ def parallel_yaml_template() -> str:
 
 def parallel_yaml_header_for_path(*, yaml_path: Path) -> str:
     return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
-# parallel.yaml used by `agents parallel run-parallel`
+# parallel.yaml used by `{PARALLEL_RUN_COMMAND_NAME}`
 # Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
-# Each run entry uses the same option names as `agents parallel create`.
+# Each run entry uses the same option names as `{PARALLEL_CREATE_COMMAND_NAME}`.
 """
 
 
 def parallel_yaml_template_for_path(*, yaml_path: Path) -> str:
-    return f"""{parallel_yaml_header_for_path(yaml_path=yaml_path)}
-default:
-  agent: codex
-  model: null
-  reasoning_effort: high
-  provider: openai
-  host: local
-  context: null
-  context_path: ./.ai/agents/default/context.md
-  separator: "\\n@-@\\n"
-  agent_load: 3
-  prompt: null
-  prompt_path: ./.ai/prompts/default.md
-  prompt_name: null
-  job_name: default
-  join_prompt_and_context: false
-  output_path: null
-  agents_dir: null
-  interactive: false
-"""
+    yaml_body = yaml.safe_dump({PARALLEL_YAML_TEMPLATE_ENTRY_NAME: PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY}, sort_keys=False, default_flow_style=False)
+    return f"{parallel_yaml_header_for_path(yaml_path=yaml_path)}{yaml_body}"
 
 
 def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE) -> list[tuple[str, Path]]:
     if parallel_yaml_path is not None:
         return [("explicit", Path(parallel_yaml_path).expanduser().resolve())]
 
-    from stackops.utils.accessories import get_repo_root
+    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
 
-    repo_root = get_repo_root(Path.cwd())
-    repo_yaml = None if repo_root is None else repo_root.resolve() / _REPO_STACKOPS_DIRECTORY_NAME / _PARALLEL_YAML_FILE_NAME
+    repo_yaml = current_repo_stackops_path(path_kind="parallel_yaml")
     private_yaml = DOTFILES_STACKOPS_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     public_yaml = CONFIG_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     library_yaml = LIBRARY_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
@@ -177,9 +168,7 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALL
                 return paths
             return [("repo", repo_yaml)] + paths
         case "repo" | "r":
-            if repo_yaml is None:
-                raise ValueError("--where repo requires running inside a git repository")
-            return [("repo", repo_yaml)]
+            return [("repo", require_current_repo_stackops_path(path_kind="parallel_yaml"))]
         case "private" | "p":
             return [("private", private_yaml)]
         case "public" | "b":

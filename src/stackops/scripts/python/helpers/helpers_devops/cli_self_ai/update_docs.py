@@ -119,6 +119,7 @@ def update_docs(
     prompt_name: Annotated[str | None, typer.Option("--prompt-name", "-N", help="Prompt entry name from prompts YAML.")] = None,
     job_name: Annotated[str, typer.Option("--job-name", "-n", help="Job label and default output directory stem.")] = DEFAULT_DOCS_JOB_NAME,
     join_prompt_and_context: Annotated[bool, typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
+    run: Annotated[bool, typer.Option("--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
     output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json.")] = None,
     agents_dir: Annotated[
         str | None, typer.Option("--agents-dir", "-d", help="Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>.")
@@ -154,9 +155,10 @@ def update_docs(
             output_path=str(resolved_output_path),
             agents_dir=str(resolved_agents_dir),
             host=host,
-            reasoning_effort=reasoning_effort,
+            reasoning=reasoning_effort,
             provider=provider,
             interactive=interactive,
+            run=run,
         )
     finally:
         context_output_path.parent.mkdir(parents=True, exist_ok=True)

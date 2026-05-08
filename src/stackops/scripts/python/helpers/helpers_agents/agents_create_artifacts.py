@@ -88,6 +88,7 @@ def _build_recreate_command_args(
     context_recreate_path: Path,
     job_name: str,
     join_prompt_and_context: bool,
+    run: bool,
     layout_output_path: Path,
     agents_dir: Path,
 ) -> list[str]:
@@ -128,6 +129,8 @@ def _build_recreate_command_args(
         command.extend(["--provider", provider])
     if join_prompt_and_context:
         command.append("--joined-prompt-context")
+    if run:
+        command.append("--run")
     return command
 
 
@@ -198,6 +201,7 @@ def write_create_artifacts(
     context: CreateContextArtifactsInput,
     job_name: str,
     join_prompt_and_context: bool,
+    run: bool,
 ) -> CreateArtifactsOutput:
     artifacts_dir = agents_dir / ".create"
     if artifacts_dir.exists():
@@ -230,6 +234,7 @@ def write_create_artifacts(
         context_recreate_path=context_recreate_path,
         job_name=job_name,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
         layout_output_path=layout_output_path,
         agents_dir=agents_dir,
     )
@@ -264,6 +269,7 @@ def write_create_artifacts(
         "separator": separator,
         "separator_cli_value": _separator_cli_value(separator),
         "join_prompt_and_context": join_prompt_and_context,
+        "run": run,
         "prompt": {
             "source_kind": prompt.source_kind,
             "source_path": None if prompt.source_path is None else str(prompt.source_path),

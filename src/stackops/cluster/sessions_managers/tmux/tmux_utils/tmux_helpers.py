@@ -23,8 +23,8 @@ class TmuxSessionStatus(TypedDict):
 
 
 TmuxMergeConflictAction = Literal[
-    "mergeNewWindowsOverwriteMatchingWindows",
-    "mergeNewWindowsSkipMatchingWindows",
+    "mergeOverwrite",
+    "mergeSkip",
 ]
 
 
@@ -48,6 +48,17 @@ def build_tmux_attach_or_switch_command(session_name: str) -> str:
         f"tmux switch-client -t {quoted_session_name}; "
         "else "
         f"tmux attach -t {quoted_session_name}; "
+        "fi"
+    )
+
+
+def build_tmux_new_session_command() -> str:
+    return (
+        'if [ -n "${TMUX:-}" ]; then '
+        """new_session_name=$(tmux new-session -d -P -F '#{session_name}') && """
+        'tmux switch-client -t "$new_session_name"; '
+        "else "
+        "tmux new-session; "
         "fi"
     )
 
@@ -238,7 +249,7 @@ def build_tmux_merge_commands(
         window_exists = window_name in existing_window_names
 
         match on_conflict:
-            case "mergeNewWindowsSkipMatchingWindows":
+            case "mergeSkip":
                 if window_exists:
                     continue
                 commands.extend(
@@ -259,7 +270,7 @@ def build_tmux_merge_commands(
                             exit_mode=exit_mode,
                         )
                     )
-            case "mergeNewWindowsOverwriteMatchingWindows":
+            case "mergeOverwrite":
                 if window_exists:
                     commands.extend(
                         _build_replace_window_commands(

@@ -97,7 +97,7 @@ def _build_captured_workflow_entry(
     entry: ParallelWorkflowEntry = {
         "agent": captured_values.agent,
         "model": captured_values.model,
-        "reasoning_effort": captured_values.reasoning_effort,
+        "reasoning": captured_values.reasoning_effort,
         "provider": captured_values.provider,
         "host": captured_values.host,
         "separator": _yaml_separator_value(separator=_require_string(value=captured_values.separator, field_name="separator")),

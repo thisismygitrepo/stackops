@@ -69,7 +69,7 @@ def choose_session(
     )
 
     if len(sessions) == 0:
-        return ("run_script", "tmux new-session")
+        return ("run_script", new_session_script(kill_all=False))
     if window:
         option_to_script, options_to_preview_mapping = build_window_target_options(
             sessions=sessions,
@@ -82,10 +82,10 @@ def choose_session(
         if len(option_to_script) == 1:
             return ("run_script", next(iter(option_to_script.values())))
         options_to_preview_mapping[NEW_SESSION_LABEL] = (
-            "backend: tmux\naction: create a fresh session\n\ntmux new-session"
+            f"backend: tmux\naction: create a fresh session\n\n{new_session_script(kill_all=False)}"
         )
         options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
-            "backend: tmux\naction: kill the tmux server, then start a new session\n\ntmux kill-server\ntmux new-session"
+            f"backend: tmux\naction: kill the tmux server, then start a new session\n\n{new_session_script(kill_all=True)}"
         )
         selection = interactive_choose_with_preview(
             msg="Choose a tmux window or pane to attach to:",
@@ -96,16 +96,18 @@ def choose_session(
         if selection == NEW_SESSION_LABEL:
             return ("run_script", new_session_script(kill_all=kill_all))
         if selection == KILL_ALL_AND_NEW_LABEL:
-            return ("run_script", "tmux kill-server\ntmux new-session")
+            return ("run_script", new_session_script(kill_all=True))
         script = option_to_script.get(selection)
         if script is None:
             return ("error", f"Unknown tmux target selected: {selection}")
         return ("run_script", script)
 
     options_to_preview_mapping = {session_name: _build_preview(session_name) for session_name in sessions}
-    options_to_preview_mapping[NEW_SESSION_LABEL] = "backend: tmux\naction: create a fresh session\n\ntmux new-session"
+    options_to_preview_mapping[NEW_SESSION_LABEL] = (
+        f"backend: tmux\naction: create a fresh session\n\n{new_session_script(kill_all=False)}"
+    )
     options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
-        "backend: tmux\naction: kill the tmux server, then start a new session\n\ntmux kill-server\ntmux new-session"
+        f"backend: tmux\naction: kill the tmux server, then start a new session\n\n{new_session_script(kill_all=True)}"
     )
     session_name = interactive_choose_with_preview(
         msg="Choose a tmux session to attach to:",
@@ -116,7 +118,7 @@ def choose_session(
     if session_name == NEW_SESSION_LABEL:
         return ("run_script", new_session_script(kill_all=kill_all))
     if session_name == KILL_ALL_AND_NEW_LABEL:
-        return ("run_script", "tmux kill-server\ntmux new-session")
+        return ("run_script", new_session_script(kill_all=True))
     return ("run_script", build_tmux_attach_or_switch_command(session_name=session_name))
 
 

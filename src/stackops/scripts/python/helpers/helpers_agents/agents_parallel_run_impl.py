@@ -5,6 +5,7 @@ from pathlib import Path
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
     PARALLEL_RUNS_WHERE,
     ParallelCreateValues,
+    ParallelYamlEntry,
     empty_parallel_create_values,
     ensure_parallel_yaml_exists,
     merge_parallel_create_values,
@@ -23,15 +24,25 @@ def run_parallel_from_yaml(
     where: PARALLEL_RUNS_WHERE,
     overrides: ParallelCreateValues,
     edit: bool,
+    add_entry: bool,
     show_parallel_yaml_format: bool,
 ) -> None:
     yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, where=where)
-    created_yaml_paths = _ensure_writable_parallel_yaml_files(
-        yaml_locations=yaml_locations,
-        parallel_yaml_path=parallel_yaml_path,
-        where=where,
-    )
+    created_yaml_paths: list[Path] = []
+    if not add_entry:
+        created_yaml_paths = _ensure_writable_parallel_yaml_files(
+            yaml_locations=yaml_locations,
+            parallel_yaml_path=parallel_yaml_path,
+            where=where,
+        )
     _report_created_yaml_paths(created_yaml_paths=created_yaml_paths)
+    if add_entry:
+        _add_parallel_yaml_entry(yaml_locations=yaml_locations, config_name=config_name)
+        if show_parallel_yaml_format:
+            import typer
+
+            typer.echo(parallel_yaml_format_explanation(yaml_paths=yaml_locations))
+        return
     if edit:
         _edit_existing_parallel_yaml_files(yaml_locations=yaml_locations)
     if show_parallel_yaml_format:
@@ -40,7 +51,7 @@ def run_parallel_from_yaml(
         typer.echo(parallel_yaml_format_explanation(yaml_paths=yaml_locations))
 
     empty_overrides = empty_parallel_create_values()
-    if (edit or show_parallel_yaml_format or len(created_yaml_paths) > 0) and config_name is None and overrides == empty_overrides:
+    if (edit or add_entry or show_parallel_yaml_format or len(created_yaml_paths) > 0) and config_name is None and overrides == empty_overrides:
         return
 
     yaml_entries = _read_existing_parallel_yaml_entries(yaml_locations=yaml_locations)
@@ -49,14 +60,14 @@ def run_parallel_from_yaml(
         requested_name=config_name,
     )
     resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
-    _require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
+    require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
 
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
 
     agents_create(
         agent=resolved.agent,
         model=resolved.model,
-        reasoning_effort=resolved.reasoning_effort,
+        reasoning=resolved.reasoning_effort,
         provider=resolved.provider,
         host=resolved.host,
         context=resolved.context,
@@ -68,13 +79,14 @@ def run_parallel_from_yaml(
         prompt_name=resolved.prompt_name,
         job_name=resolved.job_name,
         join_prompt_and_context=resolved.join_prompt_and_context,
+        run=resolved.run,
         output_path=resolved.output_path,
         agents_dir=resolved.agents_dir,
         interactive=resolved.interactive,
     )
 
 
-def _require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedParallelCreateValues) -> None:
+def require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedParallelCreateValues) -> None:
     if resolved.context is not None or resolved.context_path is not None:
         return
     raise ValueError(
@@ -101,17 +113,21 @@ def _ensure_writable_parallel_yaml_files(
     *, yaml_locations: list[tuple[str, Path]], parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE
 ) -> list[Path]:
     created_yaml_paths: list[Path] = []
-    has_existing_yaml = any(yaml_path.exists() and yaml_path.is_file() for _location_name, yaml_path in yaml_locations)
     for location_name, yaml_path in yaml_locations:
-        should_create = (
-            parallel_yaml_path is not None
-            or (where in ("all", "a") and not has_existing_yaml and location_name == "repo")
-            or (where in ("repo", "r") and location_name == "repo")
-            or (where in ("private", "p", "public", "b") and location_name in ("private", "public"))
-        )
+        should_create = _should_scaffold_parallel_yaml(location_name=location_name, parallel_yaml_path=parallel_yaml_path, where=where)
         if should_create and ensure_parallel_yaml_exists(yaml_path=yaml_path):
             created_yaml_paths.append(yaml_path)
     return created_yaml_paths
+
+
+def _add_parallel_yaml_entry(*, yaml_locations: list[tuple[str, Path]], config_name: str | None) -> None:
+    import typer
+    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry import add_parallel_yaml_entry
+
+    target_yaml_path = _select_parallel_yaml_entry_target(yaml_locations=yaml_locations)
+    added_entry_name = add_parallel_yaml_entry(yaml_path=target_yaml_path, entry_name=config_name)
+    typer.echo(f"Added parallel YAML entry '{added_entry_name}' to: {target_yaml_path}")
+    edit_parallel_yaml(yaml_path=target_yaml_path)
 
 
 def _report_created_yaml_paths(*, created_yaml_paths: list[Path]) -> None:
@@ -129,15 +145,36 @@ def _edit_existing_parallel_yaml_files(*, yaml_locations: list[tuple[str, Path]]
         edit_parallel_yaml(yaml_path=yaml_path)
 
 
-def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path]]) -> list[tuple[str, object]]:
+def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path]]) -> list[ParallelYamlEntry]:
     from stackops.utils.files.read import read_yaml
 
-    yaml_entries: list[tuple[str, object]] = []
+    yaml_entries: list[ParallelYamlEntry] = []
     for location_name, yaml_path in yaml_locations:
         if yaml_path.exists() and yaml_path.is_file():
             raw_data: object = read_yaml(yaml_path)
-            yaml_entries.append((location_name, raw_data))
+            yaml_entries.append((location_name, yaml_path, raw_data))
     if len(yaml_entries) == 0:
         searched = "\n".join(str(yaml_path) for _location_name, yaml_path in yaml_locations)
         raise ValueError(f"No parallel YAML files found. Searched:\n{searched}")
     return yaml_entries
+
+
+def _select_parallel_yaml_entry_target(*, yaml_locations: list[tuple[str, Path]]) -> Path:
+    for _location_name, yaml_path in yaml_locations:
+        if yaml_path.exists() and yaml_path.is_file():
+            return yaml_path
+    return yaml_locations[0][1]
+
+
+def _should_scaffold_parallel_yaml(*, location_name: str, parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE) -> bool:
+    if parallel_yaml_path is not None:
+        return True
+    match where:
+        case "all" | "a" | "repo" | "r":
+            return location_name == "repo"
+        case "private" | "p":
+            return location_name == "private"
+        case "public" | "b":
+            return location_name == "public"
+        case "library" | "l":
+            return False

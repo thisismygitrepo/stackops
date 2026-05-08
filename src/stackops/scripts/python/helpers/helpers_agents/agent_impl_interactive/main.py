@@ -47,6 +47,7 @@ class InteractiveAgentCreateParams:
     prompt_name: str | None
     job_name: str
     join_prompt_and_context: bool
+    run: bool
     output_path: str | None
     agents_dir: str | None
 
@@ -55,6 +56,7 @@ def _collect_inputs(
     *,
     agent: AGENTS,
     join_prompt_and_context: bool,
+    run: bool,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -81,6 +83,7 @@ def _collect_inputs(
     reviewed_create_options = collect_reviewed_create_options(
         agent=agent_selected,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -147,6 +150,7 @@ def _collect_inputs(
         prompt_name=prompt_name_selected,
         job_name=reviewed_create_options.job_name,
         join_prompt_and_context=reviewed_create_options.join_prompt_and_context,
+        run=reviewed_create_options.run,
         output_path=reviewed_create_options.output_path,
         agents_dir=reviewed_create_options.agents_dir,
     )
@@ -174,12 +178,14 @@ def main(
     prompt_name: str | None = None,
     job_name: str | None = None,
     join_prompt_and_context: bool = False,
+    run: bool = False,
     output_path: str | None = None,
     agents_dir: str | None = None,
 ) -> None:
     collected = _collect_inputs(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
+        run=run,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -201,7 +207,7 @@ def main(
         agent=collected.agent,
         host=collected.host,
         model=collected.model,
-        reasoning_effort=collected.reasoning_effort,
+        reasoning=collected.reasoning_effort,
         provider=collected.provider,
         agent_load=collected.agent_load,
         context=collected.context,
@@ -212,6 +218,7 @@ def main(
         prompt_name=collected.prompt_name,
         job_name=collected.job_name,
         join_prompt_and_context=collected.join_prompt_and_context,
+        run=collected.run,
         output_path=collected.output_path,
         agents_dir=collected.agents_dir,
         interactive=False,

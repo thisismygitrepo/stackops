@@ -1,12 +1,18 @@
 from collections.abc import Mapping
-from typing import cast, get_args
+from pathlib import Path
+from typing import Final, cast, get_args
 
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
     CREATE_CONFIG_KEYS,
     ParallelCreateValues,
+    ParallelYamlEntry,
 )
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+
+
+PARALLEL_RUN_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 
 
 def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> ParallelCreateValues:
@@ -16,24 +22,46 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
         joined_keys = ", ".join(unknown_keys)
         raise ValueError(f"Unknown keys in parallel run '{entry_name}': {joined_keys}")
 
+    parsed_entry: ParallelCreateYamlEntry = {
+        "agent": _optional_agent(mapping=raw_mapping, key="agent"),
+        "model": _optional_string(mapping=raw_mapping, key="model"),
+        "reasoning": _optional_reasoning(mapping=raw_mapping, key="reasoning"),
+        "provider": _optional_provider(mapping=raw_mapping, key="provider"),
+        "host": _optional_host(mapping=raw_mapping, key="host"),
+        "context": _optional_string(mapping=raw_mapping, key="context"),
+        "context_path": _optional_string(mapping=raw_mapping, key="context_path"),
+        "separator": _optional_string(mapping=raw_mapping, key="separator"),
+        "agent_load": _optional_int(mapping=raw_mapping, key="agent_load"),
+        "prompt": _optional_string(mapping=raw_mapping, key="prompt"),
+        "prompt_path": _optional_string(mapping=raw_mapping, key="prompt_path"),
+        "prompt_name": _optional_string(mapping=raw_mapping, key="prompt_name"),
+        "job_name": _optional_string(mapping=raw_mapping, key="job_name"),
+        "join_prompt_and_context": _optional_bool(mapping=raw_mapping, key="join_prompt_and_context"),
+        "run": _optional_bool(mapping=raw_mapping, key="run"),
+        "output_path": _optional_string(mapping=raw_mapping, key="output_path"),
+        "agents_dir": _optional_string(mapping=raw_mapping, key="agents_dir"),
+        "interactive": _optional_bool(mapping=raw_mapping, key="interactive"),
+    }
+
     return ParallelCreateValues(
-        agent=_optional_agent(mapping=raw_mapping, key="agent"),
-        model=_optional_string(mapping=raw_mapping, key="model"),
-        reasoning_effort=_optional_reasoning_effort(mapping=raw_mapping, key="reasoning_effort"),
-        provider=_optional_provider(mapping=raw_mapping, key="provider"),
-        host=_optional_host(mapping=raw_mapping, key="host"),
-        context=_optional_string(mapping=raw_mapping, key="context"),
-        context_path=_optional_string(mapping=raw_mapping, key="context_path"),
-        separator=_optional_string(mapping=raw_mapping, key="separator"),
-        agent_load=_optional_int(mapping=raw_mapping, key="agent_load"),
-        prompt=_optional_string(mapping=raw_mapping, key="prompt"),
-        prompt_path=_optional_string(mapping=raw_mapping, key="prompt_path"),
-        prompt_name=_optional_string(mapping=raw_mapping, key="prompt_name"),
-        job_name=_optional_string(mapping=raw_mapping, key="job_name"),
-        join_prompt_and_context=_optional_bool(mapping=raw_mapping, key="join_prompt_and_context"),
-        output_path=_optional_string(mapping=raw_mapping, key="output_path"),
-        agents_dir=_optional_string(mapping=raw_mapping, key="agents_dir"),
-        interactive=_optional_bool(mapping=raw_mapping, key="interactive"),
+        agent=parsed_entry["agent"],
+        model=parsed_entry["model"],
+        reasoning_effort=parsed_entry["reasoning"],
+        provider=parsed_entry["provider"],
+        host=parsed_entry["host"],
+        context=parsed_entry["context"],
+        context_path=parsed_entry["context_path"],
+        separator=parsed_entry["separator"],
+        agent_load=parsed_entry["agent_load"],
+        prompt=parsed_entry["prompt"],
+        prompt_path=parsed_entry["prompt_path"],
+        prompt_name=parsed_entry["prompt_name"],
+        job_name=parsed_entry["job_name"],
+        join_prompt_and_context=parsed_entry["join_prompt_and_context"],
+        run=parsed_entry["run"],
+        output_path=parsed_entry["output_path"],
+        agents_dir=parsed_entry["agents_dir"],
+        interactive=parsed_entry["interactive"],
     )
 
 
@@ -51,7 +79,7 @@ def select_parallel_create_values(*, raw_data: object, requested_name: str | Non
         options_to_preview_mapping=candidates,
         extension="yaml",
         multi=False,
-        preview_size_percent=45.0,
+        preview_size_percent=PARALLEL_RUN_PREVIEW_SIZE_PERCENT,
     )
     if chosen_name is None:
         raise SystemExit(1)
@@ -60,10 +88,10 @@ def select_parallel_create_values(*, raw_data: object, requested_name: str | Non
 
 
 def select_parallel_create_values_from_locations(
-    *, yaml_entries: list[tuple[str, object]], requested_name: str | None
+    *, yaml_entries: list[ParallelYamlEntry], requested_name: str | None
 ) -> tuple[str, ParallelCreateValues]:
     if requested_name is not None:
-        for _location_name, raw_data in yaml_entries:
+        for _location_name, _yaml_path, raw_data in yaml_entries:
             raw_entry = _try_resolve_named_entry(raw_data=raw_data, entry_name=requested_name)
             if raw_entry is not None:
                 return requested_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=requested_name)
@@ -74,13 +102,13 @@ def select_parallel_create_values_from_locations(
     candidate_previews: dict[str, str] = {}
     candidate_sources: dict[str, tuple[str, object]] = {}
     use_location_prefix = len(yaml_entries) > 1
-    for location_name, raw_data in yaml_entries:
+    for location_name, yaml_path, raw_data in yaml_entries:
         candidates = _collect_entry_candidates(raw_data=raw_data, prefix="")
         for candidate_name, candidate_preview in candidates.items():
             label = f"{location_name}.{candidate_name}" if use_location_prefix else candidate_name
             if label in candidate_previews:
                 label = f"{label}@{location_name}"
-            candidate_previews[label] = candidate_preview
+            candidate_previews[label] = _preview_entry_from_path(preview=candidate_preview, yaml_path=yaml_path)
             candidate_sources[label] = (candidate_name, raw_data)
 
     if len(candidate_previews) == 0:
@@ -89,7 +117,7 @@ def select_parallel_create_values_from_locations(
         options_to_preview_mapping=candidate_previews,
         extension="yaml",
         multi=False,
-        preview_size_percent=45.0,
+        preview_size_percent=PARALLEL_RUN_PREVIEW_SIZE_PERCENT,
     )
     if chosen_label is None:
         raise SystemExit(1)
@@ -166,6 +194,10 @@ def _preview_entry(*, mapping: Mapping[str, object]) -> str:
     return "\n".join(preview_lines)
 
 
+def _preview_entry_from_path(*, preview: str, yaml_path: Path) -> str:
+    return f"source_yaml: {yaml_path}\n\n{preview}"
+
+
 def _optional_string(*, mapping: Mapping[str, object], key: str) -> str | None:
     value = mapping.get(key)
     if value is None:
@@ -220,7 +252,7 @@ def _optional_provider(*, mapping: Mapping[str, object], key: str) -> PROVIDER |
     return cast(PROVIDER, value)
 
 
-def _optional_reasoning_effort(*, mapping: Mapping[str, object], key: str) -> ReasoningEffort | None:
+def _optional_reasoning(*, mapping: Mapping[str, object], key: str) -> ReasoningEffort | None:
     value = _optional_string(mapping=mapping, key=key)
     if value is None:
         return None

@@ -301,8 +301,8 @@ def get_app() -> typer.Typer:
     )(init_config)
     agents_app.command("g", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
 
-    agents_app.command(name="run-prompt", no_args_is_help=True, short_help="<r> Run one prompt via selected agent")(run_prompt)
-    agents_app.command(name="r", no_args_is_help=True, hidden=True)(run_prompt)
+    agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
+    agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)
     agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
     return agents_app

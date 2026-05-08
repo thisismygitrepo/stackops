@@ -1,7 +1,10 @@
 from subprocess import CompletedProcess
 from typing import Callable
 
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import build_tmux_attach_or_switch_command
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import (
+    build_tmux_attach_or_switch_command,
+    build_tmux_new_session_command,
+)
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
     build_pane_preview,
     build_window_preview,
@@ -10,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview impo
 
 
 def new_session_script(kill_all: bool) -> str:
-    command = "tmux new-session"
+    command = build_tmux_new_session_command()
     if kill_all:
         command = f"tmux kill-server\n{command}"
     return command

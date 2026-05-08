@@ -11,9 +11,10 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 DEFAULT_LOGIC_JOB_NAME = "updateLogic"
-UPDATE_LOGIC_PROMPT = """
-Please check the logic of the command below, and fix if you found anything not tight, inconsistent, fail mode etc.
-If code is okay for reasonable use cases, just leave it without change, you don't have to be very fussy. I dont want unnecessary complexity.
+UPDATE_LOGIC_PROMPT = """Please check the logic of the command below, and fix if you found anything not tight, inconsistent, fail mode etc.
+* Each context entry contains only a repo-relative file path and a root-relative command name.
+* Use those two fields to find and tighten the implementation directly.
+* Prefer one strict behavior. Tighten weak failure modes instead of adding fallback behavior.
 """
 
 type JsonObject = dict[str, object]
@@ -59,10 +60,8 @@ def _collect_command_context_entries(*, node: JsonObject) -> tuple[CommandLogicC
         collected_entries.append(CommandLogicContextEntry(source_file=source_file, command_name=command_name))
 
     children = node.get("children")
-    if children is None:
-        return tuple(collected_entries)
     if not isinstance(children, list):
-        raise ValueError("CLI graph node children must be a list when defined")
+        return tuple(collected_entries)
 
     for child in children:
         child_node = _as_json_object(child)
@@ -103,7 +102,7 @@ def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_
 def update_logic(
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = "codex",
     model: Annotated[str | None, typer.Option("--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
-    reasoning_effort: Annotated[
+    reasoning: Annotated[
         ReasoningEffort | None,
         typer.Option(
             "--reasoning",
@@ -113,7 +112,7 @@ def update_logic(
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option("--provider", "-v", help="Provider to use (if the agent supports many).")] = None,
     host: Annotated[HOST, typer.Option("--host", "-h", help="Machine to run agents on.")] = "local",
-    agent_load: Annotated[int, typer.Option("--agent-load", "-l", min=1, help="Number of tasks per prompt.")] = 10,
+    agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of tasks per prompt.")] = 10,
     prompt: Annotated[str | None, typer.Option("--prompt", "-p", help="Prompt prefix as string.")] = None,
     prompt_path: Annotated[
         str | None,
@@ -141,6 +140,7 @@ def update_logic(
         bool,
         typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters."),
     ] = False,
+    run: Annotated[bool, typer.Option("--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
 ) -> None:
     repo_root = get_developer_repo_root()
     if not repo_root.joinpath("pyproject.toml").is_file():
@@ -167,9 +167,10 @@ def update_logic(
             output_path=str(resolved_output_path),
             agents_dir=str(resolved_agents_dir),
             host=host,
-            reasoning_effort=reasoning_effort,
+            reasoning=reasoning,
             provider=provider,
             interactive=interactive,
+            run=run,
         )
     finally:
         context_output_path.parent.mkdir(parents=True, exist_ok=True)
