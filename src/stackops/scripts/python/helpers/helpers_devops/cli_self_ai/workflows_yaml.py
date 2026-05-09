@@ -19,7 +19,7 @@ type ParallelWorkflowEntry = dict[str, object]
 
 def write_workflows_to_yaml() -> Path:
     repo_root = _require_current_repo_root()
-    yaml_path = repo_root / ".stackops" / "parallel.yaml"
+    yaml_path = repo_root / ".stackops" / "agents" / "parallel.yaml"
     yaml_mapping = _load_parallel_yaml_mapping(yaml_path=yaml_path)
     yaml_mapping.update(_build_workflow_entries(repo_root=repo_root))
     yaml_path.parent.mkdir(parents=True, exist_ok=True)

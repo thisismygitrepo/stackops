@@ -29,7 +29,7 @@ def _require_entry(yaml_mapping: dict[str, object], key: str) -> dict[str, objec
 
 
 def test_write_workflows_to_yaml_upserts_self_workflows(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    parallel_yaml_path = tmp_path / ".stackops" / "parallel.yaml"
+    parallel_yaml_path = tmp_path / ".stackops" / "agents" / "parallel.yaml"
     parallel_yaml_path.parent.mkdir(parents=True, exist_ok=True)
     parallel_yaml_path.write_text(
         """custom:
@@ -145,7 +145,7 @@ update-docs:
     written_path = workflows_yaml.write_workflows_to_yaml()
 
     assert written_path == parallel_yaml_path
-    assert (tmp_path / ".stackops" / "parallel.schema.json").is_file()
+    assert (tmp_path / ".stackops" / "agents" / "parallel.schema.json").is_file()
     assert parallel_yaml_path.read_text(encoding="utf-8").startswith(
         "# yaml-language-server: $schema=./parallel.schema.json\n"
     )

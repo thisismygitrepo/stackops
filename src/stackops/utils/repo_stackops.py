@@ -5,6 +5,7 @@ from stackops.utils.accessories import get_repo_root
 
 
 REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
+REPO_STACKOPS_AGENTS_DIRECTORY_NAME: Final[str] = "agents"
 REPO_PROMPTS_YAML_FILE_NAME: Final[str] = "prompts.yaml"
 REPO_PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 REPO_MCP_JSON_FILE_NAME: Final[str] = "mcp.json"
@@ -19,11 +20,12 @@ def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
         return None
 
     stackops_root = repo_root.expanduser().resolve().joinpath(REPO_STACKOPS_DIRECTORY_NAME)
+    agents_root = stackops_root / REPO_STACKOPS_AGENTS_DIRECTORY_NAME
     match path_kind:
         case "prompts_yaml":
-            return stackops_root / REPO_PROMPTS_YAML_FILE_NAME
+            return agents_root / REPO_PROMPTS_YAML_FILE_NAME
         case "parallel_yaml":
-            return stackops_root / REPO_PARALLEL_YAML_FILE_NAME
+            return agents_root / REPO_PARALLEL_YAML_FILE_NAME
         case "mcp_json":
             return stackops_root / REPO_MCP_JSON_FILE_NAME
         case "scripts":

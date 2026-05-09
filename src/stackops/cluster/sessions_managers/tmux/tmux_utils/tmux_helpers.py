@@ -106,16 +106,9 @@ def _build_new_window_commands(
     session_name: str,
     window_name: str,
     cwd: str,
-    command: str,
     exit_mode: SessionExitMode,
 ) -> list[str]:
     session_target = f"{session_name}:"
-    target = f"{session_name}:{window_name}"
-    if exit_mode == "backToShell":
-        return [
-            f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(window_name)} -c {shell_quote(cwd)}",
-            f"tmux send-keys -t {shell_quote(target)} {shell_quote(command)} C-m",
-        ]
     return [
         f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(window_name)} -c {shell_quote(cwd)}",
     ]
@@ -139,7 +132,6 @@ def _build_replace_window_commands(
     session_name: str,
     window_name: str,
     cwd: str,
-    command: str,
     reserved_window_names: set[str],
     exit_mode: SessionExitMode,
 ) -> list[str]:
@@ -150,13 +142,6 @@ def _build_replace_window_commands(
     session_target = f"{session_name}:"
     target = f"{session_name}:{window_name}"
     temp_target = f"{session_name}:{temp_window_name}"
-    if exit_mode == "backToShell":
-        return [
-            f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(temp_window_name)} -c {shell_quote(cwd)}",
-            f"tmux send-keys -t {shell_quote(temp_target)} {shell_quote(command)} C-m",
-            f"tmux kill-window -t {shell_quote(target)}",
-            f"tmux rename-window -t {shell_quote(temp_target)} {shell_quote(window_name)}",
-        ]
     return [
         f"tmux new-window -t {shell_quote(session_target)} -n {shell_quote(temp_window_name)} -c {shell_quote(cwd)}",
         f"tmux kill-window -t {shell_quote(target)}",
@@ -211,7 +196,6 @@ def build_tmux_commands(
                 session_name=session_name,
                 window_name=tab["tabName"],
                 cwd=normalize_cwd(tab["startDir"]),
-                command=tab["command"],
                 exit_mode=exit_mode,
             )
         )
@@ -257,7 +241,6 @@ def build_tmux_merge_commands(
                         session_name=session_name,
                         window_name=window_name,
                         cwd=cwd,
-                        command=command,
                         exit_mode=exit_mode,
                     )
                 )
@@ -277,7 +260,6 @@ def build_tmux_merge_commands(
                             session_name=session_name,
                             window_name=window_name,
                             cwd=cwd,
-                            command=command,
                             reserved_window_names=existing_window_names,
                             exit_mode=exit_mode,
                         )
@@ -297,7 +279,6 @@ def build_tmux_merge_commands(
                             session_name=session_name,
                             window_name=window_name,
                             cwd=cwd,
-                            command=command,
                             exit_mode=exit_mode,
                         )
                     )

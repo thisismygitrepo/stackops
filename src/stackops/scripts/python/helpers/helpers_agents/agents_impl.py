@@ -1,7 +1,10 @@
 """Pure Python implementations for agents commands - no typer dependencies."""
 
+import sys
 from pathlib import Path
 from time import perf_counter
+
+import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
     CreateContextArtifactsInput,
@@ -131,8 +134,8 @@ def agents_create(
     )
 
     if cleanup_existing_agents_dir:
+        _confirm_existing_agents_dir_cleanup(agents_dir_obj=agents_dir_obj)
         import shutil
-
         shutil.rmtree(agents_dir_obj)
 
     agent_selected = agent
@@ -197,6 +200,25 @@ def agents_create(
     )
     if run:
         _run_generated_layout(layout_output_path=layout_output_path.resolve())
+
+
+def _confirm_existing_agents_dir_cleanup(*, agents_dir_obj: Path) -> None:
+    if not agents_dir_obj.exists():
+        return
+    if not agents_dir_obj.is_dir():
+        raise ValueError(f"--agents-dir points to an existing non-directory path: {agents_dir_obj}")
+    if not sys.stdin.isatty():
+        raise RuntimeError(
+            "Refusing to delete an existing agents directory in non-interactive mode: "
+            f"{agents_dir_obj}\nRe-run interactively to confirm."
+        )
+    proceed = typer.confirm(
+        f"Agents directory already exists and will be deleted to create a clean workspace:\n{agents_dir_obj}\nContinue?",
+        default=False,
+    )
+    if proceed:
+        return
+    raise RuntimeError(f"Aborted: kept existing agents directory: {agents_dir_obj}")
 
 
 def _run_generated_layout(*, layout_output_path: Path) -> None:

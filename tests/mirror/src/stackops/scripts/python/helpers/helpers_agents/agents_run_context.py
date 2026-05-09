@@ -9,7 +9,7 @@ from stackops.utils.options_utils import tv_options
 
 def testbuild_named_prompt_selection_maps_uses_compact_labels_and_source_yaml() -> None:
     locations = [
-        ("repo", Path("/tmp/repo/.stackops/prompts.yaml")),
+        ("repo", Path("/tmp/repo/.stackops/agents/prompts.yaml")),
         ("private", Path("/tmp/private/prompts.yaml")),
     ]
 
@@ -39,12 +39,12 @@ def testbuild_named_prompt_selection_maps_uses_compact_labels_and_source_yaml() 
     assert "private_only" in preview_map
     assert "shared.backend@repo" in preview_map
     assert "shared.backend@private" in preview_map
-    assert "source_yaml: /tmp/repo/.stackops/prompts.yaml" in preview_map["shared.backend@repo"]
+    assert "source_yaml: /tmp/repo/.stackops/agents/prompts.yaml" in preview_map["shared.backend@repo"]
     assert value_map["shared.backend@repo"] == "repo preview"
 
 
 def test_resolve_context_picker_shows_source_yaml_and_uses_wide_preview(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    repo_yaml = tmp_path / ".stackops" / "prompts.yaml"
+    repo_yaml = tmp_path / ".stackops" / "agents" / "prompts.yaml"
     private_yaml = tmp_path / "private" / "prompts.yaml"
     repo_yaml.parent.mkdir(parents=True, exist_ok=True)
     private_yaml.parent.mkdir(parents=True, exist_ok=True)
@@ -86,7 +86,7 @@ def test_resolve_context_picker_shows_source_yaml_and_uses_wide_preview(monkeypa
 
 
 def test_resolve_named_prompts_yaml_entry_fuzzy_picker_shows_source_yaml(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    repo_yaml = tmp_path / ".stackops" / "prompts.yaml"
+    repo_yaml = tmp_path / ".stackops" / "agents" / "prompts.yaml"
     private_yaml = tmp_path / "private" / "prompts.yaml"
     repo_yaml.parent.mkdir(parents=True, exist_ok=True)
     private_yaml.parent.mkdir(parents=True, exist_ok=True)
@@ -124,7 +124,7 @@ def test_resolve_named_prompts_yaml_entry_fuzzy_picker_shows_source_yaml(monkeyp
 
 
 def test_ensure_prompts_yaml_exists_creates_single_entry_example(tmp_path: Path) -> None:
-    yaml_path = tmp_path / ".stackops" / "prompts.yaml"
+    yaml_path = tmp_path / ".stackops" / "agents" / "prompts.yaml"
 
     created = agents_run_context.ensure_prompts_yaml_exists(yaml_path=yaml_path)
 

@@ -54,7 +54,7 @@ def test_parse_parallel_create_values_rejects_unknown_keys() -> None:
 
 def test_select_parallel_create_values_from_locations_uses_named_repo_entry() -> None:
     yaml_entries: list[agents_parallel_run_yaml.ParallelYamlEntry] = [
-        ("repo", Path("/tmp/repo/.stackops/parallel.yaml"), {"docs": {"update": {"agent": "codex", "prompt": "repo"}}}),
+        ("repo", Path("/tmp/repo/.stackops/agents/parallel.yaml"), {"docs": {"update": {"agent": "codex", "prompt": "repo"}}}),
         ("private", Path("/tmp/private/parallel.yaml"), {"docs": {"update": {"agent": "copilot", "prompt": "private"}}}),
     ]
 
@@ -69,7 +69,7 @@ def test_select_parallel_create_values_from_locations_uses_named_repo_entry() ->
 
 def test_select_parallel_create_values_from_locations_rejects_missing_named_entry() -> None:
     yaml_entries: list[agents_parallel_run_yaml.ParallelYamlEntry] = [
-        ("repo", Path("/tmp/repo/.stackops/parallel.yaml"), {"docs": {"update": {"agent": "codex"}}})
+        ("repo", Path("/tmp/repo/.stackops/agents/parallel.yaml"), {"docs": {"update": {"agent": "codex"}}})
     ]
 
     with pytest.raises(ValueError, match="Parallel run 'missing' was not found in parallel YAML"):
@@ -78,7 +78,7 @@ def test_select_parallel_create_values_from_locations_rejects_missing_named_entr
 
 def test_select_parallel_create_values_from_locations_preview_shows_source_yaml(monkeypatch: pytest.MonkeyPatch) -> None:
     yaml_entries: list[agents_parallel_run_yaml.ParallelYamlEntry] = [
-        ("repo", Path("/tmp/repo/.stackops/parallel.yaml"), {"docs": {"update": {"agent": "codex", "prompt": "repo"}}}),
+        ("repo", Path("/tmp/repo/.stackops/agents/parallel.yaml"), {"docs": {"update": {"agent": "codex", "prompt": "repo"}}}),
         ("private", Path("/tmp/private/parallel.yaml"), {"docs": {"update": {"agent": "copilot", "prompt": "private"}}}),
     ]
     captured_options: dict[str, str] = {}
@@ -102,6 +102,6 @@ def test_select_parallel_create_values_from_locations_preview_shows_source_yaml(
     )
 
     assert captured_preview_size_percent == agents_parallel_run_yaml.PARALLEL_RUN_PREVIEW_SIZE_PERCENT
-    assert "source_yaml: /tmp/repo/.stackops/parallel.yaml" in captured_options["repo.docs.update"]
+    assert "source_yaml: /tmp/repo/.stackops/agents/parallel.yaml" in captured_options["repo.docs.update"]
     assert "prompt: repo" in captured_options["repo.docs.update"]
     assert parsed.agent == "codex"

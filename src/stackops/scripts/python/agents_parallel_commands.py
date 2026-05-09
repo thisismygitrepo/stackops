@@ -49,7 +49,10 @@ def agents_create(
     agents_dir: Annotated[
         str | None,
         typer.Option(
-            ..., "--agents-dir", "-d", help="Exact directory to store agent files in. If not provided, it is built as .ai/agents/<job-name>."
+            ...,
+            "--agents-dir",
+            "-d",
+            help="Exact directory to store agent files in. If it already exists, you will be asked before it is deleted for a clean run.",
         ),
     ] = None,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")] = False,

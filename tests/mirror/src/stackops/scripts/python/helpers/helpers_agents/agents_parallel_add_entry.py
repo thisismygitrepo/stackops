@@ -6,7 +6,7 @@ from stackops.scripts.python.helpers.helpers_agents import agents_parallel_add_e
 
 
 def test_ensure_parallel_yaml_entry_exists_adds_top_level_entry(tmp_path: Path) -> None:
-    yaml_path = tmp_path / ".stackops" / "parallel.yaml"
+    yaml_path = tmp_path / ".stackops" / "agents" / "parallel.yaml"
 
     created = agents_parallel_add_entry.ensure_parallel_yaml_entry_exists(yaml_path=yaml_path, entry_name="demo")
 
@@ -26,7 +26,7 @@ def test_ensure_parallel_yaml_entry_exists_adds_top_level_entry(tmp_path: Path) 
 
 
 def test_ensure_parallel_yaml_entry_exists_adds_nested_entry_without_rewriting_siblings(tmp_path: Path) -> None:
-    yaml_path = tmp_path / ".stackops" / "parallel.yaml"
+    yaml_path = tmp_path / ".stackops" / "agents" / "parallel.yaml"
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
     yaml_path.write_text(
         """# yaml-language-server: $schema=./parallel.schema.json
@@ -59,7 +59,7 @@ other:
 
 
 def test_ensure_parallel_yaml_entry_exists_is_noop_for_existing_entry(tmp_path: Path) -> None:
-    yaml_path = tmp_path / ".stackops" / "parallel.yaml"
+    yaml_path = tmp_path / ".stackops" / "agents" / "parallel.yaml"
 
     agents_parallel_add_entry.ensure_parallel_yaml_entry_exists(yaml_path=yaml_path, entry_name="demo")
     created = agents_parallel_add_entry.ensure_parallel_yaml_entry_exists(yaml_path=yaml_path, entry_name="demo")
@@ -68,7 +68,7 @@ def test_ensure_parallel_yaml_entry_exists_is_noop_for_existing_entry(tmp_path: 
 
 
 def test_add_parallel_yaml_entry_generates_unique_placeholder_names(tmp_path: Path) -> None:
-    yaml_path = tmp_path / ".stackops" / "parallel.yaml"
+    yaml_path = tmp_path / ".stackops" / "agents" / "parallel.yaml"
 
     first_entry_name = agents_parallel_add_entry.add_parallel_yaml_entry(yaml_path=yaml_path, entry_name=None)
     second_entry_name = agents_parallel_add_entry.add_parallel_yaml_entry(yaml_path=yaml_path, entry_name=None)

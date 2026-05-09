@@ -39,7 +39,7 @@ Current subcommands:
 
 `agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning-effort`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--separator`, `--agents-dir`, `--output-path`, and `--interactive`.
 
-`agents parallel run-parallel` reads named entries from `parallel.yaml`. By default it searches `.stackops/parallel.yaml`, then StackOps private/public/library locations. Use `--parallel-yaml-path` for an explicit file, `--show-format` to print the standard, and `--edit` to open the YAML. Every `create` option can be overridden on the command line.
+`agents parallel run-parallel` reads named entries from `parallel.yaml`. By default it searches `.stackops/agents/parallel.yaml`, then StackOps private/public/library locations. Use `--parallel-yaml-path` for an explicit file, `--show-format` to print the standard, and `--edit` to open the YAML. Every `create` option can be overridden on the command line.
 
 Standard `parallel.yaml` shape:
 
@@ -91,7 +91,7 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 - `--where` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, `library`, or `custom`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 
-For `run-prompt`, `--where repo` resolves to `<git-root>/.stackops/prompts.yaml`.
+For `run-prompt`, `--where repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
 
 Examples:
 
