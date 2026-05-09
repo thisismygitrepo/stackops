@@ -122,6 +122,34 @@ def install_deb_package(downloaded: Path) -> None:
         shutil.rmtree(downloaded, ignore_errors=True)
 
 
+def install_msi_package(downloaded: Path) -> None:
+    from rich import print as rprint
+    from rich.console import Group
+    from rich.panel import Panel
+    import platform
+    import subprocess
+
+    assert platform.system() == "Windows"
+    print(f"📦 Installing .msi package: {downloaded}")
+    result = subprocess.run(
+        ["msiexec.exe", "/i", str(downloaded), "/qn", "/norestart"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode not in {0, 3010}:
+        sub_panels = []
+        if result.stdout:
+            sub_panels.append(Panel(result.stdout, title="STDOUT", style="blue"))
+        if result.stderr:
+            sub_panels.append(Panel(result.stderr, title="STDERR", style="red"))
+        group_content = Group(f"❌ Installing .msi failed\nReturn code: {result.returncode}", *sub_panels)
+        rprint(Panel(group_content, title="Installing .msi", style="red"))
+        raise RuntimeError(f"Installing .msi failed with return code {result.returncode}")
+    print("🗑️  Cleaning up .msi package...")
+    downloaded.unlink(missing_ok=True)
+
+
 def download_and_prepare(download_url: str) -> Path:
     from stackops.scripts.python.helpers.helpers_utils.download import download
     downloaded_object = download(download_url, output_dir=str(INSTALL_TMP_DIR))

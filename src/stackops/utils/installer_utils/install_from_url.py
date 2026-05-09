@@ -4,7 +4,7 @@ import platform
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
-from stackops.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
+from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_deb_package, install_msi_package
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
 from stackops.utils.installer_utils.github_release_bulk import (
     get_repo_name_from_url,
@@ -57,13 +57,22 @@ def _derive_tool_name(repo_name: str, asset_name: str | None) -> str | None:
 
 def _finalize_install(repo_name: str, asset_name: str | None, version: str, extracted_path: Path, console: "Console") -> None:
     from rich.panel import Panel
-    if extracted_path.suffix == ".deb":
+    extracted_suffix = extracted_path.suffix.lower()
+    if extracted_suffix == ".deb":
         install_deb_package(extracted_path)
         tool_name_deb = _derive_tool_name(repo_name, asset_name)
         if tool_name_deb is not None:
             INSTALL_VERSION_ROOT.joinpath(tool_name_deb).parent.mkdir(parents=True, exist_ok=True)
             INSTALL_VERSION_ROOT.joinpath(tool_name_deb).write_text(version, encoding="utf-8")
         console.print(Panel(f"Installed Debian package for [green]{tool_name_deb}[/green]", title="✅ Complete", border_style="green"))
+        return
+    if extracted_suffix == ".msi":
+        install_msi_package(extracted_path)
+        tool_name_msi = _derive_tool_name(repo_name, asset_name)
+        if tool_name_msi is not None:
+            INSTALL_VERSION_ROOT.joinpath(tool_name_msi).parent.mkdir(parents=True, exist_ok=True)
+            INSTALL_VERSION_ROOT.joinpath(tool_name_msi).write_text(version, encoding="utf-8")
+        console.print(Panel(f"Installed MSI package for [green]{tool_name_msi}[/green]", title="✅ Complete", border_style="green"))
         return
     system_name = platform.system()
     tool_name = _derive_tool_name(repo_name, asset_name)

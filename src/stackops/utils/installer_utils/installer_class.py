@@ -1,5 +1,5 @@
 import stackops.utils.path_core as path_core
-from stackops.utils.installer_utils.installer_helper import install_deb_package, download_and_prepare
+from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_deb_package, install_msi_package
 from stackops.utils.installer_utils.install_request_logic import (
     InstallTarget,
     build_install_target,
@@ -34,6 +34,10 @@ import subprocess
 
 
 PACAKGE_MANAGERS = ["bun", "npm", "pip", "uv", "winget", "powershell", "irm", "brew", "curl", "sudo", "cargo"]
+ALIASED_EXE_NAMES: dict[str, str] = {
+    "powershellwinget": "pwsh",
+    "powershellgithub": "pwsh",
+}
 
 
 class Installer:
@@ -55,7 +59,8 @@ class Installer:
     
     def _get_exe_name(self) -> str:
         """Derive executable name from app name by converting to lowercase and removing spaces."""
-        return self.installer_data["appName"].lower().replace(" ", "")  # .replace("-", "")
+        normalized_app_name = self.installer_data["appName"].lower().replace(" ", "")
+        return ALIASED_EXE_NAMES.get(normalized_app_name, normalized_app_name)  # .replace("-", "")
 
     def _get_installer_value(self) -> str:
         os_name = get_os_name()
@@ -217,7 +222,8 @@ class Installer:
                     version_to_be_installed = str(version)
             elif binary_download_link:
                 downloaded_object = download_and_prepare(installer_arch_os)
-                if downloaded_object.suffix in [".exe", ""]:  # likely an executable
+                downloaded_suffix = downloaded_object.suffix.lower()
+                if downloaded_suffix in [".exe", ""]:  # likely an executable
                     if platform.system() == "Windows":
                         exe = find_move_delete_windows(downloaded_file_path=downloaded_object, tool_name=exe_name, delete=True, rename_to=exe_name.replace(".exe", "") + ".exe")
                     elif platform.system() in ["Linux", "Darwin"]:
@@ -238,9 +244,12 @@ class Installer:
                         print(f"🔄 Renaming to correct name: {new_exe_name}")
                         path_core.with_name(exe, name=new_exe_name, inplace=True, overwrite=True)
                     version_to_be_installed = "downloaded_binary"
-                elif downloaded_object.suffix in [".deb"]:
+                elif downloaded_suffix == ".deb":
                     install_deb_package(downloaded_object)
                     version_to_be_installed = "downloaded_deb"
+                elif downloaded_suffix == ".msi":
+                    install_msi_package(downloaded_object)
+                    version_to_be_installed = "downloaded_msi"
                 else:
                     raise ValueError(f"Downloaded file is not an executable: {downloaded_object}")
             else:
@@ -248,8 +257,11 @@ class Installer:
         else:
             assert repo_url.startswith("https://github.com/"), f"repoURL must be a GitHub URL, got {repo_url}"
             downloaded, version_to_be_installed = self.binary_download(version=version)
-            if str(downloaded).endswith(".deb"):
+            downloaded_suffix = downloaded.suffix.lower()
+            if downloaded_suffix == ".deb":
                 install_deb_package(downloaded)
+            elif downloaded_suffix == ".msi":
+                install_msi_package(downloaded)
             else:
                 if platform.system() == "Windows":
                     exe = find_move_delete_windows(downloaded_file_path=downloaded, tool_name=exe_name, delete=True, rename_to=exe_name.replace(".exe", "") + ".exe")
