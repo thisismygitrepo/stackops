@@ -558,6 +558,42 @@ tmux_linux:
     os:
     - linux
     - darwin
+psmux_windows:
+  config:
+    original: ~/.config/psmux/psmux.conf
+    self_managed: CONFIG_ROOT/settings/psmux/psmux.conf
+    os:
+    - windows
+  theme:
+    original: ~/.config/psmux/psmux.theme.conf
+    self_managed: CONFIG_ROOT/settings/psmux/psmux.theme.conf
+    os:
+    - windows
+  bindings:
+    original: ~/.config/psmux/psmux.bindings.conf
+    self_managed: CONFIG_ROOT/settings/psmux/psmux.bindings.conf
+    os:
+    - windows
+  plugins:
+    original: ~/.config/psmux/psmux.plugins.conf
+    self_managed: CONFIG_ROOT/settings/psmux/psmux.plugins.conf
+    os:
+    - windows
+  powerline:
+    original: ~/.config/psmux/psmux.powerline.conf
+    self_managed: CONFIG_ROOT/settings/psmux/psmux.powerline.conf
+    os:
+    - windows
+  local:
+    original: ~/.config/psmux/psmux.local.conf
+    self_managed: CONFIG_ROOT/settings/psmux/psmux.local.conf
+    os:
+    - windows
+  install_ppm:
+    original: ~/.config/psmux/install-ppm.ps1
+    self_managed: CONFIG_ROOT/settings/psmux/install-ppm.ps1
+    os:
+    - windows
 zellij_linux:
   config:
     original: ~/.config/zellij
