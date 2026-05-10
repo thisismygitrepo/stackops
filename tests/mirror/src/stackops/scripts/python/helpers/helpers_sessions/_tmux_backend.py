@@ -3,10 +3,9 @@ from subprocess import CompletedProcess
 import pytest
 
 from stackops.scripts.python.helpers.helpers_sessions import _tmux_backend
-from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options import new_session_script
 
 
-def test_choose_session_new_session_uses_nested_safe_script() -> None:
+def test_choose_session_new_session_returns_tmux_new_session_action() -> None:
     action, script = _tmux_backend.choose_session(
         name=None,
         new_session=True,
@@ -14,14 +13,11 @@ def test_choose_session_new_session_uses_nested_safe_script() -> None:
         window=False,
     )
 
-    assert action == "run_script"
-    assert script == new_session_script(kill_all=False)
-    assert script is not None
-    assert """tmux new-session -d -P -F '#{session_name}'""" in script
-    assert 'tmux switch-client -t "$new_session_name"' in script
+    assert action == "tmux_new_session"
+    assert script == ""
 
 
-def test_choose_session_without_existing_sessions_uses_nested_safe_script(
+def test_choose_session_without_existing_sessions_returns_tmux_new_session_action(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def fake_run_command(args: list[str], timeout: float = 5.0) -> CompletedProcess[str]:
@@ -37,5 +33,5 @@ def test_choose_session_without_existing_sessions_uses_nested_safe_script(
         window=False,
     )
 
-    assert action == "run_script"
-    assert script == new_session_script(kill_all=False)
+    assert action == "tmux_new_session"
+    assert script == ""

@@ -77,12 +77,10 @@ def _validate_backend(backend: Literal["zellij", "z", "tmux", "t", "auto", "a"])
             raise ValueError("Dynamic tab runner requires zellij and is not supported on Windows.")
         return "zellij"
     if backend_lower in {"tmux", "t"}:
-        if platform.system().lower() == "windows":
-            raise ValueError("Dynamic tab runner requires tmux and is not supported on Windows.")
         return "tmux"
     if backend_lower in {"auto", "a"}:
         if platform.system().lower() == "windows":
-            raise ValueError("Dynamic tab runner requires zellij or tmux and is not supported on Windows.")
+            return "tmux"
         return "zellij"
     raise ValueError(f"Unsupported backend for dynamic tabs: {backend}")
 

@@ -1,6 +1,8 @@
 import shlex
 
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import build_tmux_attach_or_switch_command
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
+    build_tmux_attach_or_switch_command,
+)
 
 
 def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: dict[str, str], session_name: str) -> str:

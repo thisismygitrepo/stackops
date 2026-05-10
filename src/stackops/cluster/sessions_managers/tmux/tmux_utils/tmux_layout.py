@@ -1,66 +1,24 @@
 #!/usr/bin/env python3
-from pathlib import Path
-import random
-import string
+import os
 import subprocess
-import shlex
-from typing import Literal, NotRequired, TypedDict
+from typing import Literal
 
 from stackops.cluster.sessions_managers.session_exit_mode import (
     SessionExitMode,
     build_tmux_exit_mode_command,
 )
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
-from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus
-
-
-class TmuxSessionStatus(TypedDict):
-    tmux_running: bool
-    session_exists: bool
-    session_name: str
-    all_sessions: list[str]
-    error: NotRequired[str]
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common import (
+    generate_random_suffix,
+    normalize_cwd,
+    shell_quote,
+)
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
 
 TmuxMergeConflictAction = Literal[
     "mergeOverwrite",
     "mergeSkip",
 ]
-
-
-def generate_random_suffix(length: int) -> str:
-    return "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
-
-
-def normalize_cwd(cwd: str) -> str:
-    normalized = cwd.replace("$HOME", str(Path.home()))
-    return str(Path(normalized).expanduser())
-
-
-def shell_quote(value: str) -> str:
-    return shlex.quote(value)
-
-
-def build_tmux_attach_or_switch_command(session_name: str) -> str:
-    quoted_session_name = shell_quote(session_name)
-    return (
-        'if [ -n "${TMUX:-}" ]; then '
-        f"tmux switch-client -t {quoted_session_name}; "
-        "else "
-        f"tmux attach -t {quoted_session_name}; "
-        "fi"
-    )
-
-
-def build_tmux_new_session_command() -> str:
-    return (
-        'if [ -n "${TMUX:-}" ]; then '
-        """new_session_name=$(tmux new-session -d -P -F '#{session_name}') && """
-        'tmux switch-client -t "$new_session_name"; '
-        "else "
-        "tmux new-session; "
-        "fi"
-    )
 
 
 def validate_layout_config(layout_config: LayoutConfig) -> None:
@@ -106,7 +64,6 @@ def _build_new_window_commands(
     session_name: str,
     window_name: str,
     cwd: str,
-    exit_mode: SessionExitMode,
 ) -> list[str]:
     session_target = f"{session_name}:"
     return [
@@ -133,7 +90,6 @@ def _build_replace_window_commands(
     window_name: str,
     cwd: str,
     reserved_window_names: set[str],
-    exit_mode: SessionExitMode,
 ) -> list[str]:
     temp_window_name = _build_temporary_window_name(
         window_name=window_name,
@@ -196,7 +152,6 @@ def build_tmux_commands(
                 session_name=session_name,
                 window_name=tab["tabName"],
                 cwd=normalize_cwd(tab["startDir"]),
-                exit_mode=exit_mode,
             )
         )
         if tab["command"].strip():
@@ -241,7 +196,6 @@ def build_tmux_merge_commands(
                         session_name=session_name,
                         window_name=window_name,
                         cwd=cwd,
-                        exit_mode=exit_mode,
                     )
                 )
                 if command.strip():
@@ -261,7 +215,6 @@ def build_tmux_merge_commands(
                             window_name=window_name,
                             cwd=cwd,
                             reserved_window_names=existing_window_names,
-                            exit_mode=exit_mode,
                         )
                     )
                     if command.strip():
@@ -279,7 +232,6 @@ def build_tmux_merge_commands(
                             session_name=session_name,
                             window_name=window_name,
                             cwd=cwd,
-                            exit_mode=exit_mode,
                         )
                     )
                     if command.strip():
@@ -309,8 +261,21 @@ def build_tmux_script(
     session_name: str,
     exit_mode: SessionExitMode,
 ) -> str:
-    script_lines = ["#!/usr/bin/env bash", "set -e"]
-    script_lines.extend(build_tmux_commands(layout_config, session_name, exit_mode))
+    return build_tmux_script_from_commands(
+        build_tmux_commands(
+            layout_config=layout_config,
+            session_name=session_name,
+            exit_mode=exit_mode,
+        )
+    )
+
+
+def build_tmux_script_from_commands(commands: list[str]) -> str:
+    if os.name == "nt":
+        script_lines = ["$ErrorActionPreference = 'Stop'"]
+    else:
+        script_lines = ["#!/usr/bin/env bash", "set -e"]
+    script_lines.extend(commands)
     return "\n".join(script_lines) + "\n"
 
 
@@ -320,8 +285,7 @@ def build_tmux_merge_script(
     on_conflict: TmuxMergeConflictAction,
     exit_mode: SessionExitMode,
 ) -> str:
-    script_lines = ["#!/usr/bin/env bash", "set -e"]
-    script_lines.extend(
+    return build_tmux_script_from_commands(
         build_tmux_merge_commands(
             layout_config=layout_config,
             session_name=session_name,
@@ -329,56 +293,3 @@ def build_tmux_merge_script(
             exit_mode=exit_mode,
         )
     )
-    return "\n".join(script_lines) + "\n"
-
-
-def check_tmux_session_status(session_name: str) -> TmuxSessionStatus:
-    try:
-        result = subprocess.run(["tmux", "list-sessions", "-F", "#{session_name}"], capture_output=True, text=True, timeout=5)
-    except FileNotFoundError as exc:
-        return {
-            "tmux_running": False,
-            "session_exists": False,
-            "session_name": session_name,
-            "all_sessions": [],
-            "error": str(exc),
-        }
-    except Exception as exc:
-        return {
-            "tmux_running": False,
-            "session_exists": False,
-            "session_name": session_name,
-            "all_sessions": [],
-            "error": str(exc),
-        }
-
-    if result.returncode != 0:
-        stderr = (result.stderr or "").strip().lower()
-        if "no server running" in stderr:
-            return {"tmux_running": False, "session_exists": False, "session_name": session_name, "all_sessions": []}
-        return {
-            "tmux_running": False,
-            "session_exists": False,
-            "session_name": session_name,
-            "all_sessions": [],
-            "error": (result.stderr or result.stdout or "Unknown error").strip(),
-        }
-
-    sessions = [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
-    return {
-        "tmux_running": True,
-        "session_exists": session_name in sessions,
-        "session_name": session_name,
-        "all_sessions": sessions,
-    }
-
-
-def build_unknown_command_status(tab_config: TabConfig) -> CommandStatus:
-    return {
-        "status": "unknown",
-        "running": False,
-        "processes": [],
-        "command": tab_config["command"],
-        "tab_name": tab_config["tabName"],
-        "cwd": tab_config["startDir"],
-    }

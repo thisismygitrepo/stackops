@@ -19,14 +19,10 @@ def _resolve_session_backend(
                 raise typer.Exit(code=1)
             return "zellij"
         case "tmux" | "t":
-            if system == "windows":
-                typer.echo("Error: tmux is not supported on Windows.", err=True, color=True)
-                raise typer.Exit(code=1)
             return "tmux"
         case "auto" | "a":
             if system == "windows":
-                typer.echo("Error: tmux/zellij are not supported on Windows.", err=True, color=True)
-                raise typer.Exit(code=1)
+                return "tmux"
             return "zellij"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
@@ -152,6 +148,29 @@ def attach_to_session(
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit()
+    if backend_resolved == "tmux":
+        from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
+            run_tmux_script,
+            start_tmux_new_session,
+        )
+
+        try:
+            if action == "tmux_new_session":
+                start_tmux_new_session(
+                    kill_all=payload == "kill_all",
+                    timeout_seconds=30.0,
+                )
+                return
+            if action == "run_script" and payload:
+                run_tmux_script(
+                    script=payload,
+                    timeout_seconds=30.0,
+                    capture_output=False,
+                )
+                return
+        except RuntimeError as error:
+            typer.echo(f"Error: {error}", err=True, color=True)
+            raise typer.Exit(code=1) from error
     if action == "run_script" and payload:
         from stackops.utils.code import exit_then_run_shell_script
         exit_then_run_shell_script(script= payload, strict=True)
@@ -177,6 +196,20 @@ def kill_session_target(
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit(code=1)
+    if backend_resolved == "tmux" and action == "run_script" and payload:
+        from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
+            run_tmux_script,
+        )
+
+        try:
+            run_tmux_script(
+                script=payload,
+                timeout_seconds=30.0,
+            )
+            return
+        except RuntimeError as error:
+            typer.echo(f"Error: {error}", err=True, color=True)
+            raise typer.Exit(code=1) from error
     if action == "run_script" and payload:
         from stackops.utils.code import exit_then_run_shell_script
 

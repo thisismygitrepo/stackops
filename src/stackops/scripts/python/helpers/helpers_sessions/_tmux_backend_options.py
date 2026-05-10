@@ -1,7 +1,7 @@
 from subprocess import CompletedProcess
 from typing import Callable
 
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import (
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
     build_tmux_attach_or_switch_command,
     build_tmux_new_session_command,
 )

@@ -1,6 +1,6 @@
 import pytest
 
-from stackops.cluster.sessions_managers.tmux.tmux_utils import tmux_helpers
+from stackops.cluster.sessions_managers.tmux.tmux_utils import tmux_layout
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
 
@@ -14,7 +14,7 @@ def test_build_tmux_commands_sends_each_tab_command_once() -> None:
         ],
     }
 
-    commands = tmux_helpers.build_tmux_commands(
+    commands = tmux_layout.build_tmux_commands(
         layout_config=layout_config,
         session_name="demo",
         exit_mode="backToShell",
@@ -40,9 +40,9 @@ def test_build_tmux_merge_commands_sends_replaced_window_command_once(
         ],
     }
 
-    monkeypatch.setattr(tmux_helpers, "list_tmux_window_names", lambda session_name: {"Agent1"})
+    monkeypatch.setattr(tmux_layout, "list_tmux_window_names", lambda session_name: {"Agent1"})
 
-    commands = tmux_helpers.build_tmux_merge_commands(
+    commands = tmux_layout.build_tmux_merge_commands(
         layout_config=layout_config,
         session_name="demo",
         on_conflict="mergeOverwrite",

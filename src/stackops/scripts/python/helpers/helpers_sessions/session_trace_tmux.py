@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import (
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
     check_tmux_session_status,
 )
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (

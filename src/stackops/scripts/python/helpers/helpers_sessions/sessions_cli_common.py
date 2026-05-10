@@ -181,9 +181,6 @@ def resolve_standard_backend(
                 raise typer.Exit(code=1)
             return "windows-terminal"
         case "tmux" | "t":
-            if platform.system().lower() == "windows":
-                typer.echo("Error: tmux is not supported on Windows.", err=True)
-                raise typer.Exit(code=1)
             return "tmux"
         case "zellij" | "z":
             if platform.system().lower() == "windows":

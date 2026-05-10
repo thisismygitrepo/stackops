@@ -12,9 +12,12 @@ from stackops.logger import get_logger
 from stackops.utils.scheduler import Scheduler
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 from stackops.cluster.sessions_managers.tmux.tmux_local import TmuxLayoutGenerator, TmuxLayoutSummary
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import (
-    TmuxSessionStatus,
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
     build_tmux_attach_or_switch_command,
+    run_tmux_commands,
+)
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
+    TmuxSessionStatus,
     build_unknown_command_status,
     check_tmux_session_status,
 )
@@ -76,15 +79,14 @@ class TmuxLocalManager:
                     on_conflict=on_conflict,
                 )
                 session_name = manager.session_name or original_session_name
-                script_path = manager.script_path
-                if script_path is None:
-                    results[session_name] = {"success": False, "error": "No script file path available"}
+                if len(manager.launch_commands) == 0:
+                    results[session_name] = {"success": False, "error": "No tmux commands prepared"}
                     continue
-                result = subprocess.run(["bash", script_path], capture_output=True, text=True, timeout=30)
-                if result.returncode == 0:
-                    results[session_name] = {"success": True, "message": f"Session '{session_name}' started successfully"}
-                else:
-                    results[session_name] = {"success": False, "error": result.stderr or result.stdout}
+                run_tmux_commands(
+                    commands=manager.launch_commands,
+                    timeout_seconds=30.0,
+                )
+                results[session_name] = {"success": True, "message": f"Session '{session_name}' started successfully"}
             except Exception as exc:
                 results[session_name] = {"success": False, "error": str(exc)}
         return results

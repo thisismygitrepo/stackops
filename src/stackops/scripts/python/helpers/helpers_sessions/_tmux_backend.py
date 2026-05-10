@@ -5,7 +5,9 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options impo
     kill_script_for_target,
     new_session_script,
 )
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import build_tmux_attach_or_switch_command
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
+    build_tmux_attach_or_switch_command,
+)
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
     build_preview as _build_preview_impl,
     session_sort_key,
@@ -55,7 +57,7 @@ def choose_session(
             return ("run_script", attach_script_from_name(name=name, quote_fn=quote))
         return ("run_script", build_tmux_attach_or_switch_command(session_name=name))
     if new_session:
-        return ("run_script", new_session_script(kill_all=kill_all))
+        return ("tmux_new_session", "kill_all" if kill_all else "")
 
     result = run_command(["tmux", "list-sessions", "-F", "#S"])
     sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
@@ -69,7 +71,7 @@ def choose_session(
     )
 
     if len(sessions) == 0:
-        return ("run_script", new_session_script(kill_all=False))
+        return ("tmux_new_session", "")
     if window:
         option_to_script, options_to_preview_mapping = build_window_target_options(
             sessions=sessions,
@@ -94,9 +96,9 @@ def choose_session(
         if selection is None:
             return ("error", "No tmux window or pane selected.")
         if selection == NEW_SESSION_LABEL:
-            return ("run_script", new_session_script(kill_all=kill_all))
+            return ("tmux_new_session", "kill_all" if kill_all else "")
         if selection == KILL_ALL_AND_NEW_LABEL:
-            return ("run_script", new_session_script(kill_all=True))
+            return ("tmux_new_session", "kill_all")
         script = option_to_script.get(selection)
         if script is None:
             return ("error", f"Unknown tmux target selected: {selection}")
@@ -116,9 +118,9 @@ def choose_session(
     if session_name is None:
         return ("error", "No tmux session selected.")
     if session_name == NEW_SESSION_LABEL:
-        return ("run_script", new_session_script(kill_all=kill_all))
+        return ("tmux_new_session", "kill_all" if kill_all else "")
     if session_name == KILL_ALL_AND_NEW_LABEL:
-        return ("run_script", new_session_script(kill_all=True))
+        return ("tmux_new_session", "kill_all")
     return ("run_script", build_tmux_attach_or_switch_command(session_name=session_name))
 
 

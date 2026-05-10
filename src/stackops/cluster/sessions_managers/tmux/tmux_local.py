@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import subprocess
+import os
 from typing import TypedDict
 
 from stackops.cluster.sessions_managers.session_conflict import (
@@ -13,13 +13,19 @@ from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from rich.console import Console
 
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_helpers import (
-    build_tmux_script,
-    build_tmux_merge_script,
-    check_tmux_session_status,
-    build_unknown_command_status,
-    validate_layout_config,
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
+    run_tmux_commands,
+)
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
     TmuxSessionStatus,
+    build_unknown_command_status,
+    check_tmux_session_status,
+)
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout import (
+    build_tmux_commands,
+    build_tmux_merge_commands,
+    build_tmux_script_from_commands,
+    validate_layout_config,
 )
 from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus
 
@@ -56,6 +62,7 @@ class TmuxLayoutGenerator:
         self.session_name: str = session_name
         self.exit_mode: SessionExitMode = exit_mode
         self.layout_config: LayoutConfig = layout_config.copy()
+        self.launch_commands: list[str] = []
         self.script_path: str | None = None
 
     def create_layout_file(self) -> bool:
@@ -65,11 +72,12 @@ class TmuxLayoutGenerator:
         console.print(f"[bold cyan]📋 Creating tmux layout[/bold cyan] [bright_green]'{layout_name}' with {tab_count} windows[/bright_green]")
         for tab in self.layout_config["layoutTabs"]:
             console.print(f"  [yellow]→[/yellow] [bold]{tab['tabName']}[/bold] [dim]in[/dim] [blue]{tab['startDir']}[/blue]")
-        script_content = build_tmux_script(
-            self.layout_config,
-            self.session_name,
-            self.exit_mode,
+        self.launch_commands = build_tmux_commands(
+            layout_config=self.layout_config,
+            session_name=self.session_name,
+            exit_mode=self.exit_mode,
         )
+        script_content = build_tmux_script_from_commands(commands=self.launch_commands)
         self._write_script_content(script_content=script_content)
         console.print(f"[bold green]✅ Layout created successfully:[/bold green] [cyan]{self.script_path}[/cyan]")
         return True
@@ -80,11 +88,13 @@ class TmuxLayoutGenerator:
         if self.script_path is None:
             import tempfile
 
-            layout_file = Path(tempfile.mkstemp(suffix="_layout.sh", dir=tmp_dir)[1])
+            script_suffix = "_layout.ps1" if os.name == "nt" else "_layout.sh"
+            layout_file = Path(tempfile.mkstemp(suffix=script_suffix, dir=tmp_dir)[1])
         else:
             layout_file = Path(self.script_path)
         layout_file.write_text(script_content, encoding="utf-8")
-        layout_file.chmod(layout_file.stat().st_mode | 0o111)
+        if os.name != "nt":
+            layout_file.chmod(layout_file.stat().st_mode | 0o111)
         self.script_path = str(layout_file.absolute())
 
     def check_all_commands_status(self) -> dict[str, CommandStatus]:
@@ -151,7 +161,7 @@ class TmuxLayoutGenerator:
                         f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
                         f"[yellow]'{self.session_name}'[/yellow] [yellow]and overwriting matching windows.[/yellow]"
                     )
-                    script_content = build_tmux_merge_script(
+                    launch_commands = build_tmux_merge_commands(
                         layout_config=self.layout_config,
                         session_name=self.session_name,
                         on_conflict="mergeOverwrite",
@@ -162,7 +172,7 @@ class TmuxLayoutGenerator:
                         f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
                         f"[yellow]'{self.session_name}'[/yellow] [yellow]and skipping matching windows.[/yellow]"
                     )
-                    script_content = build_tmux_merge_script(
+                    launch_commands = build_tmux_merge_commands(
                         layout_config=self.layout_config,
                         session_name=self.session_name,
                         on_conflict="mergeSkip",
@@ -171,12 +181,14 @@ class TmuxLayoutGenerator:
                 case _:
                     raise ValueError(f"Unsupported tmux merge policy: {on_conflict}")
         else:
-            script_content = build_tmux_script(
+            launch_commands = build_tmux_commands(
                 layout_config=self.layout_config,
                 session_name=self.session_name,
                 exit_mode=self.exit_mode,
             )
 
+        self.launch_commands = launch_commands
+        script_content = build_tmux_script_from_commands(commands=launch_commands)
         self._write_script_content(script_content=script_content)
 
     def apply_launch_plan(
@@ -203,12 +215,13 @@ class TmuxLayoutGenerator:
             launch_plan=launch_plan,
             on_conflict=on_conflict,
         )
-        if self.script_path is None:
-            raise RuntimeError("Script path was not set after creating layout file")
-        result = subprocess.run(["bash", self.script_path], capture_output=True, text=True)
-        if result.returncode != 0:
-            raise RuntimeError(f"Failed to run tmux layout: {result.stderr or result.stdout}")
-        return {"returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
+        if len(self.launch_commands) == 0:
+            raise RuntimeError("tmux launch commands were not prepared")
+        run_tmux_commands(
+            commands=self.launch_commands,
+            timeout_seconds=30.0,
+        )
+        return {"returncode": 0, "stdout": "", "stderr": ""}
 
 
 def run_tmux_layout(layout_config: LayoutConfig, on_conflict: SessionConflictAction) -> None:
