@@ -7,6 +7,9 @@
     ".ai",
     ".agents",
   ],
+  "ignore": [
+    "tests"
+  ],
   // "python.analysis.typeCheckingMode": "strict",
   // "typeCheckingMode": "strict",
   "extraPaths": [],
