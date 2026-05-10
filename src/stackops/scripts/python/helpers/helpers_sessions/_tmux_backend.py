@@ -5,9 +5,6 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options impo
     kill_script_for_target,
     new_session_script,
 )
-from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
-    build_tmux_attach_or_switch_command,
-)
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
     build_preview as _build_preview_impl,
     session_sort_key,
@@ -54,9 +51,7 @@ def choose_session(
     window: bool = False,
 ) -> AttachSessionChoice:
     if name is not None:
-        if window:
-            return ("handoff_script", attach_script_from_name(name=name, quote_fn=quote))
-        return ("handoff_script", build_tmux_attach_or_switch_command(session_name=name))
+        return ("handoff_script", attach_script_from_name(name=name, quote_fn=quote))
     if new_session:
         return ("handoff_script", new_session_script(kill_all=kill_all))
 
@@ -122,7 +117,7 @@ def choose_session(
         return ("handoff_script", new_session_script(kill_all=kill_all))
     if session_name == KILL_ALL_AND_NEW_LABEL:
         return ("handoff_script", new_session_script(kill_all=True))
-    return ("handoff_script", build_tmux_attach_or_switch_command(session_name=session_name))
+    return ("handoff_script", attach_script_from_name(name=session_name, quote_fn=quote))
 
 
 def choose_kill_target(

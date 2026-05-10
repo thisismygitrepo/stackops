@@ -5,11 +5,15 @@ This module provides utilities to detect the CPU model and fetch Geekbench score
 using the geekbench-browser-python tool.
 """
 
+from collections.abc import Callable
+from contextlib import AbstractContextManager
+from importlib import import_module
 import os
 from pathlib import Path
 import platform
 import re
 import subprocess
+from typing import cast
 
 
 def _run_text_command(command: list[str]) -> str | None:
@@ -46,13 +50,22 @@ def _get_windows_cpu_name_from_powershell() -> str | None:
 
 def _get_windows_cpu_name_from_registry() -> str | None:
     try:
-        import winreg
-    except ImportError:
+        winreg = import_module("winreg")
+        open_key = cast(
+            Callable[[object, str], AbstractContextManager[object]],
+            getattr(winreg, "OpenKey"),
+        )
+        hkey_local_machine = getattr(winreg, "HKEY_LOCAL_MACHINE")
+        query_value_ex = cast(
+            Callable[[object, str], tuple[object, int]],
+            getattr(winreg, "QueryValueEx"),
+        )
+    except (ImportError, AttributeError):
         return None
 
     try:
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
-            value, _value_type = winreg.QueryValueEx(key, "ProcessorNameString")
+        with open_key(hkey_local_machine, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+            value, _value_type = query_value_ex(key, "ProcessorNameString")
     except OSError:
         return None
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import platform
 import shlex
 import subprocess
 
@@ -17,6 +18,15 @@ _TMUX_NEW_SESSION_COMMAND = (
     'tmux new-session; '
     'fi'
 )
+_TMUX_NEW_SESSION_POWERSHELL_COMMAND = (
+    "if ($env:TMUX) { "
+    "$newSessionName = tmux new-session -d -P -F '#{session_name}'; "
+    "if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; "
+    "tmux switch-client -t $newSessionName "
+    "} else { "
+    "tmux new-session "
+    "}"
+)
 
 
 def build_tmux_attach_or_switch_command(session_name: str) -> str:
@@ -32,6 +42,34 @@ def build_tmux_attach_or_switch_command(session_name: str) -> str:
 
 def build_tmux_new_session_command() -> str:
     return _TMUX_NEW_SESSION_COMMAND
+
+
+def _powershell_quote(value: str) -> str:
+    escaped_value = value.replace("'", "''")
+    return f"'{escaped_value}'"
+
+
+def quote_tmux_handoff_argument(value: str) -> str:
+    if platform.system() == "Windows":
+        return _powershell_quote(value)
+    return shell_quote(value)
+
+
+def build_tmux_attach_or_switch_handoff_script(session_name: str) -> str:
+    if platform.system() != "Windows":
+        return build_tmux_attach_or_switch_command(session_name=session_name)
+
+    quoted_session_name = quote_tmux_handoff_argument(session_name)
+    return (
+        f"if ($env:TMUX) {{ tmux switch-client -t {quoted_session_name} }} "
+        f"else {{ tmux attach -t {quoted_session_name} }}"
+    )
+
+
+def build_tmux_new_session_handoff_script() -> str:
+    if platform.system() != "Windows":
+        return build_tmux_new_session_command()
+    return _TMUX_NEW_SESSION_POWERSHELL_COMMAND
 
 
 def _split_tmux_command(command: str) -> list[str]:

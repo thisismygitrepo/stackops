@@ -108,3 +108,36 @@ def test_start_tmux_new_session_outside_tmux_has_no_timeout(
     )
 
     assert calls == [(["tmux", "new-session"], None)]
+
+
+def test_build_tmux_attach_or_switch_handoff_script_uses_powershell_on_windows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(tmux_execution.platform, "system", lambda: "Windows")
+
+    script = tmux_execution.build_tmux_attach_or_switch_handoff_script(
+        session_name="demo's session",
+    )
+
+    assert script == (
+        "if ($env:TMUX) { tmux switch-client -t 'demo''s session' } "
+        "else { tmux attach -t 'demo''s session' }"
+    )
+
+
+def test_build_tmux_new_session_handoff_script_uses_powershell_on_windows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(tmux_execution.platform, "system", lambda: "Windows")
+
+    script = tmux_execution.build_tmux_new_session_handoff_script()
+
+    assert script == (
+        "if ($env:TMUX) { "
+        "$newSessionName = tmux new-session -d -P -F '#{session_name}'; "
+        "if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; "
+        "tmux switch-client -t $newSessionName "
+        "} else { "
+        "tmux new-session "
+        "}"
+    )

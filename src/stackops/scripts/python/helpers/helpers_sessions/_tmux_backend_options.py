@@ -2,8 +2,9 @@ from subprocess import CompletedProcess
 from typing import Callable
 
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
-    build_tmux_attach_or_switch_command,
-    build_tmux_new_session_command,
+    build_tmux_attach_or_switch_handoff_script,
+    build_tmux_new_session_handoff_script,
+    quote_tmux_handoff_argument,
 )
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
     build_pane_preview,
@@ -13,7 +14,7 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview impo
 
 
 def new_session_script(kill_all: bool) -> str:
-    command = build_tmux_new_session_command()
+    command = build_tmux_new_session_handoff_script()
     if kill_all:
         command = f"tmux kill-server\n{command}"
     return command
@@ -25,13 +26,16 @@ def attach_script_for_target(
     window_target: str | None = None,
     pane_index: str | None = None,
 ) -> str:
+    _ = quote_fn
     commands: list[str] = []
     if window_target:
         target = f"{session_name}:{window_target}"
-        commands.append(f"tmux select-window -t {quote_fn(target)}")
+        commands.append(f"tmux select-window -t {quote_tmux_handoff_argument(target)}")
         if pane_index:
-            commands.append(f"tmux select-pane -t {quote_fn(f'{target}.{pane_index}')}")
-    commands.append(build_tmux_attach_or_switch_command(session_name=session_name))
+            commands.append(
+                f"tmux select-pane -t {quote_tmux_handoff_argument(f'{target}.{pane_index}') }"
+            )
+    commands.append(build_tmux_attach_or_switch_handoff_script(session_name=session_name))
     return "\n".join(commands)
 
 
@@ -53,7 +57,7 @@ def kill_script_for_target(
 def attach_script_from_name(name: str, quote_fn: Callable[[str], str]) -> str:
     session_name, separator, target = name.partition(":")
     if not separator or not session_name or not target:
-        return build_tmux_attach_or_switch_command(session_name=name)
+        return build_tmux_attach_or_switch_handoff_script(session_name=name)
     window_target, pane_separator, pane_index = target.rpartition(".")
     if pane_separator:
         return attach_script_for_target(

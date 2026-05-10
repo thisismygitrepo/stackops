@@ -155,6 +155,7 @@ def attach_to_session(
             typer.echo("Error: attach operation did not return a final handoff script.", err=True, color=True)
             raise typer.Exit(code=1)
         exit_then_run_shell_script(script=payload, strict=True)
+        return
     typer.echo("Error: attach operation did not return a final handoff script.", err=True, color=True)
     raise typer.Exit(code=1)
 
