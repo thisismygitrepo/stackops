@@ -5,10 +5,64 @@ This module provides utilities to detect the CPU model and fetch Geekbench score
 using the geekbench-browser-python tool.
 """
 
+import os
 from pathlib import Path
 import platform
 import re
 import subprocess
+
+
+def _run_text_command(command: list[str]) -> str | None:
+    try:
+        result = subprocess.run(
+            command,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except OSError:
+        return None
+
+    if result.returncode != 0:
+        return None
+
+    output = result.stdout.strip()
+    if output == "":
+        return None
+    return output
+
+
+def _get_windows_cpu_name_from_powershell() -> str | None:
+    command = "Get-CimInstance Win32_Processor | Select-Object -ExpandProperty Name | Select-Object -First 1"
+    for executable in ("pwsh", "powershell"):
+        output = _run_text_command([executable, "-NoProfile", "-Command", command])
+        if output is not None:
+            return output
+    return None
+
+
+def _get_windows_cpu_name_from_registry() -> str | None:
+    try:
+        import winreg
+    except ImportError:
+        return None
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+            value, _value_type = winreg.QueryValueEx(key, "ProcessorNameString")
+    except OSError:
+        return None
+
+    if not isinstance(value, str):
+        return None
+
+    stripped_value = value.strip()
+    if stripped_value == "":
+        return None
+    return stripped_value
 
 
 def get_cpu_name() -> str:
@@ -29,16 +83,17 @@ def get_cpu_name() -> str:
             pass
 
     elif system == "Windows":
-        try:
-            # shell=True might be needed for wmic depending on environment,
-            # but usually check_output with string list is safer if executable is in path.
-            # User provided: wmic cpu get name
-            output = subprocess.check_output("wmic cpu get name", shell=True).decode()
-            lines = output.strip().split("\n")
-            if len(lines) > 1:
-                return lines[1].strip()
-        except (subprocess.CalledProcessError, IndexError):
-            pass
+        windows_cpu_name = _get_windows_cpu_name_from_powershell()
+        if windows_cpu_name is not None:
+            return windows_cpu_name
+
+        windows_cpu_name = _get_windows_cpu_name_from_registry()
+        if windows_cpu_name is not None:
+            return windows_cpu_name
+
+        processor_identifier = os.getenv("PROCESSOR_IDENTIFIER", "").strip()
+        if processor_identifier != "":
+            return processor_identifier
 
     elif system == "Darwin":
         try:
