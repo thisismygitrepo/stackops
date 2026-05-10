@@ -149,28 +149,20 @@ def attach_to_session(
         typer.echo(payload, err=True, color=True)
         raise typer.Exit()
     if backend_resolved == "tmux":
-        from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
-            run_tmux_script,
-            start_tmux_new_session,
+        from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options import (
+            new_session_script,
         )
+        from stackops.utils.code import exit_then_run_shell_script
 
-        try:
-            if action == "tmux_new_session":
-                start_tmux_new_session(
-                    kill_all=payload == "kill_all",
-                    timeout_seconds=30.0,
-                )
-                return
-            if action == "run_script" and payload:
-                run_tmux_script(
-                    script=payload,
-                    timeout_seconds=30.0,
-                    capture_output=False,
-                )
-                return
-        except RuntimeError as error:
-            typer.echo(f"Error: {error}", err=True, color=True)
-            raise typer.Exit(code=1) from error
+        if action == "tmux_new_session":
+            exit_then_run_shell_script(
+                script=new_session_script(kill_all=payload == "kill_all"),
+                strict=True,
+            )
+            return
+        if action == "run_script" and payload:
+            exit_then_run_shell_script(script=payload, strict=True)
+            return
     if action == "run_script" and payload:
         from stackops.utils.code import exit_then_run_shell_script
         exit_then_run_shell_script(script= payload, strict=True)
