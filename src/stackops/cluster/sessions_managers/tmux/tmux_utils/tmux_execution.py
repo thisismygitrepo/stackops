@@ -38,6 +38,21 @@ def _split_tmux_command(command: str) -> list[str]:
     return shlex.split(command, posix=True)
 
 
+def _is_interactive_tmux_command(command: str) -> bool:
+    command_parts = _split_tmux_command(command)
+    if command_parts[:2] == ["tmux", "attach"]:
+        return True
+    if command_parts[:2] != ["tmux", "new-session"]:
+        return False
+    return "-d" not in command_parts
+
+
+def _resolve_tmux_timeout(command: str, timeout_seconds: float | None) -> float | None:
+    if _is_interactive_tmux_command(command):
+        return None
+    return timeout_seconds
+
+
 def _raise_tmux_command_failure(
     command: str,
     result: subprocess.CompletedProcess[str],
@@ -51,11 +66,15 @@ def _run_tmux_command(
     timeout_seconds: float | None,
     capture_output: bool,
 ) -> subprocess.CompletedProcess[str]:
+    resolved_timeout = _resolve_tmux_timeout(
+        command=command,
+        timeout_seconds=timeout_seconds,
+    )
     result = subprocess.run(
         _split_tmux_command(command),
         capture_output=capture_output,
         text=True,
-        timeout=timeout_seconds,
+        timeout=resolved_timeout,
         check=False,
     )
     if result.returncode != 0:
@@ -138,7 +157,10 @@ def start_tmux_new_session(
 
     result = subprocess.run(
         ["tmux", "new-session"],
-        timeout=timeout_seconds,
+        timeout=_resolve_tmux_timeout(
+            command="tmux new-session",
+            timeout_seconds=timeout_seconds,
+        ),
         check=False,
     )
     if result.returncode != 0:
