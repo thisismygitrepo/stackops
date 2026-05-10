@@ -4536,6 +4536,42 @@
           "windows": "PowerShell-{version}-win-arm64.msi"
         }
       }
+    },
+    {
+      "appName": "psnet",
+      "license": "MIT License",
+      "repoURL": "https://github.com/psmux/psnet",
+      "doc": "Real-time TUI network monitor for Windows PowerShell",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": null,
+          "darwin": null,
+          "windows": "psnet-{version}-x86_64-windows.zip"
+        },
+        "arm64": {
+          "linux": null,
+          "darwin": null,
+          "windows": null
+        }
+      }
+    },
+    {
+      "appName": "pstop",
+      "license": "MIT License",
+      "repoURL": "https://github.com/psmux/pstop",
+      "doc": "TUI system monitor for Windows PowerShell",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": null,
+          "darwin": null,
+          "windows": "pstop-windows-x86_64.zip"
+        },
+        "arm64": {
+          "linux": null,
+          "darwin": null,
+          "windows": null
+        }
+      }
     }
   ]
 }
