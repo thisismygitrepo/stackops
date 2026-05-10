@@ -42,7 +42,7 @@ def print_logo(logo: str):
             # print("\n" + "🚫 " + "-" * 70 + " 🚫")
             # print("🔍 Missing ASCII art dependencies. Install with: iwr bit.ly/cfgasciiartwindows | iex")
             # print("🚫 " + "-" * 70 + " 🚫\n")
-            _default_art = Path(random.choice(glob.glob(str(Path(__file__).parent.joinpath("art", "*")))))
+            _default_art = Path(random.choice([item for item in glob.glob(str(Path(__file__).parent.joinpath("art", "*"))) if Path(item).is_file() and item.endswith(".txt")]))
             print(_default_art.read_text())
     elif platform.system() in ["Linux", "Darwin"]:  # Explicitly handle both Linux and macOS
         from stackops.utils.installer_utils.installer_locator_utils import is_executable_in_path
