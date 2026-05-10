@@ -3,6 +3,9 @@ from subprocess import CompletedProcess
 import pytest
 
 from stackops.scripts.python.helpers.helpers_sessions import _tmux_backend
+from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options import (
+    new_session_script,
+)
 
 
 def test_choose_session_new_session_returns_tmux_new_session_action() -> None:
@@ -13,8 +16,8 @@ def test_choose_session_new_session_returns_tmux_new_session_action() -> None:
         window=False,
     )
 
-    assert action == "tmux_new_session"
-    assert script == ""
+    assert action == "handoff_script"
+    assert script == new_session_script(kill_all=False)
 
 
 def test_choose_session_without_existing_sessions_returns_tmux_new_session_action(
@@ -33,5 +36,5 @@ def test_choose_session_without_existing_sessions_returns_tmux_new_session_actio
         window=False,
     )
 
-    assert action == "tmux_new_session"
-    assert script == ""
+    assert action == "handoff_script"
+    assert script == new_session_script(kill_all=False)

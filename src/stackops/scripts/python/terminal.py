@@ -148,24 +148,15 @@ def attach_to_session(
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit()
-    if backend_resolved == "tmux":
-        from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options import (
-            new_session_script,
-        )
+    if action == "handoff_script":
         from stackops.utils.code import exit_then_run_shell_script
 
-        if action == "tmux_new_session":
-            exit_then_run_shell_script(
-                script=new_session_script(kill_all=payload == "kill_all"),
-                strict=True,
-            )
-            return
-        if action == "run_script" and payload:
-            exit_then_run_shell_script(script=payload, strict=True)
-            return
-    if action == "run_script" and payload:
-        from stackops.utils.code import exit_then_run_shell_script
-        exit_then_run_shell_script(script= payload, strict=True)
+        if payload.strip() == "":
+            typer.echo("Error: attach operation did not return a final handoff script.", err=True, color=True)
+            raise typer.Exit(code=1)
+        exit_then_run_shell_script(script=payload, strict=True)
+    typer.echo("Error: attach operation did not return a final handoff script.", err=True, color=True)
+    raise typer.Exit(code=1)
 
 
 def kill_session_target(

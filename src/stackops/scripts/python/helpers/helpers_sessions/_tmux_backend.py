@@ -17,6 +17,7 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_processes im
     find_meaningful_pane_process_label as _find_meaningful_pane_process_label_impl,
 )
 from stackops.scripts.python.helpers.helpers_sessions.attach_impl import (
+    AttachSessionChoice,
     KILL_ALL_AND_NEW_LABEL,
     NEW_SESSION_LABEL,
     interactive_choose_with_preview,
@@ -51,13 +52,13 @@ def choose_session(
     new_session: bool,
     kill_all: bool,
     window: bool = False,
-) -> tuple[str, str | None]:
+) -> AttachSessionChoice:
     if name is not None:
         if window:
-            return ("run_script", attach_script_from_name(name=name, quote_fn=quote))
-        return ("run_script", build_tmux_attach_or_switch_command(session_name=name))
+            return ("handoff_script", attach_script_from_name(name=name, quote_fn=quote))
+        return ("handoff_script", build_tmux_attach_or_switch_command(session_name=name))
     if new_session:
-        return ("tmux_new_session", "kill_all" if kill_all else "")
+        return ("handoff_script", new_session_script(kill_all=kill_all))
 
     result = run_command(["tmux", "list-sessions", "-F", "#S"])
     sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
@@ -71,7 +72,7 @@ def choose_session(
     )
 
     if len(sessions) == 0:
-        return ("tmux_new_session", "")
+        return ("handoff_script", new_session_script(kill_all=False))
     if window:
         option_to_script, options_to_preview_mapping = build_window_target_options(
             sessions=sessions,
@@ -82,7 +83,7 @@ def choose_session(
         if len(option_to_script) == 0:
             return ("error", "No tmux windows or panes are available to attach to.")
         if len(option_to_script) == 1:
-            return ("run_script", next(iter(option_to_script.values())))
+            return ("handoff_script", next(iter(option_to_script.values())))
         options_to_preview_mapping[NEW_SESSION_LABEL] = (
             f"backend: tmux\naction: create a fresh session\n\n{new_session_script(kill_all=False)}"
         )
@@ -96,13 +97,13 @@ def choose_session(
         if selection is None:
             return ("error", "No tmux window or pane selected.")
         if selection == NEW_SESSION_LABEL:
-            return ("tmux_new_session", "kill_all" if kill_all else "")
+            return ("handoff_script", new_session_script(kill_all=kill_all))
         if selection == KILL_ALL_AND_NEW_LABEL:
-            return ("tmux_new_session", "kill_all")
+            return ("handoff_script", new_session_script(kill_all=True))
         script = option_to_script.get(selection)
         if script is None:
             return ("error", f"Unknown tmux target selected: {selection}")
-        return ("run_script", script)
+        return ("handoff_script", script)
 
     options_to_preview_mapping = {session_name: _build_preview(session_name) for session_name in sessions}
     options_to_preview_mapping[NEW_SESSION_LABEL] = (
@@ -118,10 +119,10 @@ def choose_session(
     if session_name is None:
         return ("error", "No tmux session selected.")
     if session_name == NEW_SESSION_LABEL:
-        return ("tmux_new_session", "kill_all" if kill_all else "")
+        return ("handoff_script", new_session_script(kill_all=kill_all))
     if session_name == KILL_ALL_AND_NEW_LABEL:
-        return ("tmux_new_session", "kill_all")
-    return ("run_script", build_tmux_attach_or_switch_command(session_name=session_name))
+        return ("handoff_script", new_session_script(kill_all=True))
+    return ("handoff_script", build_tmux_attach_or_switch_command(session_name=session_name))
 
 
 def choose_kill_target(

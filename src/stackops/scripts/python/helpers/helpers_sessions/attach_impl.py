@@ -2,7 +2,7 @@ import re
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Literal, overload
+from typing import Literal, TypeAlias, overload
 
 import stackops.settings.zellij.layouts as layouts
 from stackops.utils.path_reference import get_path_reference_path
@@ -16,6 +16,9 @@ KILL_ALL_AND_NEW_LABEL = "KILL ALL SESSIONS & START NEW"
 _ANSI_ESCAPE_RE = re.compile(
     r"(?:\x1B|\u001B|\033)\[[0-?]*[ -/]*[@-~]|\[[0-9;?]+[ -/]*[@-~]|\[m"
 )
+
+AttachSessionAction: TypeAlias = Literal["error", "handoff_script"]
+AttachSessionChoice: TypeAlias = tuple[AttachSessionAction, str]
 
 
 def strip_ansi_codes(text: str) -> str:
@@ -98,7 +101,13 @@ def interactive_choose_with_preview(
         return chosen_single
 
 
-def choose_session(backend: Literal["zellij", "tmux"], name: str | None, new_session: bool, kill_all: bool, window: bool = False) -> tuple[str, str | None]:
+def choose_session(
+    backend: Literal["zellij", "tmux"],
+    name: str | None,
+    new_session: bool,
+    kill_all: bool,
+    window: bool = False,
+) -> AttachSessionChoice:
     match backend:
         case "zellij":
             from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_session as _zellij

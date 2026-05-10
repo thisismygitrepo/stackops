@@ -19,6 +19,7 @@ from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_preview im
     session_sort_key as _session_sort_key_impl,
 )
 from stackops.scripts.python.helpers.helpers_sessions.attach_impl import (
+    AttachSessionChoice,
     KILL_ALL_AND_NEW_LABEL,
     NEW_SESSION_LABEL,
     STANDARD,
@@ -76,11 +77,11 @@ def choose_session(
     new_session: bool,
     kill_all: bool,
     window: bool = False,
-) -> tuple[str, str | None]:
+) -> AttachSessionChoice:
     if name is not None:
-        return ("run_script", f"zellij attach {quote(name)}")
+        return ("handoff_script", f"zellij attach {quote(name)}")
     if new_session:
-        return ("run_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
+        return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
 
     result = run_command(["zellij", "list-sessions"])
     sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
@@ -90,7 +91,7 @@ def choose_session(
     if any(_session_is_current(session) for session in sessions):
         return ("error", "Already in a Zellij session, avoiding nesting and exiting.")
     if len(sessions) == 0:
-        return ("run_script", f"zellij --layout {quote(STANDARD)}")
+        return ("handoff_script", f"zellij --layout {quote(STANDARD)}")
 
     if window:
         active_sessions = [_session_name(session) for session in sessions if not _session_is_exited(session)]
@@ -105,7 +106,7 @@ def choose_session(
         if len(option_to_script) == 0:
             return ("error", "No Zellij tabs or panes are available to attach to.")
         if len(option_to_script) == 1:
-            return ("run_script", next(iter(option_to_script.values())))
+            return ("handoff_script", next(iter(option_to_script.values())))
         options_to_preview_mapping[NEW_SESSION_LABEL] = (
             f"backend: zellij\naction: create a fresh session\n\nzellij --layout {STANDARD}"
         )
@@ -119,17 +120,17 @@ def choose_session(
         if selection is None:
             return ("error", "No Zellij tab or pane selected.")
         if selection == NEW_SESSION_LABEL:
-            return ("run_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
+            return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
         if selection == KILL_ALL_AND_NEW_LABEL:
-            return ("run_script", f"zellij kill-all-sessions --yes\nzellij --layout {quote(STANDARD)}")
+            return ("handoff_script", f"zellij kill-all-sessions --yes\nzellij --layout {quote(STANDARD)}")
         script = option_to_script.get(selection)
         if script is None:
             return ("error", f"Unknown Zellij target selected: {selection}")
-        return ("run_script", script)
+        return ("handoff_script", script)
 
     if len(sessions) == 1:
         session_name = _session_name(sessions[0])
-        return ("run_script", f"zellij attach {quote(session_name)}")
+        return ("handoff_script", f"zellij attach {quote(session_name)}")
 
     display_to_raw_session = {strip_ansi_codes(session): session for session in sessions}
     display_to_session = {
@@ -153,13 +154,13 @@ def choose_session(
     if session_label is None:
         return ("error", "No Zellij session selected.")
     if session_label == NEW_SESSION_LABEL:
-        return ("run_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
+        return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
     if session_label == KILL_ALL_AND_NEW_LABEL:
-        return ("run_script", f"zellij kill-all-sessions --yes\nzellij --layout {quote(STANDARD)}")
+        return ("handoff_script", f"zellij kill-all-sessions --yes\nzellij --layout {quote(STANDARD)}")
     selected_session_name: str | None = display_to_session.get(session_label)
     if selected_session_name is None:
         return ("error", f"Unknown Zellij session selected: {session_label}")
-    return ("run_script", f"zellij attach {quote(selected_session_name)}")
+    return ("handoff_script", f"zellij attach {quote(selected_session_name)}")
 
 
 def get_session_tabs() -> list[tuple[str, str]]:
