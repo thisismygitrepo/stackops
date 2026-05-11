@@ -1,4 +1,3 @@
-import shlex
 from pathlib import Path
 from platform import system
 from typing import cast
@@ -13,7 +12,8 @@ from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
     resolve_context,
     resolve_prompts_yaml_paths,
 )
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
@@ -23,16 +23,10 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 from stackops.utils.accessories import get_repo_root
 
 
-def _quote_for_shell(value: str, is_windows: bool) -> str:
-    if is_windows:
-        return "'" + value.replace("'", "''") + "'"
-    return shlex.quote(value)
-
-
 def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
     if len(values) == 0:
         return ""
-    return " " + " ".join(_quote_for_shell(value, is_windows=is_windows) for value in values)
+    return " " + " ".join(agent_shell.quote_for_shell(value, is_windows=is_windows) for value in values)
 
 
 def make_prompt_file(prompt: str, context: str) -> Path:
@@ -67,7 +61,7 @@ def _print_prompt_file_preview(prompt_file: Path) -> None:
 def _build_codex_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_windows: bool) -> str:
     if reasoning_effort is None:
         return ""
-    config_value = _quote_for_shell(f'model_reasoning_effort="{reasoning_effort}"', is_windows=is_windows)
+    config_value = agent_shell.quote_for_shell(f'model_reasoning_effort="{reasoning_effort}"', is_windows=is_windows)
     return f" -c {config_value}"
 
 
@@ -78,43 +72,60 @@ def _build_pi_thinking_arg(reasoning_effort: ReasoningEffort | None, is_windows:
         thinking_level = "off"
     else:
         thinking_level = reasoning_effort
-    return f" --thinking {_quote_for_shell(thinking_level, is_windows=is_windows)}"
+    return f" --thinking {agent_shell.quote_for_shell(thinking_level, is_windows=is_windows)}"
 
 
 def _build_copilot_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_windows: bool) -> str:
     copilot_reasoning = copilot_reasoning_args(reasoning_effort=reasoning_effort)
     if len(copilot_reasoning) == 0:
         return ""
-    return f" {copilot_reasoning[0]} {_quote_for_shell(copilot_reasoning[1], is_windows=is_windows)}"
+    return f" {copilot_reasoning[0]} {agent_shell.quote_for_shell(copilot_reasoning[1], is_windows=is_windows)}"
 
 
-def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
-    is_windows = system() == "Windows"
-    prompt_file_q = _quote_for_shell(str(prompt_file), is_windows=is_windows)
+def build_agent_command(
+    agent: AGENTS,
+    prompt_file: Path,
+    reasoning_effort: ReasoningEffort | None,
+    *,
+    model: str | None = None,
+    provider: PROVIDER | None = None,
+    is_windows: bool | None = None,
+) -> str:
+    resolved_is_windows = system() == "Windows" if is_windows is None else is_windows
+    prompt_file_q = agent_shell.quote_for_shell(str(prompt_file), is_windows=resolved_is_windows)
     agent_cli = cast(str, agent)
     repo_root = get_repo_root(Path.cwd())
     agent_launch_prefix = resolve_agent_launch_prefix(agent=agent, repo_root=repo_root)
-    agent_launch_prefix_q = _format_shell_args(agent_launch_prefix, is_windows=is_windows)
+    agent_launch_prefix_q = _format_shell_args(agent_launch_prefix, is_windows=resolved_is_windows)
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
 
-    if is_windows:
+    if resolved_is_windows:
         prompt_content_expr = f"(Get-Content -Raw {prompt_file_q})"
     else:
         prompt_content_expr = f'"$(cat {prompt_file_q})"'
 
     match agent:
         case "copilot":
-            reasoning_arg = _build_copilot_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=is_windows)
-            return f"{agent_cli}{reasoning_arg} -p {prompt_content_expr} --yolo"
+            model_arg = ""
+            if model is not None:
+                model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
+            reasoning_arg = _build_copilot_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=resolved_is_windows)
+            return f"{agent_cli}{model_arg}{reasoning_arg} -p {prompt_content_expr} --yolo"
         case "codex":
-            reasoning_arg = _build_codex_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=is_windows)
-            if is_windows:
-                return f"Get-Content -Raw {prompt_file_q} | {agent_cli} exec{reasoning_arg} -"
-            return f"{agent_cli} exec{reasoning_arg} - < {prompt_file_q}"
+            model_arg = ""
+            if model is not None:
+                model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
+            reasoning_arg = _build_codex_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=resolved_is_windows)
+            if resolved_is_windows:
+                return f"Get-Content -Raw {prompt_file_q} | {agent_cli} exec{model_arg}{reasoning_arg} -"
+            return f"{agent_cli} exec{model_arg}{reasoning_arg} - < {prompt_file_q}"
         case "forge":
             return f"{agent_cli} -p {prompt_content_expr}"
         case "gemini":
-            return f"{agent_cli} --yolo --prompt {prompt_file_q}"
+            model_arg = ""
+            if model is not None:
+                model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
+            return f"{agent_cli}{model_arg} --yolo --prompt {prompt_file_q}"
         case "crush":
             return f"{agent_cli} run {prompt_file_q}"
         case "claude":
@@ -136,8 +147,14 @@ def build_agent_command(agent: AGENTS, prompt_file: Path, reasoning_effort: Reas
         case "droid":
             return f"{agent_cli} exec -f {prompt_file_q}"
         case "pi":
-            thinking_arg = _build_pi_thinking_arg(reasoning_effort=normalized_reasoning_effort, is_windows=is_windows)
-            return f"{agent_cli}{thinking_arg} -p {prompt_content_expr}"
+            provider_arg = ""
+            if provider is not None:
+                provider_arg = f" --provider {agent_shell.quote_for_shell(provider, is_windows=resolved_is_windows)}"
+            model_arg = ""
+            if model is not None:
+                model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
+            thinking_arg = _build_pi_thinking_arg(reasoning_effort=normalized_reasoning_effort, is_windows=resolved_is_windows)
+            return f"{agent_cli}{provider_arg}{model_arg}{thinking_arg} -p {prompt_content_expr}"
         case "cursor-agent":
             return f"{agent_cli} -p {prompt_content_expr} --output-format text"
 

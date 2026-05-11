@@ -1,5 +1,7 @@
 from typing import Literal, TypeAlias, TypedDict
 
+from stackops.scripts.python.helpers.helpers_agents.agents_shell import get_agent_command_filename
+
 
 # Vscode extensions for AI-assisted coding.
 # Github copilot
@@ -76,7 +78,7 @@ class AI_SPEC(TypedDict):
     reasoning_effort: ReasoningEffort | None
 
 
-AGENT_NAME_FORMATTER = "agent_{idx}_cmd.sh"  # e.g., agent_0_cmd.sh
+AGENT_NAME_FORMATTER = get_agent_command_filename(idx="{idx}")
 SEARCH_STRATEGIES: TypeAlias = Literal[
     "file_path", "keyword_search", "filename_pattern"
 ]

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
 
+import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -158,7 +159,7 @@ def _render_shell_path(*, path: Path, repo_root: Path, home_dir: Path, allow_rep
     return f"""$HOME{shlex.quote(f"/{relative_text}")}"""
 
 
-def _build_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:
+def _build_posix_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:
     repo_root_resolved = repo_root.resolve()
     home_dir = Path.home().resolve()
     rendered_args: list[str] = []
@@ -183,6 +184,29 @@ def _build_recreate_command(*, repo_root: Path, recreate_command_args: list[str]
         allow_repo_relative=False,
     )
     return f"""cd {repo_root_shell_path} && {' '.join(rendered_args)}"""
+
+
+def _build_powershell_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:
+    repo_root_shell_path = agent_shell.quote_for_shell(str(repo_root.resolve()), is_windows=True)
+    recreate_invocation = agent_shell.build_shell_invocation(
+        executable=recreate_command_args[0],
+        arguments=recreate_command_args[1:],
+        is_windows=True,
+    )
+    return f"""Set-Location -LiteralPath {repo_root_shell_path}
+{recreate_invocation}"""
+
+
+def _build_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:
+    if agent_shell.is_windows_host():
+        return _build_powershell_recreate_command(
+            repo_root=repo_root,
+            recreate_command_args=recreate_command_args,
+        )
+    return _build_posix_recreate_command(
+        repo_root=repo_root,
+        recreate_command_args=recreate_command_args,
+    )
 
 
 def write_create_artifacts(
@@ -243,15 +267,20 @@ def write_create_artifacts(
         recreate_command_args=recreate_command_args,
     )
 
-    recreate_script_path = artifacts_dir / "recreate_layout.sh"
-    recreate_script_path.write_text(
-        f"""#!/usr/bin/env bash
+    is_windows = agent_shell.is_windows_host()
+    recreate_script_path = artifacts_dir / agent_shell.get_recreate_script_filename(is_windows=is_windows)
+    if is_windows:
+        recreate_script_contents = f"""$ErrorActionPreference = 'Stop'
+
+{recreate_command}
+"""
+    else:
+        recreate_script_contents = f"""#!/usr/bin/env bash
 # set -euo pipefail
 
 {recreate_command}
-""",
-        encoding="utf-8",
-    )
+"""
+    recreate_script_path.write_text(recreate_script_contents, encoding="utf-8")
     recreate_script_path.chmod(0o755)
 
     manifest_path = artifacts_dir / "manifest.json"

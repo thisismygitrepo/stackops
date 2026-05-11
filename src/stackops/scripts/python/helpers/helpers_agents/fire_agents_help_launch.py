@@ -1,10 +1,9 @@
 import random
-import shlex
 from pathlib import Path
 
+import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import (
     AGENTS,
-    AGENT_NAME_FORMATTER,
     HOST,
     PROVIDER,
     AI_SPEC,
@@ -28,10 +27,42 @@ def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -
         return str(prompt_material_path)
 
 
-def _build_generic_agent_command(agent: AGENTS, prompt_path: Path, reasoning_effort: ReasoningEffort | None) -> str:
+def _build_generic_agent_command(
+    agent: AGENTS,
+    prompt_path: Path,
+    reasoning_effort: ReasoningEffort | None,
+    model: str | None,
+    provider: PROVIDER | None,
+    *,
+    is_windows: bool,
+) -> str:
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
 
-    return build_agent_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort)
+    return build_agent_command(
+        agent=agent,
+        prompt_file=prompt_path,
+        reasoning_effort=reasoning_effort,
+        model=model,
+        provider=provider,
+        is_windows=is_windows,
+    )
+
+
+def _local_agent_environment_lines(*, agent: AGENTS, api_spec: API_SPEC, is_windows: bool) -> list[str]:
+    match agent:
+        case "gemini":
+            env_name = "GEMINI_API_KEY"
+            warning_message = "Warning: No GEMINI_API_KEY provided, hoping it is set in the environment."
+        case "codex":
+            env_name = "CODEX_API_KEY"
+            warning_message = "Warning: No CODEX_API_KEY provided, hoping it is set in the environment."
+        case _:
+            return []
+
+    api_key = api_spec["api_key"]
+    if api_key is None:
+        return [agent_shell.render_output(message=warning_message, is_windows=is_windows)]
+    return [agent_shell.render_env_assignment(name=env_name, value=api_key, is_windows=is_windows)]
 
 
 def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list[API_SPEC]:
@@ -81,6 +112,7 @@ def prep_agent_launch(
     agents_dir.mkdir(parents=True, exist_ok=True)
     prompt_folder = agents_dir / "prompts"
     prompt_folder.mkdir(parents=True, exist_ok=True)
+    is_windows = agent_shell.is_windows_host()
 
     for idx, a_prompt_material in enumerate(prompts_material):
         prompt_root = prompt_folder / f"agent_{idx}"
@@ -95,28 +127,8 @@ def prep_agent_launch(
             material_reference = _format_material_reference(prompt_material_path=prompt_material_path, repo_root=repo_root)
             prompt_path.write_text(prompt_prefix + f"""\nPlease only look at:\n{material_reference}.""" + JURISDICTION_SUFFIX, encoding="utf-8",)
 
-        agent_cmd_launch_path = prompt_root / AGENT_NAME_FORMATTER.format(idx=idx)  # e.g., agent_0_cmd.sh
+        agent_cmd_launch_path = prompt_root / agent_shell.get_agent_command_filename(idx=idx, is_windows=is_windows)
         random_sleep_time = random.uniform(0, 3)
-        cmd_prefix = f"""#!/usr/bin/env bash
-
-echo "Using machine: {machine}, model: {model}, reasoning_effort: {reasoning_effort}, provider: {provider}, and agent: {agent}"
-echo "{job_name}-{idx} CMD {agent_cmd_launch_path}"
-echo "{job_name}-{idx} PROMPT {prompt_path}"
-echo "{job_name}-{idx} CONTEXT {prompt_material_path}"
-
-export FIRE_AGENTS_AGENT_NAME="{agent}"
-export FIRE_AGENTS_JOB_NAME="{job_name}"
-export FIRE_AGENTS_PROMPT_FILE="{prompt_path}"
-export FIRE_AGENTS_MATERIAL_FILE="{prompt_material_path}"
-export FIRE_AGENTS_AGENT_LAUNCHER="{agent_cmd_launch_path}"
-
-
-echo "Sleeping for {random_sleep_time:.2f} seconds to stagger agent startups ... Press Ctrl+C to cancel."
-sleep {random_sleep_time:.2f}
-echo "--------START OF AGENT OUTPUT--------"
-sleep 0.1
-
-        """
         ai_spec: AI_SPEC
         match agent:
             case "gemini":
@@ -133,9 +145,19 @@ sleep 0.1
                     api_spec=api_spec,
                     reasoning_effort=reasoning_effort,
                 )
-                from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_gemini import fire_gemini
+                if machine == "local":
+                    cmd = _build_generic_agent_command(
+                        agent=agent,
+                        prompt_path=prompt_path,
+                        reasoning_effort=reasoning_effort,
+                        model=ai_spec["model"],
+                        provider=ai_spec["provider"],
+                        is_windows=is_windows,
+                    )
+                else:
+                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_gemini import fire_gemini
 
-                cmd = fire_gemini(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+                    cmd = fire_gemini(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "cursor-agent":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(
@@ -146,7 +168,14 @@ sleep 0.1
                     api_spec=api_spec,
                     reasoning_effort=reasoning_effort,
                 )
-                cmd = _build_generic_agent_command(agent=agent, prompt_path=prompt_path, reasoning_effort=reasoning_effort)
+                cmd = _build_generic_agent_command(
+                    agent=agent,
+                    prompt_path=prompt_path,
+                    reasoning_effort=reasoning_effort,
+                    model=ai_spec["model"],
+                    provider=ai_spec["provider"],
+                    is_windows=is_windows,
+                )
             case "crush":
                 assert provider is not None, "Provider must be specified for Crush agent."
                 api_keys = get_api_keys(provider=provider)
@@ -161,9 +190,19 @@ sleep 0.1
                     api_spec=api_spec,
                     reasoning_effort=reasoning_effort,
                 )
-                from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_crush import fire_crush
+                if machine == "local":
+                    cmd = _build_generic_agent_command(
+                        agent=agent,
+                        prompt_path=prompt_path,
+                        reasoning_effort=reasoning_effort,
+                        model=ai_spec["model"],
+                        provider=ai_spec["provider"],
+                        is_windows=is_windows,
+                    )
+                else:
+                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_crush import fire_crush
 
-                cmd = fire_crush(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+                    cmd = fire_crush(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "copilot":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(
@@ -174,9 +213,19 @@ sleep 0.1
                     api_spec=api_spec,
                     reasoning_effort=reasoning_effort,
                 )
-                from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_copilot import fire_copilot
+                if machine == "local":
+                    cmd = _build_generic_agent_command(
+                        agent=agent,
+                        prompt_path=prompt_path,
+                        reasoning_effort=reasoning_effort,
+                        model=ai_spec["model"],
+                        provider=ai_spec["provider"],
+                        is_windows=is_windows,
+                    )
+                else:
+                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_copilot import fire_copilot
 
-                cmd = fire_copilot(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+                    cmd = fire_copilot(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "codex":
                 api_keys = get_api_keys(provider="openai", silent_if_missing=True)
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else API_SPEC(api_key=None, api_name="", api_label="", api_account="")
@@ -188,9 +237,19 @@ sleep 0.1
                     api_spec=api_spec,
                     reasoning_effort=reasoning_effort,
                 )
-                from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex import fire_codex
+                if machine == "local":
+                    cmd = _build_generic_agent_command(
+                        agent=agent,
+                        prompt_path=prompt_path,
+                        reasoning_effort=reasoning_effort,
+                        model=ai_spec["model"],
+                        provider=ai_spec["provider"],
+                        is_windows=is_windows,
+                    )
+                else:
+                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex import fire_codex
 
-                cmd = fire_codex(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+                    cmd = fire_codex(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "pi":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(
@@ -201,9 +260,19 @@ sleep 0.1
                     api_spec=api_spec,
                     reasoning_effort=reasoning_effort,
                 )
-                from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_pi import fire_pi
+                if machine == "local":
+                    cmd = _build_generic_agent_command(
+                        agent=agent,
+                        prompt_path=prompt_path,
+                        reasoning_effort=reasoning_effort,
+                        model=ai_spec["model"],
+                        provider=ai_spec["provider"],
+                        is_windows=is_windows,
+                    )
+                else:
+                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_pi import fire_pi
 
-                cmd = fire_pi(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+                    cmd = fire_pi(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case _:
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(
@@ -214,27 +283,68 @@ sleep 0.1
                     api_spec=api_spec,
                     reasoning_effort=reasoning_effort,
                 )
-                cmd = _build_generic_agent_command(agent=agent, prompt_path=prompt_path, reasoning_effort=reasoning_effort)
-        cmd_prefix += f"""
-echo "Running with api label:   {ai_spec["api_spec"]["api_label"]}"
-echo "Running with api acount:  {ai_spec["api_spec"]["api_account"]}"
-echo "Running with api name:    {ai_spec["api_spec"]["api_name"]}"
-echo "Running with api key:     {ai_spec["api_spec"]["api_key"]}"
-"""
-        cmd_postfix = """
-sleep 0.1
-echo "---------END OF AGENT OUTPUT---------"
-"""
-        agent_cmd_launch_path.write_text(cmd_prefix + cmd + cmd_postfix, encoding="utf-8")
+                cmd = _build_generic_agent_command(
+                    agent=agent,
+                    prompt_path=prompt_path,
+                    reasoning_effort=reasoning_effort,
+                    model=ai_spec["model"],
+                    provider=ai_spec["provider"],
+                    is_windows=is_windows,
+                )
+
+        script_lines: list[str] = []
+        if is_windows:
+            script_lines.append("$ErrorActionPreference = 'Stop'")
+        else:
+            script_lines.append("#!/usr/bin/env bash")
+        script_lines.append("")
+        script_lines.append(
+            agent_shell.render_output(
+                message=f"Using machine: {machine}, model: {model}, reasoning_effort: {reasoning_effort}, provider: {provider}, and agent: {agent}",
+                is_windows=is_windows,
+            )
+        )
+        script_lines.append(agent_shell.render_output(message=f"{job_name}-{idx} CMD {agent_cmd_launch_path}", is_windows=is_windows))
+        script_lines.append(agent_shell.render_output(message=f"{job_name}-{idx} PROMPT {prompt_path}", is_windows=is_windows))
+        script_lines.append(agent_shell.render_output(message=f"{job_name}-{idx} CONTEXT {prompt_material_path}", is_windows=is_windows))
+        script_lines.append("")
+        script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_AGENT_NAME", value=agent, is_windows=is_windows))
+        script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_JOB_NAME", value=job_name, is_windows=is_windows))
+        script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_PROMPT_FILE", value=str(prompt_path), is_windows=is_windows))
+        script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_MATERIAL_FILE", value=str(prompt_material_path), is_windows=is_windows))
+        script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_AGENT_LAUNCHER", value=str(agent_cmd_launch_path), is_windows=is_windows))
+        if machine == "local":
+            script_lines.extend(_local_agent_environment_lines(agent=agent, api_spec=ai_spec["api_spec"], is_windows=is_windows))
+        script_lines.append("")
+        script_lines.append(
+            agent_shell.render_output(
+                message=f"Sleeping for {random_sleep_time:.2f} seconds to stagger agent startups ... Press Ctrl+C to cancel.",
+                is_windows=is_windows,
+            )
+        )
+        script_lines.append(agent_shell.render_sleep_seconds(seconds=random_sleep_time, is_windows=is_windows))
+        script_lines.append(agent_shell.render_output(message="--------START OF AGENT OUTPUT--------", is_windows=is_windows))
+        script_lines.append(agent_shell.render_sleep_milliseconds(milliseconds=100, is_windows=is_windows))
+        script_lines.append(cmd.strip())
+        script_lines.append("")
+        script_lines.append(agent_shell.render_output(message=f"Running with api label:   {ai_spec['api_spec']['api_label']}", is_windows=is_windows))
+        script_lines.append(agent_shell.render_output(message=f"Running with api acount:  {ai_spec['api_spec']['api_account']}", is_windows=is_windows))
+        script_lines.append(agent_shell.render_output(message=f"Running with api name:    {ai_spec['api_spec']['api_name']}", is_windows=is_windows))
+        script_lines.append(agent_shell.render_output(message=f"Running with api key:     {ai_spec['api_spec']['api_key']}", is_windows=is_windows))
+        script_lines.append(agent_shell.render_sleep_milliseconds(milliseconds=100, is_windows=is_windows))
+        script_lines.append(agent_shell.render_output(message="---------END OF AGENT OUTPUT---------", is_windows=is_windows))
+        script_lines.append("")
+        agent_cmd_launch_path.write_text("\n".join(script_lines), encoding="utf-8")
 
 
 def get_agents_launch_layout(session_root: Path, *, job_name: str, start_dir: Path) -> LayoutsFile:
     prompt_directories = get_prompt_directories(prompt_root=session_root / "prompts")
     tab_config: list[TabConfig] = []
+    is_windows = agent_shell.is_windows_host()
     for a_prompt_dir in prompt_directories:
         idx = a_prompt_dir.name.split("_")[-1]  # e.g., agent_0 -> 0
-        agent_cmd_path = a_prompt_dir / AGENT_NAME_FORMATTER.format(idx=idx)
-        fire_cmd = f"bash {shlex.quote(str(agent_cmd_path))}"
+        agent_cmd_path = a_prompt_dir / agent_shell.get_agent_command_filename(idx=idx, is_windows=is_windows)
+        fire_cmd = agent_shell.get_script_runner_command(script_path=agent_cmd_path, is_windows=is_windows)
         tab_config.append(TabConfig(tabName=f"Agent{idx}", startDir=str(start_dir.resolve()), command=fire_cmd))
     layout = LayoutConfig(layoutName=job_name, layoutTabs=tab_config)
     layouts_file: LayoutsFile = LayoutsFile(version="1.0", layouts=[layout])

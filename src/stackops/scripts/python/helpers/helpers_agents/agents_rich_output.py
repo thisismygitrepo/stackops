@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -40,7 +41,7 @@ def _file_name_or_placeholder(*, paths: Sequence[Path], placeholder: str) -> str
 def _files_summary(*, prompt_dir: Path) -> str:
     prompt_paths = sorted(prompt_dir.glob("*_prompt.txt"))
     material_paths = sorted(prompt_dir.glob("*_material.txt"))
-    launcher_paths = sorted(prompt_dir.glob("*_cmd.sh"))
+    launcher_paths = sorted(prompt_dir.glob(agent_shell.get_agent_launcher_glob()))
     return " | ".join(
         [
             _file_name_or_placeholder(paths=prompt_paths, placeholder="-"),
