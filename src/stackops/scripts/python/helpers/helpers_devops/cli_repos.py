@@ -1,9 +1,3 @@
-"""Repos CLI powered by Typer.
-
-# TODO use gh api user --jq '.login' to get the username and use it to clone the repos.
-in the event that username@github.com is not mentioned in the remote url.
-
-"""
 
 from pathlib import Path
 from typing import Annotated

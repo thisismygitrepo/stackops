@@ -45,7 +45,6 @@ def choose_from_options[T](
     tv: bool = False,
     preview: Literal["bat"] | None = None,
 ) -> Union[T, list[T]] | None:
-    # TODO: replace with https://github.com/tmbo/questionary
     # # also see https://github.com/charmbracelet/gum
     options_list: list[T] = list(options)
     if len(options_list) == 0:
