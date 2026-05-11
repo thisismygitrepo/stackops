@@ -125,11 +125,38 @@ def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo an
     _install_stackops(dev=dev)
 
 
-def export() -> None:
+def export(
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Directory where the installer folder and zip archive will be written."),
+    ] = Path.home().joinpath("tmp_results"),
+    include_configs: Annotated[
+        bool,
+        typer.Option("--include-configs/--no-include-configs", help="Include the StackOps config tree in the offline installer."),
+    ] = True,
+    include_uv_bundle: Annotated[
+        bool,
+        typer.Option("--include-uv-bundle/--no-include-uv-bundle", help="Include the uv-managed StackOps runtime bundle when available."),
+    ] = True,
+    keep_unpacked: Annotated[
+        bool,
+        typer.Option("--keep-unpacked/--remove-unpacked", help="Keep the unpacked installer directory after writing the zip archive."),
+    ] = False,
+) -> None:
     """📤 export the installation files to get an offline image."""
+    from rich.console import Console
+
     from stackops.utils.installer_utils import installer_offline
 
-    installer_offline.export()
+    installer_offline.export(
+        options=installer_offline.OfflineInstallerOptions(
+            output_root=output_root,
+            include_configs=include_configs,
+            include_uv_bundle=include_uv_bundle,
+            keep_unpacked=keep_unpacked,
+        ),
+        console=Console(),
+    )
 
 
 def status(
