@@ -37,6 +37,7 @@ PACAKGE_MANAGERS = ["bun", "npm", "pip", "uv", "winget", "powershell", "irm", "b
 ALIASED_EXE_NAMES: dict[str, str] = {
     "powershellwinget": "pwsh",
     "powershellgithub": "pwsh",
+    "superfile": "spf",
 }
 
 

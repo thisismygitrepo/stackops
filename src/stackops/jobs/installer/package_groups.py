@@ -179,18 +179,9 @@ TERMINAL_EYE_CANDY = [
     "figlet-cli",
     "boxes",
     "cowsay",
-    # "transmission",
-    # "bytehound",
-    # "xcrawl3r",
     # "obsidian",
     # "istio",
     # "cointop",
-# sudo nala install cowsay -y || true
-# sudo nala install lolcat -y || true
-# sudo nala install boxes -y || true
-# sudo nala install figlet -y || true
-# sudo nala install fortune -y || true
-# sudo nala install toilet -y || true
 ]
 
 
@@ -202,6 +193,8 @@ PACKAGES_SYSTEM_MONITORS = [
     "procs",
     "cpufetch",
     "fastfetch",
+    "psnet",
+    "pstop",
 ]
 
 
@@ -225,6 +218,7 @@ PACKAGES_FILE = [
     # "joshuto",
     # "lf",
     # "nnn",
+    "superfile",
     "yazi",
     "tere",
     # "exa",
@@ -239,16 +233,22 @@ PACKAGES_FILE = [
 
 NETWORK = [
     "bandwhich",
+    "psnet",
     "ipinfo",
     "sniffnet",
     "topgrade",
     "speedtest",
     "rclone",
+    # "bytehound",
+    # "transmission",
+    # "xcrawl3r",
+
 ]
 
 # Terminal & Shell Enhancements - Terminal multiplexers, shell history, and prompts
 PACKAGES_TERMINAL_SHELL = [
     "zellij",
+    "psmux",
     "tmux",
     "mprocs",
     "mcfly",
