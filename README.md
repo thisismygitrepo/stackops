@@ -13,9 +13,8 @@
 
 </div>
 
-StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile manager, data and code sync solution; is there anything else? It should take a few minutes to make a new machine to look like the machine you were customizing for 1 decade.
+StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile/secrets manager, data and code sync solution, command launcher (is there anything else?) all wrapped into one solution. As such, it should take a few minutes to make a fresh new machine to look like the machine you were customizing for 10 years.
 
-`1 command + 5 minutes`: from a naked, minimal, freshly purchased or formatted machine to the usable-ready machine that you have been optimizing for 10 years.
 
 | Before | After |
 | --- | --- |
@@ -69,9 +68,6 @@ stackops --help
 
 Run these once StackOps is installed.
 
-<details>
-<summary><strong>Linux</strong></summary>
-
 ```bash
 devops install --group sysabc
 devops config copy-assets all
@@ -84,74 +80,6 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-</details>
-
-<details>
-<summary><strong>macOS</strong></summary>
-
-```bash
-devops install --group sysabc
-devops config copy-assets all
-devops config sync down \
-  --sensitivity public \
-  --method copy \
-  --on-conflict overwrite-default-path \
-  --which all
-devops config terminal config-shell --which default
-devops install --group termabc
-```
-
-</details>
-
-<details>
-<summary><strong>Windows PowerShell</strong></summary>
-
-```powershell
-devops install --group sysabc
-devops config copy-assets all
-devops config sync down `
-  --sensitivity public `
-  --method copy `
-  --on-conflict overwrite-default-path `
-  --which all
-devops config terminal config-shell --which default
-devops install --group termabc
-```
-
-</details>
-
-## CLI Map
-
-<table>
-  <thead>
-    <tr>
-      <th>Command</th>
-      <th>Use it for</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>devops</code></td>
-      <td>Machine bootstrap, package groups, and config workflows.</td>
-    </tr>
-    <tr>
-      <td><code>stackops</code></td>
-      <td>Main StackOps entrypoint and help surface.</td>
-    </tr>
-    <tr>
-      <td><code>cloud</code></td>
-      <td>Cloud sync and remote storage helpers.</td>
-    </tr>
-    <tr>
-      <td><code>terminal</code></td>
-      <td>Terminal and shell configuration helpers.</td>
-    </tr>
-    <tr>
-      <td><code>agents</code></td>
-      <td>Agent setup and automation commands.</td>
-    </tr>
-  </tbody>
-</table>
 
 ## Author
 
