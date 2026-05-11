@@ -4,6 +4,7 @@ import glob as glob_module
 import os
 import shutil
 from typing import Literal, TypeAlias
+from urllib.parse import urlsplit
 
 BACKEND_LOOSE: TypeAlias = Literal[
     "rainfrog", "r",
@@ -46,6 +47,13 @@ EXT_TO_PREFIX: dict[str, str] = {
     ".postgres": "postgres://", ".pg": "postgres://", ".postgresql": "postgres://",
     ".mysql": "mysql://",
 }
+HARLEQUIN_URL_ADAPTERS: dict[str, str] = {
+    "duckdb": "duckdb",
+    "mysql": "mysql",
+    "postgres": "postgres",
+    "postgresql": "postgres",
+    "sqlite": "sqlite",
+}
 
 
 def _find_files(pattern: str, root: Path, recursive: bool) -> list[Path]:
@@ -63,8 +71,19 @@ def _rainfrog_sqlite_read_only_url(path: Path) -> str:
     return f"""sqlite://{file_uri_path}?mode=ro"""
 
 
-def _rainfrog_command(path: Path | None, read_only: bool) -> list[str]:
+def _looks_like_url(value: str) -> bool:
+    parsed = urlsplit(value)
+    return bool(parsed.scheme) and "://" in value
+
+
+def _harlequin_url_adapter(url: str) -> str | None:
+    return HARLEQUIN_URL_ADAPTERS.get(urlsplit(url).scheme.lower())
+
+
+def _rainfrog_command(path: Path | None, url: str | None, read_only: bool) -> list[str]:
     command = ["rainfrog"]
+    if url is not None:
+        return [*command, "--url", url]
     if path is None:
         return command
     suffix = path.suffix.lower()
@@ -97,17 +116,19 @@ def _harlequin_adapter(resolved: list[Path]) -> Literal["duckdb", "sqlite"] | No
     raise ValueError(f"Harlequin requires all opened local database files to use the same engine, got: {sorted(families)}")
 
 
-def _harlequin_command(resolved: list[Path], read_only: bool, theme: str | None, limit: int | None) -> list[str]:
+def _harlequin_command(resolved: list[Path], url: str | None, read_only: bool, theme: str | None, limit: int | None) -> list[str]:
     command = ["harlequin"]
-    adapter = _harlequin_adapter(resolved)
+    adapter = _harlequin_adapter(resolved) if resolved else _harlequin_url_adapter(url) if url is not None else None
     if adapter is not None:
         command.extend(["--adapter", adapter])
-    if read_only and resolved:
+    if read_only and (resolved or url is not None):
         command.append("--read-only")
     if theme is not None:
         command.extend(["--theme", theme])
     if limit is not None:
         command.extend(["--limit", str(limit)])
+    if url is not None:
+        command.append(url)
     command.extend(str(path) for path in resolved)
     return command
 
@@ -157,6 +178,7 @@ def _validate_read_only_support(backend: BACKEND, read_only: bool, resolved: lis
 
 def app(
     path: str | None = None,
+    url: str | None = None,
     find: str | None = None,
     find_root: str | None = None,
     recursive: bool = False,
@@ -175,10 +197,15 @@ def app(
     backend_strict = LOOSE2STRICT[backend]
 
     resolved: list[Path] = []
-    if path is not None and find is not None:
-        raise ValueError("Provide either `path` or `find`, not both.")
+    if sum(option is not None for option in (path, url, find)) > 1:
+        raise ValueError("Provide only one of `path`, `url`, or `find`.")
     if path is not None:
+        if _looks_like_url(path):
+            raise ValueError("Database connection URLs must be passed with `--url` or `-u`, not as the positional `path`.")
         resolved = [Path(path).expanduser().resolve()]
+    elif url is not None:
+        if not _looks_like_url(url):
+            raise ValueError("The value passed to `--url` / `-u` must be a database connection URL.")
     elif find is not None:
         root = Path(find_root).expanduser().resolve() if find_root is not None else Path.cwd()
         resolved = _find_files(find, root, recursive)
@@ -193,32 +220,40 @@ def app(
     command: list[str]
     match backend_strict:
         case "rainfrog":
-            command = _rainfrog_command(resolved[0] if resolved else None, read_only=read_only)
+            command = _rainfrog_command(resolved[0] if resolved else None, url=url, read_only=read_only)
         case "lazysql":
             command = ["lazysql"]
             if read_only:
                 command.append("-read-only")
-            if resolved:
+            if url is not None:
+                command.append(url)
+            elif resolved:
                 command.append(_url_for(resolved[0]))
         case "dblab":
             command = ["dblab"]
             if limit is not None:
                 command.extend(["--limit", str(limit)])
-            if resolved:
+            if url is not None:
+                command.extend(["--url", url])
+            elif resolved:
                 command.extend(["--url", _url_for(resolved[0])])
         case "usql":
             command = ["usql"]
-            if resolved:
+            if url is not None:
+                command.append(url)
+            elif resolved:
                 command.append(_url_for(resolved[0]))
         case "harlequin":
-            command = _harlequin_command(resolved=resolved, read_only=read_only, theme=theme, limit=limit)
+            command = _harlequin_command(resolved=resolved, url=url, read_only=read_only, theme=theme, limit=limit)
         case "sqlit":
             command = ["sqlit"]
             if theme is not None:
                 command.extend(["--theme", theme])
             if limit is not None:
                 command.extend(["--max-rows", str(limit)])
-            if resolved:
+            if url is not None:
+                command.append(url)
+            elif resolved:
                 command.append(_url_for(resolved[0]))
 
     _launch_interactive_command(command)

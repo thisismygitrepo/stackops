@@ -13,7 +13,7 @@
 
 </div>
 
-StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile/secrets manager, data and code sync solution, command launcher (is there anything else?) all wrapped into one solution. As such, it should take a few minutes to make a fresh new machine to look like the machine you were customizing for 10 years.
+StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile/secrets manager, data and code sync solution, command launcher, processes orchestator (is there anything else?) all wrapped into one solution. As such, it should take a few minutes to make a fresh new machine to look like the machine you were customizing for 10 years.
 
 
 | Before | After |

@@ -78,6 +78,10 @@ def compress_pdf(
 
 def read_db_cli_tui(
     path: Annotated[str | None, typer.Argument(..., help="The path to the file-based db")] = None,
+    url: Annotated[
+        str | None,
+        typer.Option("--url", "-u", help="Database connection URL. Use this instead of the positional path for DSNs."),
+    ] = None,
     find: Annotated[
         str | None,
         typer.Option("--find", "-f", help="Glob pattern to discover database files."),
@@ -102,6 +106,7 @@ def read_db_cli_tui(
 
     impl(
         path=path,
+        url=url,
         find=find,
         find_root=find_root,
         recursive=recursive,

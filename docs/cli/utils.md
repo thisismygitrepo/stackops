@@ -106,7 +106,7 @@ Key behavior:
 - `download [URL]` supports `--decompress`, `--output`, and `--output-dir`.
 - `pdf-merge PDFS...` accepts one or more input files and can `--compress` the merged output.
 - `pdf-compress PDF_INPUT` supports `--quality`, `--image-dpi`, `--compress-streams`, and `--object-streams`.
-- `read-db [PATH]` defaults to the `harlequin` backend and supports `--backend`, `--read-only/--read-write`, `--theme`, and `--limit`.
+- `read-db [PATH]` defaults to the `harlequin` backend and supports `--url/-u` for explicit connection URLs plus `--backend`, `--read-only/--read-write`, `--theme`, and `--limit`.
 
 Examples:
 
@@ -116,6 +116,7 @@ utils file download https://example.com/archive.tar.gz --decompress --output-dir
 utils file pdf-merge a.pdf b.pdf c.pdf --output merged.pdf
 utils file pdf-compress report.pdf --output report-small.pdf --quality 75 --image-dpi 144
 utils file read-db ./local.db --backend harlequin --read-only
+utils file read-db --url postgres://postgres:1234@192.168.20.4:5432/binance
 ```
 
 ## Typical Flow
