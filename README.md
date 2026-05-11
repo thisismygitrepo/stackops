@@ -20,21 +20,12 @@ See the [online docs](https://thisismygitrepo.github.io/stackops/) for full usag
 
 ## Install
 
-Choose your platform and expand only the commands you need.
+Choose your platform and jump to the matching section.
 
-<details open>
-<summary><strong>Linux</strong></summary>
+| [Linux](#install-linux) | [macOS](#install-macos) | [Windows PowerShell](#install-windows-powershell) |
+| --- | --- | --- |
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv tool install --upgrade --python 3.14 stackops
-stackops --help
-```
-
-</details>
-
-<details>
-<summary><strong>macOS</strong></summary>
+### Linux
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -42,26 +33,33 @@ uv tool install --upgrade --python 3.14 stackops
 stackops --help
 ```
 
-</details>
+### macOS
 
-<details>
-<summary><strong>Windows PowerShell</strong></summary>
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install --upgrade --python 3.14 stackops
+stackops --help
+# OR: . < (curl -L https://bit.ly/sopsu)
+```
+
+### Windows PowerShell
 
 ```powershell
 powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
+# OR: irm 
 ```
-
-</details>
 
 
 ## Quick Init
 
 Run these once StackOps is installed.
 
-<details open>
-<summary><strong>Linux</strong></summary>
+| [Linux](#quick-init-linux) | [macOS](#quick-init-macos) | [Windows PowerShell](#quick-init-windows-powershell) |
+| --- | --- | --- |
+
+### Linux
 
 ```bash
 devops install --group sysabc
@@ -75,10 +73,7 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-</details>
-
-<details>
-<summary><strong>macOS</strong></summary>
+### macOS
 
 ```bash
 devops install --group sysabc
@@ -92,10 +87,7 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-</details>
-
-<details>
-<summary><strong>Windows PowerShell</strong></summary>
+### Windows PowerShell
 
 ```powershell
 devops install --group sysabc
@@ -108,8 +100,6 @@ devops config sync down `
 devops config terminal config-shell --which default
 devops install --group termabc
 ```
-
-</details>
 
 ## CLI Map
 
