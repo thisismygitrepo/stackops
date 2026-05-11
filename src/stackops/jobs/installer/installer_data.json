@@ -4538,6 +4538,24 @@
       }
     },
     {
+      "appName": "psmuxWinget",
+      "license": "MIT License",
+      "repoURL": "CMD",
+      "doc": "Native Windows terminal multiplexer",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": null,
+          "darwin": null,
+          "windows": "winget install --no-upgrade -e --id marlocarlo.psmux --source winget --scope user --accept-package-agreements --accept-source-agreements"
+        },
+        "arm64": {
+          "linux": null,
+          "darwin": null,
+          "windows": "winget install --no-upgrade -e --id marlocarlo.psmux --source winget --scope user --accept-package-agreements --accept-source-agreements"
+        }
+      }
+    },
+    {
       "appName": "psnet",
       "license": "MIT License",
       "repoURL": "https://github.com/psmux/psnet",
