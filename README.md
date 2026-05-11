@@ -15,25 +15,21 @@
 
 StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile manager, data and code sync solution; is there anything else? It should take a few minutes to make a new machine to look like the machine you were customizing for 1 decade.
 
+`1 command + 5 minutes`: from a naked, minimal, freshly purchased or formatted machine to the usable-ready machine that you have been optimizing for 10 years.
+
+| Before | After |
+| --- | --- |
+| ![Fresh minimal machine state](docs/assets/before.png) | ![Developer-ready machine state](docs/assets/after.png) |
+
 
 See the [online docs](https://thisismygitrepo.github.io/stackops/) for full usage and reference material.
 
 ## Install
 
-Choose your platform and jump to the matching section.
+Choose your platform and expand only the commands you need.
 
-| [Linux](#install-linux) | [macOS](#install-macos) | [Windows PowerShell](#install-windows-powershell) |
-| --- | --- | --- |
-
-### Linux
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv tool install --upgrade --python 3.14 stackops
-stackops --help
-```
-
-### macOS
+<details>
+<summary><strong>Linux</strong></summary>
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -42,24 +38,39 @@ stackops --help
 # OR: . < (curl -L https://bit.ly/sopsu)
 ```
 
-### Windows PowerShell
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install --upgrade --python 3.14 stackops
+stackops --help
+# OR: . < (curl -L https://bit.ly/sopsu)
+```
+
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
-# OR: irm 
+# OR: irm bit.ly/sopsw | iex
 ```
+
+</details>
 
 
 ## Quick Init
 
 Run these once StackOps is installed.
 
-| [Linux](#quick-init-linux) | [macOS](#quick-init-macos) | [Windows PowerShell](#quick-init-windows-powershell) |
-| --- | --- | --- |
-
-### Linux
+<details>
+<summary><strong>Linux</strong></summary>
 
 ```bash
 devops install --group sysabc
@@ -73,7 +84,10 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-### macOS
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
 
 ```bash
 devops install --group sysabc
@@ -87,7 +101,10 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-### Windows PowerShell
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
 
 ```powershell
 devops install --group sysabc
@@ -100,6 +117,8 @@ devops config sync down `
 devops config terminal config-shell --which default
 devops install --group termabc
 ```
+
+</details>
 
 ## CLI Map
 
