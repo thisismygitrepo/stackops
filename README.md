@@ -2,7 +2,7 @@
 
 <h1>🗜 StackOps</h1>
 
-<strong>Bootstrap and maintain a development machine from one CLI.</strong>
+<strong>Digital Life Manager.</strong>
 
 <p>
   <a href="https://thisismygitrepo.github.io/stackops/"><img alt="Docs" src="https://img.shields.io/badge/docs-online-2f6f6f"></a>
@@ -13,21 +13,17 @@
 
 </div>
 
-StackOps is a cross-platform CLI for bootstrapping and maintaining a development machine. It groups package installation, config syncing, data syncing, session automation, and helper utilities into one install.
+StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile manager, data and code sync solution; is there anything else? It should take a few minutes to make a new machine to look like the machine you were customizing for 1 decade.
+
 
 See the [online docs](https://thisismygitrepo.github.io/stackops/) for full usage and reference material.
 
 ## Install
 
-Choose your platform and run the commands in order.
+Choose your platform and expand only the commands you need.
 
-<p>
-  <a href="#install-linux"><kbd>Linux</kbd></a>
-  <a href="#install-macos"><kbd>macOS</kbd></a>
-  <a href="#install-windows-powershell"><kbd>Windows PowerShell</kbd></a>
-</p>
-
-<h3 id="install-linux">Linux</h3>
+<details open>
+<summary><strong>Linux</strong></summary>
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -35,7 +31,10 @@ uv tool install --upgrade --python 3.14 stackops
 stackops --help
 ```
 
-<h3 id="install-macos">macOS</h3>
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -43,7 +42,10 @@ uv tool install --upgrade --python 3.14 stackops
 stackops --help
 ```
 
-<h3 id="install-windows-powershell">Windows PowerShell</h3>
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
@@ -51,19 +53,15 @@ uv tool install --upgrade --python 3.14 stackops
 stackops --help
 ```
 
-If `uv` is not found after installing it, open a new terminal and run the install command again.
+</details>
+
 
 ## Quick Init
 
-Run these once StackOps is installed:
+Run these once StackOps is installed.
 
-<p>
-  <a href="#quick-init-linux"><kbd>Linux</kbd></a>
-  <a href="#quick-init-macos"><kbd>macOS</kbd></a>
-  <a href="#quick-init-windows-powershell"><kbd>Windows PowerShell</kbd></a>
-</p>
-
-<h3 id="quick-init-linux">Linux</h3>
+<details open>
+<summary><strong>Linux</strong></summary>
 
 ```bash
 devops install --group sysabc
@@ -77,7 +75,10 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-<h3 id="quick-init-macos">macOS</h3>
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
 
 ```bash
 devops install --group sysabc
@@ -91,7 +92,10 @@ devops config terminal config-shell --which default
 devops install --group termabc
 ```
 
-<h3 id="quick-init-windows-powershell">Windows PowerShell</h3>
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
 
 ```powershell
 devops install --group sysabc
@@ -104,6 +108,8 @@ devops config sync down `
 devops config terminal config-shell --which default
 devops install --group termabc
 ```
+
+</details>
 
 ## CLI Map
 
