@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 
+from stackops.jobs.scripts_dynamic import download_stackops_offline_installer
 from stackops.utils import rclone_wrapper
 from stackops.utils.installer_utils import installer_offline_constants as constants
 from stackops.utils.installer_utils.installer_offline_models import ExportStepResult
@@ -49,19 +50,10 @@ def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> 
 
 
 def _resolve_url_map_path() -> Path:
-    repo_root = _resolve_repo_root()
-    url_map_path = repo_root.joinpath(constants.OFFLINE_INSTALLER_URL_MAP_REPO_PATH)
+    url_map_path = Path(download_stackops_offline_installer.__file__).resolve().with_suffix(".json")
     if not url_map_path.is_file():
         raise RuntimeError(f"Offline installer URL map not found: {url_map_path}")
     return url_map_path
-
-
-def _resolve_repo_root() -> Path:
-    current_path = Path(__file__).resolve()
-    for parent in current_path.parents:
-        if parent.joinpath("pyproject.toml").is_file() and parent.joinpath("src", "stackops").is_dir():
-            return parent
-    raise RuntimeError("Could not resolve the StackOps repository root from the installed source tree.")
 
 
 def _build_target_key(*, system_name: str, arch_name: str) -> str:

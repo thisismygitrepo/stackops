@@ -12,11 +12,10 @@ import tempfile
 from typing import Final
 from urllib.request import urlopen
 
-
-URL_MAP_FILE_NAME: Final[str] = "download_stackops_offline_installer.json"
+URL_MAP_FILE_NAME: Final[str] = Path(__file__).resolve().with_suffix(".json").name
 URL_MAP_FALLBACK_URL: Final[str] = (
     "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/"
-    "src/stackops/jobs/scripts_dynamic/download_stackops_offline_installer.json"
+    f"src/stackops/jobs/scripts_dynamic/{URL_MAP_FILE_NAME}"
 )
 DEFAULT_OUTPUT_DIR: Final[Path] = Path.home().joinpath("tmp_results", "installer", "stackops-offline-installer")
 KNOWN_TARGETS: Final[tuple[str, ...]] = (
@@ -48,7 +47,7 @@ def main() -> None:
 
 
 def _load_url_map() -> dict[str, str | None]:
-    local_url_map_path = Path(__file__).with_name(URL_MAP_FILE_NAME)
+    local_url_map_path = Path(__file__).resolve().with_suffix(".json")
     if local_url_map_path.is_file():
         return _parse_url_map(raw_json=local_url_map_path.read_text(encoding="utf-8"))
     with urlopen(URL_MAP_FALLBACK_URL, timeout=30) as response:
