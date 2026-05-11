@@ -4590,6 +4590,24 @@
           "windows": null
         }
       }
+    },
+    {
+      "appName": "psmux",
+      "license": "MIT License",
+      "repoURL": "https://github.com/psmux/psmux",
+      "doc": "Native Windows tmux built in Rust.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": null,
+          "darwin": null,
+          "windows": "psmux-{version}-windows-x64.zip"
+        },
+        "arm64": {
+          "linux": null,
+          "darwin": null,
+          "windows": "psmux-{version}-windows-arm64.zip"
+        }
+      }
     }
   ]
 }
