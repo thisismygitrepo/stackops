@@ -107,9 +107,10 @@ Export the installation files used to create an offline installer image.
 
 ```bash
 devops self build-installer
+devops self build-installer --upload-to-cloud
 ```
 
-This command wraps the offline installer export path and does not accept extra options.
+Use `--upload-to-cloud` to upload the generated archive to `gdp:/stackops/<archive-name>`, generate a shared URL, and rewrite the matching platform download script with that URL.
 
 ### explore
 

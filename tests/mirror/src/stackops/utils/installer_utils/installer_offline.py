@@ -32,6 +32,7 @@ def test_export_builds_archive_and_summary(monkeypatch: pytest.MonkeyPatch, tmp_
             include_configs=True,
             include_uv_bundle=False,
             keep_unpacked=True,
+            upload_to_cloud=False,
         ),
         console=Console(file=console_output, force_terminal=False, color_system=None),
     )

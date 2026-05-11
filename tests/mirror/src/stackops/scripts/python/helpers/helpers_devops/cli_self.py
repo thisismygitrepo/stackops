@@ -15,6 +15,7 @@ def test_build_installer_help_lists_options() -> None:
     assert "--include-configs" in result.stdout
     assert "--include-uv-bundle" in result.stdout
     assert "--keep-unpacked" in result.stdout
+    assert "--upload-to-cloud" in result.stdout
 
 
 def test_build_installer_passes_explicit_options(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -43,6 +44,7 @@ def test_build_installer_passes_explicit_options(monkeypatch: pytest.MonkeyPatch
             "--no-include-configs",
             "--no-include-uv-bundle",
             "--keep-unpacked",
+            "--upload-to-cloud",
         ],
     )
 
@@ -53,5 +55,6 @@ def test_build_installer_passes_explicit_options(monkeypatch: pytest.MonkeyPatch
             include_configs=False,
             include_uv_bundle=False,
             keep_unpacked=True,
+            upload_to_cloud=True,
         )
     ]

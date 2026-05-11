@@ -1,6 +1,7 @@
 from rich.console import Console
 from stackops.utils.installer_utils import installer_offline_constants as constants
 from stackops.utils.installer_utils.installer_offline_models import ExportStepResult, OfflineInstallerOptions, OfflineInstallerReport
+from stackops.utils.installer_utils.installer_offline_publish import publish_archive
 from stackops.utils.installer_utils.installer_offline_render import render_report
 from stackops.utils.installer_utils.installer_offline_scripts import write_install_script
 from stackops.utils.installer_utils.installer_offline_steps import archive_output, export_binaries, export_configs
@@ -17,7 +18,7 @@ def export(*, options: OfflineInstallerOptions, console: Console) -> OfflineInst
     system_name = platform.system()
     os_name = system_name.lower()
     arch_name = platform.machine().lower()
-    output_dir = options.output_root.joinpath(f"installer_offline-{os_name}-{arch_name}")
+    output_dir = options.output_root.joinpath(f"stackops-offline-installer-{os_name}-{arch_name}")
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -42,6 +43,9 @@ def export(*, options: OfflineInstallerOptions, console: Console) -> OfflineInst
             output_path=archive_path,
         )
     )
+    if options.upload_to_cloud:
+        console.print("[bold blue]Uploading archive to cloud[/bold blue]")
+        step_results.extend(publish_archive(archive_path=archive_path, system_name=system_name, arch_name=arch_name))
     report = OfflineInstallerReport(
         platform_name=system_name,
         arch_name=arch_name,
@@ -61,6 +65,7 @@ if __name__ == "__main__":
             include_configs=True,
             include_uv_bundle=True,
             keep_unpacked=False,
+            upload_to_cloud=False,
         ),
         console=Console(),
     )

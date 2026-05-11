@@ -11,6 +11,7 @@ class OfflineInstallerOptions:
     include_configs: bool
     include_uv_bundle: bool
     keep_unpacked: bool
+    upload_to_cloud: bool
 
 
 @dataclass(frozen=True)

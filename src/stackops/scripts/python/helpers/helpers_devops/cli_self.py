@@ -142,6 +142,10 @@ def export(
         bool,
         typer.Option("--keep-unpacked/--remove-unpacked", help="Keep the unpacked installer directory after writing the zip archive."),
     ] = False,
+    upload_to_cloud: Annotated[
+        bool,
+        typer.Option("--upload-to-cloud/--no-upload-to-cloud", help="Upload the finished archive to gdp:/stackops/, share it, and refresh the matching download script."),
+    ] = False,
 ) -> None:
     """📤 export the installation files to get an offline image."""
     from rich.console import Console
@@ -154,6 +158,7 @@ def export(
             include_configs=include_configs,
             include_uv_bundle=include_uv_bundle,
             keep_unpacked=keep_unpacked,
+            upload_to_cloud=upload_to_cloud,
         ),
         console=Console(),
     )
