@@ -1,1 +1,0 @@
-utils file download --decompress --output-dir ~/tmp_results/installer/stackops-offline-installer <URL>

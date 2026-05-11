@@ -56,9 +56,9 @@ BINARY_NAMES: list[str] = [
     "yq",
 ]
 DEFAULT_OUTPUT_ROOT: Path = Path.home().joinpath("tmp_results")
-OFFLINE_INSTALLER_DOWNLOAD_OUTPUT_DIR: str = "~/tmp_results/installer/stackops-offline-installer"
 OFFLINE_INSTALLER_UPLOAD_CLOUD: Final[str] = "gdp"
 OFFLINE_INSTALLER_UPLOAD_REMOTE_DIR: Path = Path("/stackops")
+OFFLINE_INSTALLER_URL_MAP_REPO_PATH: Path = Path("src/stackops/jobs/scripts_dynamic/download_stackops_offline_installer.json")
 
 
 def resolve_install_path(*, system_name: str) -> Path:
