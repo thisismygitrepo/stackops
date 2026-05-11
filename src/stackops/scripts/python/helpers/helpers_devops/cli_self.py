@@ -144,7 +144,7 @@ def export(
     ] = False,
     upload_to_cloud: Annotated[
         bool,
-        typer.Option("--upload-to-cloud/--no-upload-to-cloud", help="Upload the finished archive to gdp:/stackops/, share it, and refresh the dynamic downloader URL map."),
+        typer.Option("--upload-to-cloud", "-u", help="Upload the finished archive to gdp:/stackops/, share it, and refresh the dynamic downloader URL map."),
     ] = False,
 ) -> None:
     """📤 export the installation files to get an offline image."""

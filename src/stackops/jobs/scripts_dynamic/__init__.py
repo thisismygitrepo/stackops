@@ -1,0 +1,2 @@
+
+OFFLINE_INSTALLER_PATH_REFERENCE = "download_stackops_offline_installer.json"
