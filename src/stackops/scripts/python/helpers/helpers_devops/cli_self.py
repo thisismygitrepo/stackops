@@ -72,7 +72,10 @@ uv tool install --no-cache --upgrade stackops
     else:
         from stackops.utils.code import run_shell_script
 
-        run_shell_script(shell_script, display_script=True, clean_env=False)
+        proc = run_shell_script(shell_script, display_script=True, clean_env=False)
+        if proc.returncode != 0:
+            typer.echo(f"❌ Update script failed with return code {proc.returncode}")
+            raise typer.Exit(code=proc.returncode)
         if link_public_configs:
             copy_assets_and_link_public_configs()
         else:
@@ -190,17 +193,34 @@ def readme() -> None:
     from rich.markdown import Markdown
 
     repo_root = _developer_repo_root()
-    if repo_root is not None:
-        markdown_text = repo_root.joinpath("README.md").read_text(encoding="utf-8")
-    else:
-        import requests
-
-        url_readme = "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/README.md"
-        response = requests.get(url_readme, timeout=10)
-        response.raise_for_status()
-        markdown_text = response.text
-
     console = Console()
+
+    if repo_root is not None:
+        readme_path = repo_root.joinpath("README.md")
+        if not readme_path.is_file():
+            typer.echo(f"❌ README.md not found at {str(readme_path)}")
+            raise typer.Exit(code=1)
+        try:
+            markdown_text = readme_path.read_text(encoding="utf-8")
+        except Exception as exc:  # pylint: disable=broad-except
+            typer.echo(f"❌ Failed to read README.md: {exc}")
+            raise typer.Exit(code=1)
+    else:
+        try:
+            import requests  # type: ignore
+        except Exception as exc:
+            typer.echo(f"❌ 'requests' is required to fetch remote README: {exc}")
+            raise typer.Exit(code=1)
+
+        url_readme = "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/README.md"
+        try:
+            response = requests.get(url_readme, timeout=10)
+            response.raise_for_status()
+            markdown_text = response.text
+        except Exception as exc:
+            typer.echo(f"❌ Failed to fetch remote README from {url_readme}: {exc}")
+            raise typer.Exit(code=1)
+
     console.print(Markdown(markdown_text))
 
 
