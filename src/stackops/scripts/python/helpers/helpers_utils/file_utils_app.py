@@ -34,14 +34,54 @@ def merge_pdfs(
     if len(pdfs) < 2:
         raise typer.BadParameter("Provide at least two PDF files to merge.", param_hint="pdfs")
 
-    output_path = Path(output if output is not None else "merged.pdf").expanduser().resolve()
+    # Resolve and validate input paths strictly
     input_paths = [Path(pdf_path).expanduser().resolve() for pdf_path in pdfs]
-    if output_path in input_paths:
+
+    # Detect duplicate inputs after resolution
+    seen: set[Path] = set()
+    duplicates: list[str] = []
+    unique_input_paths: list[Path] = []
+    for p in input_paths:
+        if p in seen:
+            duplicates.append(str(p))
+        else:
+            seen.add(p)
+            unique_input_paths.append(p)
+
+    if duplicates:
+        raise typer.BadParameter(
+            f"Duplicate input PDF paths detected (after resolution): {', '.join(duplicates)}",
+            param_hint="pdfs",
+        )
+
+    if len(unique_input_paths) < 2:
+        raise typer.BadParameter("Provide at least two distinct PDF files to merge.", param_hint="pdfs")
+
+    # Ensure inputs exist and are regular files
+    missing = [str(p) for p in unique_input_paths if not p.exists()]
+    not_files = [str(p) for p in unique_input_paths if p.exists() and not p.is_file()]
+    if missing:
+        raise typer.BadParameter(f"Input PDF files not found: {', '.join(missing)}", param_hint="pdfs")
+    if not_files:
+        raise typer.BadParameter(f"Input paths are not regular files: {', '.join(not_files)}", param_hint="pdfs")
+
+    output_path = Path(output if output is not None else "merged.pdf").expanduser().resolve()
+
+    # Prevent writing output over any input file
+    if output_path in unique_input_paths:
         raise typer.BadParameter("Output PDF path must not be one of the input PDF paths.", param_hint="--output")
+
+    # Fail if output already exists to avoid accidental overwrite
+    if output_path.exists():
+        raise typer.BadParameter(
+            f"Output path already exists: {output_path}. Remove it or choose a different --output.",
+            param_hint="--output",
+        )
 
     from stackops.scripts.python.helpers.helpers_utils.pdf import merge_pdfs as impl
 
-    impl(pdfs=pdfs, output=output, compress=compress)
+    # Call implementation with resolved paths (strings) for consistency
+    impl(pdfs=[str(p) for p in unique_input_paths], output=str(output_path), compress=compress)
 
 
 def compress_pdf(
