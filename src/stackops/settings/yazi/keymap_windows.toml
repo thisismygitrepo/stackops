@@ -151,22 +151,22 @@ run = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated
 desc = "open with duckdb ui (read-only target)"
 
 [[mgr.prepend_keymap]]
-on   = ["p", "c"]
+on   = ["P", "c"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek "$0"'
 desc = "Search contents"
 [[mgr.prepend_keymap]]
-on   = ["p", "f"]
+on   = ["P", "f"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -f "$0"'
 desc = "Search files"
 [[mgr.prepend_keymap]]
-on   = ["p", "e"]
+on   = ["P", "e"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -e "$0"'
 desc = "Search then edit"
 [[mgr.prepend_keymap]]
-on   = ["p", "s"]
+on   = ["P", "s"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -s "$0"'
 desc = "Semantic search"
 [[mgr.prepend_keymap]]
-on   = ["p", "a"]
+on   = ["P", "a"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -a "$0"'
 desc = "Symbol search"
