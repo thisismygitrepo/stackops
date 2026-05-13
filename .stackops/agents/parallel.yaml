@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=./parallel.schema.json
+# parallel.yaml used by `agents parallel run-parallel`
+# Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
+# Each run entry uses the same option names as `agents parallel create`.
+entryExample:
+  agent: codex
+  model: null
+  reasoning: null
+  provider: null
+  host: local
+  context: null
+  context_path: null
+  separator: \n@-@\n
+  agent_load: 3
+  prompt: null
+  prompt_path: null
+  prompt_name: null
+  job_name: AI_Agents
+  join_prompt_and_context: false
+  run: false
+  output_path: null
+  agents_dir: null
+  interactive: false
