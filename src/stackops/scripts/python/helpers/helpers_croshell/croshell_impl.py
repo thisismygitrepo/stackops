@@ -1,6 +1,7 @@
 """Pure Python implementation for croshell command - no typer dependencies."""
 
 from pathlib import Path
+import shutil
 from stackops.scripts.python.enums import BACKENDS
 
 
@@ -37,6 +38,9 @@ def croshell(
         uv_project_line = ""
         uv_python_line = "--python 3.14"
 
+    if path is None and backend in {"terminal1", "terminal2"}:
+        raise ValueError("Terminal preview backends require a path.")
+
     from stackops.scripts.python.helpers.helpers_croshell.crosh import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
     from stackops.utils.accessories import randstr
@@ -50,6 +54,9 @@ def croshell(
     if path is not None:
         from stackops.utils.path_helper import get_choice_file
         choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
+        if backend in {"terminal1", "terminal2"}:
+            _run_terminal_backend(target_path=choice_file, backend=backend)
+            return
         if project_path is None:
             ve_path, _ = get_ve_path_and_ipython_profile(choice_file)
             if ve_path is not None:
@@ -158,6 +165,25 @@ except Exception as e:
 
     from stackops.utils.code import exit_then_run_shell_script
     exit_then_run_shell_script(fire_line, strict=False)
+
+
+def _run_terminal_backend(target_path: Path, backend: BACKENDS) -> None:
+    """Run the Yazi terminal preview flows directly from croshell."""
+    match backend:
+        case "terminal1":
+            from stackops.settings.yazi.scripts.fullscreen_preview import preview_target
+
+            terminal_columns = shutil.get_terminal_size(fallback=(120, 40)).columns
+            exit_code = preview_target(target_path=target_path, terminal_columns=terminal_columns)
+            if exit_code != 0:
+                raise SystemExit(exit_code)
+        case "terminal2":
+            from stackops.settings.yazi.scripts.interactive_view import build_command, exec_command
+
+            command = build_command(target_path=target_path)
+            exec_command(command)
+        case _:
+            raise ValueError(f"Unsupported terminal backend: {backend}")
 
 
 def _build_preprogram() -> str:

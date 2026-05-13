@@ -5,7 +5,7 @@ This makes `stackops --help` much faster by avoiding loading heavy dependencies.
 """
 from typing import Annotated
 import typer
-from stackops.scripts.python.enums import BACKENDS_LOOSE, BACKENDS_MAP
+from stackops.scripts.python.enums import BACKENDS_LOOSE
 
 
 def fire(
@@ -51,10 +51,20 @@ def croshell(
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
     backend: Annotated[BACKENDS_LOOSE, typer.Option("--backend", "-b", help="specify the backend to use")] = "ipython",
     profile: Annotated[str | None, typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
+    stackops_project: Annotated[bool, typer.Option("--self", "-s", help="specify stackops project to use.")] = False,
+    frozen: Annotated[bool, typer.Option("--frozen", "-f", help="freeze the environment (no package changes allowed)")] = False,
 ) -> None:
     """Cross-shell command execution."""
     from stackops.scripts.python.croshell import croshell as croshell_impl
-    croshell_impl(path=path, project_path=project_path, uv_with=uv_with, backend=BACKENDS_MAP[backend], profile=profile)
+    croshell_impl(
+        path=path,
+        project_path=project_path,
+        uv_with=uv_with,
+        backend=backend,
+        profile=profile,
+        stackops_project=stackops_project,
+        frozen=frozen,
+    )
 
 
 def devops(ctx: typer.Context) -> None:
