@@ -4626,6 +4626,24 @@
           "windows": "superfile-windows-{version}-arm64.zip"
         }
       }
+    },
+    {
+      "appName": "goose",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/aaif-goose/goose",
+      "doc": "Open-source AI agent for code and workflows.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "goose-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "goose-x86_64-apple-darwin.tar.gz",
+          "windows": "goose-x86_64-pc-windows-msvc.zip"
+        },
+        "arm64": {
+          "linux": "goose-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "goose-aarch64-apple-darwin.tar.gz",
+          "windows": null
+        }
+      }
     }
   ]
 }

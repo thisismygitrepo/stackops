@@ -121,7 +121,6 @@ Safety and idempotency rules:
 - If present, update in place instead of duplicating.
 - If duplicate entries already exist, keep one and remove extras.
 - Always perform dry-run before writing.
-- Keep a backup when writing.
 - Never mutate unrelated installer entries.
 
 Helper scripts available in this skill:

@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from pathlib import Path
 import argparse
 import json
@@ -167,13 +166,8 @@ def main() -> None:
                 sys.stdout.write(f"- {warning}\n")
         return
 
-    backup_suffix: str = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-    backup_path = installer_path.with_suffix(installer_path.suffix + f".{backup_suffix}.bak")
-    backup_path.write_text(installer_path.read_text(encoding="utf-8"), encoding="utf-8")
-
     installer_path.write_text(json.dumps(installer_payload_map, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     sys.stdout.write(f"Wrote installer data via {action}: {installer_path}\n")
-    sys.stdout.write(f"Backup written: {backup_path}\n")
     if len(warning_rows) > 0:
         sys.stdout.write("Warnings:\n")
         for warning in warning_rows:
