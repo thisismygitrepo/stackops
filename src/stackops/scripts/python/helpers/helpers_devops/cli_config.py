@@ -143,22 +143,36 @@ cloud:
 
 
 def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all", "a"], typer.Argument(..., help="Which assets to copy")]) -> None:
-    """🔗 Copy asset files from library to machine."""
+    """🔗 Copy asset files from library to machine.
+
+    Strict behavior:
+    - Raise typer.Exit(code=1) on unknown asset type or on any failure.
+    - Exit immediately on first failure when copying multiple asset groups.
+    """
     from stackops.profile import create_helper
 
-    match which:
-        case "all" | "a":
-            create_helper.copy_assets_to_machine(which="scripts")
-            create_helper.copy_assets_to_machine(which="settings")
-            return
-        case "scripts" | "s":
-            create_helper.copy_assets_to_machine(which="scripts")
-            return
-        case "settings" | "t":
-            create_helper.copy_assets_to_machine(which="settings")
-            return
-    msg = typer.style("Error: ", fg=typer.colors.RED) + f"Unknown asset type: {which}"
-    typer.echo(msg)
+    try:
+        match which:
+            case "all" | "a":
+                create_helper.copy_assets_to_machine(which="scripts")
+                create_helper.copy_assets_to_machine(which="settings")
+                typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + "Copied all assets.")
+                return
+            case "scripts" | "s":
+                create_helper.copy_assets_to_machine(which="scripts")
+                typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + "Copied script assets.")
+                return
+            case "settings" | "t":
+                create_helper.copy_assets_to_machine(which="settings")
+                typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + "Copied settings assets.")
+                return
+    except Exception as exc:
+        typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"Failed to copy assets ({which}): {exc}")
+        raise typer.Exit(code=1) from exc
+
+    # Unreachable with current Literal type, but keep strict behavior if it occurs.
+    typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"Unknown asset type: {which}")
+    raise typer.Exit(code=1)
 
 
 def get_app() -> typer.Typer:
