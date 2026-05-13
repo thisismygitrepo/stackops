@@ -169,23 +169,23 @@ def get_app() -> typer.Typer:
 
     config_apps.command("register", no_args_is_help=True, help="📇 <r> Register dotfiles against user mapper.yaml")(dotfile_module.register_dotfile)
     config_apps.command("r", no_args_is_help=True, hidden=True)(dotfile_module.register_dotfile)
-    config_apps.command("edit", no_args_is_help=True, help="📝 <E> Open dotfiles mapper.yaml in nano, hx, or code.")(dotfile_module.edit_dotfile)
-    config_apps.command("E", no_args_is_help=True, help="Open dotfiles mapper.yaml in nano, hx, or code.", hidden=True)(dotfile_module.edit_dotfile)
+    config_apps.command("edit", no_args_is_help=True, help="📝 <e> Open dotfiles mapper.yaml in nano, hx, or code.")(dotfile_module.edit_dotfile)
+    config_apps.command("e", no_args_is_help=True, help="Open dotfiles mapper.yaml in nano, hx, or code.", hidden=True)(dotfile_module.edit_dotfile)
 
-    config_apps.command("export-dotfiles", no_args_is_help=True, help="📤 <e> Export dotfiles for migration to new machine.")(
+    config_apps.command("export-dotfiles", no_args_is_help=True, help="📤 <E> Export dotfiles for migration to new machine.")(
         dotfile_module.export_dotfiles
     )
-    config_apps.command("e", no_args_is_help=True, help="Export dotfiles for migration to new machine.", hidden=True)(dotfile_module.export_dotfiles)
-    config_apps.command("import-dotfiles", no_args_is_help=False, help="📥 <i> Import dotfiles from exported archive.")(
+    config_apps.command("E", no_args_is_help=True, help="Export dotfiles for migration to new machine.", hidden=True)(dotfile_module.export_dotfiles)
+    config_apps.command("import-dotfiles", no_args_is_help=False, help="📥 <I> Import dotfiles from exported archive.")(
         dotfile_module.import_dotfiles
     )
-    config_apps.command("i", no_args_is_help=False, help="Import dotfiles from exported archive.", hidden=True)(dotfile_module.import_dotfiles)
+    config_apps.command("I", no_args_is_help=False, help="Import dotfiles from exported archive.", hidden=True)(dotfile_module.import_dotfiles)
 
     config_apps.add_typer(cli_config_terminal.get_app(), name="terminal", help="🐚 <t> Configure your terminal profile.")
     config_apps.add_typer(cli_config_terminal.get_app(), name="t", help="🐚 <t> Configure your terminal profile.", hidden=True)
 
-    config_apps.command("interactive", no_args_is_help=False, help="🤖 <I> Interactive configuration of machine.")(config)
-    config_apps.command("I", no_args_is_help=False, help="Interactive configuration of machine.", hidden=True)(config)
+    config_apps.command("interactive", no_args_is_help=False, help="🤖 <i> Interactive configuration of machine.")(config)
+    config_apps.command("i", no_args_is_help=False, help="Interactive configuration of machine.", hidden=True)(config)
 
     config_apps.command("copy-assets", no_args_is_help=True, help="📋 <c> Copy asset files from library to machine.", hidden=False)(copy_assets)
     config_apps.command("c", no_args_is_help=True, help="Copy asset files from library to machine.", hidden=True)(copy_assets)
