@@ -18,12 +18,10 @@ def install_tech(
     ] = "agent-browser",
 ) -> None:
     """Install or prepare browser automation technology for agents."""
-    try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech
 
+    try:
         result = install_browser_tech(which=which)
-    except ValueError as error:
-        raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error

@@ -103,6 +103,15 @@ def register_backup_entry(
     return USER_BACKUP_PATH, entry_name, replaced
 
 
+def _parse_requested_backup_entries(which: str) -> list[str]:
+    choices = [token.strip() for token in which.split(",")]
+    if not choices or any(not token for token in choices):
+        raise ValueError("Invalid --which value: expected a comma-separated list of non-empty group or group.item names, or 'all'.")
+    if "all" in choices and len(choices) != 1:
+        raise ValueError("Invalid --which value: 'all' cannot be combined with other entries.")
+    return choices
+
+
 def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | None, repo: REPO_LOOSE) -> None:
     console = Console()
     bu_file = read_backup_config(repo=repo)
@@ -116,8 +125,7 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             console.print(Panel("🔍 DEFAULT CLOUD NOT FOUND\n🔄 Please select a cloud configuration from the options below", title="[bold red]Error: Cloud Not Found[/bold red]", border_style="red"))
             cloud_choice = choose_cloud_interactively()
             if cloud_choice is None:
-                console.print(Panel("❓ Cloud selection cancelled.", title="[bold yellow]Cancelled[/bold yellow]", border_style="yellow"))
-                return
+                raise ValueError("Cloud selection cancelled.")
             cloud = cloud_choice.strip()
     else:
         cloud = cloud.strip()
@@ -151,10 +159,9 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             options_to_preview_mapping=bu_file, extension="yaml", multi=True, preview_size_percent=75.0,
         )
         if len(choices) == 0:
-            console.print(Panel("❌ NO ITEMS SELECTED\n⚠️  Exiting without processing any items", title="[bold red]No Items Selected[/bold red]", border_style="red"))
-            return
+            raise ValueError("No backup entries selected.")
     else:
-        choices = [token.strip() for token in which.split(",")] if which else []
+        choices = _parse_requested_backup_entries(which)
         console.print(Panel(f"🔖 PRE-SELECTED ITEMS\n📝 Using: {', '.join(choices)}", title="[bold blue]Pre-selected Items[/bold blue]", border_style="blue"))
 
     items: BackupConfig
@@ -178,6 +185,8 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             unknown.append(choice)
         if unknown:
             raise ValueError(f"Unknown backup entries: {', '.join(unknown)}")
+        if not items:
+            raise ValueError("No backup entries selected.")
         console.print(Panel(f"📋 PROCESSING SELECTED ENTRIES\n🔢 Total entries to process: {sum(len(item) for item in items.values())}", title="[bold blue]Process Selected Entries[/bold blue]", border_style="blue"))
     program = ""
     console.print(Panel(f"🚀 GENERATING {direction} SCRIPT\n🌥️  Cloud: {cloud}\n🗂️  Items: {sum(len(item) for item in items.values())}", title="[bold blue]Script Generation[/bold blue]", border_style="blue"))

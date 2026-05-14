@@ -147,7 +147,7 @@ def attach_to_session(
     action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)
     if action == "error":
         typer.echo(payload, err=True, color=True)
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     if action == "handoff_script":
         from stackops.utils.code import exit_then_run_shell_script
 
@@ -248,22 +248,41 @@ def summarize(
             )
         )
         raise typer.Exit(code=1)
+    if not layout_path_obj.is_file():
+        console.print(
+            Panel(
+                f"❌ Layout path is not a file:\n{layout_path_obj}",
+                title="Error",
+                border_style="red",
+            )
+        )
+        raise typer.Exit(code=1)
 
-    json_str = layout_path_obj.read_text(encoding="utf-8")
+    try:
+        json_str = layout_path_obj.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        console.print(
+            Panel(
+                f"❌ Failed to read layout file:\n{layout_path_obj}\n\n{error}",
+                title="Error",
+                border_style="red",
+            )
+        )
+        raise typer.Exit(code=1) from error
     try:
         layout_file_obj: object = json.loads(json_str)
-    except Exception:
+    except json.JSONDecodeError:
         try:
             layout_file_obj = json.loads(remove_c_style_comments(json_str))
-        except Exception as e:
+        except json.JSONDecodeError as error:
             console.print(
                 Panel(
-                    f"❌ Failed to parse JSON file:\n{layout_path_obj}\n\n{e}",
+                    f"❌ Failed to parse JSON file:\n{layout_path_obj}\n\n{error}",
                     title="Error",
                     border_style="red",
                 )
             )
-            raise typer.Exit(code=1) from e
+            raise typer.Exit(code=1) from error
 
     if not isinstance(layout_file_obj, dict):
         console.print(Panel("❌ Layout file root must be a JSON object.", title="Error", border_style="red"))

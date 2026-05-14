@@ -89,6 +89,29 @@ def resolve_scan_root(path: Path) -> Path:
     return candidate_path
 
 
+def validate_split_options(*, split_every: int | None, split_to: int | None) -> None:
+    """Validate split flags so the command has one strict behavior."""
+    if split_every is not None and split_to is not None:
+        raise ValueError("Use either --split-every or --split-to, not both")
+    if split_every is not None and split_every <= 0:
+        raise ValueError("--split-every must be greater than 0")
+    if split_to is not None and split_to <= 0:
+        raise ValueError("--split-to must be greater than 0")
+
+
+def resolve_output_base(*, repo_root: Path, output_path: str) -> Path:
+    """Resolve the output base path and enforce repo-relative writes."""
+    output_path_value = Path(output_path)
+    if output_path_value.is_absolute():
+        raise ValueError("--output-path must be relative to the repo root")
+
+    resolved_repo_root = repo_root.resolve(strict=False)
+    resolved_output_base = (resolved_repo_root / output_path_value).resolve(strict=False)
+    if not resolved_output_base.is_relative_to(resolved_repo_root):
+        raise ValueError("--output-path must stay within the repo root")
+    return resolved_output_base
+
+
 def filter_files_by_name(files: list[str], pattern: str) -> list[str]:
     """Filter files by filename containing the pattern."""
     return [f for f in files if pattern in f]
@@ -261,16 +284,16 @@ def make_todo_files(
     console = Console()
     try:
         repo_path = resolve_scan_root(Path(repo))
+        validate_split_options(split_every=split_every, split_to=split_to)
+        output_base = resolve_output_base(repo_root=repo_path, output_path=output_path)
     except ValueError as error:
         console.print(Panel(f"❌ ERROR | {error}", border_style="bold red", expand=False))
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from error
 
     # Delete .ai/todo directory at the start
     todo_dir = repo_path / ".ai" / "todo"
     if todo_dir.exists():
         shutil.rmtree(todo_dir)
-
-    output_base = repo_path / output_path
 
     # Ensure output directory exists
     output_base.parent.mkdir(parents=True, exist_ok=True)

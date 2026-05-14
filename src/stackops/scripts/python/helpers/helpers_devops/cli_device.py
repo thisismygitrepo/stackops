@@ -1,4 +1,3 @@
-from ipaddress import ip_address
 from typing import Annotated, Literal
 
 import typer
@@ -19,14 +18,19 @@ def switch_public_ip_address(
 
 def bind_wsl_port(port: Annotated[int, typer.Option(..., "--port", "-p", min=1, max=65535, help="Port number to bind")]) -> None:
     code = f"""
-wsl_ip="$(hostname -I | tr ' ' '\\n' | grep -E '^[0-9]+([.][0-9]+){{3}}$' | head -n 1)"
-if [ -z "$wsl_ip" ]; then
-  echo "Could not detect a WSL IPv4 address."
+if ! command -v netsh.exe >/dev/null 2>&1; then
+  echo "netsh.exe is not available. Run this command from WSL on Windows."
   exit 1
 fi
 
-if ! command -v netsh.exe >/dev/null 2>&1; then
-  echo "netsh.exe is not available. Run this command from WSL on Windows."
+if ! command -v ip >/dev/null 2>&1; then
+  echo "ip is not available. Run this command from WSL."
+  exit 1
+fi
+
+wsl_ip="$(ip -4 route get 1.1.1.1 | sed -nE 's/.* src ([0-9.]+).*/\\1/p' | head -n 1)"
+if [ -z "$wsl_ip" ]; then
+  echo "Could not detect the WSL IPv4 address from the default route."
   exit 1
 fi
 
@@ -158,7 +162,17 @@ sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service instal
 
 
 def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., "--ip", help="IP address(es) to exclude from WARP (Comma separated)")]) -> None:
-    ips = [ip_address(an_ip.strip()) for an_ip in ip.split(",") if an_ip.strip()]
+    from ipaddress import IPv4Address, IPv6Address, ip_address
+
+    ips: list[IPv4Address | IPv6Address] = []
+    for raw_ip in ip.split(","):
+        stripped_ip = raw_ip.strip()
+        if not stripped_ip:
+            continue
+        try:
+            ips.append(ip_address(stripped_ip))
+        except ValueError as error:
+            raise typer.BadParameter(str(error), param_hint="--ip") from error
     if len(ips) == 0:
         raise typer.BadParameter("Provide at least one IP address.")
 

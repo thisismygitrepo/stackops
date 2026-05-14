@@ -30,8 +30,16 @@ class CliGraphSearchEntry:
         return " ".join(self.short_command_tokens)
 
     @property
+    def executable_command_tokens(self) -> tuple[str, ...]:
+        return ("stackops", *self.command_tokens)
+
+    @property
+    def executable_command(self) -> str:
+        return " ".join(self.executable_command_tokens)
+
+    @property
     def help_command(self) -> str:
-        return f"{self.command} --help"
+        return f"{self.executable_command} --help"
 
 
 def load_search_entries(graph_path: Path) -> list[CliGraphSearchEntry]:
@@ -109,7 +117,7 @@ def search_cli_graph(graph_path: Path, show_json: bool) -> int:
         )
         return 0
 
-    completed_process = subprocess.run([*selected_entry.command_tokens, "--help"], check=False)
+    completed_process = subprocess.run([*selected_entry.executable_command_tokens, "--help"], check=False)
     return completed_process.returncode
 
 

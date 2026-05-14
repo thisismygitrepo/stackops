@@ -76,6 +76,10 @@ def _build_mapper_preview(section: str, entry_name: str, entry: RawMapperEntry) 
     return preview.rstrip()
 
 
+def _path_exists_for_register(path: Path) -> bool:
+    return path.exists() or path.is_symlink()
+
+
 def _write_to_user_mapper(
     section: str,
     entry_name: str,
@@ -195,27 +199,37 @@ def register_dotfile(
     console = Console()
     orig_path = Path(file).expanduser().absolute()
     new_path = get_backup_path(orig_path=orig_path, sensitivity=sensitivity, destination=destination, shared=shared)
-    if not orig_path.exists() and not new_path.exists():
+    if not _path_exists_for_register(orig_path) and not _path_exists_for_register(new_path):
         console.print(f"[red]Error:[/] Neither original file nor self-managed file exists:\n  Original: {orig_path}\n  Self-managed: {new_path}")
         raise typer.Exit(code=1)
     new_path.parent.mkdir(parents=True, exist_ok=True)
     match method:
         case "copy" | "c":
             try:
-                copy_map(config_file_default_path=orig_path, config_file_self_managed_path=new_path, on_conflict=ON_CONFLICT_MAPPER[on_conflict])
+                result = copy_map(
+                    config_file_default_path=orig_path,
+                    config_file_self_managed_path=new_path,
+                    on_conflict=ON_CONFLICT_MAPPER[on_conflict],
+                )
             except Exception as e:
                 msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
                 typer.echo(msg)
                 raise typer.Exit(code=1) from e
         case "symlink" | "s":
             try:
-                symlink_map(config_file_default_path=orig_path, config_file_self_managed_path=new_path, on_conflict=ON_CONFLICT_MAPPER[on_conflict])
+                result = symlink_map(
+                    config_file_default_path=orig_path,
+                    config_file_self_managed_path=new_path,
+                    on_conflict=ON_CONFLICT_MAPPER[on_conflict],
+                )
             except Exception as e:
                 msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
                 typer.echo(msg)
                 raise typer.Exit(code=1) from e
         case _:
             raise ValueError(f"Unknown method: {method}")
+    if result["action"] == "error":
+        raise typer.Exit(code=1)
     if record:
         record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter)
         return

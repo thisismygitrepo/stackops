@@ -87,7 +87,10 @@ def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-se
     apps_names = parse_apps_argument(apps)
     apps_to_scan = collect_apps_to_scan(apps_names)
     if not apps_to_scan:
-        # Fail fast and consistently with other commands when no apps are found.
+        if apps_names is None:
+            typer.echo("No installed CLI apps found.", err=True)
+        else:
+            typer.echo(f"""No installed CLI apps matched: {", ".join(apps_names)}""", err=True)
         raise typer.Exit(code=1)
     _console().print(_build_apps_table(apps_to_scan))
 

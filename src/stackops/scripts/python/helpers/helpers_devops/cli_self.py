@@ -1,3 +1,4 @@
+from email import message_from_string
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -151,6 +152,29 @@ def export(
     ] = False,
 ) -> None:
     """📤 export the installation files to get an offline image."""
+    if upload_to_cloud:
+        developer_repo_root = _developer_repo_root()
+        if developer_repo_root is None:
+            typer.echo(
+                "❌ --upload-to-cloud requires the developer checkout at ~/code/stackops so the downloader URL map update is written in-repo."
+            )
+            raise typer.Exit(code=1)
+        from stackops.jobs.scripts_dynamic import download_stackops_offline_installer
+
+        active_url_map_path = Path(download_stackops_offline_installer.__file__).resolve().with_suffix(".json")
+        expected_url_map_path = developer_repo_root.joinpath(
+            "src",
+            "stackops",
+            "jobs",
+            "scripts_dynamic",
+            "download_stackops_offline_installer.json",
+        )
+        if active_url_map_path != expected_url_map_path:
+            typer.echo(
+                "❌ --upload-to-cloud requires an editable install backed by ~/code/stackops so the downloader URL map update persists in the repository."
+            )
+            raise typer.Exit(code=1)
+
     from rich.console import Console
 
     from stackops.utils.installer_utils import installer_offline
@@ -202,29 +226,32 @@ def readme() -> None:
             raise typer.Exit(code=1)
         try:
             markdown_text = readme_path.read_text(encoding="utf-8")
-        except Exception as exc:  # pylint: disable=broad-except
+        except (OSError, UnicodeError) as exc:
             typer.echo(f"❌ Failed to read README.md: {exc}")
             raise typer.Exit(code=1)
     else:
-        try:
-            import requests  # type: ignore
-        except Exception as exc:
-            typer.echo(f"❌ 'requests' is required to fetch remote README: {exc}")
-            raise typer.Exit(code=1)
+        from importlib.metadata import PackageNotFoundError, distribution
 
-        url_readme = "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/README.md"
         try:
-            response = requests.get(url_readme, timeout=10)
-            response.raise_for_status()
-            markdown_text = response.text
-        except Exception as exc:
-            typer.echo(f"❌ Failed to fetch remote README from {url_readme}: {exc}")
+            metadata_text = distribution("stackops").read_text("METADATA")
+        except PackageNotFoundError:
+            typer.echo("❌ Installed stackops package metadata is not available.")
+            raise typer.Exit(code=1)
+        if metadata_text is None:
+            typer.echo("❌ Installed stackops package metadata file is not available.")
+            raise typer.Exit(code=1)
+        markdown_text = message_from_string(metadata_text).get_payload()
+        if not isinstance(markdown_text, str):
+            typer.echo("❌ Installed stackops package metadata does not include a plain-text README.")
+            raise typer.Exit(code=1)
+        if not markdown_text:
+            typer.echo("❌ Installed stackops package metadata does not include a README.")
             raise typer.Exit(code=1)
 
     console.print(Markdown(markdown_text))
 
 
-def build_docker(variant: Annotated[Literal["slim", "ai"], typer.Argument(help="Variant to build: 'slim' or 'ai'")] = "slim") -> None:
+def build_docker(variant: Annotated[Literal["slim", "ai"], typer.Argument(help="Variant to build: 'slim' or 'ai'")]) -> None:
     """🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
     repo_root = _developer_repo_root()
     if repo_root is None:

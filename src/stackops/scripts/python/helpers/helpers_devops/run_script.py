@@ -72,6 +72,9 @@ def run_py_script(ctx: typer.Context,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
                 ) -> None:
     if command:
+        if not name:
+            typer.echo("❌ ERROR: You must provide a command to run when using --command.")
+            raise typer.Exit(code=1)
         from stackops.utils.code import exit_then_run_shell_script
 
         exit_then_run_shell_script(script=name, strict=False)
@@ -193,7 +196,12 @@ def run_py_script(ctx: typer.Context,
                 typer.echo(f"  - {r}")
             raise typer.Exit(code=1)
         else:
-            typer.echo(typer.style(f"Warning: Could not find script '{name}'. Checked {len(potential_matches)} candidate files, trying interactively:", fg=typer.colors.YELLOW))
+            typer.echo(typer.style(f"❌ ERROR: Found {len(potential_matches)} scripts matching '{name}'.", fg=typer.colors.RED, bold=True))
+            for candidate in potential_matches:
+                typer.echo(f"  - {candidate}")
+            if not interactive:
+                typer.echo("Re-run with --interactive to choose one explicitly.")
+                raise typer.Exit(code=1)
             from stackops.utils.options import choose_from_options
             options = [str(p) for p in potential_matches]
             chosen_file_part = choose_from_options(options, multi=False, msg="Select the script to run:", tv=True, preview="bat")

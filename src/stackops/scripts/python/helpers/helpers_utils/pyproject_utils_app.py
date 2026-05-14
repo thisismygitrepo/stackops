@@ -6,12 +6,6 @@ from typing import Annotated, Literal, TypeAlias
 
 import typer
 
-import stackops.scripts.python.ai.scripts as ai_scripts
-from stackops.scripts.python.helpers.helpers_utils import test_runtime as test_runtime_module
-from stackops.scripts.python.helpers.helpers_utils import type_fix as type_fix_module
-from stackops.utils.path_reference import get_path_reference_path
-
-
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 TypeHintDependencyMode: TypeAlias = Literal["self-contained", "import"]
 InitProjectGroupKey: TypeAlias = Literal["p", "t", "types", "l", "i", "d"]
@@ -154,26 +148,45 @@ def type_check(
         ),
     ] = None,
 ) -> None:
-    if exclude is None:
-        exclude = list(DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES)
-    else:
-        exclude = [*DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES, *exclude]
+    import stackops.scripts.python.ai.scripts as ai_scripts
+    from stackops.utils.path_reference import get_path_reference_path
+
     try:
         repo_root = _resolve_pyproject_root(Path(repo))
         (
-            excluded_directories,
-            skipped_excluded_directories,
+            default_excluded_directories,
+            _skipped_default_excluded_directories,
         ) = _resolve_type_check_excluded_directories(
-            repo_root=repo_root, excluded_directories=exclude
+            repo_root=repo_root,
+            excluded_directories=list(DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES),
         )
+        explicit_excluded_directories = [] if exclude is None else exclude
+        (
+            resolved_explicit_excluded_directories,
+            skipped_explicit_excluded_directories,
+        ) = _resolve_type_check_excluded_directories(
+            repo_root=repo_root,
+            excluded_directories=explicit_excluded_directories,
+        )
+        if len(skipped_explicit_excluded_directories) > 0:
+            skipped_paths = ", ".join(
+                f"'{excluded_directory}'"
+                for excluded_directory in skipped_explicit_excluded_directories
+            )
+            raise ValueError(
+                f"Excluded directories must exist inside '{repo_root}': {skipped_paths}."
+            )
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
-    for skipped_excluded_directory in skipped_excluded_directories:
-        typer.echo(
-            f"Warning: Skipping excluded path '{skipped_excluded_directory}' because it is not an existing directory.",
-            err=True,
+    excluded_directories = tuple(
+        dict.fromkeys(
+            (
+                *default_excluded_directories,
+                *resolved_explicit_excluded_directories,
+            )
         )
+    )
 
     script_path = get_path_reference_path(
         ai_scripts, ai_scripts.LINT_AND_TYPE_CHECK_PATH_REFERENCE
@@ -346,6 +359,11 @@ def init_project(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_utils import (
+        test_runtime as test_runtime_module,
+    )
+    from stackops.scripts.python.helpers.helpers_utils import type_fix as type_fix_module
+
     pyproject_app = typer.Typer(help="🐍 <p> Pyproject bootstrap and typing utilities", no_args_is_help=True, add_help_option=True, add_completion=False)
     pyproject_app.command(
         name="init-project",

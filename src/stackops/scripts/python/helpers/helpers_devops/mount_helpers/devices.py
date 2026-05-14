@@ -14,4 +14,4 @@ def list_devices() -> list[DeviceEntry]:
         return list_macos_devices()
     if platform_name == "Windows":
         return list_windows_devices()
-    return []
+    raise RuntimeError(f"Unsupported platform: {platform_name}")

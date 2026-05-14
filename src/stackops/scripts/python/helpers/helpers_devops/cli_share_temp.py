@@ -1,11 +1,10 @@
-import sys
 from collections.abc import Mapping
-from pathlib import Path
-from typing import Annotated, BinaryIO, cast
-from urllib.parse import urlparse
+from typing import TYPE_CHECKING, Annotated, BinaryIO, cast
 
-import requests
 import typer
+
+if TYPE_CHECKING:
+    import requests
 
 
 REQUEST_TIMEOUT_SECONDS: int = 30
@@ -22,6 +21,8 @@ class UploadResponseError(RuntimeError):
 
 
 def _normalize_http_url(value: str) -> str | None:
+    from urllib.parse import urlparse
+
     candidate = value.strip()
     parsed = urlparse(candidate)
     if parsed.scheme in {"http", "https"} and parsed.netloc != "":
@@ -29,7 +30,7 @@ def _normalize_http_url(value: str) -> str | None:
     return None
 
 
-def _extract_url(response: requests.Response) -> str:
+def _extract_url(response: "requests.Response") -> str:
     content_type = response.headers.get("content-type", "").lower()
     text = response.text.strip()
     if "application/json" in content_type:
@@ -52,6 +53,8 @@ def _extract_url(response: requests.Response) -> str:
 
 
 def _upload_file_handle(file_name: str, file_handle: BinaryIO | bytes, content_type: str | None) -> str:
+    import requests
+
     files: dict[str, tuple[str, BinaryIO | bytes, str] | tuple[str, BinaryIO | bytes]]
     if content_type is None:
         files = {"file": (file_name, file_handle)}
@@ -62,15 +65,25 @@ def _upload_file_handle(file_name: str, file_handle: BinaryIO | bytes, content_t
     return _extract_url(response=response)
 
 
-def upload_file(file_path: Annotated[Path, typer.Argument(..., dir_okay=False, readable=True)]) -> None:
+def upload_file(file_path: Annotated[str, typer.Argument(...)]) -> None:
     """Upload a file to temp.sh (unsecure) and print the resulting URL. Use '-' as the file path to read from stdin."""
+    import sys
+    from pathlib import Path
+
+    import requests
+
     try:
-        if str(file_path) == "-":
+        if file_path == "-":
             stdin_payload = sys.stdin.buffer.read()
             url = _upload_file_handle(file_name=STDIN_FILE_NAME, file_handle=stdin_payload, content_type=None)
         else:
-            with file_path.open("rb") as file_handle:
-                url = _upload_file_handle(file_name=file_path.name, file_handle=file_handle, content_type=None)
+            path = Path(file_path)
+            if not path.exists():
+                raise FileNotFoundError(f"File not found: {path}")
+            if path.is_dir():
+                raise IsADirectoryError(f"Expected a file path, got directory: {path}")
+            with path.open("rb") as file_handle:
+                url = _upload_file_handle(file_name=path.name, file_handle=file_handle, content_type=None)
     except (OSError, requests.RequestException, UploadResponseError) as exc:
         typer.echo(f"Upload failed: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -78,6 +91,10 @@ def upload_file(file_path: Annotated[Path, typer.Argument(..., dir_okay=False, r
 
 
 def upload_text(text: Annotated[str, typer.Argument(...)]) -> None:
+    import sys
+
+    import requests
+
     text_value = text
     if text == "-":
         text_value = sys.stdin.read()

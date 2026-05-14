@@ -2,20 +2,21 @@ from pathlib import Path
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
-
-
 SUNBURST_OUTPUT_RELATIVE_PATH = Path("docs/assets/devops-self-explore/sunburst.html")
 
 
 def update_cli_graph() -> None:
     """🧩 <g> Regenerate the checked-in CLI graph snapshot."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
+
     repo_root = cli_self_docs.get_docs_repo_root()
     cli_self_docs.write_cli_graph_snapshot(repo_root=repo_root)
 
 
 def regenerate_charts() -> None:
     """☀ <c> Regenerate the checked-in sunburst HTML chart."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
+
     repo_root = cli_self_docs.get_docs_repo_root()
     cli_self_docs.render_docs_artifact(
         repo_root=repo_root,

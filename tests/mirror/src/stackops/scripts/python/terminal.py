@@ -93,6 +93,31 @@ def test_attach_to_session_tmux_hands_off_new_session_script_to_shell(
     }
 
 
+def test_attach_to_session_exits_nonzero_when_helper_reports_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_choose_session(
+        backend: str,
+        name: str | None,
+        new_session: bool,
+        kill_all: bool,
+        window: bool,
+    ) -> tuple[str, str]:
+        _ = backend, name, new_session, kill_all, window
+        return ("error", "No tmux session selected.")
+
+    monkeypatch.setattr(terminal, "_resolve_session_backend", lambda backend: "tmux")
+    monkeypatch.setattr(
+        "stackops.scripts.python.helpers.helpers_sessions.attach_impl.choose_session",
+        fake_choose_session,
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        terminal.attach_to_session(name=None)
+
+    assert exc_info.value.exit_code == 1
+
+
 def test_attach_to_session_rejects_non_handoff_actions(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

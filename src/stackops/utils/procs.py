@@ -194,11 +194,18 @@ class ProcessManager:
             return
         kill_by_index = input("\n🔫 Kill by index? (enter numbers separated by spaces, e.g. '1 4') or [n] to cancel: ")
         if kill_by_index != "" and kill_by_index != "n":
-            indices = [int(val) for val in kill_by_index.split(" ")]
+            indices = [int(val) for val in kill_by_index.split()]
+            if len(indices) == 0:
+                raise ValueError("No process indices were provided")
+            invalid_indices = [index for index in indices if index < 0 or index >= len(selected_processes)]
+            if len(invalid_indices) > 0:
+                raise ValueError(f"Invalid process selection indices: {invalid_indices}")
             target_processes = [selected_processes[i] for i in indices]
             for idx2, process in enumerate(target_processes):
                 pprint(dict(process), f"🎯 Target Process {idx2}")
-            _ = self.kill(pids=[p["pid"] for p in target_processes]) if input("\n⚠️  Confirm termination? y/[n] ").lower() == "y" else None
+            if input("\n⚠️  Confirm termination? y/[n] ").lower() == "y":
+                self.kill(pids=[p["pid"] for p in target_processes])
+                return
         console.print(Panel("🔔 No processes were terminated.", title="[bold blue]Process Info[/bold blue]", border_style="blue"))
 
     def filter_and_kill(self, name: str | None = None):

@@ -56,6 +56,7 @@ def clone(
 
     checkout_branch_flag = checkout_to_branch
     checkout_commit_flag = checkout_to_commit
+    had_failures = False
 
     if interactive:
         from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import (
@@ -94,12 +95,15 @@ def clone(
             spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
             from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
 
-            clone_repos(
+            results = clone_repos(
                 spec_path=spec_path_self_managed,
                 preferred_remote=None,
                 checkout_branch_flag=checkout_branch_flag,
                 checkout_commit_flag=checkout_commit_flag,
             )
+            had_failures = had_failures or any(status == "failed" for status, _message in results)
+        if had_failures:
+            raise typer.Exit(code=1)
         return
     if specs_path is not None:
         spec_path_self_managed = Path(specs_path).expanduser().absolute()
@@ -114,9 +118,11 @@ def clone(
             raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
 
-    clone_repos(
+    results = clone_repos(
         spec_path=spec_path_self_managed, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag
     )
+    if any(status == "failed" for status, _message in results):
+        raise typer.Exit(code=1)
 
 
 def checkout_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
@@ -267,12 +273,19 @@ def cleanup(
     if not recursive:
         # Check if the directory is a git repo
         try:
-            Repo(str(arg_path), search_parent_directories=False)
+            repo_obj = Repo(str(arg_path), search_parent_directories=False)
         except InvalidGitRepositoryError:
             typer.echo(f"❌ {arg_path} is not a git repository. Use -r flag for recursive cleanup.")
             raise typer.Exit(code=1)
+        if repo_obj.working_tree_dir is None:
+            typer.echo(f"❌ {arg_path} is inside a bare git repository. Pass a working tree root and retry.")
+            raise typer.Exit(code=1)
+        repo_root = Path(repo_obj.working_tree_dir).resolve()
+        if arg_path != repo_root:
+            typer.echo(f"❌ {arg_path} is not a git working tree root. Pass the repository root or use -r for recursive cleanup.")
+            raise typer.Exit(code=1)
         # Run cleanup on this repo
-        repos_to_clean = [arg_path]
+        repos_to_clean = [repo_root]
     else:
         # Find all git repos recursively under the directory
         git_dirs = list(arg_path.rglob(".git"))
@@ -300,6 +313,12 @@ def config_linters(
 ) -> None:
     """🧰 Add linter config files to a git repository."""
     target_dir = Path(directory).expanduser().absolute().resolve()
+    if not target_dir.exists():
+        typer.echo(f"❌ Path does not exist: {target_dir}")
+        raise typer.Exit(code=1)
+    if not target_dir.is_dir():
+        typer.echo(f"❌ Path is not a directory: {target_dir}")
+        raise typer.Exit(code=1)
 
     from git import Repo, InvalidGitRepositoryError
 

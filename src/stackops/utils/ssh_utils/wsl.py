@@ -18,6 +18,10 @@ from stackops.utils.ssh_utils.wsl_helper import (
 )
 
 
+SSHD_CONFIG_PATH = Path("/etc/ssh/sshd_config")
+SSH_SOCKET_OVERRIDE_DIR = Path("/etc/systemd/system/ssh.socket.d")
+
+
 def copy_when_inside_wsl(source: Path | str, target: Path | str, overwrite: bool, windows_username: str | None) -> None:
     ensure_wsl_environment()
     source_relative = ensure_relative_path(source)
@@ -101,12 +105,34 @@ def open_wsl_port(ports_spec: str) -> None:
     print(f"✅ Firewall rule created for ports: {description}")
 
 
+def _run_command(command: list[str], failure_message: str, input_text: str | None = None) -> None:
+    result = subprocess.run(command, input=input_text, capture_output=True, text=True, check=False)
+    if result.returncode == 0:
+        return
+    error_output = result.stderr.strip() or result.stdout.strip()
+    if error_output:
+        raise RuntimeError(f"{failure_message}: {error_output}")
+    raise RuntimeError(f"{failure_message} (exit code {result.returncode})")
+
+
+def _systemd_unit_exists(unit_name: str) -> bool:
+    result = subprocess.run(
+        ["systemctl", "show", unit_name, "--property=LoadState", "--value"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return False
+    return result.stdout.strip() != "not-found"
+
+
 def change_ssh_port(port: int) -> None:
     ensure_linux_environment()
     if port < 1 or port > 65535:
         raise ValueError(f"Invalid port number: {port}")
 
-    sshd_config = Path("/etc/ssh/sshd_config")
+    sshd_config = SSHD_CONFIG_PATH
     if not sshd_config.exists():
         raise FileNotFoundError(f"SSH config file not found: {sshd_config}")
 
@@ -118,28 +144,25 @@ def change_ssh_port(port: int) -> None:
         new_content = f"Port {port}\n" + new_content
 
     print(f"📝 Updating {sshd_config}...")
-    result = subprocess.run(["sudo", "tee", str(sshd_config)], input=new_content.encode(), capture_output=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Failed to update sshd_config: {result.stderr.decode()}")
+    _run_command(["sudo", "tee", str(sshd_config)], "Failed to update sshd_config", new_content)
     print(f"✅ Updated {sshd_config}")
 
-    override_dir = Path("/etc/systemd/system/ssh.socket.d")
-    override_file = override_dir / "override.conf"
-    override_content = f"""[Socket]
+    print("🔄 Restarting SSH services...")
+    if _systemd_unit_exists("ssh.socket"):
+        override_dir = SSH_SOCKET_OVERRIDE_DIR
+        override_file = override_dir / "override.conf"
+        override_content = f"""[Socket]
 ListenStream=
 ListenStream={port}
 """
-    print(f"📝 Creating systemd socket override at {override_file}...")
-    subprocess.run(["sudo", "mkdir", "-p", str(override_dir)], check=True)
-    result = subprocess.run(["sudo", "tee", str(override_file)], input=override_content.encode(), capture_output=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Failed to create override file: {result.stderr.decode()}")
-    print("✅ Created systemd socket override")
-
-    print("🔄 Restarting SSH services...")
-    subprocess.run(["sudo", "systemctl", "daemon-reload"], check=True)
-    subprocess.run(["sudo", "systemctl", "restart", "ssh.socket"], check=False)
-    subprocess.run(["sudo", "service", "ssh", "restart"], check=False)
+        print(f"📝 Creating systemd socket override at {override_file}...")
+        subprocess.run(["sudo", "mkdir", "-p", str(override_dir)], check=True)
+        _run_command(["sudo", "tee", str(override_file)], "Failed to create override file", override_content)
+        print("✅ Created systemd socket override")
+        _run_command(["sudo", "systemctl", "daemon-reload"], "Failed to reload systemd daemon")
+        _run_command(["sudo", "systemctl", "restart", "ssh.socket"], "Failed to restart ssh.socket")
+    else:
+        _run_command(["sudo", "systemctl", "restart", "ssh"], "Failed to restart ssh")
     print(f"✅ SSH port changed to {port}")
     print(f"⚠️  Remember to open port {port} in Windows Firewall if running in WSL")
 

@@ -72,13 +72,9 @@ def _commit_local_changes(repo: Repo, message: str, console: Console) -> None:
     if not _has_staged_changes(repo=repo):
         print("-> No staged changes to commit.")
         return
-    try:
-        commit_output = repo.git.commit(m=message)
-        if commit_output.strip() != "":
-            print(commit_output)
-    except GitCommandError as exc:
-        print(exc)
-        print("-> Commit skipped/failed (continuing).")
+    commit_output = repo.git.commit(m=message)
+    if commit_output.strip() != "":
+        print(commit_output)
 
 
 def _find_remote(repo: Repo, remote_name: str) -> Remote | None:
@@ -247,9 +243,9 @@ def main(
             from stackops.utils.io import read_ini
             cloud_resolved = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"]
             console.print(Panel(f"⚠️  Using default cloud: `{cloud_resolved}` from {DEFAULTS_PATH}", title="Default Cloud", border_style="yellow"))
-        except FileNotFoundError:
+        except FileNotFoundError as exc:
             console.print(Panel(f"❌ ERROR: No cloud profile found\nLocation: {DEFAULTS_PATH}\nPlease set one up or provide one via the --cloud flag.", title="Error", border_style="red"))
-            return ""
+            raise typer.Exit(code=1) from exc
     else:
         cloud_resolved = cloud
     repo_local_root = Path.cwd() if repo == "." else Path(repo).expanduser().absolute()
@@ -260,7 +256,17 @@ def main(
         typer.echo(msg)
         raise typer.Exit(code=1) from exc
     repo_local_root = Path(repo_local_obj.working_dir)  # cwd might have been in a sub directory of repo_root, so its better to redefine it.
-    local_relative_home = repo_local_root.expanduser().absolute().relative_to(Path.home())
+    try:
+        local_relative_home = repo_local_root.expanduser().absolute().relative_to(Path.home())
+    except ValueError as exc:
+        console.print(
+            Panel(
+                f"❌ ERROR: Repository must live under {Path.home()}\nLocation: {repo_local_root}",
+                title="Error",
+                border_style="red",
+            )
+        )
+        raise typer.Exit(code=1) from exc
     Path(CONFIG_ROOT).joinpath("remote").mkdir(parents=True, exist_ok=True)
     repo_remote_root = Path(CONFIG_ROOT).joinpath("remote", local_relative_home)
     delete_path(repo_remote_root, verbose=True)
@@ -284,7 +290,17 @@ def main(
     repo_local_root_str = str(repo_local_root)
     repo_remote_root_str = str(repo_remote_root)
 
-    _commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
+    try:
+        _commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
+    except GitCommandError as exc:
+        console.print(
+            Panel(
+                f"❌ COMMIT FAILED\n{exc}",
+                title="Commit Failed",
+                border_style="red",
+            )
+        )
+        raise typer.Exit(code=1) from exc
     merge_result = _merge_remote_copy(repo=repo_local_obj, remote_path=repo_remote_root, console=console)
 
     if Path.home().joinpath("code/stackops").exists():
@@ -308,7 +324,7 @@ def main(
                 border_style="red",
             )
         )
-        return "error"
+        raise typer.Exit(code=1)
     conflict_paths_text = "\n".join(f"• {path}" for path in merge_result.conflict_paths)
     conflict_details = f"\n\nConflicting paths:\n{conflict_paths_text}" if conflict_paths_text != "" else ""
     console.print(Panel(f"⚠️  MERGE FAILED\n💾 Keeping local copy of remote at:\n📂 {repo_remote_root}{conflict_details}", title="Merge Failed", border_style="red"))
@@ -390,11 +406,16 @@ git commit -am "finished merging"
     print(f"• {option4:75} 👉 {shell_file_4}")
     print("\n\n")
 
+    if on_conflict == "stop-on-conflict":
+        raise typer.Exit(code=1)
+
     program_content = None
     match on_conflict:
         case "ask":
             import questionary
             choice = questionary.select("Choose one option:", choices=[option1, option2, option3, option4]).ask()
+            if choice is None:
+                raise typer.Exit(code=1)
             if choice == option1:
                 program_content = program1
             elif choice == option2:
@@ -409,8 +430,6 @@ git commit -am "finished merging"
             program_content = program1
         case "overwrite-local":
             program_content = program_2
-        case "stop-on-conflict":
-            program_content = program3
         case "remove-rclone-conflict":
             program_content = program_4
         case _:

@@ -4,12 +4,9 @@ from typing import Annotated
 
 import typer
 
-import stackops.jobs.installer as installer_assets
-from stackops.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
 from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
-from stackops.utils.path_reference import get_path_reference_library_relative_path
 
 
 DEFAULT_INSTALLER_JOB_NAME = "updateInstallerData"
@@ -21,6 +18,10 @@ def get_developer_repo_root() -> Path:
 
 
 def _get_installer_data_repo_relative_path() -> Path:
+    import stackops.jobs.installer as installer_assets
+    from stackops.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
+    from stackops.utils.path_reference import get_path_reference_library_relative_path
+
     return Path("src", "stackops").joinpath(
         get_path_reference_library_relative_path(module=installer_assets, path_reference=INSTALLER_DATA_PATH_REFERENCE)
     )
@@ -43,10 +44,28 @@ Notes:
 """
 
 
-def _ensure_prompt_override_is_unambiguous(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> None:
-    provided_prompt_overrides = sum(value is not None for value in (prompt, prompt_path, prompt_name))
-    if provided_prompt_overrides > 1:
-        raise ValueError("Provide at most one of --prompt, --prompt-path, or --prompt-name")
+def _validate_update_installer_options(
+    *,
+    agent_load: int,
+    prompt: str | None,
+    prompt_path: str | None,
+    prompt_name: str | None,
+    context: str | None,
+    context_path: str | None,
+) -> None:
+    if agent_load < 1:
+        raise typer.BadParameter("--agent-load must be at least 1.")
+
+    prompt_sources = [
+        option_name
+        for option_name, option_value in (("--prompt", prompt), ("--prompt-path", prompt_path), ("--prompt-name", prompt_name))
+        if option_value is not None
+    ]
+    if len(prompt_sources) > 1:
+        raise typer.BadParameter(f"Use only one prompt source, got: {', '.join(prompt_sources)}.")
+
+    if context is not None and context_path is not None:
+        raise typer.BadParameter("Use only one of --context or --context-path.")
 
 
 def _resolve_prompt(*, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> str | None:
@@ -61,12 +80,6 @@ def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_
     if prompt is not None or prompt_name is not None:
         return None
     return prompt_path
-
-
-def _ensure_context_input_is_unambiguous(*, context: str | None, context_path: str | None) -> None:
-    if context is not None and context_path is not None:
-        raise ValueError("Provide at most one of --context or --context-path")
-
 
 def _resolve_context_path(*, context: str | None, context_path: str | None, repo_root: Path) -> str | None:
     if context is not None:
@@ -126,8 +139,14 @@ def update_installer(
     repo_root = get_developer_repo_root()
     if not repo_root.joinpath("pyproject.toml").is_file():
         raise RuntimeError(f"Developer repo not found: {repo_root}")
-    _ensure_prompt_override_is_unambiguous(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
-    _ensure_context_input_is_unambiguous(context=context, context_path=context_path)
+    _validate_update_installer_options(
+        agent_load=agent_load,
+        prompt=prompt,
+        prompt_path=prompt_path,
+        prompt_name=prompt_name,
+        context=context,
+        context_path=context_path,
+    )
 
     resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(".ai", "agents", job_name)
     resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath("layout.json")

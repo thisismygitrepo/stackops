@@ -1,6 +1,4 @@
 import typer
-import shutil
-import subprocess
 from typing import Annotated, Literal, assert_never
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
@@ -67,6 +65,9 @@ def edit_data(
         typer.Option("--repo", "-r", help="📁 Which backup configuration file to edit: 'user' or 'library'."),
     ] = "user",
 ) -> None:
+    import shutil
+    import subprocess
+
     from stackops.scripts.python.helpers.helpers_devops.backup_config import (
         LIBRARY_BACKUP_PATH,
         USER_BACKUP_PATH,
@@ -86,7 +87,12 @@ def edit_data(
         file_path = USER_BACKUP_PATH
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            if not file_path.exists():
+            if file_path.exists():
+                if not file_path.is_file():
+                    msg = typer.style("Error: ", fg=typer.colors.RED) + f"User backup path is not a file: {file_path}"
+                    typer.echo(msg)
+                    raise typer.Exit(code=1)
+            else:
                 file_path.write_text(DEFAULT_BACKUP_HEADER, encoding="utf-8")
         except OSError as exc:
             msg = typer.style("Error: ", fg=typer.colors.RED) + f"Could not prepare user backup file {file_path}: {exc}"
@@ -96,6 +102,10 @@ def edit_data(
         file_path = LIBRARY_BACKUP_PATH
         if not file_path.exists():
             msg = typer.style("Error: ", fg=typer.colors.RED) + f"Library backup file not found: {file_path}"
+            typer.echo(msg)
+            raise typer.Exit(code=1)
+        if not file_path.is_file():
+            msg = typer.style("Error: ", fg=typer.colors.RED) + f"Library backup path is not a file: {file_path}"
             typer.echo(msg)
             raise typer.Exit(code=1)
 

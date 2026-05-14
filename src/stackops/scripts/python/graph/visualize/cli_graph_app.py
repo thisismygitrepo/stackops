@@ -65,7 +65,7 @@ def dot(
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
     if Path.home().joinpath("code", "stackops").exists():
-        uv_with: list[str] = ["plotly", "kaleido"]
+        uv_with: list[str] = []
         uv_project_dir = str(Path.home().joinpath("code", "stackops"))
     else:
         uv_with = [STACKOPS_VERSION]

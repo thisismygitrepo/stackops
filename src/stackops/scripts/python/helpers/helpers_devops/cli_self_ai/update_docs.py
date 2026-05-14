@@ -128,6 +128,8 @@ def update_docs(
         bool, typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
     ] = False,
 ) -> None:
+    from contextlib import chdir
+
     _validate_update_docs_options(agent_load=agent_load, prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
 
     repo_root = get_developer_repo_root()
@@ -140,26 +142,27 @@ def update_docs(
     context_output_path = resolved_agents_dir.joinpath("context.md")
 
     try:
-        agents_create_impl(
-            agent=agent,
-            model=model,
-            agent_load=agent_load,
-            context=context_content,
-            context_path=None,
-            separator=DEFAULT_SEAPRATOR,
-            prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-            prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-            prompt_name=prompt_name,
-            job_name=job_name,
-            join_prompt_and_context=join_prompt_and_context,
-            output_path=str(resolved_output_path),
-            agents_dir=str(resolved_agents_dir),
-            host=host,
-            reasoning=reasoning_effort,
-            provider=provider,
-            interactive=interactive,
-            run=run,
-        )
+        with chdir(repo_root):
+            agents_create_impl(
+                agent=agent,
+                model=model,
+                agent_load=agent_load,
+                context=context_content,
+                context_path=None,
+                separator=DEFAULT_SEAPRATOR,
+                prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
+                prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
+                prompt_name=prompt_name,
+                job_name=job_name,
+                join_prompt_and_context=join_prompt_and_context,
+                output_path=str(resolved_output_path),
+                agents_dir=str(resolved_agents_dir),
+                host=host,
+                reasoning=reasoning_effort,
+                provider=provider,
+                interactive=interactive,
+                run=run,
+            )
     finally:
         context_output_path.parent.mkdir(parents=True, exist_ok=True)
         context_output_path.write_text(context_content, encoding="utf-8")

@@ -47,7 +47,11 @@ def _build_devices_table(entries: list[DeviceEntry]) -> Table:
 
 
 def list_devices() -> None:
-    entries = list_devices_internal()
+    try:
+        entries = list_devices_internal()
+    except RuntimeError as exc:
+        typer.echo(f"Device listing failed: {exc}")
+        raise typer.Exit(1)
     if not entries:
         typer.echo("No devices found")
         return

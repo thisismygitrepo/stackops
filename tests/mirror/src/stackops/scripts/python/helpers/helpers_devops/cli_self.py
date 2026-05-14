@@ -20,6 +20,12 @@ def test_build_installer_help_lists_options() -> None:
 
 def test_build_installer_passes_explicit_options(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured: list[installer_offline.OfflineInstallerOptions] = []
+    repo_root = tmp_path.joinpath("repo")
+    repo_script_path = repo_root.joinpath("src", "stackops", "jobs", "scripts_dynamic", "download_stackops_offline_installer.py")
+    repo_script_path.parent.mkdir(parents=True)
+    repo_script_path.write_text("", encoding="utf-8")
+    monkeypatch.setattr(cli_self, "_developer_repo_root", lambda: repo_root)
+    monkeypatch.setattr("stackops.jobs.scripts_dynamic.download_stackops_offline_installer.__file__", str(repo_script_path))
 
     def fake_export(*, options: installer_offline.OfflineInstallerOptions, console: object) -> installer_offline.OfflineInstallerReport:
         del console
@@ -58,3 +64,58 @@ def test_build_installer_passes_explicit_options(monkeypatch: pytest.MonkeyPatch
             upload_to_cloud=True,
         )
     ]
+
+
+def test_build_installer_rejects_upload_when_url_map_is_not_repo_backed(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    captured: list[installer_offline.OfflineInstallerOptions] = []
+    repo_root = tmp_path.joinpath("repo")
+    repo_root.joinpath("src", "stackops", "jobs", "scripts_dynamic").mkdir(parents=True)
+    installed_script_path = tmp_path.joinpath("site-packages", "stackops", "jobs", "scripts_dynamic", "download_stackops_offline_installer.py")
+    installed_script_path.parent.mkdir(parents=True)
+    installed_script_path.write_text("", encoding="utf-8")
+    monkeypatch.setattr(cli_self, "_developer_repo_root", lambda: repo_root)
+    monkeypatch.setattr("stackops.jobs.scripts_dynamic.download_stackops_offline_installer.__file__", str(installed_script_path))
+
+    def fake_export(*, options: installer_offline.OfflineInstallerOptions, console: object) -> installer_offline.OfflineInstallerReport:
+        del console
+        captured.append(options)
+        return installer_offline.OfflineInstallerReport(
+            platform_name="Linux",
+            arch_name="x86_64",
+            output_dir=tmp_path.joinpath("installer_offline-linux-x86_64"),
+            archive_path=tmp_path.joinpath("installer_offline-linux-x86_64.zip"),
+            binary_results=[],
+            step_results=[],
+        )
+
+    monkeypatch.setattr("stackops.utils.installer_utils.installer_offline.export", fake_export)
+
+    result = CliRunner().invoke(cli_self.get_app(), ["build-installer", "--upload-to-cloud"])
+
+    assert result.exit_code == 1
+    assert "requires an editable install backed by ~/code/stackops" in result.stdout
+    assert captured == []
+
+
+def test_readme_uses_installed_package_metadata_when_developer_repo_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    rendered_markdown: list[str] = []
+
+    class FakeMetadata:
+        def get_payload(self) -> str:
+            return "# installed readme\n"
+
+    class FakeConsole:
+        def print(self, rendered: str) -> None:
+            rendered_markdown.append(rendered)
+
+    def fake_markdown(text: str) -> str:
+        return text
+
+    monkeypatch.setattr(cli_self, "_developer_repo_root", lambda: None)
+    monkeypatch.setattr("importlib.metadata.metadata", lambda package_name: FakeMetadata())
+    monkeypatch.setattr("rich.console.Console", FakeConsole)
+    monkeypatch.setattr("rich.markdown.Markdown", fake_markdown)
+
+    cli_self.readme()
+
+    assert rendered_markdown == ["# installed readme\n"]

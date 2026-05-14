@@ -47,15 +47,20 @@ def starship_theme() -> None:
         )
         try:
             subprocess.run(["pwsh", "-File", str(script_path)], check=True)
-        except FileNotFoundError:
-            subprocess.run(["powershell", "-File", str(script_path)], check=True)
+        except FileNotFoundError as exc:
+            typer.echo("Error: pwsh is required to select a starship prompt theme.", err=True)
+            raise typer.Exit(code=1) from exc
         return
 
     script_path = get_path_reference_path(
         module=theme_assets,
         path_reference=theme_assets.CHOOSE_STARSHIP_THEME_SH_PATH_REFERENCE,
     )
-    subprocess.run(["bash", str(script_path)], check=True)
+    try:
+        subprocess.run(["bash", str(script_path)], check=True)
+    except FileNotFoundError as exc:
+        typer.echo("Error: bash is required to select a starship prompt theme.", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 def configure_wezterm_theme() -> None:

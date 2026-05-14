@@ -28,15 +28,12 @@ Usage examples:
 
     # If no args passed via typer, try to get them from sys.argv directly
     # This handles the case where -- was used and arguments weren't parsed by typer
-    if not code_args or (len(code_args) == 1 and code_args[0] in ['--relay', 'croc']):
-        # Find the index of 'rx' or 'receive' in sys.argv and get everything after it
-        try:
-            for i, arg in enumerate(sys.argv):
-                if arg in ['rx', 'receive', 'r'] and i + 1 < len(sys.argv):
-                    code_args = sys.argv[i + 1:]
-                    break
-        except Exception:
-            pass
+    if not code_args or (len(code_args) == 1 and code_args[0] in ["--relay", "croc"]):
+        # Find the index of 'rx' or 'receive' in sys.argv and get everything after it.
+        for i, arg in enumerate(sys.argv):
+            if arg in ["rx", "receive", "r"] and i + 1 < len(sys.argv):
+                code_args = sys.argv[i + 1:]
+                break
 
     input_str = " ".join(code_args)
     try:
@@ -49,28 +46,46 @@ Usage examples:
     relay_server: str | None = None
     secret_code: str | None = None
 
-    tokens = [token for token in tokens if token not in ["--", "croc", "export"]]
-
-    relay_indexes: set[int] = set()
-    for i, token in enumerate(tokens):
+    token_index = 0
+    while token_index < len(tokens):
+        token = tokens[token_index]
+        if token == "--":
+            token_index += 1
+            continue
+        if token == "croc" and secret_code is None:
+            token_index += 1
+            continue
+        if token == "export" and token_index + 1 < len(tokens) and tokens[token_index + 1].startswith("CROC_SECRET="):
+            token_index += 1
+            continue
         if token == "--relay":
-            if i + 1 >= len(tokens) or tokens[i + 1].startswith("-"):
+            if relay_server is not None:
+                typer.echo("❌ Error: --relay may only be provided once.", err=True)
+                raise typer.Exit(code=1)
+            if token_index + 1 >= len(tokens) or tokens[token_index + 1].startswith("-"):
                 typer.echo("❌ Error: --relay requires a relay server.", err=True)
                 raise typer.Exit(code=1)
-            relay_server = tokens[i + 1]
-            relay_indexes = {i, i + 1}
-            break
-
-    for token in tokens:
+            relay_server = tokens[token_index + 1]
+            token_index += 2
+            continue
+        if token == "--yes":
+            token_index += 1
+            continue
         if token.startswith("CROC_SECRET="):
+            if secret_code is not None:
+                typer.echo("❌ Error: Croc receive code may only be provided once.", err=True)
+                raise typer.Exit(code=1)
             secret_code = token.split("=", 1)[1].strip('"').strip("'")
-            break
-
-    if not secret_code:
-        for i, token in enumerate(tokens):
-            if i not in relay_indexes and not token.startswith("-") and not token.startswith("CROC_SECRET="):
-                secret_code = token
-                break
+            token_index += 1
+            continue
+        if token.startswith("-"):
+            typer.echo(f"❌ Error: Unsupported croc receive option: {token}", err=True)
+            raise typer.Exit(code=1)
+        if secret_code is not None:
+            typer.echo(f"❌ Error: Unexpected extra argument after croc receive code: {token}", err=True)
+            raise typer.Exit(code=1)
+        secret_code = token
+        token_index += 1
 
     if not secret_code:
         typer.echo(f"❌ Error: Could not parse croc receive code from input: {input_str}", err=True)
@@ -120,6 +135,9 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
     if qrcode and backend in ("wormhole", "w"):
         typer.echo("❌ Error: --qrcode is only supported with the croc backend.", err=True)
         raise typer.Exit(code=1)
+    if zip_folder and backend in ("wormhole", "w"):
+        typer.echo("❌ Error: --zip is only supported with the croc backend.", err=True)
+        raise typer.Exit(code=1)
 
     is_windows = platform.system() == "Windows"
     send_target = "text" if text is not None else path
@@ -141,7 +159,7 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
             elif path is not None:
                 command_parts.append(quote_shell_arg(path))
             script = " ".join(command_parts)
-            receive_hint = "uvx --from magic-wormhole wormhole receive"
+            receive_hint = f"""uvx --from magic-wormhole wormhole receive {code if code is not None else "<code>"}"""
             print_desc = "🚀 sending file with magic-wormhole"
         case "croc" | "c":
             if install_missing_dependencies:
@@ -180,7 +198,7 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
 {croc_command}"""
                 else:
                     script = croc_command
-            receive_hint = "devops network receive"
+            receive_hint = f"""devops network receive -- --relay {relay_endpoint} {code if code is not None else "<code>"}"""
             print_desc = "🚀 sending file with croc"
 
     typer.echo(f"🚀 Sending {send_target}. Use: {receive_hint}")

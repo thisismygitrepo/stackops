@@ -64,6 +64,12 @@ def share_terminal(
         install_if_missing(which="ngrok", binary_name=None, verbose=True)
 
     from pathlib import Path
+    if no_auth and (username is not None or password is not None):
+        print("❌ Error: --no-auth cannot be combined with --username or --password.")
+        raise typer.Exit(code=1)
+    if not ssl and any(value is not None for value in (ssl_cert, ssl_key, ssl_ca)):
+        print("❌ Error: --ssl-cert, --ssl-key, and --ssl-ca require --ssl.")
+        raise typer.Exit(code=1)
     if username is None:
         import getpass
         username = getpass.getuser()
@@ -78,6 +84,9 @@ def share_terminal(
 
     if port is None:
         port = 7681  # Default port for ttyd
+    if port < 1 or port > 65535:
+        print(f"❌ Error: Invalid port '{port}'. Port must be between 1 and 65535.")
+        raise typer.Exit(code=1)
 
     # Handle SSL certificate defaults
     if ssl:
@@ -96,9 +105,6 @@ def share_terminal(
         if not key_path.exists():
             print(f"❌ Error: SSL key file not found: {ssl_key}")
             raise typer.Exit(code=1)
-            if ssl_cert is None or ssl_key is None:
-                print("❌ Error: SSL certificate and key must be provided when SSL is enabled.")
-                raise typer.Exit(code=1)
         
         if ssl_ca and not Path(ssl_ca).exists():
             print(f"❌ Error: SSL CA file not found: {ssl_ca}")
@@ -137,6 +143,10 @@ def share_terminal(
     import shlex
     import subprocess
     import time
+    start_command_parts = shlex.split(start_command)
+    if not start_command_parts:
+        print("❌ Error: --start-command must not be empty.")
+        raise typer.Exit(code=1)
 
     ttyd_cmd = ["ttyd", "--writable", "-t", "enableSixel=true", *ssl_args, "--port", str(port)]
     if not no_auth:
@@ -144,7 +154,7 @@ def share_terminal(
             print("❌ Error: Password not provided.")
             raise typer.Exit(code=1)
         ttyd_cmd.extend(["--credential", f"{username}:{password}"])
-    ttyd_cmd.extend(["-t", """theme={"background": "black"}""", *shlex.split(start_command)])
+    ttyd_cmd.extend(["-t", """theme={"background": "black"}""", *start_command_parts])
 
     processes: dict[str, subprocess.Popen[bytes]] = {}
     try:
@@ -161,15 +171,25 @@ def share_terminal(
                 print("❌ Error: ngrok was not found. Use --install-dep to install missing dependencies.")
                 raise typer.Exit(code=1) from None
             time.sleep(3)
-            try:
-                import requests
+            import json
+            from urllib import error, request
 
-                response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-                data = response.json()
-                public_url = data["tunnels"][0]["public_url"]
-                print(f"🌐 Ngrok tunnel ready: {public_url}")
-            except Exception as e:
-                print(f"Could not retrieve ngrok URL: {e}")
+            try:
+                with request.urlopen("http://127.0.0.1:4040/api/tunnels", timeout=5) as response:
+                    data = json.load(response)
+            except (error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
+                print(f"❌ Error: Could not retrieve ngrok URL: {exc}")
+                raise typer.Exit(code=1) from exc
+
+            tunnels = data.get("tunnels")
+            if not isinstance(tunnels, list) or len(tunnels) == 0:
+                print("❌ Error: Ngrok did not report any active tunnels.")
+                raise typer.Exit(code=1)
+            public_url = tunnels[0].get("public_url") if isinstance(tunnels[0], dict) else None
+            if not isinstance(public_url, str) or public_url == "":
+                print("❌ Error: Ngrok tunnel response did not include a public URL.")
+                raise typer.Exit(code=1)
+            print(f"🌐 Ngrok tunnel ready: {public_url}")
 
         while True:
             exited_processes = [f"{name} (exit code {process.returncode})" for name, process in processes.items() if process.poll() is not None]
