@@ -41,13 +41,13 @@ applyTo: "**/*.py"
 
 ```python
 
-from typing import Literal, Optional, TypeAlias
+from typing import Literal, TypeAlias
 class Success:
   def __init__(self, value: int):
     self.value = value
 FAILURE_REASON: TypeAlias = Literal["cache_missing", "service_history_missing"]
 class Failure:
-    def __init__(self, reason: FAILURE_REASON, message: Optional[str] = None):
+    def __init__(self, reason: FAILURE_REASON, message: str | None = None):
         self.reason: FAILURE_REASON = reason
         self.message = message
 def fallible_function(a: int, b: int) -> Success | Failure:

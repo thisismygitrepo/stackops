@@ -11,10 +11,16 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 DEFAULT_LOGIC_JOB_NAME = "updateLogic"
-UPDATE_LOGIC_PROMPT = """Please check the logic of the command below, and fix if you found anything not tight, inconsistent, fail mode etc.
+UPDATE_LOGIC_PROMPT = """
+Please check the logic of the command below, and fix if you found anything not tight, inconsistent, fail mode etc.
 * Each context entry contains only a repo-relative file path and a root-relative command name.
-* Use those two fields to find and tighten the implementation directly.
+* Use those two fields to find the command.
 * Prefer one strict behavior. Tighten weak failure modes instead of adding fallback behavior.
+* If it works as is, please don't be fussy and try to change the logic unnecessarily. Only make changes if you find actual issues, otherwise I'm happy to keep things as is.
+* Things work now, risking to break it is not worth it, don't complicate things, don't write too much code that become a liability to maintain. If it ain't broken, don't fix it.
+* Keep cli py file fast and clean by having the unncessary imports to occur within the function called, so we don't pay cost upfront for all features.
+* There are other agents that will be working on the same codebase, possibly same file, but different functions within it, so be mindful of that.
+
 """
 
 type JsonObject = dict[str, object]
@@ -76,10 +82,7 @@ def build_logic_context_from_graph(*, graph_payload: JsonObject) -> str:
     if root is None:
         raise ValueError("CLI graph payload is missing a root object")
 
-    command_entries = sorted(
-        _collect_command_context_entries(node=root),
-        key=lambda entry: (entry.source_file, entry.command_name),
-    )
+    command_entries = sorted(_collect_command_context_entries(node=root), key=lambda entry: (entry.source_file, entry.command_name))
     if len(command_entries) == 0:
         raise ValueError("CLI graph does not define any command entries")
     return DEFAULT_SEAPRATOR.join(entry.render() for entry in command_entries)
@@ -105,9 +108,7 @@ def update_logic(
     reasoning: Annotated[
         ReasoningEffort | None,
         typer.Option(
-            "--reasoning",
-            "-r",
-            help="Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.",
+            "--reasoning", "-r", help="Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default."
         ),
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option("--provider", "-v", help="Provider to use (if the agent supports many).")] = None,
@@ -124,21 +125,13 @@ def update_logic(
     ] = None,
     prompt_name: Annotated[str | None, typer.Option("--prompt-name", "-N", help="Prompt entry name from prompts YAML.")] = None,
     job_name: Annotated[str, typer.Option("--job-name", "-n", help="Job label and default output directory stem.")] = DEFAULT_LOGIC_JOB_NAME,
-    join_prompt_and_context: Annotated[
-        bool,
-        typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context."),
-    ] = False,
-    output_path: Annotated[
-        str | None,
-        typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json."),
-    ] = None,
+    join_prompt_and_context: Annotated[bool, typer.Option("--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
+    output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Layout path. Defaults to <agents-dir>/layout.json.")] = None,
     agents_dir: Annotated[
-        str | None,
-        typer.Option("--agents-dir", "-d", help="Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>."),
+        str | None, typer.Option("--agents-dir", "-d", help="Agent work directory. Defaults to $HOME/code/stackops/.ai/agents/<job-name>.")
     ] = None,
     interactive: Annotated[
-        bool,
-        typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters."),
+        bool, typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
     ] = False,
     run: Annotated[bool, typer.Option("--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
 ) -> None:
