@@ -33,10 +33,6 @@ def show_address() -> None:
     from rich.table import Table
     from rich.console import Console
 
-    addresses = helper.get_all_ipv4_addresses()
-    if public_ip_address is not None:
-        addresses.append(("Public IP", public_ip_address))
-
     # loc = loaded_json["loc"]
     # cmd = f"""curl "https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=300&center=lonlat:{loc}&zoom=6&marker=lonlat:{loc};color:%23ff0000;size:medium&apiKey=$GEOAPIFY_API_KEY" -o map.png && chafa map.png"""
     # from stackops.utils.code import run_shell_script
@@ -45,18 +41,21 @@ def show_address() -> None:
     table = Table(title="Network Interfaces")
     table.add_column("Interface", style="cyan")
     table.add_column("IP Address", style="green")
+    table.add_column("MAC Address", style="magenta")
 
-    for iface, ip in addresses:
-        table.add_row(iface, ip)
+    for address in helper.get_all_interface_ipv4_addresses():
+        table.add_row(address.interface, address.ipv4_address, address.mac_address or "-")
+    if public_ip_address is not None:
+        table.add_row("Public IP", public_ip_address, "-")
 
     console = Console()
     console.print(table)
 
-    selected_lan_ip = helper.select_lan_ipv4(prefer_vpn=False)
-    if selected_lan_ip is not None:
-        # ip, iface = res
-        # print(f"Selected IP: {ip} on interface: {iface}")
-        print(f"LAN IPv4: {selected_lan_ip}")
+    selected_lan_address = helper.select_lan_interface_ipv4(prefer_vpn=False)
+    if selected_lan_address is not None:
+        print(f"LAN IPv4: {selected_lan_address.ipv4_address}")
+        if selected_lan_address.mac_address is not None:
+            print(f"LAN MAC: {selected_lan_address.mac_address}")
     else:
         print("No LAN IPv4 found.")
 
