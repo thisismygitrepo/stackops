@@ -1,5 +1,7 @@
 import subprocess
+import time
 from dataclasses import dataclass
+from typing import Final
 
 from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import (
     WifiNetwork,
@@ -14,6 +16,10 @@ from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common 
 class LinuxWifiDevice:
     name: str
     state: str
+
+
+_DEVICE_MANAGEMENT_RECOVERY_ATTEMPTS: Final[int] = 5
+_DEVICE_MANAGEMENT_RECOVERY_DELAY_SECONDS: Final[float] = 0.5
 
 
 def _split_nmcli_fields(raw_line: str, *, field_count: int) -> list[str]:
@@ -109,9 +115,17 @@ def _ensure_linux_wifi_device_managed(device: LinuxWifiDevice) -> LinuxWifiDevic
         raise RuntimeError(f"NetworkManager could not manage WiFi device '{device.name}': {error_text}")
 
     refreshed_device = _get_linux_wifi_device(device.name)
-    if refreshed_device.state == "unmanaged":
-        raise RuntimeError(f"WiFi device '{device.name}' is still unmanaged after the recovery attempt")
-    return refreshed_device
+    for _attempt_index in range(_DEVICE_MANAGEMENT_RECOVERY_ATTEMPTS):
+        if refreshed_device.state != "unmanaged":
+            return refreshed_device
+        time.sleep(_DEVICE_MANAGEMENT_RECOVERY_DELAY_SECONDS)
+        refreshed_device = _get_linux_wifi_device(device.name)
+
+    raise RuntimeError(
+        f"WiFi device '{device.name}' is still unmanaged after the recovery attempt. "
+        "NetworkManager is likely configured to ignore this adapter, so enable management for it in "
+        "NetworkManager or netplan before retrying."
+    )
 
 
 def _ensure_linux_wifi_ready() -> str:

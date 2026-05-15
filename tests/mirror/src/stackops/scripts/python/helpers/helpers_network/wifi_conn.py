@@ -19,9 +19,11 @@ MyPhoneHotSpot:92
 
 def test_get_available_networks_recovers_unmanaged_linux_device(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(wifi_conn.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(linux_wifi.time, "sleep", lambda _seconds: None)
 
     status_outputs = iter(
         [
+            "wlp195s0:wifi:unmanaged\n",
             "wlp195s0:wifi:unmanaged\n",
             "wlp195s0:wifi:unmanaged\n",
             "wlp195s0:wifi:disconnected\n",
@@ -55,6 +57,34 @@ def test_get_available_networks_recovers_unmanaged_linux_device(monkeypatch: pyt
         {"ssid": "Cafe:Guest", "signal": "74%"},
     ]
     assert ["nmcli", "device", "set", "wlp195s0", "managed", "yes"] in observed_commands
+
+
+def test_get_available_networks_reports_actionable_error_for_persistently_unmanaged_linux_device(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(wifi_conn.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(linux_wifi.time, "sleep", lambda _seconds: None)
+
+    status_outputs = iter(["wlp195s0:wifi:unmanaged\n"] * 8)
+
+    def fake_run(command: list[str], *args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        del args, kwargs
+        match command:
+            case ["nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "device", "status"]:
+                return subprocess.CompletedProcess(args=command, returncode=0, stdout=next(status_outputs), stderr="")
+            case ["nmcli", "radio", "wifi"]:
+                return subprocess.CompletedProcess(args=command, returncode=0, stdout="enabled\n", stderr="")
+            case ["nmcli", "device", "set", "wlp195s0", "managed", "yes"]:
+                return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
+            case _:
+                raise AssertionError(f"Unexpected command: {command}")
+
+    monkeypatch.setattr(linux_wifi.subprocess, "run", fake_run)
+
+    available_networks = wifi_conn.get_available_networks()
+
+    assert available_networks == []
+    assert "configured to ignore this adapter" in capsys.readouterr().out
 
 
 def test_connect_to_new_network_uses_argument_list_for_linux(monkeypatch: pytest.MonkeyPatch) -> None:
