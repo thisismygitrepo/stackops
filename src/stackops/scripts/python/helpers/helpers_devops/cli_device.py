@@ -146,11 +146,14 @@ sudo systemd-run \
 """
         case "as-service":
             code = """
+devops install --update cloudflared
 home_dir=$HOME
 cloudflared_path="$home_dir/.local/bin/cloudflared"
 sudo $cloudflared_path service uninstall
 sudo rm /etc/cloudflared/config.yml || true
 sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service install
+# systemctl status cloudflared.service --no-pager -l
+
 """
 
     from stackops.utils.code import exit_then_run_shell_script, print_code

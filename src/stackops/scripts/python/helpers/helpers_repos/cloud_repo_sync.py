@@ -23,6 +23,12 @@ import stackops.utils.path_compression as path_compression
 from stackops.utils.rclone import RcloneCommandError, is_missing_remote_path_error
 import stackops.utils.rclone_wrapper as rclone_wrapper
 from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
+from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (
+    ConflictResolutionOption,
+    build_merge_accept_program,
+    powershell_single_quote,
+    resolve_conflict_action,
+)
 
 
 REMOTE_NAME = "originEnc"
@@ -208,35 +214,15 @@ def main(
     repo: Annotated[str, typer.Argument(..., help="Path to the local repository. Defaults to current working directory.")],
     cloud: Annotated[str | None, typer.Option(..., "--cloud", "-C", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
-    on_conflict: Annotated[Literal["ask", "a",
-                                   "push-local-merge", "p",
-                                   "overwrite-local", "o",
-                                   "stop-on-conflict", "s",
-                                   "remove-rclone-conflict", "r"
-                                    ], typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
+    on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", help="Password for encryption/decryption of the remote repository.")] = None,
 ) -> str | None:
-    on_conflict_mapper: dict[str, Literal["ask", "push-local-merge", "overwrite-local", "stop-on-conflict", "remove-rclone-conflict"]] = {
-        "a": "ask",
-        "ask": "ask",
-        "p": "push-local-merge",
-        "push-local-merge": "push-local-merge",
-        "o": "overwrite-local",
-        "overwrite-local": "overwrite-local",
-        "s": "stop-on-conflict",
-        "stop-on-conflict": "stop-on-conflict",
-        "r": "remove-rclone-conflict",
-        "remove-rclone-conflict": "remove-rclone-conflict",
-    }
-    on_conflict = on_conflict_mapper[on_conflict]
+    on_conflict = resolve_conflict_action(on_conflict=on_conflict)
     import platform
 
     from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
     from stackops.utils.code import get_uv_command_executing_python_script
     console = Console()
-
-    def _ps_single_quote(val: str) -> str:
-        return "'" + val.replace("'", "''") + "'"
 
     if cloud is None:
         try:
@@ -346,8 +332,8 @@ def main(
     option2 = "Delete local repo and replace it with remote copy:"
     if platform.system() == "Windows":
         program_2 = f"""
-Remove-Item -LiteralPath {_ps_single_quote(repo_local_root_str)} -Recurse -Force -ErrorAction SilentlyContinue
-Move-Item -LiteralPath {_ps_single_quote(repo_remote_root_str)} -Destination {_ps_single_quote(repo_local_root_str)} -Force
+Remove-Item -LiteralPath {powershell_single_quote(repo_local_root_str)} -Recurse -Force -ErrorAction SilentlyContinue
+Move-Item -LiteralPath {powershell_single_quote(repo_remote_root_str)} -Destination {powershell_single_quote(repo_local_root_str)} -Force
     """
     else:
         program_2 = f"""
@@ -398,12 +384,37 @@ git commit -am "finished merging"
     shell_file_4.write_text(program_4, encoding="utf-8")
     # ================================================================================
 
+    option5 = "Finish merge and accept remote only for conflicting files:"
+    program_5 = build_merge_accept_program(
+        repo_local_root=repo_local_root,
+        conflict_paths=merge_result.conflict_paths,
+        accept_side="remote",
+        push_local_program=program1,
+        platform_name=platform.system(),
+    )
+    shell_file_5 = get_tmp_file()
+    shell_file_5.write_text(program_5, encoding="utf-8")
+
+    option6 = "Finish merge and accept local only for conflicting files:"
+    program_6 = build_merge_accept_program(
+        repo_local_root=repo_local_root,
+        conflict_paths=merge_result.conflict_paths,
+        accept_side="local",
+        push_local_program=program1,
+        platform_name=platform.system(),
+    )
+    shell_file_6 = get_tmp_file()
+    shell_file_6.write_text(program_6, encoding="utf-8")
+    # ================================================================================
+
     console.print(Panel("🔄 RESOLVE MERGE CONFLICT\nChoose an option to resolve the conflict:", title_align="left", border_style="blue"))
 
     print(f"• {option1:75} 👉 {program1}")
     print(f"• {option2:75} 👉 {shell_file_2}")
     print(f"• {option3:75} 👉 {program3}")
     print(f"• {option4:75} 👉 {shell_file_4}")
+    print(f"• {option5:75} 👉 {shell_file_5}")
+    print(f"• {option6:75} 👉 {shell_file_6}")
     print("\n\n")
 
     if on_conflict == "stop-on-conflict":
@@ -413,7 +424,7 @@ git commit -am "finished merging"
     match on_conflict:
         case "ask":
             import questionary
-            choice = questionary.select("Choose one option:", choices=[option1, option2, option3, option4]).ask()
+            choice = questionary.select("Choose one option:", choices=[option1, option2, option3, option4, option5, option6]).ask()
             if choice is None:
                 raise typer.Exit(code=1)
             if choice == option1:
@@ -424,12 +435,20 @@ git commit -am "finished merging"
                 program_content = program3
             elif choice == option4:
                 program_content = program_4
+            elif choice == option5:
+                program_content = program_5
+            elif choice == option6:
+                program_content = program_6
             else:
                 raise NotImplementedError(f"Choice {choice} not implemented.")
         case "push-local-merge":
             program_content = program1
         case "overwrite-local":
             program_content = program_2
+        case "merge-accept-remote":
+            program_content = program_5
+        case "merge-accept-local":
+            program_content = program_6
         case "remove-rclone-conflict":
             program_content = program_4
         case _:

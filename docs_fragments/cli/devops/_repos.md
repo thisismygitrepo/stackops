@@ -140,9 +140,9 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--cloud`, `-c` | Cloud storage profile name |
+| `--cloud`, `-C` | Cloud storage profile name |
 | `--message`, `-m` | Commit message for local changes |
-| `--on-conflict`, `-o` | Conflict strategy such as `ask`, `push-local-merge`, `overwrite-local`, `stop-on-conflict`, or `remove-rclone-conflict` |
+| `--on-conflict`, `-c` | Conflict strategy such as `ask`, `push-local-merge`, `merge-accept-remote`, `merge-accept-local`, `overwrite-local`, `stop-on-conflict`, or `remove-rclone-conflict` |
 | `--password` | Password for encryption and decryption |
 
 Example:
@@ -150,6 +150,8 @@ Example:
 ```bash
 devops repos guard ~/code/private-repo --cloud myremote --message "sync before travel"
 ```
+
+`merge-accept-remote` and `merge-accept-local` keep the merge in progress, then resolve only the conflicted files by accepting the remote (`--theirs`) or local (`--ours`) side before finalizing the merge commit.
 
 ### viz
 
