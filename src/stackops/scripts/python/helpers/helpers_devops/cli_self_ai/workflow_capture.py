@@ -23,6 +23,7 @@ class AgentsCreateImpl(Protocol):
         run: bool,
         output_path: str | None,
         agents_dir: str | None,
+        save_as_yaml: bool,
         host: HOST,
         reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
@@ -52,11 +53,13 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
         run: bool,
         output_path: str | None,
         agents_dir: str | None,
+        save_as_yaml: bool,
         host: HOST,
         reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
         interactive: bool,
     ) -> None:
+        del save_as_yaml
         nonlocal captured_values
         captured_values = ParallelCreateValues(
             agent=agent,

@@ -15,6 +15,15 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 PARALLEL_RUN_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 
 
+def validate_parallel_run_name(*, entry_name: str) -> str:
+    normalized_entry_name = entry_name.strip()
+    if normalized_entry_name == "":
+        raise ValueError("Parallel run name must not be empty")
+    if "." in normalized_entry_name:
+        raise ValueError("Parallel run names must be flat top-level YAML keys without dots")
+    return normalized_entry_name
+
+
 def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> ParallelCreateValues:
     raw_mapping = _object_to_string_mapping(raw_value=raw_entry, label=f"parallel run '{entry_name}'")
     unknown_keys = sorted(key for key in raw_mapping if key not in CREATE_CONFIG_KEYS)
@@ -67,12 +76,13 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
 
 def select_parallel_create_values(*, raw_data: object, requested_name: str | None) -> tuple[str, ParallelCreateValues]:
     if requested_name is not None:
-        raw_entry = _resolve_named_entry(raw_data=raw_data, entry_name=requested_name)
-        return requested_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=requested_name)
+        normalized_name = validate_parallel_run_name(entry_name=requested_name)
+        raw_entry = _resolve_named_entry(raw_data=raw_data, entry_name=normalized_name)
+        return normalized_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)
 
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
-    candidates = _collect_entry_candidates(raw_data=raw_data, prefix="")
+    candidates = _collect_entry_candidates(raw_data=raw_data)
     if len(candidates) == 0:
         raise ValueError("No parallel run entries found in parallel YAML")
     chosen_name = choose_from_dict_with_preview(
@@ -91,11 +101,12 @@ def select_parallel_create_values_from_locations(
     *, yaml_entries: list[ParallelYamlEntry], requested_name: str | None
 ) -> tuple[str, ParallelCreateValues]:
     if requested_name is not None:
+        normalized_name = validate_parallel_run_name(entry_name=requested_name)
         for _location_name, _yaml_path, raw_data in yaml_entries:
-            raw_entry = _try_resolve_named_entry(raw_data=raw_data, entry_name=requested_name)
+            raw_entry = _try_resolve_named_entry(raw_data=raw_data, entry_name=normalized_name)
             if raw_entry is not None:
-                return requested_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=requested_name)
-        raise ValueError(f"Parallel run '{requested_name}' was not found in parallel YAML")
+                return normalized_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)
+        raise ValueError(f"Parallel run '{normalized_name}' was not found in parallel YAML")
 
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
@@ -103,9 +114,9 @@ def select_parallel_create_values_from_locations(
     candidate_sources: dict[str, tuple[str, object]] = {}
     use_location_prefix = len(yaml_entries) > 1
     for location_name, yaml_path, raw_data in yaml_entries:
-        candidates = _collect_entry_candidates(raw_data=raw_data, prefix="")
+        candidates = _collect_entry_candidates(raw_data=raw_data)
         for candidate_name, candidate_preview in candidates.items():
-            label = f"{location_name}.{candidate_name}" if use_location_prefix else candidate_name
+            label = f"{location_name}:{candidate_name}" if use_location_prefix else candidate_name
             if label in candidate_previews:
                 label = f"{label}@{location_name}"
             candidate_previews[label] = _preview_entry_from_path(preview=candidate_preview, yaml_path=yaml_path)
@@ -138,48 +149,38 @@ def _object_to_string_mapping(*, raw_value: object, label: str) -> dict[str, obj
 
 
 def _resolve_named_entry(*, raw_data: object, entry_name: str) -> object:
-    cursor = raw_data
-    for segment in (part.strip() for part in entry_name.split(".")):
-        if segment == "":
-            continue
-        mapping = _object_to_string_mapping(raw_value=cursor, label=f"parallel YAML segment before '{segment}'")
-        if segment not in mapping:
-            raise ValueError(f"Parallel run '{entry_name}' was not found in parallel YAML")
-        cursor = mapping[segment]
-    if cursor is None:
+    mapping = _object_to_string_mapping(raw_value=raw_data, label="parallel YAML")
+    if entry_name not in mapping:
+        raise ValueError(f"Parallel run '{entry_name}' was not found in parallel YAML")
+    resolved_entry = mapping[entry_name]
+    if resolved_entry is None:
         raise ValueError(f"Parallel run '{entry_name}' points to null in parallel YAML")
-    return cursor
+    return resolved_entry
 
 
 def _try_resolve_named_entry(*, raw_data: object, entry_name: str) -> object | None:
-    cursor = raw_data
-    for segment in (part.strip() for part in entry_name.split(".")):
-        if segment == "":
-            continue
-        if not isinstance(cursor, Mapping):
-            return None
-        mapping = _object_to_string_mapping(raw_value=cursor, label=f"parallel YAML segment before '{segment}'")
-        if segment not in mapping:
-            return None
-        cursor = mapping[segment]
-    if cursor is None:
+    if not isinstance(raw_data, Mapping):
+        return None
+    mapping = _object_to_string_mapping(raw_value=raw_data, label="parallel YAML")
+    if entry_name not in mapping:
+        return None
+    resolved_entry = mapping[entry_name]
+    if resolved_entry is None:
         raise ValueError(f"Parallel run '{entry_name}' points to null in parallel YAML")
-    return cursor
+    return resolved_entry
 
 
-def _collect_entry_candidates(*, raw_data: object, prefix: str) -> dict[str, str]:
+def _collect_entry_candidates(*, raw_data: object) -> dict[str, str]:
     if not isinstance(raw_data, Mapping):
         return {}
     raw_mapping = _object_to_string_mapping(raw_value=raw_data, label="parallel YAML")
-    if prefix != "" and any(key in CREATE_CONFIG_KEYS for key in raw_mapping):
-        return {prefix: _preview_entry(mapping=raw_mapping)}
-
     candidates: dict[str, str] = {}
     for key, value in raw_mapping.items():
-        dotted_key = f"{prefix}.{key}" if prefix else key
-        nested_candidates = _collect_entry_candidates(raw_data=value, prefix=dotted_key)
-        for nested_key, nested_preview in nested_candidates.items():
-            candidates[nested_key] = nested_preview
+        if not isinstance(value, Mapping):
+            continue
+        entry_mapping = _object_to_string_mapping(raw_value=value, label=f"parallel run '{key}'")
+        if any(config_key in CREATE_CONFIG_KEYS for config_key in entry_mapping):
+            candidates[key] = _preview_entry(mapping=entry_mapping)
     return candidates
 
 

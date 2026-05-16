@@ -3,7 +3,6 @@ from typing import Final, Literal, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import (
     PARALLEL_CREATE_COMMAND_NAME,
-    PARALLEL_CREATE_CONFIG_KEYS,
     PARALLEL_RUN_COMMAND_NAME,
 )
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, ReasoningEffort
@@ -73,19 +72,8 @@ def _parallel_yaml_schema() -> JsonObject:
         "title": "StackOps parallel.yaml",
         "description": f"Named parallel agent workflow entries used by `{PARALLEL_RUN_COMMAND_NAME}`.",
         "type": "object",
-        "additionalProperties": {"$ref": "#/definitions/parallelNode"},
+        "additionalProperties": {"$ref": "#/definitions/runEntry"},
         "definitions": {
-            "parallelNode": {
-                "oneOf": [
-                    {"$ref": "#/definitions/runEntry"},
-                    {"$ref": "#/definitions/runGroup"},
-                ]
-            },
-            "runGroup": {
-                "type": "object",
-                "propertyNames": {"not": {"enum": _sorted_config_key_values()}},
-                "additionalProperties": {"$ref": "#/definitions/parallelNode"},
-            },
             "runEntry": {
                 "type": "object",
                 "minProperties": 1,
@@ -155,11 +143,4 @@ def _literal_values(*, raw_values: tuple[object, ...]) -> list[str]:
         if not isinstance(raw_value, str):
             raise TypeError(f"Expected Literal value to be a string, got: {raw_value!r}")
         values.append(raw_value)
-    return values
-
-
-def _sorted_config_key_values() -> list[JsonValue]:
-    values: list[JsonValue] = []
-    for key in sorted(PARALLEL_CREATE_CONFIG_KEYS):
-        values.append(key)
     return values

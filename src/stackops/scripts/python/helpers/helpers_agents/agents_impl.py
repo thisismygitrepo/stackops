@@ -17,6 +17,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import 
     resolve_agents_workspace_root,
     resolve_prompt_input,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
     show_agents_create_overview,
@@ -47,6 +48,7 @@ def agents_create(
     run: bool,
     output_path: str | None,
     agents_dir: str | None,
+    save_as_yaml: bool,
     host: HOST,
     reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -75,6 +77,7 @@ def agents_create(
             run=run,
             output_path=output_path,
             agents_dir=agents_dir,
+            save_as_yaml=save_as_yaml,
         )
         return
     from stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch import (
@@ -85,7 +88,10 @@ def agents_create(
     from stackops.utils.accessories import get_repo_root
     import json
 
-    repo_root = get_repo_root(Path.cwd())
+    detected_repo_root = get_repo_root(Path.cwd())
+    if save_as_yaml and detected_repo_root is None:
+        raise RuntimeError("`--save-as-yaml` requires running inside a git repository.")
+    repo_root = detected_repo_root
     if repo_root is None:
         repo_root = Path.cwd().resolve()
     else:
@@ -107,6 +113,7 @@ def agents_create(
         agents_dir_obj=agents_dir_obj,
     )
     del job_name
+    requested_agents_dir = agents_dir
     cleanup_existing_agents_dir = agents_dir is not None and agents_dir_obj.exists()
     del agents_dir
 
@@ -198,6 +205,28 @@ def agents_create(
         recreate_script_path=create_artifacts.recreate_script_path,
         agent_count=len(prompt_directories),
     )
+    if save_as_yaml:
+        saved_yaml_path = _save_parallel_yaml_entry(
+            repo_root=repo_root,
+            agent=agent_selected,
+            model=model,
+            reasoning_effort=normalized_reasoning_effort,
+            provider=provider,
+            host=host,
+            context=context,
+            context_path=context_path,
+            separator=separator,
+            agent_load=agent_load,
+            prompt=prompt,
+            prompt_path=prompt_path,
+            prompt_name=prompt_name,
+            job_name=job_name_resolved,
+            join_prompt_and_context=join_prompt_and_context,
+            run=run,
+            output_path=output_path,
+            agents_dir=requested_agents_dir,
+        )
+        typer.echo(f"Saved parallel YAML entry '{job_name_resolved}' to: {saved_yaml_path}")
     if run:
         _run_generated_layout(layout_output_path=layout_output_path.resolve())
 
@@ -244,6 +273,122 @@ def _run_generated_layout(*, layout_output_path: Path) -> None:
         kill_upon_completion=False,
         subsitute_home=False,
     )
+
+
+def _save_parallel_yaml_entry(
+    *,
+    repo_root: Path,
+    agent: AGENTS,
+    model: str | None,
+    reasoning_effort: ReasoningEffort | None,
+    provider: PROVIDER | None,
+    host: HOST,
+    context: str | None,
+    context_path: str | None,
+    separator: str,
+    agent_load: int,
+    prompt: str | None,
+    prompt_path: str | None,
+    prompt_name: str | None,
+    job_name: str,
+    join_prompt_and_context: bool,
+    run: bool,
+    output_path: str | None,
+    agents_dir: str | None,
+) -> Path:
+    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry import upsert_parallel_yaml_entry
+
+    parallel_yaml_path = repo_root / ".stackops" / "agents" / "parallel.yaml"
+    upsert_parallel_yaml_entry(
+        yaml_path=parallel_yaml_path,
+        entry_name=job_name,
+        entry_values=_build_parallel_yaml_entry(
+            repo_root=repo_root,
+            agent=agent,
+            model=model,
+            reasoning_effort=reasoning_effort,
+            provider=provider,
+            host=host,
+            context=context,
+            context_path=context_path,
+            separator=separator,
+            agent_load=agent_load,
+            prompt=prompt,
+            prompt_path=prompt_path,
+            prompt_name=prompt_name,
+            job_name=job_name,
+            join_prompt_and_context=join_prompt_and_context,
+            run=run,
+            output_path=output_path,
+            agents_dir=agents_dir,
+        ),
+    )
+    return parallel_yaml_path
+
+
+def _build_parallel_yaml_entry(
+    *,
+    repo_root: Path,
+    agent: AGENTS,
+    model: str | None,
+    reasoning_effort: ReasoningEffort | None,
+    provider: PROVIDER | None,
+    host: HOST,
+    context: str | None,
+    context_path: str | None,
+    separator: str,
+    agent_load: int,
+    prompt: str | None,
+    prompt_path: str | None,
+    prompt_name: str | None,
+    job_name: str,
+    join_prompt_and_context: bool,
+    run: bool,
+    output_path: str | None,
+    agents_dir: str | None,
+) -> ParallelCreateYamlEntry:
+    return {
+        "agent": agent,
+        "model": model,
+        "reasoning": reasoning_effort,
+        "provider": provider,
+        "host": host,
+        "context": context,
+        "context_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=context_path),
+        "separator": _encode_separator_value(separator=separator),
+        "agent_load": agent_load,
+        "prompt": prompt,
+        "prompt_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=prompt_path),
+        "prompt_name": prompt_name,
+        "job_name": job_name,
+        "join_prompt_and_context": join_prompt_and_context,
+        "run": run,
+        "output_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=output_path),
+        "agents_dir": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=agents_dir),
+        "interactive": False,
+    }
+
+
+def _normalize_parallel_yaml_path_value(*, repo_root: Path, raw_path: str | None) -> str | None:
+    if raw_path is None:
+        return None
+
+    path = Path(raw_path).expanduser()
+    if not path.is_absolute():
+        path = repo_root / path
+    try:
+        return _repo_relative_cli_path(repo_root=repo_root, target_path=path.resolve())
+    except ValueError:
+        return str(path)
+
+
+def _repo_relative_cli_path(*, repo_root: Path, target_path: Path) -> str:
+    relative_path = target_path.relative_to(repo_root)
+    return f"./{relative_path.as_posix()}"
+
+
+def _encode_separator_value(*, separator: str) -> str:
+    return separator.encode("unicode_escape").decode("ascii")
 
 
 def collect(agent_dir: str, output_path: str, separator: str, pattern: str | None) -> None:

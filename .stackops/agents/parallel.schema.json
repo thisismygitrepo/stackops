@@ -4,49 +4,9 @@
   "description": "Named parallel agent workflow entries used by `agents parallel run-parallel`.",
   "type": "object",
   "additionalProperties": {
-    "$ref": "#/definitions/parallelNode"
+    "$ref": "#/definitions/runEntry"
   },
   "definitions": {
-    "parallelNode": {
-      "oneOf": [
-        {
-          "$ref": "#/definitions/runEntry"
-        },
-        {
-          "$ref": "#/definitions/runGroup"
-        }
-      ]
-    },
-    "runGroup": {
-      "type": "object",
-      "propertyNames": {
-        "not": {
-          "enum": [
-            "agent",
-            "agent_load",
-            "agents_dir",
-            "context",
-            "context_path",
-            "host",
-            "interactive",
-            "job_name",
-            "join_prompt_and_context",
-            "model",
-            "output_path",
-            "prompt",
-            "prompt_name",
-            "prompt_path",
-            "provider",
-            "reasoning",
-            "run",
-            "separator"
-          ]
-        }
-      },
-      "additionalProperties": {
-        "$ref": "#/definitions/parallelNode"
-      }
-    },
     "runEntry": {
       "type": "object",
       "minProperties": 1,

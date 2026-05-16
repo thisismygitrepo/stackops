@@ -166,6 +166,7 @@ def update_installer(
             join_prompt_and_context=join_prompt_and_context,
             output_path=str(resolved_output_path),
             agents_dir=str(resolved_agents_dir),
+            save_as_yaml=False,
             host=host,
             reasoning=reasoning_effort,
             provider=provider,

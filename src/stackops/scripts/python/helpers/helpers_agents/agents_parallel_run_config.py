@@ -139,7 +139,7 @@ def parallel_yaml_template() -> str:
 def parallel_yaml_header_for_path(*, yaml_path: Path) -> str:
     return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
 # parallel.yaml used by `{PARALLEL_RUN_COMMAND_NAME}`
-# Top-level keys are run names. Select nested entries with dot paths, e.g. docs.update.
+# Top-level keys are run names. Nested groups are not supported.
 # Each run entry uses the same option names as `{PARALLEL_CREATE_COMMAND_NAME}`.
 """
 

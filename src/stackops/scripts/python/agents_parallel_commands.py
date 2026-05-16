@@ -55,6 +55,14 @@ def agents_create(
             help="Exact directory to store agent files in. If it already exists, you will be asked before it is deleted for a clean run.",
         ),
     ] = None,
+    save_as_yaml: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--save-as-yaml",
+            help="Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.",
+        ),
+    ] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")] = False,
 ) -> None:
     """Create agents layout file, ready to run."""
@@ -80,6 +88,7 @@ def agents_create(
             run=run,
             output_path=output_path,
             agents_dir=agents_dir,
+            save_as_yaml=save_as_yaml,
             interactive=interactive,
         )
     except ValueError as e:
