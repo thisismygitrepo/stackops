@@ -183,7 +183,32 @@ def _build_posix_recreate_command(*, repo_root: Path, recreate_command_args: lis
         home_dir=home_dir,
         allow_repo_relative=False,
     )
-    return f"""cd {repo_root_shell_path} && {' '.join(rendered_args)}"""
+    command_segments = _group_posix_command_segments(
+        raw_args=recreate_command_args,
+        rendered_args=rendered_args,
+    )
+    return " \\\n    ".join([f"cd {repo_root_shell_path} &&", *command_segments])
+
+
+def _group_posix_command_segments(*, raw_args: list[str], rendered_args: list[str]) -> list[str]:
+    if len(raw_args) != len(rendered_args):
+        raise ValueError("raw_args and rendered_args must have the same length")
+    if len(rendered_args) < 5:
+        return [" ".join(rendered_args)]
+
+    grouped_segments: list[str] = [" ".join(rendered_args[:5])]
+    index = 5
+    while index < len(raw_args):
+        raw_arg = raw_args[index]
+        rendered_arg = rendered_args[index]
+        next_index = index + 1
+        if raw_arg.startswith("--") and next_index < len(raw_args) and not raw_args[next_index].startswith("--"):
+            grouped_segments.append(f"{rendered_arg} {rendered_args[next_index]}")
+            index += 2
+            continue
+        grouped_segments.append(rendered_arg)
+        index += 1
+    return grouped_segments
 
 
 def _build_powershell_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:

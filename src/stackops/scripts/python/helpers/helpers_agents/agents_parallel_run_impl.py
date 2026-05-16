@@ -82,6 +82,7 @@ def run_parallel_from_yaml(
         run=resolved.run,
         output_path=resolved.output_path,
         agents_dir=resolved.agents_dir,
+        save_as_yaml=False,
         interactive=resolved.interactive,
     )
 

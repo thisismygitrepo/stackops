@@ -37,7 +37,7 @@ Current subcommands:
 | `collect` | Concatenate collected agent material files into one output file |
 | `make-template` | Print a starter template for fire-agent usage |
 
-`agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning-effort`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--separator`, `--agents-dir`, `--output-path`, and `--interactive`.
+`agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning-effort`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--separator`, `--agents-dir`, `--output-path`, `--save-as-yaml`, and `--interactive`. `--save-as-yaml` writes or updates `.stackops/agents/parallel.yaml` using the resolved job name as the top-level entry key.
 
 `agents parallel run-parallel` reads flat top-level named entries from `parallel.yaml`. By default it searches `.stackops/agents/parallel.yaml`, then StackOps private/public/library locations. Use `--parallel-yaml-path` for an explicit file, `--show-format` to print the standard, and `--edit` to open the YAML. Every `create` option can be overridden on the command line.
 
@@ -70,6 +70,7 @@ Examples:
 agents parallel --help
 agents parallel create --help
 agents parallel create --agent codex --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs
+agents parallel create --agent codex --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs --save-as-yaml
 agents parallel create --agent copilot --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
 agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
 agents parallel run-parallel default --where repo --agent-load 5

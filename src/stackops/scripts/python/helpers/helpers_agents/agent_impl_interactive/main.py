@@ -181,6 +181,7 @@ def main(
     run: bool = False,
     output_path: str | None = None,
     agents_dir: str | None = None,
+    save_as_yaml: bool = False,
 ) -> None:
     collected = _collect_inputs(
         agent=agent,
@@ -221,5 +222,6 @@ def main(
         run=collected.run,
         output_path=collected.output_path,
         agents_dir=collected.agents_dir,
+        save_as_yaml=save_as_yaml,
         interactive=False,
     )

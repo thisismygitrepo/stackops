@@ -6,7 +6,7 @@
 default:
   agent: codex
   model: null
-  reasoning_effort: high
+  reasoning: high
   provider: openai
   host: local
   context: no context
@@ -66,7 +66,7 @@ update-installer:
 update-test:
   agent: codex
   model: null
-  reasoning_effort: null
+  reasoning: null
   provider: null
   host: local
   separator: \n@-@\n
@@ -118,7 +118,7 @@ update-test:
 update-docs:
   agent: codex
   model: null
-  reasoning_effort: null
+  reasoning: null
   provider: null
   host: local
   separator: \n@-@\n
