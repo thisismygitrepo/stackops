@@ -14,7 +14,7 @@ from stackops.utils.accessories import randstr
 from stackops.utils.io import save_json
 from stackops.utils.files.read import read_json
 from stackops.utils.ssh import SSH
-from stackops.cluster.remote.models import RemoteStackOpsConfig, EmailParams, WorkloadParams, LogEntry
+from stackops.cluster.remote.models import RemoteStackOpsConfig, EmailParams
 from stackops.cluster.remote.job_params import JobParams
 from stackops.cluster.remote.file_manager import FileManager
 from stackops.cluster.remote.execution_script import render_execution_script
@@ -251,52 +251,6 @@ class RemoteMachine:
             ssh = self._ensure_ssh()
             ssh.run_shell_cmd_on_remote(command=f"rm -rf {self.results_path}", verbose_output=False, description="delete remote results", strict_stderr=False, strict_return_code=False)
         return self
-
-    def submit_to_cloud(self, cm: object, split: int, reset_cloud: bool) -> list["RemoteMachine"]:
-        from copy import deepcopy
-        from stackops.cluster.remote.cloud_manager import CloudManager
-        import getpass
-        import platform as plat
-
-        if not isinstance(cm, CloudManager):
-            raise TypeError("cm must be a CloudManager instance")
-        if self.config.transfer_method != "cloud":
-            raise ValueError("CloudManager requires transfer_method='cloud'")
-        if self.config.launch_method != "cloud_manager":
-            raise ValueError("CloudManager requires launch_method='cloud_manager'")
-        if reset_cloud:
-            cm.reset_cloud(unsafe=False)
-        cm.claim_lock(first_call=True)
-
-        self.config.base_dir = str(CloudManager.base_path / "jobs")
-        self.file_manager.base_dir = Path(self.config.base_dir)
-
-        wl = WorkloadParams.default().split_to_jobs(jobs=split)
-        rms: list[RemoteMachine] = []
-        new_entries: list[LogEntry] = []
-        for idx, a_wl in enumerate(wl):
-            rm = deepcopy(self)
-            rm.config.job_id = f"{rm.config.job_id}-{idx + 1}-{split}"
-            rm.config.workload_params = a_wl if len(wl) > 1 else None
-            rm.file_manager.job_root = self.file_manager.base_dir / rm.config.job_id
-            rm.file_manager.job_id = rm.config.job_id
-            rm.submitted = True
-            rm.generate_scripts()
-            rms.append(rm)
-            new_entries.append(LogEntry(
-                name=rm.config.job_id, submission_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                start_time=None, end_time=None, run_machine=None,
-                source_machine=f"{getpass.getuser()}@{plat.node()}",
-                note="", pid=None, cmd="", session_name="",
-            ))
-
-        log = cm.read_log()
-        for entry in new_entries:
-            log["queued"].append(entry.__dict__)
-        cm.write_log(log=log)
-        cm.release_lock()
-        return rms
-
 
 def _build_shell_script(job_params: JobParams, config: RemoteStackOpsConfig, file_manager: FileManager) -> str:
     lines: list[str] = ['echo "=== SHELL START ==="']

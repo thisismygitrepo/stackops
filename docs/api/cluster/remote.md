@@ -132,7 +132,6 @@ job.run(run=True, show_scripts=False)
 | `check_job_status()` | Syncs remote logs when needed and resolves the results directory once the job finishes |
 | `download_results(target)` | Downloads the resolved results path |
 | `delete_remote_results()` | Deletes the remote results directory |
-| `submit_to_cloud()` | Expands one cloud-managed job into multiple `RemoteMachine` instances with split workloads |
 
 Current behavior worth knowing:
 

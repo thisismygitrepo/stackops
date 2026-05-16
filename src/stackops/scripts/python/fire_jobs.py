@@ -20,8 +20,6 @@ def fire(
     module: Annotated[bool, typer.Option("--module", "-m", help="Launch the main file")] = False,
     script: Annotated[bool, typer.Option("--script", "-s", help="Launch as a script without fire")] = False,
     optimized: Annotated[bool, typer.Option("--optimized", "-O", help="Run the optimized version of the function")] = False,
-    zellij_tab: Annotated[str | None, typer.Option("--zellij-tab", "-z", help="Open in a new zellij tab")] = None,
-    submit_to_cloud: Annotated[bool, typer.Option("--submit-to-cloud", "-C", help="Submit to cloud compute")] = False,
     root_repo: Annotated[bool, typer.Option("--root-repo", "-r", help="Resolve and search from the repository root")] = False,
     remote: Annotated[bool, typer.Option("--remote", "-R", help="Launch on a remote machine")] = False,
     streamlit: Annotated[bool, typer.Option("--streamlit", "-S", help="Run as streamlit app")] = False,
@@ -49,7 +47,6 @@ def fire(
         loop=loop,
         jupyter=jupyter,
         marimo=marimo,
-        submit_to_cloud=submit_to_cloud,
         root_repo=root_repo,
         remote=remote,
         module=module,
@@ -60,7 +57,6 @@ def fire(
         PathExport=PathExport,
         git_pull=git_pull,
         optimized=optimized,
-        zellij_tab=zellij_tab,
         watch=watch,
     )
     try:

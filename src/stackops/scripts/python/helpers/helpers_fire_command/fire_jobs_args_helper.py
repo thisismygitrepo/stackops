@@ -17,7 +17,6 @@ class FireJobArgs:
     loop: bool = False
     jupyter: bool = False
     marimo: bool = False
-    submit_to_cloud: bool = False
     root_repo: bool = False
     remote: bool = False
     module: bool = False
@@ -28,7 +27,6 @@ class FireJobArgs:
     PathExport: bool = False
     git_pull: bool = False
     optimized: bool = False
-    zellij_tab: str | None = None
     watch: bool = False
 
 

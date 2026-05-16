@@ -26,9 +26,9 @@ fire [OPTIONS] [PATH] [FUNCTION]
 | General execution | `--script`, `--module`, `--interactive`, `--debug`, `--optimized`, `--frozen` |
 | Function selection | `--choose-function` |
 | Notebook and app launch | `--jupyter`, `--marimo`, `--streamlit`, `--environment` |
-| Shell and background helpers | `--zellij-tab`, `--cmd`, `--loop`, `--watch`, `--git-pull` |
+| Shell and background helpers | `--cmd`, `--loop`, `--watch`, `--git-pull` |
 | Path and repo handling | `--root-repo`, `--holdDirectory`, `--PathExport` |
-| Remote or cloud launch | `--remote`, `--submit-to-cloud` |
+| Remote launch | `--remote` |
 | Exposed but currently inert in routing | `--ve` |
 
 ---
@@ -123,7 +123,6 @@ fire analysis.py -j
 - `--watch` prefixes the final command with `watchexec --restart --exts py,sh,ps1`.
 - `--git-pull` runs `git -C <script-dir> pull` first.
 - `--PathExport` prepends a shell snippet that appends the repo root to `PYTHONPATH`.
-- `--zellij-tab` writes the command into a temp script and opens it in a new Zellij tab.
 - `--loop` reruns after completion or interruption.
 
 Examples:

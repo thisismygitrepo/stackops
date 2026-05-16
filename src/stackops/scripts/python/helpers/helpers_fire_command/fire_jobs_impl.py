@@ -36,7 +36,7 @@ def route(args: FireJobArgs, fire_args: str) -> None:
         fire_args=fire_args,
         randstr_func=randstr,
     )
-    command = _apply_command_modifiers(args=args, command=command, choice_file=choice_file, repo_root=repo_root, randstr_func=randstr)
+    command = _apply_command_modifiers(args=args, command=command, choice_file=choice_file, repo_root=repo_root)
 
     from stackops.utils.code import exit_then_run_shell_script
 
@@ -265,39 +265,14 @@ def _build_final_command(
     return f"{exe_line} {choice_file} "
 
 
-def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc) -> str:
+def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path, repo_root: Path | None) -> str:
     """Apply various command modifiers based on args."""
-    from rich.panel import Panel
-    from rich.console import Console
-    from rich.syntax import Syntax
-
-    console = Console()
-
     if args.cmd:
         new_line = "\n"
         command = rf"""start cmd -Argument "/k {command.replace(new_line, " & ")} " """
 
-    if args.submit_to_cloud:
-        command = f"""uv run python -m stackops.cluster.templates.cli_click --file {choice_file} """
-        if args.function is not None:
-            command += f"--function {args.function} "
-
     if args.optimized:
         command = command.replace("python ", "python -OO ")
-
-    if args.zellij_tab is not None:
-        comman_path__ = Path.home().joinpath(f"tmp_results/tmp_scripts/zellij_commands/{choice_file.stem}_{randstr_func(10)}.sh")
-        comman_path__.parent.mkdir(parents=True, exist_ok=True)
-        comman_path__.write_text(command, encoding="utf-8")
-        console.print(Panel(Syntax(command, lexer="shell"), title=f"🔥 fire command @ {comman_path__}: "), style="bold red")
-
-        existing_tab_names = subprocess.run(["zellij", "action", "query-tab-names"], capture_output=True, text=True, check=True).stdout.splitlines()
-        if args.zellij_tab in existing_tab_names:
-            print(f"⚠️ Tab name `{args.zellij_tab}` already exists. Please choose a different name.")
-            args.zellij_tab += f"_{randstr_func(3)}"
-        from stackops.cluster.sessions_managers.zellij.zellij_local import run_command_in_zellij_tab
-
-        command = run_command_in_zellij_tab(command=str(comman_path__), tab_name=args.zellij_tab, cwd=None)
 
     if args.watch:
         command = "watchexec --restart --exts py,sh,ps1 " + command
