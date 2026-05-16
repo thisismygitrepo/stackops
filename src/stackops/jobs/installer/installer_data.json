@@ -4644,6 +4644,24 @@
           "windows": null
         }
       }
+    },
+    {
+      "appName": "terax",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/crynta/terax-ai",
+      "doc": "Lightweight cross-platform AI-native terminal",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "Terax_{version}_amd64.AppImage",
+          "darwin": "Terax_{version}_x64.dmg",
+          "windows": "Terax_{version}_x64-setup.exe"
+        },
+        "arm64": {
+          "linux": null,
+          "darwin": "Terax_{version}_aarch64.dmg",
+          "windows": null
+        }
+      }
     }
   ]
 }
