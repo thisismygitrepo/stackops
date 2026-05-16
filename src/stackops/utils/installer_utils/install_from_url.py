@@ -1,8 +1,9 @@
 
 
 import platform
+import re
 from pathlib import Path
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Final, TypedDict
 
 from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_deb_package, install_msi_package
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
@@ -18,6 +19,32 @@ if TYPE_CHECKING:
     from rich.console import Console
 
 SUPPORTED_GITHUB_HOSTS = {"github.com", "www.github.com"}
+_ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
+    ".tar.gz",
+    ".tar.xz",
+    ".tar.bz2",
+    ".tgz",
+    ".zip",
+    ".gz",
+    ".xz",
+    ".bz2",
+    ".deb",
+    ".msi",
+    ".exe",
+)
+_ASSET_MARKER_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""(?ix)
+    [._-]
+    (
+        v?\d+(?:[._-]\d+)+
+        |
+        linux|darwin|macos|osx|windows|win|freebsd|openbsd|netbsd|android
+        |
+        amd64|x86_64|x64|arm64|aarch64|armv7|armv6|i386|i686|386
+    )
+    (?=[._-]|$)
+    """,
+)
 
 
 class AssetDisplayRow(TypedDict):
@@ -40,18 +67,47 @@ def _format_size(size_bytes: int) -> str:
     return f"{value:.1f} {units[index]}"
 
 
+def _strip_known_suffixes(asset_name: str) -> str:
+    normalized = Path(asset_name).name
+    while True:
+        lowered = normalized.lower()
+        for suffix in _ARCHIVE_SUFFIXES:
+            if lowered.endswith(suffix):
+                normalized = normalized[: -len(suffix)]
+                break
+        else:
+            return normalized
+
+
+def _derive_asset_tool_name(asset_name: str) -> str | None:
+    stripped_name = _strip_known_suffixes(asset_name).strip()
+    if stripped_name == "":
+        return None
+    marker_match = _ASSET_MARKER_PATTERN.search(stripped_name)
+    if marker_match is None:
+        candidate = stripped_name
+    else:
+        candidate = stripped_name[: marker_match.start()]
+    cleaned_candidate = candidate.strip("._- ")
+    if cleaned_candidate == "":
+        return None
+    return cleaned_candidate
+
+
 def _derive_tool_name(repo_name: str, asset_name: str | None) -> str | None:
+    if asset_name is not None:
+        asset_candidate = _derive_asset_tool_name(asset_name)
+        if asset_candidate is not None:
+            return asset_candidate
     repo_segment = repo_name.split("/", maxsplit=1)[-1]
-    repo_clean = repo_segment.replace(".git", "").lower()
-    repo_filtered = "".join(char for char in repo_clean if char.isalnum())
-    if repo_filtered:
-        return repo_filtered
+    repo_clean = repo_segment.replace(".git", "").strip()
+    if repo_clean != "":
+        return repo_clean.lower()
     if asset_name is None:
         return None
-    asset_clean = asset_name.lower()
-    asset_filtered = "".join(char for char in asset_clean if char.isalnum())
-    if asset_filtered:
-        return asset_filtered
+    asset_clean = _strip_known_suffixes(asset_name).strip("._- ").lower()
+    if asset_clean != "":
+        return asset_clean
     return None
 
 
@@ -89,7 +145,7 @@ def _finalize_install(repo_name: str, asset_name: str | None, version: str, extr
         if system_name == "Windows":
             installed_path = find_move_delete_windows(downloaded_file_path=extracted_path, tool_name=None, delete=True, rename_to=rename_target)
         elif system_name in {"Linux", "Darwin"}:
-            installed_path = find_move_delete_linux(downloaded=extracted_path, tool_name="", delete=True, rename_to=rename_target)
+            installed_path = find_move_delete_linux(downloaded=extracted_path, tool_name=None, delete=True, rename_to=rename_target)
         else:
             raise
     if tool_name is not None:

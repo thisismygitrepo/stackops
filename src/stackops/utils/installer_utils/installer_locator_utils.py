@@ -6,6 +6,165 @@ from pathlib import Path
 import subprocess
 import platform
 import shutil
+from typing import Final
+
+
+_LISTING_LIMIT: Final[int] = 12
+_NON_INSTALLABLE_SUFFIXES: Final[tuple[str, ...]] = (
+    ".1",
+    ".3",
+    ".am",
+    ".bmp",
+    ".c",
+    ".cfg",
+    ".conf",
+    ".cpp",
+    ".css",
+    ".csv",
+    ".gif",
+    ".h",
+    ".hpp",
+    ".html",
+    ".ico",
+    ".in",
+    ".ini",
+    ".jpeg",
+    ".jpg",
+    ".json",
+    ".m4",
+    ".md",
+    ".pem",
+    ".png",
+    ".rst",
+    ".service",
+    ".spec",
+    ".svg",
+    ".toml",
+    ".txt",
+    ".xml",
+    ".yaml",
+    ".yml",
+)
+_NON_INSTALLABLE_NAMES: Final[tuple[str, ...]] = (
+    "authors",
+    "changelog",
+    "copying",
+    "license",
+    "notice",
+    "readme",
+    "relnotes",
+)
+
+
+def _is_probably_executable(path: Path) -> bool:
+    return path.is_file() and (path.stat().st_mode & 0o111) != 0
+
+
+def _is_installable_linux_candidate(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    lowered_name = path.name.lower()
+    lowered_stem = path.stem.lower()
+    if path.suffix.lower() in _NON_INSTALLABLE_SUFFIXES:
+        return False
+    if lowered_name in _NON_INSTALLABLE_NAMES or lowered_stem in _NON_INSTALLABLE_NAMES:
+        return False
+    return True
+
+
+def _build_tool_name_variants(tool_name: str) -> tuple[str, ...]:
+    normalized = tool_name.strip()
+    if normalized == "":
+        return ()
+    variants = [normalized]
+    lower_variant = normalized.lower()
+    if lower_variant not in variants:
+        variants.append(lower_variant)
+    swapped_variants = [
+        normalized.replace("-", "_"),
+        normalized.replace("_", "-"),
+    ]
+    for variant in swapped_variants:
+        if variant != "" and variant not in variants:
+            variants.append(variant)
+    collapsed = normalized.replace("-", "").replace("_", "")
+    if collapsed != "" and collapsed not in variants:
+        variants.append(collapsed)
+    return tuple(variants)
+
+
+def _format_file_listing(*, root: Path, files: list[Path]) -> str:
+    if len(files) == 0:
+        return "  (none)"
+    rows: list[str] = []
+    for file_path in sorted(files, key=lambda candidate: candidate.as_posix())[:_LISTING_LIMIT]:
+        relative_path = file_path.relative_to(root).as_posix()
+        rows.append(f"  - {relative_path}")
+    if len(files) > _LISTING_LIMIT:
+        rows.append(f"  - ... and {len(files) - _LISTING_LIMIT} more")
+    return "\n".join(rows)
+
+
+def _raise_linux_executable_error(*, downloaded: Path, tool_name: str | None, files: list[Path], executable_files: list[Path]) -> None:
+    search_variants = _build_tool_name_variants(tool_name) if tool_name is not None else ()
+    requested_name = tool_name if tool_name is not None else "<any executable>"
+    details = [
+        f"No executable could be resolved from {downloaded}",
+        f"Requested tool name: {requested_name}",
+    ]
+    if len(search_variants) > 0:
+        details.append("Search terms tried:")
+        details.extend(f"  - {variant}" for variant in search_variants)
+    details.append("Executable files found:")
+    details.append(_format_file_listing(root=downloaded, files=executable_files))
+    details.append("All files found:")
+    details.append(_format_file_listing(root=downloaded, files=files))
+    raise IndexError("\n".join(details))
+
+
+def _name_has_boundary_prefix(*, candidate_name: str, variant: str) -> bool:
+    if not candidate_name.startswith(variant):
+        return False
+    if len(candidate_name) == len(variant):
+        return True
+    return candidate_name[len(variant)] in {"-", "_", "."}
+
+
+def _score_linux_match(*, file_path: Path, search_variants: tuple[str, ...]) -> tuple[int, int]:
+    lowered_name = file_path.name.lower()
+    lowered_stem = file_path.stem.lower()
+    stem_tokens = tuple(token for token in lowered_stem.replace("-", "_").split("_") if token != "")
+    best_score = -1
+    for variant in search_variants:
+        lowered_variant = variant.lower()
+        if lowered_name == lowered_variant:
+            best_score = max(best_score, 600)
+        if lowered_stem == lowered_variant:
+            best_score = max(best_score, 550)
+        if lowered_variant in stem_tokens:
+            best_score = max(best_score, 450)
+        if _name_has_boundary_prefix(candidate_name=lowered_stem, variant=lowered_variant):
+            best_score = max(best_score, 350)
+    return (best_score, file_path.stat().st_size)
+
+
+def _select_best_linux_match(*, files: list[Path], search_variants: tuple[str, ...]) -> Path | None:
+    if len(search_variants) == 0:
+        return None
+    installable_files = [path for path in files if _is_installable_linux_candidate(path)]
+    if len(installable_files) == 0:
+        return None
+    ranked_files = [
+        (candidate, _score_linux_match(file_path=candidate, search_variants=search_variants))
+        for candidate in installable_files
+    ]
+    matching_files = [entry for entry in ranked_files if entry[1][0] >= 0]
+    if len(matching_files) == 0:
+        return None
+    return max(
+        matching_files,
+        key=lambda entry: (_is_probably_executable(entry[0]), entry[1][0], entry[1][1]),
+    )[0]
 
 
 def find_move_delete_windows(downloaded_file_path: Path, tool_name: str | None, delete: bool, rename_to: str | None):
@@ -66,35 +225,41 @@ def find_move_delete_linux(downloaded: Path, tool_name: str | None, delete: bool
     #     return last_result
 
     print("🔍 PROCESSING LINUX EXECUTABLE 🔍")
+    exe: Path | None = None
     if downloaded.is_file():
         exe = downloaded
         print(f"📄 Found direct executable file: {exe}")
     else:
         print(f"🔎 Searching for executable in: {downloaded}")
-        res = [p for p in downloaded.rglob(f"*{tool_name}*") if p.is_file()]
-        if len(res) == 1:
-            exe = res[0]
-            print(f"✅ Found match for pattern '*{tool_name}*': {exe}")
-        else:
-            if tool_name is None:  # no tool name provided, get the largest executable
-                search_res = [p for p in downloaded.rglob("*") if p.is_file()]
-                if len(search_res) == 0:
-                    print(f"❌ ERROR: No search results in `{downloaded}`")
-                    raise IndexError(f"No executable found in {downloaded}")
-                exe = max(search_res, key=lambda x: x.stat().st_size)
-                print(f"✅ Selected largest executable ({round(exe.stat().st_size / 1024, 1)} KB): {exe}")
+        all_files = [path for path in downloaded.rglob("*") if path.is_file()]
+        installable_files = [path for path in all_files if _is_installable_linux_candidate(path)]
+        executable_files = [path for path in installable_files if _is_probably_executable(path)]
+        if len(all_files) == 0:
+            print(f"❌ ERROR: No search results in `{downloaded}`")
+            _raise_linux_executable_error(downloaded=downloaded, tool_name=tool_name, files=all_files, executable_files=executable_files)
+        if tool_name is not None and tool_name.strip() != "":
+            search_variants = _build_tool_name_variants(tool_name)
+            matched_path = _select_best_linux_match(files=all_files, search_variants=search_variants)
+            if matched_path is not None:
+                exe = matched_path
+                print(f"✅ Found match for '{tool_name}': {exe}")
+            elif len(executable_files) == 1:
+                exe = executable_files[0]
+                print(f"⚠️  No file matched '{tool_name}'. Using the only executable found: {exe}")
             else:
-                exe_search_res = [p for p in downloaded.rglob(tool_name) if p.is_file()]
-                if len(exe_search_res) == 0:
-                    print(f"❌ ERROR: No search results for `{tool_name}` in `{downloaded}`")
-                    raise IndexError(f"No executable found in {downloaded}")
-                elif len(exe_search_res) == 1:
-                    exe = exe_search_res[0]
-                    print(f"✅ Found exact match for '{tool_name}': {exe}")
-                else:
-                    exe = max(exe_search_res, key=lambda x: x.stat().st_size)
-                    print(f"✅ Selected largest executable ({round(exe.stat().st_size / 1024, 1)} KB): {exe}")
+                print(f"❌ ERROR: No search results for `{tool_name}` in `{downloaded}`")
+                _raise_linux_executable_error(downloaded=downloaded, tool_name=tool_name, files=all_files, executable_files=executable_files)
+        elif len(executable_files) == 1:
+            exe = executable_files[0]
+            print(f"✅ Found executable: {exe}")
+        elif len(installable_files) == 1:
+            exe = installable_files[0]
+            print(f"⚠️  No executable bit found; using the only installable file present: {exe}")
+        else:
+            print(f"❌ ERROR: No executable found in `{downloaded}`")
+            _raise_linux_executable_error(downloaded=downloaded, tool_name=tool_name, files=all_files, executable_files=executable_files)
 
+    assert exe is not None
     if rename_to and exe.name != rename_to:
         print(f"🏷️  Renaming '{exe.name}' to '{rename_to}'")
         exe = path_core.with_name(exe, name=rename_to, inplace=True)
