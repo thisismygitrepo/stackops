@@ -37,26 +37,12 @@ def find_free_port(host: str) -> int:
 
 
 def get_lan_addresses() -> list[str]:
-    addresses: set[str] = set()
-    hostname = socket.gethostname()
-    try:
-        for result in socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM):
-            address = cast(str, result[4][0])
-            if not address.startswith("127."):
-                addresses.add(address)
-    except socket.gaierror:
-        pass
+    from stackops.scripts.python.helpers.helpers_network.address import select_lan_ipv4
 
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-            sock.connect(("8.8.8.8", 80))
-            address = sock.getsockname()[0]
-            if not address.startswith("127."):
-                addresses.add(address)
-    except OSError:
-        pass
-
-    return sorted(addresses)
+    lan_ipv4 = select_lan_ipv4(prefer_vpn=False)
+    if lan_ipv4 is None:
+        return []
+    return [lan_ipv4]
 
 
 def make_url_path(path: Path, root: Path) -> str:
