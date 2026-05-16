@@ -39,7 +39,7 @@ Current subcommands:
 
 `agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning-effort`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--separator`, `--agents-dir`, `--output-path`, and `--interactive`.
 
-`agents parallel run-parallel` reads named entries from `parallel.yaml`. By default it searches `.stackops/agents/parallel.yaml`, then StackOps private/public/library locations. Use `--parallel-yaml-path` for an explicit file, `--show-format` to print the standard, and `--edit` to open the YAML. Every `create` option can be overridden on the command line.
+`agents parallel run-parallel` reads flat top-level named entries from `parallel.yaml`. By default it searches `.stackops/agents/parallel.yaml`, then StackOps private/public/library locations. Use `--parallel-yaml-path` for an explicit file, `--show-format` to print the standard, and `--edit` to open the YAML. Every `create` option can be overridden on the command line.
 
 Standard `parallel.yaml` shape:
 
@@ -73,7 +73,7 @@ agents parallel create --agent codex --reasoning-effort high --context-path ./.a
 agents parallel create --agent copilot --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
 agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
 agents parallel run-parallel default --where repo --agent-load 5
-agents parallel run-parallel docs.update --parallel-yaml-path ./.ai/parallel.yaml --agent pi --reasoning-effort high
+agents parallel run-parallel docs_update --parallel-yaml-path ./.ai/parallel.yaml --agent pi --reasoning-effort high
 agents parallel create-context --job-name updateDocs "Collect the repo context for this doc task"
 agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 ```

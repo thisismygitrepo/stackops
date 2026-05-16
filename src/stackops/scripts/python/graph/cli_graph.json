@@ -13404,7 +13404,7 @@
                 "signature": {
                   "raw_lines": [
                     "def run_parallel(",
-                    "    config_name: Annotated[str | None, typer.Argument(help=\"Parallel YAML run name. Supports dot paths, e.g. docs.update.\")] = None,",
+                    "    config_name: Annotated[str | None, typer.Argument(help=\"Parallel YAML run name. Use a flat top-level key, e.g. docs_update.\")] = None,",
                     "    parallel_yaml_path: Annotated[",
                     "        str | None,",
                     "        typer.Option(",
@@ -13509,13 +13509,13 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Parallel YAML run name. Supports dot paths, e.g. docs.update.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Parallel YAML run name. Use a flat top-level key, e.g. docs_update.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Parallel YAML run name. Supports dot paths, e.g. docs.update."
+                        "help": "Parallel YAML run name. Use a flat top-level key, e.g. docs_update."
                       }
                     },
                     {

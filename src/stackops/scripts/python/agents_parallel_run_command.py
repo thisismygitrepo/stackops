@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 def run_parallel(
-    run_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Supports dot paths, e.g. docs.update.")] = None,
+    run_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Use a flat top-level key, e.g. docs_update.")] = None,
     parallel_yaml_path: Annotated[
         str | None,
         typer.Option(
