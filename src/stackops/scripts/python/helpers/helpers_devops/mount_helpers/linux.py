@@ -2,15 +2,24 @@ import getpass
 import json
 import os
 import tempfile
+import time
 from pathlib import Path
 from typing import Literal, TypeAlias, cast
 
-from stackops.scripts.python.helpers.helpers_devops.mount_helpers.commands import ensure_ok, run_command, run_command_sudo
+from stackops.scripts.python.helpers.helpers_devops.mount_helpers.commands import (
+    ensure_ok,
+    run_command,
+    run_command_interactive,
+    run_command_sudo,
+)
 
 MountBackend: TypeAlias = Literal["mount", "dislocker", "udisksctl"]
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.selection import pick_device
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.utils import as_str
+
+CRYPT_DEVICE_LOOKUP_ATTEMPTS = 5
+CRYPT_DEVICE_LOOKUP_DELAY_SECONDS = 0.2
 
 
 def _flatten_lsblk_devices(devices: list[dict[str, object]]) -> list[dict[str, object]]:
@@ -83,6 +92,16 @@ def _find_crypt_device(part_name: str) -> str | None:
     return None
 
 
+def _wait_for_crypt_device(part_name: str) -> str | None:
+    for attempt_index in range(CRYPT_DEVICE_LOOKUP_ATTEMPTS):
+        map_dev = _find_crypt_device(part_name)
+        if map_dev is not None:
+            return map_dev
+        if attempt_index + 1 < CRYPT_DEVICE_LOOKUP_ATTEMPTS:
+            time.sleep(CRYPT_DEVICE_LOOKUP_DELAY_SECONDS)
+    return None
+
+
 def _mount_udisksctl_linux(device_path: str, read_only: bool) -> None:
     part_name = Path(device_path).name
     map_dev = _find_crypt_device(part_name)
@@ -92,18 +111,16 @@ def _mount_udisksctl_linux(device_path: str, read_only: bool) -> None:
             target = run_command(["findmnt", "-nro", "TARGET", map_dev])
             print(f"Already mounted: {map_dev} at {target.stdout.strip()}")
             return
-    print(f"Unlocking {device_path}...")
+    print(f"Unlocking {device_path} (you may be prompted for BitLocker and Linux account passwords)...")
     unlock_cmd = ["udisksctl", "unlock", "-b", device_path]
     if read_only:
         unlock_cmd.append("--read-only")
-    ensure_ok(run_command(unlock_cmd), "udisksctl unlock")
-    map_dev = _find_crypt_device(part_name)
+    ensure_ok(run_command_interactive(unlock_cmd), "udisksctl unlock")
+    map_dev = _wait_for_crypt_device(part_name)
     if map_dev is None:
         raise RuntimeError("Could not find mapped cleartext device after unlock")
     print(f"Mounting {map_dev}...")
-    result = run_command(["udisksctl", "mount", "-b", map_dev])
-    ensure_ok(result, "udisksctl mount")
-    print(result.stdout.strip())
+    ensure_ok(run_command_interactive(["udisksctl", "mount", "-b", map_dev]), "udisksctl mount")
 
 
 def _mount_bitlocker_linux(device_path: str, mount_point: str, read_only: bool) -> None:
