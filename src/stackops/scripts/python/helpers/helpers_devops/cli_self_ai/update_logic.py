@@ -17,9 +17,9 @@ Please check the logic of the command below, and fix if you found anything not t
 * Use those two fields to find the command.
 * If it works as is, please don't be fussy and try to change the logic unnecessarily. Only make changes if you find actual issues, otherwise I'm happy to keep things as is.
 * Things work now, risking to break it is not worth it, don't complicate things, don't write too much code that become a liability to maintain. If it ain't broken, don't fix it.
-* Keep cli py file fast and clean by having the unncessary imports to occur within the function called, so we don't pay cost upfront for all features (but don't overdot it by stripping things to small shim files)
+* Keep cli py file fast and clean by having the unncessary imports to occur within the function called, so we don't pay cost upfront for all features (but don't overdot it by stripping things to small shim files), we can allow type hinting imports and other things needed for app to show right types and expectations to user.
 * There are other agents that will be working on the same codebase, possibly same file, but different functions within it, so be mindful of that.
-
+* We use latest python, don't import from future annotations, also, Optional etc are deprecated now adays, use | None instead of Optional.
 """
 
 type JsonObject = dict[str, object]
