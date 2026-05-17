@@ -29,15 +29,15 @@ open = [
 [open]
 prepend_rules = [
   # Text/Code files - open with VSCode by default, Helix as alternative
-  { name = "*.py", use = ["edit", "helix"] },
-  { name = "*.{rs,toml,yaml,yml,json,js,ts,tsx,jsx,html,css,md,txt,sh,ps1,bat,cmd}", use = ["edit", "helix"] },
+  { url = "*.py", use = ["edit", "helix"] },
+  { url = "*.{rs,toml,yaml,yml,json,js,ts,tsx,jsx,html,css,md,txt,sh,ps1,bat,cmd}", use = ["edit", "helix"] },
   { mime = "text/*", use = ["edit", "helix"] },
 ]
 rules = [
   { mime = "video/*", use = "play" },
   { mime = "application/pdf", use = ["system_default"] },
   { mime = "image/*", use = ["system_default"] },
-  { name = "*", use = ["system_default"] }
+  { url = "*", use = ["system_default"] }
 ]
 
 
@@ -92,4 +92,3 @@ path = "toggle-pane.yazi"
 # Change them to your desired values
 max_width  = 1000
 max_height = 1000
-

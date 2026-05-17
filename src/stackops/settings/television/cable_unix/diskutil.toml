@@ -1,10 +1,10 @@
 [metadata]
 name = "diskutil"
-description = "List and manage mounted filesystems on macOS"
+description = "macOS-only: list and manage mounted filesystems with diskutil"
 requirements = ["df", "awk", "diskutil"]
 
 [source]
-command = "df -hP | awk 'NR > 1 {mount=$6; for (i=7; i<=NF; i++) mount=mount \" \"$i; print mount\"\\t\"$1\"\\t\"$2\"\\t\"$5}'"
+command = "command -v diskutil >/dev/null || { echo 'diskutil is macOS-only. On Linux use: tv linux-disks or tv mounts.' >&2; exit 1; }; df -hP | awk 'NR > 1 {mount=$6; for (i=7; i<=NF; i++) mount=mount \" \"$i; print mount\"\\t\"$1\"\\t\"$2\"\\t\"$5}'"
 display = "{split:\t:0} ({split:\t:1}, {split:\t:3})"
 output = "{split:\t:0}"
 

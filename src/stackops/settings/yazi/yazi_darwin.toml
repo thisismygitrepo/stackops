@@ -23,15 +23,15 @@ open = [
 [open]
 prepend_rules = [
   # Text/Code files - open with Helix by default
-  { name = "*.py", use = ["edit", "hx"] },
-  { name = "*.{rs,toml,yaml,yml,json,js,ts,tsx,jsx,html,css,md,txt,sh,bash,zsh,ps1}", use = ["edit", "hx"] },
+  { url = "*.py", use = ["edit", "hx"] },
+  { url = "*.{rs,toml,yaml,yml,json,js,ts,tsx,jsx,html,css,md,txt,sh,bash,zsh,ps1}", use = ["edit", "hx"] },
   { mime = "text/*", use = ["edit", "hx"] },
 ]
 rules = [
   { mime = "application/pdf", use = ["system_default"] },
   { mime = "image/*",     use = ["system_default"] },
   { mime = "{audio,video}/*", use = ["system_default"] },
-  { name = "*",           use = ["system_default"] }
+  { url = "*",            use = ["system_default"] }
 ]
 
 

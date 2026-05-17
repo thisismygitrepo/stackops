@@ -1,0 +1,38 @@
+[metadata]
+name = "linux-disks"
+description = "Linux: list and manage block devices with lsblk and udisksctl"
+requirements = ["lsblk", "findmnt", "udisksctl", "awk"]
+
+[source]
+command = '''lsblk -P -p -o PATH,SIZE,FSTYPE,MOUNTPOINTS,LABEL,TYPE | awk 'function val(key, pattern, item, value) { pattern = "(^| )" key "=\"[^\"]*\""; if (match($0, pattern)) { item = substr($0, RSTART, RLENGTH); sub(/^ /, "", item); value = substr(item, length(key) + 3, length(item) - length(key) - 3); gsub(/\\x20/, " ", value); return value } return "" } { path=val("PATH"); type=val("TYPE"); if (type == "loop") next; print path "\t" type "\t" val("SIZE") "\t" val("FSTYPE") "\t" val("MOUNTPOINTS") "\t" val("LABEL") }' '''
+display = "{split:\t:0} {split:\t:5} ({split:\t:1}, {split:\t:2}, {split:\t:3}) {split:\t:4}"
+output = "{split:\t:0}"
+
+[preview]
+command = "lsblk -f '{split:\t:0}' 2>/dev/null; echo; findmnt -S '{split:\t:0}' 2>/dev/null || true; echo; udisksctl info -b '{split:\t:0}' 2>/dev/null | sed -n '1,80p'"
+
+[keybindings]
+enter = "actions:info"
+ctrl-o = "actions:open_mount"
+f2 = "actions:mount"
+f3 = "actions:unmount"
+
+[actions.info]
+description = "Show udisks information for the selected device"
+command = "udisksctl info -b '{split:\t:0}' | less"
+mode = "execute"
+
+[actions.open_mount]
+description = "Open the selected device's mount point"
+command = "xdg-open '{split:\t:4}'"
+mode = "fork"
+
+[actions.mount]
+description = "Mount the selected device with udisksctl"
+command = "udisksctl mount -b '{split:\t:0}'"
+mode = "execute"
+
+[actions.unmount]
+description = "Unmount the selected device with udisksctl"
+command = "udisksctl unmount -b '{split:\t:0}'"
+mode = "execute"
