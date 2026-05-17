@@ -60,6 +60,7 @@ PROVIDER: TypeAlias = Literal[
 ]
 ReasoningEffort: TypeAlias = Literal["none", "low", "medium", "high", "xhigh"]
 DEFAULT_SEAPRATOR = "\n@-@\n"
+DEFAULT_STUTTER_MAX = 3.0
 
 
 class API_SPEC(TypedDict):
@@ -79,6 +80,4 @@ class AI_SPEC(TypedDict):
 
 
 AGENT_NAME_FORMATTER = get_agent_command_filename(idx="{idx}")
-SEARCH_STRATEGIES: TypeAlias = Literal[
-    "file_path", "keyword_search", "filename_pattern"
-]
+SEARCH_STRATEGIES: TypeAlias = Literal["file_path", "keyword_search", "filename_pattern"]

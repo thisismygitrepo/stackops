@@ -62,6 +62,7 @@ def build_agents_create_overview_panel(
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
+    stutter_max: float,
     join_prompt_and_context: bool,
     run: bool,
 ) -> Panel:
@@ -77,6 +78,7 @@ def build_agents_create_overview_panel(
     table.add_row("Model", _optional_label(value=model))
     table.add_row("Reasoning", _optional_label(value=reasoning_effort))
     table.add_row("Rows per agent", str(agent_load))
+    table.add_row("Startup stutter max", f"{stutter_max:g}s")
     table.add_row("Prompt mode", "joined prompt/context" if join_prompt_and_context else "separate prompt/material")
     table.add_row("Run after create", str(run))
     return Panel(table, title="Agent Create", border_style="blue")
@@ -93,6 +95,7 @@ def show_agents_create_overview(
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
+    stutter_max: float,
     join_prompt_and_context: bool,
     run: bool,
 ) -> None:
@@ -107,20 +110,14 @@ def show_agents_create_overview(
             model=model,
             reasoning_effort=reasoning_effort,
             agent_load=agent_load,
+            stutter_max=stutter_max,
             join_prompt_and_context=join_prompt_and_context,
             run=run,
         )
     )
 
 
-def build_chunking_panel(
-    *,
-    subject: str,
-    total_items: int,
-    tasks_per_prompt: int,
-    generated_agents: int,
-    was_chunked: bool,
-) -> Panel:
+def build_chunking_panel(*, subject: str, total_items: int, tasks_per_prompt: int, generated_agents: int, was_chunked: bool) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
     table.add_column("Value", style="white")
@@ -132,21 +129,10 @@ def build_chunking_panel(
     return Panel(table, title="Chunking", border_style="cyan" if was_chunked else "yellow")
 
 
-def show_chunking_panel(
-    *,
-    subject: str,
-    total_items: int,
-    tasks_per_prompt: int,
-    generated_agents: int,
-    was_chunked: bool,
-) -> None:
+def show_chunking_panel(*, subject: str, total_items: int, tasks_per_prompt: int, generated_agents: int, was_chunked: bool) -> None:
     _CONSOLE.print(
         build_chunking_panel(
-            subject=subject,
-            total_items=total_items,
-            tasks_per_prompt=tasks_per_prompt,
-            generated_agents=generated_agents,
-            was_chunked=was_chunked,
+            subject=subject, total_items=total_items, tasks_per_prompt=tasks_per_prompt, generated_agents=generated_agents, was_chunked=was_chunked
         )
     )
 
@@ -157,11 +143,7 @@ def build_generated_agents_table(*, repo_root: Path, prompt_dirs: Sequence[Path]
     table.add_column("Directory", style="white", overflow="fold")
     table.add_column("Files", style="white", overflow="fold")
     for prompt_dir in prompt_dirs:
-        table.add_row(
-            prompt_dir.name,
-            _repo_relative_path(path=prompt_dir, repo_root=repo_root),
-            _files_summary(prompt_dir=prompt_dir),
-        )
+        table.add_row(prompt_dir.name, _repo_relative_path(path=prompt_dir, repo_root=repo_root), _files_summary(prompt_dir=prompt_dir))
     return table
 
 
@@ -170,13 +152,7 @@ def show_generated_agents_table(*, repo_root: Path, prompt_dirs: Sequence[Path])
 
 
 def build_created_artifacts_panel(
-    *,
-    repo_root: Path,
-    agents_dir: Path,
-    layout_output_path: Path,
-    artifacts_dir: Path,
-    recreate_script_path: Path,
-    agent_count: int,
+    *, repo_root: Path, agents_dir: Path, layout_output_path: Path, artifacts_dir: Path, recreate_script_path: Path, agent_count: int
 ) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold green", no_wrap=True)
@@ -190,13 +166,7 @@ def build_created_artifacts_panel(
 
 
 def show_created_artifacts_panel(
-    *,
-    repo_root: Path,
-    agents_dir: Path,
-    layout_output_path: Path,
-    artifacts_dir: Path,
-    recreate_script_path: Path,
-    agent_count: int,
+    *, repo_root: Path, agents_dir: Path, layout_output_path: Path, artifacts_dir: Path, recreate_script_path: Path, agent_count: int
 ) -> None:
     _CONSOLE.print(
         build_created_artifacts_panel(

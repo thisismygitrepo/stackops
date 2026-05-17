@@ -17,6 +17,7 @@ def test_parse_parallel_create_values_accepts_reasoning_key() -> None:
         "context_path": "./context.md",
         "separator": "\\n@-@\\n",
         "agent_load": 2,
+        "stutter_max": 1.5,
         "prompt": None,
         "prompt_path": "./prompt.md",
         "prompt_name": None,
@@ -37,6 +38,7 @@ def test_parse_parallel_create_values_accepts_reasoning_key() -> None:
     assert parsed.context_path == "./context.md"
     assert parsed.separator == "\\n@-@\\n"
     assert parsed.agent_load == 2
+    assert parsed.stutter_max == 1.5
     assert parsed.prompt_path == "./prompt.md"
     assert parsed.job_name == "demo"
     assert parsed.join_prompt_and_context is False
@@ -59,8 +61,7 @@ def test_select_parallel_create_values_from_locations_uses_named_repo_entry() ->
     ]
 
     _entry_name, parsed = agents_parallel_run_yaml.select_parallel_create_values_from_locations(
-        yaml_entries=yaml_entries,
-        requested_name="docs_update",
+        yaml_entries=yaml_entries, requested_name="docs_update"
     )
 
     assert parsed.agent == "codex"
@@ -96,10 +97,7 @@ def test_select_parallel_create_values_from_locations_preview_shows_source_yaml(
 
     monkeypatch.setattr(tv_options, "choose_from_dict_with_preview", fake_choose_from_dict_with_preview)
 
-    _entry_name, parsed = agents_parallel_run_yaml.select_parallel_create_values_from_locations(
-        yaml_entries=yaml_entries,
-        requested_name=None,
-    )
+    _entry_name, parsed = agents_parallel_run_yaml.select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name=None)
 
     assert captured_preview_size_percent == agents_parallel_run_yaml.PARALLEL_RUN_PREVIEW_SIZE_PERCENT
     assert "source_yaml: /tmp/repo/.stackops/agents/parallel.yaml" in captured_options["repo:docs_update"]
@@ -113,7 +111,4 @@ def test_select_parallel_create_values_from_locations_rejects_dotted_names() -> 
     ]
 
     with pytest.raises(ValueError, match="flat top-level YAML keys without dots"):
-        agents_parallel_run_yaml.select_parallel_create_values_from_locations(
-            yaml_entries=yaml_entries,
-            requested_name="docs.update",
-        )
+        agents_parallel_run_yaml.select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name="docs.update")

@@ -30,11 +30,7 @@ def run_parallel_from_yaml(
     yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, where=where)
     created_yaml_paths: list[Path] = []
     if not add_entry:
-        created_yaml_paths = _ensure_writable_parallel_yaml_files(
-            yaml_locations=yaml_locations,
-            parallel_yaml_path=parallel_yaml_path,
-            where=where,
-        )
+        created_yaml_paths = _ensure_writable_parallel_yaml_files(yaml_locations=yaml_locations, parallel_yaml_path=parallel_yaml_path, where=where)
     _report_created_yaml_paths(created_yaml_paths=created_yaml_paths)
     if add_entry:
         _add_parallel_yaml_entry(yaml_locations=yaml_locations, config_name=config_name)
@@ -55,10 +51,7 @@ def run_parallel_from_yaml(
         return
 
     yaml_entries = _read_existing_parallel_yaml_entries(yaml_locations=yaml_locations)
-    selected_name, base_values = select_parallel_create_values_from_locations(
-        yaml_entries=yaml_entries,
-        requested_name=config_name,
-    )
+    selected_name, base_values = select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name=config_name)
     resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
     require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
 
@@ -74,6 +67,7 @@ def run_parallel_from_yaml(
         context_path=resolved.context_path,
         separator=resolved.separator,
         agent_load=resolved.agent_load,
+        stutter_max=resolved.stutter_max,
         prompt=resolved.prompt,
         prompt_path=resolved.prompt_path,
         prompt_name=resolved.prompt_name,

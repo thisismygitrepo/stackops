@@ -1,10 +1,7 @@
 from pathlib import Path
 from typing import Final, Literal, get_args
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import (
-    PARALLEL_CREATE_COMMAND_NAME,
-    PARALLEL_RUN_COMMAND_NAME,
-)
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import PARALLEL_CREATE_COMMAND_NAME, PARALLEL_RUN_COMMAND_NAME
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 from stackops.utils.yaml_schema import JsonObject, JsonValue, ensure_yaml_schema_exists
 
@@ -42,12 +39,8 @@ def _prompts_yaml_schema() -> JsonObject:
                     {
                         "type": "object",
                         "properties": {
-                            "description": _nullable_string_schema(
-                                description="Human-facing description. Ignored when StackOps builds prompt text."
-                            ),
-                            "desc": _nullable_string_schema(
-                                description="Short human-facing description. Ignored when StackOps builds prompt text."
-                            ),
+                            "description": _nullable_string_schema(description="Human-facing description. Ignored when StackOps builds prompt text."),
+                            "desc": _nullable_string_schema(description="Short human-facing description. Ignored when StackOps builds prompt text."),
                             "desciption": _nullable_string_schema(
                                 description="Legacy misspelling accepted by StackOps and ignored when building prompt text."
                             ),
@@ -89,21 +82,16 @@ def _parallel_yaml_schema() -> JsonObject:
                         description="Optional reasoning value passed to agents that support it.",
                     ),
                     "provider": _enum_or_null_schema(
-                        values=_literal_values(raw_values=get_args(PROVIDER)),
-                        description="Optional provider passed to agents that support it.",
+                        values=_literal_values(raw_values=get_args(PROVIDER)), description="Optional provider passed to agents that support it."
                     ),
                     "host": _enum_or_null_schema(
-                        values=_literal_values(raw_values=get_args(HOST)),
-                        description="Execution host for generated agent commands.",
+                        values=_literal_values(raw_values=get_args(HOST)), description="Execution host for generated agent commands."
                     ),
                     "context": _nullable_string_schema(description="Inline context shared with generated agent prompts."),
                     "context_path": _nullable_string_schema(description="Path to a context file."),
                     "separator": _nullable_string_schema(description="Escaped separator used to split context chunks."),
-                    "agent_load": {
-                        "description": "Number of parallel agents to generate.",
-                        "type": ["integer", "null"],
-                        "minimum": 1,
-                    },
+                    "agent_load": {"description": "Number of parallel agents to generate.", "type": ["integer", "null"], "minimum": 1},
+                    "stutter_max": {"description": "Maximum random startup stagger delay in seconds.", "type": ["number", "null"], "minimum": 0},
                     "prompt": _nullable_string_schema(description="Inline prompt sent to each generated agent."),
                     "prompt_path": _nullable_string_schema(description="Path to a prompt file."),
                     "prompt_name": _nullable_string_schema(description="Named prompt from prompts.yaml."),
@@ -112,10 +100,7 @@ def _parallel_yaml_schema() -> JsonObject:
                         "description": "Whether to combine prompt and context before splitting work.",
                         "type": ["boolean", "null"],
                     },
-                    "run": {
-                        "description": "Whether to immediately launch the generated layout through terminal run.",
-                        "type": ["boolean", "null"],
-                    },
+                    "run": {"description": "Whether to immediately launch the generated layout through terminal run.", "type": ["boolean", "null"]},
                     "output_path": _nullable_string_schema(description="Path where generated layout JSON is written."),
                     "agents_dir": _nullable_string_schema(description="Directory where generated agent files are written."),
                     "interactive": {
@@ -123,7 +108,7 @@ def _parallel_yaml_schema() -> JsonObject:
                         "type": ["boolean", "null"],
                     },
                 },
-            },
+            }
         },
     }
 

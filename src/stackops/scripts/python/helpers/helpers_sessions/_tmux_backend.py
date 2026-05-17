@@ -44,6 +44,36 @@ def _build_preview(session_name: str) -> str:
     )
 
 
+def list_session_names() -> list[str]:
+    result = run_command(["tmux", "list-sessions", "-F", "#S"])
+    sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
+    sessions = [s for s in sessions if s.strip()]
+    sessions.sort(
+        key=lambda session_name: session_sort_key(
+            session_name=session_name,
+            natural_sort_key_fn=natural_sort_key,
+            strip_ansi_codes_fn=strip_ansi_codes,
+        )
+    )
+    return sessions
+
+
+def choose_existing_session_name(
+    msg: str = "Choose a tmux session:",
+) -> tuple[str, str]:
+    sessions = list_session_names()
+    if len(sessions) == 0:
+        return ("error", "No tmux sessions are available.")
+
+    session_name = interactive_choose_with_preview(
+        msg=msg,
+        options_to_preview_mapping={session_name: _build_preview(session_name) for session_name in sessions},
+    )
+    if session_name is None:
+        return ("error", "No tmux session selected.")
+    return ("session_name", session_name)
+
+
 def choose_session(
     name: str | None,
     new_session: bool,
@@ -55,16 +85,7 @@ def choose_session(
     if new_session:
         return ("handoff_script", new_session_script(kill_all=kill_all))
 
-    result = run_command(["tmux", "list-sessions", "-F", "#S"])
-    sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
-    sessions = [s for s in sessions if s.strip()]
-    sessions.sort(
-        key=lambda session_name: session_sort_key(
-            session_name=session_name,
-            natural_sort_key_fn=natural_sort_key,
-            strip_ansi_codes_fn=strip_ansi_codes,
-        )
-    )
+    sessions = list_session_names()
 
     if len(sessions) == 0:
         return ("handoff_script", new_session_script(kill_all=False))
@@ -132,16 +153,7 @@ def choose_kill_target(
     if name is not None:
         return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote))
 
-    result = run_command(["tmux", "list-sessions", "-F", "#S"])
-    sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
-    sessions = [s for s in sessions if s.strip()]
-    sessions.sort(
-        key=lambda session_name: session_sort_key(
-            session_name=session_name,
-            natural_sort_key_fn=natural_sort_key,
-            strip_ansi_codes_fn=strip_ansi_codes,
-        )
-    )
+    sessions = list_session_names()
 
     if len(sessions) == 0:
         return ("error", "No tmux sessions are available to kill.")

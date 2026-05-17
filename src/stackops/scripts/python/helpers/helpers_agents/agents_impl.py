@@ -1,6 +1,7 @@
 """Pure Python implementations for agents commands - no typer dependencies."""
 
 import sys
+from math import isfinite
 from pathlib import Path
 from time import perf_counter
 
@@ -18,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import 
     resolve_prompt_input,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STUTTER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
     show_agents_create_overview,
     show_created_artifacts_panel,
@@ -33,17 +34,13 @@ def agents_create(
     agent: AGENTS,
     model: str | None,
     agent_load: int,
-
     context: str | None,
     context_path: str | None,
     separator: str,
-
     prompt: str | None,
     prompt_path: str | None,
     prompt_name: str | None,
-
     job_name: str | None,
-
     join_prompt_and_context: bool,
     run: bool,
     output_path: str | None,
@@ -52,19 +49,22 @@ def agents_create(
     host: HOST,
     reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
-
     interactive: bool,
+    stutter_max: float = DEFAULT_STUTTER_MAX,
 ) -> None:
     """Create agents layout file, ready to run."""
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
+    _validate_stutter_max(stutter_max=stutter_max)
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
+
         main(
             agent=agent,
             host=host,
             model=model,
             reasoning_effort=normalized_reasoning_effort,
             provider=provider,
+            stutter_max=stutter_max,
             agent_load=agent_load,
             context=context,
             context_path=context_path,
@@ -103,15 +103,8 @@ def agents_create(
         elif provider != "openai":
             raise ValueError("Codex agent only works with openai provider.")
 
-    agents_dir_obj, job_name_resolved = resolve_agents_output_dir(
-        repo_root=repo_root,
-        agents_dir=agents_dir,
-        job_name=job_name,
-    )
-    workspace_root = resolve_agents_workspace_root(
-        preferred_root=repo_root,
-        agents_dir_obj=agents_dir_obj,
-    )
+    agents_dir_obj, job_name_resolved = resolve_agents_output_dir(repo_root=repo_root, agents_dir=agents_dir, job_name=job_name)
+    workspace_root = resolve_agents_workspace_root(preferred_root=repo_root, agents_dir_obj=agents_dir_obj)
     del job_name
     requested_agents_dir = agents_dir
     cleanup_existing_agents_dir = agents_dir is not None and agents_dir_obj.exists()
@@ -127,22 +120,20 @@ def agents_create(
         model=model,
         reasoning_effort=normalized_reasoning_effort,
         agent_load=agent_load,
+        stutter_max=stutter_max,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
     )
 
     prompt_input = resolve_prompt_input(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
     context_input = resolve_context_input(
-        context=context,
-        context_path=context_path,
-        separator=separator,
-        agent_load=agent_load,
-        agents_dir_obj=agents_dir_obj,
+        context=context, context_path=context_path, separator=separator, agent_load=agent_load, agents_dir_obj=agents_dir_obj
     )
 
     if cleanup_existing_agents_dir:
         _confirm_existing_agents_dir_cleanup(agents_dir_obj=agents_dir_obj)
         import shutil
+
         shutil.rmtree(agents_dir_obj)
 
     agent_selected = agent
@@ -158,14 +149,11 @@ def agents_create(
         reasoning_effort=normalized_reasoning_effort,
         provider=provider,
         job_name=job_name_resolved,
+        stutter_max=stutter_max,
     )
     prompt_directories = get_prompt_directories(prompt_root=agents_dir_obj / "prompts")
     show_generated_agents_table(repo_root=workspace_root, prompt_dirs=prompt_directories)
-    layoutfile = get_agents_launch_layout(
-        session_root=agents_dir_obj,
-        job_name=job_name_resolved,
-        start_dir=workspace_root,
-    )
+    layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved, start_dir=workspace_root)
 
     layout_output_path = Path(output_path) if output_path is not None else agents_dir_obj / "layout.json"
     layout_output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -180,6 +168,7 @@ def agents_create(
         reasoning_effort=normalized_reasoning_effort,
         provider=provider,
         agent_load=agent_load,
+        stutter_max=stutter_max,
         separator=separator,
         prompt=CreatePromptArtifactsInput(
             source_kind=prompt_input.source_kind,
@@ -217,6 +206,7 @@ def agents_create(
             context_path=context_path,
             separator=separator,
             agent_load=agent_load,
+            stutter_max=stutter_max,
             prompt=prompt,
             prompt_path=prompt_path,
             prompt_name=prompt_name,
@@ -238,16 +228,19 @@ def _confirm_existing_agents_dir_cleanup(*, agents_dir_obj: Path) -> None:
         raise ValueError(f"--agents-dir points to an existing non-directory path: {agents_dir_obj}")
     if not sys.stdin.isatty():
         raise RuntimeError(
-            "Refusing to delete an existing agents directory in non-interactive mode: "
-            f"{agents_dir_obj}\nRe-run interactively to confirm."
+            f"Refusing to delete an existing agents directory in non-interactive mode: {agents_dir_obj}\nRe-run interactively to confirm."
         )
     proceed = typer.confirm(
-        f"Agents directory already exists and will be deleted to create a clean workspace:\n{agents_dir_obj}\nContinue?",
-        default=False,
+        f"Agents directory already exists and will be deleted to create a clean workspace:\n{agents_dir_obj}\nContinue?", default=False
     )
     if proceed:
         return
     raise RuntimeError(f"Aborted: kept existing agents directory: {agents_dir_obj}")
+
+
+def _validate_stutter_max(*, stutter_max: float) -> None:
+    if not isfinite(stutter_max) or stutter_max < 0:
+        raise ValueError("stutter_max must be a finite number greater than or equal to 0")
 
 
 def _run_generated_layout(*, layout_output_path: Path) -> None:
@@ -295,6 +288,7 @@ def _save_parallel_yaml_entry(
     run: bool,
     output_path: str | None,
     agents_dir: str | None,
+    stutter_max: float = DEFAULT_STUTTER_MAX,
 ) -> Path:
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry import upsert_parallel_yaml_entry
 
@@ -313,6 +307,7 @@ def _save_parallel_yaml_entry(
             context_path=context_path,
             separator=separator,
             agent_load=agent_load,
+            stutter_max=stutter_max,
             prompt=prompt,
             prompt_path=prompt_path,
             prompt_name=prompt_name,
@@ -346,6 +341,7 @@ def _build_parallel_yaml_entry(
     run: bool,
     output_path: str | None,
     agents_dir: str | None,
+    stutter_max: float = DEFAULT_STUTTER_MAX,
 ) -> ParallelCreateYamlEntry:
     return {
         "agent": agent,
@@ -357,6 +353,7 @@ def _build_parallel_yaml_entry(
         "context_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=context_path),
         "separator": _encode_separator_value(separator=separator),
         "agent_load": agent_load,
+        "stutter_max": stutter_max,
         "prompt": prompt,
         "prompt_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=prompt_path),
         "prompt_name": prompt_name,
@@ -418,7 +415,7 @@ def collect(agent_dir: str, output_path: str, separator: str, pattern: str | Non
         return
     print(f"Found {len(material_files)} material files. Concatenating...")
     for idx, a_file in enumerate(material_files):
-        print(f"{idx+1}. {a_file}")
+        print(f"{idx + 1}. {a_file}")
     material_files.sort(key=lambda x: int(x.parent.name.split("_")[-1]))
     concatenated_content: list[str] = []
     for material_file in material_files:
@@ -437,23 +434,18 @@ def make_agents_command_template() -> None:
     os_name = system()
     match os_name:
         case "Linux" | "Darwin":
-            template_path = get_path_reference_path(
-                module=template_assets,
-                path_reference=template_assets.TEMPLATE_SH_PATH_REFERENCE,
-            )
+            template_path = get_path_reference_path(module=template_assets, path_reference=template_assets.TEMPLATE_SH_PATH_REFERENCE)
             template_filename = "template_fire_agents.sh"
             template_label = "shell"
         case "Windows":
-            template_path = get_path_reference_path(
-                module=template_assets,
-                path_reference=template_assets.TEMPLATE_PS1_PATH_REFERENCE,
-            )
+            template_path = get_path_reference_path(module=template_assets, path_reference=template_assets.TEMPLATE_PS1_PATH_REFERENCE)
             template_filename = "template_fire_agents.ps1"
             template_label = "PowerShell"
         case _:
             raise ValueError(f"Unsupported OS: {os_name}")
 
     from stackops.utils.accessories import get_repo_root
+
     repo_root = get_repo_root(Path.cwd())
     if repo_root is None:
         raise RuntimeError("💥 Could not determine the repository root. Please run this script from within a git repository.")
@@ -466,14 +458,10 @@ def make_agents_command_template() -> None:
     todo_output_path = save_path_root.relative_to(repo_root) / "files.md"
 
     from stackops.scripts.python.ai.utils.generate_files import make_todo_files
-    make_todo_files(
-        pattern=".py", repo=str(repo_root), strategy="name", output_path=str(todo_output_path), split_every=None, split_to=None
-    )
 
-    prompt_path = get_path_reference_path(
-        module=template_assets,
-        path_reference=template_assets.PROMPT_PATH_REFERENCE,
-    )
+    make_todo_files(pattern=".py", repo=str(repo_root), strategy="name", output_path=str(todo_output_path), split_every=None, split_to=None)
+
+    prompt_path = get_path_reference_path(module=template_assets, path_reference=template_assets.PROMPT_PATH_REFERENCE)
     save_path_root.joinpath("prompt.txt").write_text(prompt_path.read_text(encoding="utf-8"), encoding="utf-8")
     print(f"Prompt template written to {save_path_root}")
 
@@ -489,6 +477,7 @@ def init_config(
 ) -> None:
     """Initialize AI configurations in the current repository."""
     from stackops.scripts.python.ai.initai import add_ai_configs
+
     started_at = perf_counter()
     print("[init-config] Starting configuration")
     if root is None:
@@ -497,10 +486,10 @@ def init_config(
         repo_root = Path(root).expanduser().resolve()
     print(f"[init-config] Repository root input: {repo_root}")
     from typing import get_args
+
     if len(frameworks) > 0:
         selected_frameworks_list: list[AGENTS] = []
         for framework in frameworks:
-
             if framework not in get_args(AGENTS):
                 raise ValueError(f"Unsupported framework: {framework}. The supported frameworks are: {', '.join(get_args(AGENTS))}")
             selected_frameworks_list.append(framework)

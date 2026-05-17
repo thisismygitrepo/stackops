@@ -150,9 +150,7 @@ update-docs:
 
     assert written_path == parallel_yaml_path
     assert (tmp_path / ".stackops" / "agents" / "parallel.schema.json").is_file()
-    assert parallel_yaml_path.read_text(encoding="utf-8").startswith(
-        "# yaml-language-server: $schema=./parallel.schema.json\n"
-    )
+    assert parallel_yaml_path.read_text(encoding="utf-8").startswith("# yaml-language-server: $schema=./parallel.schema.json\n")
     yaml_mapping = _read_yaml_mapping(parallel_yaml_path)
     assert yaml_mapping["custom"] == {"agent": "copilot", "prompt": "keep"}
 
@@ -163,6 +161,7 @@ update-docs:
     assert update_test_entry["agents_dir"] == "./.ai/agents/updateTests"
     assert update_test_entry["output_path"] == "./.ai/agents/updateTests/layout.json"
     assert update_test_entry["agent_load"] == 10
+    assert update_test_entry["stutter_max"] == 3.0
     assert update_test_entry["prompt"] == update_test.UPDATE_TEST_PROMPT
 
     update_docs_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-docs")

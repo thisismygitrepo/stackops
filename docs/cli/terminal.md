@@ -206,11 +206,13 @@ terminal kill --window
 Trace a tmux session until every observable target matches a strict stop criterion.
 
 ```bash
-terminal trace SESSION_NAME [OPTIONS]
+terminal trace [SESSION_NAME] [OPTIONS]
 ```
 
 | Option | Short | Description |
 |--------|-------|-------------|
+| `SESSION_NAME` | - | Session name to trace; omit when using `--interactive` |
+| `--interactive` | `-i` | Choose an existing tmux session interactively |
 | `--every` | `-e` | Polling interval in seconds |
 | `--until` | `-u` | `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
 | `--exit-code` | - | Required exit code when `--until exit-code` is selected |
@@ -218,6 +220,9 @@ terminal trace SESSION_NAME [OPTIONS]
 Examples:
 
 ```bash
+# Choose an existing session interactively
+terminal trace --interactive
+
 # Wait until every pane returns to an idle shell
 terminal trace build-session
 

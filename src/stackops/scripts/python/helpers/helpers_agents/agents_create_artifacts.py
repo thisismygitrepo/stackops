@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STUTTER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -92,6 +92,7 @@ def _build_recreate_command_args(
     run: bool,
     layout_output_path: Path,
     agents_dir: Path,
+    stutter_max: float,
 ) -> list[str]:
     command: list[str] = [
         "uv",
@@ -109,6 +110,8 @@ def _build_recreate_command_args(
         _separator_cli_value(separator),
         "--agent-load",
         str(agent_load),
+        "--stutter-max",
+        f"{stutter_max:g}",
         "--job-name",
         job_name,
         "--output-path",
@@ -166,27 +169,12 @@ def _build_posix_recreate_command(*, repo_root: Path, recreate_command_args: lis
     previous_arg: str | None = None
     for arg in recreate_command_args:
         if previous_arg in _RECREATE_PATH_FLAGS:
-            rendered_args.append(
-                _render_shell_path(
-                    path=Path(arg),
-                    repo_root=repo_root_resolved,
-                    home_dir=home_dir,
-                    allow_repo_relative=True,
-                )
-            )
+            rendered_args.append(_render_shell_path(path=Path(arg), repo_root=repo_root_resolved, home_dir=home_dir, allow_repo_relative=True))
         else:
             rendered_args.append(shlex.quote(arg))
         previous_arg = arg
-    repo_root_shell_path = _render_shell_path(
-        path=repo_root_resolved,
-        repo_root=repo_root_resolved,
-        home_dir=home_dir,
-        allow_repo_relative=False,
-    )
-    command_segments = _group_posix_command_segments(
-        raw_args=recreate_command_args,
-        rendered_args=rendered_args,
-    )
+    repo_root_shell_path = _render_shell_path(path=repo_root_resolved, repo_root=repo_root_resolved, home_dir=home_dir, allow_repo_relative=False)
+    command_segments = _group_posix_command_segments(raw_args=recreate_command_args, rendered_args=rendered_args)
     return " \\\n    ".join([f"cd {repo_root_shell_path} &&", *command_segments])
 
 
@@ -214,9 +202,7 @@ def _group_posix_command_segments(*, raw_args: list[str], rendered_args: list[st
 def _build_powershell_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:
     repo_root_shell_path = agent_shell.quote_for_shell(str(repo_root.resolve()), is_windows=True)
     recreate_invocation = agent_shell.build_shell_invocation(
-        executable=recreate_command_args[0],
-        arguments=recreate_command_args[1:],
-        is_windows=True,
+        executable=recreate_command_args[0], arguments=recreate_command_args[1:], is_windows=True
     )
     return f"""Set-Location -LiteralPath {repo_root_shell_path}
 {recreate_invocation}"""
@@ -224,14 +210,8 @@ def _build_powershell_recreate_command(*, repo_root: Path, recreate_command_args
 
 def _build_recreate_command(*, repo_root: Path, recreate_command_args: list[str]) -> str:
     if agent_shell.is_windows_host():
-        return _build_powershell_recreate_command(
-            repo_root=repo_root,
-            recreate_command_args=recreate_command_args,
-        )
-    return _build_posix_recreate_command(
-        repo_root=repo_root,
-        recreate_command_args=recreate_command_args,
-    )
+        return _build_powershell_recreate_command(repo_root=repo_root, recreate_command_args=recreate_command_args)
+    return _build_posix_recreate_command(repo_root=repo_root, recreate_command_args=recreate_command_args)
 
 
 def write_create_artifacts(
@@ -251,6 +231,7 @@ def write_create_artifacts(
     job_name: str,
     join_prompt_and_context: bool,
     run: bool,
+    stutter_max: float = DEFAULT_STUTTER_MAX,
 ) -> CreateArtifactsOutput:
     artifacts_dir = agents_dir / ".create"
     if artifacts_dir.exists():
@@ -260,14 +241,8 @@ def write_create_artifacts(
     prompt_snapshot_path = artifacts_dir / "prompt.md"
     prompt_snapshot_path.write_text(prompt.content, encoding="utf-8")
     context_snapshot_path = _write_context_snapshot(artifacts_dir=artifacts_dir, context=context)
-    prompt_recreate_path = _resolve_recreate_source_path(
-        source_path=prompt.source_path,
-        snapshot_path=prompt_snapshot_path,
-    )
-    context_recreate_path = _resolve_recreate_source_path(
-        source_path=context.source_path,
-        snapshot_path=context_snapshot_path,
-    )
+    prompt_recreate_path = _resolve_recreate_source_path(source_path=prompt.source_path, snapshot_path=prompt_snapshot_path)
+    context_recreate_path = _resolve_recreate_source_path(source_path=context.source_path, snapshot_path=context_snapshot_path)
 
     recreate_command_args = _build_recreate_command_args(
         agent=agent,
@@ -286,11 +261,9 @@ def write_create_artifacts(
         run=run,
         layout_output_path=layout_output_path,
         agents_dir=agents_dir,
+        stutter_max=stutter_max,
     )
-    recreate_command = _build_recreate_command(
-        repo_root=repo_root,
-        recreate_command_args=recreate_command_args,
-    )
+    recreate_command = _build_recreate_command(repo_root=repo_root, recreate_command_args=recreate_command_args)
 
     is_windows = agent_shell.is_windows_host()
     recreate_script_path = artifacts_dir / agent_shell.get_recreate_script_filename(is_windows=is_windows)
@@ -320,6 +293,7 @@ def write_create_artifacts(
         "reasoning_effort": reasoning_effort,
         "provider": provider,
         "agent_load": agent_load,
+        "stutter_max": stutter_max,
         "separator": separator,
         "separator_cli_value": _separator_cli_value(separator),
         "join_prompt_and_context": join_prompt_and_context,

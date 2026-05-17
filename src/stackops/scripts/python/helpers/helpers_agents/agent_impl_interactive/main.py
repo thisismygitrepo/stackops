@@ -11,15 +11,14 @@ from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.commo
     prompt_text,
     separator_is_applicable_for_context_path,
 )
-from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import (
-    collect_reviewed_create_options,
-)
+from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import collect_reviewed_create_options
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import (
     AGENTS,
     DEFAULT_SEAPRATOR,
     HOST,
     PROVIDER,
     ReasoningEffort,
+    DEFAULT_STUTTER_MAX,
 )
 from stackops.utils.accessories import randstr
 
@@ -39,6 +38,7 @@ class InteractiveAgentCreateParams:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     agent_load: int
+    stutter_max: float
     context: str | None
     context_path: str | None
     separator: str
@@ -64,6 +64,7 @@ def _collect_inputs(
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
     agent_load: int,
+    stutter_max: float,
     context: str | None,
     context_path: str | None,
     separator: str,
@@ -74,11 +75,7 @@ def _collect_inputs(
 ) -> InteractiveAgentCreateParams:
     agent_selected = cast(
         AGENTS,
-        choose_required_option(
-            options=order_current_first(cast(tuple[AGENTS, ...], get_args(AGENTS)), agent),
-            msg="Choose agent",
-            header="Agent",
-        ),
+        choose_required_option(options=order_current_first(cast(tuple[AGENTS, ...], get_args(AGENTS)), agent), msg="Choose agent", header="Agent"),
     )
     reviewed_create_options = collect_reviewed_create_options(
         agent=agent_selected,
@@ -89,12 +86,15 @@ def _collect_inputs(
         host=host,
         model=model,
         agent_load=agent_load,
+        stutter_max=stutter_max,
         job_name=job_name,
         reasoning_effort=reasoning_effort,
         provider=provider,
     )
     context_mode = choose_required_option(
-        options=[_CONTEXT_MODE_PATH, _CONTEXT_MODE_TEXT] if context_path is not None and context is None else [_CONTEXT_MODE_TEXT, _CONTEXT_MODE_PATH],
+        options=[_CONTEXT_MODE_PATH, _CONTEXT_MODE_TEXT]
+        if context_path is not None and context is None
+        else [_CONTEXT_MODE_TEXT, _CONTEXT_MODE_PATH],
         msg="Choose how to provide context",
         header="Context",
     )
@@ -129,12 +129,7 @@ def _collect_inputs(
     else:
         prompt_selected = None
         prompt_path_selected = None
-        prompt_name_selected = prompt_text(
-            label="prompt name",
-            current=prompt_name,
-            required=True,
-            hint=" (uses prompts YAML lookup)",
-        )
+        prompt_name_selected = prompt_text(label="prompt name", current=prompt_name, required=True, hint=" (uses prompts YAML lookup)")
     return InteractiveAgentCreateParams(
         agent=agent_selected,
         host=reviewed_create_options.host,
@@ -142,6 +137,7 @@ def _collect_inputs(
         reasoning_effort=reviewed_create_options.reasoning_effort,
         provider=reviewed_create_options.provider,
         agent_load=reviewed_create_options.agent_load,
+        stutter_max=reviewed_create_options.stutter_max,
         context=context_selected,
         context_path=context_path_selected,
         separator=separator_selected,
@@ -170,6 +166,7 @@ def main(
     reasoning_effort: ReasoningEffort | None = None,
     provider: PROVIDER | None = None,
     agent_load: int = 3,
+    stutter_max: float = DEFAULT_STUTTER_MAX,
     context: str | None = None,
     context_path: str | None = None,
     separator: str = DEFAULT_SEAPRATOR,
@@ -194,6 +191,7 @@ def main(
         reasoning_effort=reasoning_effort,
         provider=provider,
         agent_load=agent_load,
+        stutter_max=stutter_max,
         context=context,
         context_path=context_path,
         separator=separator,
@@ -211,6 +209,7 @@ def main(
         reasoning=collected.reasoning_effort,
         provider=collected.provider,
         agent_load=collected.agent_load,
+        stutter_max=collected.stutter_max,
         context=collected.context,
         context_path=collected.context_path,
         separator=collected.separator,

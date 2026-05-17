@@ -19,16 +19,9 @@ def test_confirm_existing_agents_dir_cleanup_asks_before_deleting(monkeypatch: p
 
     monkeypatch.setattr(agents_impl.typer, "confirm", fake_confirm)
 
-    agents_impl._confirm_existing_agents_dir_cleanup(
-        agents_dir_obj=agents_dir,
-    )
+    agents_impl._confirm_existing_agents_dir_cleanup(agents_dir_obj=agents_dir)
 
-    assert prompts == [
-        (
-            f"Agents directory already exists and will be deleted to create a clean workspace:\n{agents_dir}\nContinue?",
-            False,
-        )
-    ]
+    assert prompts == [(f"Agents directory already exists and will be deleted to create a clean workspace:\n{agents_dir}\nContinue?", False)]
 
 
 def test_confirm_existing_agents_dir_cleanup_rejects_non_interactive_delete(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -38,9 +31,7 @@ def test_confirm_existing_agents_dir_cleanup_rejects_non_interactive_delete(tmp_
     monkeypatch.setattr(agents_impl.sys.stdin, "isatty", lambda: False)
 
     with pytest.raises(RuntimeError, match="Refusing to delete an existing agents directory in non-interactive mode"):
-        agents_impl._confirm_existing_agents_dir_cleanup(
-            agents_dir_obj=agents_dir,
-        )
+        agents_impl._confirm_existing_agents_dir_cleanup(agents_dir_obj=agents_dir)
 
 
 def test_confirm_existing_agents_dir_cleanup_aborts_when_user_declines(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -71,6 +62,7 @@ def test_build_parallel_yaml_entry_uses_run_parallel_shape(tmp_path: Path) -> No
         context_path=str(tmp_path / ".ai" / "agents" / "docs" / "context.md"),
         separator="\n@-@\n",
         agent_load=4,
+        stutter_max=6.25,
         prompt=None,
         prompt_path=str(tmp_path / ".ai" / "prompts" / "update.md"),
         prompt_name=None,
@@ -91,6 +83,7 @@ def test_build_parallel_yaml_entry_uses_run_parallel_shape(tmp_path: Path) -> No
         "context_path": "./.ai/agents/docs/context.md",
         "separator": "\\n@-@\\n",
         "agent_load": 4,
+        "stutter_max": 6.25,
         "prompt": None,
         "prompt_path": "./.ai/prompts/update.md",
         "prompt_name": None,
@@ -115,6 +108,7 @@ def test_save_parallel_yaml_entry_writes_job_name_key(tmp_path: Path) -> None:
         context_path=None,
         separator="\n@-@\n",
         agent_load=3,
+        stutter_max=2.5,
         prompt="prompt text",
         prompt_path=None,
         prompt_name=None,
@@ -130,36 +124,20 @@ def test_save_parallel_yaml_entry_writes_job_name_key(tmp_path: Path) -> None:
     assert isinstance(loaded_yaml, dict)
     assert loaded_yaml["updateDocs"]["job_name"] == "updateDocs"
     assert loaded_yaml["updateDocs"]["separator"] == "\\n@-@\\n"
+    assert loaded_yaml["updateDocs"]["stutter_max"] == 2.5
     assert loaded_yaml["updateDocs"]["context"] == "context text"
     assert loaded_yaml["updateDocs"]["prompt"] == "prompt text"
     assert loaded_yaml["updateDocs"]["interactive"] is False
 
 
-def test_make_agents_command_template_uses_repo_relative_files_output_path(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
+def test_make_agents_command_template_uses_repo_relative_files_output_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     from stackops.scripts.python.ai.utils import generate_files
     from stackops.utils import accessories
 
     captured_kwargs: dict[str, object] = {}
 
-    def fake_make_todo_files(
-        pattern: str,
-        repo: str,
-        strategy: str,
-        output_path: str,
-        split_every: int | None,
-        split_to: int | None,
-    ) -> None:
-        captured_kwargs.update(
-            pattern=pattern,
-            repo=repo,
-            strategy=strategy,
-            output_path=output_path,
-            split_every=split_every,
-            split_to=split_to,
-        )
+    def fake_make_todo_files(pattern: str, repo: str, strategy: str, output_path: str, split_every: int | None, split_to: int | None) -> None:
+        captured_kwargs.update(pattern=pattern, repo=repo, strategy=strategy, output_path=output_path, split_every=split_every, split_to=split_to)
 
     monkeypatch.setattr(generate_files, "make_todo_files", fake_make_todo_files)
     monkeypatch.setattr(accessories, "get_repo_root", lambda _path: tmp_path)
@@ -179,10 +157,7 @@ def test_make_agents_command_template_uses_repo_relative_files_output_path(
     assert tmp_path.joinpath(".ai", "agents", "template", "prompt.txt").is_file()
 
 
-def test_make_agents_command_template_writes_current_windows_template(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
+def test_make_agents_command_template_writes_current_windows_template(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     from stackops.scripts.python.ai.utils import generate_files
     from stackops.utils import accessories
 

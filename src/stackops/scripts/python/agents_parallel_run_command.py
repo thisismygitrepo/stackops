@@ -12,26 +12,15 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 def run_parallel(
     run_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Use a flat top-level key, e.g. docs_update.")] = None,
     parallel_yaml_path: Annotated[
-        str | None,
-        typer.Option(
-            ...,
-            "--yaml-path",
-            "-y",
-            help="YAML file containing named parallel runs. Auto-created with a template if missing.",
-        ),
+        str | None, typer.Option(..., "--yaml-path", "-y", help="YAML file containing named parallel runs. Auto-created with a template if missing.")
     ] = None,
     where: Annotated[
-        PARALLEL_RUNS_WHERE,
-        typer.Option(..., "--where", "-w", help="Where to look for parallel YAML files when --yaml-path is not provided."),
+        PARALLEL_RUNS_WHERE, typer.Option(..., "--where", "-w", help="Where to look for parallel YAML files when --yaml-path is not provided.")
     ] = "all",
     show_parallel_yaml_format: Annotated[
-        bool,
-        typer.Option(..., "--show-format", "-Y", help="Show parallel YAML format guidance and resolved file paths."),
+        bool, typer.Option(..., "--show-format", "-Y", help="Show parallel YAML format guidance and resolved file paths.")
     ] = False,
-    edit: Annotated[
-        bool,
-        typer.Option(..., "--edit", "-e", help="Open parallel YAML in an editor (hx preferred, nano fallback)."),
-    ] = False,
+    edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open parallel YAML in an editor (hx preferred, nano fallback).")] = False,
     add_entry: Annotated[
         bool,
         typer.Option(
@@ -57,20 +46,19 @@ def run_parallel(
         str | None, typer.Option(..., "--separator", "-s", help="Override separator for context. Supports escaped values like '\\n'.")
     ] = None,
     agent_load: Annotated[int | None, typer.Option(..., "--agent-load", "-l", help="Override number of tasks per prompt.")] = None,
+    stutter_max: Annotated[
+        float | None,
+        typer.Option(..., "--stutter-max", "-t", min=0.0, help="Override maximum startup stagger delay, in seconds. Use 0 to disable staggering."),
+    ] = None,
     prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Override prompt prefix as string.")] = None,
     prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Override prompt file path.")] = None,
     prompt_name: Annotated[str | None, typer.Option(..., "--prompt-name", "-N", help="Override prompt entry name from prompts YAML.")] = None,
     job_name: Annotated[
-        str | None,
-        typer.Option(..., "--job-name", "-n", help="Override job label. Also used as generated layout name and default output directory."),
+        str | None, typer.Option(..., "--job-name", "-n", help="Override job label. Also used as generated layout name and default output directory.")
     ] = None,
     join_prompt_and_context: Annotated[
         bool | None,
-        typer.Option(
-            "--joined-prompt-context/--no-joined-prompt-context",
-            "-j/-nj",
-            help="Override whether to join prompt file to the context.",
-        ),
+        typer.Option("--joined-prompt-context/--no-joined-prompt-context", "-j/-nj", help="Override whether to join prompt file to the context."),
     ] = None,
     run: Annotated[
         bool | None,
@@ -79,8 +67,7 @@ def run_parallel(
     output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Override layout.json output path.")] = None,
     agents_dir: Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Override exact directory to store agent files in.")] = None,
     interactive: Annotated[
-        bool | None,
-        typer.Option("--interactive/--no-interactive", "-i/-ni", help="Override whether to run create in interactive mode."),
+        bool | None, typer.Option("--interactive/--no-interactive", "-i/-ni", help="Override whether to run create in interactive mode.")
     ] = None,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
@@ -101,6 +88,7 @@ def run_parallel(
                 context_path=context_path,
                 separator=separator,
                 agent_load=agent_load,
+                stutter_max=stutter_max,
                 prompt=prompt,
                 prompt_path=prompt_path,
                 prompt_name=prompt_name,

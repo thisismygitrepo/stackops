@@ -54,46 +54,26 @@ def _load_parallel_yaml_mapping(*, yaml_path: Path) -> dict[str, object]:
 def _build_workflow_entries(*, repo_root: Path) -> dict[str, ParallelWorkflowEntry]:
     return {
         "update-installer": _build_captured_workflow_entry(
-            repo_root=repo_root,
-            workflow_module=update_installer,
-            workflow_function=update_installer.update_installer,
-            include_captured_context=False,
+            repo_root=repo_root, workflow_module=update_installer, workflow_function=update_installer.update_installer, include_captured_context=False
         ),
         "update-test": _build_captured_workflow_entry(
-            repo_root=repo_root,
-            workflow_module=update_test,
-            workflow_function=update_test.update_test,
-            include_captured_context=False,
+            repo_root=repo_root, workflow_module=update_test, workflow_function=update_test.update_test, include_captured_context=False
         ),
         "update-docs": _build_captured_workflow_entry(
-            repo_root=repo_root,
-            workflow_module=update_docs,
-            workflow_function=update_docs.update_docs,
-            include_captured_context=False,
+            repo_root=repo_root, workflow_module=update_docs, workflow_function=update_docs.update_docs, include_captured_context=False
         ),
         "update-logic": _build_captured_workflow_entry(
-            repo_root=repo_root,
-            workflow_module=update_logic,
-            workflow_function=update_logic.update_logic,
-            include_captured_context=False,
+            repo_root=repo_root, workflow_module=update_logic, workflow_function=update_logic.update_logic, include_captured_context=False
         ),
     }
 
 
 def _build_captured_workflow_entry(
-    *,
-    repo_root: Path,
-    workflow_module: WorkflowModule,
-    workflow_function: Callable[[], None],
-    include_captured_context: bool,
+    *, repo_root: Path, workflow_module: WorkflowModule, workflow_function: Callable[[], None], include_captured_context: bool
 ) -> ParallelWorkflowEntry:
     captured_values = capture_agents_create_values(workflow_module=workflow_module, workflow_function=workflow_function)
     job_name = _require_string(value=captured_values.job_name, field_name="job_name")
-    context_path = _resolve_context_path(
-        repo_root=repo_root,
-        captured_values=captured_values,
-        include_captured_context=include_captured_context,
-    )
+    context_path = _resolve_context_path(repo_root=repo_root, captured_values=captured_values, include_captured_context=include_captured_context)
     entry: ParallelWorkflowEntry = {
         "agent": captured_values.agent,
         "model": captured_values.model,
@@ -102,6 +82,7 @@ def _build_captured_workflow_entry(
         "host": captured_values.host,
         "separator": _yaml_separator_value(separator=_require_string(value=captured_values.separator, field_name="separator")),
         "agent_load": captured_values.agent_load,
+        "stutter_max": captured_values.stutter_max,
         "prompt": captured_values.prompt,
         "prompt_path": captured_values.prompt_path,
         "prompt_name": captured_values.prompt_name,
@@ -117,12 +98,7 @@ def _build_captured_workflow_entry(
     return entry
 
 
-def _resolve_context_path(
-    *,
-    repo_root: Path,
-    captured_values: ParallelCreateValues,
-    include_captured_context: bool,
-) -> str | None:
+def _resolve_context_path(*, repo_root: Path, captured_values: ParallelCreateValues, include_captured_context: bool) -> str | None:
     if captured_values.context is not None:
         if include_captured_context:
             return captured_values.context

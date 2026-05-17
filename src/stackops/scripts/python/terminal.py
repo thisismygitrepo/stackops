@@ -1,6 +1,6 @@
 """Terminal management commands - lazy loading subcommands."""
 
-from typing import Literal, Annotated
+from typing import Literal, Annotated, cast
 import typer
 
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose, SessionConflictActionLoose2Strict
@@ -327,7 +327,7 @@ def summarize(
             console.print(Panel(f"❌ Layout #{index} must be a JSON object.", title="Error", border_style="red"))
             raise typer.Exit(code=1)
 
-        layout: dict[object, object] = layout_raw
+        layout = cast(dict[object, object], layout_raw)
         layout_name_raw = layout.get("layoutName")
         if layout_name_raw is None:
             layout_name = f"layout#{index}"
@@ -375,10 +375,11 @@ def summarize(
 
 
 def trace(
-    session_name: Annotated[str, typer.Argument(..., help="Name of the tmux session to trace")],
+    session_name: Annotated[str | None, typer.Argument(help="Name of the tmux session to trace. Required unless --interactive is set.")] = None,
     every: Annotated[float, typer.Option("--every", "-e", help="Polling interval in seconds between tmux checks")] = 10.0,
     until: Annotated[Literal["idle-shell", "all-exited", "exit-code", "session-missing"], typer.Option("--until", "-u", help="Stop only when the selected criterion is satisfied")] = "idle-shell",
     exit_code: Annotated[int | None, typer.Option("--exit-code", help="Required pane exit code when `--until exit-code` is selected")] = None,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose an existing tmux session interactively")] = False,
 ) -> None:
     """Trace a tmux session until every target matches a strict stop criterion."""
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import trace_session as impl
@@ -392,6 +393,20 @@ def trace(
     if until != "exit-code" and exit_code is not None:
         typer.echo("Error: --exit-code can only be used with --until exit-code.", err=True, color=True)
         raise typer.Exit(code=1)
+    if session_name is not None and interactive:
+        typer.echo("Error: SESSION_NAME cannot be used together with --interactive.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if session_name is None:
+        if not interactive:
+            typer.echo("Error: SESSION_NAME is required unless --interactive is set.", err=True, color=True)
+            raise typer.Exit(code=1)
+        from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_name
+
+        action, payload = choose_existing_session_name(msg="Choose a tmux session to trace:")
+        if action == "error":
+            typer.echo(f"Error: {payload}", err=True, color=True)
+            raise typer.Exit(code=1)
+        session_name = payload
 
     impl(
         session_name=session_name,

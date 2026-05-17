@@ -113,7 +113,12 @@ def test_attach_to_session_rejects_name_with_conflicting_options(
     monkeypatch.setattr(terminal, "_resolve_session_backend", fail_to_resolve_backend)
 
     with pytest.raises(typer.Exit) as exc_info:
-        terminal.attach_to_session(name="demo", **kwargs)
+        terminal.attach_to_session(
+            name="demo",
+            new_session=kwargs.get("new_session", False),
+            kill_all=kwargs.get("kill_all", False),
+            window=kwargs.get("window", False),
+        )
 
     captured = capsys.readouterr()
     assert exc_info.value.exit_code == 1
@@ -176,3 +181,96 @@ def test_attach_to_session_rejects_non_handoff_actions(
         terminal.attach_to_session(name="demo")
 
     assert exc_info.value.exit_code == 1
+
+
+def test_trace_interactive_uses_selected_tmux_session(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_choose_existing_session_name(msg: str) -> tuple[str, str]:
+        captured["selector_msg"] = msg
+        return ("session_name", "build-session")
+
+    def fake_trace_session(
+        session_name: str,
+        until: str,
+        every_seconds: float,
+        exit_code: int | None,
+    ) -> None:
+        captured["trace"] = {
+            "session_name": session_name,
+            "until": until,
+            "every_seconds": every_seconds,
+            "exit_code": exit_code,
+        }
+
+    monkeypatch.setattr(
+        "stackops.scripts.python.helpers.helpers_sessions._tmux_backend.choose_existing_session_name",
+        fake_choose_existing_session_name,
+    )
+    monkeypatch.setattr(
+        "stackops.scripts.python.helpers.helpers_sessions.sessions_trace.trace_session",
+        fake_trace_session,
+    )
+
+    terminal.trace(
+        session_name=None,
+        every=2.5,
+        until="all-exited",
+        exit_code=None,
+        interactive=True,
+    )
+
+    assert captured == {
+        "selector_msg": "Choose a tmux session to trace:",
+        "trace": {
+            "session_name": "build-session",
+            "until": "all-exited",
+            "every_seconds": 2.5,
+            "exit_code": None,
+        },
+    }
+
+
+def test_trace_requires_name_without_interactive(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(typer.Exit) as exc_info:
+        terminal.trace(session_name=None, interactive=False)
+
+    captured = capsys.readouterr()
+    assert exc_info.value.exit_code == 1
+    assert "Error: SESSION_NAME is required unless --interactive is set." in captured.err
+
+
+def test_trace_rejects_name_with_interactive(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(typer.Exit) as exc_info:
+        terminal.trace(session_name="demo", interactive=True)
+
+    captured = capsys.readouterr()
+    assert exc_info.value.exit_code == 1
+    assert "Error: SESSION_NAME cannot be used together with --interactive." in captured.err
+
+
+def test_trace_interactive_exits_when_no_session_is_selected(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def fake_choose_existing_session_name(msg: str) -> tuple[str, str]:
+        _ = msg
+        return ("error", "No tmux session selected.")
+
+    monkeypatch.setattr(
+        "stackops.scripts.python.helpers.helpers_sessions._tmux_backend.choose_existing_session_name",
+        fake_choose_existing_session_name,
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        terminal.trace(session_name=None, interactive=True)
+
+    captured = capsys.readouterr()
+    assert exc_info.value.exit_code == 1
+    assert "Error: No tmux session selected." in captured.err

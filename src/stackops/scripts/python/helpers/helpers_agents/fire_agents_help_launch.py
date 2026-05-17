@@ -1,14 +1,9 @@
 import random
+from math import isfinite
 from pathlib import Path
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import (
-    AGENTS,
-    HOST,
-    PROVIDER,
-    AI_SPEC,
-    API_SPEC,
-)
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, AI_SPEC, API_SPEC, DEFAULT_STUTTER_MAX
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig
 
@@ -20,6 +15,7 @@ And be mindful that other agents might be operating at the same time in the same
 Don't be surprised if you saw progressing changes in other places. We try to minimize conflict that arise from multiple agents working on exact same problem, unaware of each other, so, it shoulnd't happen in 99% of cases.
 """
 
+
 def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -> str:
     try:
         return str(prompt_material_path.relative_to(repo_root))
@@ -28,23 +24,12 @@ def _format_material_reference(*, prompt_material_path: Path, repo_root: Path) -
 
 
 def _build_generic_agent_command(
-    agent: AGENTS,
-    prompt_path: Path,
-    reasoning_effort: ReasoningEffort | None,
-    model: str | None,
-    provider: PROVIDER | None,
-    *,
-    is_windows: bool,
+    agent: AGENTS, prompt_path: Path, reasoning_effort: ReasoningEffort | None, model: str | None, provider: PROVIDER | None, *, is_windows: bool
 ) -> str:
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
 
     return build_agent_command(
-        agent=agent,
-        prompt_file=prompt_path,
-        reasoning_effort=reasoning_effort,
-        model=model,
-        provider=provider,
-        is_windows=is_windows,
+        agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort, model=model, provider=provider, is_windows=is_windows
     )
 
 
@@ -102,7 +87,11 @@ def prep_agent_launch(
     agent: AGENTS,
     *,
     job_name: str,
+    stutter_max: float = DEFAULT_STUTTER_MAX,
 ) -> None:
+    if not isfinite(stutter_max) or stutter_max < 0:
+        raise ValueError("stutter_max must be a finite number greater than or equal to 0")
+
     if agent == "codex":
         if provider is None:
             provider = "openai"
@@ -125,10 +114,10 @@ def prep_agent_launch(
             prompt_material_path = prompt_root / f"agent_{idx}_material.txt"
             prompt_material_path.write_text(a_prompt_material, encoding="utf-8")
             material_reference = _format_material_reference(prompt_material_path=prompt_material_path, repo_root=repo_root)
-            prompt_path.write_text(prompt_prefix + f"""\nPlease only look at:\n{material_reference}.""" + JURISDICTION_SUFFIX, encoding="utf-8",)
+            prompt_path.write_text(prompt_prefix + f"""\nPlease only look at:\n{material_reference}.""" + JURISDICTION_SUFFIX, encoding="utf-8")
 
         agent_cmd_launch_path = prompt_root / agent_shell.get_agent_command_filename(idx=idx, is_windows=is_windows)
-        random_sleep_time = random.uniform(0, 3)
+        random_sleep_time = random.uniform(0, stutter_max)
         ai_spec: AI_SPEC
         match agent:
             case "gemini":
@@ -138,12 +127,7 @@ def prep_agent_launch(
                 if api_spec is None:
                     raise ValueError("No API keys found for Google Gemini. Please configure them in dotfiles/creds/llm/google/api_keys.ini")
                 ai_spec = AI_SPEC(
-                    provider=provider,
-                    model="gemini-2.5-pro",
-                    agent=agent,
-                    machine=machine,
-                    api_spec=api_spec,
-                    reasoning_effort=reasoning_effort,
+                    provider=provider, model="gemini-2.5-pro", agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort
                 )
                 if machine == "local":
                     cmd = _build_generic_agent_command(
@@ -160,14 +144,7 @@ def prep_agent_launch(
                     cmd = fire_gemini(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "cursor-agent":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec = AI_SPEC(
-                    provider=provider,
-                    model=model,
-                    agent=agent,
-                    machine=machine,
-                    api_spec=api_spec,
-                    reasoning_effort=reasoning_effort,
-                )
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
                 cmd = _build_generic_agent_command(
                     agent=agent,
                     prompt_path=prompt_path,
@@ -182,14 +159,7 @@ def prep_agent_launch(
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else None
                 if api_spec is None:
                     raise ValueError("No API keys found for Crush. Please configure them in dotfiles/creds/llm/crush/api_keys.ini")
-                ai_spec = AI_SPEC(
-                    provider=provider,
-                    model=model,
-                    agent=agent,
-                    machine=machine,
-                    api_spec=api_spec,
-                    reasoning_effort=reasoning_effort,
-                )
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
                 if machine == "local":
                     cmd = _build_generic_agent_command(
                         agent=agent,
@@ -205,14 +175,7 @@ def prep_agent_launch(
                     cmd = fire_crush(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "copilot":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec = AI_SPEC(
-                    provider=provider,
-                    model=model,
-                    agent=agent,
-                    machine=machine,
-                    api_spec=api_spec,
-                    reasoning_effort=reasoning_effort,
-                )
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
                 if machine == "local":
                     cmd = _build_generic_agent_command(
                         agent=agent,
@@ -229,14 +192,7 @@ def prep_agent_launch(
             case "codex":
                 api_keys = get_api_keys(provider="openai", silent_if_missing=True)
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec = AI_SPEC(
-                    provider=provider,
-                    model=model,
-                    agent=agent,
-                    machine=machine,
-                    api_spec=api_spec,
-                    reasoning_effort=reasoning_effort,
-                )
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
                 if machine == "local":
                     cmd = _build_generic_agent_command(
                         agent=agent,
@@ -252,14 +208,7 @@ def prep_agent_launch(
                     cmd = fire_codex(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "pi":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec = AI_SPEC(
-                    provider=provider,
-                    model=model,
-                    agent=agent,
-                    machine=machine,
-                    api_spec=api_spec,
-                    reasoning_effort=reasoning_effort,
-                )
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
                 if machine == "local":
                     cmd = _build_generic_agent_command(
                         agent=agent,
@@ -275,14 +224,7 @@ def prep_agent_launch(
                     cmd = fire_pi(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case _:
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
-                ai_spec = AI_SPEC(
-                    provider=provider,
-                    model=model,
-                    agent=agent,
-                    machine=machine,
-                    api_spec=api_spec,
-                    reasoning_effort=reasoning_effort,
-                )
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
                 cmd = _build_generic_agent_command(
                     agent=agent,
                     prompt_path=prompt_path,
@@ -311,15 +253,18 @@ def prep_agent_launch(
         script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_AGENT_NAME", value=agent, is_windows=is_windows))
         script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_JOB_NAME", value=job_name, is_windows=is_windows))
         script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_PROMPT_FILE", value=str(prompt_path), is_windows=is_windows))
-        script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_MATERIAL_FILE", value=str(prompt_material_path), is_windows=is_windows))
-        script_lines.append(agent_shell.render_env_assignment(name="FIRE_AGENTS_AGENT_LAUNCHER", value=str(agent_cmd_launch_path), is_windows=is_windows))
+        script_lines.append(
+            agent_shell.render_env_assignment(name="FIRE_AGENTS_MATERIAL_FILE", value=str(prompt_material_path), is_windows=is_windows)
+        )
+        script_lines.append(
+            agent_shell.render_env_assignment(name="FIRE_AGENTS_AGENT_LAUNCHER", value=str(agent_cmd_launch_path), is_windows=is_windows)
+        )
         if machine == "local":
             script_lines.extend(_local_agent_environment_lines(agent=agent, api_spec=ai_spec["api_spec"], is_windows=is_windows))
         script_lines.append("")
         script_lines.append(
             agent_shell.render_output(
-                message=f"Sleeping for {random_sleep_time:.2f} seconds to stagger agent startups ... Press Ctrl+C to cancel.",
-                is_windows=is_windows,
+                message=f"Sleeping for {random_sleep_time:.2f} seconds to stagger agent startups ... Press Ctrl+C to cancel.", is_windows=is_windows
             )
         )
         script_lines.append(agent_shell.render_sleep_seconds(seconds=random_sleep_time, is_windows=is_windows))
@@ -328,7 +273,9 @@ def prep_agent_launch(
         script_lines.append(cmd.strip())
         script_lines.append("")
         script_lines.append(agent_shell.render_output(message=f"Running with api label:   {ai_spec['api_spec']['api_label']}", is_windows=is_windows))
-        script_lines.append(agent_shell.render_output(message=f"Running with api acount:  {ai_spec['api_spec']['api_account']}", is_windows=is_windows))
+        script_lines.append(
+            agent_shell.render_output(message=f"Running with api acount:  {ai_spec['api_spec']['api_account']}", is_windows=is_windows)
+        )
         script_lines.append(agent_shell.render_output(message=f"Running with api name:    {ai_spec['api_spec']['api_name']}", is_windows=is_windows))
         script_lines.append(agent_shell.render_output(message=f"Running with api key:     {ai_spec['api_spec']['api_key']}", is_windows=is_windows))
         script_lines.append(agent_shell.render_sleep_milliseconds(milliseconds=100, is_windows=is_windows))
@@ -355,7 +302,4 @@ def get_prompt_directories(*, prompt_root: Path) -> list[Path]:
     import re
 
     prompt_directories = [path for path in prompt_root.iterdir() if path.is_dir()]
-    return sorted(
-        prompt_directories,
-        key=lambda path: [int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", path.name)],
-    )
+    return sorted(prompt_directories, key=lambda path: [int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", path.name)])
