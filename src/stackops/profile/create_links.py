@@ -35,6 +35,7 @@ from typing import Any, TypedDict, Literal, TypeAlias
 system = platform.system()  # Linux or Windows
 ERROR_LIST: list[Any] = []  # append to this after every exception captured.
 SYSTEM = system.lower()
+MAX_ERROR_TABLE_CHARS = 30
 
 console = Console()
 
@@ -232,6 +233,51 @@ def _append_operation_record(
     )
 
 
+def _operation_record_has_error(record: OperationRecord) -> bool:
+    return record["action"] == "error" or record["status"].startswith("error:")
+
+
+def _truncate_error_for_summary(value: str) -> str:
+    compact_value = value.replace("\n", " ")
+    if len(compact_value) <= MAX_ERROR_TABLE_CHARS:
+        return compact_value
+    return f"{compact_value[:MAX_ERROR_TABLE_CHARS]}..."
+
+
+def _summary_table_value(record: OperationRecord, field_name: Literal["details", "status"]) -> str:
+    value = record[field_name]
+    if not _operation_record_has_error(record):
+        return value
+    return _truncate_error_for_summary(value)
+
+
+def _print_operation_error_details(error_records: list[OperationRecord]) -> None:
+    if not error_records:
+        return
+
+    console.print()
+    console.rule("[bold red]Dotfile Sync Error Details[/]", style="red")
+    for index, record in enumerate(error_records, start=1):
+        details_grid = Table.grid(padding=(0, 1), expand=True)
+        details_grid.add_column(style="bold red", no_wrap=True)
+        details_grid.add_column(ratio=1, overflow="fold")
+        details_grid.add_row("Program", Text(record["program"]))
+        details_grid.add_row("File Key", Text(record["file_key"]))
+        details_grid.add_row("Default Path", Text(record["defaultPath"]))
+        details_grid.add_row("Self Managed", Text(record["selfManaged"]))
+        details_grid.add_row("Operation", Text(record["operation"]))
+        details_grid.add_row("Action", Text(record["action"]))
+        details_grid.add_row("Details", Text(record["details"]))
+        details_grid.add_row("Status", Text(record["status"]))
+        console.print(
+            Panel(
+                details_grid,
+                title=f"Dotfile Sync Error {index}",
+                border_style="red",
+            )
+        )
+
+
 def apply_mapper(
     mapper_data: dict[str, list[ConfigMapper]],
     on_conflict: ON_CONFLICT_STRICT,
@@ -368,22 +414,27 @@ def apply_mapper(
         table.add_column("Details", style="white")
         table.add_column("Status", style="red", no_wrap=True)
         
+        error_records: list[OperationRecord] = []
         for record in operation_records:
-            status_style = "green" if record["status"] == "success" else "red"
-            action_style = "green" if record["action"] != "error" else "red"
+            has_error = _operation_record_has_error(record)
+            if has_error:
+                error_records.append(record)
+            status_style = "red" if has_error else "green"
+            action_style = "red" if record["action"] == "error" else "green"
             table.add_row(
                 record["program"],
                 record["file_key"],
                 record["defaultPath"],
                 record["selfManaged"],
                 record["operation"],
-                f"[{action_style}]{record['action']}[/{action_style}]",
-                record["details"],
-                f"[{status_style}]{record['status']}[/{status_style}]"
+                Text(record["action"], style=action_style),
+                _summary_table_value(record, "details"),
+                Text(_summary_table_value(record, "status"), style=status_style),
             )
         
         console.print("\n")
         console.print(table)
+        _print_operation_error_details(error_records)
         
         # Export operation records to CSV
         import csv

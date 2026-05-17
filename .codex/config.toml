@@ -22,13 +22,4 @@ persistence = "none"
 [feedback]
 enabled = false
 
-[otel]
-log_user_prompt = false
-exporter = "none"
-trace_exporter = "none"
-
 [mcp_servers]
-
-[mcp_servers.postgres]
-command = "uvx"
-args = ["postgres-mcp", "--access-mode=unrestricted"]

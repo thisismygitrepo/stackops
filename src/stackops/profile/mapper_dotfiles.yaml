@@ -601,12 +601,6 @@ zellij_linux:
     os:
     - linux
     - darwin
-  themes:
-    original: ~/.config/zellij/themes
-    self_managed: CONFIG_ROOT/settings/zellij/themes
-    os:
-    - linux
-    - darwin
   layouts:
     original: ~/.config/zellij/layouts
     self_managed: CONFIG_ROOT/settings/zellij/layouts

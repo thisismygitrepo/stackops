@@ -1,16 +1,3 @@
 {
-  "mcpServers": {
-    "postgres": {
-      "command": "uvx",
-      "args": [
-        "postgres-mcp",
-        "--access-mode=unrestricted"
-      ],
-      "enabled": true,
-      "env": {
-        "DATABASE_URI": "postgresql://username:password@localhost:5432/dbname"
-      },
-      "description": "PostgreSQL MCP server. Replace DATABASE_URI with the target PostgreSQL connection string before use."
-    }
-  }
+  "mcpServers": {}
 }

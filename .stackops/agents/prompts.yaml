@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=./prompts.schema.json
+# prompts.yaml used by `agents run-prompt`
+# Top-level keys show up in interactive selection.
+# Nested keys can be selected via --context-name with dot-path syntax (example: team.backend).
+# Each entry can be a plain string or an object with prompt metadata.
+entryExample: {prompt: replace me, description: short label}
