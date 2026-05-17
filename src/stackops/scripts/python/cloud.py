@@ -90,11 +90,10 @@ def get_app() -> typer.Typer:
     return app
 
 
-def main():
+def main() -> None:
     app = get_app()
     app()
 
 
 if __name__ == "__main__":
-    pass
-    # a = get_app()(asdf)
+    main()

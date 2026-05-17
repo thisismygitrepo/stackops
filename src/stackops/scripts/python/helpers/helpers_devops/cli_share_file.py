@@ -45,6 +45,8 @@ Usage examples:
 
     relay_server: str | None = None
     secret_code: str | None = None
+    secret_code_from_env_assignment = False
+    croc_command_seen = False
 
     token_index = 0
     while token_index < len(tokens):
@@ -52,7 +54,14 @@ Usage examples:
         if token == "--":
             token_index += 1
             continue
-        if token == "croc" and secret_code is None:
+        if token == "croc":
+            if croc_command_seen:
+                typer.echo("❌ Error: Croc receive command may only be provided once.", err=True)
+                raise typer.Exit(code=1)
+            if secret_code is not None and not secret_code_from_env_assignment:
+                typer.echo(f"❌ Error: Unexpected extra argument after croc receive code: {token}", err=True)
+                raise typer.Exit(code=1)
+            croc_command_seen = True
             token_index += 1
             continue
         if token == "export" and token_index + 1 < len(tokens) and tokens[token_index + 1].startswith("CROC_SECRET="):
@@ -76,6 +85,7 @@ Usage examples:
                 typer.echo("❌ Error: Croc receive code may only be provided once.", err=True)
                 raise typer.Exit(code=1)
             secret_code = token.split("=", 1)[1].strip('"').strip("'")
+            secret_code_from_env_assignment = True
             token_index += 1
             continue
         if token.startswith("-"):
@@ -85,6 +95,7 @@ Usage examples:
             typer.echo(f"❌ Error: Unexpected extra argument after croc receive code: {token}", err=True)
             raise typer.Exit(code=1)
         secret_code = token
+        secret_code_from_env_assignment = False
         token_index += 1
 
     if not secret_code:
@@ -175,7 +186,7 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
             local_ip_v4 = res
             relay_port = "443"
             relay_endpoint = f"{local_ip_v4}:{relay_port}"
-            command_parts = ["croc", "--relay", relay_endpoint, "--ip", relay_endpoint, "send"]
+            command_parts = ["croc", "--relay", relay_endpoint, "send"]
             if is_windows and code is not None:
                 command_parts.extend(["--code", quote_shell_arg(code)])
             if zip_folder:

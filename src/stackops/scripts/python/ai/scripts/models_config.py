@@ -2,6 +2,7 @@ import atexit
 import json
 import os
 import re
+import tempfile
 import tomllib
 from pathlib import Path
 from typing import Final
@@ -21,6 +22,16 @@ PYRIGHT_CONFIG_OVERRIDE_PATH: Final[Path] = Path(".pyright.type-check.override.j
 
 def _remove_generated_file(path: Path) -> None:
     path.unlink(missing_ok=True)
+
+
+def _create_pyright_config_override_path() -> Path:
+    file_descriptor, raw_path = tempfile.mkstemp(
+        prefix=f"{PYRIGHT_CONFIG_OVERRIDE_PATH.stem}.",
+        suffix=PYRIGHT_CONFIG_OVERRIDE_PATH.suffix,
+        dir=Path.cwd(),
+    )
+    os.close(file_descriptor)
+    return Path(raw_path)
 
 
 def load_type_check_excluded_directories() -> tuple[str, ...]:
@@ -125,6 +136,7 @@ def _ensure_pyright_config_override(excluded_directories: tuple[str, ...]) -> Pa
     merged_excludes = _merge_distinct_strings(
         _extract_pyright_excludes(base_config), excluded_directories
     )
+    override_path = _create_pyright_config_override_path()
     override_config: dict[str, object]
     if has_pyright_config:
         override_config = {
@@ -134,11 +146,9 @@ def _ensure_pyright_config_override(excluded_directories: tuple[str, ...]) -> Pa
     else:
         override_config = dict(base_config)
         override_config["exclude"] = list(merged_excludes)
-    PYRIGHT_CONFIG_OVERRIDE_PATH.write_text(
-        json.dumps(override_config, indent=2) + "\n", encoding="utf-8"
-    )
-    atexit.register(_remove_generated_file, PYRIGHT_CONFIG_OVERRIDE_PATH)
-    return PYRIGHT_CONFIG_OVERRIDE_PATH
+    override_path.write_text(json.dumps(override_config, indent=2) + "\n", encoding="utf-8")
+    atexit.register(_remove_generated_file, override_path)
+    return override_path
 
 
 def build_cleanup_commands(

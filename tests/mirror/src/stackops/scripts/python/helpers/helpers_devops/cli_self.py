@@ -66,6 +66,39 @@ def test_build_installer_passes_explicit_options(monkeypatch: pytest.MonkeyPatch
     ]
 
 
+def test_build_installer_expands_user_in_output_root(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    captured: list[installer_offline.OfflineInstallerOptions] = []
+    fake_home = tmp_path.joinpath("home")
+    monkeypatch.setenv("HOME", str(fake_home))
+
+    def fake_export(*, options: installer_offline.OfflineInstallerOptions, console: object) -> installer_offline.OfflineInstallerReport:
+        del console
+        captured.append(options)
+        return installer_offline.OfflineInstallerReport(
+            platform_name="Linux",
+            arch_name="x86_64",
+            output_dir=tmp_path.joinpath("installer_offline-linux-x86_64"),
+            archive_path=tmp_path.joinpath("installer_offline-linux-x86_64.zip"),
+            binary_results=[],
+            step_results=[],
+        )
+
+    monkeypatch.setattr("stackops.utils.installer_utils.installer_offline.export", fake_export)
+
+    result = CliRunner().invoke(cli_self.get_app(), ["build-installer", "--output-root", "~/exports"])
+
+    assert result.exit_code == 0
+    assert captured == [
+        installer_offline.OfflineInstallerOptions(
+            output_root=fake_home.joinpath("exports"),
+            include_configs=True,
+            include_uv_bundle=True,
+            keep_unpacked=False,
+            upload_to_cloud=False,
+        )
+    ]
+
+
 def test_build_installer_rejects_upload_when_url_map_is_not_repo_backed(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured: list[installer_offline.OfflineInstallerOptions] = []
     repo_root = tmp_path.joinpath("repo")

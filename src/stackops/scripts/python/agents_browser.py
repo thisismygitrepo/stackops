@@ -22,6 +22,8 @@ def install_tech(
 
     try:
         result = install_browser_tech(which=which)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error

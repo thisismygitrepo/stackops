@@ -1,13 +1,19 @@
 """seek - StackOps search helper."""
 
-from pathlib import Path
 from typing import Annotated
 
 import typer
 
 
 def _resolve_seek_arguments(first_argument: str, search_term: str) -> tuple[str, str]:
+    from pathlib import Path
+
     if search_term != "":
+        if first_argument != "." and not Path(first_argument).exists():
+            raise typer.BadParameter(
+                message=f"Search path does not exist: {first_argument}",
+                param_hint="path_or_search_term",
+            )
         return first_argument, search_term
     if first_argument == "." or Path(first_argument).exists():
         return first_argument, search_term

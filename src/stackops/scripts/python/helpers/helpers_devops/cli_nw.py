@@ -103,7 +103,7 @@ def vscode_share(
             directory = resolve_share_local_folder(directory)
             directory_part = shlex.quote(str(directory))
             extra = ensure_without_connection_token(extra)
-            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {directory_part} {extra}".strip()
+            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {extra} {directory_part}".strip()
             desc = "Run local VS Code web server (serve-web)"
         case _:
             print(f"Unknown action: {action_normalized}")

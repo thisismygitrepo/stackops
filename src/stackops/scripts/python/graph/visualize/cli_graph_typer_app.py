@@ -40,7 +40,7 @@ def build_cli_graph_app() -> "typer.Typer":
             typer.Argument(help=f"""Plotly chart view. Choose from {", ".join(plotly_views)}."""),
         ] = "sunburst",
         output: Annotated[Path | None, typer.Option("--output", "-o", help="Write HTML or image output")] = None,
-        max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
+        max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the graph")] = None,
         template: Annotated[str, typer.Option("--template", help="Plotly template name")] = "plotly_dark",
         height: Annotated[int, typer.Option("--height", help="Image height (for static output)")] = 900,
         width: Annotated[int, typer.Option("--width", help="Image width (for static output)")] = 1200,

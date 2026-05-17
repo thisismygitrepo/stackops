@@ -111,14 +111,9 @@ def run_py_script(ctx: typer.Context,
 
 
     if target_file is None and Path(name).is_file():
-        if name.endswith(".py"):
-            import stackops
-            import subprocess
-            import sys
-            subprocess.run([sys.executable, name], cwd=stackops.__path__[0], check=True)
-            return
-        if Path(name).suffix in [".sh", ".ps1", ".bat", ".cmd", ""]:
-            target_file = Path(name)
+        direct_target_file = Path(name).resolve()
+        if direct_target_file.suffix in [".py", ".sh", ".ps1", ".bat", ".cmd", ""]:
+            target_file = direct_target_file
         else:
             print(f"❌ Error: File '{name}' is not a recognized script type. Supported types are {'.py', '.sh', '.ps1', '.bat', '.cmd', ''}.")
             raise typer.Exit(code=1)

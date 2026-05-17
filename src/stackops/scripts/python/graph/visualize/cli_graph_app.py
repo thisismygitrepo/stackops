@@ -24,10 +24,10 @@ def tree(
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
     if Path.home().joinpath("code", "stackops").exists():
-        uv_with: list[str] = ["rich"]
+        uv_with: list[str] = []
         uv_project_dir = str(Path.home().joinpath("code", "stackops"))
     else:
-        uv_with = [STACKOPS_VERSION, "rich"]
+        uv_with = [STACKOPS_VERSION]
         uv_project_dir = None
 
     shell_script, _pyfile = get_shell_script_running_lambda_function(
@@ -89,7 +89,7 @@ def chart(
         typer.Argument(help=f"""Plotly chart view. Choose from {", ".join(get_args(PlotlyView))}."""),
     ] = "sunburst",
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write HTML or image output")] = None,
-    max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
+    max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the graph")] = None,
     template: Annotated[str, typer.Option("--template", help="Plotly template name")] = "plotly_dark",
     height: Annotated[int, typer.Option("--height", help="Image height (for static output)")] = 900,
     width: Annotated[int, typer.Option("--width", help="Image width (for static output)")] = 1200,

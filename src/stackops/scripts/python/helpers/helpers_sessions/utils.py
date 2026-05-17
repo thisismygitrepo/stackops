@@ -17,21 +17,42 @@ def balance_load(
         "combineTabs": "combineTabs",
         "ct": "combineTabs",
     }
+    try:
+        resolved_thresh_type = thresh_type_resolved[thresh_type]
+        resolved_breaking_method = breaking_method_resolved[breaking_method]
+    except KeyError as error:
+        raise ValueError(f"Unsupported balance-load option: {error.args[0]}.") from error
 
     layout_path_obj = Path(layout_path).expanduser().absolute()
+    if not layout_path_obj.exists():
+        raise ValueError(f"Layout file not found: {layout_path_obj}")
+    if not layout_path_obj.is_file():
+        raise ValueError(f"Layout path is not a file: {layout_path_obj}")
 
     from stackops.utils.schemas.layouts.layout_types import LayoutsFile
     import json
+    raw_layout_text = layout_path_obj.read_text(encoding="utf-8")
+    try:
+        layoutfile: LayoutsFile = json.loads(raw_layout_text)
+    except json.JSONDecodeError:
+        from stackops.utils.io import remove_c_style_comments
 
-    layoutfile: LayoutsFile = json.loads(layout_path_obj.read_text(encoding="utf-8"))
-    layout_configs = layoutfile["layouts"]
+        try:
+            layoutfile = json.loads(remove_c_style_comments(raw_layout_text))
+        except json.JSONDecodeError as error:
+            raise ValueError(f"Failed to parse layout file '{layout_path_obj}': {error}") from error
+
+    try:
+        layout_configs = layoutfile["layouts"]
+    except KeyError as error:
+        raise ValueError(f"Layout file '{layout_path_obj}' is missing required 'layouts' field.") from error
     from stackops.cluster.sessions_managers.utils.load_balancer import limit_tab_num
 
     new_layouts = limit_tab_num(
         layout_configs=layout_configs,
         max_thresh=max_thresh,
-        threshold_type=thresh_type_resolved[thresh_type],
-        breaking_method=breaking_method_resolved[breaking_method],
+        threshold_type=resolved_thresh_type,
+        breaking_method=resolved_breaking_method,
     )
     layoutfile["layouts"] = new_layouts
     target_file = (

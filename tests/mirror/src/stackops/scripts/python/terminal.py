@@ -93,6 +93,33 @@ def test_attach_to_session_tmux_hands_off_new_session_script_to_shell(
     }
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "expected_error"),
+    [
+        ({"new_session": True}, "Error: NAME cannot be used together with --new-session."),
+        ({"kill_all": True}, "Error: NAME cannot be used together with --kill-all."),
+        ({"window": True}, "Error: NAME cannot be used together with --window."),
+    ],
+)
+def test_attach_to_session_rejects_name_with_conflicting_options(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    kwargs: dict[str, bool],
+    expected_error: str,
+) -> None:
+    def fail_to_resolve_backend(_backend: str) -> str:
+        raise AssertionError("attach_to_session should validate conflicting arguments before resolving the backend")
+
+    monkeypatch.setattr(terminal, "_resolve_session_backend", fail_to_resolve_backend)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        terminal.attach_to_session(name="demo", **kwargs)
+
+    captured = capsys.readouterr()
+    assert exc_info.value.exit_code == 1
+    assert expected_error in captured.err
+
+
 def test_attach_to_session_exits_nonzero_when_helper_reports_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

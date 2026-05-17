@@ -4,8 +4,6 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.graph.generate_cli_graph import build_cli_graph
-from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -36,6 +34,53 @@ class CommandLogicContextEntry:
 
 def get_developer_repo_root() -> Path:
     return Path.home().joinpath("code", "stackops")
+
+
+def agents_create_impl(
+    *,
+    agent: AGENTS,
+    model: str | None,
+    agent_load: int,
+    context: str | None,
+    context_path: str | None,
+    separator: str,
+    prompt: str | None,
+    prompt_path: str | None,
+    prompt_name: str | None,
+    job_name: str | None,
+    join_prompt_and_context: bool,
+    output_path: str | None,
+    agents_dir: str | None,
+    save_as_yaml: bool,
+    host: HOST,
+    reasoning: ReasoningEffort | None,
+    provider: PROVIDER | None,
+    interactive: bool,
+    run: bool,
+) -> None:
+    from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
+
+    impl(
+        agent=agent,
+        model=model,
+        agent_load=agent_load,
+        context=context,
+        context_path=context_path,
+        separator=separator,
+        prompt=prompt,
+        prompt_path=prompt_path,
+        prompt_name=prompt_name,
+        job_name=job_name,
+        join_prompt_and_context=join_prompt_and_context,
+        output_path=output_path,
+        agents_dir=agents_dir,
+        save_as_yaml=save_as_yaml,
+        host=host,
+        reasoning=reasoning,
+        provider=provider,
+        interactive=interactive,
+        run=run,
+    )
 
 
 def _as_json_object(value: object) -> JsonObject | None:
@@ -101,6 +146,27 @@ def _resolve_prompt_path(*, prompt: str | None, prompt_path: str | None, prompt_
     return prompt_path
 
 
+def _validate_update_logic_options(*, agent_load: int, prompt: str | None, prompt_path: str | None, prompt_name: str | None) -> None:
+    if agent_load < 1:
+        raise typer.BadParameter("--agent-load must be at least 1.")
+
+    prompt_sources = [
+        option_name
+        for option_name, option_value in (("--prompt", prompt), ("--prompt-path", prompt_path), ("--prompt-name", prompt_name))
+        if option_value is not None
+    ]
+    if len(prompt_sources) > 1:
+        prompt_source_list = ", ".join(prompt_sources)
+        raise typer.BadParameter(f"Use only one prompt source, got: {prompt_source_list}.")
+
+
+def _resolve_repo_cli_path(*, repo_root: Path, raw_path: str) -> Path:
+    path = Path(raw_path).expanduser()
+    if path.is_absolute():
+        return path
+    return repo_root.joinpath(path)
+
+
 def update_logic(
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = "codex",
     model: Annotated[str | None, typer.Option("--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
@@ -134,37 +200,52 @@ def update_logic(
     ] = False,
     run: Annotated[bool, typer.Option("--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
 ) -> None:
+    from contextlib import chdir
+
+    from stackops.scripts.python.graph.generate_cli_graph import build_cli_graph
+
+    _validate_update_logic_options(agent_load=agent_load, prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
+
     repo_root = get_developer_repo_root()
     if not repo_root.joinpath("pyproject.toml").is_file():
         raise RuntimeError(f"Developer repo not found: {repo_root}")
 
-    resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(".ai", "agents", job_name)
-    resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath("layout.json")
+    resolved_agents_dir = (
+        _resolve_repo_cli_path(repo_root=repo_root, raw_path=agents_dir)
+        if agents_dir is not None
+        else repo_root.joinpath(".ai", "agents", job_name)
+    )
+    resolved_output_path = (
+        _resolve_repo_cli_path(repo_root=repo_root, raw_path=output_path)
+        if output_path is not None
+        else resolved_agents_dir.joinpath("layout.json")
+    )
     context_content = build_logic_context_from_graph(graph_payload=build_cli_graph())
     context_output_path = resolved_agents_dir.joinpath("context.md")
 
     try:
-        agents_create_impl(
-            agent=agent,
-            model=model,
-            agent_load=agent_load,
-            context=context_content,
-            context_path=None,
-            separator=DEFAULT_SEAPRATOR,
-            prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-            prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
-            prompt_name=prompt_name,
-            job_name=job_name,
-            join_prompt_and_context=join_prompt_and_context,
-            output_path=str(resolved_output_path),
-            agents_dir=str(resolved_agents_dir),
-            save_as_yaml=False,
-            host=host,
-            reasoning=reasoning,
-            provider=provider,
-            interactive=interactive,
-            run=run,
-        )
+        with chdir(repo_root):
+            agents_create_impl(
+                agent=agent,
+                model=model,
+                agent_load=agent_load,
+                context=context_content,
+                context_path=None,
+                separator=DEFAULT_SEAPRATOR,
+                prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
+                prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),
+                prompt_name=prompt_name,
+                job_name=job_name,
+                join_prompt_and_context=join_prompt_and_context,
+                output_path=str(resolved_output_path),
+                agents_dir=str(resolved_agents_dir),
+                save_as_yaml=False,
+                host=host,
+                reasoning=reasoning,
+                provider=provider,
+                interactive=interactive,
+                run=run,
+            )
     finally:
         context_output_path.parent.mkdir(parents=True, exist_ok=True)
         context_output_path.write_text(context_content, encoding="utf-8")

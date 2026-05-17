@@ -77,15 +77,22 @@ def render_agent_skill_install_script(*, install_root: Path, commands: Sequence[
     return "\n".join(rendered_lines) + "\n"
 
 
-def run_agent_skill_install_commands(*, install_root: Path, commands: Sequence[tuple[str, ...]]) -> None:
-    from stackops.utils.code import exit_then_run_shell_script
+def run_agent_skill_install_commands(*, install_root: Path, commands: Sequence[tuple[str, ...]]) -> int:
+    import os
 
-    exit_then_run_shell_script(script=render_agent_skill_install_script(install_root=install_root, commands=commands), strict=False)
+    from stackops.utils.code import exit_then_run_shell_script, run_shell_script
+
+    script = render_agent_skill_install_script(install_root=install_root, commands=commands)
+    op_program_path_raw = os.environ.get("OP_PROGRAM_PATH")
+    if op_program_path_raw is not None and not Path(op_program_path_raw).exists():
+        exit_then_run_shell_script(script=script, strict=False)
+    proc = run_shell_script(script=script, display_script=True, clean_env=False)
+    return proc.returncode
 
 
-def add_skill(*, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None) -> None:
+def add_skill(*, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None) -> int:
     install_root = resolve_agent_skill_install_root(directory=directory)
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
     resolved_skill_name = choose_requested_skill_name() if skill_name is None else skill_name
     commands = build_agent_skill_install_commands(skill_names=(resolved_skill_name,), agent_targets=agent_targets, scope=scope)
-    run_agent_skill_install_commands(install_root=install_root, commands=commands)
+    return run_agent_skill_install_commands(install_root=install_root, commands=commands)

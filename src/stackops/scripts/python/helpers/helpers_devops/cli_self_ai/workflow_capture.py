@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 class AgentsCreateImpl(Protocol):
     def __call__(
         self,
+        *,
         agent: AGENTS,
         model: str | None,
         agent_load: int,
@@ -39,6 +40,7 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
     captured_values: ParallelCreateValues | None = None
 
     def capture_agents_create(
+        *,
         agent: AGENTS,
         model: str | None,
         agent_load: int,

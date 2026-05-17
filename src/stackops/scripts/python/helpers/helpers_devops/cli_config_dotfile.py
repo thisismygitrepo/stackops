@@ -341,6 +341,10 @@ def export_dotfiles(
     from stackops.scripts.python.helpers.helpers_network.address import select_lan_ipv4
 
     localipv4 = select_lan_ipv4(prefer_vpn=False)
+    if localipv4 is None:
+        msg = typer.style("Error: ", fg=typer.colors.RED) + "Could not determine local LAN IPv4 address for dotfiles export."
+        typer.echo(msg, err=True)
+        raise typer.Exit(code=1)
     port = 8888
     msg = f"""On the remote machine, run the following:
 d c i -u http://{localipv4}:{port} -p {pwd}
@@ -371,6 +375,27 @@ def _validate_dotfiles_archive(zip_ref: zipfile.ZipFile, destination: Path) -> N
         raise ValueError(f"Corrupt file in dotfiles archive: {corrupt_member}")
 
 
+def _resolve_import_dotfiles_source(url: str) -> Path:
+    from urllib.parse import urlparse
+
+    parsed_url = urlparse(url)
+    if parsed_url.scheme in {"", "file"}:
+        local_path_text = url if parsed_url.scheme == "" else parsed_url.path
+        local_path = Path(local_path_text).expanduser()
+        if not local_path.exists():
+            raise FileNotFoundError(f"Encrypted dotfiles archive not found: {local_path}")
+        if not local_path.is_file():
+            raise IsADirectoryError(f"Expected an encrypted dotfiles archive file, got: {local_path}")
+        return local_path.resolve()
+
+    from stackops.scripts.python.helpers.helpers_utils.download import download
+
+    downloaded_file = download(url=url, decompress=False, output_dir=str(Path.home()))
+    if downloaded_file is None or not downloaded_file.exists():
+        raise FileNotFoundError(f"Failed to download encrypted dotfiles archive from: {url}")
+    return downloaded_file
+
+
 def import_dotfiles(
         url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles archive (.zip.gpg)")] = None,
         pwd: Annotated[str | None, typer.Option(..., "--pwd", "-p", help="Password for zip decryption")] = None,
@@ -393,42 +418,50 @@ def import_dotfiles(
         print("✅ Dotfiles copied via SSH.")
         return
     if url is None:
-        url = typer.prompt("Enter the URL or local path to the encrypted dotfiles zip (e..g 192.168.20.4:8888) ")
+        url = typer.prompt("Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or ~/dotfiles.zip.gpg) ")
     if pwd is None:
         pwd = typer.prompt("Enter the password for zip decryption", hide_input=True)
-    from stackops.scripts.python.helpers.helpers_utils.download import download
-    downloaded_file = download(url=url, decompress=False, output_dir=str(Path.home()))
-    if downloaded_file is None or not downloaded_file.exists():
-        print(f"❌ Failed to download file from URL: {url}")
-        raise typer.Exit(code=1)
-    zipfile_encrypted_path = downloaded_file
-    from stackops.utils.io import decrypt_file_symmetric
+    assert url is not None, "URL prompt should have produced an archive location."
+    try:
+        zipfile_encrypted_path = _resolve_import_dotfiles_source(url=url)
+    except (FileNotFoundError, IsADirectoryError) as error:
+        msg = typer.style("Error: ", fg=typer.colors.RED) + str(error)
+        typer.echo(msg)
+        raise typer.Exit(code=1) from error
+    from stackops.utils.io import GpgCommandError, decrypt_file_symmetric
 
     assert pwd is not None, "Password prompt should have produced a decryption password."
-    zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)
+    try:
+        zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)
+    except (FileNotFoundError, IsADirectoryError, RuntimeError, GpgCommandError) as error:
+        msg = typer.style("Error: ", fg=typer.colors.RED) + str(error)
+        typer.echo(msg)
+        raise typer.Exit(code=1) from error
     print(f"✅ Decrypted zip file saved to: {zipfile_path}")
     dotfiles_path = Path.home().joinpath("dotfiles")
-    with tempfile.TemporaryDirectory(prefix=".stackops-dotfiles-import-", dir=dotfiles_path.parent) as temp_dir:
-        extracted_dotfiles_path = Path(temp_dir).joinpath("dotfiles")
-        extracted_dotfiles_path.mkdir()
-        try:
+    try:
+        with tempfile.TemporaryDirectory(prefix=".stackops-dotfiles-import-", dir=dotfiles_path.parent) as temp_dir:
+            extracted_dotfiles_path = Path(temp_dir).joinpath("dotfiles")
+            extracted_dotfiles_path.mkdir()
             with zipfile.ZipFile(zipfile_path, "r") as zip_ref:
                 _validate_dotfiles_archive(zip_ref=zip_ref, destination=extracted_dotfiles_path)
                 zip_ref.extractall(extracted_dotfiles_path)
-        except (zipfile.BadZipFile, ValueError) as e:
-            msg = typer.style("Error: ", fg=typer.colors.RED) + str(e)
-            typer.echo(msg)
-            raise typer.Exit(code=1) from e
-        if dotfiles_path.exists():
-            if not dotfiles_path.is_dir() or dotfiles_path.is_symlink():
-                msg = typer.style("Error: ", fg=typer.colors.RED) + f"Refusing to overwrite non-directory path: {dotfiles_path}"
-                typer.echo(msg)
-                raise typer.Exit(code=1)
-            print(f"⚠️  WARNING: Overwriting existing directory: {dotfiles_path}")
-            shutil.rmtree(dotfiles_path)
-        shutil.move(str(extracted_dotfiles_path), str(dotfiles_path))
+            if dotfiles_path.exists():
+                if not dotfiles_path.is_dir() or dotfiles_path.is_symlink():
+                    msg = typer.style("Error: ", fg=typer.colors.RED) + f"Refusing to overwrite non-directory path: {dotfiles_path}"
+                    typer.echo(msg)
+                    raise typer.Exit(code=1)
+                print(f"⚠️  WARNING: Overwriting existing directory: {dotfiles_path}")
+                shutil.rmtree(dotfiles_path)
+            shutil.move(str(extracted_dotfiles_path), str(dotfiles_path))
+    except (zipfile.BadZipFile, ValueError) as error:
+        msg = typer.style("Error: ", fg=typer.colors.RED) + str(error)
+        typer.echo(msg)
+        raise typer.Exit(code=1) from error
+    finally:
+        if zipfile_path.exists():
+            zipfile_path.unlink()
     print(f"✅ Dotfiles extracted to: {dotfiles_path}")
-    zipfile_path.unlink()
 
 
 def arg_parser() -> None:

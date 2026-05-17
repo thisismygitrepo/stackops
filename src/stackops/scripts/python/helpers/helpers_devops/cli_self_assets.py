@@ -1,8 +1,4 @@
-from pathlib import Path
-
 import typer
-
-SUNBURST_OUTPUT_RELATIVE_PATH = Path("docs/assets/devops-self-explore/sunburst.html")
 
 
 def update_cli_graph() -> None:
@@ -18,12 +14,13 @@ def regenerate_charts() -> None:
     from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
 
     repo_root = cli_self_docs.get_docs_repo_root()
+    artifact_spec = next((spec for spec in cli_self_docs.DOCS_ARTIFACT_SPECS if spec.view == "sunburst"), None)
+    if artifact_spec is None:
+        typer.echo("""❌ ERROR: Missing docs artifact spec for "sunburst".""", err=True)
+        raise typer.Exit(code=1)
     cli_self_docs.render_docs_artifact(
         repo_root=repo_root,
-        artifact_spec=cli_self_docs.DocsArtifactSpec(
-            view="sunburst",
-            output_relative_path=SUNBURST_OUTPUT_RELATIVE_PATH,
-        ),
+        artifact_spec=artifact_spec,
     )
 
 

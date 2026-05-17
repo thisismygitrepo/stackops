@@ -31,9 +31,6 @@ def kill_process(
         typer.Option(..., "--filter-by", "-f", help="Field used to search/filter processes."),
     ] = "command",
 ) -> None:
-    from stackops.utils.procs import ProcessManager
-
-    proc = ProcessManager()
     match search_by:
         case "command" | "c":
             search_field = "command"
@@ -54,6 +51,9 @@ def kill_process(
         case _:
             typer.echo(f"Invalid search_by value: {search_by}", err=True)
             raise typer.Exit(code=1)
+    from stackops.utils.procs import ProcessManager
+
+    proc = ProcessManager()
     proc.choose_and_kill(search_by=search_field)
 
 
@@ -69,9 +69,19 @@ def tui_env(
 def get_machine_specs(
     hardware: Annotated[bool, typer.Option(..., "--hardware", "-h", help="Show compute capability")] = False,
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs as impl
+    import json
 
-    impl(hardware=hardware)
+    from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs as impl
+    from stackops.utils.source_of_truth import CONFIG_ROOT
+
+    if hardware:
+        impl(hardware=hardware)
+        return
+    specs = impl(hardware=hardware)
+    typer.echo(specs)
+    CONFIG_ROOT.mkdir(parents=True, exist_ok=True)
+    path = CONFIG_ROOT.joinpath("machine_specs.json")
+    path.write_text(json.dumps(specs, indent=4), encoding="utf-8")
 
 
 def list_devices() -> None:
@@ -82,7 +92,10 @@ def list_devices() -> None:
 
 def mount_device(
     device_query: Annotated[str | None, typer.Option("--device", "-d", help="Device query (path, key, or label).")] = None,
-    mount_point: Annotated[str | None, typer.Option("--mount-point", "-p", help="Mount point (use '-' for default on macOS).")] = None,
+    mount_point: Annotated[
+        str | None,
+        typer.Option("--mount-point", "-p", help="Mount point (use '-' for default on macOS; not needed with --backend udisksctl)."),
+    ] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Pick device and mount point interactively.")] = False,
     read_only: Annotated[bool, typer.Option("--read-only", "-r", help="Mount in read-only mode.")] = False,
     backend: Annotated[
@@ -95,12 +108,16 @@ def mount_device(
     if interactive:
         cli_config_mount.mount_interactive()
         return
-    if device_query is None or mount_point is None:
-        msg = typer.style("Error: ", fg=typer.colors.RED) + "--device and --mount-point are required unless --interactive is set"
+    if device_query is None:
+        msg = typer.style("Error: ", fg=typer.colors.RED) + "--device is required unless --interactive is set"
+        typer.echo(msg)
+        raise typer.Exit(2)
+    if mount_point is None and backend != "udisksctl":
+        msg = typer.style("Error: ", fg=typer.colors.RED) + "--mount-point is required unless --interactive is set or --backend udisksctl is used"
         typer.echo(msg)
         raise typer.Exit(2)
 
-    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point, read_only=read_only, backend=backend)
+    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point or "", read_only=read_only, backend=backend)
 
 
 def get_app() -> typer.Typer:

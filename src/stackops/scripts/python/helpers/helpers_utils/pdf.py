@@ -40,7 +40,9 @@ def merge_pdfs(
                                    in_global=True, import_module=False)
     from stackops.utils.code import run_shell_script, get_uv_command_executing_python_script
     uv_command, _py_file = get_uv_command_executing_python_script(python_script=code, uv_with=["pypdf"], uv_project_dir=None)
-    run_shell_script(uv_command, display_script=True, clean_env=False)
+    proc = run_shell_script(uv_command, display_script=True, clean_env=False)
+    if proc.returncode != 0:
+        raise typer.Exit(code=proc.returncode)
 
 
 def compress_pdf(

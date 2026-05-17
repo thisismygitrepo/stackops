@@ -108,11 +108,14 @@ def choose_session(
         if len(option_to_script) == 1:
             return ("handoff_script", next(iter(option_to_script.values())))
         options_to_preview_mapping[NEW_SESSION_LABEL] = (
-            f"backend: zellij\naction: create a fresh session\n\nzellij --layout {STANDARD}"
+            "backend: zellij\naction: create a fresh session\n\n"
+            + new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all)
         )
-        options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
-            f"backend: zellij\naction: kill every existing session, then start a new one\n\nzellij kill-all-sessions --yes\nzellij --layout {STANDARD}"
-        )
+        if not kill_all:
+            options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
+                "backend: zellij\naction: kill every existing session, then start a new one\n\n"
+                + new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=True)
+            )
         selection = interactive_choose_with_preview(
             msg="Choose a Zellij tab or pane to attach to:",
             options_to_preview_mapping=options_to_preview_mapping,
@@ -122,7 +125,7 @@ def choose_session(
         if selection == NEW_SESSION_LABEL:
             return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
         if selection == KILL_ALL_AND_NEW_LABEL:
-            return ("handoff_script", f"zellij kill-all-sessions --yes\nzellij --layout {quote(STANDARD)}")
+            return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=True))
         script = option_to_script.get(selection)
         if script is None:
             return ("error", f"Unknown Zellij target selected: {selection}")
@@ -142,11 +145,14 @@ def choose_session(
         for display, raw_session in display_to_raw_session.items()
     }
     options_to_preview_mapping[NEW_SESSION_LABEL] = (
-        f"backend: zellij\naction: create a fresh session\n\nzellij --layout {STANDARD}"
+        "backend: zellij\naction: create a fresh session\n\n"
+        + new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all)
     )
-    options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
-        f"backend: zellij\naction: kill every existing session, then start a new one\n\nzellij kill-all-sessions --yes\nzellij --layout {STANDARD}"
-    )
+    if not kill_all:
+        options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
+            "backend: zellij\naction: kill every existing session, then start a new one\n\n"
+            + new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=True)
+        )
     session_label = interactive_choose_with_preview(
         msg="Choose a Zellij session to attach to:",
         options_to_preview_mapping=options_to_preview_mapping,
@@ -156,7 +162,7 @@ def choose_session(
     if session_label == NEW_SESSION_LABEL:
         return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
     if session_label == KILL_ALL_AND_NEW_LABEL:
-        return ("handoff_script", f"zellij kill-all-sessions --yes\nzellij --layout {quote(STANDARD)}")
+        return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=True))
     selected_session_name: str | None = display_to_session.get(session_label)
     if selected_session_name is None:
         return ("error", f"Unknown Zellij session selected: {session_label}")

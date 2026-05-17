@@ -54,3 +54,35 @@ def test_show_address_prints_mac_addresses(monkeypatch: pytest.MonkeyPatch) -> N
     assert "aa:bb:cc:dd:ee:ff" in result.stdout
     assert "LAN IPv4: 192.168.0.203" in result.stdout
     assert "LAN MAC: aa:bb:cc:dd:ee:ff" in result.stdout
+
+
+def test_vscode_share_share_local_keeps_extra_options_before_directory(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, str] = {}
+
+    monkeypatch.setattr(
+        "stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share.resolve_share_local_folder",
+        lambda directory: "/tmp/my workspace",
+    )
+    monkeypatch.setattr(
+        "stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share.print_serve_web_urls",
+        lambda cmd, folder_path: captured.update({"urls_cmd": cmd, "folder_path": folder_path}),
+    )
+    monkeypatch.setattr(
+        "stackops.utils.code.print_code",
+        lambda code, lexer, desc, subtitle="": captured.update({"printed_cmd": code, "lexer": lexer, "desc": desc}),
+    )
+    monkeypatch.setattr(
+        "stackops.utils.code.exit_then_run_shell_script",
+        lambda script, strict=False: captured.update({"executed_cmd": script, "strict": str(strict)}),
+    )
+
+    result = CliRunner().invoke(
+        cli_nw.get_app(),
+        ["vscode-share", "share-local", "--extra-args=--port=9001"],
+    )
+
+    assert result.exit_code == 0
+    executed_cmd = captured["executed_cmd"]
+    assert "--without-connection-token --port=9001" in executed_cmd
+    assert executed_cmd.index("--port=9001") < executed_cmd.index("'/tmp/my workspace'")
+    assert captured["folder_path"] == "/tmp/my workspace"

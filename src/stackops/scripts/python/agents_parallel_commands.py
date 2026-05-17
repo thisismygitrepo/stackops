@@ -146,29 +146,40 @@ def create_context(
     ] = DEFAULT_SEAPRATOR,
 ) -> None:
     """Run one prompt and ask the selected agent to persist a context file for the job."""
-    from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
+    from contextlib import chdir
 
+    from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
+    from stackops.utils.accessories import get_repo_root
+
+    repo_root = get_repo_root(Path.cwd())
+    if repo_root is None:
+        typer.echo("agents parallel create-context must be run from inside a git repository")
+        raise typer.Exit(1)
+
+    context_output_path = repo_root.joinpath(".ai", "agents", job_name, "context.md")
+    repo_relative_context_output_path = f"./{context_output_path.relative_to(repo_root).as_posix()}"
     normalized_separator = _decode_separator(separator=separator)
     separator_for_prompt = normalized_separator.encode("unicode_escape").decode("ascii")
     appended_instruction = (
-        f"Please store the results in ./.ai/agents/{job_name}/context.md (overwrite) and "
+        f"Please store the results in {repo_relative_context_output_path} (overwrite) and "
         f'within that file make sure to use "{separator_for_prompt}" to separate the individual results.'
     )
     full_prompt = f"{prompt}\n\n{appended_instruction}"
 
     try:
-        impl(
-            prompt=full_prompt,
-            agent=agent,
-            reasoning_effort=None,
-            context="",
-            context_path=None,
-            prompts_yaml_path=None,
-            context_name=None,
-            where="all",
-            edit=False,
-            show_prompts_yaml_format=False,
-        )
+        with chdir(repo_root):
+            impl(
+                prompt=full_prompt,
+                agent=agent,
+                reasoning_effort=None,
+                context="",
+                context_path=None,
+                prompts_yaml_path=None,
+                context_name=None,
+                where="all",
+                edit=False,
+                show_prompts_yaml_format=False,
+            )
     except SystemExit as e:
         exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1
         if exit_code != 0:
@@ -176,6 +187,6 @@ def create_context(
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
-    separator_path = Path(".ai") / "agents" / job_name / "separator.txt"
+    separator_path = repo_root.joinpath(".ai", "agents", job_name, "separator.txt")
     separator_path.parent.mkdir(parents=True, exist_ok=True)
     separator_path.write_text(normalized_separator, encoding="utf-8")

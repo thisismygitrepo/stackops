@@ -152,6 +152,7 @@ def export(
     ] = False,
 ) -> None:
     """📤 export the installation files to get an offline image."""
+    output_root = output_root.expanduser()
     if upload_to_cloud:
         developer_repo_root = _developer_repo_root()
         if developer_repo_root is None:

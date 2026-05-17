@@ -35,7 +35,15 @@ def pwsh_theme() -> None:
         module=theme_assets,
         path_reference=theme_assets.CHOOSE_PWSH_THEME_PATH_REFERENCE,
     )
-    exit_then_run_shell_file(script_path=str(script_path), strict=False)
+    if platform.system() == "Windows":
+        exit_then_run_shell_file(script_path=str(script_path), strict=False)
+        return
+
+    try:
+        subprocess.run(["pwsh", "-File", str(script_path)], check=True)
+    except FileNotFoundError as exc:
+        typer.echo("Error: pwsh is required to select a powershell prompt theme.", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 def starship_theme() -> None:
@@ -45,12 +53,18 @@ def starship_theme() -> None:
             module=theme_assets,
             path_reference=theme_assets.CHOOSE_STARSHIP_THEME_PS1_PATH_REFERENCE,
         )
-        try:
-            subprocess.run(["pwsh", "-File", str(script_path)], check=True)
-        except FileNotFoundError as exc:
-            typer.echo("Error: pwsh is required to select a starship prompt theme.", err=True)
-            raise typer.Exit(code=1) from exc
-        return
+        missing_error: FileNotFoundError | None = None
+        for command_name in ("pwsh", "powershell"):
+            try:
+                subprocess.run([command_name, "-File", str(script_path)], check=True)
+                return
+            except FileNotFoundError as exc:
+                missing_error = exc
+            except subprocess.CalledProcessError as exc:
+                raise typer.Exit(code=exc.returncode) from exc
+
+        typer.echo("Error: pwsh or powershell is required to select a starship prompt theme.", err=True)
+        raise typer.Exit(code=1) from missing_error
 
     script_path = get_path_reference_path(
         module=theme_assets,
@@ -61,6 +75,8 @@ def starship_theme() -> None:
     except FileNotFoundError as exc:
         typer.echo("Error: bash is required to select a starship prompt theme.", err=True)
         raise typer.Exit(code=1) from exc
+    except subprocess.CalledProcessError as exc:
+        raise typer.Exit(code=exc.returncode) from exc
 
 
 def configure_wezterm_theme() -> None:
@@ -100,10 +116,15 @@ def configure_windows_terminal_theme() -> None:
         module=theme_assets,
         path_reference=theme_assets.CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE,
     )
-    try:
-        subprocess.run(["pwsh", "-File", str(script_path)], check=True)
-    except FileNotFoundError:
-        subprocess.run(["powershell", "-File", str(script_path)], check=True)
+    for shell_name in ("pwsh", "powershell"):
+        try:
+            subprocess.run([shell_name, "-File", str(script_path)], check=True)
+            return
+        except FileNotFoundError:
+            continue
+
+    typer.echo("Error: pwsh or powershell is required to select a Windows Terminal color scheme.", err=True)
+    raise typer.Exit(code=1)
 
 
 def shell_group(ctx: typer.Context) -> None:

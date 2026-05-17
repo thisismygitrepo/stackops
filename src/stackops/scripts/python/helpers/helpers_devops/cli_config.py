@@ -4,16 +4,6 @@ from typing import Annotated, Literal, TypeAlias
 
 import typer
 
-import stackops.settings.shells.bash as bash_shell_assets
-import stackops.settings.shells.pwsh as pwsh_shell_assets
-import stackops.settings.shells.zsh as zsh_shell_assets
-import stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile as dotfile_module
-from stackops.scripts.python.helpers.helpers_devops import cli_config_terminal
-from stackops.profile import create_links_export
-from stackops.utils.path_reference import get_path_reference_path
-from stackops.utils.ve import read_default_cloud_config
-from stackops.utils.ve_schema import ensure_ve_yaml_schema_exists, ve_yaml_header_for_path
-
 InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
 DumpConfigKind: TypeAlias = Literal["ve", "init", "ia", "live"]
 
@@ -25,8 +15,21 @@ def config() -> None:
     main()
 
 
+def terminal(ctx: typer.Context) -> None:
+    """🐚 <t> Configure your terminal profile."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_terminal
+
+    cli_config_terminal.get_app()(ctx.args, standalone_mode=False)
+
+
 def _read_init_script(which: InitScriptKind) -> str:
     import platform
+
+    import stackops.settings.shells.bash as bash_shell_assets
+    import stackops.settings.shells.pwsh as pwsh_shell_assets
+    import stackops.settings.shells.zsh as zsh_shell_assets
+
+    from stackops.utils.path_reference import get_path_reference_path
 
     platform_name = platform.system()
     if platform_name == "Linux" or platform_name == "Darwin":
@@ -105,10 +108,14 @@ def dump_config(
             return
     msg = typer.style("Error: ", fg=typer.colors.RED) + f"Unknown config type: {which}"
     typer.echo(msg)
+    raise typer.Exit(code=1)
 
 
 def _dump_ve_config() -> None:
     """Generate .ve.example.yaml with all options, sections, comments and default values."""
+    from stackops.utils.ve import read_default_cloud_config
+    from stackops.utils.ve_schema import ensure_ve_yaml_schema_exists, ve_yaml_header_for_path
+
     cloud_defaults = read_default_cloud_config()
 
     def to_yaml_value(value: str | bool | None) -> str:
@@ -176,7 +183,17 @@ def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all",
 
 
 def get_app() -> typer.Typer:
+    import stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile as dotfile_module
+
+    from stackops.profile import create_links_export
+
     config_apps = typer.Typer(help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    ctx_settings: dict[str, object] = {
+        "allow_extra_args": True,
+        "allow_interspersed_args": True,
+        "ignore_unknown_options": True,
+        "help_option_names": [],
+    }
 
     config_apps.command("sync", no_args_is_help=True, help="🔄 <s> Sync dotfiles.")(create_links_export.main_from_parser)
     config_apps.command("s", no_args_is_help=True, help="Sync dotfiles.", hidden=True)(create_links_export.main_from_parser)
@@ -195,8 +212,8 @@ def get_app() -> typer.Typer:
     )
     config_apps.command("I", no_args_is_help=False, help="Import dotfiles from exported archive.", hidden=True)(dotfile_module.import_dotfiles)
 
-    config_apps.add_typer(cli_config_terminal.get_app(), name="terminal", help="🐚 <t> Configure your terminal profile.")
-    config_apps.add_typer(cli_config_terminal.get_app(), name="t", help="🐚 <t> Configure your terminal profile.", hidden=True)
+    config_apps.command("terminal", help="🐚 <t> Configure your terminal profile.", context_settings=ctx_settings)(terminal)
+    config_apps.command("t", help="🐚 <t> Configure your terminal profile.", hidden=True, context_settings=ctx_settings)(terminal)
 
     config_apps.command("interactive", no_args_is_help=False, help="🤖 <i> Interactive configuration of machine.")(config)
     config_apps.command("i", no_args_is_help=False, help="Interactive configuration of machine.", hidden=True)(config)

@@ -1,5 +1,5 @@
 import platform
-from typing import Annotated
+from typing import Annotated, Literal, TypeAlias
 
 import typer
 from rich import box
@@ -8,13 +8,10 @@ from rich.table import Table
 
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.devices import list_devices as list_devices_internal
-from stackops.scripts.python.helpers.helpers_devops.mount_helpers.linux import MountBackend, mount_linux, select_linux_partition
-from stackops.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
-from stackops.scripts.python.helpers.helpers_devops.mount_helpers.selection import pick_device, resolve_device
-from stackops.scripts.python.helpers.helpers_devops.mount_helpers.windows import mount_windows
 
 
 console = Console()
+MountBackend: TypeAlias = Literal["mount", "dislocker", "udisksctl"]
 
 
 def _display_value(value: str | None) -> str:
@@ -50,7 +47,7 @@ def list_devices() -> None:
     try:
         entries = list_devices_internal()
     except RuntimeError as exc:
-        typer.echo(f"Device listing failed: {exc}")
+        typer.echo(f"Device listing failed: {exc}", err=True)
         raise typer.Exit(1)
     if not entries:
         typer.echo("No devices found")
@@ -59,6 +56,11 @@ def list_devices() -> None:
 
 
 def mount_device(device_query: Annotated[str, typer.Argument(...)], mount_point: Annotated[str, typer.Argument(...)], read_only: bool, backend: MountBackend) -> None:
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.linux import mount_linux, select_linux_partition
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.selection import resolve_device
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.windows import mount_windows
+
     try:
         entries = list_devices_internal()
         if not entries:
@@ -83,6 +85,11 @@ def mount_device(device_query: Annotated[str, typer.Argument(...)], mount_point:
 
 
 def mount_interactive() -> None:
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.linux import mount_linux, select_linux_partition
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.selection import pick_device
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.windows import mount_windows
+
     try:
         entries = list_devices_internal()
         if not entries:

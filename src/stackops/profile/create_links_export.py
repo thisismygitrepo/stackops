@@ -87,6 +87,21 @@ def main_from_parser(
     For public config files in the library repo, copy packaged settings first when syncing down."""
     from stackops.profile.create_links import ConfigMapper, read_mapper
 
+    def merge_mapper_groups(
+        private_mapper: dict[str, list[ConfigMapper]],
+        public_mapper: dict[str, list[ConfigMapper]],
+    ) -> dict[str, list[ConfigMapper]]:
+        merged_mapper: dict[str, list[ConfigMapper]] = {
+            program_name: list(program_files)
+            for program_name, program_files in private_mapper.items()
+        }
+        for program_name, program_files in public_mapper.items():
+            if program_name in merged_mapper:
+                merged_mapper[program_name].extend(program_files)
+                continue
+            merged_mapper[program_name] = list(program_files)
+        return merged_mapper
+
     repo_key = REPO_MAP[repo]
     mapper_full_obj = read_mapper(repo=repo_key)
     mapper_full: dict[str, list[ConfigMapper]]
@@ -96,7 +111,10 @@ def main_from_parser(
     elif sensitivity_key == "public":
         mapper_full = mapper_full_obj["public"]
     else:
-        mapper_full = {**mapper_full_obj["private"], **mapper_full_obj["public"]}
+        mapper_full = merge_mapper_groups(
+            private_mapper=mapper_full_obj["private"],
+            public_mapper=mapper_full_obj["public"],
+        )
             
     if which is None:
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview

@@ -45,14 +45,21 @@ def _parse_init_config_agents(*, raw_value: str) -> tuple[AGENTS, ...]:
 
 
 def init_config(
-    root: Annotated[
-        str, typer.Option(..., "--root", "-r", help="Root directory of the repository to initialize AI configs in. Defaults to current directory.")
-    ],
     agents: Annotated[
         str, typer.Option(..., "--agent", "-a", help=_INIT_CONFIG_AGENT_HELP)
     ],
-    add_config: Annotated[bool, typer.Option("--add-config", "-c", help="Create private agent config files/directories")] = True,
-    add_instructions: Annotated[bool, typer.Option("--add-instructions", "-i", help="Create agent instructions files (e.g. AGENTS.md)")] = True,
+    root: Annotated[
+        str | None,
+        typer.Option("--root", "-r", help="Root directory of the repository to initialize AI configs in. Defaults to current directory."),
+    ] = None,
+    add_config: Annotated[
+        bool,
+        typer.Option("--add-config/--no-add-config", "-c/-C", help="Create private agent config files/directories"),
+    ] = True,
+    add_instructions: Annotated[
+        bool,
+        typer.Option("--add-instructions/--no-add-instructions", "-i/-I", help="Create agent instructions files (e.g. AGENTS.md)"),
+    ] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
     add_to_gitignore: Annotated[
@@ -268,9 +275,10 @@ def add_skill(
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
-        impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory)
+        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
+    raise typer.Exit(code=return_code)
 
 
 def get_app() -> typer.Typer:

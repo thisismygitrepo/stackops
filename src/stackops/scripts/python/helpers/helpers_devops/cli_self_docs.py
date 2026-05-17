@@ -36,15 +36,39 @@ def _build_docs_url(host: str) -> str:
     return f"http://{host}:{DOCS_PORT}{DOCS_SITE_PATH}"
 
 
+def _developer_repo_root() -> Path | None:
+    repo_root = Path.home().joinpath("code", "stackops")
+    if repo_root.joinpath("pyproject.toml").is_file():
+        return repo_root
+    return None
+
+
 def get_docs_repo_root() -> Path:
     from stackops.utils.source_of_truth import REPO_ROOT
 
-    docs_dir = REPO_ROOT.joinpath("docs")
-    docs_config_path = REPO_ROOT.joinpath(DOCS_CONFIG_FILE_NAME)
-    if not docs_dir.exists() or not docs_config_path.exists():
-        typer.echo(f"""❌ ERROR: Could not find docs sources under "{REPO_ROOT}".""", err=True)
+    repo_root = _developer_repo_root()
+    if repo_root is None:
+        repo_root = REPO_ROOT.resolve()
+
+    docs_dir = repo_root.joinpath("docs")
+    docs_config_path = repo_root.joinpath(DOCS_CONFIG_FILE_NAME)
+    if not docs_dir.is_dir() or not docs_config_path.is_file():
+        typer.echo(f"""❌ ERROR: Could not find docs sources under "{repo_root}".""", err=True)
         raise typer.Exit(code=1)
-    return REPO_ROOT
+    return repo_root
+
+
+def _require_editable_repo_root(repo_root: Path) -> None:
+    from stackops.utils.source_of_truth import REPO_ROOT
+
+    active_repo_root = REPO_ROOT.resolve()
+    resolved_repo_root = repo_root.resolve()
+    if active_repo_root != resolved_repo_root:
+        typer.echo(
+            f"""❌ Regenerating docs artifacts requires an editable stackops install backed by "{resolved_repo_root}" so the CLI graph source and checked-in outputs stay in sync.""",
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
 
 def _display_docs_url(url: str) -> None:
@@ -82,6 +106,7 @@ def _print_docs_urls() -> None:
 def write_cli_graph_snapshot(repo_root: Path) -> Path:
     from stackops.scripts.python.graph.generate_cli_graph import build_cli_graph
 
+    _require_editable_repo_root(repo_root)
     cli_graph_path = repo_root.joinpath(CLI_GRAPH_RELATIVE_PATH)
     cli_graph_payload = build_cli_graph()
     cli_graph_path.write_text(
@@ -95,16 +120,21 @@ def write_cli_graph_snapshot(repo_root: Path) -> Path:
 def render_docs_artifact(repo_root: Path, artifact_spec: DocsArtifactSpec) -> Path:
     from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly
 
+    graph_path = repo_root.joinpath(CLI_GRAPH_RELATIVE_PATH)
+    if not graph_path.is_file():
+        typer.echo(f"""❌ CLI graph snapshot not found: {graph_path.relative_to(repo_root).as_posix()}""", err=True)
+        raise typer.Exit(code=1)
+
     output_path = repo_root.joinpath(artifact_spec.output_relative_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     use_render_plotly(
         view=artifact_spec.view,
         output=str(output_path),
         template=DOCS_ARTIFACT_TEMPLATE,
-        path=None,
+        path=str(graph_path),
         max_depth=None,
         uv_with=None,
-        uv_project_dir=None,
+        uv_project_dir=str(repo_root),
     )
     typer.echo(f"""Regenerated docs artifact: {output_path.relative_to(repo_root).as_posix()}""")
     return output_path

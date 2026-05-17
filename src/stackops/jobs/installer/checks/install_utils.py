@@ -126,12 +126,12 @@ def load_engine_results_report() -> list[dict[str, str]]:
     console.print(f"[yellow]Warning: Engine results report not found at {ENGINE_RESULTS_PATH}[/yellow]")
     return []
 
-def download_safe_apps(name: str = "essentials") -> None:
+def download_safe_apps(name: str = "essentials") -> bool:
     """Downloads and installs safe apps."""
     data = load_app_metadata_report()
     if not data:
         console.print("[red]No app data available to install.[/red]")
-        return
+        return False
 
     apps_to_install = []
     if name == "essentials":
@@ -143,7 +143,7 @@ def download_safe_apps(name: str = "essentials") -> None:
 
     if not apps_to_install:
         console.print(f"[yellow]No apps found to install for '{name}'.[/yellow]")
-        return
+        return False
 
     console.print(f"[bold]Installing {len(apps_to_install)} apps...[/bold]")
     
@@ -151,4 +151,8 @@ def download_safe_apps(name: str = "essentials") -> None:
         results = list(executor.map(install_cli_app, apps_to_install))
     
     success_count = sum(results)
+    if success_count != len(apps_to_install):
+        console.print(f"[bold yellow]Installed {success_count}/{len(apps_to_install)} apps.[/bold yellow]")
+        return False
     console.print(f"[bold green]Successfully installed {success_count}/{len(apps_to_install)} apps.[/bold green]")
+    return True

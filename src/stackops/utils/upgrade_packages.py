@@ -27,6 +27,13 @@ PyprojectTable = TypedDict(
 )
 CleanupKind = Literal["dependency-group", "optional-dependency"]
 AddCommandScope = Literal["main", "dependency-group", "optional-dependency"]
+CLEANUP_KIND_ALIASES: dict[str, CleanupKind] = {
+    "dependency-group": "dependency-group",
+    "group": "dependency-group",
+    "optional-dependency": "optional-dependency",
+    "optional": "optional-dependency",
+    "extra": "optional-dependency",
+}
 
 
 @dataclass(frozen=True)
@@ -34,6 +41,12 @@ class CleanupTarget:
     kind: CleanupKind
     group_name: str
     packages: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CleanupTargetSelection:
+    kind: CleanupKind | None
+    group_name: str
 
 
 def read_pyproject(pyproject_path: Path) -> PyprojectTable:
@@ -82,39 +95,94 @@ def clean_dependency_groups(project_root: Path, group_names: Sequence[str]) -> N
         print(f"Cleaned {cleanup_target.kind} '{cleanup_target.group_name}'")
 
 
+def parse_cleanup_target_selection(group_name: str) -> CleanupTargetSelection:
+    normalized_group_name = group_name.strip()
+    if normalized_group_name == "":
+        raise ValueError("Cleanup group names must not be empty.")
+    kind_alias, separator, selected_group_name = normalized_group_name.partition(":")
+    if separator == "":
+        return CleanupTargetSelection(kind=None, group_name=normalized_group_name)
+    cleanup_kind = CLEANUP_KIND_ALIASES.get(kind_alias)
+    if cleanup_kind is None:
+        valid_prefixes = ", ".join(sorted(CLEANUP_KIND_ALIASES))
+        raise ValueError(
+            f"Unknown cleanup target prefix '{kind_alias}'. Valid prefixes: {valid_prefixes}."
+        )
+    normalized_selected_group_name = selected_group_name.strip()
+    if normalized_selected_group_name == "":
+        raise ValueError("Cleanup group names must not be empty.")
+    return CleanupTargetSelection(
+        kind=cleanup_kind,
+        group_name=normalized_selected_group_name,
+    )
+
+
 def resolve_cleanup_targets(pyproject_data: PyprojectTable, group_names: Sequence[str]) -> list[CleanupTarget]:
     optional_dependencies = get_optional_dependencies(pyproject_data=pyproject_data)
     dependency_groups = get_dependency_groups(pyproject_data=pyproject_data)
 
     cleanup_targets: list[CleanupTarget] = []
     missing_groups: list[str] = []
-    seen_group_names: set[str] = set()
+    seen_group_names: set[tuple[CleanupKind | None, str]] = set()
 
     for group_name in group_names:
-        if group_name in seen_group_names:
+        cleanup_target_selection = parse_cleanup_target_selection(group_name=group_name)
+        selection_key = (
+            cleanup_target_selection.kind,
+            cleanup_target_selection.group_name,
+        )
+        if selection_key in seen_group_names:
             continue
-        seen_group_names.add(group_name)
+        seen_group_names.add(selection_key)
 
         matched_group = False
 
-        optional_group_packages = optional_dependencies.get(group_name)
+        if (
+            cleanup_target_selection.kind is None
+            or cleanup_target_selection.kind == "optional-dependency"
+        ):
+            optional_group_packages = optional_dependencies.get(
+                cleanup_target_selection.group_name
+            )
+        else:
+            optional_group_packages = None
+        if (
+            cleanup_target_selection.kind is None
+            and optional_group_packages is not None
+            and cleanup_target_selection.group_name in dependency_groups
+        ):
+            raise ValueError(
+                "Cleanup target "
+                f"'{cleanup_target_selection.group_name}' is ambiguous because it exists "
+                "in both dependency-groups and optional-dependencies. Use "
+                f"'dependency-group:{cleanup_target_selection.group_name}' or "
+                f"'optional-dependency:{cleanup_target_selection.group_name}'."
+            )
         if optional_group_packages is not None:
             matched_group = True
             cleanup_targets.append(
                 CleanupTarget(
                     kind="optional-dependency",
-                    group_name=group_name,
+                    group_name=cleanup_target_selection.group_name,
                     packages=tuple(extract_package_name(dependency_spec) for dependency_spec in optional_group_packages),
                 )
             )
 
-        dependency_group_packages = dependency_groups.get(group_name)
+        if (
+            cleanup_target_selection.kind is None
+            or cleanup_target_selection.kind == "dependency-group"
+        ):
+            dependency_group_packages = dependency_groups.get(
+                cleanup_target_selection.group_name
+            )
+        else:
+            dependency_group_packages = None
         if dependency_group_packages is not None:
             matched_group = True
             cleanup_targets.append(
                 CleanupTarget(
                     kind="dependency-group",
-                    group_name=group_name,
+                    group_name=cleanup_target_selection.group_name,
                     packages=tuple(extract_package_name(dependency_spec) for dependency_spec in dependency_group_packages),
                 )
             )

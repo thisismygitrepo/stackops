@@ -269,7 +269,7 @@ def upgrade_packages(
         typer.Option(
             "--clean-group",
             "-c",
-            help="Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups.",
+            help="Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.",
         ),
     ] = None,
 ) -> None:

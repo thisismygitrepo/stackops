@@ -35,6 +35,8 @@ def run_cli(
     subsitute_home: bool,
 ) -> None:
     try:
+        if sleep_inbetween < 0:
+            raise ValueError("--sleep-inbetween must be >= 0.")
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
@@ -79,5 +81,5 @@ def run_cli(
             exit_mode=exit_mode,
         )
     except ValueError as e:
-        typer.echo(str(e))
+        typer.echo(str(e), err=True)
         raise typer.Exit(1) from e

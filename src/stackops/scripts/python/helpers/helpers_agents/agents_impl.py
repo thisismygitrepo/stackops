@@ -463,10 +463,11 @@ def make_agents_command_template() -> None:
     save_path = save_path_root / template_filename
     save_path.write_text(template_path.read_text(encoding="utf-8"), encoding="utf-8")
     print(f"Template {template_label} script written to {save_path}")
+    todo_output_path = save_path_root.relative_to(repo_root) / "files.md"
 
     from stackops.scripts.python.ai.utils.generate_files import make_todo_files
     make_todo_files(
-        pattern=".py", repo=str(repo_root), strategy="name", output_path=str(save_path_root / "files.md"), split_every=None, split_to=None
+        pattern=".py", repo=str(repo_root), strategy="name", output_path=str(todo_output_path), split_every=None, split_to=None
     )
 
     prompt_path = get_path_reference_path(

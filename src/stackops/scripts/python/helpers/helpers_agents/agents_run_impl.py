@@ -171,23 +171,32 @@ def run(
     edit: bool,
     show_prompts_yaml_format: bool,
 ) -> None:
-    yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
-    created_yaml_paths: list[Path] = []
-    for location_name, yaml_path in yaml_locations:
-        should_create = _should_scaffold_prompts_yaml(location_name=location_name, prompts_yaml_path=prompts_yaml_path, where=where)
-        if should_create and ensure_prompts_yaml_exists(yaml_path=yaml_path):
-            created_yaml_paths.append(yaml_path)
-    if len(created_yaml_paths) > 0:
-        import typer
-        for created_yaml_path in created_yaml_paths:
-            typer.echo(f"Created prompts YAML template at: {created_yaml_path}")
-    if edit:
-        editable_locations = [(name, path) for name, path in yaml_locations if path.exists() and path.is_file()]
-        for _, yaml_path in editable_locations:
-            edit_prompts_yaml(yaml_path=yaml_path)
-    if show_prompts_yaml_format:
-        import typer
-        typer.echo(prompts_yaml_format_explanation(yaml_paths=yaml_locations))
+    if _should_prepare_prompts_yaml(
+        context=context,
+        context_path=context_path,
+        context_name=context_name,
+        edit=edit,
+        show_prompts_yaml_format=show_prompts_yaml_format,
+    ):
+        yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
+        created_yaml_paths: list[Path] = []
+        for location_name, yaml_path in yaml_locations:
+            should_create = _should_scaffold_prompts_yaml(location_name=location_name, prompts_yaml_path=prompts_yaml_path, where=where)
+            if should_create and ensure_prompts_yaml_exists(yaml_path=yaml_path):
+                created_yaml_paths.append(yaml_path)
+        if len(created_yaml_paths) > 0:
+            import typer
+
+            for created_yaml_path in created_yaml_paths:
+                typer.echo(f"Created prompts YAML template at: {created_yaml_path}")
+        if edit:
+            editable_locations = [(name, path) for name, path in yaml_locations if path.exists() and path.is_file()]
+            for _, yaml_path in editable_locations:
+                edit_prompts_yaml(yaml_path=yaml_path)
+        if show_prompts_yaml_format:
+            import typer
+
+            typer.echo(prompts_yaml_format_explanation(yaml_paths=yaml_locations))
     has_explicit_context = context is not None or context_path is not None or context_name is not None
     if (edit or show_prompts_yaml_format) and prompt is None and not has_explicit_context:
         return
@@ -199,6 +208,21 @@ def run(
 
     from stackops.utils.code import exit_then_run_shell_script
     exit_then_run_shell_script(script=command_line, strict=False)
+
+
+def _should_prepare_prompts_yaml(
+    *,
+    context: str | None,
+    context_path: str | None,
+    context_name: str | None,
+    edit: bool,
+    show_prompts_yaml_format: bool,
+) -> bool:
+    if edit or show_prompts_yaml_format:
+        return True
+    if context_name is not None:
+        return True
+    return context is None and context_path is None
 
 
 def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str | None, where: PROMPTS_WHERE) -> bool:

@@ -81,25 +81,22 @@ def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str 
 
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
-    try:
-        options_to_preview: dict[str, str]
-        options_to_output: dict[str, str]
-        preview_size_percent: float
-        if which in {"PATH", "p"}:
-            options_to_preview, options_to_output = _build_path_selection_data()
-            preview_size_percent = 60.0
-        else:
-            options_to_preview, options_to_output = _build_env_selection_data()
-            preview_size_percent = 50.0
+    options_to_preview: dict[str, str]
+    options_to_output: dict[str, str]
+    preview_size_percent: float
+    if which in {"PATH", "p"}:
+        options_to_preview, options_to_output = _build_path_selection_data()
+        preview_size_percent = 60.0
+    else:
+        options_to_preview, options_to_output = _build_env_selection_data()
+        preview_size_percent = 50.0
 
-        selected_label = choose_from_dict_with_preview(
-            options_to_preview_mapping=options_to_preview,
-            extension="txt",
-            multi=False,
-            preview_size_percent=preview_size_percent,
-        )
-    except Exception:
-        return False, None
+    selected_label = choose_from_dict_with_preview(
+        options_to_preview_mapping=options_to_preview,
+        extension="txt",
+        multi=False,
+        preview_size_percent=preview_size_percent,
+    )
 
     if selected_label is None:
         return True, None
@@ -277,12 +274,14 @@ class MachineSpecs(TypedDict):
     user: str
 
 
-def get_machine_specs(hardware: Annotated[bool, typer.Option(..., "--hardware", "-h", help="Show compute capability")] = False) -> MachineSpecs:
-    """Write print and return the local machine specs."""
+def get_machine_specs(hardware: bool = False) -> MachineSpecs:
+    """Return the local machine specs."""
     if hardware:
         from stackops.scripts.python.helpers.helpers_utils.specs import main
+
         main()
         import sys
+
         sys.exit()
 
     import platform
@@ -318,14 +317,6 @@ def get_machine_specs(hardware: Annotated[bool, typer.Option(..., "--hardware", 
         "python_version": platform.python_version(),
         "user": os.getenv("USER") or os.getenv("USERNAME") or "Unknown",
     }
-    print(specs)
-    from stackops.utils.source_of_truth import CONFIG_ROOT
-
-    path = CONFIG_ROOT.joinpath("machine_specs.json")
-    CONFIG_ROOT.mkdir(parents=True, exist_ok=True)
-    import json
-
-    path.write_text(json.dumps(specs, indent=4), encoding="utf-8")
     return specs
 
 

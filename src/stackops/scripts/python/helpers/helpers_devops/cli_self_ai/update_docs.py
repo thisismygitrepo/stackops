@@ -54,6 +54,13 @@ def should_include_docs_context_path(*, relative_path: Path) -> bool:
     return any(relative_path.is_relative_to(allowed_root) for allowed_root in _ALLOWED_DOCS_CONTEXT_ROOTS)
 
 
+def _resolve_repo_relative_path(*, repo_root: Path, raw_path: str) -> Path:
+    path = Path(raw_path).expanduser()
+    if path.is_absolute():
+        return path
+    return repo_root / path
+
+
 def _build_docs_context(*, repo_root: Path) -> str:
     context_entries = [
         relative_path.as_posix()
@@ -136,8 +143,16 @@ def update_docs(
     if not repo_root.joinpath("pyproject.toml").is_file():
         raise RuntimeError(f"Developer repo not found: {repo_root}")
 
-    resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(".ai", "agents", job_name)
-    resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath("layout.json")
+    resolved_agents_dir = (
+        _resolve_repo_relative_path(repo_root=repo_root, raw_path=agents_dir)
+        if agents_dir is not None
+        else repo_root.joinpath(".ai", "agents", job_name)
+    )
+    resolved_output_path = (
+        _resolve_repo_relative_path(repo_root=repo_root, raw_path=output_path)
+        if output_path is not None
+        else resolved_agents_dir.joinpath("layout.json")
+    )
     context_content = _build_docs_context(repo_root=repo_root)
     context_output_path = resolved_agents_dir.joinpath("context.md")
 

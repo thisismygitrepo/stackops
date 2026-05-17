@@ -109,7 +109,7 @@ def update_test(
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option("--provider", "-v", help="Provider to use (if the agent supports many).")] = None,
     host: Annotated[HOST, typer.Option("--host", "-h", help="Machine to run agents on.")] = "local",
-    agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of tasks per prompt.")] = 10,
+    agent_load: Annotated[int, typer.Option("--agent-load", "-l", min=1, help="Number of tasks per prompt.")] = 10,
     prompt: Annotated[str | None, typer.Option("--prompt", "-p", help="Prompt prefix as string.")] = None,
     prompt_path: Annotated[
         str | None,
@@ -139,6 +139,11 @@ def update_test(
         typer.Option("--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters."),
     ] = False,
 ) -> None:
+    from contextlib import chdir
+
+    if agent_load < 1:
+        raise typer.BadParameter("--agent-load must be at least 1.")
+
     repo_root = get_developer_repo_root()
     if not repo_root.joinpath("pyproject.toml").is_file():
         raise RuntimeError(f"Developer repo not found: {repo_root}")
@@ -154,27 +159,28 @@ def update_test(
     )
 
     try:
-        agents_create_impl(
-            agent=agent,
-            model=model,
-            agent_load=agent_load,
-            context=context_content,
-            context_path=None,
-            separator=DEFAULT_SEAPRATOR,
-            prompt=resolved_prompt,
-            prompt_path=resolved_prompt_path,
-            prompt_name=resolved_prompt_name,
-            job_name=job_name,
-            join_prompt_and_context=join_prompt_and_context,
-            output_path=str(resolved_output_path),
-            agents_dir=str(resolved_agents_dir),
-            save_as_yaml=False,
-            host=host,
-            reasoning=reasoning_effort,
-            provider=provider,
-            interactive=interactive,
-            run=run,
-        )
+        with chdir(repo_root):
+            agents_create_impl(
+                agent=agent,
+                model=model,
+                agent_load=agent_load,
+                context=context_content,
+                context_path=None,
+                separator=DEFAULT_SEAPRATOR,
+                prompt=resolved_prompt,
+                prompt_path=resolved_prompt_path,
+                prompt_name=resolved_prompt_name,
+                job_name=job_name,
+                join_prompt_and_context=join_prompt_and_context,
+                output_path=str(resolved_output_path),
+                agents_dir=str(resolved_agents_dir),
+                save_as_yaml=False,
+                host=host,
+                reasoning=reasoning_effort,
+                provider=provider,
+                interactive=interactive,
+                run=run,
+            )
     finally:
         context_output_path.parent.mkdir(parents=True, exist_ok=True)
         context_output_path.write_text(context_content, encoding="utf-8")

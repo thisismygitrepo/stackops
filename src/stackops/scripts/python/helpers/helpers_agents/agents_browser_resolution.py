@@ -23,7 +23,7 @@ def resolve_browser_executable(*, browser: BrowserName) -> Path:
         if _is_executable_file(path=candidate, system_name=system_name):
             return candidate.expanduser()
     searched = "\n".join(str(candidate) for candidate in candidates)
-    raise ValueError(f"""Could not find {browser} executable for {system_name}. Searched:\n{searched}""")
+    raise RuntimeError(f"""Could not find {browser} executable for {system_name}. Searched:\n{searched}""")
 
 
 def resolve_profile_path(*, browser: BrowserName, profile_name: str | None, port: int) -> Path:

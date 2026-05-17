@@ -28,6 +28,10 @@ def run_all_cli(
     subsitute_home: bool,
 ) -> None:
     try:
+        if on_conflict in {"mergeOverwrite", "mergeSkip"}:
+            raise ValueError(
+                "--on-conflict mergeOverwrite and mergeSkip are not supported for run-all because the dynamic scheduler requires exclusive control of the session."
+            )
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
@@ -59,6 +63,9 @@ def run_all_cli(
             on_conflict=on_conflict,
             poll_seconds=poll_seconds,
         )
-    except ValueError as e:
-        typer.echo(str(e))
-        raise typer.Exit(1) from e
+    except ValueError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error
+    except RuntimeError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error

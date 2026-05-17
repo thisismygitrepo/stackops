@@ -43,3 +43,27 @@ def test_list_apps_reports_no_installed_apps(monkeypatch) -> None:
 
     assert result.exit_code == 1
     assert "No installed CLI apps found." in result.output
+
+
+def test_install_exits_non_zero_when_install_fails(monkeypatch) -> None:
+    def fake_download_safe_apps(name: str) -> bool:
+        assert name == "demo"
+        return False
+
+    monkeypatch.setattr("stackops.jobs.installer.checks.install_utils.download_safe_apps", fake_download_safe_apps)
+
+    result = CliRunner().invoke(security_cli.get_app(), ["install", "demo"])
+
+    assert result.exit_code == 1
+
+
+def test_install_returns_zero_when_install_succeeds(monkeypatch) -> None:
+    def fake_download_safe_apps(name: str) -> bool:
+        assert name == "demo"
+        return True
+
+    monkeypatch.setattr("stackops.jobs.installer.checks.install_utils.download_safe_apps", fake_download_safe_apps)
+
+    result = CliRunner().invoke(security_cli.get_app(), ["install", "demo"])
+
+    assert result.exit_code == 0

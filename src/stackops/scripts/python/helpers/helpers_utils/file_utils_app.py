@@ -78,6 +78,18 @@ def merge_pdfs(
             param_hint="--output",
         )
 
+    output_parent = output_path.parent
+    if not output_parent.exists():
+        raise typer.BadParameter(
+            f"Output directory does not exist: {output_parent}",
+            param_hint="--output",
+        )
+    if not output_parent.is_dir():
+        raise typer.BadParameter(
+            f"Output parent path is not a directory: {output_parent}",
+            param_hint="--output",
+        )
+
     from stackops.scripts.python.helpers.helpers_utils.pdf import merge_pdfs as impl
 
     # Call implementation with resolved paths (strings) for consistency

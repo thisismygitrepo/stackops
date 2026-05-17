@@ -63,11 +63,16 @@ def main_installer_cli(
     if interactive:
         return install_interactively(install_request=install_request)
     if which is not None:
+        requested_names = [item.strip() for item in which.split(",") if item.strip() != ""]
+        if len(requested_names) == 0:
+            target_name = "group name" if group else "program name"
+            typer.echo(f"❌ You must provide at least one {target_name}.")
+            raise typer.Exit(1)
         if group:
-            for a_group in [x.strip() for x in which.split(",") if x.strip() != ""]:
-                return install_group(package_group=a_group, install_request=install_request)
-        else:
-            return install_clis(clis_names=[x.strip() for x in which.split(",") if x.strip() != ""], install_request=install_request)
+            for a_group in requested_names:
+                install_group(package_group=a_group, install_request=install_request)
+            return None
+        return install_clis(clis_names=requested_names, install_request=install_request)
     else:
         if group:
             from rich.console import Console
@@ -172,6 +177,7 @@ def install_group(package_group: str, install_request: InstallRequest) -> None:
         return
     console = Console()
     console.print(f"❌ ERROR: Unknown package group: {package_group}. Available groups are: {list(PACKAGE_GROUP2NAMES.keys())}")
+    raise typer.Exit(1)
 
 
 def install_clis(clis_names: list[str], install_request: InstallRequest) -> None:
@@ -211,6 +217,8 @@ def install_clis(clis_names: list[str], install_request: InstallRequest) -> None
     if total_results:
         render_installation_summary(results=total_results, console=Console(), title="📊 Installation Results")
     return None
+
+
 def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bool:
     from stackops.utils.installer_utils.installer_locator_utils import check_tool_exists
     if binary_name is None:

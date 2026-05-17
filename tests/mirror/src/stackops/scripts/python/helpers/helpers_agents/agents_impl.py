@@ -133,3 +133,70 @@ def test_save_parallel_yaml_entry_writes_job_name_key(tmp_path: Path) -> None:
     assert loaded_yaml["updateDocs"]["context"] == "context text"
     assert loaded_yaml["updateDocs"]["prompt"] == "prompt text"
     assert loaded_yaml["updateDocs"]["interactive"] is False
+
+
+def test_make_agents_command_template_uses_repo_relative_files_output_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from stackops.scripts.python.ai.utils import generate_files
+    from stackops.utils import accessories
+
+    captured_kwargs: dict[str, object] = {}
+
+    def fake_make_todo_files(
+        pattern: str,
+        repo: str,
+        strategy: str,
+        output_path: str,
+        split_every: int | None,
+        split_to: int | None,
+    ) -> None:
+        captured_kwargs.update(
+            pattern=pattern,
+            repo=repo,
+            strategy=strategy,
+            output_path=output_path,
+            split_every=split_every,
+            split_to=split_to,
+        )
+
+    monkeypatch.setattr(generate_files, "make_todo_files", fake_make_todo_files)
+    monkeypatch.setattr(accessories, "get_repo_root", lambda _path: tmp_path)
+    monkeypatch.setattr("platform.system", lambda: "Linux")
+
+    agents_impl.make_agents_command_template()
+
+    assert captured_kwargs == {
+        "pattern": ".py",
+        "repo": str(tmp_path),
+        "strategy": "name",
+        "output_path": ".ai/agents/template/files.md",
+        "split_every": None,
+        "split_to": None,
+    }
+    assert tmp_path.joinpath(".ai", "agents", "template", "template_fire_agents.sh").is_file()
+    assert tmp_path.joinpath(".ai", "agents", "template", "prompt.txt").is_file()
+
+
+def test_make_agents_command_template_writes_current_windows_template(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from stackops.scripts.python.ai.utils import generate_files
+    from stackops.utils import accessories
+
+    monkeypatch.setattr(generate_files, "make_todo_files", lambda **_kwargs: None)
+    monkeypatch.setattr(accessories, "get_repo_root", lambda _path: tmp_path)
+    monkeypatch.setattr("platform.system", lambda: "Windows")
+
+    agents_impl.make_agents_command_template()
+
+    payload = tmp_path.joinpath(".ai", "agents", "template", "template_fire_agents.ps1").read_text(encoding="utf-8")
+
+    assert "--agent codex" in payload
+    assert "--agents " not in payload
+    assert "--max-threshold 4" in payload
+    assert "--threshold-type number" in payload
+    assert "--max-thresh " not in payload
+    assert "--thresh-type " not in payload

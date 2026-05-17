@@ -38,9 +38,17 @@ netsh.exe interface portproxy delete v4tov4 listenport={port} listenaddress=0.0.
 netsh.exe interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0 connectport={port} connectaddress="$wsl_ip"
 
 """
-    from stackops.utils.code import exit_then_run_shell_script
+    import os
+    from pathlib import Path
 
-    exit_then_run_shell_script(code)
+    from stackops.utils.code import exit_then_run_shell_script, run_shell_script
+
+    op_program_path_raw = os.environ.get("OP_PROGRAM_PATH")
+    if op_program_path_raw is not None and not Path(op_program_path_raw).exists():
+        exit_then_run_shell_script(code)
+    proc = run_shell_script(code, display_script=True, clean_env=False)
+    if proc.returncode != 0:
+        raise typer.Exit(code=proc.returncode)
 
 
 def open_wsl_port(ports: Annotated[str, typer.Argument(..., help="Comma-separated ports or port ranges (e.g., '8080,3000-3005,443')")]) -> None:
@@ -177,11 +185,9 @@ def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., "--ip", help="
         except ValueError as error:
             raise typer.BadParameter(str(error), param_hint="--ip") from error
     if len(ips) == 0:
-        raise typer.BadParameter("Provide at least one IP address.")
+        raise typer.BadParameter("Provide at least one IP address.", param_hint="--ip")
 
     res = "\n".join(f"sudo warp-cli tunnel ip add {an_ip}" for an_ip in ips)
-    for an_ip in ips:
-        print(f"Adding IP exclusion to WARP for: {an_ip}")
     code = f"""
 {res}
 echo "Restarting WARP connection..."
@@ -191,8 +197,12 @@ sleep 2
 echo "Reconnecting WARP..."
 sudo warp-cli connect
 """
-    print(code)
-    print("NOTE: Please run the above commands in your terminal to apply the changes.")
+    from stackops.utils.code import exit_then_run_shell_script, print_code
+
+    print_code(code, lexer="bash", desc="code to achieve the goal")
+    yes = typer.confirm("Do you want to run the above commands now?", default=False)
+    if yes:
+        exit_then_run_shell_script(code)
 
 
 def get_app() -> typer.Typer:

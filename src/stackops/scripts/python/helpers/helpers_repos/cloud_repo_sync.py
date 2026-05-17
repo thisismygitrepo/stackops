@@ -211,7 +211,7 @@ def _merge_remote_copy(repo: Repo, remote_path: Path, console: Console) -> Merge
 
 
 def main(
-    repo: Annotated[str, typer.Argument(..., help="Path to the local repository. Defaults to current working directory.")],
+    repo: Annotated[str, typer.Argument(help="Path to the local repository. Defaults to current working directory.")] = ".",
     cloud: Annotated[str | None, typer.Option(..., "--cloud", "-C", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
     on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",

@@ -39,3 +39,10 @@ def test_seek_passes_max_files_to_impl(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result.exit_code == 0
     assert captured_limits == [900]
+
+
+def test_seek_rejects_missing_explicit_path() -> None:
+    result = CliRunner().invoke(seek_app.get_app(), ["missing-path-for-seek-tests", "needle"])
+
+    assert result.exit_code != 0
+    assert "Search path does not exist" in result.output

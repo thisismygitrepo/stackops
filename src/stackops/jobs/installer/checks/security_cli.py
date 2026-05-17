@@ -1,24 +1,16 @@
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
-import stackops.utils.path_core as path_core
-from stackops.jobs.installer.checks.security_helper import (
-    ReportFormat,
-    ReportView,
-    build_raw_csv_table,
-    build_report_options_text,
-    build_report_stats_lines,
-    load_filtered_report_rows,
-    normalize_app_names,
-    parse_apps_argument,
-    render_csv_text,
-)
 
 if TYPE_CHECKING:
     from rich.console import Console
     from rich.table import Table
+
+
+ReportFormat = Literal["table", "csv"]
+ReportView = Literal["engines", "app-summary", "apps", "options", "stats"]
 
 
 @cache
@@ -26,6 +18,13 @@ def _console() -> Console:
     from rich.console import Console
 
     return Console()
+
+
+def _parse_apps_argument(apps: str | None) -> list[str] | None:
+    if apps is None:
+        return None
+    app_names = [name.strip() for name in apps.split(",") if name.strip()]
+    return app_names or None
 
 
 def _resolve_report_view(view: ReportView | None, summarize: bool) -> ReportView:
@@ -51,7 +50,7 @@ def scan(
     ] = None,
 ) -> None:
     def run_scan(apps: str | None, path: Path | None, record: bool | None) -> None:
-        from stackops.jobs.installer.checks.security_helper import parse_apps_argument, scan_single_path
+        from stackops.jobs.installer.checks.security_helper import scan_single_path
 
         if apps is not None and path is not None:
             raise typer.BadParameter("Use either APPS or --path, not both.")
@@ -61,7 +60,7 @@ def scan(
         else:
             from stackops.jobs.installer.checks.check_installations import scan_installed_apps
 
-            app_names = parse_apps_argument(apps)
+            app_names = _parse_apps_argument(apps)
             scan_installed_apps(app_names, write_reports_to_repo=resolved_record)
 
     from stackops.utils.code import run_lambda_function
@@ -70,6 +69,7 @@ def scan(
 
 
 def _build_apps_table(apps_to_scan: list[tuple[Path, str | None]]) -> Table:
+    import stackops.utils.path_core as path_core
     from rich.table import Table
 
     table = Table(title="Installed CLI Apps", show_lines=False)
@@ -84,7 +84,7 @@ def _build_apps_table(apps_to_scan: list[tuple[Path, str | None]]) -> Table:
 def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None) -> None:
     from stackops.jobs.installer.checks.check_installations import collect_apps_to_scan
 
-    apps_names = parse_apps_argument(apps)
+    apps_names = _parse_apps_argument(apps)
     apps_to_scan = collect_apps_to_scan(apps_names)
     if not apps_to_scan:
         if apps_names is None:
@@ -114,7 +114,8 @@ def download(url: Annotated[str, typer.Argument(..., help="Google Drive URL or f
 def install(name: Annotated[str, typer.Argument(..., help="App name from app metadata report or 'essentials'")]) -> None:
     from stackops.jobs.installer.checks.install_utils import download_safe_apps
 
-    download_safe_apps(name)
+    if not download_safe_apps(name):
+        raise typer.Exit(code=1)
 
 
 def summary() -> None:
@@ -131,49 +132,64 @@ def report(
     ] = "table",
     summarize: Annotated[bool, typer.Option("--summarize/--full", hidden=True)] = False,
 ) -> None:
-    from stackops.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH
-    from stackops.jobs.installer.checks.report_utils import (
-        APP_METADATA_KEYS,
-        ENGINE_REPORT_KEYS,
-        build_engine_results_table,
-        build_summary_group,
-    )
-
     resolved_view = _resolve_report_view(view, summarize)
     if resolved_view == "options":
+        from stackops.jobs.installer.checks.security_helper import build_report_options_text
+
         _console().print(build_report_options_text())
         return
     if resolved_view not in {"apps", "engines"} and format_type != "table":
         raise typer.BadParameter("--format csv is only supported with --view apps or --view engines.")
 
-    apps_names = parse_apps_argument(apps)
+    from stackops.jobs.installer.checks.security_helper import (
+        load_filtered_report_rows,
+        normalize_app_names,
+    )
+
+    apps_names = _parse_apps_argument(apps)
     normalized_app_names = normalize_app_names(apps_names)
     app_rows, engine_rows, app_data_list, hydrated_engine_rows = load_filtered_report_rows(normalized_app_names)
 
     if resolved_view == "stats":
+        from stackops.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH
+        from stackops.jobs.installer.checks.security_helper import build_report_stats_lines
+
         if not app_data_list:
             raise typer.Exit(code=1)
         for line in build_report_stats_lines(app_data_list, APP_METADATA_PATH, ENGINE_RESULTS_PATH):
             _console().print(line)
         return
     if resolved_view == "app-summary":
+        from stackops.jobs.installer.checks.report_utils import build_summary_group
+
         if not app_data_list:
             raise typer.Exit(code=1)
         _console().print(build_summary_group(app_data_list))
         return
     if resolved_view == "apps":
+        from stackops.jobs.installer.checks.report_utils import APP_METADATA_KEYS
+
         if not app_rows:
             raise typer.Exit(code=1)
         if format_type == "csv":
+            from stackops.jobs.installer.checks.security_helper import render_csv_text
+
             _console().print(render_csv_text(app_rows, APP_METADATA_KEYS))
             return
+        from stackops.jobs.installer.checks.security_helper import build_raw_csv_table
+
         _console().print(build_raw_csv_table("App Metadata CSV", app_rows, APP_METADATA_KEYS))
         return
     if not engine_rows:
         raise typer.Exit(code=1)
     if format_type == "csv":
+        from stackops.jobs.installer.checks.report_utils import ENGINE_REPORT_KEYS
+        from stackops.jobs.installer.checks.security_helper import render_csv_text
+
         _console().print(render_csv_text(engine_rows, ENGINE_REPORT_KEYS))
         return
+    from stackops.jobs.installer.checks.report_utils import build_engine_results_table
+
     _console().print(build_engine_results_table(hydrated_engine_rows))
 
 
@@ -182,8 +198,8 @@ def get_app() -> typer.Typer:
 
     app.command(name="scan", help="<s> Scan installed apps or a single file path with VirusTotal", no_args_is_help=True)(scan)
     app.command(name="s", help="<s> Scan installed apps or a single file path with VirusTotal", hidden=True, no_args_is_help=True)(scan)
-    app.command(name="list", help="<l> List installed apps, optionally filtered by comma-separated app names", no_args_is_help=True)(list_apps)
-    app.command(name="l", help="<l> List installed apps, optionally filtered by comma-separated app names", hidden=True, no_args_is_help=True)(list_apps)
+    app.command(name="list", help="<l> List installed apps, optionally filtered by comma-separated app names")(list_apps)
+    app.command(name="l", help="<l> List installed apps, optionally filtered by comma-separated app names", hidden=True)(list_apps)
     app.command(name="upload", help="<u> Upload a local file to cloud storage", no_args_is_help=True)(upload)
     app.command(name="u", help="<u> Upload a local file to cloud storage", hidden=True, no_args_is_help=True)(upload)
     app.command(name="download", help="<d> Download a file from Google Drive", no_args_is_help=True)(download)

@@ -12,6 +12,17 @@ def _resolve_directory(directory: str | None) -> Path:
     return Path(directory).expanduser().absolute().resolve()
 
 
+def _resolve_spec_path(spec_path: Path) -> Path:
+    resolved_spec_path = spec_path.expanduser().absolute().resolve()
+    if not resolved_spec_path.exists():
+        typer.echo(f"❌ Specification file not found: {resolved_spec_path}. Ensure this file exists or provide it explicitly using --specs-path.")
+        raise typer.Exit(code=1)
+    if not resolved_spec_path.is_file():
+        typer.echo(f"❌ Specification path is not a file: {resolved_spec_path}")
+        raise typer.Exit(code=1)
+    return resolved_spec_path
+
+
 def action(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
@@ -46,7 +57,7 @@ def clone(
         bool, typer.Option("--checkout-to-commit", "-ctc", help="Check out specific commits listed in the specification.")
     ] = False,
     checkout_to_branch: Annotated[
-        bool, typer.Option("--checkout-to-branch", "-ctb", help="Check out to the main branch defined in the specification.")
+        bool, typer.Option("--checkout-to-branch", "-ctb", help="Check out the branch recorded in the specification.")
     ] = False,
 ) -> None:
     """📥 Clone repositories described by a repos.json specification."""
@@ -62,7 +73,6 @@ def clone(
         from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import (
             BACKUP_ROOT_PRIVATE,
             BACKUP_ROOT_PUBLIC,
-            get_original_path_from_backup_path,
         )
 
         results_public = list(BACKUP_ROOT_PUBLIC.rglob("repos.json"))
@@ -83,16 +93,8 @@ def clone(
             print("❓ Selection cancelled. No repositories were cloned.")
             return
         for file in chosen_files:
-            if str(file).startswith(str(BACKUP_ROOT_PRIVATE)):
-                original_path = get_original_path_from_backup_path(Path(file), sensitivity="private", destination=None, shared=False)
-            else:
-                original_path = get_original_path_from_backup_path(Path(file), sensitivity="public", destination=None, shared=False)
             typer.echo("\n📥 Cloning or checking out repositories...")
-            dir_obj = _resolve_directory(str(original_path))
-            spec_path_default = dir_obj.joinpath("repos.json")
-            from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path
-
-            spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
+            spec_path_self_managed = _resolve_spec_path(Path(file))
             from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
 
             results = clone_repos(
@@ -106,16 +108,27 @@ def clone(
             raise typer.Exit(code=1)
         return
     if specs_path is not None:
-        spec_path_self_managed = Path(specs_path).expanduser().absolute()
+        spec_path_self_managed = _resolve_spec_path(Path(specs_path))
     else:
         dir_obj = _resolve_directory(directory)
+        if not dir_obj.exists():
+            typer.echo(f"❌ Path does not exist: {dir_obj}")
+            raise typer.Exit(code=1)
+        if not dir_obj.is_dir():
+            typer.echo(f"❌ Path is not a directory: {dir_obj}")
+            raise typer.Exit(code=1)
         spec_path_default = dir_obj.joinpath("repos.json")
         from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path
 
-        spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
-        if not spec_path_self_managed.exists():
-            print(f"❌ Specification file not found: {spec_path_self_managed}. Ensure this file exists or provide it explicitly using --specs-path.")
+        managed_spec_path = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
+        if not managed_spec_path.exists():
+            typer.echo(
+                f"❌ Specification file not found: {managed_spec_path}. "
+                f"Expected a recorded spec for {dir_obj}. "
+                "Use devops repos sync --specs-path <path> to target a spec explicitly."
+            )
             raise typer.Exit(code=1)
+        spec_path_self_managed = _resolve_spec_path(managed_spec_path)
     from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
 
     results = clone_repos(
@@ -131,7 +144,7 @@ def checkout_command(directory: Annotated[str | None, typer.Argument(help="📁 
 
 
 def checkout_to_branch_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
-    """🔀 Check out to the main branch defined in the specification."""
+    """🔀 Check out the branch recorded in the specification."""
     clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True)
 
 
@@ -141,9 +154,28 @@ def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(help="Path to t
     # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)
     # from stackops.utils.code import run_lambda_function
     # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops>=8.98"])
+    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
+    if not resolved_repo_path.exists():
+        typer.echo(f"❌ Repository path does not exist: {resolved_repo_path}", err=True)
+        raise typer.Exit(code=1)
+    if not resolved_repo_path.is_dir():
+        typer.echo(f"❌ Repository path is not a directory: {resolved_repo_path}", err=True)
+        raise typer.Exit(code=1)
+
+    from git import InvalidGitRepositoryError, Repo
+
+    try:
+        repo = Repo(resolved_repo_path)
+    except InvalidGitRepositoryError as exc:
+        typer.echo(f"❌ {resolved_repo_path} is not within a git repository. Pass a path inside a git repo and retry.", err=True)
+        raise typer.Exit(code=1) from exc
+
+    if repo.bare or repo.working_tree_dir is None:
+        typer.echo(f"❌ {resolved_repo_path} is inside a bare git repository. Pass a working tree path and retry.", err=True)
+        raise typer.Exit(code=1)
+
     from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
 
-    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
     try:
         repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix())
     except Exception as exc:
@@ -304,7 +336,9 @@ uv run --no-project --with cleanpy cleanpy .
 """
         from stackops.utils.code import run_shell_script
 
-        run_shell_script(script, display_script=True, clean_env=False)
+        result = run_shell_script(script, display_script=True, clean_env=False)
+        if result.returncode != 0:
+            raise typer.Exit(code=result.returncode)
 
 
 def config_linters(
@@ -357,8 +391,18 @@ def config_linters(
         if not source.exists():
             typer.echo(f"❌ Linter template not found: {source}")
             raise typer.Exit(code=1)
+        template_content = source.read_text(encoding="utf-8")
         destination = repo_root.joinpath(file_name)
-        destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        if destination.exists():
+            if not destination.is_file():
+                typer.echo(f"❌ Refusing to overwrite non-file path: {destination}")
+                raise typer.Exit(code=1)
+            if destination.read_text(encoding="utf-8") == template_content:
+                typer.echo(f"ℹ️ {file_name} already matches the template in {repo_root}")
+                continue
+            typer.echo(f"❌ Refusing to overwrite existing {file_name} in {repo_root}. Remove it or update it manually.")
+            raise typer.Exit(code=1)
+        destination.write_text(template_content, encoding="utf-8")
         typer.echo(f"✅ Added {file_name} to {repo_root}")
 
 
@@ -375,7 +419,7 @@ def get_app():
     repos_apps.command(name="ctc", help="Check out specific commits listed in the specification", hidden=True)(checkout_command)
 
     repos_apps.command(name="checkout-to-branch", help="🔀 [ctb] Deprecated: use sync --checkout-to-branch", hidden=True)(checkout_to_branch_command)
-    repos_apps.command(name="ctb", help="Check out to the main branch defined in the specification", hidden=True)(checkout_to_branch_command)
+    repos_apps.command(name="ctb", help="Check out the branch recorded in the specification", hidden=True)(checkout_to_branch_command)
 
     repos_apps.command(name="action", help="🔄 <a> Run pull/commit/push actions across repositories", no_args_is_help=True)(action)
     repos_apps.command(name="a", help="Run pull/commit/push actions across repositories", hidden=True, no_args_is_help=True)(action)

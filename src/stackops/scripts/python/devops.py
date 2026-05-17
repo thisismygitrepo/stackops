@@ -72,7 +72,7 @@ def config(ctx: typer.Context) -> None:
     """⚙️ <c> Configuration management"""
     from stackops.scripts.python.helpers.helpers_devops import cli_config
 
-    cli_config.get_app()(ctx.args, standalone_mode=False)
+    cli_config.get_app()(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 
 
 def data(ctx: typer.Context) -> None:

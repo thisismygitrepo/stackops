@@ -3,9 +3,17 @@
 Submodules are only imported when their commands are actually invoked, not at startup.
 This makes `stackops --help` much faster by avoiding loading heavy dependencies.
 """
+from collections.abc import Callable
 from typing import Annotated
+
 import typer
 from stackops.scripts.python.enums import BACKENDS_LOOSE
+
+
+def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) -> None:
+    nested_result: object = app_factory()(ctx.args, standalone_mode=not ctx.args)
+    if isinstance(nested_result, int):
+        raise typer.Exit(code=nested_result)
 
 
 def fire(
@@ -68,37 +76,43 @@ def croshell(
 def devops(ctx: typer.Context) -> None:
     """<d> DevOps related commands."""
     from stackops.scripts.python.devops import get_app as get_app_devops
-    get_app_devops()(ctx.args, standalone_mode=not ctx.args)
+
+    _run_nested_app(ctx, get_app_devops)
 
 
 def cloud(ctx: typer.Context) -> None:
     """<c> Cloud management commands."""
     from stackops.scripts.python.cloud import get_app as get_app_cloud
-    get_app_cloud()(ctx.args, standalone_mode=not ctx.args)
+
+    _run_nested_app(ctx, get_app_cloud)
 
 
 def terminal(ctx: typer.Context) -> None:
     """<t> Terminal and layout management."""
     from stackops.scripts.python.terminal import get_app as get_app_terminal
-    get_app_terminal()(ctx.args, standalone_mode=not ctx.args)
+
+    _run_nested_app(ctx, get_app_terminal)
 
 
 def agents(ctx: typer.Context) -> None:
     """<a> 🤖 AI Agents management commands."""
     from stackops.scripts.python.agents import get_app as get_app_agents
-    get_app_agents()(ctx.args, standalone_mode=not ctx.args)
+
+    _run_nested_app(ctx, get_app_agents)
 
 
 def utils(ctx: typer.Context) -> None:
     """<u> Utility commands."""
     from stackops.scripts.python.utils import get_app as get_app_utils
-    get_app_utils()(ctx.args, standalone_mode=not ctx.args)
+
+    _run_nested_app(ctx, get_app_utils)
 
 
 def seek(ctx: typer.Context) -> None:
     """<s> Search across files, text matches, and code symbols."""
     from stackops.scripts.python.seek import get_app as get_app_seek
-    get_app_seek()(ctx.args, standalone_mode=not ctx.args)
+
+    _run_nested_app(ctx, get_app_seek)
 
 
 

@@ -105,7 +105,7 @@ def run_all(
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.")] = "error",
+    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.")] = "error",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
     """Run every tab from every layout in a layout configuration file at a controlled pace.
@@ -120,6 +120,13 @@ def run_all(
         raise typer.Exit(code=1)
 
     on_conflict = SessionConflictActionLoose2Strict[on_conflict]
+    if on_conflict in {"mergeOverwrite", "mergeSkip"}:
+        typer.echo(
+            "Error: --on-conflict mergeOverwrite and mergeSkip are not supported for run-all because the dynamic scheduler requires exclusive control of the session.",
+            err=True,
+            color=True,
+        )
+        raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl
     impl(
         ctx=ctx,
@@ -142,6 +149,15 @@ def attach_to_session(
         backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
     """Choose a session or deeper target to attach to."""
+    if name is not None and new_session:
+        typer.echo("Error: NAME cannot be used together with --new-session.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if name is not None and kill_all:
+        typer.echo("Error: NAME cannot be used together with --kill-all.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if name is not None and window:
+        typer.echo("Error: NAME cannot be used together with --window.", err=True, color=True)
+        raise typer.Exit(code=1)
     backend_resolved = _resolve_session_backend(backend)
     from stackops.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl
     action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)
@@ -163,7 +179,7 @@ def attach_to_session(
 def kill_session_target(
         name: Annotated[str | None, typer.Argument(help="Name of the session to kill. If not provided, a list will be shown to choose from.")] = None,
         kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions.", show_default=True)] = False,
-        window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser.", show_default=True)] = False,
+        window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
         backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
     """Choose one or more session targets to kill."""
@@ -173,6 +189,9 @@ def kill_session_target(
     if kill_all and window:
         typer.echo("Error: --all cannot be used together with --window.", err=True, color=True)
         raise typer.Exit(code=1)
+    if name is not None and window:
+        typer.echo("Error: --window can only be used when NAME is omitted.", err=True, color=True)
+        raise typer.Exit(code=1)
     backend_resolved = _resolve_session_backend(backend)
     from stackops.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl
 
@@ -180,24 +199,31 @@ def kill_session_target(
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit(code=1)
-    if backend_resolved == "tmux" and action == "run_script" and payload:
-        from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
-            run_tmux_script,
-        )
-
-        try:
-            run_tmux_script(
-                script=payload,
-                timeout_seconds=30.0,
+    if action == "run_script":
+        if payload is None or payload.strip() == "":
+            typer.echo("Error: kill operation did not return a final script.", err=True, color=True)
+            raise typer.Exit(code=1)
+        script = payload
+        if backend_resolved == "tmux":
+            from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
+                run_tmux_script,
             )
-            return
-        except RuntimeError as error:
-            typer.echo(f"Error: {error}", err=True, color=True)
-            raise typer.Exit(code=1) from error
-    if action == "run_script" and payload:
+
+            try:
+                run_tmux_script(
+                    script=script,
+                    timeout_seconds=30.0,
+                )
+                return
+            except RuntimeError as error:
+                typer.echo(f"Error: {error}", err=True, color=True)
+                raise typer.Exit(code=1) from error
         from stackops.utils.code import exit_then_run_shell_script
 
-        exit_then_run_shell_script(script=payload, strict=True)
+        exit_then_run_shell_script(script=script, strict=True)
+        return
+    typer.echo("Error: kill operation did not return a final script.", err=True, color=True)
+    raise typer.Exit(code=1)
 
 
 

@@ -88,7 +88,7 @@ def _build_framework_config(repo_root: Path, framework: AGENTS, add_private_conf
         case "pi":
             pi.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case _:
-            print(ValueError(f"Unsupported framework: {framework}"))
+            raise ValueError(f"Unsupported agent configuration target: {framework}")
 
 
 def add_ai_configs(

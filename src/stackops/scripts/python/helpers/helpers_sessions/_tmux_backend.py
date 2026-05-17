@@ -80,11 +80,12 @@ def choose_session(
         if len(option_to_script) == 1:
             return ("handoff_script", next(iter(option_to_script.values())))
         options_to_preview_mapping[NEW_SESSION_LABEL] = (
-            f"backend: tmux\naction: create a fresh session\n\n{new_session_script(kill_all=False)}"
+            f"backend: tmux\naction: create a fresh session\n\n{new_session_script(kill_all=kill_all)}"
         )
-        options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
-            f"backend: tmux\naction: kill the tmux server, then start a new session\n\n{new_session_script(kill_all=True)}"
-        )
+        if not kill_all:
+            options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
+                f"backend: tmux\naction: kill the tmux server, then start a new session\n\n{new_session_script(kill_all=True)}"
+            )
         selection = interactive_choose_with_preview(
             msg="Choose a tmux window or pane to attach to:",
             options_to_preview_mapping=options_to_preview_mapping,
@@ -102,11 +103,12 @@ def choose_session(
 
     options_to_preview_mapping = {session_name: _build_preview(session_name) for session_name in sessions}
     options_to_preview_mapping[NEW_SESSION_LABEL] = (
-        f"backend: tmux\naction: create a fresh session\n\n{new_session_script(kill_all=False)}"
+        f"backend: tmux\naction: create a fresh session\n\n{new_session_script(kill_all=kill_all)}"
     )
-    options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
-        f"backend: tmux\naction: kill the tmux server, then start a new session\n\n{new_session_script(kill_all=True)}"
-    )
+    if not kill_all:
+        options_to_preview_mapping[KILL_ALL_AND_NEW_LABEL] = (
+            f"backend: tmux\naction: kill the tmux server, then start a new session\n\n{new_session_script(kill_all=True)}"
+        )
     session_name = interactive_choose_with_preview(
         msg="Choose a tmux session to attach to:",
         options_to_preview_mapping=options_to_preview_mapping,

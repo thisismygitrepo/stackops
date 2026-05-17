@@ -55,6 +55,7 @@ def test_update_docs_runs_agents_create_from_repo_root(monkeypatch, tmp_path: Pa
         join_prompt_and_context: object,
         output_path: object,
         agents_dir: object,
+        save_as_yaml: object,
         host: object,
         reasoning: object,
         provider: object,
@@ -74,6 +75,7 @@ def test_update_docs_runs_agents_create_from_repo_root(monkeypatch, tmp_path: Pa
             join_prompt_and_context,
             output_path,
             agents_dir,
+            save_as_yaml,
             host,
             reasoning,
             provider,
@@ -96,3 +98,72 @@ def test_update_docs_runs_agents_create_from_repo_root(monkeypatch, tmp_path: Pa
     assert (repo_root / ".ai" / "agents" / update_docs_module.DEFAULT_DOCS_JOB_NAME / "context.md").read_text(encoding="utf-8") == (
         "docs/cli/devops.md"
     )
+
+
+def test_update_docs_resolves_relative_paths_from_repo_root(monkeypatch, tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    repo_root.joinpath("pyproject.toml").write_text("[project]\nname = 'stackops'\n", encoding="utf-8")
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    captured_values: dict[str, Path] = {}
+
+    def fake_build_docs_context(*, repo_root: Path) -> str:
+        del repo_root
+        return "docs/cli/devops.md"
+
+    def fake_agents_create_impl(
+        *,
+        agent: object,
+        model: object,
+        agent_load: object,
+        context: object,
+        context_path: object,
+        separator: object,
+        prompt: object,
+        prompt_path: object,
+        prompt_name: object,
+        job_name: object,
+        join_prompt_and_context: object,
+        output_path: object,
+        agents_dir: object,
+        save_as_yaml: object,
+        host: object,
+        reasoning: object,
+        provider: object,
+        interactive: object,
+        run: object,
+    ) -> None:
+        del (
+            agent,
+            model,
+            agent_load,
+            context,
+            context_path,
+            separator,
+            prompt,
+            prompt_path,
+            prompt_name,
+            job_name,
+            join_prompt_and_context,
+            save_as_yaml,
+            host,
+            reasoning,
+            provider,
+            interactive,
+            run,
+        )
+        captured_values["agents_dir"] = Path(str(agents_dir))
+        captured_values["output_path"] = Path(str(output_path))
+
+    monkeypatch.setattr(update_docs_module, "get_developer_repo_root", lambda: repo_root)
+    monkeypatch.setattr(update_docs_module, "_build_docs_context", fake_build_docs_context)
+    monkeypatch.setattr(update_docs_module, "agents_create_impl", fake_agents_create_impl)
+    monkeypatch.chdir(outside_dir)
+
+    update_docs_module.update_docs(agents_dir="relative/agents", output_path="relative/layout.json")
+
+    assert captured_values["agents_dir"] == repo_root / "relative" / "agents"
+    assert captured_values["output_path"] == repo_root / "relative" / "layout.json"
+    assert (repo_root / "relative" / "agents" / "context.md").read_text(encoding="utf-8") == "docs/cli/devops.md"
+    assert not (outside_dir / "relative" / "agents" / "context.md").exists()

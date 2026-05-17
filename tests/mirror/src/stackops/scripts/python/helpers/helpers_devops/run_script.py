@@ -69,3 +69,40 @@ def test_execute_uses_selector_for_ambiguous_matches_when_interactive(
     assert result.exit_code == 0
     assert captured_options == [[str(selected_script), str(repo_scripts.joinpath("build_web.sh"))]]
     assert executed_scripts == [str(selected_script)]
+
+
+def test_execute_relative_python_file_uses_resolved_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    direct_script = tmp_path.joinpath("tools", "hello.py")
+    direct_script.parent.mkdir()
+    direct_script.write_text("print('hello')\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    captured_python_files: list[str] = []
+    executed_scripts: list[str] = []
+
+    def fake_get_uv_command_executing_python_file(
+        *,
+        python_file: str,
+        uv_with: list[str] | None,
+        uv_project_dir: str | None,
+        prepend_print: bool,
+    ) -> str:
+        _ = uv_with, uv_project_dir, prepend_print
+        captured_python_files.append(python_file)
+        return "echo direct-python"
+
+    def fake_exit_then_run_shell_script(*, script: str, strict: bool = False) -> None:
+        _ = strict
+        executed_scripts.append(script)
+
+    monkeypatch.setattr("stackops.utils.code.get_uv_command_executing_python_file", fake_get_uv_command_executing_python_file)
+    monkeypatch.setattr("stackops.utils.code.exit_then_run_shell_script", fake_exit_then_run_shell_script)
+
+    result = CliRunner().invoke(devops_app.get_app(), ["execute", "tools/hello.py"])
+
+    assert result.exit_code == 0
+    assert captured_python_files == [str(direct_script.resolve())]
+    assert executed_scripts == ["echo direct-python"]
