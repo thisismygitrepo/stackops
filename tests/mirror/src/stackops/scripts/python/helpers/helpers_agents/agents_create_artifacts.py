@@ -52,7 +52,7 @@ def test_write_create_artifacts_writes_multiline_recreate_script_on_posix(monkey
         reasoning_effort="high",
         provider="openai",
         agent_load=3,
-        stutter_max=4.25,
+        stagger_max=4.25,
         separator="\n@-@\n",
         prompt=agents_create_artifacts.CreatePromptArtifactsInput(
             source_kind="file_path", source_path=tmp_path / "prompt.md", source_name=None, content="prompt text"
@@ -72,7 +72,7 @@ def test_write_create_artifacts_writes_multiline_recreate_script_on_posix(monkey
     assert f"cd {tmp_path} && \\" in payload
     assert "    uv run agents parallel create \\" in payload
     assert "    --agent codex \\" in payload
-    assert "    --stutter-max 4.25 \\" in payload
+    assert "    --stagger-max 4.25 \\" in payload
     assert "    --prompt-path prompt.md \\" in payload
     assert "    --context-path context.md \\" in payload
     assert "    --job-name job" in payload

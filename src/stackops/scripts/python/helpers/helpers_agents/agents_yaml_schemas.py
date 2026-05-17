@@ -91,7 +91,7 @@ def _parallel_yaml_schema() -> JsonObject:
                     "context_path": _nullable_string_schema(description="Path to a context file."),
                     "separator": _nullable_string_schema(description="Escaped separator used to split context chunks."),
                     "agent_load": {"description": "Number of parallel agents to generate.", "type": ["integer", "null"], "minimum": 1},
-                    "stutter_max": {"description": "Maximum random startup stagger delay in seconds.", "type": ["number", "null"], "minimum": 0},
+                    "stagger_max": {"description": "Maximum random startup stagger delay in seconds.", "type": ["number", "null"], "minimum": 0},
                     "prompt": _nullable_string_schema(description="Inline prompt sent to each generated agent."),
                     "prompt_path": _nullable_string_schema(description="Path to a prompt file."),
                     "prompt_name": _nullable_string_schema(description="Named prompt from prompts.yaml."),

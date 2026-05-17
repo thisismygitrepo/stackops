@@ -22,7 +22,7 @@ EditableCreateOption: TypeAlias = Literal[
     "host",
     "model",
     "agent_load",
-    "stutter_max",
+    "stagger_max",
     "job_name",
     "reasoning_effort",
     "provider",
@@ -38,7 +38,7 @@ class InteractiveCreateReviewOptions:
     host: HOST
     model: str | None
     agent_load: int
-    stutter_max: float
+    stagger_max: float
     job_name: str
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
@@ -53,7 +53,7 @@ class _CreateOptionsFormSelection:
     host: HOST
     model: str | None
     agent_load: int
-    stutter_max: float
+    stagger_max: float
     job_name: str
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
@@ -96,7 +96,7 @@ def _format_agent_load_value(value: int) -> str:
     return str(value)
 
 
-def _format_stutter_max_value(value: float) -> str:
+def _format_stagger_max_value(value: float) -> str:
     return f"{value:g}"
 
 
@@ -136,7 +136,7 @@ def _build_review_option_labels(
     host: HOST,
     model: str | None,
     agent_load: int,
-    stutter_max: float,
+    stagger_max: float,
     job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -149,7 +149,7 @@ def _build_review_option_labels(
         "host": f"host = {host}",
         "model": f"model = {_format_model_value(model)}",
         "agent_load": f"agent_load = {_format_agent_load_value(agent_load)}",
-        "stutter_max": f"stutter_max = {_format_stutter_max_value(stutter_max)}",
+        "stagger_max": f"stagger_max = {_format_stagger_max_value(stagger_max)}",
         "job_name": f"job_name = {_format_job_name_value(job_name)}",
         "reasoning_effort": f"reasoning_effort = {_format_reasoning_effort_value(agent=agent, value=reasoning_effort)}",
         "provider": f"provider = {_format_provider_value(agent=agent, value=provider)}",
@@ -178,7 +178,7 @@ def _build_create_options_form(
     host: HOST,
     model: str | None,
     agent_load: int,
-    stutter_max: float,
+    stagger_max: float,
     job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -201,7 +201,7 @@ def _build_create_options_form(
         host=host,
         model=model,
         agent_load=agent_load,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
         job_name=job_name,
         reasoning_effort=reasoning_effort,
         provider=provider,
@@ -222,8 +222,8 @@ def _build_create_options_form(
         ),
         review_options["model"]: _text_option_spec(default=model, allow_blank=True, placeholder="Leave blank to use the agent default model"),
         review_options["agent_load"]: _text_option_spec(default=str(agent_load), allow_blank=False, placeholder="Enter a positive integer"),
-        review_options["stutter_max"]: _text_option_spec(
-            default=_format_stutter_max_value(stutter_max), allow_blank=False, placeholder="Enter a non-negative number of seconds"
+        review_options["stagger_max"]: _text_option_spec(
+            default=_format_stagger_max_value(stagger_max), allow_blank=False, placeholder="Enter a non-negative number of seconds"
         ),
         review_options["job_name"]: _text_option_spec(default=job_name, allow_blank=False, placeholder="Enter the job name"),
         review_options["reasoning_effort"]: _select_option_spec(default=reasoning_effort, options=reasoning_options),
@@ -312,7 +312,7 @@ def _collect_create_options_form_selection(
     host: HOST,
     model: str | None,
     agent_load: int,
-    stutter_max: float,
+    stagger_max: float,
     job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -326,7 +326,7 @@ def _collect_create_options_form_selection(
         host=host,
         model=model,
         agent_load=agent_load,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
         job_name=job_name,
         reasoning_effort=reasoning_effort,
         provider=provider,
@@ -343,7 +343,7 @@ def _collect_create_options_form_selection(
                 host=host,
                 model=model,
                 agent_load=agent_load,
-                stutter_max=stutter_max,
+                stagger_max=stagger_max,
                 job_name=job_name,
                 reasoning_effort=reasoning_effort,
                 provider=provider,
@@ -359,7 +359,7 @@ def _collect_create_options_form_selection(
         host=_require_choice(selected_values=selected_values, key=review_options["host"], options=cast(tuple[HOST, ...], get_args(HOST))),
         model=_require_optional_text_value(selected_values=selected_values, key=review_options["model"]),
         agent_load=_require_positive_int_value(selected_values=selected_values, key=review_options["agent_load"]),
-        stutter_max=_require_non_negative_float_value(selected_values=selected_values, key=review_options["stutter_max"]),
+        stagger_max=_require_non_negative_float_value(selected_values=selected_values, key=review_options["stagger_max"]),
         job_name=_require_non_blank_text_value(selected_values=selected_values, key=review_options["job_name"]),
         reasoning_effort=_require_optional_choice(
             selected_values=selected_values, key=review_options["reasoning_effort"], options=reasoning_support(agent=agent).efforts
@@ -378,7 +378,7 @@ def collect_reviewed_create_options(
     host: HOST,
     model: str | None,
     agent_load: int,
-    stutter_max: float,
+    stagger_max: float,
     job_name: str,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -396,7 +396,7 @@ def collect_reviewed_create_options(
         host=host,
         model=model,
         agent_load=agent_load,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
         job_name=job_name,
         reasoning_effort=reasoning_current,
         provider=provider_current,
@@ -410,7 +410,7 @@ def collect_reviewed_create_options(
         host=selection.host,
         model=selection.model,
         agent_load=selection.agent_load,
-        stutter_max=selection.stutter_max,
+        stagger_max=selection.stagger_max,
         job_name=selection.job_name,
         reasoning_effort=selection.reasoning_effort,
         provider=selection.provider,

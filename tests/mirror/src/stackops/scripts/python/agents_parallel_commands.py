@@ -27,7 +27,7 @@ def test_agents_create_passes_save_as_yaml_to_impl(monkeypatch: pytest.MonkeyPat
         reasoning: str | None,
         provider: str | None,
         interactive: bool,
-        stutter_max: float,
+        stagger_max: float,
     ) -> None:
         _ = (
             agent,
@@ -48,7 +48,7 @@ def test_agents_create_passes_save_as_yaml_to_impl(monkeypatch: pytest.MonkeyPat
             reasoning,
             provider,
             interactive,
-            stutter_max,
+            stagger_max,
         )
         captured_values.append(save_as_yaml)
 
@@ -64,7 +64,7 @@ def test_agents_create_passes_save_as_yaml_to_impl(monkeypatch: pytest.MonkeyPat
         context_path="context.md",
         separator="\\n@-@\\n",
         agent_load=3,
-        stutter_max=4.5,
+        stagger_max=4.5,
         prompt=None,
         prompt_path="prompt.md",
         prompt_name=None,

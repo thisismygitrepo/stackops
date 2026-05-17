@@ -62,7 +62,7 @@ def test_build_parallel_yaml_entry_uses_run_parallel_shape(tmp_path: Path) -> No
         context_path=str(tmp_path / ".ai" / "agents" / "docs" / "context.md"),
         separator="\n@-@\n",
         agent_load=4,
-        stutter_max=6.25,
+        stagger_max=6.25,
         prompt=None,
         prompt_path=str(tmp_path / ".ai" / "prompts" / "update.md"),
         prompt_name=None,
@@ -83,7 +83,7 @@ def test_build_parallel_yaml_entry_uses_run_parallel_shape(tmp_path: Path) -> No
         "context_path": "./.ai/agents/docs/context.md",
         "separator": "\\n@-@\\n",
         "agent_load": 4,
-        "stutter_max": 6.25,
+        "stagger_max": 6.25,
         "prompt": None,
         "prompt_path": "./.ai/prompts/update.md",
         "prompt_name": None,
@@ -108,7 +108,7 @@ def test_save_parallel_yaml_entry_writes_job_name_key(tmp_path: Path) -> None:
         context_path=None,
         separator="\n@-@\n",
         agent_load=3,
-        stutter_max=2.5,
+        stagger_max=2.5,
         prompt="prompt text",
         prompt_path=None,
         prompt_name=None,
@@ -124,7 +124,7 @@ def test_save_parallel_yaml_entry_writes_job_name_key(tmp_path: Path) -> None:
     assert isinstance(loaded_yaml, dict)
     assert loaded_yaml["updateDocs"]["job_name"] == "updateDocs"
     assert loaded_yaml["updateDocs"]["separator"] == "\\n@-@\\n"
-    assert loaded_yaml["updateDocs"]["stutter_max"] == 2.5
+    assert loaded_yaml["updateDocs"]["stagger_max"] == 2.5
     assert loaded_yaml["updateDocs"]["context"] == "context text"
     assert loaded_yaml["updateDocs"]["prompt"] == "prompt text"
     assert loaded_yaml["updateDocs"]["interactive"] is False

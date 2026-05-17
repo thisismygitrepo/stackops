@@ -1,6 +1,6 @@
 from typing import Final, TypedDict
 
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STUTTER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -20,7 +20,7 @@ class ParallelCreateYamlEntry(TypedDict):
     context_path: str | None
     separator: str | None
     agent_load: int | None
-    stutter_max: float | None
+    stagger_max: float | None
     prompt: str | None
     prompt_path: str | None
     prompt_name: str | None
@@ -43,7 +43,7 @@ PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY: Final[ParallelCreateYamlEntry] = {
     "context_path": None,
     "separator": _ESCAPED_DEFAULT_SEPARATOR,
     "agent_load": 3,
-    "stutter_max": DEFAULT_STUTTER_MAX,
+    "stagger_max": DEFAULT_STAGGER_MAX,
     "prompt": None,
     "prompt_path": None,
     "prompt_name": None,

@@ -37,7 +37,7 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
         "context_path": _optional_string(mapping=raw_mapping, key="context_path"),
         "separator": _optional_string(mapping=raw_mapping, key="separator"),
         "agent_load": _optional_int(mapping=raw_mapping, key="agent_load"),
-        "stutter_max": _optional_float(mapping=raw_mapping, key="stutter_max"),
+        "stagger_max": _optional_float(mapping=raw_mapping, key="stagger_max"),
         "prompt": _optional_string(mapping=raw_mapping, key="prompt"),
         "prompt_path": _optional_string(mapping=raw_mapping, key="prompt_path"),
         "prompt_name": _optional_string(mapping=raw_mapping, key="prompt_name"),
@@ -59,7 +59,7 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
         context_path=parsed_entry["context_path"],
         separator=parsed_entry["separator"],
         agent_load=parsed_entry["agent_load"],
-        stutter_max=parsed_entry["stutter_max"],
+        stagger_max=parsed_entry["stagger_max"],
         prompt=parsed_entry["prompt"],
         prompt_path=parsed_entry["prompt_path"],
         prompt_name=parsed_entry["prompt_name"],
@@ -178,7 +178,7 @@ def _collect_entry_candidates(*, raw_data: object) -> dict[str, str]:
 
 def _preview_entry(*, mapping: Mapping[str, object]) -> str:
     preview_lines: list[str] = []
-    for key in ("agent", "job_name", "agent_load", "stutter_max", "prompt", "prompt_path", "prompt_name", "context", "context_path"):
+    for key in ("agent", "job_name", "agent_load", "stagger_max", "prompt", "prompt_path", "prompt_name", "context", "context_path"):
         value = mapping.get(key)
         if value is not None:
             preview_lines.append(f"{key}: {value}")

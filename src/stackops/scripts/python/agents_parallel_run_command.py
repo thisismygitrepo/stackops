@@ -46,9 +46,9 @@ def run_parallel(
         str | None, typer.Option(..., "--separator", "-s", help="Override separator for context. Supports escaped values like '\\n'.")
     ] = None,
     agent_load: Annotated[int | None, typer.Option(..., "--agent-load", "-l", help="Override number of tasks per prompt.")] = None,
-    stutter_max: Annotated[
+    stagger_max: Annotated[
         float | None,
-        typer.Option(..., "--stutter-max", "-t", min=0.0, help="Override maximum startup stagger delay, in seconds. Use 0 to disable staggering."),
+        typer.Option(..., "--stagger-max", "-g", min=0.0, help="Override maximum startup stagger delay, in seconds. Use 0 to disable staggering."),
     ] = None,
     prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Override prompt prefix as string.")] = None,
     prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Override prompt file path.")] = None,
@@ -88,7 +88,7 @@ def run_parallel(
                 context_path=context_path,
                 separator=separator,
                 agent_load=agent_load,
-                stutter_max=stutter_max,
+                stagger_max=stagger_max,
                 prompt=prompt,
                 prompt_path=prompt_path,
                 prompt_name=prompt_name,

@@ -17,7 +17,7 @@ def test_parse_parallel_create_values_accepts_reasoning_key() -> None:
         "context_path": "./context.md",
         "separator": "\\n@-@\\n",
         "agent_load": 2,
-        "stutter_max": 1.5,
+        "stagger_max": 1.5,
         "prompt": None,
         "prompt_path": "./prompt.md",
         "prompt_name": None,
@@ -38,7 +38,7 @@ def test_parse_parallel_create_values_accepts_reasoning_key() -> None:
     assert parsed.context_path == "./context.md"
     assert parsed.separator == "\\n@-@\\n"
     assert parsed.agent_load == 2
-    assert parsed.stutter_max == 1.5
+    assert parsed.stagger_max == 1.5
     assert parsed.prompt_path == "./prompt.md"
     assert parsed.job_name == "demo"
     assert parsed.join_prompt_and_context is False

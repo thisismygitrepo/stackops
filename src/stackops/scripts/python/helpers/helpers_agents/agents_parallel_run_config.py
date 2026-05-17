@@ -12,7 +12,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
     PARALLEL_YAML_TEMPLATE_ENTRY_NAME,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STUTTER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
@@ -34,7 +34,7 @@ class ParallelCreateValues:
     context_path: str | None
     separator: str | None
     agent_load: int | None
-    stutter_max: float | None
+    stagger_max: float | None
     prompt: str | None
     prompt_path: str | None
     prompt_name: str | None
@@ -57,7 +57,7 @@ class ResolvedParallelCreateValues:
     context_path: str | None
     separator: str
     agent_load: int
-    stutter_max: float
+    stagger_max: float
     prompt: str | None
     prompt_path: str | None
     prompt_name: str | None
@@ -80,7 +80,7 @@ def empty_parallel_create_values() -> ParallelCreateValues:
         context_path=None,
         separator=None,
         agent_load=None,
-        stutter_max=None,
+        stagger_max=None,
         prompt=None,
         prompt_path=None,
         prompt_name=None,
@@ -98,15 +98,15 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
     host = overrides.host if overrides.host is not None else base.host
     separator = overrides.separator if overrides.separator is not None else base.separator
     agent_load = overrides.agent_load if overrides.agent_load is not None else base.agent_load
-    stutter_max = overrides.stutter_max if overrides.stutter_max is not None else base.stutter_max
+    stagger_max = overrides.stagger_max if overrides.stagger_max is not None else base.stagger_max
     job_name = overrides.job_name if overrides.job_name is not None else base.job_name
     join_prompt_and_context = overrides.join_prompt_and_context if overrides.join_prompt_and_context is not None else base.join_prompt_and_context
     run = overrides.run if overrides.run is not None else base.run
     interactive = overrides.interactive if overrides.interactive is not None else base.interactive
     if agent_load is not None and agent_load <= 0:
         raise ValueError("agent_load must be a positive integer")
-    if stutter_max is not None and (not isfinite(stutter_max) or stutter_max < 0):
-        raise ValueError("stutter_max must be a finite number greater than or equal to 0")
+    if stagger_max is not None and (not isfinite(stagger_max) or stagger_max < 0):
+        raise ValueError("stagger_max must be a finite number greater than or equal to 0")
     resolved_separator = DEFAULT_SEAPRATOR if separator is None else separator
     return ResolvedParallelCreateValues(
         agent="codex" if agent is None else agent,
@@ -118,7 +118,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         context_path=overrides.context_path if overrides.context_path is not None else base.context_path,
         separator=decode_separator_value(separator=resolved_separator),
         agent_load=3 if agent_load is None else agent_load,
-        stutter_max=DEFAULT_STUTTER_MAX if stutter_max is None else stutter_max,
+        stagger_max=DEFAULT_STAGGER_MAX if stagger_max is None else stagger_max,
         prompt=overrides.prompt if overrides.prompt is not None else base.prompt,
         prompt_path=overrides.prompt_path if overrides.prompt_path is not None else base.prompt_path,
         prompt_name=overrides.prompt_name if overrides.prompt_name is not None else base.prompt_name,

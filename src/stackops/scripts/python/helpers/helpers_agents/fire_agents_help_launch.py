@@ -3,7 +3,7 @@ from math import isfinite
 from pathlib import Path
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, AI_SPEC, API_SPEC, DEFAULT_STUTTER_MAX
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, AI_SPEC, API_SPEC, DEFAULT_STAGGER_MAX
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig
 
@@ -87,10 +87,10 @@ def prep_agent_launch(
     agent: AGENTS,
     *,
     job_name: str,
-    stutter_max: float = DEFAULT_STUTTER_MAX,
+    stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> None:
-    if not isfinite(stutter_max) or stutter_max < 0:
-        raise ValueError("stutter_max must be a finite number greater than or equal to 0")
+    if not isfinite(stagger_max) or stagger_max < 0:
+        raise ValueError("stagger_max must be a finite number greater than or equal to 0")
 
     if agent == "codex":
         if provider is None:
@@ -117,7 +117,7 @@ def prep_agent_launch(
             prompt_path.write_text(prompt_prefix + f"""\nPlease only look at:\n{material_reference}.""" + JURISDICTION_SUFFIX, encoding="utf-8")
 
         agent_cmd_launch_path = prompt_root / agent_shell.get_agent_command_filename(idx=idx, is_windows=is_windows)
-        random_sleep_time = random.uniform(0, stutter_max)
+        random_sleep_time = random.uniform(0, stagger_max)
         ai_spec: AI_SPEC
         match agent:
             case "gemini":

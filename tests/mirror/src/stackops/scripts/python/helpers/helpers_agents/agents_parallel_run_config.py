@@ -18,6 +18,6 @@ def test_parallel_yaml_template_uses_reasoning_key_and_runtime_defaults(tmp_path
     assert "context: null" in yaml_text
     assert "context_path: null" in yaml_text
     assert "agent_load: 3" in yaml_text
-    assert "stutter_max: 3.0" in yaml_text
+    assert "stagger_max: 3.0" in yaml_text
     assert "prompt: null" in yaml_text
     assert "prompt_path: null" in yaml_text

@@ -67,7 +67,7 @@ def run_parallel_from_yaml(
         context_path=resolved.context_path,
         separator=resolved.separator,
         agent_load=resolved.agent_load,
-        stutter_max=resolved.stutter_max,
+        stagger_max=resolved.stagger_max,
         prompt=resolved.prompt,
         prompt_path=resolved.prompt_path,
         prompt_name=resolved.prompt_name,

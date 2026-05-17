@@ -161,7 +161,7 @@ update-docs:
     assert update_test_entry["agents_dir"] == "./.ai/agents/updateTests"
     assert update_test_entry["output_path"] == "./.ai/agents/updateTests/layout.json"
     assert update_test_entry["agent_load"] == 10
-    assert update_test_entry["stutter_max"] == 3.0
+    assert update_test_entry["stagger_max"] == 3.0
     assert update_test_entry["prompt"] == update_test.UPDATE_TEST_PROMPT
 
     update_docs_entry = _require_entry(yaml_mapping=yaml_mapping, key="update-docs")

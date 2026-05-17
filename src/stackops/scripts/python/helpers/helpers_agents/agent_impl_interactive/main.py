@@ -18,7 +18,7 @@ from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types imp
     HOST,
     PROVIDER,
     ReasoningEffort,
-    DEFAULT_STUTTER_MAX,
+    DEFAULT_STAGGER_MAX,
 )
 from stackops.utils.accessories import randstr
 
@@ -38,7 +38,7 @@ class InteractiveAgentCreateParams:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     agent_load: int
-    stutter_max: float
+    stagger_max: float
     context: str | None
     context_path: str | None
     separator: str
@@ -64,7 +64,7 @@ def _collect_inputs(
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
     agent_load: int,
-    stutter_max: float,
+    stagger_max: float,
     context: str | None,
     context_path: str | None,
     separator: str,
@@ -86,7 +86,7 @@ def _collect_inputs(
         host=host,
         model=model,
         agent_load=agent_load,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
         job_name=job_name,
         reasoning_effort=reasoning_effort,
         provider=provider,
@@ -137,7 +137,7 @@ def _collect_inputs(
         reasoning_effort=reviewed_create_options.reasoning_effort,
         provider=reviewed_create_options.provider,
         agent_load=reviewed_create_options.agent_load,
-        stutter_max=reviewed_create_options.stutter_max,
+        stagger_max=reviewed_create_options.stagger_max,
         context=context_selected,
         context_path=context_path_selected,
         separator=separator_selected,
@@ -166,7 +166,7 @@ def main(
     reasoning_effort: ReasoningEffort | None = None,
     provider: PROVIDER | None = None,
     agent_load: int = 3,
-    stutter_max: float = DEFAULT_STUTTER_MAX,
+    stagger_max: float = DEFAULT_STAGGER_MAX,
     context: str | None = None,
     context_path: str | None = None,
     separator: str = DEFAULT_SEAPRATOR,
@@ -191,7 +191,7 @@ def main(
         reasoning_effort=reasoning_effort,
         provider=provider,
         agent_load=agent_load,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
         context=context,
         context_path=context_path,
         separator=separator,
@@ -209,7 +209,7 @@ def main(
         reasoning=collected.reasoning_effort,
         provider=collected.provider,
         agent_load=collected.agent_load,
-        stutter_max=collected.stutter_max,
+        stagger_max=collected.stagger_max,
         context=collected.context,
         context_path=collected.context_path,
         separator=collected.separator,

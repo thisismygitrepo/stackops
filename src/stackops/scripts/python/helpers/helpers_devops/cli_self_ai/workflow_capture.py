@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import Protocol
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ParallelCreateValues
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STUTTER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -29,7 +29,7 @@ class AgentsCreateImpl(Protocol):
         reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
         interactive: bool,
-        stutter_max: float = DEFAULT_STUTTER_MAX,
+        stagger_max: float = DEFAULT_STAGGER_MAX,
     ) -> None: ...
 
 
@@ -61,7 +61,7 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
         reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
         interactive: bool,
-        stutter_max: float = DEFAULT_STUTTER_MAX,
+        stagger_max: float = DEFAULT_STAGGER_MAX,
     ) -> None:
         del save_as_yaml
         nonlocal captured_values
@@ -75,7 +75,7 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
             context_path=context_path,
             separator=separator,
             agent_load=agent_load,
-            stutter_max=stutter_max,
+            stagger_max=stagger_max,
             prompt=prompt,
             prompt_path=prompt_path,
             prompt_name=prompt_name,

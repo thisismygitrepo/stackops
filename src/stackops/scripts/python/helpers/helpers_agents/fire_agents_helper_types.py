@@ -60,7 +60,7 @@ PROVIDER: TypeAlias = Literal[
 ]
 ReasoningEffort: TypeAlias = Literal["none", "low", "medium", "high", "xhigh"]
 DEFAULT_SEAPRATOR = "\n@-@\n"
-DEFAULT_STUTTER_MAX = 3.0
+DEFAULT_STAGGER_MAX = 3.0
 
 
 class API_SPEC(TypedDict):

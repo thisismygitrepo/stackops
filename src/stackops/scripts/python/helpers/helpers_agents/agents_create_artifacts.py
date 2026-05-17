@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STUTTER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -92,7 +92,7 @@ def _build_recreate_command_args(
     run: bool,
     layout_output_path: Path,
     agents_dir: Path,
-    stutter_max: float,
+    stagger_max: float,
 ) -> list[str]:
     command: list[str] = [
         "uv",
@@ -110,8 +110,8 @@ def _build_recreate_command_args(
         _separator_cli_value(separator),
         "--agent-load",
         str(agent_load),
-        "--stutter-max",
-        f"{stutter_max:g}",
+        "--stagger-max",
+        f"{stagger_max:g}",
         "--job-name",
         job_name,
         "--output-path",
@@ -231,7 +231,7 @@ def write_create_artifacts(
     job_name: str,
     join_prompt_and_context: bool,
     run: bool,
-    stutter_max: float = DEFAULT_STUTTER_MAX,
+    stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> CreateArtifactsOutput:
     artifacts_dir = agents_dir / ".create"
     if artifacts_dir.exists():
@@ -261,7 +261,7 @@ def write_create_artifacts(
         run=run,
         layout_output_path=layout_output_path,
         agents_dir=agents_dir,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
     )
     recreate_command = _build_recreate_command(repo_root=repo_root, recreate_command_args=recreate_command_args)
 
@@ -293,7 +293,7 @@ def write_create_artifacts(
         "reasoning_effort": reasoning_effort,
         "provider": provider,
         "agent_load": agent_load,
-        "stutter_max": stutter_max,
+        "stagger_max": stagger_max,
         "separator": separator,
         "separator_cli_value": _separator_cli_value(separator),
         "join_prompt_and_context": join_prompt_and_context,

@@ -82,7 +82,7 @@ def _build_captured_workflow_entry(
         "host": captured_values.host,
         "separator": _yaml_separator_value(separator=_require_string(value=captured_values.separator, field_name="separator")),
         "agent_load": captured_values.agent_load,
-        "stutter_max": captured_values.stutter_max,
+        "stagger_max": captured_values.stagger_max,
         "prompt": captured_values.prompt,
         "prompt_path": captured_values.prompt_path,
         "prompt_name": captured_values.prompt_name,

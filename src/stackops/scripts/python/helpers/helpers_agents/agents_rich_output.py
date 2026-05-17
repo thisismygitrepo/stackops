@@ -62,7 +62,7 @@ def build_agents_create_overview_panel(
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
-    stutter_max: float,
+    stagger_max: float,
     join_prompt_and_context: bool,
     run: bool,
 ) -> Panel:
@@ -78,7 +78,7 @@ def build_agents_create_overview_panel(
     table.add_row("Model", _optional_label(value=model))
     table.add_row("Reasoning", _optional_label(value=reasoning_effort))
     table.add_row("Rows per agent", str(agent_load))
-    table.add_row("Startup stutter max", f"{stutter_max:g}s")
+    table.add_row("Startup stagger max", f"{stagger_max:g}s")
     table.add_row("Prompt mode", "joined prompt/context" if join_prompt_and_context else "separate prompt/material")
     table.add_row("Run after create", str(run))
     return Panel(table, title="Agent Create", border_style="blue")
@@ -95,7 +95,7 @@ def show_agents_create_overview(
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
-    stutter_max: float,
+    stagger_max: float,
     join_prompt_and_context: bool,
     run: bool,
 ) -> None:
@@ -110,7 +110,7 @@ def show_agents_create_overview(
             model=model,
             reasoning_effort=reasoning_effort,
             agent_load=agent_load,
-            stutter_max=stutter_max,
+            stagger_max=stagger_max,
             join_prompt_and_context=join_prompt_and_context,
             run=run,
         )

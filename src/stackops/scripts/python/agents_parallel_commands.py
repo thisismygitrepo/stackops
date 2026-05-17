@@ -5,7 +5,7 @@ from typing import Annotated, get_args
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STUTTER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -30,9 +30,9 @@ def agents_create(
         str, typer.Option(..., "--separator", "-s", help="Separator for context. Supports escaped values like '\\n'.")
     ] = DEFAULT_SEAPRATOR,
     agent_load: Annotated[int, typer.Option(..., "--agent-load", "-l", min=1, help="Number of tasks per prompt")] = 3,
-    stutter_max: Annotated[
-        float, typer.Option(..., "--stutter-max", "-t", min=0.0, help="Maximum startup stagger delay, in seconds. Use 0 to disable staggering.")
-    ] = DEFAULT_STUTTER_MAX,
+    stagger_max: Annotated[
+        float, typer.Option(..., "--stagger-max", "-g", min=0.0, help="Maximum startup stagger delay, in seconds. Use 0 to disable staggering.")
+    ] = DEFAULT_STAGGER_MAX,
     prompt: Annotated[str | None, typer.Option(..., "--prompt", "-p", help="Prompt prefix as string")] = None,
     prompt_path: Annotated[str | None, typer.Option(..., "--prompt-path", "-P", help="Path to prompt file")] = None,
     prompt_name: Annotated[str | None, typer.Option(..., "--prompt-name", "-N", help="Prompt entry name from prompts YAML")] = None,
@@ -82,7 +82,7 @@ def agents_create(
             context_path=context_path,
             separator=normalized_separator,
             agent_load=agent_load,
-            stutter_max=stutter_max,
+            stagger_max=stagger_max,
             prompt=prompt,
             prompt_path=prompt_path,
             prompt_name=prompt_name,

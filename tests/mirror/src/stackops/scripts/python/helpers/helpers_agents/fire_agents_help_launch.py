@@ -28,7 +28,7 @@ def test_prep_agent_launch_writes_powershell_launcher_on_windows(monkeypatch: py
         provider="google",
         agent="gemini",
         job_name="job",
-        stutter_max=7.5,
+        stagger_max=7.5,
     )
 
     launcher_path = agents_dir / "prompts" / "agent_0" / "agent_0_cmd.ps1"

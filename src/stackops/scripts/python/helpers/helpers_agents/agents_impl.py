@@ -19,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import 
     resolve_prompt_input,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STUTTER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
     show_agents_create_overview,
     show_created_artifacts_panel,
@@ -50,11 +50,11 @@ def agents_create(
     reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
     interactive: bool,
-    stutter_max: float = DEFAULT_STUTTER_MAX,
+    stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> None:
     """Create agents layout file, ready to run."""
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
-    _validate_stutter_max(stutter_max=stutter_max)
+    _validate_stagger_max(stagger_max=stagger_max)
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
 
@@ -64,7 +64,7 @@ def agents_create(
             model=model,
             reasoning_effort=normalized_reasoning_effort,
             provider=provider,
-            stutter_max=stutter_max,
+            stagger_max=stagger_max,
             agent_load=agent_load,
             context=context,
             context_path=context_path,
@@ -120,7 +120,7 @@ def agents_create(
         model=model,
         reasoning_effort=normalized_reasoning_effort,
         agent_load=agent_load,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
     )
@@ -149,7 +149,7 @@ def agents_create(
         reasoning_effort=normalized_reasoning_effort,
         provider=provider,
         job_name=job_name_resolved,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
     )
     prompt_directories = get_prompt_directories(prompt_root=agents_dir_obj / "prompts")
     show_generated_agents_table(repo_root=workspace_root, prompt_dirs=prompt_directories)
@@ -168,7 +168,7 @@ def agents_create(
         reasoning_effort=normalized_reasoning_effort,
         provider=provider,
         agent_load=agent_load,
-        stutter_max=stutter_max,
+        stagger_max=stagger_max,
         separator=separator,
         prompt=CreatePromptArtifactsInput(
             source_kind=prompt_input.source_kind,
@@ -206,7 +206,7 @@ def agents_create(
             context_path=context_path,
             separator=separator,
             agent_load=agent_load,
-            stutter_max=stutter_max,
+            stagger_max=stagger_max,
             prompt=prompt,
             prompt_path=prompt_path,
             prompt_name=prompt_name,
@@ -238,9 +238,9 @@ def _confirm_existing_agents_dir_cleanup(*, agents_dir_obj: Path) -> None:
     raise RuntimeError(f"Aborted: kept existing agents directory: {agents_dir_obj}")
 
 
-def _validate_stutter_max(*, stutter_max: float) -> None:
-    if not isfinite(stutter_max) or stutter_max < 0:
-        raise ValueError("stutter_max must be a finite number greater than or equal to 0")
+def _validate_stagger_max(*, stagger_max: float) -> None:
+    if not isfinite(stagger_max) or stagger_max < 0:
+        raise ValueError("stagger_max must be a finite number greater than or equal to 0")
 
 
 def _run_generated_layout(*, layout_output_path: Path) -> None:
@@ -288,7 +288,7 @@ def _save_parallel_yaml_entry(
     run: bool,
     output_path: str | None,
     agents_dir: str | None,
-    stutter_max: float = DEFAULT_STUTTER_MAX,
+    stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> Path:
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry import upsert_parallel_yaml_entry
 
@@ -307,7 +307,7 @@ def _save_parallel_yaml_entry(
             context_path=context_path,
             separator=separator,
             agent_load=agent_load,
-            stutter_max=stutter_max,
+            stagger_max=stagger_max,
             prompt=prompt,
             prompt_path=prompt_path,
             prompt_name=prompt_name,
@@ -341,7 +341,7 @@ def _build_parallel_yaml_entry(
     run: bool,
     output_path: str | None,
     agents_dir: str | None,
-    stutter_max: float = DEFAULT_STUTTER_MAX,
+    stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> ParallelCreateYamlEntry:
     return {
         "agent": agent,
@@ -353,7 +353,7 @@ def _build_parallel_yaml_entry(
         "context_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=context_path),
         "separator": _encode_separator_value(separator=separator),
         "agent_load": agent_load,
-        "stutter_max": stutter_max,
+        "stagger_max": stagger_max,
         "prompt": prompt,
         "prompt_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=prompt_path),
         "prompt_name": prompt_name,
