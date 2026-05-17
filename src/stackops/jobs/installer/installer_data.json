@@ -2648,6 +2648,24 @@
       }
     },
     {
+      "appName": "wt",
+      "license": "MIT License and Apache License 2.0",
+      "repoURL": "https://github.com/max-sixty/worktrunk",
+      "doc": "Git worktree manager for parallel AI agent workflows.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "worktrunk-x86_64-unknown-linux-musl.tar.xz",
+          "darwin": "worktrunk-x86_64-apple-darwin.tar.xz",
+          "windows": "worktrunk-x86_64-pc-windows-msvc.zip"
+        },
+        "arm64": {
+          "linux": "worktrunk-aarch64-unknown-linux-musl.tar.xz",
+          "darwin": "worktrunk-aarch64-apple-darwin.tar.xz",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "lazygit",
       "license": "MIT License",
       "repoURL": "https://github.com/jesseduffield/lazygit",
