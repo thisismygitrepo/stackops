@@ -8,6 +8,7 @@ from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
 
 
 ENV_SUMMARY_LIMIT = 96
+MACHINE_SPECS_COMMAND_NAME = "get-machine-specs"
 
 
 def _truncate_text(text: str, limit: int) -> tuple[str, int]:

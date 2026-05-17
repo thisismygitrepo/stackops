@@ -201,11 +201,11 @@ class SSH:
                     self.progress.update(self.task, completed=transferred, total=total)
 
         self.tqdm_wrap = RichProgressWrapper
-        from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs
+        from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs, MACHINE_SPECS_COMMAND_NAME
 
         self.local_specs: MachineSpecs = get_machine_specs()
         resp = self.run_shell_cmd_on_remote(
-            command="""~/.local/bin/utils machine get-machine-specs """,
+            command=f"""~/.local/bin/utils machine {MACHINE_SPECS_COMMAND_NAME} """,
             verbose_output=False,
             description="Getting remote machine specs",
             strict_stderr=False,

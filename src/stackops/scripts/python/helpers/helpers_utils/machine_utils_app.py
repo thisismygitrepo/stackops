@@ -130,8 +130,8 @@ def get_app() -> typer.Typer:
         help="⌘ <v> Navigate ENV/PATH variables. Default: fuzzy picker with preview; use --tui for Textual.",
     )(tui_env)
     machine_app.command(name="v", no_args_is_help=False, hidden=True)(tui_env)
-    machine_app.command(name="get-machine-specs", no_args_is_help=False, help="🖥 <g> Get machine specifications.")(get_machine_specs)
-    machine_app.command(name="g", no_args_is_help=False, hidden=True)(get_machine_specs)
+    machine_app.command(name="get-machine-specs", no_args_is_help=False, help="🖥 <s> Get machine specifications.")(get_machine_specs)
+    machine_app.command(name="s", no_args_is_help=False, hidden=True)(get_machine_specs)
     machine_app.command(name="list-devices", no_args_is_help=False, help="💽 <l> List available devices for mounting.")(list_devices)
     machine_app.command(name="l", no_args_is_help=False, hidden=True)(list_devices)
     machine_app.command(name="mount", no_args_is_help=True, help="🔌 <m> Mount a device to a mount point.")(mount_device)
