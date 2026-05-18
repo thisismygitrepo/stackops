@@ -938,6 +938,24 @@
       }
     },
     {
+      "appName": "aptui",
+      "license": "MIT License",
+      "repoURL": "https://github.com/mexirica/aptui",
+      "doc": "APT package manager TUI for Debian and Ubuntu-based Linux distributions.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "aptui_{version}_linux_amd64.tar.gz",
+          "darwin": null,
+          "windows": null
+        },
+        "arm64": {
+          "linux": "aptui_{version}_linux_arm64.tar.gz",
+          "darwin": null,
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "glow",
       "license": "MIT license",
       "repoURL": "https://github.com/charmbracelet/glow/",
