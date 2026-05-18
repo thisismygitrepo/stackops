@@ -153,7 +153,7 @@ def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(help="Path to t
     # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
     # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)
     # from stackops.utils.code import run_lambda_function
-    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops>=8.98"])
+    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops>=8.99"])
     resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
     if not resolved_repo_path.exists():
         typer.echo(f"❌ Repository path does not exist: {resolved_repo_path}", err=True)
@@ -188,7 +188,7 @@ def print_python_files_by_size(repo_path: Annotated[str, typer.Argument(..., hel
     #     from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import print_python_files_by_size_impl
     #     print_python_files_by_size_impl(repo_path=repo_path)
     # from stackops.utils.code import run_lambda_function
-    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops[plot]>=8.98"])
+    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=["stackops[plot]>=8.99"])
     from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import print_python_files_by_size_impl
 
     print_python_files_by_size_impl(repo_path=repo_path)
@@ -210,7 +210,7 @@ def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help=
 
     from stackops.utils.code import run_lambda_function
 
-    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=["stackops[plot]>=8.98", "polars"])
+    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=["stackops[plot]>=8.99", "polars"])
     # from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
     # analyze_over_time(repo_path=repo_path)
 
