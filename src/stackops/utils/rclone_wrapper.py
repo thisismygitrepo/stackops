@@ -1,5 +1,6 @@
 from pathlib import Path
 import platform
+from urllib.parse import parse_qs, quote, urlparse
 
 from stackops.utils import rclone as rclone_utils
 
@@ -13,6 +14,33 @@ def _sanitize_remote_path(path: Path) -> str:
     if as_posix.startswith("/"):
         return as_posix[1:]
     return as_posix
+
+
+def google_drive_direct_download_url(*, share_url: str) -> str | None:
+    parsed_url = urlparse(share_url)
+    if parsed_url.netloc.lower() != "drive.google.com":
+        return None
+
+    file_id: str | None = None
+    if parsed_url.path == "/open":
+        values = parse_qs(parsed_url.query).get("id")
+        if values:
+            file_id = values[0]
+    else:
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        if len(path_parts) >= 3 and path_parts[0] == "file" and path_parts[1] == "d":
+            file_id = path_parts[2]
+
+    if file_id is None or file_id == "":
+        return None
+    return f"https://drive.google.com/uc?export=download&id={quote(file_id, safe='')}"
+
+
+def _print_share_urls(*, share_url: str) -> None:
+    print(f"🔗 SHARE URL: {share_url}")
+    direct_download_url = google_drive_direct_download_url(share_url=share_url)
+    if direct_download_url is not None:
+        print(f"⬇️ DIRECT DOWNLOAD URL: {direct_download_url}")
 
 
 def get_remote_path(
@@ -63,7 +91,10 @@ def to_cloud(
         return None
     if verbose:
         print("🔗 SHARING FILE")
-    return rclone_utils.link(target=f"{cloud}:{remote_path.as_posix()}", show_command=verbose)
+    share_url = rclone_utils.link(target=f"{cloud}:{remote_path.as_posix()}", show_command=verbose)
+    if verbose:
+        _print_share_urls(share_url=share_url)
+    return share_url
 
 
 def from_cloud(
