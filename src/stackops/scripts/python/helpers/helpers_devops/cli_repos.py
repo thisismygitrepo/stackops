@@ -26,7 +26,7 @@ def _resolve_spec_path(spec_path: Path) -> Path:
 def action(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
-    auto_uv_sync: Annotated[bool, typer.Option("--uv-sync/--no-uv-sync", "-u/-ns", help="Automatic uv sync after pulls.")] = False,
+    auto_uv_sync: Annotated[bool, typer.Option("--uv-sync", "-u", help="Run uv sync automatically after pulls.")] = False,
     pull: Annotated[bool, typer.Option("--pull", "-P", help="↓ Pull changes across repositories.")] = False,
     commit: Annotated[bool, typer.Option("--commit", "-c", help="💾 Commit changes across repositories.")] = False,
     push: Annotated[bool, typer.Option("--push", "-p", help="🚀 Push changes across repositories.")] = False,
@@ -52,7 +52,7 @@ def capture(directory: Annotated[str | None, typer.Argument(help="📁 Directory
 def clone(
     directory: Annotated[str, typer.Argument(help="📁 Directory containing repo(s).")] = ".",
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
-    interactive: Annotated[bool, typer.Option("--interactive/--no-interactive", "-i/-ni", help="Select interactively.")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Select interactively.")] = False,
     checkout_to_commit: Annotated[
         bool, typer.Option("--checkout-to-commit", "-ctc", help="Check out specific commits listed in the specification.")
     ] = False,

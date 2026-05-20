@@ -54,11 +54,11 @@ def init_config(
     ] = None,
     add_config: Annotated[
         bool,
-        typer.Option("--add-config/--no-add-config", "-c/-C", help="Create private agent config files/directories"),
+        typer.Option("--no-add-config", "-C", help="Skip private agent config files/directories"),
     ] = True,
     add_instructions: Annotated[
         bool,
-        typer.Option("--add-instructions/--no-add-instructions", "-i/-I", help="Create agent instructions files (e.g. AGENTS.md)"),
+        typer.Option("--no-add-instructions", "-I", help="Skip agent instruction files (e.g. AGENTS.md)"),
     ] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,

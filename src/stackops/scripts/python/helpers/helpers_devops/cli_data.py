@@ -36,9 +36,12 @@ def register_data(
     group: Annotated[str, typer.Option("--group", "-g", help="Group name in mapper_data.yaml.")] = "default",
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper_data.yaml.")] = None,
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
-    zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z/-nz", help="Zip before uploading.")] = True,
-    encrypt: Annotated[bool, typer.Option("--encrypt/--no-encrypt", "-e/-ne", help="Encrypt before uploading.")] = True,
-    rel2home: Annotated[bool | None, typer.Option("--rel2home/--no-rel2home", "-r/-nr", help="Treat the local path as relative to home.")] = None,
+    zip_: Annotated[bool, typer.Option("--no-zip", "-nz", help="Store the backup entry without zipping before upload.")] = True,
+    encrypt: Annotated[bool, typer.Option("--no-encrypt", "-ne", help="Store the backup entry without encrypting before upload.")] = True,
+    rel2home: Annotated[
+        bool | None,
+        typer.Option("--no-rel2home", "-nr", help="Store the local path as absolute even when it is under home."),
+    ] = None,
     os: Annotated[str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")] = DEFAULT_OS_FILTER,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry

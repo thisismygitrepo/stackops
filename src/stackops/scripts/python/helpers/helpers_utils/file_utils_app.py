@@ -109,11 +109,11 @@ def compress_pdf(
     ] = 0,
     compress_streams: Annotated[
         bool,
-        typer.Option("--compress-streams/--no-compress-streams", "-c/-C", help="Compress uncompressed streams."),
+        typer.Option("--no-compress-streams", "-C", help="Do not compress uncompressed streams."),
     ] = True,
     use_objstms: Annotated[
         bool,
-        typer.Option("--object-streams/--no-object-streams", "-s/-S", help="Use object streams for additional compression."),
+        typer.Option("--no-object-streams", "-S", help="Do not use object streams for additional compression."),
     ] = True,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.pdf import compress_pdf as impl
@@ -149,7 +149,7 @@ def read_db_cli_tui(
     backend: Annotated[DatabaseBackend, typer.Option("--backend", "-b", help="The TUI database client to use.")] = "harlequin",
     read_only: Annotated[
         bool,
-        typer.Option("--read-only/--read-write", "-r/-w", help="Open the database in read-only mode (if supported by backend)."),
+        typer.Option("--read-write", "-w", help="Open the database in read/write mode (if supported by backend)."),
     ] = True,
     theme: Annotated[str | None, typer.Option("--theme", "-t", help="Theme to use (if supported by backend).")] = None,
     limit: Annotated[int | None, typer.Option("--limit", "-l", help="Maximum number of rows to load (if supported by backend).")] = None,

@@ -44,8 +44,8 @@ def scan(
     record: Annotated[
         bool | None,
         typer.Option(
-            "--record/--no-record",
-            help="Write scan results to the saved repo reports. Defaults to enabled for installed-app scans and disabled for --path scans.",
+            "--record",
+            help="Write scan results to the saved repo reports. Installed-app scans already record by default.",
         ),
     ] = None,
 ) -> None:
@@ -130,7 +130,7 @@ def report(
     format_type: Annotated[
         ReportFormat, typer.Option("--format", "-f", help="Output format for apps or engines views", case_sensitive=False, show_choices=True)
     ] = "table",
-    summarize: Annotated[bool, typer.Option("--summarize/--full", hidden=True)] = False,
+    summarize: Annotated[bool, typer.Option("--summarize", hidden=True)] = False,
 ) -> None:
     resolved_view = _resolve_report_view(view, summarize)
     if resolved_view == "options":

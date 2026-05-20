@@ -33,7 +33,7 @@ def copy_assets_and_link_public_configs() -> None:
 def update(
     link_public_configs: Annotated[
         bool,
-        typer.Option("--link-public-configs/--no-link-public-configs", "-b/-nb", help="Link public configs after update (overwrites your configs!)"),
+        typer.Option("--link-public-configs", "-b", help="Link public configs after update (overwrites your configs!)"),
     ] = False,
 ) -> None:
     """🔄 UPDATE uv and stackops"""
@@ -136,15 +136,15 @@ def export(
     ] = Path.home().joinpath("tmp_results"),
     include_configs: Annotated[
         bool,
-        typer.Option("--include-configs/--no-include-configs", help="Include the StackOps config tree in the offline installer."),
+        typer.Option("--no-include-configs", help="Exclude the StackOps config tree from the offline installer."),
     ] = True,
     include_uv_bundle: Annotated[
         bool,
-        typer.Option("--include-uv-bundle/--no-include-uv-bundle", help="Include the uv-managed StackOps runtime bundle when available."),
+        typer.Option("--no-include-uv-bundle", help="Exclude the uv-managed StackOps runtime bundle."),
     ] = True,
     keep_unpacked: Annotated[
         bool,
-        typer.Option("--keep-unpacked/--remove-unpacked", help="Keep the unpacked installer directory after writing the zip archive."),
+        typer.Option("--keep-unpacked", help="Keep the unpacked installer directory after writing the zip archive."),
     ] = False,
     upload_to_cloud: Annotated[
         bool,

@@ -53,7 +53,7 @@ def mount(
     network: Annotated[str | None, typer.Option(..., "--network", "-n", help="Windows network mount target, for example X:")] = None,
     zellij_session: Annotated[str | None, typer.Option(None, "--zellij-session", "-z", help="zellij session name for Linux/macOS")] = None,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
-    interactive: Annotated[bool, typer.Option("--interactive/--no-interactive", "-i/-I", help="Choose cloud interactively from config.")] = True,
+    interactive: Annotated[bool, typer.Option("--no-interactive", "-I", help="Require --cloud instead of choosing interactively from config.")] = True,
 ) -> None:
     if cloud is None and not interactive:
         print("❌ Error: --cloud is required when --no-interactive is set")

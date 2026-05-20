@@ -105,8 +105,8 @@ Key behavior:
 
 - `download [URL]` supports `--decompress`, `--output`, and `--output-dir`.
 - `pdf-merge PDFS...` accepts one or more input files and can `--compress` the merged output.
-- `pdf-compress PDF_INPUT` supports `--quality`, `--image-dpi`, `--compress-streams`, and `--object-streams`.
-- `read-db [PATH]` defaults to the `harlequin` backend and supports `--url/-u` for explicit connection URLs plus `--backend`, `--read-only/--read-write`, `--theme`, and `--limit`.
+- `pdf-compress PDF_INPUT` supports `--quality`, `--image-dpi`, `--no-compress-streams`, and `--no-object-streams`.
+- `read-db [PATH]` defaults to the `harlequin` backend and supports `--url/-u` for explicit connection URLs plus `--backend`, `--read-write`, `--theme`, and `--limit`.
 
 Examples:
 

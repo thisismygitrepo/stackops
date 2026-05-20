@@ -51,7 +51,7 @@ def mount(
     destination: Annotated[str | None, typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option(..., "--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
-    interactive: Annotated[bool, typer.Option("--interactive/--no-interactive", "-i/-I", help="Choose cloud interactively from config.")] = True,
+    interactive: Annotated[bool, typer.Option("--no-interactive", "-I", help="Require --cloud instead of choosing interactively from config.")] = True,
 
 ) -> None:
     """🔗 Mount cloud storage services as local drives."""

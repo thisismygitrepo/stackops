@@ -10,8 +10,8 @@ PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
 
 
 def tree(
-    show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", help="Include help text in labels")] = True,
-    show_aliases: Annotated[bool, typer.Option("--show-aliases/--no-show-aliases", help="Include aliases in labels")] = False,
+    show_help: Annotated[bool, typer.Option("--no-show-help", help="Hide help text in labels")] = True,
+    show_aliases: Annotated[bool, typer.Option("--show-aliases", help="Include aliases in labels")] = False,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
 ) -> None:
     """Render a rich tree view in the terminal."""
@@ -44,7 +44,7 @@ def tree(
 
 def dot(
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write DOT output to a file")] = None,
-    include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", help="Include help text in labels")] = True,
+    include_help: Annotated[bool, typer.Option("--no-include-help", help="Hide help text in labels")] = True,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
 ) -> None:
     """Export the graph as Graphviz DOT."""
