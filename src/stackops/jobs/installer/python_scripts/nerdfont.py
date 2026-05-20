@@ -1,15 +1,18 @@
 """Nerd Fonts installer - Cross-platform font installation"""
 
+import os
 import platform
 import subprocess
 from typing import TYPE_CHECKING
+
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
+
 import stackops.jobs.installer.linux_scripts as linux_scripts
+import stackops.jobs.installer.macos_scripts as macos_scripts
 from stackops.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
-    
 )
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.schemas.installer.installer_types import InstallerData
@@ -33,7 +36,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         )
     )
 
-    _ = version
     current_platform = platform.system()
 
     if current_platform == "Windows":
@@ -69,13 +71,16 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
             raise RuntimeError(error_msg) from e
 
     elif current_platform in ["Linux", "Darwin"]:
-        console.print(f"🐧 Installing Nerd Fonts on {current_platform} using installation script...", style="bold")
+        unix_scripts = {
+            "Linux": (linux_scripts, linux_scripts.NERDFONT_PATH_REFERENCE, "Linux"),
+            "Darwin": (macos_scripts, macos_scripts.NERDFONT_PATH_REFERENCE, "macOS"),
+        }
+        script_module, path_reference, platform_label = unix_scripts[current_platform]
+        console.print(f"Installing Nerd Fonts on {platform_label} using installation script...", style="bold")
 
-        program = get_path_reference_path(
-            module=linux_scripts,
-            path_reference=linux_scripts.NERDFONT_PATH_REFERENCE,
-        ).read_text(
-            encoding="utf-8"
+        script_path = get_path_reference_path(
+            module=script_module,
+            path_reference=path_reference,
         )
 
         console.print(
@@ -96,7 +101,10 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 
         console.print("🔄 EXECUTING | Running Nerd Fonts installation...", style="bold yellow")
         try:
-            subprocess.run(program, shell=True, text=True, check=True)
+            env = os.environ.copy()
+            if version is not None:
+                env["NERDFONT_VERSION"] = version
+            subprocess.run(["bash", str(script_path)], text=True, check=True, env=env)
             console.print("✅ Nerd Fonts installation completed successfully", style="bold green")
         except subprocess.CalledProcessError as e:
             console.print(f"❌ Installation failed with exit code {e.returncode}", style="bold red")

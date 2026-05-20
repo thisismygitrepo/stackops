@@ -1,0 +1,1 @@
+NERDFONT_PATH_REFERENCE = "nerdfont.sh"

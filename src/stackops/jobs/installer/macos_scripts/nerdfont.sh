@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Installs CascadiaCode Nerd Font on Linux.
+# Installs CascadiaCode Nerd Font on macOS.
 
 FONT_VERSION="${NERDFONT_VERSION:-latest}"
 FONT_ARCHIVE="CascadiaCode.tar.xz"
@@ -15,15 +15,15 @@ else
     DOWNLOAD_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/${RELEASE_TAG}/${FONT_ARCHIVE}"
 fi
 TMP_DIR="$(mktemp -d)"
-FONT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
-VERIFY_HINT="fc-list | grep CaskaydiaCove"
+FONT_DIR="$HOME/Library/Fonts"
+VERIFY_HINT="system_profiler SPFontsDataType | grep -i CaskaydiaCove"
 
 cleanup() {
     rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
 
-echo """📥 DOWNLOADING | Fetching CascadiaCode Nerd Font for Linux
+echo """📥 DOWNLOADING | Fetching CascadiaCode Nerd Font for macOS
 """
 echo "🔽 Downloading ${FONT_ARCHIVE}..."
 curl -fL --retry 3 -o "$TMP_DIR/$FONT_ARCHIVE" "$DOWNLOAD_URL"
@@ -46,13 +46,6 @@ if [ "$FONT_COUNT" = "0" ]; then
 fi
 
 find "$TMP_DIR" -maxdepth 1 -type f \( -name "*.ttf" -o -name "*.otf" \) -exec cp -f {} "$FONT_DIR" \;
-
-if command -v fc-cache >/dev/null 2>&1; then
-    echo "🔄 Updating font cache..."
-    fc-cache -f -v "$FONT_DIR"
-else
-    echo "⚠️ fc-cache not found; skipping font cache refresh."
-fi
 
 echo """✅ INSTALLATION COMPLETE | CascadiaCode Nerd Font has been installed
 """
