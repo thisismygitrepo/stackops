@@ -70,12 +70,28 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
             )
             raise RuntimeError(error_msg) from e
 
-    elif current_platform in ["Linux", "Darwin"]:
-        unix_scripts = {
-            "Linux": (linux_scripts, linux_scripts.NERDFONT_PATH_REFERENCE, "Linux"),
-            "Darwin": (macos_scripts, macos_scripts.NERDFONT_PATH_REFERENCE, "macOS"),
-        }
-        script_module, path_reference, platform_label = unix_scripts[current_platform]
+    else:
+        if current_platform == "Linux":
+            script_module = linux_scripts
+            path_reference = linux_scripts.NERDFONT_PATH_REFERENCE
+            platform_label = "Linux"
+        elif current_platform == "Darwin":
+            script_module = macos_scripts
+            path_reference = macos_scripts.NERDFONT_PATH_REFERENCE
+            platform_label = "macOS"
+        else:
+            error_msg = f"Unsupported platform: {current_platform}"
+            console.print(
+                Panel.fit(
+                    "\n".join([error_msg, "💡 Supported platforms are Windows, Linux, and macOS (Darwin)"]),
+                    title="❌ Error",
+                    subtitle="⚠️ Unsupported platform",
+                    border_style="red",
+                    box=box.ROUNDED,
+                )
+            )
+            raise NotImplementedError(error_msg)
+
         console.print(f"Installing Nerd Fonts on {platform_label} using installation script...", style="bold")
 
         script_path = get_path_reference_path(
@@ -109,19 +125,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         except subprocess.CalledProcessError as e:
             console.print(f"❌ Installation failed with exit code {e.returncode}", style="bold red")
             raise
-
-    else:
-        error_msg = f"Unsupported platform: {current_platform}"
-        console.print(
-            Panel.fit(
-                "\n".join([error_msg, "💡 Supported platforms are Windows, Linux, and macOS (Darwin)"]),
-                title="❌ Error",
-                subtitle="⚠️ Unsupported platform",
-                border_style="red",
-                box=box.ROUNDED,
-            )
-        )
-        raise NotImplementedError(error_msg)
 
 
 if __name__ == "__main__":
