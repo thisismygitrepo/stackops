@@ -2,18 +2,16 @@
 
 import os
 import platform
+import shutil
 import subprocess
 from collections.abc import Iterable
 from pathlib import Path
-from types import ModuleType
 from typing import TYPE_CHECKING
 
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
 
-import stackops.jobs.installer.linux_scripts as linux_scripts
-import stackops.jobs.installer.macos_scripts as macos_scripts
 import stackops.jobs.installer.powershell_scripts as powershell_scripts
 from stackops.jobs.installer.python_scripts.main_protocol import (
     InstallerPythonScriptMain,
@@ -88,9 +86,20 @@ def _missing_required_fonts(installed_fonts: Iterable[str]) -> list[str]:
     return missing
 
 
+def _normalize_release_version(version: str | None) -> str | None:
+    if version is None:
+        return None
+    normalized = version.strip()
+    if normalized == "":
+        return None
+    if normalized.lower() == "latest" or normalized.startswith("v"):
+        return normalized
+    return f"v{normalized}"
+
+
 def _download_font_package(version: str | None) -> tuple[Path, str]:
     console.print("🔍 Downloading Nerd Fonts package...")
-    return Installer(installer_data=nerd_fonts).binary_download(version=version)
+    return Installer(installer_data=nerd_fonts).binary_download(version=_normalize_release_version(version))
 
 
 def _font_files(folder: Path) -> list[Path]:
@@ -172,23 +181,25 @@ def _install_windows_nerd_fonts(version: str | None) -> None:
     console.print()
 
 
-def _shell_script_for_platform(current_platform: str) -> tuple[ModuleType, str, str]:
+def _platform_label(current_platform: str) -> str:
     if current_platform == "Linux":
-        return linux_scripts, linux_scripts.NERDFONT_PATH_REFERENCE, "Linux"
+        return "Linux"
     if current_platform == "Darwin":
-        return macos_scripts, macos_scripts.NERDFONT_PATH_REFERENCE, "macOS"
+        return "macOS"
     raise NotImplementedError(f"Unsupported platform: {current_platform}")
 
 
-def _install_shell_nerd_fonts(current_platform: str, version: str | None) -> None:
-    script_module, path_reference, platform_label = _shell_script_for_platform(current_platform=current_platform)
-    console.print(f"Installing Nerd Fonts on {platform_label} using installation script...", style="bold")
+def _font_destination_dir(current_platform: str) -> Path:
+    if current_platform == "Linux":
+        xdg_data_home = os.environ.get("XDG_DATA_HOME")
+        data_home = Path(xdg_data_home).expanduser() if xdg_data_home else Path.home().joinpath(".local/share")
+        return data_home.joinpath("fonts")
+    if current_platform == "Darwin":
+        return Path.home().joinpath("Library/Fonts")
+    raise NotImplementedError(f"Unsupported platform: {current_platform}")
 
-    script_path = get_path_reference_path(
-        module=script_module,
-        path_reference=path_reference,
-    )
 
+def _print_nerd_font_features() -> None:
     console.print(
         Panel.fit(
             "\n".join(
@@ -205,17 +216,55 @@ def _install_shell_nerd_fonts(current_platform: str, version: str | None) -> Non
         )
     )
 
+
+def _copy_fonts(source_dir: Path, font_dir: Path) -> int:
+    font_files = _font_files(source_dir)
+    if len(font_files) == 0:
+        raise FileNotFoundError(f"No .ttf or .otf files were found in Nerd Fonts payload: {source_dir}")
+
+    console.print(f"📁 Creating fonts directory: {font_dir}")
+    font_dir.mkdir(parents=True, exist_ok=True)
+
+    console.print("📋 Copying font files to fonts directory...")
+    for font_file in font_files:
+        shutil.copy2(font_file, font_dir.joinpath(font_file.name))
+    return len(font_files)
+
+
+def _refresh_linux_font_cache(font_dir: Path) -> None:
+    if shutil.which("fc-cache") is None:
+        console.print("⚠️ fc-cache not found; skipping font cache refresh.")
+        return
+    console.print("🔄 Updating font cache...")
+    subprocess.run(["fc-cache", "-f", "-v", str(font_dir)], check=True)  # noqa: S603
+
+
+def _install_local_nerd_fonts(current_platform: str, version: str | None) -> None:
+    platform_label = _platform_label(current_platform=current_platform)
+    console.print(f"Installing Nerd Fonts on {platform_label}...", style="bold")
+    _print_nerd_font_features()
+
     folder, version_to_be_installed = _download_font_package(version=version)
     try:
         _assert_font_payload(folder)
-        console.print("🔄 EXECUTING | Running Nerd Fonts installation...", style="bold yellow")
-        env = os.environ.copy()
-        env["NERDFONT_SOURCE_DIR"] = str(folder)
-        env["NERDFONT_RESOLVED_VERSION"] = version_to_be_installed
-        if version is not None:
-            env["NERDFONT_VERSION"] = version
-        subprocess.run(["bash", str(script_path)], text=True, check=True, env=env)  # noqa: S603
-        console.print("✅ Nerd Fonts installation completed successfully", style="bold green")
+        font_dir = _font_destination_dir(current_platform=current_platform)
+
+        console.print(f"📦 PREPARED | Using CascadiaCode Nerd Font payload for {platform_label}")
+        console.print(f"📂 Source directory: {folder}")
+        console.print(f"🔄 Version resolved: {version_to_be_installed}")
+
+        copied_count = _copy_fonts(source_dir=folder, font_dir=font_dir)
+        if current_platform == "Linux":
+            _refresh_linux_font_cache(font_dir=font_dir)
+
+        console.print("✅ INSTALLATION COMPLETE | CascadiaCode Nerd Font has been installed", style="bold green")
+        console.print(f"📋 Copied {copied_count} font files.")
+        if current_platform == "Linux":
+            console.print("ℹ️ To verify installation, run: fc-list | grep CaskaydiaCove")
+        elif current_platform == "Darwin":
+            console.print("ℹ️ To verify installation, run: system_profiler SPFontsDataType | grep -i CaskaydiaCove")
+        console.print("💡 USE 'CaskaydiaCove Nerd Font' in VS Code and other applications")
+        console.print("🔄 You may need to restart applications to see the new font")
     finally:
         if folder.exists():
             delete_path(folder, verbose=True)
@@ -227,7 +276,7 @@ def install_nerd_fonts(version: str | None = None) -> None:
     if current_platform == "Windows":
         _install_windows_nerd_fonts(version=version)
         return
-    _install_shell_nerd_fonts(current_platform=current_platform, version=version)
+    _install_local_nerd_fonts(current_platform=current_platform, version=version)
 
 
 def main(installer_data: InstallerData, version: str | None, update: bool) -> None:

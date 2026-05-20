@@ -1,7 +1,6 @@
 BRAVE_PATH_REFERENCE = "brave.sh"
 CLOUDFLARE_WARP_CLI_PATH_REFERENCE = "cloudflare_warp_cli.sh"
 EDGE_PATH_REFERENCE = "edge.sh"
-NERDFONT_PATH_REFERENCE = "nerdfont.sh"
 NETWORK_PATH_REFERENCE = "network.sh"
 NGROK_PATH_REFERENCE = "ngrok.sh"
 Q_PATH_REFERENCE = "q.sh"
