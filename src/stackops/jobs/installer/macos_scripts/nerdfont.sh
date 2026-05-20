@@ -3,35 +3,18 @@ set -euo pipefail
 
 # Installs CascadiaCode Nerd Font on macOS.
 
-FONT_VERSION="${NERDFONT_VERSION:-latest}"
-FONT_ARCHIVE="CascadiaCode.tar.xz"
-if [ "$FONT_VERSION" = "latest" ]; then
-    DOWNLOAD_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${FONT_ARCHIVE}"
-else
-    case "$FONT_VERSION" in
-        v*) RELEASE_TAG="$FONT_VERSION" ;;
-        *) RELEASE_TAG="v$FONT_VERSION" ;;
-    esac
-    DOWNLOAD_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/${RELEASE_TAG}/${FONT_ARCHIVE}"
-fi
-TMP_DIR="$(mktemp -d)"
+FONT_SOURCE_DIR="${NERDFONT_SOURCE_DIR:?NERDFONT_SOURCE_DIR must point to the extracted Nerd Fonts package}"
 FONT_DIR="$HOME/Library/Fonts"
 VERIFY_HINT="system_profiler SPFontsDataType | grep -i CaskaydiaCove"
 
-cleanup() {
-    rm -rf "$TMP_DIR"
-}
-trap cleanup EXIT
+if [ ! -d "$FONT_SOURCE_DIR" ]; then
+    echo "Nerd Fonts source directory does not exist: $FONT_SOURCE_DIR" >&2
+    exit 1
+fi
 
-echo """📥 DOWNLOADING | Fetching CascadiaCode Nerd Font for macOS
+echo """📦 PREPARED | Using CascadiaCode Nerd Font payload for macOS
 """
-echo "🔽 Downloading ${FONT_ARCHIVE}..."
-curl -fL --retry 3 -o "$TMP_DIR/$FONT_ARCHIVE" "$DOWNLOAD_URL"
-
-echo """📦 EXTRACTING | Unpacking font archive
-"""
-echo "📂 Extracting font files..."
-tar -xf "$TMP_DIR/$FONT_ARCHIVE" -C "$TMP_DIR"
+echo "📂 Source directory: $FONT_SOURCE_DIR"
 
 echo """🔧 INSTALLING | Setting up font files
 """
@@ -39,13 +22,13 @@ echo "📁 Creating fonts directory: $FONT_DIR"
 mkdir -p "$FONT_DIR"
 
 echo "📋 Copying font files to fonts directory..."
-FONT_COUNT="$(find "$TMP_DIR" -maxdepth 1 -type f \( -name "*.ttf" -o -name "*.otf" \) -print | wc -l | tr -d ' ')"
+FONT_COUNT="$(find "$FONT_SOURCE_DIR" -type f \( -name "*.ttf" -o -name "*.otf" \) -print | wc -l | tr -d ' ')"
 if [ "$FONT_COUNT" = "0" ]; then
-    echo "No .ttf or .otf files were found in the downloaded archive." >&2
+    echo "No .ttf or .otf files were found in the prepared Nerd Fonts payload." >&2
     exit 1
 fi
 
-find "$TMP_DIR" -maxdepth 1 -type f \( -name "*.ttf" -o -name "*.otf" \) -exec cp -f {} "$FONT_DIR" \;
+find "$FONT_SOURCE_DIR" -type f \( -name "*.ttf" -o -name "*.otf" \) -exec cp -f {} "$FONT_DIR" \;
 
 echo """✅ INSTALLATION COMPLETE | CascadiaCode Nerd Font has been installed
 """

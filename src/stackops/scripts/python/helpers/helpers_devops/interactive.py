@@ -132,7 +132,7 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
             from stackops.profile.create_links_export import main_from_parser
             main_from_parser(direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
             if platform.system() == "Windows":
-                from stackops.jobs.installer.python_scripts.nerfont_windows_helper import install_nerd_fonts
+                from stackops.jobs.installer.python_scripts.nerdfont import install_nerd_fonts
                 install_nerd_fonts()
                 from stackops.settings.wt.set_wt_settings import main as set_wt_settings_main
                 set_wt_settings_main()
