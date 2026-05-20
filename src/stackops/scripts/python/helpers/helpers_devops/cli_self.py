@@ -160,16 +160,26 @@ def export(
                 "❌ --upload-to-cloud requires the developer checkout at ~/code/stackops so the downloader URL map update is written in-repo."
             )
             raise typer.Exit(code=1)
-        from stackops.jobs.scripts_dynamic import download_stackops_offline_installer
+        developer_repo_root = developer_repo_root.resolve()
+        from stackops.jobs import scripts_dynamic as scripts_dynamic_assets
+        from stackops.utils.path_reference import (
+            get_path_reference_library_relative_path,
+            get_path_reference_path,
+        )
 
-        active_url_map_path = Path(download_stackops_offline_installer.__file__).resolve().with_suffix(".json")
+        path_reference = scripts_dynamic_assets.OFFLINE_INSTALLER_PATH_REFERENCE
+        active_url_map_path = get_path_reference_path(
+            module=scripts_dynamic_assets,
+            path_reference=path_reference,
+        )
         expected_url_map_path = developer_repo_root.joinpath(
             "src",
             "stackops",
-            "jobs",
-            "scripts_dynamic",
-            "download_stackops_offline_installer.json",
-        )
+            get_path_reference_library_relative_path(
+                module=scripts_dynamic_assets,
+                path_reference=path_reference,
+            ),
+        ).resolve()
         if active_url_map_path != expected_url_map_path:
             typer.echo(
                 "❌ --upload-to-cloud requires an editable install backed by ~/code/stackops so the downloader URL map update persists in the repository."

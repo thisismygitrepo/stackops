@@ -21,11 +21,12 @@ def test_build_installer_help_lists_options() -> None:
 def test_build_installer_passes_explicit_options(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured: list[installer_offline.OfflineInstallerOptions] = []
     repo_root = tmp_path.joinpath("repo")
-    repo_script_path = repo_root.joinpath("src", "stackops", "jobs", "scripts_dynamic", "download_stackops_offline_installer.py")
-    repo_script_path.parent.mkdir(parents=True)
-    repo_script_path.write_text("", encoding="utf-8")
+    repo_package_path = repo_root.joinpath("src", "stackops", "jobs", "scripts_dynamic", "__init__.py")
+    repo_package_path.parent.mkdir(parents=True)
+    repo_package_path.write_text("", encoding="utf-8")
     monkeypatch.setattr(cli_self, "_developer_repo_root", lambda: repo_root)
-    monkeypatch.setattr("stackops.jobs.scripts_dynamic.download_stackops_offline_installer.__file__", str(repo_script_path))
+    monkeypatch.setattr("stackops.jobs.scripts_dynamic.__file__", str(repo_package_path))
+    monkeypatch.setattr("stackops.utils.path_reference.LIBRARY_ROOT", repo_root.joinpath("src", "stackops"))
 
     def fake_export(*, options: installer_offline.OfflineInstallerOptions, console: object) -> installer_offline.OfflineInstallerReport:
         del console
@@ -103,11 +104,12 @@ def test_build_installer_rejects_upload_when_url_map_is_not_repo_backed(monkeypa
     captured: list[installer_offline.OfflineInstallerOptions] = []
     repo_root = tmp_path.joinpath("repo")
     repo_root.joinpath("src", "stackops", "jobs", "scripts_dynamic").mkdir(parents=True)
-    installed_script_path = tmp_path.joinpath("site-packages", "stackops", "jobs", "scripts_dynamic", "download_stackops_offline_installer.py")
-    installed_script_path.parent.mkdir(parents=True)
-    installed_script_path.write_text("", encoding="utf-8")
+    installed_package_path = tmp_path.joinpath("site-packages", "stackops", "jobs", "scripts_dynamic", "__init__.py")
+    installed_package_path.parent.mkdir(parents=True)
+    installed_package_path.write_text("", encoding="utf-8")
     monkeypatch.setattr(cli_self, "_developer_repo_root", lambda: repo_root)
-    monkeypatch.setattr("stackops.jobs.scripts_dynamic.download_stackops_offline_installer.__file__", str(installed_script_path))
+    monkeypatch.setattr("stackops.jobs.scripts_dynamic.__file__", str(installed_package_path))
+    monkeypatch.setattr("stackops.utils.path_reference.LIBRARY_ROOT", tmp_path.joinpath("site-packages", "stackops"))
 
     def fake_export(*, options: installer_offline.OfflineInstallerOptions, console: object) -> installer_offline.OfflineInstallerReport:
         del console

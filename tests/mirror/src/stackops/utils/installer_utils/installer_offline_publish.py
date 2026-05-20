@@ -6,13 +6,15 @@ import pytest
 from stackops.utils.installer_utils import installer_offline_publish
 
 
-def test_resolve_url_map_path_uses_repo_root(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_resolve_url_map_path_uses_path_reference(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo_root = tmp_path.joinpath("repo")
-    expected_module_path = repo_root.joinpath("src/stackops/jobs/scripts_dynamic/download_stackops_offline_installer.py")
-    expected_path = expected_module_path.with_suffix(".json")
+    expected_package_path = repo_root.joinpath("src/stackops/jobs/scripts_dynamic/__init__.py")
+    expected_path = expected_package_path.parent.joinpath(
+        installer_offline_publish.scripts_dynamic_assets.OFFLINE_INSTALLER_PATH_REFERENCE
+    )
     expected_path.parent.mkdir(parents=True, exist_ok=True)
     expected_path.write_text("{}", encoding="utf-8")
-    monkeypatch.setattr(installer_offline_publish.download_stackops_offline_installer, "__file__", str(expected_module_path))
+    monkeypatch.setattr(installer_offline_publish.scripts_dynamic_assets, "__file__", str(expected_package_path))
 
     resolved_path = installer_offline_publish._resolve_url_map_path()
 
@@ -36,8 +38,10 @@ def test_build_target_key_normalizes_platform_and_arch(system_name: str, arch_na
 
 def test_publish_archive_uploads_and_updates_url_map(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo_root = tmp_path.joinpath("repo")
-    module_path = repo_root.joinpath("src/stackops/jobs/scripts_dynamic/download_stackops_offline_installer.py")
-    url_map_path = module_path.with_suffix(".json")
+    package_path = repo_root.joinpath("src/stackops/jobs/scripts_dynamic/__init__.py")
+    url_map_path = package_path.parent.joinpath(
+        installer_offline_publish.scripts_dynamic_assets.OFFLINE_INSTALLER_PATH_REFERENCE
+    )
     url_map_path.parent.mkdir(parents=True, exist_ok=True)
     url_map_path.write_text(
         json.dumps(
@@ -62,7 +66,7 @@ def test_publish_archive_uploads_and_updates_url_map(monkeypatch: pytest.MonkeyP
         captured_calls.append((local_path, cloud, remote_path, share, verbose, transfers))
         return "https://drive.google.com/open?id=test"
 
-    monkeypatch.setattr(installer_offline_publish.download_stackops_offline_installer, "__file__", str(module_path))
+    monkeypatch.setattr(installer_offline_publish.scripts_dynamic_assets, "__file__", str(package_path))
     monkeypatch.setattr(installer_offline_publish.rclone_wrapper, "to_cloud", fake_to_cloud)
 
     step_results = installer_offline_publish.publish_archive(

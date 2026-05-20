@@ -1,10 +1,11 @@
 from pathlib import Path
 import json
 
-from stackops.jobs.scripts_dynamic import download_stackops_offline_installer
+from stackops.jobs import scripts_dynamic as scripts_dynamic_assets
 from stackops.utils import rclone_wrapper
 from stackops.utils.installer_utils import installer_offline_constants as constants
 from stackops.utils.installer_utils.installer_offline_models import ExportStepResult
+from stackops.utils.path_reference import get_path_reference_path
 
 KNOWN_TARGET_KEYS: tuple[str, ...] = (
     "linux-x64",
@@ -50,7 +51,10 @@ def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> 
 
 
 def _resolve_url_map_path() -> Path:
-    url_map_path = Path(download_stackops_offline_installer.__file__).resolve().with_suffix(".json")
+    url_map_path = get_path_reference_path(
+        module=scripts_dynamic_assets,
+        path_reference=scripts_dynamic_assets.OFFLINE_INSTALLER_PATH_REFERENCE,
+    )
     if not url_map_path.is_file():
         raise RuntimeError(f"Offline installer URL map not found: {url_map_path}")
     return url_map_path
