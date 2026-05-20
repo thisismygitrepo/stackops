@@ -35,82 +35,76 @@ def render_banner(message: str, title: str, border_style: str, box_style: box.Bo
     console.print(Panel.fit(message, title=title, border_style=border_style, box=box_style, padding=(1, 4)))
 
 
-class TerminalSettings(object):
-    def __init__(self):
-        # Grabbing Terminal Settings file:
-        console.print()
-        render_banner("🔍 INITIALIZING TERMINAL SETTINGS 🔍", "Windows Terminal", "cyan", box.DOUBLE)
-        console.print()
-        tmp = os.getenv("LOCALAPPDATA")
-        if not isinstance(tmp, str):
-            console.print("❌ ERROR: Could not find LOCALAPPDATA environment variable!")
-            raise ValueError("Could not find LOCALAPPDATA environment variable.")
-        self.path = Path(tmp).joinpath(r"Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json")
-        backup_name = f".orig_{randstr()}"
-        console.print(f"📝 Creating backup of original settings as {backup_name}...")
-        path_core.copy(self.path, append=backup_name)
-        console.print(f"📂 Loading Windows Terminal settings from: {self.path}")
-        self.dat: dict[str, Any] = read_json(self.path)
-        # Use a plain Python list for profiles
-        self.profs = list(self.dat["profiles"]["list"])
-        console.print(Panel(f"✅ Successfully loaded {len(self.profs)} profiles", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
+def set_wt_settings(nerd_font: bool = True) -> None:
+    console.print()
+    render_banner("🔍 INITIALIZING TERMINAL SETTINGS 🔍", "Windows Terminal", "cyan", box.DOUBLE)
+    console.print()
 
-    def save_terminal_settings(self):
-        console.print()
-        console.print(f"💾 Saving terminal settings to: {self.path}")
-        self.dat["profiles"]["list"] = list(self.profs)
-        save_json(obj=self.dat, path=self.path, indent=5)
-        console.print(Panel("✅ Settings saved successfully!", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
+    tmp = os.getenv("LOCALAPPDATA")
+    if not isinstance(tmp, str):
+        console.print("❌ ERROR: Could not find LOCALAPPDATA environment variable!")
+        raise ValueError("Could not find LOCALAPPDATA environment variable.")
 
-    # ========================= Terminal Settings =========================================
-    def update_default_settings(self):
-        console.print()
-        console.print("⚙️  Updating default terminal settings...")
-        # Changing start up settings:
-        self.dat["startOnUserLogin"] = True
-        self.dat["launchMode"] = "fullscreen"
-        self.dat["theme"] = "dark"
-        self.dat["focusFollowMouse"] = True
-        self.dat["copyOnSelect"] = True
-        self.dat["profiles"]["defaults"]["padding"] = "0"
-        self.dat["profiles"]["defaults"]["useAcrylic"] = False
-        console.print(Panel("✅ Default settings updated", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
+    settings_path = Path(tmp).joinpath(r"Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json")
+    backup_name = f".orig_{randstr()}"
+    console.print(f"📝 Creating backup of original settings as {backup_name}...")
+    path_core.copy(settings_path, append=backup_name)
+    console.print(f"📂 Loading Windows Terminal settings from: {settings_path}")
+    data: dict[str, Any] = read_json(settings_path)
+    profiles = list(data["profiles"]["list"])
+    console.print(Panel(f"✅ Successfully loaded {len(profiles)} profiles", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
 
-    # 1- Customizing Powershell========================================================
-    # as opposed to Windows Powershell
-    def customize_powershell(self, nerd_font: bool = True):
-        console.print()
-        console.print("🛠️  Customizing PowerShell profile...")
-        pwsh: dict[str, Any] = dict(
-            name="PowerShell",
-            commandline="pwsh",
-            hidden=False,
-            opacity=87,
-            # guid="{" + str(uuid4()) + "}",  # WT doesn't accept any GUID to identify pwsh
-            startingDirectory="%USERPROFILE%",  # "%USERPROFILE%",   # None: inherent from parent process.
-        )
-        if nerd_font:
-            console.print("🔤 Setting PowerShell font to CaskaydiaCove Nerd Font...")
-            pwsh["font"] = dict(face="CaskaydiaCove Nerd Font")  # because oh-my-posh uses glyphs from this font.
+    console.print()
+    console.print("⚙️  Updating default terminal settings...")
+    data["startOnUserLogin"] = True
+    data["launchMode"] = "fullscreen"
+    data["theme"] = "dark"
+    data["focusFollowMouse"] = True
+    data["copyOnSelect"] = True
+    data["profiles"]["defaults"]["padding"] = "0"
+    data["profiles"]["defaults"]["useAcrylic"] = False
+    console.print(Panel("✅ Default settings updated", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
 
-        for idx, item in enumerate(self.profs):
-            if item["name"] == "PowerShell":
-                self.profs[idx].update(pwsh)
-                console.print(Panel("✅ PowerShell profile customized successfully", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
-                break
-        else:
-            console.print(Panel("❌ Couldn't customize PowerShell because profile not found, try to install it first.", title="[bold red]Terminal Settings[/bold red]", border_style="red", box=box.ROUNDED))
+    console.print()
+    console.print("🛠️  Customizing PowerShell profile...")
+    pwsh: dict[str, Any] = dict(
+        name="PowerShell",
+        commandline="pwsh",
+        hidden=False,
+        opacity=87,
+        # guid="{" + str(uuid4()) + "}",  # WT doesn't accept any GUID to identify pwsh
+        startingDirectory="%USERPROFILE%",  # "%USERPROFILE%",   # None: inherent from parent process.
+    )
+    if nerd_font:
+        console.print("🔤 Setting PowerShell font to CaskaydiaCove Nerd Font...")
+        pwsh["font"] = dict(face="CaskaydiaCove Nerd Font")  # because oh-my-posh uses glyphs from this font.
 
-    def make_powershell_default_profile(self):
-        console.print()
-        console.print("🌟 Setting PowerShell as the default profile...")
-        for profile in self.profs:
-            if profile["name"] == "PowerShell":
-                self.dat["defaultProfile"] = profile["guid"]
-                console.print(Panel("✅ PowerShell is now the default profile!", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
-                break
-        else:
-            console.print(Panel("❌ PowerShell profile was not found in the list of profiles and therefore was not made the default.", title="[bold red]Terminal Settings[/bold red]", border_style="red", box=box.ROUNDED))
+    powershell_profile = None
+    for profile in profiles:
+        if profile["name"] == "PowerShell":
+            profile.update(pwsh)
+            powershell_profile = profile
+            console.print(Panel("✅ PowerShell profile customized successfully", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
+            break
+    else:
+        console.print(Panel("❌ Couldn't customize PowerShell because profile not found, try to install it first.", title="[bold red]Terminal Settings[/bold red]", border_style="red", box=box.ROUNDED))
+
+    console.print()
+    console.print("🌟 Setting PowerShell as the default profile...")
+    if powershell_profile is not None:
+        data["defaultProfile"] = powershell_profile["guid"]
+        console.print(Panel("✅ PowerShell is now the default profile!", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
+    else:
+        console.print(Panel("❌ PowerShell profile was not found in the list of profiles and therefore was not made the default.", title="[bold red]Terminal Settings[/bold red]", border_style="red", box=box.ROUNDED))
+
+    console.print("⌨️  Adding keyboard shortcut for pane zoom (ctrl+shift+z)...")
+    data["actions"].append({"command": "togglePaneZoom", "keys": "ctrl+shift+z"})
+
+    console.print()
+    console.print(f"💾 Saving terminal settings to: {settings_path}")
+    data["profiles"]["list"] = profiles
+    save_json(obj=data, path=settings_path, indent=5)
+    console.print(Panel("✅ Settings saved successfully!", title="[bold blue]Terminal Settings[/bold blue]", border_style="blue", box=box.ROUNDED))
 
 
 def main():
@@ -120,14 +114,7 @@ def main():
     shell = {"powershell": "pwsh.exe", "Windows Powershell": "powershell.exe"}["powershell"].split(".exe", maxsplit=1)[0]
     if shell == "pwsh":
         console.print("🚀 Starting Windows Terminal configuration with PowerShell...")
-        ts = TerminalSettings()
-        ts.update_default_settings()
-        ts.customize_powershell(nerd_font=True)
-        ts.make_powershell_default_profile()
-        console.print("⌨️  Adding keyboard shortcut for pane zoom (ctrl+shift+z)...")
-        ts.dat["actions"].append({"command": "togglePaneZoom", "keys": "ctrl+shift+z"})
-
-        ts.save_terminal_settings()
+        set_wt_settings(nerd_font=True)
         console.print()
         render_banner("✨ WINDOWS TERMINAL SETUP COMPLETE ✨", "Windows Terminal", "green", box.DOUBLE)
         console.print()

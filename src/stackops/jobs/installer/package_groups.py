@@ -202,7 +202,6 @@ PACKAGES_SYSTEM_MONITORS = [
 
 # Search & Archive Tools - File and content search utilities, archive management
 PACKAGES_FILE = [
-    "nerdfont",
     "fd",
     "fzf",
     "tv",
@@ -247,10 +246,11 @@ NETWORK = [
 
 # Terminal & Shell Enhancements - Terminal multiplexers, shell history, and prompts
 PACKAGES_TERMINAL_SHELL = [
-    "zellij",
+    "nerdfont",
+    # "zellij",
     "psmux",
     "tmux",
-    "mprocs",
+    # "mprocs",
     "mcfly",
     # "atuin",
     "starship",
