@@ -3,11 +3,16 @@
 """
 
 import json
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Final, Literal, TypedDict
 
 import typer
 
 from stackops.utils.schemas.installer.installer_types import InstallRequest, InstallationResult, InstallerData
+
+
+INSTALLER_NAME_ALIASES: Final[dict[str, str]] = {
+    "agy": "antigravity",
+}
 
 
 class InteractiveGroupPreview(TypedDict):
@@ -189,6 +194,7 @@ def install_clis(clis_names: list[str], install_request: InstallRequest) -> None
     all_installers_data = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
     total_results: list[InstallationResult] = []
     for a_cli_name in clis_names:
+        resolved_cli_name = INSTALLER_NAME_ALIASES.get(a_cli_name.lower(), a_cli_name)
         if "github.com" in a_cli_name.lower():
             from stackops.utils.installer_utils.install_from_url import install_from_github_url
             install_from_github_url(github_url=a_cli_name)
@@ -202,7 +208,7 @@ def install_clis(clis_names: list[str], install_request: InstallRequest) -> None
         selected_installer = None
         for installer in all_installers_data:
             app_name = installer["appName"]
-            if app_name.lower() == a_cli_name.lower():
+            if app_name.lower() == resolved_cli_name.lower():
                 selected_installer = installer
                 break
         if selected_installer is None:

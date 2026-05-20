@@ -111,7 +111,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>agents</code></td>
-      <td>aider | aoe | aichat | copilot | antigravity | crush | opencode-ai | chatgpt | mods | q | qwen-code | cursor-cli | droid | kilocode | cline | auggie | agentofempires | agent-deck | agenthand</td>
+      <td>aider | aoe | aichat | copilot | antigravity/agy | crush | opencode-ai | chatgpt | mods | q | qwen-code | cursor-cli | droid | kilocode | cline | auggie | agentofempires | agent-deck | agenthand</td>
     </tr>
     <tr>
       <td><code>terminal</code></td>

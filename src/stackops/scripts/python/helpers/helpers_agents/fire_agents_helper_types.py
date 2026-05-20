@@ -18,6 +18,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_shell import get_agen
 # Warp
 
 AGENTS: TypeAlias = Literal[
+    "agy",
     "cursor-agent",
     "claude",
     "qwen",

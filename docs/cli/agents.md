@@ -100,6 +100,7 @@ Examples:
 agents run-prompt --agent codex --reasoning-effort high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --reasoning-effort high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --context-name docs.cli --where all "update the assigned docs"
+agents run-prompt --agent agy --context-path ./context.md "inspect this repo"
 agents run-prompt --agent pi --reasoning-effort high --context-path ./context.md "inspect this repo"
 agents run-prompt --show-format
 ```
@@ -116,6 +117,7 @@ Examples:
 ```bash
 agents ask --agent codex --reasoning h "inspect the repo"
 agents ask --agent copilot --reasoning m "summarize the current module"
+agents ask --agent agy "inspect the repo"
 agents ask --agent pi --reasoning h "inspect the repo"
 agents ask "summarize this file" --file-prompt ./README.md
 ```
@@ -128,7 +130,7 @@ agents ask "summarize this file" --file-prompt ./README.md
 
 ```bash
 agents make-config --root .
-agents make-config --root . --agent codex,copilot,pi --include-scripts --add-gitignore
+agents make-config --root . --agent codex,copilot,agy,pi --include-scripts --add-gitignore
 ```
 
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
@@ -137,6 +139,7 @@ agents make-config --root . --agent codex,copilot,pi --include-scripts --add-git
 - `--where` selects catalog locations: `all`, `repo`, `private`, `public`, or `library`
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
 - `copilot` means GitHub Copilot CLI. Local MCP config is written to `.mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
+- `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
 - `caveman` and `grill-me` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
@@ -144,7 +147,7 @@ For `add-mcp`, `--where repo` resolves to `<git-root>/.stackops/mcp.json`.
 
 ```bash
 agents add-mcp --help
-agents add-mcp postgres,filesystem --agent codex,copilot,pi --scope local
+agents add-mcp postgres,filesystem --agent codex,copilot,agy,pi --scope local
 agents add-mcp caveman --agent codex --scope local
 agents add-mcp --edit --where library
 ```

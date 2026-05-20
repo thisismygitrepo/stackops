@@ -4,6 +4,7 @@ from time import perf_counter
 
 import stackops.scripts.python.ai.scripts.paths as ai_script_paths
 from stackops.scripts.python.ai.utils import generic
+from stackops.scripts.python.ai.solutions.antigravity import antigravity
 from stackops.scripts.python.ai.solutions.claude import claude
 from stackops.scripts.python.ai.solutions.cline import cline
 from stackops.scripts.python.ai.solutions.copilot import github_copilot
@@ -54,6 +55,8 @@ def _collect_touched_files(before: dict[Path, tuple[int, int]], after: dict[Path
 
 def _build_framework_config(repo_root: Path, framework: AGENTS, add_private_config: bool, add_instructions: bool) -> None:
     match framework:
+        case "agy":
+            antigravity.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "copilot":
             github_copilot.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "cursor-agent":

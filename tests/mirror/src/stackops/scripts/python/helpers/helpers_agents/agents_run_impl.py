@@ -12,6 +12,12 @@ def test_build_agent_command_translates_copilot_reasoning_flag() -> None:
     assert "--reasoning high" not in command_line
 
 
+def test_build_agent_command_uses_agy_print_mode() -> None:
+    command_line = agents_run_impl.build_agent_command(agent="agy", prompt_file=Path("/tmp/prompt.md"), reasoning_effort="high")
+
+    assert command_line == 'agy --print --dangerously-skip-permissions "$(cat /tmp/prompt.md)"'
+
+
 def test_should_scaffold_prompts_yaml_prefers_repo_for_default_all() -> None:
     assert agents_run_impl._should_scaffold_prompts_yaml(location_name="repo", prompts_yaml_path=None, where="all") is True
     assert agents_run_impl._should_scaffold_prompts_yaml(location_name="private", prompts_yaml_path=None, where="all") is False

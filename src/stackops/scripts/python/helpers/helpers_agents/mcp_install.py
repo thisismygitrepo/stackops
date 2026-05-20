@@ -75,6 +75,8 @@ def install_resolved_mcp_servers(
 ) -> Path:
     path = resolve_install_path(agent=agent, scope=scope, repo_root=repo_root, home_dir=home_dir)
     match agent:
+        case "agy":
+            _write_antigravity_mcp_config(path=path, resolved_servers=resolved_servers)
         case "codex":
             _write_codex_config(path=path, resolved_servers=resolved_servers)
         case "copilot":
@@ -107,6 +109,8 @@ def resolve_install_path(
         if repo_root is None:
             raise ValueError("Local MCP installation requires running inside a git repository")
         match agent:
+            case "agy":
+                return repo_root / ".agents" / "mcp_config.json"
             case "codex":
                 return repo_root / ".codex" / "config.toml"
             case "copilot":
@@ -139,6 +143,8 @@ def resolve_install_path(
                 return repo_root / ".pi" / "mcp.json"
 
     match agent:
+        case "agy":
+            return home_dir / ".gemini" / "antigravity-cli" / "mcp_config.json"
         case "codex":
             return home_dir / ".codex" / "config.toml"
         case "copilot":
@@ -249,6 +255,37 @@ def _write_mcp_servers_file(*, path: Path, resolved_servers: tuple[ResolvedMcpSe
     mcp_servers = _ensure_object_member(root=root, key="mcpServers", path=path)
     for resolved_server in resolved_servers:
         mcp_servers[resolved_server["name"]] = _resolved_server_to_generic_entry(resolved_server=resolved_server)
+    _write_json_object(path=path, root=root)
+
+
+def _resolved_server_to_antigravity_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
+    definition = resolved_server["definition"]
+    if definition["transport"] == "stdio":
+        command = definition["command"]
+        if command is None:
+            raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a command")
+        entry: dict[str, object] = {"command": command}
+        if len(definition["args"]) > 0:
+            entry["args"] = list(definition["args"])
+        if len(definition["env"]) > 0:
+            entry["env"] = dict(definition["env"])
+        if definition["cwd"] is not None:
+            entry["cwd"] = definition["cwd"]
+    else:
+        url = definition["url"]
+        if url is None:
+            raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a URL")
+        entry = {"serverUrl": url}
+        if len(definition["headers"]) > 0:
+            entry["headers"] = dict(definition["headers"])
+    return entry
+
+
+def _write_antigravity_mcp_config(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
+    root = _load_json_object(path=path)
+    mcp_servers = _ensure_object_member(root=root, key="mcpServers", path=path)
+    for resolved_server in resolved_servers:
+        mcp_servers[resolved_server["name"]] = _resolved_server_to_antigravity_entry(resolved_server=resolved_server)
     _write_json_object(path=path, root=root)
 
 

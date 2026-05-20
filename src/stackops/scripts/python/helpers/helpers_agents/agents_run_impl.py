@@ -105,6 +105,8 @@ def build_agent_command(
         prompt_content_expr = f'"$(cat {prompt_file_q})"'
 
     match agent:
+        case "agy":
+            return f"{agent_cli} --print --dangerously-skip-permissions {prompt_content_expr}"
         case "copilot":
             model_arg = ""
             if model is not None:
