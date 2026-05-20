@@ -102,6 +102,11 @@ run  = 'shell -- code "$0"'
 desc = "Read with vscode"
 
 [[mgr.prepend_keymap]]
+on   = ["R", "o"]
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/open_default_app.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+desc = "Read with OS default app"
+
+[[mgr.prepend_keymap]]
 on   = ["R", "h"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops utils file edit "$0"'
 desc = "Read with helix"
@@ -121,7 +126,7 @@ desc = "Read with fire interactively"
 [[mgr.prepend_keymap]]
 on   = ["R", "c"]
 run  = 'shell --block -- code "$0"'
-desc = "Read with code"
+desc = "Read with VS Code (blocking shell)"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "c"]
