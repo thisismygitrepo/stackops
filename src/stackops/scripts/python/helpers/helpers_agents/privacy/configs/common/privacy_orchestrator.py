@@ -3,7 +3,6 @@ from pathlib import Path
 import stackops.scripts.python.helpers.helpers_agents.privacy.configs.aichat as aichat_assets
 import stackops.scripts.python.helpers.helpers_agents.privacy.configs.copilot as copilot_assets
 import stackops.scripts.python.helpers.helpers_agents.privacy.configs.crush as crush_assets
-import stackops.scripts.python.helpers.helpers_agents.privacy.configs.gemini as gemini_assets
 from stackops.scripts.python.helpers.helpers_agents.privacy.configs.auggie.auggie_privacy import secure_auggie_config
 from stackops.scripts.python.helpers.helpers_agents.privacy.configs.chatgpt.chatgpt_privacy import secure_chatgpt_cli
 from stackops.scripts.python.helpers.helpers_agents.privacy.configs.cline.cline_privacy import secure_cline_config
@@ -19,22 +18,6 @@ from stackops.utils.path_reference import get_path_reference_path
 
 def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root: str | None) -> None:
     root = Path(__file__).resolve().parent.parent
-    gemini_settings_source = get_path_reference_path(
-        module=gemini_assets,
-        path_reference=gemini_assets.SETTINGS_PATH_REFERENCE,
-    )
-    gemini_settings_target_global = Path.home().joinpath(".gemini/settings.json")
-    if not gemini_settings_target_global.exists() or overwrite:
-        gemini_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
-        if gemini_settings_source.exists():
-            gemini_settings_target_global.write_text(gemini_settings_source.read_text())
-    if repo_root:
-        gemini_settings_target_repo = Path(repo_root).joinpath(".gemini/settings.json")
-        if not gemini_settings_target_repo.exists() or overwrite:
-            gemini_settings_target_repo.parent.mkdir(parents=True, exist_ok=True)
-            if gemini_settings_source.exists():
-                gemini_settings_target_repo.write_text(gemini_settings_source.read_text())
-
     aider_settings_source = root.joinpath("aider/.aider.conf.yml")
     aider_settings_target_global = Path.home().joinpath(".aider.conf.yml")
     if not aider_settings_target_global.exists() or overwrite:

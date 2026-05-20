@@ -41,7 +41,6 @@
               "description": "Optional preferred agent label. Ignored when StackOps builds prompt text.",
               "enum": [
                 "cursor-agent",
-                "gemini",
                 "claude",
                 "qwen",
                 "copilot",

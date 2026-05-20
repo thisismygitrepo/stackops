@@ -121,11 +121,6 @@ def build_agent_command(
             return f"{agent_cli} exec{model_arg}{reasoning_arg} - < {prompt_file_q}"
         case "forge":
             return f"{agent_cli} -p {prompt_content_expr}"
-        case "gemini":
-            model_arg = ""
-            if model is not None:
-                model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
-            return f"{agent_cli}{model_arg} --yolo --prompt {prompt_file_q}"
         case "crush":
             return f"{agent_cli} run {prompt_file_q}"
         case "claude":

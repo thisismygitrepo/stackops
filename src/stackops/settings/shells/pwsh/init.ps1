@@ -34,6 +34,7 @@ Add-ToPathIfNotAlready -Directories @(
 )
 
 function xx { codex --dangerously-bypass-approvals-and-sandbox @args }
+function xa { agy --dangerously-skip-permissions @args }
 function xc { copilot --yolo @args }
 
 

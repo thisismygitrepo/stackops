@@ -102,7 +102,7 @@ devops install https://example.com/tool-v1.0-linux-amd64.tar.gz
 | `dev` | Full dev environment | 80+ tools across all categories |
 | `dev-utils` | Development utilities | devcontainer, rust-analyzer, evcxr, geckodriver |
 | `term-eye-candy` | Terminal visuals | lolcatjs, figlet-cli, boxes, cowsay |
-| `agents` | AI assistants | aider, aichat, copilot, gemini, opencode-ai, mods, q, ... |
+| `agents` | AI assistants | aider, aichat, copilot, antigravity, opencode-ai, mods, q, ... |
 | `terminal-emulator` | Terminal emulators | Alacritty, Wezterm, warp, vtm, nushell |
 | `shell` | Shell enhancements | zellij, mprocs, mcfly, atuin, starship |
 | `browsers` | Web browsers | Brave, browsh, carbonyl |

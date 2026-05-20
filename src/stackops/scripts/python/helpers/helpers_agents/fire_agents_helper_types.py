@@ -19,7 +19,6 @@ from stackops.scripts.python.helpers.helpers_agents.agents_shell import get_agen
 
 AGENTS: TypeAlias = Literal[
     "cursor-agent",
-    "gemini",
     "claude",
     "qwen",
     "copilot",

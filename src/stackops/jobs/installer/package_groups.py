@@ -14,7 +14,7 @@ AGENTS = [
     "aoe",
     "aichat",
     "copilot",
-    "gemini",
+    "antigravity",
     "crush",
     "opencode-ai",
     "chatgpt",

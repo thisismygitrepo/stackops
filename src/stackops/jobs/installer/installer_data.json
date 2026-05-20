@@ -3440,20 +3440,20 @@
       }
     },
     {
-      "appName": "gemini",
-      "license": "Apache-2.0",
+      "appName": "antigravity",
+      "license": "Proprietary",
       "repoURL": "CMD",
-      "doc": "Terminal-based CLI agents and tools for productivity and coding.",
+      "doc": "Google Antigravity CLI.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "bun install -g @google/gemini-cli",
-          "windows": "bun install -g @google/gemini-cli",
-          "darwin": "bun install -g @google/gemini-cli"
+          "linux": "curl -fsSL https://antigravity.google/cli/install.sh | bash",
+          "windows": "powershell -c \"irm https://antigravity.google/cli/install.ps1 | iex\"",
+          "darwin": "curl -fsSL https://antigravity.google/cli/install.sh | bash"
         },
         "arm64": {
-          "linux": "bun install -g @google/gemini-cli",
-          "windows": "bun install -g @google/gemini-cli",
-          "darwin": "bun install -g @google/gemini-cli"
+          "linux": "curl -fsSL https://antigravity.google/cli/install.sh | bash",
+          "windows": "powershell -c \"irm https://antigravity.google/cli/install.ps1 | iex\"",
+          "darwin": "curl -fsSL https://antigravity.google/cli/install.sh | bash"
         }
       }
     },

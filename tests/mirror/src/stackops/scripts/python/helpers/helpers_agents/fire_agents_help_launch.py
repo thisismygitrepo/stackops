@@ -23,10 +23,10 @@ def test_prep_agent_launch_writes_powershell_launcher_on_windows(monkeypatch: py
         prompt_prefix="prompt block",
         join_prompt_and_context=False,
         machine="local",
-        model="gemini-2.5-pro",
+        model="gpt-5.2",
         reasoning_effort=None,
-        provider="google",
-        agent="gemini",
+        provider="openai",
+        agent="codex",
         job_name="job",
         stagger_max=7.5,
     )
@@ -36,10 +36,10 @@ def test_prep_agent_launch_writes_powershell_launcher_on_windows(monkeypatch: py
 
     assert launcher_path.exists()
     assert "$ErrorActionPreference = 'Stop'" in payload
-    assert "$env:GEMINI_API_KEY = 'secret-key'" in payload
+    assert "$env:CODEX_API_KEY = 'secret-key'" in payload
     assert random_calls == [(0, 7.5)]
     assert "Start-Sleep -Seconds 7.50" in payload
-    assert "gemini --model 'gemini-2.5-pro' --yolo --prompt" in payload
+    assert "codex exec --model 'gpt-5.2' -" in payload
     assert "#!/usr/bin/env bash" not in payload
 
 

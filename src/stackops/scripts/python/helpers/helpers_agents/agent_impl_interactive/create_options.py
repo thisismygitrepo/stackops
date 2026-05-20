@@ -64,14 +64,12 @@ def _provider_options_for_agent(agent: AGENTS) -> tuple[PROVIDER, ...]:
     match agent:
         case "codex":
             return ("openai",)
-        case "gemini":
-            return ("google",)
         case _:
             return provider_options
 
 
 def _provider_allows_none(agent: AGENTS) -> bool:
-    return agent not in {"gemini", "crush"}
+    return agent != "crush"
 
 
 def _format_output_path_value(value: str | None) -> str:
@@ -118,8 +116,6 @@ def _format_provider_value(*, agent: AGENTS, value: PROVIDER | None) -> str:
     match agent:
         case "codex":
             return "auto: openai"
-        case "gemini":
-            return "auto: google"
         case "crush":
             return "required"
         case _:

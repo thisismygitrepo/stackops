@@ -35,9 +35,6 @@ def _build_generic_agent_command(
 
 def _local_agent_environment_lines(*, agent: AGENTS, api_spec: API_SPEC, is_windows: bool) -> list[str]:
     match agent:
-        case "gemini":
-            env_name = "GEMINI_API_KEY"
-            warning_message = "Warning: No GEMINI_API_KEY provided, hoping it is set in the environment."
         case "codex":
             env_name = "CODEX_API_KEY"
             warning_message = "Warning: No CODEX_API_KEY provided, hoping it is set in the environment."
@@ -120,28 +117,6 @@ def prep_agent_launch(
         random_sleep_time = random.uniform(0, stagger_max)
         ai_spec: AI_SPEC
         match agent:
-            case "gemini":
-                assert provider == "google", "Gemini agent only works with google provider."
-                api_keys = get_api_keys(provider="google")
-                api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else None
-                if api_spec is None:
-                    raise ValueError("No API keys found for Google Gemini. Please configure them in dotfiles/creds/llm/google/api_keys.ini")
-                ai_spec = AI_SPEC(
-                    provider=provider, model="gemini-2.5-pro", agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort
-                )
-                if machine == "local":
-                    cmd = _build_generic_agent_command(
-                        agent=agent,
-                        prompt_path=prompt_path,
-                        reasoning_effort=reasoning_effort,
-                        model=ai_spec["model"],
-                        provider=ai_spec["provider"],
-                        is_windows=is_windows,
-                    )
-                else:
-                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_gemini import fire_gemini
-
-                    cmd = fire_gemini(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case "cursor-agent":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)

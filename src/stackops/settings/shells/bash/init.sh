@@ -50,6 +50,7 @@ alias u='wrap_in_shell_script utils'
 alias s='wrap_in_shell_script seek'
 
 alias xx='codex --dangerously-bypass-approvals-and-sandbox'
+alias xa='agy --dangerously-skip-permissions'
 alias xc='copilot --yolo'
 
 # alias gcs='gh copilot suggest -t shell'

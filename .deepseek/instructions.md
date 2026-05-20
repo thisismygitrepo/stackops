@@ -19,8 +19,6 @@ DIR: .devcontainer
   FILE: devcontainer.json
 FILE: .dockerignore
 FILE: .flake8
-DIR: .gemini
-  FILE: settings.json
 DIR: .git
   FILE: COMMIT_EDITMSG
   FILE: FETCH_HEAD

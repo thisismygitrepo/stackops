@@ -16,7 +16,6 @@
           "description": "Agent implementation passed to `agents parallel create`.",
           "enum": [
             "cursor-agent",
-            "gemini",
             "claude",
             "qwen",
             "copilot",

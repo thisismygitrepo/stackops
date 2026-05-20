@@ -27,7 +27,6 @@ _SHORTCUT_BY_EFFORT: Final[dict[ReasoningEffort, ReasoningShortcut]] = {
 
 _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
     "cursor-agent": AgentReasoningSupport(efforts=(), note=None),
-    "gemini": AgentReasoningSupport(efforts=(), note=None),
     "claude": AgentReasoningSupport(efforts=(), note=None),
     "qwen": AgentReasoningSupport(efforts=(), note=None),
     "copilot": AgentReasoningSupport(efforts=("low", "medium", "high", "xhigh"), note=None),

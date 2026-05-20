@@ -10,7 +10,6 @@ from stackops.scripts.python.ai.solutions.copilot import github_copilot
 from stackops.scripts.python.ai.solutions.crush import crush
 from stackops.scripts.python.ai.solutions.cursor import cursors
 from stackops.scripts.python.ai.solutions.forge import forge
-from stackops.scripts.python.ai.solutions.gemini import gemini
 from stackops.scripts.python.ai.solutions.qwen_code import qwen_code
 from stackops.scripts.python.ai.solutions.codex import codex
 from stackops.scripts.python.ai.solutions.q import amazon_q
@@ -59,8 +58,6 @@ def _build_framework_config(repo_root: Path, framework: AGENTS, add_private_conf
             github_copilot.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "cursor-agent":
             cursors.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "gemini":
-            gemini.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "claude":
             claude.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "crush":
