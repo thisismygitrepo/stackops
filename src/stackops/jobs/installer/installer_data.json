@@ -2288,6 +2288,42 @@
       }
     },
     {
+      "appName": "frpc",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/fatedier/frp",
+      "doc": "🔄 Fast reverse proxy client for exposing local services behind NAT or firewalls.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "frp_{version}_linux_amd64.tar.gz",
+          "windows": "frp_{version}_windows_amd64.zip",
+          "darwin": "frp_{version}_darwin_amd64.tar.gz"
+        },
+        "arm64": {
+          "linux": "frp_{version}_linux_arm64.tar.gz",
+          "windows": "frp_{version}_windows_arm64.zip",
+          "darwin": "frp_{version}_darwin_arm64.tar.gz"
+        }
+      }
+    },
+    {
+      "appName": "frps",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/fatedier/frp",
+      "doc": "🔄 Fast reverse proxy server for exposing local services behind NAT or firewalls.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "frp_{version}_linux_amd64.tar.gz",
+          "windows": "frp_{version}_windows_amd64.zip",
+          "darwin": "frp_{version}_darwin_amd64.tar.gz"
+        },
+        "arm64": {
+          "linux": "frp_{version}_linux_arm64.tar.gz",
+          "windows": "frp_{version}_windows_arm64.zip",
+          "darwin": "frp_{version}_darwin_arm64.tar.gz"
+        }
+      }
+    },
+    {
       "appName": "bandwhich",
       "license": "MIT License",
       "repoURL": "https://github.com/imsnif/bandwhich",
