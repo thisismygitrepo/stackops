@@ -3602,20 +3602,20 @@
       }
     },
     {
-      "appName": "warp-terminal-cli",
+      "appName": "oz",
       "license": "Proprietary license under Warp Terms of Service / Product and Services License Agreement",
       "repoURL": "CMD",
-      "doc": "Modern terminal cli with AI-powered features",
+      "doc": "Warp Oz CLI for running and managing Warp cloud agents",
       "fileNamePattern": {
         "amd64": {
-          "linux": "https://app.warp.dev/download/cli?os=linux&package=deb&arch=x86_64",
-          "windows": null,
-          "darwin": " brew tap warpdotdev/warp; brew update; brew install --cask warp-cli"
+          "linux": "sudo apt install oz-stable",
+          "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         },
         "arm64": {
-          "linux": "https://app.warp.dev/download/cli?os=linux&package=deb&arch=aarch64",
-          "windows": null,
-          "darwin": " brew tap warpdotdev/warp; brew update; brew install --cask warp-cli"
+          "linux": "sudo apt install oz-stable",
+          "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         }
       }
     },

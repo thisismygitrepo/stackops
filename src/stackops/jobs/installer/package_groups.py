@@ -20,6 +20,7 @@ AGENTS = [
     "chatgpt",
     "forge",
     "mods",
+    "oz",
     "q",
     "qwen-code",
     "cursor-cli",
