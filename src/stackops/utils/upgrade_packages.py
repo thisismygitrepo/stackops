@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
+import shutil
 import subprocess
 import tomllib
 from typing import Literal, TypedDict, cast
@@ -82,17 +83,55 @@ rm -rfd .venv
     print(f"Generated {len(commands)} uv add commands in {output_path}")
 
 
-def clean_dependency_groups(project_root: Path, group_names: Sequence[str]) -> None:
+def list_all_cleanup_target_selectors(pyproject_data: PyprojectTable) -> tuple[str, ...]:
+    cleanup_target_selectors = [
+        f"optional-dependency:{group_name}"
+        for group_name in get_optional_dependencies(pyproject_data=pyproject_data)
+    ]
+    cleanup_target_selectors.extend(
+        f"dependency-group:{group_name}"
+        for group_name in get_dependency_groups(pyproject_data=pyproject_data)
+    )
+    return tuple(cleanup_target_selectors)
+
+
+def clean_dependency_groups(
+    project_root: Path,
+    group_names: Sequence[str],
+    clean_all_groups: bool = False,
+) -> None:
     pyproject_path = project_root / "pyproject.toml"
     pyproject_data = read_pyproject(pyproject_path=pyproject_path)
-
-    cleanup_targets = resolve_cleanup_targets(pyproject_data=pyproject_data, group_names=group_names)
+    selected_group_names = list(group_names)
+    if clean_all_groups:
+        selected_group_names.extend(
+            list_all_cleanup_target_selectors(pyproject_data=pyproject_data)
+        )
+    cleanup_targets = resolve_cleanup_targets(
+        pyproject_data=pyproject_data,
+        group_names=selected_group_names,
+    )
     for cleanup_target in cleanup_targets:
         if not cleanup_target.packages:
             print(f"{cleanup_target.kind} '{cleanup_target.group_name}' is already empty")
             continue
         subprocess.run(build_uv_remove_command(cleanup_target=cleanup_target), cwd=project_root, check=True)
         print(f"Cleaned {cleanup_target.kind} '{cleanup_target.group_name}'")
+
+
+def delete_project_venv(project_root: Path) -> None:
+    venv_path = project_root / ".venv"
+    if venv_path.exists() is False:
+        print(f"No .venv directory found in {project_root}")
+        return
+    if venv_path.is_symlink():
+        venv_path.unlink()
+        print(f"Deleted .venv symlink in {project_root}")
+        return
+    if venv_path.is_dir() is False:
+        raise ValueError(f"Expected '{venv_path}' to be a directory or symlink.")
+    shutil.rmtree(venv_path)
+    print(f"Deleted .venv directory in {project_root}")
 
 
 def parse_cleanup_target_selection(group_name: str) -> CleanupTargetSelection:

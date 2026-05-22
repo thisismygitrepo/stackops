@@ -272,13 +272,40 @@ def upgrade_packages(
             help="Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.",
         ),
     ] = None,
+    clean_all_groups: Annotated[
+        bool,
+        typer.Option(
+            "--clean-all-groups",
+            "-C",
+            help="Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh.",
+        ),
+    ] = False,
+    delete_venv: Annotated[
+        bool,
+        typer.Option(
+            "--delete-venv",
+            "-D",
+            help="Delete the project's .venv directory before regenerating pyproject_init.sh.",
+        ),
+    ] = False,
 ) -> None:
-    from stackops.utils.upgrade_packages import clean_dependency_groups, generate_uv_add_commands
+    from stackops.utils.upgrade_packages import (
+        clean_dependency_groups,
+        delete_project_venv,
+        generate_uv_add_commands,
+    )
 
     try:
         project_root = _resolve_pyproject_root(Path(root))
-        if clean_group:
-            clean_dependency_groups(project_root=project_root, group_names=clean_group)
+        selected_clean_groups = [] if clean_group is None else clean_group
+        if clean_all_groups or selected_clean_groups:
+            clean_dependency_groups(
+                project_root=project_root,
+                group_names=selected_clean_groups,
+                clean_all_groups=clean_all_groups,
+            )
+        if delete_venv:
+            delete_project_venv(project_root=project_root)
         generate_uv_add_commands(
             pyproject_path=project_root / "pyproject.toml",
             output_path=project_root / "pyproject_init.sh",

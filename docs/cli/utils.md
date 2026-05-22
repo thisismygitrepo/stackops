@@ -69,7 +69,7 @@ utils pyproject [OPTIONS] COMMAND [ARGS]...
 Key behavior:
 
 - `init-project` defaults to Python `3.13` and package groups `p,t,l,i,d`.
-- `upgrade-packages [ROOT]` can repeat `--clean-group` before regenerating `pyproject_init.sh`.
+- `upgrade-packages [ROOT]` can repeat `--clean-group`, use `--clean-all-groups` to clear every dependency group and extra, and use `--delete-venv` to remove the project's `.venv` before regenerating `pyproject_init.sh`.
 - `type-hint [PATH]` defaults to `--dependency self-contained`. When given a project directory, it currently scans for `dtypes.py` files and reports the corresponding `*_names.py` outputs.
 - `type-check [REPO]` resolves the repository root from the nearest `pyproject.toml` and passes exclusions through the lint/type-check script.
 - If `--exclude` is omitted, `type-check` currently defaults to excluding `tests`, `.github`, `.codex`, `.ai`, `.links`, and `.venv`.
@@ -81,6 +81,7 @@ Examples:
 ```bash
 utils pyproject init-project --name sample --python 3.14
 utils pyproject upgrade-packages . --clean-group dev
+utils pyproject upgrade-packages . --clean-all-groups --delete-venv
 utils pyproject type-hint src/my_module.py
 utils pyproject type-check . --exclude tests --exclude .venv
 utils pyproject reference-test . --verbose
