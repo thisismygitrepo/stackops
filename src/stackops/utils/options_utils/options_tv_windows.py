@@ -53,7 +53,19 @@ def select_from_options(options_to_preview_mapping: dict[str, Any], extension: s
         source_cmd = f"cmd /C type \"{entries_path}\""
         preview_cmd = f"bat --force-colorization --style=plain --paging=never {tempdir_fwd}/{{split:|:0}}.{ext_for_preview}"
         tv_cmd = f'''$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-tv --ansi --source-command '{source_cmd}' --source-display '{{split:|:1}}' --source-output '{{split:|:0}}' --preview-command '{preview_cmd}' --preview-size {preview_panel_size} --no-remote | Out-File -Encoding utf8 -FilePath "{output_file}"
+$esc = [char]27
+$tvExitCode = 1
+[Console]::Write("${{esc}}[?1049h")
+try {{
+    tv --ansi --source-command '{source_cmd}' --source-display '{{split:|:1}}' --source-output '{{split:|:0}}' --preview-command '{preview_cmd}' --preview-size {preview_panel_size} --no-remote | Out-File -Encoding utf8 -FilePath "{output_file}"
+    if ($null -ne $LASTEXITCODE) {{
+        $tvExitCode = $LASTEXITCODE
+    }}
+}}
+finally {{
+    [Console]::Write("${{esc}}[?1049l${{esc}}[0m${{esc}}[?25h")
+}}
+exit $tvExitCode
 '''
         from stackops.utils.code import run_shell_script
         result = run_shell_script(tv_cmd, display_script=False, clean_env=False)

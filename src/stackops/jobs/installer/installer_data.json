@@ -3608,12 +3608,12 @@
       "doc": "Warp Oz CLI for running and managing Warp cloud agents",
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo apt install oz-stable",
+          "linux": "oz.sh",
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         },
         "arm64": {
-          "linux": "sudo apt install oz-stable",
+          "linux": "oz.sh",
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         }
