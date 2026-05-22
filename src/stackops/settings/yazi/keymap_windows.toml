@@ -175,3 +175,8 @@ desc = "Semantic search"
 on   = ["P", "a"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -a "$0"'
 desc = "Symbol search"
+
+[[mgr.append_keymap]]
+on   = ["c", "t"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 "$HOME/AppData/Roaming/yazi/config/scripts/copy_file_content.py" %h'
+desc = "Copy file content"

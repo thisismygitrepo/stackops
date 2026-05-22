@@ -176,3 +176,8 @@ desc = "open with duckdb (read-only)"
 on = ["g", "u"]
 run = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/open_db_readonly.py" --ui "$0"'
 desc = "open with duckdb ui (read-only target)"
+
+[[mgr.append_keymap]]
+on   = ["c", "t"]
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/copy_file_content.py" %h'
+desc = "Copy file content"
