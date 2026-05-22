@@ -5,7 +5,7 @@ import sys
 from typing import Final, Literal, NoReturn, cast
 
 type Command = list[str]
-type Auto2Mode = Literal["auto", "browser", "markdown", "database", "visidata"]
+type ViewerMode = Literal["auto", "browser", "markdown", "database", "visidata"]
 
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
@@ -72,7 +72,7 @@ def build_visidata_command(target_path: Path) -> Command:
     return [(Path.home() / ".config/stackops/scripts/wrap_stackops").as_posix(), "croshell", "-b", "v", str(target_path)]
 
 
-def build_command(target_path: Path, mode: Auto2Mode = "auto", database_backend: str = "harlequin") -> Command:
+def build_command(target_path: Path, mode: ViewerMode = "auto", database_backend: str = "harlequin") -> Command:
     if target_path.is_dir():
         return build_browser_command(target_path=target_path)
     if not target_path.is_file():

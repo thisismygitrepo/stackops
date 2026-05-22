@@ -24,8 +24,8 @@ croshell [OPTIONS] [PATH]
 | --- | --- | --- |
 | `--project` | `-p` | Reuse a specific `uv` project directory |
 | `--uv-with` | `-w` | Add extra packages to the launch environment |
-| `--backend` | `-b` | Backend: `ipython`, `python`, `marimo`, `jupyter`, `vscode`, `visidata`, `auto1`, or `auto2` |
-| `--interactive` | `-i` | Select the backend interactively, including browser, Glow, and SQL clients |
+| `--backend` | `-b` | Backend: `ipython`, `python`, `marimo`, `jupyter`, `vscode`, `visidata`, `auto`, `preview`, `browser`, `glow`, or a SQL client |
+| `--interactive` | `-i` | Select any available backend interactively |
 | `--profile` | `-r` | IPython profile name |
 | `--self` | `-s` | Point the project at `~/code/stackops` when that checkout exists |
 | `--frozen` | `-f` | Add `--frozen` to the `uv run` invocation |
@@ -38,11 +38,21 @@ The backend option also accepts short aliases from the current enum mapping:
 - `jupyter` or `j`
 - `vscode` or `c`
 - `visidata` or `v`
-- `auto1` or `a1`
-- `auto2` or `a2`
+- `preview`
+- `auto`
+- `browser` or `b`
+- `glow` or `g`
+- `rainfrog` or `r`
+- `lazysql` or `l`
+- `dblab` or `d`
+- `usql` or `u`
+- `harlequin` or `h`
+- `sqlit` or `s`
 
-With `--interactive`, paths also expose file-viewer choices by their actual tool names:
+With `--interactive`, paths expose file-viewer choices by their actual tool names:
 
+- `auto`
+- `preview`
 - `browser`
 - `glow`
 - `rainfrog`
@@ -78,8 +88,8 @@ Project resolution is currently:
 - `jupyter` emits a temporary `.ipynb` and opens it in JupyterLab.
 - `vscode` initializes a temporary `uv` workspace and opens the generated script in VS Code.
 - `visidata` opens the selected file directly with `vd`; JSON files use plain `visidata`, other files add `pyarrow`.
-- `auto1` uses the fullscreen preview flow.
-- `auto2` uses the file-aware interactive viewer flow.
+- `preview` uses the fullscreen preview flow.
+- `auto` uses the file-aware viewer flow.
 - `browser` serves browser-viewable files and directories.
 - `glow` opens Markdown files in Glow.
 - SQL client choices open local DuckDB/SQLite files through the selected database TUI.
@@ -97,6 +107,12 @@ croshell script.py --backend ipython
 
 # Inspect a data file with VisiData
 croshell data.csv --backend visidata
+
+# Open Markdown directly in Glow
+croshell README.md --backend glow
+
+# Open a SQLite file directly in Rainfrog
+croshell data.sqlite --backend rainfrog
 
 # Open a generated notebook in Marimo
 croshell analysis.py --backend marimo --project .

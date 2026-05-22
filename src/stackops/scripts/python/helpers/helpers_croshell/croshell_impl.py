@@ -2,10 +2,23 @@
 
 from pathlib import Path
 import shutil
-from typing import Literal
 from stackops.scripts.python.enums import BACKENDS
 
-Auto2Mode = Literal["auto", "browser", "markdown", "database", "visidata"]
+PATH_BACKENDS = frozenset(
+    {
+        "preview",
+        "auto",
+        "browser",
+        "glow",
+        "rainfrog",
+        "lazysql",
+        "dblab",
+        "usql",
+        "harlequin",
+        "sqlit",
+    }
+)
+DATABASE_BACKENDS = frozenset({"rainfrog", "lazysql", "dblab", "usql", "harlequin", "sqlit"})
 
 
 def croshell(
@@ -15,8 +28,6 @@ def croshell(
     backend: BACKENDS,
     profile: str | None,
     frozen: bool,
-    auto2_mode: Auto2Mode = "auto",
-    auto2_db_backend: str = "harlequin",
 ) -> None:
     """Cross-shell command execution."""
     interactivity = "-i"
@@ -43,8 +54,8 @@ def croshell(
         uv_project_line = ""
         uv_python_line = "--python 3.14"
 
-    if path is None and backend in {"auto1", "auto2"}:
-        raise ValueError("Auto preview backends require a path.")
+    if path is None and backend in PATH_BACKENDS:
+        raise ValueError(f"Backend '{backend}' requires a path.")
 
     from stackops.scripts.python.helpers.helpers_croshell.crosh import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
@@ -58,15 +69,14 @@ def croshell(
     ipython_profile: str | None = profile
     if path is not None:
         from stackops.utils.path_helper import get_choice_file
-        choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
-        if backend in {"auto1", "auto2"}:
-            _run_auto_backend(
+        if backend in PATH_BACKENDS:
+            choice_file = _resolve_path_backend_target(path=path)
+            _run_path_backend(
                 target_path=choice_file,
                 backend=backend,
-                auto2_mode=auto2_mode,
-                auto2_db_backend=auto2_db_backend,
             )
             return
+        choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
         if project_path is None:
             ve_path, _ = get_ve_path_and_ipython_profile(choice_file)
             if ve_path is not None:
@@ -177,35 +187,53 @@ except Exception as e:
     exit_then_run_shell_script(fire_line, strict=False)
 
 
-def _run_auto_backend(
+def _resolve_path_backend_target(path: str) -> Path:
+    from stackops.utils.path_helper import get_choice_file, sanitize_path
+
+    if Path(path).expanduser().exists():
+        return sanitize_path(path)
+    return get_choice_file(path=path, suffixes={".*"}, search_root=None)
+
+
+def _run_path_backend(
     target_path: Path,
     backend: BACKENDS,
-    auto2_mode: Auto2Mode = "auto",
-    auto2_db_backend: str = "harlequin",
 ) -> None:
-    """Run the Yazi preview/viewer flows directly from croshell."""
+    """Run the file preview/viewer flows directly from croshell."""
     match backend:
-        case "auto1":
+        case "preview":
             from stackops.settings.yazi.scripts.fullscreen_preview import preview_target
 
             terminal_columns = shutil.get_terminal_size(fallback=(120, 40)).columns
             exit_code = preview_target(target_path=target_path, terminal_columns=terminal_columns)
             if exit_code != 0:
                 raise SystemExit(exit_code)
-        case "auto2":
+        case "auto":
             from stackops.settings.yazi.scripts.interactive_view import build_command, exec_command
 
-            if auto2_mode == "auto" and auto2_db_backend == "harlequin":
-                command = build_command(target_path=target_path)
-            else:
-                command = build_command(
-                    target_path=target_path,
-                    mode=auto2_mode,
-                    database_backend=auto2_db_backend,
-                )
+            command = build_command(target_path=target_path)
+            exec_command(command)
+        case "browser":
+            from stackops.settings.yazi.scripts.interactive_view import build_command, exec_command
+
+            command = build_command(target_path=target_path, mode="browser")
+            exec_command(command)
+        case "glow":
+            from stackops.settings.yazi.scripts.interactive_view import build_command, exec_command
+
+            command = build_command(target_path=target_path, mode="markdown")
+            exec_command(command)
+        case _ if backend in DATABASE_BACKENDS:
+            from stackops.settings.yazi.scripts.interactive_view import build_command, exec_command
+
+            command = build_command(
+                target_path=target_path,
+                mode="database",
+                database_backend=backend,
+            )
             exec_command(command)
         case _:
-            raise ValueError(f"Unsupported auto backend: {backend}")
+            raise ValueError(f"Unsupported path backend: {backend}")
 
 
 def _build_preprogram() -> str:
