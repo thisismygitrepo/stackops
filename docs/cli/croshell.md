@@ -24,7 +24,8 @@ croshell [OPTIONS] [PATH]
 | --- | --- | --- |
 | `--project` | `-p` | Reuse a specific `uv` project directory |
 | `--uv-with` | `-w` | Add extra packages to the launch environment |
-| `--backend` | `-b` | Backend: `ipython`, `python`, `marimo`, `jupyter`, `vscode`, or `visidata` |
+| `--backend` | `-b` | Backend: `ipython`, `python`, `marimo`, `jupyter`, `vscode`, `visidata`, `auto1`, or `auto2` |
+| `--interactive` | `-i` | Select the backend interactively, including browser, Glow, and SQL clients |
 | `--profile` | `-r` | IPython profile name |
 | `--self` | `-s` | Point the project at `~/code/stackops` when that checkout exists |
 | `--frozen` | `-f` | Add `--frozen` to the `uv run` invocation |
@@ -37,6 +38,19 @@ The backend option also accepts short aliases from the current enum mapping:
 - `jupyter` or `j`
 - `vscode` or `c`
 - `visidata` or `v`
+- `auto1` or `a1`
+- `auto2` or `a2`
+
+With `--interactive`, paths also expose file-viewer choices by their actual tool names:
+
+- `browser`
+- `glow`
+- `rainfrog`
+- `lazysql`
+- `dblab`
+- `usql`
+- `harlequin`
+- `sqlit`
 
 ---
 
@@ -64,6 +78,11 @@ Project resolution is currently:
 - `jupyter` emits a temporary `.ipynb` and opens it in JupyterLab.
 - `vscode` initializes a temporary `uv` workspace and opens the generated script in VS Code.
 - `visidata` opens the selected file directly with `vd`; JSON files use plain `visidata`, other files add `pyarrow`.
+- `auto1` uses the fullscreen preview flow.
+- `auto2` uses the file-aware interactive viewer flow.
+- `browser` serves browser-viewable files and directories.
+- `glow` opens Markdown files in Glow.
+- SQL client choices open local DuckDB/SQLite files through the selected database TUI.
 
 ---
 
@@ -84,6 +103,9 @@ croshell analysis.py --backend marimo --project .
 
 # Force the StackOps checkout as the uv project
 croshell src/stackops/scripts/python/croshell.py --self
+
+# Choose a backend interactively
+croshell data.sqlite --interactive
 ```
 
 ---

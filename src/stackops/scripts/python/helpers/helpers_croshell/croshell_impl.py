@@ -2,7 +2,10 @@
 
 from pathlib import Path
 import shutil
+from typing import Literal
 from stackops.scripts.python.enums import BACKENDS
+
+Auto2Mode = Literal["auto", "browser", "markdown", "database", "visidata"]
 
 
 def croshell(
@@ -11,7 +14,9 @@ def croshell(
     uv_with: str | None,
     backend: BACKENDS,
     profile: str | None,
-    frozen: bool
+    frozen: bool,
+    auto2_mode: Auto2Mode = "auto",
+    auto2_db_backend: str = "harlequin",
 ) -> None:
     """Cross-shell command execution."""
     interactivity = "-i"
@@ -38,8 +43,8 @@ def croshell(
         uv_project_line = ""
         uv_python_line = "--python 3.14"
 
-    if path is None and backend in {"terminal1", "terminal2"}:
-        raise ValueError("Terminal preview backends require a path.")
+    if path is None and backend in {"auto1", "auto2"}:
+        raise ValueError("Auto preview backends require a path.")
 
     from stackops.scripts.python.helpers.helpers_croshell.crosh import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
@@ -54,8 +59,13 @@ def croshell(
     if path is not None:
         from stackops.utils.path_helper import get_choice_file
         choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
-        if backend in {"terminal1", "terminal2"}:
-            _run_terminal_backend(target_path=choice_file, backend=backend)
+        if backend in {"auto1", "auto2"}:
+            _run_auto_backend(
+                target_path=choice_file,
+                backend=backend,
+                auto2_mode=auto2_mode,
+                auto2_db_backend=auto2_db_backend,
+            )
             return
         if project_path is None:
             ve_path, _ = get_ve_path_and_ipython_profile(choice_file)
@@ -167,23 +177,35 @@ except Exception as e:
     exit_then_run_shell_script(fire_line, strict=False)
 
 
-def _run_terminal_backend(target_path: Path, backend: BACKENDS) -> None:
-    """Run the Yazi terminal preview flows directly from croshell."""
+def _run_auto_backend(
+    target_path: Path,
+    backend: BACKENDS,
+    auto2_mode: Auto2Mode = "auto",
+    auto2_db_backend: str = "harlequin",
+) -> None:
+    """Run the Yazi preview/viewer flows directly from croshell."""
     match backend:
-        case "terminal1":
+        case "auto1":
             from stackops.settings.yazi.scripts.fullscreen_preview import preview_target
 
             terminal_columns = shutil.get_terminal_size(fallback=(120, 40)).columns
             exit_code = preview_target(target_path=target_path, terminal_columns=terminal_columns)
             if exit_code != 0:
                 raise SystemExit(exit_code)
-        case "terminal2":
+        case "auto2":
             from stackops.settings.yazi.scripts.interactive_view import build_command, exec_command
 
-            command = build_command(target_path=target_path)
+            if auto2_mode == "auto" and auto2_db_backend == "harlequin":
+                command = build_command(target_path=target_path)
+            else:
+                command = build_command(
+                    target_path=target_path,
+                    mode=auto2_mode,
+                    database_backend=auto2_db_backend,
+                )
             exec_command(command)
         case _:
-            raise ValueError(f"Unsupported terminal backend: {backend}")
+            raise ValueError(f"Unsupported auto backend: {backend}")
 
 
 def _build_preprogram() -> str:

@@ -1,7 +1,7 @@
 
 from typing import Literal, TypeAlias
 
-BACKENDS: TypeAlias = Literal["marimo", "jupyter", "vscode", "visidata", "terminal1", "terminal2", "python", "ipython"]
+BACKENDS: TypeAlias = Literal["marimo", "jupyter", "vscode", "visidata", "auto1", "auto2", "python", "ipython"]
 BACKENDS_LOOSE: TypeAlias = Literal[
     "marimo",
     "m",
@@ -11,10 +11,10 @@ BACKENDS_LOOSE: TypeAlias = Literal[
     "c",
     "visidata",
     "v",
-    "terminal1",
-    "t",
-    "terminal2",
-    "T",
+    "auto1",
+    "a1",
+    "auto2",
+    "a2",
     "python",
     "p",
     "ipython",
@@ -29,10 +29,10 @@ BACKENDS_MAP: dict[BACKENDS_LOOSE, BACKENDS] = {
     "c": "vscode",
     "visidata": "visidata",
     "v": "visidata",
-    "terminal1": "terminal1",
-    "t": "terminal1",
-    "terminal2": "terminal2",
-    "T": "terminal2",
+    "auto1": "auto1",
+    "a1": "auto1",
+    "auto2": "auto2",
+    "a2": "auto2",
     "python": "python",
     "p": "python",
     "ipython": "ipython",

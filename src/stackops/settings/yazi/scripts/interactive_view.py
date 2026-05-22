@@ -2,9 +2,10 @@ from collections.abc import Sequence
 import os
 from pathlib import Path
 import sys
-from typing import Final, NoReturn
+from typing import Final, Literal, NoReturn, cast
 
 type Command = list[str]
+type Auto2Mode = Literal["auto", "browser", "markdown", "database", "visidata"]
 
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
@@ -17,6 +18,10 @@ BROWSER_FILE_SUFFIXES: Final[frozenset[str]] = BROWSER_DOCUMENT_SUFFIXES | BROWS
 MARKDOWN_SUFFIXES: Final[frozenset[str]] = frozenset({".md", ".markdown"})
 SQLITE_SUFFIXES: Final[frozenset[str]] = frozenset({".db", ".db3", ".s3db", ".sl3", ".sqlite", ".sqlite3"})
 VISIDATA_SUFFIXES: Final[frozenset[str]] = frozenset({".json", ".parquet", ".tsv", ".xlsx", ".csv"})
+
+
+def build_browser_command(target_path: Path) -> Command:
+    return [sys.executable, str(Path(__file__).with_name("serve_browser_file.py")), str(target_path)]
 
 
 def split_marked_arguments(arguments: Sequence[str]) -> tuple[str | None, list[str]]:
@@ -47,35 +52,52 @@ def resolve_target(arguments: Sequence[str]) -> Path:
     return Path(hovered_path).resolve()
 
 
-def build_database_command(target_path: Path) -> Command:
-    suffix = target_path.suffix.lower()
-    path_string = str(target_path)
-    if suffix in DUCKDB_SUFFIXES:
-        return ["harlequin", "--adapter", "duckdb", "--read-only", path_string]
-    if suffix in SQLITE_SUFFIXES:
-        return ["harlequin", "--adapter", "sqlite", "--read-only", path_string]
-    raise ValueError(f"No database view command is configured for {target_path.suffix or 'files without an extension'}.")
+def build_database_command(target_path: Path, database_backend: str = "harlequin") -> Command:
+    from stackops.scripts.python.helpers.helpers_utils.read_db_cli_tui_backend import BACKEND_LOOSE, build_read_db_cli_tui_command
+
+    if target_path.suffix.lower() not in DUCKDB_SUFFIXES | SQLITE_SUFFIXES:
+        raise ValueError(f"No database view command is configured for {target_path.suffix or 'files without an extension'}.")
+    return build_read_db_cli_tui_command(
+        path=str(target_path),
+        backend=cast(BACKEND_LOOSE, database_backend),
+        read_only=True,
+    )
 
 
 def build_markdown_command(target_path: Path) -> Command:
     return ["glow", "--tui", str(target_path)]
 
 
-def build_command(target_path: Path) -> Command:
+def build_visidata_command(target_path: Path) -> Command:
+    return [(Path.home() / ".config/stackops/scripts/wrap_stackops").as_posix(), "croshell", "-b", "v", str(target_path)]
+
+
+def build_command(target_path: Path, mode: Auto2Mode = "auto", database_backend: str = "harlequin") -> Command:
     if target_path.is_dir():
-        return [sys.executable, str(Path(__file__).with_name("serve_browser_file.py")), str(target_path)]
+        return build_browser_command(target_path=target_path)
     if not target_path.is_file():
         raise ValueError(f"Interactive view requires a file or directory, got: {target_path}")
+    match mode:
+        case "browser":
+            return build_browser_command(target_path=target_path)
+        case "markdown":
+            return build_markdown_command(target_path=target_path)
+        case "database":
+            return build_database_command(target_path=target_path, database_backend=database_backend)
+        case "visidata":
+            return build_visidata_command(target_path=target_path)
+        case "auto":
+            pass
     suffix = target_path.suffix.lower()
     match suffix:
         case _ if suffix in BROWSER_FILE_SUFFIXES:
-            return [sys.executable, str(Path(__file__).with_name("serve_browser_file.py")), str(target_path)]
+            return build_browser_command(target_path=target_path)
         case _ if suffix in MARKDOWN_SUFFIXES:
             return build_markdown_command(target_path=target_path)
         case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
-            return build_database_command(target_path=target_path)
+            return build_database_command(target_path=target_path, database_backend=database_backend)
         case suffix if suffix in VISIDATA_SUFFIXES:
-            return [(Path.home() / ".config/stackops/scripts/wrap_stackops").as_posix(), "croshell", "-b", "v", str(target_path)]
+            return build_visidata_command(target_path=target_path)
         case _:
             raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")
 

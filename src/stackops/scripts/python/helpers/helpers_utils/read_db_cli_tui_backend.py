@@ -28,6 +28,14 @@ BACKEND: TypeAlias = Literal[
     "harlequin",
     "sqlit",
 ]
+BACKEND_CHOICES: tuple[BACKEND, ...] = (
+    "rainfrog",
+    "lazysql",
+    "dblab",
+    "usql",
+    "harlequin",
+    "sqlit",
+)
 
 LOOSE_TO_STRICT: dict[BACKEND_LOOSE, BACKEND] = {
     "rainfrog": "rainfrog",
@@ -313,6 +321,36 @@ def _build_command(
             return command
 
 
+def normalize_backend(backend: BACKEND_LOOSE) -> BACKEND:
+    return LOOSE_TO_STRICT[backend]
+
+
+def build_read_db_cli_tui_command(
+    path: str | None = None,
+    url: str | None = None,
+    find: str | None = None,
+    find_root: str | None = None,
+    recursive: bool = False,
+    backend: BACKEND_LOOSE = "harlequin",
+    read_only: bool = True,
+    theme: str | None = None,
+    limit: int | None = None,
+) -> list[str]:
+    backend_strict = normalize_backend(backend)
+    resolved = _resolve_paths(path=path, url=url, find=find, find_root=find_root, recursive=recursive)
+    if resolved:
+        _validate_backend(backend_strict, resolved)
+        _validate_read_only_support(backend_strict, read_only, resolved)
+    return _build_command(
+        backend=backend_strict,
+        resolved=resolved,
+        url=url,
+        read_only=read_only,
+        theme=theme,
+        limit=limit,
+    )
+
+
 def run_read_db_cli_tui(
     path: str | None = None,
     url: str | None = None,
@@ -324,15 +362,14 @@ def run_read_db_cli_tui(
     theme: str | None = None,
     limit: int | None = None,
 ) -> None:
-    backend_strict = LOOSE_TO_STRICT[backend]
-    resolved = _resolve_paths(path=path, url=url, find=find, find_root=find_root, recursive=recursive)
-    if resolved:
-        _validate_backend(backend_strict, resolved)
-        _validate_read_only_support(backend_strict, read_only, resolved)
-    command = _build_command(
-        backend=backend_strict,
-        resolved=resolved,
+    backend_strict = normalize_backend(backend)
+    command = build_read_db_cli_tui_command(
+        path=path,
         url=url,
+        find=find,
+        find_root=find_root,
+        recursive=recursive,
+        backend=backend,
         read_only=read_only,
         theme=theme,
         limit=limit,
