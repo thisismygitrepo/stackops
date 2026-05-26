@@ -46,6 +46,10 @@ BREW_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python-mutagen", "yt-dlp", "ueberzu
 DEFAULT_MPD_ADDRESS = "127.0.0.1:6600"
 YT_DLP_REMOTE_COMPONENT_ARGS = ["--remote-components", "ejs:github"]
 LINUX_MPD_SOCKET = "/run/mpd/socket"
+LINUX_USER_MPD_SOCKET = str(Path.home().joinpath(".config", "mpd", "socket"))
+LINUX_USER_MPD_MUSIC_DIR = Path.home().joinpath("Music")
+LINUX_USER_RMPC_CACHE_DIR = LINUX_USER_MPD_MUSIC_DIR.joinpath("rmpc-cache")
+DEFAULT_RMPC_CACHE_DIR = Path.home().joinpath(".cache", "rmpc")
 MACOS_MPD_SOCKET = "~/.mpd/socket"
 
 
@@ -145,30 +149,70 @@ def _python3_executable() -> str | None:
     return executable or None
 
 
+def _python_executable_has_mutagen(python_executable: str) -> bool:
+    result = _run_capture([python_executable, "-c", "import mutagen"])
+    return result.returncode == 0
+
+
+def _yt_dlp_python_executable() -> str | None:
+    yt_dlp_path = shutil.which("yt-dlp")
+    if yt_dlp_path is None:
+        return None
+    try:
+        first_line = Path(yt_dlp_path).resolve().read_text(encoding="utf-8").splitlines()[0]
+    except (IndexError, OSError, UnicodeDecodeError):
+        return None
+    if not first_line.startswith("#!") or "python" not in first_line:
+        return None
+    executable = first_line[2:].strip()
+    executable_parts = shlex.split(executable)
+    if len(executable_parts) >= 2 and Path(executable_parts[0]).name == "env":
+        executable = shutil.which(executable_parts[1]) or executable_parts[1]
+    return executable or None
+
+
+def _install_mutagen_for_python(console: Console, python_executable: str, description: str) -> bool:
+    install_commands = []
+    if shutil.which("uv") is not None:
+        install_commands.append(f"uv pip install --python {shlex.quote(python_executable)} mutagen")
+    install_commands.extend(
+        [
+            f"{shlex.quote(python_executable)} -m pip install --user mutagen",
+            f"{shlex.quote(python_executable)} -m pip install mutagen",
+            f"{shlex.quote(python_executable)} -m pip install --user --break-system-packages mutagen",
+        ]
+    )
+
+    for command in install_commands:
+        _run_shell(command, console, description, required=False)
+        if _python_executable_has_mutagen(python_executable):
+            return True
+    return False
+
+
 def _ensure_python3_mutagen(console: Console) -> None:
     if shutil.which("python3") is None:
         console.print("WARNING: python3 was not found; rmpc YouTube support will warn about python-mutagen.")
         return
-    if _python3_has_mutagen():
-        return
 
     python_executable = _python3_executable()
-    install_commands = [
-        "python3 -m pip install --user mutagen",
-        "python3 -m pip install mutagen",
-        "python3 -m pip install --user --break-system-packages mutagen",
-    ]
-    if python_executable is not None and shutil.which("uv") is not None:
-        install_commands.insert(0, f"uv pip install --python {shlex.quote(python_executable)} mutagen")
+    if python_executable is not None and not _python_executable_has_mutagen(python_executable):
+        _install_mutagen_for_python(console, python_executable, "Install mutagen for python3 used by rmpc")
 
-    for command in install_commands:
-        _run_shell(command, console, "Install mutagen for python3 used by rmpc", required=False)
-        if _python3_has_mutagen():
-            return
+    yt_dlp_python_executable = _yt_dlp_python_executable()
+    if yt_dlp_python_executable is not None and not _python_executable_has_mutagen(yt_dlp_python_executable):
+        _install_mutagen_for_python(
+            console,
+            yt_dlp_python_executable,
+            "Install mutagen for the yt-dlp Python environment used by rmpc",
+        )
 
-    console.print(
-        "WARNING: python3 still cannot import mutagen; rmpc YouTube support may warn about python-mutagen."
-    )
+    if not _python3_has_mutagen():
+        console.print(
+            "WARNING: python3 still cannot import mutagen; rmpc YouTube support may warn about python-mutagen."
+        )
+    if yt_dlp_python_executable is not None and not _python_executable_has_mutagen(yt_dlp_python_executable):
+        console.print("WARNING: yt-dlp still cannot import mutagen; rmpc YouTube downloads may fail.")
 
 
 def _ron_string(value: str) -> str:
@@ -191,9 +235,9 @@ def _upsert_ron_field(config_text: str, field_name: str, value_literal: str) -> 
     return f"{config_text[:insert_at]}    {field_name}: {value_literal},\n{config_text[insert_at:]}"
 
 
-def _write_rmpc_youtube_config(console: Console, mpd_address: str) -> None:
+def _write_rmpc_youtube_config(console: Console, mpd_address: str, cache_dir: Path | None = None) -> None:
     config_path = Path.home().joinpath(".config", "rmpc", "config.ron")
-    cache_dir = Path.home().joinpath(".cache", "rmpc")
+    resolved_cache_dir = cache_dir or DEFAULT_RMPC_CACHE_DIR
     if config_path.exists():
         config_text = config_path.read_text(encoding="utf-8")
     else:
@@ -217,7 +261,7 @@ def _write_rmpc_youtube_config(console: Console, mpd_address: str) -> None:
     config_text = _upsert_ron_field(
         config_text=config_text,
         field_name="cache_dir",
-        value_literal=_ron_string(str(cache_dir)),
+        value_literal=_ron_string(str(resolved_cache_dir)),
     )
     config_text = _upsert_ron_field(
         config_text=config_text,
@@ -227,8 +271,67 @@ def _write_rmpc_youtube_config(console: Console, mpd_address: str) -> None:
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(config_text, encoding="utf-8")
-    cache_dir.mkdir(parents=True, exist_ok=True)
+    resolved_cache_dir.mkdir(parents=True, exist_ok=True)
     console.print(f"Configured rmpc MPD address: {mpd_address}")
+
+
+def _write_default_user_mpd_config(config_path: Path) -> None:
+    mpd_data_dir = Path.home().joinpath(".local", "share", "mpd")
+    mpd_state_dir = Path.home().joinpath(".local", "state", "mpd")
+    config_text = "\n".join(
+        [
+            f'music_directory "{LINUX_USER_MPD_MUSIC_DIR}"',
+            f'playlist_directory "{mpd_data_dir.joinpath("playlists")}"',
+            f'db_file "{mpd_data_dir.joinpath("database")}"',
+            f'log_file "{mpd_state_dir.joinpath("log")}"',
+            f'pid_file "{mpd_state_dir.joinpath("pid")}"',
+            f'state_file "{mpd_state_dir.joinpath("state")}"',
+            f'sticker_file "{mpd_data_dir.joinpath("sticker.sql")}"',
+            "",
+            f'bind_to_address "{LINUX_USER_MPD_SOCKET}"',
+            'auto_update "yes"',
+            "",
+        ]
+    )
+    config_path.write_text(config_text, encoding="utf-8")
+
+
+def _configure_linux_user_mpd_socket(console: Console) -> str | None:
+    if _mpd_endpoint_available(LINUX_USER_MPD_SOCKET):
+        return LINUX_USER_MPD_SOCKET
+    if shutil.which("mpd") is None:
+        return None
+
+    mpd_config_dir = Path.home().joinpath(".config", "mpd")
+    mpd_data_dir = Path.home().joinpath(".local", "share", "mpd")
+    mpd_state_dir = Path.home().joinpath(".local", "state", "mpd")
+    config_path = mpd_config_dir.joinpath("mpd.conf")
+    mpd_config_dir.mkdir(parents=True, exist_ok=True)
+    mpd_data_dir.joinpath("playlists").mkdir(parents=True, exist_ok=True)
+    mpd_state_dir.mkdir(parents=True, exist_ok=True)
+    LINUX_USER_MPD_MUSIC_DIR.mkdir(parents=True, exist_ok=True)
+    LINUX_USER_RMPC_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    if config_path.exists():
+        config_text = config_path.read_text(encoding="utf-8")
+        if f'bind_to_address "{LINUX_USER_MPD_SOCKET}"' not in config_text:
+            config_path.write_text(
+                config_text
+                + f'\n# Added by stackops rmpc installer for local rmpc YouTube playback.\nbind_to_address "{LINUX_USER_MPD_SOCKET}"\n',
+                encoding="utf-8",
+            )
+    else:
+        _write_default_user_mpd_config(config_path=config_path)
+
+    if shutil.which("systemctl") is not None:
+        _run_shell("systemctl --user start mpd", console, "Start user MPD socket service", required=False)
+        if _mpd_endpoint_available(LINUX_USER_MPD_SOCKET):
+            return LINUX_USER_MPD_SOCKET
+
+    _run_shell(f"mpd {shlex.quote(str(config_path))}", console, "Start user MPD socket daemon", required=False)
+    if _mpd_endpoint_available(LINUX_USER_MPD_SOCKET):
+        return LINUX_USER_MPD_SOCKET
+    return None
 
 
 def _configure_linux_mpd_socket(console: Console) -> None:
@@ -333,17 +436,23 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 
     Installer(installer_data=RMPC_INSTALLER_DATA).install(version=release_version)
 
+    cache_dir = DEFAULT_RMPC_CACHE_DIR
     if os_name == "linux":
         _install_nala_companions(console=console)
-        _configure_linux_mpd_socket(console=console)
-        socket_path = LINUX_MPD_SOCKET
+        user_socket_path = _configure_linux_user_mpd_socket(console=console)
+        if user_socket_path is None:
+            _configure_linux_mpd_socket(console=console)
+            socket_path = LINUX_MPD_SOCKET
+        else:
+            socket_path = user_socket_path
+            cache_dir = LINUX_USER_RMPC_CACHE_DIR
     else:
         _install_brew_companions(console=console)
         _configure_macos_mpd_socket(console=console)
         socket_path = MACOS_MPD_SOCKET
     mpd_address = _choose_rmpc_mpd_address(console=console, socket_path=socket_path)
     _ensure_python3_mutagen(console=console)
-    _write_rmpc_youtube_config(console=console, mpd_address=mpd_address)
+    _write_rmpc_youtube_config(console=console, mpd_address=mpd_address, cache_dir=cache_dir)
 
     console.print(
         Panel.fit(

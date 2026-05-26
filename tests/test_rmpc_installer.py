@@ -30,9 +30,14 @@ def test_write_rmpc_config_sets_ytdlp_remote_components(tmp_path: Path, monkeypa
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(rmpc.shutil, "which", lambda _: None)
 
-    rmpc._write_rmpc_youtube_config(console=_quiet_console(), mpd_address=rmpc.DEFAULT_MPD_ADDRESS)
+    cache_dir = tmp_path / "cache"
+    rmpc._write_rmpc_youtube_config(
+        console=_quiet_console(),
+        mpd_address=rmpc.DEFAULT_MPD_ADDRESS,
+        cache_dir=cache_dir,
+    )
 
     config_text = tmp_path.joinpath(".config", "rmpc", "config.ron").read_text(encoding="utf-8")
     assert 'address: "127.0.0.1:6600",' in config_text
-    assert 'cache_dir: "' in config_text
+    assert f'cache_dir: "{cache_dir}",' in config_text
     assert 'extra_yt_dlp_args: ["--remote-components", "ejs:github"],' in config_text
