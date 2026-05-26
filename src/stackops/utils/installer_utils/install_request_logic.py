@@ -47,8 +47,8 @@ def should_skip_install(
 
 
 def validate_install_request(install_target: InstallTarget, install_request: InstallRequest) -> InstallRequestResolution:
-    supports_update = install_target.installer_kind in {"binary_url", "github_release"} or _is_winget_install_command(install_target.installer_value)
-    supports_version = install_target.installer_kind == "github_release" or _is_winget_install_command(install_target.installer_value)
+    supports_update = install_target.installer_kind in {"binary_url", "github_release", "script"} or _is_winget_install_command(install_target.installer_value)
+    supports_version = install_target.installer_kind in {"github_release", "script"} or _is_winget_install_command(install_target.installer_value)
 
     warnings: list[str] = []
     effective_update = install_request.update

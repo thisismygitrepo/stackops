@@ -1484,7 +1484,7 @@
       "doc": "🎵 A terminal based YouTube music player written in Rust.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "ytui_music-linux-amd64",
+          "linux": "ytui_music.py",
           "darwin": null,
           "windows": null
         },
@@ -1499,16 +1499,16 @@
       "appName": "youtube-tui",
       "license": "GPL-3.0",
       "repoURL": "https://github.com/Siriusmart/youtube-tui",
-      "doc": "🎵 A terminal based YouTube music player written in Rust.",
+      "doc": "🎵 An aesthetically pleasing YouTube TUI written in Rust.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "youtube-tui-full_arch-x86_64",
-          "darwin": null,
+          "linux": "youtube_tui.py",
+          "darwin": "youtube_tui.py",
           "windows": null
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
+          "linux": "youtube_tui.py",
+          "darwin": "youtube_tui.py",
           "windows": null
         }
       }
@@ -1574,13 +1574,13 @@
       "doc": "🎵 A terminal-based music player written in Rust.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "termusic-{version}-x86_64-linux.tar.xz",
-          "darwin": "termusic-{version}-x86_64-macos.tar.xz",
-          "windows": "termusic-{version}-x86_64-windows.zip"
+          "linux": "termusic.py",
+          "darwin": "termusic.py",
+          "windows": "termusic.py"
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
+          "linux": "termusic.py",
+          "darwin": "termusic.py",
           "windows": null
         }
       }

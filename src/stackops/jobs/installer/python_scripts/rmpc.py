@@ -4,6 +4,7 @@ import json
 import os
 import platform
 import re
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -42,6 +43,8 @@ NALA_REQUIRED_PACKAGES = ["mpd", "mpc"]
 NALA_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python3", "python3-pip", "python3-mutagen", "yt-dlp", "ueberzugpp"]
 BREW_REQUIRED_PACKAGES = ["mpd", "mpc"]
 BREW_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python-mutagen", "yt-dlp", "ueberzugpp"]
+DEFAULT_MPD_ADDRESS = "127.0.0.1:6600"
+YT_DLP_REMOTE_COMPONENT_ARGS = ["--remote-components", "ejs:github"]
 LINUX_MPD_SOCKET = "/run/mpd/socket"
 MACOS_MPD_SOCKET = "~/.mpd/socket"
 
@@ -106,9 +109,40 @@ def _run_capture(command: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, capture_output=True, text=True, check=False)
 
 
+def _mpd_endpoint_available(address: str) -> bool:
+    if shutil.which("mpc") is None:
+        return False
+    resolved_address = str(Path(address).expanduser()) if address.startswith("~") else address
+    result = _run_capture(["mpc", "-h", resolved_address, "status"])
+    return result.returncode == 0
+
+
+def _choose_rmpc_mpd_address(console: Console, socket_path: str) -> str:
+    if _mpd_endpoint_available(socket_path):
+        return socket_path
+    if _mpd_endpoint_available(DEFAULT_MPD_ADDRESS):
+        console.print(
+            f"WARNING: MPD socket {socket_path} is unavailable; configuring rmpc for {DEFAULT_MPD_ADDRESS} instead."
+        )
+        console.print("WARNING: rmpc YouTube commands require an MPD Unix socket to add downloaded files.")
+        return DEFAULT_MPD_ADDRESS
+    console.print(
+        f"WARNING: MPD did not answer on {socket_path} or {DEFAULT_MPD_ADDRESS}; using rmpc default address."
+    )
+    return DEFAULT_MPD_ADDRESS
+
+
 def _python3_has_mutagen() -> bool:
     result = _run_capture(["python3", "-c", "import mutagen"])
     return result.returncode == 0
+
+
+def _python3_executable() -> str | None:
+    result = _run_capture(["python3", "-c", "import sys; print(sys.executable)"])
+    if result.returncode != 0:
+        return None
+    executable = result.stdout.strip()
+    return executable or None
 
 
 def _ensure_python3_mutagen(console: Console) -> None:
@@ -118,10 +152,15 @@ def _ensure_python3_mutagen(console: Console) -> None:
     if _python3_has_mutagen():
         return
 
+    python_executable = _python3_executable()
     install_commands = [
         "python3 -m pip install --user mutagen",
+        "python3 -m pip install mutagen",
         "python3 -m pip install --user --break-system-packages mutagen",
     ]
+    if python_executable is not None and shutil.which("uv") is not None:
+        install_commands.insert(0, f"uv pip install --python {shlex.quote(python_executable)} mutagen")
+
     for command in install_commands:
         _run_shell(command, console, "Install mutagen for python3 used by rmpc", required=False)
         if _python3_has_mutagen():
@@ -133,6 +172,10 @@ def _ensure_python3_mutagen(console: Console) -> None:
 
 
 def _ron_string(value: str) -> str:
+    return json.dumps(value)
+
+
+def _ron_string_list(value: list[str]) -> str:
     return json.dumps(value)
 
 
@@ -148,7 +191,7 @@ def _upsert_ron_field(config_text: str, field_name: str, value_literal: str) -> 
     return f"{config_text[:insert_at]}    {field_name}: {value_literal},\n{config_text[insert_at:]}"
 
 
-def _write_rmpc_youtube_config(console: Console, socket_path: str) -> None:
+def _write_rmpc_youtube_config(console: Console, mpd_address: str) -> None:
     config_path = Path.home().joinpath(".config", "rmpc", "config.ron")
     cache_dir = Path.home().joinpath(".cache", "rmpc")
     if config_path.exists():
@@ -169,21 +212,29 @@ def _write_rmpc_youtube_config(console: Console, socket_path: str) -> None:
     config_text = _upsert_ron_field(
         config_text=config_text,
         field_name="address",
-        value_literal=_ron_string(socket_path),
+        value_literal=_ron_string(mpd_address),
     )
     config_text = _upsert_ron_field(
         config_text=config_text,
         field_name="cache_dir",
         value_literal=_ron_string(str(cache_dir)),
     )
+    config_text = _upsert_ron_field(
+        config_text=config_text,
+        field_name="extra_yt_dlp_args",
+        value_literal=_ron_string_list(YT_DLP_REMOTE_COMPONENT_ARGS),
+    )
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(config_text, encoding="utf-8")
     cache_dir.mkdir(parents=True, exist_ok=True)
-    console.print(f"Configured rmpc for local MPD socket: {socket_path}")
+    console.print(f"Configured rmpc MPD address: {mpd_address}")
 
 
 def _configure_linux_mpd_socket(console: Console) -> None:
+    if _mpd_endpoint_available(LINUX_MPD_SOCKET):
+        return
+
     if shutil.which("sudo") is None and not (hasattr(os, "geteuid") and os.geteuid() == 0):
         console.print("WARNING: sudo is unavailable; cannot configure /etc/mpd.conf for local socket.")
         return
@@ -211,6 +262,9 @@ fi
 
 def _configure_macos_mpd_socket(console: Console) -> None:
     Path.home().joinpath(".mpd").mkdir(parents=True, exist_ok=True)
+    if _mpd_endpoint_available(MACOS_MPD_SOCKET):
+        return
+
     brew_prefix_result = _run_capture(["brew", "--prefix"])
     if brew_prefix_result.returncode != 0:
         console.print("WARNING: Could not resolve Homebrew prefix; skipping MPD socket config.")
@@ -287,8 +341,9 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         _install_brew_companions(console=console)
         _configure_macos_mpd_socket(console=console)
         socket_path = MACOS_MPD_SOCKET
+    mpd_address = _choose_rmpc_mpd_address(console=console, socket_path=socket_path)
     _ensure_python3_mutagen(console=console)
-    _write_rmpc_youtube_config(console=console, socket_path=socket_path)
+    _write_rmpc_youtube_config(console=console, mpd_address=mpd_address)
 
     console.print(
         Panel.fit(
