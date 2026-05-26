@@ -14,7 +14,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
 )
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, PROVIDER
-from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix
+from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix, resolve_oz_mcp_config_paths
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
     copilot_reasoning_args,
@@ -82,6 +82,20 @@ def _build_copilot_reasoning_arg(reasoning_effort: ReasoningEffort | None, is_wi
     return f" {copilot_reasoning[0]} {agent_shell.quote_for_shell(copilot_reasoning[1], is_windows=is_windows)}"
 
 
+def _build_oz_model_arg(model: str | None, is_windows: bool) -> str:
+    if model is None:
+        return ""
+    return f" --model {agent_shell.quote_for_shell(model, is_windows=is_windows)}"
+
+
+def _build_oz_mcp_args(repo_root: Path | None, is_windows: bool) -> str:
+    mcp_paths = resolve_oz_mcp_config_paths(repo_root=repo_root, home_dir=Path.home())
+    args: list[str] = []
+    for mcp_path in mcp_paths:
+        args.extend(["--mcp", str(mcp_path)])
+    return _format_shell_args(args, is_windows=is_windows)
+
+
 def build_agent_command(
     agent: AGENTS,
     prompt_file: Path,
@@ -139,8 +153,10 @@ def build_agent_command(
             return f"{agent_cli}{agent_launch_prefix_q} --yolo {prompt_content_expr}"
         case "auggie":
             return f"{agent_cli} --print {prompt_content_expr}"
-        case "warp-cli":
-            return f"{agent_cli} agent run --prompt {prompt_content_expr}"
+        case "oz":
+            model_arg = _build_oz_model_arg(model=model, is_windows=resolved_is_windows)
+            mcp_arg = _build_oz_mcp_args(repo_root=repo_root, is_windows=resolved_is_windows)
+            return f"{agent_cli} agent run{model_arg}{mcp_arg} --prompt {prompt_content_expr}"
         case "droid":
             return f"{agent_cli} exec -f {prompt_file_q}"
         case "pi":

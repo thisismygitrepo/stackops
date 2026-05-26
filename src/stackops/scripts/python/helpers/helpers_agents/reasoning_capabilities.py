@@ -42,7 +42,7 @@ _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
     "kilocode": AgentReasoningSupport(efforts=(), note=None),
     "cline": AgentReasoningSupport(efforts=(), note=None),
     "auggie": AgentReasoningSupport(efforts=(), note=None),
-    "warp-cli": AgentReasoningSupport(efforts=(), note=None),
+    "oz": AgentReasoningSupport(efforts=(), note=None),
     "droid": AgentReasoningSupport(efforts=(), note=None),
     "pi": AgentReasoningSupport(
         efforts=("none", "low", "medium", "high", "xhigh"),

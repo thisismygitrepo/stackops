@@ -31,7 +31,7 @@ AGENTS: TypeAlias = Literal[
     "kilocode",
     "cline",
     "auggie",
-    "warp-cli",
+    "oz",
     "droid",
     "pi",
 ]

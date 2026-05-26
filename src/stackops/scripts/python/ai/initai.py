@@ -17,7 +17,7 @@ from stackops.scripts.python.ai.solutions.q import amazon_q
 from stackops.scripts.python.ai.solutions.opencode import opencode
 from stackops.scripts.python.ai.solutions.kilocode import kilocode
 from stackops.scripts.python.ai.solutions.auggie import auggie
-from stackops.scripts.python.ai.solutions.warp import warp
+from stackops.scripts.python.ai.solutions.oz import oz
 from stackops.scripts.python.ai.solutions.droid import droid
 from stackops.scripts.python.ai.solutions.pi import pi
 from stackops.scripts.python.ai.utils.vscode_tasks import (
@@ -81,8 +81,8 @@ def _build_framework_config(repo_root: Path, framework: AGENTS, add_private_conf
             kilocode.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "auggie":
             auggie.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "warp-cli":
-            warp.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+        case "oz":
+            oz.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "droid":
             droid.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
         case "pi":

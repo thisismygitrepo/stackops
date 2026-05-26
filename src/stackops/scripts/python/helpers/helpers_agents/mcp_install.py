@@ -18,6 +18,7 @@ _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGE
 _AUTHORIZATION_BEARER_ENV_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""^Bearer\s+\$(?:\{(?P<braced>[A-Za-z_][A-Za-z0-9_]*)\}|(?P<plain>[A-Za-z_][A-Za-z0-9_]*))$"""
 )
+_OZ_MCP_SUPPORTED_FIELDS: Final[frozenset[str]] = frozenset({"warp_id", "command", "args", "env", "url", "headers"})
 
 
 def parse_requested_agents(raw_value: str) -> tuple[AGENTS, ...]:
@@ -81,8 +82,10 @@ def install_resolved_mcp_servers(
             _write_codex_config(path=path, resolved_servers=resolved_servers)
         case "copilot":
             _write_copilot_cli_config(path=path, resolved_servers=resolved_servers)
-        case "claude" | "cursor-agent" | "forge" | "kilocode" | "warp-cli":
+        case "claude" | "cursor-agent" | "forge" | "kilocode":
             _write_mcp_servers_file(path=path, resolved_servers=resolved_servers)
+        case "oz":
+            _write_oz_mcp_file(path=path, resolved_servers=resolved_servers)
         case "qwen":
             _write_settings_with_mcp_servers(path=path, resolved_servers=resolved_servers, ensure_mcp_enabled=True)
         case "q" | "auggie" | "droid":
@@ -133,7 +136,7 @@ def resolve_install_path(
                 return repo_root / ".cline" / "data" / "settings" / "cline_mcp_settings.json"
             case "auggie":
                 return repo_root / ".augment" / "settings.json"
-            case "warp-cli":
+            case "oz":
                 return repo_root / ".warp" / "mcp.json"
             case "droid":
                 return repo_root / ".factory" / "settings.json"
@@ -167,12 +170,10 @@ def resolve_install_path(
             return home_dir / ".cline" / "data" / "settings" / "cline_mcp_settings.json"
         case "auggie":
             return home_dir / ".augment" / "settings.json"
-        case "warp-cli":
-            if system() == "Darwin":
-                return home_dir / "Library" / "Application Support" / "dev.warp.Warp-Stable" / "mcp.json"
+        case "oz":
             if system() == "Windows":
-                return home_dir / "AppData" / "Roaming" / "Warp" / "mcp.json"
-            return home_dir / ".local" / "share" / "warp" / "mcp.json"
+                return home_dir / "AppData" / "Roaming" / "stackops" / "agents" / "oz" / "mcp.json"
+            return home_dir / ".config" / "stackops" / "agents" / "oz" / "mcp.json"
         case "droid":
             return home_dir / ".factory" / "settings.json"
         case "crush":
@@ -256,6 +257,75 @@ def _write_mcp_servers_file(*, path: Path, resolved_servers: tuple[ResolvedMcpSe
     for resolved_server in resolved_servers:
         mcp_servers[resolved_server["name"]] = _resolved_server_to_generic_entry(resolved_server=resolved_server)
     _write_json_object(path=path, root=root)
+
+
+def _load_oz_mcp_root(*, path: Path) -> dict[str, object]:
+    root = _load_json_object(path=path)
+    legacy_mcp_servers = root.get("mcpServers")
+    if legacy_mcp_servers is None:
+        return _sanitize_existing_oz_mcp_root(root=root, path=path)
+    if not isinstance(legacy_mcp_servers, dict):
+        raise ValueError(f"Config field 'mcpServers' in {path} must be a JSON object")
+    return _sanitize_existing_oz_mcp_root(root=dict(legacy_mcp_servers), path=path)
+
+
+def _sanitize_existing_oz_mcp_root(*, root: dict[str, object], path: Path) -> dict[str, object]:
+    sanitized_root: dict[str, object] = {}
+    for server_name, raw_entry in root.items():
+        if server_name.startswith("$"):
+            continue
+        if not isinstance(raw_entry, dict):
+            raise ValueError(f"Oz MCP server '{server_name}' in {path} must be a JSON object")
+        sanitized_root[server_name] = {
+            field_name: field_value for field_name, field_value in raw_entry.items() if field_name in _OZ_MCP_SUPPORTED_FIELDS
+        }
+    return sanitized_root
+
+
+def _resolved_server_to_oz_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
+    definition = resolved_server["definition"]
+    if definition["cwd"] is not None:
+        raise ValueError(
+            f"Oz MCP config for '{resolved_server['name']}' cannot include cwd because oz --mcp config files do not support it"
+        )
+    if definition["transport"] == "stdio":
+        command = definition["command"]
+        if command is None:
+            raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a command")
+        entry: dict[str, object] = {
+            "command": command,
+            "args": list(definition["args"]),
+        }
+        if len(definition["env"]) > 0:
+            entry["env"] = dict(definition["env"])
+        return entry
+
+    url = definition["url"]
+    if url is None:
+        raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a URL")
+    entry = {"url": url}
+    if len(definition["headers"]) > 0:
+        entry["headers"] = dict(definition["headers"])
+    return entry
+
+
+def _write_oz_mcp_file(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
+    root = _load_oz_mcp_root(path=path)
+    for resolved_server in resolved_servers:
+        root[resolved_server["name"]] = _resolved_server_to_oz_entry(resolved_server=resolved_server)
+    _write_json_object(path=path, root=root)
+
+
+def resolve_oz_mcp_config_paths(*, repo_root: Path | None, home_dir: Path) -> list[Path]:
+    paths: list[Path] = []
+    if repo_root is not None:
+        local_path = resolve_install_path(agent="oz", scope="local", repo_root=repo_root, home_dir=home_dir)
+        if local_path.is_file():
+            paths.append(local_path)
+    global_path = resolve_install_path(agent="oz", scope="global", repo_root=repo_root, home_dir=home_dir)
+    if global_path.is_file():
+        paths.append(global_path)
+    return paths
 
 
 def _resolved_server_to_antigravity_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:

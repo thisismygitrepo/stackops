@@ -140,6 +140,7 @@ agents make-config --root . --agent codex,copilot,agy,pi --include-scripts --add
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
 - `copilot` means GitHub Copilot CLI. Local MCP config is written to `.mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
 - `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
+- `oz` means Warp Oz CLI. Local MCP config is written to `.warp/mcp.json` in Oz's direct `--mcp` file shape, and StackOps passes that file to `oz agent run --mcp` when it exists.
 - `caveman` and `grill-me` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
@@ -147,7 +148,7 @@ For `add-mcp`, `--where repo` resolves to `<git-root>/.stackops/mcp.json`.
 
 ```bash
 agents add-mcp --help
-agents add-mcp postgres,filesystem --agent codex,copilot,agy,pi --scope local
+agents add-mcp postgres,filesystem --agent codex,copilot,agy,oz,pi --scope local
 agents add-mcp caveman --agent codex --scope local
 agents add-mcp --edit --where library
 ```
