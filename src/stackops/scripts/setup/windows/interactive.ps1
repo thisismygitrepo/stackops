@@ -8,15 +8,15 @@ irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackop
 # live from github version
 # function stackops { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "git+https://github.com/thisismygitrepo/stackops" stackops $args }
 
-function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" devops $args }
-function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" cloud $args }
-function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" agents $args }
-function sessions { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" sessions $args }
-function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" fire $args }
-function croshell { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" croshell $args }
-function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" utils $args }
-function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" terminal $args }
-function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.99" seek @args }
+function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" devops $args }
+function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" cloud $args }
+function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" agents $args }
+function sessions { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" sessions $args }
+function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" fire $args }
+function croshell { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" croshell $args }
+function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" utils $args }
+function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" terminal $args }
+function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=8.100" seek @args }
 
 function d { wrap_in_shell_script devops @args }
 function c { wrap_in_shell_script cloud @args }
