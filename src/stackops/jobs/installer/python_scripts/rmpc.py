@@ -1,7 +1,9 @@
 """Install rmpc and its common MPD/media companion tools using nala or brew."""
 
+import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -37,9 +39,11 @@ RMPC_INSTALLER_DATA: InstallerData = {
 }
 
 NALA_REQUIRED_PACKAGES = ["mpd", "mpc"]
-NALA_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python3-mutagen", "yt-dlp", "ueberzugpp"]
+NALA_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python3", "python3-pip", "python3-mutagen", "yt-dlp", "ueberzugpp"]
 BREW_REQUIRED_PACKAGES = ["mpd", "mpc"]
-BREW_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "yt-dlp", "ueberzugpp"]
+BREW_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python-mutagen", "yt-dlp", "ueberzugpp"]
+LINUX_MPD_SOCKET = "/run/mpd/socket"
+MACOS_MPD_SOCKET = "~/.mpd/socket"
 
 
 def _sudo() -> str:
@@ -98,28 +102,136 @@ def _install_brew_companions(console: Console) -> None:
         )
 
 
-def _bootstrap_config(console: Console) -> None:
+def _run_capture(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(command, capture_output=True, text=True, check=False)
+
+
+def _python3_has_mutagen() -> bool:
+    result = _run_capture(["python3", "-c", "import mutagen"])
+    return result.returncode == 0
+
+
+def _ensure_python3_mutagen(console: Console) -> None:
+    if shutil.which("python3") is None:
+        console.print("WARNING: python3 was not found; rmpc YouTube support will warn about python-mutagen.")
+        return
+    if _python3_has_mutagen():
+        return
+
+    install_commands = [
+        "python3 -m pip install --user mutagen",
+        "python3 -m pip install --user --break-system-packages mutagen",
+    ]
+    for command in install_commands:
+        _run_shell(command, console, "Install mutagen for python3 used by rmpc", required=False)
+        if _python3_has_mutagen():
+            return
+
+    console.print(
+        "WARNING: python3 still cannot import mutagen; rmpc YouTube support may warn about python-mutagen."
+    )
+
+
+def _ron_string(value: str) -> str:
+    return json.dumps(value)
+
+
+def _upsert_ron_field(config_text: str, field_name: str, value_literal: str) -> str:
+    field_pattern = re.compile(rf"(?m)^(\s*{re.escape(field_name)}\s*:\s*).*(,?)\s*$")
+    if field_pattern.search(config_text):
+        return field_pattern.sub(rf"\g<1>{value_literal},", config_text, count=1)
+
+    open_tuple_match = re.search(r"\(\s*\n", config_text)
+    if open_tuple_match is None:
+        return f"(\n    {field_name}: {value_literal},\n)\n"
+    insert_at = open_tuple_match.end()
+    return f"{config_text[:insert_at]}    {field_name}: {value_literal},\n{config_text[insert_at:]}"
+
+
+def _write_rmpc_youtube_config(console: Console, socket_path: str) -> None:
     config_path = Path.home().joinpath(".config", "rmpc", "config.ron")
+    cache_dir = Path.home().joinpath(".cache", "rmpc")
     if config_path.exists():
-        console.print(f"rmpc config already exists: {config_path}")
-        return
+        config_text = config_path.read_text(encoding="utf-8")
+    else:
+        exe_path = Path(LINUX_INSTALL_PATH).joinpath("rmpc")
+        exe = str(exe_path) if exe_path.is_file() else shutil.which("rmpc")
+        config_text = ""
+        if exe is not None:
+            result = subprocess.run([exe, "config"], capture_output=True, text=True, check=False)
+            if result.returncode == 0 and result.stdout.strip() != "":
+                config_text = result.stdout
+            elif result.stderr.strip():
+                console.print(result.stderr.strip())
+        if config_text == "":
+            config_text = "(\n)\n"
 
-    exe_path = Path(LINUX_INSTALL_PATH).joinpath("rmpc")
-    exe = str(exe_path) if exe_path.is_file() else shutil.which("rmpc")
-    if exe is None:
-        console.print("WARNING: rmpc executable was not found; skipping config bootstrap.")
-        return
-
-    result = subprocess.run([exe, "config"], capture_output=True, text=True, check=False)
-    if result.returncode != 0 or result.stdout.strip() == "":
-        console.print("WARNING: Could not generate default rmpc config.")
-        if result.stderr.strip():
-            console.print(result.stderr.strip())
-        return
+    config_text = _upsert_ron_field(
+        config_text=config_text,
+        field_name="address",
+        value_literal=_ron_string(socket_path),
+    )
+    config_text = _upsert_ron_field(
+        config_text=config_text,
+        field_name="cache_dir",
+        value_literal=_ron_string(str(cache_dir)),
+    )
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(result.stdout, encoding="utf-8")
-    console.print(f"Created default rmpc config: {config_path}")
+    config_path.write_text(config_text, encoding="utf-8")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    console.print(f"Configured rmpc for local MPD socket: {socket_path}")
+
+
+def _configure_linux_mpd_socket(console: Console) -> None:
+    if shutil.which("sudo") is None and not (hasattr(os, "geteuid") and os.geteuid() == 0):
+        console.print("WARNING: sudo is unavailable; cannot configure /etc/mpd.conf for local socket.")
+        return
+
+    script = f"""
+set -e
+conf=/etc/mpd.conf
+socket={LINUX_MPD_SOCKET}
+if [ ! -f "$conf" ]; then
+  exit 0
+fi
+if ! grep -Eq '^[[:space:]]*bind_to_address[[:space:]]+"{re.escape(LINUX_MPD_SOCKET)}"' "$conf"; then
+  cp -n "$conf" "$conf.stackops-rmpc.bak"
+  printf '\\n# Added by stackops rmpc installer for local rmpc YouTube playback.\\nbind_to_address "{LINUX_MPD_SOCKET}"\\n' >> "$conf"
+fi
+"""
+    _run_shell(f"{_sudo()}sh -c {json.dumps(script)}", console, "Configure MPD local socket", required=False)
+    _run_shell(
+        f"{_sudo()}systemctl restart mpd || {_sudo()}service mpd restart",
+        console,
+        "Restart MPD after socket configuration",
+        required=False,
+    )
+
+
+def _configure_macos_mpd_socket(console: Console) -> None:
+    Path.home().joinpath(".mpd").mkdir(parents=True, exist_ok=True)
+    brew_prefix_result = _run_capture(["brew", "--prefix"])
+    if brew_prefix_result.returncode != 0:
+        console.print("WARNING: Could not resolve Homebrew prefix; skipping MPD socket config.")
+        return
+
+    mpd_conf = Path(brew_prefix_result.stdout.strip()).joinpath("etc", "mpd.conf")
+    if not mpd_conf.exists():
+        console.print(f"WARNING: Homebrew MPD config not found: {mpd_conf}")
+        return
+
+    config_text = mpd_conf.read_text(encoding="utf-8")
+    if f'bind_to_address "{MACOS_MPD_SOCKET}"' not in config_text:
+        backup_path = mpd_conf.with_suffix(mpd_conf.suffix + ".stackops-rmpc.bak")
+        if not backup_path.exists():
+            backup_path.write_text(config_text, encoding="utf-8")
+        mpd_conf.write_text(
+            config_text
+            + f'\n# Added by stackops rmpc installer for local rmpc YouTube playback.\nbind_to_address "{MACOS_MPD_SOCKET}"\n',
+            encoding="utf-8",
+        )
+    _run_shell("brew services restart mpd", console, "Restart Homebrew MPD after socket configuration", required=False)
 
 
 def _normalize_release_version(version: str | None) -> str | None:
@@ -169,9 +281,14 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 
     if os_name == "linux":
         _install_nala_companions(console=console)
+        _configure_linux_mpd_socket(console=console)
+        socket_path = LINUX_MPD_SOCKET
     else:
         _install_brew_companions(console=console)
-    _bootstrap_config(console=console)
+        _configure_macos_mpd_socket(console=console)
+        socket_path = MACOS_MPD_SOCKET
+    _ensure_python3_mutagen(console=console)
+    _write_rmpc_youtube_config(console=console, socket_path=socket_path)
 
     console.print(
         Panel.fit(

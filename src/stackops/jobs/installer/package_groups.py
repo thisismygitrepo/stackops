@@ -98,10 +98,10 @@ PACKAGES_DATABASE: list[str] = DB_TUIS + DB_CLI + DB_DESKTOP + DB_WEB
 
 # Media & Entertainment - Music players and media tools
 PACKAGES_MEDIA = [
-    "ytui-music",
-    "youtube-tui",
+    "ytui-music",  # https://github.com/sudipghimire533/ytui-music
+    "youtube-tui",  # https://github.com/Siriusmart/youtube-tui
+    "termusic",  # https://github.com/tramhao/termusic
     "rmpc",
-    "termusic",
     "kronos",
     "OBS Background removal",
 ]
