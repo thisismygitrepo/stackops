@@ -4,6 +4,31 @@ from typing import Literal
 from stackops.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig
 from pathlib import Path
 
+
+def _prepend_random_stagger(command: str, max_stagger: float | None) -> str:
+    if max_stagger is None:
+        return command
+    if max_stagger < 0:
+        raise ValueError("max_stagger must be greater than or equal to 0")
+
+    import base64
+    import platform
+    import random
+    import shlex
+
+    random_time = random.uniform(0.0, max_stagger)
+    system = platform.system().lower()
+    if system == "windows":
+        sleep_milliseconds = round(random_time * 1000)
+        ps_script = f"Start-Sleep -Milliseconds {sleep_milliseconds}\n{command}"
+        encoded_script = base64.b64encode(ps_script.encode("utf-16-le")).decode("ascii")
+        return f"powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {encoded_script}"
+    if system == "linux" or system == "darwin":
+        shell_script = f"sleep {random_time:.6f}; {command}"
+        return f"bash -lc {shlex.quote(shell_script)}"
+    raise ValueError(f"Unsupported platform: {platform.system()}")
+
+
 def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bool, uv_with: list[str] | None, uv_project_dir: str | None, start_dir: str, uv_run_flags: str) -> tuple[TabConfig, Path]:
     from stackops.utils.meta import lambda_to_python_script
     if func.__name__ == "<lambda>":
@@ -50,7 +75,8 @@ def make_layout_from_functions(functions: list[FunctionType], functions_weights:
                                layout_name: str, method: Literal["script", "fire"],
                                uv_with: list[str] | None, uv_project_dir: str | None,
                                flags: str,
-                               start_dir: str
+                               start_dir: str,
+                               max_stagger: float | None = None,
                                ) -> LayoutConfig:
     tabs2artifacts: list[tuple[TabConfig, list[Path]]] = []
     for a_func, tab_weight in zip(functions, functions_weights or [1]*len(functions)):
@@ -68,6 +94,7 @@ def make_layout_from_functions(functions: list[FunctionType], functions_weights:
         else:
             tab_config = get_fire_tab_using_fire(a_func, tab_weight=tab_weight, start_dir=start_dir, fire_flags=flags)
             artifact_files = []
+        tab_config["command"] = _prepend_random_stagger(tab_config["command"], max_stagger=max_stagger)
         tabs2artifacts.append((tab_config, artifact_files))
     list_of_tabs = [tab for tab, _ in tabs2artifacts] + tab_configs
     layout_config: LayoutConfig = {

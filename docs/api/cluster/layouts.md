@@ -48,6 +48,8 @@ The current schema key is `layoutTabs`. There is no alternate `tabs` field in th
 
 Its `flags` parameter is passed through to the selected launch mode as either `uv_run_flags` or `fire_flags`.
 
+Set `max_stagger` to add a random startup delay of up to that many seconds to each generated function tab. The extra delay is applied after the helper returns the tab command, so `get_fire_tab_using_uv()` and `get_fire_tab_using_fire()` keep their direct command behavior unchanged.
+
 ### Example
 
 ```python
@@ -74,6 +76,7 @@ layout = make_layout_from_functions(
     uv_project_dir=None,
     flags="",
     start_dir="~/code/my-project",
+    max_stagger=10.0,
 )
 
 run_tmux_layout(layout_config=layout, on_conflict="rename")
