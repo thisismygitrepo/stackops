@@ -1550,6 +1550,24 @@
       }
     },
     {
+      "appName": "rmpc",
+      "license": "BSD-3-Clause",
+      "repoURL": "CMD",
+      "doc": "A modern, configurable terminal based MPD client.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "rmpc.py",
+          "darwin": "rmpc.py",
+          "windows": null
+        },
+        "arm64": {
+          "linux": "rmpc.py",
+          "darwin": "rmpc.py",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "termusic",
       "license": "MIT and GPL-3.0",
       "repoURL": "https://github.com/tramhao/termusic",

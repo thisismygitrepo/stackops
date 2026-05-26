@@ -100,6 +100,7 @@ PACKAGES_DATABASE: list[str] = DB_TUIS + DB_CLI + DB_DESKTOP + DB_WEB
 PACKAGES_MEDIA = [
     "ytui-music",
     "youtube-tui",
+    "rmpc",
     "termusic",
     "kronos",
     "OBS Background removal",
