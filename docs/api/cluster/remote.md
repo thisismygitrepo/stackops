@@ -57,8 +57,10 @@ graph LR
 | `data` | Extra files or directories to transfer alongside the job |
 | `transfer_method` | `sftp` or `cloud` |
 | `cloud_name` | Required when `transfer_method="cloud"` |
+| `allowed_remotes` | Optional list stored with the config for callers that restrict eligible remotes |
 | `notify_upon_completion`, `to_email`, `email_config_name` | Email notification controls |
 | `launch_method` | `remotely` or `cloud_manager` |
+| `kill_on_completion` | Stored on the config for callers that want completion cleanup policy |
 | `interactive` | Runs the generated Python wrapper with `python -i` instead of `python` |
 | `wrap_in_try_except` | Wraps the generated execution line in a try/except block |
 | `parallelize`, `workload_params` | Split a callable into `ProcessPoolExecutor` work units |
@@ -67,6 +69,7 @@ graph LR
 Important current validation rules:
 
 - `cloud_name` must be set for cloud transfers
+- `interactive=True` with `lock_resources=True` prints a warning because an interactive job can hold its lock indefinitely
 - enabling notifications auto-fills `to_email` and `email_config_name` from defaults when they were not passed explicitly
 
 ---
@@ -84,7 +87,7 @@ Current constraints:
 
 - callables defined in `__main__` are rejected
 - `<run_path>` callables are rewritten from their `__file__`
-- `get_execution_line()` emits different code for plain calls, workload-aware calls, and `parallelize=True` splits
+- `get_execution_line()` emits different code for plain calls, workload-aware calls, `parallelize=True` splits, and `wrap_in_try_except=True`
 
 ---
 
@@ -126,7 +129,7 @@ job.run(run=True, show_scripts=False)
 | --- | --- |
 | `generate_scripts()` | Writes `job_params.json`, the generated Python wrapper, the shell launcher, kwargs JSON, and config JSON |
 | `show_scripts()` | Prints the generated shell and Python sources with Rich |
-| `submit()` | Transfers the job root with SFTP or prepends cloud-download commands to the shell launcher |
+| `submit()` | Transfers the job root with SFTP or prepends cloud-download commands to the shell launcher when `ssh_host` is set; local jobs only mark themselves submitted |
 | `fire(run)` | Launches the generated shell script locally or through SSH |
 | `run(run, show_scripts)` | Calls generate -> optional show -> submit -> fire |
 | `check_job_status()` | Syncs remote logs when needed and resolves the results directory once the job finishes |
@@ -137,6 +140,7 @@ Current behavior worth knowing:
 
 - the `run` flag accepted by `fire()` and `run()` is currently not used to suppress launch; those methods still fire the job
 - direct `RemoteMachine(...)` construction initializes `FileManager` with `remote_machine_type="Linux"`, so the default generated launcher is the Unix shell variant
+- a script job executes the script text and records `res = None`; a function job imports and calls the selected function with `func_kwargs`
 
 ---
 
@@ -192,9 +196,10 @@ It:
 
 - opens SSH connections to all requested hosts
 - samples remote CPU and RAM
-- computes workload splits with `MachineLoadCalculator`
+- computes normalized workload splits over an index range of `0..1000` with `MachineLoadCalculator`
 - creates one `RemoteMachine` per host
 - submits and fires those remote jobs
+- saves cluster state to `{base_dir or ~/tmp_results/remote_machines}/job_id__{job_id}/cluster.json`
 
 This is the path to use when the same callable should be partitioned across several machines instead of sent to just one host.
 
@@ -204,7 +209,7 @@ This is the path to use when the same callable should be partitioned across seve
 
 `stackops.utils.ssh.SSH` is the lower-level transport used by the remote layer.
 
-`SSH.from_config_file(host)` first tries `~/.ssh/config`; if no matching entry exists, it falls back to parsing `user@host[:port]` syntax. The class opens:
+`SSH.from_config_file(host)` calls the `SSH` constructor with the host string. The constructor first tries `~/.ssh/config`; if no matching entry exists, it parses `user@host[:port]`, `user@host`, or `host:port` syntax. The class opens:
 
 - a Paramiko SSH client
 - an SFTP channel when possible

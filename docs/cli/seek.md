@@ -7,14 +7,14 @@
 ## Usage
 
 ```bash
-seek [OPTIONS] [PATH] [SEARCH_TERM]
+seek [OPTIONS] [PATH_OR_SEARCH_TERM] [SEARCH_TERM]
 ```
 
 ## Arguments
 
 | Argument | Description |
 | --- | --- |
-| `PATH` | Directory or file to search. Defaults to the current directory. |
+| `PATH_OR_SEARCH_TERM` | Directory or file to search, or the search term when no matching path exists. Defaults to the current directory. |
 | `SEARCH_TERM` | Initial query to seed the search UI. |
 
 ---
@@ -45,6 +45,7 @@ That means `seek path query --file --ast` will still take the AST path, and `--i
 | `--rga` | `-A` | Swap `rg` for `rga` in text-search mode |
 | `--edit` | `-e` | Open the selected result in Helix |
 | `--install-req` | `-i` | Install expected helper tools and exit |
+| `--max-files INTEGER` | `-m` | Maximum files for `--semantic`; default is `50`, and `0` disables the limit |
 
 ---
 
@@ -56,7 +57,7 @@ The default mode loads a platform-specific helper script and runs an `fzf` + `rg
 
 - `--rga` rewrites that script to use `ripgrep-all`
 - `SEARCH_TERM` seeds the initial query
-- `PATH` changes the working directory before launching the search
+- when the first argument resolves to a directory, StackOps changes to that directory before launching the search
 
 ### File search
 
@@ -64,13 +65,14 @@ The default mode loads a platform-specific helper script and runs an `fzf` + `rg
 
 - without `--edit`, it previews the file with `bat`
 - with `--edit`, it adds a second line picker and opens the selected line in Helix
-- the current implementation uses `fd --type file` for the default candidate source
+- by default, the candidate source is `fd --type file`
+- with `--dotfiles`, StackOps does not prepend the `fd` candidate source and leaves candidate generation to `fzf`
 
 ### Single-file flow
 
-If `PATH` resolves to a file, `seek` skips directory search and opens a line-oriented preview for that file instead.
+If the first argument resolves to a file, `seek` skips directory search and opens a line-oriented preview for that file instead.
 
-When standard input is piped in and `PATH` is a directory, `seek` captures stdin into a temporary file and opens the same single-file flow against that temp file.
+When standard input is piped in and the first argument is a directory, `seek` captures stdin into a temporary file and opens the same single-file flow against that temp file.
 
 ### AST search
 
@@ -90,7 +92,8 @@ When standard input is piped in and `PATH` is a directory, `seek` captures stdin
 
 - prompts for a query if `SEARCH_TERM` is empty
 - limits the search set with `--extension` when provided
-- warns and exits when more than 50 files would be searched
+- warns and exits when more than `--max-files` files would be searched
+- treats `--max-files 0` as unlimited
 - uses preview selection for the returned results
 
 ---
@@ -105,6 +108,7 @@ When standard input is piped in and `PATH` is a directory, `seek` captures stdin
 - `fd`
 - `rg`
 - `rga`
+- `semtools`
 
 ---
 
@@ -128,6 +132,7 @@ seek src --ast
 
 # Semantic helper search
 seek src parser --semantic --extension .py
+seek src parser --semantic --extension .py --max-files 200
 
 # ripgrep-all text search
 seek docs invoice --rga

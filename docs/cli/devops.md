@@ -117,6 +117,7 @@ devops execute [OPTIONS] [NAME]
 Current behavior:
 
 - `NAME` can be a predefined script name or a raw command string
+- when `NAME` is a direct script file path, `execute` runs it without searching the configured script roots
 - `--where` selects search locations: `all`, `repo`, `private`, `public`, `library`, `dynamic`, or `custom`
 - `--where repo` searches `<git-root>/.stackops/scripts`
 - `--interactive` enables interactive selection

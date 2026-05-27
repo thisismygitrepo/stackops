@@ -110,8 +110,9 @@ The implementation dispatches to Windows- or Unix-specific Television helpers.
 Current `Email` behavior:
 
 - `Email.get_source_of_truth()` reads config from `~/dotfiles/stackops/emails.ini`
-- `Email.__init__()` opens either an SSL or TLS SMTP connection based on the config
-- `send_message()` appends an automation footer and optionally converts Markdown to HTML
+- `Email.__init__()` uses `smtplib.SMTP_SSL` when `encryption = ssl`; when `encryption = tls`, it constructs `smtplib.SMTP` and logs in without calling `starttls()`
+- `send_message()` appends an automation footer, converts Markdown to HTML by default, and attaches the body as an HTML MIME part
+- the `attachments` argument is accepted but ignored by the current implementation
 - `send_and_close()` requires a `config_name`; `config_name=None` currently raises `NotImplementedError`
 
 Example:

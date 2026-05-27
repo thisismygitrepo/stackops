@@ -15,10 +15,11 @@ agents [OPTIONS] COMMAND [ARGS]...
 | Command | Current behavior |
 | --- | --- |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
-| `make-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
+| `browser` | Prepare browser automation tooling or launch Chrome / Brave with CDP enabled |
+| `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
-| `make-todo` | Generate filtered checklist files for repo contents |
-| `make-symlinks` | Create `~/code_copies/<repo>_copy_<n>` symlinks to the current repo |
+| `add-todo` | Generate filtered checklist files for repo contents |
+| `add-symlinks` | Create `~/code_copies/<repo>_copy_<n>` symlinks to the current repo |
 | `run-prompt` | Run one prompt through a selected agent, with inline, file, or YAML-backed context |
 | `ask` | Ask a selected agent directly |
 | `add-skill` | Add a supported skill into an agent directory |
@@ -37,28 +38,30 @@ Current subcommands:
 | `collect` | Concatenate collected agent material files into one output file |
 | `make-template` | Print a starter template for fire-agent usage |
 
-`agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning-effort`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--stagger-max`, `--separator`, `--agents-dir`, `--output-path`, `--save-as-yaml`, and `--interactive`. `--save-as-yaml` writes or updates `.stackops/agents/parallel.yaml` using the resolved job name as the top-level entry key.
+`agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--stagger-max`, `--separator`, `--joined-prompt-context`, `--run`, `--agents-dir`, `--output-path`, `--save-as-yaml`, and `--interactive`. `--save-as-yaml` writes or updates `.stackops/agents/parallel.yaml` using the resolved job name as the top-level entry key.
 
-`agents parallel run-parallel` reads flat top-level named entries from `parallel.yaml`. By default it searches `.stackops/agents/parallel.yaml`, then StackOps private/public/library locations. Use `--parallel-yaml-path` for an explicit file, `--show-format` to print the standard, and `--edit` to open the YAML. Every `create` option can be overridden on the command line.
+`agents parallel run-parallel` reads flat top-level named entries from `parallel.yaml`. By default it searches the repo file first, then StackOps private/public/library locations. Use `--yaml-path` for an explicit file, `--show-format` to print the standard, `--edit` to open the YAML, and `--add-entry` to append a template entry before editing. Every `create` option can be overridden on the command line.
 
 Standard `parallel.yaml` shape:
 
 ```yaml
-default:
+entryExample:
   agent: codex
   model: null
-  reasoning: high
-  provider: openai
+  reasoning: null
+  provider: null
   host: local
-  context: no context
+  context: null
   context_path: null
   separator: "\n@-@\n"
-  agent_load: 1
-  prompt: go
+  agent_load: 3
+  stagger_max: 3.0
+  prompt: null
   prompt_path: null
   prompt_name: null
   job_name: AI_Agents
   join_prompt_and_context: false
+  run: false
   output_path: null
   agents_dir: null
   interactive: false
@@ -69,12 +72,12 @@ Examples:
 ```bash
 agents parallel --help
 agents parallel create --help
-agents parallel create --agent codex --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs
-agents parallel create --agent codex --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs --save-as-yaml
-agents parallel create --agent copilot --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
-agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning-effort high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
+agents parallel create --agent codex --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs
+agents parallel create --agent codex --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs --save-as-yaml
+agents parallel create --agent copilot --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
+agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
 agents parallel run-parallel default --where repo --agent-load 5
-agents parallel run-parallel docs_update --parallel-yaml-path ./.ai/parallel.yaml --agent pi --reasoning-effort high
+agents parallel run-parallel docs_update --yaml-path ./.ai/parallel.yaml --agent pi --reasoning high
 agents parallel create-context --job-name updateDocs "Collect the repo context for this doc task"
 agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 ```
@@ -86,31 +89,32 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 `run-prompt` is the structured workflow entrypoint. It supports:
 
 - `--agent`
-- `--reasoning-effort` for codex, copilot, and pi agents; unsupported agents ignore it
+- `--reasoning` for codex, copilot, and pi agents; unsupported agents ignore it
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
 - `--where` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, `library`, or `custom`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 
-For `run-prompt`, `--where repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
+For `run-prompt`, `--agent` defaults to `copilot`. `--where repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
 
 Examples:
 
 ```bash
-agents run-prompt --agent codex --reasoning-effort high --context-path ./context.md "inspect this repo"
-agents run-prompt --agent copilot --reasoning-effort high --context-path ./context.md "inspect this repo"
+agents run-prompt --agent codex --reasoning high --context-path ./context.md "inspect this repo"
+agents run-prompt --agent copilot --reasoning high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --context-name docs.cli --where all "update the assigned docs"
 agents run-prompt --agent agy --context-path ./context.md "inspect this repo"
-agents run-prompt --agent pi --reasoning-effort high --context-path ./context.md "inspect this repo"
+agents run-prompt --agent pi --reasoning high --context-path ./context.md "inspect this repo"
 agents run-prompt --show-format
 ```
 
 `ask` is the lighter-weight direct path. Current behavior to keep in mind:
 
-- default agent is `codex`
+- default agent is `pi`
 - `--reasoning` accepts `n`, `l`, `m`, `h`, `x`
 - that shortcut is only supported for `codex`, `copilot`, and `pi`
-- `--file-prompt` appends the file contents into the final prompt with explicit `BEGIN FILE` and `END FILE` markers
+- `--file-prompt` appends the file contents into the final prompt with explicit file boundary markers
+- `--quiet` skips the Rich preflight summary and streams agent output directly
 
 Examples:
 
@@ -120,17 +124,18 @@ agents ask --agent copilot --reasoning m "summarize the current module"
 agents ask --agent agy "inspect the repo"
 agents ask --agent pi --reasoning h "inspect the repo"
 agents ask "summarize this file" --file-prompt ./README.md
+agents ask --quiet "summarize the current directory"
 ```
 
 ---
 
 ## Repository and MCP helpers
 
-`make-config` currently requires `--root` and can optionally add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries:
+`add-config` currently requires `--agent` and can optionally add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `--agent all` to configure every supported agent, or pass a comma-separated list.
 
 ```bash
-agents make-config --root .
-agents make-config --root . --agent codex,copilot,agy,pi --include-scripts --add-gitignore
+agents add-config --agent all --root .
+agents add-config --agent codex,copilot,agy,pi --root . --include-scripts --add-gitignore
 ```
 
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
@@ -141,6 +146,7 @@ agents make-config --root . --agent codex,copilot,agy,pi --include-scripts --add
 - `copilot` means GitHub Copilot CLI. Local MCP config is written to `.mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
 - `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
 - `oz` means Warp Oz CLI. Local MCP config is written to `.warp/mcp.json` in Oz's direct `--mcp` file shape, and StackOps passes that file to `oz agent run --mcp` when it exists.
+- `pi` local MCP config is written to `.pi/mcp.json`; global MCP config is written to `~/.pi/agent/mcp.json`
 - `caveman` and `grill-me` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
@@ -153,13 +159,13 @@ agents add-mcp caveman --agent codex --scope local
 agents add-mcp --edit --where library
 ```
 
-`make-todo` scans a repo or workspace and writes filtered checklist files under `.ai/todo/files` by default. `make-symlinks` creates repo symlinks under `~/code_copies/`.
+`add-todo` scans a repo or workspace and writes filtered checklist files under `.ai/todo/files` by default. `add-symlinks` creates repo symlinks under `~/code_copies/`.
 
 ---
 
 ## Browser Automation
 
-`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. The direct MCP entries use explicit StackOps profile directories under `~/data/browsers-profiles/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles.
+`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. `--which` accepts `agent-browser`, `chrome-devtools-mcp`, or `playwright-mcp`. The direct MCP entries use explicit StackOps profile directories under `~/data/browsers-profiles/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles.
 
 ```bash
 agents browser install-tech
@@ -171,9 +177,10 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome or Brave with a dedicated CDP profile for tools that connect to an already running browser:
+`agents browser launch-browser` launches Chrome or Brave with a dedicated CDP profile for tools that connect to an already running browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`.
 
 ```bash
+agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
 agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
 ```
 
@@ -181,7 +188,7 @@ agents browser launch-browser --browser chrome --port 9222 --profile playwright-
 
 ## `add-skill`
 
-`add-skill` installs supported open agent skills through `bunx skills@latest add`. The shipped source aliases are `agent-browser`, `caveman`, and `grill-me`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping, and omitting it lets the upstream tool choose or prompt for agent targets. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` installs supported open agent skills through `bunx skills@latest add`. The shipped source aliases are `agent-browser`, `caveman`, and `grill-me`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping, and omitting it lets the upstream tool choose or prompt for agent targets. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
 
 ```bash
 agents add-skill --scope local
@@ -197,11 +204,13 @@ agents add-skill caveman --agent github-copilot --scope global
 ```bash
 agents --help
 agents parallel --help
-agents make-config --help
+agents add-config --help
 agents add-mcp --help
-agents make-todo --help
+agents add-todo --help
+agents add-symlinks --help
 agents run-prompt --help
 agents ask --help
 agents add-skill --help
 agents browser install-tech --help
+agents browser launch-browser --help
 ```

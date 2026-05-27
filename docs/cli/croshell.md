@@ -93,6 +93,7 @@ Project resolution is currently:
 - `browser` serves browser-viewable files and directories.
 - `glow` opens Markdown files in Glow.
 - SQL client choices open local DuckDB/SQLite files through the selected database TUI.
+- `preview`, `auto`, `browser`, `glow`, and the SQL client backends require `PATH`; calling one of those backends without a path raises an error before launch.
 
 ---
 

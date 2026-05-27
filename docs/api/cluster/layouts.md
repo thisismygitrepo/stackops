@@ -31,14 +31,14 @@ The current schema key is `layoutTabs`. There is no alternate `tabs` field in th
 
 ## Building layouts from Python functions
 
-`stackops.cluster.sessions_managers.utils.maker` converts Python callables into `TabConfig` entries.
+`stackops.cluster.sessions_managers.utils.maker` converts Python functions into `TabConfig` entries.
 
 ### Main helpers
 
 | Helper | Purpose |
 | --- | --- |
-| `get_fire_tab_using_uv()` | Generates Python source from a callable, writes a temporary script, and returns the tab config plus the generated file path |
-| `get_fire_tab_using_fire()` | Builds a `wrap_stackops fire ...` command for an importable callable |
+| `get_fire_tab_using_uv()` | Generates Python source from a function, writes a temporary script under `~/tmp_results/tmp_scripts/python/`, and returns the tab config plus the generated file path |
+| `get_fire_tab_using_fire()` | Builds a `wrap_stackops fire ...` command for a function file under the user's home directory |
 | `make_layout_from_functions()` | Builds a `LayoutConfig` from functions plus any extra tabs you want to append |
 
 `make_layout_from_functions()` accepts both launch styles through `method`:
@@ -48,7 +48,7 @@ The current schema key is `layoutTabs`. There is no alternate `tabs` field in th
 
 Its `flags` parameter is passed through to the selected launch mode as either `uv_run_flags` or `fire_flags`.
 
-Set `max_stagger` to add a random startup delay of up to that many seconds to each generated function tab. The extra delay is applied after the helper returns the tab command, so `get_fire_tab_using_uv()` and `get_fire_tab_using_fire()` keep their direct command behavior unchanged.
+Set `max_stagger` to add a random startup delay of up to that many seconds to each generated function tab. The extra delay is applied after the helper returns the tab command, so `get_fire_tab_using_uv()` and `get_fire_tab_using_fire()` keep their direct command behavior unchanged. Negative values raise `ValueError`.
 
 ### Example
 
@@ -117,11 +117,11 @@ Supported `breaking_method` values:
 
 ### Convenience launcher
 
-`load_balancer.run(layouts, on_conflict)` is a thin helper that:
+`load_balancer.run(layouts, on_conflict)` is a thin zellij helper that:
 
 1. creates a `ZellijLocalManager`
-2. starts all sessions
-3. runs the monitoring routine
+2. starts all sessions with a 2-second poll window
+3. runs the monitoring routine at 2-second intervals
 4. kills all managed sessions when monitoring finishes
 
 ---
@@ -131,7 +131,7 @@ Supported `breaking_method` values:
 The same `LayoutConfig` can be handed to multiple backends:
 
 - `run_zellij_layout(layout_config, on_conflict)`
-- `run_tmux_layout(layout_config, on_conflict)`
+- `run_tmux_layout(layout_config, on_conflict)` using `exit_mode="backToShell"`
 - `run_wt_layout(layout_config, exit_mode)`
 
 Their generator classes are:

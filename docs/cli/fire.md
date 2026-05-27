@@ -23,7 +23,7 @@ fire [OPTIONS] [PATH] [FUNCTION]
 
 | Area | Flags |
 | --- | --- |
-| General execution | `--script`, `--module`, `--interactive`, `--debug`, `--optimized`, `--frozen` |
+| General execution | `--script`, `--module`, `--interactive`, `--debug`, `--optimized`, `--frozen` (`-F`) |
 | Function selection | `--choose-function` |
 | Notebook and app launch | `--jupyter`, `--marimo`, `--streamlit`, `--environment` |
 | Shell and background helpers | `--cmd`, `--loop`, `--watch`, `--git-pull` |

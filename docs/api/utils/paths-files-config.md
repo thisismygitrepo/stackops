@@ -80,7 +80,7 @@ This is the mechanism used by the current `seek` text-search helpers to load pla
 
 Key pieces:
 
-- `read_default_cloud_config()` returns the built-in cloud defaults
+- `read_default_cloud_config()` returns the built-in cloud defaults: cloud `mycloud101`, root `myhome`, boolean transfer options off, and no key or password
 - `get_ve_path_and_ipython_profile()` walks upward from a path looking for `.ve.yaml`, then falls back to `.venv`
 - `get_ve_activate_line()` builds the platform-specific activation command
 

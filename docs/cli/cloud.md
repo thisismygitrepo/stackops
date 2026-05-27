@@ -28,6 +28,7 @@ The command also defines hidden one-letter aliases for the same actions: `s`, `c
 When a command does not override them, cloud defaults come from `stackops.utils.ve.read_default_cloud_config()`:
 
 - remote root: `myhome`
+- cloud name: `mycloud101`
 - `encrypt`, `zip`, `share`, `overwrite`, `os_specific`, `rel2home`: `False`
 - `key` and `pwd`: unset
 
@@ -105,12 +106,12 @@ Current options:
 | `--destination`, `-d` | Mount destination |
 | `--network`, `-n` | Network mount target |
 | `--backend`, `-b` | Linux/macOS terminal backend: `zellij`, `tmux`, or `auto` |
-| `--interactive`, `-i` | Choose the cloud interactively from config |
+| `--no-interactive`, `-I` | Require `--cloud` instead of choosing interactively from config |
 
 Current defaults:
 
 - backend: `tmux`
-- interactive selection: enabled
+- interactive selection: enabled unless `--no-interactive` is passed
 
 ---
 

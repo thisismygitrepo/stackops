@@ -52,9 +52,9 @@ Important current constraints:
 
 ### Current behavior
 
-- `get_uv_command(platform)` returns the repo's expected `~/.local/bin/uv` path on Unix-like systems and `~/.local/bin/uv.exe` on Windows.
+- `get_uv_command(platform)` returns `"$HOME/.local/bin/uv"` on Unix-like systems and `& "$HOME\\.local\\bin\\uv.exe"` on Windows.
 - `get_uv_command_executing_python_script()` writes the generated script to `~/tmp_results/tmp_scripts/python/<random>.py`.
-- If `prepend_print=True`, the helpers inject preview-print code and ensure `rich` is added to the `uv` dependency list.
+- If `prepend_print=True`, the helpers inject preview-print code and ensure `rich` is added to the `uv` dependency list. When `uv_with` is a list, `rich` is appended to that list before the command is built.
 - `get_uv_command_executing_python_file()` chooses `--project "<dir>"` when `uv_project_dir` is set, otherwise it uses `--no-project`.
 
 Example:
@@ -109,6 +109,7 @@ The two `exit_then_run_*` helpers are for workflows that want to hand control to
 
 - If a writable `OP_PROGRAM_PATH` is available, it writes either the PowerShell file path or `source <script_path>` into that handoff file and exits.
 - Otherwise it runs the existing script file directly.
+- In `strict=True`, a missing or already-used `OP_PROGRAM_PATH` exits with an error instead of running the file directly.
 
 ---
 

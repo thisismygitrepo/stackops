@@ -3,8 +3,8 @@
 `stackops.cluster` is the orchestration layer of the library. It combines:
 
 - typed layout definitions
-- local and remote session managers
-- remote job packaging, transfer, launch, and status tracking
+- local and remote session managers for zellij, tmux, and Windows Terminal
+- remote job packaging, transfer, launch, resource locking, and status tracking
 
 Most higher-level automation code in this area moves through those three pieces in that order.
 
@@ -14,9 +14,9 @@ Most higher-level automation code in this area moves through those three pieces 
 
 | Topic | What it covers | Main modules |
 | --- | --- | --- |
-| [Layouts](layouts.md) | Layout schema, callable-to-tab builders, layout splitting, backend-specific launchers | `stackops.utils.schemas.layouts.layout_types`, `stackops.cluster.sessions_managers.utils.maker`, `stackops.cluster.sessions_managers.utils.load_balancer`, `stackops.cluster.sessions_managers.{zellij,tmux,windows_terminal}.*` |
-| [Sessions](sessions.md) | Conflict planning plus local and remote session managers for zellij, tmux, and Windows Terminal | `stackops.cluster.sessions_managers.session_conflict`, `stackops.cluster.sessions_managers.*_manager` |
-| [Remote execution and networking](remote.md) | Remote job models, generated scripts, file transfer, SSH helpers, workload distribution, address helpers | `stackops.cluster.remote.*`, `stackops.utils.ssh`, `stackops.scripts.python.helpers.helpers_network.*` |
+| [Layouts](layouts.md) | Layout schema, callable-to-tab builders, tab and weight limiting, backend-specific launchers | `stackops.utils.schemas.layouts.layout_types`, `stackops.cluster.sessions_managers.utils.maker`, `stackops.cluster.sessions_managers.utils.load_balancer`, `stackops.cluster.sessions_managers.{zellij,tmux,windows_terminal}.*` |
+| [Sessions](sessions.md) | Conflict planning plus local and remote session managers for zellij, tmux, and Windows Terminal | `stackops.cluster.sessions_managers.session_conflict`, `stackops.cluster.sessions_managers.session_exit_mode`, `stackops.cluster.sessions_managers.*_manager` |
+| [Remote execution and networking](remote.md) | Remote job models, generated scripts, SFTP/cloud transfer, SSH helpers, workload distribution, address helpers | `stackops.cluster.remote.*`, `stackops.utils.ssh`, `stackops.scripts.python.helpers.helpers_network.*` |
 
 ---
 

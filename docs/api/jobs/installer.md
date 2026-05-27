@@ -102,7 +102,7 @@ installers = get_installers(
 
 ### 1. Package-manager commands
 
-If the resolved installer value starts with a known package-manager token such as `brew`, `cargo`, `winget`, `uv`, `pip`, `npm`, `bun`, `curl`, `sudo`, or `powershell`, the installer executes that shell command directly.
+If the resolved installer value contains a whitespace-separated package-manager token such as `bun`, `npm`, `pip`, `uv`, `winget`, `powershell`, `irm`, `brew`, `curl`, `sudo`, or `cargo`, the installer executes that shell command directly.
 
 This is also the path used for entries whose `repoURL` is `"CMD"` and whose platform value is a raw command string.
 
@@ -137,6 +137,15 @@ Current matching behavior includes:
 - `{version}` substitution with the resolved tag name
 - fallback checks for `v`-prefixed versus unprefixed versions
 - hyphen / underscore filename variants before the install fails
+
+### Install request handling
+
+`InstallRequest(version, update)` is resolved against the installer kind before installation:
+
+- installs are skipped when the executable already exists unless `update=True` or `version` is set
+- `--version` is accepted for GitHub release installers, script installers, and `winget install ...` commands
+- `--update` is accepted for binary URL, GitHub release, script installers, and `winget install ...` commands
+- unsupported `version` requests are ignored with a warning; unsupported `update` requests warn and continue
 
 ---
 
@@ -212,8 +221,12 @@ Parameters:
 | --- | --- |
 | `install_interactively(install_request)` | Shows package groups plus installers, with JSON previews when `tv` is available |
 | `install_group(package_group, install_request)` | Resolves a named package group and installs every matching catalog entry |
-| `install_clis(clis_names, install_request)` | Installs explicit catalog names, GitHub URLs, or direct binary URLs |
+| `install_clis(clis_names, install_request)` | Installs explicit catalog names, aliases, GitHub URLs, or direct binary URLs |
 | `install_if_missing(which, binary_name, verbose)` | Convenience guard that returns `True` if the tool exists or becomes installable |
+
+Current CLI aliases:
+
+- `agy` -> `antigravity`
 
 Interactive mode currently:
 
@@ -286,6 +299,7 @@ Current behavior:
 - the first installer runs serially
 - the remaining installers run through `joblib.Parallel`
 - `fresh=True` clears the version cache first
+- `safe` is accepted but currently has no behavior
 - a Rich summary is rendered after the batch finishes
 
 ---
@@ -306,13 +320,13 @@ from stackops.utils.installer_utils.install_from_url import (
 - fetches the latest release
 - lets the user choose a release asset interactively
 - downloads, extracts, and installs it
-- records the resolved version in the install-version cache
+- records the resolved version in the install-version cache when a tool name can be derived from the selected asset or repository
 
 ### `install_from_binary_url(binary_url)`
 
 - downloads a binary or archive directly
 - extracts and installs it
-- records `"latest"` in the install-version cache
+- records `"latest"` in the install-version cache only when a tool name can be derived during finalization
 
 ---
 

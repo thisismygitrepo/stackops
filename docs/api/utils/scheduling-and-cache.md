@@ -24,7 +24,7 @@ A `Scheduler` is constructed from:
 
 Current runtime behavior:
 
-- `run()` loops until it reaches `max_cycles` or `until_ms`
+- `run()` loops until it reaches `max_cycles` or `until_ms`; a `max_cycles` argument passed to `run()` replaces the constructor value for that run
 - each cycle logs a start message, calls `routine(self)`, increments `cycle`, logs a finish message, then sleeps
 - `record_session_end()` appends a row into `records`, builds a summary, and logs the accumulated session history
 - `get_records_df()` returns the recorded sessions as a list of dictionaries

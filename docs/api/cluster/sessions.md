@@ -34,7 +34,7 @@ The session-manager layer takes `LayoutConfig` objects and turns them into runni
 | `mergeOverwrite` | Keep the requested session name and merge new windows into an existing tmux or Windows Terminal session, overwriting matching windows where supported |
 | `mergeSkip` | Keep the requested session name and merge only missing windows where supported |
 
-The two merge actions are only valid for the `tmux` and `windows-terminal` backends.
+The two merge actions are only valid for the `tmux` and `windows-terminal` backends. For Windows Terminal, `mergeOverwrite` restarts an existing matching window and `mergeSkip` skips launch when the requested window already exists. For tmux, merge behavior is implemented by generating merge commands for an existing session.
 
 ---
 
@@ -47,7 +47,7 @@ The two merge actions are only valid for the `tmux` and `windows-terminal` backe
 - always prefixes managed session names with `LocalJobMgr_`
 - requires `start_all_sessions(on_conflict, poll_seconds, poll_interval)`
 - launches zellij sessions non-blockingly and then polls `zellij list-sessions`
-- supports `attach_to_session()`, `check_all_sessions_status()`, `run_monitoring_routine()`, `save()`, `load()`, and `list_active_sessions()`
+- supports `attach_to_session()`, `check_all_sessions_status()`, `run_monitoring_routine()`, `save(session_id)`, `load()`, and `list_active_sessions()`
 
 Example:
 
@@ -65,7 +65,7 @@ print(manager.attach_to_session(None))
 
 ### tmux local
 
-`TmuxLocalManager` requires explicit `session_name_prefix` and `exit_mode` values:
+`TmuxLocalManager` requires `session_name_prefix` and `exit_mode` constructor arguments. Pass `None` as the prefix to use each layout name directly:
 
 ```python
 from stackops.cluster.sessions_managers.tmux.tmux_local_manager import TmuxLocalManager
@@ -81,11 +81,11 @@ print(manager.attach_to_session(None))
 report = manager.check_all_sessions_status()
 ```
 
-tmux is also the backend where merge conflict actions produce merge scripts instead of only rename-or-restart plans.
+tmux is also the backend where merge conflict actions produce merge commands instead of only rename-or-restart plans.
 
 ### Windows Terminal local
 
-`WTLocalManager` also takes `session_layouts`, `session_name_prefix`, and `exit_mode`, but `start_all_sessions()` currently has no `on_conflict` parameter. It simply runs the generated PowerShell launcher for each managed layout.
+`WTLocalManager` also takes `session_layouts`, `session_name_prefix`, and `exit_mode`, but the current local implementation stores the prefix without applying it to generated session names. `start_all_sessions()` currently has no `on_conflict` parameter. It simply runs the generated PowerShell launcher for each managed layout.
 
 Useful current helpers include:
 
@@ -108,7 +108,8 @@ Representative helpers:
 - `ssh_to_all_machines()`
 - `start_all_sessions()` or `start_zellij_sessions()`
 - `run_monitoring_routine()`
-- `save()` / `load()`
+- `save(session_id)` / `load()`
+- `list_saved_sessions()` / `delete_session()`
 
 ---
 

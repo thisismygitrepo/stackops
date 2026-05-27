@@ -45,14 +45,14 @@ terminal run [OPTIONS]
 |--------|-------|-------------|
 | `--layouts-file` | `-f` | Override the default layout file |
 | `--test-layout` | - | Use the generated mock layout instead of reading a file |
-| `--choose-layouts` | `-c` | Comma-separated layout names, or `""` for interactive selection |
+| `--choose-layouts` | `-l` | Comma-separated layout names, or `""` for interactive selection |
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection across all layouts |
 | `--sleep-inbetween` | `-S` | Delay between launching layouts |
 | `--parallel-layouts` | `-p` | Maximum number of layouts to launch per monitored batch |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
 | `--backend` | `-b` | `tmux`, `zellij`, `windows-terminal`, or `auto` |
-| `--on-conflict` | `-o` | `error`, `restart`, `rename`, `mergeOverwrite`, or `mergeSkip` |
+| `--on-conflict` | `-c` | `error`, `restart`, `rename`, `mergeOverwrite`, or `mergeSkip` |
 | `--exit` | `-e` | `backToShell`, `terminate`, or `killWindow` after each command exits |
 | `--monitor` | `-m` | Monitor launched sessions for completion |
 | `--kill-upon-completion` | `-k` | Kill sessions after monitored completion |
@@ -88,12 +88,12 @@ terminal run-all [OPTIONS]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--layouts-file` | `-f` | Override the default layout file |
-| `--test-layout` | - | Use the generated mock layout instead of reading a file |
-| `--max-parallel-tabs` | - | Required cap for concurrently active tabs |
-| `--poll-seconds` | - | Polling interval for finished-tab detection |
-| `--kill-finished-tabs` | - | Close each tab as soon as its command finishes |
+| `--test-layout` | `-T` | Use the generated mock layout instead of reading a file |
+| `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
+| `--poll-seconds` | `-p` | Polling interval for finished-tab detection |
+| `--kill-finished-tabs` | `-k` | Close each tab as soon as its command finishes |
 | `--backend` | `-b` | `tmux`, `zellij`, or `auto` |
-| `--on-conflict` | `-o` | Conflict policy for the dynamic session |
+| `--on-conflict` | `-c` | `error`, `restart`, or `rename`; merge policies are rejected |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside selected tabs |
 
 Examples:
@@ -141,7 +141,7 @@ terminal run-aoe [OPTIONS]
 | `--aoe-bin` | - | AoE executable to invoke |
 | `--tab-command-mode` | - | `prompt`, `cmd`, or `ignore` for each tab's `command` field |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside selected tabs |
-| `--launch` / `--no-launch` | - | Control immediate session launch |
+| `--no-launch` | - | Accepted flag; current parsing still launches sessions immediately |
 
 Examples:
 
@@ -270,8 +270,8 @@ terminal balance-load LAYOUT_PATH [OPTIONS]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--max-threshold` | `-m` | Required threshold value |
-| `--threshold-type` | `-t` | `number` or `weight` |
-| `--breaking-method` | `-b` | `moreLayouts` or `combineTabs` |
+| `--threshold-type` | `-t` | `number`/`n` or `weight`/`w` |
+| `--breaking-method` | `-b` | `moreLayouts`/`ml` or `combineTabs`/`ct` |
 | `--output-path` | `-o` | Output path for the rewritten file |
 
 If `--output-path` is omitted, StackOps writes `<stem>_adjusted_<max>_<threshold>_<method>.json` beside the source file.
@@ -341,7 +341,7 @@ Older examples that use `tabs` or `cwd` are stale. The current schema uses `layo
 ## Backend Notes
 
 - `run` supports `tmux`, `zellij`, `windows-terminal`, and `auto`. `auto` resolves to `zellij` on non-Windows systems and `windows-terminal` on Windows.
-- `run-all` supports `tmux`, `zellij`, and `auto`. `auto` resolves to `zellij` on non-Windows systems and is not supported on Windows.
-- `attach` and `kill` support `tmux`, `zellij`, and `auto`. Their `auto` mode resolves to `zellij` on non-Windows systems and is rejected on Windows.
+- `run-all` supports `tmux`, `zellij`, and `auto`. `auto` resolves to `zellij` on non-Windows systems and `tmux` on Windows.
+- `attach` and `kill` support `tmux`, `zellij`, and `auto`. Their `auto` mode resolves to `zellij` on non-Windows systems and `tmux` on Windows.
 - `trace` is tmux-only.
 - `create-from-function` launches through zellij.

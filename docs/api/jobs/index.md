@@ -51,6 +51,8 @@ The current `PACKAGE_GROUP2NAMES` keys are:
 - `file-sharing`
 - `productivity`
 
+These are the exact package-group keys accepted by the runtime. CLI name aliases such as `agy` for `antigravity` are handled separately by `stackops.utils.installer_utils.installer_cli`.
+
 Example:
 
 ```python

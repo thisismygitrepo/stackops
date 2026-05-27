@@ -37,8 +37,8 @@ Key behavior:
 - `kill-process` defaults to interactive mode and supports `--filter-by command|ports|name|pid|username|status|memory|cpu`.
 - `environment` defaults to `ENV`; pass `PATH` as the positional argument to browse `PATH` entries instead.
 - `environment --tui` uses the full-screen Textual UI instead of the default fuzzy picker.
-- `get-machine-specs --hardware` includes compute capability details.
-- `mount` requires both `--device` and `--mount-point` unless `--interactive` is set.
+- `get-machine-specs --hardware` includes compute capability details; without `--hardware`, it prints specs and writes `machine_specs.json` under the StackOps config root.
+- `mount` requires `--device` unless `--interactive` is set, and requires `--mount-point` unless `--interactive` is set or `--backend udisksctl` is used.
 - `mount --backend` accepts `mount`, `dislocker`, or `udisksctl`.
 
 Examples:
@@ -63,18 +63,20 @@ utils pyproject [OPTIONS] COMMAND [ARGS]...
 | `upgrade-packages` | Regenerate package-add commands for a project, optionally clearing groups first |
 | `type-hint` | Type-hint a file or project directory |
 | `type-check` | Run the lint-and-type-check suite for a repository |
-| `reference-test` | Validate `_PATH_REFERENCE` targets in a repository |
+| `test-reference` | Validate `_PATH_REFERENCE` targets in a repository |
 | `type-fix` | Create and optionally launch an agent layout from `./.ai/linters/issues_<checker>.md` |
+| `test-runtime` | Create and optionally launch an agent layout for runtime-test generation |
 
 Key behavior:
 
-- `init-project` defaults to Python `3.13` and package groups `p,t,l,i,d`.
+- `init-project` defaults to Python `3.13` and package groups `p,t,l,i,d`; `--tmp-dir` creates a temporary project, `--libraries` adds extra packages, and `--group` accepts comma-separated group keys.
 - `upgrade-packages [ROOT]` can repeat `--clean-group`, use `--clean-all-groups` to clear every dependency group and extra, and use `--delete-venv` to remove the project's `.venv` before regenerating `pyproject_init.sh`.
-- `type-hint [PATH]` defaults to `--dependency self-contained`. When given a project directory, it currently scans for `dtypes.py` files and reports the corresponding `*_names.py` outputs.
+- `type-hint [PATH]` validates a file or project root and defaults to `--dependency self-contained`, but type-hint generation currently exits with an error because the generator implementation is missing.
 - `type-check [REPO]` resolves the repository root from the nearest `pyproject.toml` and passes exclusions through the lint/type-check script.
 - If `--exclude` is omitted, `type-check` currently defaults to excluding `tests`, `.github`, `.codex`, `.ai`, `.links`, and `.venv`.
-- `reference-test REPO` supports `--search-root` and `--verbose`.
-- `type-fix` is a callback command rather than a nested app. It accepts `--agent`, `--agent-load`, `--which-checker`, and `--max-agents`, generates a layout under `./.ai/agents/fix_<checker>_issues/`, then prompts to run it.
+- `test-reference [REPO]` supports `--search-root` and `--verbose`.
+- `type-fix` is a nested app whose callback runs when invoked with no subcommand. It accepts `--agent`, `--agent-load`, `--which-checker`/`--which`, and `--max-agents`, generates a layout under `./.ai/agents/fix_<checker>_issues/`, then prompts to run it.
+- `test-runtime` runs from the current directory, writes context to `.ai/agents/test_runtime/context.md`, skips hidden paths, `.venv`, and existing repo test files, then prompts to run the generated layout.
 
 Examples:
 
@@ -84,8 +86,9 @@ utils pyproject upgrade-packages . --clean-group dev
 utils pyproject upgrade-packages . --clean-all-groups --delete-venv
 utils pyproject type-hint src/my_module.py
 utils pyproject type-check . --exclude tests --exclude .venv
-utils pyproject reference-test . --verbose
+utils pyproject test-reference . --verbose
 utils pyproject type-fix --which-checker pyright --agent codex
+utils pyproject test-runtime --agent codex --agent-load 5
 ```
 
 ## file
@@ -98,16 +101,17 @@ utils file [OPTIONS] COMMAND [ARGS]...
 |---------|---------|
 | `edit` | Open a file or project path in the default editor |
 | `download` | Download a file and optionally decompress it |
-| `pdf-merge` | Merge one or more PDF files |
+| `pdf-merge` | Merge two or more PDF files |
 | `pdf-compress` | Compress a PDF file |
 | `read-db` | Launch a terminal database client |
 
 Key behavior:
 
 - `download [URL]` supports `--decompress`, `--output`, and `--output-dir`.
-- `pdf-merge PDFS...` accepts one or more input files and can `--compress` the merged output.
-- `pdf-compress PDF_INPUT` supports `--quality`, `--image-dpi`, `--no-compress-streams`, and `--no-object-streams`.
-- `read-db [PATH]` defaults to the `harlequin` backend and supports `--url/-u` for explicit connection URLs plus `--backend`, `--read-write`, `--theme`, and `--limit`.
+- `pdf-merge PDFS...` requires at least two distinct input files, defaults to `merged.pdf`, refuses to overwrite an existing output, and can `--compress` the merged output.
+- `pdf-compress PDF_INPUT` defaults to `<input>_compressed.pdf` and supports `--quality` and `--image-dpi`. The current CLI accepts `--no-compress-streams/-C` and `--no-object-streams/-S`, but those flags leave stream and object-stream compression enabled.
+- `read-db [PATH]` defaults to the `harlequin` backend. Provide only one of positional `PATH`, `--url/-u`, or `--find/-f`; `--find-root` and `--recursive` refine file discovery.
+- `read-db` supports backends `rainfrog`, `lazysql`, `dblab`, `usql`, `harlequin`, and `sqlit` plus their one-letter aliases. The current `--read-write/-w` flag is accepted but still leaves read-only mode enabled.
 
 Examples:
 
@@ -116,7 +120,8 @@ utils file edit .
 utils file download https://example.com/archive.tar.gz --decompress --output-dir ./downloads
 utils file pdf-merge a.pdf b.pdf c.pdf --output merged.pdf
 utils file pdf-compress report.pdf --output report-small.pdf --quality 75 --image-dpi 144
-utils file read-db ./local.db --backend harlequin --read-only
+utils file read-db ./local.db --backend harlequin
+utils file read-db --find "*.duckdb" --recursive
 utils file read-db --url postgres://postgres:1234@192.168.20.4:5432/binance
 ```
 
@@ -130,7 +135,9 @@ utils machine --help
 utils machine mount --help
 utils pyproject --help
 utils pyproject type-check --help
-utils pyproject reference-test --help
+utils pyproject test-reference --help
+utils pyproject type-fix --help
+utils pyproject test-runtime --help
 utils file --help
 utils file read-db --help
 ```

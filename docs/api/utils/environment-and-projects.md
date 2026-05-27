@@ -23,7 +23,7 @@ The environment helpers in `stackops` live in `stackops.utils.ve`. They answer t
 
 ## Discovery model
 
-`get_ve_path_and_ipython_profile(init_path)` walks through `init_path` and its parents.
+`get_ve_path_and_ipython_profile(init_path)` treats `init_path` as a directory and walks upward through that path and its parents.
 
 At each directory it:
 
@@ -32,7 +32,7 @@ At each directory it:
 3. Pulls `specs.ipy_profile` into the result when available.
 4. Falls back to a local `.venv` directory only if no `ve_path` has been found yet.
 
-The walk stops as soon as both values are known, otherwise it continues to the filesystem root. The function returns a tuple of `(ve_path, ipy_profile)` where either element may be `None`. It also prints progress and warning messages while it searches.
+The walk stops as soon as both values are known, otherwise it continues through the parent walk. The function returns a tuple of `(ve_path, ipy_profile)` where either element may be `None`. It also prints progress and warning messages while it searches.
 
 ---
 
@@ -68,6 +68,7 @@ The `cloud` section is typed by `CLOUD` and is available to callers that want li
 - `. $HOME/<relative-path>/Scripts/activate.ps1` on Windows
 
 The Windows branch rewrites the expanded virtualenv path to a `$HOME/.../Scripts/activate.ps1` PowerShell source line.
+The Windows path must be under the user's home directory because the implementation rewrites it relative to `$HOME`.
 
 ---
 

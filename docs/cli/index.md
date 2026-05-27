@@ -45,6 +45,8 @@ The wrappers currently expose:
 - `fire`
 - `croshell`
 
+The same wrapper also registers hidden one-letter aliases for these commands: `d`, `c`, `t`, `a`, `u`, `s`, `f`, and `r`.
+
 For the full command-specific flag surface, check the standalone command as well, for example `fire --help` or `seek --help`.
 
 ---
