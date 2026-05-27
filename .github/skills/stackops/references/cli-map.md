@@ -1,13 +1,16 @@
 # StackOps CLI Map
 
-Verified against source and live `--help` output on 2026-03-03.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-05-27.
 
 This reference intentionally uses:
 - direct commands only
 - canonical command names only
 
 This reference intentionally excludes:
-- command aliases
+- short aliases
+- hidden alias-only paths
+
+The tree is root-relative: use `devops repos sync` directly, or `stackops devops repos sync` through the umbrella entrypoint.
 
 ## Direct Entry Points
 
@@ -15,157 +18,166 @@ Defined in `pyproject.toml` `[project.scripts]`:
 
 - `devops` -> `stackops.scripts.python.devops:main`
 - `cloud` -> `stackops.scripts.python.cloud:main`
-- `terminal` -> `stackops.scripts.python.terminal:main`
-- `agents` -> `stackops.scripts.python.agents:main`
-- `utils` -> `stackops.scripts.python.utils:main`
 - `fire` -> `stackops.scripts.python.fire_jobs:main`
+- `agents` -> `stackops.scripts.python.agents:main`
+- `terminal` -> `stackops.scripts.python.terminal:main`
 - `croshell` -> `stackops.scripts.python.croshell:main`
+- `utils` -> `stackops.scripts.python.utils:main`
+- `stackops` -> `stackops.scripts.python.stackops_entry:main`
 - `seek` -> `stackops.scripts.python.seek:main`
-- `msearch` -> `stackops.scripts.python.msearch:main`
 
-## Command Trees
+## Command Tree
 
 ```text
-devops
-├─ install
-├─ repos
-│  ├─ sync
-│  ├─ register
-│  ├─ action
-│  ├─ analyze
-│  ├─ guard
-│  ├─ viz
-│  ├─ count-lines
-│  ├─ config-linters
-│  ├─ cleanup
-│  ├─ checkout-to-commit (hidden/deprecated)
-│  └─ checkout-to-branch (hidden/deprecated)
-├─ config
-│  ├─ sync
-│  ├─ register
-│  ├─ edit
-│  ├─ export-dotfiles
-│  ├─ import-dotfiles
-│  ├─ shell
-│  ├─ starship-theme
-│  ├─ pwsh-theme
-│  ├─ wezterm-theme
-│  ├─ ghostty-theme
-│  ├─ windows-terminal-theme
-│  ├─ copy-assets
-│  ├─ dump
-│  ├─ list-devices
-│  └─ mount
-├─ data
-│  ├─ sync
-│  ├─ register
-│  └─ edit
-├─ self
-│  ├─ update
-│  ├─ init
-│  ├─ status
+stackops
+├─ devops
 │  ├─ install
-│  ├─ explore
-│  │  ├─ search
-│  │  ├─ tree
-│  │  ├─ dot
-│  │  ├─ sunburst
-│  │  ├─ treemap
-│  │  ├─ icicle
-│  │  └─ tui
-│  ├─ readme
-│  ├─ ai (conditional)
-│  │  ├─ update-installer
-│  │  └─ update-test
-│  ├─ build-docker (conditional)
-│  └─ security (conditional)
-│     ├─ scan-all
-│     ├─ scan
-│     ├─ list-all
-│     ├─ list
-│     ├─ upload
+│  ├─ repos
+│  │  ├─ sync
+│  │  ├─ register
+│  │  ├─ checkout-to-commit (deprecated)
+│  │  ├─ checkout-to-branch (deprecated)
+│  │  ├─ action
+│  │  ├─ analyze
+│  │  ├─ guard
+│  │  ├─ viz
+│  │  ├─ count-lines
+│  │  ├─ config-linters
+│  │  └─ cleanup
+│  ├─ config
+│  │  ├─ sync
+│  │  ├─ register
+│  │  ├─ edit
+│  │  ├─ export-dotfiles
+│  │  ├─ import-dotfiles
+│  │  ├─ terminal
+│  │  │  ├─ config-shell
+│  │  │  ├─ starship-theme
+│  │  │  ├─ pwsh-theme
+│  │  │  ├─ wezterm-theme
+│  │  │  ├─ ghostty-theme
+│  │  │  └─ windows-terminal-theme
+│  │  ├─ interactive
+│  │  ├─ copy-assets
+│  │  └─ dump
+│  ├─ data
+│  │  ├─ sync
+│  │  ├─ register
+│  │  └─ edit
+│  ├─ self
+│  │  ├─ install
+│  │  ├─ update
+│  │  ├─ status
+│  │  ├─ security
+│  │  │  ├─ scan
+│  │  │  ├─ list
+│  │  │  ├─ upload
+│  │  │  ├─ download
+│  │  │  ├─ install
+│  │  │  └─ report
+│  │  ├─ explore
+│  │  │  ├─ search
+│  │  │  ├─ tree
+│  │  │  ├─ dot
+│  │  │  ├─ view
+│  │  │  └─ tui
+│  │  ├─ readme
+│  │  ├─ docs
+│  │  ├─ build-installer
+│  │  ├─ build-docker
+│  │  ├─ build-assets
+│  │  │  ├─ update-cli-graph
+│  │  │  └─ regenerate-charts
+│  │  └─ workflows
+│  │     ├─ update-installer
+│  │     ├─ update-test
+│  │     ├─ update-docs
+│  │     └─ update-logic
+│  ├─ network
+│  │  ├─ share-terminal
+│  │  ├─ share-server
+│  │  ├─ send
+│  │  ├─ receive
+│  │  ├─ share-temp-file
+│  │  ├─ ssh
+│  │  │  ├─ install-server
+│  │  │  ├─ change-port
+│  │  │  ├─ add-key
+│  │  │  └─ debug
+│  │  ├─ device
+│  │  │  ├─ switch-public-ip
+│  │  │  ├─ wifi-select
+│  │  │  ├─ bind-wsl-port
+│  │  │  ├─ open-wsl-port
+│  │  │  ├─ link-wsl-windows
+│  │  │  ├─ reset-cloudflare-tunnel
+│  │  │  └─ add-ip-exclusion-to-warp
+│  │  ├─ show-address
+│  │  └─ vscode-share
+│  └─ execute
+├─ cloud
+│  ├─ sync
+│  ├─ copy
+│  ├─ mount
+│  └─ ftpx
+├─ terminal
+│  ├─ run
+│  ├─ run-all
+│  ├─ run-aoe
+│  ├─ attach
+│  ├─ kill
+│  ├─ trace
+│  ├─ create-from-function
+│  ├─ balance-load
+│  ├─ create-template
+│  └─ summarize
+├─ agents
+│  ├─ parallel
+│  │  ├─ create
+│  │  ├─ create-context
+│  │  ├─ run-parallel
+│  │  ├─ collect
+│  │  └─ make-template
+│  ├─ browser
+│  │  ├─ install-tech
+│  │  └─ launch-browser
+│  ├─ add-mcp
+│  ├─ add-skill
+│  ├─ add-todo
+│  ├─ add-symlinks
+│  ├─ add-config
+│  ├─ run-prompt
+│  └─ ask
+├─ utils
+│  ├─ machine
+│  │  ├─ kill-process
+│  │  ├─ environment
+│  │  ├─ get-machine-specs
+│  │  ├─ list-devices
+│  │  └─ mount
+│  ├─ pyproject
+│  │  ├─ init-project
+│  │  ├─ upgrade-packages
+│  │  ├─ type-hint
+│  │  ├─ type-check
+│  │  ├─ type-fix (callback group)
+│  │  ├─ test-runtime (callback group)
+│  │  └─ test-reference
+│  └─ file
+│     ├─ edit
 │     ├─ download
-│     ├─ install
-│     ├─ summary
-│     └─ report
-├─ network
-│  ├─ share-terminal
-│  ├─ share-server
-│  ├─ send
-│  ├─ receive
-│  ├─ share-temp-file
-│  ├─ show-address
-│  ├─ switch-public-ip
-│  ├─ wifi-select
-│  ├─ bind-wsl-port
-│  ├─ open-wsl-port
-│  ├─ link-wsl-windows
-│  ├─ reset-cloudflare-tunnel
-│  ├─ add-ip-exclusion-to-warp
-│  ├─ vscode-share
-│  └─ ssh
-│     ├─ install-server
-│     ├─ change-port
-│     ├─ add-key
-│     └─ debug
-└─ execute
-
-cloud
-├─ sync
-├─ copy
-├─ mount
-└─ ftpx
-
-terminal
-├─ run
-├─ run-all
-├─ run-aoe
-├─ attach
-├─ kill
-├─ trace
-├─ create-from-function
-├─ balance-load
-├─ create-template
-└─ summarize
-
-agents
-├─ create
-├─ create-context
-├─ collect
-├─ make-template
-├─ make-config
-├─ make-todo
-├─ make-symlinks
-└─ run-prompt
-
-utils
-├─ machine
-│  ├─ kill-process
-│  ├─ environment
-│  ├─ get-machine-specs
-│  ├─ list-devices
-│  └─ mount
-├─ pyproject
-│  ├─ init-project
-│  ├─ upgrade-packages
-│  ├─ type-hint
-│  ├─ type-check
-│  ├─ type-fix
-│  └─ reference-test
-└─ file
-   ├─ edit
-   ├─ download
-   ├─ pdf-merge
-   ├─ pdf-compress
-   └─ read-db
-
-fire
-croshell
-seek
-msearch
+│     ├─ pdf-merge
+│     ├─ pdf-compress
+│     └─ read-db
+├─ seek
+│  └─ seek
+├─ fire
+└─ croshell
 ```
 
 ## Important Nuances
 
-- `devops self ai`, `devops self security`, and `devops self build-docker` are conditionally registered when `~/code/stackops` exists.
-- The docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.
+- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self workflows` are registered only when the developer checkout exists at `~/code/stackops`.
+- `utils pyproject type-fix` and `utils pyproject test-runtime` are callback groups; invoke the group itself rather than a child command.
+- The generated graph stores aliases on each node. Use `src/stackops/scripts/python/graph/cli_graph.json` when alias details matter.
+- Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

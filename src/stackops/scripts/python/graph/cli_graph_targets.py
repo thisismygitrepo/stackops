@@ -74,11 +74,43 @@ def find_dispatch_target(resolved: ResolvedCallable) -> AppRef | None:
     for node in ast.walk(function_info):
         if not isinstance(node, ast.Call):
             continue
+
+        dispatch_ref = find_nested_app_dispatch_ref(
+            node, module_info, local_modules=local_modules, local_names=local_names
+        )
+        if dispatch_ref is not None:
+            return dispatch_ref
+
         inner = node.func
         if not isinstance(inner, ast.Call):
             continue
         child_ref = resolve_child_app_ref(
             inner, module_info, local_modules=local_modules, local_names=local_names
+        )
+        if child_ref is not None:
+            return child_ref
+    return None
+
+
+def find_nested_app_dispatch_ref(
+    expr: ast.Call,
+    module_info: ModuleInfo,
+    *,
+    local_modules: dict[str, str],
+    local_names: dict[str, tuple[str, str]],
+) -> AppRef | None:
+    resolved_func = resolve_callable(
+        expr.func,
+        module_info,
+        local_modules=local_modules,
+        local_names=local_names,
+    )
+    if resolved_func is None or resolved_func.callable_name != "_run_nested_app":
+        return None
+
+    for arg in expr.args[1:]:
+        child_ref = resolve_child_app_factory_ref(
+            arg, module_info, local_modules=local_modules, local_names=local_names
         )
         if child_ref is not None:
             return child_ref
@@ -97,6 +129,21 @@ def resolve_child_app_ref(
 
     resolved = resolve_callable(
         expr.func, module_info, local_modules=local_modules, local_names=local_names
+    )
+    if resolved is None or resolved.callable_name != "get_app":
+        return None
+    return AppRef(module=resolved.module, factory=resolved.callable_name)
+
+
+def resolve_child_app_factory_ref(
+    expr: ast.AST,
+    module_info: ModuleInfo,
+    *,
+    local_modules: dict[str, str] | None = None,
+    local_names: dict[str, tuple[str, str]] | None = None,
+) -> AppRef | None:
+    resolved = resolve_callable(
+        expr, module_info, local_modules=local_modules, local_names=local_names
     )
     if resolved is None or resolved.callable_name != "get_app":
         return None

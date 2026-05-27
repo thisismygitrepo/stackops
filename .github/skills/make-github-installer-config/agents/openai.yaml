@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Installer Config"
+  short_description: "Build GitHub release installer configs"
+  default_prompt: "Use $make-github-installer-config to add a GitHub release binary installer config."

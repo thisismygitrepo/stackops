@@ -1,6 +1,6 @@
 ---
 name: stackops
-description: Teach and execute StackOps usage through direct Typer entrypoints. Use this when asked to use, explain, troubleshoot, or extend the stackops CLI/library via devops, cloud, terminal, agents, utils, fire, croshell, seek, or msearch, especially when mapping command paths to implementation files.
+description: Teach and execute StackOps usage through direct Typer entrypoints. Use this when asked to use, explain, troubleshoot, or extend the stackops CLI/library via devops, cloud, terminal, agents, utils, fire, croshell, seek, or the stackops umbrella entrypoint, especially when mapping command paths to implementation files.
 ---
 
 # StackOps
@@ -11,7 +11,8 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 
 1. Detect execution mode.
 - In this repository, prefer `UV_CACHE_DIR=/tmp/uv-cache uv run <command> ...`.
-- For globally installed usage, use direct entrypoints like `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`, `msearch`.
+- For globally installed usage, use direct entrypoints like `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, and `seek`.
+- Use `stackops <command> ...` only when the umbrella entrypoint is specifically useful.
 
 2. Resolve command path before acting.
 - Start with `<command> --help`.
@@ -25,6 +26,7 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 4. Map command to implementation.
 - Use `references/source-map.md` to jump directly to the file that registers/implements the command.
 - Remember `stackops_entry.py` is a lazy dispatcher; most behavior lives in helper modules.
+- If command names changed recently, regenerate `src/stackops/scripts/python/graph/cli_graph.json`, then refresh `references/cli-map.md` and `references/source-map.md`.
 
 5. Run safely.
 - Commands under install/update/network/config may mutate system state.
@@ -35,9 +37,9 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 Load `references/cli-map.md` for the current command tree and nested subcommands.
 
 Highlights:
-- Primary commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`, `msearch`.
+- Primary commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`, and umbrella `stackops`.
 - This skill intentionally excludes command aliases.
-- `devops self security` and `devops self build-docker` appear only when `~/code/stackops` exists.
+- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self workflows` appear only when `~/code/stackops` exists.
 
 ## Practical Rules
 
@@ -48,3 +50,7 @@ UV_CACHE_DIR=/tmp/uv-cache uv run devops repos --help
 ```
 - Use long flags in guidance.
 - When adding or changing commands, update both Typer registration and helper implementation, then re-check `--help` output.
+- Regenerate the graph after CLI shape changes:
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m stackops.scripts.python.graph.generate_cli_graph
+```

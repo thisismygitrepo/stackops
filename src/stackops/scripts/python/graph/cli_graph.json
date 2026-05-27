@@ -254,12 +254,12 @@
                     "def clone(",
                     "    directory: Annotated[str, typer.Argument(help=\"📁 Directory containing repo(s).\")] = \".\",",
                     "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
-                    "    interactive: Annotated[bool, typer.Option(\"--interactive/--no-interactive\", \"-i/-ni\", help=\"Select interactively.\")] = False,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Select interactively.\")] = False,",
                     "    checkout_to_commit: Annotated[",
                     "        bool, typer.Option(\"--checkout-to-commit\", \"-ctc\", help=\"Check out specific commits listed in the specification.\")",
                     "    ] = False,",
                     "    checkout_to_branch: Annotated[",
-                    "        bool, typer.Option(\"--checkout-to-branch\", \"-ctb\", help=\"Check out to the main branch defined in the specification.\")",
+                    "        bool, typer.Option(\"--checkout-to-branch\", \"-ctb\", help=\"Check out the branch recorded in the specification.\")",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"📥 Clone repositories described by a repos.json specification.\"\"\"",
@@ -275,7 +275,6 @@
                     "        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import (",
                     "            BACKUP_ROOT_PRIVATE,",
                     "            BACKUP_ROOT_PUBLIC,",
-                    "            get_original_path_from_backup_path,",
                     "        )",
                     "",
                     "        results_public = list(BACKUP_ROOT_PUBLIC.rglob(\"repos.json\"))",
@@ -296,16 +295,8 @@
                     "            print(\"❓ Selection cancelled. No repositories were cloned.\")",
                     "            return",
                     "        for file in chosen_files:",
-                    "            if str(file).startswith(str(BACKUP_ROOT_PRIVATE)):",
-                    "                original_path = get_original_path_from_backup_path(Path(file), sensitivity=\"private\", destination=None, shared=False)",
-                    "            else:",
-                    "                original_path = get_original_path_from_backup_path(Path(file), sensitivity=\"public\", destination=None, shared=False)",
                     "            typer.echo(\"\\n📥 Cloning or checking out repositories...\")",
-                    "            dir_obj = _resolve_directory(str(original_path))",
-                    "            spec_path_default = dir_obj.joinpath(\"repos.json\")",
-                    "            from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path",
-                    "",
-                    "            spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity=\"private\", destination=None, shared=False)",
+                    "            spec_path_self_managed = _resolve_spec_path(Path(file))",
                     "            from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos",
                     "",
                     "            results = clone_repos(",
@@ -319,16 +310,27 @@
                     "            raise typer.Exit(code=1)",
                     "        return",
                     "    if specs_path is not None:",
-                    "        spec_path_self_managed = Path(specs_path).expanduser().absolute()",
+                    "        spec_path_self_managed = _resolve_spec_path(Path(specs_path))",
                     "    else:",
                     "        dir_obj = _resolve_directory(directory)",
+                    "        if not dir_obj.exists():",
+                    "            typer.echo(f\"❌ Path does not exist: {dir_obj}\")",
+                    "            raise typer.Exit(code=1)",
+                    "        if not dir_obj.is_dir():",
+                    "            typer.echo(f\"❌ Path is not a directory: {dir_obj}\")",
+                    "            raise typer.Exit(code=1)",
                     "        spec_path_default = dir_obj.joinpath(\"repos.json\")",
                     "        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path",
                     "",
-                    "        spec_path_self_managed = get_backup_path(orig_path=spec_path_default, sensitivity=\"private\", destination=None, shared=False)",
-                    "        if not spec_path_self_managed.exists():",
-                    "            print(f\"❌ Specification file not found: {spec_path_self_managed}. Ensure this file exists or provide it explicitly using --specs-path.\")",
+                    "        managed_spec_path = get_backup_path(orig_path=spec_path_default, sensitivity=\"private\", destination=None, shared=False)",
+                    "        if not managed_spec_path.exists():",
+                    "            typer.echo(",
+                    "                f\"❌ Specification file not found: {managed_spec_path}. \"",
+                    "                f\"Expected a recorded spec for {dir_obj}. \"",
+                    "                \"Use devops repos sync --specs-path <path> to target a spec explicitly.\"",
+                    "            )",
                     "            raise typer.Exit(code=1)",
+                    "        spec_path_self_managed = _resolve_spec_path(managed_spec_path)",
                     "    from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos",
                     "",
                     "    results = clone_repos(",
@@ -382,20 +384,18 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--interactive/--no-interactive', '-i/-ni', help='Select interactively.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Select interactively.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--interactive/--no-interactive",
-                          "-i/-ni"
+                          "--interactive",
+                          "-i"
                         ],
                         "long_flags": [
-                          "--interactive",
-                          "--no-interactive"
+                          "--interactive"
                         ],
                         "short_flags": [
-                          "-i",
-                          "-ni"
+                          "-i"
                         ],
                         "help": "Select interactively."
                       }
@@ -428,7 +428,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--checkout-to-branch', '-ctb', help='Check out to the main branch defined in the specification.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--checkout-to-branch', '-ctb', help='Check out the branch recorded in the specification.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -441,7 +441,7 @@
                         "short_flags": [
                           "-ctb"
                         ],
-                        "help": "Check out to the main branch defined in the specification."
+                        "help": "Check out the branch recorded in the specification."
                       }
                     }
                   ],
@@ -568,7 +568,7 @@
                 "signature": {
                   "raw_lines": [
                     "def checkout_to_branch_command(directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None) -> None:",
-                    "    \"\"\"🔀 Check out to the main branch defined in the specification.\"\"\"",
+                    "    \"\"\"🔀 Check out the branch recorded in the specification.\"\"\"",
                     "    clone(directory=directory or \".\", specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True)"
                   ],
                   "name": "checkout_to_branch_command",
@@ -591,12 +591,12 @@
                   ],
                   "return": "None"
                 },
-                "doc": "🔀 Check out to the main branch defined in the specification.",
+                "doc": "🔀 Check out the branch recorded in the specification.",
                 "aliases": [
                   {
                     "name": "ctb",
                     "hidden": true,
-                    "help": "Check out to the main branch defined in the specification"
+                    "help": "Check out the branch recorded in the specification"
                   }
                 ]
               },
@@ -616,7 +616,7 @@
                     "def action(",
                     "    directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
                     "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"🔍 Recurse into nested repositories.\")] = False,",
-                    "    auto_uv_sync: Annotated[bool, typer.Option(\"--uv-sync/--no-uv-sync\", \"-u/-ns\", help=\"Automatic uv sync after pulls.\")] = False,",
+                    "    auto_uv_sync: Annotated[bool, typer.Option(\"--uv-sync\", \"-u\", help=\"Run uv sync automatically after pulls.\")] = False,",
                     "    pull: Annotated[bool, typer.Option(\"--pull\", \"-P\", help=\"↓ Pull changes across repositories.\")] = False,",
                     "    commit: Annotated[bool, typer.Option(\"--commit\", \"-c\", help=\"💾 Commit changes across repositories.\")] = False,",
                     "    push: Annotated[bool, typer.Option(\"--push\", \"-p\", help=\"🚀 Push changes across repositories.\")] = False,",
@@ -675,22 +675,20 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--uv-sync/--no-uv-sync', '-u/-ns', help='Automatic uv sync after pulls.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--uv-sync', '-u', help='Run uv sync automatically after pulls.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--uv-sync/--no-uv-sync",
-                          "-u/-ns"
+                          "--uv-sync",
+                          "-u"
                         ],
                         "long_flags": [
-                          "--uv-sync",
-                          "--no-uv-sync"
+                          "--uv-sync"
                         ],
                         "short_flags": [
-                          "-u",
-                          "-ns"
+                          "-u"
                         ],
-                        "help": "Automatic uv sync after pulls."
+                        "help": "Run uv sync automatically after pulls."
                       }
                     },
                     {
@@ -803,7 +801,7 @@
                     "",
                     "    from stackops.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.98\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.100\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -848,7 +846,7 @@
                 "signature": {
                   "raw_lines": [
                     "def main(",
-                    "    repo: Annotated[str, typer.Argument(..., help=\"Path to the local repository. Defaults to current working directory.\")],",
+                    "    repo: Annotated[str, typer.Argument(help=\"Path to the local repository. Defaults to current working directory.\")] = \".\",",
                     "    cloud: Annotated[str | None, typer.Option(..., \"--cloud\", \"-C\", help=\"Cloud storage profile name. If not provided, uses default from config.\")] = None,",
                     "    message: Annotated[str | None, typer.Option(..., \"--message\", \"-m\", help=\"Commit message for local changes.\")] = None,",
                     "    on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on merge conflict. Default is 'ask'.\")] = \"ask\",",
@@ -1100,16 +1098,15 @@
                       "name": "repo",
                       "kind": "positional_or_keyword",
                       "type": "str",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to the local repository. Defaults to current working directory.')]",
+                      "default": ".",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Path to the local repository. Defaults to current working directory.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Path to the local repository. Defaults to current working directory.",
-                        "default": "..."
+                        "help": "Path to the local repository. Defaults to current working directory."
                       }
                     },
                     {
@@ -1773,10 +1770,29 @@
                     "    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from stackops.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.98\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.100\"])",
+                    "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
+                    "    if not resolved_repo_path.exists():",
+                    "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if not resolved_repo_path.is_dir():",
+                    "        typer.echo(f\"❌ Repository path is not a directory: {resolved_repo_path}\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    from git import InvalidGitRepositoryError, Repo",
+                    "",
+                    "    try:",
+                    "        repo = Repo(resolved_repo_path)",
+                    "    except InvalidGitRepositoryError as exc:",
+                    "        typer.echo(f\"❌ {resolved_repo_path} is not within a git repository. Pass a path inside a git repo and retry.\", err=True)",
+                    "        raise typer.Exit(code=1) from exc",
+                    "",
+                    "    if repo.bare or repo.working_tree_dir is None:",
+                    "        typer.echo(f\"❌ {resolved_repo_path} is inside a bare git repository. Pass a working tree path and retry.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "",
                     "    from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "",
-                    "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
                     "    try:",
                     "        repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix())",
                     "    except Exception as exc:",
@@ -1874,8 +1890,18 @@
                     "        if not source.exists():",
                     "            typer.echo(f\"❌ Linter template not found: {source}\")",
                     "            raise typer.Exit(code=1)",
+                    "        template_content = source.read_text(encoding=\"utf-8\")",
                     "        destination = repo_root.joinpath(file_name)",
-                    "        destination.write_text(source.read_text(encoding=\"utf-8\"), encoding=\"utf-8\")",
+                    "        if destination.exists():",
+                    "            if not destination.is_file():",
+                    "                typer.echo(f\"❌ Refusing to overwrite non-file path: {destination}\")",
+                    "                raise typer.Exit(code=1)",
+                    "            if destination.read_text(encoding=\"utf-8\") == template_content:",
+                    "                typer.echo(f\"ℹ️ {file_name} already matches the template in {repo_root}\")",
+                    "                continue",
+                    "            typer.echo(f\"❌ Refusing to overwrite existing {file_name} in {repo_root}. Remove it or update it manually.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        destination.write_text(template_content, encoding=\"utf-8\")",
                     "        typer.echo(f\"✅ Added {file_name} to {repo_root}\")"
                   ],
                   "name": "config_linters",
@@ -1996,7 +2022,9 @@
                     "\"\"\"",
                     "        from stackops.utils.code import run_shell_script",
                     "",
-                    "        run_shell_script(script, display_script=True, clean_env=False)"
+                    "        result = run_shell_script(script, display_script=True, clean_env=False)",
+                    "        if result.returncode != 0:",
+                    "            raise typer.Exit(code=result.returncode)"
                   ],
                   "name": "cleanup",
                   "parameters": [
@@ -2113,6 +2141,21 @@
                     "    For public config files in the library repo, copy packaged settings first when syncing down.\"\"\"",
                     "    from stackops.profile.create_links import ConfigMapper, read_mapper",
                     "",
+                    "    def merge_mapper_groups(",
+                    "        private_mapper: dict[str, list[ConfigMapper]],",
+                    "        public_mapper: dict[str, list[ConfigMapper]],",
+                    "    ) -> dict[str, list[ConfigMapper]]:",
+                    "        merged_mapper: dict[str, list[ConfigMapper]] = {",
+                    "            program_name: list(program_files)",
+                    "            for program_name, program_files in private_mapper.items()",
+                    "        }",
+                    "        for program_name, program_files in public_mapper.items():",
+                    "            if program_name in merged_mapper:",
+                    "                merged_mapper[program_name].extend(program_files)",
+                    "                continue",
+                    "            merged_mapper[program_name] = list(program_files)",
+                    "        return merged_mapper",
+                    "",
                     "    repo_key = REPO_MAP[repo]",
                     "    mapper_full_obj = read_mapper(repo=repo_key)",
                     "    mapper_full: dict[str, list[ConfigMapper]]",
@@ -2122,7 +2165,10 @@
                     "    elif sensitivity_key == \"public\":",
                     "        mapper_full = mapper_full_obj[\"public\"]",
                     "    else:",
-                    "        mapper_full = {**mapper_full_obj[\"private\"], **mapper_full_obj[\"public\"]}",
+                    "        mapper_full = merge_mapper_groups(",
+                    "            private_mapper=mapper_full_obj[\"private\"],",
+                    "            public_mapper=mapper_full_obj[\"public\"],",
+                    "        )",
                     "            ",
                     "    if which is None:",
                     "        from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview",
@@ -2764,6 +2810,10 @@
                     "    from stackops.scripts.python.helpers.helpers_network.address import select_lan_ipv4",
                     "",
                     "    localipv4 = select_lan_ipv4(prefer_vpn=False)",
+                    "    if localipv4 is None:",
+                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"Could not determine local LAN IPv4 address for dotfiles export.\"",
+                    "        typer.echo(msg, err=True)",
+                    "        raise typer.Exit(code=1)",
                     "    port = 8888",
                     "    msg = f\"\"\"On the remote machine, run the following:",
                     "d c i -u http://{localipv4}:{port} -p {pwd}",
@@ -2890,42 +2940,50 @@
                     "        print(\"✅ Dotfiles copied via SSH.\")",
                     "        return",
                     "    if url is None:",
-                    "        url = typer.prompt(\"Enter the URL or local path to the encrypted dotfiles zip (e..g 192.168.20.4:8888) \")",
+                    "        url = typer.prompt(\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or ~/dotfiles.zip.gpg) \")",
                     "    if pwd is None:",
                     "        pwd = typer.prompt(\"Enter the password for zip decryption\", hide_input=True)",
-                    "    from stackops.scripts.python.helpers.helpers_utils.download import download",
-                    "    downloaded_file = download(url=url, decompress=False, output_dir=str(Path.home()))",
-                    "    if downloaded_file is None or not downloaded_file.exists():",
-                    "        print(f\"❌ Failed to download file from URL: {url}\")",
-                    "        raise typer.Exit(code=1)",
-                    "    zipfile_encrypted_path = downloaded_file",
-                    "    from stackops.utils.io import decrypt_file_symmetric",
+                    "    assert url is not None, \"URL prompt should have produced an archive location.\"",
+                    "    try:",
+                    "        zipfile_encrypted_path = _resolve_import_dotfiles_source(url=url)",
+                    "    except (FileNotFoundError, IsADirectoryError) as error:",
+                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(error)",
+                    "        typer.echo(msg)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    from stackops.utils.io import GpgCommandError, decrypt_file_symmetric",
                     "",
                     "    assert pwd is not None, \"Password prompt should have produced a decryption password.\"",
-                    "    zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)",
+                    "    try:",
+                    "        zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)",
+                    "    except (FileNotFoundError, IsADirectoryError, RuntimeError, GpgCommandError) as error:",
+                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(error)",
+                    "        typer.echo(msg)",
+                    "        raise typer.Exit(code=1) from error",
                     "    print(f\"✅ Decrypted zip file saved to: {zipfile_path}\")",
                     "    dotfiles_path = Path.home().joinpath(\"dotfiles\")",
-                    "    with tempfile.TemporaryDirectory(prefix=\".stackops-dotfiles-import-\", dir=dotfiles_path.parent) as temp_dir:",
-                    "        extracted_dotfiles_path = Path(temp_dir).joinpath(\"dotfiles\")",
-                    "        extracted_dotfiles_path.mkdir()",
-                    "        try:",
+                    "    try:",
+                    "        with tempfile.TemporaryDirectory(prefix=\".stackops-dotfiles-import-\", dir=dotfiles_path.parent) as temp_dir:",
+                    "            extracted_dotfiles_path = Path(temp_dir).joinpath(\"dotfiles\")",
+                    "            extracted_dotfiles_path.mkdir()",
                     "            with zipfile.ZipFile(zipfile_path, \"r\") as zip_ref:",
                     "                _validate_dotfiles_archive(zip_ref=zip_ref, destination=extracted_dotfiles_path)",
                     "                zip_ref.extractall(extracted_dotfiles_path)",
-                    "        except (zipfile.BadZipFile, ValueError) as e:",
-                    "            msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(e)",
-                    "            typer.echo(msg)",
-                    "            raise typer.Exit(code=1) from e",
-                    "        if dotfiles_path.exists():",
-                    "            if not dotfiles_path.is_dir() or dotfiles_path.is_symlink():",
-                    "                msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Refusing to overwrite non-directory path: {dotfiles_path}\"",
-                    "                typer.echo(msg)",
-                    "                raise typer.Exit(code=1)",
-                    "            print(f\"⚠️  WARNING: Overwriting existing directory: {dotfiles_path}\")",
-                    "            shutil.rmtree(dotfiles_path)",
-                    "        shutil.move(str(extracted_dotfiles_path), str(dotfiles_path))",
-                    "    print(f\"✅ Dotfiles extracted to: {dotfiles_path}\")",
-                    "    zipfile_path.unlink()"
+                    "            if dotfiles_path.exists():",
+                    "                if not dotfiles_path.is_dir() or dotfiles_path.is_symlink():",
+                    "                    msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Refusing to overwrite non-directory path: {dotfiles_path}\"",
+                    "                    typer.echo(msg)",
+                    "                    raise typer.Exit(code=1)",
+                    "                print(f\"⚠️  WARNING: Overwriting existing directory: {dotfiles_path}\")",
+                    "                shutil.rmtree(dotfiles_path)",
+                    "            shutil.move(str(extracted_dotfiles_path), str(dotfiles_path))",
+                    "    except (zipfile.BadZipFile, ValueError) as error:",
+                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(error)",
+                    "        typer.echo(msg)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    finally:",
+                    "        if zipfile_path.exists():",
+                    "            zipfile_path.unlink()",
+                    "    print(f\"✅ Dotfiles extracted to: {dotfiles_path}\")"
                   ],
                   "name": "import_dotfiles",
                   "parameters": [
@@ -3020,7 +3078,8 @@
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
-                  "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_config_terminal.get_app"
+                  "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_config_terminal.get_app",
+                  "callable": "terminal"
                 },
                 "app": {
                   "help": "🐚 <t> Configure your terminal profile.",
@@ -3117,12 +3176,18 @@
                         "            module=theme_assets,",
                         "            path_reference=theme_assets.CHOOSE_STARSHIP_THEME_PS1_PATH_REFERENCE,",
                         "        )",
-                        "        try:",
-                        "            subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
-                        "        except FileNotFoundError as exc:",
-                        "            typer.echo(\"Error: pwsh is required to select a starship prompt theme.\", err=True)",
-                        "            raise typer.Exit(code=1) from exc",
-                        "        return",
+                        "        missing_error: FileNotFoundError | None = None",
+                        "        for command_name in (\"pwsh\", \"powershell\"):",
+                        "            try:",
+                        "                subprocess.run([command_name, \"-File\", str(script_path)], check=True)",
+                        "                return",
+                        "            except FileNotFoundError as exc:",
+                        "                missing_error = exc",
+                        "            except subprocess.CalledProcessError as exc:",
+                        "                raise typer.Exit(code=exc.returncode) from exc",
+                        "",
+                        "        typer.echo(\"Error: pwsh or powershell is required to select a starship prompt theme.\", err=True)",
+                        "        raise typer.Exit(code=1) from missing_error",
                         "",
                         "    script_path = get_path_reference_path(",
                         "        module=theme_assets,",
@@ -3132,7 +3197,9 @@
                         "        subprocess.run([\"bash\", str(script_path)], check=True)",
                         "    except FileNotFoundError as exc:",
                         "        typer.echo(\"Error: bash is required to select a starship prompt theme.\", err=True)",
-                        "        raise typer.Exit(code=1) from exc"
+                        "        raise typer.Exit(code=1) from exc",
+                        "    except subprocess.CalledProcessError as exc:",
+                        "        raise typer.Exit(code=exc.returncode) from exc"
                       ],
                       "name": "starship_theme",
                       "parameters": [],
@@ -3171,7 +3238,15 @@
                         "        module=theme_assets,",
                         "        path_reference=theme_assets.CHOOSE_PWSH_THEME_PATH_REFERENCE,",
                         "    )",
-                        "    exit_then_run_shell_file(script_path=str(script_path), strict=False)"
+                        "    if platform.system() == \"Windows\":",
+                        "        exit_then_run_shell_file(script_path=str(script_path), strict=False)",
+                        "        return",
+                        "",
+                        "    try:",
+                        "        subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
+                        "    except FileNotFoundError as exc:",
+                        "        typer.echo(\"Error: pwsh is required to select a powershell prompt theme.\", err=True)",
+                        "        raise typer.Exit(code=1) from exc"
                       ],
                       "name": "pwsh_theme",
                       "parameters": [],
@@ -3295,10 +3370,15 @@
                         "        module=theme_assets,",
                         "        path_reference=theme_assets.CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE,",
                         "    )",
-                        "    try:",
-                        "        subprocess.run([\"pwsh\", \"-File\", str(script_path)], check=True)",
-                        "    except FileNotFoundError:",
-                        "        subprocess.run([\"powershell\", \"-File\", str(script_path)], check=True)"
+                        "    for shell_name in (\"pwsh\", \"powershell\"):",
+                        "        try:",
+                        "            subprocess.run([shell_name, \"-File\", str(script_path)], check=True)",
+                        "            return",
+                        "        except FileNotFoundError:",
+                        "            continue",
+                        "",
+                        "    typer.echo(\"Error: pwsh or powershell is required to select a Windows Terminal color scheme.\", err=True)",
+                        "    raise typer.Exit(code=1)"
                       ],
                       "name": "configure_windows_terminal_theme",
                       "parameters": [],
@@ -3322,6 +3402,13 @@
                     ]
                   }
                 ],
+                "command_context_settings": {
+                  "allow_extra_args": true,
+                  "allow_interspersed_args": true,
+                  "ignore_unknown_options": true,
+                  "help_option_names": []
+                },
+                "doc": "🐚 <t> Configure your terminal profile.",
                 "aliases": [
                   {
                     "name": "t",
@@ -3458,22 +3545,26 @@
                   "raw_lines": [
                     "def dump_config(",
                     "    which: Annotated[DumpConfigKind, typer.Option(..., \"--which\", \"-w\", help=\"Which config or init script to dump\")],",
-                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-r/-nr\", help=\"Run an init script instead of printing it.\")] = False,",
+                    "    run: Annotated[bool, typer.Option(\"--run\", \"-r\", help=\"Run an init script instead of printing it.\")] = False,",
                     ") -> None:",
                     "    \"\"\"🔗 Dump example configuration files and init scripts.\"\"\"",
                     "    match which:",
                     "        case \"ve\":",
                     "            if run:",
-                    "                msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"--run is only valid when dumping init scripts.\"",
-                    "                typer.echo(msg)",
-                    "                raise typer.Exit(code=1)",
+                    "                _reject_run_for_non_script_dump()",
                     "            _dump_ve_config()",
+                    "            return",
+                    "        case \"layout\" | \"layout-example\":",
+                    "            if run:",
+                    "                _reject_run_for_non_script_dump()",
+                    "            _dump_layout_example()",
                     "            return",
                     "        case \"init\" | \"ia\" | \"live\":",
                     "            _dump_init_script(which=which, run=run)",
                     "            return",
                     "    msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Unknown config type: {which}\"",
-                    "    typer.echo(msg)"
+                    "    typer.echo(msg)",
+                    "    raise typer.Exit(code=1)"
                   ],
                   "name": "dump_config",
                   "parameters": [
@@ -3506,20 +3597,18 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-r/-nr', help='Run an init script instead of printing it.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--run', '-r', help='Run an init script instead of printing it.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--run/--no-run",
-                          "-r/-nr"
+                          "--run",
+                          "-r"
                         ],
                         "long_flags": [
-                          "--run",
-                          "--no-run"
+                          "--run"
                         ],
                         "short_flags": [
-                          "-r",
-                          "-nr"
+                          "-r"
                         ],
                         "help": "Run an init script instead of printing it."
                       }
@@ -3727,9 +3816,12 @@
                     "    group: Annotated[str, typer.Option(\"--group\", \"-g\", help=\"Group name in mapper_data.yaml.\")] = \"default\",",
                     "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name inside the group in mapper_data.yaml.\")] = None,",
                     "    path_cloud: Annotated[str | None, typer.Option(\"--path-cloud\", \"-C\", help=\"Cloud path override (optional).\")] = None,",
-                    "    zip_: Annotated[bool, typer.Option(\"--zip/--no-zip\", \"-z/-nz\", help=\"Zip before uploading.\")] = True,",
-                    "    encrypt: Annotated[bool, typer.Option(\"--encrypt/--no-encrypt\", \"-e/-ne\", help=\"Encrypt before uploading.\")] = True,",
-                    "    rel2home: Annotated[bool | None, typer.Option(\"--rel2home/--no-rel2home\", \"-r/-nr\", help=\"Treat the local path as relative to home.\")] = None,",
+                    "    zip_: Annotated[bool, typer.Option(\"--no-zip\", \"-nz\", help=\"Store the backup entry without zipping before upload.\")] = True,",
+                    "    encrypt: Annotated[bool, typer.Option(\"--no-encrypt\", \"-ne\", help=\"Store the backup entry without encrypting before upload.\")] = True,",
+                    "    rel2home: Annotated[",
+                    "        bool | None,",
+                    "        typer.Option(\"--no-rel2home\", \"-nr\", help=\"Store the local path as absolute even when it is under home.\"),",
+                    "    ] = None,",
                     "    os: Annotated[str, typer.Option(\"--os\", \"-o\", help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")] = DEFAULT_OS_FILTER,",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry",
@@ -3835,22 +3927,20 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--zip/--no-zip', '-z/-nz', help='Zip before uploading.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-zip', '-nz', help='Store the backup entry without zipping before upload.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--zip/--no-zip",
-                          "-z/-nz"
+                          "--no-zip",
+                          "-nz"
                         ],
                         "long_flags": [
-                          "--zip",
                           "--no-zip"
                         ],
                         "short_flags": [
-                          "-z",
                           "-nz"
                         ],
-                        "help": "Zip before uploading."
+                        "help": "Store the backup entry without zipping before upload."
                       }
                     },
                     {
@@ -3859,22 +3949,20 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--encrypt/--no-encrypt', '-e/-ne', help='Encrypt before uploading.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-encrypt', '-ne', help='Store the backup entry without encrypting before upload.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--encrypt/--no-encrypt",
-                          "-e/-ne"
+                          "--no-encrypt",
+                          "-ne"
                         ],
                         "long_flags": [
-                          "--encrypt",
                           "--no-encrypt"
                         ],
                         "short_flags": [
-                          "-e",
                           "-ne"
                         ],
-                        "help": "Encrypt before uploading."
+                        "help": "Store the backup entry without encrypting before upload."
                       }
                     },
                     {
@@ -3883,22 +3971,20 @@
                       "type": "bool | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool | None, typer.Option('--rel2home/--no-rel2home', '-r/-nr', help='Treat the local path as relative to home.')]",
+                      "annotation_raw": "Annotated[bool | None, typer.Option('--no-rel2home', '-nr', help='Store the local path as absolute even when it is under home.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--rel2home/--no-rel2home",
-                          "-r/-nr"
+                          "--no-rel2home",
+                          "-nr"
                         ],
                         "long_flags": [
-                          "--rel2home",
                           "--no-rel2home"
                         ],
                         "short_flags": [
-                          "-r",
                           "-nr"
                         ],
-                        "help": "Treat the local path as relative to home."
+                        "help": "Store the local path as absolute even when it is under home."
                       }
                     },
                     {
@@ -4185,7 +4271,7 @@
                     "def update(",
                     "    link_public_configs: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--link-public-configs/--no-link-public-configs\", \"-b/-nb\", help=\"Link public configs after update (overwrites your configs!)\"),",
+                    "        typer.Option(\"--link-public-configs\", \"-b\", help=\"Link public configs after update (overwrites your configs!)\"),",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"🔄 UPDATE uv and stackops\"\"\"",
@@ -4242,20 +4328,18 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--link-public-configs/--no-link-public-configs', '-b/-nb', help='Link public configs after update (overwrites your configs!)')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--link-public-configs', '-b', help='Link public configs after update (overwrites your configs!)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--link-public-configs/--no-link-public-configs",
-                          "-b/-nb"
+                          "--link-public-configs",
+                          "-b"
                         ],
                         "long_flags": [
-                          "--link-public-configs",
-                          "--no-link-public-configs"
+                          "--link-public-configs"
                         ],
                         "short_flags": [
-                          "-b",
-                          "-nb"
+                          "-b"
                         ],
                         "help": "Link public configs after update (overwrites your configs!)"
                       }
@@ -4534,13 +4618,13 @@
                         "    record: Annotated[",
                         "        bool | None,",
                         "        typer.Option(",
-                        "            \"--record/--no-record\",",
-                        "            help=\"Write scan results to the saved repo reports. Defaults to enabled for installed-app scans and disabled for --path scans.\",",
+                        "            \"--record\",",
+                        "            help=\"Write scan results to the saved repo reports. Installed-app scans already record by default.\",",
                         "        ),",
                         "    ] = None,",
                         ") -> None:",
                         "    def run_scan(apps: str | None, path: Path | None, record: bool | None) -> None:",
-                        "        from stackops.jobs.installer.checks.security_helper import parse_apps_argument, scan_single_path",
+                        "        from stackops.jobs.installer.checks.security_helper import scan_single_path",
                         "",
                         "        if apps is not None and path is not None:",
                         "            raise typer.BadParameter(\"Use either APPS or --path, not both.\")",
@@ -4550,7 +4634,7 @@
                         "        else:",
                         "            from stackops.jobs.installer.checks.check_installations import scan_installed_apps",
                         "",
-                        "            app_names = parse_apps_argument(apps)",
+                        "            app_names = _parse_apps_argument(apps)",
                         "            scan_installed_apps(app_names, write_reports_to_repo=resolved_record)",
                         "",
                         "    from stackops.utils.code import run_lambda_function",
@@ -4599,18 +4683,17 @@
                           "type": "bool | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[bool | None, typer.Option('--record/--no-record', help='Write scan results to the saved repo reports. Defaults to enabled for installed-app scans and disabled for --path scans.')]",
+                          "annotation_raw": "Annotated[bool | None, typer.Option('--record', help='Write scan results to the saved repo reports. Installed-app scans already record by default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--record/--no-record"
+                              "--record"
                             ],
                             "long_flags": [
-                              "--record",
-                              "--no-record"
+                              "--record"
                             ],
                             "short_flags": [],
-                            "help": "Write scan results to the saved repo reports. Defaults to enabled for installed-app scans and disabled for --path scans."
+                            "help": "Write scan results to the saved repo reports. Installed-app scans already record by default."
                           }
                         }
                       ],
@@ -4643,7 +4726,7 @@
                         "def list_apps(apps: Annotated[str | None, typer.Argument(help=\"Optional comma-separated app names to list\")] = None) -> None:",
                         "    from stackops.jobs.installer.checks.check_installations import collect_apps_to_scan",
                         "",
-                        "    apps_names = parse_apps_argument(apps)",
+                        "    apps_names = _parse_apps_argument(apps)",
                         "    apps_to_scan = collect_apps_to_scan(apps_names)",
                         "    if not apps_to_scan:",
                         "        if apps_names is None:",
@@ -4672,9 +4755,6 @@
                         }
                       ],
                       "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": true
                     },
                     "aliases": [
                       {
@@ -4804,7 +4884,8 @@
                         "def install(name: Annotated[str, typer.Argument(..., help=\"App name from app metadata report or 'essentials'\")]) -> None:",
                         "    from stackops.jobs.installer.checks.install_utils import download_safe_apps",
                         "",
-                        "    download_safe_apps(name)"
+                        "    if not download_safe_apps(name):",
+                        "        raise typer.Exit(code=1)"
                       ],
                       "name": "install",
                       "parameters": [
@@ -4859,51 +4940,66 @@
                         "    format_type: Annotated[",
                         "        ReportFormat, typer.Option(\"--format\", \"-f\", help=\"Output format for apps or engines views\", case_sensitive=False, show_choices=True)",
                         "    ] = \"table\",",
-                        "    summarize: Annotated[bool, typer.Option(\"--summarize/--full\", hidden=True)] = False,",
+                        "    summarize: Annotated[bool, typer.Option(\"--summarize\", hidden=True)] = False,",
                         ") -> None:",
-                        "    from stackops.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH",
-                        "    from stackops.jobs.installer.checks.report_utils import (",
-                        "        APP_METADATA_KEYS,",
-                        "        ENGINE_REPORT_KEYS,",
-                        "        build_engine_results_table,",
-                        "        build_summary_group,",
-                        "    )",
-                        "",
                         "    resolved_view = _resolve_report_view(view, summarize)",
                         "    if resolved_view == \"options\":",
+                        "        from stackops.jobs.installer.checks.security_helper import build_report_options_text",
+                        "",
                         "        _console().print(build_report_options_text())",
                         "        return",
                         "    if resolved_view not in {\"apps\", \"engines\"} and format_type != \"table\":",
                         "        raise typer.BadParameter(\"--format csv is only supported with --view apps or --view engines.\")",
                         "",
-                        "    apps_names = parse_apps_argument(apps)",
+                        "    from stackops.jobs.installer.checks.security_helper import (",
+                        "        load_filtered_report_rows,",
+                        "        normalize_app_names,",
+                        "    )",
+                        "",
+                        "    apps_names = _parse_apps_argument(apps)",
                         "    normalized_app_names = normalize_app_names(apps_names)",
                         "    app_rows, engine_rows, app_data_list, hydrated_engine_rows = load_filtered_report_rows(normalized_app_names)",
                         "",
                         "    if resolved_view == \"stats\":",
+                        "        from stackops.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH",
+                        "        from stackops.jobs.installer.checks.security_helper import build_report_stats_lines",
+                        "",
                         "        if not app_data_list:",
                         "            raise typer.Exit(code=1)",
                         "        for line in build_report_stats_lines(app_data_list, APP_METADATA_PATH, ENGINE_RESULTS_PATH):",
                         "            _console().print(line)",
                         "        return",
                         "    if resolved_view == \"app-summary\":",
+                        "        from stackops.jobs.installer.checks.report_utils import build_summary_group",
+                        "",
                         "        if not app_data_list:",
                         "            raise typer.Exit(code=1)",
                         "        _console().print(build_summary_group(app_data_list))",
                         "        return",
                         "    if resolved_view == \"apps\":",
+                        "        from stackops.jobs.installer.checks.report_utils import APP_METADATA_KEYS",
+                        "",
                         "        if not app_rows:",
                         "            raise typer.Exit(code=1)",
                         "        if format_type == \"csv\":",
+                        "            from stackops.jobs.installer.checks.security_helper import render_csv_text",
+                        "",
                         "            _console().print(render_csv_text(app_rows, APP_METADATA_KEYS))",
                         "            return",
+                        "        from stackops.jobs.installer.checks.security_helper import build_raw_csv_table",
+                        "",
                         "        _console().print(build_raw_csv_table(\"App Metadata CSV\", app_rows, APP_METADATA_KEYS))",
                         "        return",
                         "    if not engine_rows:",
                         "        raise typer.Exit(code=1)",
                         "    if format_type == \"csv\":",
+                        "        from stackops.jobs.installer.checks.report_utils import ENGINE_REPORT_KEYS",
+                        "        from stackops.jobs.installer.checks.security_helper import render_csv_text",
+                        "",
                         "        _console().print(render_csv_text(engine_rows, ENGINE_REPORT_KEYS))",
                         "        return",
+                        "    from stackops.jobs.installer.checks.report_utils import build_engine_results_table",
+                        "",
                         "    _console().print(build_engine_results_table(hydrated_engine_rows))"
                       ],
                       "name": "report",
@@ -4973,15 +5069,14 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--summarize/--full', hidden=True)]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--summarize', hidden=True)]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--summarize/--full"
+                              "--summarize"
                             ],
                             "long_flags": [
-                              "--summarize",
-                              "--full"
+                              "--summarize"
                             ],
                             "short_flags": []
                           }
@@ -5154,8 +5249,8 @@
                     "signature": {
                       "raw_lines": [
                         "def tree(",
-                        "    show_help: Annotated[bool, typer.Option(\"--show-help/--no-show-help\", help=\"Include help text in labels\")] = True,",
-                        "    show_aliases: Annotated[bool, typer.Option(\"--show-aliases/--no-show-aliases\", help=\"Include aliases in labels\")] = False,",
+                        "    show_help: Annotated[bool, typer.Option(\"--no-show-help\", help=\"Hide help text in labels\")] = True,",
+                        "    show_aliases: Annotated[bool, typer.Option(\"--show-aliases\", help=\"Include aliases in labels\")] = False,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the tree\")] = None,",
                         ") -> None:",
                         "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
@@ -5168,10 +5263,10 @@
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "",
                         "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
-                        "        uv_with: list[str] = [\"rich\"]",
+                        "        uv_with: list[str] = []",
                         "        uv_project_dir = str(Path.home().joinpath(\"code\", \"stackops\"))",
                         "    else:",
-                        "        uv_with = [STACKOPS_VERSION, \"rich\"]",
+                        "        uv_with = [STACKOPS_VERSION]",
                         "        uv_project_dir = None",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
@@ -5193,18 +5288,17 @@
                           "type": "bool",
                           "default": true,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-help/--no-show-help', help='Include help text in labels')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--no-show-help', help='Hide help text in labels')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--show-help/--no-show-help"
+                              "--no-show-help"
                             ],
                             "long_flags": [
-                              "--show-help",
                               "--no-show-help"
                             ],
                             "short_flags": [],
-                            "help": "Include help text in labels"
+                            "help": "Hide help text in labels"
                           }
                         },
                         {
@@ -5213,15 +5307,14 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-aliases/--no-show-aliases', help='Include aliases in labels')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--show-aliases', help='Include aliases in labels')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--show-aliases/--no-show-aliases"
+                              "--show-aliases"
                             ],
                             "long_flags": [
-                              "--show-aliases",
-                              "--no-show-aliases"
+                              "--show-aliases"
                             ],
                             "short_flags": [],
                             "help": "Include aliases in labels"
@@ -5279,7 +5372,7 @@
                       "raw_lines": [
                         "def dot(",
                         "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write DOT output to a file\")] = None,",
-                        "    include_help: Annotated[bool, typer.Option(\"--include-help/--no-include-help\", help=\"Include help text in labels\")] = True,",
+                        "    include_help: Annotated[bool, typer.Option(\"--no-include-help\", help=\"Hide help text in labels\")] = True,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
                         ") -> None:",
                         "    \"\"\"Export the graph as Graphviz DOT.\"\"\"",
@@ -5347,18 +5440,17 @@
                           "type": "bool",
                           "default": true,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--include-help/--no-include-help', help='Include help text in labels')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--no-include-help', help='Hide help text in labels')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--include-help/--no-include-help"
+                              "--no-include-help"
                             ],
                             "long_flags": [
-                              "--include-help",
                               "--no-include-help"
                             ],
                             "short_flags": [],
-                            "help": "Include help text in labels"
+                            "help": "Hide help text in labels"
                           }
                         },
                         {
@@ -5417,7 +5509,7 @@
                         "        typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(get_args(PlotlyView))}.\"\"\"),",
                         "    ] = \"sunburst\",",
                         "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
-                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
+                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the graph\")] = None,",
                         "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
                         "    height: Annotated[int, typer.Option(\"--height\", help=\"Image height (for static output)\")] = 900,",
                         "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
@@ -5489,7 +5581,7 @@
                           "type": "int | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
+                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', min=0, help='Limit depth of the graph')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -5814,15 +5906,15 @@
                     "    ] = Path.home().joinpath(\"tmp_results\"),",
                     "    include_configs: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--include-configs/--no-include-configs\", help=\"Include the StackOps config tree in the offline installer.\"),",
+                    "        typer.Option(\"--no-include-configs\", help=\"Exclude the StackOps config tree from the offline installer.\"),",
                     "    ] = True,",
                     "    include_uv_bundle: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--include-uv-bundle/--no-include-uv-bundle\", help=\"Include the uv-managed StackOps runtime bundle when available.\"),",
+                    "        typer.Option(\"--no-include-uv-bundle\", help=\"Exclude the uv-managed StackOps runtime bundle.\"),",
                     "    ] = True,",
                     "    keep_unpacked: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--keep-unpacked/--remove-unpacked\", help=\"Keep the unpacked installer directory after writing the zip archive.\"),",
+                    "        typer.Option(\"--keep-unpacked\", help=\"Keep the unpacked installer directory after writing the zip archive.\"),",
                     "    ] = False,",
                     "    upload_to_cloud: Annotated[",
                     "        bool,",
@@ -5830,6 +5922,7 @@
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"📤 export the installation files to get an offline image.\"\"\"",
+                    "    output_root = output_root.expanduser()",
                     "    if upload_to_cloud:",
                     "        developer_repo_root = _developer_repo_root()",
                     "        if developer_repo_root is None:",
@@ -5837,16 +5930,26 @@
                     "                \"❌ --upload-to-cloud requires the developer checkout at ~/code/stackops so the downloader URL map update is written in-repo.\"",
                     "            )",
                     "            raise typer.Exit(code=1)",
-                    "        from stackops.jobs.scripts_dynamic import download_stackops_offline_installer",
+                    "        developer_repo_root = developer_repo_root.resolve()",
+                    "        from stackops.jobs import scripts_dynamic as scripts_dynamic_assets",
+                    "        from stackops.utils.path_reference import (",
+                    "            get_path_reference_library_relative_path,",
+                    "            get_path_reference_path,",
+                    "        )",
                     "",
-                    "        active_url_map_path = Path(download_stackops_offline_installer.__file__).resolve().with_suffix(\".json\")",
+                    "        path_reference = scripts_dynamic_assets.OFFLINE_INSTALLER_PATH_REFERENCE",
+                    "        active_url_map_path = get_path_reference_path(",
+                    "            module=scripts_dynamic_assets,",
+                    "            path_reference=path_reference,",
+                    "        )",
                     "        expected_url_map_path = developer_repo_root.joinpath(",
                     "            \"src\",",
                     "            \"stackops\",",
-                    "            \"jobs\",",
-                    "            \"scripts_dynamic\",",
-                    "            \"download_stackops_offline_installer.json\",",
-                    "        )",
+                    "            get_path_reference_library_relative_path(",
+                    "                module=scripts_dynamic_assets,",
+                    "                path_reference=path_reference,",
+                    "            ),",
+                    "        ).resolve()",
                     "        if active_url_map_path != expected_url_map_path:",
                     "            typer.echo(",
                     "                \"❌ --upload-to-cloud requires an editable install backed by ~/code/stackops so the downloader URL map update persists in the repository.\"",
@@ -5895,18 +5998,17 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--include-configs/--no-include-configs', help='Include the StackOps config tree in the offline installer.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-include-configs', help='Exclude the StackOps config tree from the offline installer.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--include-configs/--no-include-configs"
+                          "--no-include-configs"
                         ],
                         "long_flags": [
-                          "--include-configs",
                           "--no-include-configs"
                         ],
                         "short_flags": [],
-                        "help": "Include the StackOps config tree in the offline installer."
+                        "help": "Exclude the StackOps config tree from the offline installer."
                       }
                     },
                     {
@@ -5915,18 +6017,17 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--include-uv-bundle/--no-include-uv-bundle', help='Include the uv-managed StackOps runtime bundle when available.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-include-uv-bundle', help='Exclude the uv-managed StackOps runtime bundle.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--include-uv-bundle/--no-include-uv-bundle"
+                          "--no-include-uv-bundle"
                         ],
                         "long_flags": [
-                          "--include-uv-bundle",
                           "--no-include-uv-bundle"
                         ],
                         "short_flags": [],
-                        "help": "Include the uv-managed StackOps runtime bundle when available."
+                        "help": "Exclude the uv-managed StackOps runtime bundle."
                       }
                     },
                     {
@@ -5935,15 +6036,14 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--keep-unpacked/--remove-unpacked', help='Keep the unpacked installer directory after writing the zip archive.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--keep-unpacked', help='Keep the unpacked installer directory after writing the zip archive.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--keep-unpacked/--remove-unpacked"
+                          "--keep-unpacked"
                         ],
                         "long_flags": [
-                          "--keep-unpacked",
-                          "--remove-unpacked"
+                          "--keep-unpacked"
                         ],
                         "short_flags": [],
                         "help": "Keep the unpacked installer directory after writing the zip archive."
@@ -6124,12 +6224,13 @@
                         "    from stackops.scripts.python.helpers.helpers_devops import cli_self_docs",
                         "",
                         "    repo_root = cli_self_docs.get_docs_repo_root()",
+                        "    artifact_spec = next((spec for spec in cli_self_docs.DOCS_ARTIFACT_SPECS if spec.view == \"sunburst\"), None)",
+                        "    if artifact_spec is None:",
+                        "        typer.echo(\"\"\"❌ ERROR: Missing docs artifact spec for \"sunburst\".\"\"\", err=True)",
+                        "        raise typer.Exit(code=1)",
                         "    cli_self_docs.render_docs_artifact(",
                         "        repo_root=repo_root,",
-                        "        artifact_spec=cli_self_docs.DocsArtifactSpec(",
-                        "            view=\"sunburst\",",
-                        "            output_relative_path=SUNBURST_OUTPUT_RELATIVE_PATH,",
-                        "        ),",
+                        "        artifact_spec=artifact_spec,",
                         "    )"
                       ],
                       "name": "regenerate_charts",
@@ -6715,7 +6816,7 @@
                         "    ] = None,",
                         "    provider: Annotated[PROVIDER | None, typer.Option(\"--provider\", \"-v\", help=\"Provider to use (if the agent supports many).\")] = None,",
                         "    host: Annotated[HOST, typer.Option(\"--host\", \"-h\", help=\"Machine to run agents on.\")] = \"local\",",
-                        "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", help=\"Number of tasks per prompt.\")] = 10,",
+                        "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", min=1, help=\"Number of tasks per prompt.\")] = 10,",
                         "    prompt: Annotated[str | None, typer.Option(\"--prompt\", \"-p\", help=\"Prompt prefix as string.\")] = None,",
                         "    prompt_path: Annotated[",
                         "        str | None,",
@@ -6745,6 +6846,11 @@
                         "        typer.Option(\"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\"),",
                         "    ] = False,",
                         ") -> None:",
+                        "    from contextlib import chdir",
+                        "",
+                        "    if agent_load < 1:",
+                        "        raise typer.BadParameter(\"--agent-load must be at least 1.\")",
+                        "",
                         "    repo_root = get_developer_repo_root()",
                         "    if not repo_root.joinpath(\"pyproject.toml\").is_file():",
                         "        raise RuntimeError(f\"Developer repo not found: {repo_root}\")",
@@ -6760,27 +6866,28 @@
                         "    )",
                         "",
                         "    try:",
-                        "        agents_create_impl(",
-                        "            agent=agent,",
-                        "            model=model,",
-                        "            agent_load=agent_load,",
-                        "            context=context_content,",
-                        "            context_path=None,",
-                        "            separator=DEFAULT_SEAPRATOR,",
-                        "            prompt=resolved_prompt,",
-                        "            prompt_path=resolved_prompt_path,",
-                        "            prompt_name=resolved_prompt_name,",
-                        "            job_name=job_name,",
-                        "            join_prompt_and_context=join_prompt_and_context,",
-                        "            output_path=str(resolved_output_path),",
-                        "            agents_dir=str(resolved_agents_dir),",
-                        "            save_as_yaml=False,",
-                        "            host=host,",
-                        "            reasoning=reasoning_effort,",
-                        "            provider=provider,",
-                        "            interactive=interactive,",
-                        "            run=run,",
-                        "        )",
+                        "        with chdir(repo_root):",
+                        "            agents_create_impl(",
+                        "                agent=agent,",
+                        "                model=model,",
+                        "                agent_load=agent_load,",
+                        "                context=context_content,",
+                        "                context_path=None,",
+                        "                separator=DEFAULT_SEAPRATOR,",
+                        "                prompt=resolved_prompt,",
+                        "                prompt_path=resolved_prompt_path,",
+                        "                prompt_name=resolved_prompt_name,",
+                        "                job_name=job_name,",
+                        "                join_prompt_and_context=join_prompt_and_context,",
+                        "                output_path=str(resolved_output_path),",
+                        "                agents_dir=str(resolved_agents_dir),",
+                        "                save_as_yaml=False,",
+                        "                host=host,",
+                        "                reasoning=reasoning_effort,",
+                        "                provider=provider,",
+                        "                interactive=interactive,",
+                        "                run=run,",
+                        "            )",
                         "    finally:",
                         "        context_output_path.parent.mkdir(parents=True, exist_ok=True)",
                         "        context_output_path.write_text(context_content, encoding=\"utf-8\")"
@@ -6903,7 +7010,7 @@
                           "type": "int",
                           "default": 10,
                           "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', help='Number of tasks per prompt.')]",
+                          "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', min=1, help='Number of tasks per prompt.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -7186,8 +7293,16 @@
                         "    if not repo_root.joinpath(\"pyproject.toml\").is_file():",
                         "        raise RuntimeError(f\"Developer repo not found: {repo_root}\")",
                         "",
-                        "    resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(\".ai\", \"agents\", job_name)",
-                        "    resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath(\"layout.json\")",
+                        "    resolved_agents_dir = (",
+                        "        _resolve_repo_relative_path(repo_root=repo_root, raw_path=agents_dir)",
+                        "        if agents_dir is not None",
+                        "        else repo_root.joinpath(\".ai\", \"agents\", job_name)",
+                        "    )",
+                        "    resolved_output_path = (",
+                        "        _resolve_repo_relative_path(repo_root=repo_root, raw_path=output_path)",
+                        "        if output_path is not None",
+                        "        else resolved_agents_dir.joinpath(\"layout.json\")",
+                        "    )",
                         "    context_content = _build_docs_context(repo_root=repo_root)",
                         "    context_output_path = resolved_agents_dir.joinpath(\"context.md\")",
                         "",
@@ -7609,37 +7724,52 @@
                         "    ] = False,",
                         "    run: Annotated[bool, typer.Option(\"--run\", \"-R\", help=\"Immediately launch the generated layout via terminal run.\")] = False,",
                         ") -> None:",
+                        "    from contextlib import chdir",
+                        "",
+                        "    from stackops.scripts.python.graph.generate_cli_graph import build_cli_graph",
+                        "",
+                        "    _validate_update_logic_options(agent_load=agent_load, prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)",
+                        "",
                         "    repo_root = get_developer_repo_root()",
                         "    if not repo_root.joinpath(\"pyproject.toml\").is_file():",
                         "        raise RuntimeError(f\"Developer repo not found: {repo_root}\")",
                         "",
-                        "    resolved_agents_dir = Path(agents_dir) if agents_dir is not None else repo_root.joinpath(\".ai\", \"agents\", job_name)",
-                        "    resolved_output_path = Path(output_path) if output_path is not None else resolved_agents_dir.joinpath(\"layout.json\")",
+                        "    resolved_agents_dir = (",
+                        "        _resolve_repo_cli_path(repo_root=repo_root, raw_path=agents_dir)",
+                        "        if agents_dir is not None",
+                        "        else repo_root.joinpath(\".ai\", \"agents\", job_name)",
+                        "    )",
+                        "    resolved_output_path = (",
+                        "        _resolve_repo_cli_path(repo_root=repo_root, raw_path=output_path)",
+                        "        if output_path is not None",
+                        "        else resolved_agents_dir.joinpath(\"layout.json\")",
+                        "    )",
                         "    context_content = build_logic_context_from_graph(graph_payload=build_cli_graph())",
                         "    context_output_path = resolved_agents_dir.joinpath(\"context.md\")",
                         "",
                         "    try:",
-                        "        agents_create_impl(",
-                        "            agent=agent,",
-                        "            model=model,",
-                        "            agent_load=agent_load,",
-                        "            context=context_content,",
-                        "            context_path=None,",
-                        "            separator=DEFAULT_SEAPRATOR,",
-                        "            prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
-                        "            prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
-                        "            prompt_name=prompt_name,",
-                        "            job_name=job_name,",
-                        "            join_prompt_and_context=join_prompt_and_context,",
-                        "            output_path=str(resolved_output_path),",
-                        "            agents_dir=str(resolved_agents_dir),",
-                        "            save_as_yaml=False,",
-                        "            host=host,",
-                        "            reasoning=reasoning,",
-                        "            provider=provider,",
-                        "            interactive=interactive,",
-                        "            run=run,",
-                        "        )",
+                        "        with chdir(repo_root):",
+                        "            agents_create_impl(",
+                        "                agent=agent,",
+                        "                model=model,",
+                        "                agent_load=agent_load,",
+                        "                context=context_content,",
+                        "                context_path=None,",
+                        "                separator=DEFAULT_SEAPRATOR,",
+                        "                prompt=_resolve_prompt(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "                prompt_path=_resolve_prompt_path(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name),",
+                        "                prompt_name=prompt_name,",
+                        "                job_name=job_name,",
+                        "                join_prompt_and_context=join_prompt_and_context,",
+                        "                output_path=str(resolved_output_path),",
+                        "                agents_dir=str(resolved_agents_dir),",
+                        "                save_as_yaml=False,",
+                        "                host=host,",
+                        "                reasoning=reasoning,",
+                        "                provider=provider,",
+                        "                interactive=interactive,",
+                        "                run=run,",
+                        "            )",
                         "    finally:",
                         "        context_output_path.parent.mkdir(parents=True, exist_ok=True)",
                         "        context_output_path.write_text(context_content, encoding=\"utf-8\")"
@@ -8875,7 +9005,7 @@
                     "            local_ip_v4 = res",
                     "            relay_port = \"443\"",
                     "            relay_endpoint = f\"{local_ip_v4}:{relay_port}\"",
-                    "            command_parts = [\"croc\", \"--relay\", relay_endpoint, \"--ip\", relay_endpoint, \"send\"]",
+                    "            command_parts = [\"croc\", \"--relay\", relay_endpoint, \"send\"]",
                     "            if is_windows and code is not None:",
                     "                command_parts.extend([\"--code\", quote_shell_arg(code)])",
                     "            if zip_folder:",
@@ -9116,6 +9246,8 @@
                     "",
                     "    relay_server: str | None = None",
                     "    secret_code: str | None = None",
+                    "    secret_code_from_env_assignment = False",
+                    "    croc_command_seen = False",
                     "",
                     "    token_index = 0",
                     "    while token_index < len(tokens):",
@@ -9123,7 +9255,14 @@
                     "        if token == \"--\":",
                     "            token_index += 1",
                     "            continue",
-                    "        if token == \"croc\" and secret_code is None:",
+                    "        if token == \"croc\":",
+                    "            if croc_command_seen:",
+                    "                typer.echo(\"❌ Error: Croc receive command may only be provided once.\", err=True)",
+                    "                raise typer.Exit(code=1)",
+                    "            if secret_code is not None and not secret_code_from_env_assignment:",
+                    "                typer.echo(f\"❌ Error: Unexpected extra argument after croc receive code: {token}\", err=True)",
+                    "                raise typer.Exit(code=1)",
+                    "            croc_command_seen = True",
                     "            token_index += 1",
                     "            continue",
                     "        if token == \"export\" and token_index + 1 < len(tokens) and tokens[token_index + 1].startswith(\"CROC_SECRET=\"):",
@@ -9147,6 +9286,7 @@
                     "                typer.echo(\"❌ Error: Croc receive code may only be provided once.\", err=True)",
                     "                raise typer.Exit(code=1)",
                     "            secret_code = token.split(\"=\", 1)[1].strip('\"').strip(\"'\")",
+                    "            secret_code_from_env_assignment = True",
                     "            token_index += 1",
                     "            continue",
                     "        if token.startswith(\"-\"):",
@@ -9156,6 +9296,7 @@
                     "            typer.echo(f\"❌ Error: Unexpected extra argument after croc receive code: {token}\", err=True)",
                     "            raise typer.Exit(code=1)",
                     "        secret_code = token",
+                    "        secret_code_from_env_assignment = False",
                     "        token_index += 1",
                     "",
                     "    if not secret_code:",
@@ -9933,9 +10074,17 @@
                         "netsh.exe interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0 connectport={port} connectaddress=\"$wsl_ip\"",
                         "",
                         "\"\"\"",
-                        "    from stackops.utils.code import exit_then_run_shell_script",
+                        "    import os",
+                        "    from pathlib import Path",
                         "",
-                        "    exit_then_run_shell_script(code)"
+                        "    from stackops.utils.code import exit_then_run_shell_script, run_shell_script",
+                        "",
+                        "    op_program_path_raw = os.environ.get(\"OP_PROGRAM_PATH\")",
+                        "    if op_program_path_raw is not None and not Path(op_program_path_raw).exists():",
+                        "        exit_then_run_shell_script(code)",
+                        "    proc = run_shell_script(code, display_script=True, clean_env=False)",
+                        "    if proc.returncode != 0:",
+                        "        raise typer.Exit(code=proc.returncode)"
                       ],
                       "name": "bind_wsl_port",
                       "parameters": [
@@ -10241,11 +10390,9 @@
                         "        except ValueError as error:",
                         "            raise typer.BadParameter(str(error), param_hint=\"--ip\") from error",
                         "    if len(ips) == 0:",
-                        "        raise typer.BadParameter(\"Provide at least one IP address.\")",
+                        "        raise typer.BadParameter(\"Provide at least one IP address.\", param_hint=\"--ip\")",
                         "",
                         "    res = \"\\n\".join(f\"sudo warp-cli tunnel ip add {an_ip}\" for an_ip in ips)",
-                        "    for an_ip in ips:",
-                        "        print(f\"Adding IP exclusion to WARP for: {an_ip}\")",
                         "    code = f\"\"\"",
                         "{res}",
                         "echo \"Restarting WARP connection...\"",
@@ -10255,8 +10402,12 @@
                         "echo \"Reconnecting WARP...\"",
                         "sudo warp-cli connect",
                         "\"\"\"",
-                        "    print(code)",
-                        "    print(\"NOTE: Please run the above commands in your terminal to apply the changes.\")"
+                        "    from stackops.utils.code import exit_then_run_shell_script, print_code",
+                        "",
+                        "    print_code(code, lexer=\"bash\", desc=\"code to achieve the goal\")",
+                        "    yes = typer.confirm(\"Do you want to run the above commands now?\", default=False)",
+                        "    if yes:",
+                        "        exit_then_run_shell_script(code)"
                       ],
                       "name": "add_ip_exclusion_to_warp",
                       "parameters": [
@@ -10428,7 +10579,7 @@
                     "            directory = resolve_share_local_folder(directory)",
                     "            directory_part = shlex.quote(str(directory))",
                     "            extra = ensure_without_connection_token(extra)",
-                    "            cmd = f\"code serve-web {accept} {host_part} {server_base_path_part} {directory_part} {extra}\".strip()",
+                    "            cmd = f\"code serve-web {accept} {host_part} {server_base_path_part} {extra} {directory_part}\".strip()",
                     "            desc = \"Run local VS Code web server (serve-web)\"",
                     "        case _:",
                     "            print(f\"Unknown action: {action_normalized}\")",
@@ -11409,7 +11560,7 @@
                 "    destination: Annotated[str | None, typer.Option(..., \"--destination\", \"-d\", help=\"destination to mount\")] = None,",
                 "    network: Annotated[str | None, typer.Option(..., \"--network\", \"-n\", help=\"Windows network mount target, for example X:\")] = None,",
                 "    backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(\"--backend\", \"-b\", help=\"terminal backend for Linux/macOS\")] = \"tmux\",",
-                "    interactive: Annotated[bool, typer.Option(\"--interactive/--no-interactive\", \"-i/-I\", help=\"Choose cloud interactively from config.\")] = True,",
+                "    interactive: Annotated[bool, typer.Option(\"--no-interactive\", \"-I\", help=\"Require --cloud instead of choosing interactively from config.\")] = True,",
                 "",
                 ") -> None:",
                 "    \"\"\"🔗 Mount cloud storage services as local drives.\"\"\"",
@@ -11515,22 +11666,20 @@
                   "type": "bool",
                   "default": true,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--interactive/--no-interactive', '-i/-I', help='Choose cloud interactively from config.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--no-interactive', '-I', help='Require --cloud instead of choosing interactively from config.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--interactive/--no-interactive",
-                      "-i/-I"
+                      "--no-interactive",
+                      "-I"
                     ],
                     "long_flags": [
-                      "--interactive",
                       "--no-interactive"
                     ],
                     "short_flags": [
-                      "-i",
                       "-I"
                     ],
-                    "help": "Choose cloud interactively from config."
+                    "help": "Require --cloud instead of choosing interactively from config."
                   }
                 }
               ],
@@ -12170,7 +12319,7 @@
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-seconds\", \"-p\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
                 "    kill_finished_tabs: Annotated[bool, typer.Option(\"--kill-finished-tabs\", \"-k\", help=\"Close each tab once its command is finished.\")] = False,",
                 "    backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use\")] = \"tmux\",",
-                "    on_conflict: Annotated[SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.\")] = \"error\",",
+                "    on_conflict: Annotated[SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.\")] = \"error\",",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
                 ") -> None:",
                 "    \"\"\"Run every tab from every layout in a layout configuration file at a controlled pace.",
@@ -12185,6 +12334,13 @@
                 "        raise typer.Exit(code=1)",
                 "",
                 "    on_conflict = SessionConflictActionLoose2Strict[on_conflict]",
+                "    if on_conflict in {\"mergeOverwrite\", \"mergeSkip\"}:",
+                "        typer.echo(",
+                "            \"Error: --on-conflict mergeOverwrite and mergeSkip are not supported for run-all because the dynamic scheduler requires exclusive control of the session.\",",
+                "            err=True,",
+                "            color=True,",
+                "        )",
+                "        raise typer.Exit(code=1)",
                 "    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run_all import run_all_cli as impl",
                 "    impl(",
                 "        ctx=ctx,",
@@ -12350,7 +12506,7 @@
                   "type": "SessionConflictActionLoose",
                   "default": "error",
                   "required": false,
-                  "annotation_raw": "Annotated[SessionConflictActionLoose, typer.Option('--on-conflict', '-c', help='How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.')]",
+                  "annotation_raw": "Annotated[SessionConflictActionLoose, typer.Option('--on-conflict', '-c', help='How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -12363,7 +12519,7 @@
                     "short_flags": [
                       "-c"
                     ],
-                    "help": "How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux."
+                    "help": "How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session."
                   }
                 },
                 {
@@ -12438,7 +12594,7 @@
                 "    aoe_bin: Annotated[str, typer.Option(\"--aoe-bin\", help=\"AoE executable to invoke.\")] = \"aoe\",",
                 "    tab_command_mode: Annotated[Literal[\"prompt\", \"cmd\", \"ignore\"], typer.Option(\"--tab-command-mode\", help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")] = \"prompt\",",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
-                "    launch: Annotated[bool, typer.Option(\"--launch/--no-launch\", help=\"Launch each AoE session immediately after creating it.\")] = True,",
+                "    launch: Annotated[bool, typer.Option(\"--no-launch\", help=\"Create each AoE session without launching it immediately.\")] = True,",
                 ") -> None:",
                 "    \"\"\"Launch selected layout tabs as agent-of-empires sessions.",
                 "",
@@ -12860,18 +13016,17 @@
                   "type": "bool",
                   "default": true,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--launch/--no-launch', help='Launch each AoE session immediately after creating it.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--no-launch', help='Create each AoE session without launching it immediately.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--launch/--no-launch"
+                      "--no-launch"
                     ],
                     "long_flags": [
-                      "--launch",
                       "--no-launch"
                     ],
                     "short_flags": [],
-                    "help": "Launch each AoE session immediately after creating it."
+                    "help": "Create each AoE session without launching it immediately."
                   }
                 }
               ],
@@ -12911,6 +13066,15 @@
                 "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose a session or deeper target to attach to.\"\"\"",
+                "    if name is not None and new_session:",
+                "        typer.echo(\"Error: NAME cannot be used together with --new-session.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if name is not None and kill_all:",
+                "        typer.echo(\"Error: NAME cannot be used together with --kill-all.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if name is not None and window:",
+                "        typer.echo(\"Error: NAME cannot be used together with --window.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
                 "    backend_resolved = _resolve_session_backend(backend)",
                 "    from stackops.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl",
                 "    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)",
@@ -13066,7 +13230,7 @@
                 "def kill_session_target(",
                 "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to kill. If not provided, a list will be shown to choose from.\")] = None,",
                 "        kill_all: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Kill all sessions.\", show_default=True)] = False,",
-                "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser.\", show_default=True)] = False,",
+                "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.\", show_default=True)] = False,",
                 "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose one or more session targets to kill.\"\"\"",
@@ -13076,6 +13240,9 @@
                 "    if kill_all and window:",
                 "        typer.echo(\"Error: --all cannot be used together with --window.\", err=True, color=True)",
                 "        raise typer.Exit(code=1)",
+                "    if name is not None and window:",
+                "        typer.echo(\"Error: --window can only be used when NAME is omitted.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
                 "    backend_resolved = _resolve_session_backend(backend)",
                 "    from stackops.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl",
                 "",
@@ -13083,24 +13250,31 @@
                 "    if action == \"error\":",
                 "        typer.echo(payload, err=True, color=True)",
                 "        raise typer.Exit(code=1)",
-                "    if backend_resolved == \"tmux\" and action == \"run_script\" and payload:",
-                "        from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (",
-                "            run_tmux_script,",
-                "        )",
-                "",
-                "        try:",
-                "            run_tmux_script(",
-                "                script=payload,",
-                "                timeout_seconds=30.0,",
+                "    if action == \"run_script\":",
+                "        if payload is None or payload.strip() == \"\":",
+                "            typer.echo(\"Error: kill operation did not return a final script.\", err=True, color=True)",
+                "            raise typer.Exit(code=1)",
+                "        script = payload",
+                "        if backend_resolved == \"tmux\":",
+                "            from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (",
+                "                run_tmux_script,",
                 "            )",
-                "            return",
-                "        except RuntimeError as error:",
-                "            typer.echo(f\"Error: {error}\", err=True, color=True)",
-                "            raise typer.Exit(code=1) from error",
-                "    if action == \"run_script\" and payload:",
+                "",
+                "            try:",
+                "                run_tmux_script(",
+                "                    script=script,",
+                "                    timeout_seconds=30.0,",
+                "                )",
+                "                return",
+                "            except RuntimeError as error:",
+                "                typer.echo(f\"Error: {error}\", err=True, color=True)",
+                "                raise typer.Exit(code=1) from error",
                 "        from stackops.utils.code import exit_then_run_shell_script",
                 "",
-                "        exit_then_run_shell_script(script=payload, strict=True)"
+                "        exit_then_run_shell_script(script=script, strict=True)",
+                "        return",
+                "    typer.echo(\"Error: kill operation did not return a final script.\", err=True, color=True)",
+                "    raise typer.Exit(code=1)"
               ],
               "name": "kill_session_target",
               "parameters": [
@@ -13147,7 +13321,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--window', '-w', help='Include session, window/tab, and pane targets in the interactive chooser.', show_default=True)]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--window', '-w', help='Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.', show_default=True)]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -13160,7 +13334,7 @@
                     "short_flags": [
                       "-w"
                     ],
-                    "help": "Include session, window/tab, and pane targets in the interactive chooser."
+                    "help": "Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted."
                   }
                 },
                 {
@@ -13216,10 +13390,11 @@
             "signature": {
               "raw_lines": [
                 "def trace(",
-                "    session_name: Annotated[str, typer.Argument(..., help=\"Name of the tmux session to trace\")],",
+                "    session_name: Annotated[str | None, typer.Argument(help=\"Name of the tmux session to trace. Required unless --interactive is set.\")] = None,",
                 "    every: Annotated[float, typer.Option(\"--every\", \"-e\", help=\"Polling interval in seconds between tmux checks\")] = 10.0,",
                 "    until: Annotated[Literal[\"idle-shell\", \"all-exited\", \"exit-code\", \"session-missing\"], typer.Option(\"--until\", \"-u\", help=\"Stop only when the selected criterion is satisfied\")] = \"idle-shell\",",
                 "    exit_code: Annotated[int | None, typer.Option(\"--exit-code\", help=\"Required pane exit code when `--until exit-code` is selected\")] = None,",
+                "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose an existing tmux session interactively\")] = False,",
                 ") -> None:",
                 "    \"\"\"Trace a tmux session until every target matches a strict stop criterion.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import trace_session as impl",
@@ -13233,6 +13408,20 @@
                 "    if until != \"exit-code\" and exit_code is not None:",
                 "        typer.echo(\"Error: --exit-code can only be used with --until exit-code.\", err=True, color=True)",
                 "        raise typer.Exit(code=1)",
+                "    if session_name is not None and interactive:",
+                "        typer.echo(\"Error: SESSION_NAME cannot be used together with --interactive.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if session_name is None:",
+                "        if not interactive:",
+                "            typer.echo(\"Error: SESSION_NAME is required unless --interactive is set.\", err=True, color=True)",
+                "            raise typer.Exit(code=1)",
+                "        from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_name",
+                "",
+                "        action, payload = choose_existing_session_name(msg=\"Choose a tmux session to trace:\")",
+                "        if action == \"error\":",
+                "            typer.echo(f\"Error: {payload}\", err=True, color=True)",
+                "            raise typer.Exit(code=1)",
+                "        session_name = payload",
                 "",
                 "    impl(",
                 "        session_name=session_name,",
@@ -13246,17 +13435,16 @@
                 {
                   "name": "session_name",
                   "kind": "positional_or_keyword",
-                  "type": "str",
+                  "type": "str | None",
                   "default": null,
-                  "required": true,
-                  "annotation_raw": "Annotated[str, typer.Argument(..., help='Name of the tmux session to trace')]",
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the tmux session to trace. Required unless --interactive is set.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the tmux session to trace",
-                    "default": "..."
+                    "help": "Name of the tmux session to trace. Required unless --interactive is set."
                   }
                 },
                 {
@@ -13320,6 +13508,28 @@
                     ],
                     "short_flags": [],
                     "help": "Required pane exit code when `--until exit-code` is selected"
+                  }
+                },
+                {
+                  "name": "interactive",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose an existing tmux session interactively')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--interactive",
+                      "-i"
+                    ],
+                    "long_flags": [
+                      "--interactive"
+                    ],
+                    "short_flags": [
+                      "-i"
+                    ],
+                    "help": "Choose an existing tmux session interactively"
                   }
                 }
               ],
@@ -13766,7 +13976,7 @@
                 "            console.print(Panel(f\"❌ Layout #{index} must be a JSON object.\", title=\"Error\", border_style=\"red\"))",
                 "            raise typer.Exit(code=1)",
                 "",
-                "        layout: dict[object, object] = layout_raw",
+                "        layout = cast(dict[object, object], layout_raw)",
                 "        layout_name_raw = layout.get(\"layoutName\")",
                 "        if layout_name_raw is None:",
                 "            layout_name = f\"layout#{index}\"",
@@ -13903,7 +14113,7 @@
                 "name": "create",
                 "fullPath": "agents parallel create",
                 "shortPath": "a p c",
-                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: cursor-agent, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi\n",
+                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi\n",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_parallel_commands.py",
                   "module": "stackops.scripts.python.agents_parallel_commands",
@@ -13917,10 +14127,7 @@
                     "    reasoning_effort: Annotated[",
                     "        ReasoningEffort | None,",
                     "        typer.Option(",
-                    "            ...,",
-                    "            \"--reasoning\",",
-                    "            \"-r\",",
-                    "            help=\"Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.\",",
+                    "            ..., \"--reasoning\", \"-r\", help=\"Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.\"",
                     "        ),",
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Provider to use (if agent support many)\")] = None,",
@@ -13931,8 +14138,13 @@
                     "    context_path: Annotated[",
                     "        str | None, typer.Option(..., \"--context-path\", \"-C\", help=\"Path to the context file/folder, defaults to .ai/todo/\")",
                     "    ] = None,",
-                    "    separator: Annotated[str, typer.Option(..., \"--separator\", \"-s\", help=\"Separator for context. Supports escaped values like '\\\\n'.\")] = DEFAULT_SEAPRATOR,",
+                    "    separator: Annotated[",
+                    "        str, typer.Option(..., \"--separator\", \"-s\", help=\"Separator for context. Supports escaped values like '\\\\n'.\")",
+                    "    ] = DEFAULT_SEAPRATOR,",
                     "    agent_load: Annotated[int, typer.Option(..., \"--agent-load\", \"-l\", min=1, help=\"Number of tasks per prompt\")] = 3,",
+                    "    stagger_max: Annotated[",
+                    "        float, typer.Option(..., \"--stagger-max\", \"-g\", min=0.0, help=\"Maximum startup stagger delay, in seconds. Use 0 to disable staggering.\")",
+                    "    ] = DEFAULT_STAGGER_MAX,",
                     "    prompt: Annotated[str | None, typer.Option(..., \"--prompt\", \"-p\", help=\"Prompt prefix as string\")] = None,",
                     "    prompt_path: Annotated[str | None, typer.Option(..., \"--prompt-path\", \"-P\", help=\"Path to prompt file\")] = None,",
                     "    prompt_name: Annotated[str | None, typer.Option(..., \"--prompt-name\", \"-N\", help=\"Prompt entry name from prompts YAML\")] = None,",
@@ -13960,12 +14172,12 @@
                     "    save_as_yaml: Annotated[",
                     "        bool,",
                     "        typer.Option(",
-                    "            ...,",
-                    "            \"--save-as-yaml\",",
-                    "            help=\"Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.\",",
+                    "            ..., \"--save-as-yaml\", help=\"Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.\"",
                     "        ),",
                     "    ] = False,",
-                    "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\")] = False,",
+                    "    interactive: Annotated[",
+                    "        bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\")",
+                    "    ] = False,",
                     ") -> None:",
                     "    \"\"\"Create agents layout file, ready to run.\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl",
@@ -13982,6 +14194,7 @@
                     "            context_path=context_path,",
                     "            separator=normalized_separator,",
                     "            agent_load=agent_load,",
+                    "            stagger_max=stagger_max,",
                     "            prompt=prompt,",
                     "            prompt_path=prompt_path,",
                     "            prompt_name=prompt_name,",
@@ -14204,6 +14417,29 @@
                           "-l"
                         ],
                         "help": "Number of tasks per prompt",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "stagger_max",
+                      "kind": "positional_or_keyword",
+                      "type": "float",
+                      "default": "DEFAULT_STAGGER_MAX",
+                      "required": false,
+                      "annotation_raw": "Annotated[float, typer.Option(..., '--stagger-max', '-g', min=0.0, help='Maximum startup stagger delay, in seconds. Use 0 to disable staggering.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--stagger-max",
+                          "-g"
+                        ],
+                        "long_flags": [
+                          "--stagger-max"
+                        ],
+                        "short_flags": [
+                          "-g"
+                        ],
+                        "help": "Maximum startup stagger delay, in seconds. Use 0 to disable staggering.",
                         "default": "..."
                       }
                     },
@@ -14446,7 +14682,7 @@
                   {
                     "name": "c",
                     "hidden": true,
-                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: cursor-agent, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi\n"
+                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi\n"
                   }
                 ]
               },
@@ -14472,29 +14708,40 @@
                     "    ] = DEFAULT_SEAPRATOR,",
                     ") -> None:",
                     "    \"\"\"Run one prompt and ask the selected agent to persist a context file for the job.\"\"\"",
-                    "    from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl",
+                    "    from contextlib import chdir",
                     "",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl",
+                    "    from stackops.utils.accessories import get_repo_root",
+                    "",
+                    "    repo_root = get_repo_root(Path.cwd())",
+                    "    if repo_root is None:",
+                    "        typer.echo(\"agents parallel create-context must be run from inside a git repository\")",
+                    "        raise typer.Exit(1)",
+                    "",
+                    "    context_output_path = repo_root.joinpath(\".ai\", \"agents\", job_name, \"context.md\")",
+                    "    repo_relative_context_output_path = f\"./{context_output_path.relative_to(repo_root).as_posix()}\"",
                     "    normalized_separator = _decode_separator(separator=separator)",
                     "    separator_for_prompt = normalized_separator.encode(\"unicode_escape\").decode(\"ascii\")",
                     "    appended_instruction = (",
-                    "        f\"Please store the results in ./.ai/agents/{job_name}/context.md (overwrite) and \"",
+                    "        f\"Please store the results in {repo_relative_context_output_path} (overwrite) and \"",
                     "        f'within that file make sure to use \"{separator_for_prompt}\" to separate the individual results.'",
                     "    )",
                     "    full_prompt = f\"{prompt}\\n\\n{appended_instruction}\"",
                     "",
                     "    try:",
-                    "        impl(",
-                    "            prompt=full_prompt,",
-                    "            agent=agent,",
-                    "            reasoning_effort=None,",
-                    "            context=\"\",",
-                    "            context_path=None,",
-                    "            prompts_yaml_path=None,",
-                    "            context_name=None,",
-                    "            where=\"all\",",
-                    "            edit=False,",
-                    "            show_prompts_yaml_format=False,",
-                    "        )",
+                    "        with chdir(repo_root):",
+                    "            impl(",
+                    "                prompt=full_prompt,",
+                    "                agent=agent,",
+                    "                reasoning_effort=None,",
+                    "                context=\"\",",
+                    "                context_path=None,",
+                    "                prompts_yaml_path=None,",
+                    "                context_name=None,",
+                    "                where=\"all\",",
+                    "                edit=False,",
+                    "                show_prompts_yaml_format=False,",
+                    "            )",
                     "    except SystemExit as e:",
                     "        exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1",
                     "        if exit_code != 0:",
@@ -14502,7 +14749,7 @@
                     "    except ValueError as e:",
                     "        raise typer.BadParameter(str(e)) from e",
                     "",
-                    "    separator_path = Path(\".ai\") / \"agents\" / job_name / \"separator.txt\"",
+                    "    separator_path = repo_root.joinpath(\".ai\", \"agents\", job_name, \"separator.txt\")",
                     "    separator_path.parent.mkdir(parents=True, exist_ok=True)",
                     "    separator_path.write_text(normalized_separator, encoding=\"utf-8\")"
                   ],
@@ -14623,26 +14870,15 @@
                     "def run_parallel(",
                     "    run_name: Annotated[str | None, typer.Argument(help=\"Parallel YAML run name. Use a flat top-level key, e.g. docs_update.\")] = None,",
                     "    parallel_yaml_path: Annotated[",
-                    "        str | None,",
-                    "        typer.Option(",
-                    "            ...,",
-                    "            \"--yaml-path\",",
-                    "            \"-y\",",
-                    "            help=\"YAML file containing named parallel runs. Auto-created with a template if missing.\",",
-                    "        ),",
+                    "        str | None, typer.Option(..., \"--yaml-path\", \"-y\", help=\"YAML file containing named parallel runs. Auto-created with a template if missing.\")",
                     "    ] = None,",
                     "    where: Annotated[",
-                    "        PARALLEL_RUNS_WHERE,",
-                    "        typer.Option(..., \"--where\", \"-w\", help=\"Where to look for parallel YAML files when --yaml-path is not provided.\"),",
+                    "        PARALLEL_RUNS_WHERE, typer.Option(..., \"--where\", \"-w\", help=\"Where to look for parallel YAML files when --yaml-path is not provided.\")",
                     "    ] = \"all\",",
                     "    show_parallel_yaml_format: Annotated[",
-                    "        bool,",
-                    "        typer.Option(..., \"--show-format\", \"-Y\", help=\"Show parallel YAML format guidance and resolved file paths.\"),",
+                    "        bool, typer.Option(..., \"--show-format\", \"-Y\", help=\"Show parallel YAML format guidance and resolved file paths.\")",
                     "    ] = False,",
-                    "    edit: Annotated[",
-                    "        bool,",
-                    "        typer.Option(..., \"--edit\", \"-e\", help=\"Open parallel YAML in an editor (hx preferred, nano fallback).\"),",
-                    "    ] = False,",
+                    "    edit: Annotated[bool, typer.Option(..., \"--edit\", \"-e\", help=\"Open parallel YAML in an editor (hx preferred, nano fallback).\")] = False,",
                     "    add_entry: Annotated[",
                     "        bool,",
                     "        typer.Option(",
@@ -14668,30 +14904,28 @@
                     "        str | None, typer.Option(..., \"--separator\", \"-s\", help=\"Override separator for context. Supports escaped values like '\\\\n'.\")",
                     "    ] = None,",
                     "    agent_load: Annotated[int | None, typer.Option(..., \"--agent-load\", \"-l\", help=\"Override number of tasks per prompt.\")] = None,",
+                    "    stagger_max: Annotated[",
+                    "        float | None,",
+                    "        typer.Option(..., \"--stagger-max\", \"-g\", min=0.0, help=\"Override maximum startup stagger delay, in seconds. Use 0 to disable staggering.\"),",
+                    "    ] = None,",
                     "    prompt: Annotated[str | None, typer.Option(..., \"--prompt\", \"-p\", help=\"Override prompt prefix as string.\")] = None,",
                     "    prompt_path: Annotated[str | None, typer.Option(..., \"--prompt-path\", \"-P\", help=\"Override prompt file path.\")] = None,",
                     "    prompt_name: Annotated[str | None, typer.Option(..., \"--prompt-name\", \"-N\", help=\"Override prompt entry name from prompts YAML.\")] = None,",
                     "    job_name: Annotated[",
-                    "        str | None,",
-                    "        typer.Option(..., \"--job-name\", \"-n\", help=\"Override job label. Also used as generated layout name and default output directory.\"),",
+                    "        str | None, typer.Option(..., \"--job-name\", \"-n\", help=\"Override job label. Also used as generated layout name and default output directory.\")",
                     "    ] = None,",
                     "    join_prompt_and_context: Annotated[",
                     "        bool | None,",
-                    "        typer.Option(",
-                    "            \"--joined-prompt-context/--no-joined-prompt-context\",",
-                    "            \"-j/-nj\",",
-                    "            help=\"Override whether to join prompt file to the context.\",",
-                    "        ),",
+                    "        typer.Option(\"--joined-prompt-context\", \"-j\", help=\"Override generated config to join the prompt file to the context.\"),",
                     "    ] = None,",
                     "    run: Annotated[",
                     "        bool | None,",
-                    "        typer.Option(\"--run/--no-run\", \"-R/-nR\", help=\"Override whether to immediately launch the generated layout through terminal run.\"),",
+                    "        typer.Option(\"--run\", \"-R\", help=\"Override generated config to immediately launch the layout through terminal run.\"),",
                     "    ] = None,",
                     "    output_path: Annotated[str | None, typer.Option(..., \"--output-path\", \"-o\", help=\"Override layout.json output path.\")] = None,",
                     "    agents_dir: Annotated[str | None, typer.Option(..., \"--agents-dir\", \"-d\", help=\"Override exact directory to store agent files in.\")] = None,",
                     "    interactive: Annotated[",
-                    "        bool | None,",
-                    "        typer.Option(\"--interactive/--no-interactive\", \"-i/-ni\", help=\"Override whether to run create in interactive mode.\"),",
+                    "        bool | None, typer.Option(\"--interactive\", \"-i\", help=\"Override generated config to run create in interactive mode.\")",
                     "    ] = None,",
                     ") -> None:",
                     "    \"\"\"Run a named parallel agent workflow from YAML, with create-option overrides.\"\"\"",
@@ -14712,6 +14946,7 @@
                     "                context_path=context_path,",
                     "                separator=separator,",
                     "                agent_load=agent_load,",
+                    "                stagger_max=stagger_max,",
                     "                prompt=prompt,",
                     "                prompt_path=prompt_path,",
                     "                prompt_name=prompt_name,",
@@ -15071,6 +15306,29 @@
                       }
                     },
                     {
+                      "name": "stagger_max",
+                      "kind": "positional_or_keyword",
+                      "type": "float | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[float | None, typer.Option(..., '--stagger-max', '-g', min=0.0, help='Override maximum startup stagger delay, in seconds. Use 0 to disable staggering.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--stagger-max",
+                          "-g"
+                        ],
+                        "long_flags": [
+                          "--stagger-max"
+                        ],
+                        "short_flags": [
+                          "-g"
+                        ],
+                        "help": "Override maximum startup stagger delay, in seconds. Use 0 to disable staggering.",
+                        "default": "..."
+                      }
+                    },
+                    {
                       "name": "prompt",
                       "kind": "positional_or_keyword",
                       "type": "str | None",
@@ -15168,22 +15426,20 @@
                       "type": "bool | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool | None, typer.Option('--joined-prompt-context/--no-joined-prompt-context', '-j/-nj', help='Override whether to join prompt file to the context.')]",
+                      "annotation_raw": "Annotated[bool | None, typer.Option('--joined-prompt-context', '-j', help='Override generated config to join the prompt file to the context.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--joined-prompt-context/--no-joined-prompt-context",
-                          "-j/-nj"
+                          "--joined-prompt-context",
+                          "-j"
                         ],
                         "long_flags": [
-                          "--joined-prompt-context",
-                          "--no-joined-prompt-context"
+                          "--joined-prompt-context"
                         ],
                         "short_flags": [
-                          "-j",
-                          "-nj"
+                          "-j"
                         ],
-                        "help": "Override whether to join prompt file to the context."
+                        "help": "Override generated config to join the prompt file to the context."
                       }
                     },
                     {
@@ -15192,22 +15448,20 @@
                       "type": "bool | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool | None, typer.Option('--run/--no-run', '-R/-nR', help='Override whether to immediately launch the generated layout through terminal run.')]",
+                      "annotation_raw": "Annotated[bool | None, typer.Option('--run', '-R', help='Override generated config to immediately launch the layout through terminal run.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--run/--no-run",
-                          "-R/-nR"
+                          "--run",
+                          "-R"
                         ],
                         "long_flags": [
-                          "--run",
-                          "--no-run"
+                          "--run"
                         ],
                         "short_flags": [
-                          "-R",
-                          "-nR"
+                          "-R"
                         ],
-                        "help": "Override whether to immediately launch the generated layout through terminal run."
+                        "help": "Override generated config to immediately launch the layout through terminal run."
                       }
                     },
                     {
@@ -15262,22 +15516,20 @@
                       "type": "bool | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool | None, typer.Option('--interactive/--no-interactive', '-i/-ni', help='Override whether to run create in interactive mode.')]",
+                      "annotation_raw": "Annotated[bool | None, typer.Option('--interactive', '-i', help='Override generated config to run create in interactive mode.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--interactive/--no-interactive",
-                          "-i/-ni"
+                          "--interactive",
+                          "-i"
                         ],
                         "long_flags": [
-                          "--interactive",
-                          "--no-interactive"
+                          "--interactive"
                         ],
                         "short_flags": [
-                          "-i",
-                          "-ni"
+                          "-i"
                         ],
-                        "help": "Override whether to run create in interactive mode."
+                        "help": "Override generated config to run create in interactive mode."
                       }
                     }
                   ],
@@ -15312,8 +15564,7 @@
                     "    agent_dir: Annotated[str, typer.Argument(..., help=\"Path to the agent directory containing the prompts folder\")],",
                     "    output_path: Annotated[str, typer.Argument(..., help=\"Path to write the concatenated material files\")],",
                     "    separator: Annotated[",
-                    "        str,",
-                    "        typer.Option(..., help=\"Separator to use when concatenating material files. Supports escaped values like '\\\\n'.\"),",
+                    "        str, typer.Option(..., help=\"Separator to use when concatenating material files. Supports escaped values like '\\\\n'.\")",
                     "    ] = \"\\n\",",
                     "    pattern: Annotated[str | None, typer.Option(..., help=\"Pattern to match material files (e.g., 'res.txt')\")] = None,",
                     ") -> None:",
@@ -15507,6 +15758,8 @@
                     "",
                     "    try:",
                     "        result = install_browser_tech(which=which)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error",
@@ -15917,9 +16170,10 @@
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl",
                 "",
-                "        impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory)",
+                "        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory)",
                 "    except ValueError as error:",
-                "        raise typer.BadParameter(str(error)) from error"
+                "        raise typer.BadParameter(str(error)) from error",
+                "    raise typer.Exit(code=return_code)"
               ],
               "name": "add_skill",
               "parameters": [
@@ -16330,14 +16584,21 @@
             "signature": {
               "raw_lines": [
                 "def init_config(",
-                "    root: Annotated[",
-                "        str, typer.Option(..., \"--root\", \"-r\", help=\"Root directory of the repository to initialize AI configs in. Defaults to current directory.\")",
-                "    ],",
                 "    agents: Annotated[",
                 "        str, typer.Option(..., \"--agent\", \"-a\", help=_INIT_CONFIG_AGENT_HELP)",
                 "    ],",
-                "    add_config: Annotated[bool, typer.Option(\"--add-config\", \"-c\", help=\"Create private agent config files/directories\")] = True,",
-                "    add_instructions: Annotated[bool, typer.Option(\"--add-instructions\", \"-i\", help=\"Create agent instructions files (e.g. AGENTS.md)\")] = True,",
+                "    root: Annotated[",
+                "        str | None,",
+                "        typer.Option(\"--root\", \"-r\", help=\"Root directory of the repository to initialize AI configs in. Defaults to current directory.\"),",
+                "    ] = None,",
+                "    add_config: Annotated[",
+                "        bool,",
+                "        typer.Option(\"--no-add-config\", \"-C\", help=\"Skip private agent config files/directories\"),",
+                "    ] = True,",
+                "    add_instructions: Annotated[",
+                "        bool,",
+                "        typer.Option(\"--no-add-instructions\", \"-I\", help=\"Skip agent instruction files (e.g. AGENTS.md)\"),",
+                "    ] = True,",
                 "    add_scripts: Annotated[bool, typer.Option(\"--include-scripts\", \"-s\", help=\"Create shared .ai and scripts/type_checking scaffold\")] = False,",
                 "    add_vscode_tasks: Annotated[bool, typer.Option(\"--add-vscode-tasks\", \"-l\", help=\"Add VS Code lint/type-check task only\")] = False,",
                 "    add_to_gitignore: Annotated[",
@@ -16365,29 +16626,6 @@
               "name": "init_config",
               "parameters": [
                 {
-                  "name": "root",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": null,
-                  "required": true,
-                  "annotation_raw": "Annotated[str, typer.Option(..., '--root', '-r', help='Root directory of the repository to initialize AI configs in. Defaults to current directory.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--root",
-                      "-r"
-                    ],
-                    "long_flags": [
-                      "--root"
-                    ],
-                    "short_flags": [
-                      "-r"
-                    ],
-                    "help": "Root directory of the repository to initialize AI configs in. Defaults to current directory.",
-                    "default": "..."
-                  }
-                },
-                {
                   "name": "agents",
                   "kind": "positional_or_keyword",
                   "type": "str",
@@ -16410,25 +16648,47 @@
                   }
                 },
                 {
+                  "name": "root",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--root', '-r', help='Root directory of the repository to initialize AI configs in. Defaults to current directory.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--root",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--root"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Root directory of the repository to initialize AI configs in. Defaults to current directory."
+                  }
+                },
+                {
                   "name": "add_config",
                   "kind": "positional_or_keyword",
                   "type": "bool",
                   "default": true,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--add-config', '-c', help='Create private agent config files/directories')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--no-add-config', '-C', help='Skip private agent config files/directories')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--add-config",
-                      "-c"
+                      "--no-add-config",
+                      "-C"
                     ],
                     "long_flags": [
-                      "--add-config"
+                      "--no-add-config"
                     ],
                     "short_flags": [
-                      "-c"
+                      "-C"
                     ],
-                    "help": "Create private agent config files/directories"
+                    "help": "Skip private agent config files/directories"
                   }
                 },
                 {
@@ -16437,20 +16697,20 @@
                   "type": "bool",
                   "default": true,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--add-instructions', '-i', help='Create agent instructions files (e.g. AGENTS.md)')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--no-add-instructions', '-I', help='Skip agent instruction files (e.g. AGENTS.md)')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--add-instructions",
-                      "-i"
+                      "--no-add-instructions",
+                      "-I"
                     ],
                     "long_flags": [
-                      "--add-instructions"
+                      "--no-add-instructions"
                     ],
                     "short_flags": [
-                      "-i"
+                      "-I"
                     ],
-                    "help": "Create agent instructions files (e.g. AGENTS.md)"
+                    "help": "Skip agent instruction files (e.g. AGENTS.md)"
                   }
                 },
                 {
@@ -17084,9 +17344,6 @@
                     "        typer.Option(..., \"--filter-by\", \"-f\", help=\"Field used to search/filter processes.\"),",
                     "    ] = \"command\",",
                     ") -> None:",
-                    "    from stackops.utils.procs import ProcessManager",
-                    "",
-                    "    proc = ProcessManager()",
                     "    match search_by:",
                     "        case \"command\" | \"c\":",
                     "            search_field = \"command\"",
@@ -17107,6 +17364,9 @@
                     "        case _:",
                     "            typer.echo(f\"Invalid search_by value: {search_by}\", err=True)",
                     "            raise typer.Exit(code=1)",
+                    "    from stackops.utils.procs import ProcessManager",
+                    "",
+                    "    proc = ProcessManager()",
                     "    proc.choose_and_kill(search_by=search_field)"
                   ],
                   "name": "kill_process",
@@ -17224,8 +17484,8 @@
                 "kind": "command",
                 "name": "get-machine-specs",
                 "fullPath": "utils machine get-machine-specs",
-                "shortPath": "u m g",
-                "help": "🖥 <g> Get machine specifications.",
+                "shortPath": "u m s",
+                "help": "🖥 <s> Get machine specifications.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py",
                   "module": "stackops.scripts.python.helpers.helpers_utils.machine_utils_app",
@@ -17236,9 +17496,19 @@
                     "def get_machine_specs(",
                     "    hardware: Annotated[bool, typer.Option(..., \"--hardware\", \"-h\", help=\"Show compute capability\")] = False,",
                     ") -> None:",
-                    "    from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs as impl",
+                    "    import json",
                     "",
-                    "    impl(hardware=hardware)"
+                    "    from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs as impl",
+                    "    from stackops.utils.source_of_truth import CONFIG_ROOT",
+                    "",
+                    "    if hardware:",
+                    "        impl(hardware=hardware)",
+                    "        return",
+                    "    specs = impl(hardware=hardware)",
+                    "    typer.echo(specs)",
+                    "    CONFIG_ROOT.mkdir(parents=True, exist_ok=True)",
+                    "    path = CONFIG_ROOT.joinpath(\"machine_specs.json\")",
+                    "    path.write_text(json.dumps(specs, indent=4), encoding=\"utf-8\")"
                   ],
                   "name": "get_machine_specs",
                   "parameters": [
@@ -17273,7 +17543,7 @@
                 },
                 "aliases": [
                   {
-                    "name": "g",
+                    "name": "s",
                     "hidden": true
                   }
                 ]
@@ -17325,7 +17595,10 @@
                   "raw_lines": [
                     "def mount_device(",
                     "    device_query: Annotated[str | None, typer.Option(\"--device\", \"-d\", help=\"Device query (path, key, or label).\")] = None,",
-                    "    mount_point: Annotated[str | None, typer.Option(\"--mount-point\", \"-p\", help=\"Mount point (use '-' for default on macOS).\")] = None,",
+                    "    mount_point: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--mount-point\", \"-p\", help=\"Mount point (use '-' for default on macOS; not needed with --backend udisksctl).\"),",
+                    "    ] = None,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Pick device and mount point interactively.\")] = False,",
                     "    read_only: Annotated[bool, typer.Option(\"--read-only\", \"-r\", help=\"Mount in read-only mode.\")] = False,",
                     "    backend: Annotated[",
@@ -17338,12 +17611,16 @@
                     "    if interactive:",
                     "        cli_config_mount.mount_interactive()",
                     "        return",
-                    "    if device_query is None or mount_point is None:",
-                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"--device and --mount-point are required unless --interactive is set\"",
+                    "    if device_query is None:",
+                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"--device is required unless --interactive is set\"",
+                    "        typer.echo(msg)",
+                    "        raise typer.Exit(2)",
+                    "    if mount_point is None and backend != \"udisksctl\":",
+                    "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"--mount-point is required unless --interactive is set or --backend udisksctl is used\"",
                     "        typer.echo(msg)",
                     "        raise typer.Exit(2)",
                     "",
-                    "    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point, read_only=read_only, backend=backend)"
+                    "    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point or \"\", read_only=read_only, backend=backend)"
                   ],
                   "name": "mount_device",
                   "parameters": [
@@ -17375,7 +17652,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--mount-point', '-p', help=\"Mount point (use '-' for default on macOS).\")]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--mount-point', '-p', help=\"Mount point (use '-' for default on macOS; not needed with --backend udisksctl).\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -17388,7 +17665,7 @@
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Mount point (use '-' for default on macOS)."
+                        "help": "Mount point (use '-' for default on macOS; not needed with --backend udisksctl)."
                       }
                     },
                     {
@@ -17692,16 +17969,43 @@
                     "        typer.Option(",
                     "            \"--clean-group\",",
                     "            \"-c\",",
-                    "            help=\"Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups.\",",
+                    "            help=\"Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.\",",
                     "        ),",
                     "    ] = None,",
+                    "    clean_all_groups: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--clean-all-groups\",",
+                    "            \"-C\",",
+                    "            help=\"Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh.\",",
+                    "        ),",
+                    "    ] = False,",
+                    "    delete_venv: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--delete-venv\",",
+                    "            \"-D\",",
+                    "            help=\"Delete the project's .venv directory before regenerating pyproject_init.sh.\",",
+                    "        ),",
+                    "    ] = False,",
                     ") -> None:",
-                    "    from stackops.utils.upgrade_packages import clean_dependency_groups, generate_uv_add_commands",
+                    "    from stackops.utils.upgrade_packages import (",
+                    "        clean_dependency_groups,",
+                    "        delete_project_venv,",
+                    "        generate_uv_add_commands,",
+                    "    )",
                     "",
                     "    try:",
                     "        project_root = _resolve_pyproject_root(Path(root))",
-                    "        if clean_group:",
-                    "            clean_dependency_groups(project_root=project_root, group_names=clean_group)",
+                    "        selected_clean_groups = [] if clean_group is None else clean_group",
+                    "        if clean_all_groups or selected_clean_groups:",
+                    "            clean_dependency_groups(",
+                    "                project_root=project_root,",
+                    "                group_names=selected_clean_groups,",
+                    "                clean_all_groups=clean_all_groups,",
+                    "            )",
+                    "        if delete_venv:",
+                    "            delete_project_venv(project_root=project_root)",
                     "        generate_uv_add_commands(",
                     "            pyproject_path=project_root / \"pyproject.toml\",",
                     "            output_path=project_root / \"pyproject_init.sh\",",
@@ -17742,7 +18046,7 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--clean-group', '-c', help='Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--clean-group', '-c', help='Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -17755,7 +18059,51 @@
                         "short_flags": [
                           "-c"
                         ],
-                        "help": "Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups."
+                        "help": "Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name."
+                      }
+                    },
+                    {
+                      "name": "clean_all_groups",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--clean-all-groups', '-C', help='Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--clean-all-groups",
+                          "-C"
+                        ],
+                        "long_flags": [
+                          "--clean-all-groups"
+                        ],
+                        "short_flags": [
+                          "-C"
+                        ],
+                        "help": "Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh."
+                      }
+                    },
+                    {
+                      "name": "delete_venv",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--delete-venv', '-D', help=\"Delete the project's .venv directory before regenerating pyproject_init.sh.\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--delete-venv",
+                          "-D"
+                        ],
+                        "long_flags": [
+                          "--delete-venv"
+                        ],
+                        "short_flags": [
+                          "-D"
+                        ],
+                        "help": "Delete the project's .venv directory before regenerating pyproject_init.sh."
                       }
                     }
                   ],
@@ -18453,6 +18801,18 @@
                     "            param_hint=\"--output\",",
                     "        )",
                     "",
+                    "    output_parent = output_path.parent",
+                    "    if not output_parent.exists():",
+                    "        raise typer.BadParameter(",
+                    "            f\"Output directory does not exist: {output_parent}\",",
+                    "            param_hint=\"--output\",",
+                    "        )",
+                    "    if not output_parent.is_dir():",
+                    "        raise typer.BadParameter(",
+                    "            f\"Output parent path is not a directory: {output_parent}\",",
+                    "            param_hint=\"--output\",",
+                    "        )",
+                    "",
                     "    from stackops.scripts.python.helpers.helpers_utils.pdf import merge_pdfs as impl",
                     "",
                     "    # Call implementation with resolved paths (strings) for consistency",
@@ -18563,11 +18923,11 @@
                     "    ] = 0,",
                     "    compress_streams: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--compress-streams/--no-compress-streams\", \"-c/-C\", help=\"Compress uncompressed streams.\"),",
+                    "        typer.Option(\"--no-compress-streams\", \"-C\", help=\"Do not compress uncompressed streams.\"),",
                     "    ] = True,",
                     "    use_objstms: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--object-streams/--no-object-streams\", \"-s/-S\", help=\"Use object streams for additional compression.\"),",
+                    "        typer.Option(\"--no-object-streams\", \"-S\", help=\"Do not use object streams for additional compression.\"),",
                     "    ] = True,",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_utils.pdf import compress_pdf as impl",
@@ -18671,22 +19031,20 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--compress-streams/--no-compress-streams', '-c/-C', help='Compress uncompressed streams.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-compress-streams', '-C', help='Do not compress uncompressed streams.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--compress-streams/--no-compress-streams",
-                          "-c/-C"
+                          "--no-compress-streams",
+                          "-C"
                         ],
                         "long_flags": [
-                          "--compress-streams",
                           "--no-compress-streams"
                         ],
                         "short_flags": [
-                          "-c",
                           "-C"
                         ],
-                        "help": "Compress uncompressed streams."
+                        "help": "Do not compress uncompressed streams."
                       }
                     },
                     {
@@ -18695,22 +19053,20 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--object-streams/--no-object-streams', '-s/-S', help='Use object streams for additional compression.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-object-streams', '-S', help='Do not use object streams for additional compression.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--object-streams/--no-object-streams",
-                          "-s/-S"
+                          "--no-object-streams",
+                          "-S"
                         ],
                         "long_flags": [
-                          "--object-streams",
                           "--no-object-streams"
                         ],
                         "short_flags": [
-                          "-s",
                           "-S"
                         ],
-                        "help": "Use object streams for additional compression."
+                        "help": "Do not use object streams for additional compression."
                       }
                     }
                   ],
@@ -18764,7 +19120,7 @@
                     "    backend: Annotated[DatabaseBackend, typer.Option(\"--backend\", \"-b\", help=\"The TUI database client to use.\")] = \"harlequin\",",
                     "    read_only: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--read-only/--read-write\", \"-r/-w\", help=\"Open the database in read-only mode (if supported by backend).\"),",
+                    "        typer.Option(\"--read-write\", \"-w\", help=\"Open the database in read/write mode (if supported by backend).\"),",
                     "    ] = True,",
                     "    theme: Annotated[str | None, typer.Option(\"--theme\", \"-t\", help=\"Theme to use (if supported by backend).\")] = None,",
                     "    limit: Annotated[int | None, typer.Option(\"--limit\", \"-l\", help=\"Maximum number of rows to load (if supported by backend).\")] = None,",
@@ -18911,22 +19267,20 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--read-only/--read-write', '-r/-w', help='Open the database in read-only mode (if supported by backend).')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--read-write', '-w', help='Open the database in read/write mode (if supported by backend).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--read-only/--read-write",
-                          "-r/-w"
+                          "--read-write",
+                          "-w"
                         ],
                         "long_flags": [
-                          "--read-only",
                           "--read-write"
                         ],
                         "short_flags": [
-                          "-r",
                           "-w"
                         ],
-                        "help": "Open the database in read-only mode (if supported by backend)."
+                        "help": "Open the database in read/write mode (if supported by backend)."
                       }
                     },
                     {
@@ -19889,6 +20243,7 @@
             "    project_path: Annotated[str | None, typer.Option(\"--project\", \"-p\", help=\"specify uv project to use\")] = None,",
             "    uv_with: Annotated[str | None, typer.Option(\"--uv-with\", \"-w\", help=\"specify uv with packages to use\")] = None,",
             "    backend: Annotated[BACKENDS_LOOSE, typer.Option(\"--backend\", \"-b\", help=\"specify the backend to use\")] = \"ipython\",",
+            "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"select the backend interactively\")] = False,",
             "    profile: Annotated[str | None, typer.Option(\"--profile\", \"-r\", help=\"ipython profile to use, defaults to default profile.\")] = None,",
             "    stackops_project: Annotated[bool, typer.Option(\"--self\", \"-s\", help=\"specify stackops project to use.\")] = False,",
             "    frozen: Annotated[bool, typer.Option(\"--frozen\", \"-f\", help=\"freeze the environment (no package changes allowed)\")] = False,",
@@ -19900,6 +20255,7 @@
             "        project_path=project_path,",
             "        uv_with=uv_with,",
             "        backend=backend,",
+            "        interactive=interactive,",
             "        profile=profile,",
             "        stackops_project=stackops_project,",
             "        frozen=frozen,",
@@ -19986,6 +20342,28 @@
                   "-b"
                 ],
                 "help": "specify the backend to use"
+              }
+            },
+            {
+              "name": "interactive",
+              "kind": "positional_or_keyword",
+              "type": "bool",
+              "default": false,
+              "required": false,
+              "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='select the backend interactively')]",
+              "typer": {
+                "kind": "option",
+                "param_decls": [
+                  "--interactive",
+                  "-i"
+                ],
+                "long_flags": [
+                  "--interactive"
+                ],
+                "short_flags": [
+                  "-i"
+                ],
+                "help": "select the backend interactively"
               }
             },
             {
