@@ -2396,6 +2396,24 @@
       }
     },
     {
+      "appName": "pdu",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/KSXGitHub/parallel-disk-usage",
+      "doc": "💾 Highly parallelized, blazing fast directory tree analyzer.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "pdu-x86_64-unknown-linux-musl",
+          "windows": "pdu-x86_64-pc-windows-msvc.exe",
+          "darwin": "pdu-x86_64-apple-darwin"
+        },
+        "arm64": {
+          "linux": null,
+          "windows": null,
+          "darwin": null
+        }
+      }
+    },
+    {
       "appName": "ots",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/Luzifer/ots",

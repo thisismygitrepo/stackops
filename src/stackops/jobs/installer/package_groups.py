@@ -228,6 +228,7 @@ PACKAGES_FILE = [
     "diskonaut",
     "dua",
     "dust",
+    "pdu",
     "cpz",
     "rmz",
 ]

@@ -16,7 +16,6 @@
 * https://github.com/ratatui/awesome-ratatui?tab=readme-ov-file
 * https://github.com/toolleeo/awesome-cli-apps-in-a-csv
 * https://github.com/catppuccin/
-* https://github.com/jsonresume/resume-cli
 * https://github.com/EvanLi/Github-Ranking/
 * https://github.com/sindresorhus/awesome
 * https://github.com/anderspitman/awesome-tunneling
