@@ -22,6 +22,7 @@ def _build_windows_installer_data(base_installer_data: InstallerData) -> Install
         license=base_installer_data["license"],
         doc=base_installer_data["doc"],
         repoURL=base_installer_data["repoURL"],
+        categoryLabels=base_installer_data["categoryLabels"],
         fileNamePattern={
             "amd64": {
                 "linux": None,

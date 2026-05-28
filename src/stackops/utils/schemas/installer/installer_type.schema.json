@@ -1,30 +1,212 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://bytesense.local/schemas/installer_type.schema.json",
-  "title": "Installer Types Schema",
-  "description": "Schema for installer data structures",
+  "title": "StackOps installer_data.json",
+  "description": "Schema for StackOps installer package definitions.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional JSON Schema reference for editor validation."
+    },
     "version": {
       "type": "string",
-      "description": "Schema or config version."
+      "description": "Installer data format version."
     },
     "installers": {
       "type": "array",
-      "description": "List of installer data.",
+      "description": "Installer definitions.",
       "items": {
         "$ref": "#/definitions/InstallerData"
       }
     }
   },
-  "required": ["version", "installers"],
+  "required": [
+    "version",
+    "installers"
+  ],
   "definitions": {
     "CPU_ARCHITECTURES": {
-      "enum": ["amd64", "arm64"]
+      "type": "string",
+      "enum": [
+        "amd64",
+        "arm64"
+      ]
     },
     "OPERATING_SYSTEMS": {
-      "enum": ["windows", "linux", "darwin"]
+      "type": "string",
+      "enum": [
+        "windows",
+        "linux",
+        "darwin"
+      ]
+    },
+    "InstallerCategory": {
+      "type": "string",
+      "description": "One category label allowed in InstallerData.categoryLabels.",
+      "oneOf": [
+        {
+          "const": "system-setup",
+          "title": "System Setup & Package Management",
+          "description": "Bootstrap installers, package managers, updaters, system prerequisites, and platform setup helpers."
+        },
+        {
+          "const": "languages-runtimes",
+          "title": "Languages & Runtimes",
+          "description": "Programming language runtimes, toolchains, language servers, kernels, and runtime managers."
+        },
+        {
+          "const": "editors-ides",
+          "title": "Editors & IDEs",
+          "description": "Graphical and terminal editors, coding IDEs, and editor-oriented installation helpers."
+        },
+        {
+          "const": "version-control",
+          "title": "Version Control",
+          "description": "Git, GitHub, worktree, repository inspection, and Git terminal UI tooling."
+        },
+        {
+          "const": "build-devops-containers",
+          "title": "Build, DevOps & Containers",
+          "description": "Build helpers, development containers, container tooling, service orchestration, and infrastructure utilities."
+        },
+        {
+          "const": "ai-agents-assistants",
+          "title": "AI Agents & Assistants",
+          "description": "AI coding agents, chat CLIs, agent launchers, MCP tooling, and assistant-oriented apps."
+        },
+        {
+          "const": "terminals-shells",
+          "title": "Terminals & Shells",
+          "description": "Terminal emulators, shells, prompt engines, shell history tools, fonts, and terminal UX helpers."
+        },
+        {
+          "const": "terminal-workspaces",
+          "title": "Terminal Workspaces & Multiplexers",
+          "description": "Terminal multiplexers, workspace managers, web terminals, shared terminal sessions, and process panes."
+        },
+        {
+          "const": "search-navigation",
+          "title": "Search & Navigation",
+          "description": "File, code, document, shell-history, semantic, and fuzzy-search tools."
+        },
+        {
+          "const": "file-managers",
+          "title": "File Managers & Directory Browsers",
+          "description": "Terminal and web file managers, directory browsers, ls replacements, and remote file browsing tools."
+        },
+        {
+          "const": "file-operations-archives",
+          "title": "File Operations & Archives",
+          "description": "Archiving, copying, removal, file identification, previewing, cleanup, and clipboard utilities."
+        },
+        {
+          "const": "storage-backup-sync",
+          "title": "Storage, Backup & Sync",
+          "description": "Disk usage analyzers, cloud sync, backup tools, filesystem integrations, and continuous synchronization."
+        },
+        {
+          "const": "data-format-tools",
+          "title": "Data & Format Tools",
+          "description": "Structured data viewers, processors, converters, and command-line table or markup utilities."
+        },
+        {
+          "const": "databases",
+          "title": "Databases & SQL Clients",
+          "description": "Database engines, database CLIs, SQL clients, database browsers, and TUI database visualizers."
+        },
+        {
+          "const": "networking-diagnostics",
+          "title": "Networking & Diagnostics",
+          "description": "Network monitors, scanners, diagnostics, VPN clients, firewalls, IP lookup, and traffic inspection tools."
+        },
+        {
+          "const": "tunnels-remote-access",
+          "title": "Tunnels & Remote Access",
+          "description": "Localhost tunnels, reverse proxies, remote desktop tools, remote shells, and browser-based terminal access."
+        },
+        {
+          "const": "file-transfer-sharing",
+          "title": "File Transfer & Sharing",
+          "description": "Direct file transfer, encrypted sharing, local file servers, QR-based transfer, torrents, and shareable folders."
+        },
+        {
+          "const": "cloud-saas",
+          "title": "Cloud & SaaS CLIs",
+          "description": "Cloud provider, SaaS administration, cloud storage, and Cloudflare tools."
+        },
+        {
+          "const": "browsers-web-access",
+          "title": "Browsers & Web Access",
+          "description": "Desktop browsers, terminal browsers, browser helpers, browser automation, and web access utilities."
+        },
+        {
+          "const": "web-scraping-conversion",
+          "title": "Web Scraping & Content Conversion",
+          "description": "Website crawling, scraping, document extraction, HTML conversion, and web-to-text workflows."
+        },
+        {
+          "const": "documents-markdown-latex",
+          "title": "Documents, Markdown & LaTeX",
+          "description": "Markdown renderers, document converters, PDF helpers, LaTeX distributions, editors, and presentation-from-text tools."
+        },
+        {
+          "const": "graphics-images-ocr-diagrams",
+          "title": "Graphics, Images, OCR & Diagrams",
+          "description": "Image manipulation, terminal graphics, OCR, PDF/SVG rendering, diagrams, and graph visualization."
+        },
+        {
+          "const": "media-audio-video",
+          "title": "Media, Audio & Video",
+          "description": "Music players, media downloaders, video tools, streaming apps, recording apps, and conferencing clients."
+        },
+        {
+          "const": "presentations-recording",
+          "title": "Presentations & Recording",
+          "description": "Presentation tools, screen annotation, terminal recording, streaming helpers, and diagramming for talks."
+        },
+        {
+          "const": "productivity-knowledge",
+          "title": "Productivity & Knowledge",
+          "description": "Notes, cheatsheets, text expansion, timers, prompt helpers, and productivity-oriented CLI utilities."
+        },
+        {
+          "const": "security-credentials-privacy",
+          "title": "Security, Credentials & Privacy",
+          "description": "Password managers, encryption, one-time secrets, VPN clients, firewall helpers, and privacy-oriented tools."
+        },
+        {
+          "const": "monitoring-performance",
+          "title": "Monitoring, Performance & System Info",
+          "description": "System monitors, process viewers, resource profilers, benchmarking tools, log analyzers, and system info displays."
+        },
+        {
+          "const": "qr-mobile-device-tools",
+          "title": "QR, Mobile & Device Tools",
+          "description": "QR code utilities, Android mirroring, mobile transfer helpers, Wi-Fi sharing, and multi-device control."
+        },
+        {
+          "const": "terminal-fun-visuals",
+          "title": "Terminal Fun & Visuals",
+          "description": "ASCII art, terminal color effects, decorative terminal output, terminal graphics, and visual demos."
+        },
+        {
+          "const": "email-communications",
+          "title": "Email & Communications",
+          "description": "Email clients, video conferencing, and communication-focused desktop or terminal tools."
+        },
+        {
+          "const": "finance-markets",
+          "title": "Finance & Markets",
+          "description": "Market, crypto, and prediction-market tools."
+        },
+        {
+          "const": "windows-platform",
+          "title": "Windows Platform Tools",
+          "description": "Windows-specific package managers, PowerShell tools, Visual Studio prerequisites, filesystem helpers, X11, and Windows desktop utilities."
+        }
+      ]
     },
     "InstallerData": {
       "type": "object",
@@ -32,63 +214,233 @@
       "properties": {
         "appName": {
           "type": "string",
-          "description": "Name of the application."
+          "minLength": 1,
+          "description": "Name of the application. Must be unique within installers."
         },
         "license": {
           "type": "string",
-          "description": "SPDX license identifier or name."
+          "minLength": 1,
+          "description": "License identifier, license name, or project-specific license note."
         },
         "repoURL": {
           "type": "string",
-          "description": "URL of the repository."
+          "minLength": 1,
+          "description": "GitHub repository URL, direct installer source marker, or CMD for command-based installers."
         },
         "doc": {
           "type": "string",
-          "description": "Documentation string."
+          "minLength": 1,
+          "description": "Human-readable installer description."
         },
-        "filenameTemplate": {
+        "categoryLabels": {
+          "$ref": "#/definitions/InstallerCategoryLabels"
+        },
+        "fileNamePattern": {
           "type": "object",
-          "description": "Template for filenames by architecture and OS.",
+          "description": "Installer filename patterns, direct URLs, command strings, or local script references by architecture and OS.",
           "additionalProperties": false,
           "properties": {
             "amd64": {
-              "$ref": "#/definitions/ArchTemplate"
+              "$ref": "#/definitions/ArchFileNamePattern"
             },
             "arm64": {
-              "$ref": "#/definitions/ArchTemplate"
+              "$ref": "#/definitions/ArchFileNamePattern"
             }
           },
-          "required": ["amd64", "arm64"]
-        },
-        "stripVersion": {
-          "type": "boolean",
-          "description": "Whether to strip version from filename."
-        },
-        "exeName": {
-          "type": "string",
-          "description": "Name of the executable."
+          "required": [
+            "amd64",
+            "arm64"
+          ]
         }
       },
-      "required": ["appName", "repoURL", "doc", "filenameTemplate", "stripVersion", "exeName"]
+      "required": [
+        "appName",
+        "license",
+        "repoURL",
+        "doc",
+        "categoryLabels",
+        "fileNamePattern"
+      ]
     },
-    "ArchTemplate": {
+    "ArchFileNamePattern": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "windows": {
-          "type": "string",
-          "description": "Filename template for Windows."
+          "$ref": "#/definitions/InstallerPatternValue"
         },
         "linux": {
-          "type": "string",
-          "description": "Filename template for Linux."
+          "$ref": "#/definitions/InstallerPatternValue"
         },
         "darwin": {
-          "type": "string",
-          "description": "Filename template for macOS."
+          "$ref": "#/definitions/InstallerPatternValue"
         }
       },
-      "required": ["windows", "linux", "darwin"]
+      "required": [
+        "windows",
+        "linux",
+        "darwin"
+      ]
+    },
+    "InstallerPatternValue": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Filename pattern, direct URL, command, local script name, package-manager command, or null when unsupported."
+    },
+    "InstallerCategoryLabels": {
+      "type": "array",
+      "description": "Category labels for this installer. Values must be drawn from definitions.InstallerCategory.",
+      "items": {
+        "$ref": "#/definitions/InstallerCategory"
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "examples": [
+        [
+          "system-setup"
+        ],
+        [
+          "ai-agents-assistants",
+          "editors-ides"
+        ],
+        [
+          "networking-diagnostics",
+          "security-credentials-privacy",
+          "cloud-saas"
+        ]
+      ]
+    }
+  },
+  "x-categoryLabelDefinitions": {
+    "system-setup": {
+      "label": "System Setup & Package Management",
+      "description": "Bootstrap installers, package managers, updaters, system prerequisites, and platform setup helpers."
+    },
+    "languages-runtimes": {
+      "label": "Languages & Runtimes",
+      "description": "Programming language runtimes, toolchains, language servers, kernels, and runtime managers."
+    },
+    "editors-ides": {
+      "label": "Editors & IDEs",
+      "description": "Graphical and terminal editors, coding IDEs, and editor-oriented installation helpers."
+    },
+    "version-control": {
+      "label": "Version Control",
+      "description": "Git, GitHub, worktree, repository inspection, and Git terminal UI tooling."
+    },
+    "build-devops-containers": {
+      "label": "Build, DevOps & Containers",
+      "description": "Build helpers, development containers, container tooling, service orchestration, and infrastructure utilities."
+    },
+    "ai-agents-assistants": {
+      "label": "AI Agents & Assistants",
+      "description": "AI coding agents, chat CLIs, agent launchers, MCP tooling, and assistant-oriented apps."
+    },
+    "terminals-shells": {
+      "label": "Terminals & Shells",
+      "description": "Terminal emulators, shells, prompt engines, shell history tools, fonts, and terminal UX helpers."
+    },
+    "terminal-workspaces": {
+      "label": "Terminal Workspaces & Multiplexers",
+      "description": "Terminal multiplexers, workspace managers, web terminals, shared terminal sessions, and process panes."
+    },
+    "search-navigation": {
+      "label": "Search & Navigation",
+      "description": "File, code, document, shell-history, semantic, and fuzzy-search tools."
+    },
+    "file-managers": {
+      "label": "File Managers & Directory Browsers",
+      "description": "Terminal and web file managers, directory browsers, ls replacements, and remote file browsing tools."
+    },
+    "file-operations-archives": {
+      "label": "File Operations & Archives",
+      "description": "Archiving, copying, removal, file identification, previewing, cleanup, and clipboard utilities."
+    },
+    "storage-backup-sync": {
+      "label": "Storage, Backup & Sync",
+      "description": "Disk usage analyzers, cloud sync, backup tools, filesystem integrations, and continuous synchronization."
+    },
+    "data-format-tools": {
+      "label": "Data & Format Tools",
+      "description": "Structured data viewers, processors, converters, and command-line table or markup utilities."
+    },
+    "databases": {
+      "label": "Databases & SQL Clients",
+      "description": "Database engines, database CLIs, SQL clients, database browsers, and TUI database visualizers."
+    },
+    "networking-diagnostics": {
+      "label": "Networking & Diagnostics",
+      "description": "Network monitors, scanners, diagnostics, VPN clients, firewalls, IP lookup, and traffic inspection tools."
+    },
+    "tunnels-remote-access": {
+      "label": "Tunnels & Remote Access",
+      "description": "Localhost tunnels, reverse proxies, remote desktop tools, remote shells, and browser-based terminal access."
+    },
+    "file-transfer-sharing": {
+      "label": "File Transfer & Sharing",
+      "description": "Direct file transfer, encrypted sharing, local file servers, QR-based transfer, torrents, and shareable folders."
+    },
+    "cloud-saas": {
+      "label": "Cloud & SaaS CLIs",
+      "description": "Cloud provider, SaaS administration, cloud storage, and Cloudflare tools."
+    },
+    "browsers-web-access": {
+      "label": "Browsers & Web Access",
+      "description": "Desktop browsers, terminal browsers, browser helpers, browser automation, and web access utilities."
+    },
+    "web-scraping-conversion": {
+      "label": "Web Scraping & Content Conversion",
+      "description": "Website crawling, scraping, document extraction, HTML conversion, and web-to-text workflows."
+    },
+    "documents-markdown-latex": {
+      "label": "Documents, Markdown & LaTeX",
+      "description": "Markdown renderers, document converters, PDF helpers, LaTeX distributions, editors, and presentation-from-text tools."
+    },
+    "graphics-images-ocr-diagrams": {
+      "label": "Graphics, Images, OCR & Diagrams",
+      "description": "Image manipulation, terminal graphics, OCR, PDF/SVG rendering, diagrams, and graph visualization."
+    },
+    "media-audio-video": {
+      "label": "Media, Audio & Video",
+      "description": "Music players, media downloaders, video tools, streaming apps, recording apps, and conferencing clients."
+    },
+    "presentations-recording": {
+      "label": "Presentations & Recording",
+      "description": "Presentation tools, screen annotation, terminal recording, streaming helpers, and diagramming for talks."
+    },
+    "productivity-knowledge": {
+      "label": "Productivity & Knowledge",
+      "description": "Notes, cheatsheets, text expansion, timers, prompt helpers, and productivity-oriented CLI utilities."
+    },
+    "security-credentials-privacy": {
+      "label": "Security, Credentials & Privacy",
+      "description": "Password managers, encryption, one-time secrets, VPN clients, firewall helpers, and privacy-oriented tools."
+    },
+    "monitoring-performance": {
+      "label": "Monitoring, Performance & System Info",
+      "description": "System monitors, process viewers, resource profilers, benchmarking tools, log analyzers, and system info displays."
+    },
+    "qr-mobile-device-tools": {
+      "label": "QR, Mobile & Device Tools",
+      "description": "QR code utilities, Android mirroring, mobile transfer helpers, Wi-Fi sharing, and multi-device control."
+    },
+    "terminal-fun-visuals": {
+      "label": "Terminal Fun & Visuals",
+      "description": "ASCII art, terminal color effects, decorative terminal output, terminal graphics, and visual demos."
+    },
+    "email-communications": {
+      "label": "Email & Communications",
+      "description": "Email clients, video conferencing, and communication-focused desktop or terminal tools."
+    },
+    "finance-markets": {
+      "label": "Finance & Markets",
+      "description": "Market, crypto, and prediction-market tools."
+    },
+    "windows-platform": {
+      "label": "Windows Platform Tools",
+      "description": "Windows-specific package managers, PowerShell tools, Visual Studio prerequisites, filesystem helpers, X11, and Windows desktop utilities."
     }
   }
 }

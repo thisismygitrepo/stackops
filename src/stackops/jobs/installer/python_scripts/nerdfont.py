@@ -28,6 +28,7 @@ nerd_fonts: InstallerData = {
     "license": "MIT / SIL OFL 1.1",
     "repoURL": "https://github.com/ryanoasis/nerd-fonts",
     "doc": "Nerd Fonts is a project that patches developer targeted fonts with a high number of glyphs (icons)",
+    "categoryLabels": ["terminals-shells"],
     "fileNamePattern": {
         "amd64": {
             "windows": "CascadiaCode.zip",

@@ -26,6 +26,7 @@ TERMUSIC_INSTALLER_DATA: InstallerData = {
     "license": "MIT and GPL-3.0",
     "repoURL": TERMUSIC_REPO_URL,
     "doc": "A terminal-based music player written in Rust.",
+    "categoryLabels": ["media-audio-video"],
     "fileNamePattern": {
         "amd64": {
             "linux": "termusic-{version}-x86_64-linux.tar.xz",

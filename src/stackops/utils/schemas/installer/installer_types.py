@@ -1,23 +1,67 @@
 import platform
 from dataclasses import dataclass
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, NotRequired, TypeAlias, TypedDict
 
 
 CPU_ARCHITECTURES: TypeAlias = Literal["amd64", "arm64"]
 OPERATING_SYSTEMS: TypeAlias = Literal["windows", "linux", "darwin"]
+InstallerCategoryLabel: TypeAlias = Literal[
+    "ai-agents-assistants",
+    "browsers-web-access",
+    "build-devops-containers",
+    "cloud-saas",
+    "data-format-tools",
+    "databases",
+    "documents-markdown-latex",
+    "editors-ides",
+    "email-communications",
+    "file-managers",
+    "file-operations-archives",
+    "file-transfer-sharing",
+    "finance-markets",
+    "graphics-images-ocr-diagrams",
+    "languages-runtimes",
+    "media-audio-video",
+    "monitoring-performance",
+    "networking-diagnostics",
+    "presentations-recording",
+    "productivity-knowledge",
+    "qr-mobile-device-tools",
+    "search-navigation",
+    "security-credentials-privacy",
+    "storage-backup-sync",
+    "system-setup",
+    "terminal-fun-visuals",
+    "terminal-workspaces",
+    "terminals-shells",
+    "tunnels-remote-access",
+    "version-control",
+    "web-scraping-conversion",
+    "windows-platform",
+]
 
 
-class InstallerData(TypedDict):
-    appName: str
-    license: str
-    doc: str
-    repoURL: str
-    fileNamePattern: dict[CPU_ARCHITECTURES, dict[OPERATING_SYSTEMS, str | None]]
+InstallerData = TypedDict(
+    "InstallerData",
+    {
+        "appName": str,
+        "license": str,
+        "doc": str,
+        "repoURL": str,
+        "categoryLabels": list[InstallerCategoryLabel],
+        "fileNamePattern": dict[CPU_ARCHITECTURES, dict[OPERATING_SYSTEMS, str | None]],
+    },
+)
 
 
-class InstallerDataFiles(TypedDict):
-    version: str
-    installers: list[InstallerData]
+InstallerDataFiles = TypedDict(
+    "InstallerDataFiles",
+    {
+        "$schema": NotRequired[str],
+        "version": str,
+        "installers": list[InstallerData],
+    },
+)
 
 
 class InstallationResultSkipped(TypedDict):

@@ -70,6 +70,7 @@ def _build_binary_installer_data(base_installer_data: InstallerData) -> Installe
         license=base_installer_data["license"],
         doc=base_installer_data["doc"],
         repoURL=YTUI_MUSIC_REPO_URL,
+        categoryLabels=base_installer_data["categoryLabels"],
         fileNamePattern=file_name_pattern,
     )
 

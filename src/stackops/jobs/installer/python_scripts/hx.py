@@ -28,6 +28,7 @@ config_dict: InstallerData = {
     "license": "MPL-2.0",
     "repoURL": "CMD",
     "doc": "Helix is a post-modern modal text editor.",
+    "categoryLabels": ["editors-ides"],
     "fileNamePattern": {
         "amd64": {
             "linux": "helix-{version}-x86_64-linux.tar.xz",

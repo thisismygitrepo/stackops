@@ -12,6 +12,7 @@ DUCKDB_INSTALLER_DATA: InstallerData = {
     "license": "MIT",
     "repoURL": "https://github.com/duckdb/duckdb",
     "doc": "🗃️ An in-process SQL OLAP database management system",
+    "categoryLabels": ["databases"],
     "fileNamePattern": {
         "amd64": {
             "linux": "libduckdb-linux-amd64.zip",

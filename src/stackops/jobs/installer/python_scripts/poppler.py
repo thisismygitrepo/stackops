@@ -17,6 +17,7 @@ poppler_installer: InstallerData = {
     "license": "GPL-2.0-or-later",
     "repoURL": "https://github.com/oschwartz10612/poppler-windows",
     "doc": "PDF rendering library - Windows builds.",
+    "categoryLabels": ["documents-markdown-latex", "graphics-images-ocr-diagrams"],
     "fileNamePattern": {
         "amd64": {
             "windows": "Release-{version}.zip",

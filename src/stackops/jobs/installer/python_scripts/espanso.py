@@ -79,6 +79,7 @@ def _build_espanso_installer_data(
         license=base_installer_data["license"],
         doc=base_installer_data["doc"],
         repoURL=ESPANSO_REPO_URL,
+        categoryLabels=base_installer_data["categoryLabels"],
         fileNamePattern=file_name_pattern,
     )
 

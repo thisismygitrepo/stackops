@@ -19,6 +19,7 @@ installer_data_modified: InstallerData = {
       "license": "GPL-3.0",
       "repoURL": "https://github.com/ascii-boxes/boxes",
       "doc": "📦 ASCI draws boxes around text.",
+      "categoryLabels": ["terminal-fun-visuals"],
       "fileNamePattern": {
         "amd64": {
           "windows": "boxes-{version}-intel-win32.zip",

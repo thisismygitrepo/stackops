@@ -25,6 +25,7 @@ RMPC_INSTALLER_DATA: InstallerData = {
     "license": "BSD-3-Clause",
     "repoURL": RMPC_REPO_URL,
     "doc": "A modern, configurable terminal based MPD client.",
+    "categoryLabels": ["media-audio-video"],
     "fileNamePattern": {
         "amd64": {
             "linux": "rmpc-{version}-x86_64-unknown-linux-gnu.tar.gz",

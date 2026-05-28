@@ -1,4 +1,5 @@
 {
+  "$schema": "../../utils/schemas/installer/installer_type.schema.json",
   "version": "1",
   "installers": [
     {
@@ -6,6 +7,9 @@
       "license": "N/A (local/internal installer entry)",
       "repoURL": "CMD",
       "doc": "ABC programs (package managers and other system essential tools)",
+      "categoryLabels": [
+        "system-setup"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sysabc.py",
@@ -24,6 +28,9 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "js runtime and package manager, in one fast zig-based binary.",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install unzip -y; curl -fsSL https://bun.com/install | bash; . ~/.bashrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx",
@@ -42,6 +49,9 @@
       "license": "Apache License 2.0 OR MIT License",
       "repoURL": "CMD",
       "doc": "Systems programming language",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
@@ -60,6 +70,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/jdx/mise",
       "doc": "Dev tools, env vars, and tasks in one CLI.",
+      "categoryLabels": [
+        "system-setup",
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "mise-{version}-linux-x64",
@@ -78,6 +92,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/Genymobile/scrcpy",
       "doc": "This application mirrors Android devices",
+      "categoryLabels": [
+        "qr-mobile-device-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "scrcpy-linux-x86_64-{version}.tar.gz",
@@ -96,6 +113,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/antonmedv/fx",
       "doc": "🧙‍♂️ Command-line JSON viewer",
+      "categoryLabels": [
+        "data-format-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "fx_linux_amd64",
@@ -114,6 +134,9 @@
       "license": "GNU General Public License v2.0",
       "repoURL": "CMD",
       "doc": "🧙‍♂️ Distributed version control system",
+      "categoryLabels": [
+        "version-control"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install git -y",
@@ -132,6 +155,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/jqlang/jq",
       "doc": "🧙‍♂️ Command-line JSON processor",
+      "categoryLabels": [
+        "data-format-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "jq-linux-amd64",
@@ -150,6 +176,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/mikefarah/yq",
       "doc": "🧙‍♂️ Command-line YAML, JSON, XML, CSV processor",
+      "categoryLabels": [
+        "data-format-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "yq_linux_amd64",
@@ -168,6 +197,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/ys-l/csvlens",
       "doc": "🧙‍♂️ Command-line CSV viewer",
+      "categoryLabels": [
+        "data-format-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "csvlens-x86_64-unknown-linux-gnu.tar.xz",
@@ -186,6 +218,9 @@
       "license": "ImageMagick License",
       "repoURL": "https://github.com/ImageMagick/ImageMagick",
       "doc": "🧙‍♂️ Command-line image manipulation tool",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ImageMagick-9fbd2b7-gcc-x86_64.AppImage",
@@ -204,6 +239,9 @@
       "license": "Proprietary (Ookla EULA)",
       "repoURL": "CMD",
       "doc": "🚀 Test your internet connection speed and ping using speedtest.net from the CLI",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-x86_64.tgz",
@@ -222,6 +260,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/doronbehar/pistol",
       "doc": "👁️ file previewer.",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "pistol-static-linux-x86_64",
@@ -240,6 +281,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/imsnif/diskonaut",
       "doc": "💾 like dua, diskonaut is a terminal disk space navigator.",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "diskonaut-{version}-unknown-linux-musl.tar.gz",
@@ -258,6 +303,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/sayanarijit/xplr",
       "doc": "📂 A terminal file explorer with vi keybindings",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "xplr-linux.tar.gz",
@@ -276,6 +324,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/aristocratos/btop",
       "doc": "📊 btop is a resource monitor for Linux, FreeBSD and MacOS.",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "btop-x86_64-unknown-linux-musl.tbz",
@@ -294,6 +345,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/sorenisanerd/gotty",
       "doc": "🌐 gotty is a simple command line tool that turns your CLI tools into web applications.",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "gotty_{version}_linux_amd64.tar.gz",
@@ -312,6 +367,9 @@
       "license": "GNU Lesser General Public License v3.0",
       "repoURL": "https://github.com/kamiyaa/joshuto",
       "doc": "📂 A terminal file manager written in Rust.",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "joshuto-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -330,6 +388,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/pvolok/mprocs",
       "doc": "🖥️ Windows/Linux/macOS poorman's zellij",
+      "categoryLabels": [
+        "terminal-workspaces"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "mprocs-{version}-linux-x86_64-musl.tar.gz",
@@ -348,6 +409,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/F1bonacc1/process-compose",
       "doc": "Process Compose is a simple and flexible scheduler and orchestrator to manage non-containerized applications.",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "process-compose_linux_amd64.tar.gz",
@@ -366,6 +430,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/zellij-org/zellij",
       "doc": "🖥️ Zellij is a terminal workspace with support for multiple plugins, such as a terminal, status bar, tabs, splits, etc.",
+      "categoryLabels": [
+        "terminal-workspaces"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "zellij-x86_64-unknown-linux-musl.tar.gz",
@@ -384,6 +451,9 @@
       "license": "ISC License",
       "repoURL": "CMD",
       "doc": "🖥️ Terminal multiplexer",
+      "categoryLabels": [
+        "terminal-workspaces"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install tmux -y; cd ~; git clone --single-branch https://github.com/gpakosz/.tmux.git; ln -s -f .tmux/.tmux.conf; cp .tmux/.tmux.conf.local .",
@@ -402,6 +472,9 @@
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "📦 ASCI draws boxes around text.",
+      "categoryLabels": [
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "windows": "boxes.py",
@@ -420,6 +493,10 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "📶 Share WiFi credentials via QR code",
+      "categoryLabels": [
+        "file-transfer-sharing",
+        "qr-mobile-device-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g sharewifi",
@@ -438,6 +515,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/schollz/croc",
       "doc": "🦎 Easily and securely send and share things from one computer to another",
+      "categoryLabels": [
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "croc_{version}_Linux-64bit.tar.gz",
@@ -456,6 +536,9 @@
       "license": "EUPL-1.2",
       "repoURL": "https://github.com/magic-wormhole/magic-wormhole.rs",
       "doc": "🐛 Get things from one computer to another, safely (Rust implementation)",
+      "categoryLabels": [
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "magic-wormhole-cli-x86_64-unknown-linux-gnu.tgz",
@@ -474,6 +557,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "🔗 Easy file sharing from command line",
+      "categoryLabels": [
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g easy-sharing",
@@ -492,6 +578,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "🔗 Easy file sharing tool",
+      "categoryLabels": [
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @ezshare/cli",
@@ -510,6 +599,9 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/asciinema/asciinema",
       "doc": "🎥 Terminal session recorder",
+      "categoryLabels": [
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "asciinema-x86_64-unknown-linux-gnu",
@@ -528,6 +620,9 @@
       "license": "WTFPL",
       "repoURL": "CMD",
       "doc": "🌈 Rainbow colored text output for terminal",
+      "categoryLabels": [
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g lolcatjs",
@@ -546,6 +641,9 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/cowboy8625/rusty-rain",
       "doc": "🌧️ cross-platform cmatrix-like terminal rain animation",
+      "categoryLabels": [
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "x86_64-unknown-linux-musl-rusty-rain-{version}",
@@ -564,6 +662,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "📝 ASCII art text generator for terminal",
+      "categoryLabels": [
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g figlet-cli",
@@ -582,6 +683,9 @@
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "📝 ASCII art text generator for terminal",
+      "categoryLabels": [
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install cowsay",
@@ -600,6 +704,9 @@
       "license": "BSD-3-Clause",
       "repoURL": "https://github.com/Genivia/ugrep",
       "doc": "🔍 A fast, portable, feature-rich command-line search tool",
+      "categoryLabels": [
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "windows": "ugrep-windows-x64.zip",
@@ -618,6 +725,10 @@
       "license": "Sysinternals Software License Terms",
       "repoURL": "CMD",
       "doc": "🔍 A screen zoom and annotation tool for presentations",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "windows": "https://download.sysinternals.com/files/ZoomIt.zip",
@@ -636,6 +747,10 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/gsass1/NTop",
       "doc": "📊 Like htop, for Windows",
+      "categoryLabels": [
+        "monitoring-performance",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "windows": "NTop.exe",
@@ -654,6 +769,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "🔄 devtunnel secure introspectable tunnels to localhost",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "windows": "winget install --Id Microsoft.devtunnel --source winget --scope user --accept-package-agreements --accept-source-agreements",
@@ -672,6 +790,9 @@
       "license": "MIT OR Apache-2.0",
       "repoURL": "https://github.com/sharkdp/bat",
       "doc": "🦇 A cat(1) clone with wings.",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bat-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -690,6 +811,10 @@
       "license": "MIT",
       "repoURL": "https://github.com/Canop/broot",
       "doc": "🌳 broot is an fzf variant for folder structure and layered search.",
+      "categoryLabels": [
+        "search-navigation",
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "broot_{version}.zip",
@@ -708,6 +833,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/ClementTsang/bottom",
       "doc": "📊 bottom is a cross-platform graphical process/system monitor with a customizable interface and a multitude of features.",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bottom_x86_64-unknown-linux-gnu.tar.gz",
@@ -726,6 +854,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/j178/chatgpt",
       "doc": "🤖 chagpt cli",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "chatgpt_Linux_x86_64.tar.gz",
@@ -744,6 +875,10 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/cloudflare/cloudflared",
       "doc": "☁️ Cloudflared installer. Should only be installed at main computer and servers of tunnels.",
+      "categoryLabels": [
+        "tunnels-remote-access",
+        "cloud-saas"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "cloudflared-linux-amd64",
@@ -762,6 +897,11 @@
       "license": "Proprietary (Cloudflare Application Terms of Service)",
       "repoURL": "CMD",
       "doc": "🌐 Cloudflare WARP VPN client",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "cloud-saas",
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -780,6 +920,11 @@
       "license": "Proprietary (Cloudflare Application Terms of Service)",
       "repoURL": "CMD",
       "doc": "🌐 Cloudflare WARP VPN client in the terminal",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "cloud-saas",
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "cloudflare_warp_cli.py",
@@ -798,6 +943,9 @@
       "license": "GPL-2.0 license",
       "repoURL": "https://github.com/Dr-Noob/cpufetch",
       "doc": "💻 cpufetch is a small yet fancy CPU architecture fetching tool, like fastfetch but for CPUs.",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "cpufetch_x86-64_linux",
@@ -816,6 +964,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/dandavison/delta",
       "doc": "👀 A viewer for git and diff output",
+      "categoryLabels": [
+        "version-control"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "delta-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -834,6 +985,10 @@
       "license": "MIT license",
       "repoURL": "https://github.com/Byron/dua-cli",
       "doc": "💾 Rust-based cli tool to get a quick overview of disk usage.",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "dua-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -852,6 +1007,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/fastfetch-cli/fastfetch",
       "doc": "💻 fastfetch is a system information tool written in C.",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "fastfetch-linux-amd64.tar.gz",
@@ -870,6 +1028,9 @@
       "license": "Apache-2.0 license / MIT license",
       "repoURL": "https://github.com/sharkdp/fd",
       "doc": "🔍 fd is a simple, fast and user-friendly alternative to find.",
+      "categoryLabels": [
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "fd-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -888,6 +1049,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/junegunn/fzf",
       "doc": "🔍 a general-purpose cli fuzzy finder.",
+      "categoryLabels": [
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "fzf-{version}-linux_amd64.tar.gz",
@@ -906,6 +1070,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/alexpasmantier/television",
       "doc": "🔍 A fast and hackable fuzzy finder for the terminal.",
+      "categoryLabels": [
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "tv-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -924,6 +1091,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/gitui-org/gitui",
       "doc": "🐙 gitui is a terminal ui for git written in rust.",
+      "categoryLabels": [
+        "version-control"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "gitui-linux-x86_64.tar.gz",
@@ -942,6 +1112,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/mexirica/aptui",
       "doc": "APT package manager TUI for Debian and Ubuntu-based Linux distributions.",
+      "categoryLabels": [
+        "system-setup"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "aptui_{version}_linux_amd64.tar.gz",
@@ -960,6 +1133,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/charmbracelet/glow/",
       "doc": "✨ Render markdown on the CLI, with pizzazz!",
+      "categoryLabels": [
+        "documents-markdown-latex"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "glow_{version}_Linux_x86_64.tar.gz",
@@ -978,6 +1154,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/charmbracelet/gum",
       "doc": "🎯 Prompt user to select from options, written in golang.",
+      "categoryLabels": [
+        "productivity-knowledge"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "gum_{version}_Linux_x86_64.tar.gz",
@@ -996,6 +1175,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/gokcehan/lf",
       "doc": "📂 lf is a terminal file manager written in go.",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "lf-linux-amd64.tar.gz",
@@ -1014,6 +1196,9 @@
       "license": "GPL version 2 (or later)",
       "repoURL": "https://github.com/leo-arch/clifm",
       "doc": "📂 A terminal file manager with vim-like keybindings.",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "clifm-{version}-linux-x86_64.tar.gz",
@@ -1032,6 +1217,9 @@
       "license": "Apache-2.0 license",
       "repoURL": "https://github.com/lsd-rs/lsd",
       "doc": "📂 A modern replacement for ls written in Rust.",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "lsd-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -1050,6 +1238,10 @@
       "license": "MIT license",
       "repoURL": "CMD",
       "doc": "☁️ CLI for Microsoft 365",
+      "categoryLabels": [
+        "cloud-saas",
+        "productivity-knowledge"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @pnp/cli-microsoft365",
@@ -1068,6 +1260,10 @@
       "license": "MIT license",
       "repoURL": "https://github.com/cantino/mcfly",
       "doc": "🚀 Fly through your shell history. Great Scott!",
+      "categoryLabels": [
+        "terminals-shells",
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "mcfly-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -1086,6 +1282,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/ouch-org/ouch",
       "doc": "📦 A cli for extracting and creating archives in unified way.",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ouch-x86_64-unknown-linux-musl.tar.gz",
@@ -1104,6 +1303,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/dalance/procs/",
       "doc": "📊 procs is a modern replacement for ps written in Rust.",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "procs-{version}-x86_64-linux.zip",
@@ -1122,6 +1324,10 @@
       "license": "MIT license",
       "repoURL": "https://github.com/rclone/rclone",
       "doc": "☁️ cli to sync to cloud storage providers.",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "cloud-saas"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "rclone-{version}-linux-amd64.zip",
@@ -1140,6 +1346,10 @@
       "license": "MIT AND BUSL-1.1",
       "repoURL": "https://github.com/meilisearch/meilisearch",
       "doc": "🔍 semantic search at lightening speed",
+      "categoryLabels": [
+        "search-navigation",
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "meilisearch-linux-amd64",
@@ -1158,6 +1368,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/run-llama/semtools",
       "doc": "Semantic search and document parsing tools for the command line",
+      "categoryLabels": [
+        "search-navigation",
+        "web-scraping-conversion"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "semtools-x86_64-unknown-linux-gnu.tar.gz",
@@ -1176,6 +1390,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/ast-grep/ast-grep",
       "doc": "🔍 grep for code - search and rewrite code with ASTs",
+      "categoryLabels": [
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "app-x86_64-unknown-linux-gnu.zip",
@@ -1194,6 +1411,9 @@
       "license": "MIT License OR The Unlicense",
       "repoURL": "https://github.com/BurntSushi/ripgrep",
       "doc": "🔍 recursively searches directories for a regex pattern while respecting your gitignore rules",
+      "categoryLabels": [
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ripgrep-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -1212,6 +1432,9 @@
       "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/phiresky/ripgrep-all",
       "doc": "🔍 ripgrep, but also search in PDFs, E-Books, Office documents, zip, tar.gz, etc.",
+      "categoryLabels": [
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ripgrep_all-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -1230,6 +1453,10 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "🔍 ripgrep + semantic search from https://github.com/run-llama/semtools",
+      "categoryLabels": [
+        "search-navigation",
+        "web-scraping-conversion"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @llamaindex/semtools",
@@ -1248,6 +1475,9 @@
       "license": "ISC License",
       "repoURL": "https://github.com/starship/starship",
       "doc": "⭐ The minimal, blazing-fast, and infinitely customizable prompt for any shell!",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "starship-x86_64-unknown-linux-musl.tar.gz",
@@ -1266,6 +1496,10 @@
       "license": "European Union Public License 1.2",
       "repoURL": "https://github.com/mgunyho/tere",
       "doc": "📂 Tere is a terminal file explorer written in Rust. No more ls + cd",
+      "categoryLabels": [
+        "search-navigation",
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "tere-{version}-x86_64-unknown-linux-gnu.zip",
@@ -1284,6 +1518,9 @@
       "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/topgrade-rs/topgrade",
       "doc": "⬆️ Keeping your system up to date usually involves invoking multiple package managers.",
+      "categoryLabels": [
+        "system-setup"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "topgrade-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -1302,6 +1539,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/tsl0922/ttyd",
       "doc": "🌐 ttyd shares your terminal on the web.",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ttyd.x86_64",
@@ -1320,6 +1561,10 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/owenthereal/upterm",
       "doc": "🌐 upterm is a terminal multiplexer that allows you to share your terminal session over the web.",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "upterm_linux_amd64.tar.gz",
@@ -1338,6 +1583,10 @@
       "license": "MIT",
       "repoURL": "https://github.com/atanunq/viu",
       "doc": "🖼️ A cli image viewer for the terminal (like chafa & ueberzugpp but in Rust)",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams",
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "viu-x86_64-unknown-linux-musl",
@@ -1356,6 +1605,10 @@
       "license": "GPL-2.0-only",
       "repoURL": "CMD",
       "doc": "👁️ terminal image previewer.",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams",
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo apt install timg",
@@ -1374,6 +1627,10 @@
       "license": "LGPL-3.0-or-later",
       "repoURL": "CMD",
       "doc": "🖼️ Terminal graphics and image viewer",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams",
+        "terminal-fun-visuals"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install chafa -y",
@@ -1392,6 +1649,10 @@
       "license": "MIT",
       "repoURL": "https://github.com/oschwartz10612/poppler-windows",
       "doc": "PDF rendering library - Windows builds.",
+      "categoryLabels": [
+        "documents-markdown-latex",
+        "graphics-images-ocr-diagrams"
+      ],
       "fileNamePattern": {
         "amd64": {
           "windows": "poppler.py",
@@ -1410,6 +1671,9 @@
       "license": "Apache-2.0 OR MIT",
       "repoURL": "https://github.com/linebender/resvg",
       "doc": "SVG rendering library - Windows builds.",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams"
+      ],
       "fileNamePattern": {
         "amd64": {
           "windows": "resvg-win64.zip",
@@ -1428,6 +1692,9 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/watchexec/watchexec",
       "doc": "👀 Executes commands in response to file modifications.",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "watchexec-{version}-x86_64-unknown-linux-gnu.tar.xz",
@@ -1446,6 +1713,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "⚡ Blazing Fast Terminal File Manager.",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "yazi.py",
@@ -1464,6 +1734,10 @@
       "license": "MIT",
       "repoURL": "https://github.com/ajeetdsouza/zoxide",
       "doc": "🚀 A cd command that learns - easily navigate directories from the command-line",
+      "categoryLabels": [
+        "terminals-shells",
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "zoxide-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -1482,6 +1756,9 @@
       "license": "GPL-2.0-only",
       "repoURL": "https://github.com/sudipghimire533/ytui-music",
       "doc": "🎵 A terminal based YouTube music player written in Rust.",
+      "categoryLabels": [
+        "media-audio-video"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ytui_music.py",
@@ -1500,6 +1777,9 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/Siriusmart/youtube-tui",
       "doc": "🎵 An aesthetically pleasing YouTube TUI written in Rust.",
+      "categoryLabels": [
+        "media-audio-video"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "youtube_tui.py",
@@ -1518,6 +1798,9 @@
       "license": "Unlicense",
       "repoURL": "CMD",
       "doc": "📥 Command-line program to download videos from YouTube and other sites. By https://github.com/ytdl-org/youtube-dl",
+      "categoryLabels": [
+        "media-audio-video"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "https://github.com/ytdl-org/youtube-dl/releases/latest/download/youtube-dl",
@@ -1536,6 +1819,9 @@
       "license": "Unlicense",
       "repoURL": "CMD",
       "doc": "📥 A youtube-dl fork with additional features and fixes, by https://github.com/yt-dlp/yt-dlp",
+      "categoryLabels": [
+        "media-audio-video"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp",
@@ -1554,6 +1840,9 @@
       "license": "BSD-3-Clause",
       "repoURL": "CMD",
       "doc": "A modern, configurable terminal based MPD client.",
+      "categoryLabels": [
+        "media-audio-video"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "rmpc.py",
@@ -1572,6 +1861,9 @@
       "license": "MIT and GPL-3.0",
       "repoURL": "https://github.com/tramhao/termusic",
       "doc": "🎵 A terminal-based music player written in Rust.",
+      "categoryLabels": [
+        "media-audio-video"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "termusic.py",
@@ -1590,6 +1882,9 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/TrevorSatori/kronos",
       "doc": "🎵 A Customizable Terminal Music Player For Offline Listening",
+      "categoryLabels": [
+        "media-audio-video"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "Kronos",
@@ -1608,6 +1903,9 @@
       "license": "GNU GPLv2 or GNU GPLv3",
       "repoURL": "https://github.com/transmission/transmission",
       "doc": "📥 A fast, easy, and free BitTorrent client.",
+      "categoryLabels": [
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "transmission-{version}.tar.xz",
@@ -1626,6 +1924,9 @@
       "license": "BSD-2-Clause",
       "repoURL": "https://github.com/jarun/nnn",
       "doc": "📂 A terminal-based file manager.",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "nnn-static-{version}.x86_64.tar.gz",
@@ -1644,6 +1945,9 @@
       "license": "EUPL-1.2",
       "repoURL": "https://github.com/eza-community/eza",
       "doc": "📂 A modern replacement for ls. lsd alternative.",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "eza_x86_64-unknown-linux-musl.zip",
@@ -1662,6 +1966,9 @@
       "license": "Apache-2.0 or MIT",
       "repoURL": "https://github.com/koute/bytehound",
       "doc": "🔍 Inspecting the memory usage of a running process",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bytehound-x86_64-unknown-linux-gnu.tgz",
@@ -1680,6 +1987,10 @@
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "📋 Clipboard manager for the terminal",
+      "categoryLabels": [
+        "terminals-shells",
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -sSL https://github.com/Slackadays/Clipboard/raw/main/install.sh | sh",
@@ -1698,6 +2009,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/atuinsh/atuin",
       "doc": "🔍 Shell history search tool. Mcfly alternative",
+      "categoryLabels": [
+        "terminals-shells",
+        "search-navigation"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "atuin-x86_64-unknown-linux-gnu.tar.gz",
@@ -1716,6 +2031,9 @@
       "license": "GNU Lesser General Public License v2.1",
       "repoURL": "https://github.com/browsh-org/browsh",
       "doc": "🌐 browser in the shell",
+      "categoryLabels": [
+        "browsers-web-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "browsh-{version}.xpi",
@@ -1734,6 +2052,9 @@
       "license": "BSD 3-Clause License",
       "repoURL": "https://github.com/fathyb/carbonyl",
       "doc": "A Chromium based browser built to run in a terminal",
+      "categoryLabels": [
+        "browsers-web-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "carbonyl.linux-amd64.zip",
@@ -1752,6 +2073,10 @@
       "license": "GNU General Public License v2.0",
       "repoURL": "https://github.com/jaspervdj/patat",
       "doc": "🎯 Terminal-based presentations using Pandoc. Presenterm alternative.",
+      "categoryLabels": [
+        "documents-markdown-latex",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "patat-{version}-linux-x86_64.tar.gz",
@@ -1770,6 +2095,9 @@
       "license": "Version-dependent. Current upstream Redis Open Source (which includes redis-cli) is tri-licensed under RSALv2 OR SSPLv1 OR AGPLv3 for Redis 8 and later.",
       "repoURL": "CMD",
       "doc": "A cli for redis",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install redis-tools -y",
@@ -1788,6 +2116,10 @@
       "license": "Public domain",
       "repoURL": "CMD",
       "doc": "A cli for sqlite",
+      "categoryLabels": [
+        "data-format-tools",
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install sqlite3 -y",
@@ -1806,6 +2138,9 @@
       "license": "PostgreSQL License",
       "repoURL": "CMD",
       "doc": "A cli for postgresql",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install postgresql-client -y",
@@ -1824,6 +2159,9 @@
       "license": "Mozilla Public License 2.0 OR GNU General Public License v3.0 or later",
       "repoURL": "https://github.com/sqlitebrowser/sqlitebrowser",
       "doc": "🗃️ A visual tool to create, design, and edit database files compatible with SQLite.",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "DB.Browser.for.SQLite-{version}-x86.64-v2.AppImage",
@@ -1842,6 +2180,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/dbeaver/dbeaver",
       "doc": "🗃️ Free universal database tool and SQL client.",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "dbeaver-ce-{version}-linux-x86_64.tar.gz",
@@ -1860,6 +2201,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/sosedoff/pgweb/",
       "doc": "🗃️ Web-based PostgreSQL database browser written in Go",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "pgweb_linux_amd64.zip",
@@ -1878,6 +2222,9 @@
       "license": "GPL-3.0 license",
       "repoURL": "https://github.com/dbgate/dbgate",
       "doc": "🗃️ Cross-platform database manager for developers and database administrators",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "dbgate-{version}-linux_x64.tar.gz",
@@ -1896,6 +2243,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/achristmascarl/rainfrog",
       "doc": "🗃️ TUI DB Visualizer",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "rainfrog-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -1914,6 +2264,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/jorgerojas26/lazysql",
       "doc": "🗃️ TUI DB Visualizer",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "lazysql_Linux_x86_64.tar.gz",
@@ -1932,6 +2285,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/danvergara/dblab",
       "doc": "🗃️ TUI database client",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "dblab_{version}_linux_amd64.tar.gz",
@@ -1950,6 +2306,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/xo/usql",
       "doc": "🗃️ Universal command-line database client",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "usql-{version}-linux-amd64.tar.bz2",
@@ -1968,6 +2327,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/tconbeer/harlequin",
       "doc": "🗃️ Universal command-line database client",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install harlequin",
@@ -1986,6 +2348,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/Maxteabag/sqlit",
       "doc": "🗃️ Universal command-line database client",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install sqlit-tui",
@@ -2004,6 +2369,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/duckdb/duckdb",
       "doc": "🗃️ An in-process SQL OLAP database management system",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "duckdb_cli-linux-amd64.zip",
@@ -2022,6 +2390,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/control-theory/gonzo",
       "doc": "🕶️ Gonzo is a Go-based TUI for real-time log analysis, like nerdlog, caps-log and lnav.",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "gonzo-{version}-linux-amd64.tar.gz",
@@ -2040,6 +2411,9 @@
       "license": "Apache-2.0 license",
       "repoURL": "https://github.com/SUPERCILEX/fuc",
       "doc": "📋 Fast copy",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "x86_64-unknown-linux-gnu-cpz",
@@ -2058,6 +2432,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/SUPERCILEX/fuc",
       "doc": "🗑️ Fast remove",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "x86_64-unknown-linux-gnu-rmz",
@@ -2076,6 +2453,10 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "📊 Generate diagrams and flowcharts from text in a similar manner as markdown",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @mermaid-js/mermaid-cli",
@@ -2094,6 +2475,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/JohannesKaufmann/html-to-markdown",
       "doc": "📜 Convert HTML to Markdown (no LLM, very fast, very cheap)",
+      "categoryLabels": [
+        "data-format-tools",
+        "web-scraping-conversion"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "html-to-markdown_Linux_x86_64.tar.gz",
@@ -2112,6 +2497,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/hueristiq/xcrawl3r",
       "doc": "🕷️ A command line tool to crawl and scrape websites",
+      "categoryLabels": [
+        "web-scraping-conversion"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "xcrawl3r_{version}_linux_amd64.tar.gz",
@@ -2130,6 +2518,9 @@
       "license": "Proprietary / terms-based license",
       "repoURL": "https://github.com/obsidianmd/obsidian-releases",
       "doc": "🧠 Obsidian is a powerful knowledge base that works on top of a local folder of plain text Markdown files.",
+      "categoryLabels": [
+        "productivity-knowledge"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "Obsidian-{version}.AppImage",
@@ -2148,6 +2539,10 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "🎯 Markdown presentation writer",
+      "categoryLabels": [
+        "documents-markdown-latex",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @marp-team/marp-cli",
@@ -2166,6 +2561,10 @@
       "license": "BSD 2-Clause \"Simplified\" License",
       "repoURL": "https://github.com/mfontanini/presenterm",
       "doc": "🎭 present from temrinal",
+      "categoryLabels": [
+        "documents-markdown-latex",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "presenterm-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -2184,6 +2583,10 @@
       "license": "GNU General Public License v2.0 or later",
       "repoURL": "https://github.com/jgm/pandoc",
       "doc": "📝 The universal markup converter",
+      "categoryLabels": [
+        "data-format-tools",
+        "documents-markdown-latex"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "pandoc-{version}-linux-amd64.tar.gz",
@@ -2202,6 +2605,9 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "🐋 Devcontainer is a command-line tool to manage development containers",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @devcontainers/cli",
@@ -2220,6 +2626,9 @@
       "license": "Bitwarden proprietary / non-OSS default package",
       "repoURL": "CMD",
       "doc": "🔐 bitwarden is a password manager.",
+      "categoryLabels": [
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @bitwarden/cli",
@@ -2238,6 +2647,10 @@
       "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/royshil/obs-backgroundremoval",
       "doc": "🎥 A plugin for OBS Studio to remove background from a video",
+      "categoryLabels": [
+        "media-audio-video",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "obs-backgroundremoval-{version}-x86_64-linux-gnu.deb",
@@ -2256,6 +2669,9 @@
       "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/rustdesk/rustdesk",
       "doc": "🖥️ Yet another remote desktop software, written in Rust. Works out of the box, no configuration required",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "rustdesk-{version}-x86_64.AppImage",
@@ -2274,6 +2690,9 @@
       "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/evcxr/evcxr",
       "doc": "🧪 A Jupyter Kernel for Rust",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "evcxr-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -2292,6 +2711,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/axetroy/forward-cli",
       "doc": "🔄 Reverse Proxy port forwarding cli tool",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "forward_linux_amd64.tar.gz",
@@ -2310,6 +2732,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/fatedier/frp",
       "doc": "🔄 Fast reverse proxy client for exposing local services behind NAT or firewalls.",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "frp_{version}_linux_amd64.tar.gz",
@@ -2328,6 +2753,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/fatedier/frp",
       "doc": "🔄 Fast reverse proxy server for exposing local services behind NAT or firewalls.",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "frp_{version}_linux_amd64.tar.gz",
@@ -2346,6 +2774,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/imsnif/bandwhich",
       "doc": "📊 monitor network usage from cli",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bandwhich-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -2364,6 +2796,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/ipinfo/cli",
       "doc": "🌐 cli to get info of ips",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "{version}_linux_amd64.tar.gz",
@@ -2382,6 +2817,10 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/bootandy/dust",
       "doc": "📊 A more intuitive version of du in rust. It is a dua alternative.",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "dust-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -2400,6 +2839,10 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/KSXGitHub/parallel-disk-usage",
       "doc": "💾 Highly parallelized, blazing fast directory tree analyzer.",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "pdu-x86_64-unknown-linux-musl",
@@ -2418,6 +2861,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/Luzifer/ots",
       "doc": "🔒 A command line tool for generating and verifying one-time secrets.",
+      "categoryLabels": [
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ots_linux_amd64.tgz",
@@ -2436,6 +2882,10 @@
       "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/timvisee/ffsend",
       "doc": "📤 Send files in secure encrypted way over the internet.",
+      "categoryLabels": [
+        "file-transfer-sharing",
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ffsend-{version}-linux-x64",
@@ -2454,6 +2904,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/SpatiumPortae/portal",
       "doc": "🔄 A terminal-based file transfer between two computers.",
+      "categoryLabels": [
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "portal_{version}_Linux_x86_64.tar.gz",
@@ -2472,6 +2925,10 @@
       "license": "MIT license",
       "repoURL": "https://github.com/claudiodangelis/qrcp",
       "doc": "📱 Transfer files over WiFi from your computer to mobile device by scanning a QR code without leaving the terminal.",
+      "categoryLabels": [
+        "file-transfer-sharing",
+        "qr-mobile-device-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "qrcp_{version}_linux_amd64.tar.gz",
@@ -2490,6 +2947,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/sayanarijit/qrscan",
       "doc": "📷 qr code scanner",
+      "categoryLabels": [
+        "qr-mobile-device-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "qrscan-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -2508,6 +2968,9 @@
       "license": "MIT license",
       "repoURL": "https://github.com/mdp/qrterminal",
       "doc": "📷 qr code terminal from string",
+      "categoryLabels": [
+        "qr-mobile-device-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "qrterminal_Linux_x86_64.tar.gz",
@@ -2526,6 +2989,10 @@
       "license": "MIT license",
       "repoURL": "https://github.com/veeso/termscp",
       "doc": "📂 A TUI like winscp",
+      "categoryLabels": [
+        "file-managers",
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "termscp-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -2544,6 +3011,9 @@
       "license": "BSD-3-Clause license",
       "repoURL": "CMD",
       "doc": "🔲 qr code generator. String to qr code.",
+      "categoryLabels": [
+        "qr-mobile-device-tools"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install qrcode",
@@ -2562,6 +3032,10 @@
       "license": "Apache-2.0 license",
       "repoURL": "https://github.com/filebrowser/filebrowser",
       "doc": "🗂️ filebrowser provides a file managing interface within a specified directory",
+      "categoryLabels": [
+        "file-managers",
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "linux-amd64-filebrowser.tar.gz",
@@ -2580,6 +3054,10 @@
       "license": "MIT license",
       "repoURL": "https://github.com/svenstaro/miniserve",
       "doc": "📂 A small, self-contained file server with directory listings",
+      "categoryLabels": [
+        "file-managers",
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "miniserve-{version}-x86_64-unknown-linux-musl",
@@ -2598,6 +3076,10 @@
       "license": "GPL-3.0 license",
       "repoURL": "https://github.com/cloudreve/Cloudreve",
       "doc": "☁️ Self-hosted file management system with muilt-cloud support.",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "file-transfer-sharing"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "cloudreve_{version}_linux_amd64.tar.gz",
@@ -2616,6 +3098,9 @@
       "license": "BSD-2-Clause license",
       "repoURL": "https://github.com/restic/restic",
       "doc": "💾 backup program that is fast, efficient and secure. It supports the three major operating systems",
+      "categoryLabels": [
+        "storage-backup-sync"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "restic_{version}_linux_amd64.bz2",
@@ -2634,6 +3119,9 @@
       "license": "MPL-2.0 license",
       "repoURL": "https://github.com/syncthing/syncthing",
       "doc": "🔄 Syncthing is a continuous file synchronization program. It synchronizes files between two or more computers.",
+      "categoryLabels": [
+        "storage-backup-sync"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "syncthing-linux-amd64-{version}.tar.gz",
@@ -2652,6 +3140,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/istio/istio",
       "doc": "🌐 Istio is an open source service mesh that layers transparently onto existing distributed applications",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "istio-{version}-linux-amd64.tar.gz",
@@ -2670,6 +3161,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/open-pomodoro/openpomodoro-cli",
       "doc": "⏲️ Pomodoro timer for the command-line",
+      "categoryLabels": [
+        "productivity-knowledge"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "openpomodoro-cli_{version}_linux_amd64.tar.gz",
@@ -2688,6 +3182,9 @@
       "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/rust-lang/rust-analyzer",
       "doc": "🦀 Rust Language Server (LSP)",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "rust-analyzer-x86_64-unknown-linux-gnu.gz",
@@ -2706,6 +3203,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/tbillington/kondo",
       "doc": "🧹 cleans projects from litter files.",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "kondo-x86_64-unknown-linux-gnu.tar.gz",
@@ -2724,6 +3224,9 @@
       "license": "MIT License and Apache License 2.0",
       "repoURL": "CMD",
       "doc": "📊 Counts the number of lines of code, comments, and blanks in a project.",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "cargo install tokei",
@@ -2742,6 +3245,9 @@
       "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/max-sixty/worktrunk",
       "doc": "Git worktree manager for parallel AI agent workflows.",
+      "categoryLabels": [
+        "version-control"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "worktrunk-x86_64-unknown-linux-musl.tar.xz",
@@ -2760,6 +3266,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/jesseduffield/lazygit",
       "doc": "🐙 A simple terminal UI for git commands",
+      "categoryLabels": [
+        "version-control"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "lazygit_{version}_linux_x86_64.tar.gz",
@@ -2778,6 +3287,9 @@
       "license": "Apache License 2.0 for Docker Engine; Docker Desktop is licensed under the Docker Subscription Service Agreement",
       "repoURL": "CMD",
       "doc": "🐳 Docker is an open platform for developing, shipping, and running applications.",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "docker.py",
@@ -2796,6 +3308,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/jesseduffield/lazydocker",
       "doc": "🐋 A simple terminal UI for both docker and docker-compose",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "lazydocker_{version}_Linux_x86_64.tar.gz",
@@ -2814,6 +3329,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/o2sh/onefetch",
       "doc": "📊 Git repository summary on your terminal",
+      "categoryLabels": [
+        "version-control",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "onefetch-linux.tar.gz",
@@ -2832,6 +3351,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/knbr13/gitcs",
       "doc": "📈 analyze Git repositories and generate a visual contributions graph",
+      "categoryLabels": [
+        "version-control",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "gitcs_linux_amd64",
@@ -2850,6 +3373,9 @@
       "license": "CC0-1.0",
       "repoURL": "https://github.com/casey/just",
       "doc": "🎯 A command runner",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "just-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -2868,6 +3394,9 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/denisidoro/navi",
       "doc": "📚 An interactive cheatsheet tool for the command-line",
+      "categoryLabels": [
+        "productivity-knowledge"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "navi-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -2886,6 +3415,9 @@
       "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/tealdeer-rs/tealdeer",
       "doc": "⚡ A very fast implementation of tldr in Rust",
+      "categoryLabels": [
+        "productivity-knowledge"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "tealdeer-linux-x86_64-musl",
@@ -2904,6 +3436,9 @@
       "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/GyulyVGC/sniffnet",
       "doc": "🔍 A simple network sniffer in Rust",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "Sniffnet_LinuxAppImage_amd64.AppImage",
@@ -2922,6 +3457,9 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/fujiapple852/trippy",
       "doc": "🧭 A network diagnostic tool combining traceroute and ping)",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "trippy-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -2940,6 +3478,9 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/pythops/oryx",
       "doc": "🕵️‍♂️ TUI for sniffing network traffic using eBPF on Linux",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "oryx-x86_64-unknown-linux-musl",
@@ -2958,6 +3499,10 @@
       "license": "MIT",
       "repoURL": "https://github.com/peltho/tufw",
       "doc": "📋 Terminal UI for UFW (Uncomplicated Firewall) on Linux",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "tufw_{version}_linux_amd64.tar.gz",
@@ -2976,6 +3521,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/Chleba/netscanner",
       "doc": "📡 Terminal network scanner & diagnostic tool with TUI (v0.6.3)",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -2994,6 +3542,9 @@
       "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/sharkdp/hyperfine",
       "doc": "⚡ A command-line benchmarking tool",
+      "categoryLabels": [
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "hyperfine-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -3012,6 +3563,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "🤖 Get up and running with large language models locally.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -fsSL https://ollama.com/install.sh | sh",
@@ -3030,6 +3584,10 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/cointop-sh/cointop",
       "doc": "💰 Cointop is a fast and lightweight interactive terminal based UI application for tracking and monitoring cryptocurrency coin stats in real-time.",
+      "categoryLabels": [
+        "monitoring-performance",
+        "finance-markets"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "cointop_{version}_linux_amd64.tar.gz",
@@ -3048,6 +3606,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/directvt/vtm",
       "doc": "🖥️ Text-based desktop environment inside your terminal",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "vtm_linux_x86_64.tar.7z",
@@ -3066,6 +3628,10 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/GitSquared/edex-ui",
       "doc": "🚀 fullscreen, cross-platform terminal emulator and system monitor that looks and feels like a sci-fi computer interface",
+      "categoryLabels": [
+        "terminals-shells",
+        "monitoring-performance"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "eDEX-UI-Linux-x86_64.AppImage",
@@ -3084,6 +3650,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/sedwards2009/extraterm/",
       "doc": "💻 Terminal emulator",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ExtratermQt-{version}.glibc2.34-x86_64.AppImage",
@@ -3102,6 +3671,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/nushell/nushell",
       "doc": "🐚 Nushell, a cross-platform shell in Rust.",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "nu-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -3120,6 +3692,11 @@
       "license": "MIT License",
       "repoURL": "https://github.com/powershell/powershell",
       "doc": "🐚 PowerShell, a cross-platform shell in C#.",
+      "categoryLabels": [
+        "system-setup",
+        "terminals-shells",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "powershell-{version}-linux-x64.tar.gz",
@@ -3138,6 +3715,10 @@
       "license": "Mozilla Public License 2.0",
       "repoURL": "https://github.com/mozilla/geckodriver",
       "doc": "🦊 WebDriver for Firefox.",
+      "categoryLabels": [
+        "build-devops-containers",
+        "browsers-web-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "geckodriver-{version}-linux64.tar.gz",
@@ -3156,6 +3737,9 @@
       "license": "Proprietary",
       "repoURL": "CMD",
       "doc": "Secure introspectable tunnels to localhost",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "ngrok.sh",
@@ -3174,6 +3758,9 @@
       "license": "Microsoft Software License Terms",
       "repoURL": "CMD",
       "doc": "Visual Studio Code",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "code.py",
@@ -3192,6 +3779,9 @@
       "license": "AGPL-3.0-or-later, GPL-3.0-or-later, Apache-2.0",
       "repoURL": "https://github.com/zed-industries/zed",
       "doc": "High-performance, multiplayer code editor from the creators of Atom and Tree-sitter.",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -fsSL https://zed.dev/install.sh | sh; sudo mkdir -p /usr/local/bin; test -x $HOME/.local/bin/zed && sudo ln -sf $HOME/.local/bin/zed /usr/local/bin/zed || true",
@@ -3210,6 +3800,9 @@
       "license": "Apache License 2.0",
       "repoURL": "CMD",
       "doc": "Aider Chat",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "uv tool install --force --python python3.13 aider-chat@latest",
@@ -3228,6 +3821,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/gastownhall/beads",
       "doc": "Beads, a distributed graph issue tracker and memory layer for coding agents.",
+      "categoryLabels": [
+        "version-control",
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "beads_{version}_linux_amd64.tar.gz",
@@ -3246,6 +3843,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/charmbracelet/mods/",
       "doc": "🤖 AI for the command line, built for pipelines",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "mods_{version}_Linux_x86_64.tar.gz",
@@ -3264,6 +3864,9 @@
       "license": "MIT OR Apache-2.0",
       "repoURL": "https://github.com/sigoden/aichat",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "aichat-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -3282,6 +3885,9 @@
       "license": "Apache-2.0",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @qwen-code/qwen-code@latest",
@@ -3300,6 +3906,9 @@
       "license": "Apache-2.0",
       "repoURL": "CMD",
       "doc": "Cline agent extension in the terminal",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g cline",
@@ -3318,6 +3927,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "Kilocode agent extension in the terminal",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @kilocode/cli",
@@ -3336,6 +3948,9 @@
       "license": "GitHub Copilot CLI License",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @github/copilot",
@@ -3354,6 +3969,10 @@
       "license": "Apache-2.0",
       "repoURL": "CMD",
       "doc": "browser internet.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "browsers-web-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g agent-browser;  bun install -g playwright install-deps chromium",
@@ -3372,6 +3991,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/asheshgoplani/agent-deck",
       "doc": "Terminal UI for AI coding agents",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "agent-deck_{version}_linux_amd64.tar.gz",
@@ -3390,6 +4012,10 @@
       "license": "MIT",
       "repoURL": "https://github.com/weykon/agent-hand",
       "doc": "Fast tmux-backed terminal session manager for AI coding agents.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "terminal-workspaces"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "agent-hand-x86_64-unknown-linux-gnu.tar.gz",
@@ -3408,6 +4034,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/bnomei/tmux-mcp",
       "doc": "Tmux MCP server for AI assistants. Requires tmux on PATH.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "tmux-mcp-rs-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -3426,6 +4055,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/njbrake/agent-of-empires",
       "doc": "Agent of Empires terminal session manager for AI coding agents",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "aoe-linux-amd64.tar.gz",
@@ -3444,6 +4076,10 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/docker/docker-agent",
       "doc": "Docker terminal coding agent",
+      "categoryLabels": [
+        "build-devops-containers",
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "docker-agent-linux-amd64",
@@ -3462,6 +4098,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/badlogic/pi-mono",
       "doc": "AI agent toolkit: coding agent CLI, unified LLM API, TUI and web UI libraries.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @mariozechner/pi-coding-agent",
@@ -3480,6 +4119,10 @@
       "license": "MIT",
       "repoURL": "https://github.com/stablyai/orca",
       "doc": "Orca is the next-gen IDE for building with coding agents",
+      "categoryLabels": [
+        "editors-ides",
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "orca_{version}_amd64.deb",
@@ -3498,6 +4141,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "OpenClaw is a personal AI assistant you run on your own devices.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g openclaw@latest",
@@ -3516,6 +4162,9 @@
       "license": "Proprietary",
       "repoURL": "CMD",
       "doc": "Google Antigravity CLI.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -fsSL https://antigravity.google/cli/install.sh | bash",
@@ -3534,6 +4183,9 @@
       "license": "FSL-1.1-MIT",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @charmland/crush",
@@ -3552,6 +4204,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g opencode-ai@latest",
@@ -3570,6 +4225,9 @@
       "license": "Apache-2.0",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents from openai designed specifically for openai models.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @openai/codex",
@@ -3588,6 +4246,9 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/antinomyhq/forgecode",
       "doc": "AI-enabled terminal pair programmer for many model providers.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "forge-x86_64-unknown-linux-gnu",
@@ -3606,6 +4267,9 @@
       "license": "Custom Proprietary License for Augment CLI",
       "repoURL": "CMD",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bun install -g @augmentcode/auggie",
@@ -3624,6 +4288,10 @@
       "license": "Proprietary license under Warp Terms of Service / Product and Services License Agreement",
       "repoURL": "CMD",
       "doc": "Modern terminal with AI-powered features",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "https://app.warp.dev/get_warp?package=deb",
@@ -3642,6 +4310,9 @@
       "license": "Proprietary license under Warp Terms of Service / Product and Services License Agreement",
       "repoURL": "CMD",
       "doc": "Warp Oz CLI for running and managing Warp cloud agents",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "oz.sh",
@@ -3660,6 +4331,9 @@
       "license": "Proprietary / all rights reserved",
       "repoURL": "CMD",
       "doc": "Q desktop application",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "q.sh",
@@ -3678,6 +4352,10 @@
       "license": "Proprietary / governed by Cursor Terms of Service",
       "repoURL": "CMD",
       "doc": "Cursor CLI installer",
+      "categoryLabels": [
+        "editors-ides",
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "curl https://cursor.com/install -fsS | bash",
@@ -3696,6 +4374,9 @@
       "license": "Proprietary; use governed by Factory Terms of Service",
       "repoURL": "CMD",
       "doc": "Factory AI CLI installer",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -fsSL https://app.factory.ai/cli | sh",
@@ -3714,6 +4395,9 @@
       "license": "Apache-2.0",
       "repoURL": "CMD",
       "doc": "Terminal Console",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "alacritty.py",
@@ -3732,6 +4416,10 @@
       "license": "MPL-2.0",
       "repoURL": "CMD",
       "doc": "Privacy-focused web browser with built-in ad blocking",
+      "categoryLabels": [
+        "browsers-web-access",
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "brave.py",
@@ -3750,6 +4438,9 @@
       "license": "No license asserted",
       "repoURL": "https://github.com/iamadamdev/bypass-paywalls-chrome",
       "doc": "Plugin for chrome to bypass paywalls",
+      "categoryLabels": [
+        "browsers-web-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "bypass_paywall.py",
@@ -3768,6 +4459,10 @@
       "license": "Proprietary; limited right to access and use the Service under Cursor Terms of Service",
       "repoURL": "CMD",
       "doc": "Cursor",
+      "categoryLabels": [
+        "editors-ides",
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "cursor.py",
@@ -3786,6 +4481,9 @@
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "A text expander.",
+      "categoryLabels": [
+        "productivity-knowledge"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "espanso.py",
@@ -3804,6 +4502,9 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/ShishirPatil/gorilla",
       "doc": "natural language to API",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "goes.py",
@@ -3822,6 +4523,9 @@
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "Terminal text editor based on neovim.",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "lvim.py",
@@ -3840,6 +4544,9 @@
       "license": "Mixed; MIT for project source code, SIL OFL 1.1 for source/patched fonts and folders with explicit OFL/SIL files",
       "repoURL": "CMD",
       "doc": "lightweight containerization",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "nerdfont.py",
@@ -3858,6 +4565,9 @@
       "license": "Version-dependent. Current Redis 8+ is RSALv2 OR SSPLv1 OR AGPLv3",
       "repoURL": "CMD",
       "doc": "submillisecond fast key-value db",
+      "categoryLabels": [
+        "databases"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "redis.py",
@@ -3876,6 +4586,9 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "Modern, GPU-accelerated terminal emulator",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "wezterm.py",
@@ -3894,6 +4607,10 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "winget installer",
+      "categoryLabels": [
+        "system-setup",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "winget.py",
@@ -3912,6 +4629,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/cli/cli",
       "doc": "GitHub CLI",
+      "categoryLabels": [
+        "version-control"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "gh_{version}_linux_amd64.tar.gz",
@@ -3930,6 +4650,9 @@
       "license": "GNU General Public License v3 or later",
       "repoURL": "CMD",
       "doc": "a simple terminal text editor",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -3948,6 +4671,9 @@
       "license": "Mozilla Public License Version 2.0",
       "repoURL": "CMD",
       "doc": "Helix is a post-modern modal text editor.",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "hx.py",
@@ -3966,6 +4692,9 @@
       "license": "BSD-2-Clause-style license",
       "repoURL": "CMD",
       "doc": "🔍 File type identification utility",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -3984,6 +4713,9 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "✨ Prompt theme engine for any shell",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4002,6 +4734,10 @@
       "license": "Microsoft Software License Terms",
       "repoURL": "CMD",
       "doc": "📦 Microsoft Visual C++ Redistributable",
+      "categoryLabels": [
+        "system-setup",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4020,6 +4756,10 @@
       "license": "Microsoft license terms for Microsoft Diagnostic Build Tools for Visual Studio 2022",
       "repoURL": "CMD",
       "doc": "🔨 Visual Studio Build Tools",
+      "categoryLabels": [
+        "system-setup",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4038,6 +4778,9 @@
       "license": "GNU General Public License, version 3",
       "repoURL": "CMD",
       "doc": "💻 IDE for C/C++",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4056,6 +4799,9 @@
       "license": "GNU GPL v3 or later",
       "repoURL": "CMD",
       "doc": "🔧 GNU Make utility for building projects",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4074,6 +4820,9 @@
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "🔐 GNU Privacy Guard encryption tool",
+      "categoryLabels": [
+        "security-credentials-privacy"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install gnupg -y",
@@ -4092,6 +4841,10 @@
       "license": "EPL-2.0",
       "repoURL": "CMD",
       "doc": "📊 Graph visualization software",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install graphviz -y",
@@ -4110,6 +4863,10 @@
       "license": "GPLv3 with FLOSS exception; commercial license available",
       "repoURL": "CMD",
       "doc": "💾 Windows File System Proxy",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4128,6 +4885,9 @@
       "license": "GPL-2.0-or-later",
       "repoURL": "CMD",
       "doc": "🌐 Mount remote filesystems over SSH",
+      "categoryLabels": [
+        "storage-backup-sync"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install sshfs -y",
@@ -4146,6 +4906,9 @@
       "license": "Proprietary",
       "repoURL": "CMD",
       "doc": "🖥️ X11 server for Windows",
+      "categoryLabels": [
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4164,6 +4927,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "🟢 JavaScript runtime environment",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4182,6 +4948,10 @@
       "license": "Apache-2.0 OR MIT",
       "repoURL": "CMD",
       "doc": "🦀 Rust toolchain installer",
+      "categoryLabels": [
+        "system-setup",
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4200,6 +4970,10 @@
       "license": "Proprietary; winget manifest license field is \"Copyright (c) Microsoft Corporation. All rights reserved.\"",
       "repoURL": "CMD",
       "doc": "🖱️ Control multiple computers with one mouse",
+      "categoryLabels": [
+        "qr-mobile-device-tools",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4218,6 +4992,9 @@
       "license": "Proprietary; governed by the Google Chrome and ChromeOS Additional Terms of Service",
       "repoURL": "CMD",
       "doc": "🌐 Google Chrome web browser",
+      "categoryLabels": [
+        "browsers-web-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; sudo apt install -y ./google-chrome-stable_current_amd64.deb; rm google-chrome-stable_current_amd64.deb",
@@ -4236,6 +5013,9 @@
       "license": "Proprietary; governed by Google Terms of Service / service-specific terms",
       "repoURL": "CMD",
       "doc": "🖥️ Chrome Remote Desktop Host",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4254,6 +5034,11 @@
       "license": "Proprietary",
       "repoURL": "CMD",
       "doc": "📹 Video conferencing software",
+      "categoryLabels": [
+        "media-audio-video",
+        "presentations-recording",
+        "email-communications"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4272,6 +5057,9 @@
       "license": "LGPL-2.1-or-later, with BSD-3-Clause/BSD-2-Clause parts and an unRAR restriction",
       "repoURL": "CMD",
       "doc": "📦 File archiver with high compression ratio",
+      "categoryLabels": [
+        "file-operations-archives"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install p7zip-full -y",
@@ -4290,6 +5078,9 @@
       "license": "MPL-2.0",
       "repoURL": "CMD",
       "doc": "🦊 Mozilla Firefox web browser",
+      "categoryLabels": [
+        "browsers-web-access"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4308,6 +5099,9 @@
       "license": "MPL-2.0",
       "repoURL": "CMD",
       "doc": "📧 Mozilla Thunderbird email client",
+      "categoryLabels": [
+        "email-communications"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4326,6 +5120,10 @@
       "license": "GPL-3.0",
       "repoURL": "CMD",
       "doc": "🎥 Streamlabs OBS streaming software",
+      "categoryLabels": [
+        "media-audio-video",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4344,6 +5142,10 @@
       "license": "GPL-2.0-or-later",
       "repoURL": "CMD",
       "doc": "🎬 OBS Studio streaming and recording software",
+      "categoryLabels": [
+        "media-audio-video",
+        "presentations-recording"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4362,6 +5164,9 @@
       "license": "Various free software licenses; no single project-wide license",
       "repoURL": "CMD",
       "doc": "📝 LaTeX distribution for Windows",
+      "categoryLabels": [
+        "documents-markdown-latex"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4380,6 +5185,9 @@
       "license": "Various free software licenses",
       "repoURL": "CMD",
       "doc": "📝 TeX Live LaTeX distribution",
+      "categoryLabels": [
+        "documents-markdown-latex"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "sudo nala install texlive -y",
@@ -4398,6 +5206,9 @@
       "license": "GPL",
       "repoURL": "CMD",
       "doc": "📄 LaTeX editor",
+      "categoryLabels": [
+        "documents-markdown-latex"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4416,6 +5227,9 @@
       "license": "Apache-2.0",
       "repoURL": "CMD",
       "doc": "⚡ Lightning-fast code editor written in Rust",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "https://github.com/lapce/lapce/releases/latest/download/lapce-linux-amd64.tar.gz",
@@ -4434,6 +5248,9 @@
       "license": "Apache-2.0",
       "repoURL": "CMD",
       "doc": "🔤 OCR engine for text recognition",
+      "categoryLabels": [
+        "graphics-images-ocr-diagrams"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4452,6 +5269,9 @@
       "license": "same terms as Perl itself: Artistic License OR GPL-1.0-or-later",
       "repoURL": "CMD",
       "doc": "🍓 Strawberry Perl programming language",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4470,6 +5290,10 @@
       "license": "MPL-2.0 OR GPL-3.0-or-later",
       "repoURL": "CMD",
       "doc": "🗄️ DB Browser for SQLite database tool",
+      "categoryLabels": [
+        "databases",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4488,6 +5312,10 @@
       "license": "Microsoft SQL Server Management Studio License Terms",
       "repoURL": "CMD",
       "doc": "🗄️ SQL Server Management Studio",
+      "categoryLabels": [
+        "databases",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4506,6 +5334,9 @@
       "license": "Adobe Acrobat Reader Software License Agreement",
       "repoURL": "CMD",
       "doc": "📄 Adobe Acrobat Reader DC",
+      "categoryLabels": [
+        "documents-markdown-latex"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4524,6 +5355,9 @@
       "license": "MIT",
       "repoURL": "CMD",
       "doc": "📊 Julia programming language",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4542,6 +5376,9 @@
       "license": "Apache License 2.0",
       "repoURL": "CMD",
       "doc": "☁️ AWS Command Line Interface",
+      "categoryLabels": [
+        "cloud-saas"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4560,6 +5397,9 @@
       "license": "GPL-3.0 with project-specific clarifications and exceptions",
       "repoURL": "CMD",
       "doc": "📝 Notepad++ text editor",
+      "categoryLabels": [
+        "editors-ides"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4578,6 +5418,9 @@
       "license": "MIT",
       "repoURL": "https://github.com/Polymarket/polymarket-cli",
       "doc": "Polymarket CLI for market interactions",
+      "categoryLabels": [
+        "finance-markets"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "polymarket-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -4593,9 +5436,12 @@
     },
     {
       "appName": "himalaya",
+      "license": "MIT",
       "repoURL": "https://github.com/pimalaya/himalaya",
-      "licence": "MIT",
       "doc": "CLI email client",
+      "categoryLabels": [
+        "email-communications"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "himalaya.x86_64-linux.tgz",
@@ -4611,8 +5457,12 @@
     },
     {
       "appName": "meli",
+      "license": "EUPL-1.2 OR GPL-3.0-or-later",
       "repoURL": "https://github.com/meli/meli",
       "doc": "Terminal mail client",
+      "categoryLabels": [
+        "email-communications"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4624,14 +5474,18 @@
           "darwin": null,
           "windows": null
         }
-      },
-      "license": "EUPL-1.2 OR GPL-3.0-or-later"
+      }
     },
     {
       "appName": "powershellGithub",
       "license": "MIT License",
       "repoURL": "https://github.com/PowerShell/PowerShell",
       "doc": "PowerShell via GitHub release MSI",
+      "categoryLabels": [
+        "system-setup",
+        "terminals-shells",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "powershell-{version}-linux-x64.tar.gz",
@@ -4650,6 +5504,10 @@
       "license": "MIT License",
       "repoURL": "CMD",
       "doc": "Native Windows terminal multiplexer",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4668,6 +5526,11 @@
       "license": "MIT License",
       "repoURL": "https://github.com/psmux/psnet",
       "doc": "Real-time TUI network monitor for Windows PowerShell",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "monitoring-performance",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4686,6 +5549,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/psmux/pstop",
       "doc": "TUI system monitor for Windows PowerShell",
+      "categoryLabels": [
+        "monitoring-performance",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4704,6 +5571,10 @@
       "license": "MIT License",
       "repoURL": "https://github.com/psmux/psmux",
       "doc": "Native Windows tmux built in Rust.",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "windows-platform"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": null,
@@ -4722,6 +5593,9 @@
       "license": "MIT License",
       "repoURL": "https://github.com/yorukot/superfile",
       "doc": "Pretty fancy and modern terminal file manager",
+      "categoryLabels": [
+        "file-managers"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "superfile-linux-{version}-amd64.tar.gz",
@@ -4740,6 +5614,9 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/aaif-goose/goose",
       "doc": "Open-source AI agent for code and workflows.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "goose-x86_64-unknown-linux-gnu.tar.gz",
@@ -4758,6 +5635,10 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/crynta/terax-ai",
       "doc": "Lightweight cross-platform AI-native terminal",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "terminals-shells"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "Terax_{version}_amd64.AppImage",

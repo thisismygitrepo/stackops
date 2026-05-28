@@ -13,6 +13,7 @@ installer_standard: InstallerData =    {
       "license": "MIT",
       "repoURL": "https://github.com/sxyazi/yazi",
       "doc": "⚡ Blazing Fast Terminal File Manager.",
+      "categoryLabels": ["file-managers"],
       "fileNamePattern": {
         "amd64": {
           "linux": "yazi-x86_64-unknown-linux-musl.zip",
