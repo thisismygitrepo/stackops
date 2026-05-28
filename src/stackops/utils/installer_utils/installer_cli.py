@@ -58,12 +58,12 @@ def _build_interactive_option_previews(
 
 
 def main_installer_cli(
-    ctx: typer.Context | None = None,
     which: Annotated[str | None, typer.Argument(..., help="Comma-separated list of program/groups names to install (if --group flag is set).")] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
     update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
     version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
+    ctx: typer.Context | None = None,
 ) -> None:
     install_request = InstallRequest(version=version, update=update)
     if interactive:
