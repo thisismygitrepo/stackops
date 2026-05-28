@@ -47,6 +47,7 @@ def inspect_devops_help_emojis() -> list[EmojiDisplayDiagnostic]:
 
 
 def install(
+    ctx: typer.Context,
     which: Annotated[
         str | None, typer.Argument(..., help="Comma-separated list of program names to install, or group name if --group flag is set.")
     ] = None,
@@ -58,7 +59,7 @@ def install(
     """📦 Install packages"""
     import stackops.utils.installer_utils.installer_cli as installer_entry_point
 
-    installer_entry_point.main_installer_cli(which=which, group=group, interactive=interactive, update=update, version=version)
+    installer_entry_point.main_installer_cli(ctx=ctx, which=which, group=group, interactive=interactive, update=update, version=version)
 
 
 def repos(ctx: typer.Context) -> None:

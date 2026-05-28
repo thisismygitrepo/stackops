@@ -4,8 +4,6 @@ import json
 import subprocess
 from typing import Literal, NotRequired, TypedDict
 
-import click
-
 
 SessionBackend = Literal["zellij", "tmux", "windows-terminal"]
 SessionConflictActionLoose = Literal[
@@ -62,10 +60,9 @@ class SessionLaunchPlan(TypedDict):
     skip_launch: NotRequired[bool]
 
 
-class SessionConflictError(click.ClickException, ValueError):
+class SessionConflictError(ValueError):
     def __init__(self, message: str) -> None:
-        ValueError.__init__(self, message)
-        click.ClickException.__init__(self, message)
+        super().__init__(message)
 
 
 

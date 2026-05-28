@@ -58,6 +58,7 @@ def _build_interactive_option_previews(
 
 
 def main_installer_cli(
+    ctx: typer.Context | None = None,
     which: Annotated[str | None, typer.Argument(..., help="Comma-separated list of program/groups names to install (if --group flag is set).")] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
@@ -104,9 +105,8 @@ def main_installer_cli(
             console.print(table)
             raise typer.Exit(1)
     typer.echo("❌ You must provide either a program name/group name, or use --interactive/-ia option.")
-    import click
-    ctx = click.get_current_context()
-    typer.echo(ctx.get_help())
+    if ctx is not None:
+        typer.echo(ctx.get_help())
     raise typer.Exit(1)
 
 
