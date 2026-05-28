@@ -23,6 +23,7 @@ installer_data: InstallerData = {
     "license": "MIT",
     "doc": "A simple, fast and user-friendly alternative to find",
     "repoURL": "https://github.com/sharkdp/fd",
+    "categoryLabels": ["search-navigation"],
     "fileNamePattern": {
         "amd64": {
             "linux": "fd-v{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -46,6 +47,7 @@ Fields:
 | `license` | License label stored in the installer catalog |
 | `doc` | Description used in interactive selection |
 | `repoURL` | `"CMD"` for command / script driven installs, or a GitHub repository URL |
+| `categoryLabels` | Searchable category labels used by `devops install --explore` |
 | `fileNamePattern` | `arch -> os -> installer value` mapping |
 
 ### Other types

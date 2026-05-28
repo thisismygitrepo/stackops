@@ -34,6 +34,7 @@ Current options:
 
 - `--group` to treat `WHICH` as a bundle name
 - `--interactive` to choose packages interactively
+- `--explore` / `-x` to browse installer `categoryLabels` before choosing packages
 - `--update` to reinstall or upgrade when supported
 - `--version` to request a specific version or tag
 
@@ -41,6 +42,8 @@ Example:
 
 ```bash
 devops install --group sysabc
+devops install --explore
+devops install ai-agents-assistants -x
 devops install lazygit,fd --update
 ```
 

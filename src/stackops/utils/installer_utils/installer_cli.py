@@ -58,14 +58,29 @@ def _build_interactive_option_previews(
 
 
 def main_installer_cli(
-    which: Annotated[str | None, typer.Argument(..., help="Comma-separated list of program/groups names to install (if --group flag is set).")] = None,
+    which: Annotated[
+        str | None,
+        typer.Argument(..., help="Comma-separated list of program/groups names to install, or category labels if --explore is set."),
+    ] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
+    explore: Annotated[bool, typer.Option(..., "--explore", "-x", help="Explore installer categoryLabels before installing.")] = False,
     update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
     version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
     ctx: typer.Context | None = None,
 ) -> None:
     install_request = InstallRequest(version=version, update=update)
+    if interactive and explore:
+        typer.echo("❌ Use either --interactive/-i or --explore/-x, not both.")
+        raise typer.Exit(1)
+    if group and explore:
+        typer.echo("❌ Use either --group/-g or --explore/-x, not both.")
+        raise typer.Exit(1)
+    if explore:
+        from stackops.utils.installer_utils.installer_explore import explore_installers_by_category_labels
+
+        category_labels = [item.strip() for item in which.split(",") if item.strip() != ""] if which is not None else None
+        return explore_installers_by_category_labels(install_request=install_request, category_labels=category_labels)
     if interactive:
         return install_interactively(install_request=install_request)
     if which is not None:
@@ -104,7 +119,7 @@ def main_installer_cli(
                 table.add_row(group_name_parsed, items_str)
             console.print(table)
             raise typer.Exit(1)
-    typer.echo("❌ You must provide either a program name/group name, or use --interactive/-ia option.")
+    typer.echo("❌ You must provide a program name/group name, or use --interactive/-i or --explore/-x.")
     if ctx is not None:
         typer.echo(ctx.get_help())
     raise typer.Exit(1)
@@ -237,7 +252,7 @@ def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bo
     if verbose:
         print(f"⏳ {which} not found. Installing...")
     try:
-        main_installer_cli(which=which, interactive=False, update=False, version=None)
+        main_installer_cli(which=which, interactive=False, explore=False, update=False, version=None)
         return True
     except Exception as e:
         if verbose:

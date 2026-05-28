@@ -18,6 +18,7 @@ devops install [OPTIONS] [WHICH]
 |--------|-------|-------------|
 | `--group` | `-g` | Treat `WHICH` as a package group name |
 | `--interactive` | `-i` | Interactive selection with TV/fzf interface |
+| `--explore` | `-x` | Explore installer `categoryLabels`, then choose matching installers |
 
 ### Installation Modes
 
@@ -73,6 +74,16 @@ Features:
 - Package descriptions displayed
 - Multi-select supported
 - Package groups prefixed with `📦`
+
+#### Explore by Category Labels
+
+Browse installers by the `categoryLabels` stored in `installer_data.json`, then choose matching installers:
+
+```bash
+devops install --explore
+devops install -x
+devops install ai-agents-assistants -x
+```
 
 #### From GitHub URL
 
