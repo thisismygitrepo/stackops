@@ -14,56 +14,38 @@ end
 -- https://yazi-rs.github.io/docs/tips#username-hostname-in-header
 
 
--- Load Status component
-function Status:render(area)
-	self.area = area
-
-	local left = ui.Line(self:mode())
-	local right = ui.Line {}
-	local center = ui.Line {}
-
-	-- Add symlink target
+Status:children_add(function(self)
 	local h = self._current.hovered
-	if h and h.link_to then
-		center = center .. ui.Span(" -> " .. tostring(h.link_to)):fg("cyan")
+	if not h then
+		return ""
 	end
 
-	-- Add user:group on Unix
-	if h and ya.target_family() == "unix" then
-		right = right .. ui.Span(ya.user_name(h.cha.uid) or tostring(h.cha.uid)):fg("magenta")
-		right = right .. ui.Span(":"):fg("magenta")
-		right = right .. ui.Span(ya.group_name(h.cha.gid) or tostring(h.cha.gid)):fg("magenta")
-		right = right .. ui.Span(" ")
+	local line = ui.Line { " ", ui.Span(tostring(h.url)):fg("cyan") }
+	if h.link_to then
+		line = line .. ui.Span(" -> " .. tostring(h.link_to)):fg("cyan")
 	end
 
-	-- Add default status elements
-	left = left .. self:size()
-	right = self:name() .. right .. self:percentage()
+	return line
+end, 3300, Status.LEFT)
 
-	return {
-		ui.Paragraph(area, { left, center }),
-		ui.Paragraph(area, { right }):align(ui.Paragraph.RIGHT),
+Status:children_add(function()
+	local h = cx.active.current.hovered
+	if not h or ya.target_family() ~= "unix" then
+		return ""
+	end
+
+	return ui.Line {
+		ui.Span(ya.user_name(h.cha.uid) or tostring(h.cha.uid)):fg("magenta"),
+		ui.Span(":"):fg("magenta"),
+		ui.Span(ya.group_name(h.cha.gid) or tostring(h.cha.gid)):fg("magenta"),
+		" ",
 	}
-end
+end, 500, Status.RIGHT)
 
--- Load Header component  
-function Header:render(area)
-	self.area = area
-	
-	local left = ui.Line {}
-	local right = ui.Line {}
-
-	-- Add username@hostname on Unix
-	if ya.target_family() == "unix" then
-		left = left .. ui.Span(ya.user_name() .. "@" .. ya.host_name() .. ":"):fg("blue")
+Header:children_add(function()
+	if ya.target_family() ~= "unix" then
+		return ""
 	end
 
-	-- Add default header elements
-	left = left .. self:cwd()
-	right = self:tabs()
-
-	return {
-		ui.Paragraph(area, { left }),
-		ui.Paragraph(area, { right }):align(ui.Paragraph.RIGHT),
-	}
-end
+	return ui.Span(ya.user_name() .. "@" .. ya.host_name() .. ":"):fg("blue")
+end, 500, Header.LEFT)
