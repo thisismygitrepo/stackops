@@ -3,4 +3,77 @@
 # Top-level keys show up in interactive selection.
 # Nested keys can be selected via --context-name with dot-path syntax (example: team.backend).
 # Each entry can be a plain string or an object with prompt metadata.
-entryExample: {prompt: replace me, description: short label}
+# entryExample: {prompt: replace me, description: short label}
+
+createParallelAgents:
+      description: Design args and run agents parallel create without launching the layout
+      prompt: |
+        You are preparing a StackOps parallel-agent layout for the user requirement in the appended prompt.
+
+        Your job:
+        1. Read the appended user requirement as the source of truth.
+        2. Design the full `agents parallel create` invocation: agent choice, prompt source, context source, chunking, paths, and output names.
+        3. Create task-specific prompt/context input files needed for a robust command.
+        4. Run the create command yourself.
+        5. Do not launch the generated layout.
+
+        This is an orchestration prompt. Do not pass this prompt itself to the spawned agents via `--prompt-name agents.parallel.create` unless the user explicitly asks for a layout that creates more layouts. Write or select a prompt that tells the spawned agents how to do the user's actual work.
+
+        Command:
+
+        ```bash
+        agents parallel create [OPTIONS]
+        ```
+
+        If you are running from the StackOps source checkout and the `agents` executable is not available, use:
+
+        ```bash
+        uv run agents parallel create [OPTIONS]
+        ```
+
+        Hard rule: never include `--run`, `--Run`, or `-R`. The command must only create the layout and supporting files. After it succeeds, report the generated layout path and the command the user can run later if they want to launch it.
+
+        Before designing args, inspect the live command help:
+
+        ```bash
+        agents parallel create --help
+        ```
+
+        Treat the live help as the authority for option names, defaults, accepted enum values, and mutual exclusions. Do not rely on memory if help output differs from this prompt.
+
+        Design rules that help output will not decide for you:
+
+        - Use `codex` unless the user asks for another agent or the task clearly needs another installed agent.
+        - Use high reasoning for complex coding/research layout generation when the selected agent supports it, unless the user asks otherwise.
+        - Prefer a task-specific prompt file over a long inline prompt.
+        - Prefer a context file over a context directory when paths, task boundaries, or per-chunk instructions matter.
+        - Do not rely on implicit context defaults; provide explicit context unless you have verified the default file exists and is correct.
+        - Make the context file use the same separator you pass to the command.
+        - Use one task per agent when isolation matters; group small independent tasks only when that is more efficient.
+        - Use a short filesystem-safe job name. Prefer a unique name when an existing `.ai/agents/<job-name>` directory could cause cleanup prompts.
+        - Save a reusable YAML entry only when the user asks for a reusable workflow.
+        - Avoid interactive mode unless the user explicitly wants it.
+
+        Input-file pattern:
+
+        - For long prompts, write a prompt file such as `.ai/agents/_inputs/<job-name>/prompt.md`.
+        - For multiple work items, write a context file such as `.ai/agents/_inputs/<job-name>/context.md`.
+        - Separate context work items with the chosen separator, commonly a line containing `@-@`.
+        - Keep generated input files outside the final `--agents-dir` when you pass `--agents-dir`, so creating the input files does not make the agent directory pre-exist.
+
+        Command construction checklist:
+
+        - Choose a concrete `--job-name`.
+        - Choose exactly one of `--prompt`, `--prompt-path`, or `--prompt-name`.
+        - Choose at most one of `--context` or `--context-path`; normally use `--context-path`.
+        - Ensure `--agent-load` and `--separator` match how you split the context.
+        - Use shell-safe quoting for paths and values.
+        - Avoid destructive cleanup. If a target agent directory exists, choose a new job name or output directory unless the user explicitly requested replacement.
+        - Run `agents parallel create --help` if local behavior appears different from this prompt.
+        - Run the final `agents parallel create` command without `--run`.
+
+        Final response after running:
+
+        - State the command succeeded or explain the failure.
+        - Give the layout path and agents directory.
+        - Mention that the layout was not launched because `--run` was intentionally omitted.
