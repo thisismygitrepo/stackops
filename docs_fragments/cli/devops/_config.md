@@ -154,6 +154,7 @@ Write example configuration files into the current directory, or print one of th
 
 ```bash
 devops config dump --which ve
+devops config dump --which layout
 devops config dump --which init
 devops config dump --which ia
 devops config dump --which live --run
@@ -164,6 +165,7 @@ Supported `--which` values from current help:
 | Value | Meaning |
 |-------|---------|
 | `ve` | Write `.ve.example.yaml` in the current working directory |
+| `layout` | Write `layout.json` and `layout.schema.json` under `.stackops/examples` in the current working directory |
 | `init` | Print the shell init script for the current platform |
 | `ia` | Print the interactive setup bootstrap script |
 | `live` | Print the live-from-GitHub bootstrap script |

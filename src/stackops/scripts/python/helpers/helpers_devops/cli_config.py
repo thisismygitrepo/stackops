@@ -5,7 +5,7 @@ from typing import Annotated, Literal, TypeAlias
 import typer
 
 InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
-DumpConfigKind: TypeAlias = Literal["ve", "layout", "layout-example", "init", "ia", "live"]
+DumpConfigKind: TypeAlias = Literal["ve", "layout", "init", "ia", "live"]
 
 
 def config() -> None:
@@ -101,7 +101,7 @@ def dump_config(
                 _reject_run_for_non_script_dump()
             _dump_ve_config()
             return
-        case "layout" | "layout-example":
+        case "layout":
             if run:
                 _reject_run_for_non_script_dump()
             _dump_layout_example()
@@ -164,7 +164,9 @@ def _dump_layout_asset(*, path_reference: str) -> Path:
     from stackops.utils.path_reference import get_path_reference_path
 
     source_path = get_path_reference_path(module=layout_assets, path_reference=path_reference)
-    output_path = Path.cwd() / source_path.name
+    output_dir = Path.cwd() / ".stackops" / "examples"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / source_path.name
     output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
     return output_path
 
