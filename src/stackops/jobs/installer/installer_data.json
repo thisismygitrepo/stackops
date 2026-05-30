@@ -4719,14 +4719,14 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": null,
+          "linux": "sudo nala install file -y",
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
-          "darwin": null
+          "darwin": "brew install file"
         },
         "arm64": {
-          "linux": null,
+          "linux": "sudo nala install file -y",
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
-          "darwin": null
+          "darwin": "brew install file"
         }
       }
     },
