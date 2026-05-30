@@ -132,8 +132,9 @@ Current `devops self explore --help` exposes:
 
 #### search
 
-Interactive fuzzy-search over the generated CLI graph JSON. By default it runs `--help`
-for the selected command or group; use `--show-json` to print the raw graph entry.
+Interactive fuzzy-search over the generated CLI graph JSON. By default it shows a
+rendered Markdown summary for the selected command or group; use `--json` or `-j`
+to print the raw graph entry.
 
 ```bash
 devops self explore search [OPTIONS]
@@ -144,7 +145,7 @@ Key option:
 | Option | Description |
 |--------|-------------|
 | `--graph-path`, `-g` | Override the path to `cli_graph.json` |
-| `--show-json` | Print the selected `cli_graph.json` entry instead of running help |
+| `--json`, `-j` | Print the selected `cli_graph.json` entry instead of the rendered summary |
 
 #### tree
 

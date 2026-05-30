@@ -528,7 +528,7 @@ STACKOPS_DEVOPS_SELF_SECURITY_COMMAND: "StackOpsDevopsSelfSecurityCommand" = {
 STACKOPS_DEVOPS_SELF_EXPLORE_SEARCH_COMMAND: "StackOpsDevopsSelfExploreSearchCommand" = {
     "command_name": "search",
     "short_name": "s",
-    "help": "🔎 <s> Search CLI graph entries and run the selected command help.",
+    "help": "🔎 <s> Search CLI graph entries and show the selected command summary.",
     "subcommands": {},
 }
 

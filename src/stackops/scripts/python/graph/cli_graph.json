@@ -5169,7 +5169,7 @@
                     "name": "search",
                     "fullPath": "devops self explore search",
                     "shortPath": "d s x s",
-                    "help": "🔎 <s> Search CLI graph entries and run the selected command help.",
+                    "help": "🔎 <s> Search CLI graph entries and show the selected command summary.",
                     "source": {
                       "file": "src/stackops/scripts/python/graph/visualize/cli_graph_app.py",
                       "module": "stackops.scripts.python.graph.visualize.cli_graph_app",
@@ -5179,13 +5179,13 @@
                       "raw_lines": [
                         "def search(",
                         "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Path to cli_graph.json\")] = None,",
-                        "    show_json: Annotated[",
-                        "        bool,",
-                        "        typer.Option(\"--show-json\", help=\"Print the selected cli_graph.json entry instead of running '<command> --help'.\"),",
+                        "    json_output: Annotated[",
+                        "        bool, typer.Option(\"--json\", \"-j\", help=\"Print the selected cli_graph.json entry instead of the rendered summary.\")",
                         "    ] = False,",
                         ") -> None:",
-                        "    \"\"\"🔎 Search cli_graph.json entries and run --help for the selected command or group.\"\"\"",
-                        "    def func(graph_path_str: str | None, show_json: bool) -> None:",
+                        "    \"\"\"🔎 Search cli_graph.json entries and show a rendered summary for the selected command or group.\"\"\"",
+                        "",
+                        "    def func(graph_path_str: str | None, json_output: bool) -> None:",
                         "        from pathlib import Path",
                         "",
                         "        import typer",
@@ -5194,7 +5194,7 @@
                         "        from stackops.scripts.python.graph.visualize.cli_graph_search import search_cli_graph",
                         "",
                         "        graph_file = Path(graph_path_str) if graph_path_str else DEFAULT_GRAPH_PATH",
-                        "        return_code = search_cli_graph(graph_path=graph_file, show_json=show_json)",
+                        "        return_code = search_cli_graph(graph_path=graph_file, json_output=json_output)",
                         "        if return_code != 0:",
                         "            raise typer.Exit(code=return_code)",
                         "",
@@ -5208,9 +5208,7 @@
                         "        uv_with = [STACKOPS_VERSION]",
                         "        uv_project_dir = None",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_json=show_json),",
-                        "        uv_with=uv_with,",
-                        "        uv_project_dir=uv_project_dir,",
+                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output), uv_with=uv_with, uv_project_dir=uv_project_dir",
                         "    )",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
                       ],
@@ -5239,22 +5237,25 @@
                           }
                         },
                         {
-                          "name": "show_json",
+                          "name": "json_output",
                           "kind": "positional_or_keyword",
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-json', help=\"Print the selected cli_graph.json entry instead of running '<command> --help'.\")]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the selected cli_graph.json entry instead of the rendered summary.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--show-json"
+                              "--json",
+                              "-j"
                             ],
                             "long_flags": [
-                              "--show-json"
+                              "--json"
                             ],
-                            "short_flags": [],
-                            "help": "Print the selected cli_graph.json entry instead of running '<command> --help'."
+                            "short_flags": [
+                              "-j"
+                            ],
+                            "help": "Print the selected cli_graph.json entry instead of the rendered summary."
                           }
                         }
                       ],
@@ -5263,12 +5264,12 @@
                     "typer": {
                       "no_args_is_help": false
                     },
-                    "doc": "🔎 Search cli_graph.json entries and run --help for the selected command or group.",
+                    "doc": "🔎 Search cli_graph.json entries and show a rendered summary for the selected command or group.",
                     "aliases": [
                       {
                         "name": "s",
                         "hidden": true,
-                        "help": "Search CLI graph entries and run the selected command help."
+                        "help": "Search CLI graph entries and show the selected command summary."
                       }
                     ]
                   },
@@ -5291,6 +5292,7 @@
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the tree\")] = None,",
                         ") -> None:",
                         "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
+                        "",
                         "    def func(show_help: bool, show_aliases: bool, max_depth: int | None) -> None:",
                         "        from stackops.scripts.python.graph.visualize.rich_tree import render_tree",
                         "",
@@ -5307,13 +5309,7 @@
                         "        uv_project_dir = None",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(",
-                        "            show_help=show_help,",
-                        "            show_aliases=show_aliases,",
-                        "            max_depth=max_depth,",
-                        "        ),",
-                        "        uv_with=uv_with,",
-                        "        uv_project_dir=uv_project_dir,",
+                        "        lambda: func(show_help=show_help, show_aliases=show_aliases, max_depth=max_depth), uv_with=uv_with, uv_project_dir=uv_project_dir",
                         "    )",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
                       ],
@@ -5413,6 +5409,7 @@
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
                         ") -> None:",
                         "    \"\"\"Export the graph as Graphviz DOT.\"\"\"",
+                        "",
                         "    def func(output_str: str | None, include_help: bool, max_depth: int | None) -> None:",
                         "        from pathlib import Path",
                         "        from stackops.scripts.python.graph.visualize.dot_export import render_dot",
@@ -5437,11 +5434,7 @@
                         "        uv_project_dir = None",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(",
-                        "            output_str=str(output) if output else None,",
-                        "            include_help=include_help,",
-                        "            max_depth=max_depth,",
-                        "        ),",
+                        "        lambda: func(output_str=str(output) if output else None, include_help=include_help, max_depth=max_depth),",
                         "        uv_with=uv_with,",
                         "        uv_project_dir=uv_project_dir,",
                         "    )",
@@ -5541,10 +5534,7 @@
                     "signature": {
                       "raw_lines": [
                         "def chart(",
-                        "    view: Annotated[",
-                        "        PlotlyView,",
-                        "        typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(get_args(PlotlyView))}.\"\"\"),",
-                        "    ] = \"sunburst\",",
+                        "    view: Annotated[PlotlyView, typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(get_args(PlotlyView))}.\"\"\")] = \"sunburst\",",
                         "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the graph\")] = None,",
                         "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
@@ -5722,6 +5712,7 @@
                         "def navigate():",
                         "    \"\"\"📚 NAVIGATE command structure with TUI\"\"\"",
                         "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
+                        "",
                         "    # import stackops.scripts.python.graph.visualize.helpers_navigator as navigator",
                         "    # path = Path(navigator.__file__).resolve().parent.joinpath(\"devops_navigator.py\")",
                         "    # from stackops.utils.code import exit_then_run_shell_script",
@@ -5732,16 +5723,18 @@
                         "    # exit_then_run_shell_script(f\"\"\"uv run {executable} {path}\"\"\")",
                         "    def func():",
                         "        from stackops.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator",
+                        "",
                         "        main_devops_navigator()",
+                        "",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
+                        "",
                         "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
                         "        uv_with = [\"textual\"]",
                         "        uv_project_dir = str(Path.home().joinpath(\"code/stackops\"))",
                         "    else:",
                         "        uv_with = [STACKOPS_VERSION, \"textual\"]",
                         "        uv_project_dir = None",
-                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),",
-                        "            uv_with=uv_with, uv_project_dir=uv_project_dir)",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(), uv_with=uv_with, uv_project_dir=uv_project_dir)",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
                       ],
                       "name": "navigate",
@@ -18927,10 +18920,6 @@
                   {
                     "name": "p",
                     "hidden": true
-                  },
-                  {
-                    "name": "pm",
-                    "hidden": true
                   }
                 ]
               },
@@ -19115,10 +19104,6 @@
                 "aliases": [
                   {
                     "name": "c",
-                    "hidden": true
-                  },
-                  {
-                    "name": "pc",
                     "hidden": true
                   }
                 ]
@@ -19388,10 +19373,6 @@
                   {
                     "name": "s",
                     "hidden": true
-                  },
-                  {
-                    "name": "ocr",
-                    "hidden": true
                   }
                 ]
               },
@@ -19645,10 +19626,6 @@
                 "aliases": [
                   {
                     "name": "r",
-                    "hidden": true
-                  },
-                  {
-                    "name": "db",
                     "hidden": true
                   }
                 ]

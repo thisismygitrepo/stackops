@@ -1,9 +1,9 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-import subprocess
 
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.syntax import Syntax
 
@@ -61,12 +61,7 @@ def load_search_entries(graph_path: Path) -> list[CliGraphSearchEntry]:
 
         if node_kind in {"group", "command"} and source_file.endswith(".py") and command_tokens:
             entries.append(
-                CliGraphSearchEntry(
-                    source_file=source_file,
-                    command_tokens=command_tokens,
-                    short_command_tokens=short_command_tokens,
-                    entry=node,
-                )
+                CliGraphSearchEntry(source_file=source_file, command_tokens=command_tokens, short_command_tokens=short_command_tokens, entry=node)
             )
 
         children = node.get("children")
@@ -81,7 +76,7 @@ def load_search_entries(graph_path: Path) -> list[CliGraphSearchEntry]:
     return entries
 
 
-def search_cli_graph(graph_path: Path, show_json: bool) -> int:
+def search_cli_graph(graph_path: Path, json_output: bool) -> int:
     install_if_missing(which="tv", binary_name=None, verbose=True)
     entries = load_search_entries(graph_path=graph_path)
     if not entries:
@@ -89,25 +84,17 @@ def search_cli_graph(graph_path: Path, show_json: bool) -> int:
 
     options_to_preview_mapping, entry_lookup = _build_entry_lookup(entries=entries)
     selected_key = choose_from_dict_with_preview(
-        options_to_preview_mapping=options_to_preview_mapping,
-        extension="json",
-        multi=False,
-        preview_size_percent=70,
+        options_to_preview_mapping=options_to_preview_mapping, extension="md", multi=False, preview_size_percent=70
     )
     if selected_key is None:
         return 0
 
     selected_entry = entry_lookup[selected_key]
     console = _console()
-    console.print(
-        Panel(
-            _search_result_summary(entry=selected_entry, show_json=show_json),
-            title="🔎 CLI Graph Search Result",
-            border_style="green",
+    if json_output:
+        console.print(
+            Panel(_search_result_summary(entry=selected_entry, json_output=json_output), title="🔎 CLI Graph Search Result", border_style="green")
         )
-    )
-
-    if show_json:
         console.print(
             Panel(
                 Syntax(json.dumps(selected_entry.entry, ensure_ascii=False, indent=2), "json", line_numbers=True),
@@ -117,8 +104,8 @@ def search_cli_graph(graph_path: Path, show_json: bool) -> int:
         )
         return 0
 
-    completed_process = subprocess.run([*selected_entry.executable_command_tokens, "--help"], check=False)
-    return completed_process.returncode
+    console.print(Panel(Markdown(_command_summary_markdown(entry=selected_entry)), title="CLI Command Summary", border_style="green"))
+    return 0
 
 
 def _build_entry_lookup(entries: list[CliGraphSearchEntry]) -> tuple[dict[str, str], dict[str, CliGraphSearchEntry]]:
@@ -128,18 +115,7 @@ def _build_entry_lookup(entries: list[CliGraphSearchEntry]) -> tuple[dict[str, s
     for entry in entries:
         option_key = f"{entry.command}    [{entry.source_file}]"
         entry_lookup[option_key] = entry
-        summary = _node_summary(node=entry.entry)
-        header = _preview_header(entry=entry)
-        if summary:
-            options_to_preview_mapping[option_key] = (
-                f"{header}Help target: {entry.help_command}\nSummary: {summary}\n\n"
-                + json.dumps(entry.entry, ensure_ascii=False, indent=2)
-            )
-        else:
-            options_to_preview_mapping[option_key] = (
-                f"{header}Help target: {entry.help_command}\n\n"
-                + json.dumps(entry.entry, ensure_ascii=False, indent=2)
-            )
+        options_to_preview_mapping[option_key] = _command_summary_markdown(entry=entry)
 
     return options_to_preview_mapping, entry_lookup
 
@@ -149,14 +125,12 @@ def _node_summary(node: JsonObject) -> str:
     if node_kind == "group":
         app = _as_json_object(node.get("app"))
         return (
-            _as_string(app.get("help")) if app is not None else ""
-        ) or _as_string(node.get("help")) or _as_string(node.get("doc")) or _as_string(node.get("name"))
-    return (
-        _as_string(node.get("short_help"))
-        or _as_string(node.get("help"))
-        or _as_string(node.get("doc"))
-        or _as_string(node.get("name"))
-    )
+            (_as_string(app.get("help")) if app is not None else "")
+            or _as_string(node.get("help"))
+            or _as_string(node.get("doc"))
+            or _as_string(node.get("name"))
+        )
+    return _as_string(node.get("short_help")) or _as_string(node.get("help")) or _as_string(node.get("doc")) or _as_string(node.get("name"))
 
 
 def _normalize_command_tokens(tokens: list[str]) -> tuple[str, ...]:
@@ -181,26 +155,267 @@ def _distinct_short_command(entry: CliGraphSearchEntry) -> str | None:
 
 
 def _preview_header(entry: CliGraphSearchEntry) -> str:
-    lines = [
-        f"Source: {entry.source_file}",
-        f"Command: {entry.command}",
-    ]
+    lines = [f"Source: {entry.source_file}", f"Command: {entry.command}"]
     short_command = _distinct_short_command(entry=entry)
     if short_command is not None:
         lines.append(f"Short command: {short_command}")
     return "\n".join(lines) + "\n"
 
 
-def _search_result_summary(entry: CliGraphSearchEntry, show_json: bool) -> str:
-    lines = [
-        f"[bold]Source file:[/bold] {entry.source_file}",
-        f"[bold]Command:[/bold] {entry.command}",
-    ]
+def _search_result_summary(entry: CliGraphSearchEntry, json_output: bool) -> str:
+    lines = [f"[bold]Source file:[/bold] {entry.source_file}", f"[bold]Command:[/bold] {entry.command}"]
     short_command = _distinct_short_command(entry=entry)
     if short_command is not None:
         lines.append(f"[bold]Short command:[/bold] {short_command}")
-    lines.append(f"[bold]Action:[/bold] {entry.help_command if not show_json else 'show json'}")
+    lines.append(f"[bold]Action:[/bold] {'show json' if json_output else 'show summary'}")
     return "\n".join(lines)
+
+
+def _command_summary_markdown(entry: CliGraphSearchEntry) -> str:
+    node = entry.entry
+    lines = [f"# `{entry.executable_command}`", "", _metadata_line(entry=entry), "", "## Usage", "", "```bash", _usage_line(entry=entry), "```"]
+
+    description_blocks = _description_blocks(node=node)
+    if description_blocks:
+        lines.extend(["", "## Description", ""])
+        for block in description_blocks:
+            lines.extend([_escape_markdown_text(block), ""])
+        lines.pop()
+
+    aliases = _aliases(node=node)
+    if aliases:
+        lines.extend(["", "## Aliases", ""])
+        for alias in aliases:
+            alias_name = _as_string(alias.get("name"))
+            alias_help = _as_string(alias.get("help"))
+            alias_line = f"- `{alias_name}`"
+            if alias_help:
+                alias_line += f" - {_escape_markdown_text(_compact_whitespace(alias_help))}"
+            lines.append(alias_line)
+
+    parameters = _signature_parameters(node=node)
+    argument_rows = [_parameter_row(parameter=parameter) for parameter in parameters if _parameter_typer_kind(parameter=parameter) == "argument"]
+    option_rows = [_parameter_row(parameter=parameter) for parameter in parameters if _parameter_typer_kind(parameter=parameter) == "option"]
+
+    if argument_rows:
+        lines.extend(["", "## Arguments", "", _parameter_table(rows=argument_rows)])
+    if option_rows:
+        lines.extend(["", "## Options", "", _parameter_table(rows=option_rows)])
+
+    child_rows = _child_rows(node=node)
+    if child_rows:
+        lines.extend(["", "## Subcommands", "", _child_table(rows=child_rows)])
+
+    source = _as_json_object(node.get("source"))
+    if source is not None:
+        lines.extend(["", "## Source", ""])
+        for label, value in (
+            ("File", _as_string(source.get("file"))),
+            ("Module", _as_string(source.get("module"))),
+            ("Callable", _as_string(source.get("callable"))),
+            ("Dispatches to", _as_string(source.get("dispatches_to"))),
+        ):
+            if value:
+                lines.append(f"- **{label}:** `{value}`")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _metadata_line(entry: CliGraphSearchEntry) -> str:
+    node_kind = _as_string(entry.entry.get("kind")) or "entry"
+    parts = [f"**Kind:** `{node_kind}`"]
+    short_command = _distinct_short_command(entry=entry)
+    if short_command is not None:
+        parts.append(f"**Short command:** `{short_command}`")
+    parts.append(f"**Full help:** `{entry.help_command}`")
+    return " | ".join(parts)
+
+
+def _usage_line(entry: CliGraphSearchEntry) -> str:
+    node_kind = _as_string(entry.entry.get("kind"))
+    if node_kind == "group":
+        return f"{entry.executable_command} [COMMAND] [ARGS]..."
+
+    parameters = _signature_parameters(node=entry.entry)
+    option_parameters = [parameter for parameter in parameters if _parameter_typer_kind(parameter=parameter) == "option"]
+    argument_parameters = [parameter for parameter in parameters if _parameter_typer_kind(parameter=parameter) == "argument"]
+    tokens = [entry.executable_command]
+    if option_parameters:
+        tokens.append("[OPTIONS]")
+    for parameter in argument_parameters:
+        name = _as_string(parameter.get("name")).replace("_", "-").upper()
+        if not name:
+            continue
+        tokens.append(f"<{name}>" if _as_bool(parameter.get("required")) else f"[{name}]")
+    return " ".join(tokens)
+
+
+def _description_blocks(node: JsonObject) -> list[str]:
+    values: list[str] = []
+    for key in ("short_help", "help", "doc"):
+        values.append(_as_string(node.get(key)))
+
+    app = _as_json_object(node.get("app"))
+    if app is not None:
+        values.append(_as_string(app.get("help")))
+
+    blocks: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        cleaned = _clean_multiline(value)
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        blocks.append(cleaned)
+    return blocks
+
+
+def _signature_parameters(node: JsonObject) -> list[JsonObject]:
+    signature = _as_json_object(node.get("signature"))
+    if signature is None:
+        return []
+
+    parameters = signature.get("parameters")
+    if not isinstance(parameters, list):
+        return []
+
+    result: list[JsonObject] = []
+    for parameter in parameters:
+        parameter_object = _as_json_object(parameter)
+        if parameter_object is None:
+            continue
+        if _as_string(parameter_object.get("name")) == "ctx":
+            continue
+        if _parameter_typer_kind(parameter=parameter_object) not in {"argument", "option"}:
+            continue
+        result.append(parameter_object)
+    return result
+
+
+def _parameter_typer_kind(parameter: JsonObject) -> str:
+    typer_data = _as_json_object(parameter.get("typer"))
+    return _as_string(typer_data.get("kind")) if typer_data is not None else ""
+
+
+def _parameter_row(parameter: JsonObject) -> tuple[str, str, str, str, str]:
+    typer_data = _as_json_object(parameter.get("typer"))
+    typer_kind = _parameter_typer_kind(parameter=parameter)
+    name = _as_string(parameter.get("name"))
+    if typer_kind == "option" and typer_data is not None:
+        param_decls = _as_string_list(typer_data.get("param_decls"))
+        label = ", ".join(f"`{decl}`" for decl in param_decls) if param_decls else f"`--{name.replace('_', '-')}`"
+    else:
+        label = f"`{name.replace('_', '-').upper()}`"
+
+    help_text = _as_string(typer_data.get("help")) if typer_data is not None else ""
+    return (
+        label,
+        _as_string(parameter.get("type")) or "-",
+        "yes" if _as_bool(parameter.get("required")) else "no",
+        _format_default(value=parameter.get("default"), required=_as_bool(parameter.get("required"))),
+        _compact_whitespace(help_text) or "-",
+    )
+
+
+def _parameter_table(rows: list[tuple[str, str, str, str, str]]) -> str:
+    lines = ["| Parameter | Type | Required | Default | Help |", "|---|---|---:|---|---|"]
+    for label, type_name, required, default, help_text in rows:
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    label,
+                    _markdown_table_cell(type_name),
+                    _markdown_table_cell(required),
+                    _markdown_table_cell(default),
+                    _markdown_table_cell(help_text),
+                ]
+            )
+            + " |"
+        )
+    return "\n".join(lines)
+
+
+def _child_rows(node: JsonObject) -> list[tuple[str, str, str, str]]:
+    children = node.get("children")
+    if not isinstance(children, list):
+        return []
+
+    rows: list[tuple[str, str, str, str]] = []
+    for child in children[:25]:
+        child_node = _as_json_object(child)
+        if child_node is None:
+            continue
+        alias_names = ", ".join(_as_string(alias.get("name")) for alias in _aliases(node=child_node) if _as_string(alias.get("name")))
+        rows.append(
+            (
+                _as_string(child_node.get("name")) or "-",
+                _as_string(child_node.get("kind")) or "-",
+                alias_names or "-",
+                _compact_whitespace(_node_summary(node=child_node)) or "-",
+            )
+        )
+    if len(children) > 25:
+        rows.append((f"... {len(children) - 25} more", "-", "-", "-"))
+    return rows
+
+
+def _child_table(rows: list[tuple[str, str, str, str]]) -> str:
+    lines = ["| Command | Kind | Aliases | Summary |", "|---|---|---|---|"]
+    for command, kind, aliases, summary in rows:
+        lines.append(
+            "| "
+            + " | ".join(
+                [f"`{command}`" if command != "-" else "-", _markdown_table_cell(kind), _markdown_table_cell(aliases), _markdown_table_cell(summary)]
+            )
+            + " |"
+        )
+    return "\n".join(lines)
+
+
+def _aliases(node: JsonObject) -> list[JsonObject]:
+    aliases = node.get("aliases")
+    if not isinstance(aliases, list):
+        return []
+    return [alias for alias in (_as_json_object(alias) for alias in aliases) if alias is not None]
+
+
+def _format_default(value: object, required: bool) -> str:
+    if required:
+        return "-"
+    if value is None:
+        return "`None`"
+    if isinstance(value, bool):
+        return f"`{value}`"
+    if isinstance(value, str):
+        return f"`{value}`"
+    return f"`{json.dumps(value, ensure_ascii=False)}`"
+
+
+def _clean_multiline(value: str) -> str:
+    return "\n".join(line.rstrip() for line in value.strip().splitlines()).strip()
+
+
+def _compact_whitespace(value: str) -> str:
+    return " ".join(value.split())
+
+
+def _escape_markdown_text(value: str) -> str:
+    return value.replace("<", "\\<").replace(">", "\\>")
+
+
+def _markdown_table_cell(value: str) -> str:
+    return _escape_markdown_text(value).replace("|", "\\|").replace("\n", "<br>")
+
+
+def _as_string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str)]
+
+
+def _as_bool(value: object) -> bool:
+    return value if isinstance(value, bool) else False
 
 
 def _as_json_object(value: object) -> JsonObject | None:

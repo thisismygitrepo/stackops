@@ -1,4 +1,4 @@
-
+ 
 
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias, get_args
@@ -146,13 +146,13 @@ def navigate():
 
 def search(
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Path to cli_graph.json")] = None,
-    show_json: Annotated[
+    json_output: Annotated[
         bool,
-        typer.Option("--show-json", help="Print the selected cli_graph.json entry instead of running '<command> --help'."),
+        typer.Option("--json", "-j", help="Print the selected cli_graph.json entry instead of the rendered summary."),
     ] = False,
 ) -> None:
-    """🔎 Search cli_graph.json entries and run --help for the selected command or group."""
-    def func(graph_path_str: str | None, show_json: bool) -> None:
+    """🔎 Search cli_graph.json entries and show a rendered summary for the selected command or group."""
+    def func(graph_path_str: str | None, json_output: bool) -> None:
         from pathlib import Path
 
         import typer
@@ -161,7 +161,7 @@ def search(
         from stackops.scripts.python.graph.visualize.cli_graph_search import search_cli_graph
 
         graph_file = Path(graph_path_str) if graph_path_str else DEFAULT_GRAPH_PATH
-        return_code = search_cli_graph(graph_path=graph_file, show_json=show_json)
+        return_code = search_cli_graph(graph_path=graph_file, json_output=json_output)
         if return_code != 0:
             raise typer.Exit(code=return_code)
 
@@ -175,7 +175,7 @@ def search(
         uv_with = [STACKOPS_VERSION]
         uv_project_dir = None
     shell_script, _pyfile = get_shell_script_running_lambda_function(
-        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_json=show_json),
+        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),
         uv_with=uv_with,
         uv_project_dir=uv_project_dir,
     )
@@ -189,8 +189,8 @@ def get_app() -> typer.Typer:
         add_help_option=True,
         add_completion=False,
     )
-    cli_app.command(name="search", no_args_is_help=False, help="🔎 <s> Search CLI graph entries and run the selected command help.")(search)
-    cli_app.command(name="s", no_args_is_help=False, help="Search CLI graph entries and run the selected command help.", hidden=True)(search)
+    cli_app.command(name="search", no_args_is_help=False, help="🔎 <s> Search CLI graph entries and show the selected command summary.")(search)
+    cli_app.command(name="s", no_args_is_help=False, help="Search CLI graph entries and show the selected command summary.", hidden=True)(search)
     cli_app.command(name="tree", no_args_is_help=False, help="🌳 <t> Render a rich tree view in the terminal.")(tree)
     cli_app.command(name="t", no_args_is_help=False, help="Render a rich tree view in the terminal.", hidden=True)(tree)
     cli_app.command(name="dot", no_args_is_help=False, help="🧩 <d> Export the graph as Graphviz DOT.")(dot)

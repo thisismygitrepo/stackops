@@ -489,7 +489,7 @@ StackOpsDevopsSelfExploreSearchCommand = TypedDict(
     {
         "command_name": Literal["search"],
         "short_name": Literal["s"],
-        "help": Literal["🔎 <s> Search CLI graph entries and run the selected command help."],
+        "help": Literal["🔎 <s> Search CLI graph entries and show the selected command summary."],
         "subcommands": EmptySubcommands,
     },
 )
