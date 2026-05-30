@@ -5,6 +5,8 @@ import typer
 
 
 DatabaseBackend: TypeAlias = Literal["rainfrog", "r", "lazysql", "l", "dblab", "d", "usql", "u", "harlequin", "h", "sqlit", "s"]
+SuryaTask: TypeAlias = Literal["ocr", "detect", "layout", "table"]
+SURYA_CONTEXT_SETTINGS = {"allow_extra_args": True, "ignore_unknown_options": True}
 
 
 def edit_file_with_hx(
@@ -128,6 +130,60 @@ def compress_pdf(
     )
 
 
+def surya(
+    data_path: Annotated[str, typer.Argument(..., help="Path to an image, PDF, or folder for Surya.")],
+    task: Annotated[SuryaTask, typer.Option("--task", "-t", help="Surya task to run.")] = "ocr",
+    output_dir: Annotated[str | None, typer.Option("--output-dir", "-o", help="Directory for Surya results.")] = None,
+    page_range: Annotated[str | None, typer.Option("--page-range", "-p", help="PDF page range, for example: 0,5-10,20.")] = None,
+    images: Annotated[bool, typer.Option("--images", "-i", help="Save annotated page images where Surya supports it.")] = False,
+    debug: Annotated[bool, typer.Option("--debug", "-d", help="Enable Surya debug output.")] = False,
+    keep_server: Annotated[bool, typer.Option("--keep-server", "-k", help="Leave Surya's inference server running for later commands.")] = False,
+    skip_table_detection: Annotated[
+        bool,
+        typer.Option("--skip-table-detection", help="For table recognition, treat the input as an already-cropped table."),
+    ] = False,
+    package_spec: Annotated[str, typer.Option("--package-spec", help="uv package spec used to provide Surya.")] = "surya-ocr",
+) -> None:
+    if not package_spec.strip():
+        raise typer.BadParameter("Package spec cannot be empty.", param_hint="--package-spec")
+
+    if skip_table_detection and task != "table":
+        raise typer.BadParameter("--skip-table-detection is only valid with --task table.", param_hint="--skip-table-detection")
+
+    input_path = Path(data_path).expanduser().resolve()
+    if not input_path.exists():
+        raise typer.BadParameter(f"Input path not found: {input_path}", param_hint="data_path")
+    if not (input_path.is_file() or input_path.is_dir()):
+        raise typer.BadParameter(f"Input path is not a file or directory: {input_path}", param_hint="data_path")
+
+    output_dir_path: str | None = None
+    if output_dir is not None:
+        resolved_output_dir = Path(output_dir).expanduser().resolve()
+        if resolved_output_dir.exists() and not resolved_output_dir.is_dir():
+            raise typer.BadParameter(f"Output path is not a directory: {resolved_output_dir}", param_hint="--output-dir")
+        output_dir_path = str(resolved_output_dir)
+
+    import click
+    from stackops.scripts.python.helpers.helpers_utils.surya import run_surya as impl
+
+    click_context = click.get_current_context(silent=True)
+
+    returncode = impl(
+        data_path=str(input_path),
+        task=task,
+        output_dir=output_dir_path,
+        page_range=page_range,
+        images=images,
+        debug=debug,
+        keep_server=keep_server,
+        skip_table_detection=skip_table_detection,
+        package_spec=package_spec,
+        extra_args=list(click_context.args) if click_context is not None else [],
+    )
+    if returncode != 0:
+        raise typer.Exit(code=returncode)
+
+
 def read_db_cli_tui(
     path: Annotated[str | None, typer.Argument(..., help="The path to the file-based db")] = None,
     url: Annotated[
@@ -177,11 +233,10 @@ def get_app() -> typer.Typer:
     file_app.command(name="d", no_args_is_help=True, hidden=True)(download)
     file_app.command(name="pdf-merge", no_args_is_help=True, help="◫ <p> Merge PDF files into one.")(merge_pdfs)
     file_app.command(name="p", no_args_is_help=True, hidden=True)(merge_pdfs)
-    file_app.command(name="pm", no_args_is_help=True, hidden=True)(merge_pdfs)
     file_app.command(name="pdf-compress", no_args_is_help=True, help="↧ <c> Compress a PDF file.")(compress_pdf)
     file_app.command(name="c", no_args_is_help=True, hidden=True)(compress_pdf)
-    file_app.command(name="pc", no_args_is_help=True, hidden=True)(compress_pdf)
+    file_app.command(name="surya", no_args_is_help=True, help="☀ <s> OCR, layout, detection, and table recognition with Surya.", context_settings=SURYA_CONTEXT_SETTINGS)(surya)
+    file_app.command(name="s", no_args_is_help=True, hidden=True, context_settings=SURYA_CONTEXT_SETTINGS)(surya)
     file_app.command(name="read-db", no_args_is_help=False, help="🗃 <r> TUI DB Visualizer.")(read_db_cli_tui)
     file_app.command(name="r", no_args_is_help=False, hidden=True)(read_db_cli_tui)
-    file_app.command(name="db", no_args_is_help=False, hidden=True)(read_db_cli_tui)
     return file_app

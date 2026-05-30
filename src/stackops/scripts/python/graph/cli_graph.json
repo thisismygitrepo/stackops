@@ -80,34 +80,48 @@
             "signature": {
               "raw_lines": [
                 "def install(",
+                "    ctx: typer.Context,",
                 "    which: Annotated[",
-                "        str | None, typer.Argument(..., help=\"Comma-separated list of program names to install, or group name if --group flag is set.\")",
+                "        str | None,",
+                "        typer.Argument(",
+                "            ...,",
+                "            help=\"Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.\",",
+                "        ),",
                 "    ] = None,",
                 "    group: Annotated[bool, typer.Option(..., \"--group\", \"-g\", help=\"Treat 'which' as a group name. A group is bundle of apps.\")] = False,",
                 "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Interactive selection of programs to install.\")] = False,",
+                "    explore: Annotated[bool, typer.Option(..., \"--explore\", \"-x\", help=\"Explore installer categoryLabels before installing.\")] = False,",
                 "    update: Annotated[bool, typer.Option(..., \"--update\", \"-u\", help=\"Allow reinstalling or upgrading already installed apps when supported.\")] = False,",
                 "    version: Annotated[str | None, typer.Option(..., \"--version\", \"-v\", help=\"Specific version or tag to install when supported.\")] = None,",
                 ") -> None:",
                 "    \"\"\"📦 Install packages\"\"\"",
                 "    import stackops.utils.installer_utils.installer_cli as installer_entry_point",
                 "",
-                "    installer_entry_point.main_installer_cli(which=which, group=group, interactive=interactive, update=update, version=version)"
+                "    installer_entry_point.main_installer_cli(ctx=ctx, which=which, group=group, interactive=interactive, explore=explore, update=update, version=version)"
               ],
               "name": "install",
               "parameters": [
+                {
+                  "name": "ctx",
+                  "kind": "positional_or_keyword",
+                  "type": "typer.Context",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "typer.Context"
+                },
                 {
                   "name": "which",
                   "kind": "positional_or_keyword",
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(..., help='Comma-separated list of program names to install, or group name if --group flag is set.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(..., help='Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Comma-separated list of program names to install, or group name if --group flag is set.",
+                    "help": "Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.",
                     "default": "..."
                   }
                 },
@@ -154,6 +168,29 @@
                       "-i"
                     ],
                     "help": "Interactive selection of programs to install.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "explore",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--explore', '-x', help='Explore installer categoryLabels before installing.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--explore",
+                      "-x"
+                    ],
+                    "long_flags": [
+                      "--explore"
+                    ],
+                    "short_flags": [
+                      "-x"
+                    ],
+                    "help": "Explore installer categoryLabels before installing.",
                     "default": "..."
                   }
                 },
@@ -801,7 +838,7 @@
                     "",
                     "    from stackops.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.100\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.102\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1770,7 +1807,7 @@
                     "    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from stackops.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.100\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.102\"])",
                     "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
                     "    if not resolved_repo_path.exists():",
                     "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\", err=True)",
@@ -19082,6 +19119,278 @@
                   },
                   {
                     "name": "pc",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "surya",
+                "fullPath": "utils file surya",
+                "shortPath": "u f s",
+                "help": "☀ <s> OCR, layout, detection, and table recognition with Surya.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.file_utils_app",
+                  "callable": "surya"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def surya(",
+                    "    data_path: Annotated[str, typer.Argument(..., help=\"Path to an image, PDF, or folder for Surya.\")],",
+                    "    task: Annotated[SuryaTask, typer.Option(\"--task\", \"-t\", help=\"Surya task to run.\")] = \"ocr\",",
+                    "    output_dir: Annotated[str | None, typer.Option(\"--output-dir\", \"-o\", help=\"Directory for Surya results.\")] = None,",
+                    "    page_range: Annotated[str | None, typer.Option(\"--page-range\", \"-p\", help=\"PDF page range, for example: 0,5-10,20.\")] = None,",
+                    "    images: Annotated[bool, typer.Option(\"--images\", \"-i\", help=\"Save annotated page images where Surya supports it.\")] = False,",
+                    "    debug: Annotated[bool, typer.Option(\"--debug\", \"-d\", help=\"Enable Surya debug output.\")] = False,",
+                    "    keep_server: Annotated[bool, typer.Option(\"--keep-server\", \"-k\", help=\"Leave Surya's inference server running for later commands.\")] = False,",
+                    "    skip_table_detection: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--skip-table-detection\", help=\"For table recognition, treat the input as an already-cropped table.\"),",
+                    "    ] = False,",
+                    "    package_spec: Annotated[str, typer.Option(\"--package-spec\", help=\"uv package spec used to provide Surya.\")] = \"surya-ocr\",",
+                    ") -> None:",
+                    "    if not package_spec.strip():",
+                    "        raise typer.BadParameter(\"Package spec cannot be empty.\", param_hint=\"--package-spec\")",
+                    "",
+                    "    if skip_table_detection and task != \"table\":",
+                    "        raise typer.BadParameter(\"--skip-table-detection is only valid with --task table.\", param_hint=\"--skip-table-detection\")",
+                    "",
+                    "    input_path = Path(data_path).expanduser().resolve()",
+                    "    if not input_path.exists():",
+                    "        raise typer.BadParameter(f\"Input path not found: {input_path}\", param_hint=\"data_path\")",
+                    "    if not (input_path.is_file() or input_path.is_dir()):",
+                    "        raise typer.BadParameter(f\"Input path is not a file or directory: {input_path}\", param_hint=\"data_path\")",
+                    "",
+                    "    output_dir_path: str | None = None",
+                    "    if output_dir is not None:",
+                    "        resolved_output_dir = Path(output_dir).expanduser().resolve()",
+                    "        if resolved_output_dir.exists() and not resolved_output_dir.is_dir():",
+                    "            raise typer.BadParameter(f\"Output path is not a directory: {resolved_output_dir}\", param_hint=\"--output-dir\")",
+                    "        output_dir_path = str(resolved_output_dir)",
+                    "",
+                    "    import click",
+                    "    from stackops.scripts.python.helpers.helpers_utils.surya import run_surya as impl",
+                    "",
+                    "    click_context = click.get_current_context(silent=True)",
+                    "",
+                    "    returncode = impl(",
+                    "        data_path=str(input_path),",
+                    "        task=task,",
+                    "        output_dir=output_dir_path,",
+                    "        page_range=page_range,",
+                    "        images=images,",
+                    "        debug=debug,",
+                    "        keep_server=keep_server,",
+                    "        skip_table_detection=skip_table_detection,",
+                    "        package_spec=package_spec,",
+                    "        extra_args=list(click_context.args) if click_context is not None else [],",
+                    "    )",
+                    "    if returncode != 0:",
+                    "        raise typer.Exit(code=returncode)"
+                  ],
+                  "name": "surya",
+                  "parameters": [
+                    {
+                      "name": "data_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to an image, PDF, or folder for Surya.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Path to an image, PDF, or folder for Surya.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "task",
+                      "kind": "positional_or_keyword",
+                      "type": "SuryaTask",
+                      "default": "ocr",
+                      "required": false,
+                      "annotation_raw": "Annotated[SuryaTask, typer.Option('--task', '-t', help='Surya task to run.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--task",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--task"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Surya task to run."
+                      }
+                    },
+                    {
+                      "name": "output_dir",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--output-dir', '-o', help='Directory for Surya results.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--output-dir",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--output-dir"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "Directory for Surya results."
+                      }
+                    },
+                    {
+                      "name": "page_range",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--page-range', '-p', help='PDF page range, for example: 0,5-10,20.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--page-range",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--page-range"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "PDF page range, for example: 0,5-10,20."
+                      }
+                    },
+                    {
+                      "name": "images",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--images', '-i', help='Save annotated page images where Surya supports it.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--images",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--images"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Save annotated page images where Surya supports it."
+                      }
+                    },
+                    {
+                      "name": "debug",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--debug', '-d', help='Enable Surya debug output.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--debug",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--debug"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Enable Surya debug output."
+                      }
+                    },
+                    {
+                      "name": "keep_server",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--keep-server', '-k', help=\"Leave Surya's inference server running for later commands.\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--keep-server",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--keep-server"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Leave Surya's inference server running for later commands."
+                      }
+                    },
+                    {
+                      "name": "skip_table_detection",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--skip-table-detection', help='For table recognition, treat the input as an already-cropped table.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--skip-table-detection"
+                        ],
+                        "long_flags": [
+                          "--skip-table-detection"
+                        ],
+                        "short_flags": [],
+                        "help": "For table recognition, treat the input as an already-cropped table."
+                      }
+                    },
+                    {
+                      "name": "package_spec",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "surya-ocr",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Option('--package-spec', help='uv package spec used to provide Surya.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--package-spec"
+                        ],
+                        "long_flags": [
+                          "--package-spec"
+                        ],
+                        "short_flags": [],
+                        "help": "uv package spec used to provide Surya."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "command_context_settings": "SURYA_CONTEXT_SETTINGS",
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true
+                  },
+                  {
+                    "name": "ocr",
                     "hidden": true
                   }
                 ]
