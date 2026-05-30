@@ -8,14 +8,14 @@
 # live from github version
 # alias stackops='$HOME/.local/bin/uvx --python 3.14 --from "git+https://github.com/thisismygitrepo/stackops" stackops'
 
-alias devops='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.101" devops'
-alias cloud='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.101" cloud'
-alias agents='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.101" agents'
-alias fire='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.101" fire'
-alias croshell='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.101" croshell'
-alias utils='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.101" utils'
-alias terminal='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.101" terminal'
-seek() { "$HOME/.local/bin/uvx" --python 3.14 --from "stackops>=8.101" seek "$@"; }
+alias devops='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.102" devops'
+alias cloud='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.102" cloud'
+alias agents='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.102" agents'
+alias fire='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.102" fire'
+alias croshell='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.102" croshell'
+alias utils='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.102" utils'
+alias terminal='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=8.102" terminal'
+seek() { "$HOME/.local/bin/uvx" --python 3.14 --from "stackops>=8.102" seek "$@"; }
 
 alias d='wrap_in_shell_script devops'
 alias c='wrap_in_shell_script cloud'
