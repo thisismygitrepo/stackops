@@ -3325,6 +3325,28 @@
       }
     },
     {
+      "appName": "dtop",
+      "license": "MIT License",
+      "repoURL": "https://github.com/amir20/dtop",
+      "doc": "🖥️ Terminal dashboard for Docker monitoring across multiple hosts with Dozzle integration.",
+      "categoryLabels": [
+        "build-devops-containers",
+        "monitoring-performance"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "dtop-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "dtop-x86_64-apple-darwin.tar.gz",
+          "windows": null
+        },
+        "arm64": {
+          "linux": "dtop-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "dtop-aarch64-apple-darwin.tar.gz",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "onefetch",
       "license": "MIT License",
       "repoURL": "https://github.com/o2sh/onefetch",
