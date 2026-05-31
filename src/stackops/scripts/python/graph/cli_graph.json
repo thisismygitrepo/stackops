@@ -892,7 +892,7 @@
                     "    on_conflict = resolve_conflict_action(on_conflict=on_conflict)",
                     "    import platform",
                     "",
-                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH",
+                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT",
                     "    from stackops.utils.code import get_uv_command_executing_python_script",
                     "    console = Console()",
                     "",
@@ -1013,10 +1013,11 @@
                     "mv {_bash_quote(repo_remote_root_str)} {_bash_quote(repo_local_root_str)}",
                     "    \"\"\"",
                     "    if platform.system() in [\"Linux\", \"Darwin\"]:",
-                    "        program_2 += \"\"\"",
+                    "        dotfiles_linux_scripts = DOTFILES_SCRIPTS_ROOT / \"linux\"",
+                    "        program_2 += f\"\"\"",
                     "sudo chmod 600 $HOME/.ssh/*",
                     "sudo chmod 700 $HOME/.ssh",
-                    "sudo chmod +x $HOME/dotfiles/scripts/linux -R",
+                    "sudo chmod +x {_bash_quote(str(dotfiles_linux_scripts))} -R",
                     "\"\"\"",
                     "    shell_file_2 = get_tmp_file()",
                     "    shell_file_2.write_text(program_2, encoding=\"utf-8\")",
@@ -1035,20 +1036,21 @@
                     "    # ================================================================================",
                     "",
                     "    option4 = \"Remove problematic rclone file from repo and replace with remote:\"",
+                    "    remote_dotfiles_rclone_conf = CONFIG_ROOT.joinpath(\"remote\", \"dotfiles\", \"creds\", \"rclone\", \"rclone.conf\")",
                     "    if platform.system() == \"Windows\":",
                     "        program_4 = f\"\"\"",
-                    "Remove-Item -LiteralPath \"$HOME/dotfiles/creds/rclone/rclone.conf\" -Force -ErrorAction SilentlyContinue",
-                    "New-Item -ItemType Directory -Path \"$HOME/dotfiles/creds/rclone\" -Force | Out-Null",
-                    "Copy-Item -LiteralPath \"$HOME/.config/stackops/remote/dotfiles/creds/rclone/rclone.conf\" -Destination \"$HOME/dotfiles/creds/rclone/rclone.conf\" -Force",
-                    "Set-Location -LiteralPath \"$HOME/dotfiles\"",
+                    "Remove-Item -LiteralPath {powershell_single_quote(str(DOTFILES_RCLONE_CONF_PATH))} -Force -ErrorAction SilentlyContinue",
+                    "New-Item -ItemType Directory -Path {powershell_single_quote(str(DOTFILES_RCLONE_CONF_PATH.parent))} -Force | Out-Null",
+                    "Copy-Item -LiteralPath {powershell_single_quote(str(remote_dotfiles_rclone_conf))} -Destination {powershell_single_quote(str(DOTFILES_RCLONE_CONF_PATH))} -Force",
+                    "Set-Location -LiteralPath {powershell_single_quote(str(DOTFILES_ROOT))}",
                     "git commit -am \"finished merging\"",
                     "{program1}",
                     "    \"\"\"",
                     "    else:",
                     "        program_4 = f\"\"\"",
-                    "rm $HOME/dotfiles/creds/rclone/rclone.conf",
-                    "cp $HOME/.config/stackops/remote/dotfiles/creds/rclone/rclone.conf $HOME/dotfiles/creds/rclone",
-                    "cd $HOME/dotfiles",
+                    "rm {_bash_quote(str(DOTFILES_RCLONE_CONF_PATH))}",
+                    "cp {_bash_quote(str(remote_dotfiles_rclone_conf))} {_bash_quote(str(DOTFILES_RCLONE_CONF_PATH.parent))}",
+                    "cd {_bash_quote(str(DOTFILES_ROOT))}",
                     "git commit -am \"finished merging\"",
                     "{program1}",
                     "    \"\"\"",
@@ -2819,11 +2821,11 @@
                     "        print(\"❌ Internet-based transfer is not yet implemented.\")",
                     "        raise typer.Exit(code=1)",
                     "",
-                    "    dotfiles_dir = Path.home().joinpath(\"dotfiles\")",
+                    "    dotfiles_dir = DOTFILES_ROOT",
                     "    if not dotfiles_dir.exists() or not dotfiles_dir.is_dir():",
                     "        print(f\"❌ Dotfiles directory does not exist: {dotfiles_dir}\")",
                     "        raise typer.Exit(code=1)",
-                    "    dotfiles_zip = Path.home().joinpath(\"dotfiles.zip\")",
+                    "    dotfiles_zip = DOTFILES_ZIP_PATH",
                     "    if dotfiles_zip.exists():",
                     "        dotfiles_zip.unlink()",
                     "    zipfile = shutil.make_archive(base_name=str(dotfiles_zip)[:-4], format=\"zip\", root_dir=str(dotfiles_dir), base_dir=\".\", verbose=False)",
@@ -2834,7 +2836,7 @@
                     "    zipfile_path.unlink()",
                     "    print(f\"✅ Dotfiles exported to: {zipfile_encrypted_path}\")",
                     "    if over_ssh:",
-                    "        code_sample = \"\"\"ftpx ~/dotfiles.zip.gpg user@remote_host:^\"\"\"",
+                    "        code_sample = f\"ftpx {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^\"",
                     "        print(\"🔗 Exporting dotfiles via SSH-based transfer (scp).\")",
                     "        print(f\"💡 Run the following command on your local machine to copy dotfiles to the remote machine:\\n{code_sample}\")",
                     "        remote_address = typer.prompt(\"Enter the remote machine address (user@host) to copy dotfiles to \")",
@@ -2966,18 +2968,19 @@
                     "    #     cloud copy SHARE_URL . --config ss[/dim]",
                     "    if use_ssh:",
                     "        print(\"🔗 Importing dotfiles via SSH-based transfer (scp).\")",
-                    "        code = \"\"\"cloud ftpx $USER@$(hostname):^ ~/dotfiles -z\"\"\"",
+                    "        dotfiles_display_path = _format_home_relative_path(DOTFILES_ROOT)",
+                    "        code = f\"\"\"cloud ftpx $USER@$(hostname):^ {dotfiles_display_path} -z\"\"\"",
                     "        print(f\"💡 Run the following command on the remote machine that has the dotfiles:\\n{code}\")",
                     "        url = typer.prompt(\"Enter the remote machine address (user@host) to copy dotfiles from \")",
                     "",
-                    "        code_concrete = f\"cloud ftpx {url}:^ ~/dotfiles -z\"",
+                    "        code_concrete = f\"cloud ftpx {url}:^ {dotfiles_display_path} -z\"",
                     "        from stackops.utils.code import run_shell_script",
                     "        run_shell_script(code_concrete, display_script=True, clean_env=False)",
                     "",
                     "        print(\"✅ Dotfiles copied via SSH.\")",
                     "        return",
                     "    if url is None:",
-                    "        url = typer.prompt(\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or ~/dotfiles.zip.gpg) \")",
+                    "        url = typer.prompt(f\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \")",
                     "    if pwd is None:",
                     "        pwd = typer.prompt(\"Enter the password for zip decryption\", hide_input=True)",
                     "    assert url is not None, \"URL prompt should have produced an archive location.\"",
@@ -2997,7 +3000,7 @@
                     "        typer.echo(msg)",
                     "        raise typer.Exit(code=1) from error",
                     "    print(f\"✅ Decrypted zip file saved to: {zipfile_path}\")",
-                    "    dotfiles_path = Path.home().joinpath(\"dotfiles\")",
+                    "    dotfiles_path = DOTFILES_ROOT",
                     "    try:",
                     "        with tempfile.TemporaryDirectory(prefix=\".stackops-dotfiles-import-\", dir=dotfiles_path.parent) as temp_dir:",
                     "            extracted_dotfiles_path = Path(temp_dir).joinpath(\"dotfiles\")",
@@ -3569,6 +3572,380 @@
               },
               {
                 "kind": "command",
+                "name": "secrets",
+                "fullPath": "devops config secrets",
+                "shortPath": "d c S",
+                "help": "f'🔐 <S> {secrets_module.SECRETS_HELP}'",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets",
+                  "callable": "secrets"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def secrets(",
+                    "    terms: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Argument(",
+                    "            help=(",
+                    "                \"Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, \"",
+                    "                \"secret name/tags/scope, metadata, notes, or env var keys.\"",
+                    "            )",
+                    "        ),",
+                    "    ] = None,",
+                    "    secrets_path: Annotated[",
+                    "        Path | None,",
+                    "        typer.Option(\"--path\", \"-p\", help=\"Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory.\"),",
+                    "    ] = None,",
+                    "    edit: Annotated[bool, typer.Option(\"--edit\", \"-e\", help=\"Open the secrets JSON file for editing instead of loading env vars.\")] = False,",
+                    "    editor: Annotated[str, typer.Option(\"--editor\", help=\"Editor to use with --edit. Defaults to hx.\")] = \"hx\",",
+                    "    interactive: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--interactive\",",
+                    "            \"--interative\",",
+                    "            \"-i\",",
+                    "            help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\",",
+                    "        ),",
+                    "    ] = False,",
+                    "    verbose: Annotated[",
+                    "        bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected secret bundle and env var keys without secret values.\")",
+                    "    ] = False,",
+                    "    entry_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--name\", \"-n\", help=\"Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets.\"),",
+                    "    ] = None,",
+                    "    secret_name: Annotated[str | None, typer.Option(\"--secret-name\", help=\"Exact entries[].secrets[].name value to require.\")] = None,",
+                    "    tags: Annotated[",
+                    "        list[str] | None, typer.Option(\"--tag\", \"--tags\", \"-t\", help=\"Exact entry or secret tag to require. Repeat for multiple tags.\")",
+                    "    ] = None,",
+                    "    entry_tags: Annotated[",
+                    "        list[str] | None, typer.Option(\"--entry-tag\", help=\"Exact entries[].tags value to require. Repeat for multiple tags.\")",
+                    "    ] = None,",
+                    "    secret_tags: Annotated[",
+                    "        list[str] | None, typer.Option(\"--secret-tag\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
+                    "    ] = None,",
+                    "    scopes: Annotated[",
+                    "        list[str] | None, typer.Option(\"--scope\", help=\"Exact entries[].secrets[].scope value to require. Repeat for multiple scopes.\")",
+                    "    ] = None,",
+                    "    keys: Annotated[",
+                    "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    \"\"\"🔐 <S> Define env vars from .stackops/secrets/secrets.json.\"\"\"",
+                    "    resolved_secrets_path = _resolve_secrets_path(secrets_path)",
+                    "    if edit:",
+                    "        _edit_secrets_file(secrets_path=resolved_secrets_path, editor=editor)",
+                    "        return",
+                    "",
+                    "    candidates = load_secret_candidates(resolved_secrets_path)",
+                    "    selectors = SecretSelectors(",
+                    "        entry_name=_clean_optional_selector(entry_name),",
+                    "        secret_name=_clean_optional_selector(secret_name),",
+                    "        tags=_clean_selector_values(tags),",
+                    "        entry_tags=_clean_selector_values(entry_tags),",
+                    "        secret_tags=_clean_selector_values(secret_tags),",
+                    "        scopes=_clean_selector_values(scopes),",
+                    "        keys=_clean_selector_values(keys),",
+                    "    )",
+                    "    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive)",
+                    "    _validate_env_names(candidate.key_values)",
+                    "    _write_env_handoff(candidate.key_values)",
+                    "    if verbose:",
+                    "        _echo_verbose_selection(candidate=candidate, secrets_path=resolved_secrets_path)",
+                    "",
+                    "    names = \", \".join(candidate.key_values)",
+                    "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s): {names}\"",
+                    "    typer.echo(msg)"
+                  ],
+                  "name": "secrets",
+                  "parameters": [
+                    {
+                      "name": "terms",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scope, metadata, notes, or env var keys.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scope, metadata, notes, or env var keys."
+                      }
+                    },
+                    {
+                      "name": "secrets_path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory."
+                      }
+                    },
+                    {
+                      "name": "edit",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--edit', '-e', help='Open the secrets JSON file for editing instead of loading env vars.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--edit",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--edit"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "Open the secrets JSON file for editing instead of loading env vars."
+                      }
+                    },
+                    {
+                      "name": "editor",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "hx",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Option('--editor', help='Editor to use with --edit. Defaults to hx.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--editor"
+                        ],
+                        "long_flags": [
+                          "--editor"
+                        ],
+                        "short_flags": [],
+                        "help": "Editor to use with --edit. Defaults to hx."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '--interative', '-i', help='Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "--interative",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interactive",
+                          "--interative"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."
+                      }
+                    },
+                    {
+                      "name": "verbose",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Print the selected secret bundle and env var keys without secret values.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--verbose",
+                          "-v"
+                        ],
+                        "long_flags": [
+                          "--verbose"
+                        ],
+                        "short_flags": [
+                          "-v"
+                        ],
+                        "help": "Print the selected secret bundle and env var keys without secret values."
+                      }
+                    },
+                    {
+                      "name": "entry_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--name",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--name"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets."
+                      }
+                    },
+                    {
+                      "name": "secret_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--secret-name', help='Exact entries[].secrets[].name value to require.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--secret-name"
+                        ],
+                        "long_flags": [
+                          "--secret-name"
+                        ],
+                        "short_flags": [],
+                        "help": "Exact entries[].secrets[].name value to require."
+                      }
+                    },
+                    {
+                      "name": "tags",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--tag', '--tags', '-t', help='Exact entry or secret tag to require. Repeat for multiple tags.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--tag",
+                          "--tags",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--tag",
+                          "--tags"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Exact entry or secret tag to require. Repeat for multiple tags."
+                      }
+                    },
+                    {
+                      "name": "entry_tags",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--entry-tag', help='Exact entries[].tags value to require. Repeat for multiple tags.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--entry-tag"
+                        ],
+                        "long_flags": [
+                          "--entry-tag"
+                        ],
+                        "short_flags": [],
+                        "help": "Exact entries[].tags value to require. Repeat for multiple tags."
+                      }
+                    },
+                    {
+                      "name": "secret_tags",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--secret-tag', help='Exact entries[].secrets[].tags value to require. Repeat for multiple tags.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--secret-tag"
+                        ],
+                        "long_flags": [
+                          "--secret-tag"
+                        ],
+                        "short_flags": [],
+                        "help": "Exact entries[].secrets[].tags value to require. Repeat for multiple tags."
+                      }
+                    },
+                    {
+                      "name": "scopes",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', help='Exact entries[].secrets[].scope value to require. Repeat for multiple scopes.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--scope"
+                        ],
+                        "long_flags": [
+                          "--scope"
+                        ],
+                        "short_flags": [],
+                        "help": "Exact entries[].secrets[].scope value to require. Repeat for multiple scopes."
+                      }
+                    },
+                    {
+                      "name": "keys",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--key', '-k', help='Exact env var key in keyValues to require. Repeat for multiple keys.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--key",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--key"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Exact env var key in keyValues to require. Repeat for multiple keys."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true,
+                  "epilog": "secrets_module.SECRETS_EPILOG"
+                },
+                "doc": "🔐 <S> Define env vars from .stackops/secrets/secrets.json.",
+                "aliases": [
+                  {
+                    "name": "S",
+                    "hidden": true,
+                    "help": "secrets_module.SECRETS_HELP"
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "dump",
                 "fullPath": "devops config dump",
                 "shortPath": "d c d",
@@ -3591,10 +3968,20 @@
                     "                _reject_run_for_non_script_dump()",
                     "            _dump_ve_config()",
                     "            return",
-                    "        case \"layout\" | \"layout-example\":",
+                    "        case \"layout\":",
                     "            if run:",
                     "                _reject_run_for_non_script_dump()",
                     "            _dump_layout_example()",
+                    "            return",
+                    "        case \"mapper_data\" | \"mapper_dotfiles\":",
+                    "            if run:",
+                    "                _reject_run_for_non_script_dump()",
+                    "            _dump_profile_mapper_example(which=which)",
+                    "            return",
+                    "        case \"secrets\":",
+                    "            if run:",
+                    "                _reject_run_for_non_script_dump()",
+                    "            _dump_secrets_example()",
                     "            return",
                     "        case \"init\" | \"ia\" | \"live\":",
                     "            _dump_init_script(which=which, run=run)",
@@ -5180,11 +5567,11 @@
                         "def search(",
                         "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Path to cli_graph.json\")] = None,",
                         "    json_output: Annotated[",
-                        "        bool, typer.Option(\"--json\", \"-j\", help=\"Print the selected cli_graph.json entry instead of the rendered summary.\")",
+                        "        bool,",
+                        "        typer.Option(\"--json\", \"-j\", help=\"Print the selected cli_graph.json entry instead of the rendered summary.\"),",
                         "    ] = False,",
                         ") -> None:",
                         "    \"\"\"🔎 Search cli_graph.json entries and show a rendered summary for the selected command or group.\"\"\"",
-                        "",
                         "    def func(graph_path_str: str | None, json_output: bool) -> None:",
                         "        from pathlib import Path",
                         "",
@@ -5208,7 +5595,9 @@
                         "        uv_with = [STACKOPS_VERSION]",
                         "        uv_project_dir = None",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output), uv_with=uv_with, uv_project_dir=uv_project_dir",
+                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
                         "    )",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
                       ],
@@ -5292,7 +5681,6 @@
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the tree\")] = None,",
                         ") -> None:",
                         "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
-                        "",
                         "    def func(show_help: bool, show_aliases: bool, max_depth: int | None) -> None:",
                         "        from stackops.scripts.python.graph.visualize.rich_tree import render_tree",
                         "",
@@ -5309,7 +5697,13 @@
                         "        uv_project_dir = None",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(show_help=show_help, show_aliases=show_aliases, max_depth=max_depth), uv_with=uv_with, uv_project_dir=uv_project_dir",
+                        "        lambda: func(",
+                        "            show_help=show_help,",
+                        "            show_aliases=show_aliases,",
+                        "            max_depth=max_depth,",
+                        "        ),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
                         "    )",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
                       ],
@@ -5409,7 +5803,6 @@
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
                         ") -> None:",
                         "    \"\"\"Export the graph as Graphviz DOT.\"\"\"",
-                        "",
                         "    def func(output_str: str | None, include_help: bool, max_depth: int | None) -> None:",
                         "        from pathlib import Path",
                         "        from stackops.scripts.python.graph.visualize.dot_export import render_dot",
@@ -5434,7 +5827,11 @@
                         "        uv_project_dir = None",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(output_str=str(output) if output else None, include_help=include_help, max_depth=max_depth),",
+                        "        lambda: func(",
+                        "            output_str=str(output) if output else None,",
+                        "            include_help=include_help,",
+                        "            max_depth=max_depth,",
+                        "        ),",
                         "        uv_with=uv_with,",
                         "        uv_project_dir=uv_project_dir,",
                         "    )",
@@ -5534,7 +5931,10 @@
                     "signature": {
                       "raw_lines": [
                         "def chart(",
-                        "    view: Annotated[PlotlyView, typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(get_args(PlotlyView))}.\"\"\")] = \"sunburst\",",
+                        "    view: Annotated[",
+                        "        PlotlyView,",
+                        "        typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(get_args(PlotlyView))}.\"\"\"),",
+                        "    ] = \"sunburst\",",
                         "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the graph\")] = None,",
                         "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
@@ -5712,7 +6112,6 @@
                         "def navigate():",
                         "    \"\"\"📚 NAVIGATE command structure with TUI\"\"\"",
                         "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
-                        "",
                         "    # import stackops.scripts.python.graph.visualize.helpers_navigator as navigator",
                         "    # path = Path(navigator.__file__).resolve().parent.joinpath(\"devops_navigator.py\")",
                         "    # from stackops.utils.code import exit_then_run_shell_script",
@@ -5723,18 +6122,16 @@
                         "    # exit_then_run_shell_script(f\"\"\"uv run {executable} {path}\"\"\")",
                         "    def func():",
                         "        from stackops.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator",
-                        "",
                         "        main_devops_navigator()",
-                        "",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
-                        "",
                         "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
                         "        uv_with = [\"textual\"]",
                         "        uv_project_dir = str(Path.home().joinpath(\"code/stackops\"))",
                         "    else:",
                         "        uv_with = [STACKOPS_VERSION, \"textual\"]",
                         "        uv_project_dir = None",
-                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(), uv_with=uv_with, uv_project_dir=uv_project_dir)",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),",
+                        "            uv_with=uv_with, uv_project_dir=uv_project_dir)",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
                       ],
                       "name": "navigate",
@@ -8208,7 +8605,7 @@
                     "def share_terminal(",
                     "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", help=\"Port to run the terminal server on (default: 7681)\")] = None,",
                     "    username: Annotated[str | None, typer.Option(\"--username\", \"-u\", help=\"Username for terminal access (default: current user)\")] = None,",
-                    "    password: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=\"Password for terminal access (default: from ~/dotfiles/creds/passwords/quick_password)\")] = None,",
+                    "    password: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=f\"Password for terminal access (default: from {DOTFILES_QUICK_PASSWORD_PATH})\")] = None,",
                     "    no_auth: Annotated[bool, typer.Option(\"--no-auth\", \"-n\", help=\"Disable authentication (not recommended)\")] = False,",
                     "    start_command: Annotated[str | None, typer.Option(\"--start-command\", \"-s\", help=\"Command to run on terminal start (default: bash/powershell)\")] = None,",
                     "    ssl: Annotated[bool, typer.Option(\"--ssl\", \"-S\", help=\"Enable SSL\")] = False,",
@@ -8237,7 +8634,7 @@
                     "        import getpass",
                     "        username = getpass.getuser()",
                     "    if password is None and not no_auth:",
-                    "        pwd_path = Path.home().joinpath(\"dotfiles/creds/passwords/quick_password\")",
+                    "        pwd_path = DOTFILES_QUICK_PASSWORD_PATH",
                     "        if pwd_path.exists():",
                     "            password = pwd_path.read_text(encoding=\"utf-8\").strip()",
                     "        else:",
@@ -8254,9 +8651,9 @@
                     "    # Handle SSL certificate defaults",
                     "    if ssl:",
                     "        if ssl_cert is None:",
-                    "            ssl_cert = str(Path.home().joinpath(\"dotfiles/creds/passwords/ssl/origin_server/cert.pem\"))",
+                    "            ssl_cert = str(DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH)",
                     "        if ssl_key is None:",
-                    "            ssl_key = str(Path.home().joinpath(\"dotfiles/creds/passwords/ssl/origin_server/key.pem\"))",
+                    "            ssl_key = str(DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH)",
                     "        ",
                     "        # Verify SSL files exist",
                     "        cert_path = Path(ssl_cert)",
@@ -8422,7 +8819,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-w', help='Password for terminal access (default: from ~/dotfiles/creds/passwords/quick_password)')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-w', help=f'Password for terminal access (default: from {DOTFILES_QUICK_PASSWORD_PATH})')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8434,8 +8831,7 @@
                         ],
                         "short_flags": [
                           "-w"
-                        ],
-                        "help": "Password for terminal access (default: from ~/dotfiles/creds/passwords/quick_password)"
+                        ]
                       }
                     },
                     {
@@ -8643,7 +9039,7 @@
                     "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", help=\"Port to run the share server on (default: 8080)\")] = None,",
                     "    username: Annotated[str | None, typer.Option(\"--username\", \"-u\", help=\"Username for share access (default: current user)\")] = None,",
                     "    no_auth: Annotated[bool, typer.Option(\"--no-auth\", \"-na\", help=\"Disable authentication for share access\")] = False,",
-                    "    password: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=\"Password for share access (default: from ~/dotfiles/creds/passwords/quick_password)\")] = None,",
+                    "    password: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=f\"Password for share access (default: from {DOTFILES_QUICK_PASSWORD_PATH})\")] = None,",
                     "    bind_address: Annotated[str, typer.Option(\"--bind\", \"-a\", help=\"Address to bind the server to\")] = \"0.0.0.0\",",
                     "    over_internet: Annotated[bool, typer.Option(\"--over-internet\", \"-i\", help=\"Expose the share server over the internet using ngrok\")] = False,",
                     "    backend: Annotated[str, typer.Option(\"--backend\", \"-b\", help=\"Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing\")] = \"miniserve\",",
@@ -8681,7 +9077,7 @@
                     "        auth_username = username if username is not None else getpass.getuser()",
                     "        auth_password = password",
                     "        if auth_password is None:",
-                    "            pwd_path = Path.home().joinpath(\"dotfiles/creds/passwords/quick_password\")",
+                    "            pwd_path = DOTFILES_QUICK_PASSWORD_PATH",
                     "            if pwd_path.exists():",
                     "                auth_password = pwd_path.read_text(encoding=\"utf-8\").strip()",
                     "        if auth_password is None or auth_password == \"\":",
@@ -8840,7 +9236,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-w', help='Password for share access (default: from ~/dotfiles/creds/passwords/quick_password)')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-w', help=f'Password for share access (default: from {DOTFILES_QUICK_PASSWORD_PATH})')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8852,8 +9248,7 @@
                         ],
                         "short_flags": [
                           "-w"
-                        ],
-                        "help": "Password for share access (default: from ~/dotfiles/creds/passwords/quick_password)"
+                        ]
                       }
                     },
                     {

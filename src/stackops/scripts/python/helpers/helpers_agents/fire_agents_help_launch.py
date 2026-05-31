@@ -6,6 +6,7 @@ import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shel
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, AI_SPEC, API_SPEC, DEFAULT_STAGGER_MAX
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig
+from stackops.utils.source_of_truth import dotfiles_llm_api_keys_path
 
 
 JURISDICTION_SUFFIX = r"""
@@ -50,7 +51,7 @@ def _local_agent_environment_lines(*, agent: AGENTS, api_spec: API_SPEC, is_wind
 def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list[API_SPEC]:
     from stackops.utils.io import read_ini
 
-    api_key_path = Path.home().joinpath(f"dotfiles/creds/llm/{provider}/api_keys.ini")
+    api_key_path = dotfiles_llm_api_keys_path(provider)
     res: list[API_SPEC] = []
     if not api_key_path.exists() or not api_key_path.is_file():
         if not silent_if_missing:
@@ -133,7 +134,7 @@ def prep_agent_launch(
                 api_keys = get_api_keys(provider=provider)
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else None
                 if api_spec is None:
-                    raise ValueError("No API keys found for Crush. Please configure them in dotfiles/creds/llm/crush/api_keys.ini")
+                    raise ValueError(f"No API keys found for Crush. Please configure them in {dotfiles_llm_api_keys_path(provider)}")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
                 if machine == "local":
                     cmd = _build_generic_agent_command(

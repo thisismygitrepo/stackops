@@ -15,9 +15,36 @@ LIBRARY_ROOT = Path(stackops.__file__).resolve().parent
 REPO_ROOT = LIBRARY_ROOT.parent.parent
 DOTFILES_ROOT = Path.home().joinpath("dotfiles")
 DOTFILES_STACKOPS_ROOT = DOTFILES_ROOT.joinpath("stackops")
+DOTFILES_CREDS_ROOT = DOTFILES_ROOT.joinpath("creds")
+DOTFILES_SCRIPTS_ROOT = DOTFILES_ROOT.joinpath("scripts")
+DOTFILES_STACKOPS_SCRIPTS_ROOT = DOTFILES_STACKOPS_ROOT.joinpath("scripts")
+DOTFILES_STACKOPS_SCRIPTS_LINUX_ROOT = DOTFILES_STACKOPS_SCRIPTS_ROOT.joinpath("linux")
+DOTFILES_STACKOPS_SCRIPTS_MACOS_ROOT = DOTFILES_STACKOPS_SCRIPTS_ROOT.joinpath("macos")
+DOTFILES_STACKOPS_INIT_LINUX_PATH = DOTFILES_STACKOPS_ROOT.joinpath("init_linux.sh")
 
 CONFIG_ROOT = Path.home().joinpath(".config/stackops")
 DEFAULTS_PATH = DOTFILES_STACKOPS_ROOT.joinpath("defaults.ini")
+DOTFILES_EMAILS_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("emails.ini")
+DOTFILES_PHONE_NOTIFICATION_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("phone_notification.ini")
+DOTFILES_LAYOUTS_JSON_PATH = DOTFILES_STACKOPS_ROOT.joinpath("layouts.json")
+DOTFILES_WIFI_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("setup", "wifi.ini")
+DOTFILES_USER_MAPPER_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper_dotfiles.yaml")
+DOTFILES_USER_BACKUP_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper_data.yaml")
+DOTFILES_MAPPER_FILES_ROOT = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "files")
+
+DOTFILES_PASSWORDS_ROOT = DOTFILES_CREDS_ROOT.joinpath("passwords")
+DOTFILES_QUICK_PASSWORD_PATH = DOTFILES_PASSWORDS_ROOT.joinpath("quick_password")
+DOTFILES_SSL_ORIGIN_SERVER_ROOT = DOTFILES_PASSWORDS_ROOT.joinpath("ssl", "origin_server")
+DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath("cert.pem")
+DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath("key.pem")
+DOTFILES_TOKENS_ROOT = DOTFILES_CREDS_ROOT.joinpath("tokens")
+DOTFILES_VIRUSTOTAL_TOKEN_PATH = DOTFILES_TOKENS_ROOT.joinpath("virustotal")
+DOTFILES_RCLONE_CONF_PATH = DOTFILES_CREDS_ROOT.joinpath("rclone", "rclone.conf")
+DOTFILES_PYPIRC_PATH = DOTFILES_CREDS_ROOT.joinpath("msc", ".pypirc")
+DOTFILES_LLM_CREDS_ROOT = DOTFILES_CREDS_ROOT.joinpath("llm")
+DOTFILES_STREAMLIT_CREDS_ROOT = DOTFILES_CREDS_ROOT.joinpath("streamlit")
+DOTFILES_SSH_CREDS_ROOT = DOTFILES_CREDS_ROOT.joinpath(".ssh")
+DOTFILES_ZIP_PATH = Path.home().joinpath("dotfiles.zip")
 
 INSTALL_VERSION_ROOT = CONFIG_ROOT.joinpath("cli_tools_installers/versions")
 INSTALL_TMP_DIR = Path.home().joinpath("tmp_results", "tmp_installers")
@@ -26,9 +53,32 @@ INSTALL_TMP_DIR = Path.home().joinpath("tmp_results", "tmp_installers")
 LINUX_INSTALL_PATH = Path.home().joinpath(".local/bin").__str__()
 WINDOWS_INSTALL_PATH = Path.home().joinpath("AppData/Local/Microsoft/WindowsApps").__str__()
 
-SCRIPTS_ROOT_PRIVATE = DOTFILES_STACKOPS_ROOT.joinpath("scripts")  # local directory
+SCRIPTS_ROOT_PRIVATE = DOTFILES_STACKOPS_SCRIPTS_ROOT  # local directory
 SCRIPTS_ROOT_PUBLIC = CONFIG_ROOT.joinpath("scripts")  # local stackops directory
 SCRIPTS_ROOT_LIBRARY = LIBRARY_ROOT.joinpath("jobs", "scripts")
+
+SOURCE_OF_TRUTH_PATH_TOKENS: dict[str, Path] = {
+    "CONFIG_ROOT": CONFIG_ROOT,
+    "DOTFILES_ROOT": DOTFILES_ROOT,
+}
+
+
+def resolve_source_of_truth_path(path_value: str) -> Path:
+    for token_name, token_path in SOURCE_OF_TRUTH_PATH_TOKENS.items():
+        if path_value == token_name:
+            return token_path.expanduser().absolute()
+        token_prefix = f"{token_name}/"
+        if path_value.startswith(token_prefix):
+            return token_path.joinpath(path_value.removeprefix(token_prefix)).expanduser().absolute()
+    return Path(path_value).expanduser().absolute()
+
+
+def dotfiles_llm_api_keys_path(provider: str) -> Path:
+    return DOTFILES_LLM_CREDS_ROOT.joinpath(provider, "api_keys.ini")
+
+
+def dotfiles_streamlit_secrets_path(*, repo_name: str, app_name: str) -> Path:
+    return DOTFILES_STREAMLIT_CREDS_ROOT.joinpath(repo_name, app_name, "secrets.toml")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from typing import Any, TypedDict
 import stackops.settings.shells.bash as bash_shell_assets
 import stackops.settings.shells.pwsh as pwsh_shell_assets
 import stackops.utils.path_core as path_core
-from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
+from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH, resolve_source_of_truth_path
 from stackops.utils.links import files_are_identical
 from stackops.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
 from stackops.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
@@ -143,9 +143,7 @@ class ConfigStatusItem(TypedDict):
 
 def _resolve_config_paths(config_item: ConfigStatusItem) -> tuple[Path, Path]:
     default_path = Path(config_item["config_file_default_path"]).expanduser()
-    self_managed_path = Path(
-        config_item["config_file_self_managed_path"].replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())
-    ).expanduser()
+    self_managed_path = resolve_source_of_truth_path(config_item["config_file_self_managed_path"])
     return default_path, self_managed_path
 
 

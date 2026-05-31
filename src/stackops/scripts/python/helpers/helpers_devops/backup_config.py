@@ -12,12 +12,13 @@ import yaml
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from stackops.profile.create_links_export import REPO_LOOSE
 from stackops.utils.path_reference import get_path_reference_path
+from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH
 
 LIBRARY_BACKUP_PATH = get_path_reference_path(
     module=profile_assets,
     path_reference=profile_assets.MAPPER_DATA_PATH_REFERENCE,
 )
-USER_BACKUP_PATH = Path.home().joinpath("dotfiles/stackops/mapper_data.yaml")
+USER_BACKUP_PATH = DOTFILES_USER_BACKUP_PATH
 DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 # Created by `devops data register`
 #

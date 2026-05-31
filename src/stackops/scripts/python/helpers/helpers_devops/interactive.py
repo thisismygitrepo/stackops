@@ -7,7 +7,6 @@ TODO: add option for importing dotfiles
 """
 
 import sys
-from pathlib import Path
 import platform
 from typing import Literal
 import questionary
@@ -16,6 +15,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from stackops.utils.code import run_shell_script
+from stackops.utils.source_of_truth import DOTFILES_ROOT
 
 InstallOption = Literal[
     "install_stackops",
@@ -156,7 +156,7 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
         "retrieve_repositories", "retrieve_data", "link_private_configs"]
     if any(a_selected in require_dotfiles for a_selected in selected_options):
         # we cannot proceed before dotfiles are in place
-        if Path.home().joinpath("dotfiles").exists():
+        if DOTFILES_ROOT.exists():
             console.print("✅ Dotfiles directory found.", style="bold green")
         else:
             header_text = Text("DOTFILES MIGRATION", style="bold yellow")
@@ -190,7 +190,7 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
             elif answer == fetch_over_ssh:
                 from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import import_dotfiles
                 import_dotfiles(use_ssh=True)
-            if not Path.home().joinpath("dotfiles").exists():
+            if not DOTFILES_ROOT.exists():
                 console.print("❌ Dotfiles directory still not found after attempted import. Exiting...", style="bold red")
                 sys.exit(1)
 

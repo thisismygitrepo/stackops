@@ -2,6 +2,8 @@
 from typing import Annotated
 import typer
 
+from stackops.utils.source_of_truth import DOTFILES_QUICK_PASSWORD_PATH, DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH
+
 """
 reference:
 # https://github.com/tsl0922/ttyd/wiki/Serving-web-fonts
@@ -45,7 +47,7 @@ def display_terminal_url(local_ip_v4: str, port: int, protocol: str = "http") ->
 def share_terminal(
     port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the terminal server on (default: 7681)")] = None,
     username: Annotated[str | None, typer.Option("--username", "-u", help="Username for terminal access (default: current user)")] = None,
-    password: Annotated[str | None, typer.Option("--password", "-w", help="Password for terminal access (default: from ~/dotfiles/creds/passwords/quick_password)")] = None,
+    password: Annotated[str | None, typer.Option("--password", "-w", help=f"Password for terminal access (default: from {DOTFILES_QUICK_PASSWORD_PATH})")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-n", help="Disable authentication (not recommended)")] = False,
     start_command: Annotated[str | None, typer.Option("--start-command", "-s", help="Command to run on terminal start (default: bash/powershell)")] = None,
     ssl: Annotated[bool, typer.Option("--ssl", "-S", help="Enable SSL")] = False,
@@ -74,7 +76,7 @@ def share_terminal(
         import getpass
         username = getpass.getuser()
     if password is None and not no_auth:
-        pwd_path = Path.home().joinpath("dotfiles/creds/passwords/quick_password")
+        pwd_path = DOTFILES_QUICK_PASSWORD_PATH
         if pwd_path.exists():
             password = pwd_path.read_text(encoding="utf-8").strip()
         else:
@@ -91,9 +93,9 @@ def share_terminal(
     # Handle SSL certificate defaults
     if ssl:
         if ssl_cert is None:
-            ssl_cert = str(Path.home().joinpath("dotfiles/creds/passwords/ssl/origin_server/cert.pem"))
+            ssl_cert = str(DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH)
         if ssl_key is None:
-            ssl_key = str(Path.home().joinpath("dotfiles/creds/passwords/ssl/origin_server/key.pem"))
+            ssl_key = str(DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH)
         
         # Verify SSL files exist
         cert_path = Path(ssl_cert)

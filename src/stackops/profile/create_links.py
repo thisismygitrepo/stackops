@@ -24,7 +24,7 @@ from stackops.profile.dotfiles_mapper import (
     VALID_OS_VALUES,
     load_dotfiles_mapper,
 )
-from stackops.utils.source_of_truth import CONFIG_ROOT
+from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_SSH_CREDS_ROOT, resolve_source_of_truth_path
 
 import platform
 import subprocess
@@ -75,7 +75,7 @@ def _parse_os_field(os_field: OsField) -> set[OsName]:
 
 
 def _resolve_self_managed_path(path_value: str) -> Path:
-    return Path(path_value.replace("CONFIG_ROOT", CONFIG_ROOT.as_posix())).expanduser().absolute()
+    return resolve_source_of_truth_path(path_value)
 
 
 def _is_public_self_managed_path(path_value: str) -> bool:
@@ -390,12 +390,12 @@ def apply_mapper(
                         status=f"error: {str(ex)}",
                     )
 
-            if program_name == "ssh" and system == "Linux":  # permissions of ~/dotfiles/.ssh should be adjusted
+            if program_name == "ssh" and system == "Linux":  # permissions of the private SSH dotfiles should be adjusted
                 try:
                     console.print("\n[bold]🔒 Setting secure permissions for SSH files...[/bold]")
                     subprocess.run("chmod 700 $HOME/.ssh/", shell=True, check=True)
-                    subprocess.run("chmod 700 $HOME/dotfiles/creds/.ssh/", shell=True, check=True)
-                    subprocess.run("chmod 600 $HOME/dotfiles/creds/.ssh/*", shell=True, check=True)
+                    subprocess.run(f"chmod 700 {DOTFILES_SSH_CREDS_ROOT}", shell=True, check=True)
+                    subprocess.run(f"chmod 600 {DOTFILES_SSH_CREDS_ROOT}/*", shell=True, check=True)
                     subprocess.run("chmod 600 $HOME/.ssh/*", shell=True, check=True)
                     console.print("[green]✅ SSH permissions set successfully[/green]")
                 except Exception as e:

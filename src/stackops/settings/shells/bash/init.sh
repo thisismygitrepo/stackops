@@ -12,11 +12,13 @@ add_to_path_if_not_already() {
     done
 }
 CONFIG_ROOT="$HOME/.config/stackops"
+DOTFILES_ROOT="${DOTFILES_ROOT:-$HOME/dotfiles}"
+DOTFILES_STACKOPS_ROOT="${DOTFILES_STACKOPS_ROOT:-$DOTFILES_ROOT/stackops}"
 
 # 📂 Add directories to PATH
 add_to_path_if_not_already \
     "$CONFIG_ROOT/scripts" \
-    "$HOME/dotfiles/stackops/scripts/linux" \
+    "$DOTFILES_STACKOPS_ROOT/scripts/linux" \
     "$HOME/.local/bin" \
     "$HOME/.cargo/bin" \
     "$HOME/.duckdb/cli/latest" \
@@ -33,9 +35,9 @@ add_to_path_if_not_already \
 . $CONFIG_ROOT/settings/yazi/shell/yazi_cd.sh
 . $CONFIG_ROOT/scripts/wrap_stackops  # gives wrap_in_shell_script
 
-# check if file in ~/dotfiles/stackops/init_linux.sh exists and source it
-if [ -f "$HOME/dotfiles/stackops/init_linux.sh" ]; then
-    source "$HOME/dotfiles/stackops/init_linux.sh"
+# check if the private StackOps shell init exists and source it
+if [ -f "$DOTFILES_STACKOPS_ROOT/init_linux.sh" ]; then
+    source "$DOTFILES_STACKOPS_ROOT/init_linux.sh"
 fi
 
 alias l='lsd -la'

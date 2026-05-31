@@ -1,7 +1,7 @@
 
 from typing import Literal, TypeAlias
 from pathlib import Path
-from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, DEFAULTS_PATH
+from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, DEFAULTS_PATH, SCRIPTS_ROOT_PRIVATE
 from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
 
@@ -26,7 +26,7 @@ def get_custom_roots(option: Literal["scripts", "prompts"]) -> list[Path]:
 def list_available_scripts(where: WHERE) -> None:
     from pathlib import Path
     repo_root = current_repo_stackops_path(path_kind="scripts")
-    private_root = Path.home().joinpath("dotfiles/scripts")
+    private_root = SCRIPTS_ROOT_PRIVATE
     public_root = CONFIG_ROOT.joinpath("scripts")
     library_root = LIBRARY_ROOT.joinpath("jobs", "scripts")
     locations: dict[str, Path | str] = {}

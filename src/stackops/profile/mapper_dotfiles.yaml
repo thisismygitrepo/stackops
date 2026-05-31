@@ -6,14 +6,14 @@
 git:
   gitconfig:
     original: ~/.gitconfig
-    self_managed: ~/dotfiles/creds/git/.gitconfig
+    self_managed: DOTFILES_ROOT/creds/git/.gitconfig
     os:
     - linux
     - darwin
     - windows
   gitcred:
     original: ~/.git-credentials
-    self_managed: ~/dotfiles/creds/git/.git-credentials
+    self_managed: DOTFILES_ROOT/creds/git/.git-credentials
     os:
     - linux
     - darwin
@@ -21,7 +21,7 @@ git:
 ssh:
   keys:
     original: ~/.ssh
-    self_managed: ~/dotfiles/creds/.ssh
+    self_managed: DOTFILES_ROOT/creds/.ssh
     contents: true
     os:
     - linux
@@ -30,14 +30,14 @@ ssh:
 gpg:
   keys_unix:
     original: ~/.gnupg
-    self_managed: ~/dotfiles/creds/.gnupg
+    self_managed: DOTFILES_ROOT/creds/.gnupg
     contents: true
     os:
     - linux
     - darwin
   keys_windows:
     original: ~/AppData/Roaming/gnupg
-    self_managed: ~/dotfiles/creds/.gnupg
+    self_managed: DOTFILES_ROOT/creds/.gnupg
     contents: true
     os:
     - windows
@@ -46,7 +46,7 @@ gpg:
 pypi:
   creds:
     original: ~/.pypirc
-    self_managed: ~/dotfiles/creds/msc/.pypirc
+    self_managed: DOTFILES_ROOT/creds/msc/.pypirc
     os:
     - linux
     - darwin
@@ -54,19 +54,19 @@ pypi:
 rclone:
   config_xdg:
     original: ~/.config/rclone/rclone.conf
-    self_managed: ~/dotfiles/creds/rclone/rclone.conf
+    self_managed: DOTFILES_ROOT/creds/rclone/rclone.conf
     os:
     - linux
     - darwin
   config_windows:
     original: ~/AppData/Roaming/rclone/rclone.conf
-    self_managed: ~/dotfiles/creds/rclone/rclone.conf
+    self_managed: DOTFILES_ROOT/creds/rclone/rclone.conf
     os:
     - windows
 cloudflare:
   config:
     original: ~/.cloudflared
-    self_managed: ~/dotfiles/creds/cloudflare/.cloudflared
+    self_managed: DOTFILES_ROOT/creds/cloudflare/.cloudflared
     os:
     - linux
     - darwin
@@ -74,33 +74,33 @@ cloudflare:
 ngrok:
   config_linux:
     original: ~/.config/ngrok/ngrok.yml
-    self_managed: ~/dotfiles/creds/tokens/ngrok.yml
+    self_managed: DOTFILES_ROOT/creds/tokens/ngrok.yml
     os:
     - linux
     - darwin
   config_windows:
     original: ~/AppData/Local/ngrok/ngrok.yml
-    self_managed: ~/dotfiles/creds/tokens/ngrok.yml
+    self_managed: DOTFILES_ROOT/creds/tokens/ngrok.yml
     os:
     - windows
 m365:
   config1:
     original: ~/.cli-m365-msal.json
-    self_managed: ~/dotfiles/creds/tokens/.cli-m365-msal.json
+    self_managed: DOTFILES_ROOT/creds/tokens/.cli-m365-msal.json
     os:
     - linux
     - darwin
     - windows
   config2:
     original: ~/.cli-m365-all-connections.json
-    self_managed: ~/dotfiles/creds/tokens/.cli-m365-all-connections.json
+    self_managed: DOTFILES_ROOT/creds/tokens/.cli-m365-all-connections.json
     os:
     - linux
     - darwin
     - windows
   config3:
     original: ~/.cli-m365-connection.json
-    self_managed: ~/dotfiles/creds/tokens/.cli-m365-connection.json
+    self_managed: DOTFILES_ROOT/creds/tokens/.cli-m365-connection.json
     os:
     - linux
     - darwin
@@ -108,7 +108,7 @@ m365:
 remmina:
   data:
     original: ~/.var/app/org.remmina.Remmina/data/remmina
-    self_managed: ~/dotfiles/creds/RDP/remmina/data/remmina
+    self_managed: DOTFILES_ROOT/creds/RDP/remmina/data/remmina
     os:
     - linux
     - darwin
@@ -118,7 +118,7 @@ remmina:
 webapp_linux:
   brave:
     original: ~/.local/share/applications
-    self_managed: ~/dotfiles/config/webapps/linux/brave
+    self_managed: DOTFILES_ROOT/config/webapps/linux/brave
     contents: true
     os:
     - linux
@@ -136,7 +136,7 @@ wt_windows:
 chatgpt:
   config:
     original: ~/.config/chatgpt/config.json
-    self_managed: ~/dotfiles/creds/llm/chatgpt_cli/config.json
+    self_managed: DOTFILES_ROOT/creds/llm/chatgpt_cli/config.json
     os:
     - linux
     - darwin
@@ -144,7 +144,7 @@ chatgpt:
 mods:
   config:
     original: ~/.config/mods/mods.yml
-    self_managed: ~/dotfiles/creds/llm/mods_cli/mods.yml
+    self_managed: DOTFILES_ROOT/creds/llm/mods_cli/mods.yml
     os:
     - linux
     - darwin
@@ -152,7 +152,7 @@ mods:
 github_cli_token:
   token:
     original: ~/.copilot-cli-access-token
-    self_managed: ~/dotfiles/creds/llm/github_cli/.copilot-cli-access-token
+    self_managed: DOTFILES_ROOT/creds/llm/github_cli/.copilot-cli-access-token
     os:
     - linux
     - darwin
@@ -160,7 +160,7 @@ github_cli_token:
 aider:
   config:
     original: ~/.aider.conf.yml
-    self_managed: ~/dotfiles/creds/llm/aider/.aider.conf.yml
+    self_managed: DOTFILES_ROOT/creds/llm/aider/.aider.conf.yml
     os:
     - linux
     - darwin
@@ -168,14 +168,14 @@ aider:
 marvin:
   config:
     original: ~/.marvin/.env
-    self_managed: ~/dotfiles/creds/llm/marvin/.env
+    self_managed: DOTFILES_ROOT/creds/llm/marvin/.env
     os:
     - linux
     - darwin
     - windows
   threads:
     original: ~/.marvin/cli/threads/default.json
-    self_managed: ~/dotfiles/creds/llm/marvin/threads/default.json
+    self_managed: DOTFILES_ROOT/creds/llm/marvin/threads/default.json
     os:
     - linux
     - darwin
@@ -185,7 +185,7 @@ marvin:
 docker:
   config:
     original: ~/.docker/config.json
-    self_managed: ~/dotfiles/creds/docker/config.json
+    self_managed: DOTFILES_ROOT/creds/docker/config.json
     os:
     - linux
     - darwin
@@ -745,7 +745,7 @@ atuin:
 himalaya:
   config:
     original: ~/.config/himalaya/config.toml
-    self_managed: ~/dotfiles/creds/himalaya/config.toml
+    self_managed: DOTFILES_ROOT/creds/himalaya/config.toml
     os:
     - linux
     - darwin

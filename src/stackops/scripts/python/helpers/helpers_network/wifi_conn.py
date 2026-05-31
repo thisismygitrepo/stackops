@@ -16,7 +16,7 @@ SSID = HomeNetwork
 pwd = homepassword456
 
 Configuration file locations checked (in order):
-- ~/dotfiles/stackops/setup/wifi.ini
+- stackops.utils.source_of_truth.DOTFILES_WIFI_INI_PATH
 - ~/.config/wifi.ini
 - ./wifi.ini
 
@@ -36,11 +36,13 @@ from pathlib import Path
 from typing import Protocol, cast
 
 from rich.prompt import Prompt
+
 from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import (
     WifiNetwork,
     console,
     render_networks_table,
 )
+from stackops.utils.source_of_truth import DOTFILES_WIFI_INI_PATH
 
 
 class WifiPlatformModule(Protocol):
@@ -117,7 +119,7 @@ def display_available_networks() -> None:
 
 def try_config_connection(config_ssid: str) -> bool:
     try:
-        config_paths = [Path.home() / "dotfiles/stackops/setup/wifi.ini", Path.home() / ".config/wifi.ini", Path.cwd() / "wifi.ini"]
+        config_paths = [DOTFILES_WIFI_INI_PATH, Path.home() / ".config/wifi.ini", Path.cwd() / "wifi.ini"]
 
         creds = ConfigParser()
         config_found = False

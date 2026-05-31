@@ -121,7 +121,7 @@ shell_history:
 
 # dotfiles:
 #   repo:
-#     path_local: "~/dotfiles"
+#     path_local: "~/.config/example"
 #     path_cloud: "^"
 #     encrypt: true
 #     zip: true

@@ -9,6 +9,8 @@ from typing import Any, Union
 from rich.console import Console
 from rich.markdown import Markdown
 
+from stackops.utils.source_of_truth import DOTFILES_EMAILS_INI_PATH
+
 
 def download_to_memory(path: Path, allow_redirects: bool = True, timeout: float | None = None, params: Any = None) -> "Any":
     import requests
@@ -66,7 +68,7 @@ def md2html(body: str) -> str:
 class Email:
     @staticmethod
     def get_source_of_truth():
-        path = Path.home().joinpath("dotfiles/stackops/emails.ini")
+        path = DOTFILES_EMAILS_INI_PATH
         if not path.exists():
             raise FileNotFoundError(f"""File not found: {path}. It should be an ini file with this structure
 [resend]
@@ -142,7 +144,7 @@ encryption = ssl
         """If config_name is None, it sends from a generic email address."""
         if config_name is None:
             raise NotImplementedError(
-                "Sending email without a config_name is not implemented. You need to create an emails.ini file in ~/dotfiles/stackops/ with your email configuration. See the docstring of the get_source_of_truth method for more information."
+                f"Sending email without a config_name is not implemented. You need to create an emails.ini file at {DOTFILES_EMAILS_INI_PATH} with your email configuration. See the docstring of the get_source_of_truth method for more information."
             )
             # config = Email.get_source_of_truth()
             # try:
@@ -194,7 +196,7 @@ encryption = ssl
 # class PhoneNotification:  # security concerns: avoid using this.
 #     def __init__(self, token: str | None):
 #         if token is None:
-#             path = P.home().joinpath("dotfiles/stackops/phone_notification.ini")
+#             path = DOTFILES_PHONE_NOTIFICATION_INI_PATH
 #             ini = Read.ini(path)
 #             token_ = ini["default"]["token"]
 #         else:

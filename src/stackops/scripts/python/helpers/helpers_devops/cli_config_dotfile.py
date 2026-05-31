@@ -21,9 +21,9 @@ from stackops.profile.dotfiles_mapper import (
     write_dotfiles_mapper,
 )
 from stackops.profile.create_links_export import METHOD_LOOSE, METHOD_MAP, ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER
-from stackops.utils.source_of_truth import CONFIG_ROOT
+from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_MAPPER_FILES_ROOT, DOTFILES_ROOT, DOTFILES_ZIP_PATH
 
-BACKUP_ROOT_PRIVATE = Path.home().joinpath("dotfiles/stackops/mapper/files")
+BACKUP_ROOT_PRIVATE = DOTFILES_MAPPER_FILES_ROOT
 BACKUP_ROOT_PUBLIC = Path(CONFIG_ROOT).joinpath("dotfiles/mapper")
 
 
@@ -36,12 +36,18 @@ def _format_home_relative_path(path: Path) -> str:
 
 def _format_self_managed_mapper_path(path: Path) -> str:
     config_root = Path(CONFIG_ROOT).expanduser().resolve()
+    dotfiles_root = Path(DOTFILES_ROOT).expanduser().resolve()
     resolved_path = path.expanduser().resolve(strict=False)
     if resolved_path == config_root:
         return "CONFIG_ROOT"
     if resolved_path.is_relative_to(config_root):
         relative_path = resolved_path.relative_to(config_root)
         return f"CONFIG_ROOT/{relative_path.as_posix()}"
+    if resolved_path == dotfiles_root:
+        return "DOTFILES_ROOT"
+    if resolved_path.is_relative_to(dotfiles_root):
+        relative_path = resolved_path.relative_to(dotfiles_root)
+        return f"DOTFILES_ROOT/{relative_path.as_posix()}"
     return _format_home_relative_path(path)
 
 
@@ -313,11 +319,11 @@ def export_dotfiles(
         print("❌ Internet-based transfer is not yet implemented.")
         raise typer.Exit(code=1)
 
-    dotfiles_dir = Path.home().joinpath("dotfiles")
+    dotfiles_dir = DOTFILES_ROOT
     if not dotfiles_dir.exists() or not dotfiles_dir.is_dir():
         print(f"❌ Dotfiles directory does not exist: {dotfiles_dir}")
         raise typer.Exit(code=1)
-    dotfiles_zip = Path.home().joinpath("dotfiles.zip")
+    dotfiles_zip = DOTFILES_ZIP_PATH
     if dotfiles_zip.exists():
         dotfiles_zip.unlink()
     zipfile = shutil.make_archive(base_name=str(dotfiles_zip)[:-4], format="zip", root_dir=str(dotfiles_dir), base_dir=".", verbose=False)
@@ -328,7 +334,7 @@ def export_dotfiles(
     zipfile_path.unlink()
     print(f"✅ Dotfiles exported to: {zipfile_encrypted_path}")
     if over_ssh:
-        code_sample = """ftpx ~/dotfiles.zip.gpg user@remote_host:^"""
+        code_sample = f"ftpx {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^"
         print("🔗 Exporting dotfiles via SSH-based transfer (scp).")
         print(f"💡 Run the following command on your local machine to copy dotfiles to the remote machine:\n{code_sample}")
         remote_address = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles to ")
@@ -407,18 +413,19 @@ def import_dotfiles(
     #     cloud copy SHARE_URL . --config ss[/dim]
     if use_ssh:
         print("🔗 Importing dotfiles via SSH-based transfer (scp).")
-        code = """cloud ftpx $USER@$(hostname):^ ~/dotfiles -z"""
+        dotfiles_display_path = _format_home_relative_path(DOTFILES_ROOT)
+        code = f"""cloud ftpx $USER@$(hostname):^ {dotfiles_display_path} -z"""
         print(f"💡 Run the following command on the remote machine that has the dotfiles:\n{code}")
         url = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles from ")
 
-        code_concrete = f"cloud ftpx {url}:^ ~/dotfiles -z"
+        code_concrete = f"cloud ftpx {url}:^ {dotfiles_display_path} -z"
         from stackops.utils.code import run_shell_script
         run_shell_script(code_concrete, display_script=True, clean_env=False)
 
         print("✅ Dotfiles copied via SSH.")
         return
     if url is None:
-        url = typer.prompt("Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or ~/dotfiles.zip.gpg) ")
+        url = typer.prompt(f"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) ")
     if pwd is None:
         pwd = typer.prompt("Enter the password for zip decryption", hide_input=True)
     assert url is not None, "URL prompt should have produced an archive location."
@@ -438,7 +445,7 @@ def import_dotfiles(
         typer.echo(msg)
         raise typer.Exit(code=1) from error
     print(f"✅ Decrypted zip file saved to: {zipfile_path}")
-    dotfiles_path = Path.home().joinpath("dotfiles")
+    dotfiles_path = DOTFILES_ROOT
     try:
         with tempfile.TemporaryDirectory(prefix=".stackops-dotfiles-import-", dir=dotfiles_path.parent) as temp_dir:
             extracted_dotfiles_path = Path(temp_dir).joinpath("dotfiles")

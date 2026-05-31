@@ -18,6 +18,7 @@ from stackops.scripts.python.helpers.helpers_sessions.sessions_test_layouts impo
     count_tabs_in_layouts,
 )
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,7 +36,7 @@ def _resolve_layouts_file_path(ctx: typer.Context, layouts_file: str | None) -> 
     if layouts_file is not None:
         layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
     else:
-        layouts_file_resolved = Path.home().joinpath("dotfiles/stackops/layouts.json")
+        layouts_file_resolved = DOTFILES_LAYOUTS_JSON_PATH
     if layouts_file_resolved.exists():
         return layouts_file_resolved
     typer.echo(ctx.get_help())

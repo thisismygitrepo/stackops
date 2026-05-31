@@ -5,7 +5,7 @@
 Recursively Searched Predefined Directories:
 
 
-* 'private' : $HOME/dotfiles/scripts
+* 'private' : stackops.utils.source_of_truth.SCRIPTS_ROOT_PRIVATE
 
 * 'repo'    : <current-git-repo>/.stackops/scripts
 
@@ -15,7 +15,7 @@ Recursively Searched Predefined Directories:
 
 * 'dynamic' : fetched from GitHub repository on the fly (relies on latest commit, rather than the version currently installed)
 
-* 'custom'  : custom directories from comma separated entry 'scripts' under 'general' section @ ~/dotfiles/stackops/defaults.ini
+* 'custom'  : custom directories from comma separated entry 'scripts' under 'general' section @ stackops.utils.source_of_truth.DEFAULTS_PATH
 
 """
 

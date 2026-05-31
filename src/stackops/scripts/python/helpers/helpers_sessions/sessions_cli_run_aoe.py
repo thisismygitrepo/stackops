@@ -16,6 +16,7 @@ from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import (
     select_layout,
 )
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig, substitute_home
+from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
 
 def run_aoe_cli(
@@ -44,7 +45,7 @@ def run_aoe_cli(
         if layouts_file is not None:
             layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
         else:
-            layouts_file_resolved = Path.home().joinpath("dotfiles/stackops/layouts.json")
+            layouts_file_resolved = DOTFILES_LAYOUTS_JSON_PATH
         if not layouts_file_resolved.exists():
             typer.echo(ctx.get_help())
             typer.echo(f"❌ Layouts file not found: {layouts_file_resolved}", err=True)

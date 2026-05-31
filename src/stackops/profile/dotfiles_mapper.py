@@ -6,13 +6,14 @@ import stackops.profile as profile_assets
 import yaml
 
 from stackops.utils.path_reference import get_path_reference_path
+from stackops.utils.source_of_truth import DOTFILES_USER_MAPPER_PATH
 
 
 LIBRARY_MAPPER_PATH = get_path_reference_path(
     module=profile_assets,
     path_reference=profile_assets.MAPPER_DOTFILES_PATH_REFERENCE,
 )
-USER_MAPPER_PATH = Path.home().joinpath("dotfiles/stackops/mapper_dotfiles.yaml")
+USER_MAPPER_PATH = DOTFILES_USER_MAPPER_PATH
 DEFAULT_DOTFILE_MAPPER_HEADER = (
     "# User-defined config file mappings\n"
     "# Created by `d c` CLI tool\n"

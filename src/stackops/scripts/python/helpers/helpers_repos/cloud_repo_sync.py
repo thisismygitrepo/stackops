@@ -220,7 +220,7 @@ def main(
     on_conflict = resolve_conflict_action(on_conflict=on_conflict)
     import platform
 
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH
+    from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT
     from stackops.utils.code import get_uv_command_executing_python_script
     console = Console()
 
@@ -341,10 +341,11 @@ rm -rfd {_bash_quote(repo_local_root_str)}
 mv {_bash_quote(repo_remote_root_str)} {_bash_quote(repo_local_root_str)}
     """
     if platform.system() in ["Linux", "Darwin"]:
-        program_2 += """
+        dotfiles_linux_scripts = DOTFILES_SCRIPTS_ROOT / "linux"
+        program_2 += f"""
 sudo chmod 600 $HOME/.ssh/*
 sudo chmod 700 $HOME/.ssh
-sudo chmod +x $HOME/dotfiles/scripts/linux -R
+sudo chmod +x {_bash_quote(str(dotfiles_linux_scripts))} -R
 """
     shell_file_2 = get_tmp_file()
     shell_file_2.write_text(program_2, encoding="utf-8")
@@ -363,20 +364,21 @@ sudo chmod +x $HOME/dotfiles/scripts/linux -R
     # ================================================================================
 
     option4 = "Remove problematic rclone file from repo and replace with remote:"
+    remote_dotfiles_rclone_conf = CONFIG_ROOT.joinpath("remote", "dotfiles", "creds", "rclone", "rclone.conf")
     if platform.system() == "Windows":
         program_4 = f"""
-Remove-Item -LiteralPath "$HOME/dotfiles/creds/rclone/rclone.conf" -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Path "$HOME/dotfiles/creds/rclone" -Force | Out-Null
-Copy-Item -LiteralPath "$HOME/.config/stackops/remote/dotfiles/creds/rclone/rclone.conf" -Destination "$HOME/dotfiles/creds/rclone/rclone.conf" -Force
-Set-Location -LiteralPath "$HOME/dotfiles"
+Remove-Item -LiteralPath {powershell_single_quote(str(DOTFILES_RCLONE_CONF_PATH))} -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path {powershell_single_quote(str(DOTFILES_RCLONE_CONF_PATH.parent))} -Force | Out-Null
+Copy-Item -LiteralPath {powershell_single_quote(str(remote_dotfiles_rclone_conf))} -Destination {powershell_single_quote(str(DOTFILES_RCLONE_CONF_PATH))} -Force
+Set-Location -LiteralPath {powershell_single_quote(str(DOTFILES_ROOT))}
 git commit -am "finished merging"
 {program1}
     """
     else:
         program_4 = f"""
-rm $HOME/dotfiles/creds/rclone/rclone.conf
-cp $HOME/.config/stackops/remote/dotfiles/creds/rclone/rclone.conf $HOME/dotfiles/creds/rclone
-cd $HOME/dotfiles
+rm {_bash_quote(str(DOTFILES_RCLONE_CONF_PATH))}
+cp {_bash_quote(str(remote_dotfiles_rclone_conf))} {_bash_quote(str(DOTFILES_RCLONE_CONF_PATH.parent))}
+cd {_bash_quote(str(DOTFILES_ROOT))}
 git commit -am "finished merging"
 {program1}
     """

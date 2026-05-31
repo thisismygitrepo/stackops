@@ -5,6 +5,7 @@ import tomllib
 from pathlib import Path
 from stackops.utils.accessories import randstr
 from stackops.utils.options import choose_from_options
+from stackops.utils.source_of_truth import dotfiles_streamlit_secrets_path
 
 
 def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) -> tuple[str | None, Path, dict[str, object]]:
@@ -82,7 +83,7 @@ def get_command_streamlit(choice_file: Path, environment: str, repo_root: Path |
                 port = config["server"]["port"]
         secrets_path = toml_path.with_name("secrets.toml")
         if repo_root is not None:
-            secrets_template_path = Path.home().joinpath(f"dotfiles/creds/streamlit/{Path(repo_root).name}/{choice_file.name}/secrets.toml")
+            secrets_template_path = dotfiles_streamlit_secrets_path(repo_name=Path(repo_root).name, app_name=choice_file.name)
             if environment != "" and not secrets_path.exists() and secrets_template_path.exists():
                 secrets_template = tomllib.loads(secrets_template_path.read_text(encoding="utf-8"))
                 if environment == "ip":

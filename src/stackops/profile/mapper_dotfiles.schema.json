@@ -37,9 +37,9 @@
         },
         "self_managed": {
           "type": "string",
-          "description": "Path to the managed copy. May use CONFIG_ROOT or ~.",
+          "description": "Path to the managed copy. May use CONFIG_ROOT, DOTFILES_ROOT, or ~.",
           "examples": [
-            "~/dotfiles/creds/git/.gitconfig",
+            "DOTFILES_ROOT/creds/git/.gitconfig",
             "CONFIG_ROOT/settings/presenterm/config.yaml"
           ]
         },
