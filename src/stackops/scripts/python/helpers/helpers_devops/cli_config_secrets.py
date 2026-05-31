@@ -9,7 +9,12 @@ from typing import Annotated, Mapping, NoReturn
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import SecretSelectors, load_secret_candidates, resolve_candidate
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
+    SecretCandidate,
+    SecretSelectors,
+    load_secret_candidates,
+    resolve_candidate,
+)
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -20,6 +25,7 @@ SECRETS_EPILOG = """Examples:
   devops config secrets AWS_ACCESS_KEY_ID
   devops config secrets --interactive
   devops config secrets -i aws
+  devops config secrets --verbose aws dev iam-access-key
   devops config secrets --name aws-dev --tag iam-access-key
   devops config secrets --name aws-dev --tag session-token
   devops config secrets --path ~/private/team-secrets.json aws dev
@@ -28,9 +34,9 @@ SECRETS_EPILOG = """Examples:
 Terms are case-insensitive substring matches. All terms must match somewhere across entry
 name/tags/profile, secret name/tags/scope, metadata, notes, or env var keys.
 Use --interactive/-i to choose from matching entries with the TV fuzzy picker.
+Use --verbose/-v to print the selected bundle and env var keys without secret values.
 Exact selectors are case-sensitive and can be combined with terms for script-stable matching.
 """
-
 
 
 def secrets(
@@ -57,6 +63,9 @@ def secrets(
             "-i",
             help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.",
         ),
+    ] = False,
+    verbose: Annotated[
+        bool, typer.Option("--verbose", "-v", help="Print the selected secret bundle and env var keys without secret values.")
     ] = False,
     entry_name: Annotated[
         str | None,
@@ -98,6 +107,8 @@ def secrets(
     candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive)
     _validate_env_names(candidate.key_values)
     _write_env_handoff(candidate.key_values)
+    if verbose:
+        _echo_verbose_selection(candidate=candidate, secrets_path=resolved_secrets_path)
 
     names = ", ".join(candidate.key_values)
     msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(candidate.key_values)} env variable(s): {names}"
@@ -165,6 +176,32 @@ def _validate_env_names(key_values: Mapping[str, str]) -> None:
     if invalid_names:
         names = ", ".join(invalid_names)
         _fail(f"Invalid environment variable name(s) in keyValues: {names}")
+
+
+def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -> None:
+    typer.echo("Selected secret bundle:")
+    typer.echo(f"  Bundle: {_candidate_verbose_label(candidate)}")
+    typer.echo(f"  Source: {secrets_path}")
+    typer.echo(f"  JSON path: {candidate.json_path}")
+    typer.echo(f"  Entry tags: {_join_display(candidate.entry_tags)}")
+    typer.echo(f"  Secret tags: {_join_display(candidate.secret_tags)}")
+    typer.echo(f"  Scope: {_join_display(candidate.scopes)}")
+    typer.echo("Defining env vars:")
+    for key in candidate.key_values:
+        typer.echo(f"  {key}")
+
+
+def _candidate_verbose_label(candidate: SecretCandidate) -> str:
+    secret_label = candidate.secret_name
+    if secret_label is None and candidate.secret_tags:
+        secret_label = ",".join(candidate.secret_tags)
+    if secret_label is None:
+        secret_label = "<unnamed secret>"
+    return f"{candidate.entry_name} / {secret_label}"
+
+
+def _join_display(values: tuple[str, ...]) -> str:
+    return ", ".join(values) if values else "-"
 
 
 def _write_env_handoff(key_values: Mapping[str, str]) -> None:

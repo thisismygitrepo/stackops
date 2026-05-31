@@ -29,6 +29,8 @@ def test_devops_config_secrets_help_lists_edit_and_path_options() -> None:
     assert "-e" in result.output
     assert "--interactive" in result.output
     assert "-i" in result.output
+    assert "--verbose" in result.output
+    assert "-v" in result.output
     assert "--name" in result.output
     assert "-n" in result.output
     assert "--tag" in result.output
@@ -59,6 +61,34 @@ def test_devops_config_secrets_writes_non_sensitive_handoff_for_unique_keyvalues
         assert "export AWS_ACCESS_KEY_ID=AKIA_TEST" in env_script
         assert "export AWS_SECRET_ACCESS_KEY=secret-value" in env_script
         assert "export AWS_DEFAULT_REGION=us-east-1" in env_script
+
+
+def test_devops_config_secrets_verbose_prints_selection_without_secret_values() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write_secrets_file(_secrets_payload())
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(
+            get_app(),
+            ["c", "secrets", "-v", "aws", "dev", "iam-access-key"],
+            env={"OP_PROGRAM_PATH": str(op_path)},
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Selected secret bundle:" in result.output
+        assert "Bundle: aws-dev / iam-access-key" in result.output
+        assert f"Source: {Path.cwd() / '.stackops' / 'secrets' / 'secrets.json'}" in result.output
+        assert "JSON path: entries[1].secrets[0].keyValues" in result.output
+        assert "Entry tags: aws, dev" in result.output
+        assert "Secret tags: iam-access-key" in result.output
+        assert "Scope: development" in result.output
+        assert "Defining env vars:" in result.output
+        assert "AWS_ACCESS_KEY_ID" in result.output
+        assert "AWS_SECRET_ACCESS_KEY" in result.output
+        assert "AWS_DEFAULT_REGION" in result.output
+        assert "AKIA_TEST" not in result.output
+        assert "secret-value" not in result.output
 
 
 def test_devops_config_secrets_rejects_ambiguous_keyvalues_without_writing_handoff() -> None:
