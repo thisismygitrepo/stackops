@@ -6,7 +6,7 @@
 # entryExample: {prompt: replace me, description: short label}
 
 createParallelAgents:
-      description: Design args and run agents parallel create without launching the layout
+      description: Design args and create an agents layout only, without launching it
       prompt: |
         You are preparing a StackOps parallel-agent layout for the user requirement in the appended prompt.
 
@@ -14,8 +14,8 @@ createParallelAgents:
         1. Read the appended user requirement as the source of truth.
         2. Design the full `agents parallel create` invocation: agent choice, prompt source, context source, chunking, paths, and output names.
         3. Create task-specific prompt/context input files needed for a robust command.
-        4. Run the create command yourself.
-        5. Do not launch the generated layout.
+        4. Execute only the `agents parallel create` command yourself so the layout and agent files are generated.
+        5. Stop there. Do not launch the generated layout, do not start agents, and do not run the generated terminal layout.
 
         This is an orchestration prompt. Do not pass this prompt itself to the spawned agents via `--prompt-name agents.parallel.create` unless the user explicitly asks for a layout that creates more layouts. Write or select a prompt that tells the spawned agents how to do the user's actual work.
 
@@ -31,7 +31,13 @@ createParallelAgents:
         uv run agents parallel create [OPTIONS]
         ```
 
-        Hard rule: never include `--run`, `--Run`, or `-R`. The command must only create the layout and supporting files. After it succeeds, report the generated layout path and the command the user can run later if they want to launch it.
+        Creation-only contract:
+
+        - The purpose is to create files: input files, per-agent task files, and the layout JSON.
+        - The purpose is not to run the workload. Do not start terminals, do not launch agents, and do not execute any generated agent commands.
+        - Hard rule: never include `--run`, `--Run`, or `-R`.
+        - The final `agents parallel create` command must only create the layout and supporting files.
+        - After it succeeds, report the generated layout path and the command the user can run later if they want to launch it.
 
         Before designing args, inspect the live command help:
 
@@ -60,6 +66,49 @@ createParallelAgents:
         - For multiple work items, write a context file such as `.ai/agents/_inputs/<job-name>/context.md`.
         - Separate context work items with the chosen separator, commonly a line containing `@-@`.
         - Keep generated input files outside the final `--agents-dir` when you pass `--agents-dir`, so creating the input files does not make the agent directory pre-exist.
+
+        Simple three-agent example:
+
+        Suppose the appended user requirement is: "In a toy calculator project, split work across three agents: implement arithmetic, add tests, and update docs."
+
+        Create a shared prompt file at `.ai/agents/_inputs/toy-calculator-ops/prompt.md`:
+
+        ```markdown
+        You are one agent in a parallel StackOps workflow for a toy calculator project.
+
+        Use only your assigned context chunk as your task boundary.
+        Make the requested change, keep edits scoped, add or update tests when your chunk asks for them, and report the files you changed.
+        ```
+
+        Create a context file at `.ai/agents/_inputs/toy-calculator-ops/context.md` with one chunk per intended agent:
+
+        ```markdown
+        Agent 1 context:
+        Inspect `calculator.py`. Implement or fix `add(a, b)` and `subtract(a, b)`.
+        Keep the public function names stable.
+        @-@
+        Agent 2 context:
+        Inspect `calculator.py`. Implement or fix `multiply(a, b)` and `divide(a, b)`.
+        For division by zero, raise `ZeroDivisionError` with a clear message.
+        @-@
+        Agent 3 context:
+        Inspect the README and tests. Add usage examples for all four calculator operations and add focused tests for the expected behavior.
+        ```
+
+        Then create the layout only:
+
+        ```bash
+        uv run agents parallel create \
+          --agent codex \
+          --reasoning high \
+          --job-name toy-calculator-ops \
+          --prompt-path .ai/agents/_inputs/toy-calculator-ops/prompt.md \
+          --context-path .ai/agents/_inputs/toy-calculator-ops/context.md \
+          --separator '@-@' \
+          --agent-load 1
+        ```
+
+        In that example, the prompt is shared by all spawned agents. The context is split at each `@-@` separator. Because there are three context chunks and `--agent-load 1`, StackOps creates three agent tasks: agent 1 receives only the first chunk, agent 2 receives only the second chunk, and agent 3 receives only the third chunk. The command creates the layout; it does not run the agents because `--run` is intentionally omitted.
 
         Command construction checklist:
 
