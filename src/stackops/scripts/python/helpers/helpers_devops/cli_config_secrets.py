@@ -13,10 +13,28 @@ import typer
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+SECRETS_HELP = "Define env vars from .stackops/secrets/secrets.json."
+SECRETS_EPILOG = """Examples:
+  devops config secrets aws dev iam-access-key
+  devops config secrets github personal-access-token
+  devops config secrets AWS_ACCESS_KEY_ID
+  devops config secrets --interactive
+  devops config secrets -i aws
+  devops config secrets --name aws-dev --tag iam-access-key
+  devops config secrets --name aws-dev --tag session-token
+  devops config secrets --path ~/private/team-secrets.json aws dev
+  devops config secrets --edit
+
+Terms are case-insensitive substring matches. All terms must match somewhere across entry
+name/tags/profile, secret name/tags/scope, metadata, notes, or env var keys.
+Use --interactive/-i to choose from matching entries with the TV fuzzy picker.
+Exact selectors are case-sensitive and can be combined with terms for script-stable matching.
+"""
 
 
 @dataclass(frozen=True)
 class SecretCandidate:
+    json_path: str
     entry_name: str
     entry_tags: tuple[str, ...]
     secret_name: str | None
@@ -26,14 +44,75 @@ class SecretCandidate:
     searchable_values: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class SecretSelectors:
+    entry_name: str | None = None
+    secret_name: str | None = None
+    tags: tuple[str, ...] = ()
+    entry_tags: tuple[str, ...] = ()
+    secret_tags: tuple[str, ...] = ()
+    scopes: tuple[str, ...] = ()
+    keys: tuple[str, ...] = ()
+
+    def has_any(self) -> bool:
+        return any(
+            (
+                self.entry_name is not None,
+                self.secret_name is not None,
+                bool(self.tags),
+                bool(self.entry_tags),
+                bool(self.secret_tags),
+                bool(self.scopes),
+                bool(self.keys),
+            )
+        )
+
+
 def secrets(
-    queries: Annotated[list[str] | None, typer.Argument(help="Terms used to identify exactly one secrets keyValues entry.")] = None,
+    terms: Annotated[
+        list[str] | None,
+        typer.Argument(
+            help=(
+                "Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, "
+                "secret name/tags/scope, metadata, notes, or env var keys."
+            ),
+        ),
+    ] = None,
     secrets_path: Annotated[
         Path | None,
         typer.Option("--path", "-p", help="Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory."),
     ] = None,
     edit: Annotated[bool, typer.Option("--edit", "-e", help="Open the secrets JSON file for editing instead of loading env vars.")] = False,
     editor: Annotated[str, typer.Option("--editor", help="Editor to use with --edit. Defaults to hx.")] = "hx",
+    interactive: Annotated[
+        bool,
+        typer.Option(
+            "--interactive",
+            "--interative",
+            "-i",
+            help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.",
+        ),
+    ] = False,
+    entry_name: Annotated[
+        str | None,
+        typer.Option("--name", "-n", help="Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets."),
+    ] = None,
+    secret_name: Annotated[str | None, typer.Option("--secret-name", help="Exact entries[].secrets[].name value to require.")] = None,
+    tags: Annotated[
+        list[str] | None, typer.Option("--tag", "--tags", "-t", help="Exact entry or secret tag to require. Repeat for multiple tags.")
+    ] = None,
+    entry_tags: Annotated[
+        list[str] | None, typer.Option("--entry-tag", help="Exact entries[].tags value to require. Repeat for multiple tags.")
+    ] = None,
+    secret_tags: Annotated[
+        list[str] | None, typer.Option("--secret-tag", help="Exact entries[].secrets[].tags value to require. Repeat for multiple tags.")
+    ] = None,
+    scopes: Annotated[
+        list[str] | None, typer.Option("--scope", help="Exact entries[].secrets[].scope value to require. Repeat for multiple scopes.")
+    ] = None,
+    keys: Annotated[
+        list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
+    ] = None,
 ) -> None:
     """🔐 <S> Define env vars from .stackops/secrets/secrets.json."""
     resolved_secrets_path = _resolve_secrets_path(secrets_path)
@@ -42,7 +121,16 @@ def secrets(
         return
 
     candidates = _load_secret_candidates(resolved_secrets_path)
-    candidate = _resolve_candidate(candidates=candidates, queries=queries)
+    selectors = SecretSelectors(
+        entry_name=_clean_optional_selector(entry_name),
+        secret_name=_clean_optional_selector(secret_name),
+        tags=_clean_selector_values(tags),
+        entry_tags=_clean_selector_values(entry_tags),
+        secret_tags=_clean_selector_values(secret_tags),
+        scopes=_clean_selector_values(scopes),
+        keys=_clean_selector_values(keys),
+    )
+    candidate = _resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive)
     _validate_env_names(candidate.key_values)
     _write_env_handoff(candidate.key_values)
 
@@ -149,6 +237,7 @@ def _entry_candidates(entry: Mapping[str, Any], entry_index: int) -> list[Secret
         )
         candidates.append(
             SecretCandidate(
+                json_path=key_values_path,
                 entry_name=entry_name,
                 entry_tags=entry_tags,
                 secret_name=secret_name,
@@ -185,31 +274,148 @@ def _search_values_from_secret(
     return tuple(values)
 
 
-def _resolve_candidate(candidates: list[SecretCandidate], queries: list[str] | None) -> SecretCandidate:
-    normalized_queries = tuple(query.casefold() for query in queries or () if query.strip())
-    if not normalized_queries:
-        _fail("Pass at least one term to identify a secrets keyValues entry.")
+def _resolve_candidate(
+    candidates: list[SecretCandidate], terms: list[str] | None, selectors: SecretSelectors, interactive: bool
+) -> SecretCandidate:
+    normalized_terms = tuple(term.casefold() for term in terms or () if term.strip())
+    if not normalized_terms and not selectors.has_any() and not interactive:
+        _fail("Pass at least one term or exact selector to identify a secrets keyValues entry.")
 
-    matches = [candidate for candidate in candidates if _candidate_matches(candidate=candidate, queries=normalized_queries)]
+    matches = [
+        candidate
+        for candidate in candidates
+        if _candidate_matches(candidate=candidate, terms=normalized_terms)
+        and _candidate_matches_selectors(candidate=candidate, selectors=selectors)
+    ]
+    if interactive:
+        if not matches:
+            selection_text = _selection_text(terms=terms, selectors=selectors)
+            typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"No keyValues entry matched selection: {selection_text}")
+            _print_candidate_list("Available keyValues entries:", candidates)
+            raise typer.Exit(code=1)
+        return _choose_candidate_interactively(matches)
+
     if len(matches) == 1:
         return matches[0]
 
-    query_text = " ".join(queries or ())
+    selection_text = _selection_text(terms=terms, selectors=selectors)
     if not matches:
-        typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"No keyValues entry matched query: {query_text}")
+        typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"No keyValues entry matched selection: {selection_text}")
         _print_candidate_list("Available keyValues entries:", candidates)
     else:
         typer.echo(
             typer.style("Error: ", fg=typer.colors.RED)
-            + f"Query did not identify a unique keyValues entry: {query_text} matched {len(matches)} entries."
+            + f"Selection did not identify a unique keyValues entry: {selection_text} matched {len(matches)} entries."
         )
         _print_candidate_list("Matching keyValues entries:", matches)
     raise typer.Exit(code=1)
 
 
-def _candidate_matches(candidate: SecretCandidate, queries: tuple[str, ...]) -> bool:
+def _candidate_matches(candidate: SecretCandidate, terms: tuple[str, ...]) -> bool:
     searchable_values = tuple(value.casefold() for value in candidate.searchable_values)
-    return all(any(query in searchable_value for searchable_value in searchable_values) for query in queries)
+    return all(any(term in searchable_value for searchable_value in searchable_values) for term in terms)
+
+
+def _candidate_matches_selectors(candidate: SecretCandidate, selectors: SecretSelectors) -> bool:
+    if selectors.entry_name is not None and candidate.entry_name != selectors.entry_name:
+        return False
+    if selectors.secret_name is not None and candidate.secret_name != selectors.secret_name:
+        return False
+    if not all(tag in candidate.entry_tags or tag in candidate.secret_tags for tag in selectors.tags):
+        return False
+    if not all(tag in candidate.entry_tags for tag in selectors.entry_tags):
+        return False
+    if not all(tag in candidate.secret_tags for tag in selectors.secret_tags):
+        return False
+    if not all(scope in candidate.scopes for scope in selectors.scopes):
+        return False
+    return all(key in candidate.key_values for key in selectors.keys)
+
+
+def _choose_candidate_interactively(candidates: list[SecretCandidate]) -> SecretCandidate:
+    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+
+    option_to_candidate, option_to_preview = _candidate_picker_options(candidates)
+    selected_label = choose_from_dict_with_preview(
+        options_to_preview_mapping=option_to_preview,
+        extension="md",
+        multi=False,
+        preview_size_percent=60.0,
+    )
+    if selected_label is None:
+        _fail("Interactive selection cancelled.")
+
+    selected_candidate = option_to_candidate.get(selected_label)
+    if selected_candidate is None:
+        _fail(f"Interactive selection did not map to a secrets keyValues entry: {selected_label}")
+    return selected_candidate
+
+
+def _candidate_picker_options(candidates: list[SecretCandidate]) -> tuple[dict[str, SecretCandidate], dict[str, str]]:
+    base_labels = [_candidate_label(candidate) for candidate in candidates]
+    duplicate_labels = {label for label in base_labels if base_labels.count(label) > 1}
+
+    option_to_candidate: dict[str, SecretCandidate] = {}
+    option_to_preview: dict[str, str] = {}
+    for candidate, base_label in zip(candidates, base_labels, strict=True):
+        label = base_label
+        if label in duplicate_labels:
+            label = f"{base_label} [{candidate.json_path}]"
+        option_to_candidate[label] = candidate
+        option_to_preview[label] = _candidate_preview(candidate)
+    return option_to_candidate, option_to_preview
+
+
+def _candidate_preview(candidate: SecretCandidate) -> str:
+    lines = [
+        f"# {_candidate_label(candidate)}",
+        "",
+        f"- Path: `{candidate.json_path}`",
+        f"- Entry: `{candidate.entry_name}`",
+        f"- Entry tags: `{_preview_join(candidate.entry_tags)}`",
+    ]
+    if candidate.secret_name is not None:
+        lines.append(f"- Secret name: `{candidate.secret_name}`")
+    lines.extend(
+        (
+            f"- Secret tags: `{_preview_join(candidate.secret_tags)}`",
+            f"- Scope: `{_preview_join(candidate.scopes)}`",
+            f"- Env vars: `{_preview_join(tuple(candidate.key_values))}`",
+        )
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _preview_join(values: tuple[str, ...]) -> str:
+    return ", ".join(values) if values else "-"
+
+
+def _selection_text(terms: list[str] | None, selectors: SecretSelectors) -> str:
+    parts: list[str] = []
+    terms_text = " ".join(term for term in terms or () if term.strip())
+    if terms_text:
+        parts.append(f"terms={terms_text}")
+    if selectors.entry_name is not None:
+        parts.append(f"name={selectors.entry_name}")
+    if selectors.secret_name is not None:
+        parts.append(f"secret-name={selectors.secret_name}")
+    parts.extend(f"tag={tag}" for tag in selectors.tags)
+    parts.extend(f"entry-tag={tag}" for tag in selectors.entry_tags)
+    parts.extend(f"secret-tag={tag}" for tag in selectors.secret_tags)
+    parts.extend(f"scope={scope}" for scope in selectors.scopes)
+    parts.extend(f"key={key}" for key in selectors.keys)
+    return ", ".join(parts) if parts else "<none>"
+
+
+def _clean_optional_selector(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped_value = value.strip()
+    return stripped_value or None
+
+
+def _clean_selector_values(values: list[str] | None) -> tuple[str, ...]:
+    return tuple(stripped_value for value in values or () if (stripped_value := value.strip()))
 
 
 def _validate_env_names(key_values: Mapping[str, str]) -> None:

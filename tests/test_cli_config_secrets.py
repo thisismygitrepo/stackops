@@ -21,10 +21,21 @@ def test_devops_config_secrets_help_lists_edit_and_path_options() -> None:
     result = CliRunner().invoke(get_app(), ["c", "secrets", "--help"], env={"COLUMNS": "220"})
 
     assert result.exit_code == 0, result.output
+    assert "[TERMS]..." in result.output
+    assert "Case-insensitive terms used to select one secret bundle" in result.output
     assert "--path" in result.output
     assert "-p" in result.output
     assert "--edit" in result.output
     assert "-e" in result.output
+    assert "--interactive" in result.output
+    assert "-i" in result.output
+    assert "--name" in result.output
+    assert "-n" in result.output
+    assert "--tag" in result.output
+    assert "-t" in result.output
+    assert "--key" in result.output
+    assert "-k" in result.output
+    assert "devops config secrets --name aws-dev --tag iam-access-key" in result.output
 
 
 def test_devops_config_secrets_writes_non_sensitive_handoff_for_unique_keyvalues() -> None:
@@ -59,7 +70,7 @@ def test_devops_config_secrets_rejects_ambiguous_keyvalues_without_writing_hando
         result = runner.invoke(get_app(), ["c", "secrets", "aws", "dev"], env={"OP_PROGRAM_PATH": str(op_path)})
 
         assert result.exit_code == 1, result.output
-        assert "Query did not identify a unique keyValues entry" in result.output
+        assert "Selection did not identify a unique keyValues entry" in result.output
         assert "matched 2 entries" in result.output
         assert "aws-dev / iam-access-key -> AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION" in result.output
         assert "aws-dev / session-token -> AWS_SESSION_TOKEN" in result.output
@@ -98,6 +109,80 @@ def test_devops_config_secrets_uses_custom_path_for_keyvalues() -> None:
         loader_script = op_path.read_text(encoding="utf-8")
         env_path = _env_path_from_loader(loader_script)
         assert "export GITHUB_TOKEN=ghp_test" in env_path.read_text(encoding="utf-8")
+
+
+def test_devops_config_secrets_uses_exact_selectors_without_query_terms() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write_secrets_file(_secrets_payload())
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(
+            get_app(),
+            ["c", "secrets", "--name", "aws-dev", "--tag", "session-token"],
+            env={"OP_PROGRAM_PATH": str(op_path)},
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Prepared 1 env variable(s): AWS_SESSION_TOKEN" in result.output
+        env_path = _env_path_from_loader(op_path.read_text(encoding="utf-8"))
+        assert "export AWS_SESSION_TOKEN=session-value" in env_path.read_text(encoding="utf-8")
+
+
+def test_devops_config_secrets_exact_selectors_can_be_combined_with_query_terms() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write_secrets_file(_secrets_payload())
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(
+            get_app(),
+            ["c", "secrets", "--key", "AWS_ACCESS_KEY_ID", "aws"],
+            env={"OP_PROGRAM_PATH": str(op_path)},
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Prepared 3 env variable(s): AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION" in result.output
+        env_path = _env_path_from_loader(op_path.read_text(encoding="utf-8"))
+        assert "export AWS_ACCESS_KEY_ID=AKIA_TEST" in env_path.read_text(encoding="utf-8")
+
+
+def test_devops_config_secrets_interactive_picker_selects_keyvalues(monkeypatch) -> None:
+    from stackops.utils.options_utils import tv_options
+
+    def choose_session_token(
+        options_to_preview_mapping: dict[str, object],
+        extension: str | None,
+        multi: bool,
+        preview_size_percent: float,
+    ) -> str | None:
+        assert extension == "md"
+        assert multi is False
+        assert preview_size_percent == 60.0
+        assert len(options_to_preview_mapping) == 2
+        assert all("aws-dev /" in label for label in options_to_preview_mapping)
+        previews_text = "\n".join(str(preview) for preview in options_to_preview_mapping.values())
+        assert "session-value" not in previews_text
+        assert "secret-value" not in previews_text
+        return next(label for label in options_to_preview_mapping if "session-token" in label)
+
+    monkeypatch.setattr(tv_options, "choose_from_dict_with_preview", choose_session_token)
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write_secrets_file(_secrets_payload())
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(
+            get_app(),
+            ["c", "secrets", "--interactive", "aws"],
+            env={"OP_PROGRAM_PATH": str(op_path)},
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Prepared 1 env variable(s): AWS_SESSION_TOKEN" in result.output
+        env_path = _env_path_from_loader(op_path.read_text(encoding="utf-8"))
+        assert "export AWS_SESSION_TOKEN=session-value" in env_path.read_text(encoding="utf-8")
 
 
 def test_devops_config_secrets_edit_opens_custom_path_and_creates_template(monkeypatch) -> None:

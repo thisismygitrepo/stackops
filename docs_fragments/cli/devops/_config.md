@@ -156,11 +156,20 @@ Define environment variables from the current directory's `.stackops/secrets/sec
 ```bash
 devops config secrets github personal-access-token
 devops config secrets aws dev iam-access-key
+devops config secrets AWS_ACCESS_KEY_ID
+devops config secrets --interactive
+devops config secrets -i aws
+devops config secrets --name aws-dev --tag iam-access-key
+devops config secrets --name aws-dev --tag session-token
 devops config secrets --path ~/private/team-secrets.json aws dev
 devops config secrets --edit
 ```
 
-The query terms must identify exactly one `entries[].secrets[].keyValues` object. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+The query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across entry name/tags/profile, secret name/tags/scope, metadata, notes, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+
+Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy picker. If terms or exact selectors are provided, they pre-filter the picker list.
+
+For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact entry or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `--entry-tag`, `--secret-tag`, and `--scope`. Exact selectors are case-sensitive and can be combined with query terms.
 
 Use `--path`, `-p` to read another secrets JSON file instead of `.stackops/secrets/secrets.json`. Use `--edit`, `-e` to open the selected secrets file, creating it from the packaged example if it does not exist yet.
 
