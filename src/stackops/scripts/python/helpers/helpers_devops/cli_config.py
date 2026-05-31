@@ -169,12 +169,16 @@ cloud:
     typer.echo(msg)
 
 
-def _dump_example_asset(*, source_path: Path) -> Path:
-    output_dir = Path.cwd() / ".stackops" / "examples"
+def _dump_stackops_asset(*, source_path: Path, directory_name: str) -> Path:
+    output_dir = Path.cwd() / ".stackops" / directory_name
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / source_path.name
     output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
     return output_path
+
+
+def _dump_example_asset(*, source_path: Path) -> Path:
+    return _dump_stackops_asset(source_path=source_path, directory_name="examples")
 
 
 def _dump_layout_asset(*, path_reference: str) -> Path:
@@ -226,7 +230,7 @@ def _dump_secrets_asset(*, path_reference: str) -> Path:
     from stackops.utils.path_reference import get_path_reference_path
 
     source_path = get_path_reference_path(module=secrets_assets, path_reference=path_reference)
-    return _dump_example_asset(source_path=source_path)
+    return _dump_stackops_asset(source_path=source_path, directory_name="secrets")
 
 
 def _dump_secrets_example() -> None:
@@ -273,6 +277,7 @@ def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all",
 
 def get_app() -> typer.Typer:
     import stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile as dotfile_module
+    import stackops.scripts.python.helpers.helpers_devops.cli_config_secrets as secrets_module
 
     from stackops.profile import create_links_export
 
@@ -309,6 +314,9 @@ def get_app() -> typer.Typer:
 
     config_apps.command("copy-assets", no_args_is_help=True, help="📋 <c> Copy asset files from library to machine.", hidden=False)(copy_assets)
     config_apps.command("c", no_args_is_help=True, help="Copy asset files from library to machine.", hidden=True)(copy_assets)
+
+    config_apps.command("secrets", no_args_is_help=True, help="🔐 <S> Define env vars from .stackops/secrets/secrets.json.")(secrets_module.secrets)
+    config_apps.command("S", no_args_is_help=True, help="Define env vars from .stackops/secrets/secrets.json.", hidden=True)(secrets_module.secrets)
 
     config_apps.command("dump", no_args_is_help=True, help="📦 <d> Dump example configuration files and init scripts.")(dump_config)
     config_apps.command("d", no_args_is_help=True, help="Dump example configuration files and init scripts.", hidden=True)(dump_config)

@@ -19,6 +19,7 @@ Current `devops config --help` exposes:
 | `export-dotfiles` | Export `~/dotfiles` for machine migration |
 | `import-dotfiles` | Import an exported dotfiles archive |
 | `copy-assets` | Copy packaged scripts and settings onto the machine |
+| `secrets` | Define env vars from `.stackops/secrets/secrets.json` |
 | `dump` | Write example configuration files or print/run packaged init/setup scripts |
 | `terminal` | Shell profile and terminal theme commands |
 
@@ -148,6 +149,21 @@ devops config copy-assets scripts
 devops config copy-assets all
 ```
 
+### secrets
+
+Define environment variables from the current directory's `.stackops/secrets/secrets.json`.
+
+```bash
+devops config secrets github personal-access-token
+devops config secrets aws dev iam-access-key
+devops config secrets --path ~/private/team-secrets.json aws dev
+devops config secrets --edit
+```
+
+The query terms must identify exactly one `entries[].secrets[].keyValues` object. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+
+Use `--path`, `-p` to read another secrets JSON file instead of `.stackops/secrets/secrets.json`. Use `--edit`, `-e` to open the selected secrets file, creating it from the packaged example if it does not exist yet.
+
 ### dump
 
 Write example configuration files into the current directory, or print one of the packaged init/setup scripts.
@@ -171,7 +187,7 @@ Supported `--which` values from current help:
 | `layout` | Write `layout.json` and `layout.schema.json` under `.stackops/examples` in the current working directory |
 | `mapper_data` | Write `mapper_data.yaml` and `mapper_data.schema.json` under `.stackops/examples` in the current working directory |
 | `mapper_dotfiles` | Write `mapper_dotfiles.yaml` and `mapper_dotfiles.schema.json` under `.stackops/examples` in the current working directory |
-| `secrets` | Write `secrets.example.json` and `secrets.schema.json` under `.stackops/examples` in the current working directory |
+| `secrets` | Write `secrets.example.json` and `secrets.schema.json` under `.stackops/secrets` in the current working directory |
 | `init` | Print the shell init script for the current platform |
 | `ia` | Print the interactive setup bootstrap script |
 | `live` | Print the live-from-GitHub bootstrap script |

@@ -46,6 +46,15 @@ def inspect_devops_help_emojis() -> list[EmojiDisplayDiagnostic]:
     return emoji_display_diagnostics(emojis=["🔧", "📁", "🔩", "💾", "🔧", "🌐", "🚀"])
 
 
+def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer], *, prog_name: str | None = None) -> None:
+    if prog_name is None:
+        nested_result: object = app_factory()(ctx.args, standalone_mode=False)
+    else:
+        nested_result = app_factory()(ctx.args, prog_name=prog_name, standalone_mode=False)
+    if isinstance(nested_result, int):
+        raise typer.Exit(code=nested_result)
+
+
 def install(
     ctx: typer.Context,
     which: Annotated[
@@ -71,35 +80,35 @@ def repos(ctx: typer.Context) -> None:
     """📁 <r> Manage development repositories"""
     from stackops.scripts.python.helpers.helpers_devops import cli_repos
 
-    cli_repos.get_app()(ctx.args, standalone_mode=False)
+    _run_nested_app(ctx, cli_repos.get_app)
 
 
 def config(ctx: typer.Context) -> None:
     """⚙️ <c> Configuration management"""
     from stackops.scripts.python.helpers.helpers_devops import cli_config
 
-    cli_config.get_app()(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
+    _run_nested_app(ctx, cli_config.get_app, prog_name=ctx.command_path)
 
 
 def data(ctx: typer.Context) -> None:
     """💾 <d> Data management"""
     from stackops.scripts.python.helpers.helpers_devops import cli_data
 
-    cli_data.get_app()(ctx.args, standalone_mode=False)
+    _run_nested_app(ctx, cli_data.get_app)
 
 
 def self_cmd(ctx: typer.Context) -> None:
     """🔧 <s> Self management"""
     from stackops.scripts.python.helpers.helpers_devops import cli_self
 
-    cli_self.get_app()(ctx.args, standalone_mode=False)
+    _run_nested_app(ctx, cli_self.get_app)
 
 
 def network(ctx: typer.Context) -> None:
     """🌐 <n> Network management"""
     import stackops.scripts.python.helpers.helpers_devops.cli_nw as cli_network
 
-    cli_network.get_app()(ctx.args, standalone_mode=False)
+    _run_nested_app(ctx, cli_network.get_app)
 
 
 def execute(

@@ -154,7 +154,7 @@ def _distinct_short_command(entry: CliGraphSearchEntry) -> str | None:
     return entry.short_command
 
 
-def _preview_header(entry: CliGraphSearchEntry) -> str:
+def preview_header(entry: CliGraphSearchEntry) -> str:
     lines = [f"Source: {entry.source_file}", f"Command: {entry.command}"]
     short_command = _distinct_short_command(entry=entry)
     if short_command is not None:

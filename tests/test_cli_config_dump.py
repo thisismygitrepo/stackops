@@ -75,7 +75,7 @@ def test_devops_config_dump_writes_secrets_example() -> None:
         result = runner.invoke(get_app(), ["c", "d", "--which", "secrets"])
 
         assert result.exit_code == 0, result.output
-        output_dir = Path(".stackops/examples")
+        output_dir = Path(".stackops/secrets")
         assert (output_dir / "secrets.example.json").read_text(encoding="utf-8") == _secrets_asset_text(
             secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE
         )
