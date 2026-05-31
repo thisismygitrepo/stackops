@@ -6,17 +6,19 @@ from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretSelectors,
+    build_secret_candidates,
     filter_secret_candidates,
     format_secret_candidate_label,
     format_secret_selection,
-    load_secret_candidates,
 )
+from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
 
 DEFAULT_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
 __all__ = [
     "DEFAULT_SECRETS_PATH",
     "SecretAmbiguousError",
+    "SecretsFileError",
     "SecretLookupError",
     "SecretNotFoundError",
     "StackOpsSecretsError",
@@ -27,6 +29,10 @@ __all__ = [
 
 class StackOpsSecretsError(Exception):
     """Base exception for the Python secrets API."""
+
+
+class SecretsFileError(StackOpsSecretsError, ValueError):
+    """Raised when the secrets file does not match the strict schema."""
 
 
 class SecretLookupError(StackOpsSecretsError, LookupError):
@@ -89,7 +95,11 @@ def load_secret_values(
     if not selectors.has_any():
         raise SecretLookupError("Pass at least one exact selector.")
 
-    candidates = load_secret_candidates(_resolve_path(path))
+    try:
+        candidates = build_secret_candidates(load_secrets_file(_resolve_path(path)))
+    except SecretsSchemaError as exc:
+        raise SecretsFileError(str(exc)) from exc
+
     matches = filter_secret_candidates(candidates=candidates, selectors=selectors)
     if len(matches) == 1:
         return dict(matches[0].key_values)

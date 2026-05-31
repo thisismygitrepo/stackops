@@ -82,7 +82,7 @@ def test_devops_config_secrets_verbose_prints_selection_without_secret_values() 
         assert "JSON path: entries[1].secrets[0].keyValues" in result.output
         assert "Entry tags: aws, dev" in result.output
         assert "Secret tags: iam-access-key" in result.output
-        assert "Scope: development" in result.output
+        assert "Scopes: development" in result.output
         assert "Defining env vars:" in result.output
         assert "AWS_ACCESS_KEY_ID" in result.output
         assert "AWS_SECRET_ACCESS_KEY" in result.output
@@ -215,6 +215,23 @@ def test_devops_config_secrets_interactive_picker_selects_keyvalues(monkeypatch)
         assert "export AWS_SESSION_TOKEN=session-value" in env_path.read_text(encoding="utf-8")
 
 
+def test_devops_config_secrets_rejects_old_singular_scope_field() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        secret = payload["entries"][0]["secrets"][0]  # type: ignore[index]
+        secret["scope"] = "repo"  # type: ignore[index]
+        del secret["scopes"]  # type: ignore[index]
+        _write_secrets_file(payload)
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(get_app(), ["c", "secrets", "github"], env={"OP_PROGRAM_PATH": str(op_path)})
+
+        assert result.exit_code == 1, result.output
+        assert "unknown key(s): scope" in result.output
+        assert not op_path.exists()
+
+
 def test_devops_config_secrets_edit_opens_custom_path_and_creates_template(monkeypatch) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -254,7 +271,7 @@ def _env_path_from_loader(loader_script: str) -> Path:
 
 def _secrets_payload() -> dict[str, object]:
     return {
-        "version": "0.2",
+        "version": "0.3",
         "entries": [
             {
                 "name": "github-personal",
@@ -263,7 +280,7 @@ def _secrets_payload() -> dict[str, object]:
                 "secrets": [
                     {
                         "tags": ["personal-access-token"],
-                        "scope": ["repo", "workflow"],
+                        "scopes": ["repo", "workflow"],
                         "keyValues": {"GITHUB_TOKEN": "ghp_test"},
                     }
                 ],
@@ -275,7 +292,7 @@ def _secrets_payload() -> dict[str, object]:
                 "secrets": [
                     {
                         "tags": ["iam-access-key"],
-                        "scope": "development",
+                        "scopes": ["development"],
                         "keyValues": {
                             "AWS_ACCESS_KEY_ID": "AKIA_TEST",
                             "AWS_SECRET_ACCESS_KEY": "secret-value",
@@ -284,7 +301,7 @@ def _secrets_payload() -> dict[str, object]:
                     },
                     {
                         "tags": ["session-token"],
-                        "scope": "development",
+                        "scopes": ["development"],
                         "keyValues": {"AWS_SESSION_TOKEN": "session-value"},
                     },
                 ],

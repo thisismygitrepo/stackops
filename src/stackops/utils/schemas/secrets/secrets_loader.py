@@ -2,7 +2,14 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
-from stackops.utils.schemas.secrets.secrets_types import SecretRecord, SecretRotation, SecretScope, SecretStringMap, SecretsEntry, SecretsFile
+from stackops.utils.schemas.secrets.secrets_types import (
+    SecretRecord,
+    SecretRotation,
+    SecretScopes,
+    SecretStringMap,
+    SecretsEntry,
+    SecretsFile,
+)
 
 
 class SecretsSchemaError(ValueError):
@@ -25,11 +32,14 @@ def load_secrets_file(secrets_path: Path) -> SecretsFile:
 
 
 def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> SecretsFile:
+    _reject_unknown_keys(payload, allowed_keys=("$schema", "version", "entries"), path=str(secrets_path))
     schema = _optional_string(payload.get("$schema"), "$schema")
     version = _string_value(payload.get("version"), "version")
     entries = payload.get("entries")
     if not isinstance(entries, list):
         _fail(f"Secrets file must define an entries array: {secrets_path}")
+    if not entries:
+        _fail(f"Secrets file entries array must define at least one entry: {secrets_path}")
 
     parsed_entries: list[SecretsEntry] = []
     for entry_index, entry_raw in enumerate(entries):
@@ -44,9 +54,17 @@ def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> Se
 
 
 def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> SecretsEntry:
+    entry_path = f"entries[{entry_index}]"
+    _reject_unknown_keys(
+        entry,
+        allowed_keys=("name", "tags", "description", "url", "email", "username", "profile", "secrets", "metadata"),
+        path=entry_path,
+    )
     secrets_raw = entry.get("secrets")
     if not isinstance(secrets_raw, list):
-        _fail(f"Invalid secrets entry at entries[{entry_index}].secrets: expected array.")
+        _fail(f"Invalid secrets entry at {entry_path}.secrets: expected array.")
+    if not secrets_raw:
+        _fail(f"Invalid secrets entry at {entry_path}.secrets: expected at least one secret.")
 
     parsed_secrets: list[SecretRecord] = []
     for secret_index, secret_raw in enumerate(secrets_raw):
@@ -84,8 +102,14 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> SecretsEntry:
 
 def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int) -> SecretRecord:
     secret_path = f"entries[{entry_index}].secrets[{secret_index}]"
+    _reject_unknown_keys(
+        secret,
+        allowed_keys=("name", "tags", "description", "scopes", "keyValues", "rotation", "metadata", "notes"),
+        path=secret_path,
+    )
     parsed_secret: SecretRecord = {
         "tags": _string_list(secret.get("tags"), f"{secret_path}.tags"),
+        "scopes": _scopes(secret.get("scopes"), f"{secret_path}.scopes"),
         "keyValues": _key_values(secret.get("keyValues"), f"{secret_path}.keyValues"),
     }
     name = _optional_string(secret.get("name"), f"{secret_path}.name")
@@ -94,9 +118,6 @@ def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int
     description = _optional_string(secret.get("description"), f"{secret_path}.description")
     if description is not None:
         parsed_secret["description"] = description
-    scope = _optional_scope(secret.get("scope"), f"{secret_path}.scope")
-    if scope is not None:
-        parsed_secret["scope"] = scope
     rotation = _optional_rotation(secret.get("rotation"), f"{secret_path}.rotation")
     if rotation is not None:
         parsed_secret["rotation"] = rotation
@@ -142,11 +163,7 @@ def _string_list(value: Any, path: str) -> list[str]:
     return values
 
 
-def _optional_scope(value: Any, path: str) -> SecretScope | None:
-    if value is None:
-        return None
-    if isinstance(value, str) and value.strip():
-        return value
+def _scopes(value: Any, path: str) -> SecretScopes:
     return _string_list(value, path)
 
 
@@ -171,6 +188,7 @@ def _optional_rotation(value: Any, path: str) -> SecretRotation | None:
         return None
     if not isinstance(value, Mapping):
         _fail(f"Invalid secrets file: {path} must be an object.")
+    _reject_unknown_keys(value, allowed_keys=("lastRotated", "rotateEveryDays", "owner"), path=path)
 
     rotation: SecretRotation = {}
     last_rotated = _optional_string(value.get("lastRotated"), f"{path}.lastRotated")
@@ -197,12 +215,19 @@ def _key_values(value: Any, path: str) -> dict[str, str]:
     for key, secret_value in value.items():
         if not isinstance(key, str) or not key.strip():
             _fail(f"Invalid secrets file: {path} contains a non-string or empty key.")
-        if not isinstance(secret_value, str):
-            _fail(f"Invalid secrets file: {path}.{key} must be a string.")
+        if not isinstance(secret_value, str) or not secret_value.strip():
+            _fail(f"Invalid secrets file: {path}.{key} must be a non-empty string.")
         key_values[key] = secret_value
     if not key_values:
         _fail(f"Invalid secrets file: {path} must define at least one value.")
     return key_values
+
+
+def _reject_unknown_keys(mapping: Mapping[str, Any], *, allowed_keys: tuple[str, ...], path: str) -> None:
+    unknown_keys = [key for key in mapping if key not in allowed_keys]
+    if unknown_keys:
+        keys = ", ".join(str(key) for key in unknown_keys)
+        _fail(f"Invalid secrets file: {path} contains unknown key(s): {keys}.")
 
 
 def _fail(message: str) -> NoReturn:

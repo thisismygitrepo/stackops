@@ -1,7 +1,8 @@
 from typing import NotRequired, TypeAlias, TypedDict
 
 
-SecretScope: TypeAlias = str | list[str]
+SecretScope: TypeAlias = str
+SecretScopes: TypeAlias = list[SecretScope]
 SecretStringMap: TypeAlias = dict[str, str]
 
 
@@ -13,10 +14,10 @@ class SecretRotation(TypedDict, total=False):
 
 class SecretRecord(TypedDict):
     tags: list[str]
+    scopes: SecretScopes
     keyValues: SecretStringMap
     name: NotRequired[str]
     description: NotRequired[str]
-    scope: NotRequired[SecretScope]
     rotation: NotRequired[SecretRotation]
     metadata: NotRequired[SecretStringMap]
     notes: NotRequired[str]

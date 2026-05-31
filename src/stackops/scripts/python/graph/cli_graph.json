@@ -3589,7 +3589,7 @@
                     "        typer.Argument(",
                     "            help=(",
                     "                \"Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, \"",
-                    "                \"secret name/tags/scope, metadata, notes, or env var keys.\"",
+                    "                \"secret name/tags/scopes, metadata, notes, or env var keys.\"",
                     "            )",
                     "        ),",
                     "    ] = None,",
@@ -3626,7 +3626,7 @@
                     "        list[str] | None, typer.Option(\"--secret-tag\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
                     "    ] = None,",
                     "    scopes: Annotated[",
-                    "        list[str] | None, typer.Option(\"--scope\", help=\"Exact entries[].secrets[].scope value to require. Repeat for multiple scopes.\")",
+                    "        list[str] | None, typer.Option(\"--scope\", help=\"Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.\")",
                     "    ] = None,",
                     "    keys: Annotated[",
                     "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
@@ -3666,13 +3666,13 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scope, metadata, notes, or env var keys.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scope, metadata, notes, or env var keys."
+                        "help": "Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys."
                       }
                     },
                     {
@@ -3893,7 +3893,7 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', help='Exact entries[].secrets[].scope value to require. Repeat for multiple scopes.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', help='Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -3903,7 +3903,7 @@
                           "--scope"
                         ],
                         "short_flags": [],
-                        "help": "Exact entries[].secrets[].scope value to require. Repeat for multiple scopes."
+                        "help": "Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes."
                       }
                     },
                     {

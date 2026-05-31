@@ -9,6 +9,7 @@ from stackops.secrets import (
     SecretAmbiguousError,
     SecretLookupError,
     SecretNotFoundError,
+    SecretsFileError,
     load_secret_value,
     load_secret_values,
 )
@@ -92,6 +93,30 @@ def test_python_secrets_api_rejects_ambiguous_selection_without_secret_values() 
         assert "session-value" not in message
 
 
+def test_python_secrets_api_rejects_old_singular_scope_field() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        secret = payload["entries"][0]["secrets"][0]  # type: ignore[index]
+        secret["scope"] = "repo"  # type: ignore[index]
+        del secret["scopes"]  # type: ignore[index]
+        _write_secrets_file(payload)
+
+        with pytest.raises(SecretsFileError, match=r"unknown key\(s\): scope"):
+            load_secret_values(entry_name="github-personal")
+
+
+def test_python_secrets_api_requires_scopes_array() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        payload["entries"][0]["secrets"][0]["scopes"] = "repo"  # type: ignore[index]
+        _write_secrets_file(payload)
+
+        with pytest.raises(SecretsFileError, match=r"scopes must be an array"):
+            load_secret_values(entry_name="github-personal")
+
+
 def _write_secrets_file(payload: dict[str, object]) -> None:
     secrets_path = Path(".stackops") / "secrets" / "secrets.json"
     secrets_path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,7 +125,7 @@ def _write_secrets_file(payload: dict[str, object]) -> None:
 
 def _secrets_payload() -> dict[str, object]:
     return {
-        "version": "0.2",
+        "version": "0.3",
         "entries": [
             {
                 "name": "github-personal",
@@ -109,7 +134,7 @@ def _secrets_payload() -> dict[str, object]:
                 "secrets": [
                     {
                         "tags": ["personal-access-token"],
-                        "scope": ["repo", "workflow"],
+                        "scopes": ["repo", "workflow"],
                         "keyValues": {"GITHUB_TOKEN": "ghp_test"},
                     }
                 ],
@@ -121,7 +146,7 @@ def _secrets_payload() -> dict[str, object]:
                 "secrets": [
                     {
                         "tags": ["iam-access-key"],
-                        "scope": "development",
+                        "scopes": ["development"],
                         "keyValues": {
                             "AWS_ACCESS_KEY_ID": "AKIA_TEST",
                             "AWS_SECRET_ACCESS_KEY": "secret-value",
@@ -130,7 +155,7 @@ def _secrets_payload() -> dict[str, object]:
                     },
                     {
                         "tags": ["session-token"],
-                        "scope": "development",
+                        "scopes": ["development"],
                         "keyValues": {"AWS_SESSION_TOKEN": "session-value"},
                     },
                 ],

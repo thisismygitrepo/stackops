@@ -32,7 +32,7 @@ SECRETS_EPILOG = """Examples:
   devops config secrets --edit
 
 Terms are case-insensitive substring matches. All terms must match somewhere across entry
-name/tags/profile, secret name/tags/scope, metadata, notes, or env var keys.
+name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys.
 Use --interactive/-i to choose from matching entries with the TV fuzzy picker.
 Use --verbose/-v to print the selected bundle and env var keys without secret values.
 Exact selectors are case-sensitive and can be combined with terms for script-stable matching.
@@ -45,7 +45,7 @@ def secrets(
         typer.Argument(
             help=(
                 "Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, "
-                "secret name/tags/scope, metadata, notes, or env var keys."
+                "secret name/tags/scopes, metadata, notes, or env var keys."
             )
         ),
     ] = None,
@@ -82,7 +82,7 @@ def secrets(
         list[str] | None, typer.Option("--secret-tag", help="Exact entries[].secrets[].tags value to require. Repeat for multiple tags.")
     ] = None,
     scopes: Annotated[
-        list[str] | None, typer.Option("--scope", help="Exact entries[].secrets[].scope value to require. Repeat for multiple scopes.")
+        list[str] | None, typer.Option("--scope", help="Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.")
     ] = None,
     keys: Annotated[
         list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
@@ -185,7 +185,7 @@ def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -
     typer.echo(f"  JSON path: {candidate.json_path}")
     typer.echo(f"  Entry tags: {_join_display(candidate.entry_tags)}")
     typer.echo(f"  Secret tags: {_join_display(candidate.secret_tags)}")
-    typer.echo(f"  Scope: {_join_display(candidate.scopes)}")
+    typer.echo(f"  Scopes: {_join_display(candidate.scopes)}")
     typer.echo("Defining env vars:")
     for key in candidate.key_values:
         typer.echo(f"  {key}")
