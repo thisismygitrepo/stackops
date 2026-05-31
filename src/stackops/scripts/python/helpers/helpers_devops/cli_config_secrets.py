@@ -142,7 +142,7 @@ def _entry_candidates(entry: Mapping[str, Any], entry_index: int) -> list[Secret
         key_values_path = f"entries[{entry_index}].secrets[{secret_index}].keyValues"
         key_values = _key_values(secret_raw.get("keyValues"), key_values_path)
         secret_name = _optional_string(secret_raw.get("name"), f"entries[{entry_index}].secrets[{secret_index}].name")
-        secret_tags = _string_tuple(secret_raw.get("tag"), f"entries[{entry_index}].secrets[{secret_index}].tag")
+        secret_tags = _string_tuple(secret_raw.get("tags"), f"entries[{entry_index}].secrets[{secret_index}].tags")
         scopes = _scope_tuple(secret_raw.get("scope"), f"entries[{entry_index}].secrets[{secret_index}].scope")
         secret_search_values = _search_values_from_secret(
             secret=secret_raw, secret_name=secret_name, secret_tags=secret_tags, scopes=scopes, key_names=tuple(key_values)
@@ -163,7 +163,7 @@ def _entry_candidates(entry: Mapping[str, Any], entry_index: int) -> list[Secret
 
 def _search_values_from_entry(entry: Mapping[str, Any], entry_name: str, entry_tags: tuple[str, ...]) -> tuple[str, ...]:
     values: list[str] = [entry_name, *entry_tags]
-    for key in ("description", "url", "email", "username", "accountId", "profile"):
+    for key in ("description", "url", "email", "username", "profile"):
         value = entry.get(key)
         if isinstance(value, str):
             values.append(value)

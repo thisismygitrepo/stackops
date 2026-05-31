@@ -147,7 +147,7 @@ def _secrets_payload() -> dict[str, object]:
                 "username": "octocat",
                 "secrets": [
                     {
-                        "tag": ["personal-access-token"],
+                        "tags": ["personal-access-token"],
                         "scope": ["repo", "workflow"],
                         "keyValues": {"GITHUB_TOKEN": "ghp_test"},
                     }
@@ -159,7 +159,7 @@ def _secrets_payload() -> dict[str, object]:
                 "profile": "dev",
                 "secrets": [
                     {
-                        "tag": ["iam-access-key"],
+                        "tags": ["iam-access-key"],
                         "scope": "development",
                         "keyValues": {
                             "AWS_ACCESS_KEY_ID": "AKIA_TEST",
@@ -168,7 +168,7 @@ def _secrets_payload() -> dict[str, object]:
                         },
                     },
                     {
-                        "tag": ["session-token"],
+                        "tags": ["session-token"],
                         "scope": "development",
                         "keyValues": {"AWS_SESSION_TOKEN": "session-value"},
                     },
