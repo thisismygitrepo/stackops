@@ -1,11 +1,12 @@
 import json
 from pathlib import Path
-from typing import Annotated, Literal, TypeAlias
+from typing import Annotated, Literal, TypeAlias, assert_never
 
 import typer
 
 InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
-DumpConfigKind: TypeAlias = Literal["ve", "layout", "init", "ia", "live"]
+ProfileMapperDumpKind: TypeAlias = Literal["mapper_data", "mapper_dotfiles"]
+DumpConfigKind: TypeAlias = Literal["ve", "layout", "mapper_data", "mapper_dotfiles", "secrets", "init", "ia", "live"]
 
 
 def config() -> None:
@@ -106,6 +107,16 @@ def dump_config(
                 _reject_run_for_non_script_dump()
             _dump_layout_example()
             return
+        case "mapper_data" | "mapper_dotfiles":
+            if run:
+                _reject_run_for_non_script_dump()
+            _dump_profile_mapper_example(which=which)
+            return
+        case "secrets":
+            if run:
+                _reject_run_for_non_script_dump()
+            _dump_secrets_example()
+            return
         case "init" | "ia" | "live":
             _dump_init_script(which=which, run=run)
             return
@@ -158,17 +169,21 @@ cloud:
     typer.echo(msg)
 
 
+def _dump_example_asset(*, source_path: Path) -> Path:
+    output_dir = Path.cwd() / ".stackops" / "examples"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / source_path.name
+    output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
+    return output_path
+
+
 def _dump_layout_asset(*, path_reference: str) -> Path:
     import stackops.utils.schemas.layouts as layout_assets
 
     from stackops.utils.path_reference import get_path_reference_path
 
     source_path = get_path_reference_path(module=layout_assets, path_reference=path_reference)
-    output_dir = Path.cwd() / ".stackops" / "examples"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / source_path.name
-    output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
-    return output_path
+    return _dump_example_asset(source_path=source_path)
 
 
 def _dump_layout_example() -> None:
@@ -177,6 +192,49 @@ def _dump_layout_example() -> None:
     layout_path = _dump_layout_asset(path_reference=layout_assets.LAYOUT_PATH_REFERENCE)
     schema_path = _dump_layout_asset(path_reference=layout_assets.LAYOUT_SCHEMA_PATH_REFERENCE)
     msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {layout_path} and {schema_path}"
+    typer.echo(msg)
+
+
+def _dump_profile_asset(*, path_reference: str) -> Path:
+    import stackops.profile as profile_assets
+
+    from stackops.utils.path_reference import get_path_reference_path
+
+    source_path = get_path_reference_path(module=profile_assets, path_reference=path_reference)
+    return _dump_example_asset(source_path=source_path)
+
+
+def _dump_profile_mapper_example(*, which: ProfileMapperDumpKind) -> None:
+    import stackops.profile as profile_assets
+
+    match which:
+        case "mapper_data":
+            mapper_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DATA_PATH_REFERENCE)
+            schema_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE)
+        case "mapper_dotfiles":
+            mapper_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DOTFILES_PATH_REFERENCE)
+            schema_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE)
+        case _:
+            assert_never(which)
+    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {mapper_path} and {schema_path}"
+    typer.echo(msg)
+
+
+def _dump_secrets_asset(*, path_reference: str) -> Path:
+    import stackops.utils.schemas.secrets as secrets_assets
+
+    from stackops.utils.path_reference import get_path_reference_path
+
+    source_path = get_path_reference_path(module=secrets_assets, path_reference=path_reference)
+    return _dump_example_asset(source_path=source_path)
+
+
+def _dump_secrets_example() -> None:
+    import stackops.utils.schemas.secrets as secrets_assets
+
+    example_path = _dump_secrets_asset(path_reference=secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE)
+    schema_path = _dump_secrets_asset(path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE)
+    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {example_path} and {schema_path}"
     typer.echo(msg)
 
 
