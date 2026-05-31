@@ -5,7 +5,6 @@ from typing import Any, Mapping, NoReturn
 from stackops.utils.schemas.secrets.secrets_types import (
     SecretRecord,
     SecretRotation,
-    SecretScopes,
     SecretStringMap,
     SecretsEntry,
     SecretsFile,
@@ -107,9 +106,10 @@ def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int
         allowed_keys=("name", "tags", "description", "scopes", "keyValues", "rotation", "metadata", "notes"),
         path=secret_path,
     )
+    scopes = _string_list(secret["scopes"], f"{secret_path}.scopes") if "scopes" in secret else []
     parsed_secret: SecretRecord = {
         "tags": _string_list(secret.get("tags"), f"{secret_path}.tags"),
-        "scopes": _scopes(secret.get("scopes"), f"{secret_path}.scopes"),
+        "scopes": scopes,
         "keyValues": _key_values(secret.get("keyValues"), f"{secret_path}.keyValues"),
     }
     name = _optional_string(secret.get("name"), f"{secret_path}.name")
@@ -161,10 +161,6 @@ def _string_list(value: Any, path: str) -> list[str]:
     if not values:
         _fail(f"Invalid secrets file: {path} must define at least one value.")
     return values
-
-
-def _scopes(value: Any, path: str) -> SecretScopes:
-    return _string_list(value, path)
 
 
 def _optional_string_map(value: Any, path: str) -> SecretStringMap | None:

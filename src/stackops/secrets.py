@@ -22,7 +22,6 @@ __all__ = [
     "SecretLookupError",
     "SecretNotFoundError",
     "StackOpsSecretsError",
-    "load_secret_value",
     "load_secret_values",
 ]
 
@@ -45,30 +44,6 @@ class SecretNotFoundError(SecretLookupError):
 
 class SecretAmbiguousError(SecretLookupError):
     """Raised when exact selectors match multiple secret bundles."""
-
-
-def load_secret_value(
-    key: str,
-    *,
-    path: str | Path | None = None,
-    entry_name: str | None = None,
-    secret_name: str | None = None,
-    tags: tuple[str, ...] = (),
-    entry_tags: tuple[str, ...] = (),
-    secret_tags: tuple[str, ...] = (),
-    scopes: tuple[str, ...] = (),
-) -> str:
-    """Return one secret value selected by exact, case-sensitive fields."""
-    return load_secret_values(
-        path=path,
-        entry_name=entry_name,
-        secret_name=secret_name,
-        tags=tags,
-        entry_tags=entry_tags,
-        secret_tags=secret_tags,
-        scopes=scopes,
-        keys=(key,),
-    )[key]
 
 
 def load_secret_values(

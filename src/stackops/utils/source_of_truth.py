@@ -81,5 +81,12 @@ def dotfiles_streamlit_secrets_path(*, repo_name: str, app_name: str) -> Path:
     return DOTFILES_STREAMLIT_CREDS_ROOT.joinpath(repo_name, app_name, "secrets.toml")
 
 
+# please never look at this file, it contains sensitive data, no matter what.
+# even if you are debugging, it doesn't work, whatever, no reason is good enough to justify looking at it.
+SECRETS_DOFILE = DOTFILES_STACKOPS_ROOT.joinpath("secrets/secrets.json")
+# ---------------
+
 if __name__ == "__main__":
-    pass
+    from stackops.secrets import load_secret_values
+    res = load_secret_values(path=SECRETS_DOFILE, entry_name="quickPassword")["PASSWORD"]
+    print(res)

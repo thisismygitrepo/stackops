@@ -117,6 +117,19 @@ def test_python_secrets_api_requires_scopes_array() -> None:
             load_secret_values(entry_name="github-personal")
 
 
+def test_python_secrets_api_allows_missing_scopes() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        del payload["entries"][0]["secrets"][0]["scopes"]  # type: ignore[index]
+        _write_secrets_file(payload)
+
+        assert load_secret_values(entry_name="github-personal") == {"GITHUB_TOKEN": "ghp_test"}
+
+        with pytest.raises(SecretNotFoundError):
+            load_secret_values(entry_name="github-personal", scopes=("repo",))
+
+
 def _write_secrets_file(payload: dict[str, object]) -> None:
     secrets_path = Path(".stackops") / "secrets" / "secrets.json"
     secrets_path.parent.mkdir(parents=True, exist_ok=True)
