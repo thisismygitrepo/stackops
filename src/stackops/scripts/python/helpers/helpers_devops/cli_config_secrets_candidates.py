@@ -1,11 +1,30 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, NoReturn, cast
+from typing import Any, Mapping, NoReturn
 
 import typer
 
-__all__ = ["SecretCandidate", "SecretSelectors", "load_secret_candidates", "resolve_candidate"]
+from stackops.utils.schemas.secrets.secrets_types import (
+    SecretRecord,
+    SecretRotation,
+    SecretScope,
+    SecretStringMap,
+    SecretsEntry,
+    SecretsFile,
+)
+
+__all__ = [
+    "SecretCandidate",
+    "SecretSelectors",
+    "build_secret_candidates",
+    "filter_secret_candidates",
+    "format_secret_candidate_label",
+    "format_secret_selection",
+    "load_secret_candidates",
+    "load_secrets_file",
+    "resolve_candidate",
+]
 
 
 @dataclass(frozen=True)
@@ -45,6 +64,13 @@ class SecretSelectors:
 
 
 def load_secret_candidates(secrets_path: Path) -> list[SecretCandidate]:
+    candidates = build_secret_candidates(load_secrets_file(secrets_path))
+    if not candidates:
+        _fail(f"No keyValues entries found in {secrets_path}")
+    return candidates
+
+
+def load_secrets_file(secrets_path: Path) -> SecretsFile:
     if not secrets_path.exists():
         _fail(f"Secrets file not found: {secrets_path}")
 
@@ -56,44 +82,117 @@ def load_secret_candidates(secrets_path: Path) -> list[SecretCandidate]:
     if not isinstance(payload, Mapping):
         _fail(f"Secrets file must contain a JSON object: {secrets_path}")
 
-    entries = payload.get("entries")
-    if not isinstance(entries, list):
-        _fail(f"Secrets file must define an entries array: {secrets_path}")
-    entries_list = cast(list[Any], entries)
+    return _parse_secrets_file(payload=payload, secrets_path=secrets_path)
 
+
+def build_secret_candidates(secrets_file: SecretsFile) -> list[SecretCandidate]:
     candidates: list[SecretCandidate] = []
-    for entry_index, entry_raw in enumerate(entries_list):
-        if not isinstance(entry_raw, Mapping):
-            _fail(f"Invalid secrets entry at entries[{entry_index}]: expected object.")
-        candidates.extend(_entry_candidates(entry=entry_raw, entry_index=entry_index))
-
-    if not candidates:
-        _fail(f"No keyValues entries found in {secrets_path}")
+    for entry_index, entry in enumerate(secrets_file["entries"]):
+        candidates.extend(_entry_candidates(entry=entry, entry_index=entry_index))
     return candidates
 
 
-def _entry_candidates(entry: Mapping[str, Any], entry_index: int) -> list[SecretCandidate]:
-    entry_name = _string_value(entry.get("name"), f"entries[{entry_index}].name")
-    entry_tags = _string_tuple(entry.get("tags"), f"entries[{entry_index}].tags")
+def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> SecretsFile:
+    schema = _optional_string(payload.get("$schema"), "$schema")
+    version = _string_value(payload.get("version"), "version")
+    entries = payload.get("entries")
+    if not isinstance(entries, list):
+        _fail(f"Secrets file must define an entries array: {secrets_path}")
+
+    parsed_entries: list[SecretsEntry] = []
+    for entry_index, entry_raw in enumerate(entries):
+        if not isinstance(entry_raw, Mapping):
+            _fail(f"Invalid secrets entry at entries[{entry_index}]: expected object.")
+        parsed_entries.append(_parse_entry(entry=entry_raw, entry_index=entry_index))
+
+    secrets_file: SecretsFile = {"version": version, "entries": parsed_entries}
+    if schema is not None:
+        secrets_file["$schema"] = schema
+    return secrets_file
+
+
+def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> SecretsEntry:
     secrets_raw = entry.get("secrets")
     if not isinstance(secrets_raw, list):
         _fail(f"Invalid secrets entry at entries[{entry_index}].secrets: expected array.")
-    secrets = cast(list[Any], secrets_raw)
+
+    parsed_secrets: list[SecretRecord] = []
+    for secret_index, secret_raw in enumerate(secrets_raw):
+        if not isinstance(secret_raw, Mapping):
+            _fail(f"Invalid secret at entries[{entry_index}].secrets[{secret_index}]: expected object.")
+        parsed_secrets.append(_parse_secret(secret=secret_raw, entry_index=entry_index, secret_index=secret_index))
+
+    parsed_entry: SecretsEntry = {
+        "name": _string_value(entry.get("name"), f"entries[{entry_index}].name"),
+        "secrets": parsed_secrets,
+    }
+    tags = _optional_string_list(entry.get("tags"), f"entries[{entry_index}].tags")
+    if tags is not None:
+        parsed_entry["tags"] = tags
+    description = _optional_string(entry.get("description"), f"entries[{entry_index}].description")
+    if description is not None:
+        parsed_entry["description"] = description
+    url = _optional_string(entry.get("url"), f"entries[{entry_index}].url")
+    if url is not None:
+        parsed_entry["url"] = url
+    email = _optional_string(entry.get("email"), f"entries[{entry_index}].email")
+    if email is not None:
+        parsed_entry["email"] = email
+    username = _optional_string(entry.get("username"), f"entries[{entry_index}].username")
+    if username is not None:
+        parsed_entry["username"] = username
+    profile = _optional_string(entry.get("profile"), f"entries[{entry_index}].profile")
+    if profile is not None:
+        parsed_entry["profile"] = profile
+    metadata = _optional_string_map(entry.get("metadata"), f"entries[{entry_index}].metadata")
+    if metadata is not None:
+        parsed_entry["metadata"] = metadata
+    return parsed_entry
+
+
+def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int) -> SecretRecord:
+    secret_path = f"entries[{entry_index}].secrets[{secret_index}]"
+    parsed_secret: SecretRecord = {
+        "tags": _string_list(secret.get("tags"), f"{secret_path}.tags"),
+        "keyValues": _key_values(secret.get("keyValues"), f"{secret_path}.keyValues"),
+    }
+    name = _optional_string(secret.get("name"), f"{secret_path}.name")
+    if name is not None:
+        parsed_secret["name"] = name
+    description = _optional_string(secret.get("description"), f"{secret_path}.description")
+    if description is not None:
+        parsed_secret["description"] = description
+    scope = _optional_scope(secret.get("scope"), f"{secret_path}.scope")
+    if scope is not None:
+        parsed_secret["scope"] = scope
+    rotation = _optional_rotation(secret.get("rotation"), f"{secret_path}.rotation")
+    if rotation is not None:
+        parsed_secret["rotation"] = rotation
+    metadata = _optional_string_map(secret.get("metadata"), f"{secret_path}.metadata")
+    if metadata is not None:
+        parsed_secret["metadata"] = metadata
+    notes = _optional_string(secret.get("notes"), f"{secret_path}.notes")
+    if notes is not None:
+        parsed_secret["notes"] = notes
+    return parsed_secret
+
+
+def _entry_candidates(entry: SecretsEntry, entry_index: int) -> list[SecretCandidate]:
+    entry_name = entry["name"]
+    entry_tags = tuple(entry.get("tags", ()))
+    secrets = entry["secrets"]
 
     shared_search_values = _search_values_from_entry(entry=entry, entry_name=entry_name, entry_tags=entry_tags)
 
     candidates: list[SecretCandidate] = []
-    for secret_index, secret_raw in enumerate(secrets):
-        if not isinstance(secret_raw, Mapping):
-            _fail(f"Invalid secret at entries[{entry_index}].secrets[{secret_index}]: expected object.")
-
+    for secret_index, secret in enumerate(secrets):
         key_values_path = f"entries[{entry_index}].secrets[{secret_index}].keyValues"
-        key_values = _key_values(secret_raw.get("keyValues"), key_values_path)
-        secret_name = _optional_string(secret_raw.get("name"), f"entries[{entry_index}].secrets[{secret_index}].name")
-        secret_tags = _string_tuple(secret_raw.get("tags"), f"entries[{entry_index}].secrets[{secret_index}].tags")
-        scopes = _scope_tuple(secret_raw.get("scope"), f"entries[{entry_index}].secrets[{secret_index}].scope")
+        key_values = dict(secret["keyValues"])
+        secret_name = secret.get("name")
+        secret_tags = tuple(secret["tags"])
+        scopes = _scope_tuple(secret.get("scope"))
         secret_search_values = _search_values_from_secret(
-            secret=secret_raw, secret_name=secret_name, secret_tags=secret_tags, scopes=scopes, key_names=tuple(key_values)
+            secret=secret, secret_name=secret_name, secret_tags=secret_tags, scopes=scopes, key_names=tuple(key_values)
         )
         candidates.append(
             SecretCandidate(
@@ -110,25 +209,25 @@ def _entry_candidates(entry: Mapping[str, Any], entry_index: int) -> list[Secret
     return candidates
 
 
-def _search_values_from_entry(entry: Mapping[str, Any], entry_name: str, entry_tags: tuple[str, ...]) -> tuple[str, ...]:
+def _search_values_from_entry(entry: SecretsEntry, entry_name: str, entry_tags: tuple[str, ...]) -> tuple[str, ...]:
     values: list[str] = [entry_name, *entry_tags]
     for key in ("description", "url", "email", "username", "profile"):
         value = entry.get(key)
-        if isinstance(value, str):
+        if value is not None:
             values.append(value)
     values.extend(_string_map_terms(entry.get("metadata")))
     return tuple(values)
 
 
 def _search_values_from_secret(
-    secret: Mapping[str, Any], secret_name: str | None, secret_tags: tuple[str, ...], scopes: tuple[str, ...], key_names: tuple[str, ...]
+    secret: SecretRecord, secret_name: str | None, secret_tags: tuple[str, ...], scopes: tuple[str, ...], key_names: tuple[str, ...]
 ) -> tuple[str, ...]:
     values: list[str] = [*secret_tags, *scopes, *key_names]
     if secret_name is not None:
         values.append(secret_name)
     for key in ("description", "notes"):
         value = secret.get(key)
-        if isinstance(value, str):
+        if value is not None:
             values.append(value)
     values.extend(_string_map_terms(secret.get("metadata")))
     return tuple(values)
@@ -166,6 +265,18 @@ def resolve_candidate(candidates: list[SecretCandidate], terms: list[str] | None
         )
         _print_candidate_list("Matching keyValues entries:", matches)
     raise typer.Exit(code=1)
+
+
+def filter_secret_candidates(candidates: list[SecretCandidate], selectors: SecretSelectors) -> list[SecretCandidate]:
+    return [candidate for candidate in candidates if _candidate_matches_selectors(candidate=candidate, selectors=selectors)]
+
+
+def format_secret_selection(selectors: SecretSelectors) -> str:
+    return _selection_text(terms=None, selectors=selectors)
+
+
+def format_secret_candidate_label(candidate: SecretCandidate) -> str:
+    return _candidate_label(candidate)
 
 
 def _candidate_matches(candidate: SecretCandidate, terms: tuple[str, ...]) -> bool:
@@ -296,9 +407,13 @@ def _optional_string(value: Any, path: str) -> str | None:
     _fail(f"Invalid secrets file: {path} must be a non-empty string when present.")
 
 
-def _string_tuple(value: Any, path: str) -> tuple[str, ...]:
+def _optional_string_list(value: Any, path: str) -> list[str] | None:
     if value is None:
-        return ()
+        return None
+    return _string_list(value, path)
+
+
+def _string_list(value: Any, path: str) -> list[str]:
     if not isinstance(value, list):
         _fail(f"Invalid secrets file: {path} must be an array of strings when present.")
     values: list[str] = []
@@ -306,15 +421,64 @@ def _string_tuple(value: Any, path: str) -> tuple[str, ...]:
         if not isinstance(item, str) or not item.strip():
             _fail(f"Invalid secrets file: {path}[{index}] must be a non-empty string.")
         values.append(item)
-    return tuple(values)
+    if not values:
+        _fail(f"Invalid secrets file: {path} must define at least one value.")
+    return values
 
 
-def _scope_tuple(value: Any, path: str) -> tuple[str, ...]:
+def _optional_scope(value: Any, path: str) -> SecretScope | None:
+    if value is None:
+        return None
+    if isinstance(value, str) and value.strip():
+        return value
+    return _string_list(value, path)
+
+
+def _scope_tuple(value: SecretScope | None) -> tuple[str, ...]:
     if value is None:
         return ()
-    if isinstance(value, str) and value.strip():
+    if isinstance(value, str):
         return (value,)
-    return _string_tuple(value, path)
+    return tuple(value)
+
+
+def _optional_string_map(value: Any, path: str) -> SecretStringMap | None:
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        _fail(f"Invalid secrets file: {path} must be an object.")
+
+    string_map: SecretStringMap = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not key.strip():
+            _fail(f"Invalid secrets file: {path} contains a non-string or empty key.")
+        if not isinstance(item, str) or not item.strip():
+            _fail(f"Invalid secrets file: {path}.{key} must be a non-empty string.")
+        string_map[key] = item
+    return string_map
+
+
+def _optional_rotation(value: Any, path: str) -> SecretRotation | None:
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        _fail(f"Invalid secrets file: {path} must be an object.")
+
+    rotation: SecretRotation = {}
+    last_rotated = _optional_string(value.get("lastRotated"), f"{path}.lastRotated")
+    if last_rotated is not None:
+        rotation["lastRotated"] = last_rotated
+
+    rotate_every_days = value.get("rotateEveryDays")
+    if rotate_every_days is not None:
+        if isinstance(rotate_every_days, bool) or not isinstance(rotate_every_days, int) or rotate_every_days < 1:
+            _fail(f"Invalid secrets file: {path}.rotateEveryDays must be an integer greater than or equal to 1.")
+        rotation["rotateEveryDays"] = rotate_every_days
+
+    owner = _optional_string(value.get("owner"), f"{path}.owner")
+    if owner is not None:
+        rotation["owner"] = owner
+    return rotation
 
 
 def _key_values(value: Any, path: str) -> dict[str, str]:
@@ -333,15 +497,13 @@ def _key_values(value: Any, path: str) -> dict[str, str]:
     return key_values
 
 
-def _string_map_terms(value: Any) -> tuple[str, ...]:
-    if not isinstance(value, Mapping):
+def _string_map_terms(value: SecretStringMap | None) -> tuple[str, ...]:
+    if value is None:
         return ()
     terms: list[str] = []
     for key, item in value.items():
-        if isinstance(key, str):
-            terms.append(key)
-        if isinstance(item, str):
-            terms.append(item)
+        terms.append(key)
+        terms.append(item)
     return tuple(terms)
 
 
