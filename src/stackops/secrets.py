@@ -1,29 +1,29 @@
-"""Read StackOps secrets with exact selectors only."""
+"""Search StackOps secrets with exact selectors only."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
-    SecretSelectors,
-    build_secret_candidates,
-    filter_secret_candidates,
-    format_secret_candidate_label,
-    format_secret_selection,
-)
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
+from stackops.utils.schemas.secrets.secrets_types import (
+    SecretRecord,
+    SecretRotation,
+    SecretsEntry,
+)
 
 DEFAULT_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
 __all__ = [
     "DEFAULT_SECRETS_PATH",
-    "SecretAmbiguousError",
-    "SecretsFileError",
-    "SecretLookupError",
-    "SecretNotFoundError",
+    "Entry",
     "StackOpsSecretsError",
-    "load_secret_values",
+    "SecretsFileError",
+    "search_secrets",
 ]
+
+
+class Entry(SecretsEntry):
+    """Schema-shaped secrets entry returned by `search_secrets`."""
 
 
 class StackOpsSecretsError(Exception):
@@ -34,19 +34,7 @@ class SecretsFileError(StackOpsSecretsError, ValueError):
     """Raised when the secrets file does not match the strict schema."""
 
 
-class SecretLookupError(StackOpsSecretsError, LookupError):
-    """Raised when exact selectors do not resolve to one secret bundle."""
-
-
-class SecretNotFoundError(SecretLookupError):
-    """Raised when exact selectors match no secret bundles."""
-
-
-class SecretAmbiguousError(SecretLookupError):
-    """Raised when exact selectors match multiple secret bundles."""
-
-
-def load_secret_values(
+def search_secrets(
     *,
     path: str | Path | None = None,
     entry_name: str | None = None,
@@ -56,34 +44,29 @@ def load_secret_values(
     secret_tags: tuple[str, ...] = (),
     scopes: tuple[str, ...] = (),
     keys: tuple[str, ...] = (),
-) -> dict[str, str]:
-    """Return one `keyValues` object selected by exact, case-sensitive fields."""
-    selectors = SecretSelectors(
-        entry_name=entry_name,
-        secret_name=secret_name,
-        tags=tags,
-        entry_tags=entry_tags,
-        secret_tags=secret_tags,
-        scopes=scopes,
-        keys=keys,
-    )
-    if not selectors.has_any():
-        raise SecretLookupError("Pass at least one exact selector.")
+) -> list[Entry]:
+    """Return schema-shaped entries whose secret bundles match exact selectors."""
     try:
-        candidates = build_secret_candidates(load_secrets_file(_resolve_path(path)))
+        secrets_file = load_secrets_file(_resolve_path(path))
     except SecretsSchemaError as exc:
         raise SecretsFileError(str(exc)) from exc
 
-    matches = filter_secret_candidates(candidates=candidates, selectors=selectors)
-    if len(matches) == 1:
-        return dict(matches[0].key_values)
-
-    selection = format_secret_selection(selectors)
-    if not matches:
-        raise SecretNotFoundError(f"No keyValues entry matched exact selector: {selection}")
-
-    labels = "; ".join(format_secret_candidate_label(candidate) for candidate in matches)
-    raise SecretAmbiguousError(f"Exact selector matched {len(matches)} keyValues entries: {selection}: {labels}")
+    entries: list[Entry] = []
+    for entry in secrets_file["entries"]:
+        for secret in entry["secrets"]:
+            if _secret_matches(
+                entry=entry,
+                secret=secret,
+                entry_name=entry_name,
+                secret_name=secret_name,
+                tags=tags,
+                entry_tags=entry_tags,
+                secret_tags=secret_tags,
+                scopes=scopes,
+                keys=keys,
+            ):
+                entries.append(_entry_with_secret(entry=entry, secret=secret))
+    return entries
 
 
 def _resolve_path(path: str | Path | None) -> Path:
@@ -94,3 +77,84 @@ def _resolve_path(path: str | Path | None) -> Path:
     if expanded_path.is_absolute():
         return expanded_path
     return Path.cwd() / expanded_path
+
+
+def _secret_matches(
+    *,
+    entry: SecretsEntry,
+    secret: SecretRecord,
+    entry_name: str | None,
+    secret_name: str | None,
+    tags: tuple[str, ...],
+    entry_tags: tuple[str, ...],
+    secret_tags: tuple[str, ...],
+    scopes: tuple[str, ...],
+    keys: tuple[str, ...],
+) -> bool:
+    current_entry_tags = tuple(entry.get("tags", ()))
+    current_secret_tags = tuple(secret["tags"])
+    current_scopes = tuple(secret["scopes"])
+    current_keys = tuple(secret["keyValues"])
+
+    if entry_name is not None and entry["name"] != entry_name:
+        return False
+    if secret_name is not None and secret.get("name") != secret_name:
+        return False
+    if not all(tag in current_entry_tags or tag in current_secret_tags for tag in tags):
+        return False
+    if not all(tag in current_entry_tags for tag in entry_tags):
+        return False
+    if not all(tag in current_secret_tags for tag in secret_tags):
+        return False
+    if not all(scope in current_scopes for scope in scopes):
+        return False
+    return all(key in current_keys for key in keys)
+
+
+def _entry_with_secret(*, entry: SecretsEntry, secret: SecretRecord) -> Entry:
+    matched_entry: Entry = {"name": entry["name"], "secrets": [_copy_secret(secret)]}
+    if "tags" in entry:
+        matched_entry["tags"] = list(entry["tags"])
+    if "description" in entry:
+        matched_entry["description"] = entry["description"]
+    if "url" in entry:
+        matched_entry["url"] = entry["url"]
+    if "email" in entry:
+        matched_entry["email"] = entry["email"]
+    if "username" in entry:
+        matched_entry["username"] = entry["username"]
+    if "profile" in entry:
+        matched_entry["profile"] = entry["profile"]
+    if "metadata" in entry:
+        matched_entry["metadata"] = dict(entry["metadata"])
+    return matched_entry
+
+
+def _copy_secret(secret: SecretRecord) -> SecretRecord:
+    copied_secret: SecretRecord = {
+        "tags": list(secret["tags"]),
+        "scopes": list(secret["scopes"]),
+        "keyValues": dict(secret["keyValues"]),
+    }
+    if "name" in secret:
+        copied_secret["name"] = secret["name"]
+    if "description" in secret:
+        copied_secret["description"] = secret["description"]
+    if "rotation" in secret:
+        copied_secret["rotation"] = _copy_rotation(secret["rotation"])
+    if "metadata" in secret:
+        copied_secret["metadata"] = dict(secret["metadata"])
+    if "notes" in secret:
+        copied_secret["notes"] = secret["notes"]
+    return copied_secret
+
+
+def _copy_rotation(rotation: SecretRotation) -> SecretRotation:
+    copied_rotation: SecretRotation = {}
+    if "lastRotated" in rotation:
+        copied_rotation["lastRotated"] = rotation["lastRotated"]
+    if "rotateEveryDays" in rotation:
+        copied_rotation["rotateEveryDays"] = rotation["rotateEveryDays"]
+    if "owner" in rotation:
+        copied_rotation["owner"] = rotation["owner"]
+    return copied_rotation

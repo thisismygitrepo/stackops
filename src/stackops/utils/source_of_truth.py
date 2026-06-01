@@ -82,15 +82,17 @@ SECRETS_DOFILE = DOTFILES_STACKOPS_ROOT.joinpath("secrets/secrets.json")
 
 
 def read_quick_password() -> str:
-    from stackops.secrets import load_secret_values
+    from stackops.secrets import search_secrets
 
-    return load_secret_values(path=SECRETS_DOFILE, entry_name="quickPassword")["PASSWORD"]
+    secrets = search_secrets(path=SECRETS_DOFILE, entry_name="quickPassword", keys=("PASSWORD",))
+    return secrets[0]["secrets"][0]["keyValues"]["PASSWORD"]
 
 
 def read_virus_total_api_key() -> str:
-    from stackops.secrets import load_secret_values
+    from stackops.secrets import search_secrets
 
-    return load_secret_values(path=SECRETS_DOFILE, entry_name="virusTotal")["API_KEY"]
+    secrets = search_secrets(path=SECRETS_DOFILE, entry_name="virusTotal", keys=("API_KEY",))
+    return secrets[0]["secrets"][0]["keyValues"]["API_KEY"]
 
 
 if __name__ == "__main__":
