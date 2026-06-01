@@ -5,7 +5,6 @@ import tomllib
 from pathlib import Path
 from stackops.utils.accessories import randstr
 from stackops.utils.options import choose_from_options
-from stackops.utils.source_of_truth import dotfiles_streamlit_secrets_path
 
 
 def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) -> tuple[str | None, Path, dict[str, object]]:
@@ -57,7 +56,7 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
     return choice_function, choice_file, kwargs_dict
 
 
-def get_command_streamlit(choice_file: Path, environment: str, repo_root: Path | None) -> str:
+def get_command_streamlit(choice_file: Path) -> str:
     # from stackops.scripts.python.helpers.helpers_utils.path import get_machine_specs
     from stackops.scripts.python.helpers.helpers_network.address import select_lan_ipv4
     res = select_lan_ipv4(prefer_vpn=False)
@@ -81,27 +80,6 @@ def get_command_streamlit(choice_file: Path, environment: str, repo_root: Path |
         if "server" in config:
             if "port" in config["server"]:
                 port = config["server"]["port"]
-        secrets_path = toml_path.with_name("secrets.toml")
-        if repo_root is not None:
-            secrets_template_path = dotfiles_streamlit_secrets_path(repo_name=Path(repo_root).name, app_name=choice_file.name)
-            if environment != "" and not secrets_path.exists() and secrets_template_path.exists():
-                secrets_template = tomllib.loads(secrets_template_path.read_text(encoding="utf-8"))
-                if environment == "ip":
-                    host_url = f"http://{local_ip_v4}:{port}/oauth2callback"
-                elif environment == "localhost":
-                    host_url = f"http://localhost:{port}/oauth2callback"
-                elif environment == "hostname":
-                    host_url = f"http://{computer_name}:{port}/oauth2callback"
-                else:
-                    host_url = f"http://{environment}:{port}/oauth2callback"
-                try:
-                    secrets_template["auth"]["redirect_uri"] = host_url
-                    secrets_template["auth"]["cookie_secret"] = randstr(35)
-                    secrets_template["auth"]["auth0"]["redirect_uri"] = host_url
-                    # save_toml(obj=secrets_template, path=secrets_path)
-                except Exception as ex:
-                    print(ex)
-                    raise ex
     from stackops.utils.installer_utils.installer_cli import install_if_missing
     install_if_missing(which="qrterminal", binary_name=None, verbose=True)
     script = f"""

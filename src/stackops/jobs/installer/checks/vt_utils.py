@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 from rich.progress import Progress, TaskID
 
-from stackops.utils.source_of_truth import DOTFILES_VIRUSTOTAL_TOKEN_PATH
+from stackops.utils.source_of_truth import read_virus_total_api_key
 
 if TYPE_CHECKING:
     import vt
@@ -45,10 +45,7 @@ VERDICT_CATEGORIES: tuple[str, ...] = ("malicious", "suspicious", "harmless", "u
 
 
 def get_vt_client() -> "vt.Client":
-    if not DOTFILES_VIRUSTOTAL_TOKEN_PATH.exists():
-        raise FileNotFoundError(f"VirusTotal token not found at {DOTFILES_VIRUSTOTAL_TOKEN_PATH}")
-
-    token = DOTFILES_VIRUSTOTAL_TOKEN_PATH.read_text(encoding="utf-8").split("\n")[0].strip()
+    token = read_virus_total_api_key()
     import vt
 
     return vt.Client(token)

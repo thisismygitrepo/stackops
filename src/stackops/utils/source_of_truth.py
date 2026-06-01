@@ -38,11 +38,9 @@ DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath(
 DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath("key.pem")
 
 DOTFILES_TOKENS_ROOT = DOTFILES_CREDS_ROOT.joinpath("tokens")
-DOTFILES_VIRUSTOTAL_TOKEN_PATH = DOTFILES_TOKENS_ROOT.joinpath("virustotal")
 DOTFILES_RCLONE_CONF_PATH = DOTFILES_CREDS_ROOT.joinpath("rclone", "rclone.conf")
 DOTFILES_PYPIRC_PATH = DOTFILES_CREDS_ROOT.joinpath("msc", ".pypirc")
 DOTFILES_LLM_CREDS_ROOT = DOTFILES_CREDS_ROOT.joinpath("llm")
-DOTFILES_STREAMLIT_CREDS_ROOT = DOTFILES_CREDS_ROOT.joinpath("streamlit")
 DOTFILES_SSH_CREDS_ROOT = DOTFILES_CREDS_ROOT.joinpath(".ssh")
 DOTFILES_ZIP_PATH = Path.home().joinpath("dotfiles.zip")
 
@@ -77,10 +75,6 @@ def dotfiles_llm_api_keys_path(provider: str) -> Path:
     return DOTFILES_LLM_CREDS_ROOT.joinpath(provider, "api_keys.ini")
 
 
-def dotfiles_streamlit_secrets_path(*, repo_name: str, app_name: str) -> Path:
-    return DOTFILES_STREAMLIT_CREDS_ROOT.joinpath(repo_name, app_name, "secrets.toml")
-
-
 # please never look at this file, it contains sensitive data, no matter what.
 # even if you are debugging, it doesn't work, whatever, no reason is good enough to justify looking at it.
 SECRETS_DOFILE = DOTFILES_STACKOPS_ROOT.joinpath("secrets/secrets.json")
@@ -89,9 +83,13 @@ SECRETS_DOFILE = DOTFILES_STACKOPS_ROOT.joinpath("secrets/secrets.json")
 
 def read_quick_password() -> str:
     from stackops.secrets import load_secret_values
+
     return load_secret_values(path=SECRETS_DOFILE, entry_name="quickPassword")["PASSWORD"]
+
+
 def read_virus_total_api_key() -> str:
     from stackops.secrets import load_secret_values
+
     return load_secret_values(path=SECRETS_DOFILE, entry_name="virusTotal")["API_KEY"]
 
 

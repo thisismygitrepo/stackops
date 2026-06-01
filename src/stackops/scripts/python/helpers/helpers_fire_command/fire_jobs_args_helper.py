@@ -22,7 +22,6 @@ class FireJobArgs:
     module: bool = False
     script: bool = False
     streamlit: bool = False
-    environment: str = ""
     holdDirectory: bool = False
     PathExport: bool = False
     git_pull: bool = False

@@ -128,7 +128,6 @@ def _build_command(
             interactive=args.interactive,
             frozen=args.frozen,
             streamlit=args.streamlit,
-            environment=args.environment,
             jupyter=args.jupyter,
             choice_file=choice_file,
             repo_root=repo_root,
@@ -159,7 +158,7 @@ def _build_command(
 
 
 def _build_python_exe_line(
-    module: bool, interactive: bool, frozen: bool, streamlit: bool, environment: str, jupyter: bool, choice_file: Path, repo_root: Path | None
+    module: bool, interactive: bool, frozen: bool, streamlit: bool, jupyter: bool, choice_file: Path, repo_root: Path | None
 ) -> str:
     """Build Python execution line."""
     module_line = "-m" if module else ""
@@ -179,7 +178,7 @@ def _build_python_exe_line(
     if streamlit:
         from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper import get_command_streamlit
 
-        interpreter_line = get_command_streamlit(choice_file=choice_file, environment=environment, repo_root=repo_root)
+        interpreter_line = get_command_streamlit(choice_file=choice_file)
     elif jupyter:
         interpreter_line = "jupyter-lab"
     else:
