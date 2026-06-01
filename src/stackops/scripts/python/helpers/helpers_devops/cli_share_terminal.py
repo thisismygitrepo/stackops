@@ -2,7 +2,7 @@
 from typing import Annotated
 import typer
 
-from stackops.utils.source_of_truth import DOTFILES_QUICK_PASSWORD_PATH, DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH
+from stackops.utils.source_of_truth import DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH, read_quick_password
 
 """
 reference:
@@ -47,7 +47,7 @@ def display_terminal_url(local_ip_v4: str, port: int, protocol: str = "http") ->
 def share_terminal(
     port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the terminal server on (default: 7681)")] = None,
     username: Annotated[str | None, typer.Option("--username", "-u", help="Username for terminal access (default: current user)")] = None,
-    password: Annotated[str | None, typer.Option("--password", "-w", help=f"Password for terminal access (default: from {DOTFILES_QUICK_PASSWORD_PATH})")] = None,
+    password: Annotated[str | None, typer.Option("--password", "-w", help="Password for terminal access (default: configured quick password)")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-n", help="Disable authentication (not recommended)")] = False,
     start_command: Annotated[str | None, typer.Option("--start-command", "-s", help="Command to run on terminal start (default: bash/powershell)")] = None,
     ssl: Annotated[bool, typer.Option("--ssl", "-S", help="Enable SSL")] = False,
@@ -76,12 +76,10 @@ def share_terminal(
         import getpass
         username = getpass.getuser()
     if password is None and not no_auth:
-        pwd_path = DOTFILES_QUICK_PASSWORD_PATH
-        if pwd_path.exists():
-            password = pwd_path.read_text(encoding="utf-8").strip()
-        else:
-            # raise ValueError("Password not provided and default password file does not exist.")
-            print("❌ Error: Password not provided and default password file does not exist.")
+        try:
+            password = read_quick_password()
+        except Exception:
+            print("❌ Error: Password not provided and configured quick password could not be read.")
             raise typer.Exit(code=1)
 
     if port is None:

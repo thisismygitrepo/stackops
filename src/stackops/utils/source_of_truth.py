@@ -33,10 +33,10 @@ DOTFILES_USER_BACKUP_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper_data.yaml")
 DOTFILES_MAPPER_FILES_ROOT = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "files")
 
 DOTFILES_PASSWORDS_ROOT = DOTFILES_CREDS_ROOT.joinpath("passwords")
-DOTFILES_QUICK_PASSWORD_PATH = DOTFILES_PASSWORDS_ROOT.joinpath("quick_password")
 DOTFILES_SSL_ORIGIN_SERVER_ROOT = DOTFILES_PASSWORDS_ROOT.joinpath("ssl", "origin_server")
 DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath("cert.pem")
 DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath("key.pem")
+
 DOTFILES_TOKENS_ROOT = DOTFILES_CREDS_ROOT.joinpath("tokens")
 DOTFILES_VIRUSTOTAL_TOKEN_PATH = DOTFILES_TOKENS_ROOT.joinpath("virustotal")
 DOTFILES_RCLONE_CONF_PATH = DOTFILES_CREDS_ROOT.joinpath("rclone", "rclone.conf")
@@ -86,7 +86,15 @@ def dotfiles_streamlit_secrets_path(*, repo_name: str, app_name: str) -> Path:
 SECRETS_DOFILE = DOTFILES_STACKOPS_ROOT.joinpath("secrets/secrets.json")
 # ---------------
 
-if __name__ == "__main__":
+
+def read_quick_password() -> str:
     from stackops.secrets import load_secret_values
-    res = load_secret_values(path=SECRETS_DOFILE, entry_name="quickPassword")["PASSWORD"]
-    print(res)
+    return load_secret_values(path=SECRETS_DOFILE, entry_name="quickPassword")["PASSWORD"]
+def read_virus_total_api_key() -> str:
+    from stackops.secrets import load_secret_values
+    return load_secret_values(path=SECRETS_DOFILE, entry_name="virusTotal")["API_KEY"]
+
+
+if __name__ == "__main__":
+    # print(res)
+    pass

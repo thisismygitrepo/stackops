@@ -1,7 +1,7 @@
 
 # from stackops.utils.io import read_ini,
 from stackops.utils.accessories import pprint
-from stackops.utils.source_of_truth import DEFAULTS_PATH, DOTFILES_QUICK_PASSWORD_PATH
+from stackops.utils.source_of_truth import DEFAULTS_PATH, read_quick_password
 from stackops.utils.ve import VE_YAML, CLOUD
 
 
@@ -64,11 +64,10 @@ def get_secure_share_cloud_config(interactive: bool, cloud: str | None) -> CLOUD
                 cloud = default_cloud__
                 console.print(f"☁️  Using default cloud: {cloud}")
 
-    default_password_path = DOTFILES_QUICK_PASSWORD_PATH
-    if default_password_path.exists():
-        pwd = default_password_path.read_text(encoding="utf-8").strip()
+    try:
+        pwd = read_quick_password()
         default_message = "defaults to quick_password"
-    else:
+    except Exception:
         pwd = ""
         default_message = "no default password found"
     pwd = input(f"🔑 Enter encryption password ({default_message}): ") or pwd

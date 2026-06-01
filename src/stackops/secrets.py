@@ -69,7 +69,6 @@ def load_secret_values(
     )
     if not selectors.has_any():
         raise SecretLookupError("Pass at least one exact selector.")
-
     try:
         candidates = build_secret_candidates(load_secrets_file(_resolve_path(path)))
     except SecretsSchemaError as exc:

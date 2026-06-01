@@ -6,7 +6,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_share_file import share_file_receive, share_file_send
 from stackops.utils.accessories import display_with_flashy_style
-from stackops.utils.source_of_truth import DOTFILES_QUICK_PASSWORD_PATH
+from stackops.utils.source_of_truth import read_quick_password
 
 
 def web_file_explorer(
@@ -14,7 +14,7 @@ def web_file_explorer(
     port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the share server on (default: 8080)")] = None,
     username: Annotated[str | None, typer.Option("--username", "-u", help="Username for share access (default: current user)")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-na", help="Disable authentication for share access")] = False,
-    password: Annotated[str | None, typer.Option("--password", "-w", help=f"Password for share access (default: from {DOTFILES_QUICK_PASSWORD_PATH})")] = None,
+    password: Annotated[str | None, typer.Option("--password", "-w", help="Password for share access (default: configured quick password)")] = None,
     bind_address: Annotated[str, typer.Option("--bind", "-a", help="Address to bind the server to")] = "0.0.0.0",
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the share server over the internet using ngrok")] = False,
     backend: Annotated[str, typer.Option("--backend", "-b", help="Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing")] = "miniserve",
@@ -52,9 +52,10 @@ def web_file_explorer(
         auth_username = username if username is not None else getpass.getuser()
         auth_password = password
         if auth_password is None:
-            pwd_path = DOTFILES_QUICK_PASSWORD_PATH
-            if pwd_path.exists():
-                auth_password = pwd_path.read_text(encoding="utf-8").strip()
+            try:
+                auth_password = read_quick_password()
+            except Exception:
+                auth_password = None
         if auth_password is None or auth_password == "":
             typer.echo("❌ ERROR: Password not provided. Pass --password or use --no-auth.", err=True)
             raise typer.Exit(code=1)
