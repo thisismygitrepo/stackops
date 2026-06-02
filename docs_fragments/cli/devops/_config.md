@@ -223,11 +223,12 @@ devops config terminal [SUBCOMMAND] [ARGS]...
 | Command | Description |
 |---------|-------------|
 | `config-shell` | Create or configure the default shell profile or Nushell profile |
-| `starship-theme` | Interactive Starship prompt theme selection |
+| `starship-theme` | Interactive Starship prompt theme selection (`r`) |
 | `pwsh-theme` | Interactive PowerShell prompt theme selection |
 | `wezterm-theme` | Interactive WezTerm theme selection |
 | `ghostty-theme` | Interactive Ghostty theme selection |
 | `windows-terminal-theme` | Interactive Windows Terminal color scheme selection |
+| `tmux-style` | Oh My Tmux install, local config, preset, option, reload, and status helpers (`t`) |
 
 The nested help screens render `Usage: devops terminal ...`, but the full entrypoint remains `devops config terminal ...`.
 
@@ -238,6 +239,13 @@ devops config terminal config-shell --which default
 devops config terminal config-shell --which nushell
 devops config terminal wezterm-theme
 devops config terminal ghostty-theme
+devops config terminal tmux-style install-oh-my-tmux
+devops config terminal t i
+devops config terminal tmux-style apply-stackops-local --force
+devops config terminal tmux-style preset catppuccin-mocha --reload
+devops config terminal tmux-style set-option tmux_conf_theme_colour_4 '#89b4fa' --reload
 ```
+
+`tmux-style install-oh-my-tmux` delegates to the shared `devops install oh-my-tmux` installer. The remaining subcommands operate on the Oh My Tmux local customization file, defaulting to the home-dotfile layout (`~/.tmux.conf.local`) created by that installer. Use `--location xdg` for the XDG layout (`$XDG_CONFIG_HOME/tmux/tmux.conf.local`).
 
 ---

@@ -468,6 +468,28 @@
       }
     },
     {
+      "appName": "oh-my-tmux",
+      "license": "MIT License / WTFPLv2",
+      "repoURL": "CMD",
+      "doc": "🖥️ Pretty and versatile tmux configuration from https://github.com/gpakosz/.tmux",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "terminals-shells"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "sudo nala install tmux git -y; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local .",
+          "windows": null,
+          "darwin": "brew install tmux; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local ."
+        },
+        "arm64": {
+          "linux": "sudo nala install tmux git -y; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local .",
+          "windows": null,
+          "darwin": "brew install tmux; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local ."
+        }
+      }
+    },
+    {
       "appName": "boxes",
       "license": "GPL-3.0",
       "repoURL": "CMD",

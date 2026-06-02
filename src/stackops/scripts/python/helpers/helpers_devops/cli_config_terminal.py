@@ -135,13 +135,15 @@ def shell_group(ctx: typer.Context) -> None:
 
 
 def get_app() -> typer.Typer:
+    import stackops.scripts.python.helpers.helpers_devops.cli_config_tmux as cli_config_tmux
+
     shell_app = typer.Typer(help="🐚 <t> Configure your terminal profile.", no_args_is_help=False, add_help_option=True, add_completion=False)
     shell_app.callback(invoke_without_command=True)(shell_group)
 
     shell_app.command("config-shell", no_args_is_help=False, help="🐚 <s> Create or configure a shell profile.")(configure_shell_profile)
     shell_app.command("s", no_args_is_help=False, help="Create or configure a shell profile.", hidden=True)(configure_shell_profile)
-    shell_app.command("starship-theme", no_args_is_help=False, help="⭐ <t> Select starship prompt theme.")(starship_theme)
-    shell_app.command("t", no_args_is_help=False, help="Select starship prompt theme.", hidden=True)(starship_theme)
+    shell_app.command("starship-theme", no_args_is_help=False, help="⭐ <r> Select starship prompt theme.")(starship_theme)
+    shell_app.command("r", no_args_is_help=False, help="Select starship prompt theme.", hidden=True)(starship_theme)
     shell_app.command("pwsh-theme", no_args_is_help=False, help="⚡ <T> Select powershell prompt theme.")(pwsh_theme)
     shell_app.command("T", no_args_is_help=False, help="Select powershell prompt theme.", hidden=True)(pwsh_theme)
     shell_app.command("wezterm-theme", no_args_is_help=False, help="💻 <W> Select WezTerm terminal theme.")(configure_wezterm_theme)
@@ -155,5 +157,11 @@ def get_app() -> typer.Typer:
     shell_app.command("wt-theme", no_args_is_help=False, help="Select Windows Terminal color scheme.", hidden=True)(
         configure_windows_terminal_theme
     )
+    shell_app.add_typer(
+        cli_config_tmux.get_app(),
+        name="tmux-style",
+        help="🎨 <t> Style tmux through the Oh My Tmux framework.",
+    )
+    shell_app.add_typer(cli_config_tmux.get_app(), name="t", help="🎨 <t> Style tmux through the Oh My Tmux framework.", hidden=True)
 
     return shell_app
