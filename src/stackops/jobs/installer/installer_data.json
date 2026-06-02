@@ -3946,6 +3946,27 @@
       }
     },
     {
+      "appName": "qodercli",
+      "license": "Apache-2.0",
+      "repoURL": "CMD",
+      "doc": "AI-powered coding assistant CLI.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g @qoder-ai/qodercli",
+          "windows": "bun install -g @qoder-ai/qodercli",
+          "darwin": "bun install -g @qoder-ai/qodercli"
+        },
+        "arm64": {
+          "linux": "bun install -g @qoder-ai/qodercli",
+          "windows": "bun install -g @qoder-ai/qodercli",
+          "darwin": "bun install -g @qoder-ai/qodercli"
+        }
+      }
+    },
+    {
       "appName": "cline",
       "license": "Apache-2.0",
       "repoURL": "CMD",
@@ -4159,6 +4180,27 @@
       }
     },
     {
+      "appName": "omp",
+      "license": "MIT",
+      "repoURL": "https://github.com/can1357/oh-my-pi",
+      "doc": "AI coding agent for the terminal with browser tooling, LSP, Python, and subagents.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g @oh-my-pi/pi-coding-agent",
+          "darwin": "bun install -g @oh-my-pi/pi-coding-agent",
+          "windows": "bun install -g @oh-my-pi/pi-coding-agent"
+        },
+        "arm64": {
+          "linux": "bun install -g @oh-my-pi/pi-coding-agent",
+          "darwin": "bun install -g @oh-my-pi/pi-coding-agent",
+          "windows": "bun install -g @oh-my-pi/pi-coding-agent"
+        }
+      }
+    },
+    {
       "appName": "orca",
       "license": "MIT",
       "repoURL": "https://github.com/stablyai/orca",
@@ -4198,6 +4240,27 @@
           "linux": "bun install -g openclaw@latest",
           "windows": "bun install -g openclaw@latest",
           "darwin": "bun install -g openclaw@latest"
+        }
+      }
+    },
+    {
+      "appName": "hermes",
+      "license": "MIT License",
+      "repoURL": "https://github.com/NousResearch/hermes-agent",
+      "doc": "Self-improving AI agent with CLI, TUI, gateway, memory, and subagents.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash",
+          "windows": "powershell -c \"iex (irm https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.ps1)\"",
+          "darwin": "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash"
+        },
+        "arm64": {
+          "linux": "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash",
+          "windows": "powershell -c \"iex (irm https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.ps1)\"",
+          "darwin": "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash"
         }
       }
     },
@@ -5701,6 +5764,10 @@
       "license": "No license asserted",
       "repoURL": "https://github.com/ogulcancelik/herdr",
       "doc": "agent multiplexer that lives in your terminal.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "terminal-workspaces"
+      ],
       "fileNamePattern": {
         "amd64": {
           "linux": "herdr-linux-x86_64",
