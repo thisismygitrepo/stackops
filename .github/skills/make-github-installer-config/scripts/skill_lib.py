@@ -159,11 +159,15 @@ def classify_arch(asset_name: str) -> CpuArchitecture | None:
 
 def looks_like_binary_asset(asset_name: str) -> bool:
     lowered: str = asset_name.lower()
-    excluded_tokens: tuple[str, ...] = ("checksums", "sha256", ".sig", ".pem", "sbom", ".txt", ".json")
+    excluded_tokens: tuple[str, ...] = ("checksums", "sha256", ".sig", ".pem", "sbom", ".txt", ".json", ".md")
     if any(token in lowered for token in excluded_tokens):
         return False
-    archive_like: tuple[str, ...] = (".tar.gz", ".tgz", ".tar.xz", ".zip", ".7z", ".exe", ".msi", ".pkg", ".deb", ".rpm")
-    return any(lowered.endswith(suffix) for suffix in archive_like)
+    archive_like: tuple[str, ...] = (".tar.gz", ".tgz", ".tar.xz", ".zip", ".7z", ".exe", ".msi", ".pkg", ".deb", ".rpm", ".appimage")
+    if any(lowered.endswith(suffix) for suffix in archive_like):
+        return True
+    if classify_os(asset_name=asset_name) is None or classify_arch(asset_name=asset_name) is None:
+        return False
+    return re.search(r"\.[a-z0-9]{1,8}$", lowered) is None
 
 
 def to_placeholder_pattern(asset_name: str, tag_name: str) -> str:

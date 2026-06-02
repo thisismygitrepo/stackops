@@ -5695,6 +5695,24 @@
           "windows": null
         }
       }
+    },
+    {
+      "appName": "herdr",
+      "license": "No license asserted",
+      "repoURL": "https://github.com/ogulcancelik/herdr",
+      "doc": "agent multiplexer that lives in your terminal.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "herdr-linux-x86_64",
+          "darwin": "herdr-macos-x86_64",
+          "windows": null
+        },
+        "arm64": {
+          "linux": "herdr-linux-aarch64",
+          "darwin": "herdr-macos-aarch64",
+          "windows": null
+        }
+      }
     }
   ]
 }
