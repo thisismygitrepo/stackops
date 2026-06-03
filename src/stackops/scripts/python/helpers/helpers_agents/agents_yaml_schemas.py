@@ -1,14 +1,18 @@
 from pathlib import Path
-from typing import Final, Literal, get_args
+from typing import Final, Literal, cast
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import PARALLEL_CREATE_COMMAND_NAME, PARALLEL_RUN_COMMAND_NAME
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, ReasoningEffort
-from stackops.utils.yaml_schema import JsonObject, JsonValue, ensure_yaml_schema_exists
+import stackops.utils.schemas.agents as agents_schema_assets
+from stackops.utils.files.read import read_json
+from stackops.utils.path_reference import get_path_reference_path
+from stackops.utils.yaml_schema import JsonObject, ensure_yaml_schema_exists
 
 
 type StackopsYamlSchemaKind = Literal["prompts", "parallel"]
 
-_JSON_SCHEMA_DRAFT: Final[str] = "http://json-schema.org/draft-07/schema#"
+_SCHEMA_PATH_REFERENCES: Final[dict[StackopsYamlSchemaKind, str]] = {
+    "prompts": agents_schema_assets.PROMPTS_YAML_SCHEMA_PATH_REFERENCE,
+    "parallel": agents_schema_assets.PARALLEL_YAML_SCHEMA_PATH_REFERENCE,
+}
 
 
 def ensure_stackops_yaml_schema_exists(*, yaml_path: Path, schema_kind: StackopsYamlSchemaKind) -> bool:
@@ -17,115 +21,8 @@ def ensure_stackops_yaml_schema_exists(*, yaml_path: Path, schema_kind: Stackops
 
 
 def _stackops_yaml_schema(*, schema_kind: StackopsYamlSchemaKind) -> JsonObject:
-    match schema_kind:
-        case "prompts":
-            return _prompts_yaml_schema()
-        case "parallel":
-            return _parallel_yaml_schema()
-
-
-def _prompts_yaml_schema() -> JsonObject:
-    return {
-        "$schema": _JSON_SCHEMA_DRAFT,
-        "title": "StackOps prompts.yaml",
-        "description": "Named prompt and context entries used by `agents run`.",
-        "type": "object",
-        "additionalProperties": {"$ref": "#/definitions/promptEntry"},
-        "definitions": {
-            "promptEntry": {
-                "description": "Prompt text, a prompt object, or a nested namespace of prompt entries.",
-                "anyOf": [
-                    {"type": "string"},
-                    {
-                        "type": "object",
-                        "properties": {
-                            "description": _nullable_string_schema(description="Human-facing description. Ignored when StackOps builds prompt text."),
-                            "desc": _nullable_string_schema(description="Short human-facing description. Ignored when StackOps builds prompt text."),
-                            "desciption": _nullable_string_schema(
-                                description="Legacy misspelling accepted by StackOps and ignored when building prompt text."
-                            ),
-                            "agent": _enum_or_null_schema(
-                                values=_literal_values(raw_values=get_args(AGENTS)),
-                                description="Optional preferred agent label. Ignored when StackOps builds prompt text.",
-                            ),
-                            "prompt": _nullable_string_schema(description="Prompt or context text."),
-                            "directory": _nullable_string_schema(description="Working directory displayed with this prompt."),
-                        },
-                        "additionalProperties": {"$ref": "#/definitions/promptEntry"},
-                    },
-                ],
-            }
-        },
-    }
-
-
-def _parallel_yaml_schema() -> JsonObject:
-    return {
-        "$schema": _JSON_SCHEMA_DRAFT,
-        "title": "StackOps parallel.yaml",
-        "description": f"Named parallel agent workflow entries used by `{PARALLEL_RUN_COMMAND_NAME}`.",
-        "type": "object",
-        "additionalProperties": {"$ref": "#/definitions/runEntry"},
-        "definitions": {
-            "runEntry": {
-                "type": "object",
-                "minProperties": 1,
-                "additionalProperties": False,
-                "properties": {
-                    "agent": _enum_or_null_schema(
-                        values=_literal_values(raw_values=get_args(AGENTS)),
-                        description=f"Agent implementation passed to `{PARALLEL_CREATE_COMMAND_NAME}`.",
-                    ),
-                    "model": _nullable_string_schema(description="Optional model name passed to the selected agent."),
-                    "reasoning": _enum_or_null_schema(
-                        values=_literal_values(raw_values=get_args(ReasoningEffort)),
-                        description="Optional reasoning value passed to agents that support it.",
-                    ),
-                    "provider": _enum_or_null_schema(
-                        values=_literal_values(raw_values=get_args(PROVIDER)), description="Optional provider passed to agents that support it."
-                    ),
-                    "host": _enum_or_null_schema(
-                        values=_literal_values(raw_values=get_args(HOST)), description="Execution host for generated agent commands."
-                    ),
-                    "context": _nullable_string_schema(description="Inline context shared with generated agent prompts."),
-                    "context_path": _nullable_string_schema(description="Path to a context file."),
-                    "separator": _nullable_string_schema(description="Escaped separator used to split context chunks."),
-                    "agent_load": {"description": "Number of parallel agents to generate.", "type": ["integer", "null"], "minimum": 1},
-                    "stagger_max": {"description": "Maximum random startup stagger delay in seconds.", "type": ["number", "null"], "minimum": 0},
-                    "prompt": _nullable_string_schema(description="Inline prompt sent to each generated agent."),
-                    "prompt_path": _nullable_string_schema(description="Path to a prompt file."),
-                    "prompt_name": _nullable_string_schema(description="Named prompt from prompts.yaml."),
-                    "job_name": _nullable_string_schema(description="Name of the generated agent job directory."),
-                    "join_prompt_and_context": {
-                        "description": "Whether to combine prompt and context before splitting work.",
-                        "type": ["boolean", "null"],
-                    },
-                    "run": {"description": "Whether to immediately launch the generated layout through terminal run.", "type": ["boolean", "null"]},
-                    "output_path": _nullable_string_schema(description="Path where generated layout JSON is written."),
-                    "agents_dir": _nullable_string_schema(description="Directory where generated agent files are written."),
-                    "interactive": {
-                        "description": "Whether to run the interactive create flow after resolving this entry.",
-                        "type": ["boolean", "null"],
-                    },
-                },
-            }
-        },
-    }
-
-
-def _nullable_string_schema(*, description: str) -> JsonObject:
-    return {"description": description, "type": ["string", "null"]}
-
-
-def _enum_or_null_schema(*, values: list[str], description: str) -> JsonObject:
-    enum_values: list[JsonValue] = [*values, None]
-    return {"description": description, "enum": enum_values}
-
-
-def _literal_values(*, raw_values: tuple[object, ...]) -> list[str]:
-    values: list[str] = []
-    for raw_value in raw_values:
-        if not isinstance(raw_value, str):
-            raise TypeError(f"Expected Literal value to be a string, got: {raw_value!r}")
-        values.append(raw_value)
-    return values
+    schema_path = get_path_reference_path(
+        module=agents_schema_assets,
+        path_reference=_SCHEMA_PATH_REFERENCES[schema_kind],
+    )
+    return cast(JsonObject, read_json(schema_path))
