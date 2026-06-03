@@ -1,5 +1,6 @@
 """Like yadm and dotter."""
 
+import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -23,8 +24,8 @@ from stackops.profile.dotfiles_mapper import (
 from stackops.profile.create_links_export import METHOD_LOOSE, METHOD_MAP, ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER
 from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_MAPPER_FILES_ROOT, DOTFILES_ROOT, DOTFILES_ZIP_PATH
 
-BACKUP_ROOT_PRIVATE = DOTFILES_MAPPER_FILES_ROOT
-BACKUP_ROOT_PUBLIC = Path(CONFIG_ROOT).joinpath("dotfiles/mapper")
+BACKUP_ROOT_FLAT = DOTFILES_MAPPER_FILES_ROOT
+FLAT_PATH_HASH_LENGTH = 16
 
 
 def _format_home_relative_path(path: Path) -> str:
@@ -53,6 +54,13 @@ def _format_self_managed_mapper_path(path: Path) -> str:
 
 def _build_entry_name(original_path: Path) -> str:
     return original_path.stem.replace(".", "_").replace("-", "_")
+
+
+def _build_flat_backup_name(original_path: Path) -> str:
+    normalized_path = original_path.expanduser().absolute()
+    location = _format_home_relative_path(normalized_path.parent)
+    location_hash = hashlib.sha256(location.encode("utf-8")).hexdigest()[:FLAT_PATH_HASH_LENGTH]
+    return f"{location_hash}.{normalized_path.name}"
 
 
 def _build_mapper_entry(
@@ -143,17 +151,12 @@ def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, sectio
 
 def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool) -> Path:
     match sensitivity:
-        case "private" | "v":
-            backup_root = BACKUP_ROOT_PRIVATE
-        case "public" | "b":
-            backup_root = BACKUP_ROOT_PUBLIC
+        case "private" | "v" | "public" | "b":
+            pass
         case _:
             raise ValueError(f"Unknown sensitivity: {sensitivity}")
     if destination is None:
-        if shared:
-            new_path = backup_root.joinpath("shared").joinpath(orig_path.name)
-        else:
-            new_path = backup_root.joinpath(orig_path.relative_to(Path.home()))
+        new_path = BACKUP_ROOT_FLAT.joinpath(_build_flat_backup_name(orig_path))
     else:
         if shared:
             dest_path = Path(destination).expanduser().absolute()
@@ -166,18 +169,12 @@ def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "publi
 
 def get_original_path_from_backup_path(backup_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool) -> Path:
     match sensitivity:
-        case "private" | "v":
-            backup_root = BACKUP_ROOT_PRIVATE
-        case "public" | "b":
-            backup_root = BACKUP_ROOT_PUBLIC
+        case "private" | "v" | "public" | "b":
+            pass
         case _:
             raise ValueError(f"Unknown sensitivity: {sensitivity}")
     if destination is None:
-        if shared:
-            relative_part = backup_path.relative_to(backup_root.joinpath("shared"))
-        else:
-            relative_part = backup_path.relative_to(backup_root)
-        original_path = Path.home().joinpath(relative_part)
+        raise ValueError("Cannot derive the original path from a flat hashed backup path. Use the mapper entry instead.")
     else:
         dest_path = Path(destination).expanduser().absolute()
         if shared:

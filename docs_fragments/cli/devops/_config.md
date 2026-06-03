@@ -74,6 +74,8 @@ devops config sync up --sensitivity private --method copy --repo user
 
 Register a new config file or directory into the self-managed dotfiles area and, by default, record that mapping in the user mapper.
 
+Without `--destination`, the managed file is stored flat under `~/dotfiles/stackops/mapper/files/` as `<location-hash>.<original-name>`, for example `5781a41fbab95a09.bot-db.md`.
+
 ```bash
 devops config register [OPTIONS] FILE
 ```
@@ -88,7 +90,7 @@ Key options from current help:
 | `--destination`, `-d` | Override the default self-managed destination |
 | `--section`, `-se` | Section name to write inside the user mapper |
 | `--os` | Restrict the mapping to one OS or a comma-separated list |
-| `--shared`, `-sh` | Place the managed file under a shared destination layout |
+| `--shared`, `-sh` | Place the managed file under a shared layout when using `--destination` |
 | `--record`, `-r` | Record the mapping in the user mapper file |
 
 Examples:
