@@ -1,8 +1,8 @@
-
 from pathlib import Path
 from typing import Annotated
 import typer
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
+from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH, resolve_repos_spec_path
 
 
 def _resolve_directory(directory: str | None) -> Path:
@@ -12,10 +12,12 @@ def _resolve_directory(directory: str | None) -> Path:
     return Path(directory).expanduser().absolute().resolve()
 
 
-def _resolve_spec_path(spec_path: Path) -> Path:
-    resolved_spec_path = spec_path.expanduser().absolute().resolve()
+def _resolve_spec_path(specs_path: str | Path | None) -> Path:
+    resolved_spec_path = resolve_repos_spec_path(specs_path=specs_path)
     if not resolved_spec_path.exists():
-        typer.echo(f"❌ Specification file not found: {resolved_spec_path}. Ensure this file exists or provide it explicitly using --specs-path.")
+        typer.echo(
+            f"❌ Specification file not found: {resolved_spec_path}. Run devops repos register first, or provide another file using --specs-path."
+        )
         raise typer.Exit(code=1)
     if not resolved_spec_path.is_file():
         typer.echo(f"❌ Specification path is not a file: {resolved_spec_path}")
@@ -41,18 +43,23 @@ def action(
     perform_git_operations(repos_root=repos_root, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
 
 
-def capture(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+def capture(
+    directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
+    specs_path: Annotated[
+        str | None, typer.Option("--specs-path", "-s", help=f"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.")
+    ] = None,
+) -> None:
     """📝 Record repositories into a repos.json specification."""
     from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos
 
-    save_path = record_repos(repos_root_str=directory)
+    save_path = record_repos(repos_root_str=directory, specs_path=specs_path)
     print(f"\n✅ Saved repository specification to {save_path}")
 
 
 def clone(
-    directory: Annotated[str, typer.Argument(help="📁 Directory containing repo(s).")] = ".",
-    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
-    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Select interactively.")] = False,
+    specs_path: Annotated[
+        str | None, typer.Option("--specs-path", "-s", help=f"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.")
+    ] = None,
     checkout_to_commit: Annotated[
         bool, typer.Option("--checkout-to-commit", "-ctc", help="Check out specific commits listed in the specification.")
     ] = False,
@@ -67,68 +74,7 @@ def clone(
 
     checkout_branch_flag = checkout_to_branch
     checkout_commit_flag = checkout_to_commit
-    had_failures = False
-
-    if interactive:
-        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import (
-            BACKUP_ROOT_PRIVATE,
-            BACKUP_ROOT_PUBLIC,
-        )
-
-        results_public = list(BACKUP_ROOT_PUBLIC.rglob("repos.json"))
-        results_private = list(BACKUP_ROOT_PRIVATE.rglob("repos.json"))
-        if len(results_public) + len(results_private) == 0:
-            print("❌ No repos.json specifications found in backup directories.")
-            return
-        from stackops.utils.options import choose_from_options
-
-        chosen_files = choose_from_options(
-            options=[str(p) for p in results_public + results_private],
-            msg="Select a repos.json specification to clone from:",
-            multi=True,
-            tv=True,
-            preview="bat",
-        )
-        if chosen_files is None or len(chosen_files) == 0:
-            print("❓ Selection cancelled. No repositories were cloned.")
-            return
-        for file in chosen_files:
-            typer.echo("\n📥 Cloning or checking out repositories...")
-            spec_path_self_managed = _resolve_spec_path(Path(file))
-            from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
-
-            results = clone_repos(
-                spec_path=spec_path_self_managed,
-                preferred_remote=None,
-                checkout_branch_flag=checkout_branch_flag,
-                checkout_commit_flag=checkout_commit_flag,
-            )
-            had_failures = had_failures or any(status == "failed" for status, _message in results)
-        if had_failures:
-            raise typer.Exit(code=1)
-        return
-    if specs_path is not None:
-        spec_path_self_managed = _resolve_spec_path(Path(specs_path))
-    else:
-        dir_obj = _resolve_directory(directory)
-        if not dir_obj.exists():
-            typer.echo(f"❌ Path does not exist: {dir_obj}")
-            raise typer.Exit(code=1)
-        if not dir_obj.is_dir():
-            typer.echo(f"❌ Path is not a directory: {dir_obj}")
-            raise typer.Exit(code=1)
-        spec_path_default = dir_obj.joinpath("repos.json")
-        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path
-
-        managed_spec_path = get_backup_path(orig_path=spec_path_default, sensitivity="private", destination=None, shared=False)
-        if not managed_spec_path.exists():
-            typer.echo(
-                f"❌ Specification file not found: {managed_spec_path}. "
-                f"Expected a recorded spec for {dir_obj}. "
-                "Use devops repos sync --specs-path <path> to target a spec explicitly."
-            )
-            raise typer.Exit(code=1)
-        spec_path_self_managed = _resolve_spec_path(managed_spec_path)
+    spec_path_self_managed = _resolve_spec_path(specs_path)
     from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
 
     results = clone_repos(
@@ -138,14 +84,22 @@ def clone(
         raise typer.Exit(code=1)
 
 
-def checkout_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+def checkout_command(
+    specs_path: Annotated[
+        str | None, typer.Option("--specs-path", "-s", help=f"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.")
+    ] = None,
+) -> None:
     """🔀 Check out specific commits listed in the specification."""
-    clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=True, checkout_to_branch=False)
+    clone(specs_path=specs_path, checkout_to_commit=True, checkout_to_branch=False)
 
 
-def checkout_to_branch_command(directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None) -> None:
+def checkout_to_branch_command(
+    specs_path: Annotated[
+        str | None, typer.Option("--specs-path", "-s", help=f"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.")
+    ] = None,
+) -> None:
     """🔀 Check out the branch recorded in the specification."""
-    clone(directory=directory or ".", specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True)
+    clone(specs_path=specs_path, checkout_to_commit=False, checkout_to_branch=True)
 
 
 def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(help="Path to the git repository")] = ".") -> None:
@@ -409,8 +363,8 @@ def config_linters(
 def get_app():
     repos_apps = typer.Typer(help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False)
 
-    repos_apps.command(name="sync", help="📥 <s> Clone repositories described by a repos.json specification", no_args_is_help=True)(clone)
-    repos_apps.command(name="s", help="Clone repositories described by a repos.json specification", hidden=True, no_args_is_help=True)(clone)
+    repos_apps.command(name="sync", help="📥 <s> Clone repositories described by a repos.json specification")(clone)
+    repos_apps.command(name="s", help="Clone repositories described by a repos.json specification", hidden=True)(clone)
 
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)

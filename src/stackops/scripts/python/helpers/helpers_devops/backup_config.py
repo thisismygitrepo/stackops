@@ -182,11 +182,13 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
     return config
 
 
-def _load_backup_config(path: Path) -> BackupConfig | None:
+def _load_backup_config(path: Path, *, empty_as_config: bool = False) -> BackupConfig | None:
     if not path.exists() or not path.is_file():
         return None
     raw_value = cast(object, yaml.safe_load(path.read_text(encoding="utf-8")))
     if raw_value is None:
+        if empty_as_config:
+            return {}
         return None
     if not isinstance(raw_value, Mapping):
         return None
@@ -243,6 +245,10 @@ def describe_missing_backup_config(repo: REPO_LOOSE) -> str:
 
 def write_backup_config(path: Path, config: BackupConfig) -> None:
     path.write_text(_serialize_backup_config(config), encoding="utf-8")
+
+
+def read_user_backup_config_for_update() -> BackupConfig | None:
+    return _load_backup_config(USER_BACKUP_PATH, empty_as_config=True)
 
 
 def read_backup_config(repo: REPO_LOOSE) -> BackupConfig | None:

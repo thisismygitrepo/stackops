@@ -29,54 +29,51 @@ Hidden compatibility aliases still exist for older checkout flows, but the curre
 Clone or check out repositories described by a `repos.json` specification.
 
 ```bash
-devops repos sync [DIRECTORY] [OPTIONS]
+devops repos sync [OPTIONS]
 ```
 
 Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--specs-path`, `-s` | Explicit path to the `repos.json` specification |
-| `--interactive`, `-i` | Choose a backed-up `repos.json` interactively |
+| `--specs-path`, `-s` | Explicit path to the `repos.json` specification. Defaults to `/home/alex/dotfiles/stackops/mapper/repos.json` |
 | `--checkout-to-commit`, `-ctc` | Check out commits pinned in the specification |
 | `--checkout-to-branch`, `-ctb` | Check out the main branch from the specification |
 
 Important behavior from the implementation:
 
 - `--checkout-to-commit` and `--checkout-to-branch` are mutually exclusive
-- Without `--specs-path`, stackops derives the expected `repos.json` from the target directory
-- With `--interactive`, stackops searches backed-up `repos.json` files and lets you choose which one to apply
+- Without `--specs-path`, stackops reads `/home/alex/dotfiles/stackops/mapper/repos.json`
+- Repository destination paths come from the records inside the spec file
 
 Examples:
 
 ```bash
-# Clone from the default repos.json associated with a directory
-devops repos sync ~/code
+# Clone from the default global repos.json
+devops repos sync
 
 # Use an explicit spec file
-devops repos sync ~/code --specs-path ~/backups/work/repos.json
+devops repos sync --specs-path ~/backups/work/repos.json
 
 # Check out the branches declared in the spec
-devops repos sync ~/code --checkout-to-branch
-
-# Interactively choose from backed-up specs
-devops repos sync --interactive
+devops repos sync --checkout-to-branch
 ```
 
 ### register
 
-Scan a directory of repositories and write a `repos.json` specification for it.
+Scan a directory of repositories and merge those entries into a `repos.json` specification.
 
 ```bash
-devops repos register [DIRECTORY]
+devops repos register [DIRECTORY] [OPTIONS]
 ```
 
-`register` currently takes only the optional repository root argument. The generated spec is intended to become the source for future `repos sync` runs.
+By default, `register` updates `/home/alex/dotfiles/stackops/mapper/repos.json`. Use `--specs-path` to update another file. Records under the registered directory are refreshed, while records from other roots are preserved.
 
-Example:
+Examples:
 
 ```bash
 devops repos register ~/code
+devops repos register ~/code --specs-path ~/backups/work/repos.json
 ```
 
 ### action

@@ -15,9 +15,16 @@ from stackops.utils.code import print_code
 from stackops.utils.options import choose_cloud_interactively
 from stackops.scripts.python.helpers.helpers_cloud.helpers2 import ES
 from stackops.scripts.python.helpers.helpers_devops.backup_config import (
-    BackupConfig, BackupGroup, VALID_OS, USER_BACKUP_PATH,
+    BackupConfig,
+    BackupGroup,
+    VALID_OS,
+    USER_BACKUP_PATH,
     describe_missing_backup_config,
-    normalize_os_name, os_applies, read_backup_config, write_backup_config,
+    normalize_os_name,
+    os_applies,
+    read_backup_config,
+    read_user_backup_config_for_update,
+    write_backup_config,
 )
 from stackops.profile.create_links_export import REPO_LOOSE
 
@@ -80,7 +87,7 @@ def register_backup_entry(
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
     if USER_BACKUP_PATH.exists():
-        config = read_backup_config(repo="user")
+        config = read_user_backup_config_for_update()
         if config is None:
             raise ValueError(describe_missing_backup_config(repo="user"))
     else:

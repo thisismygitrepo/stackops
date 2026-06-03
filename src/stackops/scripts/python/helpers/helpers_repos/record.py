@@ -4,7 +4,12 @@ import stackops.utils.path_core as path_core
 from stackops.utils.schemas.repos.repos_types import GitVersionInfo, RepoRecordDict, RepoRemote
 
 from stackops.utils.schemas.repos.repos_types import RepoRecordFile
-from stackops.utils.io import save_json
+from stackops.scripts.python.helpers.helpers_repos.spec_store import (
+    load_or_create_repos_spec,
+    merge_repo_records,
+    resolve_repos_spec_path,
+    save_repos_spec,
+)
 
 from rich import print as pprint
 from rich.progress import Progress, TaskID, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, MofNCompleteColumn
@@ -128,7 +133,9 @@ def count_git_repositories(repos_root: str, r: bool) -> int:
     if path_obj.is_file():
         return 0
 
-    search_res = [candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
+    search_res = sorted(
+        (candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")), key=lambda path: path.as_posix()
+    )
     count = 0
 
     for a_search_res in search_res:
@@ -146,7 +153,9 @@ def count_total_directories(repos_root: str, r: bool) -> int:
     if path_obj.is_file():
         return 0
 
-    search_res = [candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
+    search_res = sorted(
+        (candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")), key=lambda path: path.as_posix()
+    )
     count = len(search_res)
 
     if r:
@@ -157,12 +166,16 @@ def count_total_directories(repos_root: str, r: bool) -> int:
     return count
 
 
-def record_repos_recursively(repos_root: str, r: bool, progress: Progress | None, scan_task_id: TaskID | None, process_task_id: TaskID | None) -> list[RepoRecordDict]:
+def record_repos_recursively(
+    repos_root: str, r: bool, progress: Progress | None, scan_task_id: TaskID | None, process_task_id: TaskID | None
+) -> list[RepoRecordDict]:
     path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
         return []
 
-    search_res = [candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")]
+    search_res = sorted(
+        (candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")), key=lambda path: path.as_posix()
+    )
     res: list[RepoRecordDict] = []
 
     for a_search_res in search_res:
@@ -193,16 +206,17 @@ def record_repos_recursively(repos_root: str, r: bool, progress: Progress | None
 
 def _resolve_directory(directory: str | None) -> Path:
     import typer
+
     if directory is None:
         directory = Path.cwd().as_posix()
         typer.echo(f"📁 Using directory: {directory}")
     return Path(directory).expanduser().absolute().resolve()
 
 
-def main_record(repos_root_str: str | None) -> Path:
+def main_record(repos_root_str: str | None, specs_path: str | Path | None = None) -> Path:
     print("\n📝 Recording repositories...")
     repos_root = _resolve_directory(directory=repos_root_str)
-    
+
     # Count total directories and repositories for accurate progress tracking
     print("🔍 Analyzing directory structure...")
     total_dirs = count_total_directories(str(repos_root), r=True)
@@ -210,13 +224,15 @@ def main_record(repos_root_str: str | None) -> Path:
     print(f"📊 Found {total_dirs} directories to scan and {total_repos} git repositories to record")
 
     # Setup progress bars
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), MofNCompleteColumn(), TimeElapsedColumn()) as progress:
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), MofNCompleteColumn(), TimeElapsedColumn()
+    ) as progress:
         scan_task = progress.add_task("Scanning directories...", total=total_dirs)
         process_task = progress.add_task("Recording repositories...", total=total_repos)
 
-        repo_records = record_repos_recursively(repos_root=str(repos_root), r=True, progress=progress, scan_task_id=scan_task, process_task_id=process_task)
-
-    res: RepoRecordFile = {"version": "0.1", "repos": repo_records}
+        repo_records = record_repos_recursively(
+            repos_root=str(repos_root), r=True, progress=progress, scan_task_id=scan_task, process_task_id=process_task
+        )
 
     # Summary with warnings
     total_repos = len(repo_records)
@@ -255,22 +271,19 @@ def main_record(repos_root_str: str | None) -> Path:
     tree_structure = build_tree_structure(repos=repo_records, repos_root=repos_root)
     print(tree_structure)
 
-    spec_path_default = Path(repos_root).expanduser().absolute().joinpath("repos.json")
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path, record_mapping
-    spec_path_self_managed = get_backup_path(
-        orig_path=spec_path_default,
-        sensitivity="private",
-        destination=None,
-        shared=False,
+    spec_path_resolved = resolve_repos_spec_path(specs_path=specs_path)
+    existing_spec = load_or_create_repos_spec(path=spec_path_resolved)
+    merged_repos, merge_summary = merge_repo_records(existing_repos=existing_spec["repos"], scanned_repos=repo_records, scanned_root=repos_root)
+    res: RepoRecordFile = {"version": existing_spec["version"], "repos": merged_repos}
+    save_repos_spec(spec=res, path=spec_path_resolved)
+    pprint(f"📁 Result saved at {spec_path_resolved}")
+    print(
+        "🧾 Global spec update: "
+        f"{merge_summary['added']} added, "
+        f"{merge_summary['updated']} updated, "
+        f"{merge_summary['unchanged']} unchanged, "
+        f"{merge_summary['removed']} removed"
     )
-    save_json(obj=res, path=spec_path_self_managed, indent=4)
-    pprint(f"📁 Result saved at {Path(spec_path_self_managed)}")
-
-    # record_mapping(
-    #     orig_path=spec_path_default,
-
-    # )
-    _ = record_mapping
 
     print(">>>>>>>>> Finished Recording")
-    return spec_path_self_managed
+    return spec_path_resolved

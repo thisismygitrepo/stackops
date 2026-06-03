@@ -1,0 +1,37 @@
+from pathlib import Path
+
+from typer.testing import CliRunner
+import yaml
+
+from stackops.scripts.python.devops import get_app
+from stackops.scripts.python.helpers.helpers_devops import backup_config, cli_backup_retrieve
+
+
+def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_path: Path) -> None:
+    backup_path = tmp_path / "dotfiles" / "stackops" / "mapper_data.yaml"
+    backup_path.parent.mkdir(parents=True)
+    backup_path.write_text(backup_config.DEFAULT_BACKUP_HEADER, encoding="utf-8")
+    local_path = tmp_path / "README.md"
+    local_path.write_text("# Test\n", encoding="utf-8")
+
+    monkeypatch.setattr(backup_config, "USER_BACKUP_PATH", backup_path)
+    monkeypatch.setattr(cli_backup_retrieve, "USER_BACKUP_PATH", backup_path)
+
+    result = CliRunner().invoke(get_app(), ["d", "r", str(local_path)])
+
+    assert result.exit_code == 0, result.output
+    assert f"Added backup entry 'README' in {backup_path}" in result.output
+
+    document = yaml.safe_load(backup_path.read_text(encoding="utf-8"))
+    assert document == {
+        "default": {
+            "README": {
+                "path_local": local_path.as_posix(),
+                "path_cloud": "^",
+                "encrypt": True,
+                "zip": True,
+                "rel2home": False,
+                "os": ["linux", "darwin", "windows"],
+            }
+        }
+    }

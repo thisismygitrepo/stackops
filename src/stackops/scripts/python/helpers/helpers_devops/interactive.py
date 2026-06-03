@@ -57,7 +57,7 @@ def display_header() -> None:
     # Print ASCII art
     console.print(Text(ascii_art, style="bold cyan"))
     console.print()
-    
+
     # Print centered text elements
     console.print(Align.center(Text(title, style="bold bright_magenta")))
     console.print(Align.center(Text(subtitle, style="italic bright_blue")))
@@ -207,7 +207,7 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
     if "retrieve_repositories" in selected_options:
         console.print(Panel("📚 [bold bright_magenta]REPOSITORIES[/bold bright_magenta]\n[italic]Project code retrieval[/italic]", border_style="bright_magenta"))
         from stackops.scripts.python.helpers.helpers_devops import cli_repos
-        cli_repos.clone(interactive=True)
+        cli_repos.clone()
 
     if "retrieve_data" in selected_options:
         console.print(Panel("💾 [bold bright_cyan]DATA RETRIEVAL[/bold bright_cyan]\n[italic]Backup restoration[/italic]", border_style="bright_cyan"))
