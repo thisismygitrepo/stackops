@@ -121,13 +121,13 @@ def _strip_artifact_suffixes(remote_path: Path, *, zip_requested: bool, encrypt_
     return remote_value
 
 
-def _record_shared_upload(
+def _record_upload(
     *,
     source_path: Path,
     original_target: str,
     cloud: str,
     remote_path: Path,
-    share_url: str,
+    share_url: str | None,
     zip_requested: bool,
     encrypt_requested: bool,
     rel2home: bool,
@@ -259,9 +259,6 @@ def main(
     console = Console()
     console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
     original_target = target
-    if record and not share:
-        console.print(Panel("❌ --record requires --share so a share URL can be saved in mapper/data.yaml.", title="[bold red]Error[/bold red]", border_style="red", width=152))
-        raise SystemExit(1)
     cloud_config_explicit = CLOUD(
         cloud="",
         overwrite=overwrite,
@@ -277,7 +274,7 @@ def main(
 
     if config == "ss" and (source.startswith("http") or source.startswith("bit.ly")):
         if record:
-            console.print(Panel("❌ --record is only supported for uploads that generate a new share URL.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+            console.print(Panel("❌ --record is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))
             raise SystemExit(1)
         console.print(Panel("🔒 Detected secure share link", title="[bold yellow]Warning[/bold yellow]", border_style="yellow"))
         if source.startswith("https://drive.google.com/open?id="):
@@ -304,7 +301,7 @@ def main(
         raise SystemExit(1)
     if cloud in source:
         if record:
-            console.print(Panel("❌ --record is only supported for uploads that generate a new share URL.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+            console.print(Panel("❌ --record is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))
             raise SystemExit(1)
         console.print(Panel(f"📥 DOWNLOADING FROM CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}", title="[bold blue]Download[/bold blue]", border_style="blue", width=152))
         target_path = Path(target).expanduser().absolute()
@@ -355,6 +352,9 @@ def main(
         console.print(Panel(f"📤 UPLOADING TO CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}", title="[bold blue]Upload[/bold blue]", border_style="blue", width=152))
         source_path = Path(source).expanduser().absolute()
         remote_path = Path(target.replace(cloud + ":", ""))
+        if record and (record_name is None or not record_name.strip()):
+            console.print(Panel("❌ --record requires --record-name so mapper/data.yaml gets an explicit entry name.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+            raise SystemExit(1)
         temp_paths: list[Path] = []
         share_url: str | None = None
         try:
@@ -396,28 +396,32 @@ def main(
             _delete_temp_paths(temp_paths)
         console.print(Panel("✅ Upload completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
 
-        if cloud_config_explicit["share"]:
+        if cloud_config_explicit["share"] and share_url is None:
+            raise RuntimeError("Share was requested but rclone did not return a share URL.")
+        if record:
+            backup_path, entry_name, replaced = _record_upload(
+                source_path=source_path,
+                original_target=original_target,
+                cloud=cloud,
+                remote_path=remote_path,
+                share_url=share_url,
+                zip_requested=cloud_config_explicit["zip"],
+                encrypt_requested=cloud_config_explicit["encrypt"],
+                rel2home=cloud_config_explicit["rel2home"],
+                record_group=record_group,
+                record_name=record_name,
+                record_os=record_os,
+                expand_symbol=ES,
+            )
+            action = "Updated" if replaced else "Added"
+            if share_url is None:
+                console.print(Panel(f"📝 RECORDED UPLOAD\n📝 {action} backup entry: {entry_name}\n📄 Data file: {backup_path}", title="[bold blue]Record[/bold blue]", border_style="blue", width=152))
+            else:
+                console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 {action} backup entry: {entry_name}\n📄 Data file: {backup_path}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
+        elif cloud_config_explicit["share"]:
             if share_url is None:
                 raise RuntimeError("Share was requested but rclone did not return a share URL.")
-            if record:
-                backup_path, entry_name, replaced = _record_shared_upload(
-                    source_path=source_path,
-                    original_target=original_target,
-                    cloud=cloud,
-                    remote_path=remote_path,
-                    share_url=share_url,
-                    zip_requested=cloud_config_explicit["zip"],
-                    encrypt_requested=cloud_config_explicit["encrypt"],
-                    rel2home=cloud_config_explicit["rel2home"],
-                    record_group=record_group,
-                    record_name=record_name,
-                    record_os=record_os,
-                    expand_symbol=ES,
-                )
-                action = "Updated" if replaced else "Added"
-                console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 {action} backup entry: {entry_name}\n📄 Data file: {backup_path}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
-            else:
-                console.print(Panel(f"🔗 SHARE URL GENERATED\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
+            console.print(Panel(f"🔗 SHARE URL GENERATED\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
     else:
         console.print(Panel(f"❌ ERROR: Cloud '{cloud}' not found in source or target", title="[bold red]Error[/bold red]", border_style="red", width=152))
         raise SystemExit(1)

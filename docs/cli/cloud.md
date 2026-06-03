@@ -75,10 +75,10 @@ Current options from live help:
 | --- | --- |
 | `--overwrite`, `-o` | Overwrite an existing destination file |
 | `--share`, `-s` | Share a file or directory |
-| `--record`, `-m` | Record a shared upload in user `mapper/data.yaml`; requires `--share` |
+| `--record`, `-m` | Record an upload in user `mapper/data.yaml`; requires `--record-name` |
 | `--record-group`, `-g` | Group name for `--record` |
-| `--record-name`, `-n` | Entry name for `--record` |
-| `--record-os` | OS filter for `--record` |
+| `--record-name`, `-n` | Entry name for `--record`; required with `--record` |
+| `--record-os` | OS filter for `--record`; defaults to all supported OS values |
 | `--relative2home`, `-r` | Treat remote paths as relative to `myhome` |
 | `--root`, `-R` | Remote root |
 | `--key`, `-k` | Encryption key |
@@ -92,10 +92,11 @@ Example:
 
 ```bash
 cloud copy ./report.pdf remote:reports/report.pdf
-cloud copy ./report.pdf remote:reports/report.pdf --share --record --record-group shared
+cloud copy ./report.pdf remote:reports/report.pdf --record --record-name report --record-group shared
+cloud copy ./report.pdf remote:reports/report.pdf --share --record --record-name report --record-group shared
 ```
 
-`--share` prints the generated URL. It does not create a `.share_url_*` sidecar file; use `--record` to save the URL in `mapper/data.yaml`.
+`--record` saves the upload in `mapper/data.yaml`. When combined with `--share`, the generated URL is stored in that entry instead of writing a `.share_url_*` sidecar file.
 
 ---
 

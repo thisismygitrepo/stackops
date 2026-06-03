@@ -34,7 +34,6 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 
 - `path_local`
 - `path_cloud`
-- `cloud`
 - `share_url`
 - `encrypt`
 - `zip`
@@ -48,7 +47,6 @@ dotfiles:
   wezterm:
     path_local: "~/.config/wezterm"
     path_cloud: "^"
-    cloud: null
     share_url: null
     encrypt: true
     zip: true
@@ -59,7 +57,7 @@ dotfiles:
 ```
 
 `^` means "derive the remote path from `path_local`".
-`cloud` is `null` unless the entry should pin a specific rclone cloud config.
+`path_cloud` can include a cloud prefix such as `od:/something`.
 `share_url` is `null` until a share link exists.
 
 ### Generate backup or restore commands
@@ -113,10 +111,11 @@ One-off upload or download:
 ```bash
 cloud copy ./report.pdf remote:reports/report.pdf
 cloud copy remote:reports/report.pdf ./report.pdf
-cloud copy ./report.pdf remote:reports/report.pdf --share --record --record-group shared
+cloud copy ./report.pdf remote:reports/report.pdf --record --record-name report --record-group shared
+cloud copy ./report.pdf remote:reports/report.pdf --share --record --record-name report --record-group shared
 ```
 
-Shared uploads print the generated URL. Add `--record` to save that URL into the user `mapper/data.yaml` entry instead of writing a `.share_url_*` sidecar file.
+`--record` requires `--record-name` and writes the upload into the user `mapper/data.yaml` entry. Add `--share` when you also want the generated URL saved there instead of writing a `.share_url_*` sidecar file.
 
 ### Sync
 

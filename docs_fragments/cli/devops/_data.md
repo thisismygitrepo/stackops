@@ -53,7 +53,7 @@ devops data sync down --repo user --which dotfiles
 devops data sync up --cloud myremote --which dotfiles.bashrc,history.shell
 ```
 
-`devops data sync` filters entries by the current OS and then prints the generated `cloud copy` script based on each item's `cloud`, `path_cloud`, `os`, `zip`, `encrypt`, and `rel2home` fields.
+`devops data sync` filters entries by the current OS and then prints the generated `cloud copy` script based on each item's `path_cloud`, `os`, `zip`, `encrypt`, and `rel2home` fields.
 
 ### register
 
@@ -106,7 +106,6 @@ dotfiles:
   wezterm:
     path_local: "~/.config/wezterm"
     path_cloud: "^"
-    cloud: null
     share_url: null
     encrypt: true
     zip: true

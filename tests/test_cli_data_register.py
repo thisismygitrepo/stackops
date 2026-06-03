@@ -29,7 +29,6 @@ def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_
             "README": {
                 "path_local": local_path.as_posix(),
                 "path_cloud": "^",
-                "cloud": None,
                 "share_url": None,
                 "encrypt": True,
                 "zip": True,
@@ -40,7 +39,7 @@ def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_
     }
 
 
-def test_backup_config_loads_missing_nullable_fields_as_none(tmp_path: Path) -> None:
+def test_backup_config_loads_missing_share_url_as_none(tmp_path: Path) -> None:
     backup_path = tmp_path / "data.yaml"
     backup_path.write_text(
         """
@@ -62,19 +61,17 @@ default:
     config = backup_config._load_backup_config(backup_path)
 
     assert config is not None
-    assert config["default"]["README"]["cloud"] is None
     assert config["default"]["README"]["share_url"] is None
 
 
-def test_data_sync_uses_entry_cloud_without_default_cloud(monkeypatch, tmp_path: Path) -> None:
+def test_data_sync_uses_cloud_from_path_cloud_without_default_cloud(monkeypatch, tmp_path: Path) -> None:
     backup_path = tmp_path / "data.yaml"
     backup_path.write_text(
         """
 default:
   README:
     path_local: /tmp/README.md
-    path_cloud: "^"
-    cloud: entrycloud
+    path_cloud: "entrycloud:^"
     share_url: null
     encrypt: true
     zip: true
