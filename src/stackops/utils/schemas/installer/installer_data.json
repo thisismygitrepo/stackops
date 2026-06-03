@@ -4434,6 +4434,29 @@
       }
     },
     {
+      "appName": "intelligent-terminal",
+      "license": "Proprietary",
+      "repoURL": "CMD",
+      "doc": "Microsoft Intelligent Terminal",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "terminals-shells",
+        "windows-platform"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": null,
+          "windows": "winget install Microsoft.IntelligentTerminal --source winget --accept-package-agreements --accept-source-agreements",
+          "darwin": null
+        },
+        "arm64": {
+          "linux": null,
+          "windows": "winget install Microsoft.IntelligentTerminal --source winget --accept-package-agreements --accept-source-agreements",
+          "darwin": null
+        }
+      }
+    },
+    {
       "appName": "oz",
       "license": "Proprietary license under Warp Terms of Service / Product and Services License Agreement",
       "repoURL": "CMD",

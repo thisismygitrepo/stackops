@@ -149,6 +149,14 @@ mods:
     - linux
     - darwin
     - windows
+ollama:
+  server:
+    original: ~/.ollama/server.json
+    self_managed: CONFIG_ROOT/settings/ollama/server.json
+    os:
+    - linux
+    - darwin
+    - windows
 github_cli_token:
   token:
     original: ~/.copilot-cli-access-token
