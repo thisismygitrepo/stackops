@@ -1278,6 +1278,27 @@
       }
     },
     {
+      "appName": "az",
+      "license": "MIT License",
+      "repoURL": "CMD",
+      "doc": "☁️ Azure Command-Line Interface",
+      "categoryLabels": [
+        "cloud-saas"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
+          "darwin": "brew update && brew install azure-cli",
+          "windows": "winget install --no-upgrade --exact --id Microsoft.AzureCLI --source winget --accept-package-agreements --accept-source-agreements"
+        },
+        "arm64": {
+          "linux": "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
+          "darwin": "brew update && brew install azure-cli",
+          "windows": "winget install --no-upgrade --exact --id Microsoft.AzureCLI --source winget --accept-package-agreements --accept-source-agreements"
+        }
+      }
+    },
+    {
       "appName": "mcfly",
       "license": "MIT license",
       "repoURL": "https://github.com/cantino/mcfly",
