@@ -347,7 +347,7 @@ StackOpsDevopsDataRegisterCommand = TypedDict(
     {
         "command_name": Literal["register"],
         "short_name": Literal["r"],
-        "help": Literal["📝 <r> Register a new backup entry in user mapper_data.yaml."],
+        "help": Literal["📝 <r> Register a new backup entry in user mapper/data.yaml."],
         "subcommands": EmptySubcommands,
     },
 )

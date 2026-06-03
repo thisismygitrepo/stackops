@@ -3,3 +3,4 @@ graft src/stackops/settings
 graft src/stackops/jobs
 graft src/stackops/profile
 graft src/stackops/scripts
+graft src/stackops/utils/schemas

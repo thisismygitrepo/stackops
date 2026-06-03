@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
-  "$id": "https://bytesense.local/schemas/mapper_dotfiles.schema.json",
+  "$id": "https://bytesense.local/schemas/mapper/dotfiles.schema.json",
   "title": "Dotfiles Mapper Schema",
-  "description": "Schema for profile/mapper_dotfiles.yaml.",
+  "description": "Schema for mapper/dotfiles.yaml.",
   "type": "object",
   "propertyNames": {
     "type": "string",

@@ -9,7 +9,7 @@ def sync(
     direction: Annotated[Literal["up", "u", "down", "d"], typer.Argument(..., help="'up'/'u' backs up; 'down'/'d' retrieves.")],
     cloud: Annotated[str | None, typer.Option("--cloud", "-c", help="☁ Cloud configuration name (rclone config name)")] = None,
     which: Annotated[
-        str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper_data.yaml), or 'all' for all items")
+        str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items")
     ] = None,
     repo: Annotated[REPO_LOOSE, typer.Option("--repo", "-r", help="📁 Which backup configuration to use: 'library', 'user', or 'all'")] = "all",
     # interactive: Annotated[bool, typer.Option("--interactive", "-i", help="🤔 Prompt the selection of which items to process")] = False,
@@ -33,8 +33,8 @@ def sync(
 
 def register_data(
     path_local: Annotated[str, typer.Argument(..., help="Local file/folder path to back up.")],
-    group: Annotated[str, typer.Option("--group", "-g", help="Group name in mapper_data.yaml.")] = "default",
-    name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper_data.yaml.")] = None,
+    group: Annotated[str, typer.Option("--group", "-g", help="Group name in mapper/data.yaml.")] = "default",
+    name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper/data.yaml.")] = None,
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
     zip_: Annotated[bool, typer.Option("--no-zip", "-nz", help="Store the backup entry without zipping before upload.")] = True,
     encrypt: Annotated[bool, typer.Option("--no-encrypt", "-ne", help="Store the backup entry without encrypting before upload.")] = True,
@@ -146,7 +146,7 @@ def get_app() -> typer.Typer:
 
     app.command(name="s", no_args_is_help=True, hidden=True)(sync)
 
-    app.command(name="register", no_args_is_help=True, hidden=False, help="📝 <r> Register a new backup entry in user mapper_data.yaml.")(register_data)
+    app.command(name="register", no_args_is_help=True, hidden=False, help="📝 <r> Register a new backup entry in user mapper/data.yaml.")(register_data)
 
     app.command(name="r", no_args_is_help=True, hidden=True)(register_data)
 

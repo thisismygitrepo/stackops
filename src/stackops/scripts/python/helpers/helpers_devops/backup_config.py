@@ -6,7 +6,7 @@ from typing import TypedDict, cast
 
 from rich.console import Console
 from rich.panel import Panel
-import stackops.profile as profile_assets
+import stackops.utils.schemas.mapper as mapper_assets
 import yaml
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
@@ -15,8 +15,8 @@ from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH
 
 LIBRARY_BACKUP_PATH = get_path_reference_path(
-    module=profile_assets,
-    path_reference=profile_assets.MAPPER_DATA_PATH_REFERENCE,
+    module=mapper_assets,
+    path_reference=mapper_assets.MAPPER_DATA_PATH_REFERENCE,
 )
 USER_BACKUP_PATH = DOTFILES_USER_BACKUP_PATH
 DEFAULT_BACKUP_HEADER = """# User-defined backup configuration

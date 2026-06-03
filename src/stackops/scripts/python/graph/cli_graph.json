@@ -2406,7 +2406,7 @@
                     "    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on conflict\")] = \"throw-error\",",
                     "    sensitivity: Annotated[Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the config file.\")] = \"private\",",
                     "    destination: Annotated[str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")] = None,",
-                    "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper_dotfiles.yaml to record this mapping.\")] = \"default\",",
+                    "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper/dotfiles.yaml to record this mapping.\")] = \"default\",",
                     "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = DEFAULT_OS_FILTER,",
                     "    shared: Annotated[bool, typer.Option(\"--shared\", \"-sh\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
                     "    record: Annotated[bool, typer.Option(\"--record\", \"-r\", help=\"Record the mapping in user's mapper.yaml\")] = True,",
@@ -2593,7 +2593,7 @@
                       "type": "str",
                       "default": "default",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--section', '-se', help='Section name in mapper_dotfiles.yaml to record this mapping.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--section', '-se', help='Section name in mapper/dotfiles.yaml to record this mapping.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2606,7 +2606,7 @@
                         "short_flags": [
                           "-se"
                         ],
-                        "help": "Section name in mapper_dotfiles.yaml to record this mapping."
+                        "help": "Section name in mapper/dotfiles.yaml to record this mapping."
                       }
                     },
                     {
@@ -4704,7 +4704,7 @@
                     "    direction: Annotated[Literal[\"up\", \"u\", \"down\", \"d\"], typer.Argument(..., help=\"'up'/'u' backs up; 'down'/'d' retrieves.\")],",
                     "    cloud: Annotated[str | None, typer.Option(\"--cloud\", \"-c\", help=\"☁ Cloud configuration name (rclone config name)\")] = None,",
                     "    which: Annotated[",
-                    "        str | None, typer.Option(\"--which\", \"-w\", help=\"📝 Comma-separated list of items to process (from mapper_data.yaml), or 'all' for all items\")",
+                    "        str | None, typer.Option(\"--which\", \"-w\", help=\"📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items\")",
                     "    ] = None,",
                     "    repo: Annotated[REPO_LOOSE, typer.Option(\"--repo\", \"-r\", help=\"📁 Which backup configuration to use: 'library', 'user', or 'all'\")] = \"all\",",
                     "    # interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"🤔 Prompt the selection of which items to process\")] = False,",
@@ -4771,7 +4771,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"📝 Comma-separated list of items to process (from mapper_data.yaml), or 'all' for all items\")]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -4784,7 +4784,7 @@
                         "short_flags": [
                           "-w"
                         ],
-                        "help": "📝 Comma-separated list of items to process (from mapper_data.yaml), or 'all' for all items"
+                        "help": "📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items"
                       }
                     },
                     {
@@ -4827,7 +4827,7 @@
                 "name": "register",
                 "fullPath": "devops data register",
                 "shortPath": "d d r",
-                "help": "📝 <r> Register a new backup entry in user mapper_data.yaml.",
+                "help": "📝 <r> Register a new backup entry in user mapper/data.yaml.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_data.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_data",
@@ -4837,8 +4837,8 @@
                   "raw_lines": [
                     "def register_data(",
                     "    path_local: Annotated[str, typer.Argument(..., help=\"Local file/folder path to back up.\")],",
-                    "    group: Annotated[str, typer.Option(\"--group\", \"-g\", help=\"Group name in mapper_data.yaml.\")] = \"default\",",
-                    "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name inside the group in mapper_data.yaml.\")] = None,",
+                    "    group: Annotated[str, typer.Option(\"--group\", \"-g\", help=\"Group name in mapper/data.yaml.\")] = \"default\",",
+                    "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name inside the group in mapper/data.yaml.\")] = None,",
                     "    path_cloud: Annotated[str | None, typer.Option(\"--path-cloud\", \"-C\", help=\"Cloud path override (optional).\")] = None,",
                     "    zip_: Annotated[bool, typer.Option(\"--no-zip\", \"-nz\", help=\"Store the backup entry without zipping before upload.\")] = True,",
                     "    encrypt: Annotated[bool, typer.Option(\"--no-encrypt\", \"-ne\", help=\"Store the backup entry without encrypting before upload.\")] = True,",
@@ -4885,7 +4885,7 @@
                       "type": "str",
                       "default": "default",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--group', '-g', help='Group name in mapper_data.yaml.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--group', '-g', help='Group name in mapper/data.yaml.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -4898,7 +4898,7 @@
                         "short_flags": [
                           "-g"
                         ],
-                        "help": "Group name in mapper_data.yaml."
+                        "help": "Group name in mapper/data.yaml."
                       }
                     },
                     {
@@ -4907,7 +4907,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Entry name inside the group in mapper_data.yaml.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Entry name inside the group in mapper/data.yaml.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -4920,7 +4920,7 @@
                         "short_flags": [
                           "-n"
                         ],
-                        "help": "Entry name inside the group in mapper_data.yaml."
+                        "help": "Entry name inside the group in mapper/data.yaml."
                       }
                     },
                     {

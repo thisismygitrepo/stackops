@@ -8,9 +8,9 @@ from stackops.utils.path_reference import get_path_reference_path
 
 
 def _profile_asset_text(path_reference: str) -> str:
-    import stackops.profile as profile_assets
+    import stackops.utils.schemas.mapper as mapper_assets
 
-    return get_path_reference_path(module=profile_assets, path_reference=path_reference).read_text(encoding="utf-8")
+    return get_path_reference_path(module=mapper_assets, path_reference=path_reference).read_text(encoding="utf-8")
 
 
 def _secrets_asset_text(path_reference: str) -> str:
@@ -34,7 +34,7 @@ def test_devops_config_dump_prints_live_from_github_script() -> None:
 
 
 def test_devops_config_dump_writes_mapper_data_example() -> None:
-    import stackops.profile as profile_assets
+    import stackops.utils.schemas.mapper as mapper_assets
 
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -42,16 +42,16 @@ def test_devops_config_dump_writes_mapper_data_example() -> None:
 
         assert result.exit_code == 0, result.output
         output_dir = Path(".stackops/examples")
-        assert (output_dir / "mapper_data.yaml").read_text(encoding="utf-8") == _profile_asset_text(
-            profile_assets.MAPPER_DATA_PATH_REFERENCE
+        assert (output_dir / "data.yaml").read_text(encoding="utf-8") == _profile_asset_text(
+            mapper_assets.MAPPER_DATA_PATH_REFERENCE
         )
-        assert (output_dir / "mapper_data.schema.json").read_text(encoding="utf-8") == _profile_asset_text(
-            profile_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE
+        assert (output_dir / "data.schema.json").read_text(encoding="utf-8") == _profile_asset_text(
+            mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE
         )
 
 
 def test_devops_config_dump_writes_mapper_dotfiles_example() -> None:
-    import stackops.profile as profile_assets
+    import stackops.utils.schemas.mapper as mapper_assets
 
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -59,11 +59,11 @@ def test_devops_config_dump_writes_mapper_dotfiles_example() -> None:
 
         assert result.exit_code == 0, result.output
         output_dir = Path(".stackops/examples")
-        assert (output_dir / "mapper_dotfiles.yaml").read_text(encoding="utf-8") == _profile_asset_text(
-            profile_assets.MAPPER_DOTFILES_PATH_REFERENCE
+        assert (output_dir / "dotfiles.yaml").read_text(encoding="utf-8") == _profile_asset_text(
+            mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE
         )
-        assert (output_dir / "mapper_dotfiles.schema.json").read_text(encoding="utf-8") == _profile_asset_text(
-            profile_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE
+        assert (output_dir / "dotfiles.schema.json").read_text(encoding="utf-8") == _profile_asset_text(
+            mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE
         )
 
 

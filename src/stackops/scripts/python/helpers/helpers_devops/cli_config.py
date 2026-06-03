@@ -199,25 +199,25 @@ def _dump_layout_example() -> None:
     typer.echo(msg)
 
 
-def _dump_profile_asset(*, path_reference: str) -> Path:
-    import stackops.profile as profile_assets
+def _dump_mapper_asset(*, path_reference: str) -> Path:
+    import stackops.utils.schemas.mapper as mapper_assets
 
     from stackops.utils.path_reference import get_path_reference_path
 
-    source_path = get_path_reference_path(module=profile_assets, path_reference=path_reference)
+    source_path = get_path_reference_path(module=mapper_assets, path_reference=path_reference)
     return _dump_example_asset(source_path=source_path)
 
 
 def _dump_profile_mapper_example(*, which: ProfileMapperDumpKind) -> None:
-    import stackops.profile as profile_assets
+    import stackops.utils.schemas.mapper as mapper_assets
 
     match which:
         case "mapper_data":
-            mapper_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DATA_PATH_REFERENCE)
-            schema_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE)
+            mapper_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DATA_PATH_REFERENCE)
+            schema_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE)
         case "mapper_dotfiles":
-            mapper_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DOTFILES_PATH_REFERENCE)
-            schema_path = _dump_profile_asset(path_reference=profile_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE)
+            mapper_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE)
+            schema_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE)
         case _:
             assert_never(which)
     msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {mapper_path} and {schema_path}"

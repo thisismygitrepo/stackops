@@ -199,8 +199,8 @@ Supported `--which` values from current help:
 |-------|---------|
 | `ve` | Write `.ve.example.yaml` in the current working directory |
 | `layout` | Write `layout.json` and `layout.schema.json` under `.stackops/examples` in the current working directory |
-| `mapper_data` | Write `mapper_data.yaml` and `mapper_data.schema.json` under `.stackops/examples` in the current working directory |
-| `mapper_dotfiles` | Write `mapper_dotfiles.yaml` and `mapper_dotfiles.schema.json` under `.stackops/examples` in the current working directory |
+| `mapper_data` | Write `data.yaml` and `data.schema.json` under `.stackops/examples` in the current working directory |
+| `mapper_dotfiles` | Write `dotfiles.yaml` and `dotfiles.schema.json` under `.stackops/examples` in the current working directory |
 | `secrets` | Write `secrets.example.json` and `secrets.schema.json` under `.stackops/secrets` in the current working directory |
 | `init` | Print the shell init script for the current platform |
 | `ia` | Print the interactive setup bootstrap script |

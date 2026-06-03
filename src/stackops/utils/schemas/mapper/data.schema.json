@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://bytesense.local/schemas/profile/mapper_data.schema.json",
+  "$id": "https://bytesense.local/schemas/mapper/data.schema.json",
   "title": "StackOps Backup Mapper",
   "type": "object",
   "propertyNames": {

@@ -422,7 +422,7 @@ STACKOPS_DEVOPS_DATA_SYNC_COMMAND: "StackOpsDevopsDataSyncCommand" = {
 STACKOPS_DEVOPS_DATA_REGISTER_COMMAND: "StackOpsDevopsDataRegisterCommand" = {
     "command_name": "register",
     "short_name": "r",
-    "help": "📝 <r> Register a new backup entry in user mapper_data.yaml.",
+    "help": "📝 <r> Register a new backup entry in user mapper/data.yaml.",
     "subcommands": {},
 }
 

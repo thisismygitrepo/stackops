@@ -57,7 +57,7 @@ devops data sync up --cloud myremote --which dotfiles.bashrc,history.shell
 
 ### register
 
-Add or update one entry inside the user backup configuration file at `~/dotfiles/stackops/mapper_data.toml`.
+Add or update one entry inside the user backup configuration file at `~/dotfiles/stackops/mapper/data.yaml`.
 
 ```bash
 devops data register [OPTIONS] PATH_LOCAL

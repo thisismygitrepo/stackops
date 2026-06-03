@@ -65,7 +65,7 @@ license-files = []
 where = ["src"]
 
 [tool.setuptools.package-data]
-stackops = ["**/*.toml", "**/*.md", "**/*.sh", "**/*.ps1", "**/*.txt", "utils/schemas/**/*.json"]
+stackops = ["**/*.toml", "**/*.md", "**/*.sh", "**/*.ps1", "**/*.txt", "utils/schemas/**/*.json", "utils/schemas/**/*.yaml"]
 
 [dependency-groups]
 dev = [

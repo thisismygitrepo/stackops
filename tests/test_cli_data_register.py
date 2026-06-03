@@ -8,7 +8,7 @@ from stackops.scripts.python.helpers.helpers_devops import backup_config, cli_ba
 
 
 def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_path: Path) -> None:
-    backup_path = tmp_path / "dotfiles" / "stackops" / "mapper_data.yaml"
+    backup_path = tmp_path / "dotfiles" / "stackops" / "mapper" / "data.yaml"
     backup_path.parent.mkdir(parents=True)
     backup_path.write_text(backup_config.DEFAULT_BACKUP_HEADER, encoding="utf-8")
     local_path = tmp_path / "README.md"
