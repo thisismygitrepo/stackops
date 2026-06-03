@@ -5,6 +5,7 @@ import yaml
 
 from stackops.scripts.python.devops import get_app
 from stackops.scripts.python.helpers.helpers_devops import backup_config, cli_backup_retrieve
+import stackops.utils.code as code_utils
 
 
 def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_path: Path) -> None:
@@ -28,6 +29,7 @@ def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_
             "README": {
                 "path_local": local_path.as_posix(),
                 "path_cloud": "^",
+                "cloud": None,
                 "share_url": None,
                 "encrypt": True,
                 "zip": True,
@@ -38,7 +40,7 @@ def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_
     }
 
 
-def test_backup_config_loads_missing_share_url_as_none(tmp_path: Path) -> None:
+def test_backup_config_loads_missing_nullable_fields_as_none(tmp_path: Path) -> None:
     backup_path = tmp_path / "data.yaml"
     backup_path.write_text(
         """
@@ -51,6 +53,8 @@ default:
     rel2home: false
     os:
       - linux
+      - darwin
+      - windows
 """,
         encoding="utf-8",
     )
@@ -58,4 +62,36 @@ default:
     config = backup_config._load_backup_config(backup_path)
 
     assert config is not None
+    assert config["default"]["README"]["cloud"] is None
     assert config["default"]["README"]["share_url"] is None
+
+
+def test_data_sync_uses_entry_cloud_without_default_cloud(monkeypatch, tmp_path: Path) -> None:
+    backup_path = tmp_path / "data.yaml"
+    backup_path.write_text(
+        """
+default:
+  README:
+    path_local: /tmp/README.md
+    path_cloud: "^"
+    cloud: entrycloud
+    share_url: null
+    encrypt: true
+    zip: true
+    rel2home: false
+    os:
+      - linux
+      - darwin
+      - windows
+""",
+        encoding="utf-8",
+    )
+    scripts: list[str] = []
+
+    monkeypatch.setattr(backup_config, "USER_BACKUP_PATH", backup_path)
+    monkeypatch.setattr(cli_backup_retrieve, "read_ini", lambda _path: (_ for _ in ()).throw(FileNotFoundError))
+    monkeypatch.setattr(code_utils, "run_shell_script", lambda script, **_kwargs: scripts.append(script))
+
+    cli_backup_retrieve.main_backup_retrieve(direction="BACKUP", which="default.README", cloud=None, repo="user")
+
+    assert scripts == ['\ncloud copy "/tmp/README.md" "entrycloud:^" -ze\n']

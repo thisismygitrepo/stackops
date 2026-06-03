@@ -31,6 +31,7 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #   sample_item:
 #     path_local: "~/path/to/local/file_or_directory"
 #     path_cloud: "^"          # "^" lets stackops deduce a remote path from path_local
+#     cloud: null              # optional rclone cloud config name for this entry
 #     share_url: null          # optional public/share link for the cloud object
 #     encrypt: true            # true/false
 #     zip: false               # true/false
@@ -50,6 +51,7 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #   sample_item:
 #     path_local: "~/.config/example"
 #     path_cloud: "^"
+#     cloud: null
 #     share_url: null
 #     encrypt: true
 #     zip: true
@@ -59,13 +61,14 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #       - darwin
 """
 VALID_OS = frozenset(ALL_OS_VALUES)
-EXPECTED_BACKUP_FIELDS = frozenset({"path_local", "path_cloud", "share_url", "zip", "encrypt", "rel2home", "os"})
+EXPECTED_BACKUP_FIELDS = frozenset({"path_local", "path_cloud", "cloud", "share_url", "zip", "encrypt", "rel2home", "os"})
 OS_OUTPUT_ORDER: dict[OsName, int] = {value: index for index, value in enumerate(ALL_OS_VALUES)}
 
 
 class BackupItem(TypedDict):
     path_local: str
     path_cloud: str | None
+    cloud: str | None
     share_url: str | None
     zip: bool
     encrypt: bool
@@ -189,6 +192,7 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
             group_items[item_name] = {
                 "path_local": _require_str_field(item, "path_local", item_key),
                 "path_cloud": _optional_str_field(item, "path_cloud", item_key),
+                "cloud": _nullable_str_field(item, "cloud", item_key),
                 "share_url": _nullable_str_field(item, "share_url", item_key),
                 "zip": _require_bool_field(item, "zip", item_key),
                 "encrypt": _require_bool_field(item, "encrypt", item_key),
@@ -224,6 +228,7 @@ def _serialize_backup_config(config: BackupConfig) -> str:
             path_cloud = item["path_cloud"]
             if path_cloud is not None:
                 yaml_item["path_cloud"] = path_cloud
+            yaml_item["cloud"] = item["cloud"]
             yaml_item["share_url"] = item["share_url"]
             yaml_item["encrypt"] = item["encrypt"]
             yaml_item["zip"] = item["zip"]

@@ -36,6 +36,15 @@
           "pattern": ".*\\S.*",
           "description": "\"^\" lets stackops derive the remote path from path_local."
         },
+        "cloud": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "description": "Optional rclone cloud config name for this backup entry. Use null to fall back to --cloud or the default cloud."
+        },
         "share_url": {
           "type": [
             "string",

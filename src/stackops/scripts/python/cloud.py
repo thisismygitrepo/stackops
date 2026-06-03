@@ -2,6 +2,7 @@
 
 import typer
 from typing import Annotated, Literal
+from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER
 from stackops.utils.ve import read_default_cloud_config
 
 
@@ -32,6 +33,10 @@ def copy(
     target: Annotated[str, typer.Argument(help="🎯 file/folder path to be be sent to here.")],
     overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="📝 Overwrite existing file.")] = defaults["overwrite"],
     share: Annotated[bool, typer.Option("--share", "-s", help="🔗 Share file / directory")] = defaults["share"],
+    record: Annotated[bool, typer.Option("--record", "-m", help="📝 Record a shared upload in user mapper/data.yaml. Requires --share.")] = False,
+    record_group: Annotated[str, typer.Option("--record-group", "-g", help="🗂 Group name for --record in mapper/data.yaml.")] = "default",
+    record_name: Annotated[str | None, typer.Option("--record-name", "-n", help="🏷 Entry name for --record in mapper/data.yaml.")] = None,
+    record_os: Annotated[str, typer.Option("--record-os", help="💻 OS filter for --record. Comma-separated: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
     rel2home: Annotated[bool, typer.Option("--relative2home", "-r", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
     key: Annotated[str | None, typer.Option("--key", "-k", help="🔑 Key for encryption")] = defaults["key"],
@@ -43,7 +48,24 @@ def copy(
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main
-    copy_main(source=source, target=target, overwrite=overwrite, share=share, rel2home=rel2home, root=root, key=key, pwd=pwd, encrypt=encrypt, zip_=zip_, os_specific=os_specific, config=config)
+    copy_main(
+        source=source,
+        target=target,
+        overwrite=overwrite,
+        share=share,
+        record=record,
+        record_group=record_group,
+        record_name=record_name,
+        record_os=record_os,
+        rel2home=rel2home,
+        root=root,
+        key=key,
+        pwd=pwd,
+        encrypt=encrypt,
+        zip_=zip_,
+        os_specific=os_specific,
+        config=config,
+    )
 
 
 def mount(

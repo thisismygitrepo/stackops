@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 from platform import system
-from typing import Literal, cast
+from typing import Literal
 
 from rich.console import Console
 from rich.panel import Panel
@@ -46,7 +46,7 @@ def _require_os_name(value: str, *, os_filter: str) -> OsName:
     token = normalize_os_name(value)
     if token not in VALID_OS:
         raise ValueError(f"Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}")
-    return cast(OsName, token)
+    return token
 
 
 def register_backup_entry(
@@ -54,6 +54,8 @@ def register_backup_entry(
     group: str,
     entry_name: str | None = None,
     path_cloud: str | None = None,
+    cloud: str | None = None,
+    share_url: str | None = None,
     zip_: bool = True,
     encrypt: bool = True,
     rel2home: bool | None = None,
@@ -85,6 +87,8 @@ def register_backup_entry(
         entry_name = _sanitize_entry_name(entry_name)
     local_display = f"~/{local_path.relative_to(home)}" if rel2home and in_home else local_path.as_posix()
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
+    cloud_name = cloud.strip() if cloud and cloud.strip() else None
+    share_url_value = share_url.strip() if share_url and share_url.strip() else None
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
     if USER_BACKUP_PATH.exists():
         config = read_user_backup_config_for_update()
@@ -101,7 +105,8 @@ def register_backup_entry(
     group_entries[entry_name] = {
         "path_local": local_display,
         "path_cloud": cloud_value,
-        "share_url": None,
+        "cloud": cloud_name,
+        "share_url": share_url_value,
         "zip": zip_,
         "encrypt": encrypt,
         "rel2home": rel2home,
@@ -125,20 +130,20 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
     bu_file = read_backup_config(repo=repo)
     if bu_file is None:
         raise ValueError(describe_missing_backup_config(repo=repo))
-    if cloud is None or not cloud.strip():
+    cloud_override = cloud.strip() if cloud and cloud.strip() else None
+    fallback_cloud: str | None = None
+    if cloud_override is None:
         try:
-            cloud = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"].strip()
-            console.print(Panel(f"⚠️  DEFAULT CLOUD CONFIGURATION\n🌥️  Using default cloud: {cloud}", title="[bold blue]Cloud Configuration[/bold blue]", border_style="blue"))
+            default_cloud = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"].strip()
+            if default_cloud:
+                fallback_cloud = default_cloud
+                console.print(Panel(f"⚠️  DEFAULT CLOUD CONFIGURATION\n🌥️  Using default cloud: {fallback_cloud}", title="[bold blue]Cloud Configuration[/bold blue]", border_style="blue"))
+            else:
+                console.print(Panel("🔍 DEFAULT CLOUD NOT FOUND\n📝 Entries with a cloud field can still run. Entries without one will prompt for a cloud.", title="[bold yellow]Cloud Configuration[/bold yellow]", border_style="yellow"))
         except (FileNotFoundError, KeyError, IndexError):
-            console.print(Panel("🔍 DEFAULT CLOUD NOT FOUND\n🔄 Please select a cloud configuration from the options below", title="[bold red]Error: Cloud Not Found[/bold red]", border_style="red"))
-            cloud_choice = choose_cloud_interactively()
-            if cloud_choice is None:
-                raise ValueError("Cloud selection cancelled.")
-            cloud = cloud_choice.strip()
+            console.print(Panel("🔍 DEFAULT CLOUD NOT FOUND\n📝 Entries with a cloud field can still run. Entries without one will prompt for a cloud.", title="[bold yellow]Cloud Configuration[/bold yellow]", border_style="yellow"))
     else:
-        cloud = cloud.strip()
-        console.print(Panel(f"🌥️  Using provided cloud: {cloud}", title="[bold blue]Cloud Configuration[/bold blue]", border_style="blue"))
-    assert cloud is not None
+        console.print(Panel(f"🌥️  Using provided cloud: {cloud_override}", title="[bold blue]Cloud Configuration[/bold blue]", border_style="blue"))
     system_raw = system()
     normalized_system = normalize_os_name(system_raw)
     filtered: BackupConfig = {}
@@ -197,7 +202,17 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             raise ValueError("No backup entries selected.")
         console.print(Panel(f"📋 PROCESSING SELECTED ENTRIES\n🔢 Total entries to process: {sum(len(item) for item in items.values())}", title="[bold blue]Process Selected Entries[/bold blue]", border_style="blue"))
     program = ""
-    console.print(Panel(f"🚀 GENERATING {direction} SCRIPT\n🌥️  Cloud: {cloud}\n🗂️  Items: {sum(len(item) for item in items.values())}", title="[bold blue]Script Generation[/bold blue]", border_style="blue"))
+    needs_fallback_cloud = cloud_override is None and fallback_cloud is None and any(item["cloud"] is None for group_items in items.values() for item in group_items.values())
+    if needs_fallback_cloud:
+        console.print(Panel("🔍 CLOUD NOT FOUND\n🔄 Please select a cloud configuration from the options below", title="[bold red]Error: Cloud Not Found[/bold red]", border_style="red"))
+        cloud_choice = choose_cloud_interactively()
+        if cloud_choice is None:
+            raise ValueError("Cloud selection cancelled.")
+        fallback_cloud = cloud_choice.strip()
+        if not fallback_cloud:
+            raise ValueError("Cloud selection cancelled.")
+    cloud_mode = cloud_override or fallback_cloud or "entry-specific"
+    console.print(Panel(f"🚀 GENERATING {direction} SCRIPT\n🌥️  Cloud: {cloud_mode}\n🗂️  Items: {sum(len(item) for item in items.values())}", title="[bold blue]Script Generation[/bold blue]", border_style="blue"))
     for group_name, group_items in items.items():
         for item_name, item in group_items.items():
             display_name = f"{group_name}.{item_name}"
@@ -207,6 +222,9 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             flags += "r" if item["rel2home"] else ""
             flags += "o" if not _is_all_os_values(item["os"]) else ""
             local_path = Path(item["path_local"]).as_posix()
+            item_cloud = cloud_override or item["cloud"] or fallback_cloud
+            if item_cloud is None:
+                raise ValueError(f"Backup entry '{display_name}' does not define 'cloud', and no --cloud or default cloud is available.")
             path_cloud = item["path_cloud"]
             if path_cloud in (None, ES):
                 remote_path = ES
@@ -215,10 +233,11 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
                 assert path_cloud is not None
                 remote_path = Path(path_cloud).as_posix()
                 remote_display = remote_path
-            remote_spec = f"{cloud}:{remote_path}"
+            remote_spec = f"{item_cloud}:{remote_path}"
             console.print(Panel(
                 f"📦 PROCESSING: {display_name}\n"
                 f"📂 Local path: {local_path}\n"
+                f"☁️  Cloud: {item_cloud}\n"
                 f"☁️  Remote path: {remote_display}\n"
                 f"🏳️  Flags: {flags or 'None'}",
                 title=f"[bold blue]Processing Item: {display_name}[/bold blue]",

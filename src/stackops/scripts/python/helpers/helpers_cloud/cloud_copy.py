@@ -105,6 +105,62 @@ def _finalize_download_path(
     return local_path
 
 
+def _split_remote_spec(value: str) -> tuple[str, str] | None:
+    if ":" not in value or (len(value) > 1 and value[1] == ":"):
+        return None
+    cloud_name, remote_value = value.split(":", 1)
+    return cloud_name, remote_value
+
+
+def _strip_artifact_suffixes(remote_path: Path, *, zip_requested: bool, encrypt_requested: bool) -> str:
+    remote_value = remote_path.as_posix()
+    if encrypt_requested and remote_value.endswith(".gpg"):
+        remote_value = remote_value.removesuffix(".gpg")
+    if zip_requested and remote_value.endswith(".zip"):
+        remote_value = remote_value.removesuffix(".zip")
+    return remote_value
+
+
+def _record_shared_upload(
+    *,
+    source_path: Path,
+    original_target: str,
+    cloud: str,
+    remote_path: Path,
+    share_url: str,
+    zip_requested: bool,
+    encrypt_requested: bool,
+    rel2home: bool,
+    record_group: str,
+    record_name: str | None,
+    record_os: str,
+    expand_symbol: str,
+) -> tuple[Path, str, bool]:
+    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry
+
+    original_target_parts = _split_remote_spec(original_target)
+    if original_target_parts is not None and original_target_parts[1] == expand_symbol:
+        path_cloud = expand_symbol
+    else:
+        path_cloud = _strip_artifact_suffixes(
+            remote_path,
+            zip_requested=zip_requested,
+            encrypt_requested=encrypt_requested,
+        )
+    return register_backup_entry(
+        path_local=source_path.as_posix(),
+        group=record_group,
+        entry_name=record_name,
+        path_cloud=path_cloud,
+        cloud=cloud,
+        share_url=share_url,
+        zip_=zip_requested,
+        encrypt=encrypt_requested,
+        rel2home=rel2home,
+        os=record_os,
+    )
+
+
 @retry(stop=stop_after_attempt(3), wait=wait_chain(wait_fixed(1), wait_fixed(4), wait_fixed(9)))
 def get_securely_shared_file(url: str | None, folder: str | None) -> None:
     from rich.console import Console
@@ -183,6 +239,10 @@ def main(
     target: str,
     overwrite: bool,
     share: bool,
+    record: bool,
+    record_group: str,
+    record_name: str | None,
+    record_os: str,
     rel2home: bool,
     root: str,
     key: str | None,
@@ -195,9 +255,13 @@ def main(
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console
     from rich.panel import Panel
-    from stackops.scripts.python.helpers.helpers_cloud.helpers2 import parse_cloud_source_target
+    from stackops.scripts.python.helpers.helpers_cloud.helpers2 import ES, parse_cloud_source_target
     console = Console()
     console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
+    original_target = target
+    if record and not share:
+        console.print(Panel("❌ --record requires --share so a share URL can be saved in mapper/data.yaml.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+        raise SystemExit(1)
     cloud_config_explicit = CLOUD(
         cloud="",
         overwrite=overwrite,
@@ -212,6 +276,9 @@ def main(
     )
 
     if config == "ss" and (source.startswith("http") or source.startswith("bit.ly")):
+        if record:
+            console.print(Panel("❌ --record is only supported for uploads that generate a new share URL.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+            raise SystemExit(1)
         console.print(Panel("🔒 Detected secure share link", title="[bold yellow]Warning[/bold yellow]", border_style="yellow"))
         if source.startswith("https://drive.google.com/open?id="):
             file_id = source.split("https://drive.google.com/open?id=")[1]
@@ -236,6 +303,9 @@ def main(
         console.print(Panel("❌ Key-based encryption is not supported yet", title="[bold red]Error[/bold red]", border_style="red"))
         raise SystemExit(1)
     if cloud in source:
+        if record:
+            console.print(Panel("❌ --record is only supported for uploads that generate a new share URL.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+            raise SystemExit(1)
         console.print(Panel(f"📥 DOWNLOADING FROM CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}", title="[bold blue]Download[/bold blue]", border_style="blue", width=152))
         target_path = Path(target).expanduser().absolute()
         remote_path = Path(source.replace(cloud + ":", ""))
@@ -327,15 +397,27 @@ def main(
         console.print(Panel("✅ Upload completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
 
         if cloud_config_explicit["share"]:
-            fname = f".share_url_{cloud}"
             if share_url is None:
                 raise RuntimeError("Share was requested but rclone did not return a share URL.")
-            if source_path.is_dir():
-                share_url_path = source_path.joinpath(fname)
+            if record:
+                backup_path, entry_name, replaced = _record_shared_upload(
+                    source_path=source_path,
+                    original_target=original_target,
+                    cloud=cloud,
+                    remote_path=remote_path,
+                    share_url=share_url,
+                    zip_requested=cloud_config_explicit["zip"],
+                    encrypt_requested=cloud_config_explicit["encrypt"],
+                    rel2home=cloud_config_explicit["rel2home"],
+                    record_group=record_group,
+                    record_name=record_name,
+                    record_os=record_os,
+                    expand_symbol=ES,
+                )
+                action = "Updated" if replaced else "Added"
+                console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 {action} backup entry: {entry_name}\n📄 Data file: {backup_path}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
             else:
-                share_url_path = source_path.with_suffix(fname)
-            share_url_path.write_text(share_url, encoding="utf-8")
-            console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 URL file: {share_url_path}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
+                console.print(Panel(f"🔗 SHARE URL GENERATED\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
     else:
         console.print(Panel(f"❌ ERROR: Cloud '{cloud}' not found in source or target", title="[bold red]Error[/bold red]", border_style="red", width=152))
         raise SystemExit(1)
