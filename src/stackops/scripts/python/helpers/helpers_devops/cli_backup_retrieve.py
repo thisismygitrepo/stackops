@@ -103,12 +103,14 @@ def register_backup_entry(
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
     share_url_value = share_url.strip() if share_url and share_url.strip() else None
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+    config: BackupConfig
     if USER_BACKUP_PATH.exists():
-        config = read_user_backup_config_for_update()
-        if config is None:
+        existing_config = read_user_backup_config_for_update()
+        if existing_config is None:
             raise ValueError(describe_missing_backup_config(repo="user"))
+        config = existing_config
     else:
-        config: BackupConfig = {}
+        config = {}
     if group_name in config:
         group_entries = config[group_name]
     else:
