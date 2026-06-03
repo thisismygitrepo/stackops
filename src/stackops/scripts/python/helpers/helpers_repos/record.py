@@ -9,10 +9,22 @@ from stackops.scripts.python.helpers.helpers_repos.spec_store import (
     merge_repo_records,
     resolve_repos_spec_path,
     save_repos_spec,
+    RepoRecordMergeEntry,
+    RepoRecordMergeReport,
 )
 
 from rich import print as pprint
 from rich.progress import Progress, TaskID, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, MofNCompleteColumn
+
+
+_MERGE_FIELD_LABELS = {
+    "name": "name",
+    "parentDir": "parent path",
+    "currentBranch": "branch",
+    "remotes": "remotes",
+    "version": "commit/branch pin",
+    "isDirty": "dirty status",
+}
 
 
 def build_tree_structure(repos: list[RepoRecordDict], repos_root: Path) -> str:
@@ -84,6 +96,42 @@ def build_tree_structure(repos: list[RepoRecordDict], repos_root: Path) -> str:
             tree_lines.append(f"{base_str}{' ' * padding}{status_str}")
 
     return "\n".join(tree_lines)
+
+
+def _format_merge_entry(entry: RepoRecordMergeEntry) -> str:
+    return f"{entry['name']} ({entry['path']}) [branch: {entry['branch']}]"
+
+
+def _format_changed_fields(entry: RepoRecordMergeEntry) -> str:
+    return ", ".join(_MERGE_FIELD_LABELS.get(field, field) for field in entry["changedFields"])
+
+
+def _print_merge_entries(label: str, marker: str, entries: list[RepoRecordMergeEntry], include_changed_fields: bool = False) -> None:
+    print(f"   {label}: {len(entries)}")
+    for entry in entries:
+        changed_suffix = ""
+        if include_changed_fields and entry["changedFields"]:
+            changed_suffix = f" | changed: {_format_changed_fields(entry)}"
+        print(f"      {marker} {_format_merge_entry(entry)}{changed_suffix}")
+
+
+def _print_unchanged_summary(entries: list[RepoRecordMergeEntry], limit: int = 12) -> None:
+    if not entries:
+        print("   Unchanged: 0")
+        return
+    names = ", ".join(entry["name"] for entry in entries[:limit])
+    if len(entries) > limit:
+        print(f"   Unchanged: {len(entries)} (showing first {limit}: {names})")
+    else:
+        print(f"   Unchanged: {len(entries)} ({names})")
+
+
+def _print_merge_report(report: RepoRecordMergeReport) -> None:
+    print("\n🧾 Global spec update:")
+    _print_merge_entries("Added", "+", report["added"])
+    _print_merge_entries("Updated", "~", report["updated"], include_changed_fields=True)
+    _print_merge_entries("Removed from spec", "-", report["removed"])
+    _print_unchanged_summary(report["unchanged"])
 
 
 def record_a_repo(path: Path, search_parent_directories: bool, preferred_remote: str | None) -> RepoRecordDict:
@@ -277,13 +325,7 @@ def main_record(repos_root_str: str | None, specs_path: str | Path | None = None
     res: RepoRecordFile = {"version": existing_spec["version"], "repos": merged_repos}
     save_repos_spec(spec=res, path=spec_path_resolved)
     pprint(f"📁 Result saved at {spec_path_resolved}")
-    print(
-        "🧾 Global spec update: "
-        f"{merge_summary['added']} added, "
-        f"{merge_summary['updated']} updated, "
-        f"{merge_summary['unchanged']} unchanged, "
-        f"{merge_summary['removed']} removed"
-    )
+    _print_merge_report(merge_summary)
 
     print(">>>>>>>>> Finished Recording")
     return spec_path_resolved

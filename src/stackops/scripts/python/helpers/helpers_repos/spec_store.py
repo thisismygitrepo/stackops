@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from stackops.utils.files.read import read_json
 from stackops.utils.io import save_json
@@ -8,6 +8,20 @@ from stackops.utils.schemas.repos.repos_types import RepoRecordDict, RepoRecordF
 
 DEFAULT_REPOS_SPEC_PATH = Path("/home/alex/dotfiles/stackops/mapper/repos.json")
 REPOS_SPEC_VERSION = "0.1"
+
+
+class RepoRecordMergeEntry(TypedDict):
+    name: str
+    path: str
+    branch: str
+    changedFields: list[str]
+
+
+class RepoRecordMergeReport(TypedDict):
+    added: list[RepoRecordMergeEntry]
+    updated: list[RepoRecordMergeEntry]
+    unchanged: list[RepoRecordMergeEntry]
+    removed: list[RepoRecordMergeEntry]
 
 
 def resolve_repos_spec_path(specs_path: str | Path | None = None) -> Path:
@@ -57,14 +71,28 @@ def _is_relative_to(path: Path, root: Path) -> bool:
     return True
 
 
+def _repo_merge_entry(repo_record: RepoRecordDict, changed_fields: list[str] | None = None) -> RepoRecordMergeEntry:
+    return {
+        "name": repo_record["name"],
+        "path": repo_record_path(repo_record).as_posix(),
+        "branch": repo_record["currentBranch"],
+        "changedFields": changed_fields or [],
+    }
+
+
+def _changed_repo_fields(existing_repo: RepoRecordDict, scanned_repo: RepoRecordDict) -> list[str]:
+    fields = ("name", "parentDir", "currentBranch", "remotes", "version", "isDirty")
+    return [field for field in fields if existing_repo[field] != scanned_repo[field]]
+
+
 def merge_repo_records(
     *, existing_repos: list[RepoRecordDict], scanned_repos: list[RepoRecordDict], scanned_root: Path
-) -> tuple[list[RepoRecordDict], dict[str, int]]:
+) -> tuple[list[RepoRecordDict], RepoRecordMergeReport]:
     root = scanned_root.expanduser().absolute().resolve()
     scanned_by_path = {repo_record_path(repo_record).as_posix(): repo_record for repo_record in scanned_repos}
 
     merged_repos: list[RepoRecordDict] = []
-    summary = {"added": 0, "updated": 0, "unchanged": 0, "removed": 0}
+    report: RepoRecordMergeReport = {"added": [], "updated": [], "unchanged": [], "removed": []}
 
     for existing_repo in existing_repos:
         existing_path = repo_record_path(existing_repo)
@@ -75,16 +103,17 @@ def merge_repo_records(
 
         scanned_repo = scanned_by_path.pop(existing_key, None)
         if scanned_repo is None:
-            summary["removed"] += 1
+            report["removed"].append(_repo_merge_entry(existing_repo))
             continue
         if scanned_repo == existing_repo:
-            summary["unchanged"] += 1
+            report["unchanged"].append(_repo_merge_entry(scanned_repo))
         else:
-            summary["updated"] += 1
+            report["updated"].append(_repo_merge_entry(scanned_repo, changed_fields=_changed_repo_fields(existing_repo, scanned_repo)))
         merged_repos.append(scanned_repo)
 
     for key in sorted(scanned_by_path):
-        summary["added"] += 1
-        merged_repos.append(scanned_by_path[key])
+        scanned_repo = scanned_by_path[key]
+        report["added"].append(_repo_merge_entry(scanned_repo))
+        merged_repos.append(scanned_repo)
 
-    return merged_repos, summary
+    return merged_repos, report

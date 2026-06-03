@@ -31,9 +31,13 @@ def test_merge_repo_records_refreshes_only_scanned_root(tmp_path: Path) -> None:
     existing_repos = [_repo_record(code_root, "alpha", branch="old"), _repo_record(code_root, "stale"), _repo_record(other_root, "keep")]
     scanned_repos = [_repo_record(code_root, "alpha", branch="new"), _repo_record(code_root, "beta")]
 
-    merged_repos, summary = merge_repo_records(existing_repos=existing_repos, scanned_repos=scanned_repos, scanned_root=code_root)
+    merged_repos, report = merge_repo_records(existing_repos=existing_repos, scanned_repos=scanned_repos, scanned_root=code_root)
 
-    assert summary == {"added": 1, "updated": 1, "unchanged": 0, "removed": 1}
+    assert [entry["name"] for entry in report["added"]] == ["beta"]
+    assert [entry["name"] for entry in report["updated"]] == ["alpha"]
+    assert report["updated"][0]["changedFields"] == ["currentBranch", "version"]
+    assert report["unchanged"] == []
+    assert [entry["name"] for entry in report["removed"]] == ["stale"]
     assert [(repo["parentDir"], repo["name"], repo["currentBranch"]) for repo in merged_repos] == [
         (code_root.as_posix(), "alpha", "new"),
         (other_root.as_posix(), "keep", "main"),
