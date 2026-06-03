@@ -180,6 +180,8 @@ def count_git_repositories(repos_root: str, r: bool) -> int:
     path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
         return 0
+    if path_obj.joinpath(".git").exists():
+        return 1
 
     search_res = sorted(
         (candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")), key=lambda path: path.as_posix()
@@ -199,6 +201,8 @@ def count_total_directories(repos_root: str, r: bool) -> int:
     """Count total directories to scan for accurate progress tracking."""
     path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
+        return 0
+    if path_obj.joinpath(".git").exists():
         return 0
 
     search_res = sorted(
@@ -220,6 +224,15 @@ def record_repos_recursively(
     path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
         return []
+    if path_obj.joinpath(".git").exists():
+        if progress is not None and process_task_id is not None:
+            progress.update(process_task_id, description=f"Recording: {path_obj.name}")
+
+        repo_record = record_a_repo(path_obj, search_parent_directories=False, preferred_remote=None)
+
+        if progress is not None and process_task_id is not None:
+            progress.update(process_task_id, advance=1, description=f"Recorded: {repo_record['name']}")
+        return [repo_record]
 
     search_res = sorted(
         (candidate for candidate in path_obj.glob("*") if candidate.is_dir() and not candidate.name.startswith(".")), key=lambda path: path.as_posix()
@@ -227,18 +240,18 @@ def record_repos_recursively(
     res: list[RepoRecordDict] = []
 
     for a_search_res in search_res:
-        if progress and scan_task_id:
+        if progress is not None and scan_task_id is not None:
             progress.update(scan_task_id, description=f"Scanning: {a_search_res.name}")
 
         if a_search_res.joinpath(".git").exists():
             try:
-                if progress and process_task_id:
+                if progress is not None and process_task_id is not None:
                     progress.update(process_task_id, description=f"Recording: {a_search_res.name}")
 
                 repo_record = record_a_repo(a_search_res, search_parent_directories=False, preferred_remote=None)
                 res.append(repo_record)
 
-                if progress and process_task_id:
+                if progress is not None and process_task_id is not None:
                     progress.update(process_task_id, advance=1, description=f"Recorded: {repo_record['name']}")
             except Exception as e:
                 print(f"⚠️ Failed to record {a_search_res}: {e}")
@@ -246,7 +259,7 @@ def record_repos_recursively(
             if r:
                 res += record_repos_recursively(str(a_search_res), r=r, progress=progress, scan_task_id=scan_task_id, process_task_id=process_task_id)
 
-        if progress and scan_task_id:
+        if progress is not None and scan_task_id is not None:
             progress.update(scan_task_id, advance=1)
 
     return res
