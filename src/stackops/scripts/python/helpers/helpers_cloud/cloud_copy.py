@@ -140,19 +140,19 @@ def _record_shared_upload(
 
     original_target_parts = _split_remote_spec(original_target)
     if original_target_parts is not None and original_target_parts[1] == expand_symbol:
-        path_cloud = expand_symbol
+        path_cloud = f"{cloud}:{expand_symbol}"
     else:
-        path_cloud = _strip_artifact_suffixes(
+        remote_value = _strip_artifact_suffixes(
             remote_path,
             zip_requested=zip_requested,
             encrypt_requested=encrypt_requested,
         )
+        path_cloud = f"{cloud}:{remote_value}"
     return register_backup_entry(
         path_local=source_path.as_posix(),
         group=record_group,
         entry_name=record_name,
         path_cloud=path_cloud,
-        cloud=cloud,
         share_url=share_url,
         zip_=zip_requested,
         encrypt=encrypt_requested,
