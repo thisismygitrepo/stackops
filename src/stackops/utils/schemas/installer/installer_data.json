@@ -1,5 +1,5 @@
 {
-  "$schema": "../../utils/schemas/installer/installer_type.schema.json",
+  "$schema": "./installer_type.schema.json",
   "version": "1",
   "installers": [
     {

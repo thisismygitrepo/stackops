@@ -18,12 +18,12 @@ def get_developer_repo_root() -> Path:
 
 
 def _get_installer_data_repo_relative_path() -> Path:
-    import stackops.jobs.installer as installer_assets
-    from stackops.jobs.installer import INSTALLER_DATA_PATH_REFERENCE
+    import stackops.utils.schemas.installer as installer_schema_assets
+    from stackops.utils.schemas.installer import INSTALLER_DATA_PATH_REFERENCE
     from stackops.utils.path_reference import get_path_reference_library_relative_path
 
     return Path("src", "stackops").joinpath(
-        get_path_reference_library_relative_path(module=installer_assets, path_reference=INSTALLER_DATA_PATH_REFERENCE)
+        get_path_reference_library_relative_path(module=installer_schema_assets, path_reference=INSTALLER_DATA_PATH_REFERENCE)
     )
 
 
@@ -108,7 +108,7 @@ def update_installer(
         typer.Option(
             "--context-path",
             "-C",
-            help="Context file or folder path. Defaults to src/stackops/jobs/installer/installer_data.json when --context is omitted.",
+            help="Context file or folder path. Defaults to src/stackops/utils/schemas/installer/installer_data.json when --context is omitted.",
         ),
     ] = None,
     separator: Annotated[

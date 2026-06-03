@@ -2,7 +2,8 @@
 
 The installer system is split across two layers:
 
-- `stackops.jobs.installer` for packaged data and install scripts
+- `stackops.jobs.installer` for packaged install scripts
+- `stackops.utils.schemas.installer` for the installer catalog and typed schema
 - `stackops.utils.installer_utils` for the runtime engine
 
 This page documents the runtime behavior that the current code exposes.
@@ -71,7 +72,7 @@ Helpers:
 
 `stackops.utils.installer_utils.installer_runner.get_installers()` loads the catalog from:
 
-- `stackops.jobs.installer.INSTALLER_DATA_PATH_REFERENCE`
+- `stackops.utils.schemas.installer.INSTALLER_DATA_PATH_REFERENCE`
 - resolved through `stackops.utils.path_reference.get_path_reference_path(...)`
 
 It then filters by:

@@ -1,8 +1,9 @@
 # Jobs and Installer APIs
 
-`stackops.jobs` is mostly the data and asset layer for the installer system. It ships:
+`stackops.jobs` is mostly the script and package-group asset layer for the installer system. The catalog JSON lives with the installer schemas under `stackops.utils.schemas.installer`.
 
-- the installer catalog JSON
+It ships:
+
 - package-group definitions
 - platform-specific install scripts
 - security-check helpers
@@ -16,7 +17,8 @@ The runtime installation engine that consumes those assets lives under `stackops
 | Area | What it provides | Main modules |
 | --- | --- | --- |
 | Package groups | Named collections of apps such as `termabc`, `agents`, `dev`, and `db-cli` | `stackops.jobs.installer.package_groups` |
-| Installer catalog assets | `installer_data.json` path references and packaged installer scripts | `stackops.jobs.installer`, `stackops.jobs.installer.python_scripts.*`, `stackops.jobs.installer.linux_scripts.*`, `stackops.jobs.installer.powershell_scripts.*` |
+| Installer catalog assets | `installer_data.json`, installer schema, and typed installer records | `stackops.utils.schemas.installer.*` |
+| Installer scripts | Packaged Python, shell, and PowerShell installers | `stackops.jobs.installer.python_scripts.*`, `stackops.jobs.installer.linux_scripts.*`, `stackops.jobs.installer.powershell_scripts.*` |
 | Installer runtime | CLI entrypoints, installer selection, bulk install orchestration, direct URL install | `stackops.utils.installer_utils.*` |
 | Typed installer schema | Platform names, architecture names, install requests, install results | `stackops.utils.schemas.installer.installer_types` |
 | Security checks | Scan and reporting helpers for installed tools | `stackops.jobs.installer.checks.*` |
@@ -68,7 +70,7 @@ print(PACKAGE_GROUP2NAMES["termabc"])
 
 The runtime path looks like this:
 
-1. `jobs/installer/installer_data.json` defines the catalog.
+1. `utils/schemas/installer/installer_data.json` defines the catalog.
 2. `jobs/installer/package_groups.py` defines named bundles.
 3. `stackops.utils.installer_utils.installer_runner.get_installers()` filters that catalog for the current OS, architecture, and optional groups.
 4. `stackops.utils.installer_utils.installer_class.Installer` resolves and executes one install target.
@@ -81,8 +83,12 @@ So this section documents both the packaged job assets and the installer APIs th
 ## Directory layout
 
 ```text
+utils/schemas/installer/
+├── installer_data.json           # Catalog of installer definitions
+├── installer_type.schema.json    # JSON Schema for the catalog
+└── installer_types.py            # TypedDicts and platform helpers
+
 jobs/installer/
-├── installer_data.json     # Catalog of installer definitions
 ├── package_groups.py       # Named package bundles
 ├── checks/                 # Security and reporting helpers
 ├── linux_scripts/          # Linux and macOS shell installers

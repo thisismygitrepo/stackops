@@ -4,7 +4,7 @@
 
 - `stackops.utils` for shared helpers and script-generation glue
 - `stackops.cluster` for layouts, terminal sessions, and remote job execution
-- `stackops.jobs.installer` plus `stackops.utils.installer_utils` for curated, grouped, and URL-driven installers
+- `stackops.utils.schemas.installer`, `stackops.jobs.installer`, and `stackops.utils.installer_utils` for curated, grouped, and URL-driven installers
 
 This reference follows those workflows instead of mirroring the raw package tree.
 
@@ -21,7 +21,7 @@ This reference follows those workflows instead of mirroring the raw package tree
 | Code generation and command launching | Lambda-to-script conversion, `uv` command builders, shell execution, shell handoff, missing-tool install guards | `stackops.utils.meta`, `stackops.utils.code`, `stackops.utils.installer_utils.installer_cli` | [Code generation and command launching](utils/code-generation.md) |
 | Session layouts and orchestration | Layout schema, tab builders, tab splitting, zellij / tmux / Windows Terminal backends | `stackops.utils.schemas.layouts.layout_types`, `stackops.cluster.sessions_managers.*` | [Layouts](cluster/layouts.md), [Sessions](cluster/sessions.md) |
 | Remote execution and networking | Remote job config and state, transfer, SSH, public-IP and LAN helpers | `stackops.cluster.remote.*`, `stackops.utils.ssh`, `stackops.scripts.python.helpers.helpers_network.*` | [Remote execution and networking](cluster/remote.md) |
-| Installer catalog and package groups | Installer data, package groups, install request handling, install orchestration, direct URL installers | `stackops.jobs.installer.*`, `stackops.utils.installer_utils.*`, `stackops.utils.schemas.installer.installer_types` | [Jobs and installer APIs](jobs/index.md) |
+| Installer catalog and package groups | Installer data, package groups, install request handling, install orchestration, direct URL installers | `stackops.utils.schemas.installer.*`, `stackops.jobs.installer.*`, `stackops.utils.installer_utils.*` | [Jobs and installer APIs](jobs/index.md) |
 
 ---
 
@@ -33,14 +33,14 @@ stackops/
 │   ├── remote/                    # Remote job models, transfer, script generation
 │   └── sessions_managers/         # zellij, tmux, Windows Terminal backends
 ├── jobs/
-│   └── installer/                 # installer_data.json, package groups, install scripts
+│   └── installer/                 # package groups and install scripts
 ├── scripts/python/helpers/
 │   └── helpers_network/           # IP and connectivity helpers
 ├── utils/
 │   ├── accessories, code, io, meta, notifications, options, scheduler, ssh, ve
 │   ├── installer_utils/           # Runtime installer engine
 │   ├── path_core, path_helper, path_reference
-│   └── schemas/{installer,layouts}
+│   └── schemas/{installer,layouts} # installer_data.json and schema types
 └── settings/                      # Configuration assets and templates
 ```
 

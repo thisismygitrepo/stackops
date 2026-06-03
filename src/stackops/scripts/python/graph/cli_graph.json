@@ -7340,7 +7340,7 @@
                         "        typer.Option(",
                         "            \"--context-path\",",
                         "            \"-C\",",
-                        "            help=\"Context file or folder path. Defaults to src/stackops/jobs/installer/installer_data.json when --context is omitted.\",",
+                        "            help=\"Context file or folder path. Defaults to src/stackops/utils/schemas/installer/installer_data.json when --context is omitted.\",",
                         "        ),",
                         "    ] = None,",
                         "    separator: Annotated[",
@@ -7546,7 +7546,7 @@
                           "type": "str | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--context-path', '-C', help='Context file or folder path. Defaults to src/stackops/jobs/installer/installer_data.json when --context is omitted.')]",
+                          "annotation_raw": "Annotated[str | None, typer.Option('--context-path', '-C', help='Context file or folder path. Defaults to src/stackops/utils/schemas/installer/installer_data.json when --context is omitted.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -7559,7 +7559,7 @@
                             "short_flags": [
                               "-C"
                             ],
-                            "help": "Context file or folder path. Defaults to src/stackops/jobs/installer/installer_data.json when --context is omitted."
+                            "help": "Context file or folder path. Defaults to src/stackops/utils/schemas/installer/installer_data.json when --context is omitted."
                           }
                         },
                         {

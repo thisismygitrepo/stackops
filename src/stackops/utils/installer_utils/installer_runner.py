@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import cast
 
+import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_summary import render_installation_summary
@@ -27,7 +28,6 @@ from rich.panel import Panel
 import platform
 import tomllib
 from joblib import Parallel, delayed
-import stackops.jobs.installer as installer_assets
 
 
 def check_latest():
@@ -114,8 +114,8 @@ def get_installed_cli_apps():
 def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
     res_raw: InstallerDataFiles = read_json(
         get_path_reference_path(
-            module=installer_assets,
-            path_reference=installer_assets.INSTALLER_DATA_PATH_REFERENCE,
+            module=installer_schema_assets,
+            path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE,
         )
     )
     res_all: list[InstallerData] = res_raw["installers"]
