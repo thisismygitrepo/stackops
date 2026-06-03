@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 from platform import system
-from typing import Literal, cast
+from typing import Literal
 
 from rich.console import Console
 from rich.panel import Panel
@@ -46,7 +46,7 @@ def _require_os_name(value: str, *, os_filter: str) -> OsName:
     token = normalize_os_name(value)
     if token not in VALID_OS:
         raise ValueError(f"Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}")
-    return cast(OsName, token)
+    return token
 
 
 def _split_remote_spec(value: str) -> tuple[str, str] | None:
@@ -108,7 +108,7 @@ def register_backup_entry(
         if config is None:
             raise ValueError(describe_missing_backup_config(repo="user"))
     else:
-        config = {}
+        config: BackupConfig = {}
     if group_name in config:
         group_entries = config[group_name]
     else:
@@ -118,6 +118,7 @@ def register_backup_entry(
     group_entries[entry_name] = {
         "path_local": local_display,
         "path_cloud": cloud_value,
+        "cloud": None,
         "share_url": share_url_value,
         "zip": zip_,
         "encrypt": encrypt,
