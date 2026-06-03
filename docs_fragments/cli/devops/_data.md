@@ -99,11 +99,20 @@ The user backup config is created automatically if it does not exist yet.
 
 ### Backup File Layout
 
-The user backup file uses grouped TOML tables. A representative entry looks like this:
+The user backup file uses grouped YAML mappings. A representative entry looks like this:
 
-```toml
-[dotfiles]
-wezterm = { path_local = "~/.config/wezterm", path_cloud = "^", encrypt = true, zip = true, rel2home = true, os = "linux,darwin" }
+```yaml
+dotfiles:
+  wezterm:
+    path_local: "~/.config/wezterm"
+    path_cloud: "^"
+    share_url: null
+    encrypt: true
+    zip: true
+    rel2home: true
+    os:
+      - linux
+      - darwin
 ```
 
 Selection behavior for `devops data sync --which ...`:

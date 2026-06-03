@@ -28,6 +28,7 @@ def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_
             "README": {
                 "path_local": local_path.as_posix(),
                 "path_cloud": "^",
+                "share_url": None,
                 "encrypt": True,
                 "zip": True,
                 "rel2home": False,
@@ -35,3 +36,26 @@ def test_devops_data_register_accepts_comment_only_user_mapper(monkeypatch, tmp_
             }
         }
     }
+
+
+def test_backup_config_loads_missing_share_url_as_none(tmp_path: Path) -> None:
+    backup_path = tmp_path / "data.yaml"
+    backup_path.write_text(
+        """
+default:
+  README:
+    path_local: /tmp/README.md
+    path_cloud: "^"
+    encrypt: true
+    zip: true
+    rel2home: false
+    os:
+      - linux
+""",
+        encoding="utf-8",
+    )
+
+    config = backup_config._load_backup_config(backup_path)
+
+    assert config is not None
+    assert config["default"]["README"]["share_url"] is None

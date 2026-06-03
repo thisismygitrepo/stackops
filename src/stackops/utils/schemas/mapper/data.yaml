@@ -7,6 +7,7 @@ thunderbird:
   windows_files:
     path_local: "~/AppData/Roaming/Thunderbird/Profiles"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: true
     rel2home: true
@@ -15,6 +16,7 @@ thunderbird:
   windows_ini:
     path_local: "~/AppData/Roaming/Thunderbird/profiles.ini"
     path_cloud: "^"
+    share_url: null
     encrypt: false
     zip: false
     rel2home: true
@@ -23,6 +25,7 @@ thunderbird:
   linux_files:
     path_local: "~/.thunderbird"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: true
     rel2home: true
@@ -33,6 +36,7 @@ zoxide:
   windows_db:
     path_local: "~/AppData/Local/zoxide/db.zo"
     path_cloud: "^"
+    share_url: null
     encrypt: false
     zip: false
     rel2home: true
@@ -41,6 +45,7 @@ zoxide:
   linux_db:
     path_local: "~/.local/share/zoxide/db.zo"
     path_cloud: "^"
+    share_url: null
     encrypt: false
     zip: false
     rel2home: true
@@ -54,6 +59,7 @@ atuin:
   history:
     path_local: "~/.local/share/atuin/history.db"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: false
     rel2home: true
@@ -71,6 +77,7 @@ mcfly:
   macos_history:
     path_local: "~/Library/Application Support/McFly/history.db"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: false
     rel2home: true
@@ -79,6 +86,7 @@ mcfly:
   linux_history:
     path_local: "~/.local/share/mcfly/history.db"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: false
     rel2home: true
@@ -87,6 +95,7 @@ mcfly:
   windows_history:
     path_local: "~/AppData/Local/McFly/data/history.db"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: false
     rel2home: true
@@ -97,6 +106,7 @@ shell_history:
   bash_history:
     path_local: "~/.bash_history"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: false
     rel2home: true
@@ -105,6 +115,7 @@ shell_history:
   zsh_history:
     path_local: "~/.zsh_history"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: false
     rel2home: true
@@ -113,6 +124,7 @@ shell_history:
   pwsh_history:
     path_local: "~/AppData/Roaming/Microsoft/Windows/PowerShell/PSReadLine/ConsoleHost_history.txt"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: false
     rel2home: true
@@ -123,6 +135,7 @@ shell_history:
 #   repo:
 #     path_local: "~/.config/example"
 #     path_cloud: "^"
+#     share_url: null
 #     encrypt: true
 #     zip: true
 #     rel2home: true
@@ -135,6 +148,7 @@ ipython:
   profile:
     path_local: "~/.ipython"
     path_cloud: "^"
+    share_url: null
     encrypt: true
     zip: true
     rel2home: true

@@ -36,6 +36,15 @@
           "pattern": ".*\\S.*",
           "description": "\"^\" lets stackops derive the remote path from path_local."
         },
+        "share_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "description": "Optional public/share URL for the cloud object. Use null when no share URL exists."
+        },
         "encrypt": {
           "type": "boolean",
           "description": "Encrypt the backup before upload."

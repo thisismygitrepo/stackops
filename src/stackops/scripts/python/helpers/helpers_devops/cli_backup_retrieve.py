@@ -1,9 +1,9 @@
 """BR: Backup and Retrieve"""
 
 import re
-from platform import system
-from typing import Literal
 from pathlib import Path
+from platform import system
+from typing import Literal, cast
 
 from rich.console import Console
 from rich.panel import Panel
@@ -46,7 +46,7 @@ def _require_os_name(value: str, *, os_filter: str) -> OsName:
     token = normalize_os_name(value)
     if token not in VALID_OS:
         raise ValueError(f"Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}")
-    return token
+    return cast(OsName, token)
 
 
 def register_backup_entry(
@@ -101,6 +101,7 @@ def register_backup_entry(
     group_entries[entry_name] = {
         "path_local": local_display,
         "path_cloud": cloud_value,
+        "share_url": None,
         "zip": zip_,
         "encrypt": encrypt,
         "rel2home": rel2home,

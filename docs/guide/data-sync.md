@@ -34,6 +34,7 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 
 - `path_local`
 - `path_cloud`
+- `share_url`
 - `encrypt`
 - `zip`
 - `rel2home`
@@ -41,12 +42,22 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 
 Representative entry:
 
-```toml
-[dotfiles]
-wezterm = { path_local = "~/.config/wezterm", path_cloud = "^", encrypt = true, zip = true, rel2home = true, os = "linux,darwin" }
+```yaml
+dotfiles:
+  wezterm:
+    path_local: "~/.config/wezterm"
+    path_cloud: "^"
+    share_url: null
+    encrypt: true
+    zip: true
+    rel2home: true
+    os:
+      - linux
+      - darwin
 ```
 
 `^` means "derive the remote path from `path_local`".
+`share_url` is `null` until a share link exists.
 
 ### Generate backup or restore commands
 
