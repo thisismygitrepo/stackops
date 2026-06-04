@@ -14,21 +14,11 @@ class StackOpsGeneralConfig(TypedDict):
     to_email: str
 
 
-class StackOpsWifiConnectionProfile(TypedDict):
-    type: Literal["wifi"]
-    ssid: str
-    password: str
-
-
-StackOpsConnectionProfile: TypeAlias = StackOpsWifiConnectionProfile
-
-
 StackOpsConfig = TypedDict(
     "StackOpsConfig",
     {
         "$schema": NotRequired[str],
         "version": str,
         "general": StackOpsGeneralConfig,
-        "connection_profiles": NotRequired[dict[str, StackOpsConnectionProfile]],
     },
 )

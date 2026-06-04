@@ -48,13 +48,6 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
                     "email_config_name": "mail",
                     "to_email": "user@example.com",
                 },
-                "connection_profiles": {
-                    "local_wifi": {
-                        "type": "wifi",
-                        "ssid": "local",
-                        "password": "",
-                    }
-                },
             }
         ),
         encoding="utf-8",
@@ -66,7 +59,6 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
     assert config["general"]["repos"] == ["~/code/repo"]
     assert source_of_truth.read_stackops_general_string("rclone_config_name") == "cloud"
     assert source_of_truth.read_stackops_general_string_list("scripts") == ["~/scripts"]
-    assert config["connection_profiles"]["local_wifi"]["type"] == "wifi"
 
 
 def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

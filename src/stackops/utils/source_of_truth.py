@@ -6,7 +6,6 @@ from typing import cast
 
 from stackops.utils.schemas.config.config_types import (
     StackOpsConfig,
-    StackOpsConnectionProfile,
     StackOpsGeneralConfig,
     StackOpsGeneralPathListKey,
     StackOpsGeneralStringKey,
@@ -135,42 +134,17 @@ def _read_general_config(value: object) -> StackOpsGeneralConfig:
     return result
 
 
-def _read_connection_profile(name: str, value: object) -> StackOpsConnectionProfile:
-    profile = _require_object(value, f"connection_profiles.{name}")
-    _reject_unknown_keys(profile, {"type", "ssid", "password"}, f"connection_profiles.{name}")
-    profile_type = _require_string(profile.get("type"), f"connection_profiles.{name}.type")
-    if profile_type != "wifi":
-        raise ValueError(f"StackOps connection profile '{name}' has unsupported type: {profile_type}")
-    return {
-        "type": "wifi",
-        "ssid": _require_string(profile.get("ssid"), f"connection_profiles.{name}.ssid"),
-        "password": _require_string(profile.get("password"), f"connection_profiles.{name}.password", non_empty=False),
-    }
-
-
-def _read_connection_profiles(value: object) -> dict[str, StackOpsConnectionProfile]:
-    raw_profiles = _require_object(value, "connection_profiles")
-    profiles: dict[str, StackOpsConnectionProfile] = {}
-    for profile_name, raw_profile in raw_profiles.items():
-        if profile_name == "":
-            raise ValueError(f"StackOps connection profile names must be non-empty: {DOTFILES_STACKOPS_CONFIG_PATH}")
-        profiles[profile_name] = _read_connection_profile(profile_name, raw_profile)
-    return profiles
-
-
 def read_stackops_config() -> StackOpsConfig:
     if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
         raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
     raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")
-    _reject_unknown_keys(raw_config, {"$schema", "version", "general", "connection_profiles"}, "root")
+    _reject_unknown_keys(raw_config, {"$schema", "version", "general"}, "root")
     config: StackOpsConfig = {
         "version": _require_version(raw_config.get("version")),
         "general": _read_general_config(raw_config.get("general")),
     }
     if "$schema" in raw_config:
         config["$schema"] = _require_string(raw_config["$schema"], "$schema", non_empty=False)
-    if "connection_profiles" in raw_config:
-        config["connection_profiles"] = _read_connection_profiles(raw_config["connection_profiles"])
     return config
 
 

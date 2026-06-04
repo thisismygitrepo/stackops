@@ -19,18 +19,6 @@
     },
     "general": {
       "$ref": "#/definitions/GeneralConfig"
-    },
-    "connection_profiles": {
-      "type": "object",
-      "description": "Named connection profiles keyed by local profile name.",
-      "propertyNames": {
-        "type": "string",
-        "minLength": 1
-      },
-      "additionalProperties": {
-        "$ref": "#/definitions/ConnectionProfile"
-      },
-      "default": {}
     }
   },
   "required": ["version", "general"],
@@ -78,31 +66,6 @@
         "minLength": 1
       },
       "uniqueItems": true
-    },
-    "ConnectionProfile": {
-      "oneOf": [
-        {
-          "$ref": "#/definitions/WifiConnectionProfile"
-        }
-      ]
-    },
-    "WifiConnectionProfile": {
-      "type": "object",
-      "description": "Wi-Fi connection profile.",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "const": "wifi"
-        },
-        "ssid": {
-          "type": "string",
-          "minLength": 1
-        },
-        "password": {
-          "type": "string"
-        }
-      },
-      "required": ["type", "ssid", "password"]
     }
   }
 }
