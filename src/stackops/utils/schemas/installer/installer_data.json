@@ -4094,28 +4094,6 @@
       }
     },
     {
-      "appName": "agent-hand",
-      "license": "MIT",
-      "repoURL": "https://github.com/weykon/agent-hand",
-      "doc": "Fast tmux-backed terminal session manager for AI coding agents.",
-      "categoryLabels": [
-        "ai-agents-assistants",
-        "terminal-workspaces"
-      ],
-      "fileNamePattern": {
-        "amd64": {
-          "linux": "agent-hand-x86_64-unknown-linux-gnu.tar.gz",
-          "darwin": "agent-hand-x86_64-apple-darwin.tar.gz",
-          "windows": "agent-hand-x86_64-pc-windows-msvc.tar.gz"
-        },
-        "arm64": {
-          "linux": null,
-          "darwin": "agent-hand-aarch64-apple-darwin.tar.gz",
-          "windows": null
-        }
-      }
-    },
-    {
       "appName": "tmux-mcp-rs",
       "license": "MIT",
       "repoURL": "https://github.com/bnomei/tmux-mcp",
