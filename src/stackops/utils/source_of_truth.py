@@ -119,12 +119,11 @@ def _read_general_config(value: object) -> StackOpsGeneralConfig:
     general = _require_object(value, "general")
     _reject_unknown_keys(
         general,
-        {"repos", "scripts", "prompts", "rclone_config_name", "email_config_name", "to_email"},
+        {"repos", "prompts", "rclone_config_name", "email_config_name", "to_email"},
         "general",
     )
     result: StackOpsGeneralConfig = {
         "repos": _require_string_list(general.get("repos"), "general.repos"),
-        "scripts": _require_string_list(general.get("scripts"), "general.scripts"),
         "rclone_config_name": _require_string(general.get("rclone_config_name"), "general.rclone_config_name"),
         "email_config_name": _require_string(general.get("email_config_name"), "general.email_config_name"),
         "to_email": _require_string(general.get("to_email"), "general.to_email"),
@@ -156,8 +155,6 @@ def read_stackops_general_string_list(key: StackOpsGeneralPathListKey) -> list[s
     general = read_stackops_config()["general"]
     if key == "repos":
         return general["repos"]
-    if key == "scripts":
-        return general["scripts"]
     if "prompts" not in general:
         raise KeyError(key)
     return general["prompts"]

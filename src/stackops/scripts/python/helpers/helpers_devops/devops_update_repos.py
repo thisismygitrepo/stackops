@@ -227,7 +227,6 @@ def main(verbose: bool = True, allow_password_prompt: bool = False) -> None:
                         '  "version": "1.0.0",',
                         '  "general": {',
                         '    "repos": ["~/code/repo1", "~/code/repo2"],',
-                        '    "scripts": [],',
                         '    "rclone_config_name": "onedrivePersonal",',
                         '    "email_config_name": "Yahoo3",',
                         '    "to_email": "myemail@email.com"',

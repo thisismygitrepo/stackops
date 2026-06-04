@@ -32,10 +32,6 @@
           "$ref": "#/definitions/PathList",
           "description": "Repository roots managed by devops update and status commands."
         },
-        "scripts": {
-          "$ref": "#/definitions/PathList",
-          "description": "Additional script roots searched by script launch helpers."
-        },
         "prompts": {
           "$ref": "#/definitions/PathList",
           "description": "Additional prompt roots searched by prompt helpers."
@@ -57,7 +53,7 @@
           "minLength": 1
         }
       },
-      "required": ["repos", "scripts", "rclone_config_name", "email_config_name", "to_email"]
+      "required": ["repos", "rclone_config_name", "email_config_name", "to_email"]
     },
     "PathList": {
       "type": "array",

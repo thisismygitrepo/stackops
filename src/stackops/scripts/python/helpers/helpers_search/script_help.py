@@ -5,10 +5,10 @@ from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, SCRIPTS_RO
 from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
 
-WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "dynamic", "d", "custom", "c"]
+WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "dynamic", "d"]
 
 
-def get_custom_roots(option: Literal["scripts", "prompts"]) -> list[Path]:
+def get_custom_roots(option: Literal["prompts"]) -> list[Path]:
     custom_roots: list[Path] = []
     try:
         custom_dirs = read_stackops_general_string_list(option)
@@ -33,7 +33,6 @@ def list_available_scripts(where: WHERE) -> None:
             locations = {"private": private_root, "public": public_root, "library": library_root}
             if repo_root is not None:
                 locations = {"repo": repo_root, **locations}
-            for idx, custom in enumerate(get_custom_roots("scripts")): locations[f"custom_{idx}"] = custom
             locations["dynamic"] = "https://github.com/thisismygitrepo/stackops/tree/main/src/stackops/jobs/scripts_dynamic"
         case "repo" | "r":
             locations = {"repo": require_current_repo_stackops_path(path_kind="scripts")}
@@ -45,9 +44,6 @@ def list_available_scripts(where: WHERE) -> None:
             locations = {"library": library_root}
         case "dynamic" | "d":
             locations = {"dynamic": "https://github.com/thisismygitrepo/stackops/tree/main/src/stackops/jobs/scripts_dynamic"}
-        case "custom" | "c":
-            for idx, custom in enumerate(get_custom_roots("scripts")): locations[f"custom_{idx}"] = custom
-
     def _print_files_by_type(files: list[str] | list[Path]) -> None:
         categories: dict[str, list[str]] = {".py": [], ".sh": [], ".ps1": [], ".cmd": [], ".bat": [], "other": []}
         for f in files:

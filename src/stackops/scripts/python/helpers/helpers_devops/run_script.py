@@ -15,8 +15,6 @@ Recursively Searched Predefined Directories:
 
 * 'dynamic' : fetched from GitHub repository on the fly (relies on latest commit, rather than the version currently installed)
 
-* 'custom'  : custom directories from the StackOps config 'general.scripts' list
-
 """
 
 
@@ -119,24 +117,12 @@ def run_py_script(ctx: typer.Context,
             raise typer.Exit(code=1)
 
     from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
-    from stackops.utils.source_of_truth import SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY, read_stackops_general_string_list
-
-    def get_custom_roots() -> list[Path]:
-        custom_roots: list[Path] = []
-        try:
-            custom_dirs = read_stackops_general_string_list("scripts")
-        except (FileNotFoundError, KeyError, ValueError):
-            return custom_roots
-        for custom_dir in custom_dirs:
-            custom_path = Path(custom_dir).expanduser().resolve()
-            if custom_path.is_dir():
-                custom_roots.append(custom_path)
-        return custom_roots
+    from stackops.utils.source_of_truth import SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY
 
     roots: list[Path] = []
     match where:
         case "all" | "a":
-            roots = [SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY] + get_custom_roots()
+            roots = [SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY]
             repo_scripts = current_repo_stackops_path(path_kind="scripts")
             if repo_scripts is not None:
                 roots = [repo_scripts] + roots
@@ -150,8 +136,6 @@ def run_py_script(ctx: typer.Context,
             roots = [SCRIPTS_ROOT_LIBRARY]
         case "dynamic" | "d":
             roots = []
-        case "custom" | "c":
-            roots = get_custom_roots()
 
     suffixes = _get_supported_script_suffixes(name=name)
     exact_names = [name] if "." in name else [f"{name}{a_suffix}" for a_suffix in suffixes]
