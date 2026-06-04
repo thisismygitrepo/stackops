@@ -93,6 +93,12 @@ def _default_unbz_name(source: Path) -> str:
     return source.name.replace(".bz", "").replace(".tbz", ".tar")
 
 
+def _default_ungz_name(source: Path) -> str:
+    if source.name.endswith(".tgz"):
+        return _strip_suffix(source.name, ".tgz", ".tar")
+    return _strip_suffix(source.name, ".gz")
+
+
 def _extract_7z_archive(archive_path: Path, destination: Path) -> None:
     archive_path_str = str(archive_path)
     destination_str = str(destination)
@@ -245,7 +251,7 @@ def untar_path(source: Path, *, folder: Path | None, name: str | None, path: Pat
 
 def ungz_path(source: Path, *, folder: Path | None, name: str | None, path: Path | None, inplace: bool, orig: bool, verbose: bool) -> Path:
     source_resolved = source.expanduser().resolve()
-    destination = _resolve_output_path(source_resolved, folder=folder, name=name, path=path, default_name=_strip_suffix(source_resolved.name, ".gz"))
+    destination = _resolve_output_path(source_resolved, folder=folder, name=name, path=path, default_name=_default_ungz_name(source_resolved))
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(gzip.decompress(source_resolved.read_bytes()))
     return _finalize_result(
