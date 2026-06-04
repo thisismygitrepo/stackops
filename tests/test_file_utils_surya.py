@@ -69,7 +69,7 @@ def test_surya_cli_validates_then_defers_to_impl(monkeypatch, tmp_path) -> None:
     result = CliRunner().invoke(
         get_app(),
         [
-            "surya",
+            "ocr",
             str(input_file),
             "--task",
             "layout",
@@ -99,3 +99,23 @@ def test_surya_cli_validates_then_defers_to_impl(monkeypatch, tmp_path) -> None:
             "extra_args": ["--max-num-seqs", "8"],
         }
     ]
+
+
+def test_surya_short_alias_is_o(monkeypatch, tmp_path) -> None:
+    from stackops.scripts.python.helpers.helpers_utils import surya as surya_impl
+    from stackops.scripts.python.helpers.helpers_utils.file_utils_app import get_app
+
+    input_file = tmp_path / "scan.pdf"
+    input_file.write_bytes(b"%PDF-1.4\n")
+    calls: list[dict[str, object]] = []
+
+    def fake_run_surya(**kwargs) -> int:
+        calls.append(kwargs)
+        return 0
+
+    monkeypatch.setattr(surya_impl, "run_surya", fake_run_surya)
+
+    result = CliRunner().invoke(get_app(), ["o", str(input_file)])
+
+    assert result.exit_code == 0, result.output
+    assert calls[0]["data_path"] == str(input_file.resolve())

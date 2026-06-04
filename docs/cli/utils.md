@@ -101,17 +101,19 @@ utils file [OPTIONS] COMMAND [ARGS]...
 |---------|---------|
 | `edit` | Open a file or project path in the default editor |
 | `download` | Download a file and optionally decompress it |
+| `scrape` | Scrape a page to Markdown with Scrapling |
 | `pdf-merge` | Merge two or more PDF files |
 | `pdf-compress` | Compress a PDF file |
-| `surya` | Run Surya OCR, layout, detection, or table recognition |
+| `ocr` | Run Surya OCR, layout, detection, or table recognition |
 | `read-db` | Launch a terminal database client |
 
 Key behavior:
 
 - `download [URL]` supports `--decompress`, `--output`, and `--output-dir`.
+- `scrape [URL] [OUTPUT_PATH]` wraps `uvx "scrapling[shell]" extract stealthy-fetch`, defaulting to `f.md`, `article` selectors, `--wait 2000`, `--timeout 60000`, and `--enable-resources`.
 - `pdf-merge PDFS...` requires at least two distinct input files, defaults to `merged.pdf`, refuses to overwrite an existing output, and can `--compress` the merged output.
 - `pdf-compress PDF_INPUT` defaults to `<input>_compressed.pdf` and supports `--quality` and `--image-dpi`. The current CLI accepts `--no-compress-streams/-C` and `--no-object-streams/-S`, but those flags leave stream and object-stream compression enabled.
-- `surya DATA_PATH` runs the `surya-ocr` package through `uv run --with ... --no-project` without importing Surya during CLI startup. Use `--task` with `ocr`, `detect`, `layout`, or `table`; common Surya flags include `--output-dir`, `--page-range`, `--images`, `--debug`, and `--keep-server`. Extra Surya flags can be passed after `--`.
+- `ocr DATA_PATH` runs the `surya-ocr` package through `uv run --with ... --no-project` without importing Surya during CLI startup. Use `--task` with `ocr`, `detect`, `layout`, or `table`; common Surya flags include `--output-dir`, `--page-range`, `--images`, `--debug`, and `--keep-server`. Extra Surya flags can be passed after `--`.
 - `read-db [PATH]` defaults to the `harlequin` backend. Provide only one of positional `PATH`, `--url/-u`, or `--find/-f`; `--find-root` and `--recursive` refine file discovery.
 - `read-db` supports backends `rainfrog`, `lazysql`, `dblab`, `usql`, `harlequin`, and `sqlit` plus their one-letter aliases. The current `--read-write/-w` flag is accepted but still leaves read-only mode enabled.
 
@@ -120,10 +122,12 @@ Examples:
 ```bash
 utils file edit .
 utils file download https://example.com/archive.tar.gz --decompress --output-dir ./downloads
+utils file scrape https://example.com/article article.md
+utils f s https://example.com/article
 utils file pdf-merge a.pdf b.pdf c.pdf --output merged.pdf
 utils file pdf-compress report.pdf --output report-small.pdf --quality 75 --image-dpi 144
-utils file surya report.pdf --task ocr --output-dir ./surya-results --page-range 0,5-10 --images
-utils file surya table.png --task table --skip-table-detection -- --debug
+utils file ocr report.pdf --task ocr --output-dir ./surya-results --page-range 0,5-10 --images
+utils f o table.png --task table --skip-table-detection -- --debug
 utils file read-db ./local.db --backend harlequin
 utils file read-db --find "*.duckdb" --recursive
 utils file read-db --url postgres://postgres:1234@192.168.20.4:5432/binance

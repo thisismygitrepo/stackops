@@ -836,13 +836,13 @@
                     "    on_conflict = resolve_conflict_action(on_conflict=on_conflict)",
                     "    import platform",
                     "",
-                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_general_string",
+                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string",
                     "    from stackops.utils.code import get_uv_command_executing_python_script",
                     "    console = Console()",
                     "",
                     "    if cloud is None:",
                     "        try:",
-                    "            cloud_resolved = read_stackops_general_string(\"rclone_config_name\")",
+                    "            cloud_resolved = read_stackops_config_string(\"default_rclone_config\")",
                     "            console.print(Panel(f\"⚠️  Using default cloud: `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}\", title=\"Default Cloud\", border_style=\"yellow\"))",
                     "        except (FileNotFoundError, KeyError, ValueError) as exc:",
                     "            console.print(Panel(f\"❌ ERROR: No cloud profile found\\nLocation: {DOTFILES_STACKOPS_CONFIG_PATH}\\nPlease set one up or provide one via the --cloud flag.\", title=\"Error\", border_style=\"red\"))",
@@ -4502,6 +4502,13 @@
                   "raw_lines": [
                     "def dump_config(",
                     "    which: Annotated[DumpConfigKind, typer.Option(..., \"--which\", \"-w\", help=\"Which config or init script to dump\")],",
+                    "    data: Annotated[bool, typer.Option(\"--data\", \"-d\", help=\"Dump the config data/template file. Defaults to data and schema when omitted.\")] = False,",
+                    "    schema: Annotated[bool, typer.Option(\"--schema\", \"-s\", help=\"Dump the matching schema file. Defaults to data and schema when omitted.\")] = False,",
+                    "    default_path: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--default-path\", \"-p\", help=\"Write to the default StackOps path for the selected file instead of the current directory.\"),",
+                    "    ] = False,",
+                    "    force: Annotated[bool, typer.Option(\"--force\", \"-f\", help=\"Overwrite existing dump output files.\")] = False,",
                     "    run: Annotated[bool, typer.Option(\"--run\", \"-r\", help=\"Run an init script instead of printing it.\")] = False,",
                     ") -> None:",
                     "    \"\"\"🔗 Dump example configuration files and init scripts.\"\"\"",
@@ -4509,24 +4516,35 @@
                     "        case \"ve\":",
                     "            if run:",
                     "                _reject_run_for_non_script_dump()",
-                    "            _dump_ve_config()",
+                    "            _dump_ve_config(data=data, schema=schema, default_path=default_path, force=force)",
                     "            return",
                     "        case \"layout\":",
                     "            if run:",
                     "                _reject_run_for_non_script_dump()",
-                    "            _dump_layout_example()",
+                    "            _dump_layout_example(data=data, schema=schema, default_path=default_path, force=force)",
                     "            return",
-                    "        case \"mapper_data\" | \"mapper_dotfiles\":",
+                    "        case \"data\" | \"dotfiles\":",
                     "            if run:",
                     "                _reject_run_for_non_script_dump()",
-                    "            _dump_profile_mapper_example(which=which)",
+                    "            _dump_profile_example(which=which, data=data, schema=schema, default_path=default_path, force=force)",
                     "            return",
                     "        case \"secrets\":",
                     "            if run:",
                     "                _reject_run_for_non_script_dump()",
-                    "            _dump_secrets_example()",
+                    "            _dump_secrets_example(data=data, schema=schema, default_path=default_path, force=force)",
+                    "            return",
+                    "        case \"config\":",
+                    "            if run:",
+                    "                _reject_run_for_non_script_dump()",
+                    "            _dump_stackops_config_example(data=data, schema=schema, default_path=default_path, force=force)",
                     "            return",
                     "        case \"init\" | \"ia\" | \"live\":",
+                    "            if data or schema:",
+                    "                _reject_data_schema_for_script_dump()",
+                    "            if default_path:",
+                    "                _reject_default_path_for_script_dump()",
+                    "            if force:",
+                    "                _reject_force_for_script_dump()",
                     "            _dump_init_script(which=which, run=run)",
                     "            return",
                     "    msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Unknown config type: {which}\"",
@@ -4556,6 +4574,94 @@
                         ],
                         "help": "Which config or init script to dump",
                         "default": "..."
+                      }
+                    },
+                    {
+                      "name": "data",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--data', '-d', help='Dump the config data/template file. Defaults to data and schema when omitted.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--data",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--data"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Dump the config data/template file. Defaults to data and schema when omitted."
+                      }
+                    },
+                    {
+                      "name": "schema",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--schema', '-s', help='Dump the matching schema file. Defaults to data and schema when omitted.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--schema",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--schema"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Dump the matching schema file. Defaults to data and schema when omitted."
+                      }
+                    },
+                    {
+                      "name": "default_path",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--default-path', '-p', help='Write to the default StackOps path for the selected file instead of the current directory.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--default-path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--default-path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Write to the default StackOps path for the selected file instead of the current directory."
+                      }
+                    },
+                    {
+                      "name": "force",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--force', '-f', help='Overwrite existing dump output files.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--force",
+                          "-f"
+                        ],
+                        "long_flags": [
+                          "--force"
+                        ],
+                        "short_flags": [
+                          "-f"
+                        ],
+                        "help": "Overwrite existing dump output files."
                       }
                     },
                     {
@@ -4960,7 +5066,7 @@
                       "type": "str",
                       "default": "DEFAULT_OS_FILTER",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help=f'OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -6515,7 +6621,7 @@
                           "type": "PlotlyView",
                           "default": "sunburst",
                           "required": false,
-                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f'Plotly chart view. Choose from {', '.join(get_args(PlotlyView))}.')]",
+                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f\"Plotly chart view. Choose from {', '.join(get_args(PlotlyView))}.\")]",
                           "typer": {
                             "kind": "argument",
                             "param_decls": [],
@@ -15387,7 +15493,7 @@
                       "type": "HOST",
                       "default": "local",
                       "required": false,
-                      "annotation_raw": "Annotated[HOST, typer.Option(..., '--host', '-h', help=f'Machine to run agents on. One of {', '.join(get_args(HOST))}')]",
+                      "annotation_raw": "Annotated[HOST, typer.Option(..., '--host', '-h', help=f\"Machine to run agents on. One of {', '.join(get_args(HOST))}\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -16272,7 +16378,7 @@
                       "type": "HOST | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[HOST | None, typer.Option(..., '--host', '-h', help=f'Override machine. One of {', '.join(get_args(HOST))}')]",
+                      "annotation_raw": "Annotated[HOST | None, typer.Option(..., '--host', '-h', help=f\"Override machine. One of {', '.join(get_args(HOST))}\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -17114,7 +17220,7 @@
                   "type": "str",
                   "default": "",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f'AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}')]",
+                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -19813,6 +19919,250 @@
               },
               {
                 "kind": "command",
+                "name": "scrape",
+                "fullPath": "utils file scrape",
+                "shortPath": "u f s",
+                "help": "<s> Scrape a page to Markdown with Scrapling.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.file_utils_app",
+                  "callable": "scrape"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def scrape(",
+                    "    url: Annotated[str | None, typer.Argument(..., help=\"The URL to scrape.\")] = None,",
+                    "    output_path: Annotated[str | None, typer.Argument(help=\"The output markdown file path. Defaults to f.md.\")] = None,",
+                    "    output: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"The output markdown file path.\")] = None,",
+                    "    selector: Annotated[str | None, typer.Option(\"--selector\", \"-s\", help=\"CSS selector to extract.\")] = \"article\",",
+                    "    wait_selector: Annotated[str | None, typer.Option(\"--wait-selector\", help=\"CSS selector to wait for before extracting.\")] = \"article\",",
+                    "    wait: Annotated[int | None, typer.Option(\"--wait\", min=0, help=\"Milliseconds to wait after the page is ready.\")] = 2000,",
+                    "    timeout: Annotated[int | None, typer.Option(\"--timeout\", min=1, help=\"Scrapling timeout in milliseconds.\")] = 60000,",
+                    "    enable_resources: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--enable-resources/--no-enable-resources\", help=\"Enable browser resources while fetching.\"),",
+                    "    ] = True,",
+                    "    package_spec: Annotated[str, typer.Option(\"--package-spec\", help=\"uvx package spec used to provide Scrapling.\")] = \"scrapling[shell]\",",
+                    ") -> None:",
+                    "    if url is None:",
+                    "        typer.echo(\"Error: URL is required.\", err=True)",
+                    "        raise typer.Exit(code=2)",
+                    "    if output is not None and output_path is not None:",
+                    "        raise typer.BadParameter(\"--output cannot be used with positional output_path.\", param_hint=\"--output\")",
+                    "    if package_spec.strip() == \"\":",
+                    "        raise typer.BadParameter(\"Package spec cannot be empty.\", param_hint=\"--package-spec\")",
+                    "    if selector is not None and selector.strip() == \"\":",
+                    "        raise typer.BadParameter(\"Selector cannot be empty.\", param_hint=\"--selector\")",
+                    "    if wait_selector is not None and wait_selector.strip() == \"\":",
+                    "        raise typer.BadParameter(\"Wait selector cannot be empty.\", param_hint=\"--wait-selector\")",
+                    "",
+                    "    import click",
+                    "    from stackops.scripts.python.helpers.helpers_utils.scrape import run_scrape as impl",
+                    "",
+                    "    click_context = click.get_current_context(silent=True)",
+                    "    returncode = impl(",
+                    "        url=url,",
+                    "        output_path=output or output_path or \"f.md\",",
+                    "        selector=selector,",
+                    "        wait_selector=wait_selector,",
+                    "        wait=wait,",
+                    "        timeout=timeout,",
+                    "        enable_resources=enable_resources,",
+                    "        package_spec=package_spec.strip(),",
+                    "        extra_args=list(click_context.args) if click_context is not None else [],",
+                    "    )",
+                    "    if returncode != 0:",
+                    "        raise typer.Exit(code=returncode)"
+                  ],
+                  "name": "scrape",
+                  "parameters": [
+                    {
+                      "name": "url",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(..., help='The URL to scrape.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "The URL to scrape.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "output_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='The output markdown file path. Defaults to f.md.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "The output markdown file path. Defaults to f.md."
+                      }
+                    },
+                    {
+                      "name": "output",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--output', '-o', help='The output markdown file path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--output",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--output"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "The output markdown file path."
+                      }
+                    },
+                    {
+                      "name": "selector",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": "article",
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--selector', '-s', help='CSS selector to extract.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--selector",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--selector"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "CSS selector to extract."
+                      }
+                    },
+                    {
+                      "name": "wait_selector",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": "article",
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--wait-selector', help='CSS selector to wait for before extracting.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--wait-selector"
+                        ],
+                        "long_flags": [
+                          "--wait-selector"
+                        ],
+                        "short_flags": [],
+                        "help": "CSS selector to wait for before extracting."
+                      }
+                    },
+                    {
+                      "name": "wait",
+                      "kind": "positional_or_keyword",
+                      "type": "int | None",
+                      "default": 2000,
+                      "required": false,
+                      "annotation_raw": "Annotated[int | None, typer.Option('--wait', min=0, help='Milliseconds to wait after the page is ready.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--wait"
+                        ],
+                        "long_flags": [
+                          "--wait"
+                        ],
+                        "short_flags": [],
+                        "help": "Milliseconds to wait after the page is ready."
+                      }
+                    },
+                    {
+                      "name": "timeout",
+                      "kind": "positional_or_keyword",
+                      "type": "int | None",
+                      "default": 60000,
+                      "required": false,
+                      "annotation_raw": "Annotated[int | None, typer.Option('--timeout', min=1, help='Scrapling timeout in milliseconds.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--timeout"
+                        ],
+                        "long_flags": [
+                          "--timeout"
+                        ],
+                        "short_flags": [],
+                        "help": "Scrapling timeout in milliseconds."
+                      }
+                    },
+                    {
+                      "name": "enable_resources",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": true,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--enable-resources/--no-enable-resources', help='Enable browser resources while fetching.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--enable-resources/--no-enable-resources"
+                        ],
+                        "long_flags": [
+                          "--enable-resources",
+                          "--no-enable-resources"
+                        ],
+                        "short_flags": [],
+                        "help": "Enable browser resources while fetching."
+                      }
+                    },
+                    {
+                      "name": "package_spec",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "scrapling[shell]",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Option('--package-spec', help='uvx package spec used to provide Scrapling.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--package-spec"
+                        ],
+                        "long_flags": [
+                          "--package-spec"
+                        ],
+                        "short_flags": [],
+                        "help": "uvx package spec used to provide Scrapling."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "command_context_settings": "SCRAPE_CONTEXT_SETTINGS",
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "pdf-merge",
                 "fullPath": "utils file pdf-merge",
                 "shortPath": "u f p",
@@ -20155,10 +20505,10 @@
               },
               {
                 "kind": "command",
-                "name": "surya",
-                "fullPath": "utils file surya",
-                "shortPath": "u f s",
-                "help": "☀ <s> OCR, layout, detection, and table recognition with Surya.",
+                "name": "ocr",
+                "fullPath": "utils file ocr",
+                "shortPath": "u f o",
+                "help": "☀ <o> OCR, layout, detection, and table recognition with Surya.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py",
                   "module": "stackops.scripts.python.helpers.helpers_utils.file_utils_app",
@@ -20416,7 +20766,7 @@
                 },
                 "aliases": [
                   {
-                    "name": "s",
+                    "name": "o",
                     "hidden": true
                   }
                 ]

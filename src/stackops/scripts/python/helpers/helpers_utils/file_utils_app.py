@@ -7,6 +7,7 @@ import typer
 DatabaseBackend: TypeAlias = Literal["rainfrog", "r", "lazysql", "l", "dblab", "d", "usql", "u", "harlequin", "h", "sqlit", "s"]
 SuryaTask: TypeAlias = Literal["ocr", "detect", "layout", "table"]
 SURYA_CONTEXT_SETTINGS = {"allow_extra_args": True, "ignore_unknown_options": True}
+SCRAPE_CONTEXT_SETTINGS = {"allow_extra_args": True, "ignore_unknown_options": True}
 
 
 def edit_file_with_hx(
@@ -26,6 +27,51 @@ def download(
     from stackops.scripts.python.helpers.helpers_utils.download import download as impl
 
     impl(url=url, decompress=decompress, output=output, output_dir=output_dir)
+
+
+def scrape(
+    url: Annotated[str | None, typer.Argument(..., help="The URL to scrape.")] = None,
+    output_path: Annotated[str | None, typer.Argument(help="The output markdown file path. Defaults to f.md.")] = None,
+    output: Annotated[str | None, typer.Option("--output", "-o", help="The output markdown file path.")] = None,
+    selector: Annotated[str | None, typer.Option("--selector", "-s", help="CSS selector to extract.")] = "article",
+    wait_selector: Annotated[str | None, typer.Option("--wait-selector", help="CSS selector to wait for before extracting.")] = "article",
+    wait: Annotated[int | None, typer.Option("--wait", min=0, help="Milliseconds to wait after the page is ready.")] = 2000,
+    timeout: Annotated[int | None, typer.Option("--timeout", min=1, help="Scrapling timeout in milliseconds.")] = 60000,
+    enable_resources: Annotated[
+        bool,
+        typer.Option("--enable-resources/--no-enable-resources", help="Enable browser resources while fetching."),
+    ] = True,
+    package_spec: Annotated[str, typer.Option("--package-spec", help="uvx package spec used to provide Scrapling.")] = "scrapling[shell]",
+) -> None:
+    if url is None:
+        typer.echo("Error: URL is required.", err=True)
+        raise typer.Exit(code=2)
+    if output is not None and output_path is not None:
+        raise typer.BadParameter("--output cannot be used with positional output_path.", param_hint="--output")
+    if package_spec.strip() == "":
+        raise typer.BadParameter("Package spec cannot be empty.", param_hint="--package-spec")
+    if selector is not None and selector.strip() == "":
+        raise typer.BadParameter("Selector cannot be empty.", param_hint="--selector")
+    if wait_selector is not None and wait_selector.strip() == "":
+        raise typer.BadParameter("Wait selector cannot be empty.", param_hint="--wait-selector")
+
+    import click
+    from stackops.scripts.python.helpers.helpers_utils.scrape import run_scrape as impl
+
+    click_context = click.get_current_context(silent=True)
+    returncode = impl(
+        url=url,
+        output_path=output or output_path or "f.md",
+        selector=selector,
+        wait_selector=wait_selector,
+        wait=wait,
+        timeout=timeout,
+        enable_resources=enable_resources,
+        package_spec=package_spec.strip(),
+        extra_args=list(click_context.args) if click_context is not None else [],
+    )
+    if returncode != 0:
+        raise typer.Exit(code=returncode)
 
 
 def merge_pdfs(
@@ -231,12 +277,14 @@ def get_app() -> typer.Typer:
     file_app.command(name="e", no_args_is_help=False, hidden=True)(edit_file_with_hx)
     file_app.command(name="download", no_args_is_help=True, help="↓ <d> Download a file from a URL and optionally decompress it.")(download)
     file_app.command(name="d", no_args_is_help=True, hidden=True)(download)
+    file_app.command(name="scrape", no_args_is_help=True, help="<s> Scrape a page to Markdown with Scrapling.", context_settings=SCRAPE_CONTEXT_SETTINGS)(scrape)
+    file_app.command(name="s", no_args_is_help=True, hidden=True, context_settings=SCRAPE_CONTEXT_SETTINGS)(scrape)
     file_app.command(name="pdf-merge", no_args_is_help=True, help="◫ <p> Merge PDF files into one.")(merge_pdfs)
     file_app.command(name="p", no_args_is_help=True, hidden=True)(merge_pdfs)
     file_app.command(name="pdf-compress", no_args_is_help=True, help="↧ <c> Compress a PDF file.")(compress_pdf)
     file_app.command(name="c", no_args_is_help=True, hidden=True)(compress_pdf)
-    file_app.command(name="surya", no_args_is_help=True, help="☀ <s> OCR, layout, detection, and table recognition with Surya.", context_settings=SURYA_CONTEXT_SETTINGS)(surya)
-    file_app.command(name="s", no_args_is_help=True, hidden=True, context_settings=SURYA_CONTEXT_SETTINGS)(surya)
+    file_app.command(name="ocr", no_args_is_help=True, help="☀ <o> OCR, layout, detection, and table recognition with Surya.", context_settings=SURYA_CONTEXT_SETTINGS)(surya)
+    file_app.command(name="o", no_args_is_help=True, hidden=True, context_settings=SURYA_CONTEXT_SETTINGS)(surya)
     file_app.command(name="read-db", no_args_is_help=False, help="🗃 <r> TUI DB Visualizer.")(read_db_cli_tui)
     file_app.command(name="r", no_args_is_help=False, hidden=True)(read_db_cli_tui)
     return file_app
