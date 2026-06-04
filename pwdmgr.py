@@ -12,9 +12,6 @@ Features
 
 
 import json
-import base64
-import getpass
-from cryptography.fernet import Fernet, InvalidToken
 import os
 import subprocess
 import time
@@ -26,47 +23,45 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from stackops.utils.io import GpgCommandError, decrypt_bytes_asymmetric, encrypt_bytes_asymmetric
 
 APP_DIR = Path(__file__).resolve().parent
 
 # Encrypted cache location
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"
-CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.encrypted.json"
-CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
+LEGACY_CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.encrypted.json"
+LEGACY_KEY_PATH = APP_DIR / ".pwdmgr_cache.key"
 
-# Key location next to this script (for demo, in real use, use a secure key store)
-KEY_PATH = APP_DIR / ".pwdmgr_cache.key"
-
-def get_encryption_key() -> bytes:
-    if KEY_PATH.exists():
-        return KEY_PATH.read_bytes()
-    # Generate a new key and save it
-    key = Fernet.generate_key()
-    KEY_PATH.write_bytes(key)
-    return key
 
 def load_encrypted_cache() -> dict[str, str]:
     if not CACHE_PATH.exists():
         return {}
-    key = get_encryption_key()
-    f = Fernet(key)
     try:
-        data = f.decrypt(CACHE_PATH.read_bytes())
+        data = decrypt_bytes_asymmetric(CACHE_PATH.read_bytes())
         loaded = json.loads(data.decode("utf-8"))
         if not isinstance(loaded, dict):
             return {}
         # Only keep str->str pairs
         return {str(k): str(v) for k, v in loaded.items()}
-    except (InvalidToken, json.JSONDecodeError):
+    except (GpgCommandError, RuntimeError, json.JSONDecodeError, UnicodeDecodeError):
         return {}
 
+
 def save_encrypted_cache(cache: dict[str, str]) -> None:
-    key = get_encryption_key()
-    f = Fernet(key)
     data = json.dumps(cache).encode("utf-8")
-    encrypted = f.encrypt(data)
-    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CACHE_PATH.write_bytes(encrypted)
+    try:
+        encrypted = encrypt_bytes_asymmetric(data)
+    except (GpgCommandError, RuntimeError) as exc:
+        err_console.print("[bold red]Could not save pwdmgr cache with StackOps GPG encryption.[/bold red]")
+        hint = getattr(exc, "hint", None)
+        if hint:
+            err_console.print(f"[yellow]{hint}[/yellow]")
+        raise typer.Exit(code=1) from exc
+    else:
+        CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        CACHE_PATH.write_bytes(encrypted)
+
 
 def cache_get(key: str) -> str | None:
     cache = load_encrypted_cache()
@@ -377,7 +372,7 @@ def search(
     if use_cached_search:
         raw = cache_get(cache_key)
         if raw:
-            info(f"[green]Loaded from cache.[/green]")
+            info("[green]Loaded from cache.[/green]")
 
     if not raw:
         status = get_vault_status(session)
@@ -589,7 +584,7 @@ def login_and_unlock(
             )
             raise typer.Exit(code=1)
         persist_session_token_to_cache(session)
-        console.print(f"[green]Vault already unlocked.[/green] Session saved to encrypted cache.")
+        console.print("[green]Vault already unlocked.[/green] Session saved to encrypted cache.")
         return
 
     console.print("[blue]Unlocking vault...[/blue]")
@@ -610,21 +605,27 @@ def login_and_unlock(
         err_console.print("[bold red]Bitwarden unlock check failed after bw unlock.[/bold red]")
         raise typer.Exit(code=1)
 
-    console.print(f"[green]Vault unlocked.[/green] Session saved to encrypted cache.")
+    console.print("[green]Vault unlocked.[/green] Session saved to encrypted cache.")
 
 @app.command("c", no_args_is_help=True, help="Alias for clean-cache.", hidden=True)
 @app.command(
     "clean-cache",
-    help="<c> Remove encrypted pwdmgr cache stored under ~/tmp_results.",
+    help="<c> Remove encrypted pwdmgr cache and legacy local-key artifacts.",
 )
 def clean_cache():
-    """Remove cached pwdmgr data under ~/tmp_results."""
-    if CACHE_PATH.exists():
-        CACHE_PATH.unlink()
-        prune_empty_directories(CACHE_PATH.parent, stop=TMP_RESULTS_ROOT)
+    """Remove cached pwdmgr data."""
+    removed_paths: list[Path] = []
+    for path in (CACHE_PATH, LEGACY_CACHE_PATH, LEGACY_KEY_PATH):
+        if path.exists():
+            path.unlink()
+            removed_paths.append(path)
+
+    if removed_paths:
+        for cache_path in (CACHE_PATH, LEGACY_CACHE_PATH):
+            prune_empty_directories(cache_path.parent, stop=TMP_RESULTS_ROOT)
         console.print(
             "[green]Removed cached pwdmgr data.[/green] "
-            "This clears cached search results and any saved BW_SESSION."
+            "This clears cached search results, any saved BW_SESSION, and legacy pwdmgr key material."
         )
         return
 

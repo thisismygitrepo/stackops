@@ -236,6 +236,62 @@ def _run_gpg(command: list[str], pwd: str | None = None) -> None:
         )
 
 
+def _decode_process_bytes(output: bytes) -> str:
+    return output.decode("utf-8", errors="replace")
+
+
+def _run_gpg_bytes(command: list[str], data: bytes) -> bytes:
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            input=data,
+            env=build_gpg_environment(),
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError(f"GPG executable not found while running: {_format_command(command)}") from error
+
+    if completed.returncode != 0:
+        raise GpgCommandError(
+            command=command,
+            returncode=completed.returncode,
+            stdout=_decode_process_bytes(completed.stdout),
+            stderr=_decode_process_bytes(completed.stderr),
+            hint=_gpg_hint(stderr=_decode_process_bytes(completed.stderr), pwd=None),
+        )
+    return completed.stdout
+
+
+def encrypt_bytes_asymmetric(data: bytes) -> bytes:
+    return _run_gpg_bytes(
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--default-recipient-self",
+            "--encrypt",
+            "--output",
+            "-",
+        ],
+        data=data,
+    )
+
+
+def decrypt_bytes_asymmetric(data: bytes) -> bytes:
+    return _run_gpg_bytes(
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--decrypt",
+            "--output",
+            "-",
+        ],
+        data=data,
+    )
+
+
 def encrypt_file_symmetric(file_path: PathLike, pwd: str) -> Path:
     source = _ensure_file(file_path)
     output_path = _encrypted_gpg_path(source)
