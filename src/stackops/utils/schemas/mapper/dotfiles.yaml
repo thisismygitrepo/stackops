@@ -46,7 +46,7 @@ gpg:
 pypi:
   creds:
     original: ~/.pypirc
-    self_managed: DOTFILES_ROOT/creds/msc/.pypirc
+    self_managed: DOTFILES_ROOT/creds/pypi/.pypirc
     os:
     - linux
     - darwin

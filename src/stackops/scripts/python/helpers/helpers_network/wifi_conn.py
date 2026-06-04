@@ -6,10 +6,6 @@ Linux requirements:
 Windows requirements:
 - Run as Administrator for netsh commands
 
-Configuration file locations checked (in order):
-- ~/.config/wifi.ini
-- ./wifi.ini
-
 Usage examples:
   python wifi_conn.py                     # Use default SSID from config
   python wifi_conn.py -n HomeWiFi         # Use specific configured network

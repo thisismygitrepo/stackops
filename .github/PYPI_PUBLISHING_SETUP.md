@@ -68,7 +68,7 @@ If you need to publish manually, you can still use the existing script:
 ./build_and_publish.sh
 ```
 
-This script reads the PyPI token from `~/dotfiles/creds/msc/.pypirc` as before.
+This script reads the PyPI token from `~/dotfiles/creds/pypi/.pypirc` as before.
 
 ## Workflow Features
 

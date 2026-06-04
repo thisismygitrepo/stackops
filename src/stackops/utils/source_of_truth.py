@@ -120,7 +120,11 @@ def read_stackops_config() -> StackOpsConfig:
 
 
 def read_stackops_config_string(key: StackOpsConfigStringKey) -> str:
-    return read_stackops_config()[key]
+    config = read_stackops_config()
+    value = config.get(key)
+    if value is None:
+        raise KeyError(key)
+    return value
 
 
 def dotfiles_llm_api_keys_path(provider: str) -> Path:
