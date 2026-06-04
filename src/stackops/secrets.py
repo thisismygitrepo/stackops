@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TypeAlias
 
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
 from stackops.utils.schemas.secrets.secrets_types import (
@@ -22,8 +23,7 @@ __all__ = [
 ]
 
 
-class Entry(SecretsEntry):
-    """Schema-shaped secrets entry returned by `search_secrets`."""
+Entry: TypeAlias = SecretsEntry
 
 
 class StackOpsSecretsError(Exception):
@@ -38,6 +38,7 @@ def search_secrets(
     *,
     path: str | Path | None = None,
     entry_name: str | None = None,
+    profile: str | None = None,
     secret_name: str | None = None,
     tags: tuple[str, ...] = (),
     entry_tags: tuple[str, ...] = (),
@@ -58,6 +59,7 @@ def search_secrets(
                 entry=entry,
                 secret=secret,
                 entry_name=entry_name,
+                profile=profile,
                 secret_name=secret_name,
                 tags=tags,
                 entry_tags=entry_tags,
@@ -84,6 +86,7 @@ def _secret_matches(
     entry: SecretsEntry,
     secret: SecretRecord,
     entry_name: str | None,
+    profile: str | None,
     secret_name: str | None,
     tags: tuple[str, ...],
     entry_tags: tuple[str, ...],
@@ -97,6 +100,8 @@ def _secret_matches(
     current_keys = tuple(secret["keyValues"])
 
     if entry_name is not None and entry["name"] != entry_name:
+        return False
+    if profile is not None and entry.get("profile") != profile:
         return False
     if secret_name is not None and secret.get("name") != secret_name:
         return False

@@ -19,7 +19,7 @@ def test_python_secrets_api_exposes_strict_selectors_only() -> None:
     assert "terms" not in parameters
     assert "query" not in parameters
     assert "interactive" not in parameters
-    assert {"entry_name", "secret_name", "tags", "entry_tags", "secret_tags", "scopes", "keys"} <= set(parameters)
+    assert {"entry_name", "profile", "secret_name", "tags", "entry_tags", "secret_tags", "scopes", "keys"} <= set(parameters)
     assert get_type_hints(search_secrets)["return"] == list[Entry]
 
 
@@ -68,6 +68,19 @@ def test_python_secrets_api_returns_each_matching_secret_bundle_as_one_entry() -
         ]
 
 
+def test_python_secrets_api_filters_by_exact_profile() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write_secrets_file(_secrets_payload())
+
+        entries = search_secrets(profile="dev", secret_tags=("session-token",))
+
+        assert len(entries) == 1
+        assert entries[0]["name"] == "aws-dev"
+        assert entries[0]["profile"] == "dev"
+        assert entries[0]["secrets"][0]["keyValues"] == {"AWS_SESSION_TOKEN": "session-value"}
+
+
 def test_python_secrets_api_uses_custom_path() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -96,6 +109,7 @@ def test_python_secrets_api_is_case_sensitive_and_exact() -> None:
         _write_secrets_file(_secrets_payload())
 
         assert search_secrets(entry_name="AWS-DEV", secret_tags=("iam-access-key",)) == []
+        assert search_secrets(profile="DEV") == []
 
 
 def test_python_secrets_api_rejects_old_singular_scope_field() -> None:
