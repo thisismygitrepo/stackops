@@ -6,6 +6,7 @@ Features
 - Rich output (pretty printing)
 - Optional copy-to-clipboard (via `cb` CLI tool)
 - Uses tv fuzzy-finder to disambiguate multiple matches
+- Uses StackOps secrets selectors for Bitwarden login credentials
 - Safe subprocess usage (no shell=True where possible)
 - Persists the latest Bitwarden session token to a local file
 """
@@ -17,19 +18,22 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional, Sequence, TypedDict, cast
+from typing import Any, List, Optional, Sequence
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
+from stackops.secrets import SecretsFileError, search_secrets
 from stackops.utils.io import GpgCommandError, decrypt_bytes_asymmetric, encrypt_bytes_asymmetric
-
-APP_DIR = Path(__file__).resolve().parent
+from stackops.utils.source_of_truth import SECRETS_DOFILE
 
 # Encrypted cache location
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"
 CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
+DEFAULT_BITWARDEN_ENTRY_NAME = "bitwarden0"
+BITWARDEN_SECRET_KEYS: tuple[str, str, str] = ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")
 
 
 def load_encrypted_cache() -> dict[str, str]:
@@ -100,39 +104,21 @@ class Entry:
     raw: dict[str, Any]
 
 
-class CredentialsFileEntry(TypedDict):
-    """One account entry expected inside the local credentials JSON file."""
-
-    account: str
-    BW_CLIENTID: str
-    BW_CLIENTSECRET: str
-    BW_PASSWORD: str
-
-
-class CredentialsFilePayload(TypedDict):
-    """Top-level local credentials JSON file shape."""
-
-    credentials: list[CredentialsFileEntry]
-
-
 @dataclass
-class AccountCredentials:
-    account: str
+class BitwardenCredentials:
+    entry_name: str
+    profile: str
     client_id: str
     client_secret: str
     password: str
 
 
-def resolve_local_path(path: Path) -> Path:
-    """Resolve a path relative to the app directory and reject escapes."""
-    resolved = (APP_DIR / path).resolve(strict=False) if not path.is_absolute() else path.resolve(strict=False)
-    # try:
-    #     resolved.relative_to(APP_DIR)
-    # except ValueError:
-    #     err_console.print(f"[bold red]Refusing to read files outside[/bold red] [dim]{APP_DIR}[/dim].")
-    #     raise typer.Exit(code=2)
-    return resolved
-
+@dataclass
+class VaultStatus:
+    status: str
+    user_email: str | None
+    user_id: str | None
+    server_url: str | None
 
 
 def load_session_token_from_cache() -> str | None:
@@ -170,15 +156,36 @@ def run_command(
         raise typer.Exit(code=1)
 
 
-def get_vault_status(session: Optional[str] = None) -> str:
-    """Return the bw vault status string: 'unauthenticated', 'locked', or 'unlocked'."""
+def get_vault_status_field(status_payload: dict[str, Any], key: str) -> str | None:
+    value = status_payload.get(key)
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def get_vault_status(session: Optional[str] = None) -> VaultStatus:
+    """Return the bw vault status and authenticated account metadata when available."""
     cmd = build_bw_command(["status"], session)
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
         data = json.loads(result.stdout)
-        return data.get("status", "unknown")
+        status = data.get("status")
+        return VaultStatus(
+            status=status if isinstance(status, str) and status else "unknown",
+            user_email=get_vault_status_field(data, "userEmail"),
+            user_id=get_vault_status_field(data, "userId"),
+            server_url=get_vault_status_field(data, "serverUrl"),
+        )
     except (FileNotFoundError, json.JSONDecodeError, OSError):
-        return "unknown"
+        return VaultStatus(status="unknown", user_email=None, user_id=None, server_url=None)
+
+
+def get_vault_account_label(vault_status: VaultStatus) -> str | None:
+    if vault_status.user_email:
+        return vault_status.user_email
+    if vault_status.user_id:
+        return f"user ID {vault_status.user_id}"
+    return None
 
 
 def run_bw_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None) -> str:
@@ -255,56 +262,48 @@ def copy_to_clipboard(value: str, slot: int = 1) -> bool:
         return False
 
 
-def load_account_credentials(credentials_file: Path, account: str) -> AccountCredentials:
-    """Load one Bitwarden account entry from the local JSON credentials file."""
+def load_bitwarden_credentials(entry_name: str, profile: str) -> BitwardenCredentials:
+    """Load one Bitwarden credential bundle from StackOps secrets."""
     try:
-        payload = json.loads(credentials_file.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        err_console.print(f"[bold red]Credentials file not found:[/bold red] {credentials_file}")
-        raise typer.Exit(code=2)
-    except json.JSONDecodeError as exc:
-        err_console.print(f"[bold red]Invalid JSON in credentials file:[/bold red] {credentials_file}")
-        err_console.print(exc)
-        raise typer.Exit(code=2)
+        entries = search_secrets(
+            path=SECRETS_DOFILE,
+            entry_name=entry_name,
+            profile=profile,
+            keys=BITWARDEN_SECRET_KEYS,
+        )
+    except SecretsFileError as exc:
+        err_console.print("[bold red]Could not load StackOps secrets.[/bold red]")
+        err_console.print(str(exc))
+        raise typer.Exit(code=2) from exc
 
-    if not isinstance(payload, dict):
-        err_console.print("[bold red]Credentials file must contain a JSON object.[/bold red]")
-        raise typer.Exit(code=2)
-
-    raw_credentials = payload.get("credentials")
-    if not isinstance(raw_credentials, list):
-        err_console.print("[bold red]Credentials file must contain a 'credentials' list.[/bold red]")
-        raise typer.Exit(code=2)
-
-    credentials_payload: CredentialsFilePayload = {
-        "credentials": [
-            cast(CredentialsFileEntry, candidate)
-            for candidate in raw_credentials
-            if isinstance(candidate, dict)
-        ]
-    }
-
-    selected = next(
-        (candidate for candidate in credentials_payload["credentials"] if candidate.get("account") == account),
-        None,
-    )
-    if selected is None:
-        err_console.print(f"[bold red]Account not found in credentials file:[/bold red] {account}")
-        raise typer.Exit(code=2)
-
-    required_keys = ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")
-    missing_keys = [key for key in required_keys if not selected.get(key)]
-    if missing_keys:
+    if not entries:
         err_console.print(
-            f"[bold red]Account '{account}' is missing required fields:[/bold red] {', '.join(missing_keys)}"
+            "[bold red]Bitwarden credentials not found in StackOps secrets.[/bold red] "
+            f"Entry: {entry_name} Profile: {profile}"
+        )
+        raise typer.Exit(code=2)
+    if len(entries) > 1:
+        err_console.print(
+            "[bold red]Multiple Bitwarden secret bundles matched.[/bold red] "
+            f"Entry: {entry_name} Profile: {profile}"
         )
         raise typer.Exit(code=2)
 
-    return AccountCredentials(
-        account=account,
-        client_id=str(selected["BW_CLIENTID"]),
-        client_secret=str(selected["BW_CLIENTSECRET"]),
-        password=str(selected["BW_PASSWORD"]),
+    key_values = entries[0]["secrets"][0]["keyValues"]
+    missing_keys = [key for key in BITWARDEN_SECRET_KEYS if not key_values.get(key)]
+    if missing_keys:
+        err_console.print(
+            "[bold red]Matched StackOps secret is missing required keys.[/bold red] "
+            f"{', '.join(missing_keys)}"
+        )
+        raise typer.Exit(code=2)
+
+    return BitwardenCredentials(
+        entry_name=entry_name,
+        profile=profile,
+        client_id=key_values["BW_CLIENTID"],
+        client_secret=key_values["BW_CLIENTSECRET"],
+        password=key_values["BW_PASSWORD"],
     )
 
 
@@ -396,19 +395,25 @@ def search(
             info("[green]Loaded from cache.[/green]")
 
     if not raw:
-        status = get_vault_status(session)
+        vault_status = get_vault_status(session)
+        status = vault_status.status
         script_name = Path(__file__).name
+        login_command = f"{script_name} login-and-unlock --profile <profile> [entry_name]"
         if status == "locked":
+            account_label = get_vault_account_label(vault_status)
+            account_message = ""
+            if account_label:
+                account_message = f" Logged in as [bold]{escape(account_label)}[/bold]."
             err_console.print(
-                "[bold red]🔒 Vault is locked.[/bold red] "
-                f"Run [bold]{script_name} login-and-unlock <credentials.json> -a <account>[/bold] "
+                f"[bold red]🔒 Vault is locked.[/bold red]{account_message} "
+                f"Run [bold]{login_command}[/bold] "
                 f"or save a valid session token using the CLI."
             )
             raise typer.Exit(code=1)
         if status == "unauthenticated":
             err_console.print(
                 "[bold red]🔒 Not logged in to Bitwarden.[/bold red] "
-                f"Run [bold]{script_name} login-and-unlock <credentials.json> -a <account>[/bold] first."
+                f"Run [bold]{login_command}[/bold] first."
             )
             raise typer.Exit(code=1)
         if status == "unknown":
@@ -546,26 +551,18 @@ def search(
 @app.command(
     "login-and-unlock",
     no_args_is_help=True,
-    help="<l> Log in with Bitwarden API credentials, unlock the vault, and persist BW_SESSION locally.",
+    help="<l> Log in with Bitwarden API credentials from StackOps secrets, unlock the vault, and persist BW_SESSION locally.",
 )
 def login_and_unlock(
-    credentials_file: Path = typer.Argument(
-        ...,
-        exists=False,
-        file_okay=True,
-        dir_okay=False,
-        readable=True,
-        help="Path to a local JSON file containing one or more Bitwarden account entries",
+    entry_name: str = typer.Argument(
+        DEFAULT_BITWARDEN_ENTRY_NAME,
+        help="StackOps secrets entry name that stores the Bitwarden API credentials.",
+        show_default=True,
     ),
-    account: str = typer.Option(..., "--account", "-a", help="Which account entry to use from the JSON file"),
+    profile: str = typer.Option(..., "--profile", help="StackOps secrets profile that stores the Bitwarden credentials."),
 ):
     """Authenticate with Bitwarden and persist a local BW_SESSION token."""
-    credentials_file = resolve_local_path(credentials_file)
-    if not credentials_file.is_file():
-        err_console.print(f"[bold red]Credentials file not found:[/bold red] {credentials_file}")
-        raise typer.Exit(code=2)
-
-    credentials = load_account_credentials(credentials_file, account)
+    credentials = load_bitwarden_credentials(entry_name, profile)
 
     env = os.environ.copy()
     existing_session = load_session_token_from_cache()
@@ -583,7 +580,11 @@ def login_and_unlock(
 
     login_check = run_command(["bw", "login", "--check"], env=env)
     if login_check.returncode == 0:
-        console.print(f"[green]Already logged in.[/green] Account: [bold]{credentials.account}[/bold]")
+        console.print(
+            "[green]Already logged in.[/green] "
+            f"Entry: [bold]{credentials.entry_name}[/bold] "
+            f"Profile: [bold]{credentials.profile}[/bold]"
+        )
     else:
         console.print("Logging in")
         login_result = run_command(["bw", "login", "--apikey"], env=env, check=True)
