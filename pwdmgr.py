@@ -180,12 +180,13 @@ def get_vault_status(session: Optional[str] = None) -> VaultStatus:
         return VaultStatus(status="unknown", user_email=None, user_id=None, server_url=None)
 
 
-def get_vault_account_label(vault_status: VaultStatus) -> str | None:
+def get_vault_account_details(vault_status: VaultStatus) -> list[tuple[str, str]]:
+    details: list[tuple[str, str]] = []
     if vault_status.user_email:
-        return vault_status.user_email
+        details.append(("Account", vault_status.user_email))
     if vault_status.user_id:
-        return f"user ID {vault_status.user_id}"
-    return None
+        details.append(("User ID", vault_status.user_id))
+    return details
 
 
 def run_bw_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None) -> str:
@@ -400,15 +401,14 @@ def search(
         script_name = Path(__file__).name
         login_command = f"{script_name} login-and-unlock --profile <profile> [entry_name]"
         if status == "locked":
-            account_label = get_vault_account_label(vault_status)
-            account_message = ""
-            if account_label:
-                account_message = f" Logged in as [bold]{escape(account_label)}[/bold]."
-            err_console.print(
-                f"[bold red]🔒 Vault is locked.[/bold red]{account_message} "
-                f"Run [bold]{login_command}[/bold] "
-                f"or save a valid session token using the CLI."
+            message_lines = ["[bold red]🔒 Vault is locked.[/bold red]"]
+            for label, value in get_vault_account_details(vault_status):
+                message_lines.append(f"[dim]{label}:[/dim] [bold]{escape(value)}[/bold]")
+            message_lines.append(
+                f"[dim]Next:[/dim] Run [bold]{login_command}[/bold] "
+                "or save a valid session token using the CLI."
             )
+            err_console.print("\n".join(message_lines))
             raise typer.Exit(code=1)
         if status == "unauthenticated":
             err_console.print(

@@ -225,6 +225,7 @@ def test_search_locked_reports_logged_in_account(monkeypatch) -> None:
     monkeypatch.setattr(pwdmgr, "get_vault_status", fake_get_vault_status)
 
     result = CliRunner().invoke(pwdmgr.app, ["search", "hi", "--fresh"])
+    output = result.output.replace("\r\n", "\n")
 
     assert result.exit_code == 1
-    assert "Vault is locked. Logged in as work@example.com." in result.output
+    assert "Vault is locked.\nAccount: work@example.com\nUser ID: user-123" in output
