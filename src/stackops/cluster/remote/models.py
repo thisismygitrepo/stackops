@@ -3,8 +3,8 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 
 from stackops.utils.accessories import randstr
-from stackops.utils.io import read_ini
-from stackops.utils.source_of_truth import DEFAULTS_PATH
+from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_general_string
+from stackops.utils.schemas.config.config_types import StackOpsGeneralStringKey
 
 
 JOB_STATUS: TypeAlias = Literal["queued", "running", "completed", "failed"]
@@ -158,12 +158,11 @@ class LogEntry:
         )
 
 
-def _read_default_config_value(key: str) -> str:
+def _read_default_config_value(key: StackOpsGeneralStringKey) -> str:
     try:
-        section = read_ini(DEFAULTS_PATH)["general"]
-        return str(section[key])
-    except (FileNotFoundError, KeyError, IndexError) as err:
-        raise ValueError(f"Default config value '{key}' could not be read from `{DEFAULTS_PATH}`") from err
+        return read_stackops_general_string(key)
+    except (FileNotFoundError, KeyError, ValueError) as err:
+        raise ValueError(f"Config value '{key}' could not be read from `{DOTFILES_STACKOPS_CONFIG_PATH}`") from err
 
 
 @dataclass

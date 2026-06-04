@@ -1,7 +1,7 @@
 
 from typing import Literal, TypeAlias
 from pathlib import Path
-from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, DEFAULTS_PATH, SCRIPTS_ROOT_PRIVATE
+from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, SCRIPTS_ROOT_PRIVATE, read_stackops_general_string_list
 from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
 
@@ -10,16 +10,14 @@ WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b
 
 def get_custom_roots(option: Literal["scripts", "prompts"]) -> list[Path]:
     custom_roots: list[Path] = []
-    if DEFAULTS_PATH.is_file():
-        from configparser import ConfigParser
-        config = ConfigParser()
-        config.read(DEFAULTS_PATH)
-        if config.has_section("general") and config.has_option("general", option):
-            custom_dirs = config.get("general", option).split(",")
-            for custom_dir in custom_dirs:
-                custom_path = Path(custom_dir.strip()).expanduser().resolve()
-                if custom_path.is_dir():
-                    custom_roots.append(custom_path)
+    try:
+        custom_dirs = read_stackops_general_string_list(option)
+    except (FileNotFoundError, KeyError, ValueError):
+        return custom_roots
+    for custom_dir in custom_dirs:
+        custom_path = Path(custom_dir).expanduser().resolve()
+        if custom_path.is_dir():
+            custom_roots.append(custom_path)
     return custom_roots
 
 

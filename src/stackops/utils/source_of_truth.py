@@ -1,9 +1,16 @@
-"""
-Utils
-"""
-
 import stackops
+import json
+import re
 from pathlib import Path
+from typing import cast
+
+from stackops.utils.schemas.config.config_types import (
+    StackOpsConfig,
+    StackOpsConnectionProfile,
+    StackOpsGeneralConfig,
+    StackOpsGeneralPathListKey,
+    StackOpsGeneralStringKey,
+)
 
 EXCLUDE_DIRS = [".links", "notebooks",
                 "CLAUDE.md", "CRUSH.md", "AGENTS.md",
@@ -23,8 +30,8 @@ DOTFILES_STACKOPS_SCRIPTS_MACOS_ROOT = DOTFILES_STACKOPS_SCRIPTS_ROOT.joinpath("
 DOTFILES_STACKOPS_INIT_LINUX_PATH = DOTFILES_STACKOPS_ROOT.joinpath("init_linux.sh")
 
 CONFIG_ROOT = Path.home().joinpath(".config/stackops")
-DEFAULTS_PATH = DOTFILES_STACKOPS_ROOT.joinpath("defaults.ini")
-DOTFILES_LAYOUTS_JSON_PATH = DOTFILES_STACKOPS_ROOT.joinpath("layouts.json")
+DOTFILES_STACKOPS_CONFIG_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "config.json")
+DOTFILES_LAYOUTS_JSON_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "layouts.json")
 DOTFILES_USER_MAPPER_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "dotfiles.yaml")
 DOTFILES_USER_BACKUP_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "data.yaml")
 DOTFILES_MAPPER_FILES_ROOT = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "files")
@@ -34,7 +41,6 @@ DOTFILES_SSL_ORIGIN_SERVER_ROOT = DOTFILES_PASSWORDS_ROOT.joinpath("ssl", "origi
 DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath("cert.pem")
 DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH = DOTFILES_SSL_ORIGIN_SERVER_ROOT.joinpath("key.pem")
 
-DOTFILES_TOKENS_ROOT = DOTFILES_CREDS_ROOT.joinpath("tokens")
 DOTFILES_RCLONE_CONF_PATH = DOTFILES_CREDS_ROOT.joinpath("rclone", "rclone.conf")
 DOTFILES_PYPIRC_PATH = DOTFILES_CREDS_ROOT.joinpath("msc", ".pypirc")
 DOTFILES_LLM_CREDS_ROOT = DOTFILES_CREDS_ROOT.joinpath("llm")
@@ -66,6 +72,121 @@ def resolve_source_of_truth_path(path_value: str) -> Path:
         if path_value.startswith(token_prefix):
             return token_path.joinpath(path_value.removeprefix(token_prefix)).expanduser().absolute()
     return Path(path_value).expanduser().absolute()
+
+
+def _reject_unknown_keys(data: dict[str, object], allowed_keys: set[str], path: str) -> None:
+    unknown_keys = sorted(set(data) - allowed_keys)
+    if unknown_keys:
+        raise ValueError(f"Unexpected StackOps config keys at {path}: {', '.join(unknown_keys)}")
+
+
+def _require_object(value: object, path: str) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise ValueError(f"StackOps config value at {path} must be an object: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    if not all(isinstance(key, str) for key in value):
+        raise ValueError(f"StackOps config object at {path} must use string keys: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    return cast(dict[str, object], value)
+
+
+def _require_string(value: object, path: str, *, non_empty: bool = True) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"StackOps config value at {path} must be a string: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    if non_empty and value == "":
+        raise ValueError(f"StackOps config value at {path} must be a non-empty string: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    return value
+
+
+def _require_version(value: object) -> str:
+    version = _require_string(value, "version")
+    if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version) is None:
+        raise ValueError(f"StackOps config version must use major.minor.patch format: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    return version
+
+
+def _require_string_list(value: object, path: str) -> list[str]:
+    if not isinstance(value, list):
+        raise ValueError(f"StackOps config value at {path} must be a list of strings: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    items: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or item.strip() == "":
+            raise ValueError(f"StackOps config value at {path}[{index}] must be a non-empty string: {DOTFILES_STACKOPS_CONFIG_PATH}")
+        items.append(item)
+    if len(set(items)) != len(items):
+        raise ValueError(f"StackOps config value at {path} must not contain duplicates: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    return items
+
+
+def _read_general_config(value: object) -> StackOpsGeneralConfig:
+    general = _require_object(value, "general")
+    _reject_unknown_keys(
+        general,
+        {"repos", "scripts", "prompts", "rclone_config_name", "email_config_name", "to_email"},
+        "general",
+    )
+    result: StackOpsGeneralConfig = {
+        "repos": _require_string_list(general.get("repos"), "general.repos"),
+        "scripts": _require_string_list(general.get("scripts"), "general.scripts"),
+        "rclone_config_name": _require_string(general.get("rclone_config_name"), "general.rclone_config_name"),
+        "email_config_name": _require_string(general.get("email_config_name"), "general.email_config_name"),
+        "to_email": _require_string(general.get("to_email"), "general.to_email"),
+    }
+    if "prompts" in general:
+        result["prompts"] = _require_string_list(general["prompts"], "general.prompts")
+    return result
+
+
+def _read_connection_profile(name: str, value: object) -> StackOpsConnectionProfile:
+    profile = _require_object(value, f"connection_profiles.{name}")
+    _reject_unknown_keys(profile, {"type", "ssid", "password"}, f"connection_profiles.{name}")
+    profile_type = _require_string(profile.get("type"), f"connection_profiles.{name}.type")
+    if profile_type != "wifi":
+        raise ValueError(f"StackOps connection profile '{name}' has unsupported type: {profile_type}")
+    return {
+        "type": "wifi",
+        "ssid": _require_string(profile.get("ssid"), f"connection_profiles.{name}.ssid"),
+        "password": _require_string(profile.get("password"), f"connection_profiles.{name}.password", non_empty=False),
+    }
+
+
+def _read_connection_profiles(value: object) -> dict[str, StackOpsConnectionProfile]:
+    raw_profiles = _require_object(value, "connection_profiles")
+    profiles: dict[str, StackOpsConnectionProfile] = {}
+    for profile_name, raw_profile in raw_profiles.items():
+        if profile_name == "":
+            raise ValueError(f"StackOps connection profile names must be non-empty: {DOTFILES_STACKOPS_CONFIG_PATH}")
+        profiles[profile_name] = _read_connection_profile(profile_name, raw_profile)
+    return profiles
+
+
+def read_stackops_config() -> StackOpsConfig:
+    if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
+        raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")
+    _reject_unknown_keys(raw_config, {"$schema", "version", "general", "connection_profiles"}, "root")
+    config: StackOpsConfig = {
+        "version": _require_version(raw_config.get("version")),
+        "general": _read_general_config(raw_config.get("general")),
+    }
+    if "$schema" in raw_config:
+        config["$schema"] = _require_string(raw_config["$schema"], "$schema", non_empty=False)
+    if "connection_profiles" in raw_config:
+        config["connection_profiles"] = _read_connection_profiles(raw_config["connection_profiles"])
+    return config
+
+
+def read_stackops_general_string(key: StackOpsGeneralStringKey) -> str:
+    return read_stackops_config()["general"][key]
+
+
+def read_stackops_general_string_list(key: StackOpsGeneralPathListKey) -> list[str]:
+    general = read_stackops_config()["general"]
+    if key == "repos":
+        return general["repos"]
+    if key == "scripts":
+        return general["scripts"]
+    if "prompts" not in general:
+        raise KeyError(key)
+    return general["prompts"]
 
 
 def dotfiles_llm_api_keys_path(provider: str) -> Path:

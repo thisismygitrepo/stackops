@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/thisismygitrepo/stackops/schemas/config.schema.json",
+  "title": "StackOps User Config Schema",
+  "version": "1.0.0",
+  "description": "Schema for the StackOps user configuration file at ~/dotfiles/stackops/config/config.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional link to the JSON Schema used for this file."
+    },
+    "version": {
+      "type": "string",
+      "description": "Config format version.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "examples": ["1.0.0"]
+    },
+    "general": {
+      "$ref": "#/definitions/GeneralConfig"
+    },
+    "connection_profiles": {
+      "type": "object",
+      "description": "Named connection profiles keyed by local profile name.",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/ConnectionProfile"
+      },
+      "default": {}
+    }
+  },
+  "required": ["version", "general"],
+  "definitions": {
+    "GeneralConfig": {
+      "type": "object",
+      "description": "Shared StackOps defaults used by CLI helpers.",
+      "additionalProperties": false,
+      "properties": {
+        "repos": {
+          "$ref": "#/definitions/PathList",
+          "description": "Repository roots managed by devops update and status commands."
+        },
+        "scripts": {
+          "$ref": "#/definitions/PathList",
+          "description": "Additional script roots searched by script launch helpers."
+        },
+        "prompts": {
+          "$ref": "#/definitions/PathList",
+          "description": "Additional prompt roots searched by prompt helpers."
+        },
+        "rclone_config_name": {
+          "type": "string",
+          "description": "Default rclone remote/profile name.",
+          "minLength": 1
+        },
+        "email_config_name": {
+          "type": "string",
+          "description": "Default email profile name used for notifications.",
+          "minLength": 1
+        },
+        "to_email": {
+          "type": "string",
+          "description": "Default recipient address used for notifications.",
+          "format": "email",
+          "minLength": 1
+        }
+      },
+      "required": ["repos", "scripts", "rclone_config_name", "email_config_name", "to_email"]
+    },
+    "PathList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "ConnectionProfile": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/WifiConnectionProfile"
+        }
+      ]
+    },
+    "WifiConnectionProfile": {
+      "type": "object",
+      "description": "Wi-Fi connection profile.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "wifi"
+        },
+        "ssid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "ssid", "password"]
+    }
+  }
+}

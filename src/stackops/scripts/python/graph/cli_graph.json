@@ -289,9 +289,9 @@
                 "signature": {
                   "raw_lines": [
                     "def clone(",
-                    "    directory: Annotated[str, typer.Argument(help=\"📁 Directory containing repo(s).\")] = \".\",",
-                    "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
-                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Select interactively.\")] = False,",
+                    "    specs_path: Annotated[",
+                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=f\"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.\")",
+                    "    ] = None,",
                     "    checkout_to_commit: Annotated[",
                     "        bool, typer.Option(\"--checkout-to-commit\", \"-ctc\", help=\"Check out specific commits listed in the specification.\")",
                     "    ] = False,",
@@ -306,68 +306,7 @@
                     "",
                     "    checkout_branch_flag = checkout_to_branch",
                     "    checkout_commit_flag = checkout_to_commit",
-                    "    had_failures = False",
-                    "",
-                    "    if interactive:",
-                    "        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import (",
-                    "            BACKUP_ROOT_PRIVATE,",
-                    "            BACKUP_ROOT_PUBLIC,",
-                    "        )",
-                    "",
-                    "        results_public = list(BACKUP_ROOT_PUBLIC.rglob(\"repos.json\"))",
-                    "        results_private = list(BACKUP_ROOT_PRIVATE.rglob(\"repos.json\"))",
-                    "        if len(results_public) + len(results_private) == 0:",
-                    "            print(\"❌ No repos.json specifications found in backup directories.\")",
-                    "            return",
-                    "        from stackops.utils.options import choose_from_options",
-                    "",
-                    "        chosen_files = choose_from_options(",
-                    "            options=[str(p) for p in results_public + results_private],",
-                    "            msg=\"Select a repos.json specification to clone from:\",",
-                    "            multi=True,",
-                    "            tv=True,",
-                    "            preview=\"bat\",",
-                    "        )",
-                    "        if chosen_files is None or len(chosen_files) == 0:",
-                    "            print(\"❓ Selection cancelled. No repositories were cloned.\")",
-                    "            return",
-                    "        for file in chosen_files:",
-                    "            typer.echo(\"\\n📥 Cloning or checking out repositories...\")",
-                    "            spec_path_self_managed = _resolve_spec_path(Path(file))",
-                    "            from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos",
-                    "",
-                    "            results = clone_repos(",
-                    "                spec_path=spec_path_self_managed,",
-                    "                preferred_remote=None,",
-                    "                checkout_branch_flag=checkout_branch_flag,",
-                    "                checkout_commit_flag=checkout_commit_flag,",
-                    "            )",
-                    "            had_failures = had_failures or any(status == \"failed\" for status, _message in results)",
-                    "        if had_failures:",
-                    "            raise typer.Exit(code=1)",
-                    "        return",
-                    "    if specs_path is not None:",
-                    "        spec_path_self_managed = _resolve_spec_path(Path(specs_path))",
-                    "    else:",
-                    "        dir_obj = _resolve_directory(directory)",
-                    "        if not dir_obj.exists():",
-                    "            typer.echo(f\"❌ Path does not exist: {dir_obj}\")",
-                    "            raise typer.Exit(code=1)",
-                    "        if not dir_obj.is_dir():",
-                    "            typer.echo(f\"❌ Path is not a directory: {dir_obj}\")",
-                    "            raise typer.Exit(code=1)",
-                    "        spec_path_default = dir_obj.joinpath(\"repos.json\")",
-                    "        from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import get_backup_path",
-                    "",
-                    "        managed_spec_path = get_backup_path(orig_path=spec_path_default, sensitivity=\"private\", destination=None, shared=False)",
-                    "        if not managed_spec_path.exists():",
-                    "            typer.echo(",
-                    "                f\"❌ Specification file not found: {managed_spec_path}. \"",
-                    "                f\"Expected a recorded spec for {dir_obj}. \"",
-                    "                \"Use devops repos sync --specs-path <path> to target a spec explicitly.\"",
-                    "            )",
-                    "            raise typer.Exit(code=1)",
-                    "        spec_path_self_managed = _resolve_spec_path(managed_spec_path)",
+                    "    spec_path_self_managed = _resolve_spec_path(specs_path)",
                     "    from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos",
                     "",
                     "    results = clone_repos(",
@@ -379,27 +318,12 @@
                   "name": "clone",
                   "parameters": [
                     {
-                      "name": "directory",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": ".",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='📁 Directory containing repo(s).')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "📁 Directory containing repo(s)."
-                      }
-                    },
-                    {
                       "name": "specs_path",
                       "kind": "positional_or_keyword",
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help='Path to repos.json specification file.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help=f'Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -411,30 +335,7 @@
                         ],
                         "short_flags": [
                           "-s"
-                        ],
-                        "help": "Path to repos.json specification file."
-                      }
-                    },
-                    {
-                      "name": "interactive",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Select interactively.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--interactive",
-                          "-i"
-                        ],
-                        "long_flags": [
-                          "--interactive"
-                        ],
-                        "short_flags": [
-                          "-i"
-                        ],
-                        "help": "Select interactively."
+                        ]
                       }
                     },
                     {
@@ -484,9 +385,6 @@
                   ],
                   "return": "None"
                 },
-                "typer": {
-                  "no_args_is_help": true
-                },
                 "doc": "📥 Clone repositories described by a repos.json specification.",
                 "aliases": [
                   {
@@ -509,11 +407,16 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def capture(directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None) -> None:",
+                    "def capture(",
+                    "    directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
+                    "    specs_path: Annotated[",
+                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=f\"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.\")",
+                    "    ] = None,",
+                    ") -> None:",
                     "    \"\"\"📝 Record repositories into a repos.json specification.\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos",
                     "",
-                    "    save_path = record_repos(repos_root_str=directory)",
+                    "    save_path = record_repos(repos_root_str=directory, specs_path=specs_path)",
                     "    print(f\"\\n✅ Saved repository specification to {save_path}\")"
                   ],
                   "name": "capture",
@@ -531,6 +434,27 @@
                         "long_flags": [],
                         "short_flags": [],
                         "help": "📁 Directory containing repo(s)."
+                      }
+                    },
+                    {
+                      "name": "specs_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help=f'Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--specs-path",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--specs-path"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ]
                       }
                     }
                   ],
@@ -558,25 +482,35 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def checkout_command(directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None) -> None:",
+                    "def checkout_command(",
+                    "    specs_path: Annotated[",
+                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=f\"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.\")",
+                    "    ] = None,",
+                    ") -> None:",
                     "    \"\"\"🔀 Check out specific commits listed in the specification.\"\"\"",
-                    "    clone(directory=directory or \".\", specs_path=None, interactive=False, checkout_to_commit=True, checkout_to_branch=False)"
+                    "    clone(specs_path=specs_path, checkout_to_commit=True, checkout_to_branch=False)"
                   ],
                   "name": "checkout_command",
                   "parameters": [
                     {
-                      "name": "directory",
+                      "name": "specs_path",
                       "kind": "positional_or_keyword",
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='📁 Directory containing repo(s).')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help=f'Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.')]",
                       "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "📁 Directory containing repo(s)."
+                        "kind": "option",
+                        "param_decls": [
+                          "--specs-path",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--specs-path"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ]
                       }
                     }
                   ],
@@ -604,25 +538,35 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def checkout_to_branch_command(directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None) -> None:",
+                    "def checkout_to_branch_command(",
+                    "    specs_path: Annotated[",
+                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=f\"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.\")",
+                    "    ] = None,",
+                    ") -> None:",
                     "    \"\"\"🔀 Check out the branch recorded in the specification.\"\"\"",
-                    "    clone(directory=directory or \".\", specs_path=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True)"
+                    "    clone(specs_path=specs_path, checkout_to_commit=False, checkout_to_branch=True)"
                   ],
                   "name": "checkout_to_branch_command",
                   "parameters": [
                     {
-                      "name": "directory",
+                      "name": "specs_path",
                       "kind": "positional_or_keyword",
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='📁 Directory containing repo(s).')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help=f'Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.')]",
                       "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "📁 Directory containing repo(s)."
+                        "kind": "option",
+                        "param_decls": [
+                          "--specs-path",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--specs-path"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ]
                       }
                     }
                   ],
@@ -892,17 +836,16 @@
                     "    on_conflict = resolve_conflict_action(on_conflict=on_conflict)",
                     "    import platform",
                     "",
-                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT",
+                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_general_string",
                     "    from stackops.utils.code import get_uv_command_executing_python_script",
                     "    console = Console()",
                     "",
                     "    if cloud is None:",
                     "        try:",
-                    "            from stackops.utils.io import read_ini",
-                    "            cloud_resolved = read_ini(DEFAULTS_PATH)[\"general\"][\"rclone_config_name\"]",
-                    "            console.print(Panel(f\"⚠️  Using default cloud: `{cloud_resolved}` from {DEFAULTS_PATH}\", title=\"Default Cloud\", border_style=\"yellow\"))",
-                    "        except FileNotFoundError as exc:",
-                    "            console.print(Panel(f\"❌ ERROR: No cloud profile found\\nLocation: {DEFAULTS_PATH}\\nPlease set one up or provide one via the --cloud flag.\", title=\"Error\", border_style=\"red\"))",
+                    "            cloud_resolved = read_stackops_general_string(\"rclone_config_name\")",
+                    "            console.print(Panel(f\"⚠️  Using default cloud: `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}\", title=\"Default Cloud\", border_style=\"yellow\"))",
+                    "        except (FileNotFoundError, KeyError, ValueError) as exc:",
+                    "            console.print(Panel(f\"❌ ERROR: No cloud profile found\\nLocation: {DOTFILES_STACKOPS_CONFIG_PATH}\\nPlease set one up or provide one via the --cloud flag.\", title=\"Error\", border_style=\"red\"))",
                     "            raise typer.Exit(code=1) from exc",
                     "    else:",
                     "        cloud_resolved = cloud",
@@ -5017,7 +4960,7 @@
                       "type": "str",
                       "default": "DEFAULT_OS_FILTER",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")]",
+                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help=f'OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -6572,7 +6515,7 @@
                           "type": "PlotlyView",
                           "default": "sunburst",
                           "required": false,
-                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f\"Plotly chart view. Choose from {', '.join(get_args(PlotlyView))}.\")]",
+                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f'Plotly chart view. Choose from {', '.join(get_args(PlotlyView))}.')]",
                           "typer": {
                             "kind": "argument",
                             "param_decls": [],
@@ -12288,6 +12231,10 @@
                 "    target: Annotated[str, typer.Argument(help=\"🎯 file/folder path to be be sent to here.\")],",
                 "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-o\", help=\"📝 Overwrite existing file.\")] = defaults[\"overwrite\"],",
                 "    share: Annotated[bool, typer.Option(\"--share\", \"-s\", help=\"🔗 Share file / directory\")] = defaults[\"share\"],",
+                "    record: Annotated[bool, typer.Option(\"--record\", \"-m\", help=\"📝 Record an upload in user mapper/data.yaml. Requires --record-name.\")] = False,",
+                "    record_group: Annotated[str, typer.Option(\"--record-group\", \"-g\", help=\"🗂 Group name for --record in mapper/data.yaml.\")] = \"default\",",
+                "    record_name: Annotated[str | None, typer.Option(\"--record-name\", \"-n\", help=\"🏷 Entry name for --record in mapper/data.yaml. Required when using --record.\")] = None,",
+                "    record_os: Annotated[str, typer.Option(\"--record-os\", help=\"💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.\")] = DEFAULT_OS_FILTER,",
                 "    rel2home: Annotated[bool, typer.Option(\"--relative2home\", \"-r\", help=\"🏠 Relative to `myhome` folder\")] = defaults[\"rel2home\"],",
                 "    root: Annotated[str, typer.Option(\"--root\", \"-R\", help=\"🌳 Remote root.\")] = defaults[\"root\"],",
                 "    key: Annotated[str | None, typer.Option(\"--key\", \"-k\", help=\"🔑 Key for encryption\")] = defaults[\"key\"],",
@@ -12299,7 +12246,24 @@
                 ") -> None:",
                 "    \"\"\"📤 Upload or 📥 Download files/folders to/from cloud storage services.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main",
-                "    copy_main(source=source, target=target, overwrite=overwrite, share=share, rel2home=rel2home, root=root, key=key, pwd=pwd, encrypt=encrypt, zip_=zip_, os_specific=os_specific, config=config)"
+                "    copy_main(",
+                "        source=source,",
+                "        target=target,",
+                "        overwrite=overwrite,",
+                "        share=share,",
+                "        record=record,",
+                "        record_group=record_group,",
+                "        record_name=record_name,",
+                "        record_os=record_os,",
+                "        rel2home=rel2home,",
+                "        root=root,",
+                "        key=key,",
+                "        pwd=pwd,",
+                "        encrypt=encrypt,",
+                "        zip_=zip_,",
+                "        os_specific=os_specific,",
+                "        config=config,",
+                "    )"
               ],
               "name": "copy",
               "parameters": [
@@ -12375,6 +12339,91 @@
                       "-s"
                     ],
                     "help": "🔗 Share file / directory"
+                  }
+                },
+                {
+                  "name": "record",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--record', '-m', help='📝 Record an upload in user mapper/data.yaml. Requires --record-name.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--record",
+                      "-m"
+                    ],
+                    "long_flags": [
+                      "--record"
+                    ],
+                    "short_flags": [
+                      "-m"
+                    ],
+                    "help": "📝 Record an upload in user mapper/data.yaml. Requires --record-name."
+                  }
+                },
+                {
+                  "name": "record_group",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "default",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Option('--record-group', '-g', help='🗂 Group name for --record in mapper/data.yaml.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--record-group",
+                      "-g"
+                    ],
+                    "long_flags": [
+                      "--record-group"
+                    ],
+                    "short_flags": [
+                      "-g"
+                    ],
+                    "help": "🗂 Group name for --record in mapper/data.yaml."
+                  }
+                },
+                {
+                  "name": "record_name",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--record-name', '-n', help='🏷 Entry name for --record in mapper/data.yaml. Required when using --record.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--record-name",
+                      "-n"
+                    ],
+                    "long_flags": [
+                      "--record-name"
+                    ],
+                    "short_flags": [
+                      "-n"
+                    ],
+                    "help": "🏷 Entry name for --record in mapper/data.yaml. Required when using --record."
+                  }
+                },
+                {
+                  "name": "record_os",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "DEFAULT_OS_FILTER",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Option('--record-os', help='💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--record-os"
+                    ],
+                    "long_flags": [
+                      "--record-os"
+                    ],
+                    "short_flags": [],
+                    "help": "💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all."
                   }
                 },
                 {
@@ -15338,7 +15387,7 @@
                       "type": "HOST",
                       "default": "local",
                       "required": false,
-                      "annotation_raw": "Annotated[HOST, typer.Option(..., '--host', '-h', help=f\"Machine to run agents on. One of {', '.join(get_args(HOST))}\")]",
+                      "annotation_raw": "Annotated[HOST, typer.Option(..., '--host', '-h', help=f'Machine to run agents on. One of {', '.join(get_args(HOST))}')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -16223,7 +16272,7 @@
                       "type": "HOST | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[HOST | None, typer.Option(..., '--host', '-h', help=f\"Override machine. One of {', '.join(get_args(HOST))}\")]",
+                      "annotation_raw": "Annotated[HOST | None, typer.Option(..., '--host', '-h', help=f'Override machine. One of {', '.join(get_args(HOST))}')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -17065,7 +17114,7 @@
                   "type": "str",
                   "default": "",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")]",
+                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f'AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [

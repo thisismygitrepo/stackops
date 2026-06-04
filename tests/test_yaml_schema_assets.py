@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import stackops.utils.schemas.agents as agents_schema_assets
+import stackops.utils.schemas.config as config_schema_assets
 import stackops.utils.schemas.ve as ve_schema_assets
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.utils.path_reference import get_path_reference_path
@@ -39,3 +40,12 @@ def test_ve_yaml_schema_is_loaded_from_schema_asset(tmp_path: Path) -> None:
     expected_schema_path = get_path_reference_path(module=ve_schema_assets, path_reference=ve_schema_assets.VE_SCHEMA_PATH_REFERENCE)
 
     assert _read_json(tmp_path / ".ve.schema.json") == _read_json(expected_schema_path)
+
+
+def test_stackops_config_schema_asset_is_valid_json() -> None:
+    schema_path = get_path_reference_path(module=config_schema_assets, path_reference=config_schema_assets.CONFIG_SCHEMA_PATH_REFERENCE)
+
+    schema = _read_json(schema_path)
+
+    assert schema["title"] == "StackOps User Config Schema"
+    assert schema["properties"]["general"]["$ref"] == "#/definitions/GeneralConfig"

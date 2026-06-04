@@ -1,7 +1,11 @@
 import hashlib
+import json
 from pathlib import Path
 
+import pytest
+
 from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import _format_self_managed_mapper_path, get_backup_path
+import stackops.utils.source_of_truth as source_of_truth
 from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_MAPPER_FILES_ROOT, DOTFILES_ROOT, resolve_source_of_truth_path
 
 
@@ -29,3 +33,61 @@ def test_get_backup_path_ignores_sensitivity_and_shared_for_default_destination(
 
     assert get_backup_path(original_path, sensitivity="public", destination=None, shared=True) == private_path
     assert private_path.parent == DOTFILES_MAPPER_FILES_ROOT
+
+
+def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "general": {
+                    "repos": ["~/code/repo"],
+                    "scripts": ["~/scripts"],
+                    "rclone_config_name": "cloud",
+                    "email_config_name": "mail",
+                    "to_email": "user@example.com",
+                },
+                "connection_profiles": {
+                    "local_wifi": {
+                        "type": "wifi",
+                        "ssid": "local",
+                        "password": "",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(source_of_truth, "DOTFILES_STACKOPS_CONFIG_PATH", config_path)
+
+    config = source_of_truth.read_stackops_config()
+
+    assert config["general"]["repos"] == ["~/code/repo"]
+    assert source_of_truth.read_stackops_general_string("rclone_config_name") == "cloud"
+    assert source_of_truth.read_stackops_general_string_list("scripts") == ["~/scripts"]
+    assert config["connection_profiles"]["local_wifi"]["type"] == "wifi"
+
+
+def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "general": {
+                    "repos": [],
+                    "scripts": [],
+                    "rclone_config_name": "cloud",
+                    "email_config_name": "mail",
+                    "to_email": "user@example.com",
+                    "extra": "nope",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(source_of_truth, "DOTFILES_STACKOPS_CONFIG_PATH", config_path)
+
+    with pytest.raises(ValueError, match="Unexpected StackOps config keys at general"):
+        source_of_truth.read_stackops_config()

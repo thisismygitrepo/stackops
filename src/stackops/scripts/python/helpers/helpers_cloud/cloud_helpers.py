@@ -1,7 +1,6 @@
 
-# from stackops.utils.io import read_ini,
 from stackops.utils.accessories import pprint
-from stackops.utils.source_of_truth import DEFAULTS_PATH, read_quick_password
+from stackops.utils.source_of_truth import read_quick_password, read_stackops_general_string
 from stackops.utils.ve import VE_YAML, CLOUD
 
 
@@ -53,8 +52,7 @@ def get_secure_share_cloud_config(interactive: bool, cloud: str | None) -> CLOUD
             console.print(f"☁️  Using cloud from environment: {cloud}")
         else:
             try:
-                from stackops.utils.io import read_ini
-                default_cloud__ = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"]
+                default_cloud__ = read_stackops_general_string("rclone_config_name")
             except Exception:
                 default_cloud__ = "No default cloud found."
             if default_cloud__ == "No default cloud found." or interactive:

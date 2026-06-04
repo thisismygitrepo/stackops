@@ -220,17 +220,16 @@ def main(
     on_conflict = resolve_conflict_action(on_conflict=on_conflict)
     import platform
 
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT
+    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_general_string
     from stackops.utils.code import get_uv_command_executing_python_script
     console = Console()
 
     if cloud is None:
         try:
-            from stackops.utils.io import read_ini
-            cloud_resolved = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"]
-            console.print(Panel(f"⚠️  Using default cloud: `{cloud_resolved}` from {DEFAULTS_PATH}", title="Default Cloud", border_style="yellow"))
-        except FileNotFoundError as exc:
-            console.print(Panel(f"❌ ERROR: No cloud profile found\nLocation: {DEFAULTS_PATH}\nPlease set one up or provide one via the --cloud flag.", title="Error", border_style="red"))
+            cloud_resolved = read_stackops_general_string("rclone_config_name")
+            console.print(Panel(f"⚠️  Using default cloud: `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}", title="Default Cloud", border_style="yellow"))
+        except (FileNotFoundError, KeyError, ValueError) as exc:
+            console.print(Panel(f"❌ ERROR: No cloud profile found\nLocation: {DOTFILES_STACKOPS_CONFIG_PATH}\nPlease set one up or provide one via the --cloud flag.", title="Error", border_style="red"))
             raise typer.Exit(code=1) from exc
     else:
         cloud_resolved = cloud

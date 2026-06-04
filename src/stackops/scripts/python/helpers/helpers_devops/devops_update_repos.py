@@ -10,8 +10,7 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_repos.update import RepositoryUpdateResult, run_uv_sync, update_repository
-from stackops.utils.io import read_ini
-from stackops.utils.source_of_truth import DEFAULTS_PATH
+from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_general_string_list
 
 
 console = Console()
@@ -200,19 +199,16 @@ def main(verbose: bool = True, allow_password_prompt: bool = False) -> None:
     _ = verbose
     repos: list[Path] = []
     try:
-        tmp = read_ini(DEFAULTS_PATH)["general"]["repos"].split(",")
-        if tmp[-1] == "":
-            tmp = tmp[:-1]
-        for item in tmp:
+        for item in read_stackops_general_string_list("repos"):
             item_obj = Path(item).expanduser()
             if item_obj not in repos:
                 repos.append(item_obj)
-    except (FileNotFoundError, KeyError, IndexError):
+    except (FileNotFoundError, KeyError, ValueError):
         console.print(
             Panel(
                 "\n".join(
                     [
-                        f"🚫 Configuration error: missing {DEFAULTS_PATH} or the [general] section / repos key.",
+                        f"🚫 Configuration error: missing {DOTFILES_STACKOPS_CONFIG_PATH} or the general.repos list.",
                         "ℹ️  Using default repositories instead.",
                     ]
                 ),
@@ -227,11 +223,16 @@ def main(verbose: bool = True, allow_password_prompt: bool = False) -> None:
                     [
                         "✨ Example configuration:",
                         "",
-                        "[general]",
-                        "repos = ~/code/repo1,~/code/repo2",
-                        "rclone_config_name = onedrivePersonal",
-                        "email_config_name = Yahoo3",
-                        "to_email = myemail@email.com",
+                        "{",
+                        '  "version": "1.0.0",',
+                        '  "general": {',
+                        '    "repos": ["~/code/repo1", "~/code/repo2"],',
+                        '    "scripts": [],',
+                        '    "rclone_config_name": "onedrivePersonal",',
+                        '    "email_config_name": "Yahoo3",',
+                        '    "to_email": "myemail@email.com"',
+                        "  }",
+                        "}",
                     ]
                 ),
                 border_style="cyan",

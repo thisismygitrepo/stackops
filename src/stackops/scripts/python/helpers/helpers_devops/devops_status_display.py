@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from stackops.utils.source_of_truth import DEFAULTS_PATH
+from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
 
 
 console = Console()
@@ -88,7 +88,7 @@ def display_repos_status(status: dict[str, Any]) -> None:
     console.rule("[bold cyan]📚 Configured Repositories[/bold cyan]")
 
     if not status["configured"]:
-        console.print(Panel(f"⚠️  No repositories configured in {DEFAULTS_PATH}", title="Repositories", border_style="yellow", padding=(1, 2)))
+        console.print(Panel(f"⚠️  No repositories configured in {DOTFILES_STACKOPS_CONFIG_PATH}", title="Repositories", border_style="yellow", padding=(1, 2)))
         return
 
     if status["count"] == 0:

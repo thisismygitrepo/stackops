@@ -13,8 +13,8 @@ from rich.console import Console
 from stackops.cluster.remote.models import JOB_STATUS, LogEntry
 from stackops.utils import rclone as rclone_utils
 from stackops.utils.files.read import read_json
-from stackops.utils.io import read_ini, save_json
-from stackops.utils.source_of_truth import DEFAULTS_PATH
+from stackops.utils.io import save_json
+from stackops.utils.source_of_truth import read_stackops_general_string
 
 
 LOCK_EXPIRY_SECONDS = 3600
@@ -59,7 +59,7 @@ class CloudManager:
         self.status_root = status_root
         self.max_jobs = max_jobs
         if cloud is None:
-            self.cloud = str(read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"])
+            self.cloud = read_stackops_general_string("rclone_config_name")
         else:
             self.cloud = cloud
         self.lock_claimed = False

@@ -9,7 +9,7 @@ from typing import Any, TypedDict
 import stackops.settings.shells.bash as bash_shell_assets
 import stackops.settings.shells.pwsh as pwsh_shell_assets
 import stackops.utils.path_core as path_core
-from stackops.utils.source_of_truth import CONFIG_ROOT, DEFAULTS_PATH, resolve_source_of_truth_path
+from stackops.utils.source_of_truth import CONFIG_ROOT, read_stackops_general_string, read_stackops_general_string_list, resolve_source_of_truth_path
 from stackops.utils.links import files_are_identical
 from stackops.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
 from stackops.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
@@ -67,11 +67,8 @@ def check_shell_profile_status() -> dict[str, Any]:
 
 def check_repos_status() -> dict[str, Any]:
     """Check configured repositories status."""
-    from stackops.utils.io import read_ini
-
     try:
-        repos_str = read_ini(DEFAULTS_PATH)["general"]["repos"]
-        repo_paths = [Path(p.strip()).expanduser() for p in repos_str.split(",") if p.strip()]
+        repo_paths = [Path(repo_path).expanduser() for repo_path in read_stackops_general_string_list("repos")]
 
         repos_info = []
         for repo_path in repo_paths:
@@ -97,7 +94,7 @@ def check_repos_status() -> dict[str, Any]:
                 repos_info.append({"path": str(repo_path), "name": repo_path.name, "exists": True, "is_repo": False})
 
         return {"configured": True, "count": len(repos_info), "repos": repos_info}
-    except (FileNotFoundError, KeyError, IndexError):
+    except (FileNotFoundError, KeyError, ValueError):
         return {"configured": False, "count": 0, "repos": []}
 
 
@@ -225,11 +222,9 @@ def check_important_tools() -> dict[str, dict[str, bool]]:
 
 def check_backup_config() -> dict[str, Any]:
     """Check backup configuration status."""
-    from stackops.utils.io import read_ini
-
     try:
-        cloud_config = read_ini(DEFAULTS_PATH)["general"]["rclone_config_name"]
-    except (FileNotFoundError, KeyError, IndexError):
+        cloud_config = read_stackops_general_string("rclone_config_name")
+    except (FileNotFoundError, KeyError, ValueError):
         cloud_config = "Not configured"
 
     try:

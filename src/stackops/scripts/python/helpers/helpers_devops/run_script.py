@@ -15,7 +15,7 @@ Recursively Searched Predefined Directories:
 
 * 'dynamic' : fetched from GitHub repository on the fly (relies on latest commit, rather than the version currently installed)
 
-* 'custom'  : custom directories from comma separated entry 'scripts' under 'general' section @ stackops.utils.source_of_truth.DEFAULTS_PATH
+* 'custom'  : custom directories from the StackOps config 'general.scripts' list
 
 """
 
@@ -119,20 +119,18 @@ def run_py_script(ctx: typer.Context,
             raise typer.Exit(code=1)
 
     from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
-    from stackops.utils.source_of_truth import DEFAULTS_PATH, SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY
+    from stackops.utils.source_of_truth import SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY, read_stackops_general_string_list
 
     def get_custom_roots() -> list[Path]:
         custom_roots: list[Path] = []
-        if DEFAULTS_PATH.is_file():
-            from configparser import ConfigParser
-            config = ConfigParser()
-            config.read(DEFAULTS_PATH)
-            if config.has_section("general") and config.has_option("general", "scripts"):
-                custom_dirs = config.get("general", "scripts").split(",")
-                for custom_dir in custom_dirs:
-                    custom_path = Path(custom_dir.strip()).expanduser().resolve()
-                    if custom_path.is_dir():
-                        custom_roots.append(custom_path)
+        try:
+            custom_dirs = read_stackops_general_string_list("scripts")
+        except (FileNotFoundError, KeyError, ValueError):
+            return custom_roots
+        for custom_dir in custom_dirs:
+            custom_path = Path(custom_dir).expanduser().resolve()
+            if custom_path.is_dir():
+                custom_roots.append(custom_path)
         return custom_roots
 
     roots: list[Path] = []
