@@ -148,6 +148,36 @@ def test_python_secrets_api_allows_missing_scopes() -> None:
         assert search_secrets(entry_name="github-personal", scopes=("repo",)) == []
 
 
+def test_python_secrets_api_allows_empty_tags_and_scopes_arrays() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        payload["entries"][0]["tags"] = []  # type: ignore[index]
+        payload["entries"][0]["secrets"][0]["tags"] = []  # type: ignore[index]
+        payload["entries"][0]["secrets"][0]["scopes"] = []  # type: ignore[index]
+        _write_secrets_file(payload)
+
+        entries = search_secrets(entry_name="github-personal")
+
+        assert entries == [
+            {
+                "name": "github-personal",
+                "tags": [],
+                "username": "octocat",
+                "secrets": [
+                    {
+                        "tags": [],
+                        "scopes": [],
+                        "keyValues": {"GITHUB_TOKEN": "ghp_test"},
+                    }
+                ],
+            }
+        ]
+        assert search_secrets(entry_name="github-personal", tags=("github",)) == []
+        assert search_secrets(entry_name="github-personal", secret_tags=("personal-access-token",)) == []
+        assert search_secrets(entry_name="github-personal", scopes=("repo",)) == []
+
+
 def _write_secrets_file(payload: dict[str, object]) -> None:
     secrets_path = Path(".stackops") / "secrets" / "secrets.json"
     secrets_path.parent.mkdir(parents=True, exist_ok=True)

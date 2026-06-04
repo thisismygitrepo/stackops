@@ -158,8 +158,6 @@ def _string_list(value: Any, path: str) -> list[str]:
         if not isinstance(item, str) or not item.strip():
             _fail(f"Invalid secrets file: {path}[{index}] must be a non-empty string.")
         values.append(item)
-    if not values:
-        _fail(f"Invalid secrets file: {path} must define at least one value.")
     return values
 
 

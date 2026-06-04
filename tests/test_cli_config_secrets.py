@@ -257,6 +257,29 @@ def test_devops_config_secrets_edit_opens_custom_path_and_creates_template(monke
         assert (custom_path.parent / "secrets.schema.json").exists()
 
 
+def test_devops_config_secrets_verbose_handles_empty_tags_arrays() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        payload["entries"][0]["tags"] = []  # type: ignore[index]
+        payload["entries"][0]["secrets"][0]["tags"] = []  # type: ignore[index]
+        payload["entries"][0]["secrets"][0]["scopes"] = []  # type: ignore[index]
+        _write_secrets_file(payload)
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(
+            get_app(),
+            ["c", "secrets", "--name", "github-personal", "--key", "GITHUB_TOKEN", "--verbose"],
+            env={"OP_PROGRAM_PATH": str(op_path)},
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Bundle: github-personal / <unnamed secret>" in result.output
+        assert "Entry tags: -" in result.output
+        assert "Secret tags: -" in result.output
+        assert "Scopes: -" in result.output
+
+
 def _write_secrets_file(payload: dict[str, object]) -> None:
     secrets_path = Path(".stackops") / "secrets" / "secrets.json"
     secrets_path.parent.mkdir(parents=True, exist_ok=True)
