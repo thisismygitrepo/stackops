@@ -30,8 +30,6 @@ APP_DIR = Path(__file__).resolve().parent
 # Encrypted cache location
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"
 CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
-LEGACY_CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.encrypted.json"
-LEGACY_KEY_PATH = APP_DIR / ".pwdmgr_cache.key"
 
 
 def load_encrypted_cache() -> dict[str, str]:
@@ -610,22 +608,16 @@ def login_and_unlock(
 @app.command("c", no_args_is_help=True, help="Alias for clean-cache.", hidden=True)
 @app.command(
     "clean-cache",
-    help="<c> Remove encrypted pwdmgr cache and legacy local-key artifacts.",
+    help="<c> Remove encrypted pwdmgr cache stored under ~/tmp_results.",
 )
 def clean_cache():
-    """Remove cached pwdmgr data."""
-    removed_paths: list[Path] = []
-    for path in (CACHE_PATH, LEGACY_CACHE_PATH, LEGACY_KEY_PATH):
-        if path.exists():
-            path.unlink()
-            removed_paths.append(path)
-
-    if removed_paths:
-        for cache_path in (CACHE_PATH, LEGACY_CACHE_PATH):
-            prune_empty_directories(cache_path.parent, stop=TMP_RESULTS_ROOT)
+    """Remove cached pwdmgr data under ~/tmp_results."""
+    if CACHE_PATH.exists():
+        CACHE_PATH.unlink()
+        prune_empty_directories(CACHE_PATH.parent, stop=TMP_RESULTS_ROOT)
         console.print(
             "[green]Removed cached pwdmgr data.[/green] "
-            "This clears cached search results, any saved BW_SESSION, and legacy pwdmgr key material."
+            "This clears cached search results and any saved BW_SESSION."
         )
         return
 
