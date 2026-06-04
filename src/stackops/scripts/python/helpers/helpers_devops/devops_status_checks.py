@@ -9,7 +9,7 @@ from typing import Any, TypedDict
 import stackops.settings.shells.bash as bash_shell_assets
 import stackops.settings.shells.pwsh as pwsh_shell_assets
 import stackops.utils.path_core as path_core
-from stackops.utils.source_of_truth import CONFIG_ROOT, read_stackops_config_string, read_stackops_config_string_list, resolve_source_of_truth_path
+from stackops.utils.source_of_truth import CONFIG_ROOT, read_stackops_config_string, resolve_source_of_truth_path
 from stackops.utils.links import files_are_identical
 from stackops.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
 from stackops.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
@@ -66,36 +66,8 @@ def check_shell_profile_status() -> dict[str, Any]:
 
 
 def check_repos_status() -> dict[str, Any]:
-    """Check configured repositories status."""
-    try:
-        repo_paths = [Path(repo_path).expanduser() for repo_path in read_stackops_config_string_list("repos")]
-
-        repos_info = []
-        for repo_path in repo_paths:
-            if not repo_path.exists():
-                repos_info.append({"path": str(repo_path), "name": repo_path.name, "exists": False, "is_repo": False})
-                continue
-
-            try:
-                import git
-
-                repo = git.Repo(str(repo_path))
-                repos_info.append(
-                    {
-                        "path": str(repo_path),
-                        "name": repo_path.name,
-                        "exists": True,
-                        "is_repo": True,
-                        "clean": not repo.is_dirty(untracked_files=True),
-                        "branch": repo.active_branch.name if not repo.head.is_detached else "DETACHED",
-                    }
-                )
-            except Exception:
-                repos_info.append({"path": str(repo_path), "name": repo_path.name, "exists": True, "is_repo": False})
-
-        return {"configured": True, "count": len(repos_info), "repos": repos_info}
-    except (FileNotFoundError, KeyError, ValueError):
-        return {"configured": False, "count": 0, "repos": []}
+    """Check repository status."""
+    return {"configured": False, "count": 0, "repos": []}
 
 
 def check_ssh_status() -> dict[str, Any]:

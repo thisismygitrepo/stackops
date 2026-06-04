@@ -41,7 +41,6 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
         json.dumps(
             {
                 "version": "1.0.0",
-                "repos": ["~/code/repo"],
                 "rclone_config_name": "cloud",
                 "email_config_name": "mail",
                 "to_email": "user@example.com",
@@ -53,7 +52,7 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
 
     config = source_of_truth.read_stackops_config()
 
-    assert config["repos"] == ["~/code/repo"]
+    assert config["to_email"] == "user@example.com"
     assert source_of_truth.read_stackops_config_string("rclone_config_name") == "cloud"
 
 
@@ -63,7 +62,6 @@ def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.Mo
         json.dumps(
             {
                 "version": "1.0.0",
-                "repos": [],
                 "rclone_config_name": "cloud",
                 "email_config_name": "mail",
                 "to_email": "user@example.com",

@@ -6,7 +6,6 @@ from typing import cast
 
 from stackops.utils.schemas.config.config_types import (
     StackOpsConfig,
-    StackOpsConfigPathListKey,
     StackOpsConfigStringKey,
 )
 
@@ -101,27 +100,13 @@ def _require_version(value: object) -> str:
     return version
 
 
-def _require_string_list(value: object, path: str) -> list[str]:
-    if not isinstance(value, list):
-        raise ValueError(f"StackOps config value at {path} must be a list of strings: {DOTFILES_STACKOPS_CONFIG_PATH}")
-    items: list[str] = []
-    for index, item in enumerate(value):
-        if not isinstance(item, str) or item.strip() == "":
-            raise ValueError(f"StackOps config value at {path}[{index}] must be a non-empty string: {DOTFILES_STACKOPS_CONFIG_PATH}")
-        items.append(item)
-    if len(set(items)) != len(items):
-        raise ValueError(f"StackOps config value at {path} must not contain duplicates: {DOTFILES_STACKOPS_CONFIG_PATH}")
-    return items
-
-
 def read_stackops_config() -> StackOpsConfig:
     if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
         raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
     raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")
-    _reject_unknown_keys(raw_config, {"$schema", "version", "repos", "rclone_config_name", "email_config_name", "to_email"}, "root")
+    _reject_unknown_keys(raw_config, {"$schema", "version", "rclone_config_name", "email_config_name", "to_email"}, "root")
     config: StackOpsConfig = {
         "version": _require_version(raw_config.get("version")),
-        "repos": _require_string_list(raw_config.get("repos"), "repos"),
         "rclone_config_name": _require_string(raw_config.get("rclone_config_name"), "rclone_config_name"),
         "email_config_name": _require_string(raw_config.get("email_config_name"), "email_config_name"),
         "to_email": _require_string(raw_config.get("to_email"), "to_email"),
@@ -132,10 +117,6 @@ def read_stackops_config() -> StackOpsConfig:
 
 
 def read_stackops_config_string(key: StackOpsConfigStringKey) -> str:
-    return read_stackops_config()[key]
-
-
-def read_stackops_config_string_list(key: StackOpsConfigPathListKey) -> list[str]:
     return read_stackops_config()[key]
 
 

@@ -17,10 +17,6 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
       "examples": ["1.0.0"]
     },
-    "repos": {
-      "$ref": "#/definitions/PathList",
-      "description": "Repository roots managed by devops update and status commands."
-    },
     "rclone_config_name": {
       "type": "string",
       "description": "Default rclone remote/profile name.",
@@ -38,15 +34,5 @@
       "minLength": 1
     }
   },
-  "required": ["version", "repos", "rclone_config_name", "email_config_name", "to_email"],
-  "definitions": {
-    "PathList": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "uniqueItems": true
-    }
-  }
+  "required": ["version", "rclone_config_name", "email_config_name", "to_email"]
 }

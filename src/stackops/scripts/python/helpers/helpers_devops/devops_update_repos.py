@@ -10,7 +10,6 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_repos.update import RepositoryUpdateResult, run_uv_sync, update_repository
-from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string_list
 
 
 console = Console()
@@ -195,51 +194,16 @@ def _display_summary(results: list[RepositoryUpdateResult]) -> None:
 
 
 def main(verbose: bool = True, allow_password_prompt: bool = False) -> None:
-    """Main function to update all configured repositories."""
+    """Main function to update repositories."""
     _ = verbose
-    repos: list[Path] = []
-    try:
-        for item in read_stackops_config_string_list("repos"):
-            item_obj = Path(item).expanduser()
-            if item_obj not in repos:
-                repos.append(item_obj)
-    except (FileNotFoundError, KeyError, ValueError):
-        console.print(
-            Panel(
-                "\n".join(
-                    [
-                        f"🚫 Configuration error: missing {DOTFILES_STACKOPS_CONFIG_PATH} or the repos list.",
-                        "ℹ️  Using default repositories instead.",
-                    ]
-                ),
-                title="Configuration Missing",
-                border_style="red",
-                padding=(1, 2),
-            )
-        )
-        console.print(
-            Panel(
-                "\n".join(
-                    [
-                        "✨ Example configuration:",
-                        "",
-                        "{",
-                        '  "version": "1.0.0",',
-                        '  "repos": ["~/code/repo1", "~/code/repo2"],',
-                        '  "rclone_config_name": "onedrivePersonal",',
-                        '  "email_config_name": "Yahoo3",',
-                        '  "to_email": "myemail@email.com"',
-                        "}",
-                    ]
-                ),
-                border_style="cyan",
-                padding=(1, 2),
-            )
-        )
-    update_repos(repos, allow_password_prompt)
+    update_repos([], allow_password_prompt)
 
 
 def update_repos(repos: list[Path], allow_password_prompt: bool) -> None:
+    if len(repos) == 0:
+        console.print(Panel("No repositories configured for bulk update.", border_style="yellow", padding=(1, 2)))
+        return
+
     # Process repositories in parallel
     results: list[RepositoryUpdateResult] = []
     repos_with_changes = []
