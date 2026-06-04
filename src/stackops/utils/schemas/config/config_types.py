@@ -1,15 +1,8 @@
 from typing import Literal, NotRequired, TypeAlias, TypedDict
 
 
-StackOpsGeneralStringKey: TypeAlias = Literal["rclone_config_name", "email_config_name", "to_email"]
-StackOpsGeneralPathListKey: TypeAlias = Literal["repos"]
-
-
-class StackOpsGeneralConfig(TypedDict):
-    repos: list[str]
-    rclone_config_name: str
-    email_config_name: str
-    to_email: str
+StackOpsConfigStringKey: TypeAlias = Literal["rclone_config_name", "email_config_name", "to_email"]
+StackOpsConfigPathListKey: TypeAlias = Literal["repos"]
 
 
 StackOpsConfig = TypedDict(
@@ -17,6 +10,9 @@ StackOpsConfig = TypedDict(
     {
         "$schema": NotRequired[str],
         "version": str,
-        "general": StackOpsGeneralConfig,
+        "repos": list[str],
+        "rclone_config_name": str,
+        "email_config_name": str,
+        "to_email": str,
     },
 )

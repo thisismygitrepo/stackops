@@ -17,40 +17,29 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
       "examples": ["1.0.0"]
     },
-    "general": {
-      "$ref": "#/definitions/GeneralConfig"
+    "repos": {
+      "$ref": "#/definitions/PathList",
+      "description": "Repository roots managed by devops update and status commands."
+    },
+    "rclone_config_name": {
+      "type": "string",
+      "description": "Default rclone remote/profile name.",
+      "minLength": 1
+    },
+    "email_config_name": {
+      "type": "string",
+      "description": "Default email profile name used for notifications.",
+      "minLength": 1
+    },
+    "to_email": {
+      "type": "string",
+      "description": "Default recipient address used for notifications.",
+      "format": "email",
+      "minLength": 1
     }
   },
-  "required": ["version", "general"],
+  "required": ["version", "repos", "rclone_config_name", "email_config_name", "to_email"],
   "definitions": {
-    "GeneralConfig": {
-      "type": "object",
-      "description": "Shared StackOps defaults used by CLI helpers.",
-      "additionalProperties": false,
-      "properties": {
-        "repos": {
-          "$ref": "#/definitions/PathList",
-          "description": "Repository roots managed by devops update and status commands."
-        },
-        "rclone_config_name": {
-          "type": "string",
-          "description": "Default rclone remote/profile name.",
-          "minLength": 1
-        },
-        "email_config_name": {
-          "type": "string",
-          "description": "Default email profile name used for notifications.",
-          "minLength": 1
-        },
-        "to_email": {
-          "type": "string",
-          "description": "Default recipient address used for notifications.",
-          "format": "email",
-          "minLength": 1
-        }
-      },
-      "required": ["repos", "rclone_config_name", "email_config_name", "to_email"]
-    },
     "PathList": {
       "type": "array",
       "items": {

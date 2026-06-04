@@ -6,9 +6,8 @@ from typing import cast
 
 from stackops.utils.schemas.config.config_types import (
     StackOpsConfig,
-    StackOpsGeneralConfig,
-    StackOpsGeneralPathListKey,
-    StackOpsGeneralStringKey,
+    StackOpsConfigPathListKey,
+    StackOpsConfigStringKey,
 )
 
 EXCLUDE_DIRS = [".links", "notebooks",
@@ -115,42 +114,29 @@ def _require_string_list(value: object, path: str) -> list[str]:
     return items
 
 
-def _read_general_config(value: object) -> StackOpsGeneralConfig:
-    general = _require_object(value, "general")
-    _reject_unknown_keys(
-        general,
-        {"repos", "rclone_config_name", "email_config_name", "to_email"},
-        "general",
-    )
-    result: StackOpsGeneralConfig = {
-        "repos": _require_string_list(general.get("repos"), "general.repos"),
-        "rclone_config_name": _require_string(general.get("rclone_config_name"), "general.rclone_config_name"),
-        "email_config_name": _require_string(general.get("email_config_name"), "general.email_config_name"),
-        "to_email": _require_string(general.get("to_email"), "general.to_email"),
-    }
-    return result
-
-
 def read_stackops_config() -> StackOpsConfig:
     if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
         raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
     raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")
-    _reject_unknown_keys(raw_config, {"$schema", "version", "general"}, "root")
+    _reject_unknown_keys(raw_config, {"$schema", "version", "repos", "rclone_config_name", "email_config_name", "to_email"}, "root")
     config: StackOpsConfig = {
         "version": _require_version(raw_config.get("version")),
-        "general": _read_general_config(raw_config.get("general")),
+        "repos": _require_string_list(raw_config.get("repos"), "repos"),
+        "rclone_config_name": _require_string(raw_config.get("rclone_config_name"), "rclone_config_name"),
+        "email_config_name": _require_string(raw_config.get("email_config_name"), "email_config_name"),
+        "to_email": _require_string(raw_config.get("to_email"), "to_email"),
     }
     if "$schema" in raw_config:
         config["$schema"] = _require_string(raw_config["$schema"], "$schema", non_empty=False)
     return config
 
 
-def read_stackops_general_string(key: StackOpsGeneralStringKey) -> str:
-    return read_stackops_config()["general"][key]
+def read_stackops_config_string(key: StackOpsConfigStringKey) -> str:
+    return read_stackops_config()[key]
 
 
-def read_stackops_general_string_list(key: StackOpsGeneralPathListKey) -> list[str]:
-    return read_stackops_config()["general"][key]
+def read_stackops_config_string_list(key: StackOpsConfigPathListKey) -> list[str]:
+    return read_stackops_config()[key]
 
 
 def dotfiles_llm_api_keys_path(provider: str) -> Path:

@@ -86,7 +86,7 @@ default:
     scripts: list[str] = []
 
     monkeypatch.setattr(backup_config, "USER_BACKUP_PATH", backup_path)
-    monkeypatch.setattr(cli_backup_retrieve, "read_stackops_general_string", lambda _key: (_ for _ in ()).throw(FileNotFoundError))
+    monkeypatch.setattr(cli_backup_retrieve, "read_stackops_config_string", lambda _key: (_ for _ in ()).throw(FileNotFoundError))
     monkeypatch.setattr(code_utils, "run_shell_script", lambda script, **_kwargs: scripts.append(script))
 
     cli_backup_retrieve.main_backup_retrieve(direction="BACKUP", which="default.README", cloud=None, repo="user")

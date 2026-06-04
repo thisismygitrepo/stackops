@@ -41,12 +41,10 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
         json.dumps(
             {
                 "version": "1.0.0",
-                "general": {
-                    "repos": ["~/code/repo"],
-                    "rclone_config_name": "cloud",
-                    "email_config_name": "mail",
-                    "to_email": "user@example.com",
-                },
+                "repos": ["~/code/repo"],
+                "rclone_config_name": "cloud",
+                "email_config_name": "mail",
+                "to_email": "user@example.com",
             }
         ),
         encoding="utf-8",
@@ -55,8 +53,8 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
 
     config = source_of_truth.read_stackops_config()
 
-    assert config["general"]["repos"] == ["~/code/repo"]
-    assert source_of_truth.read_stackops_general_string("rclone_config_name") == "cloud"
+    assert config["repos"] == ["~/code/repo"]
+    assert source_of_truth.read_stackops_config_string("rclone_config_name") == "cloud"
 
 
 def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -65,18 +63,16 @@ def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.Mo
         json.dumps(
             {
                 "version": "1.0.0",
-                "general": {
-                    "repos": [],
-                    "rclone_config_name": "cloud",
-                    "email_config_name": "mail",
-                    "to_email": "user@example.com",
-                    "extra": "nope",
-                },
+                "repos": [],
+                "rclone_config_name": "cloud",
+                "email_config_name": "mail",
+                "to_email": "user@example.com",
+                "extra": "nope",
             }
         ),
         encoding="utf-8",
     )
     monkeypatch.setattr(source_of_truth, "DOTFILES_STACKOPS_CONFIG_PATH", config_path)
 
-    with pytest.raises(ValueError, match="Unexpected StackOps config keys at general"):
+    with pytest.raises(ValueError, match="Unexpected StackOps config keys at root"):
         source_of_truth.read_stackops_config()

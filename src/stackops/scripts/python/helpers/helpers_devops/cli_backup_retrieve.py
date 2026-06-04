@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
-from stackops.utils.source_of_truth import read_stackops_general_string
+from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.code import print_code
 from stackops.utils.options import choose_cloud_interactively
 from stackops.scripts.python.helpers.helpers_cloud.helpers2 import ES
@@ -147,7 +147,7 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
     fallback_cloud: str | None = None
     if cloud_override is None:
         try:
-            default_cloud = read_stackops_general_string("rclone_config_name").strip()
+            default_cloud = read_stackops_config_string("rclone_config_name").strip()
             if default_cloud:
                 fallback_cloud = default_cloud
                 console.print(Panel(f"⚠️  DEFAULT CLOUD CONFIGURATION\n🌥️  Using default cloud: {fallback_cloud}", title="[bold blue]Cloud Configuration[/bold blue]", border_style="blue"))

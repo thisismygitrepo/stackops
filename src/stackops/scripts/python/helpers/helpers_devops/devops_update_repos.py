@@ -10,7 +10,7 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_repos.update import RepositoryUpdateResult, run_uv_sync, update_repository
-from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_general_string_list
+from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string_list
 
 
 console = Console()
@@ -199,7 +199,7 @@ def main(verbose: bool = True, allow_password_prompt: bool = False) -> None:
     _ = verbose
     repos: list[Path] = []
     try:
-        for item in read_stackops_general_string_list("repos"):
+        for item in read_stackops_config_string_list("repos"):
             item_obj = Path(item).expanduser()
             if item_obj not in repos:
                 repos.append(item_obj)
@@ -208,7 +208,7 @@ def main(verbose: bool = True, allow_password_prompt: bool = False) -> None:
             Panel(
                 "\n".join(
                     [
-                        f"🚫 Configuration error: missing {DOTFILES_STACKOPS_CONFIG_PATH} or the general.repos list.",
+                        f"🚫 Configuration error: missing {DOTFILES_STACKOPS_CONFIG_PATH} or the repos list.",
                         "ℹ️  Using default repositories instead.",
                     ]
                 ),
@@ -225,12 +225,10 @@ def main(verbose: bool = True, allow_password_prompt: bool = False) -> None:
                         "",
                         "{",
                         '  "version": "1.0.0",',
-                        '  "general": {',
-                        '    "repos": ["~/code/repo1", "~/code/repo2"],',
-                        '    "rclone_config_name": "onedrivePersonal",',
-                        '    "email_config_name": "Yahoo3",',
-                        '    "to_email": "myemail@email.com"',
-                        "  }",
+                        '  "repos": ["~/code/repo1", "~/code/repo2"],',
+                        '  "rclone_config_name": "onedrivePersonal",',
+                        '  "email_config_name": "Yahoo3",',
+                        '  "to_email": "myemail@email.com"',
                         "}",
                     ]
                 ),

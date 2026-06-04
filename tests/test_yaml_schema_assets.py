@@ -48,4 +48,5 @@ def test_stackops_config_schema_asset_is_valid_json() -> None:
     schema = _read_json(schema_path)
 
     assert schema["title"] == "StackOps User Config Schema"
-    assert schema["properties"]["general"]["$ref"] == "#/definitions/GeneralConfig"
+    assert "general" not in schema["properties"]
+    assert schema["properties"]["repos"]["$ref"] == "#/definitions/PathList"
