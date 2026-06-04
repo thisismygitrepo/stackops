@@ -221,9 +221,9 @@ class RemoteStackOpsConfig:
             raise ValueError("cloud_name must be provided when transfer_method is 'cloud'")
         if self.notify_upon_completion:
             if self.to_email is None:
-                self.to_email = _read_default_config_value("to_email")
+                self.to_email = _read_default_config_value("default_email_address")
             if self.email_config_name is None:
-                self.email_config_name = _read_default_config_value("email_config_name")
+                self.email_config_name = _read_default_config_value("default_email_config")
 
 
 @dataclass

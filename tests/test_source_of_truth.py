@@ -41,9 +41,9 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
         json.dumps(
             {
                 "version": "1.0.0",
-                "rclone_config_name": "cloud",
-                "email_config_name": "mail",
-                "to_email": "user@example.com",
+                "default_rclone_config": "cloud",
+                "default_email_config": "mail",
+                "default_email_address": "user@example.com",
             }
         ),
         encoding="utf-8",
@@ -52,8 +52,8 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
 
     config = source_of_truth.read_stackops_config()
 
-    assert config["to_email"] == "user@example.com"
-    assert source_of_truth.read_stackops_config_string("rclone_config_name") == "cloud"
+    assert config["default_email_address"] == "user@example.com"
+    assert source_of_truth.read_stackops_config_string("default_rclone_config") == "cloud"
 
 
 def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -62,9 +62,9 @@ def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.Mo
         json.dumps(
             {
                 "version": "1.0.0",
-                "rclone_config_name": "cloud",
-                "email_config_name": "mail",
-                "to_email": "user@example.com",
+                "default_rclone_config": "cloud",
+                "default_email_config": "mail",
+                "default_email_address": "user@example.com",
                 "extra": "nope",
             }
         ),

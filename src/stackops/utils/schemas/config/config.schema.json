@@ -17,22 +17,22 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
       "examples": ["1.0.0"]
     },
-    "rclone_config_name": {
+    "default_rclone_config": {
       "type": "string",
       "description": "Default rclone remote/profile name.",
       "minLength": 1
     },
-    "email_config_name": {
+    "default_email_config": {
       "type": "string",
-      "description": "Default email profile name used for notifications.",
+      "description": "Default email profile name used to send notifications.",
       "minLength": 1
     },
-    "to_email": {
+    "default_email_address": {
       "type": "string",
-      "description": "Default recipient address used for notifications.",
+      "description": "Default recipient email address used for notifications.",
       "format": "email",
       "minLength": 1
     }
   },
-  "required": ["version", "rclone_config_name", "email_config_name", "to_email"]
+  "required": ["version", "default_rclone_config", "default_email_config", "default_email_address"]
 }

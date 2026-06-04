@@ -195,7 +195,7 @@ def check_important_tools() -> dict[str, dict[str, bool]]:
 def check_backup_config() -> dict[str, Any]:
     """Check backup configuration status."""
     try:
-        cloud_config = read_stackops_config_string("rclone_config_name")
+        cloud_config = read_stackops_config_string("default_rclone_config")
     except (FileNotFoundError, KeyError, ValueError):
         cloud_config = "Not configured"
 

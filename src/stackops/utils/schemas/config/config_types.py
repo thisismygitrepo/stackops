@@ -1,7 +1,7 @@
 from typing import Literal, NotRequired, TypeAlias, TypedDict
 
 
-StackOpsConfigStringKey: TypeAlias = Literal["rclone_config_name", "email_config_name", "to_email"]
+StackOpsConfigStringKey: TypeAlias = Literal["default_rclone_config", "default_email_config", "default_email_address"]
 
 
 StackOpsConfig = TypedDict(
@@ -9,8 +9,8 @@ StackOpsConfig = TypedDict(
     {
         "$schema": NotRequired[str],
         "version": str,
-        "rclone_config_name": str,
-        "email_config_name": str,
-        "to_email": str,
+        "default_rclone_config": str,
+        "default_email_config": str,
+        "default_email_address": str,
     },
 )

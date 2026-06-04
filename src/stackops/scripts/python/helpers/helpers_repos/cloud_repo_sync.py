@@ -226,7 +226,7 @@ def main(
 
     if cloud is None:
         try:
-            cloud_resolved = read_stackops_config_string("rclone_config_name")
+            cloud_resolved = read_stackops_config_string("default_rclone_config")
             console.print(Panel(f"⚠️  Using default cloud: `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}", title="Default Cloud", border_style="yellow"))
         except (FileNotFoundError, KeyError, ValueError) as exc:
             console.print(Panel(f"❌ ERROR: No cloud profile found\nLocation: {DOTFILES_STACKOPS_CONFIG_PATH}\nPlease set one up or provide one via the --cloud flag.", title="Error", border_style="red"))

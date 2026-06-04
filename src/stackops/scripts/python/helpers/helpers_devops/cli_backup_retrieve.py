@@ -147,7 +147,7 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
     fallback_cloud: str | None = None
     if cloud_override is None:
         try:
-            default_cloud = read_stackops_config_string("rclone_config_name").strip()
+            default_cloud = read_stackops_config_string("default_rclone_config").strip()
             if default_cloud:
                 fallback_cloud = default_cloud
                 console.print(Panel(f"⚠️  DEFAULT CLOUD CONFIGURATION\n🌥️  Using default cloud: {fallback_cloud}", title="[bold blue]Cloud Configuration[/bold blue]", border_style="blue"))

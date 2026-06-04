@@ -82,7 +82,7 @@ def parse_cloud_source_target(
         target_local_path = my_abs(target)  # if source is remote, target must be local, against which we can search for .ve.yaml
         cloud_config_from_name = find_cloud_config(path=target_local_path)
         if cloud_config_from_name is None:  # last resort, use default cloud (user didn't pass cloud name, didn't pass config file)
-            default_cloud = read_stackops_config_string("rclone_config_name")
+            default_cloud = read_stackops_config_string("default_rclone_config")
             console.print(Panel(f"⚠️  No cloud config found. Using default cloud: {default_cloud}", width=150, border_style="yellow"))
             source = default_cloud + ":" + source[1:]
         else:
@@ -94,7 +94,7 @@ def parse_cloud_source_target(
         if cloud_config_from_name is None:
             cloud_config_from_name = find_cloud_config(source_local_path)
         if cloud_config_from_name is None:
-            default_cloud = read_stackops_config_string("rclone_config_name")
+            default_cloud = read_stackops_config_string("default_rclone_config")
             console.print(Panel(f"⚠️  No cloud config found. Using default cloud: {default_cloud}", width=150, border_style="yellow"))
             target = default_cloud + ":" + target[1:]
             print("target mutated to:", target, f"because of default cloud being {default_cloud}")

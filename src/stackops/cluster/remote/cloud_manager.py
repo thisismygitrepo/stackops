@@ -59,7 +59,7 @@ class CloudManager:
         self.status_root = status_root
         self.max_jobs = max_jobs
         if cloud is None:
-            self.cloud = read_stackops_config_string("rclone_config_name")
+            self.cloud = read_stackops_config_string("default_rclone_config")
         else:
             self.cloud = cloud
         self.lock_claimed = False

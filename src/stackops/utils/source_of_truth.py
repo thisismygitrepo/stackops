@@ -104,12 +104,12 @@ def read_stackops_config() -> StackOpsConfig:
     if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
         raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
     raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")
-    _reject_unknown_keys(raw_config, {"$schema", "version", "rclone_config_name", "email_config_name", "to_email"}, "root")
+    _reject_unknown_keys(raw_config, {"$schema", "version", "default_rclone_config", "default_email_config", "default_email_address"}, "root")
     config: StackOpsConfig = {
         "version": _require_version(raw_config.get("version")),
-        "rclone_config_name": _require_string(raw_config.get("rclone_config_name"), "rclone_config_name"),
-        "email_config_name": _require_string(raw_config.get("email_config_name"), "email_config_name"),
-        "to_email": _require_string(raw_config.get("to_email"), "to_email"),
+        "default_rclone_config": _require_string(raw_config.get("default_rclone_config"), "default_rclone_config"),
+        "default_email_config": _require_string(raw_config.get("default_email_config"), "default_email_config"),
+        "default_email_address": _require_string(raw_config.get("default_email_address"), "default_email_address"),
     }
     if "$schema" in raw_config:
         config["$schema"] = _require_string(raw_config["$schema"], "$schema", non_empty=False)

@@ -52,7 +52,7 @@ def get_secure_share_cloud_config(interactive: bool, cloud: str | None) -> CLOUD
             console.print(f"☁️  Using cloud from environment: {cloud}")
         else:
             try:
-                default_cloud__ = read_stackops_config_string("rclone_config_name")
+                default_cloud__ = read_stackops_config_string("default_rclone_config")
             except Exception:
                 default_cloud__ = "No default cloud found."
             if default_cloud__ == "No default cloud found." or interactive:
