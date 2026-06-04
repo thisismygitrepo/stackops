@@ -46,7 +46,7 @@ def _require_os_name(value: str, *, os_filter: str) -> OsName:
     token = normalize_os_name(value)
     if token not in VALID_OS:
         raise ValueError(f"Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}")
-    return cast(OsName, token)
+    return token
 
 
 def _split_remote_spec(value: str) -> tuple[str, str] | None:
