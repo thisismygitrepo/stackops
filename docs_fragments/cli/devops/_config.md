@@ -192,6 +192,7 @@ devops config dump --which secrets --data
 devops config dump --which secrets --schema
 devops config dump --which config
 devops config dump --which config --default-path
+devops config dump --which config --default-path --force
 devops config dump --which init
 devops config dump --which ia
 devops config dump --which live --run
@@ -218,9 +219,10 @@ Key options:
 | `--data`, `-d` | Write only the data/template file for configuration dumps |
 | `--schema`, `-s` | Write only the schema file for configuration dumps |
 | `--default-path`, `-p` | Write to the default StackOps path for the selected file instead of the current directory |
+| `--force`, `-f` | Overwrite existing dump output files |
 | `--run`, `-r` | Run the selected init/setup script instead of printing it |
 
-When neither `--data` nor `--schema` is passed, file dumps write both files. `--default-path` maps `layout` to `~/dotfiles/stackops/config/layouts.json`, `config` to `~/dotfiles/stackops/config/config.json`, `secrets` to `~/dotfiles/stackops/secrets/secrets.json`, `data` to `~/dotfiles/stackops/mapper/data.yaml`, and `dotfiles` to `~/dotfiles/stackops/mapper/dotfiles.yaml`.
+When neither `--data` nor `--schema` is passed, file dumps write both files. Existing files are not overwritten unless `--force` is passed. `--default-path` maps `layout` to `~/dotfiles/stackops/config/layouts.json`, `config` to `~/dotfiles/stackops/config/config.json`, `secrets` to `~/dotfiles/stackops/secrets/secrets.json`, `data` to `~/dotfiles/stackops/mapper/data.yaml`, and `dotfiles` to `~/dotfiles/stackops/mapper/dotfiles.yaml`.
 
 ### terminal
 

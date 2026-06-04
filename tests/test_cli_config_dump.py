@@ -38,6 +38,8 @@ def test_devops_config_dump_help_lists_all_dump_targets() -> None:
     assert "-s" in result.output
     assert "--default-path" in result.output
     assert "-p" in result.output
+    assert "--force" in result.output
+    assert "-f" in result.output
 
 
 def test_devops_config_dump_prints_live_from_github_script() -> None:
@@ -107,6 +109,59 @@ def test_devops_config_dump_writes_config_example() -> None:
 
         assert result.exit_code == 0, result.output
         output_dir = Path(".stackops/config")
+        assert (output_dir / "config.json").read_text(encoding="utf-8") == _config_asset_text(config_assets.CONFIG_PATH_REFERENCE)
+        assert (output_dir / "config.schema.json").read_text(encoding="utf-8") == _config_asset_text(
+            config_assets.CONFIG_SCHEMA_PATH_REFERENCE
+        )
+
+
+def test_devops_config_dump_refuses_existing_data_without_force() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        output_dir = Path(".stackops/config")
+        output_dir.mkdir(parents=True)
+        data_path = output_dir / "config.json"
+        data_path.write_text("existing config\n", encoding="utf-8")
+
+        result = runner.invoke(get_app(), ["c", "d", "--which", "config"])
+
+        assert result.exit_code == 1, result.output
+        assert "Refusing to overwrite existing file(s)" in result.output
+        assert "--force/-f" in result.output
+        assert data_path.read_text(encoding="utf-8") == "existing config\n"
+        assert not (output_dir / "config.schema.json").exists()
+
+
+def test_devops_config_dump_refuses_existing_schema_without_force() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        output_dir = Path(".stackops/secrets")
+        output_dir.mkdir(parents=True)
+        schema_path = output_dir / "secrets.schema.json"
+        schema_path.write_text("existing schema\n", encoding="utf-8")
+
+        result = runner.invoke(get_app(), ["c", "d", "--which", "secrets"])
+
+        assert result.exit_code == 1, result.output
+        assert "Refusing to overwrite existing file(s)" in result.output
+        assert "--force/-f" in result.output
+        assert not (output_dir / "secrets.json").exists()
+        assert schema_path.read_text(encoding="utf-8") == "existing schema\n"
+
+
+def test_devops_config_dump_force_overwrites_existing_files() -> None:
+    import stackops.utils.schemas.config as config_assets
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        output_dir = Path(".stackops/config")
+        output_dir.mkdir(parents=True)
+        (output_dir / "config.json").write_text("existing config\n", encoding="utf-8")
+        (output_dir / "config.schema.json").write_text("existing schema\n", encoding="utf-8")
+
+        result = runner.invoke(get_app(), ["c", "d", "--which", "config", "-f"])
+
+        assert result.exit_code == 0, result.output
         assert (output_dir / "config.json").read_text(encoding="utf-8") == _config_asset_text(config_assets.CONFIG_PATH_REFERENCE)
         assert (output_dir / "config.schema.json").read_text(encoding="utf-8") == _config_asset_text(
             config_assets.CONFIG_SCHEMA_PATH_REFERENCE

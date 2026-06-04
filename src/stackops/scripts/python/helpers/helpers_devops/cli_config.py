@@ -110,6 +110,7 @@ def dump_config(
         bool,
         typer.Option("--default-path", "-p", help="Write to the default StackOps path for the selected file instead of the current directory."),
     ] = False,
+    force: Annotated[bool, typer.Option("--force", "-f", help="Overwrite existing dump output files.")] = False,
     run: Annotated[bool, typer.Option("--run", "-r", help="Run an init script instead of printing it.")] = False,
 ) -> None:
     """🔗 Dump example configuration files and init scripts."""
@@ -117,33 +118,35 @@ def dump_config(
         case "ve":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_ve_config(data=data, schema=schema, default_path=default_path)
+            _dump_ve_config(data=data, schema=schema, default_path=default_path, force=force)
             return
         case "layout":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_layout_example(data=data, schema=schema, default_path=default_path)
+            _dump_layout_example(data=data, schema=schema, default_path=default_path, force=force)
             return
         case "data" | "dotfiles":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_profile_example(which=which, data=data, schema=schema, default_path=default_path)
+            _dump_profile_example(which=which, data=data, schema=schema, default_path=default_path, force=force)
             return
         case "secrets":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_secrets_example(data=data, schema=schema, default_path=default_path)
+            _dump_secrets_example(data=data, schema=schema, default_path=default_path, force=force)
             return
         case "config":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_stackops_config_example(data=data, schema=schema, default_path=default_path)
+            _dump_stackops_config_example(data=data, schema=schema, default_path=default_path, force=force)
             return
         case "init" | "ia" | "live":
             if data or schema:
                 _reject_data_schema_for_script_dump()
             if default_path:
                 _reject_default_path_for_script_dump()
+            if force:
+                _reject_force_for_script_dump()
             _dump_init_script(which=which, run=run)
             return
     msg = typer.style("Error: ", fg=typer.colors.RED) + f"Unknown config type: {which}"
@@ -169,6 +172,12 @@ def _reject_default_path_for_script_dump() -> None:
     raise typer.Exit(code=1)
 
 
+def _reject_force_for_script_dump() -> None:
+    msg = typer.style("Error: ", fg=typer.colors.RED) + "--force is only valid when dumping configuration files."
+    typer.echo(msg)
+    raise typer.Exit(code=1)
+
+
 def _reject_default_path_for_ve_dump() -> None:
     msg = typer.style("Error: ", fg=typer.colors.RED) + "--default-path is not supported for ve because it has no global StackOps path."
     typer.echo(msg)
@@ -181,37 +190,70 @@ def _resolve_dump_content_selection(*, data: bool, schema: bool) -> tuple[bool, 
     return True, True
 
 
+def _reject_unwritable_output_paths(paths: Sequence[Path], *, force: bool) -> None:
+    non_file_paths = [path for path in paths if path.exists() and not path.is_file()]
+    if non_file_paths:
+        path_text = _format_paths(non_file_paths)
+        msg = typer.style("Error: ", fg=typer.colors.RED) + f"Output path exists but is not a file: {path_text}"
+        typer.echo(msg)
+        raise typer.Exit(code=1)
+
+    existing_paths = [path for path in paths if path.exists()]
+    if existing_paths and not force:
+        path_text = _format_paths(existing_paths)
+        msg = (
+            typer.style("Error: ", fg=typer.colors.RED)
+            + f"Refusing to overwrite existing file(s): {path_text}. Pass --force/-f to overwrite."
+        )
+        typer.echo(msg)
+        raise typer.Exit(code=1)
+
+
+def _format_paths(paths: Sequence[Path]) -> str:
+    if len(paths) == 1:
+        return str(paths[0])
+    return ", ".join(str(path) for path in paths[:-1]) + f" and {paths[-1]}"
+
+
 def _echo_created_paths(paths: Sequence[Path]) -> None:
     if not paths:
         return
-    if len(paths) == 1:
-        path_text = str(paths[0])
-    else:
-        path_text = ", ".join(str(path) for path in paths[:-1]) + f" and {paths[-1]}"
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {path_text}"
+    path_text = _format_paths(paths)
+    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Wrote {path_text}"
     typer.echo(msg)
 
 
-def _dump_ve_config(*, data: bool, schema: bool, default_path: bool) -> None:
+def _dump_ve_config(*, data: bool, schema: bool, default_path: bool, force: bool) -> None:
     """Generate .ve.example.yaml with all options, sections, comments and default values."""
     if default_path:
         _reject_default_path_for_ve_dump()
 
+    import stackops.utils.schemas.ve as ve_assets
+
+    from stackops.utils.path_reference import get_path_reference_path
     from stackops.utils.ve import read_default_cloud_config
-    from stackops.utils.ve_schema import ensure_ve_yaml_schema_exists, ve_yaml_header_for_path
+    from stackops.utils.ve_schema import ve_yaml_header_for_path
+    from stackops.utils.yaml_schema import stackops_yaml_schema_path
 
     dump_data, dump_schema = _resolve_dump_content_selection(data=data, schema=schema)
     output_path = Path.cwd() / ".ve.example.yaml"
+    schema_path = stackops_yaml_schema_path(yaml_path=output_path)
     created_paths: list[Path] = []
+    output_paths: list[Path] = []
+
+    if dump_data:
+        output_paths.append(output_path)
+    if dump_schema:
+        output_paths.append(schema_path)
+    _reject_unwritable_output_paths(output_paths, force=force)
 
     if dump_schema:
-        ensure_ve_yaml_schema_exists(yaml_path=output_path)
-        created_paths.append(output_path.with_name(".ve.schema.json"))
+        schema_source_path = get_path_reference_path(module=ve_assets, path_reference=ve_assets.VE_SCHEMA_PATH_REFERENCE)
+        created_paths.append(_write_asset(source_path=schema_source_path, output_path=schema_path, force=force))
 
     if not dump_data:
         _echo_created_paths(created_paths)
         return
-
     cloud_defaults = read_default_cloud_config()
 
     def to_yaml_value(value: str | bool | None) -> str:
@@ -239,8 +281,7 @@ cloud:
   share: {to_yaml_value(cloud_defaults["share"])}  # Enable sharing/public access
   overwrite: {to_yaml_value(cloud_defaults["overwrite"])}  # Overwrite existing files during sync
 """
-    output_path.write_text(yaml_content, encoding="utf-8")
-    created_paths.insert(0, output_path)
+    created_paths.insert(0, _write_text_output(text=yaml_content, output_path=output_path, force=force))
     _echo_created_paths(created_paths)
 
 
@@ -250,23 +291,38 @@ def _get_path_reference_asset_path(*, module: ModuleType, path_reference: str) -
     return get_path_reference_path(module=module, path_reference=path_reference)
 
 
-def _write_asset(*, source_path: Path, output_path: Path) -> Path:
+def _write_asset(*, source_path: Path, output_path: Path, force: bool) -> Path:
+    _reject_unwritable_output_paths([output_path], force=force)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
     return output_path
 
 
-def _dump_asset_spec(*, spec: DumpAssetSpec, data: bool, schema: bool) -> None:
+def _write_text_output(*, text: str, output_path: Path, force: bool) -> Path:
+    _reject_unwritable_output_paths([output_path], force=force)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(text, encoding="utf-8")
+    return output_path
+
+
+def _dump_asset_spec(*, spec: DumpAssetSpec, data: bool, schema: bool, force: bool) -> None:
     dump_data, dump_schema = _resolve_dump_content_selection(data=data, schema=schema)
     created_paths: list[Path] = []
+    output_paths: list[Path] = []
     if dump_data:
-        created_paths.append(_write_asset(source_path=spec.data_source_path, output_path=spec.data_output_path))
+        output_paths.append(spec.data_output_path)
     if dump_schema:
-        created_paths.append(_write_asset(source_path=spec.schema_source_path, output_path=spec.schema_output_path))
+        output_paths.append(spec.schema_output_path)
+    _reject_unwritable_output_paths(output_paths, force=force)
+
+    if dump_data:
+        created_paths.append(_write_asset(source_path=spec.data_source_path, output_path=spec.data_output_path, force=force))
+    if dump_schema:
+        created_paths.append(_write_asset(source_path=spec.schema_source_path, output_path=spec.schema_output_path, force=force))
     _echo_created_paths(created_paths)
 
 
-def _dump_layout_example(*, data: bool, schema: bool, default_path: bool) -> None:
+def _dump_layout_example(*, data: bool, schema: bool, default_path: bool, force: bool) -> None:
     import stackops.utils.schemas.layouts as layout_assets
     from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
@@ -283,10 +339,10 @@ def _dump_layout_example(*, data: bool, schema: bool, default_path: bool) -> Non
         data_output_path=data_output_path,
         schema_output_path=schema_output_path,
     )
-    _dump_asset_spec(spec=spec, data=data, schema=schema)
+    _dump_asset_spec(spec=spec, data=data, schema=schema, force=force)
 
 
-def _dump_profile_example(*, which: Literal["data", "dotfiles"], data: bool, schema: bool, default_path: bool) -> None:
+def _dump_profile_example(*, which: Literal["data", "dotfiles"], data: bool, schema: bool, default_path: bool, force: bool) -> None:
     import stackops.utils.schemas.mapper as mapper_assets
     from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH, DOTFILES_USER_MAPPER_PATH
 
@@ -312,10 +368,10 @@ def _dump_profile_example(*, which: Literal["data", "dotfiles"], data: bool, sch
         data_output_path=data_output_path,
         schema_output_path=schema_output_path,
     )
-    _dump_asset_spec(spec=spec, data=data, schema=schema)
+    _dump_asset_spec(spec=spec, data=data, schema=schema, force=force)
 
 
-def _dump_secrets_example(*, data: bool, schema: bool, default_path: bool) -> None:
+def _dump_secrets_example(*, data: bool, schema: bool, default_path: bool, force: bool) -> None:
     import stackops.utils.schemas.secrets as secrets_assets
     from stackops.utils.source_of_truth import SECRETS_DOFILE
 
@@ -332,10 +388,10 @@ def _dump_secrets_example(*, data: bool, schema: bool, default_path: bool) -> No
         data_output_path=data_output_path,
         schema_output_path=schema_output_path,
     )
-    _dump_asset_spec(spec=spec, data=data, schema=schema)
+    _dump_asset_spec(spec=spec, data=data, schema=schema, force=force)
 
 
-def _dump_stackops_config_example(*, data: bool, schema: bool, default_path: bool) -> None:
+def _dump_stackops_config_example(*, data: bool, schema: bool, default_path: bool, force: bool) -> None:
     import stackops.utils.schemas.config as config_assets
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
 
@@ -352,7 +408,7 @@ def _dump_stackops_config_example(*, data: bool, schema: bool, default_path: boo
         data_output_path=data_output_path,
         schema_output_path=schema_output_path,
     )
-    _dump_asset_spec(spec=spec, data=data, schema=schema)
+    _dump_asset_spec(spec=spec, data=data, schema=schema, force=force)
 
 
 def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all", "a"], typer.Argument(..., help="Which assets to copy")]) -> None:
