@@ -45,7 +45,7 @@ def test_pwdmgr_cache_uses_stackops_gpg_helpers(monkeypatch, tmp_path: Path) -> 
     ]
 
 
-def test_pwdmgr_clean_cache_removes_current_and_legacy_artifacts(monkeypatch, tmp_path: Path) -> None:
+def test_pwdmgr_clean_cache_removes_current_cache(monkeypatch, tmp_path: Path) -> None:
     tmp_results_root = tmp_path / "tmp_results"
     cache_path = tmp_results_root / "cache" / "pwdmgr" / "cache.json.gpg"
 

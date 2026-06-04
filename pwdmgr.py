@@ -17,7 +17,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence, TypedDict, cast
 
 import typer
 from rich.console import Console
@@ -98,6 +98,21 @@ class Entry:
     username: Optional[str]
     password: Optional[str]
     raw: dict[str, Any]
+
+
+class CredentialsFileEntry(TypedDict):
+    """One account entry expected inside the local credentials JSON file."""
+
+    account: str
+    BW_CLIENTID: str
+    BW_CLIENTSECRET: str
+    BW_PASSWORD: str
+
+
+class CredentialsFilePayload(TypedDict):
+    """Top-level local credentials JSON file shape."""
+
+    credentials: list[CredentialsFileEntry]
 
 
 @dataclass
@@ -261,8 +276,16 @@ def load_account_credentials(credentials_file: Path, account: str) -> AccountCre
         err_console.print("[bold red]Credentials file must contain a 'credentials' list.[/bold red]")
         raise typer.Exit(code=2)
 
+    credentials_payload: CredentialsFilePayload = {
+        "credentials": [
+            cast(CredentialsFileEntry, candidate)
+            for candidate in raw_credentials
+            if isinstance(candidate, dict)
+        ]
+    }
+
     selected = next(
-        (candidate for candidate in raw_credentials if isinstance(candidate, dict) and candidate.get("account") == account),
+        (candidate for candidate in credentials_payload["credentials"] if candidate.get("account") == account),
         None,
     )
     if selected is None:
