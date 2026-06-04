@@ -9,12 +9,9 @@ from typing import Any, Union
 from rich.console import Console
 from rich.markdown import Markdown
 
-from stackops.utils.source_of_truth import DOTFILES_EMAILS_INI_PATH
-
 
 def download_to_memory(path: Path, allow_redirects: bool = True, timeout: float | None = None, params: Any = None) -> "Any":
     import requests
-
     return requests.get(
         path.as_posix().replace("https:/", "https://").replace("http:/", "http://"), allow_redirects=allow_redirects, timeout=timeout, params=params
     )  # Alternative: from urllib import request; request.urlopen(url).read().decode('utf-8').
@@ -66,42 +63,22 @@ def md2html(body: str) -> str:
 
 
 class Email:
-    @staticmethod
-    def get_source_of_truth():
-        path = DOTFILES_EMAILS_INI_PATH
-        if not path.exists():
-            raise FileNotFoundError(f"""File not found: {path}. It should be an ini file with this structure
-[resend]
-api_key = xxx
-
-[config1]
-email_add = a@b.com
-password = 123
-smtp_host = a@b.com
-smtp_port = 465
-imap_host = b@c.com
-imap_port = 465
-encryption = ssl
-
-""")
-
-        if not Path(path).exists() or Path(path).is_dir():
-            raise FileNotFoundError(f"File not found or is a directory: {path}")
-        import configparser
-
-        res = configparser.ConfigParser()
-        res.read(filenames=[str(path)], encoding=None)
-        return res
-
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config_name: str):
+        from stackops.secrets import search_secrets
+        from stackops.utils.source_of_truth import SECRETS_DOFILE
+        secrets = search_secrets(path=SECRETS_DOFILE, entry_name=config_name)
+        if len(secrets) == 0:
+            raise ValueError(f"No secrets found for config_name: {config_name}")
+        elif len(secrets) > 1:
+            raise ValueError(f"Multiple secrets found for config_name: {config_name}. Please ensure config_name is unique. Found secrets: {secrets}")
+        config = secrets[0]["secrets"][0]["keyValues"]
         self.config = config
         from smtplib import SMTP_SSL, SMTP
-
         self.server: Union[SMTP_SSL, SMTP]
         if config["encryption"].lower() == "ssl":
-            self.server = smtplib.SMTP_SSL(host=self.config["smtp_host"], port=self.config["smtp_port"])
+            self.server = smtplib.SMTP_SSL(host=self.config["smtp_host"], port=int(self.config["smtp_port"]))
         elif config["encryption"].lower() == "tls":
-            self.server = smtplib.SMTP(host=self.config["smtp_host"], port=self.config["smtp_port"])
+            self.server = smtplib.SMTP(host=self.config["smtp_host"], port=int(self.config["smtp_port"]))
         self.server.login(self.config["email_add"], password=self.config["password"])
 
     def send_message(self, to: str, subject: str, body: str, txt_to_html: bool = True, attachments: list[Any] | None = None):
@@ -140,36 +117,10 @@ encryption = ssl
         self.server.quit()  # Closing is vital as many servers do not allow mutiple connections.
 
     @staticmethod
-    def send_and_close(config_name: str | None, to: str, subject: str, body: str) -> Any:
-        """If config_name is None, it sends from a generic email address."""
-        if config_name is None:
-            raise NotImplementedError(
-                f"Sending email without a config_name is not implemented. You need to create an emails.ini file at {DOTFILES_EMAILS_INI_PATH} with your email configuration. See the docstring of the get_source_of_truth method for more information."
-            )
-            # config = Email.get_source_of_truth()
-            # try:
-            #     api_key = config['resend']['api_key']
-            #     to = config["resend"]["signup_email"]
-            # except KeyError as ke:
-            #     msggg = "You did not pass a config_name, therefore, the default is to use resend, however, you need to add your resend api key to the emails.ini file."
-            #     raise KeyError(msggg) from ke
-
-            # _resend = install_n_import("resend")
-            # import resend
-            # resend.api_key = api_key
-            # r = resend.Emails.send({
-            # "from": "onboarding@resend.dev",
-            # "to": to,
-            # "subject": subject,
-            # "html": md2html(body=body)
-            # })
-            # return r
-
-        else:
-            config = dict(Email.get_source_of_truth()[config_name])
-            tmp = Email(config=config)
-            tmp.send_message(to=to, subject=subject, body=body)
-            tmp.close()
+    def send_and_close(config_name: str, to: str, subject: str, body: str) -> Any:
+        tmp = Email(config_name=config_name)
+        tmp.send_message(to=to, subject=subject, body=body)
+        tmp.close()
 
     # @staticmethod
     # def send_m365(to: list[str], subject: str, body: str | None, body_file: str | None, body_content_type: Literal["HTML", "Text"], attachments: list[Path] | None = None) -> None:

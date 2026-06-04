@@ -24,7 +24,6 @@ DOTFILES_STACKOPS_INIT_LINUX_PATH = DOTFILES_STACKOPS_ROOT.joinpath("init_linux.
 
 CONFIG_ROOT = Path.home().joinpath(".config/stackops")
 DEFAULTS_PATH = DOTFILES_STACKOPS_ROOT.joinpath("defaults.ini")
-DOTFILES_EMAILS_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("emails.ini")
 DOTFILES_PHONE_NOTIFICATION_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("phone_notification.ini")
 DOTFILES_LAYOUTS_JSON_PATH = DOTFILES_STACKOPS_ROOT.joinpath("layouts.json")
 DOTFILES_WIFI_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("setup", "wifi.ini")
@@ -83,7 +82,6 @@ SECRETS_DOFILE = DOTFILES_STACKOPS_ROOT.joinpath("secrets/secrets.json")
 
 def read_quick_password() -> str:
     from stackops.secrets import search_secrets
-
     secrets = search_secrets(path=SECRETS_DOFILE, entry_name="quickPassword", keys=("PASSWORD",))
     return secrets[0]["secrets"][0]["keyValues"]["PASSWORD"]
 
@@ -93,6 +91,10 @@ def read_virus_total_api_key() -> str:
 
     secrets = search_secrets(path=SECRETS_DOFILE, entry_name="virusTotal", keys=("API_KEY",))
     return secrets[0]["secrets"][0]["keyValues"]["API_KEY"]
+
+
+def read_email():
+    pass
 
 
 if __name__ == "__main__":
