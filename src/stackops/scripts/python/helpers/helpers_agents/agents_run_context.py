@@ -8,7 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import e
 from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
-PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "custom", "c"]
+PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
 _PROMPTS_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 
@@ -183,7 +183,6 @@ def _build_prompt_selection_maps(
 
 def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, CONFIG_ROOT, LIBRARY_ROOT
-    from stackops.scripts.python.helpers.helpers_search.script_help import get_custom_roots
     from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
     repo_prompts = current_repo_stackops_path(path_kind="prompts_yaml")
@@ -191,11 +190,9 @@ def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str,
     public_prompts = CONFIG_ROOT / "agents" / "prompts" / "prompts.yaml"
     library_prompts = LIBRARY_ROOT / "agents" / "prompts" / "prompts.yaml"
 
-    custom_prompts = [(f"custom_{idx}", custom_root / "prompts.yaml") for idx, custom_root in enumerate(get_custom_roots("prompts"))]
-
     match where:
         case "all" | "a":
-            locations = [("private", private_prompts), ("public", public_prompts), ("library", library_prompts)] + custom_prompts
+            locations = [("private", private_prompts), ("public", public_prompts), ("library", library_prompts)]
             if repo_prompts is None:
                 return locations
             return [("repo", repo_prompts)] + locations
@@ -207,8 +204,6 @@ def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str,
             return [("public", public_prompts)]
         case "library" | "l":
             return [("library", library_prompts)]
-        case "custom" | "c":
-            return custom_prompts
 
 
 def resolve_prompts_yaml_paths(prompts_yaml_path: str | None, where: PROMPTS_WHERE) -> list[tuple[str, Path]]:

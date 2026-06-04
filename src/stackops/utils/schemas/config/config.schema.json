@@ -32,10 +32,6 @@
           "$ref": "#/definitions/PathList",
           "description": "Repository roots managed by devops update and status commands."
         },
-        "prompts": {
-          "$ref": "#/definitions/PathList",
-          "description": "Additional prompt roots searched by prompt helpers."
-        },
         "rclone_config_name": {
           "type": "string",
           "description": "Default rclone remote/profile name.",

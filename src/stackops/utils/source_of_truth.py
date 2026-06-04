@@ -119,7 +119,7 @@ def _read_general_config(value: object) -> StackOpsGeneralConfig:
     general = _require_object(value, "general")
     _reject_unknown_keys(
         general,
-        {"repos", "prompts", "rclone_config_name", "email_config_name", "to_email"},
+        {"repos", "rclone_config_name", "email_config_name", "to_email"},
         "general",
     )
     result: StackOpsGeneralConfig = {
@@ -128,8 +128,6 @@ def _read_general_config(value: object) -> StackOpsGeneralConfig:
         "email_config_name": _require_string(general.get("email_config_name"), "general.email_config_name"),
         "to_email": _require_string(general.get("to_email"), "general.to_email"),
     }
-    if "prompts" in general:
-        result["prompts"] = _require_string_list(general["prompts"], "general.prompts")
     return result
 
 
@@ -152,12 +150,7 @@ def read_stackops_general_string(key: StackOpsGeneralStringKey) -> str:
 
 
 def read_stackops_general_string_list(key: StackOpsGeneralPathListKey) -> list[str]:
-    general = read_stackops_config()["general"]
-    if key == "repos":
-        return general["repos"]
-    if "prompts" not in general:
-        raise KeyError(key)
-    return general["prompts"]
+    return read_stackops_config()["general"][key]
 
 
 def dotfiles_llm_api_keys_path(provider: str) -> Path:

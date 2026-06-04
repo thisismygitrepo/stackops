@@ -248,5 +248,5 @@ def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str 
             return location_name == "private"
         case "public" | "b":
             return location_name == "public"
-        case "library" | "l" | "custom" | "c":
+        case "library" | "l":
             return False
