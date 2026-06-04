@@ -1,12 +1,23 @@
 import json
+from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Literal, TypeAlias, assert_never
+from types import ModuleType
+from typing import Annotated, Literal, TypeAlias
 
 import typer
 
 InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
-ProfileMapperDumpKind: TypeAlias = Literal["mapper_data", "mapper_dotfiles"]
-DumpConfigKind: TypeAlias = Literal["ve", "layout", "mapper_data", "mapper_dotfiles", "secrets", "init", "ia", "live"]
+AssetDumpKind: TypeAlias = Literal["layout", "data", "dotfiles", "secrets", "config"]
+DumpConfigKind: TypeAlias = Literal["ve", "layout", "data", "dotfiles", "secrets", "config", "init", "ia", "live"]
+
+
+@dataclass(frozen=True, slots=True)
+class DumpAssetSpec:
+    data_source_path: Path
+    schema_source_path: Path
+    data_output_path: Path
+    schema_output_path: Path
 
 
 def config() -> None:
@@ -93,6 +104,12 @@ def _dump_init_script(which: InitScriptKind, run: bool) -> None:
 
 def dump_config(
     which: Annotated[DumpConfigKind, typer.Option(..., "--which", "-w", help="Which config or init script to dump")],
+    data: Annotated[bool, typer.Option("--data", "-d", help="Dump the config data/template file. Defaults to data and schema when omitted.")] = False,
+    schema: Annotated[bool, typer.Option("--schema", "-s", help="Dump the matching schema file. Defaults to data and schema when omitted.")] = False,
+    default_path: Annotated[
+        bool,
+        typer.Option("--default-path", "-p", help="Write to the default StackOps path for the selected file instead of the current directory."),
+    ] = False,
     run: Annotated[bool, typer.Option("--run", "-r", help="Run an init script instead of printing it.")] = False,
 ) -> None:
     """🔗 Dump example configuration files and init scripts."""
@@ -100,24 +117,33 @@ def dump_config(
         case "ve":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_ve_config()
+            _dump_ve_config(data=data, schema=schema, default_path=default_path)
             return
         case "layout":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_layout_example()
+            _dump_layout_example(data=data, schema=schema, default_path=default_path)
             return
-        case "mapper_data" | "mapper_dotfiles":
+        case "data" | "dotfiles":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_profile_mapper_example(which=which)
+            _dump_profile_example(which=which, data=data, schema=schema, default_path=default_path)
             return
         case "secrets":
             if run:
                 _reject_run_for_non_script_dump()
-            _dump_secrets_example()
+            _dump_secrets_example(data=data, schema=schema, default_path=default_path)
+            return
+        case "config":
+            if run:
+                _reject_run_for_non_script_dump()
+            _dump_stackops_config_example(data=data, schema=schema, default_path=default_path)
             return
         case "init" | "ia" | "live":
+            if data or schema:
+                _reject_data_schema_for_script_dump()
+            if default_path:
+                _reject_default_path_for_script_dump()
             _dump_init_script(which=which, run=run)
             return
     msg = typer.style("Error: ", fg=typer.colors.RED) + f"Unknown config type: {which}"
@@ -131,10 +157,60 @@ def _reject_run_for_non_script_dump() -> None:
     raise typer.Exit(code=1)
 
 
-def _dump_ve_config() -> None:
+def _reject_data_schema_for_script_dump() -> None:
+    msg = typer.style("Error: ", fg=typer.colors.RED) + "--data and --schema are only valid when dumping configuration files."
+    typer.echo(msg)
+    raise typer.Exit(code=1)
+
+
+def _reject_default_path_for_script_dump() -> None:
+    msg = typer.style("Error: ", fg=typer.colors.RED) + "--default-path is only valid when dumping configuration files."
+    typer.echo(msg)
+    raise typer.Exit(code=1)
+
+
+def _reject_default_path_for_ve_dump() -> None:
+    msg = typer.style("Error: ", fg=typer.colors.RED) + "--default-path is not supported for ve because it has no global StackOps path."
+    typer.echo(msg)
+    raise typer.Exit(code=1)
+
+
+def _resolve_dump_content_selection(*, data: bool, schema: bool) -> tuple[bool, bool]:
+    if data or schema:
+        return data, schema
+    return True, True
+
+
+def _echo_created_paths(paths: Sequence[Path]) -> None:
+    if not paths:
+        return
+    if len(paths) == 1:
+        path_text = str(paths[0])
+    else:
+        path_text = ", ".join(str(path) for path in paths[:-1]) + f" and {paths[-1]}"
+    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {path_text}"
+    typer.echo(msg)
+
+
+def _dump_ve_config(*, data: bool, schema: bool, default_path: bool) -> None:
     """Generate .ve.example.yaml with all options, sections, comments and default values."""
+    if default_path:
+        _reject_default_path_for_ve_dump()
+
     from stackops.utils.ve import read_default_cloud_config
     from stackops.utils.ve_schema import ensure_ve_yaml_schema_exists, ve_yaml_header_for_path
+
+    dump_data, dump_schema = _resolve_dump_content_selection(data=data, schema=schema)
+    output_path = Path.cwd() / ".ve.example.yaml"
+    created_paths: list[Path] = []
+
+    if dump_schema:
+        ensure_ve_yaml_schema_exists(yaml_path=output_path)
+        created_paths.append(output_path.with_name(".ve.schema.json"))
+
+    if not dump_data:
+        _echo_created_paths(created_paths)
+        return
 
     cloud_defaults = read_default_cloud_config()
 
@@ -163,83 +239,120 @@ cloud:
   share: {to_yaml_value(cloud_defaults["share"])}  # Enable sharing/public access
   overwrite: {to_yaml_value(cloud_defaults["overwrite"])}  # Overwrite existing files during sync
 """
-    ensure_ve_yaml_schema_exists(yaml_path=output_path)
     output_path.write_text(yaml_content, encoding="utf-8")
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {output_path}"
-    typer.echo(msg)
+    created_paths.insert(0, output_path)
+    _echo_created_paths(created_paths)
 
 
-def _dump_stackops_asset(*, source_path: Path, directory_name: str) -> Path:
-    output_dir = Path.cwd() / ".stackops" / directory_name
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / source_path.name
+def _get_path_reference_asset_path(*, module: ModuleType, path_reference: str) -> Path:
+    from stackops.utils.path_reference import get_path_reference_path
+
+    return get_path_reference_path(module=module, path_reference=path_reference)
+
+
+def _write_asset(*, source_path: Path, output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
     return output_path
 
 
-def _dump_example_asset(*, source_path: Path) -> Path:
-    return _dump_stackops_asset(source_path=source_path, directory_name="examples")
+def _dump_asset_spec(*, spec: DumpAssetSpec, data: bool, schema: bool) -> None:
+    dump_data, dump_schema = _resolve_dump_content_selection(data=data, schema=schema)
+    created_paths: list[Path] = []
+    if dump_data:
+        created_paths.append(_write_asset(source_path=spec.data_source_path, output_path=spec.data_output_path))
+    if dump_schema:
+        created_paths.append(_write_asset(source_path=spec.schema_source_path, output_path=spec.schema_output_path))
+    _echo_created_paths(created_paths)
 
 
-def _dump_layout_asset(*, path_reference: str) -> Path:
+def _dump_layout_example(*, data: bool, schema: bool, default_path: bool) -> None:
     import stackops.utils.schemas.layouts as layout_assets
+    from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
-    from stackops.utils.path_reference import get_path_reference_path
+    if default_path:
+        data_output_path = DOTFILES_LAYOUTS_JSON_PATH
+        schema_output_path = DOTFILES_LAYOUTS_JSON_PATH.with_name(layout_assets.LAYOUT_SCHEMA_PATH_REFERENCE)
+    else:
+        output_dir = Path.cwd() / ".stackops" / "examples"
+        data_output_path = output_dir / layout_assets.LAYOUT_PATH_REFERENCE
+        schema_output_path = output_dir / layout_assets.LAYOUT_SCHEMA_PATH_REFERENCE
+    spec = DumpAssetSpec(
+        data_source_path=_get_path_reference_asset_path(module=layout_assets, path_reference=layout_assets.LAYOUT_PATH_REFERENCE),
+        schema_source_path=_get_path_reference_asset_path(module=layout_assets, path_reference=layout_assets.LAYOUT_SCHEMA_PATH_REFERENCE),
+        data_output_path=data_output_path,
+        schema_output_path=schema_output_path,
+    )
+    _dump_asset_spec(spec=spec, data=data, schema=schema)
 
-    source_path = get_path_reference_path(module=layout_assets, path_reference=path_reference)
-    return _dump_example_asset(source_path=source_path)
 
-
-def _dump_layout_example() -> None:
-    import stackops.utils.schemas.layouts as layout_assets
-
-    layout_path = _dump_layout_asset(path_reference=layout_assets.LAYOUT_PATH_REFERENCE)
-    schema_path = _dump_layout_asset(path_reference=layout_assets.LAYOUT_SCHEMA_PATH_REFERENCE)
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {layout_path} and {schema_path}"
-    typer.echo(msg)
-
-
-def _dump_mapper_asset(*, path_reference: str) -> Path:
+def _dump_profile_example(*, which: Literal["data", "dotfiles"], data: bool, schema: bool, default_path: bool) -> None:
     import stackops.utils.schemas.mapper as mapper_assets
+    from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH, DOTFILES_USER_MAPPER_PATH
 
-    from stackops.utils.path_reference import get_path_reference_path
+    if which == "data":
+        data_path_reference = mapper_assets.MAPPER_DATA_PATH_REFERENCE
+        schema_path_reference = mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE
+        default_data_path = DOTFILES_USER_BACKUP_PATH
+    else:
+        data_path_reference = mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE
+        schema_path_reference = mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE
+        default_data_path = DOTFILES_USER_MAPPER_PATH
 
-    source_path = get_path_reference_path(module=mapper_assets, path_reference=path_reference)
-    return _dump_example_asset(source_path=source_path)
+    if default_path:
+        data_output_path = default_data_path
+        schema_output_path = default_data_path.with_name(schema_path_reference)
+    else:
+        output_dir = Path.cwd() / ".stackops" / "examples"
+        data_output_path = output_dir / data_path_reference
+        schema_output_path = output_dir / schema_path_reference
+    spec = DumpAssetSpec(
+        data_source_path=_get_path_reference_asset_path(module=mapper_assets, path_reference=data_path_reference),
+        schema_source_path=_get_path_reference_asset_path(module=mapper_assets, path_reference=schema_path_reference),
+        data_output_path=data_output_path,
+        schema_output_path=schema_output_path,
+    )
+    _dump_asset_spec(spec=spec, data=data, schema=schema)
 
 
-def _dump_profile_mapper_example(*, which: ProfileMapperDumpKind) -> None:
-    import stackops.utils.schemas.mapper as mapper_assets
-
-    match which:
-        case "mapper_data":
-            mapper_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DATA_PATH_REFERENCE)
-            schema_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE)
-        case "mapper_dotfiles":
-            mapper_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE)
-            schema_path = _dump_mapper_asset(path_reference=mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE)
-        case _:
-            assert_never(which)
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {mapper_path} and {schema_path}"
-    typer.echo(msg)
-
-
-def _dump_secrets_asset(*, path_reference: str) -> Path:
+def _dump_secrets_example(*, data: bool, schema: bool, default_path: bool) -> None:
     import stackops.utils.schemas.secrets as secrets_assets
+    from stackops.utils.source_of_truth import SECRETS_DOFILE
 
-    from stackops.utils.path_reference import get_path_reference_path
+    if default_path:
+        data_output_path = SECRETS_DOFILE
+        schema_output_path = SECRETS_DOFILE.with_name(secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE)
+    else:
+        output_dir = Path.cwd() / ".stackops" / "secrets"
+        data_output_path = output_dir / "secrets.json"
+        schema_output_path = output_dir / secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE
+    spec = DumpAssetSpec(
+        data_source_path=_get_path_reference_asset_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE),
+        schema_source_path=_get_path_reference_asset_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE),
+        data_output_path=data_output_path,
+        schema_output_path=schema_output_path,
+    )
+    _dump_asset_spec(spec=spec, data=data, schema=schema)
 
-    source_path = get_path_reference_path(module=secrets_assets, path_reference=path_reference)
-    return _dump_stackops_asset(source_path=source_path, directory_name="secrets")
 
+def _dump_stackops_config_example(*, data: bool, schema: bool, default_path: bool) -> None:
+    import stackops.utils.schemas.config as config_assets
+    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
 
-def _dump_secrets_example() -> None:
-    import stackops.utils.schemas.secrets as secrets_assets
-
-    example_path = _dump_secrets_asset(path_reference=secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE)
-    schema_path = _dump_secrets_asset(path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE)
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Created {example_path} and {schema_path}"
-    typer.echo(msg)
+    if default_path:
+        data_output_path = DOTFILES_STACKOPS_CONFIG_PATH
+        schema_output_path = DOTFILES_STACKOPS_CONFIG_PATH.with_name(config_assets.CONFIG_SCHEMA_PATH_REFERENCE)
+    else:
+        output_dir = Path.cwd() / ".stackops" / "config"
+        data_output_path = output_dir / config_assets.CONFIG_PATH_REFERENCE
+        schema_output_path = output_dir / config_assets.CONFIG_SCHEMA_PATH_REFERENCE
+    spec = DumpAssetSpec(
+        data_source_path=_get_path_reference_asset_path(module=config_assets, path_reference=config_assets.CONFIG_PATH_REFERENCE),
+        schema_source_path=_get_path_reference_asset_path(module=config_assets, path_reference=config_assets.CONFIG_SCHEMA_PATH_REFERENCE),
+        data_output_path=data_output_path,
+        schema_output_path=schema_output_path,
+    )
+    _dump_asset_spec(spec=spec, data=data, schema=schema)
 
 
 def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all", "a"], typer.Argument(..., help="Which assets to copy")]) -> None:

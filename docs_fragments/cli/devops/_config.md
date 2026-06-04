@@ -185,9 +185,13 @@ Write example configuration files into the current directory, or print one of th
 ```bash
 devops config dump --which ve
 devops config dump --which layout
-devops config dump --which mapper_data
-devops config dump --which mapper_dotfiles
+devops config dump --which data
+devops config dump --which dotfiles
 devops config dump --which secrets
+devops config dump --which secrets --data
+devops config dump --which secrets --schema
+devops config dump --which config
+devops config dump --which config --default-path
 devops config dump --which init
 devops config dump --which ia
 devops config dump --which live --run
@@ -199,18 +203,24 @@ Supported `--which` values from current help:
 |-------|---------|
 | `ve` | Write `.ve.example.yaml` in the current working directory |
 | `layout` | Write `layout.json` and `layout.schema.json` under `.stackops/examples` in the current working directory |
-| `mapper_data` | Write `data.yaml` and `data.schema.json` under `.stackops/examples` in the current working directory |
-| `mapper_dotfiles` | Write `dotfiles.yaml` and `dotfiles.schema.json` under `.stackops/examples` in the current working directory |
-| `secrets` | Write `secrets.example.json` and `secrets.schema.json` under `.stackops/secrets` in the current working directory |
+| `data` | Write `data.yaml` and `data.schema.json` under `.stackops/examples` in the current working directory |
+| `dotfiles` | Write `dotfiles.yaml` and `dotfiles.schema.json` under `.stackops/examples` in the current working directory |
+| `secrets` | Write `secrets.json` and `secrets.schema.json` under `.stackops/secrets` in the current working directory |
+| `config` | Write `config.json` and `config.schema.json` under `.stackops/config` in the current working directory |
 | `init` | Print the shell init script for the current platform |
 | `ia` | Print the interactive setup bootstrap script |
 | `live` | Print the live-from-GitHub bootstrap script |
 
-Key option:
+Key options:
 
 | Option | Description |
 |--------|-------------|
+| `--data`, `-d` | Write only the data/template file for configuration dumps |
+| `--schema`, `-s` | Write only the schema file for configuration dumps |
+| `--default-path`, `-p` | Write to the default StackOps path for the selected file instead of the current directory |
 | `--run`, `-r` | Run the selected init/setup script instead of printing it |
+
+When neither `--data` nor `--schema` is passed, file dumps write both files. `--default-path` maps `layout` to `~/dotfiles/stackops/config/layouts.json`, `config` to `~/dotfiles/stackops/config/config.json`, `secrets` to `~/dotfiles/stackops/secrets/secrets.json`, `data` to `~/dotfiles/stackops/mapper/data.yaml`, and `dotfiles` to `~/dotfiles/stackops/mapper/dotfiles.yaml`.
 
 ### terminal
 

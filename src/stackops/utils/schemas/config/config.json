@@ -1,0 +1,7 @@
+{
+  "$schema": "./config.schema.json",
+  "version": "1.0.0",
+  "default_rclone_config": "myremote",
+  "default_email_config": "default",
+  "default_email_address": "user@example.com"
+}

@@ -19,11 +19,25 @@ def _secrets_asset_text(path_reference: str) -> str:
     return get_path_reference_path(module=secrets_assets, path_reference=path_reference).read_text(encoding="utf-8")
 
 
+def _config_asset_text(path_reference: str) -> str:
+    import stackops.utils.schemas.config as config_assets
+
+    return get_path_reference_path(module=config_assets, path_reference=path_reference).read_text(encoding="utf-8")
+
+
 def test_devops_config_dump_help_lists_all_dump_targets() -> None:
     result = CliRunner().invoke(get_app(), ["c", "d", "--help"], env={"COLUMNS": "220"})
 
     assert result.exit_code == 0, result.output
-    assert "[ve|layout|mapper_data|mapper_dotfiles|secrets|init|ia|live]" in result.output
+    assert "[ve|layout|data|dotfiles|secrets|config|init|ia|live]" in result.output
+    assert "mapper_data" not in result.output
+    assert "mapper_dotfiles" not in result.output
+    assert "--data" in result.output
+    assert "-d" in result.output
+    assert "--schema" in result.output
+    assert "-s" in result.output
+    assert "--default-path" in result.output
+    assert "-p" in result.output
 
 
 def test_devops_config_dump_prints_live_from_github_script() -> None:
@@ -33,12 +47,12 @@ def test_devops_config_dump_prints_live_from_github_script() -> None:
     assert "git+https://github.com/thisismygitrepo/stackops" in result.output
 
 
-def test_devops_config_dump_writes_mapper_data_example() -> None:
+def test_devops_config_dump_writes_data_example() -> None:
     import stackops.utils.schemas.mapper as mapper_assets
 
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(get_app(), ["c", "d", "--which", "mapper_data"])
+        result = runner.invoke(get_app(), ["c", "d", "--which", "data"])
 
         assert result.exit_code == 0, result.output
         output_dir = Path(".stackops/examples")
@@ -50,12 +64,12 @@ def test_devops_config_dump_writes_mapper_data_example() -> None:
         )
 
 
-def test_devops_config_dump_writes_mapper_dotfiles_example() -> None:
+def test_devops_config_dump_writes_dotfiles_example() -> None:
     import stackops.utils.schemas.mapper as mapper_assets
 
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(get_app(), ["c", "d", "--which", "mapper_dotfiles"])
+        result = runner.invoke(get_app(), ["c", "d", "--which", "dotfiles"])
 
         assert result.exit_code == 0, result.output
         output_dir = Path(".stackops/examples")
@@ -76,12 +90,86 @@ def test_devops_config_dump_writes_secrets_example() -> None:
 
         assert result.exit_code == 0, result.output
         output_dir = Path(".stackops/secrets")
-        assert (output_dir / "secrets.example.json").read_text(encoding="utf-8") == _secrets_asset_text(
+        assert (output_dir / "secrets.json").read_text(encoding="utf-8") == _secrets_asset_text(
             secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE
         )
         assert (output_dir / "secrets.schema.json").read_text(encoding="utf-8") == _secrets_asset_text(
             secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE
         )
+
+
+def test_devops_config_dump_writes_config_example() -> None:
+    import stackops.utils.schemas.config as config_assets
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(get_app(), ["c", "d", "--which", "config"])
+
+        assert result.exit_code == 0, result.output
+        output_dir = Path(".stackops/config")
+        assert (output_dir / "config.json").read_text(encoding="utf-8") == _config_asset_text(config_assets.CONFIG_PATH_REFERENCE)
+        assert (output_dir / "config.schema.json").read_text(encoding="utf-8") == _config_asset_text(
+            config_assets.CONFIG_SCHEMA_PATH_REFERENCE
+        )
+
+
+def test_devops_config_dump_can_write_only_schema() -> None:
+    import stackops.utils.schemas.config as config_assets
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(get_app(), ["c", "d", "--which", "config", "-s"])
+
+        assert result.exit_code == 0, result.output
+        output_dir = Path(".stackops/config")
+        assert not (output_dir / "config.json").exists()
+        assert (output_dir / "config.schema.json").read_text(encoding="utf-8") == _config_asset_text(
+            config_assets.CONFIG_SCHEMA_PATH_REFERENCE
+        )
+
+
+def test_devops_config_dump_can_write_only_data() -> None:
+    import stackops.utils.schemas.secrets as secrets_assets
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(get_app(), ["c", "d", "--which", "secrets", "-d"])
+
+        assert result.exit_code == 0, result.output
+        output_dir = Path(".stackops/secrets")
+        assert (output_dir / "secrets.json").read_text(encoding="utf-8") == _secrets_asset_text(
+            secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE
+        )
+        assert not (output_dir / "secrets.schema.json").exists()
+
+
+def test_devops_config_dump_writes_config_to_default_path(monkeypatch, tmp_path: Path) -> None:
+    import stackops.utils.schemas.config as config_assets
+    from stackops.utils import source_of_truth
+
+    config_path = tmp_path / "dotfiles" / "stackops" / "config" / "config.json"
+    monkeypatch.setattr(source_of_truth, "DOTFILES_STACKOPS_CONFIG_PATH", config_path)
+
+    result = CliRunner().invoke(get_app(), ["c", "d", "--which", "config", "-d", "-p"])
+
+    assert result.exit_code == 0, result.output
+    assert config_path.read_text(encoding="utf-8") == _config_asset_text(config_assets.CONFIG_PATH_REFERENCE)
+
+
+def test_devops_config_dump_writes_secrets_schema_to_default_path(monkeypatch, tmp_path: Path) -> None:
+    import stackops.utils.schemas.secrets as secrets_assets
+    from stackops.utils import source_of_truth
+
+    secrets_path = tmp_path / "dotfiles" / "stackops" / "secrets" / "secrets.json"
+    monkeypatch.setattr(source_of_truth, "SECRETS_DOFILE", secrets_path)
+
+    result = CliRunner().invoke(get_app(), ["c", "d", "--which", "secrets", "-s", "-p"])
+
+    assert result.exit_code == 0, result.output
+    assert not secrets_path.exists()
+    assert (secrets_path.parent / "secrets.schema.json").read_text(encoding="utf-8") == _secrets_asset_text(
+        secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE
+    )
 
 
 def test_secrets_example_references_schema() -> None:
@@ -90,3 +178,11 @@ def test_secrets_example_references_schema() -> None:
     example = json.loads(_secrets_asset_text(secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE))
 
     assert example["$schema"] == f"./{secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE}"
+
+
+def test_config_example_references_schema() -> None:
+    import stackops.utils.schemas.config as config_assets
+
+    example = json.loads(_config_asset_text(config_assets.CONFIG_PATH_REFERENCE))
+
+    assert example["$schema"] == f"./{config_assets.CONFIG_SCHEMA_PATH_REFERENCE}"
