@@ -9,8 +9,8 @@ StackOpsConfig = TypedDict(
     {
         "$schema": NotRequired[str],
         "version": str,
-        "default_rclone_config": str,
-        "default_email_config": str,
-        "default_email_address": str,
+        "default_rclone_config": NotRequired[str],
+        "default_email_config": NotRequired[str],
+        "default_email_address": NotRequired[str],
     },
 )

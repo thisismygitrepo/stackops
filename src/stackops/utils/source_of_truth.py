@@ -107,12 +107,15 @@ def read_stackops_config() -> StackOpsConfig:
     _reject_unknown_keys(raw_config, {"$schema", "version", "default_rclone_config", "default_email_config", "default_email_address"}, "root")
     config: StackOpsConfig = {
         "version": _require_version(raw_config.get("version")),
-        "default_rclone_config": _require_string(raw_config.get("default_rclone_config"), "default_rclone_config"),
-        "default_email_config": _require_string(raw_config.get("default_email_config"), "default_email_config"),
-        "default_email_address": _require_string(raw_config.get("default_email_address"), "default_email_address"),
     }
     if "$schema" in raw_config:
         config["$schema"] = _require_string(raw_config["$schema"], "$schema", non_empty=False)
+    if "default_rclone_config" in raw_config:
+        config["default_rclone_config"] = _require_string(raw_config["default_rclone_config"], "default_rclone_config")
+    if "default_email_config" in raw_config:
+        config["default_email_config"] = _require_string(raw_config["default_email_config"], "default_email_config")
+    if "default_email_address" in raw_config:
+        config["default_email_address"] = _require_string(raw_config["default_email_address"], "default_email_address")
     return config
 
 

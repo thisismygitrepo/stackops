@@ -56,6 +56,18 @@ def test_read_stackops_config_returns_schema_typed_config(monkeypatch: pytest.Mo
     assert source_of_truth.read_stackops_config_string("default_rclone_config") == "cloud"
 
 
+def test_read_stackops_config_accepts_missing_optional_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps({"version": "1.0.0"}), encoding="utf-8")
+    monkeypatch.setattr(source_of_truth, "DOTFILES_STACKOPS_CONFIG_PATH", config_path)
+
+    config = source_of_truth.read_stackops_config()
+
+    assert config == {"version": "1.0.0"}
+    with pytest.raises(KeyError):
+        source_of_truth.read_stackops_config_string("default_rclone_config")
+
+
 def test_read_stackops_config_rejects_unknown_config_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     config_path = tmp_path / "config.json"
     config_path.write_text(

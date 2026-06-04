@@ -34,5 +34,5 @@
       "minLength": 1
     }
   },
-  "required": ["version", "default_rclone_config", "default_email_config", "default_email_address"]
+  "required": ["version"]
 }

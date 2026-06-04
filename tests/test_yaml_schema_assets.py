@@ -50,3 +50,4 @@ def test_stackops_config_schema_asset_is_valid_json() -> None:
     assert schema["title"] == "StackOps User Config Schema"
     assert "general" not in schema["properties"]
     assert "repos" not in schema["properties"]
+    assert schema["required"] == ["version"]
