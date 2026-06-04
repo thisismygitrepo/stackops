@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import TypeAlias
 
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
 from stackops.utils.schemas.secrets.secrets_types import (
+    SecretJsonValue,
     SecretRecord,
     SecretRotation,
     SecretsEntry,
+    SecretValueMap,
 )
 
 DEFAULT_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
@@ -17,8 +20,11 @@ DEFAULT_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 __all__ = [
     "DEFAULT_SECRETS_PATH",
     "Entry",
+    "SecretJsonValue",
+    "SecretValueMap",
     "StackOpsSecretsError",
     "SecretsFileError",
+    "render_secret_value",
     "search_secrets",
 ]
 
@@ -32,6 +38,12 @@ class StackOpsSecretsError(Exception):
 
 class SecretsFileError(StackOpsSecretsError, ValueError):
     """Raised when the secrets file does not match the strict schema."""
+
+
+def render_secret_value(value: SecretJsonValue) -> str:
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, separators=(",", ":"), ensure_ascii=False)
 
 
 def search_secrets(

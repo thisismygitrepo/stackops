@@ -5,7 +5,7 @@ from typing import NoReturn
 import typer
 
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import SecretRecord, SecretStringMap, SecretsEntry, SecretsFile
+from stackops.utils.schemas.secrets.secrets_types import SecretRecord, SecretStringMap, SecretsEntry, SecretsFile, SecretValueMap
 
 __all__ = [
     "SecretCandidate",
@@ -28,7 +28,7 @@ class SecretCandidate:
     secret_name: str | None
     secret_tags: tuple[str, ...]
     scopes: tuple[str, ...]
-    key_values: dict[str, str]
+    key_values: SecretValueMap
     searchable_values: tuple[str, ...]
 
 
@@ -284,7 +284,7 @@ def _candidate_label(candidate: SecretCandidate) -> str:
         secret_label = ",".join(candidate.secret_tags)
     if secret_label is None:
         secret_label = "<unnamed secret>"
-    keys = ", ".join(candidate.key_values)
+    keys = ", ".join(candidate.key_values) if candidate.key_values else "<no keys>"
     return f"{candidate.entry_name} / {secret_label} -> {keys}"
 
 

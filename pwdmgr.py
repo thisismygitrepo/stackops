@@ -32,7 +32,7 @@ from stackops.utils.source_of_truth import SECRETS_DOFILE
 # Encrypted cache location
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"
 CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
-DEFAULT_BITWARDEN_ENTRY_NAME = "bitwarden0"
+DEFAULT_BITWARDEN_ENTRY_NAME = "bitwarden"
 BITWARDEN_SECRET_KEYS: tuple[str, str, str] = ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")
 
 

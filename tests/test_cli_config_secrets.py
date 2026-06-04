@@ -280,6 +280,56 @@ def test_devops_config_secrets_verbose_handles_empty_tags_arrays() -> None:
         assert "Scopes: -" in result.output
 
 
+def test_devops_config_secrets_writes_arbitrary_json_keyvalues() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        payload["entries"][0]["secrets"][0]["keyValues"] = {  # type: ignore[index]
+            "PORT": 5432,
+            "FEATURE_ENABLED": True,
+            "SETTINGS": {"nested": [1, None, "x"]},
+            "EMPTY": "",
+        }
+        _write_secrets_file(payload)
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(
+            get_app(),
+            ["c", "secrets", "--name", "github-personal"],
+            env={"OP_PROGRAM_PATH": str(op_path)},
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Prepared 4 env variable(s): PORT, FEATURE_ENABLED, SETTINGS, EMPTY" in result.output
+        env_path = _env_path_from_loader(op_path.read_text(encoding="utf-8"))
+        env_script = env_path.read_text(encoding="utf-8")
+        assert "export PORT=5432" in env_script
+        assert "export FEATURE_ENABLED=true" in env_script
+        assert """export SETTINGS='{"nested":[1,null,"x"]}'""" in env_script
+        assert "export EMPTY=''" in env_script
+
+
+def test_devops_config_secrets_handles_empty_keyvalues() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        payload["entries"][0]["secrets"][0]["keyValues"] = {}  # type: ignore[index]
+        _write_secrets_file(payload)
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(
+            get_app(),
+            ["c", "secrets", "--name", "github-personal"],
+            env={"OP_PROGRAM_PATH": str(op_path)},
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "Prepared 0 env variable(s)." in result.output
+        env_path = _env_path_from_loader(op_path.read_text(encoding="utf-8"))
+        env_script = env_path.read_text(encoding="utf-8")
+        assert "export " not in env_script
+
+
 def _write_secrets_file(payload: dict[str, object]) -> None:
     secrets_path = Path(".stackops") / "secrets" / "secrets.json"
     secrets_path.parent.mkdir(parents=True, exist_ok=True)

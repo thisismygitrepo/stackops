@@ -64,7 +64,7 @@ def md2html(body: str) -> str:
 
 class Email:
     def __init__(self, config_name: str):
-        from stackops.secrets import search_secrets
+        from stackops.secrets import render_secret_value, search_secrets
         from stackops.utils.source_of_truth import SECRETS_DOFILE
         secrets = search_secrets(path=SECRETS_DOFILE, entry_name=config_name)
         if len(secrets) == 0:
@@ -72,14 +72,28 @@ class Email:
         elif len(secrets) > 1:
             raise ValueError(f"Multiple secrets found for config_name: {config_name}. Please ensure config_name is unique. Found secrets: {secrets}")
         config = secrets[0]["secrets"][0]["keyValues"]
-        self.config = config
+        email_add = config["email_add"]
+        if not isinstance(email_add, str):
+            raise TypeError(f"Secret value at {config_name}.email_add must be a string.")
+        password = config["password"]
+        if not isinstance(password, str):
+            raise TypeError(f"Secret value at {config_name}.password must be a string.")
+        encryption = config["encryption"]
+        if not isinstance(encryption, str):
+            raise TypeError(f"Secret value at {config_name}.encryption must be a string.")
+        smtp_host = config["smtp_host"]
+        if not isinstance(smtp_host, str):
+            raise TypeError(f"Secret value at {config_name}.smtp_host must be a string.")
+        self.email_add = email_add
+        encryption_name = encryption.lower()
+        smtp_port = int(render_secret_value(config["smtp_port"]))
         from smtplib import SMTP_SSL, SMTP
         self.server: Union[SMTP_SSL, SMTP]
-        if config["encryption"].lower() == "ssl":
-            self.server = smtplib.SMTP_SSL(host=self.config["smtp_host"], port=int(self.config["smtp_port"]))
-        elif config["encryption"].lower() == "tls":
-            self.server = smtplib.SMTP(host=self.config["smtp_host"], port=int(self.config["smtp_port"]))
-        self.server.login(self.config["email_add"], password=self.config["password"])
+        if encryption_name == "ssl":
+            self.server = smtplib.SMTP_SSL(host=smtp_host, port=smtp_port)
+        elif encryption_name == "tls":
+            self.server = smtplib.SMTP(host=smtp_host, port=smtp_port)
+        self.server.login(self.email_add, password=password)
 
     def send_message(self, to: str, subject: str, body: str, txt_to_html: bool = True, attachments: list[Any] | None = None):
         _ = attachments
@@ -87,7 +101,7 @@ class Email:
         # msg = message.EmailMessage()
         msg = MIMEMultipart("alternative")
         msg["subject"] = subject
-        msg["From"] = self.config["email_add"]
+        msg["From"] = self.email_add
         msg["To"] = to
         # msg['Content-Type'] = "text/html"
         # msg.set_content(body)
@@ -111,7 +125,7 @@ class Email:
         server.login(email_add, password=pwd)
 
     def send_email(self, to_addrs: str, msg: str):
-        return self.server.sendmail(from_addr=self.config["email_add"], to_addrs=to_addrs, msg=msg)
+        return self.server.sendmail(from_addr=self.email_add, to_addrs=to_addrs, msg=msg)
 
     def close(self):
         self.server.quit()  # Closing is vital as many servers do not allow mutiple connections.

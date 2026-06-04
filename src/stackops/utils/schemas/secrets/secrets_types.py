@@ -4,6 +4,8 @@ from typing import NotRequired, TypeAlias, TypedDict
 SecretScope: TypeAlias = str
 SecretScopes: TypeAlias = list[SecretScope]
 SecretStringMap: TypeAlias = dict[str, str]
+SecretJsonValue: TypeAlias = str | int | float | bool | None | list["SecretJsonValue"] | dict[str, "SecretJsonValue"]
+SecretValueMap: TypeAlias = dict[str, SecretJsonValue]
 
 
 class SecretRotation(TypedDict, total=False):
@@ -15,7 +17,7 @@ class SecretRotation(TypedDict, total=False):
 class SecretRecord(TypedDict):
     tags: list[str]
     scopes: SecretScopes
-    keyValues: SecretStringMap
+    keyValues: SecretValueMap
     name: NotRequired[str]
     description: NotRequired[str]
     rotation: NotRequired[SecretRotation]

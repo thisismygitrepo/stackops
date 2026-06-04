@@ -112,7 +112,11 @@ def try_config_connection(config_ssid: str) -> bool:
             console.print(f"[yellow]⚠️ Multiple configurations found for SSID '{config_ssid}', using the first one[/yellow]")
             return False
         ssid = secrets[0]["secrets"][0]["keyValues"]["ssid"]
+        if not isinstance(ssid, str):
+            raise TypeError(f"Secret value at {config_ssid}.ssid must be a string.")
         password = secrets[0]["secrets"][0]["keyValues"]["password"]
+        if not isinstance(password, str):
+            raise TypeError(f"Secret value at {config_ssid}.password must be a string.")
 
         console.print(f"[green]✅ Found configuration for {config_ssid}[/green]")
         connect_to_new_network(ssid, password)

@@ -178,6 +178,31 @@ def test_python_secrets_api_allows_empty_tags_and_scopes_arrays() -> None:
         assert search_secrets(entry_name="github-personal", scopes=("repo",)) == []
 
 
+def test_python_secrets_api_allows_missing_secret_tags_and_preserves_arbitrary_keyvalues() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        secret = payload["entries"][0]["secrets"][0]  # type: ignore[index]
+        del secret["tags"]  # type: ignore[index]
+        secret["keyValues"] = {  # type: ignore[index]
+            "": "",
+            "PORT": 5432,
+            "FEATURE_ENABLED": True,
+            "SETTINGS": {"nested": [1, None, "x"]},
+        }
+        _write_secrets_file(payload)
+
+        entries = search_secrets(entry_name="github-personal", keys=("",))
+
+        assert entries[0]["secrets"][0]["tags"] == []
+        assert entries[0]["secrets"][0]["keyValues"] == {
+            "": "",
+            "PORT": 5432,
+            "FEATURE_ENABLED": True,
+            "SETTINGS": {"nested": [1, None, "x"]},
+        }
+
+
 def _write_secrets_file(payload: dict[str, object]) -> None:
     secrets_path = Path(".stackops") / "secrets" / "secrets.json"
     secrets_path.parent.mkdir(parents=True, exist_ok=True)

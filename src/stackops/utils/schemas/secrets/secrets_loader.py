@@ -3,11 +3,13 @@ from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
 from stackops.utils.schemas.secrets.secrets_types import (
+    SecretJsonValue,
     SecretRecord,
     SecretRotation,
     SecretStringMap,
     SecretsEntry,
     SecretsFile,
+    SecretValueMap,
 )
 
 
@@ -106,9 +108,10 @@ def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int
         allowed_keys=("name", "tags", "description", "scopes", "keyValues", "rotation", "metadata", "notes"),
         path=secret_path,
     )
+    tags = _optional_string_list(secret.get("tags"), f"{secret_path}.tags")
     scopes = _string_list(secret["scopes"], f"{secret_path}.scopes") if "scopes" in secret else []
     parsed_secret: SecretRecord = {
-        "tags": _string_list(secret.get("tags"), f"{secret_path}.tags"),
+        "tags": tags if tags is not None else [],
         "scopes": scopes,
         "keyValues": _key_values(secret.get("keyValues"), f"{secret_path}.keyValues"),
     }
@@ -201,20 +204,38 @@ def _optional_rotation(value: Any, path: str) -> SecretRotation | None:
     return rotation
 
 
-def _key_values(value: Any, path: str) -> dict[str, str]:
+def _key_values(value: Any, path: str) -> SecretValueMap:
     if not isinstance(value, Mapping):
         _fail(f"Invalid secrets file: {path} must be an object.")
 
-    key_values: dict[str, str] = {}
+    key_values: SecretValueMap = {}
     for key, secret_value in value.items():
-        if not isinstance(key, str) or not key.strip():
-            _fail(f"Invalid secrets file: {path} contains a non-string or empty key.")
-        if not isinstance(secret_value, str) or not secret_value.strip():
-            _fail(f"Invalid secrets file: {path}.{key} must be a non-empty string.")
-        key_values[key] = secret_value
-    if not key_values:
-        _fail(f"Invalid secrets file: {path} must define at least one value.")
+        if not isinstance(key, str):
+            _fail(f"Invalid secrets file: {path} contains a non-string key.")
+        key_values[key] = _json_value(secret_value, _json_field_path(path, key))
     return key_values
+
+
+def _json_value(value: Any, path: str) -> SecretJsonValue:
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    if isinstance(value, list):
+        items: list[SecretJsonValue] = []
+        for index, item in enumerate(value):
+            items.append(_json_value(item, f"{path}[{index}]"))
+        return items
+    if isinstance(value, Mapping):
+        mapping_value: dict[str, SecretJsonValue] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                _fail(f"Invalid secrets file: {path} contains a non-string key.")
+            mapping_value[key] = _json_value(item, _json_field_path(path, key))
+        return mapping_value
+    _fail(f"Invalid secrets file: {path} must be a JSON value.")
+
+
+def _json_field_path(path: str, key: str) -> str:
+    return f"{path}[{json.dumps(key)}]"
 
 
 def _reject_unknown_keys(mapping: Mapping[str, Any], *, allowed_keys: tuple[str, ...], path: str) -> None:
