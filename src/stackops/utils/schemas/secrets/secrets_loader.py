@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
 from stackops.utils.schemas.secrets.secrets_types import (
-    SecretJsonValue,
     SecretRecord,
     SecretRotation,
     SecretStringMap,
@@ -216,16 +215,16 @@ def _key_values(value: Any, path: str) -> SecretValueMap:
     return key_values
 
 
-def _json_value(value: Any, path: str) -> SecretJsonValue:
+def _json_value(value: Any, path: str) -> object:
     if value is None or isinstance(value, str | int | float | bool):
         return value
     if isinstance(value, list):
-        items: list[SecretJsonValue] = []
+        items: list[object] = []
         for index, item in enumerate(value):
             items.append(_json_value(item, f"{path}[{index}]"))
         return items
     if isinstance(value, Mapping):
-        mapping_value: dict[str, SecretJsonValue] = {}
+        mapping_value: dict[str, object] = {}
         for key, item in value.items():
             if not isinstance(key, str):
                 _fail(f"Invalid secrets file: {path} contains a non-string key.")

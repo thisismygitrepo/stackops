@@ -9,7 +9,7 @@ from typing import Annotated, Mapping, NoReturn
 
 import typer
 
-from stackops.secrets import SecretJsonValue, render_secret_value
+from stackops.secrets import render_secret_value
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretCandidate,
     SecretSelectors,
@@ -176,7 +176,7 @@ def _clean_selector_values(values: list[str] | None) -> tuple[str, ...]:
     return tuple(stripped_value for value in values or () if (stripped_value := value.strip()))
 
 
-def _validate_env_names(key_values: Mapping[str, SecretJsonValue]) -> None:
+def _validate_env_names(key_values: Mapping[str, object]) -> None:
     invalid_names = [name for name in key_values if ENV_VAR_NAME_RE.fullmatch(name) is None]
     if invalid_names:
         names = ", ".join(invalid_names)
@@ -209,7 +209,7 @@ def _join_display(values: tuple[str, ...]) -> str:
     return ", ".join(values) if values else "-"
 
 
-def _write_env_handoff(key_values: Mapping[str, SecretJsonValue]) -> None:
+def _write_env_handoff(key_values: Mapping[str, object]) -> None:
     op_program_path_raw = os.environ.get("OP_PROGRAM_PATH")
     if not op_program_path_raw:
         _fail("Cannot define env variables in the parent shell because OP_PROGRAM_PATH is not set. Run through the StackOps shell wrapper.")
@@ -233,7 +233,7 @@ def _write_env_handoff(key_values: Mapping[str, SecretJsonValue]) -> None:
     _chmod_private(op_program_path, 0o700)
 
 
-def _render_env_file(key_values: Mapping[str, SecretJsonValue], powershell: bool) -> str:
+def _render_env_file(key_values: Mapping[str, object], powershell: bool) -> str:
     if powershell:
         lines = ["# StackOps secrets env file. This file is removed after loading."]
         for key, value in key_values.items():
