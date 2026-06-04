@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 from platform import system
-from typing import Literal, cast
+from typing import Literal
 
 from rich.console import Console
 from rich.panel import Panel

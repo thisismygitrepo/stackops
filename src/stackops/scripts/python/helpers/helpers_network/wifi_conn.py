@@ -6,17 +6,7 @@ Linux requirements:
 Windows requirements:
 - Run as Administrator for netsh commands
 
-Configuration file format (wifi.ini):
-[MyPhoneHotSpot]
-SSID = MyPhoneHotSpot
-pwd = mypassword123
-
-[HomeWiFi]
-SSID = HomeNetwork
-pwd = homepassword456
-
 Configuration file locations checked (in order):
-- stackops.utils.source_of_truth.DOTFILES_WIFI_INI_PATH
 - ~/.config/wifi.ini
 - ./wifi.ini
 
@@ -30,9 +20,7 @@ Usage examples:
 
 import getpass
 import platform
-from configparser import ConfigParser
 from importlib import import_module
-from pathlib import Path
 from typing import Protocol, cast
 
 from rich.prompt import Prompt
@@ -42,7 +30,6 @@ from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common 
     console,
     render_networks_table,
 )
-from stackops.utils.source_of_truth import DOTFILES_WIFI_INI_PATH
 
 
 class WifiPlatformModule(Protocol):
@@ -119,30 +106,17 @@ def display_available_networks() -> None:
 
 def try_config_connection(config_ssid: str) -> bool:
     try:
-        config_paths = [DOTFILES_WIFI_INI_PATH, Path.home() / ".config/wifi.ini", Path.cwd() / "wifi.ini"]
-
-        creds = ConfigParser()
-        config_found = False
-
-        for config_path in config_paths:
-            if config_path.exists():
-                creds.read(config_path)
-                config_found = True
-                break
-
-        if not config_found:
-            console.print("[yellow]⚠️  No WiFi configuration file found in standard locations[/yellow]")
+        from stackops.utils.source_of_truth import SECRETS_DOFILE
+        from stackops.secrets import search_secrets
+        secrets = search_secrets(path=SECRETS_DOFILE, entry_name=config_ssid, tags=("wifi",))
+        if not secrets:
+            console.print(f"[yellow]⚠️ No configuration found for SSID '{config_ssid}'[/yellow]")
             return False
-
-        if config_ssid not in creds:
-            console.print(f"[yellow]⚠️  SSID '{config_ssid}' not found in configuration[/yellow]")
-            available_ssids = list(creds.sections())
-            if available_ssids:
-                console.print(f"[blue]Available configured networks: {', '.join(available_ssids)}[/blue]")
+        if len(secrets) > 1:
+            console.print(f"[yellow]⚠️ Multiple configurations found for SSID '{config_ssid}', using the first one[/yellow]")
             return False
-
-        ssid = creds[config_ssid]["SSID"]
-        password = creds[config_ssid]["pwd"]
+        ssid = secrets[0]["secrets"][0]["keyValues"]["ssid"]
+        password = secrets[0]["secrets"][0]["keyValues"]["password"]
 
         console.print(f"[green]✅ Found configuration for {config_ssid}[/green]")
         connect_to_new_network(ssid, password)

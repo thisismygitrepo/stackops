@@ -144,26 +144,6 @@ class Email:
     #     response.print(desc="Email sending response")
 
 
-# class PhoneNotification:  # security concerns: avoid using this.
-#     def __init__(self, token: str | None):
-#         if token is None:
-#             path = DOTFILES_PHONE_NOTIFICATION_INI_PATH
-#             ini = Read.ini(path)
-#             token_ = ini["default"]["token"]
-#         else:
-#             token_ = token
-#         pushbullet = install_n_import("pushbullet")
-#         self.api = pushbullet.Pushbullet(token_)
-#     def send_notification(self, title: str = "Note From Python", body: str = "A notfication"):
-#         self.api.push_note(title=title, body=body)
-#     @staticmethod
-#     def open_website():
-#         P(r"https://www.pushbullet.com/")()
-#     @staticmethod  # https://www.youtube.com/watch?v=tbzPcKRZlHg
-#     def try_me(bulletpoint_token: str):
-#         n = PhoneNotification(bulletpoint_token)
-#         n.send_notification()
-
 
 if __name__ == "__main__":
     pass

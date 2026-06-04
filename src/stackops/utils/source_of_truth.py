@@ -24,9 +24,7 @@ DOTFILES_STACKOPS_INIT_LINUX_PATH = DOTFILES_STACKOPS_ROOT.joinpath("init_linux.
 
 CONFIG_ROOT = Path.home().joinpath(".config/stackops")
 DEFAULTS_PATH = DOTFILES_STACKOPS_ROOT.joinpath("defaults.ini")
-DOTFILES_PHONE_NOTIFICATION_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("phone_notification.ini")
 DOTFILES_LAYOUTS_JSON_PATH = DOTFILES_STACKOPS_ROOT.joinpath("layouts.json")
-DOTFILES_WIFI_INI_PATH = DOTFILES_STACKOPS_ROOT.joinpath("setup", "wifi.ini")
 DOTFILES_USER_MAPPER_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "dotfiles.yaml")
 DOTFILES_USER_BACKUP_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "data.yaml")
 DOTFILES_MAPPER_FILES_ROOT = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "files")
