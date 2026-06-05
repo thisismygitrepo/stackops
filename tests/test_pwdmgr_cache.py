@@ -64,6 +64,23 @@ def test_pwdmgr_clean_cache_removes_current_cache(monkeypatch, tmp_path: Path) -
     assert not cache_path.exists()
 
 
+def test_pwdmgr_clean_cache_alias_runs_without_args_help(monkeypatch, tmp_path: Path) -> None:
+    tmp_results_root = tmp_path / "tmp_results"
+    cache_path = tmp_results_root / "cache" / "pwdmgr" / "cache.json.gpg"
+
+    cache_path.parent.mkdir(parents=True)
+    cache_path.write_bytes(b"gpg-cache")
+
+    monkeypatch.setattr(pwdmgr, "TMP_RESULTS_ROOT", tmp_results_root)
+    monkeypatch.setattr(pwdmgr, "CACHE_PATH", cache_path)
+
+    result = CliRunner().invoke(pwdmgr.app, ["c"])
+
+    assert result.exit_code == 0
+    assert not cache_path.exists()
+    assert "Removed cached pwdmgr data." in result.output
+
+
 def test_load_bitwarden_credentials_uses_stackops_search_secrets(monkeypatch) -> None:
     calls: list[dict[str, object]] = []
 
@@ -122,7 +139,7 @@ def test_load_bitwarden_credentials_uses_stackops_search_secrets(monkeypatch) ->
 
 
 def test_login_and_unlock_requires_profile() -> None:
-    result = CliRunner().invoke(pwdmgr.app, ["login-and-unlock", "custom-entry"])
+    result = CliRunner().invoke(pwdmgr.app, ["login-and-unlock", "--entry-name", "custom-entry"])
 
     assert result.exit_code != 0
     assert "Missing option '--profile'" in result.output
@@ -182,8 +199,51 @@ def test_login_and_unlock_defaults_entry_name(monkeypatch) -> None:
     result = CliRunner().invoke(pwdmgr.app, ["login-and-unlock", "--profile", "dev"])
 
     assert result.exit_code == 0
-    assert calls == [("bitwarden0", "dev")]
+    assert calls == [(pwdmgr.DEFAULT_BITWARDEN_ENTRY_NAME, "dev")]
     assert persisted_sessions == ["session-token"]
+
+
+def test_login_and_unlock_accepts_short_profile_and_entry_name_option(monkeypatch) -> None:
+    calls: list[tuple[str, str]] = []
+    persisted_sessions: list[str] = []
+
+    def fake_load_bitwarden_credentials(entry_name: str, profile: str):
+        calls.append((entry_name, profile))
+        return pwdmgr.BitwardenCredentials(
+            entry_name=entry_name,
+            profile=profile,
+            client_id="client-id",
+            client_secret="client-secret",
+            password="vault-password",
+        )
+
+    def fake_run_command(
+        args: list[str],
+        *,
+        env: dict[str, str] | None = None,
+        check: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        _ = check
+        assert env is not None
+        assert env["BW_CLIENTID"] == "client-id"
+        assert env["BW_CLIENTSECRET"] == "client-secret"
+        assert env["BW_PASSWORD"] == "vault-password"
+        assert env["BW_SESSION"] == "cached-session"
+
+        if args in (["bw", "login", "--check"], ["bw", "unlock", "--check"]):
+            return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+        raise AssertionError(f"Unexpected command: {args}")
+
+    monkeypatch.setattr(pwdmgr, "load_bitwarden_credentials", fake_load_bitwarden_credentials)
+    monkeypatch.setattr(pwdmgr, "load_session_token_from_cache", lambda: "cached-session")
+    monkeypatch.setattr(pwdmgr, "persist_session_token_to_cache", persisted_sessions.append)
+    monkeypatch.setattr(pwdmgr, "run_command", fake_run_command)
+
+    result = CliRunner().invoke(pwdmgr.app, ["login-and-unlock", "--entry-name", "custom-entry", "-p", "dev"])
+
+    assert result.exit_code == 0
+    assert calls == [("custom-entry", "dev")]
+    assert persisted_sessions == ["cached-session"]
 
 
 def test_get_vault_status_includes_account_metadata(monkeypatch) -> None:

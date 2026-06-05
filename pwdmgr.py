@@ -399,7 +399,7 @@ def search(
         vault_status = get_vault_status(session)
         status = vault_status.status
         script_name = Path(__file__).name
-        login_command = f"{script_name} login-and-unlock --profile <profile> [entry_name]"
+        login_command = f"{script_name} login-and-unlock -p <profile> [--entry-name <entry_name>]"
         if status == "locked":
             message_lines = ["[bold red]🔒 Vault is locked.[/bold red]"]
             for label, value in get_vault_account_details(vault_status):
@@ -554,15 +554,16 @@ def search(
     help="<l> Log in with Bitwarden API credentials from StackOps secrets, unlock the vault, and persist BW_SESSION locally.",
 )
 def login_and_unlock(
-    entry_name: str = typer.Argument(
+    entry_name: str = typer.Option(
         DEFAULT_BITWARDEN_ENTRY_NAME,
+        "--entry-name",
         help="StackOps secrets entry name that stores the Bitwarden API credentials.",
         show_default=True,
     ),
-    profile: str = typer.Option(..., "--profile", help="StackOps secrets profile that stores the Bitwarden credentials."),
+    profile: str = typer.Option(..., "--profile", "-p", help="StackOps secrets profile that stores the Bitwarden credentials."),
 ):
     """Authenticate with Bitwarden and persist a local BW_SESSION token."""
-    credentials = load_bitwarden_credentials(entry_name, profile)
+    credentials = load_bitwarden_credentials(entry_name=entry_name, profile=profile)
 
     env = os.environ.copy()
     existing_session = load_session_token_from_cache()
@@ -629,7 +630,7 @@ def login_and_unlock(
 
     console.print("[green]Vault unlocked.[/green] Session saved to encrypted cache.")
 
-@app.command("c", no_args_is_help=True, help="Alias for clean-cache.", hidden=True)
+@app.command("c", help="Alias for clean-cache.", hidden=True)
 @app.command(
     "clean-cache",
     help="<c> Remove encrypted pwdmgr cache stored under ~/tmp_results.",
