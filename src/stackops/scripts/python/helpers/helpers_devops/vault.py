@@ -29,7 +29,7 @@ from stackops.utils.source_of_truth import SECRETS_DOFILE
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"
 CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
 DEFAULT_BITWARDEN_LOGIN_NAME = "bitwarden"
-DEFAULT_LOGIN_COMMAND = "devops vault login-and-unlock -p <profile> [--login-name <login_name>]"
+DEFAULT_LOGIN_COMMAND = "devops vault login-and-unlock [--account-name <accountName>] [--login-name <login_name>]"
 BITWARDEN_SECRET_KEYS: tuple[str, str, str] = ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")
 
 
@@ -109,7 +109,7 @@ class VaultItem:
 @dataclass
 class BitwardenCredentials:
     login_name: str
-    profile: str
+    account_name: str | None
     client_id: str
     client_secret: str
     password: str
@@ -253,20 +253,21 @@ def copy_to_clipboard(value: str, slot: int = 1) -> bool:
         return False
 
 
-def load_bitwarden_credentials(login_name: str, profile: str) -> BitwardenCredentials:
+def load_bitwarden_credentials(login_name: str, account_name: str | None = None) -> BitwardenCredentials:
     """Load one Bitwarden credential bundle from StackOps secrets."""
     try:
-        logins = search_secrets(path=SECRETS_DOFILE, login_name=login_name, profile=profile, keys=BITWARDEN_SECRET_KEYS)
+        logins = search_secrets(path=SECRETS_DOFILE, login_name=login_name, account_name=account_name, keys=BITWARDEN_SECRET_KEYS)
     except SecretsFileError as exc:
         err_console.print("[bold red]Could not load StackOps secrets.[/bold red]")
         err_console.print(str(exc))
         raise VaultExit(code=2) from exc
 
+    selection = _format_bitwarden_secret_selection(login_name=login_name, account_name=account_name)
     if not logins:
-        err_console.print(f"[bold red]Bitwarden credentials not found in StackOps secrets.[/bold red] Login: {login_name} Profile: {profile}")
+        err_console.print(f"[bold red]Bitwarden credentials not found in StackOps secrets.[/bold red] {selection}")
         raise VaultExit(code=2)
     if len(logins) > 1:
-        err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] Login: {login_name} Profile: {profile}")
+        err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] {selection}")
         raise VaultExit(code=2)
 
     key_values = logins[0]["secrets"][0]["keyValues"]
@@ -277,11 +278,18 @@ def load_bitwarden_credentials(login_name: str, profile: str) -> BitwardenCreden
 
     return BitwardenCredentials(
         login_name=login_name,
-        profile=profile,
+        account_name=account_name,
         client_id=str(key_values["BW_CLIENTID"]),
         client_secret=str(key_values["BW_CLIENTSECRET"]),
         password=str(key_values["BW_PASSWORD"]),
     )
+
+
+def _format_bitwarden_secret_selection(*, login_name: str, account_name: str | None) -> str:
+    text = f"Login: {login_name}"
+    if account_name is not None:
+        text += f" Account: {account_name}"
+    return text
 
 
 def print_process_output(result: subprocess.CompletedProcess[str], *, stderr: bool = False) -> None:
@@ -479,9 +487,9 @@ def search(
     time.sleep(0.05)
 
 
-def login_and_unlock(profile: str, *, login_name: str = DEFAULT_BITWARDEN_LOGIN_NAME) -> None:
+def login_and_unlock(account_name: str | None = None, *, login_name: str = DEFAULT_BITWARDEN_LOGIN_NAME) -> None:
     """Authenticate with Bitwarden and persist a local BW_SESSION token."""
-    credentials = load_bitwarden_credentials(login_name=login_name, profile=profile)
+    credentials = load_bitwarden_credentials(login_name=login_name, account_name=account_name)
 
     env = os.environ.copy()
     existing_session = load_session_token_from_cache()
@@ -498,7 +506,8 @@ def login_and_unlock(profile: str, *, login_name: str = DEFAULT_BITWARDEN_LOGIN_
 
     login_check = run_command(["bw", "login", "--check"], env=env)
     if login_check.returncode == 0:
-        console.print(f"[green]Already logged in.[/green] Login: [bold]{credentials.login_name}[/bold] Profile: [bold]{credentials.profile}[/bold]")
+        selection = _format_bitwarden_secret_selection(login_name=credentials.login_name, account_name=credentials.account_name)
+        console.print(f"[green]Already logged in.[/green] {selection}")
     else:
         console.print("Logging in")
         login_result = run_command(["bw", "login", "--apikey"], env=env, check=True)

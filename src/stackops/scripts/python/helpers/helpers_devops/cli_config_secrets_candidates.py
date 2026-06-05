@@ -154,7 +154,7 @@ def _login_candidates(login: Login, entry_index: int) -> list[SecretCandidate]:
 
 def _search_values_from_login(login: Login, login_name: str, login_tags: tuple[str, ...]) -> tuple[str, ...]:
     values: list[str] = [login_name, *login_tags]
-    for key in ("description", "notes", "url", "email", "username", "profile"):
+    for key in ("description", "url", "email", "username", "accountName"):
         value = login.get(key)
         if value is not None:
             values.append(value)

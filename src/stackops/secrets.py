@@ -44,7 +44,7 @@ def search_secrets(
     *,
     path: str | Path | None = None,
     login_name: str | None = None,
-    profile: str | None = None,
+    account_name: str | None = None,
     secret_name: str | None = None,
     tags: tuple[str, ...] = (),
     login_tags: tuple[str, ...] = (),
@@ -65,7 +65,7 @@ def search_secrets(
                 login=login,
                 secret=secret,
                 login_name=login_name,
-                profile=profile,
+                account_name=account_name,
                 secret_name=secret_name,
                 tags=tags,
                 login_tags=login_tags,
@@ -92,7 +92,7 @@ def _secret_matches(
     login: Login,
     secret: SecretRecord,
     login_name: str | None,
-    profile: str | None,
+    account_name: str | None,
     secret_name: str | None,
     tags: tuple[str, ...],
     login_tags: tuple[str, ...],
@@ -107,7 +107,7 @@ def _secret_matches(
 
     if login_name is not None and login["name"] != login_name:
         return False
-    if profile is not None and login.get("profile") != profile:
+    if account_name is not None and login.get("accountName") != account_name:
         return False
     if secret_name is not None and secret.get("name") != secret_name:
         return False
@@ -128,16 +128,14 @@ def _login_with_secret(*, login: Login, secret: SecretRecord) -> Login:
         matched_login["tags"] = list(login["tags"])
     if "description" in login:
         matched_login["description"] = login["description"]
-    if "notes" in login:
-        matched_login["notes"] = login["notes"]
     if "url" in login:
         matched_login["url"] = login["url"]
     if "email" in login:
         matched_login["email"] = login["email"]
     if "username" in login:
         matched_login["username"] = login["username"]
-    if "profile" in login:
-        matched_login["profile"] = login["profile"]
+    if "accountName" in login:
+        matched_login["accountName"] = login["accountName"]
     if "metadata" in login:
         matched_login["metadata"] = dict(login["metadata"])
     return matched_login

@@ -37,7 +37,7 @@ SECRETS_EPILOG = """Examples:
   devops config secrets --edit
 
 Terms are case-insensitive substring matches. All terms must match somewhere across login
-name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys.
+name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.
 Use --interactive/-i to choose from matching logins with the TV fuzzy picker.
 Use --verbose/-v to print the selected bundle and env var keys without secret values.
 Use --source to choose the local file, global source-of-truth file, or both.
@@ -62,8 +62,8 @@ def secrets(
         list[str] | None,
         typer.Argument(
             help=(
-                "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/profile, "
-                "secret name/tags/scopes, metadata, notes, or env var keys."
+                "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, "
+                "secret name/tags/scopes, metadata, or env var keys."
             )
         ),
     ] = None,

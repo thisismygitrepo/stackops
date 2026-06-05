@@ -57,7 +57,7 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
     entry_path = f"entries[{entry_index}]"
     _reject_unknown_keys(
         entry,
-        allowed_keys=("name", "tags", "description", "notes", "url", "email", "username", "profile", "secrets", "metadata"),
+        allowed_keys=("name", "tags", "description", "url", "email", "username", "accountName", "secrets", "metadata"),
         path=entry_path,
     )
     secrets_raw = entry.get("secrets")
@@ -82,9 +82,6 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
     description = _optional_string(entry.get("description"), f"entries[{entry_index}].description")
     if description is not None:
         parsed_entry["description"] = description
-    notes = _optional_string(entry.get("notes"), f"entries[{entry_index}].notes")
-    if notes is not None:
-        parsed_entry["notes"] = notes
     url = _optional_string(entry.get("url"), f"entries[{entry_index}].url")
     if url is not None:
         parsed_entry["url"] = url
@@ -94,9 +91,9 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
     username = _optional_string(entry.get("username"), f"entries[{entry_index}].username")
     if username is not None:
         parsed_entry["username"] = username
-    profile = _optional_string(entry.get("profile"), f"entries[{entry_index}].profile")
-    if profile is not None:
-        parsed_entry["profile"] = profile
+    account_name = _optional_string(entry.get("accountName"), f"entries[{entry_index}].accountName")
+    if account_name is not None:
+        parsed_entry["accountName"] = account_name
     metadata = _optional_string_map(entry.get("metadata"), f"entries[{entry_index}].metadata")
     if metadata is not None:
         parsed_entry["metadata"] = metadata

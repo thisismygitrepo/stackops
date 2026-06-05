@@ -28,11 +28,10 @@ class Login(TypedDict):
     secrets: list[SecretRecord]
     tags: NotRequired[list[str]]
     description: NotRequired[str]
-    notes: NotRequired[str]
     url: NotRequired[str]
     email: NotRequired[str]
     username: NotRequired[str]
-    profile: NotRequired[str]
+    accountName: NotRequired[str]
     metadata: NotRequired[SecretStringMap]
 
 

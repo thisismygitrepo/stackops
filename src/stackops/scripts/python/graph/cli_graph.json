@@ -4131,8 +4131,8 @@
                     "        list[str] | None,",
                     "        typer.Argument(",
                     "            help=(",
-                    "                \"Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, \"",
-                    "                \"secret name/tags/scopes, metadata, notes, or env var keys.\"",
+                    "                \"Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, \"",
+                    "                \"secret name/tags/scopes, metadata, or env var keys.\"",
                     "            )",
                     "        ),",
                     "    ] = None,",
@@ -4157,16 +4157,16 @@
                     "    verbose: Annotated[",
                     "        bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected secret bundle and env var keys without secret values.\")",
                     "    ] = False,",
-                    "    entry_name: Annotated[",
+                    "    login_name: Annotated[",
                     "        str | None,",
-                    "        typer.Option(\"--name\", \"-n\", help=\"Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets.\"),",
+                    "        typer.Option(\"--name\", \"-n\", help=\"Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets.\"),",
                     "    ] = None,",
                     "    secret_name: Annotated[str | None, typer.Option(\"--secret-name\", help=\"Exact entries[].secrets[].name value to require.\")] = None,",
                     "    tags: Annotated[",
-                    "        list[str] | None, typer.Option(\"--tag\", \"--tags\", \"-t\", help=\"Exact entry or secret tag to require. Repeat for multiple tags.\")",
+                    "        list[str] | None, typer.Option(\"--tag\", \"--tags\", \"-t\", help=\"Exact login or secret tag to require. Repeat for multiple tags.\")",
                     "    ] = None,",
-                    "    entry_tags: Annotated[",
-                    "        list[str] | None, typer.Option(\"--entry-tag\", help=\"Exact entries[].tags value to require. Repeat for multiple tags.\")",
+                    "    login_tags: Annotated[",
+                    "        list[str] | None, typer.Option(\"--login-tag\", help=\"Exact login tag at entries[].tags to require. Repeat for multiple tags.\")",
                     "    ] = None,",
                     "    secret_tags: Annotated[",
                     "        list[str] | None, typer.Option(\"--secret-tag\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
@@ -4188,10 +4188,10 @@
                     "",
                     "    candidates = _load_secret_candidates_from_sources(secret_sources)",
                     "    selectors = SecretSelectors(",
-                    "        entry_name=_clean_optional_selector(entry_name),",
+                    "        login_name=_clean_optional_selector(login_name),",
                     "        secret_name=_clean_optional_selector(secret_name),",
                     "        tags=_clean_selector_values(tags),",
-                    "        entry_tags=_clean_selector_values(entry_tags),",
+                    "        login_tags=_clean_selector_values(login_tags),",
                     "        secret_tags=_clean_selector_values(secret_tags),",
                     "        scopes=_clean_selector_values(scopes),",
                     "        keys=_clean_selector_values(keys),",
@@ -4218,13 +4218,13 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys."
+                        "help": "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys."
                       }
                     },
                     {
@@ -4357,12 +4357,12 @@
                       }
                     },
                     {
-                      "name": "entry_name",
+                      "name": "login_name",
                       "kind": "positional_or_keyword",
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -4375,7 +4375,7 @@
                         "short_flags": [
                           "-n"
                         ],
-                        "help": "Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets."
+                        "help": "Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets."
                       }
                     },
                     {
@@ -4403,7 +4403,7 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--tag', '--tags', '-t', help='Exact entry or secret tag to require. Repeat for multiple tags.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--tag', '--tags', '-t', help='Exact login or secret tag to require. Repeat for multiple tags.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -4418,26 +4418,26 @@
                         "short_flags": [
                           "-t"
                         ],
-                        "help": "Exact entry or secret tag to require. Repeat for multiple tags."
+                        "help": "Exact login or secret tag to require. Repeat for multiple tags."
                       }
                     },
                     {
-                      "name": "entry_tags",
+                      "name": "login_tags",
                       "kind": "positional_or_keyword",
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--entry-tag', help='Exact entries[].tags value to require. Repeat for multiple tags.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--login-tag', help='Exact login tag at entries[].tags to require. Repeat for multiple tags.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--entry-tag"
+                          "--login-tag"
                         ],
                         "long_flags": [
-                          "--entry-tag"
+                          "--login-tag"
                         ],
                         "short_flags": [],
-                        "help": "Exact entries[].tags value to require. Repeat for multiple tags."
+                        "help": "Exact login tag at entries[].tags to require. Repeat for multiple tags."
                       }
                     },
                     {
@@ -12393,68 +12393,67 @@
                 "signature": {
                   "raw_lines": [
                     "def login_and_unlock(",
-                    "    profile: Annotated[str, typer.Option(..., \"--profile\", \"-p\", help=\"StackOps secrets profile that stores the Bitwarden credentials.\")],",
-                    "    entry_name: Annotated[",
-                    "        str, typer.Option(\"--entry-name\", help=\"StackOps secrets entry name that stores the Bitwarden API credentials.\", show_default=True)",
-                    "    ] = DEFAULT_BITWARDEN_ENTRY_NAME,",
+                    "    account_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--account-name\", help=\"Optional StackOps secrets accountName that stores the Bitwarden credentials.\"),",
+                    "    ] = None,",
+                    "    login_name: Annotated[",
+                    "        str, typer.Option(\"--login-name\", help=\"StackOps secrets login name that stores the Bitwarden API credentials.\", show_default=True)",
+                    "    ] = DEFAULT_BITWARDEN_LOGIN_NAME,",
                     ") -> None:",
                     "    \"\"\"Authenticate with Bitwarden and persist a local BW_SESSION token.\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_devops import vault",
                     "",
                     "    try:",
-                    "        vault.login_and_unlock(profile=profile, entry_name=entry_name)",
+                    "        vault.login_and_unlock(account_name=account_name, login_name=login_name)",
                     "    except vault.VaultExit as exc:",
                     "        _raise_typer_exit(exc)"
                   ],
                   "name": "login_and_unlock",
                   "parameters": [
                     {
-                      "name": "profile",
+                      "name": "account_name",
                       "kind": "positional_or_keyword",
-                      "type": "str",
+                      "type": "str | None",
                       "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--profile', '-p', help='StackOps secrets profile that stores the Bitwarden credentials.')]",
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--account-name', help='Optional StackOps secrets accountName that stores the Bitwarden credentials.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--profile",
-                          "-p"
+                          "--account-name"
                         ],
                         "long_flags": [
-                          "--profile"
+                          "--account-name"
                         ],
-                        "short_flags": [
-                          "-p"
-                        ],
-                        "help": "StackOps secrets profile that stores the Bitwarden credentials.",
-                        "default": "..."
+                        "short_flags": [],
+                        "help": "Optional StackOps secrets accountName that stores the Bitwarden credentials."
                       }
                     },
                     {
-                      "name": "entry_name",
+                      "name": "login_name",
                       "kind": "positional_or_keyword",
                       "type": "str",
-                      "default": "DEFAULT_BITWARDEN_ENTRY_NAME",
+                      "default": "DEFAULT_BITWARDEN_LOGIN_NAME",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--entry-name', help='StackOps secrets entry name that stores the Bitwarden API credentials.', show_default=True)]",
+                      "annotation_raw": "Annotated[str, typer.Option('--login-name', help='StackOps secrets login name that stores the Bitwarden API credentials.', show_default=True)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--entry-name"
+                          "--login-name"
                         ],
                         "long_flags": [
-                          "--entry-name"
+                          "--login-name"
                         ],
                         "short_flags": [],
-                        "help": "StackOps secrets entry name that stores the Bitwarden API credentials."
+                        "help": "StackOps secrets login name that stores the Bitwarden API credentials."
                       }
                     }
                   ],
                   "return": "None"
                 },
                 "typer": {
-                  "no_args_is_help": true
+                  "no_args_is_help": false
                 },
                 "doc": "Authenticate with Bitwarden and persist a local BW_SESSION token.",
                 "aliases": [

@@ -59,7 +59,10 @@ def search(
 
 
 def login_and_unlock(
-    profile: Annotated[str, typer.Option(..., "--profile", "-p", help="StackOps secrets profile that stores the Bitwarden credentials.")],
+    account_name: Annotated[
+        str | None,
+        typer.Option("--account-name", help="Optional StackOps secrets accountName that stores the Bitwarden credentials."),
+    ] = None,
     login_name: Annotated[
         str, typer.Option("--login-name", help="StackOps secrets login name that stores the Bitwarden API credentials.", show_default=True)
     ] = DEFAULT_BITWARDEN_LOGIN_NAME,
@@ -68,7 +71,7 @@ def login_and_unlock(
     from stackops.scripts.python.helpers.helpers_devops import vault
 
     try:
-        vault.login_and_unlock(profile=profile, login_name=login_name)
+        vault.login_and_unlock(account_name=account_name, login_name=login_name)
     except vault.VaultExit as exc:
         _raise_typer_exit(exc)
 
@@ -96,10 +99,10 @@ def get_app() -> typer.Typer:
 
     app.command(
         "login-and-unlock",
-        no_args_is_help=True,
+        no_args_is_help=False,
         help="<l> Log in with Bitwarden API credentials from StackOps secrets, unlock the vault, and persist BW_SESSION locally.",
     )(login_and_unlock)
-    app.command("l", no_args_is_help=True, help="Alias for login-and-unlock.", hidden=True)(login_and_unlock)
+    app.command("l", no_args_is_help=False, help="Alias for login-and-unlock.", hidden=True)(login_and_unlock)
 
     app.command("clean-cache", help="<c> Remove encrypted vault cache stored under ~/tmp_results.")(clean_cache)
     app.command("c", help="Alias for clean-cache.", hidden=True)(clean_cache)

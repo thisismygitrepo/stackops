@@ -159,7 +159,7 @@ Current behavior:
 Examples:
 
 ```bash
-devops vault login-and-unlock -p dev
+devops vault login-and-unlock --account-name dev
 devops vault search github --copy password
 devops v s github --json
 devops vault clean-cache
