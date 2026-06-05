@@ -8,9 +8,10 @@ from pathlib import Path
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
 from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretValueMap
 
-DEFAULT_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
+DEFAULT_LOCAL_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
-__all__ = ["DEFAULT_SECRETS_PATH", "Login", "SecretValueMap", "StackOpsSecretsError", "SecretsFileError", "render_secret_value", "search_secrets"]
+
+__all__ = ["DEFAULT_LOCAL_SECRETS_PATH", "Login", "SecretValueMap", "StackOpsSecretsError", "SecretsFileError", "render_secret_value", "search_secrets"]
 
 
 class StackOpsSecretsError(Exception):
@@ -66,8 +67,9 @@ def search_secrets(
 
 def _resolve_path(path: str | Path | None) -> Path:
     if path is None:
-        return Path.cwd() / DEFAULT_SECRETS_PATH
-
+        from stackops.utils.source_of_truth import SECRETS_DOFILE
+        return SECRETS_DOFILE
+        # return Path.cwd() / DEFAULT_SECRETS_PATH
     expanded_path = Path(path).expanduser()
     if expanded_path.is_absolute():
         return expanded_path
