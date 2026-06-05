@@ -14,10 +14,10 @@ class SecretRotation(TypedDict, total=False):
 
 
 class SecretRecord(TypedDict):
+    name: str
     tags: list[str]
     scopes: SecretScopes
     keyValues: SecretValueMap
-    name: NotRequired[str]
     description: NotRequired[str]
     rotation: NotRequired[SecretRotation]
     metadata: NotRequired[SecretStringMap]
@@ -35,11 +35,4 @@ class Login(TypedDict):
     metadata: NotRequired[SecretStringMap]
 
 
-SecretsFile = TypedDict(
-    "SecretsFile",
-    {
-        "$schema": NotRequired[str],
-        "version": str,
-        "entries": list[Login],
-    },
-)
+SecretsFile = TypedDict("SecretsFile", {"$schema": NotRequired[str], "version": str, "entries": list[Login]})

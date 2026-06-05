@@ -2,14 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
-from stackops.utils.schemas.secrets.secrets_types import (
-    Login,
-    SecretRecord,
-    SecretRotation,
-    SecretStringMap,
-    SecretsFile,
-    SecretValueMap,
-)
+from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretStringMap, SecretsFile, SecretValueMap
 
 
 class SecretsSchemaError(ValueError):
@@ -56,9 +49,7 @@ def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> Se
 def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
     entry_path = f"entries[{entry_index}]"
     _reject_unknown_keys(
-        entry,
-        allowed_keys=("name", "tags", "description", "url", "email", "username", "accountName", "secrets", "metadata"),
-        path=entry_path,
+        entry, allowed_keys=("name", "tags", "description", "url", "email", "username", "accountName", "secrets", "metadata"), path=entry_path
     )
     secrets_raw = entry.get("secrets")
     if not isinstance(secrets_raw, list):
@@ -72,10 +63,7 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
             _fail(f"Invalid secret at entries[{entry_index}].secrets[{secret_index}]: expected object.")
         parsed_secrets.append(_parse_secret(secret=secret_raw, entry_index=entry_index, secret_index=secret_index))
 
-    parsed_entry: Login = {
-        "name": _string_value(entry.get("name"), f"entries[{entry_index}].name"),
-        "secrets": parsed_secrets,
-    }
+    parsed_entry: Login = {"name": _string_value(entry.get("name"), f"entries[{entry_index}].name"), "secrets": parsed_secrets}
     tags = _optional_string_list(entry.get("tags"), f"entries[{entry_index}].tags")
     if tags is not None:
         parsed_entry["tags"] = tags
@@ -102,21 +90,15 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
 
 def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int) -> SecretRecord:
     secret_path = f"entries[{entry_index}].secrets[{secret_index}]"
-    _reject_unknown_keys(
-        secret,
-        allowed_keys=("name", "tags", "description", "scopes", "keyValues", "rotation", "metadata"),
-        path=secret_path,
-    )
+    _reject_unknown_keys(secret, allowed_keys=("name", "tags", "description", "scopes", "keyValues", "rotation", "metadata"), path=secret_path)
     tags = _optional_string_list(secret.get("tags"), f"{secret_path}.tags")
     scopes = _string_list(secret["scopes"], f"{secret_path}.scopes") if "scopes" in secret else []
     parsed_secret: SecretRecord = {
+        "name": _string_value(secret.get("name"), f"{secret_path}.name"),
         "tags": tags if tags is not None else [],
         "scopes": scopes,
         "keyValues": _key_values(secret.get("keyValues"), f"{secret_path}.keyValues"),
     }
-    name = _optional_string(secret.get("name"), f"{secret_path}.name")
-    if name is not None:
-        parsed_secret["name"] = name
     description = _optional_string(secret.get("description"), f"{secret_path}.description")
     if description is not None:
         parsed_secret["description"] = description

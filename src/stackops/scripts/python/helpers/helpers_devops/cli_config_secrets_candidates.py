@@ -25,7 +25,7 @@ class SecretCandidate:
     json_path: str
     login_name: str
     login_tags: tuple[str, ...]
-    secret_name: str | None
+    secret_name: str
     secret_tags: tuple[str, ...]
     scopes: tuple[str, ...]
     key_values: SecretValueMap
@@ -133,7 +133,7 @@ def _login_candidates(login: Login, entry_index: int) -> list[SecretCandidate]:
         key_values = dict(secret["keyValues"])
         secret_tags = tuple(secret["tags"])
         scopes = tuple(secret["scopes"])
-        secret_name = secret.get("name")
+        secret_name = secret["name"]
         secret_search_values = _search_values_from_secret(
             secret=secret, secret_name=secret_name, secret_tags=secret_tags, scopes=scopes, key_names=tuple(key_values)
         )
@@ -162,11 +162,9 @@ def _search_values_from_login(login: Login, login_name: str, login_tags: tuple[s
 
 
 def _search_values_from_secret(
-    secret: SecretRecord, secret_name: str | None, secret_tags: tuple[str, ...], scopes: tuple[str, ...], key_names: tuple[str, ...]
+    secret: SecretRecord, secret_name: str, secret_tags: tuple[str, ...], scopes: tuple[str, ...], key_names: tuple[str, ...]
 ) -> tuple[str, ...]:
-    values: list[str] = [*secret_tags, *scopes, *key_names]
-    if secret_name is not None:
-        values.append(secret_name)
+    values: list[str] = [secret_name, *secret_tags, *scopes, *key_names]
     for key in ("description",):
         value = secret.get(key)
         if value is not None:
@@ -237,8 +235,7 @@ def _candidate_preview(candidate: SecretCandidate) -> str:
     if candidate.source_path is not None:
         lines.append(f"- File: `{candidate.source_path}`")
     lines.extend((f"- Login: `{candidate.login_name}`", f"- Login tags: `{_preview_join(candidate.login_tags)}`"))
-    if candidate.secret_name is not None:
-        lines.append(f"- Secret name: `{candidate.secret_name}`")
+    lines.append(f"- Secret name: `{candidate.secret_name}`")
     lines.extend(
         (
             f"- Secret tags: `{_preview_join(candidate.secret_tags)}`",
@@ -279,14 +276,9 @@ def _print_candidate_list(title: str, candidates: list[SecretCandidate]) -> None
 
 
 def _candidate_label(candidate: SecretCandidate) -> str:
-    secret_label = candidate.secret_name
-    if secret_label is None and candidate.secret_tags:
-        secret_label = ",".join(candidate.secret_tags)
-    if secret_label is None:
-        secret_label = "<unnamed secret>"
     keys = ", ".join(candidate.key_values) if candidate.key_values else "<no keys>"
     source_prefix = f"[{candidate.source_name}] " if candidate.source_name is not None else ""
-    return f"{source_prefix}{candidate.login_name} / {secret_label} -> {keys}"
+    return f"{source_prefix}{candidate.login_name} / {candidate.secret_name} -> {keys}"
 
 
 def _string_map_terms(value: SecretStringMap | None) -> tuple[str, ...]:

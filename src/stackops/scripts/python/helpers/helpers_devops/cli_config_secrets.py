@@ -255,12 +255,7 @@ def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -
 
 
 def _candidate_verbose_label(candidate: SecretCandidate) -> str:
-    secret_label = candidate.secret_name
-    if secret_label is None and candidate.secret_tags:
-        secret_label = ",".join(candidate.secret_tags)
-    if secret_label is None:
-        secret_label = "<unnamed secret>"
-    return f"{candidate.login_name} / {secret_label}"
+    return f"{candidate.login_name} / {candidate.secret_name}"
 
 
 def _join_display(values: tuple[str, ...]) -> str:

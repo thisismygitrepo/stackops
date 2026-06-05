@@ -6,24 +6,11 @@ import json
 from pathlib import Path
 
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import (
-    Login,
-    SecretRecord,
-    SecretRotation,
-    SecretValueMap,
-)
+from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretValueMap
 
 DEFAULT_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
-__all__ = [
-    "DEFAULT_SECRETS_PATH",
-    "Login",
-    "SecretValueMap",
-    "StackOpsSecretsError",
-    "SecretsFileError",
-    "render_secret_value",
-    "search_secrets",
-]
+__all__ = ["DEFAULT_SECRETS_PATH", "Login", "SecretValueMap", "StackOpsSecretsError", "SecretsFileError", "render_secret_value", "search_secrets"]
 
 
 class StackOpsSecretsError(Exception):
@@ -109,7 +96,7 @@ def _secret_matches(
         return False
     if account_name is not None and login.get("accountName") != account_name:
         return False
-    if secret_name is not None and secret.get("name") != secret_name:
+    if secret_name is not None and secret["name"] != secret_name:
         return False
     if not all(tag in current_login_tags or tag in current_secret_tags for tag in tags):
         return False
@@ -143,12 +130,11 @@ def _login_with_secret(*, login: Login, secret: SecretRecord) -> Login:
 
 def _copy_secret(secret: SecretRecord) -> SecretRecord:
     copied_secret: SecretRecord = {
+        "name": secret["name"],
         "tags": list(secret["tags"]),
         "scopes": list(secret["scopes"]),
         "keyValues": dict(secret["keyValues"]),
     }
-    if "name" in secret:
-        copied_secret["name"] = secret["name"]
     if "description" in secret:
         copied_secret["description"] = secret["description"]
     if "rotation" in secret:
