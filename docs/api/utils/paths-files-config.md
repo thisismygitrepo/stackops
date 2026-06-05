@@ -43,7 +43,7 @@ Two behaviors worth knowing:
 
 ## `path_helper`
 
-`stackops.utils.path_helper` is the higher-level file chooser used by commands like `fire` and `croshell`.
+`stackops.utils.path_helper` is the higher-level file chooser used by commands like `fire` and `preview`.
 
 Current responsibilities:
 

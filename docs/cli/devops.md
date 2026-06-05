@@ -1,6 +1,6 @@
 # devops
 
-`devops` is the main operational CLI for package installation, repo automation, config sync, data sync, self-management, networking, and script execution.
+`devops` is the main operational CLI for package installation, repo automation, config sync, data sync, self-management, networking, script execution, and vault access.
 
 ---
 
@@ -21,6 +21,7 @@ devops [OPTIONS] COMMAND [ARGS]...
 | `self` | StackOps self-management and developer workflows |
 | `network` | Sharing, transfer, address, SSH, and device helpers |
 | `execute` | Run scripts from predefined locations or as a raw command |
+| `vault` | Search Bitwarden credentials and manage login/unlock state |
 
 ---
 
@@ -109,6 +110,12 @@ These are the child commands exposed by the current live help.
 - `ssh`
 - `device`
 
+`vault`:
+
+- `search`
+- `login-and-unlock`
+- `clean-cache`
+
 ---
 
 ## `execute`
@@ -137,6 +144,29 @@ devops execute "echo hello" --command
 
 ---
 
+## `vault`
+
+```bash
+devops vault COMMAND [ARGS]...
+```
+
+Current behavior:
+
+- `search` retrieves Bitwarden credentials and can copy password, username, TOTP, or raw JSON to clipboard slots
+- `login-and-unlock` loads Bitwarden API credentials from StackOps secrets, unlocks the vault, and saves `BW_SESSION` locally
+- `clean-cache` removes cached search results and any saved session token
+
+Examples:
+
+```bash
+devops vault login-and-unlock -p dev
+devops vault search github --copy password
+devops v s github --json
+devops vault clean-cache
+```
+
+---
+
 ## Working with nested apps
 
 The nested groups above are lazily loaded Typer apps. The exact leaf commands and flags live under those subtrees, so use help at the branch you care about:
@@ -147,6 +177,7 @@ devops config --help
 devops data --help
 devops self --help
 devops network --help
+devops vault --help
 devops self docs --help
 devops config terminal --help
 ```

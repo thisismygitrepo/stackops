@@ -168,7 +168,7 @@ if TYPE_CHECKING:
         StackOpsSeekSubcommands,
         StackOpsSeekCommand,
         StackOpsFireCommand,
-        StackOpsCroshellCommand,
+        StackOpsPreviewCommand,
         StackOpsSubcommands,
         StackOpsCommandHierarchy,
     )
@@ -1365,10 +1365,10 @@ STACKOPS_SEEK_COMMAND: "StackOpsSeekCommand" = {
 
 STACKOPS_FIRE_COMMAND: "StackOpsFireCommand" = {"command_name": "fire", "short_name": "f", "help": "<f> Fire and manage jobs", "subcommands": {}}
 
-STACKOPS_CROSHELL_COMMAND: "StackOpsCroshellCommand" = {
-    "command_name": "croshell",
-    "short_name": "r",
-    "help": "<r> Cross-shell command execution",
+STACKOPS_PREVIEW_COMMAND: "StackOpsPreviewCommand" = {
+    "command_name": "preview",
+    "short_name": "p",
+    "help": "<p> Preview files and launch reader backends",
     "subcommands": {},
 }
 
@@ -1380,7 +1380,7 @@ STACKOPS_SUBCOMMANDS: "StackOpsSubcommands" = {
     "utils": STACKOPS_UTILS_COMMAND,
     "seek": STACKOPS_SEEK_COMMAND,
     "fire": STACKOPS_FIRE_COMMAND,
-    "croshell": STACKOPS_CROSHELL_COMMAND,
+    "preview": STACKOPS_PREVIEW_COMMAND,
 }
 
 STACKOPS_COMMAND: "StackOpsCommandHierarchy" = {
@@ -1392,6 +1392,6 @@ STACKOPS_COMMAND: "StackOpsCommandHierarchy" = {
 
 STACKOPS_CLI_HIERARCHY: "StackOpsCommandHierarchy" = STACKOPS_COMMAND
 
-# q = STACKOPS_CLI_HIERARCHY["subcommands"]["croshell"]
+# q = STACKOPS_CLI_HIERARCHY["subcommands"]["preview"]
 # w = StackOpsTerminalKillCommand[""]
-# q = STACKOPS_CROSHELL_COMMAND["subcommands"]
+# q = STACKOPS_PREVIEW_COMMAND["subcommands"]

@@ -69,7 +69,7 @@ def build_markdown_command(target_path: Path) -> Command:
 
 
 def build_visidata_command(target_path: Path) -> Command:
-    return [(Path.home() / ".config/stackops/scripts/wrap_stackops").as_posix(), "croshell", "-b", "v", str(target_path)]
+    return [(Path.home() / ".config/stackops/scripts/wrap_stackops").as_posix(), "preview", "-b", "v", str(target_path)]
 
 
 def build_command(target_path: Path, mode: ViewerMode = "auto", database_backend: str = "harlequin") -> Command:

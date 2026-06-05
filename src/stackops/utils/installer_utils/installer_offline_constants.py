@@ -6,7 +6,7 @@ from stackops.utils.source_of_truth import LINUX_INSTALL_PATH, WINDOWS_INSTALL_P
 
 CONFIG_ROOT: Path = SOURCE_CONFIG_ROOT
 UV_TOOL_BINARIES: list[str] = [
-    "devops", "cloud", "agents", "terminal", "fire", "croshell", "utils", "seek", "explore",
+    "devops", "cloud", "agents", "terminal", "fire", "preview", "utils", "seek", "explore",
 ]
 UV_TOOL_NAME: Final[str] = "stackops"
 UV_TOOLS_ROOT: Path = Path.home().joinpath(".local/share/uv/tools")

@@ -1624,12 +1624,12 @@ StackOpsFireCommand = TypedDict(
     {"command_name": Literal["fire"], "short_name": Literal["f"], "help": Literal["<f> Fire and manage jobs"], "subcommands": EmptySubcommands},
 )
 
-StackOpsCroshellCommand = TypedDict(
-    "StackOpsCroshellCommand",
+StackOpsPreviewCommand = TypedDict(
+    "StackOpsPreviewCommand",
     {
-        "command_name": Literal["croshell"],
-        "short_name": Literal["r"],
-        "help": Literal["<r> Cross-shell command execution"],
+        "command_name": Literal["preview"],
+        "short_name": Literal["p"],
+        "help": Literal["<p> Preview files and launch reader backends"],
         "subcommands": EmptySubcommands,
     },
 )
@@ -1644,7 +1644,7 @@ StackOpsSubcommands = TypedDict(
         "utils": StackOpsUtilsCommand,
         "seek": StackOpsSeekCommand,
         "fire": StackOpsFireCommand,
-        "croshell": StackOpsCroshellCommand,
+        "preview": StackOpsPreviewCommand,
     },
 )
 

@@ -43,7 +43,7 @@ alias c='wrap_in_shell_script cloud'
 alias a='wrap_in_shell_script agents'
 alias t='wrap_in_shell_script terminal'
 alias f='wrap_in_shell_script fire'
-alias r='wrap_in_shell_script croshell'
+alias p='wrap_in_shell_script preview'
 alias u='wrap_in_shell_script utils'
 alias s='wrap_in_shell_script seek'
 

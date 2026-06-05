@@ -63,9 +63,9 @@ run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" u
 desc = "Read with helix"
 
 [[mgr.prepend_keymap]]
-on   = ["R", "c"]
-run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" croshell "$0"'
-desc = "Read with croshell"
+on   = ["R", "p"]
+run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" preview "$0"'
+desc = "Read with preview"
 
 
 [[mgr.prepend_keymap]]

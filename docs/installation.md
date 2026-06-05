@@ -24,7 +24,7 @@ StackOps supports Python 3.13+ and is easiest to install with [uv](https://docs.
 uv tool install --upgrade --python 3.14 stackops
 ```
 
-This should give entrypoints: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`
+This should give entrypoints: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, `seek`
 You can verify with, e.g.:
 
 ```bash

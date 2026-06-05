@@ -53,7 +53,7 @@ map Q !~/.config/stackops/settings/lf/linux/exe/previewer.sh "$f"
 # key bindings
 map vmap v  # default is invert
 map V invert
-map p
+map p $preview $f
 map x
 map c
 map v
@@ -83,12 +83,12 @@ map <enter> open
 map w
 map ww bash
 # map wp $powershell
-map wr $croshell
+map wp $preview
 # map wm $cmd
 map i !~/.config/stackops/settings/lf/linux/exe/previewer.sh $f
 map I !cat $f | gum pager
-map R $croshell $f
-map O $croshell -j $f
+map P $preview $f
+map O $preview -j $f
 
 
 # o file/folder Operations
@@ -117,7 +117,7 @@ map jD cd ~/Downloads
 map jx cd ~/dotfiles
 # map jm cd ~/code/stackops/src/stackops
 map jh cd ~
-map jj $croshell -j --read $f
+map jj $preview -j --read $f
 # map jj $lvim ~/.config/stackops/settings/lf/linux/lfrc
 
 # from https://github.com/gokcehan/lf/wiki/Integrations#zoxide

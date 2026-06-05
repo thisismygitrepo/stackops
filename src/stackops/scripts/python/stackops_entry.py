@@ -50,7 +50,7 @@ def fire(
               PathExport=PathExport, git_pull=git_pull, watch=watch)
 
 
-def croshell(
+def preview(
     path: Annotated[str | None, typer.Argument(help="path of file to read.")] = None,
     project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
@@ -60,9 +60,9 @@ def croshell(
     stackops_project: Annotated[bool, typer.Option("--self", "-s", help="specify stackops project to use.")] = False,
     frozen: Annotated[bool, typer.Option("--frozen", "-f", help="freeze the environment (no package changes allowed)")] = False,
 ) -> None:
-    """Cross-shell command execution."""
-    from stackops.scripts.python.croshell import croshell as croshell_impl
-    croshell_impl(
+    """Preview files and launch reader backends."""
+    from stackops.scripts.python.preview import preview as preview_impl
+    preview_impl(
         path=path,
         project_path=project_path,
         uv_with=uv_with,
@@ -137,8 +137,8 @@ def get_app() -> typer.Typer:
 
     app.command(name="fire", help="<f> Fire and manage jobs", no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
     app.command(name="f", hidden=True, no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
-    app.command("croshell", no_args_is_help=False, help="<r> Cross-shell command execution")(croshell)
-    app.command("r", no_args_is_help=False, hidden=True)(croshell)
+    app.command("preview", no_args_is_help=False, help="<p> Preview files and launch reader backends")(preview)
+    app.command("p", no_args_is_help=False, hidden=True)(preview)
 
     return app
 

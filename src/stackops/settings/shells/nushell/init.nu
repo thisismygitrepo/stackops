@@ -115,12 +115,11 @@ export alias lf = lfcd
 export def d [...args: string] { wrap_in_shell_script "devops" ...$args }
 export def c [...args: string] { wrap_in_shell_script "cloud" ...$args }
 export def a [...args: string] { wrap_in_shell_script "agents" ...$args }
-export def s [...args: string] { wrap_in_shell_script "sessions" ...$args }
+export def s [...args: string] { wrap_in_shell_script "seek" ...$args }
 export def f [...args: string] { wrap_in_shell_script "fire" ...$args }
-export def r [...args: string] { wrap_in_shell_script "croshell" ...$args }
+export def p [...args: string] { wrap_in_shell_script "preview" ...$args }
 export def u [...args: string] { wrap_in_shell_script "utils" ...$args }
 export def t [...args: string] { wrap_in_shell_script "terminal" ...$args }
-export def p [...args: string] { wrap_in_shell_script "seek" ...$args }
 export def x [...args: string] { wrap_in_shell_script "explore" ...$args }
 
 export alias l = lsd -la

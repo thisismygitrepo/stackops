@@ -46,7 +46,7 @@ set ifs "\n"
 # key bindings
 map v  # default is invert
 map V invert
-map p
+map p $preview.ps1 $f
 map x
 map c
 map v
@@ -71,10 +71,10 @@ map <enter> open
 map w
 map ww $powershell
 map wp $pwsh
-map wc $croshell.ps1
+map wP $preview.ps1
 map wm $cmd
 map i $~/.config/stackops/settings/lf/windows/previewer.ps1 $f
-map R $powershell $env:USERPROFILE/scripts/croshell.ps1 -r $f
+map P $powershell $env:USERPROFILE/scripts/preview.ps1 -r $f
 
 # o file/folder Operations
 map o
@@ -110,4 +110,3 @@ map jj $pwsh -File $env:USERPROFILE/.local/bin/lvim.ps1 -- $HOME/.config/stackop
 map m
 map md $~/.config/stackops/settings/lf/windows/mkdir.ps1
 map mf $~/.config/stackops/settings/lf/windows/mkfile.ps1
-

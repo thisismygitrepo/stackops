@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --no-dev --project
 
-"""croshell - Cross-shell command execution."""
+"""preview - File preview and backend launcher."""
 
 from typing import Annotated, cast
 import typer
@@ -50,7 +50,7 @@ def _choose_backend_interactively(path: str | None) -> BACKENDS:
 
     choice = choose_from_options(
         options=_interactive_backend_options(path=path),
-        msg="Select croshell backend",
+        msg="Select preview backend",
         multi=False,
         custom_input=False,
         default="ipython",
@@ -62,7 +62,7 @@ def _choose_backend_interactively(path: str | None) -> BACKENDS:
     return _resolve_backend_choice(backend=cast(BACKENDS_LOOSE, str(choice)))
 
 
-def croshell(
+def preview(
     path: Annotated[str | None, typer.Argument(help="path of file to read.")] = None,
     project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
@@ -72,7 +72,7 @@ def croshell(
     stackops_project: Annotated[bool, typer.Option("--self", "-s", help="specify stackops project to use.")] = False,
     frozen: Annotated[bool, typer.Option("--frozen", "-f", help="freeze the environment (no package changes allowed)")] = False
 ) -> None:
-    """Cross-shell command execution."""
+    """Preview files and launch reader backends."""
     if stackops_project:
         from pathlib import Path
         if Path.home().joinpath("code/stackops").exists():
@@ -85,7 +85,7 @@ def croshell(
     else:
         resolved_backend = _resolve_backend_choice(backend=backend)
 
-    from stackops.scripts.python.helpers.helpers_croshell.croshell_impl import croshell as impl
+    from stackops.scripts.python.helpers.helpers_preview.preview_impl import preview as impl
     impl(
         path=path,
         project_path=project_path,
@@ -97,7 +97,7 @@ def croshell(
 
 
 def main() -> None:
-    typer.run(croshell)
+    typer.run(preview)
 
 
 if __name__ == "__main__":

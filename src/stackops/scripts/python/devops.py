@@ -128,6 +128,13 @@ def execute(
     run_py_script_module.run_py_script(ctx=ctx, name=name, where=where, interactive=interactive, command=command, list_scripts=list_scripts)
 
 
+def vault(ctx: typer.Context) -> None:
+    """🔐 <v> Search Bitwarden credentials and manage vault sessions."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_vault
+
+    _run_nested_app(ctx, cli_vault.get_app, prog_name=ctx.command_path)
+
+
 def get_app() -> typer.Typer:
     cli_app = typer.Typer(help="🔧 DevOps operations", no_args_is_help=True, add_help_option=True, add_completion=False)
     ctx_settings: dict[str, object] = {
@@ -155,6 +162,9 @@ def get_app() -> typer.Typer:
         execute
     )
     cli_app.command("e", no_args_is_help=True, hidden=True)(execute)
+
+    cli_app.command("vault", help="🔐 <v> Search Bitwarden credentials and manage vault sessions", context_settings=ctx_settings)(vault)
+    cli_app.command("v", hidden=True, context_settings=ctx_settings)(vault)
 
     return cli_app
 

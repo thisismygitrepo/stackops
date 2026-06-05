@@ -106,9 +106,9 @@ run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops utils file
 desc = "Read with helix"
 
 [[mgr.prepend_keymap]]
-on   = ["R", "s"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops croshell "$0"'
-desc = "Read with croshell"
+on   = ["R", "p"]
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops preview "$0"'
+desc = "Read with preview"
 [[mgr.prepend_keymap]]
 on   = ["R", "f"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire "$0"'

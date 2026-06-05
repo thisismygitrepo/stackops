@@ -14,10 +14,10 @@ def test_devops_config_help_lists_secrets_command() -> None:
 
     assert result.exit_code == 0, result.output
     assert "secrets" in result.output
-    assert "Define env vars from .stackops/secrets/secrets.json" in result.output
+    assert "Define env vars from StackOps secrets files" in result.output
 
 
-def test_devops_config_secrets_help_lists_edit_and_path_options() -> None:
+def test_devops_config_secrets_help_lists_source_edit_and_path_options() -> None:
     result = CliRunner().invoke(get_app(), ["c", "secrets", "--help"], env={"COLUMNS": "220"})
 
     assert result.exit_code == 0, result.output
@@ -25,6 +25,11 @@ def test_devops_config_secrets_help_lists_edit_and_path_options() -> None:
     assert "Case-insensitive terms used to select one secret bundle" in result.output
     assert "--path" in result.output
     assert "-p" in result.output
+    assert "--source" in result.output
+    assert "-s" in result.output
+    assert "local" in result.output
+    assert "global" in result.output
+    assert "both" in result.output
     assert "--edit" in result.output
     assert "-e" in result.output
     assert "--interactive" in result.output
@@ -69,11 +74,7 @@ def test_devops_config_secrets_verbose_prints_selection_without_secret_values() 
         _write_secrets_file(_secrets_payload())
         op_path = Path.cwd() / "handoff.sh"
 
-        result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "-v", "aws", "dev", "iam-access-key"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
-        )
+        result = runner.invoke(get_app(), ["c", "secrets", "-v", "aws", "dev", "iam-access-key"], env={"OP_PROGRAM_PATH": str(op_path)})
 
         assert result.exit_code == 0, result.output
         assert "Selected secret bundle:" in result.output
@@ -124,14 +125,11 @@ def test_devops_config_secrets_uses_custom_path_for_keyvalues() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         custom_path = Path("private") / "team-secrets.json"
-        custom_path.parent.mkdir(parents=True, exist_ok=True)
-        custom_path.write_text(json.dumps(_secrets_payload()), encoding="utf-8")
+        _write_secrets_file_at(custom_path, _secrets_payload())
         op_path = Path.cwd() / "handoff.sh"
 
         result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "--path", str(custom_path), "github", "personal-access-token"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
+            get_app(), ["c", "secrets", "--path", str(custom_path), "github", "personal-access-token"], env={"OP_PROGRAM_PATH": str(op_path)}
         )
 
         assert result.exit_code == 0, result.output
@@ -141,17 +139,73 @@ def test_devops_config_secrets_uses_custom_path_for_keyvalues() -> None:
         assert "export GITHUB_TOKEN=ghp_test" in env_path.read_text(encoding="utf-8")
 
 
+def test_devops_config_secrets_uses_global_source_path(monkeypatch) -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        global_path = Path("global") / "secrets.json"
+        _write_secrets_file_at(global_path, _single_secret_payload(entry_name="global-only", key="GLOBAL_TOKEN", value="global-value"))
+        monkeypatch.setattr(cli_config_secrets, "_resolve_global_secrets_path", lambda: Path.cwd() / global_path)
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(get_app(), ["c", "secrets", "-s", "global", "global-only"], env={"OP_PROGRAM_PATH": str(op_path)})
+
+        assert result.exit_code == 0, result.output
+        assert "Prepared 1 env variable(s): GLOBAL_TOKEN" in result.output
+        assert "global-value" not in result.output
+        env_path = _env_path_from_loader(op_path.read_text(encoding="utf-8"))
+        assert "export GLOBAL_TOKEN=global-value" in env_path.read_text(encoding="utf-8")
+
+
+def test_devops_config_secrets_source_both_can_select_from_global(monkeypatch) -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write_secrets_file_at(
+            Path(".stackops") / "secrets" / "secrets.json", _single_secret_payload(entry_name="local-only", key="LOCAL_TOKEN", value="local-value")
+        )
+        global_path = Path("global") / "secrets.json"
+        _write_secrets_file_at(global_path, _single_secret_payload(entry_name="global-only", key="GLOBAL_TOKEN", value="global-value"))
+        monkeypatch.setattr(cli_config_secrets, "_resolve_global_secrets_path", lambda: Path.cwd() / global_path)
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(get_app(), ["c", "secrets", "--source", "both", "--name", "global-only"], env={"OP_PROGRAM_PATH": str(op_path)})
+
+        assert result.exit_code == 0, result.output
+        assert "Prepared 1 env variable(s): GLOBAL_TOKEN" in result.output
+        assert "global-value" not in result.output
+        assert "local-value" not in result.output
+        env_path = _env_path_from_loader(op_path.read_text(encoding="utf-8"))
+        assert "export GLOBAL_TOKEN=global-value" in env_path.read_text(encoding="utf-8")
+
+
+def test_devops_config_secrets_source_both_labels_ambiguous_matches(monkeypatch) -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _write_secrets_file_at(
+            Path(".stackops") / "secrets" / "secrets.json", _single_secret_payload(entry_name="local-only", key="SHARED_TOKEN", value="local-value")
+        )
+        global_path = Path("global") / "secrets.json"
+        _write_secrets_file_at(global_path, _single_secret_payload(entry_name="global-only", key="SHARED_TOKEN", value="global-value"))
+        monkeypatch.setattr(cli_config_secrets, "_resolve_global_secrets_path", lambda: Path.cwd() / global_path)
+        op_path = Path.cwd() / "handoff.sh"
+
+        result = runner.invoke(get_app(), ["c", "secrets", "--source", "both", "shared"], env={"OP_PROGRAM_PATH": str(op_path)})
+
+        assert result.exit_code == 1, result.output
+        assert "Selection did not identify a unique keyValues entry" in result.output
+        assert "[local] local-only / shared -> SHARED_TOKEN" in result.output
+        assert "[global] global-only / shared -> SHARED_TOKEN" in result.output
+        assert "local-value" not in result.output
+        assert "global-value" not in result.output
+        assert not op_path.exists()
+
+
 def test_devops_config_secrets_uses_exact_selectors_without_query_terms() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         _write_secrets_file(_secrets_payload())
         op_path = Path.cwd() / "handoff.sh"
 
-        result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "--name", "aws-dev", "--tag", "session-token"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
-        )
+        result = runner.invoke(get_app(), ["c", "secrets", "--name", "aws-dev", "--tag", "session-token"], env={"OP_PROGRAM_PATH": str(op_path)})
 
         assert result.exit_code == 0, result.output
         assert "Prepared 1 env variable(s): AWS_SESSION_TOKEN" in result.output
@@ -165,11 +219,7 @@ def test_devops_config_secrets_exact_selectors_can_be_combined_with_query_terms(
         _write_secrets_file(_secrets_payload())
         op_path = Path.cwd() / "handoff.sh"
 
-        result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "--key", "AWS_ACCESS_KEY_ID", "aws"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
-        )
+        result = runner.invoke(get_app(), ["c", "secrets", "--key", "AWS_ACCESS_KEY_ID", "aws"], env={"OP_PROGRAM_PATH": str(op_path)})
 
         assert result.exit_code == 0, result.output
         assert "Prepared 3 env variable(s): AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION" in result.output
@@ -181,10 +231,7 @@ def test_devops_config_secrets_interactive_picker_selects_keyvalues(monkeypatch)
     from stackops.utils.options_utils import tv_options
 
     def choose_session_token(
-        options_to_preview_mapping: dict[str, object],
-        extension: str | None,
-        multi: bool,
-        preview_size_percent: float,
+        options_to_preview_mapping: dict[str, object], extension: str | None, multi: bool, preview_size_percent: float
     ) -> str | None:
         assert extension == "md"
         assert multi is False
@@ -203,11 +250,7 @@ def test_devops_config_secrets_interactive_picker_selects_keyvalues(monkeypatch)
         _write_secrets_file(_secrets_payload())
         op_path = Path.cwd() / "handoff.sh"
 
-        result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "--interactive", "aws"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
-        )
+        result = runner.invoke(get_app(), ["c", "secrets", "--interactive", "aws"], env={"OP_PROGRAM_PATH": str(op_path)})
 
         assert result.exit_code == 0, result.output
         assert "Prepared 1 env variable(s): AWS_SESSION_TOKEN" in result.output
@@ -268,9 +311,7 @@ def test_devops_config_secrets_verbose_handles_empty_tags_arrays() -> None:
         op_path = Path.cwd() / "handoff.sh"
 
         result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "--name", "github-personal", "--key", "GITHUB_TOKEN", "--verbose"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
+            get_app(), ["c", "secrets", "--name", "github-personal", "--key", "GITHUB_TOKEN", "--verbose"], env={"OP_PROGRAM_PATH": str(op_path)}
         )
 
         assert result.exit_code == 0, result.output
@@ -293,11 +334,7 @@ def test_devops_config_secrets_writes_arbitrary_json_keyvalues() -> None:
         _write_secrets_file(payload)
         op_path = Path.cwd() / "handoff.sh"
 
-        result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "--name", "github-personal"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
-        )
+        result = runner.invoke(get_app(), ["c", "secrets", "--name", "github-personal"], env={"OP_PROGRAM_PATH": str(op_path)})
 
         assert result.exit_code == 0, result.output
         assert "Prepared 4 env variable(s): PORT, FEATURE_ENABLED, SETTINGS, EMPTY" in result.output
@@ -317,11 +354,7 @@ def test_devops_config_secrets_handles_empty_keyvalues() -> None:
         _write_secrets_file(payload)
         op_path = Path.cwd() / "handoff.sh"
 
-        result = runner.invoke(
-            get_app(),
-            ["c", "secrets", "--name", "github-personal"],
-            env={"OP_PROGRAM_PATH": str(op_path)},
-        )
+        result = runner.invoke(get_app(), ["c", "secrets", "--name", "github-personal"], env={"OP_PROGRAM_PATH": str(op_path)})
 
         assert result.exit_code == 0, result.output
         assert "Prepared 0 env variable(s)." in result.output
@@ -332,6 +365,10 @@ def test_devops_config_secrets_handles_empty_keyvalues() -> None:
 
 def _write_secrets_file(payload: dict[str, object]) -> None:
     secrets_path = Path(".stackops") / "secrets" / "secrets.json"
+    _write_secrets_file_at(secrets_path, payload)
+
+
+def _write_secrets_file_at(secrets_path: Path, payload: dict[str, object]) -> None:
     secrets_path.parent.mkdir(parents=True, exist_ok=True)
     secrets_path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -350,13 +387,7 @@ def _secrets_payload() -> dict[str, object]:
                 "name": "github-personal",
                 "tags": ["github", "personal"],
                 "username": "octocat",
-                "secrets": [
-                    {
-                        "tags": ["personal-access-token"],
-                        "scopes": ["repo", "workflow"],
-                        "keyValues": {"GITHUB_TOKEN": "ghp_test"},
-                    }
-                ],
+                "secrets": [{"tags": ["personal-access-token"], "scopes": ["repo", "workflow"], "keyValues": {"GITHUB_TOKEN": "ghp_test"}}],
             },
             {
                 "name": "aws-dev",
@@ -366,18 +397,23 @@ def _secrets_payload() -> dict[str, object]:
                     {
                         "tags": ["iam-access-key"],
                         "scopes": ["development"],
-                        "keyValues": {
-                            "AWS_ACCESS_KEY_ID": "AKIA_TEST",
-                            "AWS_SECRET_ACCESS_KEY": "secret-value",
-                            "AWS_DEFAULT_REGION": "us-east-1",
-                        },
+                        "keyValues": {"AWS_ACCESS_KEY_ID": "AKIA_TEST", "AWS_SECRET_ACCESS_KEY": "secret-value", "AWS_DEFAULT_REGION": "us-east-1"},
                     },
-                    {
-                        "tags": ["session-token"],
-                        "scopes": ["development"],
-                        "keyValues": {"AWS_SESSION_TOKEN": "session-value"},
-                    },
+                    {"tags": ["session-token"], "scopes": ["development"], "keyValues": {"AWS_SESSION_TOKEN": "session-value"}},
                 ],
             },
+        ],
+    }
+
+
+def _single_secret_payload(*, entry_name: str, key: str, value: str) -> dict[str, object]:
+    return {
+        "version": "0.3",
+        "entries": [
+            {
+                "name": entry_name,
+                "tags": [entry_name],
+                "secrets": [{"name": "shared", "tags": ["shared"], "scopes": ["test"], "keyValues": {key: value}}],
+            }
         ],
     }

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import NoReturn
 
@@ -30,6 +30,8 @@ class SecretCandidate:
     scopes: tuple[str, ...]
     key_values: SecretValueMap
     searchable_values: tuple[str, ...]
+    source_name: str | None = None
+    source_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -56,7 +58,7 @@ class SecretSelectors:
         )
 
 
-def load_secret_candidates(secrets_path: Path) -> list[SecretCandidate]:
+def load_secret_candidates(secrets_path: Path, *, source_name: str | None = None) -> list[SecretCandidate]:
     try:
         secrets_file = load_secrets_file(secrets_path)
     except SecretsSchemaError as exc:
@@ -65,7 +67,7 @@ def load_secret_candidates(secrets_path: Path) -> list[SecretCandidate]:
     candidates = build_secret_candidates(secrets_file)
     if not candidates:
         _fail(f"No keyValues entries found in {secrets_path}")
-    return candidates
+    return [replace(candidate, source_name=source_name, source_path=secrets_path) for candidate in candidates]
 
 
 def build_secret_candidates(secrets_file: SecretsFile) -> list[SecretCandidate]:
@@ -230,13 +232,12 @@ def _candidate_picker_options(candidates: list[SecretCandidate]) -> tuple[dict[s
 
 
 def _candidate_preview(candidate: SecretCandidate) -> str:
-    lines = [
-        f"# {_candidate_label(candidate)}",
-        "",
-        f"- Path: `{candidate.json_path}`",
-        f"- Entry: `{candidate.entry_name}`",
-        f"- Entry tags: `{_preview_join(candidate.entry_tags)}`",
-    ]
+    lines = [f"# {_candidate_label(candidate)}", "", f"- Path: `{candidate.json_path}`"]
+    if candidate.source_name is not None:
+        lines.append(f"- Source: `{candidate.source_name}`")
+    if candidate.source_path is not None:
+        lines.append(f"- File: `{candidate.source_path}`")
+    lines.extend((f"- Entry: `{candidate.entry_name}`", f"- Entry tags: `{_preview_join(candidate.entry_tags)}`"))
     if candidate.secret_name is not None:
         lines.append(f"- Secret name: `{candidate.secret_name}`")
     lines.extend(
@@ -285,7 +286,8 @@ def _candidate_label(candidate: SecretCandidate) -> str:
     if secret_label is None:
         secret_label = "<unnamed secret>"
     keys = ", ".join(candidate.key_values) if candidate.key_values else "<no keys>"
-    return f"{candidate.entry_name} / {secret_label} -> {keys}"
+    source_prefix = f"[{candidate.source_name}] " if candidate.source_name is not None else ""
+    return f"{source_prefix}{candidate.entry_name} / {secret_label} -> {keys}"
 
 
 def _string_map_terms(value: SecretStringMap | None) -> tuple[str, ...]:

@@ -54,7 +54,7 @@ if (Test-Path "$CONFIG_ROOT\scripts\wrap_stackops.ps1") {
     function a { wrap_in_shell_script agents $args }
     function t { wrap_in_shell_script terminal $args }
     function f { wrap_in_shell_script fire $args }
-    function rr { wrap_in_shell_script croshell $args }
+    function p { wrap_in_shell_script preview $args }
     function u { wrap_in_shell_script utils $args }
     function s { wrap_in_shell_script seek @args }
 
@@ -68,7 +68,7 @@ else {
     function a { agents $args }
     function t { terminal $args }
     function f { fire $args }
-    function rr { croshell $args }
+    function p { preview $args }
     function u { utils $args }
     function s { seek @args }
 }

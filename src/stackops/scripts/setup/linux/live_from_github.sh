@@ -16,7 +16,7 @@ devops() { _stackops_uvx devops "$@"; }
 cloud() { _stackops_uvx cloud "$@"; }
 agents() { _stackops_uvx agents "$@"; }
 fire() { _stackops_uvx fire "$@"; }
-croshell() { _stackops_uvx croshell "$@"; }
+preview() { _stackops_uvx preview "$@"; }
 utils() { _stackops_uvx utils "$@"; }
 terminal() { _stackops_uvx terminal "$@"; }
 seek() { _stackops_uvx seek "$@"; }
@@ -25,7 +25,7 @@ d() { wrap_in_shell_script devops "$@"; }
 c() { wrap_in_shell_script cloud "$@"; }
 a() { wrap_in_shell_script agents "$@"; }
 f() { wrap_in_shell_script fire "$@"; }
-rr() { wrap_in_shell_script croshell "$@"; }
+p() { wrap_in_shell_script preview "$@"; }
 u() { wrap_in_shell_script utils "$@"; }
 t() { wrap_in_shell_script terminal "$@"; }
 s() { wrap_in_shell_script seek "$@"; }

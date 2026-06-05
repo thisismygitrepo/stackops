@@ -1,13 +1,13 @@
-# croshell
+# preview
 
-`croshell` builds a temporary `uv run` launch context, then opens it in an interactive backend such as IPython, Python, Marimo, Jupyter, VS Code, or VisiData.
+`preview` builds a temporary `uv run` launch context, then opens a selected file or directory in a preview, viewer, or interactive backend such as IPython, Python, Marimo, Jupyter, VS Code, or VisiData.
 
 ---
 
 ## Usage
 
 ```bash
-croshell [OPTIONS] [PATH]
+preview [OPTIONS] [PATH]
 ```
 
 ## Arguments
@@ -66,7 +66,7 @@ With `--interactive`, paths expose file-viewer choices by their actual tool name
 
 ## Current launch behavior
 
-`croshell` does more than open a shell:
+`preview` does more than open a shell:
 
 - if `PATH` is a Python file, it stages that file inside a generated temporary script
 - if `PATH` is a non-Python file, it generates a reader script using StackOps file readers and prints the parsed content in the chosen backend
@@ -101,28 +101,28 @@ Project resolution is currently:
 
 ```bash
 # Launch the default IPython backend
-croshell
+preview
 
 # Open a Python file with IPython
-croshell script.py --backend ipython
+preview script.py --backend ipython
 
 # Inspect a data file with VisiData
-croshell data.csv --backend visidata
+preview data.csv --backend visidata
 
 # Open Markdown directly in Glow
-croshell README.md --backend glow
+preview README.md --backend glow
 
 # Open a SQLite file directly in Rainfrog
-croshell data.sqlite --backend rainfrog
+preview data.sqlite --backend rainfrog
 
 # Open a generated notebook in Marimo
-croshell analysis.py --backend marimo --project .
+preview analysis.py --backend marimo --project .
 
 # Force the StackOps checkout as the uv project
-croshell src/stackops/scripts/python/croshell.py --self
+preview src/stackops/scripts/python/preview.py --self
 
 # Choose a backend interactively
-croshell data.sqlite --interactive
+preview data.sqlite --interactive
 ```
 
 ---
@@ -130,5 +130,5 @@ croshell data.sqlite --interactive
 ## Getting help
 
 ```bash
-croshell --help
+preview --help
 ```

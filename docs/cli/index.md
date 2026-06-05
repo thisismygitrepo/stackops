@@ -17,7 +17,7 @@ For day-to-day use, prefer the standalone command when you already know which to
 | [`terminal`](terminal.md) | Terminal session and layout management |
 | [`agents`](agents.md) | AI agent scaffolding, MCP catalog installs, prompt runs, and parallel agent workflows |
 | [`utils`](utils.md) | General-purpose utility commands |
-| [`croshell`](croshell.md) | Cross-shell launcher built around `uv run` backends |
+| [`preview`](preview.md) | File preview and `uv run` backend launcher |
 | [`seek`](seek.md) | Interactive search across files, text matches, and symbols |
 | [`fire`](fire.md) | File, function, notebook, and app runner |
 | [`cloud`](cloud.md) | Cloud sync, copy, mount, and SSH transfer helpers |
@@ -43,9 +43,9 @@ The wrappers currently expose:
 - `utils`
 - `seek`
 - `fire`
-- `croshell`
+- `preview`
 
-The same wrapper also registers hidden one-letter aliases for these commands: `d`, `c`, `t`, `a`, `u`, `s`, `f`, and `r`.
+The same wrapper also registers hidden one-letter aliases for these commands: `d`, `c`, `t`, `a`, `u`, `s`, `f`, and `p`.
 
 For the full command-specific flag surface, check the standalone command as well, for example `fire --help` or `seek --help`.
 
@@ -57,7 +57,7 @@ For the full command-specific flag surface, check the standalone command as well
 devops --help
 agents --help
 cloud --help
-croshell --help
+preview --help
 fire --help
 seek --help
 stackops --help

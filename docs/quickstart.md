@@ -56,7 +56,7 @@ cloud --help
 terminal --help
 agents --help
 utils --help
-croshell --help
+preview --help
 ```
 
 

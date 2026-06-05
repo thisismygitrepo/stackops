@@ -1,4 +1,4 @@
-"""Pure Python implementation for croshell command - no typer dependencies."""
+"""Pure Python implementation for preview command - no typer dependencies."""
 
 from pathlib import Path
 import shutil
@@ -21,7 +21,7 @@ PATH_BACKENDS = frozenset(
 DATABASE_BACKENDS = frozenset({"rainfrog", "lazysql", "dblab", "usql", "harlequin", "sqlit"})
 
 
-def croshell(
+def preview(
     path: str | None,
     project_path: str | None,
     uv_with: str | None,
@@ -29,7 +29,7 @@ def croshell(
     profile: str | None,
     frozen: bool,
 ) -> None:
-    """Cross-shell command execution."""
+    """Preview files and launch reader backends."""
     interactivity = "-i"
     user_uv_with_line = "INIT_VALUE_INVALID"
     if uv_with is not None:
@@ -57,7 +57,7 @@ def croshell(
     if path is None and backend in PATH_BACKENDS:
         raise ValueError(f"Backend '{backend}' requires a path.")
 
-    from stackops.scripts.python.helpers.helpers_croshell.crosh import get_read_python_file_pycode
+    from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
     from stackops.utils.accessories import randstr
     from stackops.utils.ve import get_ve_path_and_ipython_profile
@@ -88,7 +88,7 @@ def croshell(
             text = f"📄 Selected file: {choice_file.name}"
             console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
         else:
-            # from stackops.scripts.python.helpers.helpers_croshell.crosh import get_read_data_pycode
+            # from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_data_pycode
             # program = lambda_to_python_script(
             #     lambda: get_read_data_pycode(path=str(choice_file)),
             #     in_global=True, import_module=False
@@ -136,7 +136,7 @@ except Exception as e:
 
     preprogram = _build_preprogram()
 
-    pyfile = Path.home().joinpath(f"tmp_results/tmp_scripts/python/croshell/{randstr()}/script.py")
+    pyfile = Path.home().joinpath(f"tmp_results/tmp_scripts/python/preview/{randstr()}/script.py")
     pyfile.parent.mkdir(parents=True, exist_ok=True)
     title = "Reading Data"
     def_code = lambda_to_python_script(
@@ -199,7 +199,7 @@ def _run_path_backend(
     target_path: Path,
     backend: BACKENDS,
 ) -> None:
-    """Run the file preview/viewer flows directly from croshell."""
+    """Run the file preview/viewer flows directly from preview."""
     match backend:
         case "preview":
             from stackops.settings.yazi.scripts.fullscreen_preview import preview_target
@@ -237,7 +237,7 @@ def _run_path_backend(
 
 
 def _build_preprogram() -> str:
-    """Build the preprogram code for croshell."""
+    """Build the preprogram code for preview."""
     import inspect
     import textwrap
     from typing import Callable
@@ -261,7 +261,7 @@ def _build_preprogram() -> str:
                 # print(todays_date)
                 print_logo("StackOps")
         except ImportError:
-            print("Croshell: stackops is not installed in the current environment.")
+            print("Preview: stackops is not installed in the current environment.")
             print("Skipping logo printing and some utilities. Some features may not work as expected.")
     preprogram += get_body_simple_function_no_args(preprogram_func)
     return preprogram
@@ -279,7 +279,7 @@ def _build_fire_line(
     user_uv_with_line: str,
     uv_with: str | None,
 ) -> str:
-    """Build the fire line command for croshell."""
+    """Build the fire line command for preview."""
     if backend == "visidata":
         if file_obj.suffix == ".json":
             return f"""uv run {uv_python_line} {user_uv_with_line} {uv_project_line} --with visidata vd "{str(file_obj)}" """

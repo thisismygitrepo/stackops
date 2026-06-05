@@ -4,6 +4,8 @@ import re
 import shlex
 import shutil
 import subprocess
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Annotated, Mapping, NoReturn
 
@@ -19,7 +21,7 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidate
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-SECRETS_HELP = "Define env vars from .stackops/secrets/secrets.json."
+SECRETS_HELP = "Define env vars from StackOps secrets files."
 SECRETS_EPILOG = """Examples:
   devops config secrets aws dev iam-access-key
   devops config secrets github personal-access-token
@@ -29,6 +31,8 @@ SECRETS_EPILOG = """Examples:
   devops config secrets --verbose aws dev iam-access-key
   devops config secrets --name aws-dev --tag iam-access-key
   devops config secrets --name aws-dev --tag session-token
+  devops config secrets --source global bitwarden
+  devops config secrets --source both github token
   devops config secrets --path ~/private/team-secrets.json aws dev
   devops config secrets --edit
 
@@ -36,8 +40,21 @@ Terms are case-insensitive substring matches. All terms must match somewhere acr
 name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys.
 Use --interactive/-i to choose from matching entries with the TV fuzzy picker.
 Use --verbose/-v to print the selected bundle and env var keys without secret values.
+Use --source to choose the local file, global source-of-truth file, or both.
 Exact selectors are case-sensitive and can be combined with terms for script-stable matching.
 """
+
+
+class SecretsSource(str, Enum):
+    local = "local"
+    global_ = "global"
+    both = "both"
+
+
+@dataclass(frozen=True)
+class SecretsFileSource:
+    name: str
+    path: Path
 
 
 def secrets(
@@ -52,18 +69,21 @@ def secrets(
     ] = None,
     secrets_path: Annotated[
         Path | None,
-        typer.Option("--path", "-p", help="Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory."),
+        typer.Option(
+            "--path", "-p", help="Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+        ),
     ] = None,
+    secrets_source: Annotated[
+        SecretsSource,
+        typer.Option(
+            "--source", "-s", case_sensitive=False, help="Secrets file source to read: local, global, or both. --path overrides the local source."
+        ),
+    ] = SecretsSource.local,
     edit: Annotated[bool, typer.Option("--edit", "-e", help="Open the secrets JSON file for editing instead of loading env vars.")] = False,
     editor: Annotated[str, typer.Option("--editor", help="Editor to use with --edit. Defaults to hx.")] = "hx",
     interactive: Annotated[
         bool,
-        typer.Option(
-            "--interactive",
-            "--interative",
-            "-i",
-            help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.",
-        ),
+        typer.Option("--interactive", "-i", help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."),
     ] = False,
     verbose: Annotated[
         bool, typer.Option("--verbose", "-v", help="Print the selected secret bundle and env var keys without secret values.")
@@ -89,13 +109,15 @@ def secrets(
         list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
     ] = None,
 ) -> None:
-    """🔐 <S> Define env vars from .stackops/secrets/secrets.json."""
-    resolved_secrets_path = _resolve_secrets_path(secrets_path)
+    """🔐 <S> Define env vars from StackOps secrets files."""
+    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
     if edit:
-        _edit_secrets_file(secrets_path=resolved_secrets_path, editor=editor)
+        if len(secret_sources) != 1:
+            _fail("--edit can only open one secrets file. Choose --source local or --source global.")
+        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor)
         return
 
-    candidates = load_secret_candidates(resolved_secrets_path)
+    candidates = _load_secret_candidates_from_sources(secret_sources)
     selectors = SecretSelectors(
         entry_name=_clean_optional_selector(entry_name),
         secret_name=_clean_optional_selector(secret_name),
@@ -109,7 +131,7 @@ def secrets(
     _validate_env_names(candidate.key_values)
     _write_env_handoff(candidate.key_values)
     if verbose:
-        _echo_verbose_selection(candidate=candidate, secrets_path=resolved_secrets_path)
+        _echo_verbose_selection(candidate=candidate, secrets_path=_candidate_source_path(candidate=candidate, secret_sources=secret_sources))
 
     names = ", ".join(candidate.key_values)
     msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(candidate.key_values)} env variable(s)"
@@ -120,13 +142,49 @@ def secrets(
     typer.echo(msg)
 
 
-def _resolve_secrets_path(secrets_path: Path | None) -> Path:
+def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource) -> list[SecretsFileSource]:
+    local_source = SecretsFileSource(name="local", path=_resolve_local_secrets_path(secrets_path))
+    if secrets_source is SecretsSource.local:
+        return [local_source]
+
+    global_source = SecretsFileSource(name="global", path=_resolve_global_secrets_path())
+    if secrets_source is SecretsSource.global_:
+        if secrets_path is not None:
+            _fail("--path overrides only the local secrets source. Use --source local or --source both with --path.")
+        return [global_source]
+    if secrets_source is SecretsSource.both:
+        return [local_source, global_source]
+
+    _fail(f"Unknown secrets source: {secrets_source}")
+
+
+def _resolve_local_secrets_path(secrets_path: Path | None) -> Path:
     if secrets_path is None:
         return Path.cwd() / SECRETS_RELATIVE_PATH
     expanded_path = secrets_path.expanduser()
     if expanded_path.is_absolute():
         return expanded_path
     return Path.cwd() / expanded_path
+
+
+def _resolve_global_secrets_path() -> Path:
+    from stackops.utils.source_of_truth import SECRETS_DOFILE
+
+    return SECRETS_DOFILE.expanduser()
+
+
+def _load_secret_candidates_from_sources(secret_sources: list[SecretsFileSource]) -> list[SecretCandidate]:
+    include_source_labels = len(secret_sources) > 1
+    candidates: list[SecretCandidate] = []
+    for secret_source in secret_sources:
+        candidates.extend(load_secret_candidates(secret_source.path, source_name=secret_source.name if include_source_labels else None))
+    return candidates
+
+
+def _candidate_source_path(*, candidate: SecretCandidate, secret_sources: list[SecretsFileSource]) -> Path:
+    if candidate.source_path is not None:
+        return candidate.source_path
+    return secret_sources[0].path
 
 
 def _edit_secrets_file(secrets_path: Path, editor: str) -> None:

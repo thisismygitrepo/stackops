@@ -4138,18 +4138,21 @@
                     "    ] = None,",
                     "    secrets_path: Annotated[",
                     "        Path | None,",
-                    "        typer.Option(\"--path\", \"-p\", help=\"Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory.\"),",
+                    "        typer.Option(",
+                    "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                    "        ),",
                     "    ] = None,",
+                    "    secrets_source: Annotated[",
+                    "        SecretsSource,",
+                    "        typer.Option(",
+                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Secrets file source to read: local, global, or both. --path overrides the local source.\"",
+                    "        ),",
+                    "    ] = SecretsSource.local,",
                     "    edit: Annotated[bool, typer.Option(\"--edit\", \"-e\", help=\"Open the secrets JSON file for editing instead of loading env vars.\")] = False,",
                     "    editor: Annotated[str, typer.Option(\"--editor\", help=\"Editor to use with --edit. Defaults to hx.\")] = \"hx\",",
                     "    interactive: Annotated[",
                     "        bool,",
-                    "        typer.Option(",
-                    "            \"--interactive\",",
-                    "            \"--interative\",",
-                    "            \"-i\",",
-                    "            help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\",",
-                    "        ),",
+                    "        typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\"),",
                     "    ] = False,",
                     "    verbose: Annotated[",
                     "        bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected secret bundle and env var keys without secret values.\")",
@@ -4175,13 +4178,15 @@
                     "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
                     "    ] = None,",
                     ") -> None:",
-                    "    \"\"\"🔐 <S> Define env vars from .stackops/secrets/secrets.json.\"\"\"",
-                    "    resolved_secrets_path = _resolve_secrets_path(secrets_path)",
+                    "    \"\"\"🔐 <S> Define env vars from StackOps secrets files.\"\"\"",
+                    "    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
                     "    if edit:",
-                    "        _edit_secrets_file(secrets_path=resolved_secrets_path, editor=editor)",
+                    "        if len(secret_sources) != 1:",
+                    "            _fail(\"--edit can only open one secrets file. Choose --source local or --source global.\")",
+                    "        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor)",
                     "        return",
                     "",
-                    "    candidates = load_secret_candidates(resolved_secrets_path)",
+                    "    candidates = _load_secret_candidates_from_sources(secret_sources)",
                     "    selectors = SecretSelectors(",
                     "        entry_name=_clean_optional_selector(entry_name),",
                     "        secret_name=_clean_optional_selector(secret_name),",
@@ -4195,10 +4200,14 @@
                     "    _validate_env_names(candidate.key_values)",
                     "    _write_env_handoff(candidate.key_values)",
                     "    if verbose:",
-                    "        _echo_verbose_selection(candidate=candidate, secrets_path=resolved_secrets_path)",
+                    "        _echo_verbose_selection(candidate=candidate, secrets_path=_candidate_source_path(candidate=candidate, secret_sources=secret_sources))",
                     "",
                     "    names = \", \".join(candidate.key_values)",
-                    "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s): {names}\"",
+                    "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s)\"",
+                    "    if names:",
+                    "        msg += f\": {names}\"",
+                    "    else:",
+                    "        msg += \".\"",
                     "    typer.echo(msg)"
                   ],
                   "name": "secrets",
@@ -4224,7 +4233,7 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -4237,7 +4246,29 @@
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Path to a secrets JSON file. Defaults to .stackops/secrets/secrets.json in the current directory."
+                        "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                      }
+                    },
+                    {
+                      "name": "secrets_source",
+                      "kind": "positional_or_keyword",
+                      "type": "SecretsSource",
+                      "default": "SecretsSource.local",
+                      "required": false,
+                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local, global, or both. --path overrides the local source.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Secrets file source to read: local, global, or both. --path overrides the local source."
                       }
                     },
                     {
@@ -4287,17 +4318,15 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '--interative', '-i', help='Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--interactive",
-                          "--interative",
                           "-i"
                         ],
                         "long_flags": [
-                          "--interactive",
-                          "--interative"
+                          "--interactive"
                         ],
                         "short_flags": [
                           "-i"
@@ -4478,7 +4507,7 @@
                   "no_args_is_help": true,
                   "epilog": "secrets_module.SECRETS_EPILOG"
                 },
-                "doc": "🔐 <S> Define env vars from .stackops/secrets/secrets.json.",
+                "doc": "🔐 <S> Define env vars from StackOps secrets files.",
                 "aliases": [
                   {
                     "name": "S",
@@ -11984,6 +12013,504 @@
             "aliases": [
               {
                 "name": "e",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "group",
+            "name": "vault",
+            "fullPath": "devops vault",
+            "shortPath": "d v",
+            "help": "🔐 <v> Search Bitwarden credentials and manage vault sessions",
+            "source": {
+              "file": "src/stackops/scripts/python/devops.py",
+              "module": "stackops.scripts.python.devops",
+              "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_vault.get_app",
+              "callable": "vault"
+            },
+            "app": {
+              "name": "vault",
+              "help": "🔐 <v> Search Bitwarden credentials and manage login/unlock session state.",
+              "no_args_is_help": true,
+              "add_help_option": true,
+              "add_completion": false
+            },
+            "children": [
+              {
+                "kind": "command",
+                "name": "search",
+                "fullPath": "devops vault search",
+                "shortPath": "d v s",
+                "help": "<s> Retrieve credentials from Bitwarden CLI and optionally copy them to the clipboard.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
+                  "callable": "search"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def search(",
+                    "    name: Annotated[str, typer.Argument(..., help=\"Name (or part of the name) of the credential to retrieve\")],",
+                    "    copy: Annotated[",
+                    "        str,",
+                    "        typer.Option(",
+                    "            \"--copy\",",
+                    "            \"-c\",",
+                    "            show_default=True,",
+                    "            help=\"Which field to copy to clipboard (password, username, totp, none)\",",
+                    "            show_choices=True,",
+                    "            case_sensitive=False,",
+                    "        ),",
+                    "    ] = \"password\",",
+                    "    sync: Annotated[bool, typer.Option(\"--sync\", \"-S\", help=\"Sync vault with server before searching and bypass the local search cache\")] = False,",
+                    "    show: Annotated[bool, typer.Option(\"--show\", \"-s\", help=\"Show credentials in terminal (insecure)\")] = False,",
+                    "    use_totp: Annotated[bool, typer.Option(\"--totp/--no-totp\", help=\"Attempt to fetch TOTP if present\")] = True,",
+                    "    username_slot: Annotated[int, typer.Option(\"--username-slot\", help=\"Clipboard slot for username\")] = 0,",
+                    "    password_slot: Annotated[int, typer.Option(\"--password-slot\", help=\"Clipboard slot for password\")] = 1,",
+                    "    totp_slot: Annotated[int, typer.Option(\"--totp-slot\", help=\"Clipboard slot for TOTP\")] = 2,",
+                    "    json_slot: Annotated[int, typer.Option(\"--json-slot\", help=\"Clipboard slot for full JSON result\")] = 3,",
+                    "    silent: Annotated[bool, typer.Option(\"--silent\", \"-q\", help=\"Suppress all progress/status output; only the final result is printed\")] = False,",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"--json-output\", \"-j\", help=\"Output selected credentials as JSON (includes notes)\")] = False,",
+                    "    raw_output: Annotated[bool, typer.Option(\"--raw\", help=\"Output raw search results JSON exactly as returned by bw\")] = False,",
+                    "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass cache and query Bitwarden directly\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops import vault",
+                    "",
+                    "    try:",
+                    "        vault.search(",
+                    "            name=name,",
+                    "            copy=copy,",
+                    "            sync=sync,",
+                    "            show=show,",
+                    "            use_totp=use_totp,",
+                    "            username_slot=username_slot,",
+                    "            password_slot=password_slot,",
+                    "            totp_slot=totp_slot,",
+                    "            json_slot=json_slot,",
+                    "            silent=silent,",
+                    "            json_output=json_output,",
+                    "            raw_output=raw_output,",
+                    "            fresh=fresh,",
+                    "        )",
+                    "    except vault.VaultExit as exc:",
+                    "        _raise_typer_exit(exc)"
+                  ],
+                  "name": "search",
+                  "parameters": [
+                    {
+                      "name": "name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Name (or part of the name) of the credential to retrieve')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Name (or part of the name) of the credential to retrieve",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "copy",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "password",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Option('--copy', '-c', show_default=True, help='Which field to copy to clipboard (password, username, totp, none)', show_choices=True, case_sensitive=False)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--copy",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--copy"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "Which field to copy to clipboard (password, username, totp, none)"
+                      }
+                    },
+                    {
+                      "name": "sync",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--sync', '-S', help='Sync vault with server before searching and bypass the local search cache')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--sync",
+                          "-S"
+                        ],
+                        "long_flags": [
+                          "--sync"
+                        ],
+                        "short_flags": [
+                          "-S"
+                        ],
+                        "help": "Sync vault with server before searching and bypass the local search cache"
+                      }
+                    },
+                    {
+                      "name": "show",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--show', '-s', help='Show credentials in terminal (insecure)')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--show",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--show"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Show credentials in terminal (insecure)"
+                      }
+                    },
+                    {
+                      "name": "use_totp",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": true,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--totp/--no-totp', help='Attempt to fetch TOTP if present')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--totp/--no-totp"
+                        ],
+                        "long_flags": [
+                          "--totp",
+                          "--no-totp"
+                        ],
+                        "short_flags": [],
+                        "help": "Attempt to fetch TOTP if present"
+                      }
+                    },
+                    {
+                      "name": "username_slot",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 0,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--username-slot', help='Clipboard slot for username')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--username-slot"
+                        ],
+                        "long_flags": [
+                          "--username-slot"
+                        ],
+                        "short_flags": [],
+                        "help": "Clipboard slot for username"
+                      }
+                    },
+                    {
+                      "name": "password_slot",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 1,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--password-slot', help='Clipboard slot for password')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--password-slot"
+                        ],
+                        "long_flags": [
+                          "--password-slot"
+                        ],
+                        "short_flags": [],
+                        "help": "Clipboard slot for password"
+                      }
+                    },
+                    {
+                      "name": "totp_slot",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 2,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--totp-slot', help='Clipboard slot for TOTP')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--totp-slot"
+                        ],
+                        "long_flags": [
+                          "--totp-slot"
+                        ],
+                        "short_flags": [],
+                        "help": "Clipboard slot for TOTP"
+                      }
+                    },
+                    {
+                      "name": "json_slot",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 3,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--json-slot', help='Clipboard slot for full JSON result')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json-slot"
+                        ],
+                        "long_flags": [
+                          "--json-slot"
+                        ],
+                        "short_flags": [],
+                        "help": "Clipboard slot for full JSON result"
+                      }
+                    },
+                    {
+                      "name": "silent",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--silent', '-q', help='Suppress all progress/status output; only the final result is printed')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--silent",
+                          "-q"
+                        ],
+                        "long_flags": [
+                          "--silent"
+                        ],
+                        "short_flags": [
+                          "-q"
+                        ],
+                        "help": "Suppress all progress/status output; only the final result is printed"
+                      }
+                    },
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '--json-output', '-j', help='Output selected credentials as JSON (includes notes)')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "--json-output",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json",
+                          "--json-output"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Output selected credentials as JSON (includes notes)"
+                      }
+                    },
+                    {
+                      "name": "raw_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--raw', help='Output raw search results JSON exactly as returned by bw')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--raw"
+                        ],
+                        "long_flags": [
+                          "--raw"
+                        ],
+                        "short_flags": [],
+                        "help": "Output raw search results JSON exactly as returned by bw"
+                      }
+                    },
+                    {
+                      "name": "fresh",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--fresh', '-f', help='Bypass cache and query Bitwarden directly')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--fresh",
+                          "-f"
+                        ],
+                        "long_flags": [
+                          "--fresh"
+                        ],
+                        "short_flags": [
+                          "-f"
+                        ],
+                        "help": "Bypass cache and query Bitwarden directly"
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "doc": "Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard.",
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true,
+                    "help": "Alias for search."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "login-and-unlock",
+                "fullPath": "devops vault login-and-unlock",
+                "shortPath": "d v l",
+                "help": "<l> Log in with Bitwarden API credentials from StackOps secrets, unlock the vault, and persist BW_SESSION locally.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
+                  "callable": "login_and_unlock"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def login_and_unlock(",
+                    "    profile: Annotated[str, typer.Option(..., \"--profile\", \"-p\", help=\"StackOps secrets profile that stores the Bitwarden credentials.\")],",
+                    "    entry_name: Annotated[",
+                    "        str, typer.Option(\"--entry-name\", help=\"StackOps secrets entry name that stores the Bitwarden API credentials.\", show_default=True)",
+                    "    ] = DEFAULT_BITWARDEN_ENTRY_NAME,",
+                    ") -> None:",
+                    "    \"\"\"Authenticate with Bitwarden and persist a local BW_SESSION token.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops import vault",
+                    "",
+                    "    try:",
+                    "        vault.login_and_unlock(profile=profile, entry_name=entry_name)",
+                    "    except vault.VaultExit as exc:",
+                    "        _raise_typer_exit(exc)"
+                  ],
+                  "name": "login_and_unlock",
+                  "parameters": [
+                    {
+                      "name": "profile",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option(..., '--profile', '-p', help='StackOps secrets profile that stores the Bitwarden credentials.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--profile",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--profile"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "StackOps secrets profile that stores the Bitwarden credentials.",
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "entry_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "DEFAULT_BITWARDEN_ENTRY_NAME",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Option('--entry-name', help='StackOps secrets entry name that stores the Bitwarden API credentials.', show_default=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--entry-name"
+                        ],
+                        "long_flags": [
+                          "--entry-name"
+                        ],
+                        "short_flags": [],
+                        "help": "StackOps secrets entry name that stores the Bitwarden API credentials."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "doc": "Authenticate with Bitwarden and persist a local BW_SESSION token.",
+                "aliases": [
+                  {
+                    "name": "l",
+                    "hidden": true,
+                    "help": "Alias for login-and-unlock."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "clean-cache",
+                "fullPath": "devops vault clean-cache",
+                "shortPath": "d v c",
+                "help": "<c> Remove encrypted vault cache stored under ~/tmp_results.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
+                  "callable": "clean_cache"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def clean_cache() -> None:",
+                    "    \"\"\"Remove cached vault data under ~/tmp_results.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops import vault",
+                    "",
+                    "    try:",
+                    "        vault.clean_cache()",
+                    "    except vault.VaultExit as exc:",
+                    "        _raise_typer_exit(exc)"
+                  ],
+                  "name": "clean_cache",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "doc": "Remove cached vault data under ~/tmp_results.",
+                "aliases": [
+                  {
+                    "name": "c",
+                    "hidden": true,
+                    "help": "Alias for clean-cache."
+                  }
+                ]
+              }
+            ],
+            "command_context_settings": {
+              "allow_extra_args": true,
+              "allow_interspersed_args": true,
+              "ignore_unknown_options": true,
+              "help_option_names": []
+            },
+            "doc": "🔐 <v> Search Bitwarden credentials and manage vault sessions.",
+            "aliases": [
+              {
+                "name": "v",
                 "hidden": true
               }
             ]
@@ -21885,18 +22412,18 @@
       },
       {
         "kind": "command",
-        "name": "croshell",
-        "fullPath": "croshell",
-        "shortPath": "r",
-        "help": "<r> Cross-shell command execution",
+        "name": "preview",
+        "fullPath": "preview",
+        "shortPath": "p",
+        "help": "<p> Preview files and launch reader backends",
         "source": {
           "file": "src/stackops/scripts/python/stackops_entry.py",
           "module": "stackops.scripts.python.stackops_entry",
-          "callable": "croshell"
+          "callable": "preview"
         },
         "signature": {
           "raw_lines": [
-            "def croshell(",
+            "def preview(",
             "    path: Annotated[str | None, typer.Argument(help=\"path of file to read.\")] = None,",
             "    project_path: Annotated[str | None, typer.Option(\"--project\", \"-p\", help=\"specify uv project to use\")] = None,",
             "    uv_with: Annotated[str | None, typer.Option(\"--uv-with\", \"-w\", help=\"specify uv with packages to use\")] = None,",
@@ -21906,9 +22433,9 @@
             "    stackops_project: Annotated[bool, typer.Option(\"--self\", \"-s\", help=\"specify stackops project to use.\")] = False,",
             "    frozen: Annotated[bool, typer.Option(\"--frozen\", \"-f\", help=\"freeze the environment (no package changes allowed)\")] = False,",
             ") -> None:",
-            "    \"\"\"Cross-shell command execution.\"\"\"",
-            "    from stackops.scripts.python.croshell import croshell as croshell_impl",
-            "    croshell_impl(",
+            "    \"\"\"Preview files and launch reader backends.\"\"\"",
+            "    from stackops.scripts.python.preview import preview as preview_impl",
+            "    preview_impl(",
             "        path=path,",
             "        project_path=project_path,",
             "        uv_with=uv_with,",
@@ -21919,7 +22446,7 @@
             "        frozen=frozen,",
             "    )"
           ],
-          "name": "croshell",
+          "name": "preview",
           "parameters": [
             {
               "name": "path",
@@ -22096,10 +22623,10 @@
         "typer": {
           "no_args_is_help": false
         },
-        "doc": "Cross-shell command execution.",
+        "doc": "Preview files and launch reader backends.",
         "aliases": [
           {
-            "name": "r",
+            "name": "p",
             "hidden": true
           }
         ]
