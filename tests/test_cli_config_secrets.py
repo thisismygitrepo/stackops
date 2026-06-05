@@ -40,6 +40,7 @@ def test_devops_config_secrets_help_lists_source_edit_and_path_options() -> None
     assert "-n" in result.output
     assert "--tag" in result.output
     assert "-t" in result.output
+    assert "--login-tag" in result.output
     assert "--key" in result.output
     assert "-k" in result.output
     assert "devops config secrets --name aws-dev --tag iam-access-key" in result.output
@@ -81,7 +82,7 @@ def test_devops_config_secrets_verbose_prints_selection_without_secret_values() 
         assert "Bundle: aws-dev / iam-access-key" in result.output
         assert f"Source: {Path.cwd() / '.stackops' / 'secrets' / 'secrets.json'}" in result.output
         assert "JSON path: entries[1].secrets[0].keyValues" in result.output
-        assert "Entry tags: aws, dev" in result.output
+        assert "Login tags: aws, dev" in result.output
         assert "Secret tags: iam-access-key" in result.output
         assert "Scopes: development" in result.output
         assert "Defining env vars:" in result.output
@@ -143,7 +144,7 @@ def test_devops_config_secrets_uses_global_source_path(monkeypatch) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         global_path = Path("global") / "secrets.json"
-        _write_secrets_file_at(global_path, _single_secret_payload(entry_name="global-only", key="GLOBAL_TOKEN", value="global-value"))
+        _write_secrets_file_at(global_path, _single_secret_payload(login_name="global-only", key="GLOBAL_TOKEN", value="global-value"))
         monkeypatch.setattr(cli_config_secrets, "_resolve_global_secrets_path", lambda: Path.cwd() / global_path)
         op_path = Path.cwd() / "handoff.sh"
 
@@ -160,10 +161,10 @@ def test_devops_config_secrets_source_both_can_select_from_global(monkeypatch) -
     runner = CliRunner()
     with runner.isolated_filesystem():
         _write_secrets_file_at(
-            Path(".stackops") / "secrets" / "secrets.json", _single_secret_payload(entry_name="local-only", key="LOCAL_TOKEN", value="local-value")
+            Path(".stackops") / "secrets" / "secrets.json", _single_secret_payload(login_name="local-only", key="LOCAL_TOKEN", value="local-value")
         )
         global_path = Path("global") / "secrets.json"
-        _write_secrets_file_at(global_path, _single_secret_payload(entry_name="global-only", key="GLOBAL_TOKEN", value="global-value"))
+        _write_secrets_file_at(global_path, _single_secret_payload(login_name="global-only", key="GLOBAL_TOKEN", value="global-value"))
         monkeypatch.setattr(cli_config_secrets, "_resolve_global_secrets_path", lambda: Path.cwd() / global_path)
         op_path = Path.cwd() / "handoff.sh"
 
@@ -181,10 +182,10 @@ def test_devops_config_secrets_source_both_labels_ambiguous_matches(monkeypatch)
     runner = CliRunner()
     with runner.isolated_filesystem():
         _write_secrets_file_at(
-            Path(".stackops") / "secrets" / "secrets.json", _single_secret_payload(entry_name="local-only", key="SHARED_TOKEN", value="local-value")
+            Path(".stackops") / "secrets" / "secrets.json", _single_secret_payload(login_name="local-only", key="SHARED_TOKEN", value="local-value")
         )
         global_path = Path("global") / "secrets.json"
-        _write_secrets_file_at(global_path, _single_secret_payload(entry_name="global-only", key="SHARED_TOKEN", value="global-value"))
+        _write_secrets_file_at(global_path, _single_secret_payload(login_name="global-only", key="SHARED_TOKEN", value="global-value"))
         monkeypatch.setattr(cli_config_secrets, "_resolve_global_secrets_path", lambda: Path.cwd() / global_path)
         op_path = Path.cwd() / "handoff.sh"
 
@@ -316,7 +317,7 @@ def test_devops_config_secrets_verbose_handles_empty_tags_arrays() -> None:
 
         assert result.exit_code == 0, result.output
         assert "Bundle: github-personal / <unnamed secret>" in result.output
-        assert "Entry tags: -" in result.output
+        assert "Login tags: -" in result.output
         assert "Secret tags: -" in result.output
         assert "Scopes: -" in result.output
 
@@ -406,13 +407,13 @@ def _secrets_payload() -> dict[str, object]:
     }
 
 
-def _single_secret_payload(*, entry_name: str, key: str, value: str) -> dict[str, object]:
+def _single_secret_payload(*, login_name: str, key: str, value: str) -> dict[str, object]:
     return {
         "version": "0.3",
         "entries": [
             {
-                "name": entry_name,
-                "tags": [entry_name],
+                "name": login_name,
+                "tags": [login_name],
                 "secrets": [{"name": "shared", "tags": ["shared"], "scopes": ["test"], "keyValues": {key: value}}],
             }
         ],

@@ -5,7 +5,7 @@ from typing import NoReturn
 import typer
 
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import SecretRecord, SecretStringMap, SecretsEntry, SecretsFile, SecretValueMap
+from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretStringMap, SecretsFile, SecretValueMap
 
 __all__ = [
     "SecretCandidate",
@@ -23,8 +23,8 @@ __all__ = [
 @dataclass(frozen=True)
 class SecretCandidate:
     json_path: str
-    entry_name: str
-    entry_tags: tuple[str, ...]
+    login_name: str
+    login_tags: tuple[str, ...]
     secret_name: str | None
     secret_tags: tuple[str, ...]
     scopes: tuple[str, ...]
@@ -36,10 +36,10 @@ class SecretCandidate:
 
 @dataclass(frozen=True)
 class SecretSelectors:
-    entry_name: str | None = None
+    login_name: str | None = None
     secret_name: str | None = None
     tags: tuple[str, ...] = ()
-    entry_tags: tuple[str, ...] = ()
+    login_tags: tuple[str, ...] = ()
     secret_tags: tuple[str, ...] = ()
     scopes: tuple[str, ...] = ()
     keys: tuple[str, ...] = ()
@@ -47,10 +47,10 @@ class SecretSelectors:
     def has_any(self) -> bool:
         return any(
             (
-                self.entry_name is not None,
+                self.login_name is not None,
                 self.secret_name is not None,
                 bool(self.tags),
-                bool(self.entry_tags),
+                bool(self.login_tags),
                 bool(self.secret_tags),
                 bool(self.scopes),
                 bool(self.keys),
@@ -73,7 +73,7 @@ def load_secret_candidates(secrets_path: Path, *, source_name: str | None = None
 def build_secret_candidates(secrets_file: SecretsFile) -> list[SecretCandidate]:
     candidates: list[SecretCandidate] = []
     for entry_index, entry in enumerate(secrets_file["entries"]):
-        candidates.extend(_entry_candidates(entry=entry, entry_index=entry_index))
+        candidates.extend(_login_candidates(login=entry, entry_index=entry_index))
     return candidates
 
 
@@ -123,13 +123,13 @@ def format_secret_candidate_label(candidate: SecretCandidate) -> str:
     return _candidate_label(candidate)
 
 
-def _entry_candidates(entry: SecretsEntry, entry_index: int) -> list[SecretCandidate]:
-    entry_name = entry["name"]
-    entry_tags = tuple(entry.get("tags", ()))
-    shared_search_values = _search_values_from_entry(entry=entry, entry_name=entry_name, entry_tags=entry_tags)
+def _login_candidates(login: Login, entry_index: int) -> list[SecretCandidate]:
+    login_name = login["name"]
+    login_tags = tuple(login.get("tags", ()))
+    shared_search_values = _search_values_from_login(login=login, login_name=login_name, login_tags=login_tags)
 
     candidates: list[SecretCandidate] = []
-    for secret_index, secret in enumerate(entry["secrets"]):
+    for secret_index, secret in enumerate(login["secrets"]):
         key_values = dict(secret["keyValues"])
         secret_tags = tuple(secret["tags"])
         scopes = tuple(secret["scopes"])
@@ -140,8 +140,8 @@ def _entry_candidates(entry: SecretsEntry, entry_index: int) -> list[SecretCandi
         candidates.append(
             SecretCandidate(
                 json_path=f"entries[{entry_index}].secrets[{secret_index}].keyValues",
-                entry_name=entry_name,
-                entry_tags=entry_tags,
+                login_name=login_name,
+                login_tags=login_tags,
                 secret_name=secret_name,
                 secret_tags=secret_tags,
                 scopes=scopes,
@@ -152,13 +152,13 @@ def _entry_candidates(entry: SecretsEntry, entry_index: int) -> list[SecretCandi
     return candidates
 
 
-def _search_values_from_entry(entry: SecretsEntry, entry_name: str, entry_tags: tuple[str, ...]) -> tuple[str, ...]:
-    values: list[str] = [entry_name, *entry_tags]
-    for key in ("description", "url", "email", "username", "profile"):
-        value = entry.get(key)
+def _search_values_from_login(login: Login, login_name: str, login_tags: tuple[str, ...]) -> tuple[str, ...]:
+    values: list[str] = [login_name, *login_tags]
+    for key in ("description", "notes", "url", "email", "username", "profile"):
+        value = login.get(key)
         if value is not None:
             values.append(value)
-    values.extend(_string_map_terms(entry.get("metadata")))
+    values.extend(_string_map_terms(login.get("metadata")))
     return tuple(values)
 
 
@@ -168,7 +168,7 @@ def _search_values_from_secret(
     values: list[str] = [*secret_tags, *scopes, *key_names]
     if secret_name is not None:
         values.append(secret_name)
-    for key in ("description", "notes"):
+    for key in ("description",):
         value = secret.get(key)
         if value is not None:
             values.append(value)
@@ -182,13 +182,13 @@ def _candidate_matches(candidate: SecretCandidate, terms: tuple[str, ...]) -> bo
 
 
 def _candidate_matches_selectors(candidate: SecretCandidate, selectors: SecretSelectors) -> bool:
-    if selectors.entry_name is not None and candidate.entry_name != selectors.entry_name:
+    if selectors.login_name is not None and candidate.login_name != selectors.login_name:
         return False
     if selectors.secret_name is not None and candidate.secret_name != selectors.secret_name:
         return False
-    if not all(tag in candidate.entry_tags or tag in candidate.secret_tags for tag in selectors.tags):
+    if not all(tag in candidate.login_tags or tag in candidate.secret_tags for tag in selectors.tags):
         return False
-    if not all(tag in candidate.entry_tags for tag in selectors.entry_tags):
+    if not all(tag in candidate.login_tags for tag in selectors.login_tags):
         return False
     if not all(tag in candidate.secret_tags for tag in selectors.secret_tags):
         return False
@@ -237,7 +237,7 @@ def _candidate_preview(candidate: SecretCandidate) -> str:
         lines.append(f"- Source: `{candidate.source_name}`")
     if candidate.source_path is not None:
         lines.append(f"- File: `{candidate.source_path}`")
-    lines.extend((f"- Entry: `{candidate.entry_name}`", f"- Entry tags: `{_preview_join(candidate.entry_tags)}`"))
+    lines.extend((f"- Login: `{candidate.login_name}`", f"- Login tags: `{_preview_join(candidate.login_tags)}`"))
     if candidate.secret_name is not None:
         lines.append(f"- Secret name: `{candidate.secret_name}`")
     lines.extend(
@@ -259,12 +259,12 @@ def _selection_text(terms: list[str] | None, selectors: SecretSelectors) -> str:
     terms_text = " ".join(term for term in terms or () if term.strip())
     if terms_text:
         parts.append(f"terms={terms_text}")
-    if selectors.entry_name is not None:
-        parts.append(f"name={selectors.entry_name}")
+    if selectors.login_name is not None:
+        parts.append(f"name={selectors.login_name}")
     if selectors.secret_name is not None:
         parts.append(f"secret-name={selectors.secret_name}")
     parts.extend(f"tag={tag}" for tag in selectors.tags)
-    parts.extend(f"entry-tag={tag}" for tag in selectors.entry_tags)
+    parts.extend(f"login-tag={tag}" for tag in selectors.login_tags)
     parts.extend(f"secret-tag={tag}" for tag in selectors.secret_tags)
     parts.extend(f"scope={scope}" for scope in selectors.scopes)
     parts.extend(f"key={key}" for key in selectors.keys)
@@ -287,7 +287,7 @@ def _candidate_label(candidate: SecretCandidate) -> str:
         secret_label = "<unnamed secret>"
     keys = ", ".join(candidate.key_values) if candidate.key_values else "<no keys>"
     source_prefix = f"[{candidate.source_name}] " if candidate.source_name is not None else ""
-    return f"{source_prefix}{candidate.entry_name} / {secret_label} -> {keys}"
+    return f"{source_prefix}{candidate.login_name} / {secret_label} -> {keys}"
 
 
 def _string_map_terms(value: SecretStringMap | None) -> tuple[str, ...]:

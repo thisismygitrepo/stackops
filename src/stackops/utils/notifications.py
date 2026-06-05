@@ -66,7 +66,7 @@ class Email:
     def __init__(self, config_name: str):
         from stackops.secrets import render_secret_value, search_secrets
         from stackops.utils.source_of_truth import SECRETS_DOFILE
-        secrets = search_secrets(path=SECRETS_DOFILE, entry_name=config_name)
+        secrets = search_secrets(path=SECRETS_DOFILE, login_name=config_name)
         if len(secrets) == 0:
             raise ValueError(f"No secrets found for config_name: {config_name}")
         elif len(secrets) > 1:

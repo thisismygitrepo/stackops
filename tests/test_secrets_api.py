@@ -6,8 +6,9 @@ from typing import get_type_hints
 import pytest
 from typer.testing import CliRunner
 
+import stackops.secrets as secrets_api
 from stackops.secrets import (
-    Entry,
+    Login,
     SecretsFileError,
     search_secrets,
 )
@@ -19,8 +20,12 @@ def test_python_secrets_api_exposes_strict_selectors_only() -> None:
     assert "terms" not in parameters
     assert "query" not in parameters
     assert "interactive" not in parameters
-    assert {"entry_name", "profile", "secret_name", "tags", "entry_tags", "secret_tags", "scopes", "keys"} <= set(parameters)
-    assert get_type_hints(search_secrets)["return"] == list[Entry]
+    assert {"login_name", "profile", "secret_name", "tags", "login_tags", "secret_tags", "scopes", "keys"} <= set(parameters)
+    assert "entry_name" not in parameters
+    assert "entry_tags" not in parameters
+    assert get_type_hints(search_secrets)["return"] == list[Login]
+    assert not hasattr(secrets_api, "Entry")
+    assert not hasattr(secrets_api, "Account")
 
 
 def test_python_secrets_api_returns_schema_entries_with_exact_selectors() -> None:
@@ -28,7 +33,7 @@ def test_python_secrets_api_returns_schema_entries_with_exact_selectors() -> Non
     with runner.isolated_filesystem():
         _write_secrets_file(_secrets_payload())
 
-        entries = search_secrets(entry_name="aws-dev", secret_tags=("iam-access-key",))
+        entries = search_secrets(login_name="aws-dev", secret_tags=("iam-access-key",))
 
         assert entries == [
             {
@@ -55,7 +60,7 @@ def test_python_secrets_api_returns_each_matching_secret_bundle_as_one_entry() -
     with runner.isolated_filesystem():
         _write_secrets_file(_secrets_payload())
 
-        entries = search_secrets(entry_name="aws-dev")
+        entries = search_secrets(login_name="aws-dev")
 
         assert len(entries) == 2
         assert [entry["secrets"][0]["keyValues"] for entry in entries] == [
@@ -88,7 +93,7 @@ def test_python_secrets_api_uses_custom_path() -> None:
         custom_path.parent.mkdir(parents=True, exist_ok=True)
         custom_path.write_text(json.dumps(_secrets_payload()), encoding="utf-8")
 
-        entries = search_secrets(path=custom_path, entry_name="github-personal")
+        entries = search_secrets(path=custom_path, login_name="github-personal")
 
         assert entries[0]["secrets"][0]["keyValues"]["GITHUB_TOKEN"] == "ghp_test"
 
@@ -108,7 +113,7 @@ def test_python_secrets_api_is_case_sensitive_and_exact() -> None:
     with runner.isolated_filesystem():
         _write_secrets_file(_secrets_payload())
 
-        assert search_secrets(entry_name="AWS-DEV", secret_tags=("iam-access-key",)) == []
+        assert search_secrets(login_name="AWS-DEV", secret_tags=("iam-access-key",)) == []
         assert search_secrets(profile="DEV") == []
 
 
@@ -122,7 +127,18 @@ def test_python_secrets_api_rejects_old_singular_scope_field() -> None:
         _write_secrets_file(payload)
 
         with pytest.raises(SecretsFileError, match=r"unknown key\(s\): scope"):
-            search_secrets(entry_name="github-personal")
+            search_secrets(login_name="github-personal")
+
+
+def test_python_secrets_api_requires_account_name() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        del payload["entries"][0]["name"]  # type: ignore[index]
+        _write_secrets_file(payload)
+
+        with pytest.raises(SecretsFileError, match=r"entries\[0\]\.name must be a non-empty string"):
+            search_secrets(login_name="github-personal")
 
 
 def test_python_secrets_api_requires_scopes_array() -> None:
@@ -133,7 +149,7 @@ def test_python_secrets_api_requires_scopes_array() -> None:
         _write_secrets_file(payload)
 
         with pytest.raises(SecretsFileError, match=r"scopes must be an array"):
-            search_secrets(entry_name="github-personal")
+            search_secrets(login_name="github-personal")
 
 
 def test_python_secrets_api_allows_missing_scopes() -> None:
@@ -143,9 +159,32 @@ def test_python_secrets_api_allows_missing_scopes() -> None:
         del payload["entries"][0]["secrets"][0]["scopes"]  # type: ignore[index]
         _write_secrets_file(payload)
 
-        assert search_secrets(entry_name="github-personal")[0]["secrets"][0]["keyValues"] == {"GITHUB_TOKEN": "ghp_test"}
+        assert search_secrets(login_name="github-personal")[0]["secrets"][0]["keyValues"] == {"GITHUB_TOKEN": "ghp_test"}
 
-        assert search_secrets(entry_name="github-personal", scopes=("repo",)) == []
+        assert search_secrets(login_name="github-personal", scopes=("repo",)) == []
+
+
+def test_python_secrets_api_preserves_login_notes_for_bitwarden_compatibility() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        payload["entries"][0]["notes"] = "Bitwarden notes"  # type: ignore[index]
+        _write_secrets_file(payload)
+
+        entries = search_secrets(login_name="github-personal")
+
+        assert entries[0]["notes"] == "Bitwarden notes"
+
+
+def test_python_secrets_api_rejects_secret_notes() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        payload = _secrets_payload()
+        payload["entries"][0]["secrets"][0]["notes"] = "Secret notes"  # type: ignore[index]
+        _write_secrets_file(payload)
+
+        with pytest.raises(SecretsFileError, match=r"unknown key\(s\): notes"):
+            search_secrets(login_name="github-personal")
 
 
 def test_python_secrets_api_allows_empty_tags_and_scopes_arrays() -> None:
@@ -157,7 +196,7 @@ def test_python_secrets_api_allows_empty_tags_and_scopes_arrays() -> None:
         payload["entries"][0]["secrets"][0]["scopes"] = []  # type: ignore[index]
         _write_secrets_file(payload)
 
-        entries = search_secrets(entry_name="github-personal")
+        entries = search_secrets(login_name="github-personal")
 
         assert entries == [
             {
@@ -173,9 +212,9 @@ def test_python_secrets_api_allows_empty_tags_and_scopes_arrays() -> None:
                 ],
             }
         ]
-        assert search_secrets(entry_name="github-personal", tags=("github",)) == []
-        assert search_secrets(entry_name="github-personal", secret_tags=("personal-access-token",)) == []
-        assert search_secrets(entry_name="github-personal", scopes=("repo",)) == []
+        assert search_secrets(login_name="github-personal", tags=("github",)) == []
+        assert search_secrets(login_name="github-personal", secret_tags=("personal-access-token",)) == []
+        assert search_secrets(login_name="github-personal", scopes=("repo",)) == []
 
 
 def test_python_secrets_api_allows_missing_secret_tags_and_preserves_arbitrary_keyvalues() -> None:
@@ -192,7 +231,7 @@ def test_python_secrets_api_allows_missing_secret_tags_and_preserves_arbitrary_k
         }
         _write_secrets_file(payload)
 
-        entries = search_secrets(entry_name="github-personal", keys=("",))
+        entries = search_secrets(login_name="github-personal", keys=("",))
 
         assert entries[0]["secrets"][0]["tags"] == []
         assert entries[0]["secrets"][0]["keyValues"] == {

@@ -2,7 +2,7 @@ from typing import Annotated
 
 import typer
 
-DEFAULT_BITWARDEN_ENTRY_NAME = "bitwarden"
+DEFAULT_BITWARDEN_LOGIN_NAME = "bitwarden"
 
 
 def _raise_typer_exit(exc: Exception) -> None:
@@ -60,15 +60,15 @@ def search(
 
 def login_and_unlock(
     profile: Annotated[str, typer.Option(..., "--profile", "-p", help="StackOps secrets profile that stores the Bitwarden credentials.")],
-    entry_name: Annotated[
-        str, typer.Option("--entry-name", help="StackOps secrets entry name that stores the Bitwarden API credentials.", show_default=True)
-    ] = DEFAULT_BITWARDEN_ENTRY_NAME,
+    login_name: Annotated[
+        str, typer.Option("--login-name", help="StackOps secrets login name that stores the Bitwarden API credentials.", show_default=True)
+    ] = DEFAULT_BITWARDEN_LOGIN_NAME,
 ) -> None:
     """Authenticate with Bitwarden and persist a local BW_SESSION token."""
     from stackops.scripts.python.helpers.helpers_devops import vault
 
     try:
-        vault.login_and_unlock(profile=profile, entry_name=entry_name)
+        vault.login_and_unlock(profile=profile, login_name=login_name)
     except vault.VaultExit as exc:
         _raise_typer_exit(exc)
 

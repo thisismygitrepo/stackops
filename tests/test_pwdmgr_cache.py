@@ -72,11 +72,11 @@ def test_vault_clean_cache_alias_runs_without_args_help(monkeypatch, tmp_path: P
 def test_load_bitwarden_credentials_uses_stackops_search_secrets(monkeypatch) -> None:
     calls: list[dict[str, object]] = []
 
-    def fake_search_secrets(*, path: Path, entry_name: str, profile: str, keys: tuple[str, str, str]) -> list[dict[str, object]]:
-        calls.append({"path": path, "entry_name": entry_name, "profile": profile, "keys": keys})
+    def fake_search_secrets(*, path: Path, login_name: str, profile: str, keys: tuple[str, str, str]) -> list[dict[str, object]]:
+        calls.append({"path": path, "login_name": login_name, "profile": profile, "keys": keys})
         return [
             {
-                "name": entry_name,
+                "name": login_name,
                 "profile": profile,
                 "secrets": [
                     {
@@ -93,29 +93,29 @@ def test_load_bitwarden_credentials_uses_stackops_search_secrets(monkeypatch) ->
     credentials = vault.load_bitwarden_credentials("bitwarden0", "dev")
 
     assert calls == [
-        {"path": vault.SECRETS_DOFILE, "entry_name": "bitwarden0", "profile": "dev", "keys": ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")}
+        {"path": vault.SECRETS_DOFILE, "login_name": "bitwarden0", "profile": "dev", "keys": ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")}
     ]
     assert credentials == vault.BitwardenCredentials(
-        entry_name="bitwarden0", profile="dev", client_id="client-id", client_secret="client-secret", password="vault-password"
+        login_name="bitwarden0", profile="dev", client_id="client-id", client_secret="client-secret", password="vault-password"
     )
 
 
 def test_login_and_unlock_requires_profile() -> None:
-    result = CliRunner().invoke(_vault_app(), ["login-and-unlock", "--entry-name", "custom-entry"])
+    result = CliRunner().invoke(_vault_app(), ["login-and-unlock", "--login-name", "custom-login"])
 
     assert result.exit_code != 0
     assert "Missing option '--profile'" in result.output
 
 
-def test_login_and_unlock_defaults_entry_name(monkeypatch) -> None:
+def test_login_and_unlock_defaults_login_name(monkeypatch) -> None:
     calls: list[tuple[str, str]] = []
     unlock_check_codes = iter((1, 0))
     persisted_sessions: list[str] = []
 
-    def fake_load_bitwarden_credentials(entry_name: str, profile: str):
-        calls.append((entry_name, profile))
+    def fake_load_bitwarden_credentials(login_name: str, profile: str):
+        calls.append((login_name, profile))
         return vault.BitwardenCredentials(
-            entry_name=entry_name, profile=profile, client_id="client-id", client_secret="client-secret", password="vault-password"
+            login_name=login_name, profile=profile, client_id="client-id", client_secret="client-secret", password="vault-password"
         )
 
     def fake_run_command(args: list[str], *, env: dict[str, str] | None = None, check: bool = False) -> subprocess.CompletedProcess[str]:
@@ -152,18 +152,18 @@ def test_login_and_unlock_defaults_entry_name(monkeypatch) -> None:
     result = CliRunner().invoke(_vault_app(), ["login-and-unlock", "--profile", "dev"])
 
     assert result.exit_code == 0
-    assert calls == [(vault.DEFAULT_BITWARDEN_ENTRY_NAME, "dev")]
+    assert calls == [(vault.DEFAULT_BITWARDEN_LOGIN_NAME, "dev")]
     assert persisted_sessions == ["session-token"]
 
 
-def test_login_and_unlock_accepts_short_profile_and_entry_name_option(monkeypatch) -> None:
+def test_login_and_unlock_accepts_short_profile_and_login_name_option(monkeypatch) -> None:
     calls: list[tuple[str, str]] = []
     persisted_sessions: list[str] = []
 
-    def fake_load_bitwarden_credentials(entry_name: str, profile: str):
-        calls.append((entry_name, profile))
+    def fake_load_bitwarden_credentials(login_name: str, profile: str):
+        calls.append((login_name, profile))
         return vault.BitwardenCredentials(
-            entry_name=entry_name, profile=profile, client_id="client-id", client_secret="client-secret", password="vault-password"
+            login_name=login_name, profile=profile, client_id="client-id", client_secret="client-secret", password="vault-password"
         )
 
     def fake_run_command(args: list[str], *, env: dict[str, str] | None = None, check: bool = False) -> subprocess.CompletedProcess[str]:
@@ -183,10 +183,10 @@ def test_login_and_unlock_accepts_short_profile_and_entry_name_option(monkeypatc
     monkeypatch.setattr(vault, "persist_session_token_to_cache", persisted_sessions.append)
     monkeypatch.setattr(vault, "run_command", fake_run_command)
 
-    result = CliRunner().invoke(_vault_app(), ["login-and-unlock", "--entry-name", "custom-entry", "-p", "dev"])
+    result = CliRunner().invoke(_vault_app(), ["login-and-unlock", "--login-name", "custom-login", "-p", "dev"])
 
     assert result.exit_code == 0
-    assert calls == [("custom-entry", "dev")]
+    assert calls == [("custom-login", "dev")]
     assert persisted_sessions == ["cached-session"]
 
 

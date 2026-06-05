@@ -28,8 +28,8 @@ from stackops.utils.source_of_truth import SECRETS_DOFILE
 # Keep the historical pwdmgr cache path so existing saved BW_SESSION tokens keep working.
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"
 CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
-DEFAULT_BITWARDEN_ENTRY_NAME = "bitwarden"
-DEFAULT_LOGIN_COMMAND = "devops vault login-and-unlock -p <profile> [--entry-name <entry_name>]"
+DEFAULT_BITWARDEN_LOGIN_NAME = "bitwarden"
+DEFAULT_LOGIN_COMMAND = "devops vault login-and-unlock -p <profile> [--login-name <login_name>]"
 BITWARDEN_SECRET_KEYS: tuple[str, str, str] = ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")
 
 
@@ -98,7 +98,7 @@ err_console = Console(stderr=True)
 
 
 @dataclass
-class Entry:
+class VaultItem:
     id: str
     name: str
     username: Optional[str]
@@ -108,7 +108,7 @@ class Entry:
 
 @dataclass
 class BitwardenCredentials:
-    entry_name: str
+    login_name: str
     profile: str
     client_id: str
     client_secret: str
@@ -190,8 +190,8 @@ def run_bw_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None)
     return run_command(args, env=env, check=True).stdout
 
 
-def parse_items(raw: str) -> List[Entry]:
-    """Parse the JSON returned by `bw list items` into Entry objects."""
+def parse_items(raw: str) -> List[VaultItem]:
+    """Parse the JSON returned by `bw list items` into VaultItem objects."""
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
@@ -199,11 +199,11 @@ def parse_items(raw: str) -> List[Entry]:
         err_console.print(exc)
         raise VaultExit(code=1)
 
-    items: List[Entry] = []
+    items: List[VaultItem] = []
     for it in data:
         login = it.get("login", {}) or {}
         items.append(
-            Entry(id=it.get("id", ""), name=it.get("name", "<unnamed>"), username=login.get("username"), password=login.get("password"), raw=it)
+            VaultItem(id=it.get("id", ""), name=it.get("name", "<unnamed>"), username=login.get("username"), password=login.get("password"), raw=it)
         )
     return items
 
@@ -214,14 +214,14 @@ def get_item_notes(raw_item: dict[str, Any]) -> Optional[str]:
     return notes if isinstance(notes, str) and notes else None
 
 
-def choose_entry_interactive(items: List[Entry]) -> Entry:
-    """Choose an entry interactively using the tv fuzzy-finder with a preview panel."""
+def choose_entry_interactive(items: List[VaultItem]) -> VaultItem:
+    """Choose a vault item interactively using the tv fuzzy-finder with a preview panel."""
     if not items:
         raise ValueError("no items to choose from")
 
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
-    def _preview(e: Entry) -> str:
+    def _preview(e: VaultItem) -> str:
         login = e.raw.get("login", {}) or {}
         uris = ", ".join(u.get("uri", "") for u in (login.get("uris") or []))
         lines = [
@@ -235,7 +235,7 @@ def choose_entry_interactive(items: List[Entry]) -> Entry:
         ]
         return "\n".join(lines)
 
-    mapping: dict[str, Entry] = {f"{e.name} | {e.username or ''}": e for e in items}
+    mapping: dict[str, VaultItem] = {f"{e.name} | {e.username or ''}": e for e in items}
     preview_mapping: dict[str, str] = {k: _preview(e) for k, e in mapping.items()}
 
     choice = choose_from_dict_with_preview(preview_mapping, extension="txt", multi=False, preview_size_percent=50.0)
@@ -253,30 +253,30 @@ def copy_to_clipboard(value: str, slot: int = 1) -> bool:
         return False
 
 
-def load_bitwarden_credentials(entry_name: str, profile: str) -> BitwardenCredentials:
+def load_bitwarden_credentials(login_name: str, profile: str) -> BitwardenCredentials:
     """Load one Bitwarden credential bundle from StackOps secrets."""
     try:
-        entries = search_secrets(path=SECRETS_DOFILE, entry_name=entry_name, profile=profile, keys=BITWARDEN_SECRET_KEYS)
+        logins = search_secrets(path=SECRETS_DOFILE, login_name=login_name, profile=profile, keys=BITWARDEN_SECRET_KEYS)
     except SecretsFileError as exc:
         err_console.print("[bold red]Could not load StackOps secrets.[/bold red]")
         err_console.print(str(exc))
         raise VaultExit(code=2) from exc
 
-    if not entries:
-        err_console.print(f"[bold red]Bitwarden credentials not found in StackOps secrets.[/bold red] Entry: {entry_name} Profile: {profile}")
+    if not logins:
+        err_console.print(f"[bold red]Bitwarden credentials not found in StackOps secrets.[/bold red] Login: {login_name} Profile: {profile}")
         raise VaultExit(code=2)
-    if len(entries) > 1:
-        err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] Entry: {entry_name} Profile: {profile}")
+    if len(logins) > 1:
+        err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] Login: {login_name} Profile: {profile}")
         raise VaultExit(code=2)
 
-    key_values = entries[0]["secrets"][0]["keyValues"]
+    key_values = logins[0]["secrets"][0]["keyValues"]
     missing_keys = [key for key in BITWARDEN_SECRET_KEYS if not key_values.get(key)]
     if missing_keys:
         err_console.print(f"[bold red]Matched StackOps secret is missing required keys.[/bold red] {', '.join(missing_keys)}")
         raise VaultExit(code=2)
 
     return BitwardenCredentials(
-        entry_name=entry_name,
+        login_name=login_name,
         profile=profile,
         client_id=str(key_values["BW_CLIENTID"]),
         client_secret=str(key_values["BW_CLIENTSECRET"]),
@@ -479,9 +479,9 @@ def search(
     time.sleep(0.05)
 
 
-def login_and_unlock(profile: str, *, entry_name: str = DEFAULT_BITWARDEN_ENTRY_NAME) -> None:
+def login_and_unlock(profile: str, *, login_name: str = DEFAULT_BITWARDEN_LOGIN_NAME) -> None:
     """Authenticate with Bitwarden and persist a local BW_SESSION token."""
-    credentials = load_bitwarden_credentials(entry_name=entry_name, profile=profile)
+    credentials = load_bitwarden_credentials(login_name=login_name, profile=profile)
 
     env = os.environ.copy()
     existing_session = load_session_token_from_cache()
@@ -498,7 +498,7 @@ def login_and_unlock(profile: str, *, entry_name: str = DEFAULT_BITWARDEN_ENTRY_
 
     login_check = run_command(["bw", "login", "--check"], env=env)
     if login_check.returncode == 0:
-        console.print(f"[green]Already logged in.[/green] Entry: [bold]{credentials.entry_name}[/bold] Profile: [bold]{credentials.profile}[/bold]")
+        console.print(f"[green]Already logged in.[/green] Login: [bold]{credentials.login_name}[/bold] Profile: [bold]{credentials.profile}[/bold]")
     else:
         console.print("Logging in")
         login_result = run_command(["bw", "login", "--apikey"], env=env, check=True)

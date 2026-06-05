@@ -139,7 +139,7 @@ SECRETS_DOFILE = DOTFILES_STACKOPS_ROOT.joinpath("secrets/secrets.json")
 
 def read_quick_password() -> str:
     from stackops.secrets import search_secrets
-    secrets = search_secrets(path=SECRETS_DOFILE, entry_name="quickPassword", keys=("PASSWORD",))
+    secrets = search_secrets(path=SECRETS_DOFILE, login_name="quickPassword", keys=("PASSWORD",))
     password = secrets[0]["secrets"][0]["keyValues"]["PASSWORD"]
     if not isinstance(password, str):
         raise TypeError("Secret value at quickPassword.PASSWORD must be a string.")
@@ -149,7 +149,7 @@ def read_quick_password() -> str:
 def read_virus_total_api_key() -> str:
     from stackops.secrets import search_secrets
 
-    secrets = search_secrets(path=SECRETS_DOFILE, entry_name="virusTotal", keys=("API_KEY",))
+    secrets = search_secrets(path=SECRETS_DOFILE, login_name="virusTotal", keys=("API_KEY",))
     api_key = secrets[0]["secrets"][0]["keyValues"]["API_KEY"]
     if not isinstance(api_key, str):
         raise TypeError("Secret value at virusTotal.API_KEY must be a string.")

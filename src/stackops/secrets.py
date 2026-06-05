@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TypeAlias
 
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
 from stackops.utils.schemas.secrets.secrets_types import (
+    Login,
     SecretRecord,
     SecretRotation,
-    SecretsEntry,
     SecretValueMap,
 )
 
@@ -18,16 +17,13 @@ DEFAULT_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
 __all__ = [
     "DEFAULT_SECRETS_PATH",
-    "Entry",
+    "Login",
     "SecretValueMap",
     "StackOpsSecretsError",
     "SecretsFileError",
     "render_secret_value",
     "search_secrets",
 ]
-
-
-Entry: TypeAlias = SecretsEntry
 
 
 class StackOpsSecretsError(Exception):
@@ -47,38 +43,38 @@ def render_secret_value(value: object) -> str:
 def search_secrets(
     *,
     path: str | Path | None = None,
-    entry_name: str | None = None,
+    login_name: str | None = None,
     profile: str | None = None,
     secret_name: str | None = None,
     tags: tuple[str, ...] = (),
-    entry_tags: tuple[str, ...] = (),
+    login_tags: tuple[str, ...] = (),
     secret_tags: tuple[str, ...] = (),
     scopes: tuple[str, ...] = (),
     keys: tuple[str, ...] = (),
-) -> list[Entry]:
-    """Return schema-shaped entries whose secret bundles match exact selectors."""
+) -> list[Login]:
+    """Return schema-shaped logins whose secret bundles match exact selectors."""
     try:
         secrets_file = load_secrets_file(_resolve_path(path))
     except SecretsSchemaError as exc:
         raise SecretsFileError(str(exc)) from exc
 
-    entries: list[Entry] = []
-    for entry in secrets_file["entries"]:
-        for secret in entry["secrets"]:
+    logins: list[Login] = []
+    for login in secrets_file["entries"]:
+        for secret in login["secrets"]:
             if _secret_matches(
-                entry=entry,
+                login=login,
                 secret=secret,
-                entry_name=entry_name,
+                login_name=login_name,
                 profile=profile,
                 secret_name=secret_name,
                 tags=tags,
-                entry_tags=entry_tags,
+                login_tags=login_tags,
                 secret_tags=secret_tags,
                 scopes=scopes,
                 keys=keys,
             ):
-                entries.append(_entry_with_secret(entry=entry, secret=secret))
-    return entries
+                logins.append(_login_with_secret(login=login, secret=secret))
+    return logins
 
 
 def _resolve_path(path: str | Path | None) -> Path:
@@ -93,31 +89,31 @@ def _resolve_path(path: str | Path | None) -> Path:
 
 def _secret_matches(
     *,
-    entry: SecretsEntry,
+    login: Login,
     secret: SecretRecord,
-    entry_name: str | None,
+    login_name: str | None,
     profile: str | None,
     secret_name: str | None,
     tags: tuple[str, ...],
-    entry_tags: tuple[str, ...],
+    login_tags: tuple[str, ...],
     secret_tags: tuple[str, ...],
     scopes: tuple[str, ...],
     keys: tuple[str, ...],
 ) -> bool:
-    current_entry_tags = tuple(entry.get("tags", ()))
+    current_login_tags = tuple(login.get("tags", ()))
     current_secret_tags = tuple(secret["tags"])
     current_scopes = tuple(secret["scopes"])
     current_keys = tuple(secret["keyValues"])
 
-    if entry_name is not None and entry["name"] != entry_name:
+    if login_name is not None and login["name"] != login_name:
         return False
-    if profile is not None and entry.get("profile") != profile:
+    if profile is not None and login.get("profile") != profile:
         return False
     if secret_name is not None and secret.get("name") != secret_name:
         return False
-    if not all(tag in current_entry_tags or tag in current_secret_tags for tag in tags):
+    if not all(tag in current_login_tags or tag in current_secret_tags for tag in tags):
         return False
-    if not all(tag in current_entry_tags for tag in entry_tags):
+    if not all(tag in current_login_tags for tag in login_tags):
         return False
     if not all(tag in current_secret_tags for tag in secret_tags):
         return False
@@ -126,23 +122,25 @@ def _secret_matches(
     return all(key in current_keys for key in keys)
 
 
-def _entry_with_secret(*, entry: SecretsEntry, secret: SecretRecord) -> Entry:
-    matched_entry: Entry = {"name": entry["name"], "secrets": [_copy_secret(secret)]}
-    if "tags" in entry:
-        matched_entry["tags"] = list(entry["tags"])
-    if "description" in entry:
-        matched_entry["description"] = entry["description"]
-    if "url" in entry:
-        matched_entry["url"] = entry["url"]
-    if "email" in entry:
-        matched_entry["email"] = entry["email"]
-    if "username" in entry:
-        matched_entry["username"] = entry["username"]
-    if "profile" in entry:
-        matched_entry["profile"] = entry["profile"]
-    if "metadata" in entry:
-        matched_entry["metadata"] = dict(entry["metadata"])
-    return matched_entry
+def _login_with_secret(*, login: Login, secret: SecretRecord) -> Login:
+    matched_login: Login = {"name": login["name"], "secrets": [_copy_secret(secret)]}
+    if "tags" in login:
+        matched_login["tags"] = list(login["tags"])
+    if "description" in login:
+        matched_login["description"] = login["description"]
+    if "notes" in login:
+        matched_login["notes"] = login["notes"]
+    if "url" in login:
+        matched_login["url"] = login["url"]
+    if "email" in login:
+        matched_login["email"] = login["email"]
+    if "username" in login:
+        matched_login["username"] = login["username"]
+    if "profile" in login:
+        matched_login["profile"] = login["profile"]
+    if "metadata" in login:
+        matched_login["metadata"] = dict(login["metadata"])
+    return matched_login
 
 
 def _copy_secret(secret: SecretRecord) -> SecretRecord:
@@ -159,8 +157,6 @@ def _copy_secret(secret: SecretRecord) -> SecretRecord:
         copied_secret["rotation"] = _copy_rotation(secret["rotation"])
     if "metadata" in secret:
         copied_secret["metadata"] = dict(secret["metadata"])
-    if "notes" in secret:
-        copied_secret["notes"] = secret["notes"]
     return copied_secret
 
 

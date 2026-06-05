@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
 from stackops.utils.schemas.secrets.secrets_types import (
+    Login,
     SecretRecord,
     SecretRotation,
     SecretStringMap,
-    SecretsEntry,
     SecretsFile,
     SecretValueMap,
 )
@@ -39,12 +39,12 @@ def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> Se
     if not isinstance(entries, list):
         _fail(f"Secrets file must define an entries array: {secrets_path}")
     if not entries:
-        _fail(f"Secrets file entries array must define at least one entry: {secrets_path}")
+        _fail(f"Secrets file entries array must define at least one login: {secrets_path}")
 
-    parsed_entries: list[SecretsEntry] = []
+    parsed_entries: list[Login] = []
     for entry_index, entry_raw in enumerate(entries):
         if not isinstance(entry_raw, Mapping):
-            _fail(f"Invalid secrets entry at entries[{entry_index}]: expected object.")
+            _fail(f"Invalid secrets login at entries[{entry_index}]: expected object.")
         parsed_entries.append(_parse_entry(entry=entry_raw, entry_index=entry_index))
 
     secrets_file: SecretsFile = {"version": version, "entries": parsed_entries}
@@ -53,18 +53,18 @@ def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> Se
     return secrets_file
 
 
-def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> SecretsEntry:
+def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
     entry_path = f"entries[{entry_index}]"
     _reject_unknown_keys(
         entry,
-        allowed_keys=("name", "tags", "description", "url", "email", "username", "profile", "secrets", "metadata"),
+        allowed_keys=("name", "tags", "description", "notes", "url", "email", "username", "profile", "secrets", "metadata"),
         path=entry_path,
     )
     secrets_raw = entry.get("secrets")
     if not isinstance(secrets_raw, list):
-        _fail(f"Invalid secrets entry at {entry_path}.secrets: expected array.")
+        _fail(f"Invalid secrets login at {entry_path}.secrets: expected array.")
     if not secrets_raw:
-        _fail(f"Invalid secrets entry at {entry_path}.secrets: expected at least one secret.")
+        _fail(f"Invalid secrets login at {entry_path}.secrets: expected at least one secret.")
 
     parsed_secrets: list[SecretRecord] = []
     for secret_index, secret_raw in enumerate(secrets_raw):
@@ -72,7 +72,7 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> SecretsEntry:
             _fail(f"Invalid secret at entries[{entry_index}].secrets[{secret_index}]: expected object.")
         parsed_secrets.append(_parse_secret(secret=secret_raw, entry_index=entry_index, secret_index=secret_index))
 
-    parsed_entry: SecretsEntry = {
+    parsed_entry: Login = {
         "name": _string_value(entry.get("name"), f"entries[{entry_index}].name"),
         "secrets": parsed_secrets,
     }
@@ -82,6 +82,9 @@ def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> SecretsEntry:
     description = _optional_string(entry.get("description"), f"entries[{entry_index}].description")
     if description is not None:
         parsed_entry["description"] = description
+    notes = _optional_string(entry.get("notes"), f"entries[{entry_index}].notes")
+    if notes is not None:
+        parsed_entry["notes"] = notes
     url = _optional_string(entry.get("url"), f"entries[{entry_index}].url")
     if url is not None:
         parsed_entry["url"] = url
@@ -104,7 +107,7 @@ def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int
     secret_path = f"entries[{entry_index}].secrets[{secret_index}]"
     _reject_unknown_keys(
         secret,
-        allowed_keys=("name", "tags", "description", "scopes", "keyValues", "rotation", "metadata", "notes"),
+        allowed_keys=("name", "tags", "description", "scopes", "keyValues", "rotation", "metadata"),
         path=secret_path,
     )
     tags = _optional_string_list(secret.get("tags"), f"{secret_path}.tags")
@@ -126,9 +129,6 @@ def _parse_secret(secret: Mapping[str, Any], entry_index: int, secret_index: int
     metadata = _optional_string_map(secret.get("metadata"), f"{secret_path}.metadata")
     if metadata is not None:
         parsed_secret["metadata"] = metadata
-    notes = _optional_string(secret.get("notes"), f"{secret_path}.notes")
-    if notes is not None:
-        parsed_secret["notes"] = notes
     return parsed_secret
 
 

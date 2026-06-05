@@ -21,14 +21,14 @@ class SecretRecord(TypedDict):
     description: NotRequired[str]
     rotation: NotRequired[SecretRotation]
     metadata: NotRequired[SecretStringMap]
-    notes: NotRequired[str]
 
 
-class SecretsEntry(TypedDict):
+class Login(TypedDict):
     name: str
     secrets: list[SecretRecord]
     tags: NotRequired[list[str]]
     description: NotRequired[str]
+    notes: NotRequired[str]
     url: NotRequired[str]
     email: NotRequired[str]
     username: NotRequired[str]
@@ -41,6 +41,6 @@ SecretsFile = TypedDict(
     {
         "$schema": NotRequired[str],
         "version": str,
-        "entries": list[SecretsEntry],
+        "entries": list[Login],
     },
 )

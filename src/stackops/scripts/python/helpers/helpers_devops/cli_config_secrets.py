@@ -36,9 +36,9 @@ SECRETS_EPILOG = """Examples:
   devops config secrets --path ~/private/team-secrets.json aws dev
   devops config secrets --edit
 
-Terms are case-insensitive substring matches. All terms must match somewhere across entry
+Terms are case-insensitive substring matches. All terms must match somewhere across login
 name/tags/profile, secret name/tags/scopes, metadata, notes, or env var keys.
-Use --interactive/-i to choose from matching entries with the TV fuzzy picker.
+Use --interactive/-i to choose from matching logins with the TV fuzzy picker.
 Use --verbose/-v to print the selected bundle and env var keys without secret values.
 Use --source to choose the local file, global source-of-truth file, or both.
 Exact selectors are case-sensitive and can be combined with terms for script-stable matching.
@@ -62,7 +62,7 @@ def secrets(
         list[str] | None,
         typer.Argument(
             help=(
-                "Case-insensitive terms used to select one secret bundle. All terms must match across entry name/tags/profile, "
+                "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/profile, "
                 "secret name/tags/scopes, metadata, notes, or env var keys."
             )
         ),
@@ -88,16 +88,16 @@ def secrets(
     verbose: Annotated[
         bool, typer.Option("--verbose", "-v", help="Print the selected secret bundle and env var keys without secret values.")
     ] = False,
-    entry_name: Annotated[
+    login_name: Annotated[
         str | None,
-        typer.Option("--name", "-n", help="Exact entries[].name value to require. Use with --tag/--key when an entry has multiple secrets."),
+        typer.Option("--name", "-n", help="Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets."),
     ] = None,
     secret_name: Annotated[str | None, typer.Option("--secret-name", help="Exact entries[].secrets[].name value to require.")] = None,
     tags: Annotated[
-        list[str] | None, typer.Option("--tag", "--tags", "-t", help="Exact entry or secret tag to require. Repeat for multiple tags.")
+        list[str] | None, typer.Option("--tag", "--tags", "-t", help="Exact login or secret tag to require. Repeat for multiple tags.")
     ] = None,
-    entry_tags: Annotated[
-        list[str] | None, typer.Option("--entry-tag", help="Exact entries[].tags value to require. Repeat for multiple tags.")
+    login_tags: Annotated[
+        list[str] | None, typer.Option("--login-tag", help="Exact login tag at entries[].tags to require. Repeat for multiple tags.")
     ] = None,
     secret_tags: Annotated[
         list[str] | None, typer.Option("--secret-tag", help="Exact entries[].secrets[].tags value to require. Repeat for multiple tags.")
@@ -119,10 +119,10 @@ def secrets(
 
     candidates = _load_secret_candidates_from_sources(secret_sources)
     selectors = SecretSelectors(
-        entry_name=_clean_optional_selector(entry_name),
+        login_name=_clean_optional_selector(login_name),
         secret_name=_clean_optional_selector(secret_name),
         tags=_clean_selector_values(tags),
-        entry_tags=_clean_selector_values(entry_tags),
+        login_tags=_clean_selector_values(login_tags),
         secret_tags=_clean_selector_values(secret_tags),
         scopes=_clean_selector_values(scopes),
         keys=_clean_selector_values(keys),
@@ -246,7 +246,7 @@ def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -
     typer.echo(f"  Bundle: {_candidate_verbose_label(candidate)}")
     typer.echo(f"  Source: {secrets_path}")
     typer.echo(f"  JSON path: {candidate.json_path}")
-    typer.echo(f"  Entry tags: {_join_display(candidate.entry_tags)}")
+    typer.echo(f"  Login tags: {_join_display(candidate.login_tags)}")
     typer.echo(f"  Secret tags: {_join_display(candidate.secret_tags)}")
     typer.echo(f"  Scopes: {_join_display(candidate.scopes)}")
     typer.echo("Defining env vars:")
@@ -260,7 +260,7 @@ def _candidate_verbose_label(candidate: SecretCandidate) -> str:
         secret_label = ",".join(candidate.secret_tags)
     if secret_label is None:
         secret_label = "<unnamed secret>"
-    return f"{candidate.entry_name} / {secret_label}"
+    return f"{candidate.login_name} / {secret_label}"
 
 
 def _join_display(values: tuple[str, ...]) -> str:
