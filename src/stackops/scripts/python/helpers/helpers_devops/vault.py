@@ -21,7 +21,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
-from stackops.secrets import SecretsFileError, build_missing_login_guidance, search_logins
+from stackops.secrets import Login, SecretsFileError, search_logins
 from stackops.utils.io import GpgCommandError, decrypt_bytes_asymmetric, encrypt_bytes_asymmetric
 from stackops.utils.source_of_truth import SECRETS_DOFILE
 
@@ -31,11 +31,6 @@ CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
 DEFAULT_BITWARDEN_LOGIN_NAME = "bitwarden"
 DEFAULT_LOGIN_COMMAND = "devops vault login-and-unlock [--account-name <accountName>] [--login-name <login_name>]"
 BITWARDEN_SECRET_KEYS: tuple[str, str, str] = ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")
-BITWARDEN_SECRET_EXAMPLE_VALUES = {
-    "BW_CLIENTID": "<bitwarden-client-id>",
-    "BW_CLIENTSECRET": "<bitwarden-client-secret>",
-    "BW_PASSWORD": "<bitwarden-master-password>",
-}
 
 
 class VaultExit(Exception):
@@ -269,17 +264,26 @@ def load_bitwarden_credentials(login_name: str, account_name: str | None = None)
 
     selection = _format_bitwarden_secret_selection(login_name=login_name, account_name=account_name)
     if not logins:
+        expected_entry: Login = {
+            "name": login_name,
+            "secrets": [
+                {
+                    "name": "api-login",
+                    "tags": [],
+                    "scopes": [],
+                    "keyValues": {
+                        "BW_CLIENTID": "<bitwarden-client-id>",
+                        "BW_CLIENTSECRET": "<bitwarden-client-secret>",
+                        "BW_PASSWORD": "<bitwarden-master-password>",
+                    },
+                }
+            ],
+        }
+        if account_name is not None:
+            expected_entry["accountName"] = account_name
         err_console.print(f"[bold red]Bitwarden credentials not found in StackOps secrets.[/bold red] {selection}")
-        err_console.print(
-            build_missing_login_guidance(
-                path=SECRETS_DOFILE,
-                login_name=login_name,
-                account_name=account_name,
-                keys=BITWARDEN_SECRET_KEYS,
-                key_examples=BITWARDEN_SECRET_EXAMPLE_VALUES,
-            ),
-            markup=False,
-        )
+        err_console.print(f"Expected {SECRETS_DOFILE} to contain a login entry shaped like:", markup=False)
+        err_console.print(json.dumps(expected_entry, indent=2), markup=False)
         raise VaultExit(code=2)
     if len(logins) > 1:
         err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] {selection}")

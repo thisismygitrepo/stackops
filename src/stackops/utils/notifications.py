@@ -1,5 +1,6 @@
 """Notifications Module"""
 
+import json
 from pathlib import Path
 import smtplib
 import imaplib
@@ -63,21 +64,39 @@ def md2html(body: str) -> str:
 
 
 EMAIL_SECRET_KEYS: tuple[str, str, str, str, str] = ("email_add", "password", "encryption", "smtp_host", "smtp_port")
-EMAIL_SECRET_EXAMPLE_VALUES = {
-    "email_add": "you@example.com",
-    "password": "<email-password-or-app-password>",
-    "encryption": "tls",
-    "smtp_host": "smtp.example.com",
-    "smtp_port": "587",
-}
 
 
 class Email:
     def __init__(self, config_name: str):
-        from stackops.secrets import render_secret_value, require_login
+        from stackops.secrets import Login, render_secret_value, search_logins
         from stackops.utils.source_of_truth import SECRETS_DOFILE
-        login = require_login(path=SECRETS_DOFILE, login_name=config_name, keys=EMAIL_SECRET_KEYS, key_examples=EMAIL_SECRET_EXAMPLE_VALUES)
-        config = login["secrets"][0]["keyValues"]
+        secrets = search_logins(path=SECRETS_DOFILE, login_name=config_name, keys=EMAIL_SECRET_KEYS)
+        if len(secrets) == 0:
+            expected_entry: Login = {
+                "name": config_name,
+                "secrets": [
+                    {
+                        "name": "smtp",
+                        "tags": [],
+                        "scopes": [],
+                        "keyValues": {
+                            "email_add": "you@example.com",
+                            "password": "<email-password-or-app-password>",
+                            "encryption": "tls",
+                            "smtp_host": "smtp.example.com",
+                            "smtp_port": "587",
+                        },
+                    }
+                ],
+            }
+            raise ValueError(
+                f"No email secrets found for config_name: {config_name}\n"
+                f"Expected {SECRETS_DOFILE} to contain a login entry shaped like:\n"
+                + json.dumps(expected_entry, indent=2)
+            )
+        if len(secrets) > 1:
+            raise ValueError(f"Multiple email secrets found for config_name: {config_name}. Please ensure config_name is unique.")
+        config = secrets[0]["secrets"][0]["keyValues"]
         email_add = config["email_add"]
         if not isinstance(email_add, str):
             raise TypeError(f"Secret value at {config_name}.email_add must be a string.")

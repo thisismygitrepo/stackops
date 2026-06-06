@@ -15,6 +15,7 @@ Usage examples:
 """
 
 import getpass
+import json
 import platform
 from importlib import import_module
 from typing import Protocol, cast
@@ -103,20 +104,27 @@ def display_available_networks() -> None:
 def try_config_connection(config_ssid: str) -> bool:
     try:
         from stackops.utils.source_of_truth import SECRETS_DOFILE
-        from stackops.secrets import build_missing_login_guidance, search_logins
+        from stackops.secrets import Login, search_logins
         secrets = search_logins(path=SECRETS_DOFILE, login_name=config_ssid, tags=("wifi",), keys=("ssid", "password"))
         if not secrets:
+            expected_entry: Login = {
+                "name": config_ssid,
+                "tags": ["wifi"],
+                "secrets": [
+                    {
+                        "name": "credentials",
+                        "tags": [],
+                        "scopes": [],
+                        "keyValues": {
+                            "ssid": config_ssid,
+                            "password": "<wifi-password>",
+                        },
+                    }
+                ],
+            }
             console.print(f"[yellow]⚠️ No configuration found for SSID '{config_ssid}'[/yellow]")
-            console.print(
-                build_missing_login_guidance(
-                    path=SECRETS_DOFILE,
-                    login_name=config_ssid,
-                    tags=("wifi",),
-                    keys=("ssid", "password"),
-                    key_examples={"ssid": config_ssid, "password": "<wifi-password>"},
-                ),
-                markup=False,
-            )
+            console.print(f"Expected {SECRETS_DOFILE} to contain a login entry shaped like:", markup=False)
+            console.print(json.dumps(expected_entry, indent=2), markup=False)
             return False
         if len(secrets) > 1:
             console.print(f"[yellow]⚠️ Multiple configurations found for SSID '{config_ssid}', using the first one[/yellow]")
