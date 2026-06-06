@@ -1,4 +1,5 @@
 #!/bin/bash
+set +x
 
 # # Force user to specify variant
 # if [ $# -eq 0 ]; then
@@ -17,6 +18,16 @@ if [ "$VARIANT" != "slim" ] && [ "$VARIANT" != "ai" ]; then
 fi
 
 IMAGE_NAME="stackops-$VARIANT"
+DOCKER_IMAGE_NAMESPACE="${DOCKER_IMAGE_NAMESPACE:-${DOCKER_USERNAME:-}}"
+DOCKER_IMAGE_REGISTRY="${DOCKER_IMAGE_REGISTRY:-${DOCKER_REGISTRY:-}}"
+if [ -z "$DOCKER_IMAGE_NAMESPACE" ]; then
+    echo "❌ ERROR: DOCKER_IMAGE_NAMESPACE is not set. Run via 'devops self build-docker' so StackOps can select Docker credentials."
+    exit 1
+fi
+IMAGE_REPOSITORY="$DOCKER_IMAGE_NAMESPACE/$IMAGE_NAME"
+if [ -n "$DOCKER_IMAGE_REGISTRY" ]; then
+    IMAGE_REPOSITORY="${DOCKER_IMAGE_REGISTRY%/}/$IMAGE_REPOSITORY"
+fi
 DOCKERFILE_PATH="./jobs/dockers/Dockerfile_$VARIANT"
 DATE=$(date +%y-%m)
 
@@ -35,22 +46,22 @@ if [ ! -f "$DOCKERFILE_PATH" ]; then
 fi
 
 
-echo """🚀 STARTING DOCKER BUILD | Building image ${IMAGE_NAME}:${DATE} """
+echo """🚀 STARTING DOCKER BUILD | Building image ${IMAGE_REPOSITORY}:${DATE} """
 echo """🧹 CLEANUP | Removing old docker images"""
-docker rmi "statistician/$IMAGE_NAME:latest" --force
-docker rmi "statistician/$IMAGE_NAME:$DATE" --force
+docker rmi "$IMAGE_REPOSITORY:latest" --force
+docker rmi "$IMAGE_REPOSITORY:$DATE" --force
 
 echo """🏗️ BUILD | Creating new docker image"""
-docker build --no-cache --file "$DOCKERFILE_PATH" --progress=plain -t "statistician/$IMAGE_NAME:latest" "$REPO_ROOT"
+docker build --no-cache --file "$DOCKERFILE_PATH" --progress=plain -t "$IMAGE_REPOSITORY:latest" "$REPO_ROOT"
 # building with no cache since docker is unaware of changes in code due to dynamic code like curl URL | bash etc.
 
 
-echo """✨ FINISHED | Try it out using: docker run --rm -it statistician/$IMAGE_NAME:latest
+echo """✨ FINISHED | Try it out using: docker run --rm -it $IMAGE_REPOSITORY:latest
 🧰 HELPFUL CLEANUP COMMANDS:
 Use this to clean instances: docker ps --all -q | xargs docker rm
 Delete images: docker rmi -f \$(docker images -q)
 docker ps --all -q | xargs docker rm; docker rmi -f \$(docker images -q)
-docker run --rm -it statistician/$IMAGE_NAME:latest /bin/bash hollywood
+docker run --rm -it $IMAGE_REPOSITORY:latest /bin/bash hollywood
 """
 
 echo """📝 STATUS | Current docker images"""
@@ -61,18 +72,36 @@ printf "❓ Do you want to push to the registry? (y/n): "
 read answer
 case "$answer" in
     [Yy]* )
+        if [ -z "${DOCKER_LOGIN_TOKEN_ENV_VAR:-}" ]; then
+            echo "❌ ERROR: DOCKER_LOGIN_TOKEN_ENV_VAR is not set. Run via 'devops self build-docker' so StackOps can select the token env var."
+            exit 1
+        fi
+        if ! printenv "$DOCKER_LOGIN_TOKEN_ENV_VAR" >/dev/null; then
+            echo "❌ ERROR: Token env var '$DOCKER_LOGIN_TOKEN_ENV_VAR' is not available."
+            exit 1
+        fi
+        docker_login_command=(docker login --username "$DOCKER_IMAGE_NAMESPACE" --password-stdin)
+        if [ -n "$DOCKER_IMAGE_REGISTRY" ]; then
+            docker_login_command=(docker login "$DOCKER_IMAGE_REGISTRY" --username "$DOCKER_IMAGE_NAMESPACE" --password-stdin)
+        fi
+        echo """    🔐 LOGIN | Authenticating Docker as ${DOCKER_IMAGE_NAMESPACE}
+    """
+        if ! printenv "$DOCKER_LOGIN_TOKEN_ENV_VAR" | "${docker_login_command[@]}"; then
+            echo "❌ ERROR: Docker login failed."
+            exit 1
+        fi
         echo """    ✅ PUSHING IMAGES | Uploading to docker registry
     """
-        docker push "statistician/$IMAGE_NAME:latest"
-        docker tag "statistician/$IMAGE_NAME:latest" "statistician/$IMAGE_NAME:$DATE"
-        docker push "statistician/$IMAGE_NAME:$DATE"
+        docker push "$IMAGE_REPOSITORY:latest"
+        docker tag "$IMAGE_REPOSITORY:latest" "$IMAGE_REPOSITORY:$DATE"
+        docker push "$IMAGE_REPOSITORY:$DATE"
         ;;
     * )
         echo """    ❌ PUSH ABORTED | Registry upload canceled"""
         echo """    You can push later using:
-    docker push statistician/$IMAGE_NAME:latest
-    docker tag statistician/$IMAGE_NAME:latest statistician/$IMAGE_NAME:$DATE
-    docker push statistician/$IMAGE_NAME:$DATE
+    docker push $IMAGE_REPOSITORY:latest
+    docker tag $IMAGE_REPOSITORY:latest $IMAGE_REPOSITORY:$DATE
+    docker push $IMAGE_REPOSITORY:$DATE
     """
         ;;
 esac

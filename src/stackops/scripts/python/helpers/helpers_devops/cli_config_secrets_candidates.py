@@ -31,6 +31,7 @@ class SecretCandidate:
     scopes: tuple[str, ...]
     key_values: SecretValueMap
     searchable_values: tuple[str, ...]
+    login_entry: Login | None = None
     source_name: str | None = None
     source_path: Path | None = None
 
@@ -150,6 +151,7 @@ def _login_candidates(login: Login, entry_index: int) -> list[SecretCandidate]:
                 scopes=scopes,
                 key_values=key_values,
                 searchable_values=shared_search_values + secret_search_values,
+                login_entry=login,
             )
         )
     return candidates
@@ -250,7 +252,25 @@ def _candidate_preview(candidate: SecretCandidate, *, include_secret_values: boo
     )
     if include_secret_values:
         lines.extend(("", "## Secret values", "```json", json.dumps(candidate.key_values, indent=2, ensure_ascii=False), "```"))
+        lines.extend(("", "## Login entry", "```json", json.dumps(_candidate_login_entry(candidate), indent=2, ensure_ascii=False), "```"))
     return "\n".join(lines) + "\n"
+
+
+def _candidate_login_entry(candidate: SecretCandidate) -> Login | dict[str, object]:
+    if candidate.login_entry is not None:
+        return candidate.login_entry
+    return {
+        "name": candidate.login_name,
+        "tags": list(candidate.login_tags),
+        "secrets": [
+            {
+                "name": candidate.secret_name,
+                "tags": list(candidate.secret_tags),
+                "scopes": list(candidate.scopes),
+                "keyValues": candidate.key_values,
+            }
+        ],
+    }
 
 
 def _preview_join(values: tuple[str, ...]) -> str:

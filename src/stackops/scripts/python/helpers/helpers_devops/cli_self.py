@@ -262,8 +262,57 @@ def readme() -> None:
     console.print(Markdown(markdown_text))
 
 
-def build_docker(variant: Annotated[Literal["slim", "ai"], typer.Argument(help="Variant to build: 'slim' or 'ai'")]) -> None:
+def build_docker(
+    variant: Annotated[Literal["slim", "ai"], typer.Argument(help="Variant to build: 'slim' or 'ai'")],
+    docker_login_name: Annotated[
+        str | None,
+        typer.Option("--docker-login-name", "-n", help="Exact StackOps secrets entries[].name for Docker credentials."),
+    ] = None,
+    docker_account_name: Annotated[
+        str | None,
+        typer.Option("--docker-account-name", "-a", help="Exact StackOps secrets entries[].accountName for Docker credentials."),
+    ] = None,
+    docker_secret_name: Annotated[
+        str | None,
+        typer.Option("--docker-secret-name", "-N", help="Exact StackOps secrets entries[].secrets[].name for Docker credentials."),
+    ] = None,
+    docker_tags: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--docker-tag",
+            "--docker-tags",
+            "-t",
+            help="Exact Docker credential login or secret tag. Repeat for multiple tags. Defaults to 'docker' when no selector is passed.",
+        ),
+    ] = None,
+    docker_login_tags: Annotated[
+        list[str] | None,
+        typer.Option("--docker-login-tag", "-l", help="Exact Docker credential login tag. Repeat for multiple tags."),
+    ] = None,
+    docker_secret_tags: Annotated[
+        list[str] | None,
+        typer.Option("--docker-secret-tag", "-T", help="Exact Docker credential secret tag. Repeat for multiple tags."),
+    ] = None,
+    docker_scopes: Annotated[
+        list[str] | None,
+        typer.Option("--docker-scope", "-S", help="Exact Docker credential secret scope. Repeat for multiple scopes."),
+    ] = None,
+    docker_token_key: Annotated[
+        str | None,
+        typer.Option(
+            "--docker-token-key",
+            "-k",
+            help="Env var key in keyValues to pass to docker login. Defaults to the first match in: DOCKER_TOKEN, DOCKERHUB_TOKEN, DOCKER_PASSWORD, DOCKER_PAT.",
+        ),
+    ] = None,
+    docker_secrets_path: Annotated[
+        Path | None,
+        typer.Option("--docker-secrets-path", "-p", help="Secrets JSON path for Docker credentials. Defaults to the StackOps source-of-truth secrets file."),
+    ] = None,
+) -> None:
     """🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_docker
+
     repo_root = _developer_repo_root()
     if repo_root is None:
         typer.echo("❌ Developer repo not found: ~/code/stackops")
@@ -274,11 +323,42 @@ def build_docker(variant: Annotated[Literal["slim", "ai"], typer.Argument(help="
         typer.echo(f"❌ Script not found: {str(script_path)}")
         raise typer.Exit(code=1)
 
-    shell_cmd = f"""
-export VARIANT="{variant}"
-cd "{str(repo_root)}"
-bash "{str(script_path)}"
-"""
+    try:
+        op_program_path = cli_self_docker.fresh_op_program_path()
+        credentials = cli_self_docker.resolve_docker_credentials(
+            secrets_path=docker_secrets_path,
+            login_name=docker_login_name,
+            account_name=docker_account_name,
+            secret_name=docker_secret_name,
+            tags=docker_tags,
+            login_tags=docker_login_tags,
+            secret_tags=docker_secret_tags,
+            scopes=docker_scopes,
+            token_key=docker_token_key,
+        )
+        credential_env_keys = tuple(credentials.key_values)
+        cli_self_docker.validate_env_names(credentials.key_values)
+        secret_env_path = cli_self_docker.docker_secret_env_path(op_program_path)
+        cli_self_docker.write_private_docker_env_file(secret_env_path, credentials.key_values)
+    except cli_self_docker.DockerCredentialError as exc:
+        typer.echo(typer.style("Error: ", fg=typer.colors.RED) + str(exc))
+        raise typer.Exit(code=1)
+
+    typer.echo(
+        typer.style("✅ Docker credentials: ", fg=typer.colors.GREEN)
+        + f"using login '{credentials.login_name}' / secret '{credentials.secret_name}' "
+        + f"as Docker namespace '{credentials.username}' with token env var '{credentials.token_env_key}'."
+    )
+
+    shell_cmd = cli_self_docker.render_build_docker_shell_script(
+        variant=variant,
+        repo_root=repo_root,
+        script_path=script_path,
+        secret_env_path=secret_env_path,
+        docker_username=credentials.username,
+        token_env_key=credentials.token_env_key,
+        credential_env_keys=credential_env_keys,
+    )
     from stackops.utils.code import exit_then_run_shell_script
 
     exit_then_run_shell_script(shell_cmd, strict=True)

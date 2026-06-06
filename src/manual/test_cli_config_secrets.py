@@ -7,7 +7,11 @@ import pytest
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import SecretCandidate, _candidate_preview
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
+    SecretCandidate,
+    _candidate_preview,
+    build_secret_candidates,
+)
 
 
 def test_secrets_source_defaults_to_both() -> None:
@@ -143,16 +147,58 @@ def test_interactive_preview_hides_secret_values_by_default() -> None:
     assert "API_TOKEN" in preview
     assert "token-value" not in preview
     assert "nested-value" not in preview
+    assert "OTHER_TOKEN" not in preview
+    assert "login-metadata-value" not in preview
 
 
-def test_interactive_preview_can_include_secret_values() -> None:
+def test_interactive_preview_can_include_secret_values_and_whole_login_entry() -> None:
     candidate = _dummy_secret_candidate()
 
     preview = _candidate_preview(candidate, include_secret_values=True)
 
     assert "## Secret values" in preview
+    assert "## Login entry" in preview
     assert '"API_TOKEN": "token-value"' in preview
     assert '"nested": "nested-value"' in preview
+    assert '"accountName": "example-account"' in preview
+    assert '"login-metadata-key": "login-metadata-value"' in preview
+    assert '"OTHER_TOKEN": "other-token-value"' in preview
+
+
+def test_build_secret_candidates_attaches_whole_login_entry_for_preview() -> None:
+    candidate = build_secret_candidates(
+        {
+            "version": "1",
+            "entries": [
+                {
+                    "name": "example",
+                    "tags": ["service"],
+                    "accountName": "example-account",
+                    "metadata": {"login-metadata-key": "login-metadata-value"},
+                    "secrets": [
+                        {
+                            "name": "api",
+                            "tags": ["dev"],
+                            "scopes": ["read"],
+                            "keyValues": {"API_TOKEN": "token-value"},
+                        },
+                        {
+                            "name": "other-api",
+                            "tags": ["prod"],
+                            "scopes": ["write"],
+                            "keyValues": {"OTHER_TOKEN": "other-token-value"},
+                        },
+                    ],
+                }
+            ],
+        }
+    )[0]
+
+    preview = _candidate_preview(candidate, include_secret_values=True)
+
+    assert '"accountName": "example-account"' in preview
+    assert '"login-metadata-key": "login-metadata-value"' in preview
+    assert '"OTHER_TOKEN": "other-token-value"' in preview
 
 
 def _dummy_secret_candidate(*, json_path: str = "entries[0].secrets[0].keyValues") -> SecretCandidate:
@@ -165,6 +211,26 @@ def _dummy_secret_candidate(*, json_path: str = "entries[0].secrets[0].keyValues
         scopes=("read",),
         key_values={"API_TOKEN": "token-value", "STRUCTURED": {"nested": "nested-value"}},
         searchable_values=("example", "api", "API_TOKEN", "STRUCTURED"),
+        login_entry={
+            "name": "example",
+            "tags": ["service"],
+            "accountName": "example-account",
+            "metadata": {"login-metadata-key": "login-metadata-value"},
+            "secrets": [
+                {
+                    "name": "api",
+                    "tags": ["dev"],
+                    "scopes": ["read"],
+                    "keyValues": {"API_TOKEN": "token-value", "STRUCTURED": {"nested": "nested-value"}},
+                },
+                {
+                    "name": "other-api",
+                    "tags": ["prod"],
+                    "scopes": ["write"],
+                    "keyValues": {"OTHER_TOKEN": "other-token-value"},
+                },
+            ],
+        },
         source_name="local",
         source_path=Path(".stackops/secrets/secrets.json"),
     )

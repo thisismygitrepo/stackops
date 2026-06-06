@@ -177,7 +177,7 @@ Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy p
 
 After an interactive selection, StackOps prints a `jq` command for the selected login entry, for example `jq '.entries[3]' ~/.stackops/secrets/secrets.json`.
 
-Use `--preview-secrets`, `-P` with `--interactive`, `-i` to include secret values in the picker preview. Without it, the preview only shows metadata and environment variable names.
+Use `--preview-secrets`, `-P` with `--interactive`, `-i` to include secret values and the full selected login entry in the picker preview. Without it, the preview only shows metadata and environment variable names.
 
 Use `--verbose`, `-v` to print the selected bundle and environment variable keys without printing secret values.
 

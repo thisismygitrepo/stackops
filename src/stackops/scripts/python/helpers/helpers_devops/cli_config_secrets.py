@@ -188,6 +188,8 @@ def _resolve_secrets_source_alias(secrets_source: SecretsSource) -> ResolvedSecr
             return "global"
         case "both" | "b":
             return "both"
+        case _:
+            raise NotImplementedError
     _fail(f"Unknown secrets source: {secrets_source}")
 
 
