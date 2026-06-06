@@ -113,7 +113,7 @@ def _install_stackops(dev: bool) -> None:
 
         exit_then_run_shell_script(f"""
 cd "{str(stackops_path)}"
-{uv_command} sync
+{uv_command} sync --no-dev
 {uv_command} tool install --upgrade --editable "{str(stackops_path)}"
 {uv_command2}
 """, strict=True)
