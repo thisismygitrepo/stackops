@@ -11,7 +11,15 @@ from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, Se
 DEFAULT_LOCAL_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
 
-__all__ = ["DEFAULT_LOCAL_SECRETS_PATH", "Login", "SecretValueMap", "StackOpsSecretsError", "SecretsFileError", "render_secret_value", "search_logins"]
+__all__ = [
+    "DEFAULT_LOCAL_SECRETS_PATH",
+    "Login",
+    "SecretValueMap",
+    "StackOpsSecretsError",
+    "SecretsFileError",
+    "render_secret_value",
+    "search_logins",
+]
 
 
 class StackOpsSecretsError(Exception):

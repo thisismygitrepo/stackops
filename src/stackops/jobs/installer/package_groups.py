@@ -27,6 +27,7 @@ AGENTS = [
     "qwen-code",
     "cursor-cli",
     "droid",
+    "dmux",
     "pi",
     "omp",
     "orca",

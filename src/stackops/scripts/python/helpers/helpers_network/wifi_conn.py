@@ -103,10 +103,20 @@ def display_available_networks() -> None:
 def try_config_connection(config_ssid: str) -> bool:
     try:
         from stackops.utils.source_of_truth import SECRETS_DOFILE
-        from stackops.secrets import search_logins
-        secrets = search_logins(path=SECRETS_DOFILE, login_name=config_ssid, tags=("wifi",))
+        from stackops.secrets import build_missing_login_guidance, search_logins
+        secrets = search_logins(path=SECRETS_DOFILE, login_name=config_ssid, tags=("wifi",), keys=("ssid", "password"))
         if not secrets:
             console.print(f"[yellow]⚠️ No configuration found for SSID '{config_ssid}'[/yellow]")
+            console.print(
+                build_missing_login_guidance(
+                    path=SECRETS_DOFILE,
+                    login_name=config_ssid,
+                    tags=("wifi",),
+                    keys=("ssid", "password"),
+                    key_examples={"ssid": config_ssid, "password": "<wifi-password>"},
+                ),
+                markup=False,
+            )
             return False
         if len(secrets) > 1:
             console.print(f"[yellow]⚠️ Multiple configurations found for SSID '{config_ssid}', using the first one[/yellow]")

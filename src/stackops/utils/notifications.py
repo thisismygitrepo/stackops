@@ -62,16 +62,22 @@ def md2html(body: str) -> str:
 </html>"""
 
 
+EMAIL_SECRET_KEYS: tuple[str, str, str, str, str] = ("email_add", "password", "encryption", "smtp_host", "smtp_port")
+EMAIL_SECRET_EXAMPLE_VALUES = {
+    "email_add": "you@example.com",
+    "password": "<email-password-or-app-password>",
+    "encryption": "tls",
+    "smtp_host": "smtp.example.com",
+    "smtp_port": "587",
+}
+
+
 class Email:
     def __init__(self, config_name: str):
-        from stackops.secrets import render_secret_value, search_logins
+        from stackops.secrets import render_secret_value, require_login
         from stackops.utils.source_of_truth import SECRETS_DOFILE
-        secrets = search_logins(path=SECRETS_DOFILE, login_name=config_name)
-        if len(secrets) == 0:
-            raise ValueError(f"No secrets found for config_name: {config_name}")
-        elif len(secrets) > 1:
-            raise ValueError(f"Multiple secrets found for config_name: {config_name}. Please ensure config_name is unique. Found secrets: {secrets}")
-        config = secrets[0]["secrets"][0]["keyValues"]
+        login = require_login(path=SECRETS_DOFILE, login_name=config_name, keys=EMAIL_SECRET_KEYS, key_examples=EMAIL_SECRET_EXAMPLE_VALUES)
+        config = login["secrets"][0]["keyValues"]
         email_add = config["email_add"]
         if not isinstance(email_add, str):
             raise TypeError(f"Secret value at {config_name}.email_add must be a string.")
