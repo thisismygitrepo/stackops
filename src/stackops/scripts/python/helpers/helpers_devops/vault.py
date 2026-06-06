@@ -21,7 +21,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
-from stackops.secrets import SecretsFileError, search_secrets
+from stackops.secrets import SecretsFileError, search_logins
 from stackops.utils.io import GpgCommandError, decrypt_bytes_asymmetric, encrypt_bytes_asymmetric
 from stackops.utils.source_of_truth import SECRETS_DOFILE
 
@@ -256,7 +256,7 @@ def copy_to_clipboard(value: str, slot: int = 1) -> bool:
 def load_bitwarden_credentials(login_name: str, account_name: str | None = None) -> BitwardenCredentials:
     """Load one Bitwarden credential bundle from StackOps secrets."""
     try:
-        logins = search_secrets(path=SECRETS_DOFILE, login_name=login_name, account_name=account_name, keys=BITWARDEN_SECRET_KEYS)
+        logins = search_logins(path=SECRETS_DOFILE, login_name=login_name, account_name=account_name, keys=BITWARDEN_SECRET_KEYS)
     except SecretsFileError as exc:
         err_console.print("[bold red]Could not load StackOps secrets.[/bold red]")
         err_console.print(str(exc))

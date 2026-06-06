@@ -11,7 +11,7 @@ from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, Se
 DEFAULT_LOCAL_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
 
-__all__ = ["DEFAULT_LOCAL_SECRETS_PATH", "Login", "SecretValueMap", "StackOpsSecretsError", "SecretsFileError", "render_secret_value", "search_secrets"]
+__all__ = ["DEFAULT_LOCAL_SECRETS_PATH", "Login", "SecretValueMap", "StackOpsSecretsError", "SecretsFileError", "render_secret_value", "search_logins"]
 
 
 class StackOpsSecretsError(Exception):
@@ -28,7 +28,7 @@ def render_secret_value(value: object) -> str:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False)
 
 
-def search_secrets(
+def search_logins(
     *,
     path: str | Path | None = None,
     login_name: str | None = None,
