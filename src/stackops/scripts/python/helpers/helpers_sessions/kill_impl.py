@@ -2,7 +2,7 @@ from typing import Literal
 
 
 def choose_kill_target(
-    backend: Literal["zellij", "tmux"],
+    backend: Literal["zellij", "tmux", "herdr"],
     name: str | None,
     kill_all: bool = False,
     window: bool = False,
@@ -16,4 +16,8 @@ def choose_kill_target(
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_kill_target as _tmux
 
             return _tmux(name=name, kill_all=kill_all, window=window)
+        case "herdr":
+            from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import choose_kill_target as _herdr
+
+            return _herdr(name=name, kill_all=kill_all, window=window)
     raise ValueError(f"Unsupported backend: {backend}")

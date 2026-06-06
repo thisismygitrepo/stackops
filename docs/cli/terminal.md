@@ -1,6 +1,6 @@
 # terminal
 
-Launch and manage layout-driven terminal sessions for `tmux`, `zellij`, Windows Terminal, and agent-of-empires.
+Launch and manage layout-driven terminal sessions for `tmux`, `zellij`, Windows Terminal, and agent-of-empires, plus attach/kill helpers for Herdr.
 
 ## Usage
 
@@ -170,13 +170,16 @@ terminal attach [OPTIONS] [NAME]
 | `--new-session` | `-n` | Create a new session instead of attaching |
 | `--kill-all` | `-k` | Kill all existing sessions before creating a new one |
 | `--window` | `-w` | Choose a window/tab or pane target instead of only sessions |
-| `--backend` | `-b` | `tmux`, `zellij`, or `auto` |
+| `--backend` | `-b` | `tmux`, `zellij`, `herdr`, or `auto` |
 
 Example:
 
 ```bash
 # Choose a pane or tab interactively
 terminal attach --window
+
+# Attach to a Herdr session
+terminal attach --backend herdr
 ```
 
 ## kill
@@ -192,7 +195,7 @@ terminal kill [OPTIONS] [NAME]
 | `NAME` | - | Session name to kill; omit for interactive selection |
 | `--all` | `-a` | Kill all sessions |
 | `--window` | `-w` | Include sessions, windows/tabs, and panes in the chooser |
-| `--backend` | `-b` | `tmux`, `zellij`, or `auto` |
+| `--backend` | `-b` | `tmux`, `zellij`, `herdr`, or `auto` |
 
 Example:
 

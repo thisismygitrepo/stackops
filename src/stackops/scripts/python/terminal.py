@@ -7,8 +7,8 @@ from stackops.cluster.sessions_managers.session_conflict import SessionConflictA
 
 
 def _resolve_session_backend(
-    backend: Literal["zellij", "z", "tmux", "t", "auto", "a"],
-) -> Literal["zellij", "tmux"]:
+    backend: Literal["zellij", "z", "tmux", "t", "herdr", "h", "auto", "a"],
+) -> Literal["zellij", "tmux", "herdr"]:
     import platform
 
     system = platform.system().lower()
@@ -20,6 +20,11 @@ def _resolve_session_backend(
             return "zellij"
         case "tmux" | "t":
             return "tmux"
+        case "herdr" | "h":
+            if system == "windows":
+                typer.echo("Error: Herdr is not supported on Windows.", err=True, color=True)
+                raise typer.Exit(code=1)
+            return "herdr"
         case "auto" | "a":
             if system == "windows":
                 return "tmux"
@@ -146,7 +151,7 @@ def attach_to_session(
         new_session: Annotated[bool, typer.Option("--new-session", "-n", help="Create a new session instead of attaching to an existing one.", show_default=True)] = False,
         kill_all: Annotated[bool, typer.Option("--kill-all", "-k", help="Kill all existing sessions before creating a new one.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Choose a window/tab or pane target instead of only choosing from sessions.", show_default=True)] = False,
-        backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
+        backend: Annotated[Literal["zellij", "z", "tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
     """Choose a session or deeper target to attach to."""
     if name is not None and new_session:
@@ -180,7 +185,7 @@ def kill_session_target(
         name: Annotated[str | None, typer.Argument(help="Name of the session to kill. If not provided, a list will be shown to choose from.")] = None,
         kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
-        backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
+        backend: Annotated[Literal["zellij", "z", "tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
     """Choose one or more session targets to kill."""
     if kill_all and name is not None:
