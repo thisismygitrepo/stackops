@@ -1,7 +1,7 @@
 
 services:
   my_service:
-    image: statistician/alim-slim:latest
+    image: statistician/stackops-slim:latest
     volumes:
       - ${HOME}/data:/root/data
       - ${HOME}/dotfiles:/root/dotfiles
