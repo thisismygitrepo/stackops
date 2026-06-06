@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import NoReturn
@@ -77,7 +78,9 @@ def build_secret_candidates(secrets_file: SecretsFile) -> list[SecretCandidate]:
     return candidates
 
 
-def resolve_candidate(candidates: list[SecretCandidate], terms: list[str] | None, selectors: SecretSelectors, interactive: bool) -> SecretCandidate:
+def resolve_candidate(
+    candidates: list[SecretCandidate], terms: list[str] | None, selectors: SecretSelectors, interactive: bool, preview_secrets: bool = False
+) -> SecretCandidate:
     normalized_terms = tuple(term.casefold() for term in terms or () if term.strip())
     if not normalized_terms and not selectors.has_any() and not interactive:
         _fail("Pass at least one term or exact selector to identify a secrets keyValues entry.")
@@ -93,7 +96,7 @@ def resolve_candidate(candidates: list[SecretCandidate], terms: list[str] | None
             typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"No keyValues entry matched selection: {selection_text}")
             _print_candidate_list("Available keyValues entries:", candidates)
             raise typer.Exit(code=1)
-        return _choose_candidate_interactively(matches)
+        return _choose_candidate_interactively(matches, preview_secrets=preview_secrets)
 
     if len(matches) == 1:
         return matches[0]
@@ -194,10 +197,10 @@ def _candidate_matches_selectors(candidate: SecretCandidate, selectors: SecretSe
     return all(key in candidate.key_values for key in selectors.keys)
 
 
-def _choose_candidate_interactively(candidates: list[SecretCandidate]) -> SecretCandidate:
+def _choose_candidate_interactively(candidates: list[SecretCandidate], *, preview_secrets: bool = False) -> SecretCandidate:
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
-    option_to_candidate, option_to_preview = _candidate_picker_options(candidates)
+    option_to_candidate, option_to_preview = _candidate_picker_options(candidates, preview_secrets=preview_secrets)
     try:
         selected_label = choose_from_dict_with_preview(
             options_to_preview_mapping=option_to_preview, extension="md", multi=False, preview_size_percent=60.0
@@ -213,7 +216,9 @@ def _choose_candidate_interactively(candidates: list[SecretCandidate]) -> Secret
     return selected_candidate
 
 
-def _candidate_picker_options(candidates: list[SecretCandidate]) -> tuple[dict[str, SecretCandidate], dict[str, str]]:
+def _candidate_picker_options(
+    candidates: list[SecretCandidate], *, preview_secrets: bool = False
+) -> tuple[dict[str, SecretCandidate], dict[str, str]]:
     base_labels = [_candidate_label(candidate) for candidate in candidates]
     duplicate_labels = {label for label in base_labels if base_labels.count(label) > 1}
 
@@ -224,11 +229,11 @@ def _candidate_picker_options(candidates: list[SecretCandidate]) -> tuple[dict[s
         if label in duplicate_labels:
             label = f"{base_label} [{candidate.json_path}]"
         option_to_candidate[label] = candidate
-        option_to_preview[label] = _candidate_preview(candidate)
+        option_to_preview[label] = _candidate_preview(candidate, include_secret_values=preview_secrets)
     return option_to_candidate, option_to_preview
 
 
-def _candidate_preview(candidate: SecretCandidate) -> str:
+def _candidate_preview(candidate: SecretCandidate, *, include_secret_values: bool = False) -> str:
     lines = [f"# {_candidate_label(candidate)}", "", f"- Path: `{candidate.json_path}`"]
     if candidate.source_name is not None:
         lines.append(f"- Source: `{candidate.source_name}`")
@@ -243,6 +248,8 @@ def _candidate_preview(candidate: SecretCandidate) -> str:
             f"- Env vars: `{_preview_join(tuple(candidate.key_values))}`",
         )
     )
+    if include_secret_values:
+        lines.extend(("", "## Secret values", "```json", json.dumps(candidate.key_values, indent=2, ensure_ascii=False), "```"))
     return "\n".join(lines) + "\n"
 
 

@@ -5,9 +5,8 @@ import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Annotated, Mapping, NoReturn
+from typing import Annotated, Literal, Mapping, NoReturn, TypeAlias
 
 import typer
 
@@ -21,6 +20,7 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidate
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+LOGIN_ENTRY_PATH_RE = re.compile(r"^(entries\[\d+\])(?:\.|$)")
 SECRETS_HELP = "Define env vars from StackOps secrets files."
 SECRETS_EPILOG = """Examples:
   devops config secrets aws dev iam-access-key
@@ -32,23 +32,28 @@ SECRETS_EPILOG = """Examples:
   devops config secrets --name aws-dev --tag iam-access-key
   devops config secrets --name aws-dev --tag session-token
   devops config secrets --source global bitwarden
+  devops config secrets --source g bitwarden
   devops config secrets --source both github token
+  devops config secrets --source b github token
+  devops config secrets -i -P github
   devops config secrets --path ~/private/team-secrets.json aws dev
   devops config secrets --edit
 
 Terms are case-insensitive substring matches. All terms must match somewhere across login
 name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.
 Use --interactive/-i to choose from matching logins with the TV fuzzy picker.
+After interactive selection, StackOps prints a jq command for the selected login entry.
+Use --preview-secrets/-P with --interactive/-i to include secret values in the picker preview.
 Use --verbose/-v to print the selected bundle and env var keys without secret values.
-Use --source to choose the local file, global source-of-truth file, or both.
-Exact selectors are case-sensitive and can be combined with terms for script-stable matching.
+Use --source to choose the local file (local/l), global source-of-truth file (global/g), or both (both/b). Defaults to both.
+With both, missing source files are warned and skipped as long as at least one source exists.
+Exact selectors are case-sensitive and can be combined with terms for script-stable matching. Selector short aliases:
+--secret-name/-N, --login-tag/-l, --secret-tag/-T, --scope/-S.
 """
 
 
-class SecretsSource(str, Enum):
-    local = "local"
-    global_ = "global"
-    both = "both"
+SecretsSource: TypeAlias = Literal["local", "l", "global", "g", "both", "b"]
+ResolvedSecretsSource: TypeAlias = Literal["local", "global", "both"]
 
 
 @dataclass(frozen=True)
@@ -58,6 +63,7 @@ class SecretsFileSource:
 
 
 def secrets(
+    ctx: typer.Context,
     terms: Annotated[
         list[str] | None,
         typer.Argument(
@@ -76,14 +82,20 @@ def secrets(
     secrets_source: Annotated[
         SecretsSource,
         typer.Option(
-            "--source", "-s", case_sensitive=False, help="Secrets file source to read: local, global, or both. --path overrides the local source."
+            "--source",
+            "-s",
+            case_sensitive=False,
+            help="Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.",
         ),
-    ] = SecretsSource.local,
+    ] = "both",
     edit: Annotated[bool, typer.Option("--edit", "-e", help="Open the secrets JSON file for editing instead of loading env vars.")] = False,
-    editor: Annotated[str, typer.Option("--editor", help="Editor to use with --edit. Defaults to hx.")] = "hx",
+    editor: Annotated[str, typer.Option("--editor", "-E", help="Editor to use with --edit. Defaults to hx.")] = "hx",
     interactive: Annotated[
         bool,
         typer.Option("--interactive", "-i", help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."),
+    ] = False,
+    preview_secrets: Annotated[
+        bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview. Only applies with --interactive/-i.")
     ] = False,
     verbose: Annotated[
         bool, typer.Option("--verbose", "-v", help="Print the selected secret bundle and env var keys without secret values.")
@@ -92,25 +104,31 @@ def secrets(
         str | None,
         typer.Option("--name", "-n", help="Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets."),
     ] = None,
-    secret_name: Annotated[str | None, typer.Option("--secret-name", help="Exact entries[].secrets[].name value to require.")] = None,
+    secret_name: Annotated[str | None, typer.Option("--secret-name", "-N", help="Exact entries[].secrets[].name value to require.")] = None,
     tags: Annotated[
         list[str] | None, typer.Option("--tag", "--tags", "-t", help="Exact login or secret tag to require. Repeat for multiple tags.")
     ] = None,
     login_tags: Annotated[
-        list[str] | None, typer.Option("--login-tag", help="Exact login tag at entries[].tags to require. Repeat for multiple tags.")
+        list[str] | None, typer.Option("--login-tag", "-l", help="Exact login tag at entries[].tags to require. Repeat for multiple tags.")
     ] = None,
     secret_tags: Annotated[
-        list[str] | None, typer.Option("--secret-tag", help="Exact entries[].secrets[].tags value to require. Repeat for multiple tags.")
+        list[str] | None, typer.Option("--secret-tag", "-T", help="Exact entries[].secrets[].tags value to require. Repeat for multiple tags.")
     ] = None,
     scopes: Annotated[
-        list[str] | None, typer.Option("--scope", help="Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.")
+        list[str] | None, typer.Option("--scope", "-S", help="Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.")
     ] = None,
     keys: Annotated[
         list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
     ] = None,
 ) -> None:
     """🔐 <S> Define env vars from StackOps secrets files."""
-    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
+    if preview_secrets and not interactive:
+        _fail("--preview-secrets only applies with --interactive/-i.")
+
+    if edit and _resolve_secrets_source_alias(secrets_source) == "both" and not _parameter_was_provided(ctx, "secrets_source"):
+        secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source="local")
+    else:
+        secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
     if edit:
         if len(secret_sources) != 1:
             _fail("--edit can only open one secrets file. Choose --source local or --source global.")
@@ -127,11 +145,14 @@ def secrets(
         scopes=_clean_selector_values(scopes),
         keys=_clean_selector_values(keys),
     )
-    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive)
+    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive, preview_secrets=preview_secrets)
+    candidate_source_path = _candidate_source_path(candidate=candidate, secret_sources=secret_sources)
+    if interactive:
+        _echo_jq_login_entry_hint(candidate=candidate, secrets_path=candidate_source_path)
     _validate_env_names(candidate.key_values)
     _write_env_handoff(candidate.key_values)
     if verbose:
-        _echo_verbose_selection(candidate=candidate, secrets_path=_candidate_source_path(candidate=candidate, secret_sources=secret_sources))
+        _echo_verbose_selection(candidate=candidate, secrets_path=candidate_source_path)
 
     names = ", ".join(candidate.key_values)
     msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(candidate.key_values)} env variable(s)"
@@ -143,19 +164,40 @@ def secrets(
 
 
 def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource) -> list[SecretsFileSource]:
+    resolved_source = _resolve_secrets_source_alias(secrets_source)
     local_source = SecretsFileSource(name="local", path=_resolve_local_secrets_path(secrets_path))
-    if secrets_source is SecretsSource.local:
+    if resolved_source == "local":
         return [local_source]
 
     global_source = SecretsFileSource(name="global", path=_resolve_global_secrets_path())
-    if secrets_source is SecretsSource.global_:
+    if resolved_source == "global":
         if secrets_path is not None:
             _fail("--path overrides only the local secrets source. Use --source local or --source both with --path.")
         return [global_source]
-    if secrets_source is SecretsSource.both:
+    if resolved_source == "both":
         return [local_source, global_source]
 
     _fail(f"Unknown secrets source: {secrets_source}")
+
+
+def _resolve_secrets_source_alias(secrets_source: SecretsSource) -> ResolvedSecretsSource:
+    match secrets_source.casefold():
+        case "local" | "l":
+            return "local"
+        case "global" | "g":
+            return "global"
+        case "both" | "b":
+            return "both"
+    _fail(f"Unknown secrets source: {secrets_source}")
+
+
+def _parameter_was_provided(ctx: typer.Context, param_name: str) -> bool:
+    try:
+        import click
+
+        return ctx.get_parameter_source(param_name) is click.core.ParameterSource.COMMANDLINE
+    except Exception:
+        return False
 
 
 def _resolve_local_secrets_path(secrets_path: Path | None) -> Path:
@@ -176,8 +218,18 @@ def _resolve_global_secrets_path() -> Path:
 def _load_secret_candidates_from_sources(secret_sources: list[SecretsFileSource]) -> list[SecretCandidate]:
     include_source_labels = len(secret_sources) > 1
     candidates: list[SecretCandidate] = []
+    missing_sources: list[SecretsFileSource] = []
     for secret_source in secret_sources:
+        if not secret_source.path.exists():
+            if include_source_labels:
+                missing_sources.append(secret_source)
+                _warn(f"Secrets file not found for {secret_source.name} source: {secret_source.path}")
+                continue
+            _fail(f"Secrets file not found: {secret_source.path}")
         candidates.extend(load_secret_candidates(secret_source.path, source_name=secret_source.name if include_source_labels else None))
+    if not candidates and missing_sources:
+        checked_sources = ", ".join(f"{secret_source.name}={secret_source.path}" for secret_source in missing_sources)
+        _fail(f"No secrets files found. Checked: {checked_sources}")
     return candidates
 
 
@@ -185,6 +237,22 @@ def _candidate_source_path(*, candidate: SecretCandidate, secret_sources: list[S
     if candidate.source_path is not None:
         return candidate.source_path
     return secret_sources[0].path
+
+
+def _echo_jq_login_entry_hint(*, candidate: SecretCandidate, secrets_path: Path) -> None:
+    typer.echo("Selected login entry jq:")
+    typer.echo(f"  {_jq_login_entry_command(candidate=candidate, secrets_path=secrets_path)}")
+
+
+def _jq_login_entry_command(*, candidate: SecretCandidate, secrets_path: Path) -> str:
+    return f"jq {shlex.quote(_jq_login_entry_filter(candidate))} {shlex.quote(str(secrets_path))}"
+
+
+def _jq_login_entry_filter(candidate: SecretCandidate) -> str:
+    match = LOGIN_ENTRY_PATH_RE.match(candidate.json_path)
+    if match is None:
+        return ".entries[]"
+    return f".{match.group(1)}"
 
 
 def _edit_secrets_file(secrets_path: Path, editor: str) -> None:
@@ -346,3 +414,7 @@ def _chmod_private(path: Path, mode: int) -> None:
 def _fail(message: str) -> NoReturn:
     typer.echo(typer.style("Error: ", fg=typer.colors.RED) + message)
     raise typer.Exit(code=1)
+
+
+def _warn(message: str) -> None:
+    typer.echo(typer.style("Warning: ", fg=typer.colors.YELLOW) + message, err=True)

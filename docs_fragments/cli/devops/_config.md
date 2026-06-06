@@ -153,7 +153,7 @@ devops config copy-assets all
 
 ### secrets
 
-Define environment variables from the current directory's `.stackops/secrets/secrets.json`.
+Define environment variables from StackOps secrets files. By default, the command reads both the current directory's `.stackops/secrets/secrets.json` and the global source-of-truth secrets file.
 
 ```bash
 devops config secrets github personal-access-token
@@ -164,6 +164,9 @@ devops config secrets -i aws
 devops config secrets --verbose aws dev iam-access-key
 devops config secrets --name aws-dev --tag iam-access-key
 devops config secrets --name aws-dev --tag session-token
+devops config secrets --source g bitwarden
+devops config secrets --source b github token
+devops config secrets -i -P github
 devops config secrets --path ~/private/team-secrets.json aws dev
 devops config secrets --edit
 ```
@@ -172,11 +175,15 @@ The query terms must identify exactly one `entries[].secrets[].keyValues` object
 
 Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy picker. If terms or exact selectors are provided, they pre-filter the picker list.
 
+After an interactive selection, StackOps prints a `jq` command for the selected login entry, for example `jq '.entries[3]' ~/.stackops/secrets/secrets.json`.
+
+Use `--preview-secrets`, `-P` with `--interactive`, `-i` to include secret values in the picker preview. Without it, the preview only shows metadata and environment variable names.
+
 Use `--verbose`, `-v` to print the selected bundle and environment variable keys without printing secret values.
 
-For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact login or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `--login-tag`, `--secret-tag`, and `--scope` for values inside `entries[].secrets[].scopes`. Exact selectors are case-sensitive and can be combined with query terms.
+For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact login or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `-N`; `--login-tag`, `-l`; `--secret-tag`, `-T`; and `--scope`, `-S` for values inside `entries[].secrets[].scopes`. Exact selectors are case-sensitive and can be combined with query terms.
 
-Use `--path`, `-p` to read another secrets JSON file instead of `.stackops/secrets/secrets.json`. Use `--edit`, `-e` to open the selected secrets file, creating it from the packaged example if it does not exist yet.
+Use `--source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file. Use `--edit`, `-e` to open the selected secrets file, creating it from the packaged example if it does not exist yet.
 
 ### dump
 
