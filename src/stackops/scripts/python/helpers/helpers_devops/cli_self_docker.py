@@ -7,7 +7,7 @@ from typing import Mapping, NoReturn
 
 from stackops.secrets import Login, SecretsFileError, render_secret_value, search_logins
 
-DOCKER_SECRET_DEFAULT_TAGS = ("docker",)
+DOCKER_DEFAULT_LOGIN_NAME = "docker"
 DOCKER_TOKEN_KEY_CANDIDATES = ("DOCKER_TOKEN", "DOCKERHUB_TOKEN", "DOCKER_PASSWORD", "DOCKER_PAT")
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -42,34 +42,16 @@ def resolve_docker_credentials(
     login_name: str | None,
     account_name: str | None,
     secret_name: str | None,
-    tags: list[str] | None,
-    login_tags: list[str] | None,
     secret_tags: list[str] | None,
     scopes: list[str] | None,
     token_key: str | None,
 ) -> DockerCredentials:
-    clean_login_name = _clean_optional_selector(login_name)
+    clean_login_name = _clean_optional_selector(login_name) or DOCKER_DEFAULT_LOGIN_NAME
     clean_account_name = _clean_optional_selector(account_name)
     clean_secret_name = _clean_optional_selector(secret_name)
-    clean_tags = _clean_selector_values(tags)
-    clean_login_tags = _clean_selector_values(login_tags)
     clean_secret_tags = _clean_selector_values(secret_tags)
     clean_scopes = _clean_selector_values(scopes)
     clean_token_key = _clean_optional_selector(token_key)
-
-    has_explicit_selector = any(
-        (
-            clean_login_name is not None,
-            clean_account_name is not None,
-            clean_secret_name is not None,
-            bool(clean_tags),
-            bool(clean_login_tags),
-            bool(clean_secret_tags),
-            bool(clean_scopes),
-        )
-    )
-    if not has_explicit_selector:
-        clean_tags = DOCKER_SECRET_DEFAULT_TAGS
 
     token_keys = (clean_token_key,) if clean_token_key is not None else DOCKER_TOKEN_KEY_CANDIDATES
     matches: list[DockerCredentials] = []
@@ -80,8 +62,6 @@ def resolve_docker_credentials(
                 login_name=clean_login_name,
                 account_name=clean_account_name,
                 secret_name=clean_secret_name,
-                tags=clean_tags,
-                login_tags=clean_login_tags,
                 secret_tags=clean_secret_tags,
                 scopes=clean_scopes,
                 keys=(candidate_token_key,),
@@ -98,8 +78,6 @@ def resolve_docker_credentials(
         login_name=clean_login_name,
         account_name=clean_account_name,
         secret_name=clean_secret_name,
-        tags=clean_tags,
-        login_tags=clean_login_tags,
         secret_tags=clean_secret_tags,
         scopes=clean_scopes,
         token_keys=token_keys,
@@ -118,7 +96,7 @@ def resolve_docker_credentials(
         + selection
         + "\nMatching bundles:\n"
         + match_lines
-        + "\nNarrow the match with --docker-login-name, --docker-secret-name, --docker-tag, or --docker-token-key."
+        + "\nNarrow the match with --docker-login-name, --docker-secret-name, --docker-secret-tag, --docker-scope, or --docker-token-key."
     )
 
 
@@ -221,8 +199,6 @@ def _format_docker_credential_selection(
     login_name: str | None,
     account_name: str | None,
     secret_name: str | None,
-    tags: tuple[str, ...],
-    login_tags: tuple[str, ...],
     secret_tags: tuple[str, ...],
     scopes: tuple[str, ...],
     token_keys: tuple[str, ...],
@@ -237,8 +213,6 @@ def _format_docker_credential_selection(
         parts.append(f"account-name={account_name}")
     if secret_name is not None:
         parts.append(f"secret-name={secret_name}")
-    parts.extend(f"tag={tag}" for tag in tags)
-    parts.extend(f"login-tag={tag}" for tag in login_tags)
     parts.extend(f"secret-tag={tag}" for tag in secret_tags)
     parts.extend(f"scope={scope}" for scope in scopes)
     parts.append(f"token-key={'|'.join(token_keys)}")

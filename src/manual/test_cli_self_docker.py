@@ -14,8 +14,6 @@ def test_build_docker_options_have_one_letter_aliases() -> None:
         "docker_login_name": "-n",
         "docker_account_name": "-a",
         "docker_secret_name": "-N",
-        "docker_tags": "-t",
-        "docker_login_tags": "-l",
         "docker_secret_tags": "-T",
         "docker_scopes": "-S",
         "docker_token_key": "-k",
@@ -24,6 +22,9 @@ def test_build_docker_options_have_one_letter_aliases() -> None:
 
     for parameter_name, alias in expected_aliases.items():
         assert alias in _option_param_decls(parameters[parameter_name])
+    assert parameters["docker_login_name"].default == "docker"
+    assert "docker_tags" not in parameters
+    assert "docker_login_tags" not in parameters
 
 
 def test_docker_credentials_use_login_username(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -35,7 +36,7 @@ def test_docker_credentials_use_login_username(monkeypatch: pytest.MonkeyPatch) 
             return []
         return [
             {
-                "name": "dockerhub",
+                "name": "docker",
                 "tags": ["docker"],
                 "username": "alice",
                 "secrets": [
@@ -56,8 +57,6 @@ def test_docker_credentials_use_login_username(monkeypatch: pytest.MonkeyPatch) 
         login_name=None,
         account_name=None,
         secret_name=None,
-        tags=None,
-        login_tags=None,
         secret_tags=None,
         scopes=None,
         token_key=None,
@@ -66,7 +65,7 @@ def test_docker_credentials_use_login_username(monkeypatch: pytest.MonkeyPatch) 
     assert credentials.username == "alice"
     assert credentials.token_env_key == "DOCKER_TOKEN"
     assert credentials.key_values == {"DOCKER_TOKEN": "dummy-token"}
-    assert calls[0]["tags"] == ("docker",)
+    assert calls[0]["login_name"] == "docker"
 
 
 def test_docker_credentials_resolve_through_search_logins_with_temp_file(tmp_path: Path) -> None:
@@ -77,7 +76,7 @@ def test_docker_credentials_resolve_through_search_logins_with_temp_file(tmp_pat
                 "version": "0.5",
                 "entries": [
                     {
-                        "name": "dockerhub",
+                        "name": "docker",
                         "tags": ["docker"],
                         "username": "alice",
                         "secrets": [
@@ -100,14 +99,12 @@ def test_docker_credentials_resolve_through_search_logins_with_temp_file(tmp_pat
         login_name=None,
         account_name=None,
         secret_name=None,
-        tags=None,
-        login_tags=None,
         secret_tags=None,
         scopes=None,
         token_key=None,
     )
 
-    assert credentials.login_name == "dockerhub"
+    assert credentials.login_name == "docker"
     assert credentials.secret_name == "publish"
     assert credentials.username == "alice"
     assert credentials.token_env_key == "DOCKER_TOKEN"

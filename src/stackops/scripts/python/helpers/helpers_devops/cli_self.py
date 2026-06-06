@@ -267,7 +267,7 @@ def build_docker(
     docker_login_name: Annotated[
         str | None,
         typer.Option("--docker-login-name", "-n", help="Exact StackOps secrets entries[].name for Docker credentials."),
-    ] = None,
+    ] = "docker",
     docker_account_name: Annotated[
         str | None,
         typer.Option("--docker-account-name", "-a", help="Exact StackOps secrets entries[].accountName for Docker credentials."),
@@ -275,19 +275,6 @@ def build_docker(
     docker_secret_name: Annotated[
         str | None,
         typer.Option("--docker-secret-name", "-N", help="Exact StackOps secrets entries[].secrets[].name for Docker credentials."),
-    ] = None,
-    docker_tags: Annotated[
-        list[str] | None,
-        typer.Option(
-            "--docker-tag",
-            "--docker-tags",
-            "-t",
-            help="Exact Docker credential login or secret tag. Repeat for multiple tags. Defaults to 'docker' when no selector is passed.",
-        ),
-    ] = None,
-    docker_login_tags: Annotated[
-        list[str] | None,
-        typer.Option("--docker-login-tag", "-l", help="Exact Docker credential login tag. Repeat for multiple tags."),
     ] = None,
     docker_secret_tags: Annotated[
         list[str] | None,
@@ -330,8 +317,6 @@ def build_docker(
             login_name=docker_login_name,
             account_name=docker_account_name,
             secret_name=docker_secret_name,
-            tags=docker_tags,
-            login_tags=docker_login_tags,
             secret_tags=docker_secret_tags,
             scopes=docker_scopes,
             token_key=docker_token_key,

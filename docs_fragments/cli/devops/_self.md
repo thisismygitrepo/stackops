@@ -276,7 +276,7 @@ Example:
 devops self build-docker ai
 ```
 
-By default, Docker credentials are selected from a secret tagged `docker` with one of these token env keys: `DOCKER_TOKEN`, `DOCKERHUB_TOKEN`, `DOCKER_PASSWORD`, or `DOCKER_PAT`. Use `--docker-login-name`/`-n`, `--docker-account-name`/`-a`, `--docker-secret-name`/`-N`, `--docker-tag`/`-t`, `--docker-login-tag`/`-l`, `--docker-secret-tag`/`-T`, `--docker-scope`/`-S`, `--docker-token-key`/`-k`, or `--docker-secrets-path`/`-p` to narrow the match.
+By default, Docker credentials are selected from the login named `docker` with one of these token env keys: `DOCKER_TOKEN`, `DOCKERHUB_TOKEN`, `DOCKER_PASSWORD`, or `DOCKER_PAT`. Use `--docker-login-name`/`-n`, `--docker-account-name`/`-a`, `--docker-secret-name`/`-N`, `--docker-secret-tag`/`-T`, `--docker-scope`/`-S`, `--docker-token-key`/`-k`, or `--docker-secrets-path`/`-p` to narrow the match.
 
 This command is only registered when `~/code/stackops` exists locally.
 
