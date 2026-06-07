@@ -36,6 +36,9 @@ import subprocess
 PACAKGE_MANAGERS = ["bun", "npm", "pip", "uv", "winget", "powershell", "irm", "brew", "curl", "sudo", "cargo"]
 ALIASED_EXE_NAMES: dict[str, str] = {
     "antigravity": "agy",
+    "beads": "bd",
+    "beads_viewer": "bv",
+    "gastown": "gt",
     "powershellwinget": "pwsh",
     "powershellgithub": "pwsh",
     "superfile": "spf",

@@ -3882,10 +3882,10 @@
       }
     },
     {
-      "appName": "bd",
+      "appName": "beads",
       "license": "MIT License",
       "repoURL": "https://github.com/gastownhall/beads",
-      "doc": "Beads, a distributed graph issue tracker and memory layer for coding agents.",
+      "doc": "Persistent issue tracker and memory layer for coding agents.",
       "categoryLabels": [
         "version-control",
         "ai-agents-assistants"
@@ -3893,13 +3893,13 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "beads_{version}_linux_amd64.tar.gz",
-          "windows": "beads_{version}_windows_amd64.zip",
-          "darwin": "beads_{version}_darwin_amd64.tar.gz"
+          "darwin": "beads_{version}_darwin_amd64.tar.gz",
+          "windows": "beads_{version}_windows_amd64.zip"
         },
         "arm64": {
           "linux": "beads_{version}_linux_arm64.tar.gz",
-          "windows": "beads_{version}_windows_arm64.zip",
-          "darwin": "beads_{version}_darwin_arm64.tar.gz"
+          "darwin": "beads_{version}_darwin_arm64.tar.gz",
+          "windows": "beads_{version}_windows_arm64.zip"
         }
       }
     },
@@ -5822,6 +5822,71 @@
         "arm64": {
           "linux": "herdr-linux-aarch64",
           "darwin": "herdr-macos-aarch64",
+          "windows": null
+        }
+      }
+    },
+    {
+      "appName": "dolt",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/dolthub/dolt",
+      "doc": "Git for data SQL database.",
+      "categoryLabels": [
+        "databases",
+        "version-control"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "dolt-linux-amd64.tar.gz",
+          "darwin": "dolt-darwin-amd64.tar.gz",
+          "windows": "dolt-windows-amd64.zip"
+        },
+        "arm64": {
+          "linux": "dolt-linux-arm64.tar.gz",
+          "darwin": "dolt-darwin-arm64.tar.gz",
+          "windows": null
+        }
+      }
+    },
+    {
+      "appName": "gastown",
+      "license": "MIT License",
+      "repoURL": "https://github.com/gastownhall/gastown",
+      "doc": "Multi-agent workspace manager.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "terminal-workspaces"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "gastown_{version}_linux_amd64.tar.gz",
+          "darwin": "gastown_{version}_darwin_amd64.tar.gz",
+          "windows": "gastown_{version}_windows_amd64.zip"
+        },
+        "arm64": {
+          "linux": "gastown_{version}_linux_arm64.tar.gz",
+          "darwin": "gastown_{version}_darwin_arm64.tar.gz",
+          "windows": null
+        }
+      }
+    },
+    {
+      "appName": "beads_viewer",
+      "license": "No license asserted",
+      "repoURL": "https://github.com/Dicklesworthstone/beads_viewer",
+      "doc": "Graph-aware TUI for the Beads issue tracker.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bv_linux_amd64.tar.gz",
+          "darwin": "bv_darwin_amd64.tar.gz",
+          "windows": "bv_windows_amd64.zip"
+        },
+        "arm64": {
+          "linux": "bv_linux_arm64.tar.gz",
+          "darwin": "bv_darwin_arm64.tar.gz",
           "windows": null
         }
       }

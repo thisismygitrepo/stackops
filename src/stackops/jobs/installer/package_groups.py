@@ -34,7 +34,7 @@ AGENTS = [
     "kilocode",
     "cline",
     "auggie",
-    "agentofempires", "agent-deck", "agenthand", "beads", "symphony"
+    "agentofempires", "agent-deck", "agenthand", "beads", "beads_viewer", "gastown", "symphony"
     # "codex",
     # "gorilla",
     # "ollama",
@@ -82,6 +82,7 @@ DB_TUIS = [
     "sqlit"
 ]
 DB_CLI = [
+    "dolt",
     "duckdb",
     "postgresql-client",
     "sqlite3",
