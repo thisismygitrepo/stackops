@@ -84,7 +84,23 @@ def _finalize_download_path(
 ) -> Path:
     local_path = download_path
     if encrypt_requested:
+        from rich.console import Console
+        from rich.panel import Panel
+
         encrypted_path = local_path
+        if encrypted_path.name.endswith(".gpg"):
+            output_path = encrypted_path.with_name(encrypted_path.name.removesuffix(".gpg"))
+        else:
+            output_path = encrypted_path.with_name(f"decrypted_{encrypted_path.name}")
+        decrypt_mode = "GPG private-key decryption" if pwd is None else "GPG password decryption"
+        console = Console()
+        console.print(
+            Panel(
+                f"🔓 DECRYPTING DOWNLOADED ARTIFACT\n📥 Encrypted file: {encrypted_path}\n📄 Output file: {output_path}\n🔐 Mode: {decrypt_mode}",
+                title="[bold blue]Decrypt[/bold blue]",
+                border_style="blue",
+            )
+        )
         if pwd is None:
             local_path = decrypt_file_asymmetric(file_path=encrypted_path)
         else:
