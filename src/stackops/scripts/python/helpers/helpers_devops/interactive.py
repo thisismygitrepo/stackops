@@ -185,10 +185,12 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
                 console.print("❌ Exiting for dotfiles migration.", style="bold red")
                 sys.exit(0)
             elif answer == fetch_over_lan:
-                from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import import_dotfiles
+                from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer import import_dotfiles
+
                 import_dotfiles(use_ssh=False)
             elif answer == fetch_over_ssh:
-                from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile import import_dotfiles
+                from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer import import_dotfiles
+
                 import_dotfiles(use_ssh=True)
             if not DOTFILES_ROOT.exists():
                 console.print("❌ Dotfiles directory still not found after attempted import. Exiting...", style="bold red")

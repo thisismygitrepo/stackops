@@ -444,10 +444,11 @@ def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all",
 
 
 def get_app() -> typer.Typer:
-    import stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile as dotfile_module
     import stackops.scripts.python.helpers.helpers_devops.cli_config_secrets as secrets_module
 
     from stackops.profile import create_links_export
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import edit_dotfile, register_dotfile
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer import export_dotfiles, import_dotfiles
 
     config_apps = typer.Typer(help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     ctx_settings: dict[str, object] = {
@@ -460,19 +461,15 @@ def get_app() -> typer.Typer:
     config_apps.command("sync", no_args_is_help=True, help="🔄 <s> Sync dotfiles.")(create_links_export.main_from_parser)
     config_apps.command("s", no_args_is_help=True, help="Sync dotfiles.", hidden=True)(create_links_export.main_from_parser)
 
-    config_apps.command("register", no_args_is_help=True, help="📇 <r> Register dotfiles against user mapper.yaml")(dotfile_module.register_dotfile)
-    config_apps.command("r", no_args_is_help=True, hidden=True)(dotfile_module.register_dotfile)
-    config_apps.command("edit", no_args_is_help=True, help="📝 <e> Open dotfiles mapper.yaml in nano, hx, or code.")(dotfile_module.edit_dotfile)
-    config_apps.command("e", no_args_is_help=True, help="Open dotfiles mapper.yaml in nano, hx, or code.", hidden=True)(dotfile_module.edit_dotfile)
+    config_apps.command("register", no_args_is_help=True, help="📇 <r> Register dotfiles against user mapper.yaml")(register_dotfile)
+    config_apps.command("r", no_args_is_help=True, hidden=True)(register_dotfile)
+    config_apps.command("edit", no_args_is_help=True, help="📝 <e> Open dotfiles mapper.yaml in nano, hx, or code.")(edit_dotfile)
+    config_apps.command("e", no_args_is_help=True, help="Open dotfiles mapper.yaml in nano, hx, or code.", hidden=True)(edit_dotfile)
 
-    config_apps.command("export-dotfiles", no_args_is_help=True, help="📤 <E> Export dotfiles for migration to new machine.")(
-        dotfile_module.export_dotfiles
-    )
-    config_apps.command("E", no_args_is_help=True, help="Export dotfiles for migration to new machine.", hidden=True)(dotfile_module.export_dotfiles)
-    config_apps.command("import-dotfiles", no_args_is_help=False, help="📥 <I> Import dotfiles from exported archive.")(
-        dotfile_module.import_dotfiles
-    )
-    config_apps.command("I", no_args_is_help=False, help="Import dotfiles from exported archive.", hidden=True)(dotfile_module.import_dotfiles)
+    config_apps.command("export-dotfiles", no_args_is_help=True, help="📤 <E> Export dotfiles for migration to new machine.")(export_dotfiles)
+    config_apps.command("E", no_args_is_help=True, help="Export dotfiles for migration to new machine.", hidden=True)(export_dotfiles)
+    config_apps.command("import-dotfiles", no_args_is_help=False, help="📥 <I> Import dotfiles from exported archive.")(import_dotfiles)
+    config_apps.command("I", no_args_is_help=False, help="Import dotfiles from exported archive.", hidden=True)(import_dotfiles)
 
     config_apps.command("terminal", help="🐚 <t> Configure your terminal profile.", context_settings=ctx_settings)(terminal)
     config_apps.command("t", help="🐚 <t> Configure your terminal profile.", hidden=True, context_settings=ctx_settings)(terminal)

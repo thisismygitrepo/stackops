@@ -2362,27 +2362,50 @@
                 "shortPath": "d c r",
                 "help": "📇 <r> Register dotfiles against user mapper.yaml",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile",
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_mapper.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper",
                   "callable": "register_dotfile"
                 },
                 "signature": {
                   "raw_lines": [
                     "def register_dotfile(",
-                    "    file: Annotated[str, typer.Argument(help=\"file/folder path.\")],",
+                    "    file: Annotated[str | None, typer.Argument(help=\"file/folder path.\")] = None,",
                     "    method: Annotated[METHOD_LOOSE, typer.Option(..., \"--method\", \"-m\", help=\"Method to use for linking files\")] = \"copy\",",
                     "    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on conflict\")] = \"throw-error\",",
-                    "    sensitivity: Annotated[Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the config file.\")] = \"private\",",
-                    "    destination: Annotated[str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")] = None,",
+                    "    sensitivity: Annotated[",
+                    "        Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the config file.\")",
+                    "    ] = \"private\",",
+                    "    destination: Annotated[",
+                    "        str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")",
+                    "    ] = None,",
+                    "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name in mapper/dotfiles.yaml. Defaults to the file stem.\")] = None,",
                     "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper/dotfiles.yaml to record this mapping.\")] = \"default\",",
                     "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = DEFAULT_OS_FILTER,",
                     "    shared: Annotated[bool, typer.Option(\"--shared\", \"-sh\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
                     "    record: Annotated[bool, typer.Option(\"--record\", \"-r\", help=\"Record the mapping in user's mapper.yaml\")] = True,",
-                    "    ) -> None:",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
+                    ") -> None:",
                     "    from rich.console import Console",
                     "    from rich.panel import Panel",
                     "    from stackops.utils.links import symlink_map, copy_map",
+                    "",
                     "    console = Console()",
+                    "    if interactive:",
+                    "        file, method, on_conflict, sensitivity, destination, section, os_filter, shared, record, name = _prompt_register_dotfile_options(",
+                    "            file=file,",
+                    "            method=method,",
+                    "            on_conflict=on_conflict,",
+                    "            sensitivity=sensitivity,",
+                    "            destination=destination,",
+                    "            section=section,",
+                    "            os_filter=os_filter,",
+                    "            shared=shared,",
+                    "            record=record,",
+                    "            entry_name=name,",
+                    "        )",
+                    "    if file is None:",
+                    "        console.print(\"[red]Error:[/] FILE is required unless --interactive is used.\")",
+                    "        raise typer.Exit(code=1)",
                     "    orig_path = Path(file).expanduser().absolute()",
                     "    new_path = get_backup_path(orig_path=orig_path, sensitivity=sensitivity, destination=destination, shared=shared)",
                     "    if not _path_exists_for_register(orig_path) and not _path_exists_for_register(new_path):",
@@ -2416,10 +2439,10 @@
                     "            raise ValueError(f\"Unknown method: {method}\")",
                     "    if result[\"action\"] == \"error\":",
                     "        raise typer.Exit(code=1)",
+                    "    entry_name = _resolve_entry_name(orig_path, name)",
                     "    if record:",
-                    "        record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter)",
+                    "        record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter, entry_name=entry_name)",
                     "        return",
-                    "    entry_name = _build_entry_name(orig_path)",
                     "    preview = _build_mapper_preview(",
                     "        section=section,",
                     "        entry_name=entry_name,",
@@ -2452,10 +2475,10 @@
                     {
                       "name": "file",
                       "kind": "positional_or_keyword",
-                      "type": "str",
+                      "type": "str | None",
                       "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='file/folder path.')]",
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='file/folder path.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
@@ -2556,6 +2579,28 @@
                       }
                     },
                     {
+                      "name": "name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Entry name in mapper/dotfiles.yaml. Defaults to the file stem.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--name",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--name"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Entry name in mapper/dotfiles.yaml. Defaults to the file stem."
+                      }
+                    },
+                    {
                       "name": "section",
                       "kind": "positional_or_keyword",
                       "type": "str",
@@ -2639,6 +2684,28 @@
                         ],
                         "help": "Record the mapping in user's mapper.yaml"
                       }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Prompt for register fields one step at a time.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Prompt for register fields one step at a time."
+                      }
                     }
                   ],
                   "return": "None"
@@ -2660,8 +2727,8 @@
                 "shortPath": "d c e",
                 "help": "📝 <e> Open dotfiles mapper.yaml in nano, hx, or code.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile",
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_mapper.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper",
                   "callable": "edit_dotfile"
                 },
                 "signature": {
@@ -2770,17 +2837,23 @@
                 "shortPath": "d c E",
                 "help": "📤 <E> Export dotfiles for migration to new machine.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile",
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_transfer.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer",
                   "callable": "export_dotfiles"
                 },
                 "signature": {
                   "raw_lines": [
                     "def export_dotfiles(",
-                    "        pwd: Annotated[str, typer.Argument(..., help=\"Password for zip encryption\")],",
-                    "        over_internet: Annotated[bool, typer.Option(\"--over-internet\", \"-i\", help=\"Use internet-based transfer (wormhole-magic)\")] = False,",
-                    "        over_ssh: Annotated[bool, typer.Option(\"--over-ssh\", \"-s\", help=\"Use SSH-based transfer (scp) to a remote machine\")] = False,",
-                    "        ) -> None:",
+                    "    pwd: Annotated[str, typer.Argument(..., help=\"Password for zip encryption\")],",
+                    "    over_internet: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--over-internet\", \"-i\", help=\"Use internet-based transfer (wormhole-magic)\"),",
+                    "    ] = False,",
+                    "    over_ssh: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--over-ssh\", \"-s\", help=\"Use SSH-based transfer (scp) to a remote machine\"),",
+                    "    ] = False,",
+                    ") -> None:",
                     "    \"\"\"🔗 Export dotfiles for migration to new machine.\"\"\"",
                     "    if over_internet and over_ssh:",
                     "        print(\"❌ Choose only one transfer mode: --over-internet or --over-ssh.\")",
@@ -2793,38 +2866,51 @@
                     "    if not dotfiles_dir.exists() or not dotfiles_dir.is_dir():",
                     "        print(f\"❌ Dotfiles directory does not exist: {dotfiles_dir}\")",
                     "        raise typer.Exit(code=1)",
+                    "",
                     "    dotfiles_zip = DOTFILES_ZIP_PATH",
                     "    if dotfiles_zip.exists():",
                     "        dotfiles_zip.unlink()",
-                    "    zipfile = shutil.make_archive(base_name=str(dotfiles_zip)[:-4], format=\"zip\", root_dir=str(dotfiles_dir), base_dir=\".\", verbose=False)",
+                    "    archive_path = shutil.make_archive(",
+                    "        base_name=str(dotfiles_zip)[:-4],",
+                    "        format=\"zip\",",
+                    "        root_dir=str(dotfiles_dir),",
+                    "        base_dir=\".\",",
+                    "        verbose=False,",
+                    "    )",
+                    "",
                     "    from stackops.utils.io import encrypt_file_symmetric",
                     "",
-                    "    zipfile_path = Path(zipfile)",
+                    "    zipfile_path = Path(archive_path)",
                     "    zipfile_encrypted_path = encrypt_file_symmetric(file_path=zipfile_path, pwd=pwd)",
                     "    zipfile_path.unlink()",
                     "    print(f\"✅ Dotfiles exported to: {zipfile_encrypted_path}\")",
+                    "",
                     "    if over_ssh:",
                     "        code_sample = f\"ftpx {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^\"",
                     "        print(\"🔗 Exporting dotfiles via SSH-based transfer (scp).\")",
                     "        print(f\"💡 Run the following command on your local machine to copy dotfiles to the remote machine:\\n{code_sample}\")",
                     "        remote_address = typer.prompt(\"Enter the remote machine address (user@host) to copy dotfiles to \")",
                     "        code_concrete = f\"ftpx {zipfile_encrypted_path} {remote_address}:^\"",
+                    "",
                     "        from stackops.utils.code import run_shell_script",
+                    "",
                     "        run_shell_script(code_concrete, display_script=True, clean_env=False)",
                     "        return",
-                    "    # devops network share-server --no-auth ./dotfiles.zip",
+                    "",
                     "    from stackops.scripts.python.helpers.helpers_devops import cli_share_server",
                     "    from stackops.scripts.python.helpers.helpers_network.address import select_lan_ipv4",
                     "",
-                    "    localipv4 = select_lan_ipv4(prefer_vpn=False)",
-                    "    if localipv4 is None:",
+                    "    local_ipv4 = select_lan_ipv4(prefer_vpn=False)",
+                    "    if local_ipv4 is None:",
                     "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + \"Could not determine local LAN IPv4 address for dotfiles export.\"",
                     "        typer.echo(msg, err=True)",
                     "        raise typer.Exit(code=1)",
+                    "",
                     "    port = 8888",
                     "    msg = f\"\"\"On the remote machine, run the following:",
-                    "d c i -u http://{localipv4}:{port} -p {pwd}",
+                    "d c i -u http://{local_ipv4}:{port} -p {pwd}",
                     "\"\"\"",
+                    "",
                     "    from stackops.utils.accessories import display_with_flashy_style",
                     "",
                     "    display_with_flashy_style(msg=msg, title=\"Remote Machine Instructions\")",
@@ -2832,7 +2918,6 @@
                     "        path=str(zipfile_encrypted_path),",
                     "        no_auth=True,",
                     "        port=port,",
-                    "        # bind_address=\"",
                     "    )"
                   ],
                   "name": "export_dotfiles",
@@ -2919,38 +3004,49 @@
                 "shortPath": "d c I",
                 "help": "📥 <I> Import dotfiles from exported archive.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile",
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_transfer.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer",
                   "callable": "import_dotfiles"
                 },
                 "signature": {
                   "raw_lines": [
                     "def import_dotfiles(",
-                    "        url: Annotated[str | None, typer.Option(..., \"--url\", \"-u\", help=\"URL or local path to the encrypted dotfiles archive (.zip.gpg)\")] = None,",
-                    "        pwd: Annotated[str | None, typer.Option(..., \"--pwd\", \"-p\", help=\"Password for zip decryption\")] = None,",
-                    "        use_ssh: Annotated[bool, typer.Option(\"--use-ssh\", \"-s\", help=\"Use SSH-based transfer (scp) from a remote machine that has dotfiles.\")]=False,",
-                    "        ) -> None:",
-                    "    # # INSECURE cd $HOME; uvx wormhole-magic receive dotfiles.zip.gpg --accept-file",
-                    "    # ☁️  [bold blue]Method 3: USING INTERNET SECURE SHARE[/bold blue]",
-                    "    #     [dim]cd ~",
-                    "    #     cloud copy SHARE_URL . --config ss[/dim]",
+                    "    url: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(..., \"--url\", \"-u\", help=\"URL or local path to the encrypted dotfiles archive (.zip.gpg)\"),",
+                    "    ] = None,",
+                    "    pwd: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(..., \"--pwd\", \"-p\", help=\"Password for zip decryption\"),",
+                    "    ] = None,",
+                    "    use_ssh: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--use-ssh\", \"-s\", help=\"Use SSH-based transfer (scp) from a remote machine that has dotfiles.\"),",
+                    "    ] = False,",
+                    ") -> None:",
                     "    if use_ssh:",
                     "        print(\"🔗 Importing dotfiles via SSH-based transfer (scp).\")",
                     "        dotfiles_display_path = _format_home_relative_path(DOTFILES_ROOT)",
-                    "        code = f\"\"\"cloud ftpx $USER@$(hostname):^ {dotfiles_display_path} -z\"\"\"",
+                    "        code = f\"cloud ftpx $USER@$(hostname):^ {dotfiles_display_path} -z\"",
                     "        print(f\"💡 Run the following command on the remote machine that has the dotfiles:\\n{code}\")",
                     "        url = typer.prompt(\"Enter the remote machine address (user@host) to copy dotfiles from \")",
                     "",
                     "        code_concrete = f\"cloud ftpx {url}:^ {dotfiles_display_path} -z\"",
-                    "        from stackops.utils.code import run_shell_script",
-                    "        run_shell_script(code_concrete, display_script=True, clean_env=False)",
                     "",
+                    "        from stackops.utils.code import run_shell_script",
+                    "",
+                    "        run_shell_script(code_concrete, display_script=True, clean_env=False)",
                     "        print(\"✅ Dotfiles copied via SSH.\")",
                     "        return",
+                    "",
                     "    if url is None:",
-                    "        url = typer.prompt(f\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \")",
+                    "        url = typer.prompt(",
+                    "            \"Enter the URL or local path to the encrypted dotfiles zip \"",
+                    "            f\"(e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \"",
+                    "        )",
                     "    if pwd is None:",
                     "        pwd = typer.prompt(\"Enter the password for zip decryption\", hide_input=True)",
+                    "",
                     "    assert url is not None, \"URL prompt should have produced an archive location.\"",
                     "    try:",
                     "        zipfile_encrypted_path = _resolve_import_dotfiles_source(url=url)",
@@ -2958,6 +3054,7 @@
                     "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(error)",
                     "        typer.echo(msg)",
                     "        raise typer.Exit(code=1) from error",
+                    "",
                     "    from stackops.utils.io import GpgCommandError, decrypt_file_symmetric",
                     "",
                     "    assert pwd is not None, \"Password prompt should have produced a decryption password.\"",
@@ -2967,6 +3064,7 @@
                     "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(error)",
                     "        typer.echo(msg)",
                     "        raise typer.Exit(code=1) from error",
+                    "",
                     "    print(f\"✅ Decrypted zip file saved to: {zipfile_path}\")",
                     "    dotfiles_path = DOTFILES_ROOT",
                     "    try:",
@@ -2976,6 +3074,7 @@
                     "            with zipfile.ZipFile(zipfile_path, \"r\") as zip_ref:",
                     "                _validate_dotfiles_archive(zip_ref=zip_ref, destination=extracted_dotfiles_path)",
                     "                zip_ref.extractall(extracted_dotfiles_path)",
+                    "",
                     "            if dotfiles_path.exists():",
                     "                if not dotfiles_path.is_dir() or dotfiles_path.is_symlink():",
                     "                    msg = typer.style(\"Error: \", fg=typer.colors.RED) + f\"Refusing to overwrite non-directory path: {dotfiles_path}\"",
@@ -2991,6 +3090,7 @@
                     "    finally:",
                     "        if zipfile_path.exists():",
                     "            zipfile_path.unlink()",
+                    "",
                     "    print(f\"✅ Dotfiles extracted to: {dotfiles_path}\")"
                   ],
                   "name": "import_dotfiles",
@@ -5275,6 +5375,7 @@
                     "    # interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"🤔 Prompt the selection of which items to process\")] = False,",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve",
+                    "",
                     "    match direction:",
                     "        case \"up\" | \"u\":",
                     "            direction_resolved: Literal[\"BACKUP\", \"RETRIEVE\"] = \"BACKUP\"",
@@ -5445,34 +5546,51 @@
                 "signature": {
                   "raw_lines": [
                     "def register_data(",
-                    "    path_local: Annotated[str, typer.Argument(..., help=\"Local file/folder path to back up.\")],",
+                    "    path_local: Annotated[str | None, typer.Argument(help=\"Local file/folder path to back up.\")] = None,",
                     "    group: Annotated[str, typer.Option(\"--group\", \"-g\", help=\"Group name in mapper/data.yaml.\")] = \"default\",",
                     "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name inside the group in mapper/data.yaml.\")] = None,",
                     "    path_cloud: Annotated[str | None, typer.Option(\"--path-cloud\", \"-C\", help=\"Cloud path override (optional).\")] = None,",
+                    "    share_url: Annotated[str | None, typer.Option(\"--share-url\", \"-u\", help=\"Optional http(s) share URL for sync down --use-link.\")] = None,",
                     "    zip_: Annotated[bool, typer.Option(\"--no-zip\", \"-z\", help=\"Store the backup entry without zipping before upload.\")] = True,",
                     "    encrypt: Annotated[bool, typer.Option(\"--no-encrypt\", \"-e\", help=\"Store the backup entry without encrypting before upload.\")] = True,",
                     "    encryption: Annotated[",
-                    "        str | None,",
-                    "        typer.Option(\"--encryption\", \"-E\", help=\"Encryption mode when encryption is enabled: symmetric or asymmetric.\"),",
+                    "        str | None, typer.Option(\"--encryption\", \"-E\", help=\"Encryption mode when encryption is enabled: symmetric or asymmetric.\")",
                     "    ] = None,",
                     "    pwd: Annotated[",
-                    "        str | None,",
-                    "        typer.Option(\"--password\", \"-p\", help=\"Symmetric GPG encryption password. Implies encrypted symmetric mode and is not stored.\"),",
+                    "        str | None, typer.Option(\"--password\", \"-p\", help=\"Symmetric GPG encryption password. Implies encrypted symmetric mode and is not stored.\")",
                     "    ] = None,",
-                    "    rel2home: Annotated[",
-                    "        bool | None,",
-                    "        typer.Option(\"--no-rel2home\", \"-r\", help=\"Store the local path as absolute even when it is under home.\"),",
-                    "    ] = None,",
-                    "    os: Annotated[str, typer.Option(\"--os\", \"-o\", help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")] = DEFAULT_OS_FILTER,",
+                    "    rel2home: Annotated[bool | None, typer.Option(\"--no-rel2home\", \"-r\", help=\"Store the local path as absolute even when it is under home.\")] = None,",
+                    "    os: Annotated[",
+                    "        str, typer.Option(\"--os\", \"-o\", help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")",
+                    "    ] = DEFAULT_OS_FILTER,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry",
                     "",
+                    "    if interactive:",
+                    "        path_local, group, name, path_cloud, share_url, zip_, encrypt, encryption, rel2home, os = _prompt_register_data_options(",
+                    "            path_local=path_local,",
+                    "            group=group,",
+                    "            name=name,",
+                    "            path_cloud=path_cloud,",
+                    "            share_url=share_url,",
+                    "            zip_=zip_,",
+                    "            encrypt=encrypt,",
+                    "            encryption=encryption,",
+                    "            pwd=pwd,",
+                    "            rel2home=rel2home,",
+                    "            os=os,",
+                    "        )",
+                    "    if path_local is None:",
+                    "        typer.echo(\"Error: PATH_LOCAL is required unless --interactive is used.\", err=True)",
+                    "        raise typer.Exit(code=1)",
                     "    try:",
                     "        backup_path, entry_name, replaced = register_backup_entry(",
                     "            path_local=path_local,",
                     "            group=group,",
                     "            entry_name=name,",
                     "            path_cloud=path_cloud,",
+                    "            share_url=share_url,",
                     "            zip_=zip_,",
                     "            encrypt=encrypt,",
                     "            encryption=encryption,",
@@ -5492,17 +5610,16 @@
                     {
                       "name": "path_local",
                       "kind": "positional_or_keyword",
-                      "type": "str",
+                      "type": "str | None",
                       "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Local file/folder path to back up.')]",
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Local file/folder path to back up.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Local file/folder path to back up.",
-                        "default": "..."
+                        "help": "Local file/folder path to back up."
                       }
                     },
                     {
@@ -5569,6 +5686,28 @@
                           "-C"
                         ],
                         "help": "Cloud path override (optional)."
+                      }
+                    },
+                    {
+                      "name": "share_url",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--share-url', '-u', help='Optional http(s) share URL for sync down --use-link.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--share-url",
+                          "-u"
+                        ],
+                        "long_flags": [
+                          "--share-url"
+                        ],
+                        "short_flags": [
+                          "-u"
+                        ],
+                        "help": "Optional http(s) share URL for sync down --use-link."
                       }
                     },
                     {
@@ -5700,6 +5839,28 @@
                         "short_flags": [
                           "-o"
                         ]
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Prompt for register fields one step at a time.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Prompt for register fields one step at a time."
                       }
                     }
                   ],
