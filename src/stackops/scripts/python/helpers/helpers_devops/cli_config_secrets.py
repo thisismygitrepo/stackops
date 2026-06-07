@@ -1,10 +1,8 @@
 import re
 import shlex
-import shutil
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Literal, Mapping, NoReturn, TypeAlias
+from typing import Annotated, Literal, NoReturn, TypeAlias
 
 import typer
 
@@ -15,7 +13,6 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidate
     load_secret_candidates,
     resolve_candidate,
 )
-from stackops.utils.schemas.secrets.secrets_types import Login
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME
@@ -148,13 +145,13 @@ def secrets(
     if edit:
         if len(secret_sources) != 1:
             _fail("--edit can only open one secrets file. Choose --source local or --source global.")
-        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor, create=create)
+        secret_actions.edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor, create=create)
         return
 
     if add:
         if len(secret_sources) != 1:
             _fail("--add can only update one secrets file. Choose --source local or --source global.")
-        _add_secrets_entry(secrets_path=secret_sources[0].path, create=create)
+        secret_actions.add_secrets_entry(secrets_path=secret_sources[0].path, create=create)
         return
 
     candidates = _load_secret_candidates_from_sources(secret_sources)
@@ -171,8 +168,8 @@ def secrets(
     candidate_source_path = _candidate_source_path(candidate=candidate, secret_sources=secret_sources)
     if interactive:
         _echo_jq_login_entry_hint(candidate=candidate, secrets_path=candidate_source_path)
-    _validate_env_names(candidate.key_values)
-    _write_env_handoff(candidate.key_values)
+    secret_actions.validate_env_names(candidate.key_values)
+    secret_actions.write_env_handoff(candidate.key_values)
     if verbose:
         _echo_verbose_selection(candidate=candidate, secrets_path=candidate_source_path)
 
@@ -279,28 +276,6 @@ def _jq_login_entry_filter(candidate: SecretCandidate) -> str:
     return f".{match.group(1)}"
 
 
-def _edit_secrets_file(secrets_path: Path, editor: str, *, create: bool = False) -> None:
-    secret_actions._edit_secrets_file(
-        secrets_path=secrets_path,
-        editor=editor,
-        create=create,
-        shutil_module=shutil,
-        subprocess_module=subprocess,
-    )
-
-
-def _add_secrets_entry(secrets_path: Path, *, create: bool = False) -> None:
-    secret_actions._add_secrets_entry(
-        secrets_path=secrets_path,
-        create=create,
-        prompt_secret_login_entry=_prompt_secret_login_entry,
-    )
-
-
-def _prompt_secret_login_entry() -> Login:
-    return secret_actions._prompt_secret_login_entry()
-
-
 def _clean_optional_selector(value: str | None) -> str | None:
     if value is None:
         return None
@@ -310,10 +285,6 @@ def _clean_optional_selector(value: str | None) -> str | None:
 
 def _clean_selector_values(values: list[str] | None) -> tuple[str, ...]:
     return tuple(stripped_value for value in values or () if (stripped_value := value.strip()))
-
-
-def _validate_env_names(key_values: Mapping[str, object]) -> None:
-    secret_actions._validate_env_names(key_values)
 
 
 def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -> None:
@@ -335,26 +306,6 @@ def _candidate_verbose_label(candidate: SecretCandidate) -> str:
 
 def _join_display(values: tuple[str, ...]) -> str:
     return ", ".join(values) if values else "-"
-
-
-def _write_env_handoff(key_values: Mapping[str, object]) -> None:
-    secret_actions._write_env_handoff(key_values)
-
-
-def _render_env_file(key_values: Mapping[str, object], powershell: bool) -> str:
-    return secret_actions._render_env_file(key_values=key_values, powershell=powershell)
-
-
-def _render_loader_file(env_path: Path, powershell: bool) -> str:
-    return secret_actions._render_loader_file(env_path=env_path, powershell=powershell)
-
-
-def _quote_powershell(value: str) -> str:
-    return secret_actions._quote_powershell(value)
-
-
-def _chmod_private(path: Path, mode: int) -> None:
-    secret_actions._chmod_private(path=path, mode=mode)
 
 
 def _fail(message: str) -> NoReturn:

@@ -5,8 +5,10 @@ import re
 import shlex
 import shutil
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Mapping, NoReturn
+from types import ModuleType
+from typing import Mapping, NoReturn
 
 import typer
 
@@ -19,13 +21,13 @@ SECRETS_FILE_VERSION = "0.5"
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-def _edit_secrets_file(
+def edit_secrets_file(
     secrets_path: Path,
     editor: str,
     *,
     create: bool = False,
-    shutil_module=shutil,
-    subprocess_module=subprocess,
+    shutil_module: ModuleType = shutil,
+    subprocess_module: ModuleType = subprocess,
 ) -> None:
     if not secrets_path.exists():
         if not create:
@@ -45,14 +47,14 @@ def _edit_secrets_file(
         _fail(f"Editor exited with status code {result.returncode}.")
 
 
-def _add_secrets_entry(
+def add_secrets_entry(
     secrets_path: Path,
     *,
     create: bool = False,
     prompt_secret_login_entry: Callable[[], Login] | None = None,
 ) -> None:
     secrets_file, created_file = _load_or_initialize_add_target(secrets_path=secrets_path, create=create)
-    prompt_entry = prompt_secret_login_entry or _prompt_secret_login_entry
+    prompt_entry = prompt_secret_login_entry or prompt_secret_login
     entry = prompt_entry()
     _secrets_entries(secrets_file).append(entry)
     _write_secrets_file(secrets_path=secrets_path, secrets_file=secrets_file, created_file=created_file)
@@ -101,7 +103,7 @@ def _write_secrets_file(*, secrets_path: Path, secrets_file: Mapping[str, object
         _chmod_private(secrets_path, 0o600)
 
 
-def _prompt_secret_login_entry() -> Login:
+def prompt_secret_login() -> Login:
     typer.echo("Login entry")
     entry: Login = {"name": _prompt_required_string("Login name"), "secrets": []}
     tags = _prompt_string_list("Login tags")
@@ -271,14 +273,14 @@ def _write_default_secrets_schema(schema_path: Path) -> None:
     schema_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
 
 
-def _validate_env_names(key_values: Mapping[str, object]) -> None:
+def validate_env_names(key_values: Mapping[str, object]) -> None:
     invalid_names = [name for name in key_values if ENV_VAR_NAME_RE.fullmatch(name) is None]
     if invalid_names:
         names = ", ".join(invalid_names)
         _fail(f"Invalid environment variable name(s) in keyValues: {names}")
 
 
-def _write_env_handoff(key_values: Mapping[str, object]) -> None:
+def write_env_handoff(key_values: Mapping[str, object]) -> None:
     op_program_path_raw = os.environ.get("OP_PROGRAM_PATH")
     if not op_program_path_raw:
         _fail("Cannot define env variables in the parent shell because OP_PROGRAM_PATH is not set. Run through the StackOps shell wrapper.")
