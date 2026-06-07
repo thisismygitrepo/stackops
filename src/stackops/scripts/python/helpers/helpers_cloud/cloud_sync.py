@@ -9,7 +9,6 @@ def main(
     config: str | None,
     transfers: int,
     root: str,
-    key: str | None,
     pwd: str | None,
     encrypt: bool,
     zip_: bool,
@@ -30,7 +29,6 @@ def main(
     cloud_config_explicit = CLOUD(
         cloud="",
         root=root,
-        key=key,
         pwd=pwd,
         encrypt=encrypt,
         zip=zip_,

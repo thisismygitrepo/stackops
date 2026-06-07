@@ -48,7 +48,6 @@ cloud:
   root: myhome
   rel2home: false
   pwd: null
-  key: null
   encrypt: false
   os_specific: false
   zip: false

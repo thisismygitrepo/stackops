@@ -273,8 +273,7 @@ cloud:
   cloud: {to_yaml_value(cloud_defaults["cloud"])}  # Cloud storage identifier/name
   root: {to_yaml_value(cloud_defaults["root"])}  # Root directory within the cloud storage
   rel2home: {to_yaml_value(cloud_defaults["rel2home"])}  # Whether paths are relative to home directory
-  pwd: {to_yaml_value(cloud_defaults["pwd"])}  # Password for encryption (leave empty for no password)
-  key: {to_yaml_value(cloud_defaults["key"])}  # Encryption key path (leave empty for no key-based encryption)
+  pwd: {to_yaml_value(cloud_defaults["pwd"])}  # Password for symmetric GPG encryption/decryption (leave empty to use local GPG keyring)
   encrypt: {to_yaml_value(cloud_defaults["encrypt"])}  # Enable encryption for cloud sync
   os_specific: {to_yaml_value(cloud_defaults["os_specific"])}  # Use OS-specific paths/configuration
   zip: {to_yaml_value(cloud_defaults["zip"])}  # Compress files before uploading

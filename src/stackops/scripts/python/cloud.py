@@ -15,8 +15,7 @@ def sync(
     config: Annotated[str | None, typer.Option("--config", "-c", help="path to .ve.yaml file.")] = None,
     transfers: Annotated[int, typer.Option("--transfers", "-t", help="Number of threads in syncing.")] = 10,
     root: Annotated[str, typer.Option("--root", "-R", help="Remote root.")] = defaults["root"],
-    key: Annotated[str | None, typer.Option("--key", "-k", help="Key for encryption")] = defaults["key"],
-    pwd: Annotated[str | None, typer.Option("--pwd", "-P", help="Password for encryption")] = defaults["pwd"],
+    pwd: Annotated[str | None, typer.Option("--pwd", "-P", help="Symmetric GPG encryption password used when --encrypt is set.")] = defaults["pwd"],
     encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="Decrypt after receiving.")] = defaults["encrypt"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="unzip after receiving.")] = defaults["zip"],
     bisync: Annotated[bool, typer.Option("--bisync", "-b", help="Bidirectional sync.")] = False,
@@ -25,7 +24,7 @@ def sync(
 ) -> None:
     """🔄 Synchronize files/folders between local and cloud storage."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main
-    sync_main(source=source, target=target, config=config, transfers=transfers, root=root, key=key, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)
+    sync_main(source=source, target=target, config=config, transfers=transfers, root=root, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)
 
 
 def copy(
@@ -39,8 +38,7 @@ def copy(
     record_os: Annotated[str, typer.Option("--record-os", help="💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.")] = DEFAULT_OS_FILTER,
     rel2home: Annotated[bool, typer.Option("--relative2home", "-r", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
-    key: Annotated[str | None, typer.Option("--key", "-k", help="🔑 Key for encryption")] = defaults["key"],
-    pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Password for encryption")] = defaults["pwd"],
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password used when --encrypt is set.")] = defaults["pwd"],
     encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="🔐 Encrypt before sending.")] = defaults["encrypt"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
@@ -59,7 +57,6 @@ def copy(
         record_os=record_os,
         rel2home=rel2home,
         root=root,
-        key=key,
         pwd=pwd,
         encrypt=encrypt,
         zip_=zip_,

@@ -17,7 +17,6 @@ def merge_cloud_config(cloud_config_base: CLOUD, cloud_config_explicit: CLOUD, c
         "root": cloud_config_base["root"],
         "rel2home": cloud_config_base["rel2home"],
         "pwd": cloud_config_base["pwd"],
-        "key": cloud_config_base["key"],
         "encrypt": cloud_config_base["encrypt"],
         "os_specific": cloud_config_base["os_specific"],
         "zip": cloud_config_base["zip"],
@@ -32,8 +31,6 @@ def merge_cloud_config(cloud_config_base: CLOUD, cloud_config_explicit: CLOUD, c
         merged["rel2home"] = cloud_config_explicit["rel2home"]
     if cloud_config_explicit["pwd"] != cloud_config_defaults["pwd"]:
         merged["pwd"] = cloud_config_explicit["pwd"]
-    if cloud_config_explicit["key"] != cloud_config_defaults["key"]:
-        merged["key"] = cloud_config_explicit["key"]
     if cloud_config_explicit["encrypt"] != cloud_config_defaults["encrypt"]:
         merged["encrypt"] = cloud_config_explicit["encrypt"]
     if cloud_config_explicit["os_specific"] != cloud_config_defaults["os_specific"]:

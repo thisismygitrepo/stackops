@@ -30,7 +30,7 @@ When a command does not override them, cloud defaults come from `stackops.utils.
 - remote root: `myhome`
 - cloud name: `mycloud101`
 - `encrypt`, `zip`, `share`, `overwrite`, `os_specific`, `rel2home`: `False`
-- `key` and `pwd`: unset
+- `pwd`: unset
 
 ---
 
@@ -47,8 +47,7 @@ Current options from live help:
 | `--config`, `-c` | Path to `.ve.yaml` |
 | `--transfers`, `-t` | Number of sync threads |
 | `--root`, `-R` | Remote root |
-| `--key`, `-k` | Encryption key |
-| `--pwd`, `-P` | Encryption password |
+| `--pwd`, `-P` | Symmetric GPG encryption password used when `--encrypt` is set |
 | `--encrypt`, `-e` | Current help text: decrypt after receiving |
 | `--zip`, `-z` | Current help text: unzip after receiving |
 | `--bisync`, `-b` | Bidirectional sync |
@@ -81,8 +80,7 @@ Current options from live help:
 | `--record-os` | OS filter for `--record`; defaults to all supported OS values |
 | `--relative2home`, `-r` | Treat remote paths as relative to `myhome` |
 | `--root`, `-R` | Remote root |
-| `--key`, `-k` | Encryption key |
-| `--password`, `-p` | Encryption password |
+| `--password`, `-p` | Symmetric GPG encryption password used when `--encrypt` is set |
 | `--encrypt`, `-e` | Encrypt before sending |
 | `--zip`, `-z` | Current help text: unzip after receiving |
 | `--os-specific`, `-O` | Choose a path specific to the current OS |

@@ -42,14 +42,7 @@
           "type": "boolean"
         },
         "pwd": {
-          "description": "Optional password used for encryption.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "key": {
-          "description": "Optional encryption key path.",
+          "description": "Optional password used for symmetric GPG encryption and decryption.",
           "type": [
             "string",
             "null"
@@ -81,7 +74,6 @@
         "root",
         "rel2home",
         "pwd",
-        "key",
         "encrypt",
         "os_specific",
         "zip",

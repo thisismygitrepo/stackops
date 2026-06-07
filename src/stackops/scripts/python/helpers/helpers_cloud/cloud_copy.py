@@ -320,7 +320,6 @@ def main(
     record_os: str,
     rel2home: bool,
     root: str,
-    key: str | None,
     pwd: str | None,
     encrypt: bool,
     zip_: bool,
@@ -340,7 +339,6 @@ def main(
         share=share,
         rel2home=rel2home,
         root=root,
-        key=key,
         pwd=pwd,
         encrypt=encrypt,
         zip=zip_,
@@ -371,9 +369,6 @@ def main(
         source=source,
         target=target,
     )
-    if cloud_config_explicit["key"] is not None:
-        console.print(Panel("❌ Key-based encryption is not supported yet", title="[bold red]Error[/bold red]", border_style="red"))
-        raise SystemExit(1)
     if cloud in source:
         if record:
             console.print(Panel("❌ --record is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))

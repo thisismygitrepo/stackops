@@ -10,7 +10,6 @@ class CLOUD(TypedDict, total=True):
     rel2home: bool
 
     pwd: str | None
-    key: str | None
     encrypt: bool
 
     os_specific: bool
@@ -23,7 +22,6 @@ def read_default_cloud_config() -> CLOUD:
         "root": "myhome",
         "rel2home": False,
         "pwd": None,
-        "key": None,
         "encrypt": False,
         "os_specific": False,
         "zip": False,
