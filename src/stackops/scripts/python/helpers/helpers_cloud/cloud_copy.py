@@ -255,7 +255,7 @@ def main(
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console
     from rich.panel import Panel
-    from stackops.scripts.python.helpers.helpers_cloud.helpers2 import ES, parse_cloud_source_target
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES, parse_cloud_source_target
     console = Console()
     console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
     original_target = target

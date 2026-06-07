@@ -33,7 +33,7 @@ def _format_env_preview(env_key: str, env_value: str) -> str:
 
 
 def _format_path_preview(path_entry: str) -> str:
-    from stackops.scripts.python.helpers.helper_env.path_manager_backend import get_directory_contents
+    from stackops.scripts.python.helpers.helpers_env.path_manager_backend import get_directory_contents
 
     path_obj = Path(path_entry)
     if path_obj.exists():
@@ -61,7 +61,7 @@ def _build_env_selection_data() -> tuple[dict[str, str], dict[str, str]]:
 
 
 def _build_path_selection_data() -> tuple[dict[str, str], dict[str, str]]:
-    from stackops.scripts.python.helpers.helper_env.path_manager_backend import get_path_entries
+    from stackops.scripts.python.helpers.helpers_env.path_manager_backend import get_path_entries
 
     options_to_preview: dict[str, str] = {}
     options_to_output: dict[str, str] = {}
@@ -105,7 +105,7 @@ def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str 
 
 
 def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
-    from stackops.scripts.python.helpers import helper_env as navigator
+    from stackops.scripts.python.helpers import helpers_env as navigator
     if which in {"PATH", "p"}:
         path = Path(navigator.__file__).resolve().parent.joinpath(navigator.PATH_MANAGER_TUI_PATH_REFERENCE)
     else:

@@ -12,7 +12,7 @@ from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.code import print_code
 from stackops.utils.options import choose_cloud_interactively
-from stackops.scripts.python.helpers.helpers_cloud.helpers2 import ES
+from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
 from stackops.scripts.python.helpers.helpers_devops.backup_config import (
     BackupConfig,
     BackupGroup,

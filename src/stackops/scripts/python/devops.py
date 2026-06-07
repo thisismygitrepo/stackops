@@ -113,7 +113,10 @@ def network(ctx: typer.Context) -> None:
 
 def execute(
     ctx: typer.Context,
-    name: Annotated[str, typer.Argument(help="Name of script to run, e.g., 'a' for a.py, or command to execute")] = "",
+    name: Annotated[
+        str,
+        typer.Argument(help="Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute"),
+    ] = "",
     where: Annotated[
         WHERE,
         typer.Option("--where", "-w", help="Where to look for the script"),

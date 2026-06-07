@@ -17,7 +17,7 @@ def main(
     delete: bool,
     verbose: bool,
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_cloud.helpers2 import parse_cloud_source_target
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import parse_cloud_source_target
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount import get_mprocs_mount_txt
 
     from rich.console import Console

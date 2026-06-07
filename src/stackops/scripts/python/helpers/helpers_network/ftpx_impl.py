@@ -97,7 +97,7 @@ def _handle_win_transfer(source: str, target: str, overwrite_existing: bool, win
 
 def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, str, bool]:
     """Resolve source and target paths, determine machine and direction."""
-    from stackops.scripts.python.helpers.helpers_cloud.helpers2 import ES
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
 
     resolved_source: str | None = None
     resolved_target: str | None = None

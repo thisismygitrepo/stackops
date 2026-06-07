@@ -63,7 +63,12 @@ def _is_supported_script_match(file_path: Path, root: Path, supported_suffixes: 
 
 
 def run_py_script(ctx: typer.Context,
-                  name: Annotated[str, typer.Argument(help="Name of script to run, e.g., 'a' for a.py, or command to execute")] = "",
+                  name: Annotated[
+                      str,
+                      typer.Argument(
+                          help="Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute"
+                      ),
+                  ] = "",
                   where: Annotated[WHERE, typer.Option("--where", "-w", help="Where to look for the script")] = "all",
                   interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
                   command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
@@ -86,7 +91,7 @@ def run_py_script(ctx: typer.Context,
         raise typer.Exit(code=1)
     target_file: Path | None = None
     if where in ["dynamic", "d"]:
-        # src/stackops/jobs/scripts/python_scripts/a.py
+        # src/stackops/jobs/scripts_dynamic/system_compute_analyzer.py
         if "." in name:
             resolved_names: list[str] = [name]
         else:
@@ -198,13 +203,16 @@ def run_py_script(ctx: typer.Context,
 
 
 def copy_script_to_local(ctx: typer.Context,
-                         name: Annotated[str, typer.Argument(help="Name of the temporary python script to copy, e.g., 'a' for a.py")],
+                         name: Annotated[
+                             str,
+                             typer.Argument(help="Name of the dynamic script to copy, e.g., 'system_compute_analyzer' for system_compute_analyzer.py"),
+                         ],
                          alias: Annotated[str | None, typer.Option("--alias", "-a", help="Whether to create call it a different name locally")] = None
                          ) -> None:
     """
-    Copy a temporary python script stored in stackops/scripts/python/helpers/tmp_py_scripts to the local machine.
+    Copy a dynamic script stored in stackops/jobs/scripts_dynamic to the local machine.
     """
-    url = f"""https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/python/helpers/tmp_py_scripts/{name}.py"""
+    url = f"""https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/jobs/scripts_dynamic/{name}.py"""
     import requests
     response = requests.get(url, timeout=30)
     if response.status_code != 200:
@@ -221,10 +229,10 @@ def copy_script_to_local(ctx: typer.Context,
 
 def get_app():
     app = typer.Typer(
-        name="run-tmp-script",
-        help="Helper to run temporary python scripts stored in stackops/scripts/python/helpers/tmp_py_scripts",
+        name="dynamic-scripts",
+        help="Helper to run dynamic scripts stored in stackops/jobs/scripts_dynamic",
         no_args_is_help=True,
     )
-    from stackops.jobs.scripts_dynamic import a
-    app.command()(a.main)
+    from stackops.jobs.scripts_dynamic import system_compute_analyzer
+    app.command(name="system-compute-analyzer")(system_compute_analyzer.main)
     return app

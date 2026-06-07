@@ -12373,7 +12373,7 @@
               "raw_lines": [
                 "def execute(",
                 "    ctx: typer.Context,",
-                "    name: Annotated[str, typer.Argument(help=\"Name of script to run, e.g., 'a' for a.py, or command to execute\")] = \"\",",
+                "    name: Annotated[str, typer.Argument(help=\"Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute\")] = \"\",",
                 "    where: Annotated[",
                 "        WHERE,",
                 "        typer.Option(\"--where\", \"-w\", help=\"Where to look for the script\"),",
@@ -12403,13 +12403,13 @@
                   "type": "str",
                   "default": "",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Argument(help=\"Name of script to run, e.g., 'a' for a.py, or command to execute\")]",
+                  "annotation_raw": "Annotated[str, typer.Argument(help=\"Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute\")]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of script to run, e.g., 'a' for a.py, or command to execute"
+                    "help": "Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute"
                   }
                 },
                 {

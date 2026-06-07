@@ -66,7 +66,7 @@ def mount(
     from rich.console import Console
     from rich.panel import Panel
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_zellij import build_zellij_launch_command
-    from stackops.scripts.python.helpers.helpers_cloud.cloud_mont_tmux import build_tmux_launch_command
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux import build_tmux_launch_command
     console = Console()
     DEFAULT_MOUNT = "~/data/rclone"
     DEFAULT_ZELLIJ_SESSION = "cloud-mount"

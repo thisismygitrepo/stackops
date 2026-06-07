@@ -19,7 +19,7 @@ from textual.containers import Horizontal, Vertical
 from textual.visual import VisualType
 from textual.widgets import Footer, Header, Label, ListItem, ListView, Static
 
-from stackops.scripts.python.helpers.helper_env.path_manager_backend import get_directory_contents, get_path_entries, get_platform
+from stackops.scripts.python.helpers.helpers_env.path_manager_backend import get_directory_contents, get_path_entries, get_platform
 
 
 class DirectoryPreview(Static):
