@@ -1,6 +1,7 @@
 """BR: Backup and Retrieve"""
 
 import re
+import shlex
 from pathlib import Path
 from platform import system
 from typing import Literal
@@ -27,6 +28,7 @@ from stackops.scripts.python.helpers.helpers_devops.backup_config import (
     write_backup_config,
 )
 from stackops.profile.create_links_export import REPO_LOOSE
+from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
 
 DIRECTION = Literal["BACKUP", "RETRIEVE"]
 
@@ -107,6 +109,7 @@ def _retrieve_from_share_url(
     display_name: str,
     item: BackupItem,
     local_path: Path,
+    pwd: str | None,
     overwrite: bool,
 ) -> Path:
     from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import (
@@ -124,7 +127,8 @@ def _retrieve_from_share_url(
             target_path=local_path,
             zip_requested=item["zip"],
             encrypt_requested=item["encrypt"],
-            pwd=None,
+            encryption_mode=item["encryption"],
+            pwd=pwd if item["encryption"] == "symmetric" else None,
             overwrite=overwrite,
         )
     except ShareUrlDownloadError as error:
@@ -141,6 +145,8 @@ def register_backup_entry(
     share_url: str | None = None,
     zip_: bool = True,
     encrypt: bool = True,
+    encryption: str | None = None,
+    password: str | None = None,
     rel2home: bool | None = None,
     os: str = "",
 ) -> tuple[Path, str, bool]:
@@ -171,6 +177,18 @@ def register_backup_entry(
     local_display = f"~/{local_path.relative_to(home)}" if rel2home and in_home else local_path.as_posix()
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
     share_url_value = share_url.strip() if share_url and share_url.strip() else None
+    encryption_mode: EncryptionMode | None = None
+    if password is not None:
+        if password == "":
+            raise ValueError("Password must be non-empty.")
+        if not encrypt:
+            raise ValueError("--password cannot be combined with --no-encrypt.")
+        if encryption is not None and parse_encryption_mode(encryption, label="Encryption mode") != "symmetric":
+            raise ValueError("--password can only be used with symmetric encryption.")
+        encryption_mode = "symmetric"
+        encrypt = True
+    elif encrypt:
+        encryption_mode = parse_encryption_mode(encryption or "asymmetric", label="Encryption mode")
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
     config: BackupConfig
     if USER_BACKUP_PATH.exists():
@@ -192,6 +210,7 @@ def register_backup_entry(
         "share_url": share_url_value,
         "zip": zip_,
         "encrypt": encrypt,
+        "encryption": encryption_mode,
         "rel2home": rel2home,
         "os": set(os_tokens),
     }
@@ -208,8 +227,17 @@ def _parse_requested_backup_entries(which: str) -> list[str]:
     return choices
 
 
-def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | None, repo: REPO_LOOSE, use_link: bool = False) -> None:
+def main_backup_retrieve(
+    direction: DIRECTION,
+    which: str | None,
+    cloud: str | None,
+    repo: REPO_LOOSE,
+    use_link: bool = False,
+    pwd: str | None = None,
+) -> None:
     console = Console()
+    if pwd == "":
+        raise ValueError("--password must be non-empty.")
     if use_link and direction != "RETRIEVE":
         raise ValueError("--use-link can only be used with sync down/d. Backups still use rclone.")
     use_link_retrieve = use_link and direction == "RETRIEVE"
@@ -322,6 +350,11 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             flags += "e" if item["encrypt"] else ""
             flags += "r" if item["rel2home"] else ""
             flags += "o" if not _is_all_os_values(item["os"]) else ""
+            encryption_mode = item["encryption"]
+            if item["encrypt"] and encryption_mode is None:
+                raise ValueError(f"Backup entry '{display_name}' must define 'encryption' when 'encrypt' is true.")
+            encryption_arg = f" --encryption {encryption_mode}" if item["encrypt"] else ""
+            password_arg = f" --password {shlex.quote(pwd)}" if encryption_mode == "symmetric" and pwd is not None else ""
             local_path = Path(item["path_local"]).as_posix()
             path_cloud = item["path_cloud"]
             if use_link_retrieve:
@@ -329,6 +362,7 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
                     f"📦 PROCESSING: {display_name}\n"
                     f"📂 Local path: {local_path}\n"
                     "🔗 Source: share_url\n"
+                    f"🔐 Encryption: {item['encryption'] if item['encrypt'] else 'None'}\n"
                     f"🏳️  Flags: {flags or 'None'}",
                     title=f"[bold blue]Processing Link Item: {display_name}[/bold blue]",
                     border_style="blue",
@@ -337,6 +371,7 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
                     display_name=display_name,
                     item=item,
                     local_path=Path(local_path),
+                    pwd=pwd,
                     overwrite=not _is_all_os_values(item["os"]),
                 )
                 link_download_count += 1
@@ -376,9 +411,9 @@ def main_backup_retrieve(direction: DIRECTION, which: str | None, cloud: str | N
             ))
             flag_arg = f" -{flags}" if flags else ""
             if direction == "BACKUP":
-                program += f"""\ncloud copy "{local_path}" "{remote_spec}"{flag_arg}\n"""
+                program += f"""\ncloud copy "{local_path}" "{remote_spec}"{flag_arg}{encryption_arg}{password_arg}\n"""
             elif direction == "RETRIEVE":
-                program += f"""\ncloud copy "{remote_spec}" "{local_path}"{flag_arg}\n"""
+                program += f"""\ncloud copy "{remote_spec}" "{local_path}"{flag_arg}{encryption_arg}{password_arg}\n"""
             else:
                 console.print(Panel('❌ ERROR: INVALID DIRECTION\n⚠️  Direction must be either "BACKUP" or "RETRIEVE"', title="[bold red]Error: Invalid Direction[/bold red]", border_style="red"))
                 raise RuntimeError(f"Unknown direction: {direction}")

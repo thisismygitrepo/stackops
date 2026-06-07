@@ -31,6 +31,7 @@ When a command does not override them, cloud defaults come from `stackops.utils.
 - cloud name: `mycloud101`
 - `encrypt`, `zip`, `share`, `overwrite`, `os_specific`, `rel2home`: `False`
 - `pwd`: unset
+- encryption mode: unset unless passed with `--encryption`
 
 ---
 
@@ -80,8 +81,9 @@ Current options from live help:
 | `--record-os` | OS filter for `--record`; defaults to all supported OS values |
 | `--relative2home`, `-r` | Treat remote paths as relative to `myhome` |
 | `--root`, `-R` | Remote root |
-| `--password`, `-p` | Symmetric GPG encryption password used when `--encrypt` is set |
+| `--password`, `-p` | Symmetric GPG encryption password; implies `--encrypt --encryption symmetric` |
 | `--encrypt`, `-e` | Encrypt before sending |
+| `--encryption`, `-E` | Encryption mode when `--encrypt` is set: `symmetric` or `asymmetric` |
 | `--zip`, `-z` | Current help text: unzip after receiving |
 | `--os-specific`, `-O` | Choose a path specific to the current OS |
 | `--config`, `-c` | Path to `.ve.yaml` |
@@ -90,11 +92,14 @@ Example:
 
 ```bash
 cloud copy ./report.pdf remote:reports/report.pdf
+cloud copy ./report.pdf remote:reports/report.pdf --encrypt --encryption asymmetric
+cloud copy ./report.pdf remote:reports/report.pdf --password "$STACKOPS_BACKUP_PASSWORD"
 cloud copy ./report.pdf remote:reports/report.pdf --record --record-name report --record-group shared
 cloud copy ./report.pdf remote:reports/report.pdf --share --record --record-name report --record-group shared
 ```
 
 `--record` saves the upload in `mapper/data.yaml`. When combined with `--share`, the generated URL is stored in that entry instead of writing a `.share_url_*` sidecar file.
+Use `--encryption symmetric` for password-based GPG and `--encryption asymmetric` for GPG public/private keys. Passing `--password` selects encrypted symmetric mode automatically.
 
 ---
 

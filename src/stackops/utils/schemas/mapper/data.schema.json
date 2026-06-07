@@ -49,6 +49,10 @@
           "type": "boolean",
           "description": "Encrypt the backup before upload."
         },
+        "encryption": {
+          "$ref": "#/$defs/encryption_mode",
+          "description": "Required when encrypt is true. Use symmetric for password-based GPG or asymmetric for GPG public/private keys."
+        },
         "zip": {
           "type": "boolean",
           "description": "Compress the item before upload."
@@ -74,7 +78,52 @@
         "rel2home",
         "os"
       ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "encrypt": {
+                "const": true
+              }
+            },
+            "required": [
+              "encrypt"
+            ]
+          },
+          "then": {
+            "required": [
+              "encryption"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "encrypt": {
+                "const": false
+              }
+            },
+            "required": [
+              "encrypt"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "encryption"
+              ]
+            }
+          }
+        }
+      ],
       "additionalProperties": false
+    },
+    "encryption_mode": {
+      "type": "string",
+      "enum": [
+        "symmetric",
+        "asymmetric"
+      ]
     },
     "os_name": {
       "type": "string",

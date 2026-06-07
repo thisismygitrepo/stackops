@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 import zipfile
 
 import typer
@@ -54,6 +54,12 @@ def _format_self_managed_mapper_path(path: Path) -> str:
 
 def _build_entry_name(original_path: Path) -> str:
     return original_path.stem.replace(".", "_").replace("-", "_")
+
+
+def _resolve_entry_name(original_path: Path, entry_name: str | None) -> str:
+    if entry_name is None or not entry_name.strip():
+        return _build_entry_name(original_path)
+    return entry_name.strip()
 
 
 def _build_flat_backup_name(original_path: Path) -> str:
@@ -123,21 +129,23 @@ def _write_to_user_mapper(
     )
     return mapper_path, entry
 
-def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, section: str, os_filter: str) -> None:
-    entry_name = _build_entry_name(orig_path)
+
+def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, section: str, os_filter: str, entry_name: str | None = None) -> None:
+    resolved_entry_name = _resolve_entry_name(orig_path, entry_name)
     method_resolved = METHOD_MAP[method]
     mapper_file, entry = _write_to_user_mapper(
         section=section,
-        entry_name=entry_name,
+        entry_name=resolved_entry_name,
         original_path=orig_path,
         self_managed_path=new_path,
         method=method_resolved,
         is_contents=False,
         os_filter=os_filter,
     )
-    preview = _build_mapper_preview(section=section, entry_name=entry_name, entry=entry)
+    preview = _build_mapper_preview(section=section, entry_name=resolved_entry_name, entry=entry)
     from rich.console import Console
     from rich.panel import Panel
+
     console = Console()
     console.print(
         Panel(
@@ -167,7 +175,9 @@ def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "publi
     return new_path
 
 
-def get_original_path_from_backup_path(backup_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool) -> Path:
+def get_original_path_from_backup_path(
+    backup_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool
+) -> Path:
     match sensitivity:
         case "private" | "v" | "public" | "b":
             pass
@@ -185,21 +195,151 @@ def get_original_path_from_backup_path(backup_path: Path, sensitivity: Literal["
     return original_path
 
 
+def _prompt_register_dotfile_options(
+    *,
+    file: str | None,
+    method: METHOD_LOOSE,
+    on_conflict: ON_CONFLICT_LOOSE,
+    sensitivity: Literal["private", "v", "public", "b"],
+    destination: str | None,
+    section: str,
+    os_filter: str,
+    shared: bool,
+    record: bool,
+    entry_name: str | None,
+) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, Literal["private", "public"], str | None, str, str, bool, bool, str]:
+    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
+
+    file_default = file or Path.cwd().as_posix()
+    prompted_file = ask_text(
+        "File or directory",
+        help_text="Local config file or directory to register. The original path or target self-managed path must exist.",
+        default=file_default,
+    )
+    assert prompted_file is not None
+    orig_path = Path(prompted_file).expanduser().absolute()
+    method_default = METHOD_MAP[method]
+    prompted_method = cast(
+        METHOD_LOOSE,
+        ask_choice(
+            "Method",
+            help_text="Use copy to keep separate files, or symlink to point the original path at the self-managed copy.",
+            choices=("copy", "symlink"),
+            default=method_default,
+        ),
+    )
+    conflict_default = ON_CONFLICT_MAPPER[on_conflict]
+    prompted_on_conflict = cast(
+        ON_CONFLICT_LOOSE,
+        ask_choice(
+            "Conflict behavior",
+            help_text="What to do if both the original path and self-managed path already exist.",
+            choices=("throw-error", "overwrite-self-managed", "backup-self-managed", "overwrite-default-path", "backup-default-path"),
+            default=conflict_default,
+        ),
+    )
+    sensitivity_default = "private" if sensitivity in ("private", "v") else "public"
+    prompted_sensitivity = cast(
+        Literal["private", "public"],
+        ask_choice(
+            "Sensitivity",
+            help_text="Private entries go into your private dotfiles area. Public entries go into the public/shared area.",
+            choices=("private", "public"),
+            default=sensitivity_default,
+        ),
+    )
+    prompted_destination = ask_text(
+        "Destination directory",
+        help_text="Optional self-managed destination root. Leave blank to use the default flat dotfiles storage.",
+        default=destination,
+        allow_empty=True,
+    )
+    prompted_shared = ask_bool(
+        "Shared destination", help_text="When a destination directory is provided, place the file under a shared subdirectory.", default=shared
+    )
+    default_entry_name = entry_name or _build_entry_name(orig_path)
+    prompted_entry_name = ask_text("Mapper entry name", help_text="YAML key to use inside the selected mapper section.", default=default_entry_name)
+    prompted_section = ask_text(
+        "Mapper section", help_text="Top-level section in mapper/dotfiles.yaml where this entry should be recorded.", default=section
+    )
+    prompted_os_filter = ask_text("OS filter", help_text="Comma-separated OS list. Valid values are linux, darwin, and windows.", default=os_filter)
+    prompted_record = ask_bool(
+        "Record in mapper", help_text="Write the YAML entry to your user mapper. If disabled, StackOps prints a preview instead.", default=record
+    )
+    assert prompted_entry_name is not None
+    assert prompted_section is not None
+    assert prompted_os_filter is not None
+    self_managed_path = get_backup_path(
+        orig_path=orig_path, sensitivity=prompted_sensitivity, destination=prompted_destination, shared=prompted_shared
+    )
+    confirm_summary(
+        "Config Register Review",
+        [
+            f"file: {prompted_file}",
+            f"self_managed: {self_managed_path}",
+            f"method: {prompted_method}",
+            f"on_conflict: {prompted_on_conflict}",
+            f"sensitivity: {prompted_sensitivity}",
+            f"destination: {prompted_destination or '(default)'}",
+            f"shared: {prompted_shared}",
+            f"record: {prompted_record}",
+            f"section: {prompted_section}",
+            f"name: {prompted_entry_name}",
+            f"os: {prompted_os_filter}",
+        ],
+    )
+    return (
+        prompted_file,
+        prompted_method,
+        prompted_on_conflict,
+        prompted_sensitivity,
+        prompted_destination,
+        prompted_section,
+        prompted_os_filter,
+        prompted_shared,
+        prompted_record,
+        prompted_entry_name,
+    )
+
+
 def register_dotfile(
-    file: Annotated[str, typer.Argument(help="file/folder path.")],
+    file: Annotated[str | None, typer.Argument(help="file/folder path.")] = None,
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "copy",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict")] = "throw-error",
-    sensitivity: Annotated[Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the config file.")] = "private",
-    destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")] = None,
+    sensitivity: Annotated[
+        Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the config file.")
+    ] = "private",
+    destination: Annotated[
+        str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")
+    ] = None,
+    name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name in mapper/dotfiles.yaml. Defaults to the file stem.")] = None,
     section: Annotated[str, typer.Option("--section", "-se", help="Section name in mapper/dotfiles.yaml to record this mapping.")] = "default",
     os_filter: Annotated[str, typer.Option("--os", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
     shared: Annotated[bool, typer.Option("--shared", "-sh", help="Whether the config file is shared across destinations directory.")] = False,
     record: Annotated[bool, typer.Option("--record", "-r", help="Record the mapping in user's mapper.yaml")] = True,
-    ) -> None:
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
+) -> None:
     from rich.console import Console
     from rich.panel import Panel
     from stackops.utils.links import symlink_map, copy_map
+
     console = Console()
+    if interactive:
+        file, method, on_conflict, sensitivity, destination, section, os_filter, shared, record, name = _prompt_register_dotfile_options(
+            file=file,
+            method=method,
+            on_conflict=on_conflict,
+            sensitivity=sensitivity,
+            destination=destination,
+            section=section,
+            os_filter=os_filter,
+            shared=shared,
+            record=record,
+            entry_name=name,
+        )
+    if file is None:
+        console.print("[red]Error:[/] FILE is required unless --interactive is used.")
+        raise typer.Exit(code=1)
     orig_path = Path(file).expanduser().absolute()
     new_path = get_backup_path(orig_path=orig_path, sensitivity=sensitivity, destination=destination, shared=shared)
     if not _path_exists_for_register(orig_path) and not _path_exists_for_register(new_path):
@@ -233,10 +373,10 @@ def register_dotfile(
             raise ValueError(f"Unknown method: {method}")
     if result["action"] == "error":
         raise typer.Exit(code=1)
+    entry_name = _resolve_entry_name(orig_path, name)
     if record:
-        record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter)
+        record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter, entry_name=entry_name)
         return
-    entry_name = _build_entry_name(orig_path)
     preview = _build_mapper_preview(
         section=section,
         entry_name=entry_name,

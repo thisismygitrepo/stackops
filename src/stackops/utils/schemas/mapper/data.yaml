@@ -2,6 +2,7 @@
 
 # locations to be backed up to the cloud.
 # os must be a YAML list containing one or more of: linux, darwin, windows.
+# encryption is required when encrypt is true: symmetric or asymmetric.
 
 thunderbird:
   windows_files:
@@ -9,6 +10,7 @@ thunderbird:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: true
     rel2home: true
     os:
@@ -27,6 +29,7 @@ thunderbird:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: true
     rel2home: true
     os:
@@ -61,6 +64,7 @@ atuin:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: false
     rel2home: true
     os:
@@ -79,6 +83,7 @@ mcfly:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: false
     rel2home: true
     os:
@@ -88,6 +93,7 @@ mcfly:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: false
     rel2home: true
     os:
@@ -97,6 +103,7 @@ mcfly:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: false
     rel2home: true
     os:
@@ -108,6 +115,7 @@ shell_history:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: false
     rel2home: true
     os:
@@ -117,6 +125,7 @@ shell_history:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: false
     rel2home: true
     os:
@@ -126,6 +135,7 @@ shell_history:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: false
     rel2home: true
     os:
@@ -137,6 +147,7 @@ shell_history:
 #     path_cloud: "^"
 #     share_url: null
 #     encrypt: true
+#     encryption: asymmetric
 #     zip: true
 #     rel2home: true
 #     os:
@@ -150,6 +161,7 @@ ipython:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: true
     rel2home: true
     os:

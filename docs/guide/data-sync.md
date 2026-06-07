@@ -26,7 +26,8 @@ Current subcommands:
 Add one file or directory to the user backup config:
 
 ```bash
-devops data register ~/.config/wezterm --group dotfiles --zip --encrypt
+devops data register ~/.config/wezterm --group dotfiles --encryption asymmetric
+devops data register ~/.config/wezterm --group dotfiles --password "$STACKOPS_BACKUP_PASSWORD"
 devops data register ~/Documents/work --group documents --path-cloud backups/work --os linux,darwin
 ```
 
@@ -36,6 +37,7 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 - `path_cloud`
 - `share_url`
 - `encrypt`
+- `encryption`
 - `zip`
 - `rel2home`
 - `os`
@@ -49,6 +51,7 @@ dotfiles:
     path_cloud: "^"
     share_url: null
     encrypt: true
+    encryption: asymmetric
     zip: true
     rel2home: true
     os:
@@ -59,6 +62,8 @@ dotfiles:
 `^` means "derive the remote path from `path_local`".
 `path_cloud` can include a cloud prefix such as `od:/something`.
 `share_url` is `null` until a share link exists.
+`encryption` is required only when `encrypt` is `true`; use `symmetric` for password-based GPG and `asymmetric` for GPG public/private keys.
+Passing `--password` to `register` records `encryption: symmetric` but does not store the password in `mapper/data.yaml`.
 
 ### Generate backup or restore commands
 
@@ -78,6 +83,9 @@ devops data sync down --repo user --which dotfiles
 
 # Restrict the generated commands to one item and one cloud profile
 devops data sync up --cloud myremote --which dotfiles.wezterm
+
+# Use one password for selected symmetric entries
+devops data sync up --which dotfiles.wezterm --password "$STACKOPS_BACKUP_PASSWORD"
 
 # Restore one item from its recorded share_url instead of rclone
 devops data sync down --use-link --which dotfiles.wezterm
@@ -156,6 +164,7 @@ The `cloud` commands can load defaults from a nearby `.ve.yaml` file or from an 
 - `--config`
 - `--root`
 - `--encrypt`
+- `--encryption`
 - `--zip`
 - `--relative2home`
 

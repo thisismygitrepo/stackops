@@ -1,5 +1,6 @@
 import typer
-from typing import Annotated, Literal, assert_never
+from pathlib import Path
+from typing import Annotated, Literal, assert_never, cast
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
 from stackops.profile.create_links_export import REPO_LOOSE
@@ -8,6 +9,10 @@ from stackops.profile.create_links_export import REPO_LOOSE
 def sync(
     direction: Annotated[Literal["up", "u", "down", "d"], typer.Argument(..., help="'up'/'u' backs up; 'down'/'d' retrieves.")],
     cloud: Annotated[str | None, typer.Option("--cloud", "-c", help="☁ Cloud configuration name (rclone config name)")] = None,
+    pwd: Annotated[
+        str | None,
+        typer.Option("--password", "-p", help="Symmetric GPG encryption password for entries with encryption: symmetric."),
+    ] = None,
     which: Annotated[
         str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items")
     ] = None,
@@ -23,6 +28,7 @@ def sync(
     # interactive: Annotated[bool, typer.Option("--interactive", "-i", help="🤔 Prompt the selection of which items to process")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve
+
     match direction:
         case "up" | "u":
             direction_resolved: Literal["BACKUP", "RETRIEVE"] = "BACKUP"
@@ -32,31 +38,179 @@ def sync(
             typer.echo("Error: Invalid direction. Use 'up' or 'down'.")
             raise typer.Exit(code=1)
     try:
-        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo, use_link=use_link)
+        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo, use_link=use_link, pwd=pwd)
     except ValueError as exc:
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)
         typer.echo(msg)
         raise typer.Exit(code=1)
 
 
+def _ordered_os_tokens(os_filter: str) -> list[str]:
+    requested = {part.strip().lower() for part in os_filter.split(",") if part.strip()}
+    return [value for value in ALL_OS_VALUES if value in requested]
+
+
+def _default_data_entry_name(path_local: str, os_filter: str) -> str:
+    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import _sanitize_entry_name
+
+    base_name = _sanitize_entry_name(Path(path_local).expanduser().stem)
+    os_tokens = _ordered_os_tokens(os_filter)
+    if len(os_tokens) == len(ALL_OS_VALUES):
+        return base_name
+    if len(os_tokens) == 0:
+        return base_name
+    return f"{base_name}_{'_'.join(os_tokens)}"
+
+
+def _default_rel2home(path_local: str) -> bool:
+    local_path = Path(path_local).expanduser().absolute()
+    return local_path.is_relative_to(Path.home())
+
+
+def _prompt_register_data_options(
+    *,
+    path_local: str | None,
+    group: str,
+    name: str | None,
+    path_cloud: str | None,
+    share_url: str | None,
+    zip_: bool,
+    encrypt: bool,
+    encryption: str | None,
+    pwd: str | None,
+    rel2home: bool | None,
+    os: str,
+) -> tuple[str, str, str, str, str | None, bool, bool, str | None, bool, str]:
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
+    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
+
+    path_default = path_local or Path.cwd().as_posix()
+    prompted_path_local = ask_text(
+        "Local path", help_text="Local file or directory to back up. The path must exist when the entry is written.", default=path_default
+    )
+    assert prompted_path_local is not None
+    prompted_group = ask_text("Group", help_text="Top-level group in mapper/data.yaml.", default=group)
+    prompted_os = ask_text("OS filter", help_text=f"Comma-separated OS list. Valid values are: {', '.join(ALL_OS_VALUES)}.", default=os)
+    assert prompted_group is not None
+    assert prompted_os is not None
+    entry_name_default = name or _default_data_entry_name(path_local=prompted_path_local, os_filter=prompted_os)
+    prompted_name = ask_text("Entry name", help_text="YAML key to use inside the selected backup group.", default=entry_name_default)
+    prompted_path_cloud = ask_text(
+        "Cloud path", help_text="Cloud object path. Use ^ to let StackOps derive the path from the local file or directory.", default=path_cloud or ES
+    )
+    prompted_share_url = ask_text(
+        "Share URL",
+        help_text="Optional http(s) share link used by `devops data sync down --use-link`. Leave blank for null.",
+        default=share_url,
+        allow_empty=True,
+    )
+    prompted_zip = ask_bool("Zip before upload", help_text="Store this entry as a zip archive before upload.", default=zip_)
+    prompted_encrypt = ask_bool("Encrypt before upload", help_text="Encrypt this entry before upload.", default=encrypt)
+    if prompted_encrypt:
+        if pwd is not None:
+            prompted_encryption: str | None = "symmetric"
+        else:
+            encryption_default = encryption if encryption in ("asymmetric", "symmetric") else "asymmetric"
+            prompted_encryption = cast(
+                str,
+                ask_choice(
+                    "Encryption mode",
+                    help_text="Asymmetric uses configured GPG recipients. Symmetric uses a password during sync.",
+                    choices=("asymmetric", "symmetric"),
+                    default=encryption_default,
+                ),
+            )
+    else:
+        prompted_encryption = None
+    rel2home_default = rel2home if rel2home is not None else _default_rel2home(prompted_path_local)
+    prompted_rel2home = ask_bool(
+        "Store relative to home",
+        help_text="When enabled, paths under your home directory are stored as ~/... instead of absolute paths.",
+        default=rel2home_default,
+    )
+    assert prompted_name is not None
+    assert prompted_path_cloud is not None
+    confirm_summary(
+        "Data Register Review",
+        [
+            f"path_local: {prompted_path_local}",
+            f"group: {prompted_group}",
+            f"name: {prompted_name}",
+            f"path_cloud: {prompted_path_cloud}",
+            f"share_url: {prompted_share_url or 'null'}",
+            f"zip: {prompted_zip}",
+            f"encrypt: {prompted_encrypt}",
+            f"encryption: {prompted_encryption or 'null'}",
+            f"rel2home: {prompted_rel2home}",
+            f"os: {prompted_os}",
+        ],
+    )
+    return (
+        prompted_path_local,
+        prompted_group,
+        prompted_name,
+        prompted_path_cloud,
+        prompted_share_url,
+        prompted_zip,
+        prompted_encrypt,
+        prompted_encryption,
+        prompted_rel2home,
+        prompted_os,
+    )
+
+
 def register_data(
-    path_local: Annotated[str, typer.Argument(..., help="Local file/folder path to back up.")],
+    path_local: Annotated[str | None, typer.Argument(help="Local file/folder path to back up.")] = None,
     group: Annotated[str, typer.Option("--group", "-g", help="Group name in mapper/data.yaml.")] = "default",
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper/data.yaml.")] = None,
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
-    zip_: Annotated[bool, typer.Option("--no-zip", "-nz", help="Store the backup entry without zipping before upload.")] = True,
-    encrypt: Annotated[bool, typer.Option("--no-encrypt", "-ne", help="Store the backup entry without encrypting before upload.")] = True,
-    rel2home: Annotated[
-        bool | None,
-        typer.Option("--no-rel2home", "-nr", help="Store the local path as absolute even when it is under home."),
+    share_url: Annotated[str | None, typer.Option("--share-url", "-u", help="Optional http(s) share URL for sync down --use-link.")] = None,
+    zip_: Annotated[bool, typer.Option("--no-zip", "-z", help="Store the backup entry without zipping before upload.")] = True,
+    encrypt: Annotated[bool, typer.Option("--no-encrypt", "-e", help="Store the backup entry without encrypting before upload.")] = True,
+    encryption: Annotated[
+        str | None, typer.Option("--encryption", "-E", help="Encryption mode when encryption is enabled: symmetric or asymmetric.")
     ] = None,
-    os: Annotated[str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")] = DEFAULT_OS_FILTER,
+    pwd: Annotated[
+        str | None, typer.Option("--password", "-p", help="Symmetric GPG encryption password. Implies encrypted symmetric mode and is not stored.")
+    ] = None,
+    rel2home: Annotated[bool | None, typer.Option("--no-rel2home", "-r", help="Store the local path as absolute even when it is under home.")] = None,
+    os: Annotated[
+        str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")
+    ] = DEFAULT_OS_FILTER,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry
 
+    if interactive:
+        path_local, group, name, path_cloud, share_url, zip_, encrypt, encryption, rel2home, os = _prompt_register_data_options(
+            path_local=path_local,
+            group=group,
+            name=name,
+            path_cloud=path_cloud,
+            share_url=share_url,
+            zip_=zip_,
+            encrypt=encrypt,
+            encryption=encryption,
+            pwd=pwd,
+            rel2home=rel2home,
+            os=os,
+        )
+    if path_local is None:
+        typer.echo("Error: PATH_LOCAL is required unless --interactive is used.", err=True)
+        raise typer.Exit(code=1)
     try:
         backup_path, entry_name, replaced = register_backup_entry(
-            path_local=path_local, group=group, entry_name=name, path_cloud=path_cloud, zip_=zip_, encrypt=encrypt, rel2home=rel2home, os=os
+            path_local=path_local,
+            group=group,
+            entry_name=name,
+            path_cloud=path_cloud,
+            share_url=share_url,
+            zip_=zip_,
+            encrypt=encrypt,
+            encryption=encryption,
+            password=pwd,
+            rel2home=rel2home,
+            os=os,
         )
     except ValueError as exc:
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)

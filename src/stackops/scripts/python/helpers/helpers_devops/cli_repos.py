@@ -25,6 +25,27 @@ def _resolve_spec_path(specs_path: str | Path | None) -> Path:
     return resolved_spec_path
 
 
+def _prompt_capture_options(directory: str | None, specs_path: str | None) -> tuple[str, str]:
+    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_text, confirm_summary
+
+    directory_default = directory or Path.cwd().as_posix()
+    specs_path_default = specs_path or DEFAULT_REPOS_SPEC_PATH.as_posix()
+    prompted_directory = ask_text(
+        "Repository directory",
+        help_text="Directory to scan for Git repositories. Existing records under this root are refreshed.",
+        default=directory_default,
+    )
+    prompted_specs_path = ask_text(
+        "Specification path",
+        help_text="repos.json file to create or update. Records outside the scanned root are preserved.",
+        default=specs_path_default,
+    )
+    assert prompted_directory is not None
+    assert prompted_specs_path is not None
+    confirm_summary("Repository Register Review", [f"directory: {prompted_directory}", f"specs_path: {prompted_specs_path}"])
+    return prompted_directory, prompted_specs_path
+
+
 def action(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
@@ -48,10 +69,13 @@ def capture(
     specs_path: Annotated[
         str | None, typer.Option("--specs-path", "-s", help=f"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.")
     ] = None,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     """📝 Record repositories into a repos.json specification."""
     from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos
 
+    if interactive:
+        directory, specs_path = _prompt_capture_options(directory=directory, specs_path=specs_path)
     save_path = record_repos(repos_root_str=directory, specs_path=specs_path)
     print(f"\n✅ Saved repository specification to {save_path}")
 

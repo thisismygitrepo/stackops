@@ -13,6 +13,7 @@ from stackops.utils.io import (
     encrypt_file_asymmetric,
     encrypt_file_symmetric,
 )
+from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
 from stackops.utils.path_core import delete_path
 import stackops.utils.rclone_wrapper as rclone_wrapper
 from stackops.utils.rclone import RcloneCommandError
@@ -42,11 +43,37 @@ def _delete_temp_paths(paths: list[Path]) -> None:
         delete_path(temp_path, verbose=False)
 
 
+def _resolve_encryption_settings(*, encrypt_requested: bool, encryption: str | None, pwd: str | None) -> tuple[bool, EncryptionMode | None]:
+    encryption_mode = None if encryption is None else parse_encryption_mode(encryption, label="--encryption")
+    if pwd is not None:
+        if pwd == "":
+            raise ValueError("--password must be non-empty.")
+        if encryption_mode not in (None, "symmetric"):
+            raise ValueError("--password can only be used with --encryption symmetric.")
+        return True, "symmetric"
+    if not encrypt_requested:
+        if encryption_mode is not None:
+            raise ValueError("--encryption can only be used when --encrypt is set.")
+        return False, None
+    if encryption_mode is None:
+        raise ValueError("--encrypt requires --encryption symmetric or --encryption asymmetric.")
+    return True, encryption_mode
+
+
+def _require_symmetric_password(pwd: str | None) -> str:
+    if pwd is not None:
+        return pwd
+    import getpass
+
+    return getpass.getpass(prompt="🔑 Enter symmetric GPG encryption password: ")
+
+
 def _prepare_upload_path(
     *,
     local_path: Path,
     zip_requested: bool,
     encrypt_requested: bool,
+    encryption_mode: EncryptionMode | None,
     pwd: str | None,
 ) -> tuple[Path, list[Path]]:
     upload_path = local_path.expanduser().absolute()
@@ -66,10 +93,12 @@ def _prepare_upload_path(
         )
         temp_paths.append(upload_path)
     if encrypt_requested:
-        if pwd is None:
+        if encryption_mode == "asymmetric":
             upload_path = encrypt_file_asymmetric(file_path=upload_path)
+        elif encryption_mode == "symmetric":
+            upload_path = encrypt_file_symmetric(file_path=upload_path, pwd=_require_symmetric_password(pwd))
         else:
-            upload_path = encrypt_file_symmetric(file_path=upload_path, pwd=pwd)
+            raise ValueError("Encryption mode is required when encryption is enabled.")
         temp_paths.append(upload_path)
     return upload_path, temp_paths
 
@@ -79,6 +108,7 @@ def _finalize_download_path(
     download_path: Path,
     zip_requested: bool,
     encrypt_requested: bool,
+    encryption_mode: EncryptionMode | None,
     pwd: str | None,
     overwrite: bool,
 ) -> Path:
@@ -92,7 +122,7 @@ def _finalize_download_path(
             output_path = encrypted_path.with_name(encrypted_path.name.removesuffix(".gpg"))
         else:
             output_path = encrypted_path.with_name(f"decrypted_{encrypted_path.name}")
-        decrypt_mode = "GPG private-key decryption" if pwd is None else "GPG password decryption"
+        decrypt_mode = "GPG password decryption" if encryption_mode == "symmetric" else "GPG private-key decryption"
         console = Console()
         console.print(
             Panel(
@@ -101,10 +131,12 @@ def _finalize_download_path(
                 border_style="blue",
             )
         )
-        if pwd is None:
+        if encryption_mode == "asymmetric":
             local_path = decrypt_file_asymmetric(file_path=encrypted_path)
+        elif encryption_mode == "symmetric":
+            local_path = decrypt_file_symmetric(file_path=encrypted_path, pwd=_require_symmetric_password(pwd))
         else:
-            local_path = decrypt_file_symmetric(file_path=encrypted_path, pwd=pwd)
+            raise ValueError("Encryption mode is required when encryption is enabled.")
         delete_path(encrypted_path, verbose=False)
     if zip_requested:
         local_path = path_compression.unzip_path(
@@ -159,9 +191,12 @@ def download_from_share_url(
     target_path: Path,
     zip_requested: bool,
     encrypt_requested: bool,
+    encryption_mode: EncryptionMode | None,
     pwd: str | None,
     overwrite: bool,
 ) -> Path:
+    if encrypt_requested and encryption_mode is None:
+        raise ValueError("Encryption mode is required when encryption is enabled.")
     direct_download_url = rclone_wrapper.google_drive_direct_download_url(share_url=share_url)
     download_url = share_url if direct_download_url is None else direct_download_url
     target_path_resolved = target_path.expanduser().absolute()
@@ -175,6 +210,7 @@ def download_from_share_url(
         download_path=download_path,
         zip_requested=zip_requested,
         encrypt_requested=encrypt_requested,
+        encryption_mode=encryption_mode,
         pwd=pwd,
         overwrite=overwrite,
     )
@@ -205,6 +241,7 @@ def _record_upload(
     share_url: str | None,
     zip_requested: bool,
     encrypt_requested: bool,
+    encryption_mode: EncryptionMode | None,
     rel2home: bool,
     record_group: str,
     record_name: str | None,
@@ -231,6 +268,7 @@ def _record_upload(
         share_url=share_url,
         zip_=zip_requested,
         encrypt=encrypt_requested,
+        encryption=encryption_mode,
         rel2home=rel2home,
         os=record_os,
     )
@@ -322,6 +360,7 @@ def main(
     root: str,
     pwd: str | None,
     encrypt: bool,
+    encryption: str | None,
     zip_: bool,
     os_specific: bool,
     config: str | None,
@@ -333,18 +372,6 @@ def main(
     console = Console()
     console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
     original_target = target
-    cloud_config_explicit = CLOUD(
-        cloud="",
-        overwrite=overwrite,
-        share=share,
-        rel2home=rel2home,
-        root=root,
-        pwd=pwd,
-        encrypt=encrypt,
-        zip=zip_,
-        os_specific=os_specific,
-    )
-
     if config == "ss" and (source.startswith("http") or source.startswith("bit.ly")):
         if record:
             console.print(Panel("❌ --record is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))
@@ -360,6 +387,24 @@ def main(
                 raise SystemExit(1)
         get_securely_shared_file(url=source, folder=target)
         return
+
+    try:
+        encrypt_effective, encryption_mode = _resolve_encryption_settings(encrypt_requested=encrypt, encryption=encryption, pwd=pwd)
+    except ValueError as error:
+        console.print(Panel(f"❌ ERROR: Invalid encryption configuration\n{error}", title="[bold red]Error[/bold red]", border_style="red", width=152))
+        raise SystemExit(1) from None
+
+    cloud_config_explicit = CLOUD(
+        cloud="",
+        overwrite=overwrite,
+        share=share,
+        rel2home=rel2home,
+        root=root,
+        pwd=pwd,
+        encrypt=encrypt_effective,
+        zip=zip_,
+        os_specific=os_specific,
+    )
 
     console.print(Panel("🔍 Parsing source and target paths...", title="[bold blue]Info[/bold blue]", border_style="blue"))
     cloud, source, target = parse_cloud_source_target(
@@ -393,6 +438,7 @@ def main(
                 download_path=download_path,
                 zip_requested=cloud_config_explicit["zip"],
                 encrypt_requested=cloud_config_explicit["encrypt"],
+                encryption_mode=encryption_mode,
                 pwd=cloud_config_explicit["pwd"],
                 overwrite=cloud_config_explicit["overwrite"],
             )
@@ -432,6 +478,7 @@ def main(
                 local_path=source_path,
                 zip_requested=cloud_config_explicit["zip"],
                 encrypt_requested=cloud_config_explicit["encrypt"],
+                encryption_mode=encryption_mode,
                 pwd=cloud_config_explicit["pwd"],
             )
             share_url = rclone_wrapper.to_cloud(
@@ -477,6 +524,7 @@ def main(
                 share_url=share_url,
                 zip_requested=cloud_config_explicit["zip"],
                 encrypt_requested=cloud_config_explicit["encrypt"],
+                encryption_mode=encryption_mode,
                 rel2home=cloud_config_explicit["rel2home"],
                 record_group=record_group,
                 record_name=record_name,
