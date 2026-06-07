@@ -484,19 +484,17 @@ def get_app() -> typer.Typer:
     config_apps.command("copy-assets", no_args_is_help=True, help="📋 <c> Copy asset files from library to machine.", hidden=False)(copy_assets)
     config_apps.command("c", no_args_is_help=True, help="Copy asset files from library to machine.", hidden=True)(copy_assets)
 
-    config_apps.command(
-        "secrets",
-        no_args_is_help=True,
+    config_apps.add_typer(
+        secrets_module.get_app(),
+        name="secrets",
         help=f"🔐 <S> {secrets_module.SECRETS_HELP}",
-        epilog=secrets_module.SECRETS_EPILOG,
-    )(secrets_module.secrets)
-    config_apps.command(
-        "S",
-        no_args_is_help=True,
+    )
+    config_apps.add_typer(
+        secrets_module.get_app(),
+        name="S",
         help=secrets_module.SECRETS_HELP,
-        epilog=secrets_module.SECRETS_EPILOG,
         hidden=True,
-    )(secrets_module.secrets)
+    )
 
     config_apps.command("dump", no_args_is_help=True, help="📦 <d> Dump example configuration files and init scripts.")(dump_config)
     config_apps.command("d", no_args_is_help=True, help="Dump example configuration files and init scripts.", hidden=True)(dump_config)

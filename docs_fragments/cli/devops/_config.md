@@ -153,30 +153,30 @@ devops config copy-assets all
 
 ### secrets
 
-Define environment variables from StackOps secrets files. By default, the command reads both the current directory's `.stackops/secrets/secrets.json` and the global source-of-truth secrets file.
+Manage StackOps secrets files and define environment variables from them. The `search` subcommand reads both the current directory's `.stackops/secrets/secrets.json` and the global source-of-truth secrets file by default.
 
 ```bash
-devops config secrets github personal-access-token
-devops config secrets aws dev iam-access-key
-devops config secrets AWS_ACCESS_KEY_ID
-devops config secrets --interactive
-devops config secrets -i aws
-devops config secrets --verbose aws dev iam-access-key
-devops config secrets --name aws-dev --tag iam-access-key
-devops config secrets --name aws-dev --tag session-token
-devops config secrets --source g bitwarden
-devops config secrets --source b github token
-devops config secrets -i -P github
-devops config secrets --path ~/private/team-secrets.json aws dev
-devops config secrets --edit
-devops config secrets --edit --create
-devops config secrets --add
-devops config secrets --add --create
+devops config secrets search github personal-access-token
+devops config secrets s aws dev iam-access-key
+devops config secrets s AWS_ACCESS_KEY_ID
+devops config secrets search --interactive
+devops config secrets s -i aws
+devops config secrets search --verbose aws dev iam-access-key
+devops config secrets search --name aws-dev --tag iam-access-key
+devops config secrets search --name aws-dev --tag session-token
+devops config secrets search --source g bitwarden
+devops config secrets s --source b github token
+devops config secrets s -i -P github
+devops config secrets search --path ~/private/team-secrets.json aws dev
+devops config secrets edit
+devops config secrets e --create
+devops config secrets add
+devops config secrets a --create
 ```
 
 The query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across login name/tags/accountName, secret name/tags/scopes, metadata, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
 
-Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy picker. If terms or exact selectors are provided, they pre-filter the picker list.
+Use `devops config secrets search` or its alias `devops config secrets s` to select and load a secret bundle. Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy picker. If terms or exact selectors are provided, they pre-filter the picker list.
 
 After an interactive selection, StackOps prints a `jq` command for the selected login entry, for example `jq '.entries[3]' ~/.stackops/secrets/secrets.json`.
 
@@ -186,7 +186,9 @@ Use `--verbose`, `-v` to print the selected bundle and environment variable keys
 
 For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact login or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `-N`; `--login-tag`, `-l`; `--secret-tag`, `-T`; and `--scope`, `-S` for values inside `entries[].secrets[].scopes`. Exact selectors are case-sensitive and can be combined with query terms.
 
-Use `--source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file. Use `--edit`, `-e` to open the selected secrets file. Use `--add` to step through prompts for a new login entry and append it to the selected file. Add `--create` with `--edit` or `--add` to allow creating a missing secrets file and schema.
+Use `search --source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file.
+
+Use `devops config secrets edit` or `devops config secrets e` to open one secrets file. Use `devops config secrets add` or `devops config secrets a` to step through prompts for a new login entry and append it to one file. Both commands default to the local source and accept `--source local|global`, `--path`, and `--create`.
 
 ### dump
 

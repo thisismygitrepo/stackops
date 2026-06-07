@@ -4114,515 +4114,682 @@
                 ]
               },
               {
-                "kind": "command",
+                "kind": "group",
                 "name": "secrets",
                 "fullPath": "devops config secrets",
                 "shortPath": "d c S",
                 "help": "f'🔐 <S> {secrets_module.SECRETS_HELP}'",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets",
-                  "callable": "secrets"
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
+                  "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets.get_app"
                 },
-                "signature": {
-                  "raw_lines": [
-                    "def secrets(",
-                    "    ctx: typer.Context,",
-                    "    terms: Annotated[",
-                    "        list[str] | None,",
-                    "        typer.Argument(",
-                    "            help=(",
-                    "                \"Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, \"",
-                    "                \"secret name/tags/scopes, metadata, or env var keys.\"",
-                    "            )",
-                    "        ),",
-                    "    ] = None,",
-                    "    secrets_path: Annotated[",
-                    "        Path | None,",
-                    "        typer.Option(",
-                    "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
-                    "        ),",
-                    "    ] = None,",
-                    "    secrets_source: Annotated[",
-                    "        SecretsSource,",
-                    "        typer.Option(",
-                    "            \"--source\",",
-                    "            \"-s\",",
-                    "            case_sensitive=False,",
-                    "            help=\"Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.\",",
-                    "        ),",
-                    "    ] = \"both\",",
-                    "    edit: Annotated[bool, typer.Option(\"--edit\", \"-e\", help=\"Open the secrets JSON file for editing instead of loading env vars.\")] = False,",
-                    "    add: Annotated[bool, typer.Option(\"--add\", help=\"Step through prompts to append a new login entry to the secrets JSON file.\")] = False,",
-                    "    create: Annotated[",
-                    "        bool,",
-                    "        typer.Option(\"--create\", help=\"Allow --edit or --add to create a missing secrets JSON file and secrets.schema.json.\"),",
-                    "    ] = False,",
-                    "    editor: Annotated[str, typer.Option(\"--editor\", \"-E\", help=\"Editor to use with --edit. Defaults to hx.\")] = \"hx\",",
-                    "    interactive: Annotated[",
-                    "        bool,",
-                    "        typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\"),",
-                    "    ] = False,",
-                    "    preview_secrets: Annotated[",
-                    "        bool, typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview. Only applies with --interactive/-i.\")",
-                    "    ] = False,",
-                    "    verbose: Annotated[",
-                    "        bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected secret bundle and env var keys without secret values.\")",
-                    "    ] = False,",
-                    "    login_name: Annotated[",
-                    "        str | None,",
-                    "        typer.Option(\"--name\", \"-n\", help=\"Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets.\"),",
-                    "    ] = None,",
-                    "    secret_name: Annotated[str | None, typer.Option(\"--secret-name\", \"-N\", help=\"Exact entries[].secrets[].name value to require.\")] = None,",
-                    "    tags: Annotated[",
-                    "        list[str] | None, typer.Option(\"--tag\", \"--tags\", \"-t\", help=\"Exact login or secret tag to require. Repeat for multiple tags.\")",
-                    "    ] = None,",
-                    "    login_tags: Annotated[",
-                    "        list[str] | None, typer.Option(\"--login-tag\", \"-l\", help=\"Exact login tag at entries[].tags to require. Repeat for multiple tags.\")",
-                    "    ] = None,",
-                    "    secret_tags: Annotated[",
-                    "        list[str] | None, typer.Option(\"--secret-tag\", \"-T\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
-                    "    ] = None,",
-                    "    scopes: Annotated[",
-                    "        list[str] | None, typer.Option(\"--scope\", \"-S\", help=\"Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.\")",
-                    "    ] = None,",
-                    "    keys: Annotated[",
-                    "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
-                    "    ] = None,",
-                    ") -> None:",
-                    "    \"\"\"🔐 <S> Define env vars from StackOps secrets files.\"\"\"",
-                    "    if edit and add:",
-                    "        _fail(\"--edit and --add cannot be used together.\")",
-                    "    if create and not (edit or add):",
-                    "        _fail(\"--create only applies with --edit or --add.\")",
-                    "",
-                    "    if preview_secrets and not interactive:",
-                    "        _fail(\"--preview-secrets only applies with --interactive/-i.\")",
-                    "",
-                    "    if (edit or add) and _resolve_secrets_source_alias(secrets_source) == \"both\" and not _parameter_was_provided(ctx, \"secrets_source\"):",
-                    "        secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=\"local\")",
-                    "    else:",
-                    "        secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
-                    "    if edit:",
-                    "        if len(secret_sources) != 1:",
-                    "            _fail(\"--edit can only open one secrets file. Choose --source local or --source global.\")",
-                    "        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor, create=create)",
-                    "        return",
-                    "",
-                    "    if add:",
-                    "        if len(secret_sources) != 1:",
-                    "            _fail(\"--add can only update one secrets file. Choose --source local or --source global.\")",
-                    "        _add_secrets_entry(secrets_path=secret_sources[0].path, create=create)",
-                    "        return",
-                    "",
-                    "    candidates = _load_secret_candidates_from_sources(secret_sources)",
-                    "    selectors = SecretSelectors(",
-                    "        login_name=_clean_optional_selector(login_name),",
-                    "        secret_name=_clean_optional_selector(secret_name),",
-                    "        tags=_clean_selector_values(tags),",
-                    "        login_tags=_clean_selector_values(login_tags),",
-                    "        secret_tags=_clean_selector_values(secret_tags),",
-                    "        scopes=_clean_selector_values(scopes),",
-                    "        keys=_clean_selector_values(keys),",
-                    "    )",
-                    "    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive, preview_secrets=preview_secrets)",
-                    "    candidate_source_path = _candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
-                    "    if interactive:",
-                    "        _echo_jq_login_entry_hint(candidate=candidate, secrets_path=candidate_source_path)",
-                    "    _validate_env_names(candidate.key_values)",
-                    "    _write_env_handoff(candidate.key_values)",
-                    "    if verbose:",
-                    "        _echo_verbose_selection(candidate=candidate, secrets_path=candidate_source_path)",
-                    "",
-                    "    names = \", \".join(candidate.key_values)",
-                    "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s)\"",
-                    "    if names:",
-                    "        msg += f\": {names}\"",
-                    "    else:",
-                    "        msg += \".\"",
-                    "    typer.echo(msg)"
-                  ],
+                "app": {
                   "name": "secrets",
-                  "parameters": [
-                    {
-                      "name": "ctx",
-                      "kind": "positional_or_keyword",
-                      "type": "typer.Context",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "typer.Context"
-                    },
-                    {
-                      "name": "terms",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys."
-                      }
-                    },
-                    {
-                      "name": "secrets_path",
-                      "kind": "positional_or_keyword",
-                      "type": "Path | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--path",
-                          "-p"
-                        ],
-                        "long_flags": [
-                          "--path"
-                        ],
-                        "short_flags": [
-                          "-p"
-                        ],
-                        "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
-                      }
-                    },
-                    {
-                      "name": "secrets_source",
-                      "kind": "positional_or_keyword",
-                      "type": "SecretsSource",
-                      "default": "both",
-                      "required": false,
-                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--source",
-                          "-s"
-                        ],
-                        "long_flags": [
-                          "--source"
-                        ],
-                        "short_flags": [
-                          "-s"
-                        ],
-                        "help": "Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source."
-                      }
-                    },
-                    {
-                      "name": "edit",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--edit', '-e', help='Open the secrets JSON file for editing instead of loading env vars.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--edit",
-                          "-e"
-                        ],
-                        "long_flags": [
-                          "--edit"
-                        ],
-                        "short_flags": [
-                          "-e"
-                        ],
-                        "help": "Open the secrets JSON file for editing instead of loading env vars."
-                      }
-                    },
-                    {
-                      "name": "add",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--add', help='Step through prompts to append a new login entry to the secrets JSON file.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--add"
-                        ],
-                        "long_flags": [
-                          "--add"
-                        ],
-                        "short_flags": [],
-                        "help": "Step through prompts to append a new login entry to the secrets JSON file."
-                      }
-                    },
-                    {
-                      "name": "create",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--create', help='Allow --edit or --add to create a missing secrets JSON file and secrets.schema.json.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--create"
-                        ],
-                        "long_flags": [
-                          "--create"
-                        ],
-                        "short_flags": [],
-                        "help": "Allow --edit or --add to create a missing secrets JSON file and secrets.schema.json."
-                      }
-                    },
-                    {
-                      "name": "editor",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": "hx",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--editor', '-E', help='Editor to use with --edit. Defaults to hx.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--editor",
-                          "-E"
-                        ],
-                        "long_flags": [
-                          "--editor"
-                        ],
-                        "short_flags": [
-                          "-E"
-                        ],
-                        "help": "Editor to use with --edit. Defaults to hx."
-                      }
-                    },
-                    {
-                      "name": "interactive",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--interactive",
-                          "-i"
-                        ],
-                        "long_flags": [
-                          "--interactive"
-                        ],
-                        "short_flags": [
-                          "-i"
-                        ],
-                        "help": "Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."
-                      }
-                    },
-                    {
-                      "name": "preview_secrets",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--preview-secrets', '-P', help='Include secret values in the interactive TV preview. Only applies with --interactive/-i.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--preview-secrets",
-                          "-P"
-                        ],
-                        "long_flags": [
-                          "--preview-secrets"
-                        ],
-                        "short_flags": [
-                          "-P"
-                        ],
-                        "help": "Include secret values in the interactive TV preview. Only applies with --interactive/-i."
-                      }
-                    },
-                    {
-                      "name": "verbose",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Print the selected secret bundle and env var keys without secret values.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--verbose",
-                          "-v"
-                        ],
-                        "long_flags": [
-                          "--verbose"
-                        ],
-                        "short_flags": [
-                          "-v"
-                        ],
-                        "help": "Print the selected secret bundle and env var keys without secret values."
-                      }
-                    },
-                    {
-                      "name": "login_name",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--name",
-                          "-n"
-                        ],
-                        "long_flags": [
-                          "--name"
-                        ],
-                        "short_flags": [
-                          "-n"
-                        ],
-                        "help": "Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets."
-                      }
-                    },
-                    {
-                      "name": "secret_name",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--secret-name', '-N', help='Exact entries[].secrets[].name value to require.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--secret-name",
-                          "-N"
-                        ],
-                        "long_flags": [
-                          "--secret-name"
-                        ],
-                        "short_flags": [
-                          "-N"
-                        ],
-                        "help": "Exact entries[].secrets[].name value to require."
-                      }
-                    },
-                    {
-                      "name": "tags",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--tag', '--tags', '-t', help='Exact login or secret tag to require. Repeat for multiple tags.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--tag",
-                          "--tags",
-                          "-t"
-                        ],
-                        "long_flags": [
-                          "--tag",
-                          "--tags"
-                        ],
-                        "short_flags": [
-                          "-t"
-                        ],
-                        "help": "Exact login or secret tag to require. Repeat for multiple tags."
-                      }
-                    },
-                    {
-                      "name": "login_tags",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--login-tag', '-l', help='Exact login tag at entries[].tags to require. Repeat for multiple tags.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--login-tag",
-                          "-l"
-                        ],
-                        "long_flags": [
-                          "--login-tag"
-                        ],
-                        "short_flags": [
-                          "-l"
-                        ],
-                        "help": "Exact login tag at entries[].tags to require. Repeat for multiple tags."
-                      }
-                    },
-                    {
-                      "name": "secret_tags",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--secret-tag', '-T', help='Exact entries[].secrets[].tags value to require. Repeat for multiple tags.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--secret-tag",
-                          "-T"
-                        ],
-                        "long_flags": [
-                          "--secret-tag"
-                        ],
-                        "short_flags": [
-                          "-T"
-                        ],
-                        "help": "Exact entries[].secrets[].tags value to require. Repeat for multiple tags."
-                      }
-                    },
-                    {
-                      "name": "scopes",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', '-S', help='Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--scope",
-                          "-S"
-                        ],
-                        "long_flags": [
-                          "--scope"
-                        ],
-                        "short_flags": [
-                          "-S"
-                        ],
-                        "help": "Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes."
-                      }
-                    },
-                    {
-                      "name": "keys",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--key', '-k', help='Exact env var key in keyValues to require. Repeat for multiple keys.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--key",
-                          "-k"
-                        ],
-                        "long_flags": [
-                          "--key"
-                        ],
-                        "short_flags": [
-                          "-k"
-                        ],
-                        "help": "Exact env var key in keyValues to require. Repeat for multiple keys."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
+                  "help": "f'🔐 <S> {SECRETS_HELP}'",
                   "no_args_is_help": true,
-                  "epilog": "secrets_module.SECRETS_EPILOG"
+                  "add_help_option": true,
+                  "add_completion": false
                 },
-                "doc": "🔐 <S> Define env vars from StackOps secrets files.",
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "search",
+                    "fullPath": "devops config secrets search",
+                    "shortPath": "d c S s",
+                    "help": "f'🔎 <s> {SECRETS_SEARCH_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets",
+                      "callable": "search"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def search(",
+                        "    terms: Annotated[",
+                        "        list[str] | None,",
+                        "        typer.Argument(",
+                        "            help=(",
+                        "                \"Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, \"",
+                        "                \"secret name/tags/scopes, metadata, or env var keys.\"",
+                        "            )",
+                        "        ),",
+                        "    ] = None,",
+                        "    secrets_path: Annotated[",
+                        "        Path | None,",
+                        "        typer.Option(",
+                        "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                        "        ),",
+                        "    ] = None,",
+                        "    secrets_source: Annotated[",
+                        "        SecretsSource,",
+                        "        typer.Option(",
+                        "            \"--source\",",
+                        "            \"-s\",",
+                        "            case_sensitive=False,",
+                        "            help=\"Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.\",",
+                        "        ),",
+                        "    ] = \"both\",",
+                        "    interactive: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\"),",
+                        "    ] = False,",
+                        "    preview_secrets: Annotated[",
+                        "        bool, typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview. Only applies with --interactive/-i.\")",
+                        "    ] = False,",
+                        "    verbose: Annotated[",
+                        "        bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected secret bundle and env var keys without secret values.\")",
+                        "    ] = False,",
+                        "    login_name: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--name\", \"-n\", help=\"Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets.\"),",
+                        "    ] = None,",
+                        "    secret_name: Annotated[str | None, typer.Option(\"--secret-name\", \"-N\", help=\"Exact entries[].secrets[].name value to require.\")] = None,",
+                        "    tags: Annotated[",
+                        "        list[str] | None, typer.Option(\"--tag\", \"--tags\", \"-t\", help=\"Exact login or secret tag to require. Repeat for multiple tags.\")",
+                        "    ] = None,",
+                        "    login_tags: Annotated[",
+                        "        list[str] | None, typer.Option(\"--login-tag\", \"-l\", help=\"Exact login tag at entries[].tags to require. Repeat for multiple tags.\")",
+                        "    ] = None,",
+                        "    secret_tags: Annotated[",
+                        "        list[str] | None, typer.Option(\"--secret-tag\", \"-T\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
+                        "    ] = None,",
+                        "    scopes: Annotated[",
+                        "        list[str] | None, typer.Option(\"--scope\", \"-S\", help=\"Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.\")",
+                        "    ] = None,",
+                        "    keys: Annotated[",
+                        "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
+                        "    ] = None,",
+                        ") -> None:",
+                        "    \"\"\"🔐 <S> Define env vars from StackOps secrets files.\"\"\"",
+                        "    if preview_secrets and not interactive:",
+                        "        _fail(\"--preview-secrets only applies with --interactive/-i.\")",
+                        "",
+                        "    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    candidates = _load_secret_candidates_from_sources(secret_sources)",
+                        "    selectors = SecretSelectors(",
+                        "        login_name=_clean_optional_selector(login_name),",
+                        "        secret_name=_clean_optional_selector(secret_name),",
+                        "        tags=_clean_selector_values(tags),",
+                        "        login_tags=_clean_selector_values(login_tags),",
+                        "        secret_tags=_clean_selector_values(secret_tags),",
+                        "        scopes=_clean_selector_values(scopes),",
+                        "        keys=_clean_selector_values(keys),",
+                        "    )",
+                        "    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive, preview_secrets=preview_secrets)",
+                        "    candidate_source_path = _candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
+                        "    if interactive:",
+                        "        _echo_jq_login_entry_hint(candidate=candidate, secrets_path=candidate_source_path)",
+                        "    secret_actions.validate_env_names(candidate.key_values)",
+                        "    secret_actions.write_env_handoff(candidate.key_values)",
+                        "    if verbose:",
+                        "        _echo_verbose_selection(candidate=candidate, secrets_path=candidate_source_path)",
+                        "",
+                        "    names = \", \".join(candidate.key_values)",
+                        "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s)\"",
+                        "    if names:",
+                        "        msg += f\": {names}\"",
+                        "    else:",
+                        "        msg += \".\"",
+                        "    typer.echo(msg)"
+                      ],
+                      "name": "search",
+                      "parameters": [
+                        {
+                          "name": "terms",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys."
+                          }
+                        },
+                        {
+                          "name": "secrets_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--path",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--path"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                          }
+                        },
+                        {
+                          "name": "secrets_source",
+                          "kind": "positional_or_keyword",
+                          "type": "SecretsSource",
+                          "default": "both",
+                          "required": false,
+                          "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--source",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--source"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source."
+                          }
+                        },
+                        {
+                          "name": "interactive",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--interactive",
+                              "-i"
+                            ],
+                            "long_flags": [
+                              "--interactive"
+                            ],
+                            "short_flags": [
+                              "-i"
+                            ],
+                            "help": "Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."
+                          }
+                        },
+                        {
+                          "name": "preview_secrets",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--preview-secrets', '-P', help='Include secret values in the interactive TV preview. Only applies with --interactive/-i.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--preview-secrets",
+                              "-P"
+                            ],
+                            "long_flags": [
+                              "--preview-secrets"
+                            ],
+                            "short_flags": [
+                              "-P"
+                            ],
+                            "help": "Include secret values in the interactive TV preview. Only applies with --interactive/-i."
+                          }
+                        },
+                        {
+                          "name": "verbose",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Print the selected secret bundle and env var keys without secret values.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--verbose",
+                              "-v"
+                            ],
+                            "long_flags": [
+                              "--verbose"
+                            ],
+                            "short_flags": [
+                              "-v"
+                            ],
+                            "help": "Print the selected secret bundle and env var keys without secret values."
+                          }
+                        },
+                        {
+                          "name": "login_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--name",
+                              "-n"
+                            ],
+                            "long_flags": [
+                              "--name"
+                            ],
+                            "short_flags": [
+                              "-n"
+                            ],
+                            "help": "Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets."
+                          }
+                        },
+                        {
+                          "name": "secret_name",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--secret-name', '-N', help='Exact entries[].secrets[].name value to require.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--secret-name",
+                              "-N"
+                            ],
+                            "long_flags": [
+                              "--secret-name"
+                            ],
+                            "short_flags": [
+                              "-N"
+                            ],
+                            "help": "Exact entries[].secrets[].name value to require."
+                          }
+                        },
+                        {
+                          "name": "tags",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Option('--tag', '--tags', '-t', help='Exact login or secret tag to require. Repeat for multiple tags.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--tag",
+                              "--tags",
+                              "-t"
+                            ],
+                            "long_flags": [
+                              "--tag",
+                              "--tags"
+                            ],
+                            "short_flags": [
+                              "-t"
+                            ],
+                            "help": "Exact login or secret tag to require. Repeat for multiple tags."
+                          }
+                        },
+                        {
+                          "name": "login_tags",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Option('--login-tag', '-l', help='Exact login tag at entries[].tags to require. Repeat for multiple tags.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--login-tag",
+                              "-l"
+                            ],
+                            "long_flags": [
+                              "--login-tag"
+                            ],
+                            "short_flags": [
+                              "-l"
+                            ],
+                            "help": "Exact login tag at entries[].tags to require. Repeat for multiple tags."
+                          }
+                        },
+                        {
+                          "name": "secret_tags",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Option('--secret-tag', '-T', help='Exact entries[].secrets[].tags value to require. Repeat for multiple tags.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--secret-tag",
+                              "-T"
+                            ],
+                            "long_flags": [
+                              "--secret-tag"
+                            ],
+                            "short_flags": [
+                              "-T"
+                            ],
+                            "help": "Exact entries[].secrets[].tags value to require. Repeat for multiple tags."
+                          }
+                        },
+                        {
+                          "name": "scopes",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', '-S', help='Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--scope",
+                              "-S"
+                            ],
+                            "long_flags": [
+                              "--scope"
+                            ],
+                            "short_flags": [
+                              "-S"
+                            ],
+                            "help": "Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes."
+                          }
+                        },
+                        {
+                          "name": "keys",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Option('--key', '-k', help='Exact env var key in keyValues to require. Repeat for multiple keys.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--key",
+                              "-k"
+                            ],
+                            "long_flags": [
+                              "--key"
+                            ],
+                            "short_flags": [
+                              "-k"
+                            ],
+                            "help": "Exact env var key in keyValues to require. Repeat for multiple keys."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true,
+                      "epilog": "SECRETS_SEARCH_EPILOG"
+                    },
+                    "doc": "🔐 <S> Define env vars from StackOps secrets files.",
+                    "aliases": [
+                      {
+                        "name": "s",
+                        "hidden": true,
+                        "help": "Alias for search."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "add",
+                    "fullPath": "devops config secrets add",
+                    "shortPath": "d c S a",
+                    "help": "➕ <a> Append a new login entry to a StackOps secrets file.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets",
+                      "callable": "add"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def add(",
+                        "    secrets_path: Annotated[",
+                        "        Path | None,",
+                        "        typer.Option(",
+                        "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                        "        ),",
+                        "    ] = None,",
+                        "    secrets_source: Annotated[",
+                        "        WritableSecretsSource,",
+                        "        typer.Option(",
+                        "            \"--source\",",
+                        "            \"-s\",",
+                        "            case_sensitive=False,",
+                        "            help=\"Secrets file source to update: local/l or global/g. --path overrides the local source.\",",
+                        "        ),",
+                        "    ] = \"local\",",
+                        "    create: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--create\", help=f\"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.\"),",
+                        "    ] = False,",
+                        ") -> None:",
+                        "    \"\"\"➕ <a> Append a new login entry to a StackOps secrets file.\"\"\"",
+                        "    secret_source = _resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    secret_actions.add_secrets_entry(secrets_path=secret_source.path, create=create)"
+                      ],
+                      "name": "add",
+                      "parameters": [
+                        {
+                          "name": "secrets_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--path",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--path"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                          }
+                        },
+                        {
+                          "name": "secrets_source",
+                          "kind": "positional_or_keyword",
+                          "type": "WritableSecretsSource",
+                          "default": "local",
+                          "required": false,
+                          "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to update: local/l or global/g. --path overrides the local source.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--source",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--source"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Secrets file source to update: local/l or global/g. --path overrides the local source."
+                          }
+                        },
+                        {
+                          "name": "create",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--create', help=f'Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--create"
+                            ],
+                            "long_flags": [
+                              "--create"
+                            ],
+                            "short_flags": []
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "➕ <a> Append a new login entry to a StackOps secrets file.",
+                    "aliases": [
+                      {
+                        "name": "a",
+                        "hidden": true,
+                        "help": "Alias for add."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "edit",
+                    "fullPath": "devops config secrets edit",
+                    "shortPath": "d c S e",
+                    "help": "📝 <e> Open a StackOps secrets file for editing.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets",
+                      "callable": "edit"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def edit(",
+                        "    secrets_path: Annotated[",
+                        "        Path | None,",
+                        "        typer.Option(",
+                        "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                        "        ),",
+                        "    ] = None,",
+                        "    secrets_source: Annotated[",
+                        "        WritableSecretsSource,",
+                        "        typer.Option(",
+                        "            \"--source\",",
+                        "            \"-s\",",
+                        "            case_sensitive=False,",
+                        "            help=\"Secrets file source to edit: local/l or global/g. --path overrides the local source.\",",
+                        "        ),",
+                        "    ] = \"local\",",
+                        "    create: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--create\", help=f\"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.\"),",
+                        "    ] = False,",
+                        "    editor: Annotated[str, typer.Option(\"--editor\", \"-E\", help=\"Editor to use. Defaults to hx.\")] = \"hx\",",
+                        ") -> None:",
+                        "    \"\"\"📝 <e> Open a StackOps secrets file for editing.\"\"\"",
+                        "    secret_source = _resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    secret_actions.edit_secrets_file(secrets_path=secret_source.path, editor=editor, create=create)"
+                      ],
+                      "name": "edit",
+                      "parameters": [
+                        {
+                          "name": "secrets_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--path",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--path"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                          }
+                        },
+                        {
+                          "name": "secrets_source",
+                          "kind": "positional_or_keyword",
+                          "type": "WritableSecretsSource",
+                          "default": "local",
+                          "required": false,
+                          "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to edit: local/l or global/g. --path overrides the local source.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--source",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--source"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Secrets file source to edit: local/l or global/g. --path overrides the local source."
+                          }
+                        },
+                        {
+                          "name": "create",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--create', help=f'Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--create"
+                            ],
+                            "long_flags": [
+                              "--create"
+                            ],
+                            "short_flags": []
+                          }
+                        },
+                        {
+                          "name": "editor",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "hx",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('--editor', '-E', help='Editor to use. Defaults to hx.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--editor",
+                              "-E"
+                            ],
+                            "long_flags": [
+                              "--editor"
+                            ],
+                            "short_flags": [
+                              "-E"
+                            ],
+                            "help": "Editor to use. Defaults to hx."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "📝 <e> Open a StackOps secrets file for editing.",
+                    "aliases": [
+                      {
+                        "name": "e",
+                        "hidden": true,
+                        "help": "Alias for edit."
+                      }
+                    ]
+                  }
+                ],
                 "aliases": [
                   {
                     "name": "S",
