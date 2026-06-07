@@ -782,7 +782,7 @@
                     "",
                     "    from stackops.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.102\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.103\", \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -1752,7 +1752,7 @@
                     "    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from stackops.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.102\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.103\"])",
                     "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
                     "    if not resolved_repo_path.exists():",
                     "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\", err=True)",
@@ -4127,6 +4127,7 @@
                 "signature": {
                   "raw_lines": [
                     "def secrets(",
+                    "    ctx: typer.Context,",
                     "    terms: Annotated[",
                     "        list[str] | None,",
                     "        typer.Argument(",
@@ -4145,14 +4146,25 @@
                     "    secrets_source: Annotated[",
                     "        SecretsSource,",
                     "        typer.Option(",
-                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Secrets file source to read: local, global, or both. --path overrides the local source.\"",
+                    "            \"--source\",",
+                    "            \"-s\",",
+                    "            case_sensitive=False,",
+                    "            help=\"Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.\",",
                     "        ),",
-                    "    ] = SecretsSource.local,",
+                    "    ] = \"both\",",
                     "    edit: Annotated[bool, typer.Option(\"--edit\", \"-e\", help=\"Open the secrets JSON file for editing instead of loading env vars.\")] = False,",
-                    "    editor: Annotated[str, typer.Option(\"--editor\", help=\"Editor to use with --edit. Defaults to hx.\")] = \"hx\",",
+                    "    add: Annotated[bool, typer.Option(\"--add\", help=\"Step through prompts to append a new login entry to the secrets JSON file.\")] = False,",
+                    "    create: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--create\", help=\"Allow --edit or --add to create a missing secrets JSON file and secrets.schema.json.\"),",
+                    "    ] = False,",
+                    "    editor: Annotated[str, typer.Option(\"--editor\", \"-E\", help=\"Editor to use with --edit. Defaults to hx.\")] = \"hx\",",
                     "    interactive: Annotated[",
                     "        bool,",
                     "        typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\"),",
+                    "    ] = False,",
+                    "    preview_secrets: Annotated[",
+                    "        bool, typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview. Only applies with --interactive/-i.\")",
                     "    ] = False,",
                     "    verbose: Annotated[",
                     "        bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected secret bundle and env var keys without secret values.\")",
@@ -4161,29 +4173,46 @@
                     "        str | None,",
                     "        typer.Option(\"--name\", \"-n\", help=\"Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets.\"),",
                     "    ] = None,",
-                    "    secret_name: Annotated[str | None, typer.Option(\"--secret-name\", help=\"Exact entries[].secrets[].name value to require.\")] = None,",
+                    "    secret_name: Annotated[str | None, typer.Option(\"--secret-name\", \"-N\", help=\"Exact entries[].secrets[].name value to require.\")] = None,",
                     "    tags: Annotated[",
                     "        list[str] | None, typer.Option(\"--tag\", \"--tags\", \"-t\", help=\"Exact login or secret tag to require. Repeat for multiple tags.\")",
                     "    ] = None,",
                     "    login_tags: Annotated[",
-                    "        list[str] | None, typer.Option(\"--login-tag\", help=\"Exact login tag at entries[].tags to require. Repeat for multiple tags.\")",
+                    "        list[str] | None, typer.Option(\"--login-tag\", \"-l\", help=\"Exact login tag at entries[].tags to require. Repeat for multiple tags.\")",
                     "    ] = None,",
                     "    secret_tags: Annotated[",
-                    "        list[str] | None, typer.Option(\"--secret-tag\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
+                    "        list[str] | None, typer.Option(\"--secret-tag\", \"-T\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
                     "    ] = None,",
                     "    scopes: Annotated[",
-                    "        list[str] | None, typer.Option(\"--scope\", help=\"Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.\")",
+                    "        list[str] | None, typer.Option(\"--scope\", \"-S\", help=\"Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.\")",
                     "    ] = None,",
                     "    keys: Annotated[",
                     "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
                     "    ] = None,",
                     ") -> None:",
                     "    \"\"\"🔐 <S> Define env vars from StackOps secrets files.\"\"\"",
-                    "    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
+                    "    if edit and add:",
+                    "        _fail(\"--edit and --add cannot be used together.\")",
+                    "    if create and not (edit or add):",
+                    "        _fail(\"--create only applies with --edit or --add.\")",
+                    "",
+                    "    if preview_secrets and not interactive:",
+                    "        _fail(\"--preview-secrets only applies with --interactive/-i.\")",
+                    "",
+                    "    if (edit or add) and _resolve_secrets_source_alias(secrets_source) == \"both\" and not _parameter_was_provided(ctx, \"secrets_source\"):",
+                    "        secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=\"local\")",
+                    "    else:",
+                    "        secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
                     "    if edit:",
                     "        if len(secret_sources) != 1:",
                     "            _fail(\"--edit can only open one secrets file. Choose --source local or --source global.\")",
-                    "        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor)",
+                    "        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor, create=create)",
+                    "        return",
+                    "",
+                    "    if add:",
+                    "        if len(secret_sources) != 1:",
+                    "            _fail(\"--add can only update one secrets file. Choose --source local or --source global.\")",
+                    "        _add_secrets_entry(secrets_path=secret_sources[0].path, create=create)",
                     "        return",
                     "",
                     "    candidates = _load_secret_candidates_from_sources(secret_sources)",
@@ -4196,11 +4225,14 @@
                     "        scopes=_clean_selector_values(scopes),",
                     "        keys=_clean_selector_values(keys),",
                     "    )",
-                    "    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive)",
+                    "    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive, preview_secrets=preview_secrets)",
+                    "    candidate_source_path = _candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
+                    "    if interactive:",
+                    "        _echo_jq_login_entry_hint(candidate=candidate, secrets_path=candidate_source_path)",
                     "    _validate_env_names(candidate.key_values)",
                     "    _write_env_handoff(candidate.key_values)",
                     "    if verbose:",
-                    "        _echo_verbose_selection(candidate=candidate, secrets_path=_candidate_source_path(candidate=candidate, secret_sources=secret_sources))",
+                    "        _echo_verbose_selection(candidate=candidate, secrets_path=candidate_source_path)",
                     "",
                     "    names = \", \".join(candidate.key_values)",
                     "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s)\"",
@@ -4212,6 +4244,14 @@
                   ],
                   "name": "secrets",
                   "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
                     {
                       "name": "terms",
                       "kind": "positional_or_keyword",
@@ -4253,9 +4293,9 @@
                       "name": "secrets_source",
                       "kind": "positional_or_keyword",
                       "type": "SecretsSource",
-                      "default": "SecretsSource.local",
+                      "default": "both",
                       "required": false,
-                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local, global, or both. --path overrides the local source.')]",
+                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -4268,7 +4308,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to read: local, global, or both. --path overrides the local source."
+                        "help": "Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source."
                       }
                     },
                     {
@@ -4294,21 +4334,62 @@
                       }
                     },
                     {
+                      "name": "add",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--add', help='Step through prompts to append a new login entry to the secrets JSON file.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--add"
+                        ],
+                        "long_flags": [
+                          "--add"
+                        ],
+                        "short_flags": [],
+                        "help": "Step through prompts to append a new login entry to the secrets JSON file."
+                      }
+                    },
+                    {
+                      "name": "create",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--create', help='Allow --edit or --add to create a missing secrets JSON file and secrets.schema.json.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--create"
+                        ],
+                        "long_flags": [
+                          "--create"
+                        ],
+                        "short_flags": [],
+                        "help": "Allow --edit or --add to create a missing secrets JSON file and secrets.schema.json."
+                      }
+                    },
+                    {
                       "name": "editor",
                       "kind": "positional_or_keyword",
                       "type": "str",
                       "default": "hx",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--editor', help='Editor to use with --edit. Defaults to hx.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--editor', '-E', help='Editor to use with --edit. Defaults to hx.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--editor"
+                          "--editor",
+                          "-E"
                         ],
                         "long_flags": [
                           "--editor"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-E"
+                        ],
                         "help": "Editor to use with --edit. Defaults to hx."
                       }
                     },
@@ -4332,6 +4413,28 @@
                           "-i"
                         ],
                         "help": "Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."
+                      }
+                    },
+                    {
+                      "name": "preview_secrets",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--preview-secrets', '-P', help='Include secret values in the interactive TV preview. Only applies with --interactive/-i.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--preview-secrets",
+                          "-P"
+                        ],
+                        "long_flags": [
+                          "--preview-secrets"
+                        ],
+                        "short_flags": [
+                          "-P"
+                        ],
+                        "help": "Include secret values in the interactive TV preview. Only applies with --interactive/-i."
                       }
                     },
                     {
@@ -4384,16 +4487,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--secret-name', help='Exact entries[].secrets[].name value to require.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--secret-name', '-N', help='Exact entries[].secrets[].name value to require.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--secret-name"
+                          "--secret-name",
+                          "-N"
                         ],
                         "long_flags": [
                           "--secret-name"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-N"
+                        ],
                         "help": "Exact entries[].secrets[].name value to require."
                       }
                     },
@@ -4427,16 +4533,19 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--login-tag', help='Exact login tag at entries[].tags to require. Repeat for multiple tags.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--login-tag', '-l', help='Exact login tag at entries[].tags to require. Repeat for multiple tags.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--login-tag"
+                          "--login-tag",
+                          "-l"
                         ],
                         "long_flags": [
                           "--login-tag"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-l"
+                        ],
                         "help": "Exact login tag at entries[].tags to require. Repeat for multiple tags."
                       }
                     },
@@ -4446,16 +4555,19 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--secret-tag', help='Exact entries[].secrets[].tags value to require. Repeat for multiple tags.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--secret-tag', '-T', help='Exact entries[].secrets[].tags value to require. Repeat for multiple tags.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--secret-tag"
+                          "--secret-tag",
+                          "-T"
                         ],
                         "long_flags": [
                           "--secret-tag"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-T"
+                        ],
                         "help": "Exact entries[].secrets[].tags value to require. Repeat for multiple tags."
                       }
                     },
@@ -4465,16 +4577,19 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', help='Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', '-S', help='Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--scope"
+                          "--scope",
+                          "-S"
                         ],
                         "long_flags": [
                           "--scope"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-S"
+                        ],
                         "help": "Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes."
                       }
                     },
@@ -7204,8 +7319,44 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def build_docker(variant: Annotated[Literal[\"slim\", \"ai\"], typer.Argument(help=\"Variant to build: 'slim' or 'ai'\")]) -> None:",
+                    "def build_docker(",
+                    "    variant: Annotated[Literal[\"slim\", \"ai\"], typer.Argument(help=\"Variant to build: 'slim' or 'ai'\")],",
+                    "    docker_login_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--docker-login-name\", \"-n\", help=\"Exact StackOps secrets entries[].name for Docker credentials.\"),",
+                    "    ] = \"docker\",",
+                    "    docker_account_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--docker-account-name\", \"-a\", help=\"Exact StackOps secrets entries[].accountName for Docker credentials.\"),",
+                    "    ] = None,",
+                    "    docker_secret_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--docker-secret-name\", \"-N\", help=\"Exact StackOps secrets entries[].secrets[].name for Docker credentials.\"),",
+                    "    ] = None,",
+                    "    docker_secret_tags: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Option(\"--docker-secret-tag\", \"-T\", help=\"Exact Docker credential secret tag. Repeat for multiple tags.\"),",
+                    "    ] = None,",
+                    "    docker_scopes: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Option(\"--docker-scope\", \"-S\", help=\"Exact Docker credential secret scope. Repeat for multiple scopes.\"),",
+                    "    ] = None,",
+                    "    docker_token_key: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            \"--docker-token-key\",",
+                    "            \"-k\",",
+                    "            help=\"Env var key in keyValues to pass to docker login. Defaults to the first match in: DOCKER_TOKEN, DOCKERHUB_TOKEN, DOCKER_PASSWORD, DOCKER_PAT.\",",
+                    "        ),",
+                    "    ] = None,",
+                    "    docker_secrets_path: Annotated[",
+                    "        Path | None,",
+                    "        typer.Option(\"--docker-secrets-path\", \"-p\", help=\"Secrets JSON path for Docker credentials. Defaults to the StackOps source-of-truth secrets file.\"),",
+                    "    ] = None,",
+                    ") -> None:",
                     "    \"\"\"🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops import cli_self_docker",
+                    "",
                     "    repo_root = _developer_repo_root()",
                     "    if repo_root is None:",
                     "        typer.echo(\"❌ Developer repo not found: ~/code/stackops\")",
@@ -7216,11 +7367,40 @@
                     "        typer.echo(f\"❌ Script not found: {str(script_path)}\")",
                     "        raise typer.Exit(code=1)",
                     "",
-                    "    shell_cmd = f\"\"\"",
-                    "export VARIANT=\"{variant}\"",
-                    "cd \"{str(repo_root)}\"",
-                    "bash \"{str(script_path)}\"",
-                    "\"\"\"",
+                    "    try:",
+                    "        op_program_path = cli_self_docker.fresh_op_program_path()",
+                    "        credentials = cli_self_docker.resolve_docker_credentials(",
+                    "            secrets_path=docker_secrets_path,",
+                    "            login_name=docker_login_name,",
+                    "            account_name=docker_account_name,",
+                    "            secret_name=docker_secret_name,",
+                    "            secret_tags=docker_secret_tags,",
+                    "            scopes=docker_scopes,",
+                    "            token_key=docker_token_key,",
+                    "        )",
+                    "        credential_env_keys = tuple(credentials.key_values)",
+                    "        cli_self_docker.validate_env_names(credentials.key_values)",
+                    "        secret_env_path = cli_self_docker.docker_secret_env_path(op_program_path)",
+                    "        cli_self_docker.write_private_docker_env_file(secret_env_path, credentials.key_values)",
+                    "    except cli_self_docker.DockerCredentialError as exc:",
+                    "        typer.echo(typer.style(\"Error: \", fg=typer.colors.RED) + str(exc))",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    typer.echo(",
+                    "        typer.style(\"✅ Docker credentials: \", fg=typer.colors.GREEN)",
+                    "        + f\"using login '{credentials.login_name}' / secret '{credentials.secret_name}' \"",
+                    "        + f\"as Docker namespace '{credentials.username}' with token env var '{credentials.token_env_key}'.\"",
+                    "    )",
+                    "",
+                    "    shell_cmd = cli_self_docker.render_build_docker_shell_script(",
+                    "        variant=variant,",
+                    "        repo_root=repo_root,",
+                    "        script_path=script_path,",
+                    "        secret_env_path=secret_env_path,",
+                    "        docker_username=credentials.username,",
+                    "        token_env_key=credentials.token_env_key,",
+                    "        credential_env_keys=credential_env_keys,",
+                    "    )",
                     "    from stackops.utils.code import exit_then_run_shell_script",
                     "",
                     "    exit_then_run_shell_script(shell_cmd, strict=True)"
@@ -7240,6 +7420,160 @@
                         "long_flags": [],
                         "short_flags": [],
                         "help": "Variant to build: 'slim' or 'ai'"
+                      }
+                    },
+                    {
+                      "name": "docker_login_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": "docker",
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--docker-login-name', '-n', help='Exact StackOps secrets entries[].name for Docker credentials.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--docker-login-name",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--docker-login-name"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Exact StackOps secrets entries[].name for Docker credentials."
+                      }
+                    },
+                    {
+                      "name": "docker_account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--docker-account-name', '-a', help='Exact StackOps secrets entries[].accountName for Docker credentials.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--docker-account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--docker-account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Exact StackOps secrets entries[].accountName for Docker credentials."
+                      }
+                    },
+                    {
+                      "name": "docker_secret_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--docker-secret-name', '-N', help='Exact StackOps secrets entries[].secrets[].name for Docker credentials.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--docker-secret-name",
+                          "-N"
+                        ],
+                        "long_flags": [
+                          "--docker-secret-name"
+                        ],
+                        "short_flags": [
+                          "-N"
+                        ],
+                        "help": "Exact StackOps secrets entries[].secrets[].name for Docker credentials."
+                      }
+                    },
+                    {
+                      "name": "docker_secret_tags",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--docker-secret-tag', '-T', help='Exact Docker credential secret tag. Repeat for multiple tags.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--docker-secret-tag",
+                          "-T"
+                        ],
+                        "long_flags": [
+                          "--docker-secret-tag"
+                        ],
+                        "short_flags": [
+                          "-T"
+                        ],
+                        "help": "Exact Docker credential secret tag. Repeat for multiple tags."
+                      }
+                    },
+                    {
+                      "name": "docker_scopes",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--docker-scope', '-S', help='Exact Docker credential secret scope. Repeat for multiple scopes.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--docker-scope",
+                          "-S"
+                        ],
+                        "long_flags": [
+                          "--docker-scope"
+                        ],
+                        "short_flags": [
+                          "-S"
+                        ],
+                        "help": "Exact Docker credential secret scope. Repeat for multiple scopes."
+                      }
+                    },
+                    {
+                      "name": "docker_token_key",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--docker-token-key', '-k', help='Env var key in keyValues to pass to docker login. Defaults to the first match in: DOCKER_TOKEN, DOCKERHUB_TOKEN, DOCKER_PASSWORD, DOCKER_PAT.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--docker-token-key",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--docker-token-key"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Env var key in keyValues to pass to docker login. Defaults to the first match in: DOCKER_TOKEN, DOCKERHUB_TOKEN, DOCKER_PASSWORD, DOCKER_PAT."
+                      }
+                    },
+                    {
+                      "name": "docker_secrets_path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--docker-secrets-path', '-p', help='Secrets JSON path for Docker credentials. Defaults to the StackOps source-of-truth secrets file.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--docker-secrets-path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--docker-secrets-path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Secrets JSON path for Docker credentials. Defaults to the StackOps source-of-truth secrets file."
                       }
                     }
                   ],
@@ -14770,7 +15104,7 @@
                 "        new_session: Annotated[bool, typer.Option(\"--new-session\", \"-n\", help=\"Create a new session instead of attaching to an existing one.\", show_default=True)] = False,",
                 "        kill_all: Annotated[bool, typer.Option(\"--kill-all\", \"-k\", help=\"Kill all existing sessions before creating a new one.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Choose a window/tab or pane target instead of only choosing from sessions.\", show_default=True)] = False,",
-                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
+                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose a session or deeper target to attach to.\"\"\"",
                 "    if name is not None and new_session:",
@@ -14885,10 +15219,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
+                  "type": "Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -14938,7 +15272,7 @@
                 "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to kill. If not provided, a list will be shown to choose from.\")] = None,",
                 "        kill_all: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Kill all sessions.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.\", show_default=True)] = False,",
-                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
+                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose one or more session targets to kill.\"\"\"",
                 "    if kill_all and name is not None:",
@@ -15047,10 +15381,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
+                  "type": "Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [

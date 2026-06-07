@@ -1,5 +1,3 @@
-import os
-import platform
 import re
 import shlex
 import shutil
@@ -10,16 +8,19 @@ from typing import Annotated, Literal, Mapping, NoReturn, TypeAlias
 
 import typer
 
-from stackops.secrets import render_secret_value
+from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretCandidate,
     SecretSelectors,
     load_secret_candidates,
     resolve_candidate,
 )
+from stackops.utils.schemas.secrets.secrets_types import Login
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
-ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME
+SECRETS_FILE_VERSION = secret_actions.SECRETS_FILE_VERSION
+ENV_VAR_NAME_RE = secret_actions.ENV_VAR_NAME_RE
 LOGIN_ENTRY_PATH_RE = re.compile(r"^(entries\[\d+\])(?:\.|$)")
 SECRETS_HELP = "Define env vars from StackOps secrets files."
 SECRETS_EPILOG = """Examples:
@@ -38,6 +39,9 @@ SECRETS_EPILOG = """Examples:
   devops config secrets -i -P github
   devops config secrets --path ~/private/team-secrets.json aws dev
   devops config secrets --edit
+  devops config secrets --edit --create
+  devops config secrets --add
+  devops config secrets --add --create
 
 Terms are case-insensitive substring matches. All terms must match somewhere across login
 name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.
@@ -47,6 +51,8 @@ Use --preview-secrets/-P with --interactive/-i to include secret values in the p
 Use --verbose/-v to print the selected bundle and env var keys without secret values.
 Use --source to choose the local file (local/l), global source-of-truth file (global/g), or both (both/b). Defaults to both.
 With both, missing source files are warned and skipped as long as at least one source exists.
+Use --add to append a new entry through prompts.
+Use --create with --edit or --add to allow creating a missing secrets file and schema.
 Exact selectors are case-sensitive and can be combined with terms for script-stable matching. Selector short aliases:
 --secret-name/-N, --login-tag/-l, --secret-tag/-T, --scope/-S.
 """
@@ -89,6 +95,11 @@ def secrets(
         ),
     ] = "both",
     edit: Annotated[bool, typer.Option("--edit", "-e", help="Open the secrets JSON file for editing instead of loading env vars.")] = False,
+    add: Annotated[bool, typer.Option("--add", help="Step through prompts to append a new login entry to the secrets JSON file.")] = False,
+    create: Annotated[
+        bool,
+        typer.Option("--create", help="Allow --edit or --add to create a missing secrets JSON file and secrets.schema.json."),
+    ] = False,
     editor: Annotated[str, typer.Option("--editor", "-E", help="Editor to use with --edit. Defaults to hx.")] = "hx",
     interactive: Annotated[
         bool,
@@ -122,17 +133,28 @@ def secrets(
     ] = None,
 ) -> None:
     """🔐 <S> Define env vars from StackOps secrets files."""
+    if edit and add:
+        _fail("--edit and --add cannot be used together.")
+    if create and not (edit or add):
+        _fail("--create only applies with --edit or --add.")
+
     if preview_secrets and not interactive:
         _fail("--preview-secrets only applies with --interactive/-i.")
 
-    if edit and _resolve_secrets_source_alias(secrets_source) == "both" and not _parameter_was_provided(ctx, "secrets_source"):
+    if (edit or add) and _resolve_secrets_source_alias(secrets_source) == "both" and not _parameter_was_provided(ctx, "secrets_source"):
         secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source="local")
     else:
         secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
     if edit:
         if len(secret_sources) != 1:
             _fail("--edit can only open one secrets file. Choose --source local or --source global.")
-        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor)
+        _edit_secrets_file(secrets_path=secret_sources[0].path, editor=editor, create=create)
+        return
+
+    if add:
+        if len(secret_sources) != 1:
+            _fail("--add can only update one secrets file. Choose --source local or --source global.")
+        _add_secrets_entry(secrets_path=secret_sources[0].path, create=create)
         return
 
     candidates = _load_secret_candidates_from_sources(secret_sources)
@@ -257,40 +279,26 @@ def _jq_login_entry_filter(candidate: SecretCandidate) -> str:
     return f".{match.group(1)}"
 
 
-def _edit_secrets_file(secrets_path: Path, editor: str) -> None:
-    secrets_path.parent.mkdir(parents=True, exist_ok=True)
-    if not secrets_path.exists():
-        secrets_path.write_text(_read_default_secrets_template(), encoding="utf-8")
-        _write_default_secrets_schema(secrets_path.parent / "secrets.schema.json")
-
-    editor_bin = shutil.which(editor)
-    if editor_bin is None:
-        _fail(f"Editor '{editor}' is not available on PATH.")
-
-    result = subprocess.run([editor_bin, str(secrets_path)], check=False)
-    if result.returncode != 0:
-        _fail(f"Editor exited with status code {result.returncode}.")
+def _edit_secrets_file(secrets_path: Path, editor: str, *, create: bool = False) -> None:
+    secret_actions._edit_secrets_file(
+        secrets_path=secrets_path,
+        editor=editor,
+        create=create,
+        shutil_module=shutil,
+        subprocess_module=subprocess,
+    )
 
 
-def _read_default_secrets_template() -> str:
-    import stackops.utils.schemas.secrets as secrets_assets
+def _add_secrets_entry(secrets_path: Path, *, create: bool = False) -> None:
+    secret_actions._add_secrets_entry(
+        secrets_path=secrets_path,
+        create=create,
+        prompt_secret_login_entry=_prompt_secret_login_entry,
+    )
 
-    from stackops.utils.path_reference import get_path_reference_path
 
-    template_path = get_path_reference_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE)
-    return template_path.read_text(encoding="utf-8")
-
-
-def _write_default_secrets_schema(schema_path: Path) -> None:
-    if schema_path.exists():
-        return
-
-    import stackops.utils.schemas.secrets as secrets_assets
-
-    from stackops.utils.path_reference import get_path_reference_path
-
-    source_path = get_path_reference_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE)
-    schema_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
+def _prompt_secret_login_entry() -> Login:
+    return secret_actions._prompt_secret_login_entry()
 
 
 def _clean_optional_selector(value: str | None) -> str | None:
@@ -305,10 +313,7 @@ def _clean_selector_values(values: list[str] | None) -> tuple[str, ...]:
 
 
 def _validate_env_names(key_values: Mapping[str, object]) -> None:
-    invalid_names = [name for name in key_values if ENV_VAR_NAME_RE.fullmatch(name) is None]
-    if invalid_names:
-        names = ", ".join(invalid_names)
-        _fail(f"Invalid environment variable name(s) in keyValues: {names}")
+    secret_actions._validate_env_names(key_values)
 
 
 def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -> None:
@@ -333,84 +338,23 @@ def _join_display(values: tuple[str, ...]) -> str:
 
 
 def _write_env_handoff(key_values: Mapping[str, object]) -> None:
-    op_program_path_raw = os.environ.get("OP_PROGRAM_PATH")
-    if not op_program_path_raw:
-        _fail("Cannot define env variables in the parent shell because OP_PROGRAM_PATH is not set. Run through the StackOps shell wrapper.")
-
-    op_program_path = Path(op_program_path_raw)
-    if op_program_path.exists():
-        _fail(f"Cannot write shell handoff script because OP_PROGRAM_PATH already exists: {op_program_path}")
-
-    op_program_path.parent.mkdir(parents=True, exist_ok=True)
-
-    powershell = platform.system() == "Windows"
-    env_suffix = ".secrets.env.ps1" if powershell else ".secrets.env.sh"
-    env_path = op_program_path.with_name(f"{op_program_path.stem}{env_suffix}")
-    if env_path.exists():
-        _fail(f"Cannot write secrets env file because it already exists: {env_path}")
-
-    env_path.write_text(_render_env_file(key_values=key_values, powershell=powershell), encoding="utf-8")
-    _chmod_private(env_path, 0o600)
-
-    op_program_path.write_text(_render_loader_file(env_path=env_path, powershell=powershell), encoding="utf-8")
-    _chmod_private(op_program_path, 0o700)
+    secret_actions._write_env_handoff(key_values)
 
 
 def _render_env_file(key_values: Mapping[str, object], powershell: bool) -> str:
-    if powershell:
-        lines = ["# StackOps secrets env file. This file is removed after loading."]
-        for key, value in key_values.items():
-            lines.append(f"$env:{key} = {_quote_powershell(render_secret_value(value))}")
-        return "\n".join(lines) + "\n"
-
-    lines = ["# StackOps secrets env file. This file is removed after loading.", "set +x"]
-    for key, value in key_values.items():
-        lines.append(f"export {key}={shlex.quote(render_secret_value(value))}")
-    return "\n".join(lines) + "\n"
+    return secret_actions._render_env_file(key_values=key_values, powershell=powershell)
 
 
 def _render_loader_file(env_path: Path, powershell: bool) -> str:
-    if powershell:
-        env_path_quoted = _quote_powershell(str(env_path))
-        return f"""# StackOps secrets loader. Secret values live in a private temp file, not here.
-$StackOpsSecretEnvFile = {env_path_quoted}
-if (-not (Test-Path -LiteralPath $StackOpsSecretEnvFile)) {{
-    Write-Error "StackOps secrets env file is missing: $StackOpsSecretEnvFile"
-    exit 1
-}}
-. $StackOpsSecretEnvFile
-Remove-Item -LiteralPath $StackOpsSecretEnvFile -Force -ErrorAction SilentlyContinue
-Remove-Variable -Name StackOpsSecretEnvFile -ErrorAction SilentlyContinue
-"""
-
-    env_path_quoted = shlex.quote(str(env_path))
-    return f"""# StackOps secrets loader. Secret values live in a private temp file, not here.
-_stackops_secret_env_file={env_path_quoted}
-if [ ! -f "$_stackops_secret_env_file" ]; then
-  echo "StackOps secrets env file is missing: $_stackops_secret_env_file" >&2
-  return 1 2>/dev/null || exit 1
-fi
-case $- in
-  *x*) _stackops_restore_xtrace=1; set +x ;;
-  *) _stackops_restore_xtrace=0 ;;
-esac
-. "$_stackops_secret_env_file"
-rm -f "$_stackops_secret_env_file"
-if [ "$_stackops_restore_xtrace" = "1" ]; then
-  set -x
-fi
-unset _stackops_secret_env_file _stackops_restore_xtrace
-"""
+    return secret_actions._render_loader_file(env_path=env_path, powershell=powershell)
 
 
 def _quote_powershell(value: str) -> str:
-    return "'" + value.replace("'", "''") + "'"
+    return secret_actions._quote_powershell(value)
 
 
 def _chmod_private(path: Path, mode: int) -> None:
-    if platform.system() == "Windows":
-        return
-    path.chmod(mode)
+    secret_actions._chmod_private(path=path, mode=mode)
 
 
 def _fail(message: str) -> NoReturn:

@@ -169,6 +169,9 @@ devops config secrets --source b github token
 devops config secrets -i -P github
 devops config secrets --path ~/private/team-secrets.json aws dev
 devops config secrets --edit
+devops config secrets --edit --create
+devops config secrets --add
+devops config secrets --add --create
 ```
 
 The query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across login name/tags/accountName, secret name/tags/scopes, metadata, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
@@ -183,7 +186,7 @@ Use `--verbose`, `-v` to print the selected bundle and environment variable keys
 
 For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact login or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `-N`; `--login-tag`, `-l`; `--secret-tag`, `-T`; and `--scope`, `-S` for values inside `entries[].secrets[].scopes`. Exact selectors are case-sensitive and can be combined with query terms.
 
-Use `--source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file. Use `--edit`, `-e` to open the selected secrets file, creating it from the packaged example if it does not exist yet.
+Use `--source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file. Use `--edit`, `-e` to open the selected secrets file. Use `--add` to step through prompts for a new login entry and append it to the selected file. Add `--create` with `--edit` or `--add` to allow creating a missing secrets file and schema.
 
 ### dump
 
