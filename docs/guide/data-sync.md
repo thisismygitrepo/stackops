@@ -78,7 +78,12 @@ devops data sync down --repo user --which dotfiles
 
 # Restrict the generated commands to one item and one cloud profile
 devops data sync up --cloud myremote --which dotfiles.wezterm
+
+# Restore one item from its recorded share_url instead of rclone
+devops data sync down --use-link --which dotfiles.wezterm
 ```
+
+`--use-link` is only valid for `down`. Every selected entry must have a non-null `share_url`; otherwise StackOps exits with the affected entry names and tells you to either remove `--use-link` or add valid links.
 
 ### Inspect or edit the backup config
 

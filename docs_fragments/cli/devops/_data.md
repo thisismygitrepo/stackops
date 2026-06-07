@@ -33,6 +33,7 @@ Key options from current help:
 | `--cloud`, `-c` | Select the rclone config name to use |
 | `--which`, `-w` | Choose specific items, a whole group, or `all` |
 | `--repo`, `-r` | Load backup entries from `library`, `user`, or `all` |
+| `--use-link`, `-l` | On `down`, download from each entry's `share_url` with requests instead of rclone |
 
 If `--which` is omitted, the command falls back to interactive selection. The selector accepts:
 
@@ -51,9 +52,12 @@ devops data sync down --repo user --which dotfiles
 
 # Generate commands for selected entries with a specific cloud config
 devops data sync up --cloud myremote --which dotfiles.bashrc,history.shell
+
+# Restore selected entries from their recorded share_url values
+devops data sync down --use-link --which dotfiles.bashrc
 ```
 
-`devops data sync` filters entries by the current OS and then prints the generated `cloud copy` script based on each item's `path_cloud`, `os`, `zip`, `encrypt`, and `rel2home` fields.
+`devops data sync` filters entries by the current OS and then prints the generated `cloud copy` script based on each item's `path_cloud`, `os`, `zip`, `encrypt`, and `rel2home` fields. With `--use-link`, only `down` is allowed, every selected entry must define a non-null `share_url`, and the retrieve path uses direct HTTP downloads instead of rclone.
 
 ### register
 

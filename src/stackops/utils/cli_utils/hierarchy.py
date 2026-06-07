@@ -415,7 +415,7 @@ STACKOPS_DEVOPS_CONFIG_COMMAND: "StackOpsDevopsConfigCommand" = {
 STACKOPS_DEVOPS_DATA_SYNC_COMMAND: "StackOpsDevopsDataSyncCommand" = {
     "command_name": "sync",
     "short_name": "s",
-    "help": "🔄 <s> Back up or retrieve files and directories using rclone.",
+    "help": "🔄 <s> Back up or retrieve files and directories using rclone or share links.",
     "subcommands": {},
 }
 

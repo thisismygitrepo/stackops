@@ -12,6 +12,14 @@ def sync(
         str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items")
     ] = None,
     repo: Annotated[REPO_LOOSE, typer.Option("--repo", "-r", help="📁 Which backup configuration to use: 'library', 'user', or 'all'")] = "all",
+    use_link: Annotated[
+        bool,
+        typer.Option(
+            "--use-link",
+            "-l",
+            help="🔗 On sync down, download from each entry's share_url with requests instead of rclone.",
+        ),
+    ] = False,
     # interactive: Annotated[bool, typer.Option("--interactive", "-i", help="🤔 Prompt the selection of which items to process")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve
@@ -24,7 +32,7 @@ def sync(
             typer.echo("Error: Invalid direction. Use 'up' or 'down'.")
             raise typer.Exit(code=1)
     try:
-        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo)
+        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo, use_link=use_link)
     except ValueError as exc:
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)
         typer.echo(msg)
@@ -134,13 +142,13 @@ def edit_data(
 def get_app() -> typer.Typer:
     app = typer.Typer(
         name="data",
-        help="🗄 <d> Backup and retrieve configuration files and directories to/from cloud storage using rclone.",
+        help="🗄 <d> Backup and retrieve configuration files and directories to/from cloud storage.",
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
     )
 
-    app.command(name="sync", no_args_is_help=True, hidden=False, help="🔄 <s> Back up or retrieve files and directories using rclone.")(
+    app.command(name="sync", no_args_is_help=True, hidden=False, help="🔄 <s> Back up or retrieve files and directories using rclone or share links.")(
         sync
     )
 

@@ -24,6 +24,10 @@ from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
 defaults = read_default_cloud_config()
 
 
+class ShareUrlDownloadError(RuntimeError):
+    pass
+
+
 def _artifact_path(local_path: Path, zip_requested: bool, encrypt_requested: bool) -> Path:
     suffix = ""
     if zip_requested:
@@ -103,6 +107,61 @@ def _finalize_download_path(
             merge=False,
         )
     return local_path
+
+
+def _download_url_to_path(*, url: str, destination: Path) -> Path:
+    from urllib.parse import urlparse
+
+    import requests
+
+    parsed_url = urlparse(url)
+    if parsed_url.scheme not in {"http", "https"} or parsed_url.netloc == "":
+        raise ShareUrlDownloadError("share_url must be a valid http(s) URL.")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with requests.get(url, allow_redirects=True, stream=True, timeout=60) as response:
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as error:
+                status_code = error.response.status_code if error.response is not None else "unknown"
+                raise ShareUrlDownloadError(f"HTTP download failed with status code {status_code}.") from error
+            with destination.open("wb") as output:
+                for chunk in response.iter_content(chunk_size=8192 * 40):
+                    if chunk:
+                        output.write(chunk)
+    except requests.RequestException as error:
+        raise ShareUrlDownloadError(f"HTTP download failed: {type(error).__name__}.") from error
+    except OSError as error:
+        raise ShareUrlDownloadError(f"Could not write downloaded file: {error}") from error
+    return destination
+
+
+def download_from_share_url(
+    *,
+    share_url: str,
+    target_path: Path,
+    zip_requested: bool,
+    encrypt_requested: bool,
+    pwd: str | None,
+    overwrite: bool,
+) -> Path:
+    direct_download_url = rclone_wrapper.google_drive_direct_download_url(share_url=share_url)
+    download_url = share_url if direct_download_url is None else direct_download_url
+    target_path_resolved = target_path.expanduser().absolute()
+    download_path = _artifact_path(
+        local_path=target_path_resolved,
+        zip_requested=zip_requested,
+        encrypt_requested=encrypt_requested,
+    )
+    _download_url_to_path(url=download_url, destination=download_path)
+    return _finalize_download_path(
+        download_path=download_path,
+        zip_requested=zip_requested,
+        encrypt_requested=encrypt_requested,
+        pwd=pwd,
+        overwrite=overwrite,
+    )
 
 
 def _split_remote_spec(value: str) -> tuple[str, str] | None:

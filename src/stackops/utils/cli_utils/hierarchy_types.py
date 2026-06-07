@@ -337,7 +337,7 @@ StackOpsDevopsDataSyncCommand = TypedDict(
     {
         "command_name": Literal["sync"],
         "short_name": Literal["s"],
-        "help": Literal["🔄 <s> Back up or retrieve files and directories using rclone."],
+        "help": Literal["🔄 <s> Back up or retrieve files and directories using rclone or share links."],
         "subcommands": EmptySubcommands,
     },
 )
