@@ -3634,13 +3634,13 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "curl -fsSL https://ollama.com/install.sh | sh",
-          "darwin": "devops install https://ollama.com/download/Ollama.dmg",
-          "windows": "devops install https://ollama.com/download/OllamaSetup.exe"
+          "darwin": "curl -fsSL https://ollama.com/install.sh | sh",
+          "windows": "irm https://ollama.com/install.ps1 | iex"
         },
         "arm64": {
           "linux": "curl -fsSL https://ollama.com/install.sh | sh",
-          "darwin": "devops install https://ollama.com/download/Ollama.dmg",
-          "windows": "devops install https://ollama.com/download/OllamaSetup.exe"
+          "darwin": "curl -fsSL https://ollama.com/install.sh | sh",
+          "windows": "irm https://ollama.com/install.ps1 | iex"
         }
       }
     },
