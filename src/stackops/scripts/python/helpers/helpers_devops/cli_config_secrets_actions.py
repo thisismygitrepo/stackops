@@ -13,6 +13,10 @@ from typing import Mapping, NoReturn
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interactive import (
+    InteractivePickerOption,
+    choose_interactive_options,
+)
 from stackops.secrets import render_secret_value
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
 from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretStringMap, SecretsFile, SecretValueMap
@@ -65,7 +69,7 @@ def add_secrets_entry(
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Added secrets entry '{entry['name']}' to {secrets_path}")
 
 
-def subset_secrets_file(source_path: Path, output_path: Path, *, overwrite: bool = False) -> None:
+def subset_secrets_file(source_path: Path, output_path: Path, *, overwrite: bool = False, preview_secrets: bool) -> None:
     try:
         secrets_file = load_secrets_file(source_path)
     except SecretsSchemaError as exc:
@@ -76,7 +80,11 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, overwrite: bool
     if output_path.exists() and not overwrite:
         _fail(f"Subset output file already exists: {output_path}. Pass --overwrite to replace it.")
 
-    selected_indices = _choose_subset_login_indices(secrets_file)
+    selected_indices = _choose_subset_login_indices(
+        secrets_file=secrets_file,
+        source_path=source_path,
+        preview_secrets=preview_secrets,
+    )
     if not selected_indices:
         _fail("No secrets entries selected.")
 
@@ -141,74 +149,98 @@ def _write_secrets_file(*, secrets_path: Path, secrets_file: Mapping[str, object
         _chmod_private(secrets_path, 0o600)
 
 
-def _choose_subset_login_indices(secrets_file: SecretsFile) -> list[int]:
-    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+def _choose_subset_login_indices(*, secrets_file: SecretsFile, source_path: Path, preview_secrets: bool) -> list[int]:
+    picker_options = _subset_login_picker_options(
+        secrets_file=secrets_file,
+        source_path=source_path,
+        preview_secrets=preview_secrets,
+    )
+    return choose_interactive_options(
+        picker_options,
+        missing_tool_message="Interactive subset selection requires `tv` on PATH.",
+        missing_selection_message="Interactive selection did not map to a secrets entry",
+    )
 
-    option_to_index, option_to_preview = _subset_login_picker_options(secrets_file)
-    try:
-        selected_labels = choose_from_dict_with_preview(
-            options_to_preview_mapping=option_to_preview, extension="md", multi=True, preview_size_percent=60.0
+
+def _subset_login_picker_options(
+    *, secrets_file: SecretsFile, source_path: Path, preview_secrets: bool
+) -> list[InteractivePickerOption[int]]:
+    picker_options: list[InteractivePickerOption[int]] = []
+    for entry_index, entry in enumerate(secrets_file["entries"]):
+        picker_options.append(
+            InteractivePickerOption(
+                value=entry_index,
+                label=_subset_login_label(entry=entry),
+                preview=_subset_login_preview(
+                    entry=entry,
+                    entry_index=entry_index,
+                    source_path=source_path,
+                    preview_secrets=preview_secrets,
+                ),
+                disambiguator=f"entries[{entry_index}]",
+            )
         )
-    except FileNotFoundError:
-        _fail("Interactive subset selection requires `tv` on PATH.")
-    if not selected_labels:
-        return []
-
-    selected_indices: list[int] = []
-    for label in selected_labels:
-        selected_index = option_to_index.get(label)
-        if selected_index is None:
-            _fail(f"Interactive selection did not map to a secrets entry: {label}")
-        selected_indices.append(selected_index)
-    return selected_indices
+    return picker_options
 
 
-def _subset_login_picker_options(secrets_file: SecretsFile) -> tuple[dict[str, int], dict[str, str]]:
-    entries = secrets_file["entries"]
-    base_labels = [_subset_login_label(entry=entry, entry_index=entry_index) for entry_index, entry in enumerate(entries)]
-    duplicate_labels = {label for label in base_labels if base_labels.count(label) > 1}
-
-    option_to_index: dict[str, int] = {}
-    option_to_preview: dict[str, str] = {}
-    for entry_index, (entry, base_label) in enumerate(zip(entries, base_labels, strict=True)):
-        label = base_label
-        if label in duplicate_labels:
-            label = f"{base_label} [entries[{entry_index}]]"
-        option_to_index[label] = entry_index
-        option_to_preview[label] = _subset_login_preview(entry=entry, entry_index=entry_index)
-    return option_to_index, option_to_preview
+def _subset_login_label(*, entry: Login) -> str:
+    return f"{entry['name']} -> {_preview_summary(_subset_login_env_var_names(entry=entry), limit=4)}"
 
 
-def _subset_login_label(*, entry: Login, entry_index: int) -> str:
-    secret_count = len(entry["secrets"])
-    key_count = sum(len(secret["keyValues"]) for secret in entry["secrets"])
-    tags = _preview_join(tuple(entry.get("tags", ())))
-    return f"{entry['name']} [entries[{entry_index}], tags: {tags}, bundles: {secret_count}, keys: {key_count}]"
-
-
-def _subset_login_preview(*, entry: Login, entry_index: int) -> str:
+def _subset_login_preview(*, entry: Login, entry_index: int, source_path: Path, preview_secrets: bool) -> str:
+    env_var_names = _subset_login_env_var_names(entry=entry)
     lines = [
-        f"# {entry['name']}",
-        "",
-        "Secret values are not shown in this preview.",
+        f"# {_subset_login_label(entry=entry)}",
         "",
         f"- Path: `entries[{entry_index}]`",
+        f"- File: `{source_path}`",
+        f"- Login: `{entry['name']}`",
         f"- Login tags: `{_preview_join(tuple(entry.get('tags', ())))}`",
         f"- Secret bundles: `{len(entry['secrets'])}`",
-        f"- Env vars: `{sum(len(secret['keyValues']) for secret in entry['secrets'])}`",
+        f"- Env vars: `{_preview_join(env_var_names)}`",
         "",
         "## Secret Bundles",
     ]
-    for secret in entry["secrets"]:
-        lines.append(
-            f"- `{secret['name']}`: keys `{_preview_join(tuple(secret['keyValues']))}`; "
-            f"tags `{_preview_join(tuple(secret['tags']))}`; scopes `{_preview_join(tuple(secret['scopes']))}`"
+    for secret_index, secret in enumerate(entry["secrets"]):
+        lines.extend(
+            (
+                f"### {secret['name']}",
+                f"- Path: `entries[{entry_index}].secrets[{secret_index}]`",
+                f"- Secret tags: `{_preview_join(tuple(secret['tags']))}`",
+                f"- Scopes: `{_preview_join(tuple(secret['scopes']))}`",
+                f"- Env vars: `{_preview_join(tuple(secret['keyValues']))}`",
+                "",
+            )
         )
+    if preview_secrets:
+        lines.extend(("", "## Login entry", "```json", json.dumps(entry, indent=2, ensure_ascii=False), "```"))
+    if lines[-1] == "":
+        lines.pop()
     return "\n".join(lines) + "\n"
 
 
 def _preview_join(values: tuple[str, ...]) -> str:
     return ", ".join(values) if values else "-"
+
+
+def _preview_summary(values: tuple[str, ...], *, limit: int) -> str:
+    if not values:
+        return "<no env vars>"
+    if len(values) <= limit:
+        return ", ".join(values)
+    return f"""{", ".join(values[:limit])}, +{len(values) - limit} more"""
+
+
+def _subset_login_env_var_names(*, entry: Login) -> tuple[str, ...]:
+    env_var_names: list[str] = []
+    seen_env_var_names: set[str] = set()
+    for secret in entry["secrets"]:
+        for env_var_name in secret["keyValues"]:
+            if env_var_name in seen_env_var_names:
+                continue
+            seen_env_var_names.add(env_var_name)
+            env_var_names.append(env_var_name)
+    return tuple(env_var_names)
 
 
 def prompt_secret_login() -> Login:

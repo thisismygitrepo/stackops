@@ -206,11 +206,20 @@ def subset(
         bool,
         typer.Option("--overwrite", "-f", help="Replace the output file if it already exists."),
     ] = False,
+    preview_secrets: Annotated[
+        bool,
+        typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview."),
+    ] = False,
 ) -> None:
     """📦 <u> Create a new StackOps secrets file from selected entries."""
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
     resolved_output_path = _resolve_output_path(output_path)
-    secret_actions.subset_secrets_file(source_path=secret_source.path, output_path=resolved_output_path, overwrite=overwrite)
+    secret_actions.subset_secrets_file(
+        source_path=secret_source.path,
+        output_path=resolved_output_path,
+        overwrite=overwrite,
+        preview_secrets=preview_secrets,
+    )
 
 
 def add(

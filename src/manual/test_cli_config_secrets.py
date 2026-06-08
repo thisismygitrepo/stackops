@@ -7,6 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config, cli_config_secrets
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interactive import InteractivePickerOption
 
 
 def test_config_secrets_is_nested_typer_app() -> None:
@@ -75,6 +76,7 @@ def test_secrets_add_and_edit_have_short_aliases() -> None:
     assert "-p" in _option_param_decls(subset_parameters["secrets_path"])
     assert "-s" in _option_param_decls(subset_parameters["secrets_source"])
     assert "-f" in _option_param_decls(subset_parameters["overwrite"])
+    assert "-P" in _option_param_decls(subset_parameters["preview_secrets"])
     assert "-p" in _option_param_decls(add_parameters["secrets_path"])
     assert "-s" in _option_param_decls(add_parameters["secrets_source"])
     assert "-p" in _option_param_decls(edit_parameters["secrets_path"])
@@ -199,7 +201,11 @@ def test_secrets_subset_writes_selected_entries_without_printing_secret_values(t
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr(cli_config_secrets.secret_actions, "_choose_subset_login_indices", lambda secrets_file: [1])
+    monkeypatch.setattr(
+        cli_config_secrets.secret_actions,
+        "_choose_subset_login_indices",
+        lambda *, secrets_file, source_path, preview_secrets: [1],
+    )
     runner = CliRunner()
 
     result = runner.invoke(
@@ -239,7 +245,11 @@ def test_secrets_subset_refuses_to_overwrite_by_default(tmp_path: Path, monkeypa
         encoding="utf-8",
     )
     output_path.write_text("existing\n", encoding="utf-8")
-    monkeypatch.setattr(cli_config_secrets.secret_actions, "_choose_subset_login_indices", lambda secrets_file: [0])
+    monkeypatch.setattr(
+        cli_config_secrets.secret_actions,
+        "_choose_subset_login_indices",
+        lambda *, secrets_file, source_path, preview_secrets: [0],
+    )
     runner = CliRunner()
 
     result = runner.invoke(
@@ -249,6 +259,127 @@ def test_secrets_subset_refuses_to_overwrite_by_default(tmp_path: Path, monkeypa
 
     assert result.exit_code == 1
     assert output_path.read_text(encoding="utf-8") == "existing\n"
+
+
+def test_secrets_subset_preview_matches_search_style_without_secret_values(tmp_path: Path) -> None:
+    source_path = tmp_path / "source-secrets.json"
+    output_path = tmp_path / "subset-secrets.json"
+    source_path.write_text(
+        json.dumps(
+            {
+                "version": "0.5",
+                "entries": [
+                    {
+                        "name": "shared-login",
+                        "tags": ["team-a"],
+                        "secrets": [
+                            {
+                                "name": "first-token",
+                                "tags": ["api"],
+                                "scopes": ["dev"],
+                                "keyValues": {"FIRST_TOKEN": "first-secret-value"},
+                            },
+                            {
+                                "name": "second-token",
+                                "tags": ["ops"],
+                                "scopes": ["prod"],
+                                "keyValues": {"SECOND_TOKEN": "second-secret-value"},
+                            },
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    captured_picker_options: list[InteractivePickerOption[int]] = []
+
+    def capture_picker_options(
+        options: list[InteractivePickerOption[int]],
+        *,
+        missing_tool_message: str,
+        missing_selection_message: str,
+    ) -> list[int]:
+        assert missing_tool_message == "Interactive subset selection requires `tv` on PATH."
+        assert missing_selection_message == "Interactive selection did not map to a secrets entry"
+        captured_picker_options.extend(options)
+        return [0]
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(cli_config_secrets.secret_actions, "choose_interactive_options", capture_picker_options)
+    try:
+        result = CliRunner().invoke(
+            cli_config_secrets.get_app(),
+            ["subset", "--path", str(source_path), "--source", "local", "--output", str(output_path)],
+        )
+    finally:
+        monkeypatch.undo()
+
+    assert result.exit_code == 0
+    assert len(captured_picker_options) == 1
+    assert captured_picker_options[0].label == "shared-login -> FIRST_TOKEN, SECOND_TOKEN"
+    assert "# shared-login -> FIRST_TOKEN, SECOND_TOKEN" in captured_picker_options[0].preview
+    assert f"- File: `{source_path}`" in captured_picker_options[0].preview
+    assert "- Login: `shared-login`" in captured_picker_options[0].preview
+    assert "- Env vars: `FIRST_TOKEN, SECOND_TOKEN`" in captured_picker_options[0].preview
+    assert "### first-token" in captured_picker_options[0].preview
+    assert "### second-token" in captured_picker_options[0].preview
+    assert "first-secret-value" not in captured_picker_options[0].preview
+    assert "second-secret-value" not in captured_picker_options[0].preview
+
+
+def test_secrets_subset_preview_secrets_includes_login_entry_json(tmp_path: Path) -> None:
+    source_path = tmp_path / "source-secrets.json"
+    output_path = tmp_path / "subset-secrets.json"
+    source_path.write_text(
+        json.dumps(
+            {
+                "version": "0.5",
+                "entries": [
+                    {
+                        "name": "shared-login",
+                        "tags": ["team-a"],
+                        "secrets": [
+                            {
+                                "name": "first-token",
+                                "tags": ["api"],
+                                "scopes": ["dev"],
+                                "keyValues": {"FIRST_TOKEN": "first-secret-value"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    captured_picker_options: list[InteractivePickerOption[int]] = []
+
+    def capture_picker_options(
+        options: list[InteractivePickerOption[int]],
+        *,
+        missing_tool_message: str,
+        missing_selection_message: str,
+    ) -> list[int]:
+        assert missing_tool_message == "Interactive subset selection requires `tv` on PATH."
+        assert missing_selection_message == "Interactive selection did not map to a secrets entry"
+        captured_picker_options.extend(options)
+        return [0]
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(cli_config_secrets.secret_actions, "choose_interactive_options", capture_picker_options)
+    try:
+        result = CliRunner().invoke(
+            cli_config_secrets.get_app(),
+            ["subset", "--path", str(source_path), "--source", "local", "--output", str(output_path), "--preview-secrets"],
+        )
+    finally:
+        monkeypatch.undo()
+
+    assert result.exit_code == 0
+    assert len(captured_picker_options) == 1
+    assert "## Login entry" in captured_picker_options[0].preview
+    assert '"FIRST_TOKEN": "first-secret-value"' in captured_picker_options[0].preview
 
 
 def _option_param_decls(parameter: Parameter) -> tuple[str, ...]:

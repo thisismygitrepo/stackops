@@ -5,6 +5,10 @@ from typing import NoReturn
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interactive import (
+    InteractivePickerOption,
+    choose_interactive_option,
+)
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
 from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretStringMap, SecretsFile, SecretValueMap
 
@@ -200,39 +204,21 @@ def _candidate_matches_selectors(candidate: SecretCandidate, selectors: SecretSe
 
 
 def _choose_candidate_interactively(candidates: list[SecretCandidate], *, preview_secrets: bool = False) -> SecretCandidate:
-    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-
-    option_to_candidate, option_to_preview = _candidate_picker_options(candidates, preview_secrets=preview_secrets)
-    try:
-        selected_label = choose_from_dict_with_preview(
-            options_to_preview_mapping=option_to_preview, extension="md", multi=False, preview_size_percent=60.0
+    picker_options = [
+        InteractivePickerOption(
+            value=candidate,
+            label=_candidate_label(candidate),
+            preview=_candidate_preview(candidate, include_secret_values=preview_secrets),
+            disambiguator=candidate.json_path,
         )
-    except FileNotFoundError:
-        _fail("Interactive selection requires `tv` on PATH.")
-    if selected_label is None:
-        _fail("Interactive selection cancelled.")
-
-    selected_candidate = option_to_candidate.get(selected_label)
-    if selected_candidate is None:
-        _fail(f"Interactive selection did not map to a secrets keyValues entry: {selected_label}")
-    return selected_candidate
-
-
-def _candidate_picker_options(
-    candidates: list[SecretCandidate], *, preview_secrets: bool = False
-) -> tuple[dict[str, SecretCandidate], dict[str, str]]:
-    base_labels = [_candidate_label(candidate) for candidate in candidates]
-    duplicate_labels = {label for label in base_labels if base_labels.count(label) > 1}
-
-    option_to_candidate: dict[str, SecretCandidate] = {}
-    option_to_preview: dict[str, str] = {}
-    for candidate, base_label in zip(candidates, base_labels, strict=True):
-        label = base_label
-        if label in duplicate_labels:
-            label = f"{base_label} [{candidate.json_path}]"
-        option_to_candidate[label] = candidate
-        option_to_preview[label] = _candidate_preview(candidate, include_secret_values=preview_secrets)
-    return option_to_candidate, option_to_preview
+        for candidate in candidates
+    ]
+    return choose_interactive_option(
+        picker_options,
+        missing_tool_message="Interactive selection requires `tv` on PATH.",
+        cancelled_message="Interactive selection cancelled.",
+        missing_selection_message="Interactive selection did not map to a secrets keyValues entry",
+    )
 
 
 def _candidate_preview(candidate: SecretCandidate, *, include_secret_values: bool = False) -> str:
