@@ -1,5 +1,7 @@
 from typing import TypedDict
 
+from stackops.utils.encryption import EncryptionMode
+
 
 class CloudConfig(TypedDict, total=True):
     cloud: str
@@ -7,6 +9,7 @@ class CloudConfig(TypedDict, total=True):
     rel2home: bool
     pwd: str | None
     encrypt: bool
+    encryption: EncryptionMode | None
     os_specific: bool
     zip: bool
     share: bool
@@ -20,6 +23,7 @@ def read_default_cloud_config() -> CloudConfig:
         "rel2home": False,
         "pwd": None,
         "encrypt": False,
+        "encryption": None,
         "os_specific": False,
         "zip": False,
         "share": False,

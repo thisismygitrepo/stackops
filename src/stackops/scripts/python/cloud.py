@@ -39,7 +39,7 @@ def copy(
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.")] = defaults["pwd"],
     encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="🔐 Encrypt before sending.")] = defaults["encrypt"],
-    encryption: Annotated[str | None, typer.Option("--encryption", "-E", help="🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.")] = None,
+    encryption: Annotated[str | None, typer.Option("--encryption", "-E", help="🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.")] = defaults["encryption"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
 ) -> None:

@@ -310,6 +310,7 @@ def main(
         root=root,
         pwd=pwd,
         encrypt=encrypt_effective,
+        encryption=encryption_mode,
         zip=zip_,
         os_specific=os_specific,
     )
@@ -344,7 +345,7 @@ def main(
                 download_path=download_path,
                 zip_requested=cloud_config_explicit["zip"],
                 encrypt_requested=cloud_config_explicit["encrypt"],
-                encryption_mode=encryption_mode,
+                encryption_mode=cloud_config_explicit["encryption"],
                 pwd=cloud_config_explicit["pwd"],
                 overwrite=cloud_config_explicit["overwrite"],
             )
@@ -384,7 +385,7 @@ def main(
                 local_path=source_path,
                 zip_requested=cloud_config_explicit["zip"],
                 encrypt_requested=cloud_config_explicit["encrypt"],
-                encryption_mode=encryption_mode,
+                encryption_mode=cloud_config_explicit["encryption"],
                 pwd=cloud_config_explicit["pwd"],
             )
             share_url = rclone_wrapper.to_cloud(
@@ -430,7 +431,7 @@ def main(
                 share_url=share_url,
                 zip_requested=cloud_config_explicit["zip"],
                 encrypt_requested=cloud_config_explicit["encrypt"],
-                encryption_mode=encryption_mode,
+                encryption_mode=cloud_config_explicit["encryption"],
                 rel2home=cloud_config_explicit["rel2home"],
                 record_group=record_group,
                 record_name=record_name,

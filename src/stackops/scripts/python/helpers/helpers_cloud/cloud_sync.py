@@ -30,6 +30,7 @@ def main(
         root=root,
         pwd=pwd,
         encrypt=encrypt,
+        encryption=None,
         zip=zip_,
         rel2home=True,
         os_specific=False,
