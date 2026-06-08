@@ -6,6 +6,7 @@ import shlex
 import shutil
 import subprocess
 from collections.abc import Callable
+from copy import deepcopy
 from pathlib import Path
 from types import ModuleType
 from typing import Mapping, NoReturn
@@ -14,7 +15,7 @@ import typer
 
 from stackops.secrets import render_secret_value
 from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretStringMap, SecretValueMap
+from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretStringMap, SecretsFile, SecretValueMap
 
 SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
 SECRETS_FILE_VERSION = "0.5"
@@ -64,6 +65,43 @@ def add_secrets_entry(
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Added secrets entry '{entry['name']}' to {secrets_path}")
 
 
+def subset_secrets_file(source_path: Path, output_path: Path, *, overwrite: bool = False) -> None:
+    try:
+        secrets_file = load_secrets_file(source_path)
+    except SecretsSchemaError as exc:
+        _fail(str(exc))
+
+    if source_path.resolve(strict=False) == output_path.resolve(strict=False):
+        _fail("Subset output path must be different from the source secrets file.")
+    if output_path.exists() and not overwrite:
+        _fail(f"Subset output file already exists: {output_path}. Pass --overwrite to replace it.")
+
+    selected_indices = _choose_subset_login_indices(secrets_file)
+    if not selected_indices:
+        _fail("No secrets entries selected.")
+
+    selected_index_set = set(selected_indices)
+    selected_entries = [deepcopy(entry) for index, entry in enumerate(secrets_file["entries"]) if index in selected_index_set]
+    if not selected_entries:
+        _fail("No secrets entries selected.")
+
+    subset_file: dict[str, object] = {}
+    if "$schema" in secrets_file:
+        subset_file["$schema"] = secrets_file["$schema"]
+    subset_file["version"] = secrets_file["version"]
+    subset_file["entries"] = selected_entries
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(subset_file, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _chmod_private(output_path, 0o600)
+
+    secret_count = sum(len(entry["secrets"]) for entry in selected_entries)
+    typer.echo(
+        typer.style("✅ Success: ", fg=typer.colors.GREEN)
+        + f"Wrote {len(selected_entries)} login entry(ies) and {secret_count} secret bundle(s) to {output_path}"
+    )
+
+
 def _load_or_initialize_add_target(*, secrets_path: Path, create: bool) -> tuple[dict[str, object], bool]:
     if not secrets_path.exists():
         if not create:
@@ -101,6 +139,76 @@ def _write_secrets_file(*, secrets_path: Path, secrets_file: Mapping[str, object
     secrets_path.write_text(json.dumps(secrets_file, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if created_file:
         _chmod_private(secrets_path, 0o600)
+
+
+def _choose_subset_login_indices(secrets_file: SecretsFile) -> list[int]:
+    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+
+    option_to_index, option_to_preview = _subset_login_picker_options(secrets_file)
+    try:
+        selected_labels = choose_from_dict_with_preview(
+            options_to_preview_mapping=option_to_preview, extension="md", multi=True, preview_size_percent=60.0
+        )
+    except FileNotFoundError:
+        _fail("Interactive subset selection requires `tv` on PATH.")
+    if not selected_labels:
+        return []
+
+    selected_indices: list[int] = []
+    for label in selected_labels:
+        selected_index = option_to_index.get(label)
+        if selected_index is None:
+            _fail(f"Interactive selection did not map to a secrets entry: {label}")
+        selected_indices.append(selected_index)
+    return selected_indices
+
+
+def _subset_login_picker_options(secrets_file: SecretsFile) -> tuple[dict[str, int], dict[str, str]]:
+    entries = secrets_file["entries"]
+    base_labels = [_subset_login_label(entry=entry, entry_index=entry_index) for entry_index, entry in enumerate(entries)]
+    duplicate_labels = {label for label in base_labels if base_labels.count(label) > 1}
+
+    option_to_index: dict[str, int] = {}
+    option_to_preview: dict[str, str] = {}
+    for entry_index, (entry, base_label) in enumerate(zip(entries, base_labels, strict=True)):
+        label = base_label
+        if label in duplicate_labels:
+            label = f"{base_label} [entries[{entry_index}]]"
+        option_to_index[label] = entry_index
+        option_to_preview[label] = _subset_login_preview(entry=entry, entry_index=entry_index)
+    return option_to_index, option_to_preview
+
+
+def _subset_login_label(*, entry: Login, entry_index: int) -> str:
+    secret_count = len(entry["secrets"])
+    key_count = sum(len(secret["keyValues"]) for secret in entry["secrets"])
+    tags = _preview_join(tuple(entry.get("tags", ())))
+    return f"{entry['name']} [entries[{entry_index}], tags: {tags}, bundles: {secret_count}, keys: {key_count}]"
+
+
+def _subset_login_preview(*, entry: Login, entry_index: int) -> str:
+    lines = [
+        f"# {entry['name']}",
+        "",
+        "Secret values are not shown in this preview.",
+        "",
+        f"- Path: `entries[{entry_index}]`",
+        f"- Login tags: `{_preview_join(tuple(entry.get('tags', ())))}`",
+        f"- Secret bundles: `{len(entry['secrets'])}`",
+        f"- Env vars: `{sum(len(secret['keyValues']) for secret in entry['secrets'])}`",
+        "",
+        "## Secret Bundles",
+    ]
+    for secret in entry["secrets"]:
+        lines.append(
+            f"- `{secret['name']}`: keys `{_preview_join(tuple(secret['keyValues']))}`; "
+            f"tags `{_preview_join(tuple(secret['tags']))}`; scopes `{_preview_join(tuple(secret['scopes']))}`"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _preview_join(values: tuple[str, ...]) -> str:
+    return ", ".join(values) if values else "-"
 
 
 def prompt_secret_login() -> Login:

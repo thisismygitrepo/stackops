@@ -18,6 +18,7 @@ def test_config_secrets_is_nested_typer_app() -> None:
     assert "Usage: root secrets [OPTIONS] COMMAND [ARGS]..." in result.output
     assert "search" in result.output
     assert "stats" in result.output
+    assert "subset" in result.output
     assert "add" in result.output
     assert "edit" in result.output
     assert "Examples:" not in result.output
@@ -63,12 +64,17 @@ def test_secrets_search_keeps_selector_aliases() -> None:
 
 def test_secrets_add_and_edit_have_short_aliases() -> None:
     stats_parameters = signature(cli_config_secrets.stats).parameters
+    subset_parameters = signature(cli_config_secrets.subset).parameters
     add_parameters = signature(cli_config_secrets.add).parameters
     edit_parameters = signature(cli_config_secrets.edit).parameters
 
     assert "-p" in _option_param_decls(stats_parameters["secrets_path"])
     assert "-s" in _option_param_decls(stats_parameters["secrets_source"])
     assert "-d" in _option_param_decls(stats_parameters["details"])
+    assert "-o" in _option_param_decls(subset_parameters["output_path"])
+    assert "-p" in _option_param_decls(subset_parameters["secrets_path"])
+    assert "-s" in _option_param_decls(subset_parameters["secrets_source"])
+    assert "-f" in _option_param_decls(subset_parameters["overwrite"])
     assert "-p" in _option_param_decls(add_parameters["secrets_path"])
     assert "-s" in _option_param_decls(add_parameters["secrets_source"])
     assert "-p" in _option_param_decls(edit_parameters["secrets_path"])
@@ -153,6 +159,96 @@ def test_secrets_stats_uses_aggregate_tables_without_secret_values(tmp_path: Pat
     assert "SERVICE_TOKEN" not in result.output
     assert "service-login" not in result.output
     assert "service-token" not in result.output
+
+
+def test_secrets_subset_writes_selected_entries_without_printing_secret_values(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    secrets_path = tmp_path / "source-secrets.json"
+    output_path = tmp_path / "subset" / "secrets.json"
+    secrets_path.write_text(
+        json.dumps(
+            {
+                "$schema": "./secrets.schema.json",
+                "version": "0.5",
+                "entries": [
+                    {
+                        "name": "first-login",
+                        "tags": ["team-a"],
+                        "secrets": [
+                            {
+                                "name": "first-token",
+                                "tags": ["api"],
+                                "scopes": ["dev"],
+                                "keyValues": {"FIRST_TOKEN": "first-secret-value"},
+                            }
+                        ],
+                    },
+                    {
+                        "name": "second-login",
+                        "tags": ["team-b"],
+                        "secrets": [
+                            {
+                                "name": "second-token",
+                                "tags": ["api"],
+                                "scopes": ["prod"],
+                                "keyValues": {"SECOND_TOKEN": "second-secret-value"},
+                            }
+                        ],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cli_config_secrets.secret_actions, "_choose_subset_login_indices", lambda secrets_file: [1])
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli_config_secrets.get_app(),
+        ["subset", "--path", str(secrets_path), "--source", "local", "--output", str(output_path)],
+    )
+
+    assert result.exit_code == 0
+    assert "second-secret-value" not in result.output
+    subset_payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert subset_payload["$schema"] == "./secrets.schema.json"
+    assert subset_payload["version"] == "0.5"
+    assert [entry["name"] for entry in subset_payload["entries"]] == ["second-login"]
+    assert subset_payload["entries"][0]["secrets"][0]["keyValues"] == {"SECOND_TOKEN": "second-secret-value"}
+
+
+def test_secrets_subset_refuses_to_overwrite_by_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    secrets_path = tmp_path / "source-secrets.json"
+    output_path = tmp_path / "subset-secrets.json"
+    secrets_path.write_text(
+        json.dumps(
+            {
+                "version": "0.5",
+                "entries": [
+                    {
+                        "name": "service-login",
+                        "secrets": [
+                            {
+                                "name": "service-token",
+                                "keyValues": {"SERVICE_TOKEN": "source-secret-value"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_path.write_text("existing\n", encoding="utf-8")
+    monkeypatch.setattr(cli_config_secrets.secret_actions, "_choose_subset_login_indices", lambda secrets_file: [0])
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli_config_secrets.get_app(),
+        ["subset", "--path", str(secrets_path), "--source", "local", "--output", str(output_path)],
+    )
+
+    assert result.exit_code == 1
+    assert output_path.read_text(encoding="utf-8") == "existing\n"
 
 
 def _option_param_decls(parameter: Parameter) -> tuple[str, ...]:

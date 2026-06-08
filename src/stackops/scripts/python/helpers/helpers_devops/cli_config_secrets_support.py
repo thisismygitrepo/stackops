@@ -469,3 +469,16 @@ def _fail(message: str) -> NoReturn:
 
 def _warn(message: str) -> None:
     typer.echo(typer.style("Warning: ", fg=typer.colors.YELLOW) + message, err=True)
+
+
+resolve_secret_sources = _resolve_secret_sources
+resolve_single_secret_source = _resolve_single_secret_source
+load_secret_candidates_from_sources = _load_secret_candidates_from_sources
+candidate_source_path = _candidate_source_path
+load_secret_stats_from_sources = _load_secret_stats_from_sources
+render_secret_stats = _render_secret_stats
+echo_jq_login_entry_hint = _echo_jq_login_entry_hint
+clean_optional_selector = _clean_optional_selector
+clean_selector_values = _clean_selector_values
+echo_verbose_selection = _echo_verbose_selection
+fail = _fail
