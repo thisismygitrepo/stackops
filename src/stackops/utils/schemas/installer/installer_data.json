@@ -3882,6 +3882,28 @@
       }
     },
     {
+      "appName": "ai-devkit",
+      "license": "MIT",
+      "repoURL": "https://github.com/codeaholicguy/ai-devkit",
+      "doc": "Repeatable engineering workflow, memory, verification, skills, and agent setup for AI coding agents.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "productivity-knowledge"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g ai-devkit@latest",
+          "windows": "bun install -g ai-devkit@latest",
+          "darwin": "bun install -g ai-devkit@latest"
+        },
+        "arm64": {
+          "linux": "bun install -g ai-devkit@latest",
+          "windows": "bun install -g ai-devkit@latest",
+          "darwin": "bun install -g ai-devkit@latest"
+        }
+      }
+    },
+    {
       "appName": "beads",
       "license": "MIT License",
       "repoURL": "https://github.com/gastownhall/beads",
