@@ -7,7 +7,7 @@ This part of the utility API is the filesystem and configuration layer that curr
 | `stackops.utils.path_core` | Core path operations such as copy, move, delete, symlink, download, temp-path creation, and safe naming |
 | `stackops.utils.path_helper` | File resolution and interactive path selection helpers |
 | `stackops.utils.path_reference` | Resolve package-relative asset paths from imported modules |
-| `stackops.utils.ve` | `.ve.yaml` and `.venv` discovery helpers |
+| `stackops.utils.python_env` | `.venv` discovery and activation helpers |
 | `stackops.utils.io` | JSON / INI / pickle IO plus GPG-backed file encryption helpers |
 
 Older wording around `PathExtended` has been removed here because the current repo centers these modules instead.
@@ -74,22 +74,20 @@ This is the mechanism used by the current `seek` text-search helpers to load pla
 
 ---
 
-## `ve`
+## `python_env`
 
-`stackops.utils.ve` handles the lightweight project metadata that StackOps uses to discover environments and cloud defaults.
+`stackops.utils.python_env` handles project-local virtualenv discovery and activation helpers.
 
 Key pieces:
 
-- `read_default_cloud_config()` returns the built-in cloud defaults: cloud `mycloud101`, root `myhome`, boolean transfer options off, and no password
-- `get_ve_path_and_ipython_profile()` walks upward from a path looking for `.ve.yaml`, then falls back to `.venv`
-- `get_ve_activate_line()` builds the platform-specific activation command
+- `find_virtualenv_root()` walks upward from a path looking for `.venv`
+- `build_virtualenv_activation_line()` builds the platform-specific activation command
 
-Current `.ve.yaml` lookup behavior:
+Current `.venv` lookup behavior:
 
-- reads `specs.ve_path` when present
-- reads `specs.ipy_profile` when present
-- falls back to a sibling `.venv`
-- stops early once both values are found
+- normalizes file inputs to their parent directory
+- checks that directory and each parent for a sibling `.venv`
+- returns the first match it finds
 
 ---
 
@@ -126,16 +124,16 @@ from pathlib import Path
 from stackops.utils.io import read_ini, save_json
 from stackops.utils.path_core import tmpfile, validate_name
 from stackops.utils.path_helper import get_choice_file
-from stackops.utils.ve import get_ve_path_and_ipython_profile
+from stackops.utils.python_env import find_virtualenv_root
 
 target_path = tmpfile(name=validate_name("example config"), suffix=".json")
 save_json({"workers": 8, "queue": "jobs"}, target_path, indent=2)
 
 choice = get_choice_file(path=str(target_path), suffixes={".json"}, search_root=None)
-ve_path, ipy_profile = get_ve_path_and_ipython_profile(Path(choice))
+virtualenv_path = find_virtualenv_root(Path(choice))
 
 print(choice)
-print(ve_path, ipy_profile)
+print(virtualenv_path)
 print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no ini file")
 ```
 
@@ -169,7 +167,7 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
 
 ## Virtual Environment Helpers
 
-::: stackops.utils.ve
+::: stackops.utils.python_env
     options:
       show_root_heading: true
       show_source: false

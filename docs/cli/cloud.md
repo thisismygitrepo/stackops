@@ -25,13 +25,14 @@ The command also defines hidden one-letter aliases for the same actions: `s`, `c
 
 ## Defaults
 
-When a command does not override them, cloud defaults come from `stackops.utils.ve.read_default_cloud_config()`:
+When a command does not override them, cloud defaults come from `stackops.utils.cloud_defaults.read_default_cloud_config()`:
 
 - remote root: `myhome`
 - cloud name: `mycloud101`
 - `encrypt`, `zip`, `share`, `overwrite`, `os_specific`, `rel2home`: `False`
 - `pwd`: unset
 - encryption mode: unset unless passed with `--encryption`
+- if a remote path starts with `:`, StackOps fills in the cloud name from the configured default rclone remote
 
 ---
 
@@ -45,7 +46,6 @@ Current options from live help:
 
 | Option | Meaning |
 | --- | --- |
-| `--config`, `-c` | Path to `.ve.yaml` |
 | `--transfers`, `-t` | Number of sync threads |
 | `--root`, `-R` | Remote root |
 | `--pwd`, `-P` | Symmetric GPG encryption password used when `--encrypt` is set |
@@ -86,7 +86,6 @@ Current options from live help:
 | `--encryption`, `-E` | Encryption mode when `--encrypt` is set: `symmetric` or `asymmetric` |
 | `--zip`, `-z` | Current help text: unzip after receiving |
 | `--os-specific`, `-O` | Choose a path specific to the current OS |
-| `--config`, `-c` | Path to `.ve.yaml` |
 
 Example:
 

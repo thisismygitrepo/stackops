@@ -210,7 +210,7 @@ uv venv
             total_packages["plot"] = ["python-magic", "matplotlib", "plotly", "kaleido"]
         if "d" in packages:
             total_packages["data"] = ["numpy", "pandas", "polars", "duckdb-engine", "sqlalchemy", "psycopg2-binary", "pyarrow", "tqdm", "openpyxl"]
-    from stackops.utils.ve import get_ve_activate_line
+    from stackops.utils.python_env import build_virtualenv_activation_line
     groups_packages_lines = "\n".join(
         [f"uv add --group {group_name} {' '.join(packages)}" for group_name, packages in total_packages.items()]
     )   
@@ -218,7 +218,7 @@ uv venv
 {starting_code}
 {packages_add_line}
 {groups_packages_lines}
-{get_ve_activate_line(ve_root=str(repo_root.joinpath(".venv")))}
+{build_virtualenv_activation_line(repo_root.joinpath(".venv"))}
 {agents_line}
 ls
 """

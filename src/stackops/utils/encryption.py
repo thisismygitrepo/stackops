@@ -1,4 +1,4 @@
-from typing import Literal, cast
+from typing import Literal
 
 EncryptionMode = Literal["symmetric", "asymmetric"]
 ENCRYPTION_MODES: tuple[EncryptionMode, ...] = ("symmetric", "asymmetric")
@@ -10,5 +10,5 @@ def parse_encryption_mode(value: object, *, label: str = "encryption") -> Encryp
         raise ValueError(f"{label} must be one of: {ENCRYPTION_MODES_DISPLAY}.")
     token = value.strip().lower()
     if token in ENCRYPTION_MODES:
-        return cast(EncryptionMode, token)
+        return token
     raise ValueError(f"{label} must be one of: {ENCRYPTION_MODES_DISPLAY}.")

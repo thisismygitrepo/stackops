@@ -166,12 +166,7 @@ def _build_python_exe_line(
     interactive_line = "-i" if interactive else ""
     frozen_line = "--frozen" if frozen else ""
     if interactive:
-        from stackops.utils.ve import get_ve_path_and_ipython_profile
-
-        _ve_root_from_file, ipy_profile = get_ve_path_and_ipython_profile(init_path=choice_file)
-        if ipy_profile is None:
-            ipy_profile = "default"
-        ipython_line = f"--no-banner --profile {ipy_profile} "
+        ipython_line = "--no-banner --profile default "
     else:
         ipython_line = ""
 

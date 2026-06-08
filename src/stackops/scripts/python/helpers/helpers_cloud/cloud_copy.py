@@ -5,7 +5,6 @@ CC
 from pathlib import Path
 
 import stackops.utils.path_compression as path_compression
-import stackops.utils.path_core as path_core
 from stackops.utils.io import (
     GpgCommandError,
     decrypt_file_asymmetric,
@@ -17,9 +16,7 @@ from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
 from stackops.utils.path_core import delete_path
 import stackops.utils.rclone_wrapper as rclone_wrapper
 from stackops.utils.rclone import RcloneCommandError
-from stackops.utils.ve import CLOUD, read_default_cloud_config
-
-from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
+from stackops.utils.cloud_defaults import CloudConfig, read_default_cloud_config
 
 
 defaults = read_default_cloud_config()
@@ -274,79 +271,6 @@ def _record_upload(
     )
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_chain(wait_fixed(1), wait_fixed(4), wait_fixed(9)))
-def get_securely_shared_file(url: str | None, folder: str | None) -> None:
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.progress import Progress
-    import getpass
-    import os
-    from stackops.utils.io import GpgCommandError, decrypt_file_symmetric
-    console = Console()
-    console.print(Panel("🚀 Secure File Downloader", title="[bold blue]Downloader[/bold blue]", border_style="blue"))
-    folder_obj = Path.cwd() if folder is None else Path(folder).expanduser()
-    print(f"📂 Target folder: {folder_obj}")
-
-    if os.environ.get("DECRYPTION_PASSWORD") is not None:
-        print("🔑 Using password from environment variables")
-        pwd = str(os.environ.get("DECRYPTION_PASSWORD"))
-    else:
-        pwd = getpass.getpass(prompt="🔑 Enter decryption password: ")
-
-    if url is None:
-        if os.environ.get("SHARE_URL") is not None:
-            url = os.environ.get("SHARE_URL")
-            assert url is not None
-            print("🔗 Using URL from environment variables")
-        else:
-            url = input("🔗 Enter share URL: ")
-
-    console.print(Panel("📡 Downloading from URL...", title="[bold blue]Download[/bold blue]", border_style="blue"))
-    with Progress(transient=True) as progress:
-        _task = progress.add_task("Downloading... ", total=None)
-        url_obj = path_core.download(url, folder=folder_obj)
-
-    console.print(Panel(f"📥 Downloaded file: {url_obj}", title="[bold green]Success[/bold green]", border_style="green"))
-
-    console.print(Panel("🔐 Decrypting and extracting...", title="[bold blue]Processing[/bold blue]", border_style="blue"))
-    with Progress(transient=True) as progress:
-        _task = progress.add_task("Decrypting... ", total=None)
-        tmp_folder = path_core.tmpdir(prefix="tmp_unzip")
-        try:
-            try:
-                decrypted_path = Path(decrypt_file_symmetric(file_path=url_obj, pwd=pwd))
-            except GpgCommandError as error:
-                console.print(
-                    Panel(
-                        f"URL: {url_obj}\n📂 Target folder: {folder_obj}\n\n{error}",
-                        title="[bold red]GPG Error[/bold red]",
-                        border_style="red",
-                    )
-                )
-                raise SystemExit(1) from None
-            delete_path(url_obj, verbose=False)
-            res = path_compression.unzip_path(
-                decrypted_path,
-                folder=tmp_folder,
-                path=None,
-                name=None,
-                verbose=True,
-                content=False,
-                inplace=True,
-                overwrite=False,
-                orig=False,
-                pwd=None,
-                tmp=False,
-                pattern=None,
-                merge=False,
-            )
-            for x in res.glob("*"):
-                path_core.move(x, folder=folder_obj, overwrite=True)
-        finally:
-            # Clean up temporary folder
-            if tmp_folder.exists():
-                delete_path(tmp_folder, verbose=False)
-
 def main(
     source: str,
     target: str,
@@ -363,7 +287,6 @@ def main(
     encryption: str | None,
     zip_: bool,
     os_specific: bool,
-    config: str | None,
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console
@@ -372,21 +295,6 @@ def main(
     console = Console()
     console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
     original_target = target
-    if config == "ss" and (source.startswith("http") or source.startswith("bit.ly")):
-        if record:
-            console.print(Panel("❌ --record is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))
-            raise SystemExit(1)
-        console.print(Panel("🔒 Detected secure share link", title="[bold yellow]Warning[/bold yellow]", border_style="yellow"))
-        if source.startswith("https://drive.google.com/open?id="):
-            file_id = source.split("https://drive.google.com/open?id=")[1]
-            if file_id:  # Ensure we actually extracted an ID
-                source = f"https://drive.google.com/uc?export=download&id={file_id}"
-                print("🔄 Converting Google Drive link to direct download URL")
-            else:
-                console.print(Panel("❌ Invalid Google Drive link format", title="[bold red]Error[/bold red]", border_style="red"))
-                raise SystemExit(1)
-        get_securely_shared_file(url=source, folder=target)
-        return
 
     try:
         encrypt_effective, encryption_mode = _resolve_encryption_settings(encrypt_requested=encrypt, encryption=encryption, pwd=pwd)
@@ -394,7 +302,7 @@ def main(
         console.print(Panel(f"❌ ERROR: Invalid encryption configuration\n{error}", title="[bold red]Error[/bold red]", border_style="red", width=152))
         raise SystemExit(1) from None
 
-    cloud_config_explicit = CLOUD(
+    cloud_config_explicit = CloudConfig(
         cloud="",
         overwrite=overwrite,
         share=share,
@@ -409,8 +317,6 @@ def main(
     console.print(Panel("🔍 Parsing source and target paths...", title="[bold blue]Info[/bold blue]", border_style="blue"))
     cloud, source, target = parse_cloud_source_target(
         cloud_config_explicit=cloud_config_explicit,
-        cloud_config_defaults=defaults,
-        cloud_config_name=config,
         source=source,
         target=target,
     )

@@ -1,6 +1,6 @@
 import typer
 from pathlib import Path
-from typing import Annotated, Literal, assert_never, cast
+from typing import Annotated, Literal, assert_never
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
 from stackops.profile.create_links_export import REPO_LOOSE
@@ -51,9 +51,9 @@ def _ordered_os_tokens(os_filter: str) -> list[str]:
 
 
 def _default_data_entry_name(path_local: str, os_filter: str) -> str:
-    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import _sanitize_entry_name
+    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import sanitize_entry_name
 
-    base_name = _sanitize_entry_name(Path(path_local).expanduser().stem)
+    base_name = sanitize_entry_name(Path(path_local).expanduser().stem)
     os_tokens = _ordered_os_tokens(os_filter)
     if len(os_tokens) == len(ALL_OS_VALUES):
         return base_name
@@ -111,14 +111,11 @@ def _prompt_register_data_options(
             prompted_encryption: str | None = "symmetric"
         else:
             encryption_default = encryption if encryption in ("asymmetric", "symmetric") else "asymmetric"
-            prompted_encryption = cast(
-                str,
-                ask_choice(
-                    "Encryption mode",
-                    help_text="Asymmetric uses configured GPG recipients. Symmetric uses a password during sync.",
-                    choices=("asymmetric", "symmetric"),
-                    default=encryption_default,
-                ),
+            prompted_encryption = ask_choice(
+                "Encryption mode",
+                help_text="Asymmetric uses configured GPG recipients. Symmetric uses a password during sync.",
+                choices=("asymmetric", "symmetric"),
+                default=encryption_default,
             )
     else:
         prompted_encryption = None

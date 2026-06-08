@@ -8,7 +8,7 @@
 
 | Topic | Use it when you need to... | Main modules |
 | --- | --- | --- |
-| [Environment and project wiring](environment-and-projects.md) | Discover project virtualenvs, optional IPython profiles, and `.ve.yaml` cloud metadata | `stackops.utils.ve` |
+| [Environment and project wiring](environment-and-projects.md) | Discover project virtualenvs and load default cloud settings | `stackops.utils.python_env`, `stackops.utils.cloud_defaults` |
 | [Paths, files, and config](paths-files-config.md) | Read and write JSON / INI / pickle files, encrypt files with GPG, resolve paths and path references | `stackops.utils.io`, `stackops.utils.path_core`, `stackops.utils.path_helper`, `stackops.utils.path_reference` |
 | [Scheduling and cache](scheduling-and-cache.md) | Run recurring routines and reuse expensive results through memory or disk caches | `stackops.utils.scheduler` |
 | [Interactive helpers and notifications](interactive-helpers.md) | Generate IDs, split work, present interactive choices, and send email | `stackops.utils.accessories`, `stackops.utils.options`, `stackops.utils.notifications` |
@@ -33,7 +33,7 @@ from stackops.utils.io import read_json, save_json
 from stackops.utils.options import choose_from_options
 from stackops.utils.path_core import collapseuser, tmpfile
 from stackops.utils.scheduler import Scheduler, CacheMemory
-from stackops.utils.ve import get_ve_path_and_ipython_profile
+from stackops.utils.python_env import find_virtualenv_root
 ```
 
 The utilities in this section are intentionally low-level. Higher-level session, cluster, and installer flows mostly build on these primitives rather than replacing them.

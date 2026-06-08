@@ -9,7 +9,7 @@ def create_from_function(
         path: Annotated[str, typer.Option(..., "--path", "-p", help="Path to a Python or Shell script file or a directory containing such files")] = ".",
         function: Annotated[str | None, typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
 ):
-    from stackops.utils.ve import get_ve_path_and_ipython_profile
+    from stackops.utils.python_env import find_virtualenv_root
     from stackops.utils.options import choose_from_options
     from stackops.utils.path_helper import match_file_name, sanitize_path
     from stackops.utils.accessories import get_repo_root
@@ -35,14 +35,9 @@ def create_from_function(
 
     repo_root = get_repo_root(Path(choice_file))
     print(f"💾 Selected file: {choice_file}.\nRepo root: {repo_root}")
-    ve_root_from_file, ipy_profile = get_ve_path_and_ipython_profile(choice_file)
-    if ipy_profile is None:
-        ipy_profile = "default"
-    # if ve_root_from_file is None:
-    #     raise ValueError(f"Could not determine virtual environment for file {choice_file}. Please ensure it is within a recognized project structure.")
-    # _activate_ve_line = get_ve_activate_line(ve_root=ve_root_from_file)
-    if ve_root_from_file is not None:
-        start_dir = Path(ve_root_from_file).parent
+    virtualenv_root = find_virtualenv_root(choice_file)
+    if virtualenv_root is not None:
+        start_dir = virtualenv_root.parent
     else:
         start_dir = Path.cwd()
 

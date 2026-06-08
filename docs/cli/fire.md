@@ -29,7 +29,6 @@ fire [OPTIONS] [PATH] [FUNCTION]
 | Shell and background helpers | `--cmd`, `--loop`, `--watch`, `--git-pull` |
 | Path and repo handling | `--root-repo`, `--holdDirectory`, `--PathExport` |
 | Remote launch | `--remote` |
-| Exposed but currently inert in routing | `--ve` |
 
 ---
 
@@ -119,7 +118,7 @@ fire analysis.py -j
 
 ## Interactive and development helpers
 
-- `--interactive` launches IPython and currently discovers the IPython profile from the nearest `.ve.yaml`; it falls back to `default`.
+- `--interactive` launches IPython with the default profile.
 - `--watch` prefixes the final command with `watchexec --restart --exts py,sh,ps1`.
 - `--git-pull` runs `git -C <script-dir> pull` first.
 - `--PathExport` prepends a shell snippet that appends the repo root to `PYTHONPATH`.
@@ -138,7 +137,6 @@ fire nested/tool.py -r -P
 
 ## Notes
 
-- `--ve` is still exposed in the CLI help, but the current route implementation does not use it when building the command. Environment discovery currently comes from repo-root handling and `.ve.yaml` / `.venv` discovery instead.
 - `stackops fire` routes into the same command family, but `fire --help` is the best source for the direct entrypoint's full option surface.
 
 ---

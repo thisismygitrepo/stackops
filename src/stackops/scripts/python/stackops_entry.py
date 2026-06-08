@@ -20,7 +20,6 @@ def fire(
     ctx: typer.Context,
     path: Annotated[str, typer.Argument(help="Path to the Python file to run")] = ".",
     function: Annotated[str | None, typer.Argument(help="Function to run")] = None,
-    ve: Annotated[str, typer.Option("--ve", "-v", help="Virtual environment name")] = "",
     cmd: Annotated[bool, typer.Option("--cmd", "-B", help="Create a cmd fire command to launch the job asynchronously")] = False,
     debug: Annotated[bool, typer.Option("--debug", "-d", help="Enable debug mode")] = False,
     choose_function: Annotated[bool, typer.Option("--choose-function", "-c", help="Choose function interactively")] = False,
@@ -43,7 +42,7 @@ def fire(
 ) -> None:
     """Fire and manage jobs."""
     from stackops.scripts.python.fire_jobs import fire as fire_impl
-    fire_impl(ctx=ctx, path=path, function=function, ve=ve, cmd=cmd, interactive=interactive, debug=debug,
+    fire_impl(ctx=ctx, path=path, function=function, cmd=cmd, interactive=interactive, debug=debug,
               choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,
               script=script, optimized=optimized, root_repo=root_repo,
               remote=remote, streamlit=streamlit, holdDirectory=holdDirectory,

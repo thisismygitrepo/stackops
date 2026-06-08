@@ -1,4 +1,4 @@
-from stackops.utils.ve import CLOUD, read_default_cloud_config
+from stackops.utils.cloud_defaults import CloudConfig, read_default_cloud_config
 
 
 defaults = read_default_cloud_config()
@@ -6,7 +6,6 @@ defaults = read_default_cloud_config()
 def main(
     source: str,
     target: str,
-    config: str | None,
     transfers: int,
     root: str,
     pwd: str | None,
@@ -26,7 +25,7 @@ def main(
     title = "☁️  Cloud Sync Utility"
     console.print(Panel(title, title_align="left", border_style="blue"))
 
-    cloud_config_explicit = CLOUD(
+    cloud_config_explicit = CloudConfig(
         cloud="",
         root=root,
         pwd=pwd,
@@ -39,9 +38,7 @@ def main(
     )
 
     cloud, source, target = parse_cloud_source_target(cloud_config_explicit=cloud_config_explicit,
-        cloud_config_defaults=defaults,
-            cloud_config_name=config,
-            source=source, target=target)
+        source=source, target=target)
     # map short flags to long flags (-u -> --upload), for easier use in the script
     if bisync:
         title = "🔄 BI-DIRECTIONAL SYNC"

@@ -60,7 +60,7 @@ def preview(
     from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
     from stackops.utils.accessories import randstr
-    from stackops.utils.ve import get_ve_path_and_ipython_profile
+    from stackops.utils.python_env import find_virtualenv_root
     import json
     from rich.console import Console
     from rich.panel import Panel
@@ -78,10 +78,9 @@ def preview(
             return
         choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
         if project_path is None:
-            ve_path, _ = get_ve_path_and_ipython_profile(choice_file)
-            if ve_path is not None:
-                ve_path_obj = Path(ve_path)
-                uv_project_line = f'--project {ve_path_obj.parent}'
+            virtualenv_root = find_virtualenv_root(choice_file)
+            if virtualenv_root is not None:
+                uv_project_line = f'--project {virtualenv_root.parent}'
                 uv_python_line = ""
         if choice_file.suffix == ".py":
             program = choice_file.read_text(encoding="utf-8")

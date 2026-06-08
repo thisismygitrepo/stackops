@@ -1,9 +1,9 @@
 # Environment and Project Wiring
 
-The environment helpers in `stackops` live in `stackops.utils.ve`. They answer two practical questions:
+The environment helpers in `stackops` now live across `stackops.utils.python_env` and `stackops.utils.cloud_defaults`. They answer two practical questions:
 
 - which virtualenv should this project use?
-- does the project declare an IPython profile or cloud-sync metadata in `.ve.yaml`?
+- what cloud-transfer defaults should commands start from?
 
 ---
 
@@ -11,59 +11,43 @@ The environment helpers in `stackops` live in `stackops.utils.ve`. They answer t
 
 | API | Responsibility |
 | --- | --- |
-| `FILE_NAME` | The project-level config file name: `.ve.yaml` |
-| `CLOUD` | Typed cloud metadata for keys such as `cloud`, `root`, `encrypt`, `share`, and `overwrite` |
-| `VE_SPECS` | Typed `specs` block containing `ve_path` and optional `ipy_profile` |
-| `VE_YAML` | Typed top-level structure for `.ve.yaml` |
-| `read_default_cloud_config()` | Returns the default `CLOUD` payload used by callers as a baseline |
-| `get_ve_path_and_ipython_profile(init_path)` | Walks upward from a path and resolves virtualenv plus optional IPython profile |
-| `get_ve_activate_line(ve_root)` | Builds the platform-specific shell line that activates a virtualenv |
+| `find_virtualenv_root(init_path)` | Walks upward from a path and resolves the first project-local `.venv` |
+| `build_virtualenv_activation_line(virtualenv_root)` | Builds the platform-specific shell line that activates a virtualenv |
+| `CloudConfig` | Typed cloud metadata for keys such as `cloud`, `root`, `encrypt`, `share`, and `overwrite` |
+| `read_default_cloud_config()` | Returns the default `CloudConfig` payload used by callers as a baseline |
 
 ---
 
 ## Discovery model
 
-`get_ve_path_and_ipython_profile(init_path)` treats `init_path` as a directory and walks upward through that path and its parents.
+`find_virtualenv_root(init_path)` treats `init_path` as a file-or-directory input, normalizes file paths to their parent directory, then walks upward through that path and its parents.
 
 At each directory it:
 
-1. Reads `.ve.yaml` if present.
-2. Pulls `specs.ve_path` into the result when available.
-3. Pulls `specs.ipy_profile` into the result when available.
-4. Falls back to a local `.venv` directory only if no `ve_path` has been found yet.
+1. Checks for a sibling `.venv` directory.
+2. Returns the first match immediately.
+3. Continues through parent directories if no `.venv` is present.
 
-The walk stops as soon as both values are known, otherwise it continues through the parent walk. The function returns a tuple of `(ve_path, ipy_profile)` where either element may be `None`. It also prints progress and warning messages while it searches.
+The function returns a `Path` when it finds a project-local virtualenv and `None` otherwise. It also prints the resolved path, or that no environment was discovered.
 
 ---
 
-## Example `.ve.yaml`
+## Default cloud payload
 
-```yaml
-specs:
-  ve_path: ~/.venvs/my-project
-  ipy_profile: default
+`read_default_cloud_config()` returns:
 
-cloud:
-  cloud: mycloud101
-  root: myhome
-  rel2home: false
-  pwd: null
-  encrypt: false
-  os_specific: false
-  zip: false
-  share: false
-  overwrite: false
-```
-
-The `cloud` section is typed by `CLOUD` and is available to callers that want lightweight per-project sync metadata. Environment discovery itself only needs the `specs` block.
+- `cloud`: `mycloud101`
+- `root`: `myhome`
+- `rel2home`, `encrypt`, `os_specific`, `zip`, `share`, `overwrite`: `False`
+- `pwd`: `None`
 
 ---
 
 ## Activation lines
 
-`get_ve_activate_line(ve_root)` returns:
+`build_virtualenv_activation_line(virtualenv_root)` returns:
 
-- `. {ve_root}/bin/activate` on Linux and macOS
+- `. {virtualenv_root}/bin/activate` on Linux and macOS
 - `. $HOME/<relative-path>/Scripts/activate.ps1` on Windows
 
 The Windows branch rewrites the expanded virtualenv path to a `$HOME/.../Scripts/activate.ps1` PowerShell source line.
@@ -76,28 +60,31 @@ The Windows path must be under the user's home directory because the implementat
 ```python
 from pathlib import Path
 
-from stackops.utils.ve import (
-    FILE_NAME,
-    get_ve_activate_line,
-    get_ve_path_and_ipython_profile,
-)
+from stackops.utils.cloud_defaults import read_default_cloud_config
+from stackops.utils.python_env import build_virtualenv_activation_line, find_virtualenv_root
 
 project_path = Path.cwd()
-ve_path, ipy_profile = get_ve_path_and_ipython_profile(project_path)
+virtualenv_root = find_virtualenv_root(project_path)
+cloud_defaults = read_default_cloud_config()
 
-print(FILE_NAME)
-print(ve_path)
-print(ipy_profile)
+print(virtualenv_root)
+print(cloud_defaults["root"])
 
-if ve_path is not None:
-    print(get_ve_activate_line(ve_path))
+if virtualenv_root is not None:
+    print(build_virtualenv_activation_line(virtualenv_root))
 ```
 
 ---
 
 ## API reference
 
-::: stackops.utils.ve
+::: stackops.utils.python_env
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+::: stackops.utils.cloud_defaults
     options:
       show_root_heading: true
       show_source: false

@@ -9,7 +9,6 @@ class FireJobArgs:
     path: str = "."
     function: str | None = None
     frozen: bool = False
-    ve: str = ""
     cmd: bool = False
     interactive: bool = False
     debug: bool = False

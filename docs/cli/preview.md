@@ -75,7 +75,7 @@ With `--interactive`, paths expose file-viewer choices by their actual tool name
 Project resolution is currently:
 
 1. explicit `--project`, if provided
-2. nearest `.ve.yaml` or `.venv` discovered from the selected file
+2. nearest `.venv` discovered from the selected file
 3. `~/code/stackops`, if that checkout exists and nothing else was selected
 
 ---

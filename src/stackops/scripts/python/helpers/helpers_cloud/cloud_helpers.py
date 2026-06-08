@@ -1,33 +1,8 @@
 
-from stackops.utils.accessories import pprint
-from stackops.utils.source_of_truth import read_quick_password, read_stackops_config_string
-from stackops.utils.ve import VE_YAML, CLOUD
-
-
-from typing import cast
-import os
 from pathlib import Path
 from rich.console import Console
-from rich.panel import Panel
 
 console = Console()
-
-def find_cloud_config(path: Path) -> CLOUD | None:
-    display_header(f"Searching for .ve.yaml configuration file @ {path}")
-    for _i in range(len(path.parts)):
-        if path.joinpath(".ve.yaml").exists():
-            import yaml
-            res = cast(VE_YAML, yaml.load(path.joinpath(".ve.yaml").read_text(encoding="utf-8"), Loader=yaml.FullLoader))
-            cloud_section = "cloud"
-            display_success(f"Found cloud config at: {path.joinpath('.ve.yaml')}")
-            if cloud_section in res:
-                cloud_config = res["cloud"]
-                pprint(dict(cloud_config), "Cloud Config")
-                return cloud_config
-            display_error(f".ve.yaml @ {path}/.ve.yaml has no [cloud] section.")
-        path = path.parent
-    display_error("No cloud configuration file found")
-    return None
 
 
 def my_abs(path: str) -> Path:
@@ -42,56 +17,29 @@ def my_abs(path: str) -> Path:
     return obj.absolute()
 
 
-def get_secure_share_cloud_config(interactive: bool, cloud: str | None) -> CLOUD:
-    console.print(Panel("🔐 Secure Share Cloud Configuration", expand=False))
-    if cloud is None:
-        if os.environ.get("CLOUD_CONFIG_NAME") is not None:
-            default_cloud = os.environ.get("CLOUD_CONFIG_NAME")
-            assert default_cloud is not None
-            cloud = default_cloud
-            console.print(f"☁️  Using cloud from environment: {cloud}")
-        else:
-            try:
-                default_cloud__ = read_stackops_config_string("default_rclone_config")
-            except Exception:
-                default_cloud__ = "No default cloud found."
-            if default_cloud__ == "No default cloud found." or interactive:
-                # assert default_cloud is not None
-                cloud = input(f"☁️  Enter cloud name (default {default_cloud__}): ") or default_cloud__
-            else:
-                cloud = default_cloud__
-                console.print(f"☁️  Using default cloud: {cloud}")
-
-    try:
-        pwd = read_quick_password()
-        default_message = "defaults to quick_password"
-    except Exception:
-        pwd = ""
-        default_message = "no default password found"
-    pwd = input(f"🔑 Enter symmetric GPG encryption password ({default_message}): ") or pwd
-    res = CLOUD(cloud=cloud, pwd=pwd, encrypt=True, zip=True, overwrite=True, share=True, rel2home=True, root="myshare", os_specific=False)
-    display_success("Using SecureShare cloud config")
-    pprint(dict(res), "SecureShare Config")
-    return res
-
-
-def display_header(title: str):
+def display_header(title: str) -> None:
     console.print(f"\n[bold]{title}[/bold]")
 
-def display_subheader(title: str):
+
+def display_subheader(title: str) -> None:
     console.print(f"[bold]{title}[/bold]")
 
-def display_content(content: str):
+
+def display_content(content: str) -> None:
     console.print(content)
 
-def display_status(status: str):
+
+def display_status(status: str) -> None:
     console.print(status)
 
-def display_success(message: str):
+
+def display_success(message: str) -> None:
     console.print(f"[green]✓ {message}[/green]")
 
-def display_warning(message: str):
+
+def display_warning(message: str) -> None:
     console.print(f"[yellow]⚠ {message}[/yellow]")
 
-def display_error(message: str):
+
+def display_error(message: str) -> None:
     console.print(f"[red]✗ {message}[/red]")

@@ -4328,27 +4328,27 @@
                         ") -> None:",
                         "    \"\"\"🔐 <S> Define env vars from StackOps secrets files.\"\"\"",
                         "    if preview_secrets and not interactive:",
-                        "        _fail(\"--preview-secrets only applies with --interactive/-i.\")",
+                        "        fail(\"--preview-secrets only applies with --interactive/-i.\")",
                         "",
-                        "    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
-                        "    candidates = _load_secret_candidates_from_sources(secret_sources)",
+                        "    secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    candidates = load_secret_candidates_from_sources(secret_sources)",
                         "    selectors = SecretSelectors(",
-                        "        login_name=_clean_optional_selector(login_name),",
-                        "        secret_name=_clean_optional_selector(secret_name),",
-                        "        tags=_clean_selector_values(tags),",
-                        "        login_tags=_clean_selector_values(login_tags),",
-                        "        secret_tags=_clean_selector_values(secret_tags),",
-                        "        scopes=_clean_selector_values(scopes),",
-                        "        keys=_clean_selector_values(keys),",
+                        "        login_name=clean_optional_selector(login_name),",
+                        "        secret_name=clean_optional_selector(secret_name),",
+                        "        tags=clean_selector_values(tags),",
+                        "        login_tags=clean_selector_values(login_tags),",
+                        "        secret_tags=clean_selector_values(secret_tags),",
+                        "        scopes=clean_selector_values(scopes),",
+                        "        keys=clean_selector_values(keys),",
                         "    )",
                         "    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive, preview_secrets=preview_secrets)",
-                        "    candidate_source_path = _candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
+                        "    selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
                         "    if interactive:",
-                        "        _echo_jq_login_entry_hint(candidate=candidate, secrets_path=candidate_source_path)",
+                        "        echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)",
                         "    secret_actions.validate_env_names(candidate.key_values)",
                         "    secret_actions.write_env_handoff(candidate.key_values)",
                         "    if verbose:",
-                        "        _echo_verbose_selection(candidate=candidate, secrets_path=candidate_source_path)",
+                        "        echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)",
                         "",
                         "    names = \", \".join(candidate.key_values)",
                         "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s)\"",
@@ -4700,9 +4700,9 @@
                         "    ] = 8,",
                         ") -> None:",
                         "    \"\"\"📊 <t> Show aggregate StackOps secrets inventory stats without printing secret values.\"\"\"",
-                        "    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
-                        "    stats_rows = _load_secret_stats_from_sources(secret_sources=secret_sources, show_paths=show_paths)",
-                        "    _render_secret_stats(stats_rows=stats_rows, details=details, show_paths=show_paths, top=top)"
+                        "    secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    stats_rows = load_secret_stats_from_sources(secret_sources=secret_sources, show_paths=show_paths)",
+                        "    render_secret_stats(stats_rows=stats_rows, details=details, show_paths=show_paths, top=top)"
                       ],
                       "name": "stats",
                       "parameters": [
@@ -4827,6 +4827,154 @@
                   },
                   {
                     "kind": "command",
+                    "name": "subset",
+                    "fullPath": "devops config secrets subset",
+                    "shortPath": "d c S u",
+                    "help": "f'📦 <u> {SECRETS_SUBSET_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets",
+                      "callable": "subset"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def subset(",
+                        "    output_path: Annotated[",
+                        "        Path,",
+                        "        typer.Option(\"--output\", \"-o\", help=\"Path for the new subset secrets JSON file.\"),",
+                        "    ],",
+                        "    secrets_path: Annotated[",
+                        "        Path | None,",
+                        "        typer.Option(",
+                        "            \"--path\", \"-p\", help=\"Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                        "        ),",
+                        "    ] = None,",
+                        "    secrets_source: Annotated[",
+                        "        WritableSecretsSource,",
+                        "        typer.Option(",
+                        "            \"--source\",",
+                        "            \"-s\",",
+                        "            case_sensitive=False,",
+                        "            help=\"Source secrets file to read: local/l or global/g. --path overrides the local source.\",",
+                        "        ),",
+                        "    ] = \"local\",",
+                        "    overwrite: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--overwrite\", \"-f\", help=\"Replace the output file if it already exists.\"),",
+                        "    ] = False,",
+                        ") -> None:",
+                        "    \"\"\"📦 <u> Create a new StackOps secrets file from selected entries.\"\"\"",
+                        "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    resolved_output_path = _resolve_output_path(output_path)",
+                        "    secret_actions.subset_secrets_file(source_path=secret_source.path, output_path=resolved_output_path, overwrite=overwrite)"
+                      ],
+                      "name": "subset",
+                      "parameters": [
+                        {
+                          "name": "output_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[Path, typer.Option('--output', '-o', help='Path for the new subset secrets JSON file.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Path for the new subset secrets JSON file."
+                          }
+                        },
+                        {
+                          "name": "secrets_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--path",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--path"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                          }
+                        },
+                        {
+                          "name": "secrets_source",
+                          "kind": "positional_or_keyword",
+                          "type": "WritableSecretsSource",
+                          "default": "local",
+                          "required": false,
+                          "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Source secrets file to read: local/l or global/g. --path overrides the local source.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--source",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--source"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Source secrets file to read: local/l or global/g. --path overrides the local source."
+                          }
+                        },
+                        {
+                          "name": "overwrite",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--overwrite', '-f', help='Replace the output file if it already exists.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--overwrite",
+                              "-f"
+                            ],
+                            "long_flags": [
+                              "--overwrite"
+                            ],
+                            "short_flags": [
+                              "-f"
+                            ],
+                            "help": "Replace the output file if it already exists."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
+                    "doc": "📦 <u> Create a new StackOps secrets file from selected entries.",
+                    "aliases": [
+                      {
+                        "name": "u",
+                        "hidden": true,
+                        "help": "Alias for subset."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
                     "name": "add",
                     "fullPath": "devops config secrets add",
                     "shortPath": "d c S a",
@@ -4860,7 +5008,7 @@
                         "    ] = False,",
                         ") -> None:",
                         "    \"\"\"➕ <a> Append a new login entry to a StackOps secrets file.\"\"\"",
-                        "    secret_source = _resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
                         "    secret_actions.add_secrets_entry(secrets_path=secret_source.path, create=create)"
                       ],
                       "name": "add",
@@ -4978,7 +5126,7 @@
                         "    editor: Annotated[str, typer.Option(\"--editor\", \"-E\", help=\"Editor to use. Defaults to hx.\")] = \"hx\",",
                         ") -> None:",
                         "    \"\"\"📝 <e> Open a StackOps secrets file for editing.\"\"\"",
-                        "    secret_source = _resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
+                        "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
                         "    secret_actions.edit_secrets_file(secrets_path=secret_source.path, editor=editor, create=create)"
                       ],
                       "name": "edit",
@@ -5117,11 +5265,6 @@
                     ") -> None:",
                     "    \"\"\"🔗 Dump example configuration files and init scripts.\"\"\"",
                     "    match which:",
-                    "        case \"ve\":",
-                    "            if run:",
-                    "                _reject_run_for_non_script_dump()",
-                    "            _dump_ve_config(data=data, schema=schema, default_path=default_path, force=force)",
-                    "            return",
                     "        case \"layout\":",
                     "            if run:",
                     "                _reject_run_for_non_script_dump()",
@@ -13538,7 +13681,6 @@
                 "def sync(",
                 "    source: Annotated[str, typer.Argument(help=\"source\")],",
                 "    target: Annotated[str, typer.Argument(help=\"target\")],",
-                "    config: Annotated[str | None, typer.Option(\"--config\", \"-c\", help=\"path to .ve.yaml file.\")] = None,",
                 "    transfers: Annotated[int, typer.Option(\"--transfers\", \"-t\", help=\"Number of threads in syncing.\")] = 10,",
                 "    root: Annotated[str, typer.Option(\"--root\", \"-R\", help=\"Remote root.\")] = defaults[\"root\"],",
                 "    pwd: Annotated[str | None, typer.Option(\"--pwd\", \"-P\", help=\"Symmetric GPG encryption password used when --encrypt is set.\")] = defaults[\"pwd\"],",
@@ -13550,7 +13692,7 @@
                 ") -> None:",
                 "    \"\"\"🔄 Synchronize files/folders between local and cloud storage.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main",
-                "    sync_main(source=source, target=target, config=config, transfers=transfers, root=root, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)"
+                "    sync_main(source=source, target=target, transfers=transfers, root=root, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)"
               ],
               "name": "sync",
               "parameters": [
@@ -13582,28 +13724,6 @@
                     "long_flags": [],
                     "short_flags": [],
                     "help": "target"
-                  }
-                },
-                {
-                  "name": "config",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--config', '-c', help='path to .ve.yaml file.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--config",
-                      "-c"
-                    ],
-                    "long_flags": [
-                      "--config"
-                    ],
-                    "short_flags": [
-                      "-c"
-                    ],
-                    "help": "path to .ve.yaml file."
                   }
                 },
                 {
@@ -13826,7 +13946,6 @@
                 "    encryption: Annotated[str | None, typer.Option(\"--encryption\", \"-E\", help=\"🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.\")] = None,",
                 "    zip_: Annotated[bool, typer.Option(\"--zip\", \"-z\", help=\"📦 unzip after receiving.\")] = defaults[\"zip\"],",
                 "    os_specific: Annotated[bool, typer.Option(\"--os-specific\", \"-O\", help=\"💻 choose path specific for this OS.\")] = defaults[\"os_specific\"],",
-                "    config: Annotated[str | None, typer.Option(\"--config\", \"-c\", help=\"🔧 path to .ve.yaml file.\")] = None,",
                 ") -> None:",
                 "    \"\"\"📤 Upload or 📥 Download files/folders to/from cloud storage services.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main",
@@ -13846,7 +13965,6 @@
                 "        encryption=encryption,",
                 "        zip_=zip_,",
                 "        os_specific=os_specific,",
-                "        config=config,",
                 "    )"
               ],
               "name": "copy",
@@ -14162,28 +14280,6 @@
                       "-O"
                     ],
                     "help": "💻 choose path specific for this OS."
-                  }
-                },
-                {
-                  "name": "config",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--config', '-c', help='🔧 path to .ve.yaml file.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--config",
-                      "-c"
-                    ],
-                    "long_flags": [
-                      "--config"
-                    ],
-                    "short_flags": [
-                      "-c"
-                    ],
-                    "help": "🔧 path to .ve.yaml file."
                   }
                 }
               ],
@@ -22878,7 +22974,6 @@
             "    ctx: typer.Context,",
             "    path: Annotated[str, typer.Argument(help=\"Path to the Python file to run\")] = \".\",",
             "    function: Annotated[str | None, typer.Argument(help=\"Function to run\")] = None,",
-            "    ve: Annotated[str, typer.Option(\"--ve\", \"-v\", help=\"Virtual environment name\")] = \"\",",
             "    cmd: Annotated[bool, typer.Option(\"--cmd\", \"-B\", help=\"Create a cmd fire command to launch the job asynchronously\")] = False,",
             "    debug: Annotated[bool, typer.Option(\"--debug\", \"-d\", help=\"Enable debug mode\")] = False,",
             "    choose_function: Annotated[bool, typer.Option(\"--choose-function\", \"-c\", help=\"Choose function interactively\")] = False,",
@@ -22901,7 +22996,7 @@
             ") -> None:",
             "    \"\"\"Fire and manage jobs.\"\"\"",
             "    from stackops.scripts.python.fire_jobs import fire as fire_impl",
-            "    fire_impl(ctx=ctx, path=path, function=function, ve=ve, cmd=cmd, interactive=interactive, debug=debug,",
+            "    fire_impl(ctx=ctx, path=path, function=function, cmd=cmd, interactive=interactive, debug=debug,",
             "              choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,",
             "              script=script, optimized=optimized, root_repo=root_repo,",
             "              remote=remote, streamlit=streamlit, holdDirectory=holdDirectory,",
@@ -22945,28 +23040,6 @@
                 "long_flags": [],
                 "short_flags": [],
                 "help": "Function to run"
-              }
-            },
-            {
-              "name": "ve",
-              "kind": "positional_or_keyword",
-              "type": "str",
-              "default": "",
-              "required": false,
-              "annotation_raw": "Annotated[str, typer.Option('--ve', '-v', help='Virtual environment name')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--ve",
-                  "-v"
-                ],
-                "long_flags": [
-                  "--ve"
-                ],
-                "short_flags": [
-                  "-v"
-                ],
-                "help": "Virtual environment name"
               }
             },
             {

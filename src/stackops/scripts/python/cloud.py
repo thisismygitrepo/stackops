@@ -3,7 +3,7 @@
 import typer
 from typing import Annotated, Literal
 from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER
-from stackops.utils.ve import read_default_cloud_config
+from stackops.utils.cloud_defaults import read_default_cloud_config
 
 
 defaults = read_default_cloud_config()
@@ -12,7 +12,6 @@ defaults = read_default_cloud_config()
 def sync(
     source: Annotated[str, typer.Argument(help="source")],
     target: Annotated[str, typer.Argument(help="target")],
-    config: Annotated[str | None, typer.Option("--config", "-c", help="path to .ve.yaml file.")] = None,
     transfers: Annotated[int, typer.Option("--transfers", "-t", help="Number of threads in syncing.")] = 10,
     root: Annotated[str, typer.Option("--root", "-R", help="Remote root.")] = defaults["root"],
     pwd: Annotated[str | None, typer.Option("--pwd", "-P", help="Symmetric GPG encryption password used when --encrypt is set.")] = defaults["pwd"],
@@ -24,7 +23,7 @@ def sync(
 ) -> None:
     """🔄 Synchronize files/folders between local and cloud storage."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main
-    sync_main(source=source, target=target, config=config, transfers=transfers, root=root, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)
+    sync_main(source=source, target=target, transfers=transfers, root=root, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)
 
 
 def copy(
@@ -43,7 +42,6 @@ def copy(
     encryption: Annotated[str | None, typer.Option("--encryption", "-E", help="🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.")] = None,
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
-    config: Annotated[str | None, typer.Option("--config", "-c", help="🔧 path to .ve.yaml file.")] = None,
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main
@@ -63,7 +61,6 @@ def copy(
         encryption=encryption,
         zip_=zip_,
         os_specific=os_specific,
-        config=config,
     )
 
 

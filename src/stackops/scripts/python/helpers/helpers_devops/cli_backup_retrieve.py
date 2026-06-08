@@ -33,7 +33,7 @@ from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
 DIRECTION = Literal["BACKUP", "RETRIEVE"]
 
 
-def _sanitize_entry_name(value: str) -> str:
+def sanitize_entry_name(value: str) -> str:
     token = value.strip().replace(".", "_").replace("-", "_")
     token = re.sub(r"\s+", "_", token)
     token = re.sub(r"[^A-Za-z0-9_]", "_", token)
@@ -168,12 +168,12 @@ def register_backup_entry(
         rel2home = in_home
     if rel2home and not in_home:
         raise ValueError("rel2home is true, but the local path is not under the home directory.")
-    group_name = _sanitize_entry_name(group) if group and group.strip() else "default"
+    group_name = sanitize_entry_name(group) if group and group.strip() else "default"
     if entry_name is None or not entry_name.strip():
-        base_name = _sanitize_entry_name(local_path.stem)
+        base_name = sanitize_entry_name(local_path.stem)
         entry_name = base_name if _is_all_os_values(set(os_tokens)) else f"{base_name}_{'_'.join(os_tokens)}"
     else:
-        entry_name = _sanitize_entry_name(entry_name)
+        entry_name = sanitize_entry_name(entry_name)
     local_display = f"~/{local_path.relative_to(home)}" if rel2home and in_home else local_path.as_posix()
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
     share_url_value = share_url.strip() if share_url and share_url.strip() else None

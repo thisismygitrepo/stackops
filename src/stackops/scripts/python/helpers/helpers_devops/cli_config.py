@@ -1,4 +1,3 @@
-import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,7 +8,7 @@ import typer
 
 InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
 AssetDumpKind: TypeAlias = Literal["layout", "data", "dotfiles", "secrets", "config"]
-DumpConfigKind: TypeAlias = Literal["ve", "layout", "data", "dotfiles", "secrets", "config", "init", "ia", "live"]
+DumpConfigKind: TypeAlias = Literal["layout", "data", "dotfiles", "secrets", "config", "init", "ia", "live"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,11 +114,6 @@ def dump_config(
 ) -> None:
     """🔗 Dump example configuration files and init scripts."""
     match which:
-        case "ve":
-            if run:
-                _reject_run_for_non_script_dump()
-            _dump_ve_config(data=data, schema=schema, default_path=default_path, force=force)
-            return
         case "layout":
             if run:
                 _reject_run_for_non_script_dump()
@@ -178,12 +172,6 @@ def _reject_force_for_script_dump() -> None:
     raise typer.Exit(code=1)
 
 
-def _reject_default_path_for_ve_dump() -> None:
-    msg = typer.style("Error: ", fg=typer.colors.RED) + "--default-path is not supported for ve because it has no global StackOps path."
-    typer.echo(msg)
-    raise typer.Exit(code=1)
-
-
 def _resolve_dump_content_selection(*, data: bool, schema: bool) -> tuple[bool, bool]:
     if data or schema:
         return data, schema
@@ -223,67 +211,6 @@ def _echo_created_paths(paths: Sequence[Path]) -> None:
     typer.echo(msg)
 
 
-def _dump_ve_config(*, data: bool, schema: bool, default_path: bool, force: bool) -> None:
-    """Generate .ve.example.yaml with all options, sections, comments and default values."""
-    if default_path:
-        _reject_default_path_for_ve_dump()
-
-    import stackops.utils.schemas.ve as ve_assets
-
-    from stackops.utils.path_reference import get_path_reference_path
-    from stackops.utils.ve import read_default_cloud_config
-    from stackops.utils.ve_schema import ve_yaml_header_for_path
-    from stackops.utils.yaml_schema import stackops_yaml_schema_path
-
-    dump_data, dump_schema = _resolve_dump_content_selection(data=data, schema=schema)
-    output_path = Path.cwd() / ".ve.example.yaml"
-    schema_path = stackops_yaml_schema_path(yaml_path=output_path)
-    created_paths: list[Path] = []
-    output_paths: list[Path] = []
-
-    if dump_data:
-        output_paths.append(output_path)
-    if dump_schema:
-        output_paths.append(schema_path)
-    _reject_unwritable_output_paths(output_paths, force=force)
-
-    if dump_schema:
-        schema_source_path = get_path_reference_path(module=ve_assets, path_reference=ve_assets.VE_SCHEMA_PATH_REFERENCE)
-        created_paths.append(_write_asset(source_path=schema_source_path, output_path=schema_path, force=force))
-
-    if not dump_data:
-        _echo_created_paths(created_paths)
-        return
-    cloud_defaults = read_default_cloud_config()
-
-    def to_yaml_value(value: str | bool | None) -> str:
-        """Convert Python values to YAML-compatible strings."""
-        if value is None:
-            return "null"
-        if isinstance(value, bool):
-            return "true" if value else "false"
-        return json.dumps(value)
-
-    output_path = Path.cwd() / ".ve.example.yaml"
-    yaml_content = f"""{ve_yaml_header_for_path(yaml_path=output_path)}
-specs:
-  ve_path: ".venv"  # Path to the virtual environment directory (e.g., /home/user/projects/myproject/.venv or ~/venvs/myproject)
-  ipy_profile: null  # IPython profile name to use when launching IPython (e.g., myprofile creates/uses ~/.ipython/profile_myprofile)
-cloud:
-  cloud: {to_yaml_value(cloud_defaults["cloud"])}  # Cloud storage identifier/name
-  root: {to_yaml_value(cloud_defaults["root"])}  # Root directory within the cloud storage
-  rel2home: {to_yaml_value(cloud_defaults["rel2home"])}  # Whether paths are relative to home directory
-  pwd: {to_yaml_value(cloud_defaults["pwd"])}  # Password for symmetric GPG encryption/decryption (leave empty to use local GPG keyring)
-  encrypt: {to_yaml_value(cloud_defaults["encrypt"])}  # Enable encryption for cloud sync
-  os_specific: {to_yaml_value(cloud_defaults["os_specific"])}  # Use OS-specific paths/configuration
-  zip: {to_yaml_value(cloud_defaults["zip"])}  # Compress files before uploading
-  share: {to_yaml_value(cloud_defaults["share"])}  # Enable sharing/public access
-  overwrite: {to_yaml_value(cloud_defaults["overwrite"])}  # Overwrite existing files during sync
-"""
-    created_paths.insert(0, _write_text_output(text=yaml_content, output_path=output_path, force=force))
-    _echo_created_paths(created_paths)
-
-
 def _get_path_reference_asset_path(*, module: ModuleType, path_reference: str) -> Path:
     from stackops.utils.path_reference import get_path_reference_path
 
@@ -294,13 +221,6 @@ def _write_asset(*, source_path: Path, output_path: Path, force: bool) -> Path:
     _reject_unwritable_output_paths([output_path], force=force)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
-    return output_path
-
-
-def _write_text_output(*, text: str, output_path: Path, force: bool) -> Path:
-    _reject_unwritable_output_paths([output_path], force=force)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(text, encoding="utf-8")
     return output_path
 
 

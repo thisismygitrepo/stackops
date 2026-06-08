@@ -199,7 +199,6 @@ Use `devops config secrets edit` or `devops config secrets e` to open one secret
 Write example configuration files into the current directory, or print one of the packaged init/setup scripts.
 
 ```bash
-devops config dump --which ve
 devops config dump --which layout
 devops config dump --which data
 devops config dump --which dotfiles
@@ -218,7 +217,6 @@ Supported `--which` values from current help:
 
 | Value | Meaning |
 |-------|---------|
-| `ve` | Write `.ve.example.yaml` in the current working directory |
 | `layout` | Write `layout.json` and `layout.schema.json` under `.stackops/examples` in the current working directory |
 | `data` | Write `data.yaml` and `data.schema.json` under `.stackops/examples` in the current working directory |
 | `dotfiles` | Write `dotfiles.yaml` and `dotfiles.schema.json` under `.stackops/examples` in the current working directory |

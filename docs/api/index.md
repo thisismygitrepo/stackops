@@ -14,7 +14,7 @@ This reference follows those workflows instead of mirroring the raw package tree
 
 | Area | What it covers | Main modules | Reference |
 | --- | --- | --- | --- |
-| Environment and project wiring | `.ve.yaml` discovery, optional IPython profile lookup, cloud metadata defaults | `stackops.utils.ve` | [Environment and project wiring](utils/environment-and-projects.md) |
+| Environment and project wiring | `.venv` discovery, activation helpers, and cloud metadata defaults | `stackops.utils.python_env`, `stackops.utils.cloud_defaults` | [Environment and project wiring](utils/environment-and-projects.md) |
 | Paths, files, and config documents | JSON / INI / pickle IO, GPG helpers, path mutation, path-reference lookup | `stackops.utils.io`, `stackops.utils.path_core`, `stackops.utils.path_helper`, `stackops.utils.path_reference` | [Paths, files, and config](utils/paths-files-config.md) |
 | Scheduling and cache | Repeating routines, memory cache, disk-backed cache | `stackops.utils.scheduler` | [Scheduling and cache](utils/scheduling-and-cache.md) |
 | Interactive helpers and notifications | IDs, list splitting, fuzzy / TV-backed choices, HTML email | `stackops.utils.accessories`, `stackops.utils.options`, `stackops.utils.notifications` | [Interactive helpers and notifications](utils/interactive-helpers.md) |
@@ -37,7 +37,7 @@ stackops/
 ├── scripts/python/helpers/
 │   └── helpers_network/           # IP and connectivity helpers
 ├── utils/
-│   ├── accessories, code, io, meta, notifications, options, scheduler, ssh, ve
+│   ├── accessories, cloud_defaults, code, io, meta, notifications, options, python_env, scheduler, ssh
 │   ├── installer_utils/           # Runtime installer engine
 │   ├── path_core, path_helper, path_reference
 │   └── schemas/{installer,layouts} # installer_data.json and schema types

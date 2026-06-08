@@ -159,13 +159,14 @@ cloud ftpx localmachine:/tmp/archive remotehost:/tmp/archive --recursive
 
 ## Config sources
 
-The `cloud` commands can load defaults from a nearby `.ve.yaml` file or from an explicit `--config` path. The live help shows the current flags for ad hoc operations such as:
+The `cloud` commands rely on explicit CLI flags for transfer behavior. The live help shows the current flags for ad hoc operations such as:
 
-- `--config`
 - `--root`
 - `--encrypt`
 - `--encryption`
 - `--zip`
 - `--relative2home`
+
+If a remote path starts with `:`, StackOps fills in the cloud name from the configured default cloud.
 
 Use `devops data` when you want durable named backup sets. Use `cloud copy` or `cloud sync` when you already know the exact source and destination you want to move.
