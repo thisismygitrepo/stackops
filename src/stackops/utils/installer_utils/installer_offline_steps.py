@@ -33,7 +33,7 @@ def export_configs(*, configs_root: Path, include_configs: bool) -> ExportStepRe
         return ExportStepResult(label="configs", status="skipped", detail="disabled by CLI option", output_path=None)
     if not constants.CONFIG_ROOT.exists():
         return ExportStepResult(label="configs", status="missing", detail=f"missing source: {constants.CONFIG_ROOT}", output_path=None)
-    shutil.copytree(constants.CONFIG_ROOT, configs_root, dirs_exist_ok=True)
+    shutil.copytree(constants.CONFIG_ROOT, configs_root, dirs_exist_ok=True, ignore=shutil.ignore_patterns("offline_installers"))
     return ExportStepResult(label="configs", status="included", detail=f"copied from {constants.CONFIG_ROOT}", output_path=configs_root)
 
 
