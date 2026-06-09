@@ -19,7 +19,14 @@ from stackops.profile.dotfiles_mapper import (
     normalize_os_filter,
     write_dotfiles_mapper,
 )
-from stackops.profile.create_links_export import METHOD_LOOSE, METHOD_MAP, ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER
+from stackops.profile.create_links_export import (
+    CONFIG_FILE_SOURCE_LOOSE,
+    CONFIG_FILE_SOURCE_MAP,
+    METHOD_LOOSE,
+    METHOD_MAP,
+    ON_CONFLICT_LOOSE,
+    ON_CONFLICT_MAPPER,
+)
 from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_MAPPER_FILES_ROOT, DOTFILES_ROOT
 
 BACKUP_ROOT_FLAT = DOTFILES_MAPPER_FILES_ROOT
@@ -408,15 +415,13 @@ def edit_dotfile(
         Literal["nano", "hx", "code"],
         typer.Option("--editor", "-e", help="📝 Editor to open the dotfiles mapper.yaml file."),
     ] = "hx",
-    repo: Annotated[
-        Literal["library", "l", "user", "u"],
-        typer.Option("--repo", "-r", help="📁 Which mapper file to edit: 'user' or 'library'."),
+    source: Annotated[
+        CONFIG_FILE_SOURCE_LOOSE,
+        typer.Option("--source", help="📁 Which mapper file to edit: 'user' or 'library'."),
     ] = "user",
 ) -> None:
-    from stackops.profile.create_links_export import REPO_MAP
-
-    repo_key = REPO_MAP[repo]
-    if repo_key == "user":
+    source_key = CONFIG_FILE_SOURCE_MAP[source]
+    if source_key == "user":
         file_path = USER_MAPPER_PATH
         file_path.parent.mkdir(parents=True, exist_ok=True)
         if not file_path.exists():

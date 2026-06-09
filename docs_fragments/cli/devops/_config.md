@@ -48,7 +48,7 @@ Key arguments and options from current help:
 | `direction` | Required. Use `up` to push default paths into the managed location, or `down` to apply managed files back to default paths |
 | `--sensitivity`, `-s` | Required. Choose `private`, `public`, or `all` |
 | `--method`, `-m` | Required. Use `symlink` or `copy` |
-| `--repo`, `-r` | Select mappings from `library`, `user`, or `all` |
+| `--source` | Select mappings from `library`, `user`, or `all` |
 | `--on-conflict`, `-c` | Conflict policy such as `throw-error`, `overwrite-self-managed`, or `overwrite-default-path` |
 | `--which`, `-w` | Limit the run to specific mapping names, or use `all` |
 
@@ -67,7 +67,7 @@ Examples:
 devops config sync down --sensitivity public --method symlink --which all
 
 # Push local private config changes back into the managed backup area
-devops config sync up --sensitivity private --method copy --repo user
+devops config sync up --sensitivity private --method copy --source user
 ```
 
 ### register
@@ -108,7 +108,7 @@ devops config register ~/.config/nvim --method symlink --sensitivity public --se
 Open the dotfile mapper in `nano`, `hx`, or `code`.
 
 ```bash
-devops config edit --editor hx --repo user
+devops config edit --editor hx --source user
 ```
 
 The user mapper is created automatically if it does not exist yet.

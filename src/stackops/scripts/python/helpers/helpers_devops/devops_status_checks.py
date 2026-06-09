@@ -143,7 +143,7 @@ def check_config_files_status() -> dict[str, Any]:
     from stackops.profile.create_links import read_mapper
 
     try:
-        mapper = read_mapper(repo="all")
+        mapper = read_mapper(source="all")
         public_configs = list(mapper.get("public", {}).keys())
         private_configs = list(mapper.get("private", {}).keys())
         public_items = _flatten_config_items(mapper.get("public", {}))
@@ -204,7 +204,7 @@ def check_backup_config() -> dict[str, Any]:
 
         backup_file = LIBRARY_BACKUP_PATH
         if backup_file.exists():
-            backup_data = read_backup_config(repo="library")
+            backup_data = read_backup_config(source="library")
             if backup_data is None:
                 backup_items = []
                 backup_items_count = 0

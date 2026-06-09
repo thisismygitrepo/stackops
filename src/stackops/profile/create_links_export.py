@@ -35,15 +35,23 @@ SENSITIVITY_MAP: dict[SENSITIVITY_LOOSE, SENSITIVITY_STRICT] = {
     "a": "all",
 }
 
-REPO_STRICT: TypeAlias = Literal["library", "user", "all"]
-REPO_LOOSE: TypeAlias = Literal["library", "l", "user", "u", "all", "a"]
-REPO_MAP: dict[REPO_LOOSE, REPO_STRICT] = {
+CONFIG_SOURCE_STRICT: TypeAlias = Literal["library", "user", "all"]
+CONFIG_SOURCE_LOOSE: TypeAlias = Literal["library", "l", "user", "u", "all", "a"]
+CONFIG_SOURCE_MAP: dict[CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_STRICT] = {
     "library": "library",
     "l": "library",
     "user": "user",
     "u": "user",
     "a": "all",
     "all": "all",
+}
+CONFIG_FILE_SOURCE_STRICT: TypeAlias = Literal["library", "user"]
+CONFIG_FILE_SOURCE_LOOSE: TypeAlias = Literal["library", "l", "user", "u"]
+CONFIG_FILE_SOURCE_MAP: dict[CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_STRICT] = {
+    "library": "library",
+    "l": "library",
+    "user": "user",
+    "u": "user",
 }
 
 METHOD_STRICT: TypeAlias = Literal["symlink", "copy"]
@@ -77,7 +85,7 @@ def main_from_parser(
     ],
     sensitivity: Annotated[SENSITIVITY_LOOSE, typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the configuration files to manage.")] = "all",
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "symlink",
-    repo: Annotated[REPO_LOOSE, typer.Option(..., "--repo", "-r", help="Mapper source to use for config files.")] = "library",
+    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., "--source", help="Mapper source to use for config files.")] = "library",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict")] = "throw-error",
     which: Annotated[str | None, typer.Option(..., "--which", "-w", help="Specific items to process ('all' for all items) (default is None, selection is interactive)")] = None,
 ) -> None:
@@ -102,8 +110,8 @@ def main_from_parser(
             merged_mapper[program_name] = list(program_files)
         return merged_mapper
 
-    repo_key = REPO_MAP[repo]
-    mapper_full_obj = read_mapper(repo=repo_key)
+    source_key = CONFIG_SOURCE_MAP[source]
+    mapper_full_obj = read_mapper(source=source_key)
     mapper_full: dict[str, list[ConfigMapper]]
     sensitivity_key = SENSITIVITY_MAP[sensitivity]
     if sensitivity_key == "private":

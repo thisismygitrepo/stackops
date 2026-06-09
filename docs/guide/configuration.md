@@ -52,7 +52,7 @@ Current help shows these key concepts:
 - positional `direction` with `up` and `down`
 - `--sensitivity` selects whether you are managing `public`, `private`, or `all` configuration files
 - `--method` selects `symlink` or `copy`
-- `--repo` chooses which mapper source to use
+- `--source` chooses which mapper source to use
 - `--which` narrows the operation to specific items
 
 That makes `devops config sync` the main high-level replacement for older configuration, dotfiles, and links documentation.

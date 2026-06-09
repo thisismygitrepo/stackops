@@ -14,7 +14,7 @@ from rich.text import Text
 from rich.table import Table
 
 from stackops.utils.links import symlink_map, copy_map
-from stackops.profile.create_links_export import DIRECTION_STRICT, ON_CONFLICT_STRICT
+from stackops.profile.create_links_export import CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT, ON_CONFLICT_STRICT
 from stackops.profile.dotfiles_mapper import (
     LIBRARY_MAPPER_PATH,
     USER_MAPPER_PATH,
@@ -29,7 +29,7 @@ from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_SSH_CREDS_ROOT,
 import platform
 import subprocess
 import io
-from typing import Any, TypedDict, Literal, TypeAlias
+from typing import Any, TypedDict, Literal
 
 
 system = platform.system()  # Linux or Windows
@@ -39,10 +39,6 @@ MAX_ERROR_TABLE_CHARS = 30
 
 console = Console()
 
-REPO_ALIASES = {
-    "l": "library",
-    "i": "user",
-}
 ON_CONFLICT_UP_COPY_MAP: dict[ON_CONFLICT_STRICT, ON_CONFLICT_STRICT] = {
     "throw-error": "throw-error",
     "overwrite-self-managed": "overwrite-default-path",
@@ -64,10 +60,6 @@ def _normalize_os_name(value: str) -> OsName:
         case _:
             expected_values = ", ".join(sorted(VALID_OS_VALUES))
             raise ValueError(f"Unsupported operating system: {value!r}. Expected one of: {expected_values}.")
-
-
-def _normalize_repo_name(value: str) -> str:
-    return REPO_ALIASES.get(value.strip().lower(), value.strip().lower())
 
 
 def _parse_os_field(os_field: OsField) -> set[OsName]:
@@ -95,12 +87,9 @@ class MapperFileData(TypedDict):
     public: dict[str, list[ConfigMapper]]
     private: dict[str, list[ConfigMapper]]
 
-RepoLoose: TypeAlias = Literal["user", "library", "all"]
-
-
-def read_mapper(repo: RepoLoose) -> MapperFileData:
-    repo_key = _normalize_repo_name(repo)
-    match repo_key:
+def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
+    source_key = CONFIG_SOURCE_MAP[source]
+    match source_key:
         case "user":
             mapper_path = USER_MAPPER_PATH
         case "library":
@@ -110,13 +99,13 @@ def read_mapper(repo: RepoLoose) -> MapperFileData:
             if not USER_MAPPER_PATH.exists():
                 user_mapper: MapperFileData = {"public": {}, "private": {}}
             else:
-                user_mapper = read_mapper(repo="user")
-            library_mapper = read_mapper(repo="library")
+                user_mapper = read_mapper(source="user")
+            library_mapper = read_mapper(source="library")
             merged_public: dict[str, list[ConfigMapper]] = {**library_mapper["public"], **user_mapper["public"]}
             merged_private: dict[str, list[ConfigMapper]] = {**library_mapper["private"], **user_mapper["private"]}
             return {"public": merged_public, "private": merged_private}
         case _:
-            raise ValueError(f"Unsupported repo value: {repo}")
+            raise ValueError(f"Unsupported config source value: {source}")
     mapper_data: MapperDocument = load_dotfiles_mapper(mapper_path)
     public: dict[str, list[ConfigMapper]] = {}
     private: dict[str, list[ConfigMapper]] = {}

@@ -27,7 +27,7 @@ from stackops.scripts.python.helpers.helpers_devops.backup_config import (
     read_user_backup_config_for_update,
     write_backup_config,
 )
-from stackops.profile.create_links_export import REPO_LOOSE
+from stackops.profile.create_links_export import CONFIG_SOURCE_LOOSE
 from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
 
 DIRECTION = Literal["BACKUP", "RETRIEVE"]
@@ -194,7 +194,7 @@ def register_backup_entry(
     if USER_BACKUP_PATH.exists():
         existing_config = read_user_backup_config_for_update()
         if existing_config is None:
-            raise ValueError(describe_missing_backup_config(repo="user"))
+            raise ValueError(describe_missing_backup_config(source="user"))
         config = existing_config
     else:
         config = {}
@@ -231,7 +231,7 @@ def main_backup_retrieve(
     direction: DIRECTION,
     which: str | None,
     cloud: str | None,
-    repo: REPO_LOOSE,
+    source: CONFIG_SOURCE_LOOSE,
     use_link: bool = False,
     pwd: str | None = None,
 ) -> None:
@@ -241,9 +241,9 @@ def main_backup_retrieve(
     if use_link and direction != "RETRIEVE":
         raise ValueError("--use-link can only be used with sync down/d. Backups still use rclone.")
     use_link_retrieve = use_link and direction == "RETRIEVE"
-    bu_file = read_backup_config(repo=repo)
+    bu_file = read_backup_config(source=source)
     if bu_file is None:
-        raise ValueError(describe_missing_backup_config(repo=repo))
+        raise ValueError(describe_missing_backup_config(source=source))
     cloud_override = cloud.strip() if cloud and cloud.strip() else None
     fallback_cloud: str | None = None
     if use_link_retrieve:

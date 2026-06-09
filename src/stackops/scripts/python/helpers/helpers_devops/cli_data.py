@@ -1,9 +1,9 @@
 import typer
 from pathlib import Path
-from typing import Annotated, Literal, assert_never
+from typing import Annotated, Literal
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
-from stackops.profile.create_links_export import REPO_LOOSE
+from stackops.profile.create_links_export import CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_MAP, CONFIG_SOURCE_LOOSE
 
 
 def sync(
@@ -16,7 +16,7 @@ def sync(
     which: Annotated[
         str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items")
     ] = None,
-    repo: Annotated[REPO_LOOSE, typer.Option("--repo", "-r", help="📁 Which backup configuration to use: 'library', 'user', or 'all'")] = "all",
+    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option("--source", help="📁 Which backup configuration to use: 'library', 'user', or 'all'")] = "all",
     use_link: Annotated[
         bool,
         typer.Option(
@@ -38,7 +38,7 @@ def sync(
             typer.echo("Error: Invalid direction. Use 'up' or 'down'.")
             raise typer.Exit(code=1)
     try:
-        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, repo=repo, use_link=use_link, pwd=pwd)
+        main_backup_retrieve(direction=direction_resolved, which=which, cloud=cloud, source=source, use_link=use_link, pwd=pwd)
     except ValueError as exc:
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)
         typer.echo(msg)
@@ -222,9 +222,9 @@ def edit_data(
         Literal["nano", "hx", "code"],
         typer.Option("--editor", "-e", help="📝 Editor to open the backup config file."),
     ] = "hx",
-    repo: Annotated[
-        Literal["library", "l", "user", "u"],
-        typer.Option("--repo", "-r", help="📁 Which backup configuration file to edit: 'user' or 'library'."),
+    source: Annotated[
+        CONFIG_FILE_SOURCE_LOOSE,
+        typer.Option("--source", help="📁 Which backup configuration file to edit: 'user' or 'library'."),
     ] = "user",
 ) -> None:
     import shutil
@@ -236,16 +236,9 @@ def edit_data(
         DEFAULT_BACKUP_HEADER,
     )
 
-    repo_key: Literal["library", "user"]
-    match repo:
-        case "library" | "l":
-            repo_key = "library"
-        case "user" | "u":
-            repo_key = "user"
-        case _:
-            assert_never(repo)
+    source_key = CONFIG_FILE_SOURCE_MAP[source]
 
-    if repo_key == "user":
+    if source_key == "user":
         file_path = USER_BACKUP_PATH
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)

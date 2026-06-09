@@ -6,22 +6,12 @@ project_doc_max_bytes = 32768
 project_doc_fallback_filenames = []
 mcp_oauth_credentials_store = "auto"
 
-# --- Headroom init provider ---
-model_provider = "headroom"
-openai_base_url = "http://127.0.0.1:8787/v1"
-
-[model_providers.headroom]
-name = "Headroom init proxy"
-base_url = "http://127.0.0.1:8787/v1"
-supports_websockets = true
-# --- end Headroom init provider ---
-
 [sandbox_workspace_write]
 network_access = true
 
 [features]
 # --- Headroom init features ---
-codex_hooks = true
+hooks = true
 # --- end Headroom init features ---
 multi_agent = true
 remote_models = true

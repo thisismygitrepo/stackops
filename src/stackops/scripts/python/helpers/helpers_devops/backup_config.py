@@ -10,7 +10,7 @@ import stackops.utils.schemas.mapper as mapper_assets
 import yaml
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
-from stackops.profile.create_links_export import REPO_LOOSE
+from stackops.profile.create_links_export import CONFIG_SOURCE_LOOSE
 from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH
@@ -274,8 +274,8 @@ def _describe_backup_config_state(path: Path, *, label: str) -> str:
     return f"{label} backup configuration file is empty or invalid: {path}"
 
 
-def describe_missing_backup_config(repo: REPO_LOOSE) -> str:
-    match repo:
+def describe_missing_backup_config(source: CONFIG_SOURCE_LOOSE) -> str:
+    match source:
         case "library" | "l":
             return _describe_backup_config_state(LIBRARY_BACKUP_PATH, label="Library")
         case "user" | "u":
@@ -285,7 +285,7 @@ def describe_missing_backup_config(repo: REPO_LOOSE) -> str:
             user_message = _describe_backup_config_state(USER_BACKUP_PATH, label="User")
             return f"No backup configuration could be loaded.\n{library_message}\n{user_message}"
         case _:
-            raise ValueError(f"Invalid which_backup value: {repo!r}.")
+            raise ValueError(f"Invalid backup config source value: {source!r}.")
 
 
 def write_backup_config(path: Path, config: BackupConfig) -> None:
@@ -296,8 +296,8 @@ def read_user_backup_config_for_update() -> BackupConfig | None:
     return _load_backup_config(USER_BACKUP_PATH, empty_as_config=True)
 
 
-def read_backup_config(repo: REPO_LOOSE) -> BackupConfig | None:
-    match repo:
+def read_backup_config(source: CONFIG_SOURCE_LOOSE) -> BackupConfig | None:
+    match source:
         case "library" | "l":
             path = LIBRARY_BACKUP_PATH
             bu_file = _load_backup_config(path)
@@ -319,5 +319,5 @@ def read_backup_config(repo: REPO_LOOSE) -> BackupConfig | None:
             else:
                 bu_file = None
         case _:
-            raise ValueError(f"Invalid which_backup value: {repo!r}.")
+            raise ValueError(f"Invalid backup config source value: {source!r}.")
     return bu_file

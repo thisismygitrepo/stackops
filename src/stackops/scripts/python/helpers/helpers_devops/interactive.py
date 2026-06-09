@@ -216,7 +216,7 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
         console.print("🔧 Retrieving backup data", style="bold cyan")
         try:
             from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve
-            main_backup_retrieve(direction="RETRIEVE", cloud=None, which=None, repo="all")
+            main_backup_retrieve(direction="RETRIEVE", cloud=None, which=None, source="all")
             console.print("✅ Backup data retrieved successfully", style="bold green")
         except Exception as e:
             console.print(f"❌ Error retrieving backup data: {e}", style="bold red")
