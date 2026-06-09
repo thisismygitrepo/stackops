@@ -7,22 +7,25 @@
   ],
   "permission": {
     "*": "ask",
-    "external_directory": "allow",
+    "bash": "allow",
     "edit": "allow",
-    "task": "allow",
-    "webfetch": "allow",
-    "websearch": "allow",
-    "codesearch": "allow",
-    "bash": {
-      "*": "allow",
-      "git *": "allow"
-    },
     "read": {
       "*": "allow",
       "*.env": "deny",
       "*.env.*": "deny",
       "*.env.example": "allow"
-    }
+    },
+    "grep": "allow",
+    "glob": "allow",
+    "lsp": "allow",
+    "skill": "allow",
+    "todowrite": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "question": "allow",
+    "task": "allow",
+    "external_directory": "allow",
+    "codesearch": "allow"
   },
   "mcp": {
     "context7": {
