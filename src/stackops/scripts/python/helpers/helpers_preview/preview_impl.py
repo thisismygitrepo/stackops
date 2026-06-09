@@ -299,7 +299,7 @@ uv run {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
         if Path.home().joinpath("code/stackops").exists():
             requirements = f"""{user_uv_with_line}  {uv_project_line} --with jupyterlab """
         else:
-            requirements = f"""{user_uv_with_line} {uv_project_line} --with "cowsay,stackops[plot]>=8.104" """
+            requirements = f"""{user_uv_with_line} {uv_project_line} --with "cowsay" --with "stackops[plot]>=8.104" """
         return f"uv run {requirements} jupyter-lab {str(nb_target)}"
 
     if backend == "vscode":
@@ -308,8 +308,8 @@ uv run {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
 cd "{str(pyfile.parent)}"
 uv init {uv_python_line}
 uv venv
-uv add "cowsay,stackops[plot]>=8.104"
-uv add {user_uv_add}
+uv add "cowsay" "stackops[plot]>=8.104"
+{user_uv_add}
 # code serve-web
 code --new-window "{str(pyfile)}"
 """
