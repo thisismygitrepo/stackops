@@ -5954,6 +5954,48 @@
           "windows": null
         }
       }
+    },
+    {
+      "appName": "difft",
+      "license": "MIT License",
+      "repoURL": "https://github.com/wilfred/difftastic",
+      "doc": "Structural diff tool that understands code syntax.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "difft-x86_64-unknown-linux-musl.tar.gz",
+          "darwin": "difft-x86_64-apple-darwin.tar.gz",
+          "windows": "difft-x86_64-pc-windows-msvc.zip"
+        },
+        "arm64": {
+          "linux": "difft-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "difft-aarch64-apple-darwin.tar.gz",
+          "windows": "difft-aarch64-pc-windows-msvc.zip"
+        }
+      },
+      "categoryLabels": [
+        "version-control"
+      ]
+    },
+    {
+      "appName": "scc",
+      "license": "MIT License",
+      "repoURL": "https://github.com/boyter/scc",
+      "doc": "Sloc Cloc and Code - fast code counter and complexity estimator.",
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "scc_Linux_x86_64.tar.gz",
+          "darwin": "scc_Darwin_x86_64.tar.gz",
+          "windows": "scc_Windows_x86_64.zip"
+        },
+        "arm64": {
+          "linux": "scc_Linux_arm64.tar.gz",
+          "darwin": "scc_Darwin_arm64.tar.gz",
+          "windows": "scc_Windows_arm64.zip"
+        }
+      },
+      "categoryLabels": [
+        "search-navigation"
+      ]
     }
   ]
 }
