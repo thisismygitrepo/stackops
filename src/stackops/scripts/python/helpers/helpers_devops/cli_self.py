@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
+from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
 
 def _developer_repo_root() -> Path | None:
@@ -119,7 +119,7 @@ cd "{str(stackops_path)}"
 """, strict=True)
     else:
         exit_then_run_shell_script(rf"""
-{uv_command} tool install --upgrade "{STACKOPS_VERSION}"
+{uv_command} tool install --upgrade "{STACKOPS_REQUIREMENT}"
 {uv_command2}
 """, strict=True)
 

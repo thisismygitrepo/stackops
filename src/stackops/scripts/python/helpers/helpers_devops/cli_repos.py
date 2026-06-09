@@ -3,6 +3,10 @@ from typing import Annotated
 import typer
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
 from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH, resolve_repos_spec_path
+from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
+
+
+STACKOPS_PLOT_REQUIREMENT = f"stackops[plot]>={STACKOPS_VERSION}"
 
 
 def _resolve_directory(directory: str | None) -> Path:
@@ -188,7 +192,7 @@ def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help=
 
     from stackops.utils.code import run_lambda_function
 
-    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=["stackops[plot]>=8.104", "polars"])
+    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[STACKOPS_PLOT_REQUIREMENT, "polars"])
     # from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
     # analyze_over_time(repo_path=repo_path)
 

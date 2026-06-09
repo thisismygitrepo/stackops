@@ -32,7 +32,9 @@ def resolve_uv_run_config(*, cwd: Path, module_file: Path) -> tuple[list[str], s
             continue
         if repo_root.joinpath("pyproject.toml").exists():
             return ["textual"], str(repo_root)
-    return ["textual", "stackops>=8.104"], None
+    from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
+
+    return ["textual", STACKOPS_REQUIREMENT], None
 
 
 def use_textual_options_form(

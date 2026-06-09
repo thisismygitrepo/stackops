@@ -5,6 +5,8 @@ from typing import Annotated, Literal, TypeAlias, get_args
 
 import typer
 
+from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
+
 
 PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
 
@@ -20,14 +22,13 @@ def tree(
 
         render_tree(show_help=show_help, show_aliases=show_aliases, max_depth=max_depth)
 
-    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
     if Path.home().joinpath("code", "stackops").exists():
         uv_with: list[str] = []
         uv_project_dir = str(Path.home().joinpath("code", "stackops"))
     else:
-        uv_with = [STACKOPS_VERSION]
+        uv_with = [STACKOPS_REQUIREMENT]
         uv_project_dir = None
 
     shell_script, _pyfile = get_shell_script_running_lambda_function(
@@ -61,14 +62,13 @@ def dot(
             output_path.write_text(dot_text, encoding="utf-8")
             print(f"Wrote {output_path}")
 
-    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
     if Path.home().joinpath("code", "stackops").exists():
         uv_with: list[str] = []
         uv_project_dir = str(Path.home().joinpath("code", "stackops"))
     else:
-        uv_with = [STACKOPS_VERSION]
+        uv_with = [STACKOPS_REQUIREMENT]
         uv_project_dir = None
 
     shell_script, _pyfile = get_shell_script_running_lambda_function(
@@ -95,14 +95,13 @@ def chart(
     width: Annotated[int, typer.Option("--width", help="Image width (for static output)")] = 1200,
 ) -> None:
     """Render a Plotly hierarchy chart."""
-    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
     from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly
 
     if Path.home().joinpath("code", "stackops").exists():
         uv_with: list[str] | None = None
         uv_project_dir = str(Path.home().joinpath("code/stackops"))
     else:
-        uv_with = [STACKOPS_VERSION]
+        uv_with = [STACKOPS_REQUIREMENT]
         uv_project_dir = None
 
     use_render_plotly(
@@ -120,7 +119,6 @@ def chart(
 
 def navigate():
     """📚 NAVIGATE command structure with TUI"""
-    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
     # import stackops.scripts.python.graph.visualize.helpers_navigator as navigator
     # path = Path(navigator.__file__).resolve().parent.joinpath("devops_navigator.py")
     # from stackops.utils.code import exit_then_run_shell_script
@@ -137,7 +135,7 @@ def navigate():
         uv_with = ["textual"]
         uv_project_dir = str(Path.home().joinpath("code/stackops"))
     else:
-        uv_with = [STACKOPS_VERSION, "textual"]
+        uv_with = [STACKOPS_REQUIREMENT, "textual"]
         uv_project_dir = None
     shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),
             uv_with=uv_with, uv_project_dir=uv_project_dir)
@@ -165,14 +163,13 @@ def search(
         if return_code != 0:
             raise typer.Exit(code=return_code)
 
-    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
     if Path.home().joinpath("code", "stackops").exists():
         uv_with = []
         uv_project_dir = str(Path.home().joinpath("code/stackops"))
     else:
-        uv_with = [STACKOPS_VERSION]
+        uv_with = [STACKOPS_REQUIREMENT]
         uv_project_dir = None
     shell_script, _pyfile = get_shell_script_running_lambda_function(
         lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),

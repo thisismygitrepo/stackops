@@ -2,7 +2,7 @@
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from stackops.utils.accessories import randstr
 from stackops.utils.meta import lambda_to_python_script
-from stackops.utils.ssh_utils.abc import STACKOPS_VERSION, DEFAULT_PICKLE_SUBDIR
+from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT, DEFAULT_PICKLE_SUBDIR
 from stackops.utils.code import get_uv_command
 from typing import Union, TYPE_CHECKING
 
@@ -82,7 +82,7 @@ def check_remote_is_dir(self: "SSH", source_path: Union[str, Path]) -> bool:
     )
     response = self.run_py_remotely(
         python_code=command,
-        uv_with=[STACKOPS_VERSION],
+        uv_with=[STACKOPS_REQUIREMENT],
         uv_project_dir=None,
         description=f"Check if source `{source_path}` is a dir",
         verbose_output=False,

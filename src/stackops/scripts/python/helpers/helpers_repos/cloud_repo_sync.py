@@ -22,7 +22,7 @@ from stackops.utils.path_core import delete_path
 import stackops.utils.path_compression as path_compression
 from stackops.utils.rclone import RcloneCommandError, is_missing_remote_path_error
 import stackops.utils.rclone_wrapper as rclone_wrapper
-from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
+from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (
     ConflictResolutionOption,
     build_merge_accept_program,
@@ -292,7 +292,7 @@ def main(
         uv_project_dir = f"""{str(Path.home().joinpath("code/stackops"))}"""
         uv_with = None
     else:
-        uv_with = [STACKOPS_VERSION]
+        uv_with = [STACKOPS_REQUIREMENT]
         uv_project_dir = None
 
     if merge_result.status == "success":

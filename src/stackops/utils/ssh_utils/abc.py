@@ -1,5 +1,5 @@
 
 
-STACKOPS_VERSION = "stackops>=8.104"
+STACKOPS_VERSION = "8.104"
+STACKOPS_REQUIREMENT = f"stackops>={STACKOPS_VERSION}"
 DEFAULT_PICKLE_SUBDIR = "tmp_results/tmp_scripts/ssh"
-

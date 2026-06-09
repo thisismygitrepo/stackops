@@ -3,7 +3,7 @@ from typing import Union
 from pathlib import Path
 from stackops.utils.accessories import randstr
 from stackops.utils.meta import lambda_to_python_script
-from stackops.utils.ssh_utils.abc import STACKOPS_VERSION, DEFAULT_PICKLE_SUBDIR
+from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT, DEFAULT_PICKLE_SUBDIR
 
 
 def copy_to_here(
@@ -53,7 +53,7 @@ def copy_to_here(
             )
             response = self.run_py_remotely(
                 python_code=command,
-                uv_with=[STACKOPS_VERSION],
+                uv_with=[STACKOPS_REQUIREMENT],
                 uv_project_dir=None,
                 description="Searching for files in source",
                 verbose_output=False,
@@ -104,7 +104,7 @@ def copy_to_here(
                 )
                 response = self.run_py_remotely(
                     python_code=command,
-                    uv_with=[STACKOPS_VERSION],
+                    uv_with=[STACKOPS_REQUIREMENT],
                     uv_project_dir=None,
                     description="Finding default target via relative source path",
                     verbose_output=False,
@@ -168,7 +168,7 @@ def copy_to_here(
         )
         response = self.run_py_remotely(
             python_code=command,
-            uv_with=[STACKOPS_VERSION],
+            uv_with=[STACKOPS_REQUIREMENT],
             uv_project_dir=None,
             description=f"Zipping source file {source}",
             verbose_output=False,
@@ -219,7 +219,7 @@ def copy_to_here(
         )
         response = self.run_py_remotely(
             python_code=command,
-            uv_with=[STACKOPS_VERSION],
+            uv_with=[STACKOPS_REQUIREMENT],
             uv_project_dir=None,
             description="Finding default target via relative source path",
             verbose_output=False,
@@ -284,7 +284,7 @@ def copy_to_here(
                                 in_global=True, import_module=False)
         self.run_py_remotely(
             python_code=command,
-            uv_with=[STACKOPS_VERSION],
+            uv_with=[STACKOPS_REQUIREMENT],
             uv_project_dir=None,
             description="Cleaning temp zip files @ remote.",
             verbose_output=False,

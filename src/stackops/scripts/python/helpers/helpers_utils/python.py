@@ -4,7 +4,7 @@ from typing import Annotated, Literal, TypedDict, cast
 
 import typer
 
-from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
+from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
 
 ENV_SUMMARY_LIMIT = 96
@@ -115,7 +115,7 @@ def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
     uv_with = ["textual"]
     uv_project_dir = None
     if not Path.home().joinpath("code/stackops").exists():
-        uv_with.append(STACKOPS_VERSION)
+        uv_with.append(STACKOPS_REQUIREMENT)
     else:
         uv_project_dir = str(Path.home().joinpath("code/stackops"))
     run_shell_script(
