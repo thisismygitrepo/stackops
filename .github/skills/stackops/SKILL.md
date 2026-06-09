@@ -1,6 +1,6 @@
 ---
 name: stackops
-description: Teach and execute StackOps usage through direct Typer entrypoints. Use this when asked to use, explain, troubleshoot, or extend the stackops CLI/library via devops, cloud, terminal, agents, utils, fire, croshell, seek, or the stackops umbrella entrypoint, especially when mapping command paths to implementation files.
+description: Teach and execute StackOps usage through direct Typer entrypoints. Use this when asked to use, explain, troubleshoot, or extend the stackops CLI/library via devops, cloud, terminal, agents, utils, fire, preview, seek, or the stackops umbrella entrypoint, especially when mapping command paths to implementation files.
 ---
 
 # StackOps
@@ -11,7 +11,7 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 
 1. Detect execution mode.
 - In this repository, prefer `UV_CACHE_DIR=/tmp/uv-cache uv run <command> ...`.
-- For globally installed usage, use direct entrypoints like `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, and `seek`.
+- For globally installed usage, use direct entrypoints like `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, and `seek`.
 - Use `stackops <command> ...` only when the umbrella entrypoint is specifically useful.
 
 2. Resolve command path before acting.
@@ -37,7 +37,7 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 Load `references/cli-map.md` for the current command tree and nested subcommands.
 
 Highlights:
-- Primary commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `croshell`, `seek`, and umbrella `stackops`.
+- Primary commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, `seek`, and umbrella `stackops`.
 - This skill intentionally excludes command aliases.
 - `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self workflows` appear only when `~/code/stackops` exists.
 

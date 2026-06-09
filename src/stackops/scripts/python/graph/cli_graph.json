@@ -6286,6 +6286,277 @@
               },
               {
                 "kind": "command",
+                "name": "clone",
+                "fullPath": "devops self clone",
+                "shortPath": "d s c",
+                "help": "📥 <c> Clone the StackOps source checkout.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "clone"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def clone(",
+                    "    directory: Annotated[",
+                    "        Path | None,",
+                    "        typer.Argument(help=\"Directory for the StackOps checkout. Defaults to the current directory.\"),",
+                    "    ] = None,",
+                    "    remote: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--remote\", \"-r\", help=\"Git remote URL. Defaults to the StackOps HTTPS remote, or SSH when --ssh is set.\"),",
+                    "    ] = None,",
+                    "    ssh: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--ssh\", help=\"Use the built-in git@github.com SSH remote instead of HTTPS.\"),",
+                    "    ] = False,",
+                    "    branch: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--branch\", \"-b\", help=\"Branch or tag to check out during clone, or in an existing checkout.\"),",
+                    "    ] = None,",
+                    "    depth: Annotated[",
+                    "        int | None,",
+                    "        typer.Option(\"--depth\", \"-d\", help=\"Create a shallow clone with the given depth.\"),",
+                    "    ] = None,",
+                    "    pull: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--pull\", \"-p\", help=\"If DIRECTORY already exists as a git repo, pull with --ff-only.\"),",
+                    "    ] = False,",
+                    "    install_editable: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--install\", \"-i\", help=\"Run uv sync and install the checkout as an editable stackops tool.\"),",
+                    "    ] = False,",
+                    "    dry_run: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--dry-run\", \"-n\", help=\"Print the git and uv actions without changing files.\"),",
+                    "    ] = False,",
+                    ") -> None:",
+                    "    \"\"\"📥 Clone the StackOps source checkout.\"\"\"",
+                    "    if depth is not None and depth < 1:",
+                    "        typer.echo(\"❌ --depth must be 1 or greater.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    destination = Path.cwd().absolute() if directory is None else directory.expanduser().absolute()",
+                    "    remote_url = _stackops_clone_remote(remote=remote, use_ssh=ssh)",
+                    "    git_marker = destination.joinpath(\".git\")",
+                    "",
+                    "    if destination.exists():",
+                    "        if not destination.is_dir():",
+                    "            typer.echo(f\"❌ Destination exists but is not a directory: {destination}\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        if git_marker.exists():",
+                    "            typer.echo(f\"ℹ️ Reusing existing checkout: {destination}\")",
+                    "            if branch is not None:",
+                    "                _run_git_command([\"git\", \"fetch\", \"--all\", \"--prune\"], cwd=destination, dry_run=dry_run)",
+                    "                _run_git_command([\"git\", \"checkout\", branch], cwd=destination, dry_run=dry_run)",
+                    "            if pull:",
+                    "                _run_git_command([\"git\", \"pull\", \"--ff-only\"], cwd=destination, dry_run=dry_run)",
+                    "            elif branch is None:",
+                    "                typer.echo(\"ℹ️ Existing checkout left unchanged. Use --pull to update it.\")",
+                    "        elif any(destination.iterdir()):",
+                    "            typer.echo(f\"❌ Destination exists but is neither empty nor a git repository: {destination}\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        else:",
+                    "            _clone_stackops_repo(destination, remote_url=remote_url, branch=branch, depth=depth, dry_run=dry_run)",
+                    "    else:",
+                    "        if not destination.parent.exists():",
+                    "            import shlex",
+                    "",
+                    "            typer.echo(f\"➤ mkdir -p {shlex.quote(destination.parent.as_posix())}\")",
+                    "            if not dry_run:",
+                    "                destination.parent.mkdir(parents=True, exist_ok=True)",
+                    "        _clone_stackops_repo(destination, remote_url=remote_url, branch=branch, depth=depth, dry_run=dry_run)",
+                    "",
+                    "    if install_editable:",
+                    "        _install_editable_stackops_checkout(destination, dry_run=dry_run)",
+                    "    elif not dry_run:",
+                    "        typer.echo(f\"Next: cd {destination}\")"
+                  ],
+                  "name": "clone",
+                  "parameters": [
+                    {
+                      "name": "directory",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Argument(help='Directory for the StackOps checkout. Defaults to the current directory.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Directory for the StackOps checkout. Defaults to the current directory."
+                      }
+                    },
+                    {
+                      "name": "remote",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--remote', '-r', help='Git remote URL. Defaults to the StackOps HTTPS remote, or SSH when --ssh is set.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--remote",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--remote"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Git remote URL. Defaults to the StackOps HTTPS remote, or SSH when --ssh is set."
+                      }
+                    },
+                    {
+                      "name": "ssh",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--ssh', help='Use the built-in git@github.com SSH remote instead of HTTPS.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--ssh"
+                        ],
+                        "long_flags": [
+                          "--ssh"
+                        ],
+                        "short_flags": [],
+                        "help": "Use the built-in git@github.com SSH remote instead of HTTPS."
+                      }
+                    },
+                    {
+                      "name": "branch",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--branch', '-b', help='Branch or tag to check out during clone, or in an existing checkout.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--branch",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--branch"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Branch or tag to check out during clone, or in an existing checkout."
+                      }
+                    },
+                    {
+                      "name": "depth",
+                      "kind": "positional_or_keyword",
+                      "type": "int | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[int | None, typer.Option('--depth', '-d', help='Create a shallow clone with the given depth.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--depth",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--depth"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Create a shallow clone with the given depth."
+                      }
+                    },
+                    {
+                      "name": "pull",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--pull', '-p', help='If DIRECTORY already exists as a git repo, pull with --ff-only.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--pull",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--pull"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "If DIRECTORY already exists as a git repo, pull with --ff-only."
+                      }
+                    },
+                    {
+                      "name": "install_editable",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--install', '-i', help='Run uv sync and install the checkout as an editable stackops tool.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--install",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--install"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Run uv sync and install the checkout as an editable stackops tool."
+                      }
+                    },
+                    {
+                      "name": "dry_run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-n', help='Print the git and uv actions without changing files.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--dry-run",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--dry-run"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Print the git and uv actions without changing files."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "📥 Clone the StackOps source checkout.",
+                "aliases": [
+                  {
+                    "name": "c",
+                    "hidden": true,
+                    "help": "Clone the StackOps source checkout."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "update",
                 "fullPath": "devops self update",
                 "shortPath": "d s u",

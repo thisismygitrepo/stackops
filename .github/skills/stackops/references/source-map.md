@@ -1,48 +1,51 @@
 # StackOps Source Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-05-27.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-09.
 
 Use this map to jump from a command path to the file that registers or implements it. For signatures, options, aliases, and full node metadata, inspect `src/stackops/scripts/python/graph/cli_graph.json`.
 
 ## Root Entrypoints
 
 - Umbrella entrypoint: `src/stackops/scripts/python/stackops_entry.py`
-- `devops` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.devops.get_app` via `devops`
-- `cloud` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.cloud.get_app` via `cloud`
-- `terminal` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.terminal.get_app` via `terminal`
-- `agents` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.agents.get_app` via `agents`
-- `utils` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.utils.get_app` via `utils`
-- `seek` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.seek.get_app` via `seek`
+- `devops` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.devops.get_app via `devops`
+- `cloud` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.cloud.get_app via `cloud`
+- `terminal` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.terminal.get_app via `terminal`
+- `agents` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.agents.get_app via `agents`
+- `utils` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.utils.get_app via `utils`
+- `seek` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.seek.get_app via `seek`
 - `fire` -> `src/stackops/scripts/python/stackops_entry.py` -> `fire`
-- `croshell` -> `src/stackops/scripts/python/stackops_entry.py` -> `croshell`
+- `preview` -> `src/stackops/scripts/python/stackops_entry.py` -> `preview`
 
 ## Group Routes
 
-- `devops` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.devops.get_app` via `devops`
-- `devops repos` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_repos.get_app` via `repos`
-- `devops config` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_config.get_app` via `config`
-- `devops config terminal` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_config_terminal.get_app` via `terminal`
-- `devops data` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_data.get_app` via `data`
-- `devops self` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self.get_app` via `self_cmd`
-- `devops self security` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.jobs.installer.checks.security_cli.get_app` via `security`
-- `devops self explore` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.graph.visualize.cli_graph_app.get_app` via `explore`
-- `devops self build-assets` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self_assets.get_app`
-- `devops self workflows` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self_ai.app.get_app`
-- `devops network` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_nw.get_app` via `network`
-- `devops network ssh` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_ssh.get_app`
-- `devops network device` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_device.get_app`
-- `cloud` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.cloud.get_app` via `cloud`
-- `terminal` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.terminal.get_app` via `terminal`
-- `agents` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.agents.get_app` via `agents`
-- `agents parallel` -> `src/stackops/scripts/python/agents.py` -> `stackops.scripts.python.agents_parallel.get_app`
-- `agents browser` -> `src/stackops/scripts/python/agents.py` -> `stackops.scripts.python.agents_browser.get_app`
-- `utils` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.utils.get_app` via `utils`
-- `utils machine` -> `src/stackops/scripts/python/utils.py` -> `stackops.scripts.python.helpers.helpers_utils.machine_utils_app.get_app`
-- `utils pyproject` -> `src/stackops/scripts/python/utils.py` -> `stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app.get_app`
-- `utils pyproject type-fix` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `stackops.scripts.python.helpers.helpers_utils.type_fix.get_app`
-- `utils pyproject test-runtime` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `stackops.scripts.python.helpers.helpers_utils.test_runtime.get_app`
-- `utils file` -> `src/stackops/scripts/python/utils.py` -> `stackops.scripts.python.helpers.helpers_utils.file_utils_app.get_app`
-- `seek` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.seek.get_app` via `seek`
+- `devops` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.devops.get_app via `devops`
+- `devops repos` -> `src/stackops/scripts/python/devops.py` -> stackops.scripts.python.helpers.helpers_devops.cli_repos.get_app via `repos`
+- `devops config` -> `src/stackops/scripts/python/devops.py` -> stackops.scripts.python.helpers.helpers_devops.cli_config.get_app via `config`
+- `devops config terminal` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config.py` -> stackops.scripts.python.helpers.helpers_devops.cli_config_terminal.get_app via `terminal`
+- `devops config terminal tmux-style` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_terminal.py` -> stackops.scripts.python.helpers.helpers_devops.cli_config_tmux.get_app
+- `devops config secrets` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config.py` -> stackops.scripts.python.helpers.helpers_devops.cli_config_secrets.get_app
+- `devops data` -> `src/stackops/scripts/python/devops.py` -> stackops.scripts.python.helpers.helpers_devops.cli_data.get_app via `data`
+- `devops self` -> `src/stackops/scripts/python/devops.py` -> stackops.scripts.python.helpers.helpers_devops.cli_self.get_app via `self_cmd`
+- `devops self security` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> stackops.jobs.installer.checks.security_cli.get_app via `security`
+- `devops self explore` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> stackops.scripts.python.graph.visualize.cli_graph_app.get_app via `explore`
+- `devops self build-assets` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> stackops.scripts.python.helpers.helpers_devops.cli_self_assets.get_app
+- `devops self workflows` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> stackops.scripts.python.helpers.helpers_devops.cli_self_ai.app.get_app
+- `devops network` -> `src/stackops/scripts/python/devops.py` -> stackops.scripts.python.helpers.helpers_devops.cli_nw.get_app via `network`
+- `devops network ssh` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> stackops.scripts.python.helpers.helpers_devops.cli_ssh.get_app
+- `devops network device` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> stackops.scripts.python.helpers.helpers_devops.cli_device.get_app
+- `devops vault` -> `src/stackops/scripts/python/devops.py` -> stackops.scripts.python.helpers.helpers_devops.cli_vault.get_app via `vault`
+- `cloud` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.cloud.get_app via `cloud`
+- `terminal` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.terminal.get_app via `terminal`
+- `agents` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.agents.get_app via `agents`
+- `agents parallel` -> `src/stackops/scripts/python/agents.py` -> stackops.scripts.python.agents_parallel.get_app
+- `agents browser` -> `src/stackops/scripts/python/agents.py` -> stackops.scripts.python.agents_browser.get_app
+- `utils` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.utils.get_app via `utils`
+- `utils machine` -> `src/stackops/scripts/python/utils.py` -> stackops.scripts.python.helpers.helpers_utils.machine_utils_app.get_app
+- `utils pyproject` -> `src/stackops/scripts/python/utils.py` -> stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app.get_app
+- `utils pyproject type-fix` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> stackops.scripts.python.helpers.helpers_utils.type_fix.get_app
+- `utils pyproject test-runtime` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> stackops.scripts.python.helpers.helpers_utils.test_runtime.get_app
+- `utils file` -> `src/stackops/scripts/python/utils.py` -> stackops.scripts.python.helpers.helpers_utils.file_utils_app.get_app
+- `seek` -> `src/stackops/scripts/python/stackops_entry.py` -> stackops.scripts.python.seek.get_app via `seek`
 
 ## Command Implementations
 
@@ -59,23 +62,35 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops repos config-linters` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `config_linters`
 - `devops repos cleanup` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `cleanup`
 - `devops config sync` -> `src/stackops/profile/create_links_export.py` -> `main_from_parser`
-- `devops config register` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py` -> `register_dotfile`
-- `devops config edit` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py` -> `edit_dotfile`
-- `devops config export-dotfiles` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py` -> `export_dotfiles`
-- `devops config import-dotfiles` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile.py` -> `import_dotfiles`
+- `devops config register` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_mapper.py` -> `register_dotfile`
+- `devops config edit` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_mapper.py` -> `edit_dotfile`
+- `devops config export-dotfiles` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_transfer.py` -> `export_dotfiles`
+- `devops config import-dotfiles` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_transfer.py` -> `import_dotfiles`
 - `devops config terminal config-shell` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_terminal.py` -> `configure_shell_profile`
 - `devops config terminal starship-theme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_terminal.py` -> `starship_theme`
 - `devops config terminal pwsh-theme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_terminal.py` -> `pwsh_theme`
 - `devops config terminal wezterm-theme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_terminal.py` -> `configure_wezterm_theme`
 - `devops config terminal ghostty-theme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_terminal.py` -> `configure_ghostty_theme`
 - `devops config terminal windows-terminal-theme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_terminal.py` -> `configure_windows_terminal_theme`
+- `devops config terminal tmux-style install-oh-my-tmux` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py` -> `install_oh_my_tmux`
+- `devops config terminal tmux-style apply-stackops-local` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py` -> `apply_stackops_local`
+- `devops config terminal tmux-style preset` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py` -> `preset`
+- `devops config terminal tmux-style set-option` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py` -> `set_option`
+- `devops config terminal tmux-style reload` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py` -> `reload_tmux`
+- `devops config terminal tmux-style status` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py` -> `status`
 - `devops config interactive` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config.py` -> `config`
 - `devops config copy-assets` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config.py` -> `copy_assets`
+- `devops config secrets search` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py` -> `search`
+- `devops config secrets stats` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py` -> `stats`
+- `devops config secrets subset` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py` -> `subset`
+- `devops config secrets add` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py` -> `add`
+- `devops config secrets edit` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets.py` -> `edit`
 - `devops config dump` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config.py` -> `dump_config`
 - `devops data sync` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_data.py` -> `sync`
 - `devops data register` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_data.py` -> `register_data`
 - `devops data edit` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_data.py` -> `edit_data`
 - `devops self install` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `install`
+- `devops self clone` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `clone`
 - `devops self update` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `update`
 - `devops self status` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `status`
 - `devops self security scan` -> `src/stackops/jobs/installer/checks/security_cli.py` -> `scan`
@@ -118,6 +133,9 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops network show-address` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `show_address`
 - `devops network vscode-share` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `vscode_share`
 - `devops execute` -> `src/stackops/scripts/python/devops.py` -> `execute`
+- `devops vault search` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py` -> `search`
+- `devops vault login-and-unlock` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py` -> `login_and_unlock`
+- `devops vault clean-cache` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py` -> `clean_cache`
 - `cloud sync` -> `src/stackops/scripts/python/cloud.py` -> `sync`
 - `cloud copy` -> `src/stackops/scripts/python/cloud.py` -> `copy`
 - `cloud mount` -> `src/stackops/scripts/python/cloud.py` -> `mount`
@@ -158,12 +176,14 @@ Use this map to jump from a command path to the file that registers or implement
 - `utils pyproject test-reference` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `reference_test`
 - `utils file edit` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `edit_file_with_hx`
 - `utils file download` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `download`
+- `utils file scrape` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `scrape`
 - `utils file pdf-merge` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `merge_pdfs`
 - `utils file pdf-compress` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `compress_pdf`
+- `utils file ocr` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `surya`
 - `utils file read-db` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `read_db_cli_tui`
 - `seek seek` -> `src/stackops/scripts/python/seek.py` -> `seek`
 - `fire` -> `src/stackops/scripts/python/stackops_entry.py` -> `fire`
-- `croshell` -> `src/stackops/scripts/python/stackops_entry.py` -> `croshell`
+- `preview` -> `src/stackops/scripts/python/stackops_entry.py` -> `preview`
 
 ## Debugging and Validation Workflow
 

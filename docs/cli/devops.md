@@ -87,6 +87,7 @@ These are the child commands exposed by the current live help.
 `self`:
 
 - `install`
+- `clone`
 - `update`
 - `status`
 - `security`

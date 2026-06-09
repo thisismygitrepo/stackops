@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-05-27.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-09.
 
 This reference intentionally uses:
 - direct commands only
@@ -18,13 +18,12 @@ Defined in `pyproject.toml` `[project.scripts]`:
 
 - `devops` -> `stackops.scripts.python.devops:main`
 - `cloud` -> `stackops.scripts.python.cloud:main`
-- `fire` -> `stackops.scripts.python.fire_jobs:main`
-- `agents` -> `stackops.scripts.python.agents:main`
 - `terminal` -> `stackops.scripts.python.terminal:main`
-- `croshell` -> `stackops.scripts.python.croshell:main`
+- `agents` -> `stackops.scripts.python.agents:main`
 - `utils` -> `stackops.scripts.python.utils:main`
-- `stackops` -> `stackops.scripts.python.stackops_entry:main`
+- `fire` -> `stackops.scripts.python.fire_jobs:main`
 - `seek` -> `stackops.scripts.python.seek:main`
+- `stackops` -> `stackops.scripts.python.stackops_entry:main`
 
 ## Command Tree
 
@@ -35,8 +34,8 @@ stackops
 │  ├─ repos
 │  │  ├─ sync
 │  │  ├─ register
-│  │  ├─ checkout-to-commit (deprecated)
-│  │  ├─ checkout-to-branch (deprecated)
+│  │  ├─ checkout-to-commit
+│  │  ├─ checkout-to-branch
 │  │  ├─ action
 │  │  ├─ analyze
 │  │  ├─ guard
@@ -56,9 +55,22 @@ stackops
 │  │  │  ├─ pwsh-theme
 │  │  │  ├─ wezterm-theme
 │  │  │  ├─ ghostty-theme
-│  │  │  └─ windows-terminal-theme
+│  │  │  ├─ windows-terminal-theme
+│  │  │  └─ tmux-style
+│  │  │     ├─ install-oh-my-tmux
+│  │  │     ├─ apply-stackops-local
+│  │  │     ├─ preset
+│  │  │     ├─ set-option
+│  │  │     ├─ reload
+│  │  │     └─ status
 │  │  ├─ interactive
 │  │  ├─ copy-assets
+│  │  ├─ secrets
+│  │  │  ├─ search
+│  │  │  ├─ stats
+│  │  │  ├─ subset
+│  │  │  ├─ add
+│  │  │  └─ edit
 │  │  └─ dump
 │  ├─ data
 │  │  ├─ sync
@@ -66,6 +78,7 @@ stackops
 │  │  └─ edit
 │  ├─ self
 │  │  ├─ install
+│  │  ├─ clone
 │  │  ├─ update
 │  │  ├─ status
 │  │  ├─ security
@@ -114,7 +127,11 @@ stackops
 │  │  │  └─ add-ip-exclusion-to-warp
 │  │  ├─ show-address
 │  │  └─ vscode-share
-│  └─ execute
+│  ├─ execute
+│  └─ vault
+│     ├─ search
+│     ├─ login-and-unlock
+│     └─ clean-cache
 ├─ cloud
 │  ├─ sync
 │  ├─ copy
@@ -166,18 +183,20 @@ stackops
 │  └─ file
 │     ├─ edit
 │     ├─ download
+│     ├─ scrape
 │     ├─ pdf-merge
 │     ├─ pdf-compress
+│     ├─ ocr
 │     └─ read-db
 ├─ seek
 │  └─ seek
 ├─ fire
-└─ croshell
+└─ preview
 ```
 
 ## Important Nuances
 
 - `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self workflows` are registered only when the developer checkout exists at `~/code/stackops`.
-- `utils pyproject type-fix` and `utils pyproject test-runtime` are callback groups; invoke the group itself rather than a child command.
+- Callback groups such as `utils pyproject type-fix` and `utils pyproject test-runtime` are invoked as the group command itself.
 - The generated graph stores aliases on each node. Use `src/stackops/scripts/python/graph/cli_graph.json` when alias details matter.
 - Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

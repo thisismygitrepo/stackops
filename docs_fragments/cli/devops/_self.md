@@ -13,6 +13,7 @@ Current `devops self --help` exposes:
 | Command | Description | Availability |
 |---------|-------------|--------------|
 | `install` | Install stackops locally, optionally from a development checkout | Always |
+| `clone` | Clone the StackOps source checkout into a local directory | Always |
 | `update` | Upgrade stackops, refresh packaged assets, and optionally relink public configs | Always |
 | `status` | Inspect machine, shell, repo, SSH, config, app, or backup state | Always |
 | `security` | Run security and installer-audit helpers | Always |
@@ -99,6 +100,35 @@ Examples:
 ```bash
 devops self install
 devops self install --dev
+```
+
+### clone
+
+Clone the StackOps source checkout. The positional `DIRECTORY` is the checkout directory itself and defaults to the current working directory.
+
+```bash
+devops self clone [OPTIONS] [DIRECTORY]
+```
+
+Key options from current help:
+
+| Option | Description |
+|--------|-------------|
+| `--remote`, `-r` | Git remote URL to clone from |
+| `--ssh` | Use the built-in SSH remote instead of HTTPS |
+| `--branch`, `-b` | Branch or tag to check out |
+| `--depth`, `-d` | Create a shallow clone with the given depth |
+| `--pull`, `-p` | Pull an existing checkout with `--ff-only` |
+| `--install`, `-i` | Run `uv sync` and install the checkout editable |
+| `--dry-run`, `-n` | Print planned git and uv actions without changing files |
+
+Examples:
+
+```bash
+devops self clone
+devops self clone ~/code/stackops --ssh
+devops self clone ~/code/stackops --branch main --depth 1
+devops self clone ~/code/stackops --pull --install
 ```
 
 ### build-installer

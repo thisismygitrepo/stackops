@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 import shlex
 from typing import Final, Literal, TypeAlias
@@ -8,10 +9,18 @@ from stackops.utils.options import choose_from_options
 SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 
-_OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, str]] = {
-    "agent-browser": "vercel-labs/agent-browser",
-    "caveman": "JuliusBrussee/caveman",
-    "grill-me": "mattpocock/skills/grill-me",
+
+@dataclass(frozen=True)
+class AgentSkillSource:
+    source: str
+    skill: str | None = None
+
+
+_OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
+    "agent-browser": AgentSkillSource("vercel-labs/agent-browser"),
+    "caveman": AgentSkillSource("JuliusBrussee/caveman"),
+    "grill-me": AgentSkillSource("mattpocock/skills/grill-me"),
+    "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
 }
 
 
@@ -61,7 +70,10 @@ def build_agent_skill_install_commands(
         if source is None:
             raise ValueError(f"Skill '{skill_name}' is not recognized. Supported skills: {', '.join(supported_agent_skill_names())}")
 
-        command = ["bunx", SKILLS_CLI_PACKAGE, "add", source, "--yes"]
+        command = ["bunx", SKILLS_CLI_PACKAGE, "add", source.source]
+        if source.skill is not None:
+            command.extend(("--skill", source.skill))
+        command.append("--yes")
         if scope == "global":
             command.append("--global")
         if len(agent_targets) > 0:
