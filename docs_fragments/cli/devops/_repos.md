@@ -22,8 +22,6 @@ Current `devops repos --help` exposes:
 | `config-linters` | Add linter config files to a git repository |
 | `cleanup` | Clean repository directories from cache files |
 
-Hidden compatibility aliases still exist for older checkout flows, but the current path is `sync --checkout-to-commit` or `sync --checkout-to-branch`.
-
 ### sync
 
 Clone or check out repositories described by a `repos.json` specification.
@@ -37,8 +35,8 @@ Key options from current help:
 | Option | Description |
 |--------|-------------|
 | `--specs-path`, `-s` | Explicit path to the `repos.json` specification. Defaults to `/home/alex/dotfiles/stackops/mapper/repos.json` |
-| `--checkout-to-commit`, `-ctc` | Check out commits pinned in the specification |
-| `--checkout-to-branch`, `-ctb` | Check out the main branch from the specification |
+| `--checkout-to-commit`, `-c` | Check out commits pinned in the specification |
+| `--checkout-to-branch`, `-b` | Check out the main branch from the specification |
 
 Important behavior from the implementation:
 
@@ -164,12 +162,12 @@ Commonly used options from current help:
 |--------|-------------|
 | `--repo`, `-r` | Repository to visualize |
 | `--output`, `-o` | Render to a video file instead of interactive mode |
-| `--resolution`, `-res` | Output resolution |
-| `--seconds-per-day`, `-spd` | Playback speed |
-| `--start-date` | Lower date bound |
-| `--stop-date` | Upper date bound |
+| `--resolution`, `-R` | Output resolution |
+| `--seconds-per-day`, `-D` | Playback speed |
+| `--start-date`, `-S` | Lower date bound |
+| `--stop-date`, `-E` | Upper date bound |
 | `--title`, `-t` | Visualization title |
-| `--self` | Clone and visualize the stackops repository |
+| `--self`, `-x` | Clone and visualize the stackops repository |
 
 The current help also exposes additional rendering controls for hidden layers, viewport, avatars, file limits, framerate, background color, and camera mode.
 

@@ -293,10 +293,10 @@
                     "        str | None, typer.Option(\"--specs-path\", \"-s\", help=f\"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.\")",
                     "    ] = None,",
                     "    checkout_to_commit: Annotated[",
-                    "        bool, typer.Option(\"--checkout-to-commit\", \"-ctc\", help=\"Check out specific commits listed in the specification.\")",
+                    "        bool, typer.Option(\"--checkout-to-commit\", \"-c\", help=\"Check out specific commits listed in the specification.\")",
                     "    ] = False,",
                     "    checkout_to_branch: Annotated[",
-                    "        bool, typer.Option(\"--checkout-to-branch\", \"-ctb\", help=\"Check out the branch recorded in the specification.\")",
+                    "        bool, typer.Option(\"--checkout-to-branch\", \"-b\", help=\"Check out the branch recorded in the specification.\")",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"📥 Clone repositories described by a repos.json specification.\"\"\"",
@@ -344,18 +344,18 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--checkout-to-commit', '-ctc', help='Check out specific commits listed in the specification.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--checkout-to-commit', '-c', help='Check out specific commits listed in the specification.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--checkout-to-commit",
-                          "-ctc"
+                          "-c"
                         ],
                         "long_flags": [
                           "--checkout-to-commit"
                         ],
                         "short_flags": [
-                          "-ctc"
+                          "-c"
                         ],
                         "help": "Check out specific commits listed in the specification."
                       }
@@ -366,18 +366,18 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--checkout-to-branch', '-ctb', help='Check out the branch recorded in the specification.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--checkout-to-branch', '-b', help='Check out the branch recorded in the specification.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--checkout-to-branch",
-                          "-ctb"
+                          "-b"
                         ],
                         "long_flags": [
                           "--checkout-to-branch"
                         ],
                         "short_flags": [
-                          "-ctb"
+                          "-b"
                         ],
                         "help": "Check out the branch recorded in the specification."
                       }
@@ -491,118 +491,6 @@
                     "name": "r",
                     "hidden": true,
                     "help": "Record repositories into a repos.json specification"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "checkout-to-commit",
-                "fullPath": "devops repos checkout-to-commit",
-                "shortPath": "d r ctc",
-                "help": "🔀 [ctc] Deprecated: use sync --checkout-to-commit",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
-                  "callable": "checkout_command"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def checkout_command(",
-                    "    specs_path: Annotated[",
-                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=f\"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.\")",
-                    "    ] = None,",
-                    ") -> None:",
-                    "    \"\"\"🔀 Check out specific commits listed in the specification.\"\"\"",
-                    "    clone(specs_path=specs_path, checkout_to_commit=True, checkout_to_branch=False)"
-                  ],
-                  "name": "checkout_command",
-                  "parameters": [
-                    {
-                      "name": "specs_path",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help=f'Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--specs-path",
-                          "-s"
-                        ],
-                        "long_flags": [
-                          "--specs-path"
-                        ],
-                        "short_flags": [
-                          "-s"
-                        ]
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "doc": "🔀 Check out specific commits listed in the specification.",
-                "aliases": [
-                  {
-                    "name": "ctc",
-                    "hidden": true,
-                    "help": "Check out specific commits listed in the specification"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "checkout-to-branch",
-                "fullPath": "devops repos checkout-to-branch",
-                "shortPath": "d r ctb",
-                "help": "🔀 [ctb] Deprecated: use sync --checkout-to-branch",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
-                  "callable": "checkout_to_branch_command"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def checkout_to_branch_command(",
-                    "    specs_path: Annotated[",
-                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=f\"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.\")",
-                    "    ] = None,",
-                    ") -> None:",
-                    "    \"\"\"🔀 Check out the branch recorded in the specification.\"\"\"",
-                    "    clone(specs_path=specs_path, checkout_to_commit=False, checkout_to_branch=True)"
-                  ],
-                  "name": "checkout_to_branch_command",
-                  "parameters": [
-                    {
-                      "name": "specs_path",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help=f'Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--specs-path",
-                          "-s"
-                        ],
-                        "long_flags": [
-                          "--specs-path"
-                        ],
-                        "short_flags": [
-                          "-s"
-                        ]
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "doc": "🔀 Check out the branch recorded in the specification.",
-                "aliases": [
-                  {
-                    "name": "ctb",
-                    "hidden": true,
-                    "help": "Check out the branch recorded in the specification"
                   }
                 ]
               },
@@ -856,7 +744,7 @@
                     "    cloud: Annotated[str | None, typer.Option(..., \"--cloud\", \"-C\", help=\"Cloud storage profile name. If not provided, uses default from config.\")] = None,",
                     "    message: Annotated[str | None, typer.Option(..., \"--message\", \"-m\", help=\"Commit message for local changes.\")] = None,",
                     "    on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on merge conflict. Default is 'ask'.\")] = \"ask\",",
-                    "    pwd: Annotated[str | None, typer.Option(..., \"--password\", help=\"Password for encryption/decryption of the remote repository.\")] = None,",
+                    "    pwd: Annotated[str | None, typer.Option(..., \"--password\", \"-p\", help=\"Password for encryption/decryption of the remote repository.\")] = None,",
                     ") -> str | None:",
                     "    on_conflict = resolve_conflict_action(on_conflict=on_conflict)",
                     "    import platform",
@@ -1191,16 +1079,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--password', help='Password for encryption/decryption of the remote repository.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--password', '-p', help='Password for encryption/decryption of the remote repository.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--password"
+                          "--password",
+                          "-p"
                         ],
                         "long_flags": [
                           "--password"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-p"
+                        ],
                         "help": "Password for encryption/decryption of the remote repository.",
                         "default": "..."
                       }
@@ -1234,10 +1125,10 @@
                     "    output_file: Annotated[",
                     "        Path | None, typer.Option(..., \"--output\", \"-o\", help=\"Output video file (e.g., output.mp4). If specified, gource will render to video.\")",
                     "    ] = None,",
-                    "    resolution: Annotated[str, typer.Option(..., \"--resolution\", \"-res\", help=\"Video resolution (e.g., 1920x1080, 1280x720)\")] = \"1920x1080\",",
-                    "    seconds_per_day: Annotated[float, typer.Option(..., \"--seconds-per-day\", \"-spd\", help=\"Speed of simulation (lower = faster)\")] = 0.1,",
+                    "    resolution: Annotated[str, typer.Option(..., \"--resolution\", \"-R\", help=\"Video resolution (e.g., 1920x1080, 1280x720)\")] = \"1920x1080\",",
+                    "    seconds_per_day: Annotated[float, typer.Option(..., \"--seconds-per-day\", \"-D\", help=\"Speed of simulation (lower = faster)\")] = 0.1,",
                     "    auto_skip_seconds: Annotated[",
-                    "        float, typer.Option(..., \"--auto-skip-seconds\", \"-as\", help=\"Skip to next entry if nothing happens for X seconds\")",
+                    "        float, typer.Option(..., \"--auto-skip-seconds\", \"-A\", help=\"Skip to next entry if nothing happens for X seconds\")",
                     "    ] = 1.0,",
                     "    title: Annotated[str | None, typer.Option(..., \"--title\", \"-t\", help=\"Title for the visualization\")] = None,",
                     "    hide_items: Annotated[",
@@ -1249,17 +1140,17 @@
                     "    key_items: Annotated[bool, typer.Option(..., \"--key\", \"-k\", help=\"Show file extension key\")] = False,",
                     "    fullscreen: Annotated[bool, typer.Option(..., \"--fullscreen\", \"-f\", help=\"Run in fullscreen mode\")] = False,",
                     "    viewport: Annotated[str | None, typer.Option(..., \"--viewport\", \"-v\", help=\"Camera viewport (e.g., '1000x1000')\")] = None,",
-                    "    start_date: Annotated[str | None, typer.Option(..., \"--start-date\", help=\"Start date (YYYY-MM-DD)\")] = None,",
-                    "    stop_date: Annotated[str | None, typer.Option(..., \"--stop-date\", help=\"Stop date (YYYY-MM-DD)\")] = None,",
-                    "    user_image_dir: Annotated[Path | None, typer.Option(..., \"--user-image-dir\", help=\"Directory with user avatar images\")] = None,",
-                    "    max_files: Annotated[int, typer.Option(..., \"--max-files\", help=\"Maximum number of files to show (0 = no limit)\")] = 0,",
-                    "    max_file_lag: Annotated[float, typer.Option(..., \"--max-file-lag\", help=\"Max time files remain on screen after last change\")] = 5.0,",
-                    "    file_idle_time: Annotated[int, typer.Option(..., \"--file-idle-time\", help=\"Time in seconds files remain idle before being removed\")] = 0,",
-                    "    framerate: Annotated[int, typer.Option(..., \"--framerate\", help=\"Frames per second for video output\")] = 60,",
-                    "    background_color: Annotated[str, typer.Option(..., \"--background-color\", help=\"Background color in hex (e.g., 000000 for black)\")] = \"000000\",",
-                    "    font_size: Annotated[int, typer.Option(..., \"--font-size\", help=\"Font size\")] = 22,",
-                    "    camera_mode: Annotated[str, typer.Option(..., \"--camera-mode\", help=\"Camera mode: overview or track\")] = \"overview\",",
-                    "    self: Annotated[bool, typer.Option(..., \"--self\", help=\"Clone stackops repository and act on it\")] = False,",
+                    "    start_date: Annotated[str | None, typer.Option(..., \"--start-date\", \"-S\", help=\"Start date (YYYY-MM-DD)\")] = None,",
+                    "    stop_date: Annotated[str | None, typer.Option(..., \"--stop-date\", \"-E\", help=\"Stop date (YYYY-MM-DD)\")] = None,",
+                    "    user_image_dir: Annotated[Path | None, typer.Option(..., \"--user-image-dir\", \"-i\", help=\"Directory with user avatar images\")] = None,",
+                    "    max_files: Annotated[int, typer.Option(..., \"--max-files\", \"-M\", help=\"Maximum number of files to show (0 = no limit)\")] = 0,",
+                    "    max_file_lag: Annotated[float, typer.Option(..., \"--max-file-lag\", \"-L\", help=\"Max time files remain on screen after last change\")] = 5.0,",
+                    "    file_idle_time: Annotated[int, typer.Option(..., \"--file-idle-time\", \"-I\", help=\"Time in seconds files remain idle before being removed\")] = 0,",
+                    "    framerate: Annotated[int, typer.Option(..., \"--framerate\", \"-F\", help=\"Frames per second for video output\")] = 60,",
+                    "    background_color: Annotated[str, typer.Option(..., \"--background-color\", \"-B\", help=\"Background color in hex (e.g., 000000 for black)\")] = \"000000\",",
+                    "    font_size: Annotated[int, typer.Option(..., \"--font-size\", \"-z\", help=\"Font size\")] = 22,",
+                    "    camera_mode: Annotated[str, typer.Option(..., \"--camera-mode\", \"-C\", help=\"Camera mode: overview or track\")] = \"overview\",",
+                    "    self: Annotated[bool, typer.Option(..., \"--self\", \"-x\", help=\"Clone stackops repository and act on it\")] = False,",
                     ") -> None:",
                     "    \"\"\"🎬 Visualize repository activity using Gource.\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_repos.grource import visualize",
@@ -1349,18 +1240,18 @@
                       "type": "str",
                       "default": "1920x1080",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--resolution', '-res', help='Video resolution (e.g., 1920x1080, 1280x720)')]",
+                      "annotation_raw": "Annotated[str, typer.Option(..., '--resolution', '-R', help='Video resolution (e.g., 1920x1080, 1280x720)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--resolution",
-                          "-res"
+                          "-R"
                         ],
                         "long_flags": [
                           "--resolution"
                         ],
                         "short_flags": [
-                          "-res"
+                          "-R"
                         ],
                         "help": "Video resolution (e.g., 1920x1080, 1280x720)",
                         "default": "..."
@@ -1372,18 +1263,18 @@
                       "type": "float",
                       "default": 0.1,
                       "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option(..., '--seconds-per-day', '-spd', help='Speed of simulation (lower = faster)')]",
+                      "annotation_raw": "Annotated[float, typer.Option(..., '--seconds-per-day', '-D', help='Speed of simulation (lower = faster)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--seconds-per-day",
-                          "-spd"
+                          "-D"
                         ],
                         "long_flags": [
                           "--seconds-per-day"
                         ],
                         "short_flags": [
-                          "-spd"
+                          "-D"
                         ],
                         "help": "Speed of simulation (lower = faster)",
                         "default": "..."
@@ -1395,18 +1286,18 @@
                       "type": "float",
                       "default": 1.0,
                       "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option(..., '--auto-skip-seconds', '-as', help='Skip to next entry if nothing happens for X seconds')]",
+                      "annotation_raw": "Annotated[float, typer.Option(..., '--auto-skip-seconds', '-A', help='Skip to next entry if nothing happens for X seconds')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--auto-skip-seconds",
-                          "-as"
+                          "-A"
                         ],
                         "long_flags": [
                           "--auto-skip-seconds"
                         ],
                         "short_flags": [
-                          "-as"
+                          "-A"
                         ],
                         "help": "Skip to next entry if nothing happens for X seconds",
                         "default": "..."
@@ -1533,16 +1424,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--start-date', help='Start date (YYYY-MM-DD)')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--start-date', '-S', help='Start date (YYYY-MM-DD)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--start-date"
+                          "--start-date",
+                          "-S"
                         ],
                         "long_flags": [
                           "--start-date"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-S"
+                        ],
                         "help": "Start date (YYYY-MM-DD)",
                         "default": "..."
                       }
@@ -1553,16 +1447,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--stop-date', help='Stop date (YYYY-MM-DD)')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--stop-date', '-E', help='Stop date (YYYY-MM-DD)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--stop-date"
+                          "--stop-date",
+                          "-E"
                         ],
                         "long_flags": [
                           "--stop-date"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-E"
+                        ],
                         "help": "Stop date (YYYY-MM-DD)",
                         "default": "..."
                       }
@@ -1573,16 +1470,19 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option(..., '--user-image-dir', help='Directory with user avatar images')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option(..., '--user-image-dir', '-i', help='Directory with user avatar images')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--user-image-dir"
+                          "--user-image-dir",
+                          "-i"
                         ],
                         "long_flags": [
                           "--user-image-dir"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-i"
+                        ],
                         "help": "Directory with user avatar images",
                         "default": "..."
                       }
@@ -1593,16 +1493,19 @@
                       "type": "int",
                       "default": 0,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--max-files', help='Maximum number of files to show (0 = no limit)')]",
+                      "annotation_raw": "Annotated[int, typer.Option(..., '--max-files', '-M', help='Maximum number of files to show (0 = no limit)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--max-files"
+                          "--max-files",
+                          "-M"
                         ],
                         "long_flags": [
                           "--max-files"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-M"
+                        ],
                         "help": "Maximum number of files to show (0 = no limit)",
                         "default": "..."
                       }
@@ -1613,16 +1516,19 @@
                       "type": "float",
                       "default": 5.0,
                       "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option(..., '--max-file-lag', help='Max time files remain on screen after last change')]",
+                      "annotation_raw": "Annotated[float, typer.Option(..., '--max-file-lag', '-L', help='Max time files remain on screen after last change')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--max-file-lag"
+                          "--max-file-lag",
+                          "-L"
                         ],
                         "long_flags": [
                           "--max-file-lag"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-L"
+                        ],
                         "help": "Max time files remain on screen after last change",
                         "default": "..."
                       }
@@ -1633,16 +1539,19 @@
                       "type": "int",
                       "default": 0,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--file-idle-time', help='Time in seconds files remain idle before being removed')]",
+                      "annotation_raw": "Annotated[int, typer.Option(..., '--file-idle-time', '-I', help='Time in seconds files remain idle before being removed')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--file-idle-time"
+                          "--file-idle-time",
+                          "-I"
                         ],
                         "long_flags": [
                           "--file-idle-time"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-I"
+                        ],
                         "help": "Time in seconds files remain idle before being removed",
                         "default": "..."
                       }
@@ -1653,16 +1562,19 @@
                       "type": "int",
                       "default": 60,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--framerate', help='Frames per second for video output')]",
+                      "annotation_raw": "Annotated[int, typer.Option(..., '--framerate', '-F', help='Frames per second for video output')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--framerate"
+                          "--framerate",
+                          "-F"
                         ],
                         "long_flags": [
                           "--framerate"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-F"
+                        ],
                         "help": "Frames per second for video output",
                         "default": "..."
                       }
@@ -1673,16 +1585,19 @@
                       "type": "str",
                       "default": "000000",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--background-color', help='Background color in hex (e.g., 000000 for black)')]",
+                      "annotation_raw": "Annotated[str, typer.Option(..., '--background-color', '-B', help='Background color in hex (e.g., 000000 for black)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--background-color"
+                          "--background-color",
+                          "-B"
                         ],
                         "long_flags": [
                           "--background-color"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-B"
+                        ],
                         "help": "Background color in hex (e.g., 000000 for black)",
                         "default": "..."
                       }
@@ -1693,16 +1608,19 @@
                       "type": "int",
                       "default": 22,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--font-size', help='Font size')]",
+                      "annotation_raw": "Annotated[int, typer.Option(..., '--font-size', '-z', help='Font size')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--font-size"
+                          "--font-size",
+                          "-z"
                         ],
                         "long_flags": [
                           "--font-size"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-z"
+                        ],
                         "help": "Font size",
                         "default": "..."
                       }
@@ -1713,16 +1631,19 @@
                       "type": "str",
                       "default": "overview",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--camera-mode', help='Camera mode: overview or track')]",
+                      "annotation_raw": "Annotated[str, typer.Option(..., '--camera-mode', '-C', help='Camera mode: overview or track')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--camera-mode"
+                          "--camera-mode",
+                          "-C"
                         ],
                         "long_flags": [
                           "--camera-mode"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-C"
+                        ],
                         "help": "Camera mode: overview or track",
                         "default": "..."
                       }
@@ -1733,16 +1654,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--self', help='Clone stackops repository and act on it')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--self', '-x', help='Clone stackops repository and act on it')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--self"
+                          "--self",
+                          "-x"
                         ],
                         "long_flags": [
                           "--self"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-x"
+                        ],
                         "help": "Clone stackops repository and act on it",
                         "default": "..."
                       }
@@ -1763,8 +1687,8 @@
                 "kind": "command",
                 "name": "count-lines",
                 "fullPath": "devops repos count-lines",
-                "shortPath": "d r lc",
-                "help": "📄 <l> Count python lines of code in current repo + historical edits.",
+                "shortPath": "d r c",
+                "help": "📄 <c> Count python lines of code in current repo + historical edits.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
@@ -1828,7 +1752,7 @@
                 },
                 "aliases": [
                   {
-                    "name": "lc",
+                    "name": "c",
                     "hidden": true,
                     "help": "Count python lines of code in current repo + historical edits."
                   }
@@ -2379,9 +2303,9 @@
                     "        str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")",
                     "    ] = None,",
                     "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name in mapper/dotfiles.yaml. Defaults to the file stem.\")] = None,",
-                    "    section: Annotated[str, typer.Option(\"--section\", \"-se\", help=\"Section name in mapper/dotfiles.yaml to record this mapping.\")] = \"default\",",
-                    "    os_filter: Annotated[str, typer.Option(\"--os\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = DEFAULT_OS_FILTER,",
-                    "    shared: Annotated[bool, typer.Option(\"--shared\", \"-sh\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
+                    "    section: Annotated[str, typer.Option(\"--section\", \"-S\", help=\"Section name in mapper/dotfiles.yaml to record this mapping.\")] = \"default\",",
+                    "    os_filter: Annotated[str, typer.Option(\"--os\", \"-o\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = DEFAULT_OS_FILTER,",
+                    "    shared: Annotated[bool, typer.Option(\"--shared\", \"-h\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
                     "    record: Annotated[bool, typer.Option(\"--record\", \"-r\", help=\"Record the mapping in user's mapper.yaml\")] = True,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
                     ") -> None:",
@@ -2606,18 +2530,18 @@
                       "type": "str",
                       "default": "default",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--section', '-se', help='Section name in mapper/dotfiles.yaml to record this mapping.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--section', '-S', help='Section name in mapper/dotfiles.yaml to record this mapping.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--section",
-                          "-se"
+                          "-S"
                         ],
                         "long_flags": [
                           "--section"
                         ],
                         "short_flags": [
-                          "-se"
+                          "-S"
                         ],
                         "help": "Section name in mapper/dotfiles.yaml to record this mapping."
                       }
@@ -2628,16 +2552,19 @@
                       "type": "str",
                       "default": "DEFAULT_OS_FILTER",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--os', help='Comma-separated OS list from: linux,darwin,windows.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--os', '-o', help='Comma-separated OS list from: linux,darwin,windows.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--os"
+                          "--os",
+                          "-o"
                         ],
                         "long_flags": [
                           "--os"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-o"
+                        ],
                         "help": "Comma-separated OS list from: linux,darwin,windows."
                       }
                     },
@@ -2647,18 +2574,18 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--shared', '-sh', help='Whether the config file is shared across destinations directory.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--shared', '-h', help='Whether the config file is shared across destinations directory.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--shared",
-                          "-sh"
+                          "-h"
                         ],
                         "long_flags": [
                           "--shared"
                         ],
                         "short_flags": [
-                          "-sh"
+                          "-h"
                         ],
                         "help": "Whether the config file is shared across destinations directory."
                       }
@@ -3501,11 +3428,6 @@
                         "name": "x",
                         "hidden": true,
                         "help": "Select Windows Terminal color scheme."
-                      },
-                      {
-                        "name": "wt-theme",
-                        "hidden": true,
-                        "help": "Select Windows Terminal color scheme."
                       }
                     ]
                   },
@@ -3634,11 +3556,6 @@
                         "doc": "Install Oh My Tmux through the shared StackOps installer.",
                         "aliases": [
                           {
-                            "name": "install",
-                            "hidden": true,
-                            "help": "Install Oh My Tmux and link tmux to it."
-                          },
-                          {
                             "name": "i",
                             "hidden": true,
                             "help": "Install Oh My Tmux and link tmux to it."
@@ -3720,11 +3637,6 @@
                         },
                         "doc": "Copy StackOps' Oh My Tmux local customization file.",
                         "aliases": [
-                          {
-                            "name": "local",
-                            "hidden": true,
-                            "help": "Copy the StackOps Oh My Tmux local config."
-                          },
                           {
                             "name": "l",
                             "hidden": true,
@@ -3852,7 +3764,7 @@
                             "    name: Annotated[str, typer.Argument(help=\"Oh My Tmux variable name, for example tmux_conf_theme_colour_4.\")],",
                             "    value: Annotated[str, typer.Argument(help=\"Value to write into the local config.\")],",
                             "    location: Annotated[TmuxInstallLocation, typer.Option(\"--location\", \"-l\", help=\"tmux config location to update.\")] = \"home\",",
-                            "    raw: Annotated[bool, typer.Option(\"--raw\", help=\"Write VALUE without shell quoting.\")] = False,",
+                            "    raw: Annotated[bool, typer.Option(\"--raw\", \"-R\", help=\"Write VALUE without shell quoting.\")] = False,",
                             "    reload_config: Annotated[bool, typer.Option(\"--reload\", \"-r\", help=\"Reload tmux after updating the local config.\")] = False,",
                             ") -> None:",
                             "    \"\"\"Set one Oh My Tmux variable in the local customization file.\"\"\"",
@@ -3922,16 +3834,19 @@
                               "type": "bool",
                               "default": false,
                               "required": false,
-                              "annotation_raw": "Annotated[bool, typer.Option('--raw', help='Write VALUE without shell quoting.')]",
+                              "annotation_raw": "Annotated[bool, typer.Option('--raw', '-R', help='Write VALUE without shell quoting.')]",
                               "typer": {
                                 "kind": "option",
                                 "param_decls": [
-                                  "--raw"
+                                  "--raw",
+                                  "-R"
                                 ],
                                 "long_flags": [
                                   "--raw"
                                 ],
-                                "short_flags": [],
+                                "short_flags": [
+                                  "-R"
+                                ],
                                 "help": "Write VALUE without shell quoting."
                               }
                             },
@@ -3965,11 +3880,6 @@
                         },
                         "doc": "Set one Oh My Tmux variable in the local customization file.",
                         "aliases": [
-                          {
-                            "name": "set",
-                            "hidden": true,
-                            "help": "Set an Oh My Tmux tmux_conf_* option."
-                          },
                           {
                             "name": "s",
                             "hidden": true,
@@ -4692,11 +4602,11 @@
                         "    ] = False,",
                         "    show_paths: Annotated[",
                         "        bool,",
-                        "        typer.Option(\"--show-paths\", help=\"Include secrets file paths in the source table.\"),",
+                        "        typer.Option(\"--show-paths\", \"-P\", help=\"Include secrets file paths in the source table.\"),",
                         "    ] = False,",
                         "    top: Annotated[",
                         "        int,",
-                        "        typer.Option(\"--top\", min=1, max=50, help=\"Number of tag/scope labels to show with --details.\"),",
+                        "        typer.Option(\"--top\", \"-t\", min=1, max=50, help=\"Number of tag/scope labels to show with --details.\"),",
                         "    ] = 8,",
                         ") -> None:",
                         "    \"\"\"📊 <t> Show aggregate StackOps secrets inventory stats without printing secret values.\"\"\"",
@@ -4778,16 +4688,19 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-paths', help='Include secrets file paths in the source table.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--show-paths', '-P', help='Include secrets file paths in the source table.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--show-paths"
+                              "--show-paths",
+                              "-P"
                             ],
                             "long_flags": [
                               "--show-paths"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-P"
+                            ],
                             "help": "Include secrets file paths in the source table."
                           }
                         },
@@ -4797,16 +4710,19 @@
                           "type": "int",
                           "default": 8,
                           "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--top', min=1, max=50, help='Number of tag/scope labels to show with --details.')]",
+                          "annotation_raw": "Annotated[int, typer.Option('--top', '-t', min=1, max=50, help='Number of tag/scope labels to show with --details.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--top"
+                              "--top",
+                              "-t"
                             ],
                             "long_flags": [
                               "--top"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-t"
+                            ],
                             "help": "Number of tag/scope labels to show with --details."
                           }
                         }
@@ -5035,7 +4951,7 @@
                         "    ] = \"local\",",
                         "    create: Annotated[",
                         "        bool,",
-                        "        typer.Option(\"--create\", help=f\"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.\"),",
+                        "        typer.Option(\"--create\", \"-c\", help=f\"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.\"),",
                         "    ] = False,",
                         ") -> None:",
                         "    \"\"\"➕ <a> Append a new login entry to a StackOps secrets file.\"\"\"",
@@ -5094,16 +5010,19 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--create', help=f'Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--create', '-c', help=f'Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--create"
+                              "--create",
+                              "-c"
                             ],
                             "long_flags": [
                               "--create"
                             ],
-                            "short_flags": []
+                            "short_flags": [
+                              "-c"
+                            ]
                           }
                         }
                       ],
@@ -5152,7 +5071,7 @@
                         "    ] = \"local\",",
                         "    create: Annotated[",
                         "        bool,",
-                        "        typer.Option(\"--create\", help=f\"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.\"),",
+                        "        typer.Option(\"--create\", \"-c\", help=f\"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.\"),",
                         "    ] = False,",
                         "    editor: Annotated[str, typer.Option(\"--editor\", \"-E\", help=\"Editor to use. Defaults to hx.\")] = \"hx\",",
                         ") -> None:",
@@ -5212,16 +5131,19 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--create', help=f'Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--create', '-c', help=f'Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--create"
+                              "--create",
+                              "-c"
                             ],
                             "long_flags": [
                               "--create"
                             ],
-                            "short_flags": []
+                            "short_flags": [
+                              "-c"
+                            ]
                           }
                         },
                         {
@@ -6308,7 +6230,7 @@
                     "    ] = None,",
                     "    ssh: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--ssh\", help=\"Use the built-in git@github.com SSH remote instead of HTTPS.\"),",
+                    "        typer.Option(\"--ssh\", \"-s\", help=\"Use the built-in git@github.com SSH remote instead of HTTPS.\"),",
                     "    ] = False,",
                     "    branch: Annotated[",
                     "        str | None,",
@@ -6417,16 +6339,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--ssh', help='Use the built-in git@github.com SSH remote instead of HTTPS.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--ssh', '-s', help='Use the built-in git@github.com SSH remote instead of HTTPS.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--ssh"
+                          "--ssh",
+                          "-s"
                         ],
                         "long_flags": [
                           "--ssh"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-s"
+                        ],
                         "help": "Use the built-in git@github.com SSH remote instead of HTTPS."
                       }
                     },
@@ -6912,13 +6837,14 @@
                         "    path: Annotated[",
                         "        Path | None,",
                         "        typer.Option(",
-                        "            \"--path\", help=\"Optional file path to scan instead of installed apps\", exists=True, file_okay=True, dir_okay=False, resolve_path=True",
+                        "            \"--path\", \"-p\", help=\"Optional file path to scan instead of installed apps\", exists=True, file_okay=True, dir_okay=False, resolve_path=True",
                         "        ),",
                         "    ] = None,",
                         "    record: Annotated[",
                         "        bool | None,",
                         "        typer.Option(",
                         "            \"--record\",",
+                        "            \"-r\",",
                         "            help=\"Write scan results to the saved repo reports. Installed-app scans already record by default.\",",
                         "        ),",
                         "    ] = None,",
@@ -6964,16 +6890,19 @@
                           "type": "Path | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', help='Optional file path to scan instead of installed apps', exists=True, file_okay=True, dir_okay=False, resolve_path=True)]",
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Optional file path to scan instead of installed apps', exists=True, file_okay=True, dir_okay=False, resolve_path=True)]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--path"
+                              "--path",
+                              "-p"
                             ],
                             "long_flags": [
                               "--path"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-p"
+                            ],
                             "help": "Optional file path to scan instead of installed apps"
                           }
                         },
@@ -6983,16 +6912,19 @@
                           "type": "bool | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[bool | None, typer.Option('--record', help='Write scan results to the saved repo reports. Installed-app scans already record by default.')]",
+                          "annotation_raw": "Annotated[bool | None, typer.Option('--record', '-r', help='Write scan results to the saved repo reports. Installed-app scans already record by default.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--record"
+                              "--record",
+                              "-r"
                             ],
                             "long_flags": [
                               "--record"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-r"
+                            ],
                             "help": "Write scan results to the saved repo reports. Installed-app scans already record by default."
                           }
                         }
@@ -7240,7 +7172,7 @@
                         "    format_type: Annotated[",
                         "        ReportFormat, typer.Option(\"--format\", \"-f\", help=\"Output format for apps or engines views\", case_sensitive=False, show_choices=True)",
                         "    ] = \"table\",",
-                        "    summarize: Annotated[bool, typer.Option(\"--summarize\", hidden=True)] = False,",
+                        "    summarize: Annotated[bool, typer.Option(\"--summarize\", \"-s\", hidden=True)] = False,",
                         ") -> None:",
                         "    resolved_view = _resolve_report_view(view, summarize)",
                         "    if resolved_view == \"options\":",
@@ -7369,16 +7301,19 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--summarize', hidden=True)]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--summarize', '-s', hidden=True)]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--summarize"
+                              "--summarize",
+                              "-s"
                             ],
                             "long_flags": [
                               "--summarize"
                             ],
-                            "short_flags": []
+                            "short_flags": [
+                              "-s"
+                            ]
                           }
                         }
                       ],
@@ -7551,8 +7486,8 @@
                     "signature": {
                       "raw_lines": [
                         "def tree(",
-                        "    show_help: Annotated[bool, typer.Option(\"--no-show-help\", help=\"Hide help text in labels\")] = True,",
-                        "    show_aliases: Annotated[bool, typer.Option(\"--show-aliases\", help=\"Include aliases in labels\")] = False,",
+                        "    show_help: Annotated[bool, typer.Option(\"--no-show-help\", \"-H\", help=\"Hide help text in labels\")] = True,",
+                        "    show_aliases: Annotated[bool, typer.Option(\"--show-aliases\", \"-a\", help=\"Include aliases in labels\")] = False,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the tree\")] = None,",
                         ") -> None:",
                         "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
@@ -7589,16 +7524,19 @@
                           "type": "bool",
                           "default": true,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--no-show-help', help='Hide help text in labels')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--no-show-help', '-H', help='Hide help text in labels')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--no-show-help"
+                              "--no-show-help",
+                              "-H"
                             ],
                             "long_flags": [
                               "--no-show-help"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-H"
+                            ],
                             "help": "Hide help text in labels"
                           }
                         },
@@ -7608,16 +7546,19 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show-aliases', help='Include aliases in labels')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--show-aliases', '-a', help='Include aliases in labels')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--show-aliases"
+                              "--show-aliases",
+                              "-a"
                             ],
                             "long_flags": [
                               "--show-aliases"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-a"
+                            ],
                             "help": "Include aliases in labels"
                           }
                         },
@@ -7673,7 +7614,7 @@
                       "raw_lines": [
                         "def dot(",
                         "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write DOT output to a file\")] = None,",
-                        "    include_help: Annotated[bool, typer.Option(\"--no-include-help\", help=\"Hide help text in labels\")] = True,",
+                        "    include_help: Annotated[bool, typer.Option(\"--no-include-help\", \"-H\", help=\"Hide help text in labels\")] = True,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
                         ") -> None:",
                         "    \"\"\"Export the graph as Graphviz DOT.\"\"\"",
@@ -7740,16 +7681,19 @@
                           "type": "bool",
                           "default": true,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--no-include-help', help='Hide help text in labels')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--no-include-help', '-H', help='Hide help text in labels')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--no-include-help"
+                              "--no-include-help",
+                              "-H"
                             ],
                             "long_flags": [
                               "--no-include-help"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-H"
+                            ],
                             "help": "Hide help text in labels"
                           }
                         },
@@ -7810,9 +7754,9 @@
                         "    ] = \"sunburst\",",
                         "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
                         "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the graph\")] = None,",
-                        "    template: Annotated[str, typer.Option(\"--template\", help=\"Plotly template name\")] = \"plotly_dark\",",
-                        "    height: Annotated[int, typer.Option(\"--height\", help=\"Image height (for static output)\")] = 900,",
-                        "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
+                        "    template: Annotated[str, typer.Option(\"--template\", \"-t\", help=\"Plotly template name\")] = \"plotly_dark\",",
+                        "    height: Annotated[int, typer.Option(\"--height\", \"-H\", help=\"Image height (for static output)\")] = 900,",
+                        "    width: Annotated[int, typer.Option(\"--width\", \"-w\", help=\"Image width (for static output)\")] = 1200,",
                         ") -> None:",
                         "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
                         "    from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly",
@@ -7902,16 +7846,19 @@
                           "type": "str",
                           "default": "plotly_dark",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--template', help='Plotly template name')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--template', '-t', help='Plotly template name')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--template"
+                              "--template",
+                              "-t"
                             ],
                             "long_flags": [
                               "--template"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-t"
+                            ],
                             "help": "Plotly template name"
                           }
                         },
@@ -7921,16 +7868,19 @@
                           "type": "int",
                           "default": 900,
                           "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--height', help='Image height (for static output)')]",
+                          "annotation_raw": "Annotated[int, typer.Option('--height', '-H', help='Image height (for static output)')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--height"
+                              "--height",
+                              "-H"
                             ],
                             "long_flags": [
                               "--height"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-H"
+                            ],
                             "help": "Image height (for static output)"
                           }
                         },
@@ -7940,16 +7890,19 @@
                           "type": "int",
                           "default": 1200,
                           "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--width', help='Image width (for static output)')]",
+                          "annotation_raw": "Annotated[int, typer.Option('--width', '-w', help='Image width (for static output)')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--width"
+                              "--width",
+                              "-w"
                             ],
                             "long_flags": [
                               "--width"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-w"
+                            ],
                             "help": "Image width (for static output)"
                           }
                         }
@@ -8200,19 +8153,19 @@
                     "def export(",
                     "    output_root: Annotated[",
                     "        Path,",
-                    "        typer.Option(\"--output-root\", help=\"Directory where the installer folder and zip archive will be written.\"),",
+                    "        typer.Option(\"--output-root\", \"-o\", help=\"Directory where the installer folder and zip archive will be written.\"),",
                     "    ] = Path.home().joinpath(\"tmp_results\"),",
                     "    include_configs: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--no-include-configs\", help=\"Exclude the StackOps config tree from the offline installer.\"),",
+                    "        typer.Option(\"--no-include-configs\", \"-c\", help=\"Exclude the StackOps config tree from the offline installer.\"),",
                     "    ] = True,",
                     "    include_uv_bundle: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--no-include-uv-bundle\", help=\"Exclude the uv-managed StackOps runtime bundle.\"),",
+                    "        typer.Option(\"--no-include-uv-bundle\", \"-b\", help=\"Exclude the uv-managed StackOps runtime bundle.\"),",
                     "    ] = True,",
                     "    keep_unpacked: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--keep-unpacked\", help=\"Keep the unpacked installer directory after writing the zip archive.\"),",
+                    "        typer.Option(\"--keep-unpacked\", \"-k\", help=\"Keep the unpacked installer directory after writing the zip archive.\"),",
                     "    ] = False,",
                     "    upload_to_cloud: Annotated[",
                     "        bool,",
@@ -8277,16 +8230,19 @@
                       "type": "Path",
                       "default": "Path.home().joinpath('tmp_results')",
                       "required": false,
-                      "annotation_raw": "Annotated[Path, typer.Option('--output-root', help='Directory where the installer folder and zip archive will be written.')]",
+                      "annotation_raw": "Annotated[Path, typer.Option('--output-root', '-o', help='Directory where the installer folder and zip archive will be written.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--output-root"
+                          "--output-root",
+                          "-o"
                         ],
                         "long_flags": [
                           "--output-root"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-o"
+                        ],
                         "help": "Directory where the installer folder and zip archive will be written."
                       }
                     },
@@ -8296,16 +8252,19 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--no-include-configs', help='Exclude the StackOps config tree from the offline installer.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-include-configs', '-c', help='Exclude the StackOps config tree from the offline installer.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--no-include-configs"
+                          "--no-include-configs",
+                          "-c"
                         ],
                         "long_flags": [
                           "--no-include-configs"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-c"
+                        ],
                         "help": "Exclude the StackOps config tree from the offline installer."
                       }
                     },
@@ -8315,16 +8274,19 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--no-include-uv-bundle', help='Exclude the uv-managed StackOps runtime bundle.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-include-uv-bundle', '-b', help='Exclude the uv-managed StackOps runtime bundle.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--no-include-uv-bundle"
+                          "--no-include-uv-bundle",
+                          "-b"
                         ],
                         "long_flags": [
                           "--no-include-uv-bundle"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-b"
+                        ],
                         "help": "Exclude the uv-managed StackOps runtime bundle."
                       }
                     },
@@ -8334,16 +8296,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--keep-unpacked', help='Keep the unpacked installer directory after writing the zip archive.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--keep-unpacked', '-k', help='Keep the unpacked installer directory after writing the zip archive.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--keep-unpacked"
+                          "--keep-unpacked",
+                          "-k"
                         ],
                         "long_flags": [
                           "--keep-unpacked"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-k"
+                        ],
                         "help": "Keep the unpacked installer directory after writing the zip archive."
                       }
                     },
@@ -8809,11 +8774,6 @@
                 "aliases": [
                   {
                     "name": "a",
-                    "hidden": true,
-                    "help": "Regenerate repo-local CLI and skill assets."
-                  },
-                  {
-                    "name": "ba",
                     "hidden": true,
                     "help": "Regenerate repo-local CLI and skill assets."
                   }
@@ -11166,7 +11126,7 @@
                     "    path: Annotated[str, typer.Argument(help=\"Path to the file or directory to share\")],",
                     "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", help=\"Port to run the share server on (default: 8080)\")] = None,",
                     "    username: Annotated[str | None, typer.Option(\"--username\", \"-u\", help=\"Username for share access (default: current user)\")] = None,",
-                    "    no_auth: Annotated[bool, typer.Option(\"--no-auth\", \"-na\", help=\"Disable authentication for share access\")] = False,",
+                    "    no_auth: Annotated[bool, typer.Option(\"--no-auth\", \"-n\", help=\"Disable authentication for share access\")] = False,",
                     "    password: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=\"Password for share access (default: configured quick password)\")] = None,",
                     "    bind_address: Annotated[str, typer.Option(\"--bind\", \"-a\", help=\"Address to bind the server to\")] = \"0.0.0.0\",",
                     "    over_internet: Annotated[bool, typer.Option(\"--over-internet\", \"-i\", help=\"Expose the share server over the internet using ngrok\")] = False,",
@@ -11343,18 +11303,18 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--no-auth', '-na', help='Disable authentication for share access')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-auth', '-n', help='Disable authentication for share access')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--no-auth",
-                          "-na"
+                          "-n"
                         ],
                         "long_flags": [
                           "--no-auth"
                         ],
                         "short_flags": [
-                          "-na"
+                          "-n"
                         ],
                         "help": "Disable authentication for share access"
                       }
@@ -11487,8 +11447,8 @@
                 "kind": "command",
                 "name": "send",
                 "fullPath": "devops network send",
-                "shortPath": "d n sx",
-                "help": "📁 <sx> send files from here.",
+                "shortPath": "d n f",
+                "help": "📁 <f> send files from here.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_share_file.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_share_file",
@@ -11497,10 +11457,10 @@
                 "signature": {
                   "raw_lines": [
                     "def share_file_send(path: Annotated[str | None, typer.Argument(help=\"Path to the file or directory to send. Required unless --text is provided.\")] = None,",
-                    "                    zip_folder: Annotated[bool, typer.Option(\"--zip\", help=\"Zip folder before sending\")] = False,",
+                    "                    zip_folder: Annotated[bool, typer.Option(\"--zip\", \"-z\", help=\"Zip folder before sending\")] = False,",
                     "                    code: Annotated[str | None, typer.Option(\"--code\", \"-c\", help=\"Codephrase used to connect to relay\")] = None,",
                     "                    text: Annotated[str | None, typer.Option(\"--text\", \"-t\", help=\"Send some text\")] = None,",
-                    "                    qrcode: Annotated[bool, typer.Option(\"--qrcode\", \"--qr\", help=\"Show receive code as a qrcode\")] = False,",
+                    "                    qrcode: Annotated[bool, typer.Option(\"--qrcode\", \"--qr\", \"-q\", help=\"Show receive code as a qrcode\")] = False,",
                     "                    backend: Annotated[Literal[\"wormhole\", \"w\", \"croc\", \"c\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to use\")] = \"croc\",",
                     "                    install_missing_dependencies: Annotated[bool, typer.Option(\"--install-dep\", \"-D\", help=\"Install missing dependencies\", show_default=False)] = False,",
                     "                    ) -> None:",
@@ -11614,16 +11574,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--zip', help='Zip folder before sending')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--zip', '-z', help='Zip folder before sending')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--zip"
+                          "--zip",
+                          "-z"
                         ],
                         "long_flags": [
                           "--zip"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-z"
+                        ],
                         "help": "Zip folder before sending"
                       }
                     },
@@ -11677,18 +11640,21 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--qrcode', '--qr', help='Show receive code as a qrcode')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--qrcode', '--qr', '-q', help='Show receive code as a qrcode')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--qrcode",
-                          "--qr"
+                          "--qr",
+                          "-q"
                         ],
                         "long_flags": [
                           "--qrcode",
                           "--qr"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-q"
+                        ],
                         "help": "Show receive code as a qrcode"
                       }
                     },
@@ -11745,9 +11711,9 @@
                 "doc": "Send a file, directory, or text.",
                 "aliases": [
                   {
-                    "name": "sx",
+                    "name": "f",
                     "hidden": true,
-                    "help": "📁 [sx] send files from here."
+                    "help": "📁 send files from here."
                   }
                 ]
               },
@@ -11755,8 +11721,8 @@
                 "kind": "command",
                 "name": "receive",
                 "fullPath": "devops network receive",
-                "shortPath": "d n rx",
-                "help": "📁 <rx> receive files to here.",
+                "shortPath": "d n r",
+                "help": "📁 <r> receive files to here.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_share_file.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_share_file",
@@ -11925,9 +11891,9 @@
                 "doc": "Receive a file using croc with relay server.\nUsage examples:\n    devops network receive 7121-donor-olympic-bicycle\n    devops network receive -- --relay 10.17.62.206:443 7121-donor-olympic-bicycle\n    devops network receive -- croc --relay 10.17.62.206:443 7121-donor-olympic-bicycle",
                 "aliases": [
                   {
-                    "name": "rx",
+                    "name": "r",
                     "hidden": true,
-                    "help": "📁 [rx] receive files to here."
+                    "help": "📁 receive files to here."
                   }
                 ]
               },
@@ -12134,7 +12100,7 @@
                     "signature": {
                       "raw_lines": [
                         "def add_ssh_key(",
-                        "    path: Annotated[str | None, typer.Option(..., help=\"Path to the public key file\")] = None,",
+                        "    path: Annotated[str | None, typer.Option(..., \"--path\", \"-p\", help=\"Path to the public key file\")] = None,",
                         "    choose: Annotated[bool, typer.Option(..., \"--choose\", \"-c\", help=\"Choose from available public keys in ~/.ssh/*.pub\")] = False,",
                         "    value: Annotated[bool, typer.Option(..., \"--value\", \"-v\", help=\"Paste the public key content manually\")] = False,",
                         "    github: Annotated[str | None, typer.Option(..., \"--github\", \"-g\", help=\"Fetch public keys from a GitHub username\")] = None,",
@@ -12159,12 +12125,19 @@
                           "type": "str | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option(..., help='Path to the public key file')]",
+                          "annotation_raw": "Annotated[str | None, typer.Option(..., '--path', '-p', help='Path to the public key file')]",
                           "typer": {
                             "kind": "option",
-                            "param_decls": [],
-                            "long_flags": [],
-                            "short_flags": [],
+                            "param_decls": [
+                              "--path",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--path"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
                             "help": "Path to the public key file",
                             "default": "..."
                           }
@@ -12932,7 +12905,7 @@
                     },
                     "signature": {
                       "raw_lines": [
-                        "def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., \"--ip\", help=\"IP address(es) to exclude from WARP (Comma separated)\")]) -> None:",
+                        "def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., \"--ip\", \"-i\", help=\"IP address(es) to exclude from WARP (Comma separated)\")]) -> None:",
                         "    from ipaddress import IPv4Address, IPv6Address, ip_address",
                         "",
                         "    ips: list[IPv4Address | IPv6Address] = []",
@@ -12972,16 +12945,19 @@
                           "type": "str",
                           "default": null,
                           "required": true,
-                          "annotation_raw": "Annotated[str, typer.Option(..., '--ip', help='IP address(es) to exclude from WARP (Comma separated)')]",
+                          "annotation_raw": "Annotated[str, typer.Option(..., '--ip', '-i', help='IP address(es) to exclude from WARP (Comma separated)')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--ip"
+                              "--ip",
+                              "-i"
                             ],
                             "long_flags": [
                               "--ip"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-i"
+                            ],
                             "help": "IP address(es) to exclude from WARP (Comma separated)",
                             "default": "..."
                           }
@@ -13519,14 +13495,14 @@
                     "    ] = \"password\",",
                     "    sync: Annotated[bool, typer.Option(\"--sync\", \"-S\", help=\"Sync vault with server before searching and bypass the local search cache\")] = False,",
                     "    show: Annotated[bool, typer.Option(\"--show\", \"-s\", help=\"Show credentials in terminal (insecure)\")] = False,",
-                    "    use_totp: Annotated[bool, typer.Option(\"--totp/--no-totp\", help=\"Attempt to fetch TOTP if present\")] = True,",
-                    "    username_slot: Annotated[int, typer.Option(\"--username-slot\", help=\"Clipboard slot for username\")] = 0,",
-                    "    password_slot: Annotated[int, typer.Option(\"--password-slot\", help=\"Clipboard slot for password\")] = 1,",
-                    "    totp_slot: Annotated[int, typer.Option(\"--totp-slot\", help=\"Clipboard slot for TOTP\")] = 2,",
-                    "    json_slot: Annotated[int, typer.Option(\"--json-slot\", help=\"Clipboard slot for full JSON result\")] = 3,",
+                    "    use_totp: Annotated[bool, typer.Option(\"--totp/--no-totp\", \"-t/-T\", help=\"Attempt to fetch TOTP if present\")] = True,",
+                    "    username_slot: Annotated[int, typer.Option(\"--username-slot\", \"-u\", help=\"Clipboard slot for username\")] = 0,",
+                    "    password_slot: Annotated[int, typer.Option(\"--password-slot\", \"-p\", help=\"Clipboard slot for password\")] = 1,",
+                    "    totp_slot: Annotated[int, typer.Option(\"--totp-slot\", \"-P\", help=\"Clipboard slot for TOTP\")] = 2,",
+                    "    json_slot: Annotated[int, typer.Option(\"--json-slot\", \"-J\", help=\"Clipboard slot for full JSON result\")] = 3,",
                     "    silent: Annotated[bool, typer.Option(\"--silent\", \"-q\", help=\"Suppress all progress/status output; only the final result is printed\")] = False,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"--json-output\", \"-j\", help=\"Output selected credentials as JSON (includes notes)\")] = False,",
-                    "    raw_output: Annotated[bool, typer.Option(\"--raw\", help=\"Output raw search results JSON exactly as returned by bw\")] = False,",
+                    "    raw_output: Annotated[bool, typer.Option(\"--raw\", \"-r\", help=\"Output raw search results JSON exactly as returned by bw\")] = False,",
                     "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass cache and query Bitwarden directly\")] = False,",
                     ") -> None:",
                     "    \"\"\"Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard.\"\"\"",
@@ -13641,17 +13617,21 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--totp/--no-totp', help='Attempt to fetch TOTP if present')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--totp/--no-totp', '-t/-T', help='Attempt to fetch TOTP if present')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--totp/--no-totp"
+                          "--totp/--no-totp",
+                          "-t/-T"
                         ],
                         "long_flags": [
                           "--totp",
                           "--no-totp"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-t",
+                          "-T"
+                        ],
                         "help": "Attempt to fetch TOTP if present"
                       }
                     },
@@ -13661,16 +13641,19 @@
                       "type": "int",
                       "default": 0,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--username-slot', help='Clipboard slot for username')]",
+                      "annotation_raw": "Annotated[int, typer.Option('--username-slot', '-u', help='Clipboard slot for username')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--username-slot"
+                          "--username-slot",
+                          "-u"
                         ],
                         "long_flags": [
                           "--username-slot"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-u"
+                        ],
                         "help": "Clipboard slot for username"
                       }
                     },
@@ -13680,16 +13663,19 @@
                       "type": "int",
                       "default": 1,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--password-slot', help='Clipboard slot for password')]",
+                      "annotation_raw": "Annotated[int, typer.Option('--password-slot', '-p', help='Clipboard slot for password')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--password-slot"
+                          "--password-slot",
+                          "-p"
                         ],
                         "long_flags": [
                           "--password-slot"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-p"
+                        ],
                         "help": "Clipboard slot for password"
                       }
                     },
@@ -13699,16 +13685,19 @@
                       "type": "int",
                       "default": 2,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--totp-slot', help='Clipboard slot for TOTP')]",
+                      "annotation_raw": "Annotated[int, typer.Option('--totp-slot', '-P', help='Clipboard slot for TOTP')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--totp-slot"
+                          "--totp-slot",
+                          "-P"
                         ],
                         "long_flags": [
                           "--totp-slot"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-P"
+                        ],
                         "help": "Clipboard slot for TOTP"
                       }
                     },
@@ -13718,16 +13707,19 @@
                       "type": "int",
                       "default": 3,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--json-slot', help='Clipboard slot for full JSON result')]",
+                      "annotation_raw": "Annotated[int, typer.Option('--json-slot', '-J', help='Clipboard slot for full JSON result')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--json-slot"
+                          "--json-slot",
+                          "-J"
                         ],
                         "long_flags": [
                           "--json-slot"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-J"
+                        ],
                         "help": "Clipboard slot for full JSON result"
                       }
                     },
@@ -13783,16 +13775,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--raw', help='Output raw search results JSON exactly as returned by bw')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--raw', '-r', help='Output raw search results JSON exactly as returned by bw')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--raw"
+                          "--raw",
+                          "-r"
                         ],
                         "long_flags": [
                           "--raw"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-r"
+                        ],
                         "help": "Output raw search results JSON exactly as returned by bw"
                       }
                     },
@@ -13849,10 +13844,10 @@
                     "def login_and_unlock(",
                     "    account_name: Annotated[",
                     "        str | None,",
-                    "        typer.Option(\"--account-name\", help=\"Optional StackOps secrets accountName that stores the Bitwarden credentials.\"),",
+                    "        typer.Option(\"--account-name\", \"-a\", help=\"Optional StackOps secrets accountName that stores the Bitwarden credentials.\"),",
                     "    ] = None,",
                     "    login_name: Annotated[",
-                    "        str, typer.Option(\"--login-name\", help=\"StackOps secrets login name that stores the Bitwarden API credentials.\", show_default=True)",
+                    "        str, typer.Option(\"--login-name\", \"-n\", help=\"StackOps secrets login name that stores the Bitwarden API credentials.\", show_default=True)",
                     "    ] = DEFAULT_BITWARDEN_LOGIN_NAME,",
                     ") -> None:",
                     "    \"\"\"Authenticate with Bitwarden and persist a local BW_SESSION token.\"\"\"",
@@ -13871,16 +13866,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--account-name', help='Optional StackOps secrets accountName that stores the Bitwarden credentials.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--account-name', '-a', help='Optional StackOps secrets accountName that stores the Bitwarden credentials.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--account-name"
+                          "--account-name",
+                          "-a"
                         ],
                         "long_flags": [
                           "--account-name"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-a"
+                        ],
                         "help": "Optional StackOps secrets accountName that stores the Bitwarden credentials."
                       }
                     },
@@ -13890,16 +13888,19 @@
                       "type": "str",
                       "default": "DEFAULT_BITWARDEN_LOGIN_NAME",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--login-name', help='StackOps secrets login name that stores the Bitwarden API credentials.', show_default=True)]",
+                      "annotation_raw": "Annotated[str, typer.Option('--login-name', '-n', help='StackOps secrets login name that stores the Bitwarden API credentials.', show_default=True)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--login-name"
+                          "--login-name",
+                          "-n"
                         ],
                         "long_flags": [
                           "--login-name"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-n"
+                        ],
                         "help": "StackOps secrets login name that stores the Bitwarden API credentials."
                       }
                     }
@@ -14274,7 +14275,7 @@
                 "    record: Annotated[bool, typer.Option(\"--record\", \"-m\", help=\"📝 Record an upload in user mapper/data.yaml. Requires --record-name.\")] = False,",
                 "    record_group: Annotated[str, typer.Option(\"--record-group\", \"-g\", help=\"🗂 Group name for --record in mapper/data.yaml.\")] = \"default\",",
                 "    record_name: Annotated[str | None, typer.Option(\"--record-name\", \"-n\", help=\"🏷 Entry name for --record in mapper/data.yaml. Required when using --record.\")] = None,",
-                "    record_os: Annotated[str, typer.Option(\"--record-os\", help=\"💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.\")] = DEFAULT_OS_FILTER,",
+                "    record_os: Annotated[str, typer.Option(\"--record-os\", \"-F\", help=\"💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.\")] = DEFAULT_OS_FILTER,",
                 "    rel2home: Annotated[bool, typer.Option(\"--relative2home\", \"-r\", help=\"🏠 Relative to `myhome` folder\")] = defaults[\"rel2home\"],",
                 "    root: Annotated[str, typer.Option(\"--root\", \"-R\", help=\"🌳 Remote root.\")] = defaults[\"root\"],",
                 "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.\")] = defaults[\"pwd\"],",
@@ -14451,16 +14452,19 @@
                   "type": "str",
                   "default": "DEFAULT_OS_FILTER",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--record-os', help='💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.')]",
+                  "annotation_raw": "Annotated[str, typer.Option('--record-os', '-F', help='💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--record-os"
+                      "--record-os",
+                      "-F"
                     ],
                     "long_flags": [
                       "--record-os"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-F"
+                    ],
                     "help": "💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all."
                   }
                 },
@@ -14998,7 +15002,7 @@
                 "def run(",
                 "    ctx: typer.Context,",
                 "    layouts_file: Annotated[str | None, typer.Option(..., \"--layouts-file\", \"-f\", help=\"Path to the layout.json file\")] = None,",
-                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.\")] = False,",
+                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.\")] = False,",
                 "",
                 "    choose_layouts: Annotated[str | None, typer.Option(..., \"--choose-layouts\", \"-l\", help=\"Comma separated layout names. Pass empty string to select layouts interactively.\")] = None,",
                 "    choose_tabs: Annotated[str | None, typer.Option(..., \"--choose-tabs\", \"-t\", help=\"Comma separated tab names. Pass empty string to select tabs interactively from all layouts.\")] = None,",
@@ -15084,16 +15088,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', '-L', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--test-layout"
+                      "--test-layout",
+                      "-L"
                     ],
                     "long_flags": [
                       "--test-layout"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-L"
+                    ],
                     "help": "Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.",
                     "default": "..."
                   }
@@ -15672,20 +15679,20 @@
                 "    choose_tabs: Annotated[str | None, typer.Option(..., \"--choose-tabs\", \"-t\", help=\"Comma separated tab names. Pass empty string to select tabs interactively from all layouts.\")] = None,",
                 "    sleep_inbetween: Annotated[float, typer.Option(..., \"--sleep-inbetween\", \"-S\", help=\"Sleep time in seconds between AoE session launches\")] = 1.0,",
                 "    max_tabs: Annotated[int, typer.Option(..., \"--max-tabs-per-layout\", \"-T\", help=\"A sanity checker that throws an error if any selected layout exceeds this number of tabs.\")] = 25,",
-                "    agent: Annotated[str | None, typer.Option(\"--agent\", help=\"AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.\")] = \"codex\",",
+                "    agent: Annotated[str | None, typer.Option(\"--agent\", \"-a\", help=\"AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.\")] = \"codex\",",
                 "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model forwarded to the underlying AoE/agent CLI when supported.\")] = None,",
                 "    provider: Annotated[str | None, typer.Option(\"--provider\", \"-p\", help=\"Provider forwarded to the underlying AoE/agent CLI when supported.\")] = None,",
-                "    sandbox: Annotated[str | None, typer.Option(\"--sandbox\", help=\"Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.\")] = None,",
-                "    yolo: Annotated[bool, typer.Option(\"--yolo\", help=\"Enable AoE/agent YOLO mode when supported.\")] = False,",
-                "    cmd: Annotated[str | None, typer.Option(\"--cmd\", help=\"Override the launched agent binary/command.\")] = None,",
-                "    args: Annotated[list[str] | None, typer.Option(\"--args\", help=\"Repeatable extra argument forwarded to the launched agent CLI.\")] = None,",
-                "    env: Annotated[list[str] | None, typer.Option(\"--env\", help=\"Repeatable KEY=VALUE pair forwarded to AoE when supported.\")] = None,",
-                "    force: Annotated[bool, typer.Option(\"--force\", help=\"Pass force/overwrite to AoE when supported.\")] = False,",
-                "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Print generated `aoe add` commands instead of executing them.\")] = False,",
-                "    aoe_bin: Annotated[str, typer.Option(\"--aoe-bin\", help=\"AoE executable to invoke.\")] = \"aoe\",",
-                "    tab_command_mode: Annotated[Literal[\"prompt\", \"cmd\", \"ignore\"], typer.Option(\"--tab-command-mode\", help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")] = \"prompt\",",
+                "    sandbox: Annotated[str | None, typer.Option(\"--sandbox\", \"-s\", help=\"Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.\")] = None,",
+                "    yolo: Annotated[bool, typer.Option(\"--yolo\", \"-y\", help=\"Enable AoE/agent YOLO mode when supported.\")] = False,",
+                "    cmd: Annotated[str | None, typer.Option(\"--cmd\", \"-C\", help=\"Override the launched agent binary/command.\")] = None,",
+                "    args: Annotated[list[str] | None, typer.Option(\"--args\", \"-A\", help=\"Repeatable extra argument forwarded to the launched agent CLI.\")] = None,",
+                "    env: Annotated[list[str] | None, typer.Option(\"--env\", \"-e\", help=\"Repeatable KEY=VALUE pair forwarded to AoE when supported.\")] = None,",
+                "    force: Annotated[bool, typer.Option(\"--force\", \"-F\", help=\"Pass force/overwrite to AoE when supported.\")] = False,",
+                "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-d\", help=\"Print generated `aoe add` commands instead of executing them.\")] = False,",
+                "    aoe_bin: Annotated[str, typer.Option(\"--aoe-bin\", \"-b\", help=\"AoE executable to invoke.\")] = \"aoe\",",
+                "    tab_command_mode: Annotated[Literal[\"prompt\", \"cmd\", \"ignore\"], typer.Option(\"--tab-command-mode\", \"-M\", help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")] = \"prompt\",",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
-                "    launch: Annotated[bool, typer.Option(\"--no-launch\", help=\"Create each AoE session without launching it immediately.\")] = True,",
+                "    launch: Annotated[bool, typer.Option(\"--no-launch\", \"-n\", help=\"Create each AoE session without launching it immediately.\")] = True,",
                 ") -> None:",
                 "    \"\"\"Launch selected layout tabs as agent-of-empires sessions.",
                 "",
@@ -15850,16 +15857,19 @@
                   "type": "str | None",
                   "default": "codex",
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--agent', help='AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--agent', '-a', help='AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--agent"
+                      "--agent",
+                      "-a"
                     ],
                     "long_flags": [
                       "--agent"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-a"
+                    ],
                     "help": "AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful."
                   }
                 },
@@ -15913,16 +15923,19 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--sandbox', help='Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--sandbox', '-s', help='Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--sandbox"
+                      "--sandbox",
+                      "-s"
                     ],
                     "long_flags": [
                       "--sandbox"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-s"
+                    ],
                     "help": "Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported."
                   }
                 },
@@ -15932,16 +15945,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--yolo', help='Enable AoE/agent YOLO mode when supported.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--yolo', '-y', help='Enable AoE/agent YOLO mode when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--yolo"
+                      "--yolo",
+                      "-y"
                     ],
                     "long_flags": [
                       "--yolo"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-y"
+                    ],
                     "help": "Enable AoE/agent YOLO mode when supported."
                   }
                 },
@@ -15951,16 +15967,19 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--cmd', help='Override the launched agent binary/command.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--cmd', '-C', help='Override the launched agent binary/command.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--cmd"
+                      "--cmd",
+                      "-C"
                     ],
                     "long_flags": [
                       "--cmd"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-C"
+                    ],
                     "help": "Override the launched agent binary/command."
                   }
                 },
@@ -15970,16 +15989,19 @@
                   "type": "list[str] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--args', help='Repeatable extra argument forwarded to the launched agent CLI.')]",
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--args', '-A', help='Repeatable extra argument forwarded to the launched agent CLI.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--args"
+                      "--args",
+                      "-A"
                     ],
                     "long_flags": [
                       "--args"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-A"
+                    ],
                     "help": "Repeatable extra argument forwarded to the launched agent CLI."
                   }
                 },
@@ -15989,16 +16011,19 @@
                   "type": "list[str] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--env', help='Repeatable KEY=VALUE pair forwarded to AoE when supported.')]",
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--env', '-e', help='Repeatable KEY=VALUE pair forwarded to AoE when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--env"
+                      "--env",
+                      "-e"
                     ],
                     "long_flags": [
                       "--env"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-e"
+                    ],
                     "help": "Repeatable KEY=VALUE pair forwarded to AoE when supported."
                   }
                 },
@@ -16008,16 +16033,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--force', help='Pass force/overwrite to AoE when supported.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--force', '-F', help='Pass force/overwrite to AoE when supported.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--force"
+                      "--force",
+                      "-F"
                     ],
                     "long_flags": [
                       "--force"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-F"
+                    ],
                     "help": "Pass force/overwrite to AoE when supported."
                   }
                 },
@@ -16027,16 +16055,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--dry-run', help='Print generated `aoe add` commands instead of executing them.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-d', help='Print generated `aoe add` commands instead of executing them.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--dry-run"
+                      "--dry-run",
+                      "-d"
                     ],
                     "long_flags": [
                       "--dry-run"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-d"
+                    ],
                     "help": "Print generated `aoe add` commands instead of executing them."
                   }
                 },
@@ -16046,16 +16077,19 @@
                   "type": "str",
                   "default": "aoe",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--aoe-bin', help='AoE executable to invoke.')]",
+                  "annotation_raw": "Annotated[str, typer.Option('--aoe-bin', '-b', help='AoE executable to invoke.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--aoe-bin"
+                      "--aoe-bin",
+                      "-b"
                     ],
                     "long_flags": [
                       "--aoe-bin"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-b"
+                    ],
                     "help": "AoE executable to invoke."
                   }
                 },
@@ -16065,16 +16099,19 @@
                   "type": "Literal['prompt', 'cmd', 'ignore']",
                   "default": "prompt",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['prompt', 'cmd', 'ignore'], typer.Option('--tab-command-mode', help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")]",
+                  "annotation_raw": "Annotated[Literal['prompt', 'cmd', 'ignore'], typer.Option('--tab-command-mode', '-M', help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--tab-command-mode"
+                      "--tab-command-mode",
+                      "-M"
                     ],
                     "long_flags": [
                       "--tab-command-mode"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-M"
+                    ],
                     "help": "How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it."
                   }
                 },
@@ -16107,16 +16144,19 @@
                   "type": "bool",
                   "default": true,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--no-launch', help='Create each AoE session without launching it immediately.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--no-launch', '-n', help='Create each AoE session without launching it immediately.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--no-launch"
+                      "--no-launch",
+                      "-n"
                     ],
                     "long_flags": [
                       "--no-launch"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-n"
+                    ],
                     "help": "Create each AoE session without launching it immediately."
                   }
                 }
@@ -16484,7 +16524,7 @@
                 "    session_name: Annotated[str | None, typer.Argument(help=\"Name of the tmux session to trace. Required unless --interactive is set.\")] = None,",
                 "    every: Annotated[float, typer.Option(\"--every\", \"-e\", help=\"Polling interval in seconds between tmux checks\")] = 10.0,",
                 "    until: Annotated[Literal[\"idle-shell\", \"all-exited\", \"exit-code\", \"session-missing\"], typer.Option(\"--until\", \"-u\", help=\"Stop only when the selected criterion is satisfied\")] = \"idle-shell\",",
-                "    exit_code: Annotated[int | None, typer.Option(\"--exit-code\", help=\"Required pane exit code when `--until exit-code` is selected\")] = None,",
+                "    exit_code: Annotated[int | None, typer.Option(\"--exit-code\", \"-c\", help=\"Required pane exit code when `--until exit-code` is selected\")] = None,",
                 "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose an existing tmux session interactively\")] = False,",
                 ") -> None:",
                 "    \"\"\"Trace a tmux session until every target matches a strict stop criterion.\"\"\"",
@@ -16588,16 +16628,19 @@
                   "type": "int | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[int | None, typer.Option('--exit-code', help='Required pane exit code when `--until exit-code` is selected')]",
+                  "annotation_raw": "Annotated[int | None, typer.Option('--exit-code', '-c', help='Required pane exit code when `--until exit-code` is selected')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--exit-code"
+                      "--exit-code",
+                      "-c"
                     ],
                     "long_flags": [
                       "--exit-code"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-c"
+                    ],
                     "help": "Required pane exit code when `--until exit-code` is selected"
                   }
                 },
@@ -17263,7 +17306,7 @@
                     "    save_as_yaml: Annotated[",
                     "        bool,",
                     "        typer.Option(",
-                    "            ..., \"--save-as-yaml\", help=\"Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.\"",
+                    "            ..., \"--save-as-yaml\", \"-y\", help=\"Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.\"",
                     "        ),",
                     "    ] = False,",
                     "    interactive: Annotated[",
@@ -17724,16 +17767,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--save-as-yaml', help='Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--save-as-yaml', '-y', help='Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--save-as-yaml"
+                          "--save-as-yaml",
+                          "-y"
                         ],
                         "long_flags": [
                           "--save-as-yaml"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-y"
+                        ],
                         "help": "Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.",
                         "default": "..."
                       }
@@ -18655,9 +18701,9 @@
                     "    agent_dir: Annotated[str, typer.Argument(..., help=\"Path to the agent directory containing the prompts folder\")],",
                     "    output_path: Annotated[str, typer.Argument(..., help=\"Path to write the concatenated material files\")],",
                     "    separator: Annotated[",
-                    "        str, typer.Option(..., help=\"Separator to use when concatenating material files. Supports escaped values like '\\\\n'.\")",
+                    "        str, typer.Option(..., \"--separator\", \"-s\", help=\"Separator to use when concatenating material files. Supports escaped values like '\\\\n'.\")",
                     "    ] = \"\\n\",",
-                    "    pattern: Annotated[str | None, typer.Option(..., help=\"Pattern to match material files (e.g., 'res.txt')\")] = None,",
+                    "    pattern: Annotated[str | None, typer.Option(..., \"--pattern\", \"-p\", help=\"Pattern to match material files (e.g., 'res.txt')\")] = None,",
                     ") -> None:",
                     "    \"\"\"Collect all material files from an agent directory and concatenate them.\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_agents.agents_impl import collect as impl",
@@ -18708,12 +18754,19 @@
                       "type": "str",
                       "default": "\n",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., help=\"Separator to use when concatenating material files. Supports escaped values like '\\\\n'.\")]",
+                      "annotation_raw": "Annotated[str, typer.Option(..., '--separator', '-s', help=\"Separator to use when concatenating material files. Supports escaped values like '\\\\n'.\")]",
                       "typer": {
                         "kind": "option",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
+                        "param_decls": [
+                          "--separator",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--separator"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
                         "help": "Separator to use when concatenating material files. Supports escaped values like '\\n'.",
                         "default": "..."
                       }
@@ -18724,12 +18777,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., help=\"Pattern to match material files (e.g., 'res.txt')\")]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--pattern', '-p', help=\"Pattern to match material files (e.g., 'res.txt')\")]",
                       "typer": {
                         "kind": "option",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
+                        "param_decls": [
+                          "--pattern",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--pattern"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
                         "help": "Pattern to match material files (e.g., 'res.txt')",
                         "default": "..."
                       }
@@ -21207,10 +21267,6 @@
                   {
                     "name": "a",
                     "hidden": true
-                  },
-                  {
-                    "name": "up",
-                    "hidden": true
                   }
                 ]
               },
@@ -21481,7 +21537,7 @@
                 "kind": "group",
                 "name": "test-runtime",
                 "fullPath": "utils pyproject test-runtime",
-                "shortPath": "u p tr",
+                "shortPath": "u p R",
                 "help": "🧪 <R> Create and run the runtime-test workflow for Python files under the current directory.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
@@ -21497,7 +21553,7 @@
                 "children": [],
                 "aliases": [
                   {
-                    "name": "tr",
+                    "name": "R",
                     "hidden": true
                   }
                 ]
@@ -21530,7 +21586,7 @@
                     "            help=\"Directory to scan for package __init__.py files. Relative values are resolved from the repository root.\",",
                     "        ),",
                     "    ] = None,",
-                    "    verbose: Annotated[bool, typer.Option(\"--verbose\", help=\"Print scan context and detailed rich audit tables.\")] = False,",
+                    "    verbose: Annotated[bool, typer.Option(\"--verbose\", \"-v\", help=\"Print scan context and detailed rich audit tables.\")] = False,",
                     ") -> None:",
                     "    from rich.panel import Panel",
                     "",
@@ -21605,16 +21661,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--verbose', help='Print scan context and detailed rich audit tables.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Print scan context and detailed rich audit tables.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--verbose"
+                          "--verbose",
+                          "-v"
                         ],
                         "long_flags": [
                           "--verbose"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-v"
+                        ],
                         "help": "Print scan context and detailed rich audit tables."
                       }
                     }
@@ -21726,7 +21785,7 @@
                     "    url: Annotated[str | None, typer.Argument(..., help=\"The URL to download the file from.\")] = None,",
                     "    decompress: Annotated[bool, typer.Option(..., \"--decompress\", \"-d\", help=\"Decompress the file if it's an archive.\")] = False,",
                     "    output: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"The output file path.\")] = None,",
-                    "    output_dir: Annotated[str | None, typer.Option(\"--output-dir\", help=\"Directory to place the downloaded file in.\")] = None,",
+                    "    output_dir: Annotated[str | None, typer.Option(\"--output-dir\", \"-O\", help=\"Directory to place the downloaded file in.\")] = None,",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_utils.download import download as impl",
                     "",
@@ -21801,16 +21860,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--output-dir', help='Directory to place the downloaded file in.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--output-dir', '-O', help='Directory to place the downloaded file in.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--output-dir"
+                          "--output-dir",
+                          "-O"
                         ],
                         "long_flags": [
                           "--output-dir"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-O"
+                        ],
                         "help": "Directory to place the downloaded file in."
                       }
                     }
@@ -21845,14 +21907,14 @@
                     "    output_path: Annotated[str | None, typer.Argument(help=\"The output markdown file path. Defaults to f.md.\")] = None,",
                     "    output: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"The output markdown file path.\")] = None,",
                     "    selector: Annotated[str | None, typer.Option(\"--selector\", \"-s\", help=\"CSS selector to extract.\")] = \"article\",",
-                    "    wait_selector: Annotated[str | None, typer.Option(\"--wait-selector\", help=\"CSS selector to wait for before extracting.\")] = \"article\",",
-                    "    wait: Annotated[int | None, typer.Option(\"--wait\", min=0, help=\"Milliseconds to wait after the page is ready.\")] = 2000,",
-                    "    timeout: Annotated[int | None, typer.Option(\"--timeout\", min=1, help=\"Scrapling timeout in milliseconds.\")] = 60000,",
+                    "    wait_selector: Annotated[str | None, typer.Option(\"--wait-selector\", \"-W\", help=\"CSS selector to wait for before extracting.\")] = \"article\",",
+                    "    wait: Annotated[int | None, typer.Option(\"--wait\", \"-w\", min=0, help=\"Milliseconds to wait after the page is ready.\")] = 2000,",
+                    "    timeout: Annotated[int | None, typer.Option(\"--timeout\", \"-t\", min=1, help=\"Scrapling timeout in milliseconds.\")] = 60000,",
                     "    enable_resources: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--enable-resources/--no-enable-resources\", help=\"Enable browser resources while fetching.\"),",
+                    "        typer.Option(\"--enable-resources/--no-enable-resources\", \"-e/-E\", help=\"Enable browser resources while fetching.\"),",
                     "    ] = True,",
-                    "    package_spec: Annotated[str, typer.Option(\"--package-spec\", help=\"uvx package spec used to provide Scrapling.\")] = \"scrapling[shell]\",",
+                    "    package_spec: Annotated[str, typer.Option(\"--package-spec\", \"-p\", help=\"uvx package spec used to provide Scrapling.\")] = \"scrapling[shell]\",",
                     ") -> None:",
                     "    if url is None:",
                     "        typer.echo(\"Error: URL is required.\", err=True)",
@@ -21967,16 +22029,19 @@
                       "type": "str | None",
                       "default": "article",
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--wait-selector', help='CSS selector to wait for before extracting.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--wait-selector', '-W', help='CSS selector to wait for before extracting.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--wait-selector"
+                          "--wait-selector",
+                          "-W"
                         ],
                         "long_flags": [
                           "--wait-selector"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-W"
+                        ],
                         "help": "CSS selector to wait for before extracting."
                       }
                     },
@@ -21986,16 +22051,19 @@
                       "type": "int | None",
                       "default": 2000,
                       "required": false,
-                      "annotation_raw": "Annotated[int | None, typer.Option('--wait', min=0, help='Milliseconds to wait after the page is ready.')]",
+                      "annotation_raw": "Annotated[int | None, typer.Option('--wait', '-w', min=0, help='Milliseconds to wait after the page is ready.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--wait"
+                          "--wait",
+                          "-w"
                         ],
                         "long_flags": [
                           "--wait"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-w"
+                        ],
                         "help": "Milliseconds to wait after the page is ready."
                       }
                     },
@@ -22005,16 +22073,19 @@
                       "type": "int | None",
                       "default": 60000,
                       "required": false,
-                      "annotation_raw": "Annotated[int | None, typer.Option('--timeout', min=1, help='Scrapling timeout in milliseconds.')]",
+                      "annotation_raw": "Annotated[int | None, typer.Option('--timeout', '-t', min=1, help='Scrapling timeout in milliseconds.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--timeout"
+                          "--timeout",
+                          "-t"
                         ],
                         "long_flags": [
                           "--timeout"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-t"
+                        ],
                         "help": "Scrapling timeout in milliseconds."
                       }
                     },
@@ -22024,17 +22095,21 @@
                       "type": "bool",
                       "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--enable-resources/--no-enable-resources', help='Enable browser resources while fetching.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--enable-resources/--no-enable-resources', '-e/-E', help='Enable browser resources while fetching.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--enable-resources/--no-enable-resources"
+                          "--enable-resources/--no-enable-resources",
+                          "-e/-E"
                         ],
                         "long_flags": [
                           "--enable-resources",
                           "--no-enable-resources"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-e",
+                          "-E"
+                        ],
                         "help": "Enable browser resources while fetching."
                       }
                     },
@@ -22044,16 +22119,19 @@
                       "type": "str",
                       "default": "scrapling[shell]",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--package-spec', help='uvx package spec used to provide Scrapling.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--package-spec', '-p', help='uvx package spec used to provide Scrapling.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--package-spec"
+                          "--package-spec",
+                          "-p"
                         ],
                         "long_flags": [
                           "--package-spec"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-p"
+                        ],
                         "help": "uvx package spec used to provide Scrapling."
                       }
                     }
@@ -22436,9 +22514,9 @@
                     "    keep_server: Annotated[bool, typer.Option(\"--keep-server\", \"-k\", help=\"Leave Surya's inference server running for later commands.\")] = False,",
                     "    skip_table_detection: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--skip-table-detection\", help=\"For table recognition, treat the input as an already-cropped table.\"),",
+                    "        typer.Option(\"--skip-table-detection\", \"-S\", help=\"For table recognition, treat the input as an already-cropped table.\"),",
                     "    ] = False,",
-                    "    package_spec: Annotated[str, typer.Option(\"--package-spec\", help=\"uv package spec used to provide Surya.\")] = \"surya-ocr\",",
+                    "    package_spec: Annotated[str, typer.Option(\"--package-spec\", \"-P\", help=\"uv package spec used to provide Surya.\")] = \"surya-ocr\",",
                     ") -> None:",
                     "    if not package_spec.strip():",
                     "        raise typer.BadParameter(\"Package spec cannot be empty.\", param_hint=\"--package-spec\")",
@@ -22635,16 +22713,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--skip-table-detection', help='For table recognition, treat the input as an already-cropped table.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--skip-table-detection', '-S', help='For table recognition, treat the input as an already-cropped table.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--skip-table-detection"
+                          "--skip-table-detection",
+                          "-S"
                         ],
                         "long_flags": [
                           "--skip-table-detection"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-S"
+                        ],
                         "help": "For table recognition, treat the input as an already-cropped table."
                       }
                     },
@@ -22654,16 +22735,19 @@
                       "type": "str",
                       "default": "surya-ocr",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--package-spec', help='uv package spec used to provide Surya.')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--package-spec', '-P', help='uv package spec used to provide Surya.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--package-spec"
+                          "--package-spec",
+                          "-P"
                         ],
                         "long_flags": [
                           "--package-spec"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-P"
+                        ],
                         "help": "uv package spec used to provide Surya."
                       }
                     }
@@ -22706,11 +22790,11 @@
                     "    ] = None,",
                     "    find_root: Annotated[",
                     "        str | None,",
-                    "        typer.Option(\"--find-root\", help=\"Root directory for --find.\"),",
+                    "        typer.Option(\"--find-root\", \"-R\", help=\"Root directory for --find.\"),",
                     "    ] = None,",
                     "    recursive: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--recursive\", help=\"Search subdirectories when using --find.\"),",
+                    "        typer.Option(\"--recursive\", \"-r\", help=\"Search subdirectories when using --find.\"),",
                     "    ] = False,",
                     "    backend: Annotated[DatabaseBackend, typer.Option(\"--backend\", \"-b\", help=\"The TUI database client to use.\")] = \"harlequin\",",
                     "    read_only: Annotated[",
@@ -22802,16 +22886,19 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--find-root', help='Root directory for --find.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--find-root', '-R', help='Root directory for --find.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--find-root"
+                          "--find-root",
+                          "-R"
                         ],
                         "long_flags": [
                           "--find-root"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-R"
+                        ],
                         "help": "Root directory for --find."
                       }
                     },
@@ -22821,16 +22908,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--recursive', help='Search subdirectories when using --find.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--recursive', '-r', help='Search subdirectories when using --find.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--recursive"
+                          "--recursive",
+                          "-r"
                         ],
                         "long_flags": [
                           "--recursive"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-r"
+                        ],
                         "help": "Search subdirectories when using --find."
                       }
                     },

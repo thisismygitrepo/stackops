@@ -311,9 +311,9 @@ def register_dotfile(
         str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")
     ] = None,
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name in mapper/dotfiles.yaml. Defaults to the file stem.")] = None,
-    section: Annotated[str, typer.Option("--section", "-se", help="Section name in mapper/dotfiles.yaml to record this mapping.")] = "default",
-    os_filter: Annotated[str, typer.Option("--os", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
-    shared: Annotated[bool, typer.Option("--shared", "-sh", help="Whether the config file is shared across destinations directory.")] = False,
+    section: Annotated[str, typer.Option("--section", "-S", help="Section name in mapper/dotfiles.yaml to record this mapping.")] = "default",
+    os_filter: Annotated[str, typer.Option("--os", "-o", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
+    shared: Annotated[bool, typer.Option("--shared", "-h", help="Whether the config file is shared across destinations directory.")] = False,
     record: Annotated[bool, typer.Option("--record", "-r", help="Record the mapping in user's mapper.yaml")] = True,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:

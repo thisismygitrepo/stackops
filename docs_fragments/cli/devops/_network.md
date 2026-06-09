@@ -67,7 +67,7 @@ Key options from current help:
 | `--port`, `-p` | Port for the share server |
 | `--username`, `-u` | Login username |
 | `--password`, `-w` | Login password |
-| `--no-auth`, `-na` | Disable authentication |
+| `--no-auth`, `-n` | Disable authentication |
 | `--bind`, `-a` | Bind address |
 | `--over-internet`, `-i` | Expose via ngrok |
 | `--backend`, `-b` | Backend choice from `filebrowser`, `miniserve`, `qrcp`, or `easy-sharing` |

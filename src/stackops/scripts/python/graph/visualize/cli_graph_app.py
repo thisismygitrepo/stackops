@@ -12,8 +12,8 @@ PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
 
 
 def tree(
-    show_help: Annotated[bool, typer.Option("--no-show-help", help="Hide help text in labels")] = True,
-    show_aliases: Annotated[bool, typer.Option("--show-aliases", help="Include aliases in labels")] = False,
+    show_help: Annotated[bool, typer.Option("--no-show-help", "-H", help="Hide help text in labels")] = True,
+    show_aliases: Annotated[bool, typer.Option("--show-aliases", "-a", help="Include aliases in labels")] = False,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
 ) -> None:
     """Render a rich tree view in the terminal."""
@@ -45,7 +45,7 @@ def tree(
 
 def dot(
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write DOT output to a file")] = None,
-    include_help: Annotated[bool, typer.Option("--no-include-help", help="Hide help text in labels")] = True,
+    include_help: Annotated[bool, typer.Option("--no-include-help", "-H", help="Hide help text in labels")] = True,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
 ) -> None:
     """Export the graph as Graphviz DOT."""
@@ -90,9 +90,9 @@ def chart(
     ] = "sunburst",
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write HTML or image output")] = None,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the graph")] = None,
-    template: Annotated[str, typer.Option("--template", help="Plotly template name")] = "plotly_dark",
-    height: Annotated[int, typer.Option("--height", help="Image height (for static output)")] = 900,
-    width: Annotated[int, typer.Option("--width", help="Image width (for static output)")] = 1200,
+    template: Annotated[str, typer.Option("--template", "-t", help="Plotly template name")] = "plotly_dark",
+    height: Annotated[int, typer.Option("--height", "-H", help="Image height (for static output)")] = 900,
+    width: Annotated[int, typer.Option("--width", "-w", help="Image width (for static output)")] = 1200,
 ) -> None:
     """Render a Plotly hierarchy chart."""
     from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly

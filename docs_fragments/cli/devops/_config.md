@@ -49,7 +49,7 @@ Key arguments and options from current help:
 | `--sensitivity`, `-s` | Required. Choose `private`, `public`, or `all` |
 | `--method`, `-m` | Required. Use `symlink` or `copy` |
 | `--repo`, `-r` | Select mappings from `library`, `user`, or `all` |
-| `--on-conflict`, `-o` | Conflict policy such as `throw-error`, `overwrite-self-managed`, or `overwrite-default-path` |
+| `--on-conflict`, `-c` | Conflict policy such as `throw-error`, `overwrite-self-managed`, or `overwrite-default-path` |
 | `--which`, `-w` | Limit the run to specific mapping names, or use `all` |
 
 If `--which` is omitted, the command falls back to interactive selection.
@@ -85,12 +85,12 @@ Key options from current help:
 | Option | Description |
 |--------|-------------|
 | `--method`, `-m` | Store it with `copy` or `symlink` semantics |
-| `--on-conflict`, `-o` | Conflict strategy during the initial transfer |
+| `--on-conflict`, `-c` | Conflict strategy during the initial transfer |
 | `--sensitivity`, `-s` | Mark the mapping as `private` or `public` |
 | `--destination`, `-d` | Override the default self-managed destination |
-| `--section`, `-se` | Section name to write inside the user mapper |
-| `--os` | Restrict the mapping to one OS or a comma-separated list |
-| `--shared`, `-sh` | Place the managed file under a shared layout when using `--destination` |
+| `--section`, `-S` | Section name to write inside the user mapper |
+| `--os`, `-o` | Restrict the mapping to one OS or a comma-separated list |
+| `--shared`, `-h` | Place the managed file under a shared layout when using `--destination` |
 | `--record`, `-r` | Record the mapping in the user mapper file |
 
 Examples:

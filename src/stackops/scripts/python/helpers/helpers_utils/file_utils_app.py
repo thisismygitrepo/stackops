@@ -22,7 +22,7 @@ def download(
     url: Annotated[str | None, typer.Argument(..., help="The URL to download the file from.")] = None,
     decompress: Annotated[bool, typer.Option(..., "--decompress", "-d", help="Decompress the file if it's an archive.")] = False,
     output: Annotated[str | None, typer.Option("--output", "-o", help="The output file path.")] = None,
-    output_dir: Annotated[str | None, typer.Option("--output-dir", help="Directory to place the downloaded file in.")] = None,
+    output_dir: Annotated[str | None, typer.Option("--output-dir", "-O", help="Directory to place the downloaded file in.")] = None,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.download import download as impl
 
@@ -34,14 +34,14 @@ def scrape(
     output_path: Annotated[str | None, typer.Argument(help="The output markdown file path. Defaults to f.md.")] = None,
     output: Annotated[str | None, typer.Option("--output", "-o", help="The output markdown file path.")] = None,
     selector: Annotated[str | None, typer.Option("--selector", "-s", help="CSS selector to extract.")] = "article",
-    wait_selector: Annotated[str | None, typer.Option("--wait-selector", help="CSS selector to wait for before extracting.")] = "article",
-    wait: Annotated[int | None, typer.Option("--wait", min=0, help="Milliseconds to wait after the page is ready.")] = 2000,
-    timeout: Annotated[int | None, typer.Option("--timeout", min=1, help="Scrapling timeout in milliseconds.")] = 60000,
+    wait_selector: Annotated[str | None, typer.Option("--wait-selector", "-W", help="CSS selector to wait for before extracting.")] = "article",
+    wait: Annotated[int | None, typer.Option("--wait", "-w", min=0, help="Milliseconds to wait after the page is ready.")] = 2000,
+    timeout: Annotated[int | None, typer.Option("--timeout", "-t", min=1, help="Scrapling timeout in milliseconds.")] = 60000,
     enable_resources: Annotated[
         bool,
-        typer.Option("--enable-resources/--no-enable-resources", help="Enable browser resources while fetching."),
+        typer.Option("--enable-resources/--no-enable-resources", "-e/-E", help="Enable browser resources while fetching."),
     ] = True,
-    package_spec: Annotated[str, typer.Option("--package-spec", help="uvx package spec used to provide Scrapling.")] = "scrapling[shell]",
+    package_spec: Annotated[str, typer.Option("--package-spec", "-p", help="uvx package spec used to provide Scrapling.")] = "scrapling[shell]",
 ) -> None:
     if url is None:
         typer.echo("Error: URL is required.", err=True)
@@ -186,9 +186,9 @@ def surya(
     keep_server: Annotated[bool, typer.Option("--keep-server", "-k", help="Leave Surya's inference server running for later commands.")] = False,
     skip_table_detection: Annotated[
         bool,
-        typer.Option("--skip-table-detection", help="For table recognition, treat the input as an already-cropped table."),
+        typer.Option("--skip-table-detection", "-S", help="For table recognition, treat the input as an already-cropped table."),
     ] = False,
-    package_spec: Annotated[str, typer.Option("--package-spec", help="uv package spec used to provide Surya.")] = "surya-ocr",
+    package_spec: Annotated[str, typer.Option("--package-spec", "-P", help="uv package spec used to provide Surya.")] = "surya-ocr",
 ) -> None:
     if not package_spec.strip():
         raise typer.BadParameter("Package spec cannot be empty.", param_hint="--package-spec")
@@ -242,11 +242,11 @@ def read_db_cli_tui(
     ] = None,
     find_root: Annotated[
         str | None,
-        typer.Option("--find-root", help="Root directory for --find."),
+        typer.Option("--find-root", "-R", help="Root directory for --find."),
     ] = None,
     recursive: Annotated[
         bool,
-        typer.Option("--recursive", help="Search subdirectories when using --find."),
+        typer.Option("--recursive", "-r", help="Search subdirectories when using --find."),
     ] = False,
     backend: Annotated[DatabaseBackend, typer.Option("--backend", "-b", help="The TUI database client to use.")] = "harlequin",
     read_only: Annotated[

@@ -154,9 +154,6 @@ def get_app() -> typer.Typer:
         configure_windows_terminal_theme
     )
     shell_app.command("x", no_args_is_help=False, help="Select Windows Terminal color scheme.", hidden=True)(configure_windows_terminal_theme)
-    shell_app.command("wt-theme", no_args_is_help=False, help="Select Windows Terminal color scheme.", hidden=True)(
-        configure_windows_terminal_theme
-    )
     shell_app.add_typer(
         cli_config_tmux.get_app(),
         name="tmux-style",

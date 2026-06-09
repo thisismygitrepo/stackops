@@ -25,14 +25,14 @@ def search(
     ] = "password",
     sync: Annotated[bool, typer.Option("--sync", "-S", help="Sync vault with server before searching and bypass the local search cache")] = False,
     show: Annotated[bool, typer.Option("--show", "-s", help="Show credentials in terminal (insecure)")] = False,
-    use_totp: Annotated[bool, typer.Option("--totp/--no-totp", help="Attempt to fetch TOTP if present")] = True,
-    username_slot: Annotated[int, typer.Option("--username-slot", help="Clipboard slot for username")] = 0,
-    password_slot: Annotated[int, typer.Option("--password-slot", help="Clipboard slot for password")] = 1,
-    totp_slot: Annotated[int, typer.Option("--totp-slot", help="Clipboard slot for TOTP")] = 2,
-    json_slot: Annotated[int, typer.Option("--json-slot", help="Clipboard slot for full JSON result")] = 3,
+    use_totp: Annotated[bool, typer.Option("--totp/--no-totp", "-t/-T", help="Attempt to fetch TOTP if present")] = True,
+    username_slot: Annotated[int, typer.Option("--username-slot", "-u", help="Clipboard slot for username")] = 0,
+    password_slot: Annotated[int, typer.Option("--password-slot", "-p", help="Clipboard slot for password")] = 1,
+    totp_slot: Annotated[int, typer.Option("--totp-slot", "-P", help="Clipboard slot for TOTP")] = 2,
+    json_slot: Annotated[int, typer.Option("--json-slot", "-J", help="Clipboard slot for full JSON result")] = 3,
     silent: Annotated[bool, typer.Option("--silent", "-q", help="Suppress all progress/status output; only the final result is printed")] = False,
     json_output: Annotated[bool, typer.Option("--json", "--json-output", "-j", help="Output selected credentials as JSON (includes notes)")] = False,
-    raw_output: Annotated[bool, typer.Option("--raw", help="Output raw search results JSON exactly as returned by bw")] = False,
+    raw_output: Annotated[bool, typer.Option("--raw", "-r", help="Output raw search results JSON exactly as returned by bw")] = False,
     fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass cache and query Bitwarden directly")] = False,
 ) -> None:
     """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
@@ -61,10 +61,10 @@ def search(
 def login_and_unlock(
     account_name: Annotated[
         str | None,
-        typer.Option("--account-name", help="Optional StackOps secrets accountName that stores the Bitwarden credentials."),
+        typer.Option("--account-name", "-a", help="Optional StackOps secrets accountName that stores the Bitwarden credentials."),
     ] = None,
     login_name: Annotated[
-        str, typer.Option("--login-name", help="StackOps secrets login name that stores the Bitwarden API credentials.", show_default=True)
+        str, typer.Option("--login-name", "-n", help="StackOps secrets login name that stores the Bitwarden API credentials.", show_default=True)
     ] = DEFAULT_BITWARDEN_LOGIN_NAME,
 ) -> None:
     """Authenticate with Bitwarden and persist a local BW_SESSION token."""

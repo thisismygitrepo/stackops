@@ -172,7 +172,7 @@ sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service instal
         exit_then_run_shell_script(code)
 
 
-def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., "--ip", help="IP address(es) to exclude from WARP (Comma separated)")]) -> None:
+def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., "--ip", "-i", help="IP address(es) to exclude from WARP (Comma separated)")]) -> None:
     from ipaddress import IPv4Address, IPv6Address, ip_address
 
     ips: list[IPv4Address | IPv6Address] = []

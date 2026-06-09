@@ -226,7 +226,7 @@ def reference_test(
             help="Directory to scan for package __init__.py files. Relative values are resolved from the repository root.",
         ),
     ] = None,
-    verbose: Annotated[bool, typer.Option("--verbose", help="Print scan context and detailed rich audit tables.")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Print scan context and detailed rich audit tables.")] = False,
 ) -> None:
     from rich.panel import Panel
 
@@ -400,7 +400,6 @@ def get_app() -> typer.Typer:
     pyproject_app.command(name="i", no_args_is_help=False, hidden=True)(init_project)
     pyproject_app.command(name="upgrade-packages", no_args_is_help=False, help="↑ <a> Upgrade project dependencies.")(upgrade_packages)
     pyproject_app.command(name="a", no_args_is_help=False, hidden=True)(upgrade_packages)
-    pyproject_app.command(name="up", no_args_is_help=False, hidden=True)(upgrade_packages)
 
     pyproject_app.command(name="type-hint", no_args_is_help=True, help="✐ <t> Type hint a file or project directory.")(type_hint)
     pyproject_app.command(name="t", no_args_is_help=True, hidden=True)(type_hint)
@@ -414,7 +413,7 @@ def get_app() -> typer.Typer:
         name="test-runtime",
         help="🧪 <R> Create and run the runtime-test workflow for Python files under the current directory.",
     )
-    pyproject_app.add_typer(test_runtime_module.get_app(), name="tr", hidden=True)
+    pyproject_app.add_typer(test_runtime_module.get_app(), name="R", hidden=True)
     pyproject_app.command(name="test-reference", no_args_is_help=False, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
     pyproject_app.command(name="r", no_args_is_help=False, hidden=True)(reference_test)
     return pyproject_app

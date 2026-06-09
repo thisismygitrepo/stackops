@@ -123,10 +123,10 @@ croc {relay_arg} --yes""".strip()
 
 
 def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the file or directory to send. Required unless --text is provided.")] = None,
-                    zip_folder: Annotated[bool, typer.Option("--zip", help="Zip folder before sending")] = False,
+                    zip_folder: Annotated[bool, typer.Option("--zip", "-z", help="Zip folder before sending")] = False,
                     code: Annotated[str | None, typer.Option("--code", "-c", help="Codephrase used to connect to relay")] = None,
                     text: Annotated[str | None, typer.Option("--text", "-t", help="Send some text")] = None,
-                    qrcode: Annotated[bool, typer.Option("--qrcode", "--qr", help="Show receive code as a qrcode")] = False,
+                    qrcode: Annotated[bool, typer.Option("--qrcode", "--qr", "-q", help="Show receive code as a qrcode")] = False,
                     backend: Annotated[Literal["wormhole", "w", "croc", "c"], typer.Option("--backend", "-b", help="Backend to use")] = "croc",
                     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
                     ) -> None:

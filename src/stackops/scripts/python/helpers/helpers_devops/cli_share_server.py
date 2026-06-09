@@ -13,7 +13,7 @@ def web_file_explorer(
     path: Annotated[str, typer.Argument(help="Path to the file or directory to share")],
     port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the share server on (default: 8080)")] = None,
     username: Annotated[str | None, typer.Option("--username", "-u", help="Username for share access (default: current user)")] = None,
-    no_auth: Annotated[bool, typer.Option("--no-auth", "-na", help="Disable authentication for share access")] = False,
+    no_auth: Annotated[bool, typer.Option("--no-auth", "-n", help="Disable authentication for share access")] = False,
     password: Annotated[str | None, typer.Option("--password", "-w", help="Password for share access (default: configured quick password)")] = None,
     bind_address: Annotated[str, typer.Option("--bind", "-a", help="Address to bind the server to")] = "0.0.0.0",
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the share server over the internet using ngrok")] = False,

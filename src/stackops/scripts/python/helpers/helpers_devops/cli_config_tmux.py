@@ -242,7 +242,7 @@ def set_option(
     name: Annotated[str, typer.Argument(help="Oh My Tmux variable name, for example tmux_conf_theme_colour_4.")],
     value: Annotated[str, typer.Argument(help="Value to write into the local config.")],
     location: Annotated[TmuxInstallLocation, typer.Option("--location", "-l", help="tmux config location to update.")] = "home",
-    raw: Annotated[bool, typer.Option("--raw", help="Write VALUE without shell quoting.")] = False,
+    raw: Annotated[bool, typer.Option("--raw", "-R", help="Write VALUE without shell quoting.")] = False,
     reload_config: Annotated[bool, typer.Option("--reload", "-r", help="Reload tmux after updating the local config.")] = False,
 ) -> None:
     """Set one Oh My Tmux variable in the local customization file."""
@@ -315,17 +315,14 @@ def get_app() -> typer.Typer:
     tmux_app.command("install-oh-my-tmux", no_args_is_help=False, help="📦 <i> Install Oh My Tmux and link tmux to it.")(
         install_oh_my_tmux
     )
-    tmux_app.command("install", no_args_is_help=False, help="Install Oh My Tmux and link tmux to it.", hidden=True)(install_oh_my_tmux)
     tmux_app.command("i", no_args_is_help=False, help="Install Oh My Tmux and link tmux to it.", hidden=True)(install_oh_my_tmux)
     tmux_app.command("apply-stackops-local", no_args_is_help=False, help="🧩 <l> Copy the StackOps Oh My Tmux local config.")(
         apply_stackops_local
     )
-    tmux_app.command("local", no_args_is_help=False, help="Copy the StackOps Oh My Tmux local config.", hidden=True)(apply_stackops_local)
     tmux_app.command("l", no_args_is_help=False, help="Copy the StackOps Oh My Tmux local config.", hidden=True)(apply_stackops_local)
     tmux_app.command("preset", no_args_is_help=False, help="🎛️ <p> Apply an Oh My Tmux color preset.")(preset)
     tmux_app.command("p", no_args_is_help=False, help="Apply an Oh My Tmux color preset.", hidden=True)(preset)
     tmux_app.command("set-option", no_args_is_help=False, help="✏️ <s> Set an Oh My Tmux tmux_conf_* option.")(set_option)
-    tmux_app.command("set", no_args_is_help=False, help="Set an Oh My Tmux tmux_conf_* option.", hidden=True)(set_option)
     tmux_app.command("s", no_args_is_help=False, help="Set an Oh My Tmux tmux_conf_* option.", hidden=True)(set_option)
     tmux_app.command("reload", no_args_is_help=False, help="🔄 <r> Reload tmux config.")(reload_tmux)
     tmux_app.command("r", no_args_is_help=False, help="Reload tmux config.", hidden=True)(reload_tmux)

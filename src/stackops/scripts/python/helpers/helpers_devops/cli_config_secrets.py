@@ -169,11 +169,11 @@ def stats(
     ] = False,
     show_paths: Annotated[
         bool,
-        typer.Option("--show-paths", help="Include secrets file paths in the source table."),
+        typer.Option("--show-paths", "-P", help="Include secrets file paths in the source table."),
     ] = False,
     top: Annotated[
         int,
-        typer.Option("--top", min=1, max=50, help="Number of tag/scope labels to show with --details."),
+        typer.Option("--top", "-t", min=1, max=50, help="Number of tag/scope labels to show with --details."),
     ] = 8,
 ) -> None:
     """📊 <t> Show aggregate StackOps secrets inventory stats without printing secret values."""
@@ -240,7 +240,7 @@ def add(
     ] = "local",
     create: Annotated[
         bool,
-        typer.Option("--create", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}."),
+        typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}."),
     ] = False,
 ) -> None:
     """➕ <a> Append a new login entry to a StackOps secrets file."""
@@ -266,7 +266,7 @@ def edit(
     ] = "local",
     create: Annotated[
         bool,
-        typer.Option("--create", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}."),
+        typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}."),
     ] = False,
     editor: Annotated[str, typer.Option("--editor", "-E", help="Editor to use. Defaults to hx.")] = "hx",
 ) -> None:

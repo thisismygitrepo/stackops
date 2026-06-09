@@ -6,8 +6,6 @@ if TYPE_CHECKING:
         StackOpsDevopsInstallCommand,
         StackOpsDevopsReposSyncCommand,
         StackOpsDevopsReposRegisterCommand,
-        StackOpsDevopsReposCheckoutToCommitCommand,
-        StackOpsDevopsReposCheckoutToBranchCommand,
         StackOpsDevopsReposActionCommand,
         StackOpsDevopsReposAnalyzeCommand,
         StackOpsDevopsReposGuardCommand,
@@ -195,20 +193,6 @@ STACKOPS_DEVOPS_REPOS_REGISTER_COMMAND: "StackOpsDevopsReposRegisterCommand" = {
     "subcommands": {},
 }
 
-STACKOPS_DEVOPS_REPOS_CHECKOUT_TO_COMMIT_COMMAND: "StackOpsDevopsReposCheckoutToCommitCommand" = {
-    "command_name": "checkout-to-commit",
-    "short_name": "ctc",
-    "help": "🔀 [ctc] Deprecated: use sync --checkout-to-commit",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_REPOS_CHECKOUT_TO_BRANCH_COMMAND: "StackOpsDevopsReposCheckoutToBranchCommand" = {
-    "command_name": "checkout-to-branch",
-    "short_name": "ctb",
-    "help": "🔀 [ctb] Deprecated: use sync --checkout-to-branch",
-    "subcommands": {},
-}
-
 STACKOPS_DEVOPS_REPOS_ACTION_COMMAND: "StackOpsDevopsReposActionCommand" = {
     "command_name": "action",
     "short_name": "a",
@@ -239,8 +223,8 @@ STACKOPS_DEVOPS_REPOS_VIZ_COMMAND: "StackOpsDevopsReposVizCommand" = {
 
 STACKOPS_DEVOPS_REPOS_COUNT_LINES_COMMAND: "StackOpsDevopsReposCountLinesCommand" = {
     "command_name": "count-lines",
-    "short_name": "lc",
-    "help": "📄 <l> Count python lines of code in current repo + historical edits.",
+    "short_name": "c",
+    "help": "📄 <c> Count python lines of code in current repo + historical edits.",
     "subcommands": {},
 }
 
@@ -261,8 +245,6 @@ STACKOPS_DEVOPS_REPOS_CLEANUP_COMMAND: "StackOpsDevopsReposCleanupCommand" = {
 STACKOPS_DEVOPS_REPOS_SUBCOMMANDS: "StackOpsDevopsReposSubcommands" = {
     "sync": STACKOPS_DEVOPS_REPOS_SYNC_COMMAND,
     "register": STACKOPS_DEVOPS_REPOS_REGISTER_COMMAND,
-    "checkout-to-commit": STACKOPS_DEVOPS_REPOS_CHECKOUT_TO_COMMIT_COMMAND,
-    "checkout-to-branch": STACKOPS_DEVOPS_REPOS_CHECKOUT_TO_BRANCH_COMMAND,
     "action": STACKOPS_DEVOPS_REPOS_ACTION_COMMAND,
     "analyze": STACKOPS_DEVOPS_REPOS_ANALYZE_COMMAND,
     "guard": STACKOPS_DEVOPS_REPOS_GUARD_COMMAND,
@@ -708,15 +690,15 @@ STACKOPS_DEVOPS_NETWORK_SHARE_SERVER_COMMAND: "StackOpsDevopsNetworkShareServerC
 
 STACKOPS_DEVOPS_NETWORK_SEND_COMMAND: "StackOpsDevopsNetworkSendCommand" = {
     "command_name": "send",
-    "short_name": "sx",
-    "help": "📁 <sx> send files from here.",
+    "short_name": "f",
+    "help": "📁 <f> send files from here.",
     "subcommands": {},
 }
 
 STACKOPS_DEVOPS_NETWORK_RECEIVE_COMMAND: "StackOpsDevopsNetworkReceiveCommand" = {
     "command_name": "receive",
-    "short_name": "rx",
-    "help": "📁 <rx> receive files to here.",
+    "short_name": "r",
+    "help": "📁 <r> receive files to here.",
     "subcommands": {},
 }
 
@@ -1255,7 +1237,7 @@ STACKOPS_UTILS_PYPROJECT_TYPE_FIX_COMMAND: "StackOpsUtilsPyprojectTypeFixCommand
 
 STACKOPS_UTILS_PYPROJECT_TEST_RUNTIME_COMMAND: "StackOpsUtilsPyprojectTestRuntimeCommand" = {
     "command_name": "test-runtime",
-    "short_name": "tr",
+    "short_name": "R",
     "help": "🧪 <R> Create and run the runtime-test workflow for Python files under the current directory.",
     "subcommands": {},
 }

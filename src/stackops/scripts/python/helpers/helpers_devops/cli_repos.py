@@ -89,10 +89,10 @@ def clone(
         str | None, typer.Option("--specs-path", "-s", help=f"Path to repos.json specification file. Defaults to {DEFAULT_REPOS_SPEC_PATH}.")
     ] = None,
     checkout_to_commit: Annotated[
-        bool, typer.Option("--checkout-to-commit", "-ctc", help="Check out specific commits listed in the specification.")
+        bool, typer.Option("--checkout-to-commit", "-c", help="Check out specific commits listed in the specification.")
     ] = False,
     checkout_to_branch: Annotated[
-        bool, typer.Option("--checkout-to-branch", "-ctb", help="Check out the branch recorded in the specification.")
+        bool, typer.Option("--checkout-to-branch", "-b", help="Check out the branch recorded in the specification.")
     ] = False,
 ) -> None:
     """📥 Clone repositories described by a repos.json specification."""
@@ -202,10 +202,10 @@ def gource_viz(
     output_file: Annotated[
         Path | None, typer.Option(..., "--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")
     ] = None,
-    resolution: Annotated[str, typer.Option(..., "--resolution", "-res", help="Video resolution (e.g., 1920x1080, 1280x720)")] = "1920x1080",
-    seconds_per_day: Annotated[float, typer.Option(..., "--seconds-per-day", "-spd", help="Speed of simulation (lower = faster)")] = 0.1,
+    resolution: Annotated[str, typer.Option(..., "--resolution", "-R", help="Video resolution (e.g., 1920x1080, 1280x720)")] = "1920x1080",
+    seconds_per_day: Annotated[float, typer.Option(..., "--seconds-per-day", "-D", help="Speed of simulation (lower = faster)")] = 0.1,
     auto_skip_seconds: Annotated[
-        float, typer.Option(..., "--auto-skip-seconds", "-as", help="Skip to next entry if nothing happens for X seconds")
+        float, typer.Option(..., "--auto-skip-seconds", "-A", help="Skip to next entry if nothing happens for X seconds")
     ] = 1.0,
     title: Annotated[str | None, typer.Option(..., "--title", "-t", help="Title for the visualization")] = None,
     hide_items: Annotated[
@@ -217,17 +217,17 @@ def gource_viz(
     key_items: Annotated[bool, typer.Option(..., "--key", "-k", help="Show file extension key")] = False,
     fullscreen: Annotated[bool, typer.Option(..., "--fullscreen", "-f", help="Run in fullscreen mode")] = False,
     viewport: Annotated[str | None, typer.Option(..., "--viewport", "-v", help="Camera viewport (e.g., '1000x1000')")] = None,
-    start_date: Annotated[str | None, typer.Option(..., "--start-date", help="Start date (YYYY-MM-DD)")] = None,
-    stop_date: Annotated[str | None, typer.Option(..., "--stop-date", help="Stop date (YYYY-MM-DD)")] = None,
-    user_image_dir: Annotated[Path | None, typer.Option(..., "--user-image-dir", help="Directory with user avatar images")] = None,
-    max_files: Annotated[int, typer.Option(..., "--max-files", help="Maximum number of files to show (0 = no limit)")] = 0,
-    max_file_lag: Annotated[float, typer.Option(..., "--max-file-lag", help="Max time files remain on screen after last change")] = 5.0,
-    file_idle_time: Annotated[int, typer.Option(..., "--file-idle-time", help="Time in seconds files remain idle before being removed")] = 0,
-    framerate: Annotated[int, typer.Option(..., "--framerate", help="Frames per second for video output")] = 60,
-    background_color: Annotated[str, typer.Option(..., "--background-color", help="Background color in hex (e.g., 000000 for black)")] = "000000",
-    font_size: Annotated[int, typer.Option(..., "--font-size", help="Font size")] = 22,
-    camera_mode: Annotated[str, typer.Option(..., "--camera-mode", help="Camera mode: overview or track")] = "overview",
-    self: Annotated[bool, typer.Option(..., "--self", help="Clone stackops repository and act on it")] = False,
+    start_date: Annotated[str | None, typer.Option(..., "--start-date", "-S", help="Start date (YYYY-MM-DD)")] = None,
+    stop_date: Annotated[str | None, typer.Option(..., "--stop-date", "-E", help="Stop date (YYYY-MM-DD)")] = None,
+    user_image_dir: Annotated[Path | None, typer.Option(..., "--user-image-dir", "-i", help="Directory with user avatar images")] = None,
+    max_files: Annotated[int, typer.Option(..., "--max-files", "-M", help="Maximum number of files to show (0 = no limit)")] = 0,
+    max_file_lag: Annotated[float, typer.Option(..., "--max-file-lag", "-L", help="Max time files remain on screen after last change")] = 5.0,
+    file_idle_time: Annotated[int, typer.Option(..., "--file-idle-time", "-I", help="Time in seconds files remain idle before being removed")] = 0,
+    framerate: Annotated[int, typer.Option(..., "--framerate", "-F", help="Frames per second for video output")] = 60,
+    background_color: Annotated[str, typer.Option(..., "--background-color", "-B", help="Background color in hex (e.g., 000000 for black)")] = "000000",
+    font_size: Annotated[int, typer.Option(..., "--font-size", "-z", help="Font size")] = 22,
+    camera_mode: Annotated[str, typer.Option(..., "--camera-mode", "-C", help="Camera mode: overview or track")] = "overview",
+    self: Annotated[bool, typer.Option(..., "--self", "-x", help="Clone stackops repository and act on it")] = False,
 ) -> None:
     """🎬 Visualize repository activity using Gource."""
     from stackops.scripts.python.helpers.helpers_repos.grource import visualize
@@ -397,12 +397,6 @@ def get_app():
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
 
-    repos_apps.command(name="checkout-to-commit", help="🔀 [ctc] Deprecated: use sync --checkout-to-commit", hidden=True)(checkout_command)
-    repos_apps.command(name="ctc", help="Check out specific commits listed in the specification", hidden=True)(checkout_command)
-
-    repos_apps.command(name="checkout-to-branch", help="🔀 [ctb] Deprecated: use sync --checkout-to-branch", hidden=True)(checkout_to_branch_command)
-    repos_apps.command(name="ctb", help="Check out the branch recorded in the specification", hidden=True)(checkout_to_branch_command)
-
     repos_apps.command(name="action", help="🔄 <a> Run pull/commit/push actions across repositories", no_args_is_help=True)(action)
     repos_apps.command(name="a", help="Run pull/commit/push actions across repositories", hidden=True, no_args_is_help=True)(action)
     repos_apps.command(name="analyze", help="📊 <z> Analyze repository development over time")(analyze_repo_development)
@@ -414,8 +408,8 @@ def get_app():
     repos_apps.command(name="viz", help="🎬 <v> Visualize repository activity using Gource")(gource_viz)
     repos_apps.command(name="v", help="Visualize repository activity using Gource", hidden=True)(gource_viz)
 
-    repos_apps.command(name="count-lines", help="📄 <l> Count python lines of code in current repo + historical edits.")(count_lines_in_repo)
-    repos_apps.command(name="lc", help="Count python lines of code in current repo + historical edits.", hidden=True)(count_lines_in_repo)
+    repos_apps.command(name="count-lines", help="📄 <c> Count python lines of code in current repo + historical edits.")(count_lines_in_repo)
+    repos_apps.command(name="c", help="Count python lines of code in current repo + historical edits.", hidden=True)(count_lines_in_repo)
 
     repos_apps.command(name="config-linters", help="🧰 <l> Add linter config files to a git repository")(config_linters)
     repos_apps.command(name="l", help="Add linter config files to a git repository", hidden=True)(config_linters)

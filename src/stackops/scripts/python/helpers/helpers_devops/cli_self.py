@@ -208,7 +208,7 @@ def clone(
     ] = None,
     ssh: Annotated[
         bool,
-        typer.Option("--ssh", help="Use the built-in git@github.com SSH remote instead of HTTPS."),
+        typer.Option("--ssh", "-s", help="Use the built-in git@github.com SSH remote instead of HTTPS."),
     ] = False,
     branch: Annotated[
         str | None,
@@ -276,19 +276,19 @@ def clone(
 def export(
     output_root: Annotated[
         Path,
-        typer.Option("--output-root", help="Directory where the installer folder and zip archive will be written."),
+        typer.Option("--output-root", "-o", help="Directory where the installer folder and zip archive will be written."),
     ] = Path.home().joinpath("tmp_results"),
     include_configs: Annotated[
         bool,
-        typer.Option("--no-include-configs", help="Exclude the StackOps config tree from the offline installer."),
+        typer.Option("--no-include-configs", "-c", help="Exclude the StackOps config tree from the offline installer."),
     ] = True,
     include_uv_bundle: Annotated[
         bool,
-        typer.Option("--no-include-uv-bundle", help="Exclude the uv-managed StackOps runtime bundle."),
+        typer.Option("--no-include-uv-bundle", "-b", help="Exclude the uv-managed StackOps runtime bundle."),
     ] = True,
     keep_unpacked: Annotated[
         bool,
-        typer.Option("--keep-unpacked", help="Keep the unpacked installer directory after writing the zip archive."),
+        typer.Option("--keep-unpacked", "-k", help="Keep the unpacked installer directory after writing the zip archive."),
     ] = False,
     upload_to_cloud: Annotated[
         bool,
@@ -565,7 +565,6 @@ def get_app() -> typer.Typer:
         )
         cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI and skill assets.")
         cli_app.add_typer(cli_self_assets.get_app(), name="a", help="Regenerate repo-local CLI and skill assets.", hidden=True)
-        cli_app.add_typer(cli_self_assets.get_app(), name="ba", help="Regenerate repo-local CLI and skill assets.", hidden=True)
         cli_app.add_typer(cli_self_ai_app.get_app(), name="workflows", help="🤖 <w> Developer AI workflows.")
         cli_app.add_typer(cli_self_ai_app.get_app(), name="w", help="Developer AI workflows.", hidden=True)
 

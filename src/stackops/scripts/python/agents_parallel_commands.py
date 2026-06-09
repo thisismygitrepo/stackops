@@ -60,7 +60,7 @@ def agents_create(
     save_as_yaml: Annotated[
         bool,
         typer.Option(
-            ..., "--save-as-yaml", help="Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name."
+            ..., "--save-as-yaml", "-y", help="Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name."
         ),
     ] = False,
     interactive: Annotated[
@@ -105,9 +105,9 @@ def collect(
     agent_dir: Annotated[str, typer.Argument(..., help="Path to the agent directory containing the prompts folder")],
     output_path: Annotated[str, typer.Argument(..., help="Path to write the concatenated material files")],
     separator: Annotated[
-        str, typer.Option(..., help="Separator to use when concatenating material files. Supports escaped values like '\\n'.")
+        str, typer.Option(..., "--separator", "-s", help="Separator to use when concatenating material files. Supports escaped values like '\\n'.")
     ] = "\n",
-    pattern: Annotated[str | None, typer.Option(..., help="Pattern to match material files (e.g., 'res.txt')")] = None,
+    pattern: Annotated[str | None, typer.Option(..., "--pattern", "-p", help="Pattern to match material files (e.g., 'res.txt')")] = None,
 ) -> None:
     """Collect all material files from an agent directory and concatenate them."""
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import collect as impl

@@ -38,13 +38,14 @@ def scan(
     path: Annotated[
         Path | None,
         typer.Option(
-            "--path", help="Optional file path to scan instead of installed apps", exists=True, file_okay=True, dir_okay=False, resolve_path=True
+            "--path", "-p", help="Optional file path to scan instead of installed apps", exists=True, file_okay=True, dir_okay=False, resolve_path=True
         ),
     ] = None,
     record: Annotated[
         bool | None,
         typer.Option(
             "--record",
+            "-r",
             help="Write scan results to the saved repo reports. Installed-app scans already record by default.",
         ),
     ] = None,
@@ -130,7 +131,7 @@ def report(
     format_type: Annotated[
         ReportFormat, typer.Option("--format", "-f", help="Output format for apps or engines views", case_sensitive=False, show_choices=True)
     ] = "table",
-    summarize: Annotated[bool, typer.Option("--summarize", hidden=True)] = False,
+    summarize: Annotated[bool, typer.Option("--summarize", "-s", hidden=True)] = False,
 ) -> None:
     resolved_view = _resolve_report_view(view, summarize)
     if resolved_view == "options":

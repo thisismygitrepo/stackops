@@ -142,7 +142,7 @@ Write-Host "========================================" -ForegroundColor Magenta
 
 
 def add_ssh_key(
-    path: Annotated[str | None, typer.Option(..., help="Path to the public key file")] = None,
+    path: Annotated[str | None, typer.Option(..., "--path", "-p", help="Path to the public key file")] = None,
     choose: Annotated[bool, typer.Option(..., "--choose", "-c", help="Choose from available public keys in ~/.ssh/*.pub")] = False,
     value: Annotated[bool, typer.Option(..., "--value", "-v", help="Paste the public key content manually")] = False,
     github: Annotated[str | None, typer.Option(..., "--github", "-g", help="Fetch public keys from a GitHub username")] = None,

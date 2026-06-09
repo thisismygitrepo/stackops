@@ -9,7 +9,7 @@ def download(
     url: Annotated[str | None, typer.Argument(..., help="The URL to download the file from.")] = None,
     decompress: Annotated[bool, typer.Option(..., "--decompress", "-d", help="Decompress the file if it's an archive.")] = False,
     output: Annotated[str | None, typer.Option("--output", "-o", help="The output file path.")] = None,
-    output_dir: Annotated[str | None, typer.Option("--output-dir", help="Directory to place the downloaded file in.")] = None,
+    output_dir: Annotated[str | None, typer.Option("--output-dir", "-O", help="Directory to place the downloaded file in.")] = None,
 ) -> Path | None:
     import subprocess
     from urllib.parse import parse_qs, unquote, urlparse

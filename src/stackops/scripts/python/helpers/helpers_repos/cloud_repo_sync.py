@@ -215,7 +215,7 @@ def main(
     cloud: Annotated[str | None, typer.Option(..., "--cloud", "-C", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
     on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
-    pwd: Annotated[str | None, typer.Option(..., "--password", help="Password for encryption/decryption of the remote repository.")] = None,
+    pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
 ) -> str | None:
     on_conflict = resolve_conflict_action(on_conflict=on_conflict)
     import platform

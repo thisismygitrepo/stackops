@@ -53,7 +53,7 @@ def balance_load(
 def run(
     ctx: typer.Context,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    test_layout: Annotated[bool, typer.Option(..., "--test-layout", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
 
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
@@ -383,7 +383,7 @@ def trace(
     session_name: Annotated[str | None, typer.Argument(help="Name of the tmux session to trace. Required unless --interactive is set.")] = None,
     every: Annotated[float, typer.Option("--every", "-e", help="Polling interval in seconds between tmux checks")] = 10.0,
     until: Annotated[Literal["idle-shell", "all-exited", "exit-code", "session-missing"], typer.Option("--until", "-u", help="Stop only when the selected criterion is satisfied")] = "idle-shell",
-    exit_code: Annotated[int | None, typer.Option("--exit-code", help="Required pane exit code when `--until exit-code` is selected")] = None,
+    exit_code: Annotated[int | None, typer.Option("--exit-code", "-c", help="Required pane exit code when `--until exit-code` is selected")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose an existing tmux session interactively")] = False,
 ) -> None:
     """Trace a tmux session until every target matches a strict stop criterion."""
@@ -428,20 +428,20 @@ def run_aoe(
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
     sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between AoE session launches")] = 1.0,
     max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A sanity checker that throws an error if any selected layout exceeds this number of tabs.")] = 25,
-    agent: Annotated[str | None, typer.Option("--agent", help="AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.")] = "codex",
+    agent: Annotated[str | None, typer.Option("--agent", "-a", help="AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.")] = "codex",
     model: Annotated[str | None, typer.Option("--model", "-m", help="Model forwarded to the underlying AoE/agent CLI when supported.")] = None,
     provider: Annotated[str | None, typer.Option("--provider", "-p", help="Provider forwarded to the underlying AoE/agent CLI when supported.")] = None,
-    sandbox: Annotated[str | None, typer.Option("--sandbox", help="Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.")] = None,
-    yolo: Annotated[bool, typer.Option("--yolo", help="Enable AoE/agent YOLO mode when supported.")] = False,
-    cmd: Annotated[str | None, typer.Option("--cmd", help="Override the launched agent binary/command.")] = None,
-    args: Annotated[list[str] | None, typer.Option("--args", help="Repeatable extra argument forwarded to the launched agent CLI.")] = None,
-    env: Annotated[list[str] | None, typer.Option("--env", help="Repeatable KEY=VALUE pair forwarded to AoE when supported.")] = None,
-    force: Annotated[bool, typer.Option("--force", help="Pass force/overwrite to AoE when supported.")] = False,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Print generated `aoe add` commands instead of executing them.")] = False,
-    aoe_bin: Annotated[str, typer.Option("--aoe-bin", help="AoE executable to invoke.")] = "aoe",
-    tab_command_mode: Annotated[Literal["prompt", "cmd", "ignore"], typer.Option("--tab-command-mode", help="How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.")] = "prompt",
+    sandbox: Annotated[str | None, typer.Option("--sandbox", "-s", help="Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.")] = None,
+    yolo: Annotated[bool, typer.Option("--yolo", "-y", help="Enable AoE/agent YOLO mode when supported.")] = False,
+    cmd: Annotated[str | None, typer.Option("--cmd", "-C", help="Override the launched agent binary/command.")] = None,
+    args: Annotated[list[str] | None, typer.Option("--args", "-A", help="Repeatable extra argument forwarded to the launched agent CLI.")] = None,
+    env: Annotated[list[str] | None, typer.Option("--env", "-e", help="Repeatable KEY=VALUE pair forwarded to AoE when supported.")] = None,
+    force: Annotated[bool, typer.Option("--force", "-F", help="Pass force/overwrite to AoE when supported.")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run", "-d", help="Print generated `aoe add` commands instead of executing them.")] = False,
+    aoe_bin: Annotated[str, typer.Option("--aoe-bin", "-b", help="AoE executable to invoke.")] = "aoe",
+    tab_command_mode: Annotated[Literal["prompt", "cmd", "ignore"], typer.Option("--tab-command-mode", "-M", help="How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.")] = "prompt",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
-    launch: Annotated[bool, typer.Option("--no-launch", help="Create each AoE session without launching it immediately.")] = True,
+    launch: Annotated[bool, typer.Option("--no-launch", "-n", help="Create each AoE session without launching it immediately.")] = True,
 ) -> None:
     """Launch selected layout tabs as agent-of-empires sessions.
 

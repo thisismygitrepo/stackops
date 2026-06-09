@@ -33,26 +33,6 @@ StackOpsDevopsReposRegisterCommand = TypedDict(
     },
 )
 
-StackOpsDevopsReposCheckoutToCommitCommand = TypedDict(
-    "StackOpsDevopsReposCheckoutToCommitCommand",
-    {
-        "command_name": Literal["checkout-to-commit"],
-        "short_name": Literal["ctc"],
-        "help": Literal["🔀 [ctc] Deprecated: use sync --checkout-to-commit"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsReposCheckoutToBranchCommand = TypedDict(
-    "StackOpsDevopsReposCheckoutToBranchCommand",
-    {
-        "command_name": Literal["checkout-to-branch"],
-        "short_name": Literal["ctb"],
-        "help": Literal["🔀 [ctb] Deprecated: use sync --checkout-to-branch"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
 StackOpsDevopsReposActionCommand = TypedDict(
     "StackOpsDevopsReposActionCommand",
     {
@@ -97,8 +77,8 @@ StackOpsDevopsReposCountLinesCommand = TypedDict(
     "StackOpsDevopsReposCountLinesCommand",
     {
         "command_name": Literal["count-lines"],
-        "short_name": Literal["lc"],
-        "help": Literal["📄 <l> Count python lines of code in current repo + historical edits."],
+        "short_name": Literal["c"],
+        "help": Literal["📄 <c> Count python lines of code in current repo + historical edits."],
         "subcommands": EmptySubcommands,
     },
 )
@@ -128,8 +108,6 @@ StackOpsDevopsReposSubcommands = TypedDict(
     {
         "sync": StackOpsDevopsReposSyncCommand,
         "register": StackOpsDevopsReposRegisterCommand,
-        "checkout-to-commit": StackOpsDevopsReposCheckoutToCommitCommand,
-        "checkout-to-branch": StackOpsDevopsReposCheckoutToBranchCommand,
         "action": StackOpsDevopsReposActionCommand,
         "analyze": StackOpsDevopsReposAnalyzeCommand,
         "guard": StackOpsDevopsReposGuardCommand,
@@ -742,15 +720,15 @@ StackOpsDevopsNetworkShareServerCommand = TypedDict(
 
 StackOpsDevopsNetworkSendCommand = TypedDict(
     "StackOpsDevopsNetworkSendCommand",
-    {"command_name": Literal["send"], "short_name": Literal["sx"], "help": Literal["📁 <sx> send files from here."], "subcommands": EmptySubcommands},
+    {"command_name": Literal["send"], "short_name": Literal["f"], "help": Literal["📁 <f> send files from here."], "subcommands": EmptySubcommands},
 )
 
 StackOpsDevopsNetworkReceiveCommand = TypedDict(
     "StackOpsDevopsNetworkReceiveCommand",
     {
         "command_name": Literal["receive"],
-        "short_name": Literal["rx"],
-        "help": Literal["📁 <rx> receive files to here."],
+        "short_name": Literal["r"],
+        "help": Literal["📁 <r> receive files to here."],
         "subcommands": EmptySubcommands,
     },
 )
@@ -1488,7 +1466,7 @@ StackOpsUtilsPyprojectTestRuntimeCommand = TypedDict(
     "StackOpsUtilsPyprojectTestRuntimeCommand",
     {
         "command_name": Literal["test-runtime"],
-        "short_name": Literal["tr"],
+        "short_name": Literal["R"],
         "help": Literal["🧪 <R> Create and run the runtime-test workflow for Python files under the current directory."],
         "subcommands": EmptySubcommands,
     },

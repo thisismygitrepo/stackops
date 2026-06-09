@@ -34,7 +34,7 @@ def copy(
     record: Annotated[bool, typer.Option("--record", "-m", help="📝 Record an upload in user mapper/data.yaml. Requires --record-name.")] = False,
     record_group: Annotated[str, typer.Option("--record-group", "-g", help="🗂 Group name for --record in mapper/data.yaml.")] = "default",
     record_name: Annotated[str | None, typer.Option("--record-name", "-n", help="🏷 Entry name for --record in mapper/data.yaml. Required when using --record.")] = None,
-    record_os: Annotated[str, typer.Option("--record-os", help="💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.")] = DEFAULT_OS_FILTER,
+    record_os: Annotated[str, typer.Option("--record-os", "-F", help="💻 OS filter for --record. Comma-separated: linux,darwin,windows. Defaults to all.")] = DEFAULT_OS_FILTER,
     rel2home: Annotated[bool, typer.Option("--relative2home", "-r", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.")] = defaults["pwd"],
