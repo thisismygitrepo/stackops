@@ -807,7 +807,7 @@
                     "",
                     "    from stackops.utils.code import run_lambda_function",
                     "",
-                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[\"stackops[plot]>=8.103\", \"polars\"])"
+                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[STACKOPS_PLOT_REQUIREMENT, \"polars\"])"
                   ],
                   "name": "analyze_repo_development",
                   "parameters": [
@@ -933,7 +933,7 @@
                     "        uv_project_dir = f\"\"\"{str(Path.home().joinpath(\"code/stackops\"))}\"\"\"",
                     "        uv_with = None",
                     "    else:",
-                    "        uv_with = [STACKOPS_VERSION]",
+                    "        uv_with = [STACKOPS_REQUIREMENT]",
                     "        uv_project_dir = None",
                     "",
                     "    if merge_result.status == \"success\":",
@@ -1777,7 +1777,7 @@
                     "    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from stackops.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=8.103\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=26.6\"])",
                     "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
                     "    if not resolved_repo_path.exists():",
                     "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\", err=True)",
@@ -4862,11 +4862,20 @@
                         "        bool,",
                         "        typer.Option(\"--overwrite\", \"-f\", help=\"Replace the output file if it already exists.\"),",
                         "    ] = False,",
+                        "    preview_secrets: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview.\"),",
+                        "    ] = False,",
                         ") -> None:",
                         "    \"\"\"📦 <u> Create a new StackOps secrets file from selected entries.\"\"\"",
                         "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
                         "    resolved_output_path = _resolve_output_path(output_path)",
-                        "    secret_actions.subset_secrets_file(source_path=secret_source.path, output_path=resolved_output_path, overwrite=overwrite)"
+                        "    secret_actions.subset_secrets_file(",
+                        "        source_path=secret_source.path,",
+                        "        output_path=resolved_output_path,",
+                        "        overwrite=overwrite,",
+                        "        preview_secrets=preview_secrets,",
+                        "    )"
                       ],
                       "name": "subset",
                       "parameters": [
@@ -4956,6 +4965,28 @@
                               "-f"
                             ],
                             "help": "Replace the output file if it already exists."
+                          }
+                        },
+                        {
+                          "name": "preview_secrets",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--preview-secrets', '-P', help='Include secret values in the interactive TV preview.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--preview-secrets",
+                              "-P"
+                            ],
+                            "long_flags": [
+                              "--preview-secrets"
+                            ],
+                            "short_flags": [
+                              "-P"
+                            ],
+                            "help": "Include secret values in the interactive TV preview."
                           }
                         }
                       ],
@@ -7159,14 +7190,13 @@
                         "        if return_code != 0:",
                         "            raise typer.Exit(code=return_code)",
                         "",
-                        "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "",
                         "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
                         "        uv_with = []",
                         "        uv_project_dir = str(Path.home().joinpath(\"code/stackops\"))",
                         "    else:",
-                        "        uv_with = [STACKOPS_VERSION]",
+                        "        uv_with = [STACKOPS_REQUIREMENT]",
                         "        uv_project_dir = None",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
                         "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),",
@@ -7260,14 +7290,13 @@
                         "",
                         "        render_tree(show_help=show_help, show_aliases=show_aliases, max_depth=max_depth)",
                         "",
-                        "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "",
                         "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
                         "        uv_with: list[str] = []",
                         "        uv_project_dir = str(Path.home().joinpath(\"code\", \"stackops\"))",
                         "    else:",
-                        "        uv_with = [STACKOPS_VERSION]",
+                        "        uv_with = [STACKOPS_REQUIREMENT]",
                         "        uv_project_dir = None",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
@@ -7390,14 +7419,13 @@
                         "            output_path.write_text(dot_text, encoding=\"utf-8\")",
                         "            print(f\"Wrote {output_path}\")",
                         "",
-                        "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "",
                         "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
                         "        uv_with: list[str] = []",
                         "        uv_project_dir = str(Path.home().joinpath(\"code\", \"stackops\"))",
                         "    else:",
-                        "        uv_with = [STACKOPS_VERSION]",
+                        "        uv_with = [STACKOPS_REQUIREMENT]",
                         "        uv_project_dir = None",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
@@ -7516,14 +7544,13 @@
                         "    width: Annotated[int, typer.Option(\"--width\", help=\"Image width (for static output)\")] = 1200,",
                         ") -> None:",
                         "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
-                        "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
                         "    from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly",
                         "",
                         "    if Path.home().joinpath(\"code\", \"stackops\").exists():",
                         "        uv_with: list[str] | None = None",
                         "        uv_project_dir = str(Path.home().joinpath(\"code/stackops\"))",
                         "    else:",
-                        "        uv_with = [STACKOPS_VERSION]",
+                        "        uv_with = [STACKOPS_REQUIREMENT]",
                         "        uv_project_dir = None",
                         "",
                         "    use_render_plotly(",
@@ -7685,7 +7712,6 @@
                       "raw_lines": [
                         "def navigate():",
                         "    \"\"\"📚 NAVIGATE command structure with TUI\"\"\"",
-                        "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
                         "    # import stackops.scripts.python.graph.visualize.helpers_navigator as navigator",
                         "    # path = Path(navigator.__file__).resolve().parent.joinpath(\"devops_navigator.py\")",
                         "    # from stackops.utils.code import exit_then_run_shell_script",
@@ -7702,7 +7728,7 @@
                         "        uv_with = [\"textual\"]",
                         "        uv_project_dir = str(Path.home().joinpath(\"code/stackops\"))",
                         "    else:",
-                        "        uv_with = [STACKOPS_VERSION, \"textual\"]",
+                        "        uv_with = [STACKOPS_REQUIREMENT, \"textual\"]",
                         "        uv_project_dir = None",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),",
                         "            uv_with=uv_with, uv_project_dir=uv_project_dir)",
@@ -13943,7 +13969,7 @@
                 "    root: Annotated[str, typer.Option(\"--root\", \"-R\", help=\"🌳 Remote root.\")] = defaults[\"root\"],",
                 "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.\")] = defaults[\"pwd\"],",
                 "    encrypt: Annotated[bool, typer.Option(\"--encrypt\", \"-e\", help=\"🔐 Encrypt before sending.\")] = defaults[\"encrypt\"],",
-                "    encryption: Annotated[str | None, typer.Option(\"--encryption\", \"-E\", help=\"🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.\")] = None,",
+                "    encryption: Annotated[str | None, typer.Option(\"--encryption\", \"-E\", help=\"🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.\")] = defaults[\"encryption\"],",
                 "    zip_: Annotated[bool, typer.Option(\"--zip\", \"-z\", help=\"📦 unzip after receiving.\")] = defaults[\"zip\"],",
                 "    os_specific: Annotated[bool, typer.Option(\"--os-specific\", \"-O\", help=\"💻 choose path specific for this OS.\")] = defaults[\"os_specific\"],",
                 ") -> None:",
@@ -14220,7 +14246,7 @@
                   "name": "encryption",
                   "kind": "positional_or_keyword",
                   "type": "str | None",
-                  "default": null,
+                  "default": "defaults['encryption']",
                   "required": false,
                   "annotation_raw": "Annotated[str | None, typer.Option('--encryption', '-E', help='🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.')]",
                   "typer": {

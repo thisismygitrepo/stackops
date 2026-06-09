@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 import shutil
 import subprocess
@@ -50,8 +51,111 @@ class CleanupTargetSelection:
     group_name: str
 
 
+@dataclass(frozen=True, order=True)
+class StackOpsCalVer:
+    year: int
+    month: int
+    release: int | None = None
+
+    def __post_init__(self) -> None:
+        if not 0 <= self.year <= 99:
+            raise ValueError("StackOps CalVer year must be a two-digit value from 0 to 99.")
+        if not 1 <= self.month <= 12:
+            raise ValueError("StackOps CalVer month must be between 1 and 12.")
+        if self.release is not None and self.release < 1:
+            raise ValueError("StackOps CalVer release number must be omitted or greater than zero.")
+
+
 def read_pyproject(pyproject_path: Path) -> PyprojectTable:
     return cast(PyprojectTable, tomllib.loads(pyproject_path.read_text(encoding="utf-8")))
+
+
+def parse_stackops_calver(version: str) -> StackOpsCalVer | None:
+    normalized_version = version.strip()
+    if normalized_version.startswith("v"):
+        normalized_version = normalized_version[1:]
+    version_parts = normalized_version.split(".")
+    if len(version_parts) not in {2, 3}:
+        return None
+    if any(part == "" or part.isascii() is False or part.isdigit() is False for part in version_parts):
+        return None
+
+    year = int(version_parts[0])
+    month = int(version_parts[1])
+    release = None if len(version_parts) == 2 else int(version_parts[2])
+    try:
+        return StackOpsCalVer(year=year, month=month, release=release)
+    except ValueError:
+        return None
+
+
+def format_stackops_calver(version: StackOpsCalVer) -> str:
+    base_version = f"{version.year}.{version.month}"
+    if version.release is None:
+        return base_version
+    return f"{base_version}.{version.release}"
+
+
+def format_stackops_display_version(version: str) -> str:
+    parsed_version = parse_stackops_calver(version)
+    if parsed_version is None:
+        return f"v{version}"
+    return f"v{format_stackops_calver(parsed_version)}"
+
+
+def get_stackops_date_version(today: date | None = None) -> StackOpsCalVer:
+    resolved_today = date.today() if today is None else today
+    return StackOpsCalVer(year=resolved_today.year % 100, month=resolved_today.month)
+
+
+def parse_numeric_release(version: str) -> tuple[int, ...] | None:
+    normalized_version = version.strip()
+    if normalized_version.startswith("v"):
+        normalized_version = normalized_version[1:]
+    version_parts = normalized_version.split(".")
+    if not version_parts or any(part == "" or part.isascii() is False or part.isdigit() is False for part in version_parts):
+        return None
+    return tuple(int(part) for part in version_parts)
+
+
+def is_numeric_release_less_than(left: tuple[int, ...], right: tuple[int, ...]) -> bool:
+    max_len = max(len(left), len(right))
+    padded_left = left + (0,) * (max_len - len(left))
+    padded_right = right + (0,) * (max_len - len(right))
+    return padded_left < padded_right
+
+
+def get_next_stackops_version(current_version: str, today: date | None = None) -> str:
+    current_calver = parse_stackops_calver(current_version)
+    date_version = get_stackops_date_version(today=today)
+
+    if current_calver is None:
+        current_release = parse_numeric_release(current_version)
+        date_release = (date_version.year, date_version.month)
+        if current_release is not None and not is_numeric_release_less_than(current_release, date_release):
+            raise ValueError(
+                f"Refusing to migrate from {current_version} to {format_stackops_calver(date_version)} because that would not be a version increase."
+            )
+        return format_stackops_calver(date_version)
+
+    current_month = StackOpsCalVer(year=current_calver.year, month=current_calver.month)
+    if current_month < date_version:
+        return format_stackops_calver(date_version)
+    if current_month > date_version:
+        raise ValueError(
+            "Current StackOps version "
+            f"{current_version} belongs to {format_stackops_display_version(format_stackops_calver(current_month))}, "
+            f"which is later than today's release month {format_stackops_display_version(format_stackops_calver(date_version))}."
+        )
+
+    next_release = 1 if current_calver.release is None else current_calver.release + 1
+    return format_stackops_calver(
+        StackOpsCalVer(
+            year=current_calver.year,
+            month=current_calver.month,
+            release=next_release,
+        )
+    )
 
 
 def generate_uv_add_commands(pyproject_path: Path, output_path: Path) -> None:
@@ -301,21 +405,19 @@ def upgrade_machine_config_version() -> None:
         raise ValueError(f"Missing project.version in {pyproject_file}")
 
     current_version_str = project_table["version"]
-    version_parts = current_version_str.split(".")
-    major = int(version_parts[0])
-    minor = int(version_parts[1])
-    new_minor = minor + 1
-    new_version = f"{major}.{new_minor:0{len(version_parts[1])}d}"
+    new_version = get_next_stackops_version(current_version=current_version_str)
 
     optional_groups: set[str] = set(get_optional_dependencies(pyproject_data=pyproject_data))
     optional_groups.update(get_dependency_groups(pyproject_data=pyproject_data))
 
-    print(f"Upgrading from {current_version_str} to {new_version}")
+    print(
+        "Upgrading from "
+        f"{current_version_str} ({format_stackops_display_version(current_version_str)}) "
+        f"to {new_version} ({format_stackops_display_version(new_version)})"
+    )
     print(f"Found optional groups: {', '.join(sorted(optional_groups))}")
 
-    content = pyproject_file.read_text(encoding="utf-8")
-    updated_content = content.replace(f'version = "{current_version_str}"', f'version = "{new_version}"')
-    pyproject_file.write_text(updated_content, encoding="utf-8")
+    subprocess.run(["uv", "version", new_version, "--no-sync"], cwd=current_dir, check=True)
     print(f"Updated pyproject.toml: {current_version_str} -> {new_version}")
 
     source_files = list(current_dir.glob("**/*.py")) + list(current_dir.glob("**/*.sh")) + list(current_dir.glob("**/*.ps1"))
@@ -331,6 +433,10 @@ def upgrade_machine_config_version() -> None:
         updated_file_content = file_content.replace(
             f"stackops>={current_version_str}",
             f"stackops>={new_version}",
+        )
+        updated_file_content = updated_file_content.replace(
+            f'STACKOPS_VERSION = "{current_version_str}"',
+            f'STACKOPS_VERSION = "{new_version}"',
         )
         for group_name in optional_groups:
             updated_file_content = updated_file_content.replace(
