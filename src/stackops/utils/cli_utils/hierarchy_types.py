@@ -563,6 +563,16 @@ StackOpsDevopsSelfBuildInstallerCommand = TypedDict(
     },
 )
 
+StackOpsDevopsSelfDownloadInstallerCommand = TypedDict(
+    "StackOpsDevopsSelfDownloadInstallerCommand",
+    {
+        "command_name": Literal["download-installer"],
+        "short_name": Literal["D"],
+        "help": Literal["📥 <D> Download an offline installer."],
+        "subcommands": EmptySubcommands,
+    },
+)
+
 StackOpsDevopsSelfBuildDockerCommand = TypedDict(
     "StackOpsDevopsSelfBuildDockerCommand",
     {
@@ -682,6 +692,7 @@ StackOpsDevopsSelfSubcommands = TypedDict(
         "readme": StackOpsDevopsSelfReadmeCommand,
         "docs": StackOpsDevopsSelfDocsCommand,
         "build-installer": StackOpsDevopsSelfBuildInstallerCommand,
+        "download-installer": StackOpsDevopsSelfDownloadInstallerCommand,
         "build-docker": StackOpsDevopsSelfBuildDockerCommand,
         "build-assets": StackOpsDevopsSelfBuildAssetsCommand,
         "workflows": StackOpsDevopsSelfWorkflowsCommand,

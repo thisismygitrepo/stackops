@@ -59,6 +59,7 @@ if TYPE_CHECKING:
         StackOpsDevopsSelfReadmeCommand,
         StackOpsDevopsSelfDocsCommand,
         StackOpsDevopsSelfBuildInstallerCommand,
+        StackOpsDevopsSelfDownloadInstallerCommand,
         StackOpsDevopsSelfBuildDockerCommand,
         StackOpsDevopsSelfBuildAssetsUpdateCLIGraphCommand,
         StackOpsDevopsSelfBuildAssetsRegenerateChartsCommand,
@@ -578,6 +579,13 @@ STACKOPS_DEVOPS_SELF_BUILD_INSTALLER_COMMAND: "StackOpsDevopsSelfBuildInstallerC
     "subcommands": {},
 }
 
+STACKOPS_DEVOPS_SELF_DOWNLOAD_INSTALLER_COMMAND: "StackOpsDevopsSelfDownloadInstallerCommand" = {
+    "command_name": "download-installer",
+    "short_name": "D",
+    "help": "📥 <D> Download an offline installer.",
+    "subcommands": {},
+}
+
 STACKOPS_DEVOPS_SELF_BUILD_DOCKER_COMMAND: "StackOpsDevopsSelfBuildDockerCommand" = {
     "command_name": "build-docker",
     "short_name": "d",
@@ -662,6 +670,7 @@ STACKOPS_DEVOPS_SELF_SUBCOMMANDS: "StackOpsDevopsSelfSubcommands" = {
     "readme": STACKOPS_DEVOPS_SELF_README_COMMAND,
     "docs": STACKOPS_DEVOPS_SELF_DOCS_COMMAND,
     "build-installer": STACKOPS_DEVOPS_SELF_BUILD_INSTALLER_COMMAND,
+    "download-installer": STACKOPS_DEVOPS_SELF_DOWNLOAD_INSTALLER_COMMAND,
     "build-docker": STACKOPS_DEVOPS_SELF_BUILD_DOCKER_COMMAND,
     "build-assets": STACKOPS_DEVOPS_SELF_BUILD_ASSETS_COMMAND,
     "workflows": STACKOPS_DEVOPS_SELF_WORKFLOWS_COMMAND,

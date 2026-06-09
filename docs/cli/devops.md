@@ -95,6 +95,7 @@ These are the child commands exposed by the current live help.
 - `readme`
 - `docs`
 - `build-installer`
+- `download-installer`
 - `build-docker`
 - `build-assets`
 - `workflows`

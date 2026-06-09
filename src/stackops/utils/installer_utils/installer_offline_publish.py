@@ -18,7 +18,13 @@ KNOWN_TARGET_KEYS: tuple[str, ...] = (
 
 
 def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> list[ExportStepResult]:
-    remote_path = constants.OFFLINE_INSTALLER_UPLOAD_REMOTE_DIR.joinpath(archive_path.name)
+    remote_path = rclone_wrapper.get_remote_path(
+        local_path=archive_path,
+        root=constants.OFFLINE_INSTALLER_UPLOAD_REMOTE_ROOT,
+        os_specific=False,
+        rel2home=True,
+        strict=True,
+    )
     share_url = rclone_wrapper.to_cloud(
         local_path=archive_path,
         cloud=constants.OFFLINE_INSTALLER_UPLOAD_CLOUD,

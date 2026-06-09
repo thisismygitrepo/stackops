@@ -17,7 +17,12 @@ URL_MAP_FALLBACK_URL: Final[str] = (
     "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/"
     f"src/stackops/jobs/scripts_dynamic/{URL_MAP_FILE_NAME}"
 )
-DEFAULT_OUTPUT_DIR: Final[Path] = Path.home().joinpath("tmp_results", "installer", "stackops-offline-installer")
+DEFAULT_OUTPUT_DIR: Final[Path] = Path.home().joinpath(
+    ".config",
+    "stackops",
+    "offline_installers",
+    "stackops-offline-installer",
+)
 KNOWN_TARGETS: Final[tuple[str, ...]] = (
     "linux-x64",
     "linux-arm",
@@ -35,15 +40,23 @@ class InstallerTarget:
 
 
 def main() -> None:
+    download_installer(target_key=None, output_dir=None)
+
+
+def download_installer(*, target_key: str | None, output_dir: Path | None) -> Path:
     url_map = _load_url_map()
     targets = _build_targets(url_map=url_map)
-    selected_target = _prompt_for_target(targets=targets)
+    if target_key is None:
+        selected_target = _prompt_for_target(targets=targets)
+    else:
+        selected_target = _resolve_target(targets=targets, target_key=target_key)
     if selected_target.url is None:
         raise RuntimeError(f"No Google Drive URL is configured yet for {selected_target.pair}.")
-    output_dir = DEFAULT_OUTPUT_DIR.expanduser().resolve()
-    print(f"Downloading {selected_target.pair} offline installer into {output_dir}")
-    _download_and_extract(url=selected_target.url, output_dir=output_dir)
-    print(f"Offline installer extracted to {output_dir}")
+    resolved_output_dir = (output_dir or DEFAULT_OUTPUT_DIR).expanduser().resolve()
+    print(f"Downloading {selected_target.pair} offline installer into {resolved_output_dir}")
+    _download_and_extract(url=selected_target.url, output_dir=resolved_output_dir)
+    print(f"Offline installer extracted to {resolved_output_dir}")
+    return resolved_output_dir
 
 
 def _load_url_map() -> dict[str, str | None]:
@@ -89,6 +102,14 @@ def _prompt_for_target(*, targets: list[InstallerTarget]) -> InstallerTarget:
         if 1 <= selected_index <= len(targets):
             return targets[selected_index - 1]
         print("Choice out of range.")
+
+
+def _resolve_target(*, targets: list[InstallerTarget], target_key: str) -> InstallerTarget:
+    for target in targets:
+        if target.pair == target_key:
+            return target
+    supported_targets = ", ".join(target.pair for target in targets)
+    raise RuntimeError(f"Unsupported offline installer target: {target_key}. Supported targets: {supported_targets}")
 
 
 def _download_and_extract(*, url: str, output_dir: Path) -> None:

@@ -21,6 +21,7 @@ Current `devops self --help` exposes:
 | `readme` | Fetch and render the project README in the terminal | Always |
 | `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/stackops` exists |
 | `build-installer` | Export installation files for an offline installer image | Always |
+| `download-installer` | Download and extract a published offline installer image | Always |
 | `build-docker` | Build Docker images from the repo script | Only when `~/code/stackops` exists |
 | `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/stackops` exists |
 
@@ -140,7 +141,19 @@ devops self build-installer
 devops self build-installer --upload-to-cloud
 ```
 
-Use `--upload-to-cloud` to upload the generated archive to `gdp:/stackops/<archive-name>`, generate a shared URL, and update the JSON URL map consumed by `scripts_dynamic/download_stackops_offline_installer.py`.
+Use `--upload-to-cloud` to upload the generated archive to the mirrored `gdp:myhome/generic_os/.config/stackops/offline_installers/<archive-name>` path, generate a shared URL, and update the JSON URL map consumed by `scripts_dynamic/download_stackops_offline_installer.py`.
+
+### download-installer
+
+Download and extract an offline installer published in `download_stackops_offline_installer.json`.
+
+```bash
+devops self download-installer
+devops self download-installer --target linux-x64
+devops self download-installer --target macos-arm --output-dir ~/.config/stackops/offline_installers/stackops-offline-installer
+```
+
+When `--target` is omitted, StackOps prompts for one of the configured OS/architecture pairs.
 
 ### explore
 

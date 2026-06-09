@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 import typer
 
+from stackops.utils.installer_utils import installer_offline_constants
 from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
 STACKOPS_REPO_HTTPS = "https://github.com/thisismygitrepo/stackops.git"
@@ -277,7 +278,7 @@ def export(
     output_root: Annotated[
         Path,
         typer.Option("--output-root", "-o", help="Directory where the installer folder and zip archive will be written."),
-    ] = Path.home().joinpath("tmp_results"),
+    ] = installer_offline_constants.DEFAULT_OUTPUT_ROOT,
     include_configs: Annotated[
         bool,
         typer.Option("--no-include-configs", "-c", help="Exclude the StackOps config tree from the offline installer."),
@@ -292,7 +293,11 @@ def export(
     ] = False,
     upload_to_cloud: Annotated[
         bool,
-        typer.Option("--upload-to-cloud", "-u", help="Upload the finished archive to gdp:/stackops/, share it, and refresh the dynamic downloader URL map."),
+        typer.Option(
+            "--upload-to-cloud",
+            "-u",
+            help="Upload the finished archive to its mirrored gdp:myhome/ path, share it, and refresh the dynamic downloader URL map.",
+        ),
     ] = False,
 ) -> None:
     """📤 export the installation files to get an offline image."""
@@ -344,6 +349,26 @@ def export(
         ),
         console=Console(),
     )
+
+
+def download_installer(
+    target: Annotated[
+        str | None,
+        typer.Option("--target", "-t", help="OS/arch target from the offline installer URL map. Prompts when omitted."),
+    ] = None,
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("--output-dir", "-o", help="Directory where the downloaded offline installer will be extracted."),
+    ] = None,
+) -> None:
+    """📥 Download and extract a published offline installer."""
+    from stackops.jobs.scripts_dynamic import download_stackops_offline_installer
+
+    try:
+        download_stackops_offline_installer.download_installer(target_key=target, output_dir=output_dir)
+    except RuntimeError as exc:
+        typer.echo(f"❌ {exc}", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 def status(
@@ -555,6 +580,10 @@ def get_app() -> typer.Typer:
 
     cli_app.command(name="build-installer", no_args_is_help=False, help="📤 <e> Build an offline installer.")(export)
     cli_app.command(name="e", no_args_is_help=False, help="Export the installation files to get an offline image.", hidden=True)(export)
+    cli_app.command(name="download-installer", no_args_is_help=False, help="📥 <D> Download an offline installer.")(download_installer)
+    cli_app.command(name="D", no_args_is_help=False, help="Download and extract a published offline installer.", hidden=True)(
+        download_installer
+    )
 
     if developer_repo_root is not None:
         cli_app.command(name="build-docker", no_args_is_help=False, help="🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)")(
