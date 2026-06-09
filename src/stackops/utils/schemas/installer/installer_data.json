@@ -3242,6 +3242,48 @@
       }
     },
     {
+      "appName": "vscode-json-languageserver",
+      "license": "MIT License",
+      "repoURL": "https://github.com/microsoft/vscode-json-languageservice",
+      "doc": "JSON Language Server for editor and LSP integrations.",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g vscode-json-language-server",
+          "darwin": "bun install -g vscode-json-language-server",
+          "windows": "bun install -g vscode-json-language-server"
+        },
+        "arm64": {
+          "linux": "bun install -g vscode-json-language-server",
+          "darwin": "bun install -g vscode-json-language-server",
+          "windows": "bun install -g vscode-json-language-server"
+        }
+      }
+    },
+    {
+      "appName": "yaml-language-server",
+      "license": "MIT License",
+      "repoURL": "https://github.com/redhat-developer/yaml-language-server",
+      "doc": "YAML Language Server for editor and LSP integrations.",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g yaml-language-server",
+          "darwin": "bun install -g yaml-language-server",
+          "windows": "bun install -g yaml-language-server"
+        },
+        "arm64": {
+          "linux": "bun install -g yaml-language-server",
+          "darwin": "bun install -g yaml-language-server",
+          "windows": "bun install -g yaml-language-server"
+        }
+      }
+    },
+    {
       "appName": "kondo",
       "license": "MIT License",
       "repoURL": "https://github.com/tbillington/kondo",
