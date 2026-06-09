@@ -26,7 +26,7 @@ Use this skill to work from direct CLI commands into nested Typer apps and helpe
 4. Map command to implementation.
 - Use `references/source-map.md` to jump directly to the file that registers/implements the command.
 - Remember `stackops_entry.py` is a lazy dispatcher; most behavior lives in helper modules.
-- If command names changed recently, regenerate `src/stackops/scripts/python/graph/cli_graph.json`, then refresh `references/cli-map.md` and `references/source-map.md`.
+- If command names changed recently, run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs` to refresh `src/stackops/scripts/python/graph/cli_graph.json`, `references/cli-map.md`, and `references/source-map.md`.
 
 5. Run safely.
 - Commands under install/update/network/config may mutate system state.
@@ -50,7 +50,7 @@ UV_CACHE_DIR=/tmp/uv-cache uv run devops repos --help
 ```
 - Use long flags in guidance.
 - When adding or changing commands, update both Typer registration and helper implementation, then re-check `--help` output.
-- Regenerate the graph after CLI shape changes:
+- Regenerate the skill references after CLI shape changes:
 ```bash
-UV_CACHE_DIR=/tmp/uv-cache uv run python -m stackops.scripts.python.graph.generate_cli_graph
+UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs
 ```

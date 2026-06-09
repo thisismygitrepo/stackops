@@ -8674,14 +8674,14 @@
                 "name": "build-assets",
                 "fullPath": "devops self build-assets",
                 "shortPath": "d s a",
-                "help": "🗂 <a> Regenerate repo-local CLI graph assets.",
+                "help": "🗂 <a> Regenerate repo-local CLI and skill assets.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_self",
                   "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_self_assets.get_app"
                 },
                 "app": {
-                  "help": "🗂 <a> Regenerate repo-local CLI graph assets.",
+                  "help": "🗂 <a> Regenerate repo-local CLI and skill assets.",
                   "no_args_is_help": true,
                   "add_help_option": true,
                   "add_completion": false
@@ -8765,18 +8765,57 @@
                         "help": "Regenerate the checked-in sunburst HTML chart."
                       }
                     ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "update-skill-refs",
+                    "fullPath": "devops self build-assets update-skill-refs",
+                    "shortPath": "d s a s",
+                    "help": "📚 <s> Regenerate the StackOps skill CLI reference maps.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self_assets.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_self_assets",
+                      "callable": "update_stackops_skill_refs"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def update_stackops_skill_refs() -> None:",
+                        "    \"\"\"📚 <s> Regenerate the StackOps skill CLI reference maps.\"\"\"",
+                        "    from stackops.scripts.python.helpers.helpers_devops import cli_self_docs, stackops_skill_refs",
+                        "",
+                        "    repo_root = cli_self_docs.get_docs_repo_root()",
+                        "    cli_self_docs.write_cli_graph_snapshot(repo_root=repo_root)",
+                        "    generated_paths = stackops_skill_refs.write_stackops_skill_references(repo_root=repo_root)",
+                        "    for generated_path in generated_paths:",
+                        "        typer.echo(f\"\"\"Regenerated StackOps skill reference: {generated_path.relative_to(repo_root).as_posix()}\"\"\")"
+                      ],
+                      "name": "update_stackops_skill_refs",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "📚 <s> Regenerate the StackOps skill CLI reference maps.",
+                    "aliases": [
+                      {
+                        "name": "s",
+                        "hidden": true,
+                        "help": "Regenerate the StackOps skill CLI reference maps."
+                      }
+                    ]
                   }
                 ],
                 "aliases": [
                   {
                     "name": "a",
                     "hidden": true,
-                    "help": "Regenerate repo-local CLI graph assets."
+                    "help": "Regenerate repo-local CLI and skill assets."
                   },
                   {
                     "name": "ba",
                     "hidden": true,
-                    "help": "Regenerate repo-local CLI graph assets."
+                    "help": "Regenerate repo-local CLI and skill assets."
                   }
                 ]
               },

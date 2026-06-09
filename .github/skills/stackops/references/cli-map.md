@@ -18,12 +18,13 @@ Defined in `pyproject.toml` `[project.scripts]`:
 
 - `devops` -> `stackops.scripts.python.devops:main`
 - `cloud` -> `stackops.scripts.python.cloud:main`
-- `terminal` -> `stackops.scripts.python.terminal:main`
-- `agents` -> `stackops.scripts.python.agents:main`
-- `utils` -> `stackops.scripts.python.utils:main`
 - `fire` -> `stackops.scripts.python.fire_jobs:main`
-- `seek` -> `stackops.scripts.python.seek:main`
+- `agents` -> `stackops.scripts.python.agents:main`
+- `terminal` -> `stackops.scripts.python.terminal:main`
+- `preview` -> `stackops.scripts.python.preview:main`
+- `utils` -> `stackops.scripts.python.utils:main`
 - `stackops` -> `stackops.scripts.python.stackops_entry:main`
+- `seek` -> `stackops.scripts.python.seek:main`
 
 ## Command Tree
 
@@ -100,7 +101,8 @@ stackops
 │  │  ├─ build-docker
 │  │  ├─ build-assets
 │  │  │  ├─ update-cli-graph
-│  │  │  └─ regenerate-charts
+│  │  │  ├─ regenerate-charts
+│  │  │  └─ update-skill-refs
 │  │  └─ workflows
 │  │     ├─ update-installer
 │  │     ├─ update-test
