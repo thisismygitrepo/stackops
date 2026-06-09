@@ -356,17 +356,17 @@ Security and reporting helpers live under `stackops.jobs.installer.checks.*`. Th
 
 ## API reference
 
-## Installer CLI helpers
+## Installer schema
 
-::: stackops.utils.installer_utils.installer_cli
+::: stackops.utils.schemas.installer.installer_types
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Installer runner
+## Package groups
 
-::: stackops.utils.installer_utils.installer_runner
+::: stackops.jobs.installer.package_groups
     options:
       show_root_heading: true
       show_source: false
@@ -380,6 +380,54 @@ Security and reporting helpers live under `stackops.jobs.installer.checks.*`. Th
       show_source: false
       members_order: source
 
+## Installer runner
+
+::: stackops.utils.installer_utils.installer_runner
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Install request logic
+
+::: stackops.utils.installer_utils.install_request_logic
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installer helper utilities
+
+::: stackops.utils.installer_utils.installer_helper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installer locator utilities
+
+::: stackops.utils.installer_utils.installer_locator_utils
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## GitHub release scraper
+
+::: stackops.utils.installer_utils.github_release_scraper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## GitHub release bulk helpers
+
+::: stackops.utils.installer_utils.github_release_bulk
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Install from URL helpers
 
 ::: stackops.utils.installer_utils.install_from_url
@@ -388,9 +436,137 @@ Security and reporting helpers live under `stackops.jobs.installer.checks.*`. Th
       show_source: false
       members_order: source
 
-## Installer schema
+## Installer CLI helpers
 
-::: stackops.utils.schemas.installer.installer_types
+::: stackops.utils.installer_utils.installer_cli
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installer explore helpers
+
+::: stackops.utils.installer_utils.installer_explore
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installer summary helpers
+
+::: stackops.utils.installer_utils.installer_summary
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer entrypoint
+
+::: stackops.utils.installer_utils.installer_offline
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer models
+
+::: stackops.utils.installer_utils.installer_offline_models
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer constants
+
+::: stackops.utils.installer_utils.installer_offline_constants
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer publish helpers
+
+::: stackops.utils.installer_utils.installer_offline_publish
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer render helpers
+
+::: stackops.utils.installer_utils.installer_offline_render
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer script helpers
+
+::: stackops.utils.installer_utils.installer_offline_scripts
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer steps
+
+::: stackops.utils.installer_utils.installer_offline_steps
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Offline installer uv helpers
+
+::: stackops.utils.installer_utils.installer_offline_uv
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installation check utilities
+
+::: stackops.jobs.installer.checks.install_utils
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installation checks
+
+::: stackops.jobs.installer.checks.check_installations
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Security CLI helpers
+
+::: stackops.jobs.installer.checks.security_cli
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Security helper utilities
+
+::: stackops.jobs.installer.checks.security_helper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Security report utilities
+
+::: stackops.jobs.installer.checks.report_utils
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## VirusTotal utilities
+
+::: stackops.jobs.installer.checks.vt_utils
     options:
       show_root_heading: true
       show_source: false

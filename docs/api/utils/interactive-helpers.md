@@ -159,6 +159,22 @@ Email.send_and_close(
       show_source: false
       members_order: source
 
+## Textual options form
+
+::: stackops.utils.options_utils.textual_options_form
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Terminal helpers
+
+::: stackops.utils.terminal
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Notifications
 
 ::: stackops.utils.notifications

@@ -174,9 +174,57 @@ Those classes are responsible for rendering backend-specific layout artifacts:
       show_source: false
       members_order: source
 
+## Load balancer helper
+
+::: stackops.cluster.sessions_managers.helpers.load_balancer_helper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Zellij layout helpers
 
 ::: stackops.cluster.sessions_managers.zellij.zellij_local
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij layout generator
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.layout_generator
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij local helper
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij local helper restart
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper_restart
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij local helper with panes
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper_with_panes
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij local manager helper
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_manager_helper
     options:
       show_root_heading: true
       show_source: false
@@ -190,9 +238,57 @@ Those classes are responsible for rendering backend-specific layout artifacts:
       show_source: false
       members_order: source
 
+## tmux common helpers
+
+::: stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## tmux execution helpers
+
+::: stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## tmux layout helpers
+
+::: stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## tmux status helpers
+
+::: stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Windows Terminal layout helpers
 
 ::: stackops.cluster.sessions_managers.windows_terminal.wt_local
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal layout generator
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.layout_generator
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal helpers
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers
     options:
       show_root_heading: true
       show_source: false

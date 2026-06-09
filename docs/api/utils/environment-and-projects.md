@@ -89,3 +89,115 @@ if virtualenv_root is not None:
       show_root_heading: true
       show_source: false
       members_order: source
+
+## Package logger
+
+::: stackops.logger
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Profile creation helpers
+
+::: stackops.profile.create_helper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Dotfiles mapper
+
+::: stackops.profile.dotfiles_mapper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Secrets API
+
+::: stackops.secrets
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## OneDrive auth
+
+::: stackops.utils.cloud.onedrive.auth
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## OneDrive file operations
+
+::: stackops.utils.cloud.onedrive.file_ops
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Rclone helpers
+
+::: stackops.utils.rclone
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Rclone wrapper
+
+::: stackops.utils.rclone_wrapper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## StackOps repository helpers
+
+::: stackops.utils.repo_stackops
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## StackOps config schema
+
+::: stackops.utils.schemas.config.config_types
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Fire agent input schema
+
+::: stackops.utils.schemas.fire_agents.fire_agents_input
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Repository schema
+
+::: stackops.utils.schemas.repos.repos_types
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Secrets loader schema
+
+::: stackops.utils.schemas.secrets.secrets_loader
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Secrets types schema
+
+::: stackops.utils.schemas.secrets.secrets_types
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source

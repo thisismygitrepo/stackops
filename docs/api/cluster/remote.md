@@ -258,9 +258,33 @@ Representative operations include:
       show_source: false
       members_order: source
 
+## Cloud manager
+
+::: stackops.cluster.remote.cloud_manager
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Job parameters
 
 ::: stackops.cluster.remote.job_params
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Data transfer
+
+::: stackops.cluster.remote.data_transfer
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Execution script renderer
+
+::: stackops.cluster.remote.execution_script
     options:
       show_root_heading: true
       show_source: false
@@ -290,9 +314,33 @@ Representative operations include:
       show_source: false
       members_order: source
 
+## Remote notifications
+
+::: stackops.cluster.remote.notification
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## SSH helper
 
 ::: stackops.utils.ssh
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## SSH utility protocol
+
+::: stackops.utils.ssh_utils.abc
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## WSL SSH helpers
+
+::: stackops.utils.ssh_utils.wsl_helper
     options:
       show_root_heading: true
       show_source: false

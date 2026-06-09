@@ -144,6 +144,22 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
+## Session exit mode
+
+::: stackops.cluster.sessions_managers.session_exit_mode
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Enhanced command runner
+
+::: stackops.cluster.sessions_managers.helpers.enhanced_command_runner
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Zellij local manager
 
 ::: stackops.cluster.sessions_managers.zellij.zellij_local_manager
@@ -176,9 +192,145 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
+## Zellij remote sessions
+
+::: stackops.cluster.sessions_managers.zellij.zellij_remote
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Windows Terminal remote manager
 
 ::: stackops.cluster.sessions_managers.windows_terminal.wt_remote_manager
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal remote sessions
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_remote
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij example usage
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.example_usage
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij monitoring types
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij process monitor
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.process_monitor
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij remote executor
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.remote_executor
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij session manager utility
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.session_manager
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Zellij status reporter
+
+::: stackops.cluster.sessions_managers.zellij.zellij_utils.status_reporter
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal local manager demo
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples.wt_local_manager_demo
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal local monitoring
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.local_monitoring
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal manager persistence
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal monitoring helpers
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.monitoring_helpers
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal process monitor
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.process_monitor
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal remote executor
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.remote_executor
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal session manager utility
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.session_manager
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal status reporter
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporter
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Windows Terminal status reporting
+
+::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting
     options:
       show_root_heading: true
       show_source: false

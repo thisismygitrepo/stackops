@@ -1,0 +1,1 @@
+"""Fire agent schema APIs."""

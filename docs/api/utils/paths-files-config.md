@@ -165,6 +165,22 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
       show_source: false
       members_order: source
 
+## Source of truth
+
+::: stackops.utils.source_of_truth
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Path compression
+
+::: stackops.utils.path_compression
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## Virtual Environment Helpers
 
 ::: stackops.utils.python_env
@@ -176,6 +192,62 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
 ## IO
 
 ::: stackops.utils.io
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Encryption mode helpers
+
+::: stackops.utils.encryption
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## File wrapper
+
+::: stackops.utils.files.f
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## File headers
+
+::: stackops.utils.files.headers
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Notebook helpers
+
+::: stackops.utils.files.notebook
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Archive decompression
+
+::: stackops.utils.files.ouch.decompress
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Link helpers
+
+::: stackops.utils.links
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## YAML schema helpers
+
+::: stackops.utils.yaml_schema
     options:
       show_root_heading: true
       show_source: false
