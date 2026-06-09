@@ -3924,6 +3924,27 @@
       }
     },
     {
+      "appName": "openhands",
+      "license": "MIT License",
+      "repoURL": "https://github.com/OpenHands/OpenHands",
+      "doc": "OpenHands AI-driven development CLI and local GUI.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "uv tool install openhands --python 3.12",
+          "windows": "uv tool install openhands --python 3.12",
+          "darwin": "uv tool install openhands --python 3.12"
+        },
+        "arm64": {
+          "linux": "uv tool install openhands --python 3.12",
+          "windows": "uv tool install openhands --python 3.12",
+          "darwin": "uv tool install openhands --python 3.12"
+        }
+      }
+    },
+    {
       "appName": "ai-devkit",
       "license": "MIT",
       "repoURL": "https://github.com/codeaholicguy/ai-devkit",
