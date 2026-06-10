@@ -19,6 +19,7 @@ def fire(
     module: Annotated[bool, typer.Option("--module", "-m", help="Launch the main file")] = False,
     script: Annotated[bool, typer.Option("--script", "-s", help="Launch as a script without fire")] = False,
     optimized: Annotated[bool, typer.Option("--optimized", "-O", help="Run the optimized version of the function")] = False,
+    jit: Annotated[bool, typer.Option("--jit", "-J", help="Enable CPython experimental JIT with PYTHON_JIT=1")] = False,
     root_repo: Annotated[bool, typer.Option("--root-repo", "-r", help="Resolve and search from the repository root")] = False,
     remote: Annotated[bool, typer.Option("--remote", "-R", help="Launch on a remote machine")] = False,
     streamlit: Annotated[bool, typer.Option("--streamlit", "-S", help="Run as streamlit app")] = False,
@@ -53,6 +54,7 @@ def fire(
         PathExport=PathExport,
         git_pull=git_pull,
         optimized=optimized,
+        jit=jit,
         watch=watch,
     )
     try:

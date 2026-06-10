@@ -1,11 +1,13 @@
 """Pure Python implementation for fire_jobs route command - no typer dependencies."""
 
+import platform
 import subprocess
-from typing import Callable
+from typing import Callable, Literal
 from pathlib import Path
 from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper import FireJobArgs
 
 RandStrFunc = Callable[[int], str]
+type SupportedPlatformSystem = Literal["Windows", "Linux", "Darwin"]
 
 
 def route(args: FireJobArgs, fire_args: str) -> None:
@@ -19,7 +21,7 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     print(f"💾 Selected file: {choice_file}.\nRepo root: {repo_root}")
 
     if args.marimo:
-        _handle_marimo(choice_file=choice_file, repo_root=repo_root, randstr_func=randstr)
+        _handle_marimo(choice_file=choice_file, repo_root=repo_root, randstr_func=randstr, jit=args.jit)
         return
 
     kwargs_dict = _prepare_kwargs(args=args, choice_file=choice_file)
@@ -56,7 +58,7 @@ def _get_search_root(root_repo: bool) -> Path | None:
     return repo_root
 
 
-def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc) -> None:
+def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc, jit: bool) -> None:
     """Handle marimo notebook launch."""
     print(f"🧽 Preparing to launch Marimo notebook for `{choice_file}`...")
     project_segment = f"--project {repo_root} " if repo_root is not None else ""
@@ -87,6 +89,8 @@ uv run {project_segment} --with marimo --with pydantic-ai-slim marimo edit --hos
 """
     from stackops.utils.code import exit_then_run_shell_script
 
+    if jit:
+        script = _prepend_python_jit_env(command=script, platform_system=_get_supported_platform_system())
     print(f"🚀 Launching Marimo notebook for `{choice_file}`...")
     exit_then_run_shell_script(script)
 
@@ -281,13 +285,37 @@ def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path,
         command = export_line + "\n" + command
 
     if args.loop:
-        import platform
-
-        if platform.system() in ["Linux", "Darwin"]:
+        platform_system = _get_supported_platform_system()
+        if platform_system in ["Linux", "Darwin"]:
             command = command + "\nsleep 0.5"
-        elif platform.system() == "Windows":
+        elif platform_system == "Windows":
             command = "$ErrorActionPreference = 'SilentlyContinue';\n" + command + "\nStart-Sleep -Seconds 0.5"
         else:
-            raise NotImplementedError(f"Platform {platform.system()} not supported.")
+            raise NotImplementedError(f"Platform {platform_system} not supported.")
+
+    if args.jit:
+        command = _prepend_python_jit_env(command=command, platform_system=_get_supported_platform_system())
 
     return command
+
+
+def _get_supported_platform_system() -> SupportedPlatformSystem:
+    return _normalize_supported_platform_system(platform_system=platform.system())
+
+
+def _normalize_supported_platform_system(platform_system: str) -> SupportedPlatformSystem:
+    match platform_system:
+        case "Windows" | "Linux" | "Darwin":
+            return platform_system
+        case _:
+            raise NotImplementedError(f"Platform {platform_system} not supported.")
+
+
+def _prepend_python_jit_env(command: str, platform_system: SupportedPlatformSystem) -> str:
+    """Set PYTHON_JIT before launching Python-backed commands."""
+    match platform_system:
+        case "Windows":
+            env_line = "$env:PYTHON_JIT = '1'"
+        case "Linux" | "Darwin":
+            env_line = "export PYTHON_JIT=1"
+    return f"{env_line}\n{command}"

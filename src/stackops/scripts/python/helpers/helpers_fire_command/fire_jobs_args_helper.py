@@ -25,6 +25,7 @@ class FireJobArgs:
     PathExport: bool = False
     git_pull: bool = False
     optimized: bool = False
+    jit: bool = False
     watch: bool = False
 
 

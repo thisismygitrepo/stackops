@@ -33,6 +33,7 @@ def fire(
     module: Annotated[bool, typer.Option("--module", "-m", help="Launch the main file")] = False,
     script: Annotated[bool, typer.Option("--script", "-s", help="Launch as a script without fire")] = False,
     optimized: Annotated[bool, typer.Option("--optimized", "-O", help="Run the optimized version of the function")] = False,
+    jit: Annotated[bool, typer.Option("--jit", "-J", help="Enable CPython experimental JIT with PYTHON_JIT=1")] = False,
     root_repo: Annotated[bool, typer.Option("--root-repo", "-r", help="Resolve and search from the repository root")] = False,
     remote: Annotated[bool, typer.Option("--remote", "-R", help="Launch on a remote machine")] = False,
     holdDirectory: Annotated[bool, typer.Option("--holdDirectory", "-D", help="Hold current directory and avoid cd'ing to the script directory")] = False,
@@ -44,7 +45,7 @@ def fire(
     from stackops.scripts.python.fire_jobs import fire as fire_impl
     fire_impl(ctx=ctx, path=path, function=function, cmd=cmd, interactive=interactive, debug=debug,
               choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,
-              script=script, optimized=optimized, root_repo=root_repo,
+              script=script, optimized=optimized, jit=jit, root_repo=root_repo,
               remote=remote, streamlit=streamlit, holdDirectory=holdDirectory,
               PathExport=PathExport, git_pull=git_pull, watch=watch)
 

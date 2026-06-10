@@ -23,7 +23,7 @@ fire [OPTIONS] [PATH] [FUNCTION]
 
 | Area | Flags |
 | --- | --- |
-| General execution | `--script`, `--module`, `--interactive`, `--debug`, `--optimized`, `--frozen` (`-F`) |
+| General execution | `--script`, `--module`, `--interactive`, `--debug`, `--optimized`, `--jit` (`-J`), `--frozen` (`-F`) |
 | Function selection | `--choose-function` |
 | Notebook and app launch | `--jupyter`, `--marimo`, `--streamlit`, `--environment` |
 | Shell and background helpers | `--cmd`, `--loop`, `--watch`, `--git-pull` |
@@ -119,6 +119,7 @@ fire analysis.py -j
 ## Interactive and development helpers
 
 - `--interactive` launches IPython with the default profile.
+- `--jit` (`-J`) sets `PYTHON_JIT=1` before launching the Python-backed command. This opts into CPython's experimental JIT when the selected interpreter supports it.
 - `--watch` prefixes the final command with `watchexec --restart --exts py,sh,ps1`.
 - `--git-pull` runs `git -C <script-dir> pull` first.
 - `--PathExport` prepends a shell snippet that appends the repo root to `PYTHONPATH`.
