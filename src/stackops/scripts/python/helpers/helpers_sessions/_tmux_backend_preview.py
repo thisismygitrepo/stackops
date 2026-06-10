@@ -1,6 +1,21 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
+from collections.abc import Sequence
 from subprocess import CompletedProcess
-from typing import Callable
+from typing import Callable, Literal, TypeAlias, TypedDict
+
+
+PaneStatusCategory: TypeAlias = Literal["idle", "running", "exited", "unknown"]
+
+
+class ClassifiedPane(TypedDict):
+    window_index: str
+    window_name: str
+    pane_index: str
+    process_name: str
+    status: str
+    category: PaneStatusCategory
+    cwd: str
+    is_active: bool
 
 
 def session_sort_key(
@@ -107,10 +122,108 @@ def _render_window_summary_table(windows: list[dict[str, str]]) -> list[str]:
     return lines
 
 
-def _render_pane_details_table(
+def _classify_status(status: str) -> PaneStatusCategory:
+    if status == "idle shell":
+        return "idle"
+    if status.startswith("running:"):
+        return "running"
+    if status.startswith("exited ("):
+        return "exited"
+    return "unknown"
+
+
+def _classify_panes_by_window(
     windows: list[dict[str, str]],
     panes_by_window: dict[str, list[dict[str, str]]],
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
+) -> dict[str, list[ClassifiedPane]]:
+    classified_panes_by_window: dict[str, list[ClassifiedPane]] = {}
+    for window in windows:
+        window_index = window["window_index"]
+        classified_panes: list[ClassifiedPane] = []
+        for pane in panes_by_window.get(window_index, []):
+            process_name, status = classify_pane_status_fn(pane)
+            classified_panes.append(
+                {
+                    "window_index": window_index,
+                    "window_name": window["window_name"],
+                    "pane_index": pane["pane_index"],
+                    "process_name": process_name,
+                    "status": status,
+                    "category": _classify_status(status=status),
+                    "cwd": pane["pane_cwd"] or "—",
+                    "is_active": bool(pane["pane_active"]),
+                }
+            )
+        classified_panes_by_window[window_index] = classified_panes
+    return classified_panes_by_window
+
+
+def _process_group_name(process_name: str) -> str:
+    text = process_name.strip().strip("`")
+    if not text or text == "—":
+        return "—"
+    return text.split(maxsplit=1)[0]
+
+
+def _format_process_counts(process_counts: Counter[str]) -> str:
+    if not process_counts:
+        return "—"
+    ordered_processes = sorted(process_counts.items(), key=lambda item: (-item[1], item[0]))
+    return ", ".join(
+        f"{process_name} x{count}" if count > 1 else process_name
+        for process_name, count in ordered_processes
+    )
+
+
+def _render_process_summary_table(classified_panes_by_window: dict[str, list[ClassifiedPane]]) -> list[str]:
+    category_counts: Counter[PaneStatusCategory] = Counter()
+    running_process_counts: Counter[str] = Counter()
+    total_panes = 0
+
+    for classified_panes in classified_panes_by_window.values():
+        for pane in classified_panes:
+            total_panes += 1
+            category = pane["category"]
+            category_counts[category] += 1
+            if category == "running":
+                running_process_counts[_process_group_name(process_name=pane["process_name"])] += 1
+
+    return [
+        "## Process Summary",
+        "",
+        "| Panes | Idle Shell | Running | Exited | Unknown | Running Processes |",
+        "|------:|-----------:|--------:|-------:|--------:|-------------------|",
+        (
+            f"| {total_panes} | {category_counts['idle']} | {category_counts['running']} | "
+            f"{category_counts['exited']} | {category_counts['unknown']} | "
+            f"{_format_process_counts(process_counts=running_process_counts)} |"
+        ),
+        "",
+    ]
+
+
+def _render_window_pane_details_table(
+    classified_panes: Sequence[ClassifiedPane],
+) -> list[str]:
+    lines = [
+        "| Pane | Process | Status | Directory |",
+        "|------|---------|--------|-----------|",
+    ]
+    if not classified_panes:
+        lines.append("| — | — | — | — |")
+    for pane in classified_panes:
+        active_flag = " ⇐" if pane["is_active"] else ""
+        lines.append(
+            f"| {pane['pane_index']}{active_flag} | {pane['process_name']} | {pane['status']} | `{pane['cwd']}` |"
+        )
+    lines.append("")
+    return lines
+
+
+def _render_pane_details_table(
+    windows: list[dict[str, str]],
+    classified_panes_by_window: dict[str, list[ClassifiedPane]],
 ) -> list[str]:
     lines = [
         "## Pane Details",
@@ -119,16 +232,14 @@ def _render_pane_details_table(
         "|---------|------------|------|---------|--------|-----------|",
     ]
     for window in windows:
-        window_panes = panes_by_window.get(window["window_index"], [])
+        window_panes = classified_panes_by_window.get(window["window_index"], [])
         if not window_panes:
             lines.append(f"| {window['window_index']} | {window['window_name']} | — | — | — | — |")
             continue
         for pane in window_panes:
-            process_name, status = classify_pane_status_fn(pane)
-            cwd = pane["pane_cwd"] or "—"
-            active_flag = " ⇐" if pane["pane_active"] else ""
+            active_flag = " ⇐" if pane["is_active"] else ""
             lines.append(
-                f"| {window['window_index']} | {window['window_name']} | {pane['pane_index']}{active_flag} | {process_name} | {status} | `{cwd}` |"
+                f"| {window['window_index']} | {window['window_name']} | {pane['pane_index']}{active_flag} | {pane['process_name']} | {pane['status']} | `{pane['cwd']}` |"
             )
     lines.append("")
     return lines
@@ -144,10 +255,16 @@ def build_preview(
     if windows is None:
         return "\n".join(lines + ["", pane_warning or "No preview data available"])
 
+    classified_panes_by_window = _classify_panes_by_window(
+        windows=windows,
+        panes_by_window=panes_by_window,
+        classify_pane_status_fn=classify_pane_status_fn,
+    )
     lines.append(f"  |  **windows:** {len(windows)}")
     lines.append("")
+    lines.extend(_render_process_summary_table(classified_panes_by_window=classified_panes_by_window))
     lines.extend(_render_window_summary_table(windows))
-    lines.extend(_render_pane_details_table(windows, panes_by_window, classify_pane_status_fn))
+    lines.extend(_render_pane_details_table(windows, classified_panes_by_window))
     if pane_warning:
         lines.append(f"> ⚠ pane query warning: {pane_warning}")
     return "\n".join(lines)
@@ -160,23 +277,21 @@ def build_window_preview(
     pane_warning: str | None,
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
 ) -> str:
+    classified_panes_by_window = _classify_panes_by_window(
+        windows=[window],
+        panes_by_window={window["window_index"]: panes},
+        classify_pane_status_fn=classify_pane_status_fn,
+    )
+    classified_panes = classified_panes_by_window[window["window_index"]]
     lines = [
         f"# Session: {session_name}",
         "",
         "**backend:** tmux",
         f"**window:** {window['window_index']}:{window['window_name']}",
         "",
-        "| Pane | Process | Status | Directory |",
-        "|------|---------|--------|-----------|",
     ]
-    if not panes:
-        lines.append("| — | — | — | — |")
-    for pane in panes:
-        process_name, status = classify_pane_status_fn(pane)
-        cwd = pane["pane_cwd"] or "—"
-        active_flag = " ⇐" if pane["pane_active"] else ""
-        lines.append(f"| {pane['pane_index']}{active_flag} | {process_name} | {status} | `{cwd}` |")
-    lines.append("")
+    lines.extend(_render_process_summary_table(classified_panes_by_window=classified_panes_by_window))
+    lines.extend(_render_window_pane_details_table(classified_panes=classified_panes))
     if pane_warning:
         lines.append(f"> ⚠ pane query warning: {pane_warning}")
     return "\n".join(lines)
