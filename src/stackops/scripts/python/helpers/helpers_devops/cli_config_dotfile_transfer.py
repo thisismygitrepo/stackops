@@ -83,7 +83,7 @@ def export_dotfiles(
 
     port = 8888
     msg = f"""On the remote machine, run the following:
-d c i -u http://{local_ipv4}:{port} -p {pwd}
+d c I -u http://{local_ipv4}:{port} -p {pwd}
 """
 
     from stackops.utils.accessories import display_with_flashy_style

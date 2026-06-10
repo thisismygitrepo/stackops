@@ -18,8 +18,8 @@ The schema lives in `stackops.utils.schemas.layouts.layout_types`.
 
 ### Helper behavior
 
-- `serialize_layouts_to_file(layouts, version, path)` writes a new layout file with `"$schema": "https://bit.ly/cfglayout"`.
-- If the target file already exists, `serialize_layouts_to_file()` replaces layouts that share the same `layoutName` and appends new ones.
+- `serialize_layouts_to_file(layouts, version, path, write_mode="replace_file")` writes a layout file with `"$schema": "https://bit.ly/cfglayout"` and replaces any existing file content.
+- `serialize_layouts_to_file(layouts, version, path, write_mode="merge_by_layout_name")` preserves existing layouts, replaces layouts that share the same `layoutName`, and appends new layout names.
 - `substitute_home(tabs)` expands `~` and `$HOME` and rewrites shorthand command prefixes:
   - `f ...` -> `~/.config/stackops/scripts/wrap_stackops fire ...`
   - `t ...` -> `~/.config/stackops/scripts/wrap_stackops terminal ...`
