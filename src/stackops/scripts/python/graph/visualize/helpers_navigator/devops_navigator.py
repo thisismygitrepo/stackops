@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "stackops>=26.6.1",
+#     "stackops>=26.6.2",
 #     "textual",
 # ]
 # ///

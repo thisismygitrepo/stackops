@@ -62,7 +62,7 @@ def use_textual_options_form(
 
     from stackops.utils.code import run_lambda_function
     uv_with, uv_project_dir = resolve_uv_run_config(cwd=Path.cwd(), module_file=Path(__file__).resolve())
-    # uv_with, uv_project_dir = ["textual", "stackops>=26.6.1"], None
+    # uv_with, uv_project_dir = ["textual", "stackops>=26.6.2"], None
     run_lambda_function(
         lambda: func(
             inputs=options,
