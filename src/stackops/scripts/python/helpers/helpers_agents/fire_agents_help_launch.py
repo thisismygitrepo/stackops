@@ -3,7 +3,7 @@ from math import isfinite
 from pathlib import Path
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER, AI_SPEC, API_SPEC, DEFAULT_STAGGER_MAX
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, AI_SPEC, API_SPEC, DEFAULT_STAGGER_MAX
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig
 from stackops.utils.source_of_truth import dotfiles_llm_api_keys_path

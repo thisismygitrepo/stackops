@@ -17,7 +17,7 @@ from stackops.utils.schemas.installer.installer_types import (
     get_normalized_arch,
     get_os_name,
 )
-from stackops.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
+from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 from stackops.utils.path_core import delete_path
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 from stackops.utils.files.read import read_json

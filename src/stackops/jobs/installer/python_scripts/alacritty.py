@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
-from stackops.jobs.installer.python_scripts.main_protocol import (
+from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
     
 )

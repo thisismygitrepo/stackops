@@ -4,7 +4,7 @@ from pathlib import Path
 import platform
 import subprocess
 from typing import TYPE_CHECKING
-from stackops.jobs.installer.python_scripts.main_protocol import (
+from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
     
 )

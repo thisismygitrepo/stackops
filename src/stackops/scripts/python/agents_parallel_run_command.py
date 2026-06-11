@@ -5,7 +5,7 @@ from typing import Annotated, get_args
 import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import PARALLEL_RUNS_SOURCE, ParallelCreateValues
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 

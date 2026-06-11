@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 

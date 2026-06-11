@@ -7,7 +7,7 @@ from rich import box
 from rich.console import Console
 from rich.panel import Panel
 import stackops.jobs.installer.linux_scripts as linux_scripts
-from stackops.jobs.installer.python_scripts.main_protocol import InstallerPythonScriptMain
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.schemas.installer.installer_types import InstallerData
 

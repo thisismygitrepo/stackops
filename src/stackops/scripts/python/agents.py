@@ -9,7 +9,7 @@ import typer
 from stackops.scripts.python.agents_browser import get_app as get_browser_app
 from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
 from stackops.scripts.python.helpers.helpers_agents.agents_run_context import PROMPTS_SOURCE
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_SCOPE

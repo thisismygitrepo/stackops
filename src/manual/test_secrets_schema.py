@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import SecretRecord
+from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+from stackops.secrets.types import SecretRecord
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SECRETS_SCHEMA_PATH = REPO_ROOT / "src" / "stackops" / "utils" / "schemas" / "secrets" / "secrets.schema.json"
-SECRETS_EXAMPLE_PATH = REPO_ROOT / "src" / "stackops" / "utils" / "schemas" / "secrets" / "secrets.example.json"
+SECRETS_SCHEMA_PATH = REPO_ROOT / "src" / "stackops" / "secrets" / "secrets.schema.json"
+SECRETS_EXAMPLE_PATH = REPO_ROOT / "src" / "stackops" / "secrets" / "secrets.example.json"
 
 
 def test_loader_requires_secret_name(tmp_path: Path) -> None:

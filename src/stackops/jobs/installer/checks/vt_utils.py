@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 from rich.progress import Progress, TaskID
 
-from stackops.utils.source_of_truth import read_virus_total_api_key
+from stackops.secrets.readers import read_virus_total_api_key
 
 if TYPE_CHECKING:
     import vt

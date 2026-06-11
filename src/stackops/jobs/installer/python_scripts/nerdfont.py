@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 import stackops.jobs.installer.powershell_scripts as powershell_scripts
-from stackops.jobs.installer.python_scripts.main_protocol import (
+from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
 )
 from stackops.utils.accessories import randstr

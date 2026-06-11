@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
     resolve_prompts_yaml_paths,
 )
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix, resolve_oz_mcp_config_paths
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,

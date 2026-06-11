@@ -103,7 +103,7 @@ def display_available_networks() -> None:
 
 def try_config_connection(config_ssid: str) -> bool:
     try:
-        from stackops.utils.source_of_truth import SECRETS_DOFILE
+        from stackops.secrets.paths import SECRETS_DOFILE
         from stackops.secrets import Login, search_logins
         secrets = search_logins(path=SECRETS_DOFILE, login_name=config_ssid, tags=("wifi",), keys=("ssid", "password"))
         if not secrets:

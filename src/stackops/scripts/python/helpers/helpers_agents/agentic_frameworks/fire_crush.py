@@ -2,7 +2,7 @@
 from pathlib import Path
 # import shlex
 import stackops.scripts.python.helpers.helpers_agents.agentic_frameworks as framework_assets
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AI_SPEC
+from stackops.utils.schemas.fire_agents.fire_agents_types import AI_SPEC
 from stackops.utils.path_reference import get_path_reference_path
 
 

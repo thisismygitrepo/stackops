@@ -5,7 +5,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.terminal import run as terminal_run_command
 from stackops.utils.accessories import get_repo_root
 

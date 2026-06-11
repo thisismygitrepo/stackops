@@ -1,21 +1,5 @@
 from typing import Literal, TypeAlias, TypedDict
 
-from stackops.scripts.python.helpers.helpers_agents.agents_shell import get_agent_command_filename
-
-
-# Vscode extensions for AI-assisted coding.
-# Github copilot
-# Roo
-# Cline
-# Kilocode
-# Continue
-# CodeGPT
-# qodo (and cli)
-
-# Editors based on AI
-# Kiro
-# Cursor
-# Warp
 
 AGENTS: TypeAlias = Literal[
     "agy",
@@ -79,5 +63,4 @@ class AI_SPEC(TypedDict):
     reasoning_effort: ReasoningEffort | None
 
 
-AGENT_NAME_FORMATTER = get_agent_command_filename(idx="{idx}")
 SEARCH_STRATEGIES: TypeAlias = Literal["file_path", "keyword_search", "filename_pattern"]

@@ -5,7 +5,7 @@ from typing import Any
 
 
 def get_import_module_string(py_file: str) -> str:
-    from stackops.scripts.python.helpers.helpers_fire_command.file_wrangler import get_import_module_code
+    from stackops.utils.module_import import get_import_module_code
     from stackops.utils.accessories import get_repo_root
     from pathlib import Path
     repo_root = get_repo_root(Path(py_file))

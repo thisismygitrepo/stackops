@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import stackops.utils.path_core as path_core
-from stackops.jobs.installer.python_scripts.main_protocol import (
+from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
     
 )

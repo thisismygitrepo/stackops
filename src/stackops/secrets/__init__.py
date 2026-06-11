@@ -1,12 +1,13 @@
 """Search StackOps secrets with exact selectors only."""
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 
-from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretValueMap
+from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+from stackops.secrets.types import Login, SecretRecord, SecretRotation, SecretValueMap
+
+SECRETS_EXAMPLE_PATH_REFERENCE = "secrets.example.json"
+SECRETS_SCHEMA_PATH_REFERENCE = "secrets.schema.json"
 
 DEFAULT_LOCAL_SECRETS_PATH = Path(".stackops") / "secrets" / "secrets.json"
 
@@ -75,9 +76,8 @@ def search_logins(
 
 def _resolve_path(path: str | Path | None) -> Path:
     if path is None:
-        from stackops.utils.source_of_truth import SECRETS_DOFILE
+        from stackops.secrets.paths import SECRETS_DOFILE
         return SECRETS_DOFILE
-        # return Path.cwd() / DEFAULT_SECRETS_PATH
     expanded_path = Path(path).expanduser()
     if expanded_path.is_absolute():
         return expanded_path

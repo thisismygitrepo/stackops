@@ -18,8 +18,8 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interacti
     choose_interactive_options,
 )
 from stackops.secrets import render_secret_value
-from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretRotation, SecretStringMap, SecretsFile, SecretValueMap
+from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+from stackops.secrets.types import Login, SecretRecord, SecretRotation, SecretStringMap, SecretsFile, SecretValueMap
 
 SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
 SECRETS_FILE_VERSION = "0.5"
@@ -461,7 +461,7 @@ def _prompt_optional_positive_int(label: str) -> int | None:
 
 
 def _read_default_secrets_template() -> str:
-    import stackops.utils.schemas.secrets as secrets_assets
+    import stackops.secrets as secrets_assets
 
     from stackops.utils.path_reference import get_path_reference_path
 
@@ -473,7 +473,7 @@ def _write_default_secrets_schema(schema_path: Path) -> None:
     if schema_path.exists():
         return
 
-    import stackops.utils.schemas.secrets as secrets_assets
+    import stackops.secrets as secrets_assets
 
     from stackops.utils.path_reference import get_path_reference_path
 

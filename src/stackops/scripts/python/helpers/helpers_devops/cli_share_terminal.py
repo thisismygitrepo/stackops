@@ -2,7 +2,8 @@
 from typing import Annotated
 import typer
 
-from stackops.utils.source_of_truth import DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH, read_quick_password
+from stackops.utils.source_of_truth import DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH
+from stackops.secrets.readers import read_quick_password
 
 """
 reference:

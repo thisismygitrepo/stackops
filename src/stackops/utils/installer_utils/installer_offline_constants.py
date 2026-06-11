@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Final
 
 from stackops.utils.source_of_truth import CONFIG_ROOT as SOURCE_CONFIG_ROOT
-from stackops.utils.source_of_truth import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
+from stackops.utils.source_of_truth import LIBRARY_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 CONFIG_ROOT: Path = SOURCE_CONFIG_ROOT
 UV_TOOL_BINARIES: list[str] = [
@@ -58,6 +58,7 @@ BINARY_NAMES: list[str] = [
 DEFAULT_OUTPUT_ROOT: Path = CONFIG_ROOT.joinpath("offline_installers")
 OFFLINE_INSTALLER_UPLOAD_CLOUD: Final[str] = "gdp"
 OFFLINE_INSTALLER_UPLOAD_REMOTE_ROOT: Final[str] = "myhome"
+OFFLINE_INSTALLER_URL_MAP_PATH: Path = LIBRARY_ROOT / "jobs" / "scripts_dynamic" / "download_stackops_offline_installer.json"
 
 
 def resolve_install_path(*, system_name: str) -> Path:

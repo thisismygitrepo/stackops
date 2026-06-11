@@ -1,14 +1,12 @@
 import os
 from pathlib import Path
-from typing import Annotated, Literal, TypedDict, cast
+from typing import Annotated, Literal
 
 import typer
 
 from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
-
 ENV_SUMMARY_LIMIT = 96
-MACHINE_SPECS_COMMAND_NAME = "get-machine-specs"
 
 
 def _truncate_text(text: str, limit: int) -> tuple[str, int]:
@@ -262,64 +260,6 @@ source ./.venv/bin/activate
     exit_then_run_shell_script(code)
 
 
-class MachineSpecs(TypedDict):
-    system: Literal["Windows", "Linux", "Darwin"]
-    distro: str
-    home_dir: str
-    hostname: str
-    release: str
-    version: str
-    machine: str
-    processor: str
-    python_version: str
-    user: str
-
-
-def get_machine_specs(hardware: bool = False) -> MachineSpecs:
-    """Return the local machine specs."""
-    if hardware:
-        from stackops.scripts.python.helpers.helpers_utils.specs import main
-
-        main()
-        import sys
-
-        sys.exit()
-
-    import platform
-    from stackops.utils.code import get_uv_command
-
-    uv_cmd = get_uv_command(platform=platform.system())
-    command = f"""{uv_cmd} run --with distro python -c "import distro; print(distro.name(pretty=True))" """
-    import subprocess
-    from pathlib import Path
-    import socket
-    import os
-
-    distro = "Unknown"
-    try:
-        distro_process = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
-        detected_distro = distro_process.stdout.strip()
-        if distro_process.returncode == 0 and detected_distro:
-            distro = detected_distro
-    except OSError:
-        pass
-    system = platform.system()
-    if system not in {"Windows", "Linux", "Darwin"}:
-        system = "Linux"
-    specs: MachineSpecs = {
-        "system": cast(Literal["Windows", "Linux", "Darwin"], system),
-        "distro": distro,
-        "home_dir": str(Path.home()),
-        "hostname": socket.gethostname(),
-        "release": platform.release(),
-        "version": platform.version(),
-        "machine": platform.machine(),
-        "processor": platform.processor() or "Unknown",
-        "python_version": platform.python_version(),
-        "user": os.getenv("USER") or os.getenv("USERNAME") or "Unknown",
-    }
-    return specs
-
-
 if __name__ == "__main__":
+    from stackops.utils.machine_specs import get_machine_specs
     get_machine_specs()

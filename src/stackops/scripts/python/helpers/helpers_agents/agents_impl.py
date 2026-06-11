@@ -19,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import 
     resolve_prompt_input,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
     show_agents_create_overview,
     show_created_artifacts_panel,

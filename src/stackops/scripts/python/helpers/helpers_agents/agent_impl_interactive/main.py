@@ -12,7 +12,7 @@ from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.commo
     separator_is_applicable_for_context_path,
 )
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import collect_reviewed_create_options
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import (
+from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     DEFAULT_SEAPRATOR,
     HOST,

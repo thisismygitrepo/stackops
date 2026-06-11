@@ -23,7 +23,7 @@ from rich.panel import Panel
 from rich.table import Table
 from stackops.secrets import Login, SecretsFileError, search_logins
 from stackops.utils.io import GpgCommandError, decrypt_bytes_asymmetric, encrypt_bytes_asymmetric
-from stackops.utils.source_of_truth import SECRETS_DOFILE
+from stackops.secrets.paths import SECRETS_DOFILE
 
 # Keep the historical pwdmgr cache path so existing saved BW_SESSION tokens keep working.
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"

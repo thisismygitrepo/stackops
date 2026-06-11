@@ -12,8 +12,8 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidate
     SecretCandidate,
     load_secret_candidates,
 )
-from stackops.utils.schemas.secrets.secrets_loader import SecretsSchemaError, load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import Login, SecretsFile
+from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+from stackops.secrets.types import Login, SecretsFile
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME
@@ -109,7 +109,7 @@ def _resolve_local_secrets_path(secrets_path: Path | None) -> Path:
 
 
 def _resolve_global_secrets_path() -> Path:
-    from stackops.utils.source_of_truth import SECRETS_DOFILE
+    from stackops.secrets.paths import SECRETS_DOFILE
 
     return SECRETS_DOFILE.expanduser()
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 import shlex
 
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AI_SPEC, ReasoningEffort
+from stackops.utils.schemas.fire_agents.fire_agents_types import AI_SPEC, ReasoningEffort
 
 
 def _pi_thinking_level(reasoning_effort: ReasoningEffort | None) -> str | None:

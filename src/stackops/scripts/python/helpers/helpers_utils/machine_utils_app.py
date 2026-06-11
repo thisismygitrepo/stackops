@@ -71,7 +71,7 @@ def get_machine_specs(
 ) -> None:
     import json
 
-    from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs as impl
+    from stackops.utils.machine_specs import get_machine_specs as impl
     from stackops.utils.source_of_truth import CONFIG_ROOT
 
     if hardware:

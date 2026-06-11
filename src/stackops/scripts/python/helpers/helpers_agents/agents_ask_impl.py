@@ -13,7 +13,7 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
     ReasoningShortcut,

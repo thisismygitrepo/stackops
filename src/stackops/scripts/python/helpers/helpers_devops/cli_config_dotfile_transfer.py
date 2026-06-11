@@ -125,7 +125,7 @@ def _resolve_import_dotfiles_source(url: str) -> Path:
             raise IsADirectoryError(f"Expected an encrypted dotfiles archive file, got: {local_path}")
         return local_path.resolve()
 
-    from stackops.scripts.python.helpers.helpers_utils.download import download
+    from stackops.utils.download import download
 
     downloaded_file = download(url=url, decompress=False, output_dir=str(Path.home()))
     if downloaded_file is None or not downloaded_file.exists():

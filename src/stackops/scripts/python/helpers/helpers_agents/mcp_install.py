@@ -5,7 +5,7 @@ from platform import system
 import re
 from typing import Final, Literal, cast, get_args
 
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
 from stackops.utils.io import remove_c_style_comments

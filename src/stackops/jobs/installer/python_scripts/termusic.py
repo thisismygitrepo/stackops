@@ -12,7 +12,7 @@ import stackops.utils.path_core as path_core
 from rich.console import Console
 from rich.panel import Panel
 
-from stackops.jobs.installer.python_scripts.main_protocol import InstallerPythonScriptMain
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 from stackops.utils.path_core import delete_path

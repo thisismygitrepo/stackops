@@ -6,7 +6,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_share_file import share_file_receive, share_file_send
 from stackops.utils.accessories import display_with_flashy_style
-from stackops.utils.source_of_truth import read_quick_password
+from stackops.secrets.readers import read_quick_password
 
 
 def web_file_explorer(

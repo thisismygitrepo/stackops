@@ -1,7 +1,7 @@
 from pathlib import Path
 import shlex
 
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AI_SPEC
+from stackops.utils.schemas.fire_agents.fire_agents_types import AI_SPEC
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import copilot_reasoning_args
 
 

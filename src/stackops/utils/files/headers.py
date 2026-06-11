@@ -57,7 +57,7 @@ def print_logo(logo: str):
             #     print(Path(random.choice(glob.glob(str(Path(__file__).parent.joinpath("art", "*"))))).read_text())
             character_or_box_color(logo=logo)
         else:
-            from stackops.jobs.installer.package_groups import PACKAGE_NAME
+            from stackops.utils.schemas.installer.package_groups import PACKAGE_NAME
             pacakage_name: PACKAGE_NAME = "eye"
             install_cmd = f"d install --group {pacakage_name}"
             print(f"🔍 Missing ASCII art dependencies. Install with: {install_cmd}  | {avail_boxes=} {avail_cowsay} {avail_figlet} {avail_lolcat=}")

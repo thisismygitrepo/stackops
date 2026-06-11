@@ -5,7 +5,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.source_of_truth import EXCLUDE_DIRS
 

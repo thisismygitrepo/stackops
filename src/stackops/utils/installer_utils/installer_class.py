@@ -7,10 +7,10 @@ from stackops.utils.installer_utils.install_request_logic import (
     should_skip_install,
     validate_install_request,
 )
-from stackops.jobs.installer.python_scripts.main_protocol import (
+from stackops.utils.installer_utils.installer_main_protocol import (
     load_installer_python_script_main,
 )
-from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
+from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LIBRARY_ROOT
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows, check_tool_exists
 from stackops.utils.schemas.installer.installer_types import (
     InstallRequest,
@@ -196,9 +196,7 @@ class Installer:
                     rprint(Panel(group_content, title=desc, style="red"))
                     raise RuntimeError(f"{desc} failed with return code {result.returncode}")
             elif script_installer:
-                import stackops.jobs.installer as module
-                from pathlib import Path
-                search_root = Path(module.__file__).parent
+                search_root = LIBRARY_ROOT / "jobs" / "installer"
                 search_results = list(search_root.rglob(installer_arch_os))
                 if len(search_results) == 0:
                     raise FileNotFoundError(f"Could not find installation script: {installer_arch_os}")

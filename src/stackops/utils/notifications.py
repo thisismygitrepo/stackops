@@ -69,7 +69,7 @@ EMAIL_SECRET_KEYS: tuple[str, str, str, str, str] = ("email_add", "password", "e
 class Email:
     def __init__(self, config_name: str):
         from stackops.secrets import Login, render_secret_value, search_logins
-        from stackops.utils.source_of_truth import SECRETS_DOFILE
+        from stackops.secrets.paths import SECRETS_DOFILE
         secrets = search_logins(path=SECRETS_DOFILE, login_name=config_name, keys=EMAIL_SECRET_KEYS)
         if len(secrets) == 0:
             expected_entry: Login = {

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Final, Literal, TypeAlias
 
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, ReasoningEffort
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, ReasoningEffort
 
 
 ReasoningShortcut: TypeAlias = Literal["n", "l", "m", "h", "x"]

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Sequence
 from rich.console import Console
 from rich.panel import Panel
 
-from stackops.jobs.installer.python_scripts.main_protocol import InstallerPythonScriptMain
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_cli import install_if_missing
 from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH, check_tool_exists
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_os_name

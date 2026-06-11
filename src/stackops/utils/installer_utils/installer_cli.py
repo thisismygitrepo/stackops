@@ -40,7 +40,7 @@ def _build_installer_option_to_data(installers: list[InstallerData]) -> dict[str
 def _build_interactive_option_previews(
     category_display_to_name: dict[str, str], installer_option_to_data: dict[str, InstallerData]
 ) -> dict[str, str]:
-    from stackops.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
+    from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 
     option_previews: dict[str, str] = {}
     for display_label, group_name in category_display_to_name.items():
@@ -186,7 +186,7 @@ def install_group(package_group: str, install_request: InstallRequest) -> None:
     from rich.console import Console
     from rich.panel import Panel
     # from rich.table import Table
-    from stackops.jobs.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
+    from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
     if package_group in PACKAGE_GROUP2NAMES:
         panel = Panel(f"[bold yellow]Installing programs from category: [green]{package_group}[/green][/bold yellow]", title="[bold blue]📦 Category Installation[/bold blue]", border_style="blue", padding=(1, 2))
         console = Console()

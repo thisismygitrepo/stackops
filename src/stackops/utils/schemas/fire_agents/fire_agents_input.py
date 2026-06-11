@@ -5,10 +5,8 @@ capturing all user inputs collected during interactive execution.
 """
 
 from pathlib import Path
-from typing import TypedDict, Literal, NotRequired
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch import AGENTS
-
-SEARCH_STRATEGIES = Literal["file_path", "keyword_search", "filename_pattern"]
+from typing import TypedDict, NotRequired
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, SEARCH_STRATEGIES
 
 
 class FilePathSearchInput(TypedDict):

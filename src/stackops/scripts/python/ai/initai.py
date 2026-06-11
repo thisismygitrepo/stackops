@@ -23,7 +23,7 @@ from stackops.scripts.python.ai.solutions.pi import pi
 from stackops.scripts.python.ai.utils.vscode_tasks import (
     add_lint_and_type_check_task,
 )
-from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import (
+from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
 )
 from stackops.utils.accessories import get_repo_root

@@ -180,7 +180,7 @@ def check_config_files_status() -> dict[str, Any]:
 
 def check_important_tools() -> dict[str, dict[str, bool]]:
     """Check if important CLI tools are installed, organized by groups."""
-    from stackops.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
+    from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
 
     group_status: dict[str, dict[str, bool]] = {}
     for group_name, tools in PACKAGE_GROUP2NAMES.items():

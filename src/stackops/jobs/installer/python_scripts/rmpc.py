@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from rich.console import Console
 from rich.panel import Panel
 
-from stackops.jobs.installer.python_scripts.main_protocol import InstallerPythonScriptMain
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_os_name
