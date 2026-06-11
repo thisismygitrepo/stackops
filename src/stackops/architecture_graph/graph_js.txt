@@ -3,6 +3,7 @@ const svg = document.getElementById("graph");
 const search = document.getElementById("search");
 const depthSelect = document.getElementById("depth-select");
 const reset = document.getElementById("reset");
+const toggleBidi = document.getElementById("toggle-bidi");
 const nodeCount = document.getElementById("node-count");
 const edgeCount = document.getElementById("edge-count");
 const moduleCount = document.getElementById("module-count");
@@ -29,6 +30,9 @@ let width = 900;
 let height = 620;
 let edgeLayer = null;
 let nodeLayer = null;
+let highlightBidirectional = false;
+let bidiEdgeKeys = new Set();
+let bidiNodeIds = new Set();
 
 function graphPayloadForDepth(depth) {
   const graphPayload = pagePayload.depths[String(depth)];
@@ -56,9 +60,16 @@ function initializeGraphData(depth) {
 
 function assignParallelOffsets() {
   const directedPairs = new Set(edges.map((edge) => directedEdgeKey(edge.source, edge.target)));
+  bidiEdgeKeys = new Set();
+  bidiNodeIds = new Set();
   for (const edge of edges) {
     const hasReverseEdge = directedPairs.has(directedEdgeKey(edge.target, edge.source));
     edge.parallelOffset = hasReverseEdge ? 9 : 0;
+    if (hasReverseEdge) {
+      bidiEdgeKeys.add(directedEdgeKey(edge.source, edge.target));
+      bidiNodeIds.add(edge.source);
+      bidiNodeIds.add(edge.target);
+    }
   }
 }
 
@@ -185,6 +196,12 @@ reset.addEventListener("click", () => {
     node.pinned = false;
   }
   seedPositions();
+  paint();
+});
+
+toggleBidi.addEventListener("click", () => {
+  highlightBidirectional = !highlightBidirectional;
+  toggleBidi.setAttribute("aria-pressed", String(highlightBidirectional));
   paint();
 });
 

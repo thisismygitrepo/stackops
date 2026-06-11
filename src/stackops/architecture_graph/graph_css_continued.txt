@@ -45,6 +45,17 @@
   stroke-opacity: 0.95;
 }
 
+.edge.bidi {
+  stroke: #e11d48;
+  stroke-opacity: 1;
+  stroke-width: 2.8px;
+}
+
+.node.bidi circle {
+  stroke: #e11d48;
+  stroke-width: 4px;
+}
+
 .edge.dim,
 .node.dim {
   opacity: 0.15;

@@ -126,15 +126,17 @@ function paint() {
   for (const { edge, line } of edgeViews) {
     const isOutgoing = edge.source === selectedId;
     const isIncoming = edge.target === selectedId;
+    const isBidi = highlightBidirectional && bidiEdgeKeys.has(directedEdgeKey(edge.source, edge.target));
     const visibleByQuery = query === "" || edge.source.toLowerCase().includes(query) || edge.target.toLowerCase().includes(query);
-    line.setAttribute("class", ["edge", isOutgoing ? "outgoing" : "", isIncoming ? "incoming" : "", visibleByQuery ? "" : "dim"].join(" "));
-    line.setAttribute("marker-end", isOutgoing ? "url(#arrow-out)" : isIncoming ? "url(#arrow-in)" : "url(#arrow-default)");
+    line.setAttribute("class", ["edge", isOutgoing ? "outgoing" : "", isIncoming ? "incoming" : "", isBidi ? "bidi" : "", visibleByQuery ? "" : "dim"].join(" "));
+    line.setAttribute("marker-end", isOutgoing ? "url(#arrow-out)" : isIncoming ? "url(#arrow-in)" : isBidi ? "url(#arrow-default)" : "url(#arrow-default)");
   }
   for (const { node, group } of nodeViews) {
     const connected = node.id === selectedId || outgoing.has(node.id) || incoming.has(node.id);
     const matches = query === "" || node.id.toLowerCase().includes(query) || node.label.toLowerCase().includes(query);
+    const isBidiNode = highlightBidirectional && bidiNodeIds.has(node.id);
     const dim = (selectedId !== null && !connected) || !matches;
-    group.setAttribute("class", ["node", node.id === selectedId ? "selected" : "", dim ? "dim" : ""].join(" "));
+    group.setAttribute("class", ["node", node.id === selectedId ? "selected" : "", isBidiNode ? "bidi" : "", dim ? "dim" : ""].join(" "));
   }
   renderDetails();
 }

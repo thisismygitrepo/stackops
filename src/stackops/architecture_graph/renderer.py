@@ -39,6 +39,7 @@ def render_html(payload: GraphPagePayload) -> str:
           <span>Depth</span>
           <select id="depth-select"></select>
         </label>
+        <button id="toggle-bidi" type="button" aria-pressed="false">Bidirectional</button>
         <button id="reset" type="button">Reset</button>
       </div>
       <svg id="graph" role="img" aria-label="StackOps dependency graph"></svg>

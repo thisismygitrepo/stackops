@@ -1,1 +1,1 @@
-WRAP_STACKOPS_PATH_REFERENCE = "wrap_stackops.ps1"
+
