@@ -1701,7 +1701,7 @@
                     "    # from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
                     "    # repo_analyzer_1.count_historical_line_edits(repo_path=repo_path)",
                     "    # from stackops.utils.code import run_lambda_function",
-                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=26.6\"])",
+                    "    # run_lambda_function(lambda: func(repo_path=repo_path), uv_project_dir=None, uv_with=[\"stackops>=26.6.2\"])",
                     "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
                     "    if not resolved_repo_path.exists():",
                     "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\", err=True)",
@@ -2827,7 +2827,7 @@
                     "",
                     "    port = 8888",
                     "    msg = f\"\"\"On the remote machine, run the following:",
-                    "d c i -u http://{local_ipv4}:{port} -p {pwd}",
+                    "d c I -u http://{local_ipv4}:{port} -p {pwd}",
                     "\"\"\"",
                     "",
                     "    from stackops.utils.accessories import display_with_flashy_style",
@@ -4749,7 +4749,7 @@
                         "def subset(",
                         "    output_path: Annotated[",
                         "        Path,",
-                        "        typer.Option(\"--output\", \"-o\", help=\"Path for the new subset secrets JSON file.\"),",
+                        "        typer.Option(\"--output\", help=\"Output secrets JSON path. Default mode creates a new file and refuses existing paths.\"),",
                         "    ],",
                         "    secrets_path: Annotated[",
                         "        Path | None,",
@@ -4766,22 +4766,28 @@
                         "            help=\"Source secrets file to read: local/l or global/g. --path overrides the local source.\",",
                         "        ),",
                         "    ] = \"local\",",
-                        "    overwrite: Annotated[",
-                        "        bool,",
-                        "        typer.Option(\"--overwrite\", \"-f\", help=\"Replace the output file if it already exists.\"),",
-                        "    ] = False,",
+                        "    on_conflict: Annotated[",
+                        "        secret_actions.SubsetOutputConflictOption,",
+                        "        typer.Option(",
+                        "            \"--on-conflict\",",
+                        "            \"-o\",",
+                        "            case_sensitive=False,",
+                        "            help=\"How to handle an existing --output path: throw-error/t, overwrite/o, or append/a.\",",
+                        "        ),",
+                        "    ] = \"throw-error\",",
                         "    preview_secrets: Annotated[",
                         "        bool,",
                         "        typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview.\"),",
                         "    ] = False,",
                         ") -> None:",
-                        "    \"\"\"📦 <u> Create a new StackOps secrets file from selected entries.\"\"\"",
+                        "    \"\"\"📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict.\"\"\"",
                         "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
                         "    resolved_output_path = _resolve_output_path(output_path)",
+                        "    resolved_on_conflict = secret_actions.resolve_subset_output_conflict_action(on_conflict=on_conflict)",
                         "    secret_actions.subset_secrets_file(",
                         "        source_path=secret_source.path,",
                         "        output_path=resolved_output_path,",
-                        "        overwrite=overwrite,",
+                        "        on_conflict=resolved_on_conflict,",
                         "        preview_secrets=preview_secrets,",
                         "    )"
                       ],
@@ -4793,20 +4799,17 @@
                           "type": "Path",
                           "default": null,
                           "required": true,
-                          "annotation_raw": "Annotated[Path, typer.Option('--output', '-o', help='Path for the new subset secrets JSON file.')]",
+                          "annotation_raw": "Annotated[Path, typer.Option('--output', help='Output secrets JSON path. Default mode creates a new file and refuses existing paths.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--output",
-                              "-o"
+                              "--output"
                             ],
                             "long_flags": [
                               "--output"
                             ],
-                            "short_flags": [
-                              "-o"
-                            ],
-                            "help": "Path for the new subset secrets JSON file."
+                            "short_flags": [],
+                            "help": "Output secrets JSON path. Default mode creates a new file and refuses existing paths."
                           }
                         },
                         {
@@ -4854,25 +4857,25 @@
                           }
                         },
                         {
-                          "name": "overwrite",
+                          "name": "on_conflict",
                           "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
+                          "type": "secret_actions.SubsetOutputConflictOption",
+                          "default": "throw-error",
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--overwrite', '-f', help='Replace the output file if it already exists.')]",
+                          "annotation_raw": "Annotated[secret_actions.SubsetOutputConflictOption, typer.Option('--on-conflict', '-o', case_sensitive=False, help='How to handle an existing --output path: throw-error/t, overwrite/o, or append/a.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--overwrite",
-                              "-f"
+                              "--on-conflict",
+                              "-o"
                             ],
                             "long_flags": [
-                              "--overwrite"
+                              "--on-conflict"
                             ],
                             "short_flags": [
-                              "-f"
+                              "-o"
                             ],
-                            "help": "Replace the output file if it already exists."
+                            "help": "How to handle an existing --output path: throw-error/t, overwrite/o, or append/a."
                           }
                         },
                         {
@@ -4903,7 +4906,7 @@
                     "typer": {
                       "no_args_is_help": true
                     },
-                    "doc": "📦 <u> Create a new StackOps secrets file from selected entries.",
+                    "doc": "📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict.",
                     "aliases": [
                       {
                         "name": "u",
@@ -23489,6 +23492,7 @@
             "    module: Annotated[bool, typer.Option(\"--module\", \"-m\", help=\"Launch the main file\")] = False,",
             "    script: Annotated[bool, typer.Option(\"--script\", \"-s\", help=\"Launch as a script without fire\")] = False,",
             "    optimized: Annotated[bool, typer.Option(\"--optimized\", \"-O\", help=\"Run the optimized version of the function\")] = False,",
+            "    jit: Annotated[bool, typer.Option(\"--jit\", \"-J\", help=\"Enable CPython experimental JIT with PYTHON_JIT=1\")] = False,",
             "    root_repo: Annotated[bool, typer.Option(\"--root-repo\", \"-r\", help=\"Resolve and search from the repository root\")] = False,",
             "    remote: Annotated[bool, typer.Option(\"--remote\", \"-R\", help=\"Launch on a remote machine\")] = False,",
             "    holdDirectory: Annotated[bool, typer.Option(\"--holdDirectory\", \"-D\", help=\"Hold current directory and avoid cd'ing to the script directory\")] = False,",
@@ -23500,7 +23504,7 @@
             "    from stackops.scripts.python.fire_jobs import fire as fire_impl",
             "    fire_impl(ctx=ctx, path=path, function=function, cmd=cmd, interactive=interactive, debug=debug,",
             "              choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,",
-            "              script=script, optimized=optimized, root_repo=root_repo,",
+            "              script=script, optimized=optimized, jit=jit, root_repo=root_repo,",
             "              remote=remote, streamlit=streamlit, holdDirectory=holdDirectory,",
             "              PathExport=PathExport, git_pull=git_pull, watch=watch)"
           ],
@@ -23784,6 +23788,28 @@
                   "-O"
                 ],
                 "help": "Run the optimized version of the function"
+              }
+            },
+            {
+              "name": "jit",
+              "kind": "positional_or_keyword",
+              "type": "bool",
+              "default": false,
+              "required": false,
+              "annotation_raw": "Annotated[bool, typer.Option('--jit', '-J', help='Enable CPython experimental JIT with PYTHON_JIT=1')]",
+              "typer": {
+                "kind": "option",
+                "param_decls": [
+                  "--jit",
+                  "-J"
+                ],
+                "long_flags": [
+                  "--jit"
+                ],
+                "short_flags": [
+                  "-J"
+                ],
+                "help": "Enable CPython experimental JIT with PYTHON_JIT=1"
               }
             },
             {

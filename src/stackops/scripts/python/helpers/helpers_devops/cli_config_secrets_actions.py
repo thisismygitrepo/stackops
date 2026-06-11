@@ -9,7 +9,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from types import ModuleType
-from typing import Literal, Mapping, NoReturn
+from typing import Literal, Mapping, NoReturn, TypeAlias
 
 import typer
 
@@ -24,7 +24,20 @@ from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, Se
 SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
 SECRETS_FILE_VERSION = "0.5"
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-type SubsetOutputMode = Literal["create", "overwrite", "append"]
+SubsetOutputConflictAction: TypeAlias = Literal["throw-error", "overwrite", "append"]
+SubsetOutputConflictOption: TypeAlias = Literal["throw-error", "t", "overwrite", "o", "append", "a"]
+SUBSET_OUTPUT_CONFLICT_ACTIONS: dict[SubsetOutputConflictOption, SubsetOutputConflictAction] = {
+    "throw-error": "throw-error",
+    "t": "throw-error",
+    "overwrite": "overwrite",
+    "o": "overwrite",
+    "append": "append",
+    "a": "append",
+}
+
+
+def resolve_subset_output_conflict_action(on_conflict: SubsetOutputConflictOption) -> SubsetOutputConflictAction:
+    return SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]
 
 
 def edit_secrets_file(
@@ -70,7 +83,13 @@ def add_secrets_entry(
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Added secrets entry '{entry['name']}' to {secrets_path}")
 
 
-def subset_secrets_file(source_path: Path, output_path: Path, *, output_mode: SubsetOutputMode, preview_secrets: bool) -> None:
+def subset_secrets_file(
+    source_path: Path,
+    output_path: Path,
+    *,
+    on_conflict: SubsetOutputConflictAction,
+    preview_secrets: bool,
+) -> None:
     try:
         secrets_file = load_secrets_file(source_path)
     except SecretsSchemaError as exc:
@@ -78,7 +97,7 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, output_mode: Su
 
     if source_path.resolve(strict=False) == output_path.resolve(strict=False):
         _fail("Subset output path must be different from the source secrets file.")
-    existing_output_file = _load_existing_subset_output(output_path=output_path, output_mode=output_mode)
+    existing_output_file = _load_existing_subset_output(output_path=output_path, on_conflict=on_conflict)
     if existing_output_file is not None and existing_output_file["version"] != secrets_file["version"]:
         _fail(
             f"Cannot append to {output_path}: output version {existing_output_file['version']} "
@@ -109,23 +128,29 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, output_mode: Su
     _chmod_private(output_path, 0o600)
 
     secret_count = sum(len(entry["secrets"]) for entry in selected_entries)
-    action = "Appended" if output_mode == "append" else "Wrote"
-    suffix = f"; output now has {len(subset_file['entries'])} login entry(ies)" if output_mode == "append" else ""
+    action = "Appended" if on_conflict == "append" else "Wrote"
+    suffix = f"; output now has {len(subset_file['entries'])} login entry(ies)" if on_conflict == "append" else ""
     typer.echo(
         typer.style("✅ Success: ", fg=typer.colors.GREEN)
         + f"{action} {len(selected_entries)} selected login entry(ies) and {secret_count} secret bundle(s) to {output_path}{suffix}"
     )
 
 
-def _load_existing_subset_output(*, output_path: Path, output_mode: SubsetOutputMode) -> SecretsFile | None:
-    if output_mode == "create":
+def _load_existing_subset_output(*, output_path: Path, on_conflict: SubsetOutputConflictAction) -> SecretsFile | None:
+    if on_conflict == "throw-error":
         if output_path.exists():
-            _fail(f"Subset output file already exists: {output_path}. Pass --append to add entries or --overwrite to replace it.")
+            _fail(
+                f"Subset output file already exists: {output_path}. "
+                + "Pass --on-conflict append to add entries or --on-conflict overwrite to replace it."
+            )
         return None
-    if output_mode == "overwrite":
+    if on_conflict == "overwrite":
         return None
     if not output_path.exists():
-        _fail(f"Subset output file does not exist: {output_path}. Run without --append to create it first.")
+        _fail(
+            f"Subset output file does not exist: {output_path}. "
+            + "Use --on-conflict throw-error to create a new output file."
+        )
 
     try:
         return load_secrets_file(output_path)
