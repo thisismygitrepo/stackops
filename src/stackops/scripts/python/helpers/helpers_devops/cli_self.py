@@ -518,6 +518,39 @@ def build_docker(
     exit_then_run_shell_script(shell_cmd, strict=True)
 
 
+def build_graph(
+    view: Annotated[
+        bool,
+        typer.Option("--view", "-v", help="Preview the generated HTML graph in the browser."),
+    ] = False,
+) -> None:
+    """🕸 <g> Build the architecture dependency graph."""
+    repo_root = _developer_repo_root()
+    if repo_root is None:
+        typer.echo("❌ Developer repo not found: ~/code/stackops")
+        raise typer.Exit(code=1)
+
+    from stackops.architecture_graph.cli import DEFAULT_OUTPUT_PATH, DEFAULT_PACKAGE_NAME, DEFAULT_SOURCE_ROOT
+    from stackops.architecture_graph.graph import build_graph_page_payload
+    from stackops.architecture_graph.renderer import write_html
+
+    source_root = repo_root.joinpath(DEFAULT_SOURCE_ROOT)
+    output_path = repo_root.joinpath(DEFAULT_OUTPUT_PATH)
+    payload = build_graph_page_payload(
+        source_root=source_root,
+        package_name=DEFAULT_PACKAGE_NAME,
+        initial_depth=1,
+        max_depth=3,
+    )
+    written = write_html(payload=payload, output_path=output_path)
+    typer.echo(f"Wrote {written}")
+
+    if view:
+        from stackops.utils.code import exit_then_run_shell_script
+
+        exit_then_run_shell_script(f'preview --backend browser "{written}"', strict=True)
+
+
 def explore(ctx: typer.Context) -> None:
     """🧭 <x> Explore the StackOps CLI graph."""
     from stackops.scripts.python.graph.visualize import cli_graph_app
@@ -592,6 +625,8 @@ def get_app() -> typer.Typer:
         cli_app.command(name="d", no_args_is_help=False, help="Build docker images (wraps jobs/shell/docker_build_and_publish.sh)", hidden=True)(
             build_docker
         )
+        cli_app.command(name="build-graph", no_args_is_help=False, help="🕸 <g> Build the architecture dependency graph.")(build_graph)
+        cli_app.command(name="g", no_args_is_help=False, help="Build the architecture dependency graph.", hidden=True)(build_graph)
         cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI and skill assets.")
         cli_app.add_typer(cli_self_assets.get_app(), name="a", help="Regenerate repo-local CLI and skill assets.", hidden=True)
         cli_app.add_typer(cli_self_ai_app.get_app(), name="workflows", help="🤖 <w> Developer AI workflows.")

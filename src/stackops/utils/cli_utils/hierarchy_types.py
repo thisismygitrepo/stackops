@@ -583,6 +583,16 @@ StackOpsDevopsSelfBuildDockerCommand = TypedDict(
     },
 )
 
+StackOpsDevopsSelfBuildGraphCommand = TypedDict(
+    "StackOpsDevopsSelfBuildGraphCommand",
+    {
+        "command_name": Literal["build-graph"],
+        "short_name": Literal["g"],
+        "help": Literal["🕸 <g> Build the architecture dependency graph."],
+        "subcommands": EmptySubcommands,
+    },
+)
+
 StackOpsDevopsSelfBuildAssetsUpdateCLIGraphCommand = TypedDict(
     "StackOpsDevopsSelfBuildAssetsUpdateCLIGraphCommand",
     {
@@ -694,6 +704,7 @@ StackOpsDevopsSelfSubcommands = TypedDict(
         "build-installer": StackOpsDevopsSelfBuildInstallerCommand,
         "download-installer": StackOpsDevopsSelfDownloadInstallerCommand,
         "build-docker": StackOpsDevopsSelfBuildDockerCommand,
+        "build-graph": StackOpsDevopsSelfBuildGraphCommand,
         "build-assets": StackOpsDevopsSelfBuildAssetsCommand,
         "workflows": StackOpsDevopsSelfWorkflowsCommand,
     },

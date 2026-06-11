@@ -61,6 +61,7 @@ if TYPE_CHECKING:
         StackOpsDevopsSelfBuildInstallerCommand,
         StackOpsDevopsSelfDownloadInstallerCommand,
         StackOpsDevopsSelfBuildDockerCommand,
+        StackOpsDevopsSelfBuildGraphCommand,
         StackOpsDevopsSelfBuildAssetsUpdateCLIGraphCommand,
         StackOpsDevopsSelfBuildAssetsRegenerateChartsCommand,
         StackOpsDevopsSelfBuildAssetsSubcommands,
@@ -593,6 +594,13 @@ STACKOPS_DEVOPS_SELF_BUILD_DOCKER_COMMAND: "StackOpsDevopsSelfBuildDockerCommand
     "subcommands": {},
 }
 
+STACKOPS_DEVOPS_SELF_BUILD_GRAPH_COMMAND: "StackOpsDevopsSelfBuildGraphCommand" = {
+    "command_name": "build-graph",
+    "short_name": "g",
+    "help": "🕸 <g> Build the architecture dependency graph.",
+    "subcommands": {},
+}
+
 STACKOPS_DEVOPS_SELF_BUILD_ASSETS_UPDATE_CLI_GRAPH_COMMAND: "StackOpsDevopsSelfBuildAssetsUpdateCLIGraphCommand" = {
     "command_name": "update-cli-graph",
     "short_name": "g",
@@ -672,6 +680,7 @@ STACKOPS_DEVOPS_SELF_SUBCOMMANDS: "StackOpsDevopsSelfSubcommands" = {
     "build-installer": STACKOPS_DEVOPS_SELF_BUILD_INSTALLER_COMMAND,
     "download-installer": STACKOPS_DEVOPS_SELF_DOWNLOAD_INSTALLER_COMMAND,
     "build-docker": STACKOPS_DEVOPS_SELF_BUILD_DOCKER_COMMAND,
+    "build-graph": STACKOPS_DEVOPS_SELF_BUILD_GRAPH_COMMAND,
     "build-assets": STACKOPS_DEVOPS_SELF_BUILD_ASSETS_COMMAND,
     "workflows": STACKOPS_DEVOPS_SELF_WORKFLOWS_COMMAND,
 }
