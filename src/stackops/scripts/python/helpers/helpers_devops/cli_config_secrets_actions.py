@@ -9,7 +9,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from types import ModuleType
-from typing import Mapping, NoReturn
+from typing import Literal, Mapping, NoReturn
 
 import typer
 
@@ -24,6 +24,7 @@ from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, Se
 SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
 SECRETS_FILE_VERSION = "0.5"
 ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+type SubsetOutputMode = Literal["create", "overwrite", "append"]
 
 
 def edit_secrets_file(
@@ -69,7 +70,7 @@ def add_secrets_entry(
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Added secrets entry '{entry['name']}' to {secrets_path}")
 
 
-def subset_secrets_file(source_path: Path, output_path: Path, *, overwrite: bool = False, preview_secrets: bool) -> None:
+def subset_secrets_file(source_path: Path, output_path: Path, *, output_mode: SubsetOutputMode, preview_secrets: bool) -> None:
     try:
         secrets_file = load_secrets_file(source_path)
     except SecretsSchemaError as exc:
@@ -77,8 +78,12 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, overwrite: bool
 
     if source_path.resolve(strict=False) == output_path.resolve(strict=False):
         _fail("Subset output path must be different from the source secrets file.")
-    if output_path.exists() and not overwrite:
-        _fail(f"Subset output file already exists: {output_path}. Pass --overwrite to replace it.")
+    existing_output_file = _load_existing_subset_output(output_path=output_path, output_mode=output_mode)
+    if existing_output_file is not None and existing_output_file["version"] != secrets_file["version"]:
+        _fail(
+            f"Cannot append to {output_path}: output version {existing_output_file['version']} "
+            + f"does not match source version {secrets_file['version']}."
+        )
 
     selected_indices = _choose_subset_login_indices(
         secrets_file=secrets_file,
@@ -93,21 +98,59 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, overwrite: bool
     if not selected_entries:
         _fail("No secrets entries selected.")
 
-    subset_file: dict[str, object] = {}
-    if "$schema" in secrets_file:
-        subset_file["$schema"] = secrets_file["$schema"]
-    subset_file["version"] = secrets_file["version"]
-    subset_file["entries"] = selected_entries
+    subset_file = _build_subset_file(
+        source_file=secrets_file,
+        selected_entries=selected_entries,
+        existing_output_file=existing_output_file,
+    )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(subset_file, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     _chmod_private(output_path, 0o600)
 
     secret_count = sum(len(entry["secrets"]) for entry in selected_entries)
+    action = "Appended" if output_mode == "append" else "Wrote"
+    suffix = f"; output now has {len(subset_file['entries'])} login entry(ies)" if output_mode == "append" else ""
     typer.echo(
         typer.style("✅ Success: ", fg=typer.colors.GREEN)
-        + f"Wrote {len(selected_entries)} login entry(ies) and {secret_count} secret bundle(s) to {output_path}"
+        + f"{action} {len(selected_entries)} selected login entry(ies) and {secret_count} secret bundle(s) to {output_path}{suffix}"
     )
+
+
+def _load_existing_subset_output(*, output_path: Path, output_mode: SubsetOutputMode) -> SecretsFile | None:
+    if output_mode == "create":
+        if output_path.exists():
+            _fail(f"Subset output file already exists: {output_path}. Pass --append to add entries or --overwrite to replace it.")
+        return None
+    if output_mode == "overwrite":
+        return None
+    if not output_path.exists():
+        _fail(f"Subset output file does not exist: {output_path}. Run without --append to create it first.")
+
+    try:
+        return load_secrets_file(output_path)
+    except SecretsSchemaError as exc:
+        _fail(f"Cannot append to invalid subset output file: {exc}")
+
+
+def _build_subset_file(
+    *,
+    source_file: SecretsFile,
+    selected_entries: list[Login],
+    existing_output_file: SecretsFile | None,
+) -> SecretsFile:
+    if existing_output_file is None:
+        subset_file: SecretsFile = {"version": source_file["version"], "entries": selected_entries}
+        if "$schema" in source_file:
+            subset_file["$schema"] = source_file["$schema"]
+        return subset_file
+
+    merged_entries = [deepcopy(entry) for entry in existing_output_file["entries"]]
+    merged_entries.extend(selected_entries)
+    subset_file = {"version": existing_output_file["version"], "entries": merged_entries}
+    if "$schema" in existing_output_file:
+        subset_file["$schema"] = existing_output_file["$schema"]
+    return subset_file
 
 
 def _load_or_initialize_add_target(*, secrets_path: Path, create: bool) -> tuple[dict[str, object], bool]:

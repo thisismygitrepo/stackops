@@ -190,7 +190,7 @@ For script-stable matching, use exact selectors. `--name`, `-n` matches `entries
 
 Use `search --source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file.
 
-Use `devops config secrets subset` to choose top-level `entries[]` interactively from one source file and write a new `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. The output path is required with `--output`, `-o`; existing files are not replaced unless `--overwrite`, `-f` is passed.
+Use `devops config secrets subset` to choose top-level `entries[]` interactively from one source file and write a `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. The output path is required with `--output`, `-o`. By default, the command creates a new file and refuses an existing output path. Use `--append`, `-a` to add selected entries to an existing output file, or `--overwrite`, `-f` to replace the output file.
 
 Use `devops config secrets edit` or `devops config secrets e` to open one secrets file. Use `devops config secrets add` or `devops config secrets a` to step through prompts for a new login entry and append it to one file. Both commands default to the local source and accept `--source local|global`, `--path`, and `--create`.
 

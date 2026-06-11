@@ -28,7 +28,7 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support i
 SECRETS_HELP = "Manage StackOps secrets files and define env vars."
 SECRETS_SEARCH_HELP = "Define env vars from StackOps secrets files."
 SECRETS_STATS_HELP = "Show aggregate StackOps secrets inventory stats without printing secret values."
-SECRETS_SUBSET_HELP = "Create a new StackOps secrets file from selected entries."
+SECRETS_SUBSET_HELP = "Create a new StackOps secrets file by default; append with --append."
 SECRETS_SEARCH_EPILOG = """Examples:
   devops config secrets search aws dev iam-access-key
   devops config secrets s github personal-access-token
@@ -185,7 +185,7 @@ def stats(
 def subset(
     output_path: Annotated[
         Path,
-        typer.Option("--output", "-o", help="Path for the new subset secrets JSON file."),
+        typer.Option("--output", "-o", help="Output secrets JSON path. Default mode creates a new file and refuses existing paths."),
     ],
     secrets_path: Annotated[
         Path | None,
@@ -204,20 +204,33 @@ def subset(
     ] = "local",
     overwrite: Annotated[
         bool,
-        typer.Option("--overwrite", "-f", help="Replace the output file if it already exists."),
+        typer.Option("--overwrite", "-f", help="Replace --output if it already exists. Mutually exclusive with --append."),
+    ] = False,
+    append: Annotated[
+        bool,
+        typer.Option("--append", "-a", help="Append selected entries to an existing --output file. Mutually exclusive with --overwrite."),
     ] = False,
     preview_secrets: Annotated[
         bool,
         typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview."),
     ] = False,
 ) -> None:
-    """📦 <u> Create a new StackOps secrets file from selected entries."""
+    """📦 <u> Create a new StackOps secrets file by default; use --append for existing output."""
+    if overwrite and append:
+        fail("--append and --overwrite cannot be used together.")
+
+    output_mode: secret_actions.SubsetOutputMode = "create"
+    if overwrite:
+        output_mode = "overwrite"
+    if append:
+        output_mode = "append"
+
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
     resolved_output_path = _resolve_output_path(output_path)
     secret_actions.subset_secrets_file(
         source_path=secret_source.path,
         output_path=resolved_output_path,
-        overwrite=overwrite,
+        output_mode=output_mode,
         preview_secrets=preview_secrets,
     )
 
