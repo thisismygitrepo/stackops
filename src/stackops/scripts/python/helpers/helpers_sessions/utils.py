@@ -35,7 +35,7 @@ def balance_load(
     try:
         layoutfile: LayoutsFile = json.loads(raw_layout_text)
     except json.JSONDecodeError:
-        from stackops.utils.io import remove_c_style_comments
+        from stackops.utils.files.read import remove_c_style_comments
 
         try:
             layoutfile = json.loads(remove_c_style_comments(raw_layout_text))

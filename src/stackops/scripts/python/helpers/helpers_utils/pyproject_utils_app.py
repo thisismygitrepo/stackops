@@ -386,10 +386,8 @@ def init_project(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.helpers.helpers_utils import (
-        test_runtime as test_runtime_module,
-    )
-    from stackops.scripts.python.helpers.helpers_utils import type_fix as type_fix_module
+    from stackops.scripts.python import agents_test_runtime as test_runtime_module
+    from stackops.scripts.python import agents_type_fix as type_fix_module
 
     pyproject_app = typer.Typer(help="🐍 <p> Pyproject bootstrap and typing utilities", no_args_is_help=True, add_help_option=True, add_completion=False)
     pyproject_app.command(

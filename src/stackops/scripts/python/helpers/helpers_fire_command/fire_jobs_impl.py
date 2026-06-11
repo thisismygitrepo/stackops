@@ -201,8 +201,7 @@ def _create_import_script(
     """Create a script that imports the module and calls the function."""
     from stackops.utils.module_import import get_import_module_code
     from stackops.scripts.python.helpers.helpers_fire_command.file_wrangler import wrap_import_in_try_except
-    from stackops.utils.meta import lambda_to_python_script
-    from stackops.utils.code import print_code
+    from stackops.utils.meta import lambda_to_python_script, print_code
 
     import_code = get_import_module_code(str(choice_file))
     import_code_robust = lambda_to_python_script(

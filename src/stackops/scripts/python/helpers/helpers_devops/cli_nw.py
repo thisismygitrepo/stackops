@@ -108,7 +108,8 @@ def vscode_share(
         case _:
             print(f"Unknown action: {action_normalized}")
             return
-    from stackops.utils.code import print_code, exit_then_run_shell_script
+    from stackops.utils.code import exit_then_run_shell_script
+    from stackops.utils.meta import print_code
 
     print_code(cmd, lexer="bash", desc=desc)
     if action_normalized == "share-local":

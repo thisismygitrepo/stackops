@@ -6,7 +6,7 @@ from pathlib import Path
 
 import stackops.utils.path_core as path_core
 from stackops.utils.source_of_truth import CONFIG_ROOT
-from stackops.utils.code import print_code
+from stackops.utils.meta import print_code
 from stackops.utils.terminal import Response
 from typing import Annotated
 import typer

@@ -117,7 +117,8 @@ Usage examples:
         script = f"""export CROC_SECRET={shlex.quote(secret_code)}
 croc {relay_arg} --yes""".strip()
 
-    from stackops.utils.code import exit_then_run_shell_script, print_code
+    from stackops.utils.code import exit_then_run_shell_script
+    from stackops.utils.meta import print_code
     print_code(code=script, desc="🚀 Receiving file with croc", lexer="powershell" if is_windows else "bash")
     exit_then_run_shell_script(script=script, strict=False)
 
@@ -213,6 +214,7 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
             print_desc = "🚀 sending file with croc"
 
     typer.echo(f"🚀 Sending {send_target}. Use: {receive_hint}")
-    from stackops.utils.code import exit_then_run_shell_script, print_code
+    from stackops.utils.code import exit_then_run_shell_script
+    from stackops.utils.meta import print_code
     print_code(code=script, desc=print_desc, lexer="powershell" if is_windows else "bash")
     exit_then_run_shell_script(script=script, strict=False)

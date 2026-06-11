@@ -4,6 +4,27 @@ from collections.abc import Callable
 from typing import Any
 
 
+def print_code(code: str, lexer: str, desc: str, subtitle: str = "") -> None:
+    import platform
+    try:
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.syntax import Syntax
+        if lexer == "shell":
+            if platform.system() == "Windows":
+                lexer = "powershell"
+            elif platform.system() in ["Linux", "Darwin"]:
+                lexer = "sh"
+            else:
+                raise NotImplementedError(f"Platform {platform.system()} not supported for lexer {lexer}")
+        console = Console()
+        console.print(Panel(Syntax(code=code, lexer=lexer), title=f"📄 {desc}", subtitle=subtitle), style="bold red")
+    except ImportError:
+        print(f"--- {desc} ---")
+        print(code)
+        print(f"--- End of {desc} ---")
+
+
 def get_import_module_string(py_file: str) -> str:
     from stackops.utils.module_import import get_import_module_code
     from stackops.utils.accessories import get_repo_root
@@ -247,7 +268,6 @@ def lambda_to_python_script(lmb: Callable[[], Any],
     return result_text
 
 if __name__ == "__main__":
-    from stackops.utils.code import print_code
     import_code_robust = "<import_code_robust>"
     print_code.__name__ = "blah"
     res = lambda_to_python_script(

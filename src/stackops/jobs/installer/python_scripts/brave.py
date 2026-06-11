@@ -77,7 +77,8 @@ winget install --no-upgrade --name "Brave"                        --Id "Brave.Br
     )
 
     console.print("🔄 EXECUTING | Running Brave Browser installation...", style="bold yellow")
-    from stackops.utils.code import print_code, run_shell_script
+    from stackops.utils.code import run_shell_script
+    from stackops.utils.meta import print_code
     try:
         print_code(code=program, lexer="shell", desc="Installation Script Preview")
         run_shell_script(program, display_script=True, clean_env=False)

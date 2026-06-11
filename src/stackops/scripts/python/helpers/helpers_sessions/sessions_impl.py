@@ -23,7 +23,7 @@ def select_layout(layouts_json_file: str, selected_layouts_names: list[str], sel
         layout_file: LayoutsFile = json.loads(json_str)
     except Exception:
         print(f"Failed to parse the json file {layouts_json_file}, trying to clean the comments and giving it another shot ... ")
-        from stackops.utils.io import remove_c_style_comments
+        from stackops.utils.files.read import remove_c_style_comments
         json_str = remove_c_style_comments(json_str)
         layout_file = json.loads(json_str)
     if len(layout_file["layouts"]) == 0:

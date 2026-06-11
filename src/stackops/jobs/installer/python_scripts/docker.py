@@ -10,7 +10,8 @@ from rich.panel import Panel
 from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
 )
-from stackops.utils.code import print_code, run_shell_script
+from stackops.utils.code import run_shell_script
+from stackops.utils.meta import print_code
 from stackops.utils.schemas.installer.installer_types import InstallerData
 
 

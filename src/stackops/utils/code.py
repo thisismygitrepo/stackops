@@ -4,6 +4,7 @@ import subprocess
 from typing import Any, Literal, Callable, cast
 
 from stackops.utils.accessories import randstr
+from stackops.utils.meta import lambda_to_python_script, print_code
 
 
 def get_uv_command(platform: str) -> str:
@@ -15,27 +16,6 @@ def get_uv_command(platform: str) -> str:
             return '"$HOME/.local/bin/uv" '
         case _:
             return '"$HOME/.local/bin/uv" '
-
-def print_code(code: str, lexer: str, desc: str, subtitle: str = "") -> None:
-    import platform
-    try:
-        from rich.console import Console
-        from rich.panel import Panel
-        from rich.syntax import Syntax
-        if lexer == "shell":
-            if platform.system() == "Windows":
-                lexer = "powershell"
-            elif platform.system() in ["Linux", "Darwin"]:
-                lexer = "sh"
-            else:
-                raise NotImplementedError(f"Platform {platform.system()} not supported for lexer {lexer}")
-        console = Console()
-        console.print(Panel(Syntax(code=code, lexer=lexer), title=f"📄 {desc}", subtitle=subtitle), style="bold red")
-    except ImportError:
-        print(f"--- {desc} ---")
-        print(code)
-        print(f"--- End of {desc} ---")
-
 
 def get_uv_command_executing_python_file(python_file: str, uv_with: list[str] | None,
                                          uv_project_dir: str | None,
@@ -67,7 +47,6 @@ def get_uv_command_executing_python_script(python_script: str, uv_with: list[str
     python_file = Path.home().joinpath("tmp_results", "tmp_scripts", "python", randstr() + ".py")
     python_file.parent.mkdir(parents=True, exist_ok=True)
     if prepend_print:
-        from stackops.utils.meta import lambda_to_python_script
         print_code_string = lambda_to_python_script(lambda: print_code(code=python_script, lexer="python", desc="Temporary Python Script", subtitle="Executing via shell script"),
                                                     in_global=True, import_module=False)
         python_file.write_text(print_code_string + "\n" + python_script, encoding="utf-8")
@@ -78,7 +57,6 @@ def get_uv_command_executing_python_script(python_script: str, uv_with: list[str
 
 
 def get_shell_script_running_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> tuple[str, Path]:
-    from stackops.utils.meta import lambda_to_python_script
     code = lambda_to_python_script(lmb,
                                             in_global=True, import_module=False)
     uv_command, py_file = get_uv_command_executing_python_script(python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)

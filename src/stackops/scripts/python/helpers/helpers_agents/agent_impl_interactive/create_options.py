@@ -5,13 +5,13 @@ from typing import Literal, TypeAlias, cast, get_args
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import order_current_first
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import reasoning_support
+from stackops.utils.options_utils.textual_options_form import use_textual_options_form
 from stackops.utils.options_utils.textual_options_form_types import (
     OptionValue,
     SelectedOptionMap,
     TextualOptionMap,
     TextualSelectOptionSpec,
     TextualTextOptionSpec,
-    use_textual_options_form,
 )
 
 EditableCreateOption: TypeAlias = Literal[

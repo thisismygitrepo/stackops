@@ -164,7 +164,8 @@ sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service instal
 
 """
 
-    from stackops.utils.code import exit_then_run_shell_script, print_code
+    from stackops.utils.code import exit_then_run_shell_script
+    from stackops.utils.meta import print_code
 
     print_code(code, lexer="bash", desc="code to achieve the goal")
     yes = typer.confirm("Do you want to run the above commands now?", default=False)
@@ -197,7 +198,8 @@ sleep 2
 echo "Reconnecting WARP..."
 sudo warp-cli connect
 """
-    from stackops.utils.code import exit_then_run_shell_script, print_code
+    from stackops.utils.code import exit_then_run_shell_script
+    from stackops.utils.meta import print_code
 
     print_code(code, lexer="bash", desc="code to achieve the goal")
     yes = typer.confirm("Do you want to run the above commands now?", default=False)

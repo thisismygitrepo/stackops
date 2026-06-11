@@ -275,7 +275,7 @@ def summarize(
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
-    from stackops.utils.io import remove_c_style_comments
+    from stackops.utils.files.read import remove_c_style_comments
 
     console = Console()
     layout_path_obj = Path(layout_path).expanduser().absolute()

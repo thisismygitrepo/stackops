@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from stackops.utils.source_of_truth import read_stackops_config_string
-from stackops.utils.code import print_code
+from stackops.utils.meta import print_code
 from stackops.utils.options import choose_cloud_interactively
 from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
 from stackops.scripts.python.helpers.helpers_devops.backup_config import (

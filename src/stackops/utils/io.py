@@ -134,61 +134,6 @@ def read_ini(path: "Path", encoding: str | None = None):
     return res
 
 
-def remove_c_style_comments(text: str) -> str:
-    result: list[str] = []
-    index = 0
-    in_string = False
-    escaping = False
-
-    while index < len(text):
-        current = text[index]
-        next_index = index + 1
-        next_character = text[next_index] if next_index < len(text) else ""
-
-        if in_string:
-            result.append(current)
-            if escaping:
-                escaping = False
-            elif current == "\\":
-                escaping = True
-            elif current == '"':
-                in_string = False
-            index += 1
-            continue
-
-        if current == '"':
-            in_string = True
-            result.append(current)
-            index += 1
-            continue
-
-        if current == "/" and next_character == "/":
-            index += 2
-            while index < len(text) and text[index] not in "\r\n":
-                index += 1
-            continue
-
-        if current == "/" and next_character == "*":
-            index += 2
-            while index < len(text):
-                if text[index] == "*" and index + 1 < len(text) and text[index + 1] == "/":
-                    index += 2
-                    break
-                if text[index] in "\r\n":
-                    result.append(text[index])
-                index += 1
-            continue
-
-        result.append(current)
-        index += 1
-
-    return "".join(result)
-
-
-def read_json(path: "Path", r: bool = False, **kwargs: Any) -> Any:
-    from stackops.utils.files.read import read_json as _read_json
-    return _read_json(path, r=r, **kwargs)
-
 
 def from_pickle(path: Path) -> Any:
     return pickle.loads(path.read_bytes())

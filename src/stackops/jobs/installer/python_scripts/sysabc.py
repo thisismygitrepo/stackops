@@ -39,7 +39,8 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         error_msg = f"Unsupported platform: {platform.system()}"
         console.print(Panel.fit("\n".join([error_msg]), title="❌ Error", subtitle="⚠️ Unsupported platform", border_style="red", box=box.ROUNDED))
         raise NotImplementedError(error_msg)
-    from stackops.utils.code import print_code, run_shell_script
+    from stackops.utils.code import run_shell_script
+    from stackops.utils.meta import print_code
 
     print_code(code=program, lexer="shell", desc="Installation Script Preview")
     run_shell_script(program, display_script=True, clean_env=False)

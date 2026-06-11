@@ -17,15 +17,7 @@ class MachineSpecs(TypedDict):
     user: str
 
 
-def get_machine_specs(hardware: bool = False) -> MachineSpecs:
-    if hardware:
-        from stackops.scripts.python.helpers.helpers_utils.specs import main
-
-        main()
-        import sys
-
-        sys.exit()
-
+def get_machine_specs() -> MachineSpecs:
     import platform
     import subprocess
     import socket

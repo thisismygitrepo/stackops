@@ -90,7 +90,7 @@ echo "http://{computer_name}:{port}"
 """
     # from stackops.utils.code import run_shell_script
     # run_shell_script(script)
-    from stackops.utils.code import print_code
+    from stackops.utils.meta import print_code
     print_code(code=script, lexer="shell", desc="Streamlit QR Codes and URLs")
 
     message = f"🚀 Streamlit app is running @:\n1- http://{local_ip_v4}:{port}\n2- http://{computer_name}:{port}\n3- http://localhost:{port}"

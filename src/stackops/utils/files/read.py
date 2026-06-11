@@ -19,13 +19,67 @@ def read_file(path: 'Path', **kwargs: Any) -> Any:
     raise AttributeError(f"Unknown file type. failed to recognize the suffix `{suffix}` of file {path}")
 
 
-def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
-    try:
-        mydict = json.loads(Path(path).read_text(encoding="utf-8"), **kwargs)
-    except Exception:
-        from stackops.utils.io import remove_c_style_comments
+def _remove_c_style_comments(text: str) -> str:
+    result: list[str] = []
+    index = 0
+    in_string = False
+    escaping = False
 
-        mydict = json.loads(remove_c_style_comments(Path(path).read_text(encoding="utf-8")), **kwargs)
+    while index < len(text):
+        current = text[index]
+        next_index = index + 1
+        next_character = text[next_index] if next_index < len(text) else ""
+
+        if in_string:
+            result.append(current)
+            if escaping:
+                escaping = False
+            elif current == "\\":
+                escaping = True
+            elif current == '"':
+                in_string = False
+            index += 1
+            continue
+
+        if current == '"':
+            in_string = True
+            result.append(current)
+            index += 1
+            continue
+
+        if current == "/" and next_character == "/":
+            index += 2
+            while index < len(text) and text[index] not in "\r\n":
+                index += 1
+            continue
+
+        if current == "/" and next_character == "*":
+            index += 2
+            while index < len(text):
+                if text[index] == "*" and index + 1 < len(text) and text[index + 1] == "/":
+                    index += 2
+                    break
+                if text[index] in "\r\n":
+                    result.append(text[index])
+                index += 1
+            continue
+
+        result.append(current)
+        index += 1
+
+    return "".join(result)
+
+
+def remove_c_style_comments(text: str) -> str:
+    return _remove_c_style_comments(text)
+
+
+def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
+    raw_text = Path(path).read_text(encoding="utf-8")
+    try:
+        mydict = json.loads(raw_text, **kwargs)
+    except Exception:
+        mydict = json.loads(_remove_c_style_comments(raw_text), **kwargs)
     _ = r
     return mydict
 

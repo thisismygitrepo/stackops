@@ -71,13 +71,17 @@ def get_machine_specs(
 ) -> None:
     import json
 
-    from stackops.utils.machine_specs import get_machine_specs as impl
     from stackops.utils.source_of_truth import CONFIG_ROOT
 
     if hardware:
-        impl(hardware=hardware)
+        from stackops.scripts.python.helpers.helpers_utils.specs import main
+
+        main()
         return
-    specs = impl(hardware=hardware)
+
+    from stackops.utils.machine_specs import get_machine_specs as impl
+
+    specs = impl()
     typer.echo(specs)
     CONFIG_ROOT.mkdir(parents=True, exist_ok=True)
     path = CONFIG_ROOT.joinpath("machine_specs.json")
