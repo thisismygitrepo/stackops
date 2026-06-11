@@ -29,6 +29,39 @@
   font-weight: 800;
 }
 
+.bidi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.bidi-table th {
+  text-align: left;
+  padding: 6px 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.bidi-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #edf2f7;
+  color: #1f2937;
+}
+
+.bidi-table tr:last-child td {
+  border-bottom: none;
+}
+
+.bidi-table .count {
+  text-align: right;
+  font-weight: 700;
+  color: #e11d48;
+}
+
 .edge {
   fill: none;
   stroke: #94a3b8;
@@ -112,11 +145,13 @@
     flex-wrap: wrap;
   }
 
-  .depth-field {
+  .depth-field,
+  .module-field {
     flex: 1;
   }
 
-  .depth-field select {
+  .depth-field select,
+  .module-field select {
     flex: 1;
   }
 
@@ -124,7 +159,8 @@
     min-height: 420px;
   }
 }
-.depth-field {
+.depth-field,
+.module-field {
   display: inline-flex;
   align-items: center;
   gap: 8px;

@@ -158,7 +158,7 @@ button[aria-pressed="true"] {
 
 .details {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 16px;
   min-width: 0;
   padding: 18px;

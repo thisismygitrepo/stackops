@@ -2,6 +2,7 @@ const pagePayload = JSON.parse(document.getElementById("graph-data").textContent
 const svg = document.getElementById("graph");
 const search = document.getElementById("search");
 const depthSelect = document.getElementById("depth-select");
+const moduleSelect = document.getElementById("module-select");
 const reset = document.getElementById("reset");
 const toggleBidi = document.getElementById("toggle-bidi");
 const nodeCount = document.getElementById("node-count");
@@ -11,6 +12,8 @@ const detailTitle = document.getElementById("detail-title");
 const detailMeta = document.getElementById("detail-meta");
 const outgoingList = document.getElementById("outgoing-list");
 const incomingList = document.getElementById("incoming-list");
+const bidiSummarySection = document.getElementById("bidi-summary-section");
+const bidiSummary = document.getElementById("bidi-summary");
 const legend = document.getElementById("legend");
 const ns = "http://www.w3.org/2000/svg";
 const palette = ["#2563eb", "#dc2626", "#16a34a", "#9333ea", "#f97316", "#0891b2", "#be123c", "#4f46e5", "#65a30d"];
@@ -24,6 +27,7 @@ let groupColor = new Map();
 let edgeViews = [];
 let nodeViews = [];
 let selectedId = null;
+let focusedModuleId = null;
 let dragState = null;
 let suppressNextClick = false;
 let width = 900;
@@ -169,6 +173,7 @@ function setDepth(depth) {
   mountGraphElements();
   resize();
   renderLegend();
+  populateModuleSelect();
   paint();
 }
 
@@ -184,6 +189,21 @@ function populateDepthSelect() {
   depthSelect.value = String(pagePayload.initialDepth);
 }
 
+function populateModuleSelect() {
+  moduleSelect.replaceChildren();
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All Modules";
+  moduleSelect.append(allOption);
+  for (const node of nodes.sort((left, right) => left.id.localeCompare(right.id))) {
+    const option = document.createElement("option");
+    option.value = node.id;
+    option.textContent = node.label;
+    moduleSelect.append(option);
+  }
+  moduleSelect.value = focusedModuleId || "";
+}
+
 svg.addEventListener("click", () => {
   selectedId = null;
   paint();
@@ -191,7 +211,9 @@ svg.addEventListener("click", () => {
 
 reset.addEventListener("click", () => {
   selectedId = null;
+  focusedModuleId = null;
   search.value = "";
+  moduleSelect.value = "";
   for (const node of nodes) {
     node.pinned = false;
   }
@@ -209,4 +231,9 @@ search.addEventListener("input", paint);
 
 depthSelect.addEventListener("change", () => {
   setDepth(Number(depthSelect.value));
+});
+
+moduleSelect.addEventListener("change", () => {
+  focusedModuleId = moduleSelect.value || null;
+  paint();
 });

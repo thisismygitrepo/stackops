@@ -35,6 +35,10 @@ def render_html(payload: GraphPagePayload) -> str:
     <section class="graph-panel" aria-label="Dependency graph">
       <div class="toolbar">
         <input id="search" type="search" placeholder="Filter modules" autocomplete="off">
+        <label class="module-field" for="module-select">
+          <span>Module</span>
+          <select id="module-select"></select>
+        </label>
         <label class="depth-field" for="depth-select">
           <span>Depth</span>
           <select id="depth-select"></select>
@@ -58,6 +62,10 @@ def render_html(payload: GraphPagePayload) -> str:
       <section>
         <h3>Imported By</h3>
         <ul id="incoming-list" class="edge-list"></ul>
+      </section>
+      <section id="bidi-summary-section" hidden>
+        <h3>Bidirectional Dependencies</h3>
+        <table id="bidi-summary" class="bidi-table"></table>
       </section>
     </aside>
   </main>

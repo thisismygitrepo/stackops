@@ -123,22 +123,29 @@ function paint() {
   const query = search.value.trim().toLowerCase();
   const outgoing = new Set(edges.filter((edge) => edge.source === selectedId).map((edge) => edge.target));
   const incoming = new Set(edges.filter((edge) => edge.target === selectedId).map((edge) => edge.source));
+  const focusedOutgoing = focusedModuleId ? new Set(edges.filter((edge) => edge.source === focusedModuleId).map((edge) => edge.target)) : new Set();
+  const focusedIncoming = focusedModuleId ? new Set(edges.filter((edge) => edge.target === focusedModuleId).map((edge) => edge.source)) : new Set();
+  const focusedNeighborhood = focusedModuleId ? new Set([focusedModuleId, ...focusedOutgoing, ...focusedIncoming]) : null;
   for (const { edge, line } of edgeViews) {
     const isOutgoing = edge.source === selectedId;
     const isIncoming = edge.target === selectedId;
     const isBidi = highlightBidirectional && bidiEdgeKeys.has(directedEdgeKey(edge.source, edge.target));
     const visibleByQuery = query === "" || edge.source.toLowerCase().includes(query) || edge.target.toLowerCase().includes(query);
-    line.setAttribute("class", ["edge", isOutgoing ? "outgoing" : "", isIncoming ? "incoming" : "", isBidi ? "bidi" : "", visibleByQuery ? "" : "dim"].join(" "));
+    const visibleByFocus = !focusedNeighborhood || (focusedNeighborhood.has(edge.source) && focusedNeighborhood.has(edge.target));
+    const hidden = !visibleByQuery || !visibleByFocus;
+    line.setAttribute("class", ["edge", isOutgoing ? "outgoing" : "", isIncoming ? "incoming" : "", isBidi ? "bidi" : "", hidden ? "dim" : ""].join(" "));
     line.setAttribute("marker-end", isOutgoing ? "url(#arrow-out)" : isIncoming ? "url(#arrow-in)" : isBidi ? "url(#arrow-default)" : "url(#arrow-default)");
   }
   for (const { node, group } of nodeViews) {
     const connected = node.id === selectedId || outgoing.has(node.id) || incoming.has(node.id);
     const matches = query === "" || node.id.toLowerCase().includes(query) || node.label.toLowerCase().includes(query);
     const isBidiNode = highlightBidirectional && bidiNodeIds.has(node.id);
-    const dim = (selectedId !== null && !connected) || !matches;
+    const visibleByFocus = !focusedNeighborhood || focusedNeighborhood.has(node.id);
+    const dim = (selectedId !== null && !connected) || !matches || !visibleByFocus;
     group.setAttribute("class", ["node", node.id === selectedId ? "selected" : "", isBidiNode ? "bidi" : "", dim ? "dim" : ""].join(" "));
   }
   renderDetails();
+  renderBidiSummary();
 }
 
 function renderDetails() {
@@ -168,6 +175,61 @@ function renderEdgeList(list, items, key) {
     count.textContent = String(item.count);
     row.append(name, count);
     list.append(row);
+  }
+}
+
+function renderBidiSummary() {
+  if (!highlightBidirectional) {
+    bidiSummarySection.hidden = true;
+    return;
+  }
+  bidiSummarySection.hidden = false;
+  bidiSummary.replaceChildren();
+  const bidiPairs = [];
+  const seen = new Set();
+  for (const edge of edges) {
+    const key = directedEdgeKey(edge.source, edge.target);
+    if (!bidiEdgeKeys.has(key) || seen.has(key)) {
+      continue;
+    }
+    const reverseKey = directedEdgeKey(edge.target, edge.source);
+    seen.add(key);
+    seen.add(reverseKey);
+    const reverseEdge = edges.find((e) => directedEdgeKey(e.source, e.target) === reverseKey);
+    bidiPairs.push({
+      source: edge.source,
+      target: edge.target,
+      forwardCount: edge.count,
+      reverseCount: reverseEdge ? reverseEdge.count : 0,
+    });
+  }
+  if (bidiPairs.length === 0) {
+    const emptyRow = bidiSummary.insertRow();
+    const emptyCell = emptyRow.insertCell();
+    emptyCell.colSpan = 3;
+    emptyCell.textContent = "None";
+    emptyCell.style.color = "#94a3b8";
+    return;
+  }
+  const headerRow = bidiSummary.createTHead().insertRow();
+  for (const text of ["Module A", "Module B", "A\u2192B", "B\u2192A"]) {
+    const th = document.createElement("th");
+    th.textContent = text;
+    headerRow.append(th);
+  }
+  const tbody = bidiSummary.createTBody();
+  for (const pair of bidiPairs.sort((left, right) => (right.forwardCount + right.reverseCount) - (left.forwardCount + left.reverseCount))) {
+    const row = tbody.insertRow();
+    const cellA = row.insertCell();
+    cellA.textContent = pair.source;
+    const cellB = row.insertCell();
+    cellB.textContent = pair.target;
+    const cellForward = row.insertCell();
+    cellForward.textContent = String(pair.forwardCount);
+    cellForward.className = "count";
+    const cellReverse = row.insertCell();
+    cellReverse.textContent = String(pair.reverseCount);
+    cellReverse.className = "count";
   }
 }
 
