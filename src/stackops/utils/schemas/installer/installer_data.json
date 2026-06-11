@@ -3966,6 +3966,27 @@
       }
     },
     {
+      "appName": "rtk",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/rtk-ai/rtk",
+      "doc": "CLI proxy that reduces LLM token consumption on common development commands.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "rtk-x86_64-unknown-linux-musl.tar.gz",
+          "windows": "rtk-x86_64-pc-windows-msvc.zip",
+          "darwin": "rtk-x86_64-apple-darwin.tar.gz"
+        },
+        "arm64": {
+          "linux": "rtk-aarch64-unknown-linux-gnu.tar.gz",
+          "windows": null,
+          "darwin": "rtk-aarch64-apple-darwin.tar.gz"
+        }
+      }
+    },
+    {
       "appName": "ai-devkit",
       "license": "MIT",
       "repoURL": "https://github.com/codeaholicguy/ai-devkit",
