@@ -193,7 +193,8 @@ terminal kill [OPTIONS] [NAME]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `NAME` | - | Session name to kill; omit for interactive selection |
-| `--all` | `-a` | Kill all sessions |
+| `--all` | `-a` | Kill all sessions; with `--idle`, inspect all sessions for idle panes/windows |
+| `--idle` | `-i` | Kill idle-shell panes/windows in `NAME` or a chosen session; combine with `--all` to inspect all sessions |
 | `--window` | `-w` | Include sessions, windows/tabs, and panes in the chooser |
 | `--backend` | `-b` | `tmux`, `zellij`, `herdr`, or `auto` |
 
@@ -202,6 +203,9 @@ Example:
 ```bash
 # Choose an exact pane or tab to kill
 terminal kill --window
+
+# Kill idle-shell panes/windows across every tmux session
+terminal kill --idle --all
 ```
 
 ## trace

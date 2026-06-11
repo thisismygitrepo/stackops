@@ -185,9 +185,12 @@ def get_session_tabs() -> list[tuple[str, str]]:
 
 def choose_kill_target(
     name: str | None,
-    kill_all: bool = False,
-    window: bool = False,
+    kill_all: bool,
+    idle: bool,
+    window: bool,
 ) -> tuple[str, str | None]:
+    if idle:
+        return ("error", "--idle is only supported for the tmux backend because Zellij shell-idle status is not available.")
     if kill_all:
         return ("run_script", "zellij kill-all-sessions --yes")
     if name is not None:

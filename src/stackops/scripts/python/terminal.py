@@ -183,7 +183,8 @@ def attach_to_session(
 
 def kill_session_target(
         name: Annotated[str | None, typer.Argument(help="Name of the session to kill. If not provided, a list will be shown to choose from.")] = None,
-        kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions.", show_default=True)] = False,
+        kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions. With --idle, inspect all sessions for idle panes/windows.", show_default=True)] = False,
+        idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
         backend: Annotated[Literal["zellij", "z", "tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
@@ -197,10 +198,19 @@ def kill_session_target(
     if name is not None and window:
         typer.echo("Error: --window can only be used when NAME is omitted.", err=True, color=True)
         raise typer.Exit(code=1)
+    if idle and window:
+        typer.echo("Error: --idle cannot be used together with --window.", err=True, color=True)
+        raise typer.Exit(code=1)
     backend_resolved = _resolve_session_backend(backend)
     from stackops.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl
 
-    action, payload = impl(backend=backend_resolved, name=name, kill_all=kill_all, window=window)
+    action, payload = impl(
+        backend=backend_resolved,
+        name=name,
+        kill_all=kill_all,
+        idle=idle,
+        window=window,
+    )
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit(code=1)

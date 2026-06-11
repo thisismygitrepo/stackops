@@ -47,7 +47,7 @@ def collect_session_snapshot(
             "-t",
             session_name,
             "-F",
-            "#{window_index}\t#{window_name}\t#{window_panes}\t#{?window_active,active,}",
+            "#{window_index}\t#{window_name}\t#{window_panes}\t#{?window_active,active,}\t#{window_id}",
         ]
     )
     if windows_result.returncode != 0:
@@ -59,7 +59,7 @@ def collect_session_snapshot(
         if not window_line.strip():
             continue
         parts = window_line.split("\t")
-        while len(parts) < 4:
+        while len(parts) < 5:
             parts.append("")
         windows.append(
             {
@@ -67,6 +67,7 @@ def collect_session_snapshot(
                 "window_name": parts[1].strip(),
                 "window_panes": parts[2].strip(),
                 "window_active": parts[3].strip(),
+                "window_id": parts[4].strip(),
             }
         )
     windows.sort(key=_window_sort_key)
@@ -79,7 +80,7 @@ def collect_session_snapshot(
             "-t",
             session_name,
             "-F",
-            "#{window_index}\t#{pane_index}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}\t#{pane_dead_status}\t#{pane_pid}",
+            "#{window_index}\t#{pane_index}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}\t#{pane_dead_status}\t#{pane_pid}\t#{window_id}\t#{pane_id}",
         ]
     )
 
@@ -90,7 +91,7 @@ def collect_session_snapshot(
             if not pane_line.strip():
                 continue
             parts = pane_line.split("\t")
-            while len(parts) < 8:
+            while len(parts) < 10:
                 parts.append("")
             panes_by_window[parts[0].strip()].append(
                 {
@@ -101,6 +102,8 @@ def collect_session_snapshot(
                     "pane_dead": parts[5].strip(),
                     "pane_dead_status": parts[6].strip(),
                     "pane_pid": parts[7].strip(),
+                    "window_id": parts[8].strip(),
+                    "pane_id": parts[9].strip(),
                 }
             )
         for pane_list in panes_by_window.values():

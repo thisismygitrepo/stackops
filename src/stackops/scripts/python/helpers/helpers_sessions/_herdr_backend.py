@@ -375,9 +375,12 @@ def choose_session(
 
 def choose_kill_target(
     name: str | None,
-    kill_all: bool = False,
-    window: bool = False,
+    kill_all: bool,
+    idle: bool,
+    window: bool,
 ) -> tuple[str, str | None]:
+    if idle:
+        return ("error", "--idle is only supported for the tmux backend because Herdr shell-idle status is not available.")
     sessions = _session_entries()
     if sessions is None:
         return ("error", "Unable to list Herdr sessions. Confirm `herdr session list --json` works.")

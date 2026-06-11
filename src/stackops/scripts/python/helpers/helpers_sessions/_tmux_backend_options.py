@@ -54,6 +54,57 @@ def kill_script_for_target(
     return f"tmux kill-window -t {quote_fn(target)}"
 
 
+def _window_kill_target(session_name: str, window: dict[str, str]) -> str:
+    window_id = window.get("window_id", "")
+    if window_id:
+        return window_id
+    return f"{session_name}:{window['window_index']}"
+
+
+def _pane_kill_target(session_name: str, window: dict[str, str], pane: dict[str, str]) -> str:
+    pane_id = pane.get("pane_id", "")
+    if pane_id:
+        return pane_id
+    return f"{session_name}:{window['window_index']}.{pane['pane_index']}"
+
+
+def build_idle_kill_script_for_sessions(
+    sessions: list[str],
+    run_command_fn: Callable[[list[str]], CompletedProcess[str]],
+    classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
+    quote_fn: Callable[[str], str],
+) -> str:
+    commands: list[str] = []
+    for session_name in sessions:
+        windows, panes_by_window, pane_warning = collect_session_snapshot(
+            session_name=session_name,
+            run_command_fn=run_command_fn,
+        )
+        if windows is None:
+            detail = pane_warning or "No window data available"
+            raise ValueError(f"Unable to inspect tmux session '{session_name}': {detail}")
+        if pane_warning is not None:
+            raise ValueError(f"Unable to inspect tmux panes in session '{session_name}': {pane_warning}")
+
+        for window in windows:
+            window_panes = panes_by_window.get(window["window_index"], [])
+            if len(window_panes) == 0:
+                continue
+            idle_panes: list[dict[str, str]] = []
+            for pane in window_panes:
+                _, status_text = classify_pane_status_fn(pane)
+                if status_text == "idle shell":
+                    idle_panes.append(pane)
+            if len(idle_panes) == 0:
+                continue
+            if len(idle_panes) == len(window_panes):
+                commands.append(f"tmux kill-window -t {quote_fn(_window_kill_target(session_name, window))}")
+                continue
+            for pane in idle_panes:
+                commands.append(f"tmux kill-pane -t {quote_fn(_pane_kill_target(session_name, window, pane))}")
+    return "\n".join(commands)
+
+
 def attach_script_from_name(name: str, quote_fn: Callable[[str], str]) -> str:
     session_name, separator, target = name.partition(":")
     if not separator or not session_name or not target:

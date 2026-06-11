@@ -1,5 +1,6 @@
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options import (
     attach_script_from_name,
+    build_idle_kill_script_for_sessions,
     build_kill_target_options,
     build_window_target_options,
     kill_script_for_target,
@@ -143,11 +144,45 @@ def choose_session(
     return ("handoff_script", attach_script_from_name(name=session_name, quote_fn=quote))
 
 
+def _choose_idle_kill_target(sessions: list[str]) -> tuple[str, str | None]:
+    if len(sessions) == 0:
+        return ("error", "No tmux sessions are available to inspect for idle panes or windows.")
+    try:
+        script = build_idle_kill_script_for_sessions(
+            sessions=sessions,
+            run_command_fn=run_command,
+            classify_pane_status_fn=_classify_pane_status,
+            quote_fn=quote,
+        )
+    except ValueError as error:
+        return ("error", str(error))
+    if script.strip():
+        return ("run_script", script)
+    if len(sessions) == 1:
+        return ("error", f"No idle-shell tmux panes or windows are available to kill in session '{sessions[0]}'.")
+    return ("error", "No idle-shell tmux panes or windows are available to kill.")
+
+
 def choose_kill_target(
     name: str | None,
-    kill_all: bool = False,
-    window: bool = False,
+    kill_all: bool,
+    idle: bool,
+    window: bool,
 ) -> tuple[str, str | None]:
+    if idle:
+        if window:
+            return ("error", "--idle cannot be used together with --window.")
+        if kill_all:
+            return _choose_idle_kill_target(sessions=list_session_names())
+        if name is not None:
+            return _choose_idle_kill_target(sessions=[name])
+        action, payload = choose_existing_session_name(
+            msg="Choose a tmux session to clean idle panes/windows:",
+        )
+        if action != "session_name":
+            return ("error", payload)
+        return _choose_idle_kill_target(sessions=[payload])
+
     if kill_all:
         return ("run_script", "tmux kill-server")
     if name is not None:
