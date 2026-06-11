@@ -58,6 +58,7 @@ def delete_remote_repo_copy_and_push_local(remote_repo: str, local_repo: str, cl
             cloud=cloud,
             remote_path=remote_path,
             share=False,
+            share_options=None,
             verbose=True,
             transfers=10,
         )

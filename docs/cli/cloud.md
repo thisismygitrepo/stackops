@@ -74,7 +74,8 @@ Current options from live help:
 | Option | Meaning |
 | --- | --- |
 | `--overwrite`, `-o` | Overwrite an existing destination file |
-| `--share`, `-s` | Share a file or directory |
+| `--share-scope`, `-s` | Share link scope: `anonymous`/`a` or `organization`/`o`; implies sharing |
+| `--share-type`, `-t` | Share link type: `view`/`v`, `edit`/`e`, or `embed`/`m`; implies sharing |
 | `--record`, `-m` | Record an upload in user `mapper/data.yaml`; requires `--record-name` |
 | `--record-group`, `-g` | Group name for `--record` |
 | `--record-name`, `-n` | Entry name for `--record`; required with `--record` |
@@ -83,7 +84,7 @@ Current options from live help:
 | `--root`, `-R` | Remote root |
 | `--password`, `-p` | Symmetric GPG encryption password; implies `--encrypt --encryption symmetric` |
 | `--encrypt`, `-e` | Encrypt before sending |
-| `--encryption`, `-E` | Encryption mode when `--encrypt` is set: `symmetric` or `asymmetric` |
+| `--encryption`, `-E` | Encryption mode when `--encrypt` is set: `symmetric`/`s` or `asymmetric`/`a` |
 | `--zip`, `-z` | Current help text: unzip after receiving |
 | `--os-specific`, `-O` | Choose a path specific to the current OS |
 
@@ -91,14 +92,16 @@ Example:
 
 ```bash
 cloud copy ./report.pdf remote:reports/report.pdf
-cloud copy ./report.pdf remote:reports/report.pdf --encrypt --encryption asymmetric
+cloud copy ./report.pdf remote:reports/report.pdf --encrypt --encryption a
 cloud copy ./report.pdf remote:reports/report.pdf --password "$STACKOPS_BACKUP_PASSWORD"
 cloud copy ./report.pdf remote:reports/report.pdf --record --record-name report --record-group shared
-cloud copy ./report.pdf remote:reports/report.pdf --share --record --record-name report --record-group shared
+cloud copy ./report.pdf remote:reports/report.pdf --share-type v --record --record-name report --record-group shared
+cloud copy ./report.pdf remote:reports/report.pdf -s o -t v
 ```
 
-`--record` saves the upload in `mapper/data.yaml`. When combined with `--share`, the generated URL is stored in that entry instead of writing a `.share_url_*` sidecar file.
-Use `--encryption symmetric` for password-based GPG and `--encryption asymmetric` for GPG public/private keys. Passing `--password` selects encrypted symmetric mode automatically.
+`--record` saves the upload in `mapper/data.yaml`. When `--share-scope` or `--share-type` is present, the generated URL is stored in that entry instead of writing a `.share_url_*` sidecar file.
+`--share-scope` and `--share-type` are generic StackOps options. StackOps resolves the rclone config name to its backend type and maps supported providers internally; for OneDrive this becomes `--onedrive-link-scope` and `--onedrive-link-type`. Backends without provider-specific scope/type controls use plain `rclone link` for `anonymous` + `view`, and reject unsupported stronger options.
+Use `--encryption symmetric`/`s` for password-based GPG and `--encryption asymmetric`/`a` for GPG public/private keys. Passing `--password` selects encrypted symmetric mode automatically.
 
 ---
 

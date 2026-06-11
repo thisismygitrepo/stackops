@@ -77,9 +77,10 @@ def test_subset_help_exposes_on_conflict_instead_of_legacy_flags() -> None:
     result = runner.invoke(cli_config_secrets.get_app(), ["subset", "--help"])
 
     assert result.exit_code == 0
-    assert "--output" in result.output
+    assert "OUTPUT_PATH" in result.output
     assert "--on-conflict" in result.output
     assert "-o" in result.output
+    assert "--output" not in result.output
     assert "--append" not in result.output
     assert "--overwrite" not in result.output
 
@@ -111,7 +112,7 @@ def test_subset_cli_accepts_one_letter_overwrite_conflict_alias(
 
     result = runner.invoke(
         cli_config_secrets.get_app(),
-        ["subset", "--output", str(output_path), "--path", str(source_path), "-o", "o"],
+        ["subset", str(output_path), "--path", str(source_path), "-o", "o"],
     )
 
     assert result.exit_code == 0

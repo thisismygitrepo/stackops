@@ -185,7 +185,7 @@ def stats(
 def subset(
     output_path: Annotated[
         Path,
-        typer.Option("--output", help="Output secrets JSON path. Default mode creates a new file and refuses existing paths."),
+        typer.Argument(help="Output secrets JSON path. Default mode creates a new file and refuses existing paths."),
     ],
     secrets_path: Annotated[
         Path | None,
@@ -208,7 +208,7 @@ def subset(
             "--on-conflict",
             "-o",
             case_sensitive=False,
-            help="How to handle an existing --output path: throw-error/t, overwrite/o, or append/a.",
+            help="How to handle an existing output path: throw-error/t, overwrite/o, or append/a.",
         ),
     ] = "throw-error",
     preview_secrets: Annotated[

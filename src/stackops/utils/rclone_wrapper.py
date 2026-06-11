@@ -72,6 +72,7 @@ def to_cloud(
     cloud: str,
     remote_path: Path,
     share: bool,
+    share_options: rclone_utils.ShareLinkOptions | None,
     verbose: bool,
     transfers: int,
 ) -> str | None:
@@ -91,7 +92,12 @@ def to_cloud(
         return None
     if verbose:
         print("🔗 SHARING FILE")
-    share_url = rclone_utils.link(target=f"{cloud}:{remote_path.as_posix()}", show_command=verbose)
+    share_url = rclone_utils.link(
+        target=f"{cloud}:{remote_path.as_posix()}",
+        remote_name=cloud,
+        share_options=share_options,
+        show_command=verbose,
+    )
     if verbose:
         _print_share_urls(share_url=share_url)
     return share_url

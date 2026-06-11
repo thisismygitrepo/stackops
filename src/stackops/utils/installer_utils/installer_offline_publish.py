@@ -30,6 +30,7 @@ def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> 
         cloud=constants.OFFLINE_INSTALLER_UPLOAD_CLOUD,
         remote_path=remote_path,
         share=True,
+        share_options=None,
         verbose=True,
         transfers=10,
     )

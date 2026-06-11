@@ -168,8 +168,8 @@ devops config secrets search --source g bitwarden
 devops config secrets s --source b github token
 devops config secrets s -i -P github
 devops config secrets search --path ~/private/team-secrets.json aws dev
-devops config secrets subset --path ~/private/team-secrets.json --output ./secrets.json
-devops config secrets subset --source global --output ./team-secrets.json
+devops config secrets subset ./secrets.json --path ~/private/team-secrets.json
+devops config secrets subset ./team-secrets.json --source global
 devops config secrets edit
 devops config secrets e --create
 devops config secrets add
@@ -190,7 +190,7 @@ For script-stable matching, use exact selectors. `--name`, `-n` matches `entries
 
 Use `search --source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file.
 
-Use `devops config secrets subset` to choose top-level `entries[]` interactively from one source file and write a `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. The output path is required with `--output`. By default, the command creates a new file and refuses an existing output path. Use `--on-conflict`, `-o` with `append`/`a` to add selected entries to an existing output file, `overwrite`/`o` to replace the output file, or `throw-error`/`t` to keep the default refusal behavior.
+Use `devops config secrets subset OUTPUT_PATH` to choose top-level `entries[]` interactively from one source file and write a `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. By default, the command creates a new file and refuses an existing output path. Use `--on-conflict`, `-o` with `append`/`a` to add selected entries to an existing output file, `overwrite`/`o` to replace the output file, or `throw-error`/`t` to keep the default refusal behavior.
 
 Use `devops config secrets edit` or `devops config secrets e` to open one secrets file. Use `devops config secrets add` or `devops config secrets a` to step through prompts for a new login entry and append it to one file. Both commands default to the local source and accept `--source local|global`, `--path`, and `--create`.
 

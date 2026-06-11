@@ -146,6 +146,7 @@ def _upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: st
             cloud=cloud,
             remote_path=remote_path,
             share=False,
+            share_options=None,
             verbose=True,
             transfers=10,
         )

@@ -15,7 +15,15 @@ from stackops.utils.io import (
 from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
 from stackops.utils.path_core import delete_path
 import stackops.utils.rclone_wrapper as rclone_wrapper
-from stackops.utils.rclone import RcloneCommandError
+from stackops.utils.rclone import (
+    RcloneCommandError,
+    RcloneConfigError,
+    ShareLinkOptions,
+    ShareLinkTypeChoice,
+    ShareScopeChoice,
+    parse_share_link_type,
+    parse_share_scope,
+)
 from stackops.utils.cloud_defaults import CloudConfig, read_default_cloud_config
 
 
@@ -55,6 +63,14 @@ def _resolve_encryption_settings(*, encrypt_requested: bool, encryption: str | N
     if encryption_mode is None:
         raise ValueError("--encrypt requires --encryption symmetric or --encryption asymmetric.")
     return True, encryption_mode
+
+
+def _resolve_share_options(*, share_scope: ShareScopeChoice | None, share_type: ShareLinkTypeChoice | None) -> ShareLinkOptions | None:
+    if share_scope is None and share_type is None:
+        return None
+    scope = None if share_scope is None else parse_share_scope(share_scope, label="--share-scope")
+    link_type = None if share_type is None else parse_share_link_type(share_type, label="--share-type")
+    return ShareLinkOptions(scope=scope, link_type=link_type)
 
 
 def _require_symmetric_password(pwd: str | None) -> str:
@@ -275,7 +291,8 @@ def main(
     source: str,
     target: str,
     overwrite: bool,
-    share: bool,
+    share_scope: ShareScopeChoice | None,
+    share_type: ShareLinkTypeChoice | None,
     record: bool,
     record_group: str,
     record_name: str | None,
@@ -298,14 +315,15 @@ def main(
 
     try:
         encrypt_effective, encryption_mode = _resolve_encryption_settings(encrypt_requested=encrypt, encryption=encryption, pwd=pwd)
+        share_options = _resolve_share_options(share_scope=share_scope, share_type=share_type)
     except ValueError as error:
-        console.print(Panel(f"❌ ERROR: Invalid encryption configuration\n{error}", title="[bold red]Error[/bold red]", border_style="red", width=152))
+        console.print(Panel(f"❌ ERROR: Invalid cloud copy configuration\n{error}", title="[bold red]Error[/bold red]", border_style="red", width=152))
         raise SystemExit(1) from None
 
     cloud_config_explicit = CloudConfig(
         cloud="",
         overwrite=overwrite,
-        share=share,
+        share=share_options is not None,
         rel2home=rel2home,
         root=root,
         pwd=pwd,
@@ -393,6 +411,7 @@ def main(
                 cloud=cloud,
                 remote_path=remote_path,
                 share=cloud_config_explicit["share"],
+                share_options=share_options,
                 verbose=True,
                 transfers=10,
             )
@@ -411,6 +430,16 @@ def main(
                 Panel(
                     f"☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}\n\n{error}",
                     title="[bold red]Rclone Error[/bold red]",
+                    border_style="red",
+                    width=152,
+                )
+            )
+            raise SystemExit(1) from None
+        except RcloneConfigError as error:
+            console.print(
+                Panel(
+                    f"☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}\n\n{error}",
+                    title="[bold red]Rclone Config Error[/bold red]",
                     border_style="red",
                     width=152,
                 )

@@ -45,6 +45,7 @@ def upload_app(path: Path) -> str | None:
             cloud=CLOUD_STORAGE_NAME,
             remote_path=remote_path,
             share=True,
+            share_options=None,
             verbose=False,
             transfers=10,
         )

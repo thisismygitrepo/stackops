@@ -4,6 +4,8 @@ import typer
 from typing import Annotated, Literal
 from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER
 from stackops.utils.cloud_defaults import read_default_cloud_config
+from stackops.utils.encryption import EncryptionModeChoice
+from stackops.utils.rclone import ShareLinkTypeChoice, ShareScopeChoice
 
 
 defaults = read_default_cloud_config()
@@ -30,7 +32,8 @@ def copy(
     source: Annotated[str, typer.Argument(help="📂 file/folder path to be taken from here.")],
     target: Annotated[str, typer.Argument(help="🎯 file/folder path to be be sent to here.")],
     overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="📝 Overwrite existing file.")] = defaults["overwrite"],
-    share: Annotated[bool, typer.Option("--share", "-s", help="🔗 Share file / directory")] = defaults["share"],
+    share_scope: Annotated[ShareScopeChoice | None, typer.Option("--share-scope", "-s", help="🔗 Share link scope: anonymous/a or organization/o.")] = None,
+    share_type: Annotated[ShareLinkTypeChoice | None, typer.Option("--share-type", "-t", help="🔗 Share link type: view/v, edit/e, or embed/m.")] = None,
     record: Annotated[bool, typer.Option("--record", "-m", help="📝 Record an upload in user mapper/data.yaml. Requires --record-name.")] = False,
     record_group: Annotated[str, typer.Option("--record-group", "-g", help="🗂 Group name for --record in mapper/data.yaml.")] = "default",
     record_name: Annotated[str | None, typer.Option("--record-name", "-n", help="🏷 Entry name for --record in mapper/data.yaml. Required when using --record.")] = None,
@@ -39,17 +42,19 @@ def copy(
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.")] = defaults["pwd"],
     encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="🔐 Encrypt before sending.")] = defaults["encrypt"],
-    encryption: Annotated[str | None, typer.Option("--encryption", "-E", help="🔐 Encryption mode when --encrypt is set: symmetric or asymmetric.")] = defaults["encryption"],
+    encryption: Annotated[EncryptionModeChoice | None, typer.Option("--encryption", "-E", help="🔐 Encryption mode when --encrypt is set: symmetric/s or asymmetric/a.")] = defaults["encryption"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main
+
     copy_main(
         source=source,
         target=target,
         overwrite=overwrite,
-        share=share,
+        share_scope=share_scope,
+        share_type=share_type,
         record=record,
         record_group=record_group,
         record_name=record_name,

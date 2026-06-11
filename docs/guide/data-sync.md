@@ -125,10 +125,10 @@ One-off upload or download:
 cloud copy ./report.pdf remote:reports/report.pdf
 cloud copy remote:reports/report.pdf ./report.pdf
 cloud copy ./report.pdf remote:reports/report.pdf --record --record-name report --record-group shared
-cloud copy ./report.pdf remote:reports/report.pdf --share --record --record-name report --record-group shared
+cloud copy ./report.pdf remote:reports/report.pdf --share-type v --record --record-name report --record-group shared
 ```
 
-`--record` requires `--record-name` and writes the upload into the user `mapper/data.yaml` entry. Add `--share` when you also want the generated URL saved there instead of writing a `.share_url_*` sidecar file.
+`--record` requires `--record-name` and writes the upload into the user `mapper/data.yaml` entry. Add `--share-scope` or `--share-type` when you also want the generated URL saved there instead of writing a `.share_url_*` sidecar file.
 
 ### Sync
 
