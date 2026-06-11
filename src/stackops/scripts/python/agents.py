@@ -1,7 +1,8 @@
 """Agents management commands - lazy loading subcommands."""
 
 from pathlib import Path
-from typing import Annotated, Final, Literal, cast, get_args
+import shlex
+from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 
 import typer
 
@@ -17,6 +18,20 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
+INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "omp", "o"]
+_CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $caveman wenyan-full for this entire session."
+_OVERHEAD_COMMAND: Final[str] = "overhead"
+_INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, AGENTS]] = {
+    "codex": "codex",
+    "x": "codex",
+    "copilot": "copilot",
+    "c": "copilot",
+    "pi": "pi",
+    "p": "pi",
+    "opencode": "opencode",
+    "omp": "opencode",
+    "o": "opencode",
+}
 _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
     f"{','.join(_AGENT_VALUES)}"
@@ -154,6 +169,64 @@ def create_symlink_command(num: Annotated[int, typer.Argument(help="Number of sy
     from stackops.scripts.python.ai.utils.generate_files import create_symlink_command as impl
 
     impl(num=num)
+
+
+def _resolve_interactive_agent(agent: INTERACTIVE_AGENT) -> AGENTS:
+    return _INTERACTIVE_AGENT_ALIASES[agent]
+
+
+def _interactive_agent_command(agent: AGENTS, caveman: bool) -> list[str]:
+    match agent:
+        case "codex":
+            command = ["codex", "--dangerously-bypass-approvals-and-sandbox"]
+            if caveman:
+                command.append(_CAVEMAN_INITIAL_PROMPT)
+            return command
+        case "copilot":
+            command = ["copilot", "--yolo"]
+            if caveman:
+                command.extend(["--interactive", _CAVEMAN_INITIAL_PROMPT])
+            return command
+        case "pi":
+            command = ["pi"]
+            if caveman:
+                command.append(_CAVEMAN_INITIAL_PROMPT)
+            return command
+        case "opencode":
+            command = ["omp"]
+            if caveman:
+                command.append(_CAVEMAN_INITIAL_PROMPT)
+            return command
+        case _:
+            raise ValueError(f"Unsupported interactive agent: {agent}")
+
+
+def _apply_overhead(command: list[str], overhead: bool) -> list[str]:
+    if overhead:
+        return [_OVERHEAD_COMMAND, "--", *command]
+    return command
+
+
+def run_interactive(
+    agent: Annotated[
+        INTERACTIVE_AGENT,
+        typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, or omp/o."),
+    ] = "codex",
+    caveman: Annotated[
+        bool,
+        typer.Option(..., "--caveman", "-c", help="Start the session with the caveman wenyan-full prompt."),
+    ] = False,
+    overhead: Annotated[
+        bool,
+        typer.Option(..., "--overhead", "-o", help="Launch the session through overhead."),
+    ] = False,
+) -> None:
+    """Launch an agent with reasonable defaults."""
+    resolved_agent = _resolve_interactive_agent(agent=agent)
+    command = _apply_overhead(command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), overhead=overhead)
+    from stackops.utils.code import exit_then_run_shell_script
+
+    exit_then_run_shell_script(script=shlex.join(command), strict=False)
 
 
 def run_prompt(
@@ -311,6 +384,10 @@ def get_app() -> typer.Typer:
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)
+    agents_app.command(name="run-interactive", no_args_is_help=False, short_help="<i> Launch an agent with reasonable defaults")(
+        run_interactive
+    )
+    agents_app.command(name="i", no_args_is_help=False, hidden=True)(run_interactive)
     agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
     return agents_app
