@@ -19,6 +19,7 @@ AGENTS = [
     "opencode-ai",
     "chatgpt",
     "forge",
+    "headroom",
     "hermes",
     "mods",
     "oz",

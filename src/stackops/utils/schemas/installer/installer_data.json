@@ -3945,6 +3945,27 @@
       }
     },
     {
+      "appName": "headroom",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/chopratejas/headroom",
+      "doc": "Context compression layer for AI agents, with CLI, proxy, MCP server, and agent wrappers.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "uv tool install \"headroom-ai[all]\"",
+          "windows": "uv tool install \"headroom-ai[all]\"",
+          "darwin": "uv tool install \"headroom-ai[all]\""
+        },
+        "arm64": {
+          "linux": "uv tool install \"headroom-ai[all]\"",
+          "windows": "uv tool install \"headroom-ai[all]\"",
+          "darwin": "uv tool install \"headroom-ai[all]\""
+        }
+      }
+    },
+    {
       "appName": "ai-devkit",
       "license": "MIT",
       "repoURL": "https://github.com/codeaholicguy/ai-devkit",
