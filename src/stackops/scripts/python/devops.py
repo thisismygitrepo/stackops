@@ -119,7 +119,7 @@ def execute(
     ] = "",
     source: Annotated[
         SCRIPT_SOURCE,
-        typer.Option("--source", help="Source to look for the script"),
+        typer.Option("--source", "-s", help="Source to look for the script"),
     ] = "all",
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
     command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,

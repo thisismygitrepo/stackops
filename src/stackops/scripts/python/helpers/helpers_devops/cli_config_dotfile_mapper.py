@@ -417,7 +417,7 @@ def edit_dotfile(
     ] = "hx",
     source: Annotated[
         CONFIG_FILE_SOURCE_LOOSE,
-        typer.Option("--source", help="📁 Which mapper file to edit: 'user' or 'library'."),
+        typer.Option("--source", "-s", help="📁 Which mapper file to edit: 'user' or 'library'."),
     ] = "user",
 ) -> None:
     source_key = CONFIG_FILE_SOURCE_MAP[source]

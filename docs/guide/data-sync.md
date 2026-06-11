@@ -79,7 +79,7 @@ Examples:
 devops data sync up --which all
 
 # Restore one group from the user backup config
-devops data sync down --source user --which dotfiles
+devops data sync down -s user --which dotfiles
 
 # Restrict the generated commands to one item and one cloud profile
 devops data sync up --cloud myremote --which dotfiles.wezterm
@@ -96,9 +96,11 @@ devops data sync down --use-link --which dotfiles.wezterm
 ### Inspect or edit the backup config
 
 ```bash
-devops data edit --source user
-devops data edit --source library
+devops data edit -s user
+devops data edit -s library
 ```
+
+Use `--source`, `-s` on data sync and edit commands to choose `library`, `user`, or `all` where supported.
 
 ---
 

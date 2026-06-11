@@ -32,7 +32,7 @@ Key options from current help:
 |--------|-------------|
 | `--cloud`, `-c` | Select the rclone config name to use |
 | `--which`, `-w` | Choose specific items, a whole group, or `all` |
-| `--source` | Load backup entries from `library`, `user`, or `all` |
+| `--source`, `-s` | Load backup entries from `library`, `user`, or `all` |
 | `--use-link`, `-l` | On `down`, download from each entry's `share_url` with requests instead of rclone |
 
 If `--which` is omitted, the command falls back to interactive selection. The selector accepts:
@@ -48,7 +48,7 @@ Examples:
 devops data sync up --which all
 
 # Generate commands to restore one group from the user backup config
-devops data sync down --source user --which dotfiles
+devops data sync down -s user --which dotfiles
 
 # Generate commands for selected entries with a specific cloud config
 devops data sync up --cloud myremote --which dotfiles.bashrc,history.shell
@@ -96,10 +96,10 @@ If `--name` is omitted, the command generates one from the local path and OS fil
 Open the backup configuration file in `nano`, `hx`, or `code`.
 
 ```bash
-devops data edit --editor hx --source user
+devops data edit --editor hx -s user
 ```
 
-The user backup config is created automatically if it does not exist yet.
+Use `--source`, `-s` to choose `user` or `library`. The user backup config is created automatically if it does not exist yet.
 
 ### Backup File Layout
 

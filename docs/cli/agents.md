@@ -40,7 +40,7 @@ Current subcommands:
 
 `agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning`, `--provider`, `--host`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--stagger-max`, `--separator`, `--joined-prompt-context`, `--run`, `--agents-dir`, `--output-path`, `--save-as-yaml`, and `--interactive`. `--save-as-yaml` writes or updates `.stackops/agents/parallel.yaml` using the resolved job name as the top-level entry key.
 
-`agents parallel run-parallel` reads flat top-level named entries from `parallel.yaml`. By default it searches the repo file first, then StackOps private/public/library locations. Use `--yaml-path` for an explicit file, `--show-format` to print the standard, `--edit` to open the YAML, and `--add-entry` to append a template entry before editing. Every `create` option can be overridden on the command line.
+`agents parallel run-parallel` reads flat top-level named entries from `parallel.yaml`. By default it searches the repo file first, then StackOps private/public/library locations. Use `--source`, `-S` to choose lookup locations, `--yaml-path` for an explicit file, `--show-format` to print the standard, `--edit` to open the YAML, and `--add-entry` to append a template entry before editing. Every `create` option can be overridden on the command line.
 
 Standard `parallel.yaml` shape:
 
@@ -76,7 +76,7 @@ agents parallel create --agent codex --reasoning high --context-path ./.ai/agent
 agents parallel create --agent codex --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs --save-as-yaml
 agents parallel create --agent copilot --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
 agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
-agents parallel run-parallel default --source repo --agent-load 5
+agents parallel run-parallel default -S repo --agent-load 5
 agents parallel run-parallel docs_update --yaml-path ./.ai/parallel.yaml --agent pi --reasoning high
 agents parallel create-context --job-name updateDocs "Collect the repo context for this doc task"
 agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
@@ -92,17 +92,17 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 - `--reasoning` for codex, copilot, and pi agents; unsupported agents ignore it
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
-- `--source` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, or `library`
+- `--source`, `-s` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, or `library`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 
-For `run-prompt`, `--agent` defaults to `copilot`. `--source repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
+For `run-prompt`, `--agent` defaults to `copilot`. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
 
 Examples:
 
 ```bash
 agents run-prompt --agent codex --reasoning high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --reasoning high --context-path ./context.md "inspect this repo"
-agents run-prompt --agent copilot --context-name docs.cli --source all "update the assigned docs"
+agents run-prompt --agent copilot --context-name docs.cli -s all "update the assigned docs"
 agents run-prompt --agent agy --context-path ./context.md "inspect this repo"
 agents run-prompt --agent pi --reasoning high --context-path ./context.md "inspect this repo"
 agents run-prompt --show-format
@@ -141,7 +141,7 @@ agents add-config --agent codex,copilot,agy,pi --root . --include-scripts --add-
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
 
 - `--scope local` installs into the enclosing git repository; when run from a multi-repo workspace root, it installs into that workspace directory
-- `--source` selects catalog locations: `all`, `repo`, `private`, `public`, or `library`
+- `--source`, `-S` selects catalog locations: `all`, `repo`, `private`, `public`, or `library`
 - `--edit` opens the catalog files and exits immediately if no MCP names were provided
 - `copilot` means GitHub Copilot CLI. Local MCP config is written to `.mcp.json`; global MCP config is written to `$COPILOT_HOME/mcp-config.json` when `COPILOT_HOME` is set, otherwise `~/.copilot/mcp-config.json`
 - `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
@@ -150,13 +150,13 @@ agents add-config --agent codex,copilot,agy,pi --root . --include-scripts --add-
 - `agent-browser`, `caveman`, `grill-me`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
-For `add-mcp`, `--source repo` resolves to `<git-root>/.stackops/mcp.json`.
+For `add-mcp`, `--source repo` or `-S repo` resolves to `<git-root>/.stackops/mcp.json`.
 
 ```bash
 agents add-mcp --help
 agents add-mcp postgres,filesystem --agent codex,copilot,agy,oz,pi --scope local
 agents add-mcp caveman --agent codex --scope local
-agents add-mcp --edit --source library
+agents add-mcp --edit -S library
 ```
 
 `add-todo` scans a repo or workspace and writes filtered checklist files under `.ai/todo/files` by default. `add-symlinks` creates repo symlinks under `~/code_copies/`.

@@ -16,7 +16,7 @@ def sync(
     which: Annotated[
         str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items")
     ] = None,
-    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option("--source", help="📁 Which backup configuration to use: 'library', 'user', or 'all'")] = "all",
+    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option("--source", "-s", help="📁 Which backup configuration to use: 'library', 'user', or 'all'")] = "all",
     use_link: Annotated[
         bool,
         typer.Option(
@@ -224,7 +224,7 @@ def edit_data(
     ] = "hx",
     source: Annotated[
         CONFIG_FILE_SOURCE_LOOSE,
-        typer.Option("--source", help="📁 Which backup configuration file to edit: 'user' or 'library'."),
+        typer.Option("--source", "-s", help="📁 Which backup configuration file to edit: 'user' or 'library'."),
     ] = "user",
 ) -> None:
     import shutil

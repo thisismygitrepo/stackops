@@ -48,7 +48,7 @@ Key arguments and options from current help:
 | `direction` | Required. Use `up` to push default paths into the managed location, or `down` to apply managed files back to default paths |
 | `--sensitivity`, `-s` | Required. Choose `private`, `public`, or `all` |
 | `--method`, `-m` | Required. Use `symlink` or `copy` |
-| `--source` | Select mappings from `library`, `user`, or `all` |
+| `--source`, `-S` | Select mappings from `library`, `user`, or `all` |
 | `--on-conflict`, `-c` | Conflict policy such as `throw-error`, `overwrite-self-managed`, or `overwrite-default-path` |
 | `--which`, `-w` | Limit the run to specific mapping names, or use `all` |
 
@@ -67,7 +67,7 @@ Examples:
 devops config sync down --sensitivity public --method symlink --which all
 
 # Push local private config changes back into the managed backup area
-devops config sync up --sensitivity private --method copy --source user
+devops config sync up --sensitivity private --method copy -S user
 ```
 
 ### register
@@ -108,10 +108,10 @@ devops config register ~/.config/nvim --method symlink --sensitivity public --se
 Open the dotfile mapper in `nano`, `hx`, or `code`.
 
 ```bash
-devops config edit --editor hx --source user
+devops config edit --editor hx -s user
 ```
 
-The user mapper is created automatically if it does not exist yet.
+Use `--source`, `-s` to choose `user` or `library`. The user mapper is created automatically if it does not exist yet.
 
 ### export-dotfiles
 
@@ -164,12 +164,12 @@ devops config secrets s -i aws
 devops config secrets search --verbose aws dev iam-access-key
 devops config secrets search --name aws-dev --tag iam-access-key
 devops config secrets search --name aws-dev --tag session-token
-devops config secrets search --source g bitwarden
-devops config secrets s --source b github token
+devops config secrets search -s g bitwarden
+devops config secrets s -s b github token
 devops config secrets s -i -P github
 devops config secrets search --path ~/private/team-secrets.json aws dev
 devops config secrets subset ./secrets.json --path ~/private/team-secrets.json
-devops config secrets subset ./team-secrets.json --source global
+devops config secrets subset ./team-secrets.json -s global
 devops config secrets edit
 devops config secrets e --create
 devops config secrets add
@@ -192,7 +192,7 @@ Use `search --source`, `-s` to choose `local`, `global`, or `both`. The one-lett
 
 Use `devops config secrets subset OUTPUT_PATH` to choose top-level `entries[]` interactively from one source file and write a `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. By default, the command creates a new file and refuses an existing output path. Use `--on-conflict`, `-o` with `append`/`a` to add selected entries to an existing output file, `overwrite`/`o` to replace the output file, or `throw-error`/`t` to keep the default refusal behavior.
 
-Use `devops config secrets edit` or `devops config secrets e` to open one secrets file. Use `devops config secrets add` or `devops config secrets a` to step through prompts for a new login entry and append it to one file. Both commands default to the local source and accept `--source local|global`, `--path`, and `--create`.
+Use `devops config secrets edit` or `devops config secrets e` to open one secrets file. Use `devops config secrets add` or `devops config secrets a` to step through prompts for a new login entry and append it to one file. Both commands default to the local source and accept `--source`, `-s` with `local|global`, `--path`, and `--create`.
 
 ### dump
 

@@ -106,7 +106,7 @@ def run_py_script(ctx: typer.Context,
                           help="Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute"
                       ),
                   ] = "",
-                  source: Annotated[SCRIPT_SOURCE, typer.Option("--source", help="Source to look for the script")] = "all",
+                  source: Annotated[SCRIPT_SOURCE, typer.Option("--source", "-s", help="Source to look for the script")] = "all",
                   interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
                   command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,

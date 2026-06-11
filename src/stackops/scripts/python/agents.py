@@ -95,7 +95,7 @@ def add_mcp(
     scope: Annotated[
         MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config or skill files into repo-local or user-global agent config.")
     ] = "local",
-    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", help="Source to resolve or edit MCP catalog files.")] = "all",
+    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", "-S", help="Source to resolve or edit MCP catalog files.")] = "all",
     edit: Annotated[
         bool,
         typer.Option(
@@ -192,7 +192,7 @@ def run_prompt(
     ] = None,
     source: Annotated[
         PROMPTS_SOURCE,
-        typer.Option(..., "--source", help="Source to look for context YAML files when --context-yaml-path is not provided."),
+        typer.Option(..., "--source", "-s", help="Source to look for context YAML files when --context-yaml-path is not provided."),
     ] = "all",
     show_prompts_yaml_format: Annotated[
         bool,

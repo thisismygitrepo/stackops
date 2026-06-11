@@ -15,7 +15,8 @@ def run_parallel(
         str | None, typer.Option(..., "--yaml-path", "-y", help="YAML file containing named parallel runs. Auto-created with a template if missing.")
     ] = None,
     source: Annotated[
-        PARALLEL_RUNS_SOURCE, typer.Option(..., "--source", help="Source to look for parallel YAML files when --yaml-path is not provided.")
+        PARALLEL_RUNS_SOURCE,
+        typer.Option(..., "--source", "-S", help="Source to look for parallel YAML files when --yaml-path is not provided."),
     ] = "all",
     show_parallel_yaml_format: Annotated[
         bool, typer.Option(..., "--show-format", "-Y", help="Show parallel YAML format guidance and resolved file paths.")

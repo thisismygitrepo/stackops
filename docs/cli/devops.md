@@ -130,8 +130,8 @@ Current behavior:
 
 - `NAME` can be a predefined script name or a raw command string
 - when `NAME` is a direct script file path, `execute` runs it without searching the configured script roots
-- `--source` selects search locations: `all`, `repo`, `private`, `public`, `library`, or `dynamic`
-- `--source repo` searches `<git-root>/.stackops/scripts`
+- `--source`, `-s` selects search locations: `all`, `repo`, `private`, `public`, `library`, or `dynamic`
+- `--source repo` or `-s repo` searches `<git-root>/.stackops/scripts`
 - `--interactive` enables interactive selection
 - `--command` runs the input as a command
 - `--list` prints the available scripts

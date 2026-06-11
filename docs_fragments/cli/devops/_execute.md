@@ -10,7 +10,7 @@ devops execute [OPTIONS] [NAME]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--source` | `-` | Script location: `all`, `repo`, `private`, `public`, `library`, `dynamic` |
+| `--source` | `-s` | Script location: `all`, `repo`, `private`, `public`, `library`, `dynamic` |
 | `--interactive` | `-i` | Interactive selection of scripts |
 | `--command` | `-c` | Run as command |
 | `--list` | `-l` | List available scripts |
@@ -30,8 +30,8 @@ devops execute --interactive
 devops e -i
 
 # Run from specific location
-devops execute my_script --source private
-devops execute my_script --source repo
+devops execute my_script -s private
+devops execute my_script -s repo
 ```
 
 ---

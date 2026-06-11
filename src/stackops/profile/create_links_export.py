@@ -85,7 +85,7 @@ def main_from_parser(
     ],
     sensitivity: Annotated[SENSITIVITY_LOOSE, typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the configuration files to manage.")] = "all",
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "symlink",
-    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., "--source", help="Mapper source to use for config files.")] = "library",
+    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., "--source", "-S", help="Mapper source to use for config files.")] = "library",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict")] = "throw-error",
     which: Annotated[str | None, typer.Option(..., "--which", "-w", help="Specific items to process ('all' for all items) (default is None, selection is interactive)")] = None,
 ) -> None:
