@@ -1,6 +1,5 @@
 """BR: Backup and Retrieve"""
 
-import re
 import shlex
 from pathlib import Path
 from platform import system
@@ -9,7 +8,6 @@ from typing import Literal
 from rich.console import Console
 from rich.panel import Panel
 
-from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.code import print_code
 from stackops.utils.options import choose_cloud_interactively
@@ -18,37 +16,16 @@ from stackops.scripts.python.helpers.helpers_devops.backup_config import (
     BackupConfig,
     BackupGroup,
     BackupItem,
-    VALID_OS,
-    USER_BACKUP_PATH,
     describe_missing_backup_config,
     normalize_os_name,
     os_applies,
     read_backup_config,
-    read_user_backup_config_for_update,
-    write_backup_config,
 )
-from stackops.profile.create_links_export import CONFIG_SOURCE_LOOSE
-from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
+from stackops.scripts.python.helpers.helpers_devops.backup_registration import all_os_values
+from stackops.profile.link_options import CONFIG_SOURCE_LOOSE
 
 DIRECTION = Literal["BACKUP", "RETRIEVE"]
 
-
-def sanitize_entry_name(value: str) -> str:
-    token = value.strip().replace(".", "_").replace("-", "_")
-    token = re.sub(r"\s+", "_", token)
-    token = re.sub(r"[^A-Za-z0-9_]", "_", token)
-    return token or "backup_item"
-
-
-def _is_all_os_values(os_values: set[OsName]) -> bool:
-    return len(os_values) == len(ALL_OS_VALUES) and all(value in os_values for value in ALL_OS_VALUES)
-
-
-def _require_os_name(value: str, *, os_filter: str) -> OsName:
-    token = normalize_os_name(value)
-    if token not in VALID_OS:
-        raise ValueError(f"Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}")
-    return token
 
 
 def _split_remote_spec(value: str) -> tuple[str, str] | None:
@@ -136,86 +113,6 @@ def _retrieve_from_share_url(
     except GpgCommandError as error:
         raise ValueError(f"Could not decrypt '{display_name}' after downloading its share_url.\n{error}") from error
 
-
-def register_backup_entry(
-    path_local: str,
-    group: str,
-    entry_name: str | None = None,
-    path_cloud: str | None = None,
-    share_url: str | None = None,
-    zip_: bool = True,
-    encrypt: bool = True,
-    encryption: str | None = None,
-    password: str | None = None,
-    rel2home: bool | None = None,
-    os: str = "",
-) -> tuple[Path, str, bool]:
-    local_path = Path(path_local).expanduser().absolute()
-    if not local_path.exists():
-        raise ValueError(f"Local path does not exist: {local_path}")
-    os_parts = [part.strip() for part in os.split(",")]
-    os_tokens_unsorted: set[OsName] = set()
-    for part in os_parts:
-        if not part:
-            continue
-        os_tokens_unsorted.add(_require_os_name(part, os_filter=os))
-    os_tokens = sorted(os_tokens_unsorted, key=ALL_OS_VALUES.index)
-    if not os_tokens:
-        raise ValueError(f"Invalid os value: {os!r}. Expected one of: {sorted(VALID_OS)}")
-    home = Path.home()
-    in_home = local_path.is_relative_to(home)
-    if rel2home is None:
-        rel2home = in_home
-    if rel2home and not in_home:
-        raise ValueError("rel2home is true, but the local path is not under the home directory.")
-    group_name = sanitize_entry_name(group) if group and group.strip() else "default"
-    if entry_name is None or not entry_name.strip():
-        base_name = sanitize_entry_name(local_path.stem)
-        entry_name = base_name if _is_all_os_values(set(os_tokens)) else f"{base_name}_{'_'.join(os_tokens)}"
-    else:
-        entry_name = sanitize_entry_name(entry_name)
-    local_display = f"~/{local_path.relative_to(home)}" if rel2home and in_home else local_path.as_posix()
-    cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
-    share_url_value = share_url.strip() if share_url and share_url.strip() else None
-    encryption_mode: EncryptionMode | None = None
-    if password is not None:
-        if password == "":
-            raise ValueError("Password must be non-empty.")
-        if not encrypt:
-            raise ValueError("--password cannot be combined with --no-encrypt.")
-        if encryption is not None and parse_encryption_mode(encryption, label="Encryption mode") != "symmetric":
-            raise ValueError("--password can only be used with symmetric encryption.")
-        encryption_mode = "symmetric"
-        encrypt = True
-    elif encrypt:
-        encryption_mode = parse_encryption_mode(encryption or "asymmetric", label="Encryption mode")
-    USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
-    config: BackupConfig
-    if USER_BACKUP_PATH.exists():
-        existing_config = read_user_backup_config_for_update()
-        if existing_config is None:
-            raise ValueError(describe_missing_backup_config(source="user"))
-        config = existing_config
-    else:
-        config = {}
-    if group_name in config:
-        group_entries = config[group_name]
-    else:
-        group_entries = {}
-        config[group_name] = group_entries
-    replaced = entry_name in group_entries
-    group_entries[entry_name] = {
-        "path_local": local_display,
-        "path_cloud": cloud_value,
-        "share_url": share_url_value,
-        "zip": zip_,
-        "encrypt": encrypt,
-        "encryption": encryption_mode,
-        "rel2home": rel2home,
-        "os": set(os_tokens),
-    }
-    write_backup_config(USER_BACKUP_PATH, config)
-    return USER_BACKUP_PATH, entry_name, replaced
 
 
 def _parse_requested_backup_entries(which: str) -> list[str]:
@@ -349,7 +246,7 @@ def main_backup_retrieve(
             flags += "z" if item["zip"] else ""
             flags += "e" if item["encrypt"] else ""
             flags += "r" if item["rel2home"] else ""
-            flags += "o" if not _is_all_os_values(item["os"]) else ""
+            flags += "o" if not all_os_values(item["os"]) else ""
             encryption_mode = item["encryption"]
             if item["encrypt"] and encryption_mode is None:
                 raise ValueError(f"Backup entry '{display_name}' must define 'encryption' when 'encrypt' is true.")
@@ -372,7 +269,7 @@ def main_backup_retrieve(
                     item=item,
                     local_path=Path(local_path),
                     pwd=pwd,
-                    overwrite=not _is_all_os_values(item["os"]),
+                    overwrite=not all_os_values(item["os"]),
                 )
                 link_download_count += 1
                 console.print(Panel(f"✅ Downloaded and restored: {final_path}", title="[bold green]Link Retrieve[/bold green]", border_style="green"))

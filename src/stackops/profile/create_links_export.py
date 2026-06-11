@@ -1,76 +1,18 @@
-from typing import Annotated, Literal, Never, TypeAlias
+from typing import Annotated, Never
 
 import typer
 
-
-ON_CONFLICT_LOOSE: TypeAlias = Literal[
-    "throw-error", "t",
-    "overwrite-self-managed", "os",
-    "backup-self-managed", "bs",
-    "overwrite-default-path", "od",
-    "backup-default-path", "bd"
-    ]
-ON_CONFLICT_STRICT: TypeAlias = Literal["throw-error", "overwrite-self-managed", "backup-self-managed", "overwrite-default-path", "backup-default-path"]
-ON_CONFLICT_MAPPER: dict[ON_CONFLICT_LOOSE, ON_CONFLICT_STRICT] = {
-    "t": "throw-error",
-    "os": "overwrite-self-managed",
-    "bs": "backup-self-managed",
-    "od": "overwrite-default-path",
-    "bd": "backup-default-path",
-    "throw-error": "throw-error",
-    "overwrite-self-managed": "overwrite-self-managed",
-    "backup-self-managed": "backup-self-managed",
-    "overwrite-default-path": "overwrite-default-path",
-    "backup-default-path": "backup-default-path",
-    }
-
-SENSITIVITY_LOOSE: TypeAlias = Literal["private", "p", "public", "b", "all", "a"]
-SENSITIVITY_STRICT: TypeAlias = Literal["private", "public", "all"]
-SENSITIVITY_MAP: dict[SENSITIVITY_LOOSE, SENSITIVITY_STRICT] = {
-    "private": "private",
-    "p": "private",
-    "public": "public",
-    "b": "public",
-    "all": "all",
-    "a": "all",
-}
-
-CONFIG_SOURCE_STRICT: TypeAlias = Literal["library", "user", "all"]
-CONFIG_SOURCE_LOOSE: TypeAlias = Literal["library", "l", "user", "u", "all", "a"]
-CONFIG_SOURCE_MAP: dict[CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_STRICT] = {
-    "library": "library",
-    "l": "library",
-    "user": "user",
-    "u": "user",
-    "a": "all",
-    "all": "all",
-}
-CONFIG_FILE_SOURCE_STRICT: TypeAlias = Literal["library", "user"]
-CONFIG_FILE_SOURCE_LOOSE: TypeAlias = Literal["library", "l", "user", "u"]
-CONFIG_FILE_SOURCE_MAP: dict[CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_STRICT] = {
-    "library": "library",
-    "l": "library",
-    "user": "user",
-    "u": "user",
-}
-
-METHOD_STRICT: TypeAlias = Literal["symlink", "copy"]
-METHOD_LOOSE: TypeAlias = Literal["symlink", "s", "copy", "c"]
-METHOD_MAP: dict[METHOD_LOOSE, METHOD_STRICT] = {
-    "symlink": "symlink",
-    "s": "symlink",
-    "copy": "copy",
-    "c": "copy",
-}
-
-DIRECTION_LOOSE: TypeAlias = Literal["up", "u", "down", "d"]
-DIRECTION_STRICT: TypeAlias = Literal["up", "down"]
-DIRECTION_MAP: dict[DIRECTION_LOOSE, DIRECTION_STRICT] = {
-    "up": "up",
-    "u": "up",
-    "down": "down",
-    "d": "down",
-}
+from stackops.profile.link_options import (
+    CONFIG_SOURCE_LOOSE,
+    CONFIG_SOURCE_MAP,
+    DIRECTION_LOOSE,
+    DIRECTION_MAP,
+    METHOD_LOOSE,
+    METHOD_MAP,
+    SENSITIVITY_LOOSE,
+    SENSITIVITY_MAP,
+)
+from stackops.utils.link_conflict import ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER
 
 
 def _exit_with_error(message: str) -> Never:

@@ -19,11 +19,13 @@ from stackops.profile.dotfiles_mapper import (
     normalize_os_filter,
     write_dotfiles_mapper,
 )
-from stackops.profile.create_links_export import (
+from stackops.profile.link_options import (
     CONFIG_FILE_SOURCE_LOOSE,
     CONFIG_FILE_SOURCE_MAP,
     METHOD_LOOSE,
     METHOD_MAP,
+)
+from stackops.utils.link_conflict import (
     ON_CONFLICT_LOOSE,
     ON_CONFLICT_MAPPER,
 )
