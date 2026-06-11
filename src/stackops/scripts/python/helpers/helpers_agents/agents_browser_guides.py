@@ -18,6 +18,10 @@ _BROWSER_TECH_ASSETS: Final[dict[BrowserTechName, BrowserTechAssetSet]] = {
         path_references=(browser_guide_assets.AGENT_BROWSER_GUIDE_PATH_REFERENCE,),
         mcp_servers=(),
     ),
+    "playwright-cli": BrowserTechAssetSet(
+        path_references=(browser_guide_assets.PLAYWRIGHT_CLI_GUIDE_PATH_REFERENCE,),
+        mcp_servers=(),
+    ),
     "chrome-devtools-mcp": BrowserTechAssetSet(
         path_references=(
             browser_guide_assets.CHROME_DEVTOOLS_MCP_GUIDE_PATH_REFERENCE,

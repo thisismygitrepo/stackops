@@ -288,9 +288,9 @@ def get_app() -> typer.Typer:
     )
     agents_app.add_typer(get_parallel_app(), name="p", help="Parallel agent workflow commands", hidden=True)
     agents_app.add_typer(
-        get_browser_app(), name="browser", help="🌐 <b> Browser automation commands for agents", short_help="<b> Browser automation commands"
+        get_browser_app(), name="browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="<b> Browser automation for agent CLIs/MCP"
     )
-    agents_app.add_typer(get_browser_app(), name="b", help="Browser automation commands for agents", hidden=True)
+    agents_app.add_typer(get_browser_app(), name="b", help="Browser automation for agent CLIs and MCP", hidden=True)
 
     agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries or supported skills")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)

@@ -9,9 +9,12 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     AGENT_BROWSER_INSTALLER_NAME,
     AGENT_BROWSER_SKILL_REPO,
     BROWSER_MCP_ROOT,
+    BROWSER_TECH_ROOT,
     BROWSING_ROOT,
     BrowserName,
     BrowserTechName,
+    PLAYWRIGHT_CLI_COMMAND_NAME,
+    PLAYWRIGHT_CLI_PACKAGE_NAME,
     REMOTE_DEBUGGING_LAN,
     REMOTE_DEBUGGING_LOCALHOST,
 )
@@ -66,6 +69,16 @@ def install_agent_browser_skill() -> BrowserSkillInstallResult:
     return BrowserSkillInstallResult(install_root=install_root, command=command)
 
 
+def install_playwright_cli() -> tuple[Path, tuple[tuple[str, ...], ...]]:
+    install_root = BROWSER_TECH_ROOT.expanduser().joinpath("playwright-cli")
+    install_root.mkdir(parents=True, exist_ok=True)
+    install_command = ("bun", "install", "-g", PLAYWRIGHT_CLI_PACKAGE_NAME)
+    skills_command = (PLAYWRIGHT_CLI_COMMAND_NAME, "install", "--skills")
+    _run_required_command(command=install_command, cwd=install_root)
+    _run_required_command(command=skills_command, cwd=install_root)
+    return install_root, (install_command, skills_command)
+
+
 def install_browser_tech(*, which: BrowserTechName) -> BrowserTechInstallResult:
     match which:
         case "agent-browser":
@@ -75,6 +88,16 @@ def install_browser_tech(*, which: BrowserTechName) -> BrowserTechInstallResult:
                 which=which,
                 install_root=result.install_root,
                 commands=(result.command,),
+                guide_paths=guide_paths,
+                mcp_servers=(),
+            )
+        case "playwright-cli":
+            install_root, commands = install_playwright_cli()
+            guide_paths = write_browser_tech_files(which=which, install_root=install_root)
+            return BrowserTechInstallResult(
+                which=which,
+                install_root=install_root,
+                commands=commands,
                 guide_paths=guide_paths,
                 mcp_servers=(),
             )

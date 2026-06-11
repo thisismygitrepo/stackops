@@ -165,10 +165,11 @@ agents add-mcp --edit -S library
 
 ## Browser Automation
 
-`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. `--which` accepts `agent-browser`, `chrome-devtools-mcp`, or `playwright-mcp`. The direct MCP entries use explicit StackOps profile directories under `~/data/browsers-profiles/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles.
+`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. `--which` accepts `agent-browser`, `playwright-cli`, `chrome-devtools-mcp`, or `playwright-mcp`. `playwright-cli` installs the official Playwright agent CLI and skills. The MCP entries write StackOps guide/config files under `~/code/agents/browser/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles.
 
 ```bash
 agents browser install-tech
+agents browser install-tech --which playwright-cli
 agents browser install-tech --which chrome-devtools-mcp
 agents browser install-tech --which playwright-mcp
 agents add-mcp chrome-devtools --agent codex --scope local
@@ -177,7 +178,7 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome or Brave with a dedicated CDP profile for tools that connect to an already running browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`.
+`agents browser launch-browser` launches Chrome or Brave with CDP enabled and an isolated profile for tools that attach to an existing browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`.
 
 ```bash
 agents browser launch-browser --browser chrome --port 9331 --profile agent-browser

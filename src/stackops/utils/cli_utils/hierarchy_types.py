@@ -1227,7 +1227,7 @@ StackOpsAgentsBrowserInstallTechCommand = TypedDict(
     {
         "command_name": Literal["install-tech"],
         "short_name": Literal["i"],
-        "help": Literal["<i> Install browser automation tech"],
+        "help": Literal["<i> Install agent-browser, playwright-cli, or MCP configs"],
         "subcommands": EmptySubcommands,
     },
 )
@@ -1237,7 +1237,7 @@ StackOpsAgentsBrowserLaunchBrowserCommand = TypedDict(
     {
         "command_name": Literal["launch-browser"],
         "short_name": Literal["l"],
-        "help": Literal["<l> Launch Chrome or Brave for CDP automation"],
+        "help": Literal["<l> Launch Chrome or Brave with CDP profile"],
         "subcommands": EmptySubcommands,
     },
 )
@@ -1252,7 +1252,7 @@ StackOpsAgentsBrowserCommand = TypedDict(
     {
         "command_name": Literal["browser"],
         "short_name": Literal["b"],
-        "help": Literal["<b> Browser automation commands"],
+        "help": Literal["<b> Browser automation for agent CLIs/MCP"],
         "subcommands": StackOpsAgentsBrowserSubcommands,
     },
 )

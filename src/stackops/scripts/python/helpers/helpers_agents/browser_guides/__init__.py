@@ -8,5 +8,6 @@ PLAYWRIGHT_MCP_CDP_CONFIG_PATH_REFERENCE: Final[str] = "playwright-mcp-cdp.mcp.j
 PLAYWRIGHT_MCP_CONFIG_PATH_REFERENCE: Final[str] = "playwright-mcp.mcp.json"
 PLAYWRIGHT_MCP_EXTENSION_CONFIG_PATH_REFERENCE: Final[str] = "playwright-mcp-extension.mcp.json"
 PLAYWRIGHT_MCP_GUIDE_PATH_REFERENCE: Final[str] = "playwright-mcp.md"
+PLAYWRIGHT_CLI_GUIDE_PATH_REFERENCE: Final[str] = "playwright-cli.md"
 PLAYWRIGHT_MCP_STORAGE_STATE_CONFIG_PATH_REFERENCE: Final[str] = "playwright-mcp-storage-state.mcp.json"
 PLAYWRIGHT_MCP_USER_DATA_DIR_CONFIG_PATH_REFERENCE: Final[str] = "playwright-mcp-user-data-dir.mcp.json"

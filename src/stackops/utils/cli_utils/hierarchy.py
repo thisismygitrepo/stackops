@@ -1068,14 +1068,14 @@ STACKOPS_AGENTS_PARALLEL_COMMAND: "StackOpsAgentsParallelCommand" = {
 STACKOPS_AGENTS_BROWSER_INSTALL_TECH_COMMAND: "StackOpsAgentsBrowserInstallTechCommand" = {
     "command_name": "install-tech",
     "short_name": "i",
-    "help": "<i> Install browser automation tech",
+    "help": "<i> Install agent-browser, playwright-cli, or MCP configs",
     "subcommands": {},
 }
 
 STACKOPS_AGENTS_BROWSER_LAUNCH_BROWSER_COMMAND: "StackOpsAgentsBrowserLaunchBrowserCommand" = {
     "command_name": "launch-browser",
     "short_name": "l",
-    "help": "<l> Launch Chrome or Brave for CDP automation",
+    "help": "<l> Launch Chrome or Brave with CDP profile",
     "subcommands": {},
 }
 
@@ -1087,7 +1087,7 @@ STACKOPS_AGENTS_BROWSER_SUBCOMMANDS: "StackOpsAgentsBrowserSubcommands" = {
 STACKOPS_AGENTS_BROWSER_COMMAND: "StackOpsAgentsBrowserCommand" = {
     "command_name": "browser",
     "short_name": "b",
-    "help": "<b> Browser automation commands",
+    "help": "<b> Browser automation for agent CLIs/MCP",
     "subcommands": STACKOPS_AGENTS_BROWSER_SUBCOMMANDS,
 }
 
