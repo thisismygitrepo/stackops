@@ -1,0 +1,195 @@
+const pagePayload = JSON.parse(document.getElementById("graph-data").textContent);
+const svg = document.getElementById("graph");
+const search = document.getElementById("search");
+const depthSelect = document.getElementById("depth-select");
+const reset = document.getElementById("reset");
+const nodeCount = document.getElementById("node-count");
+const edgeCount = document.getElementById("edge-count");
+const moduleCount = document.getElementById("module-count");
+const detailTitle = document.getElementById("detail-title");
+const detailMeta = document.getElementById("detail-meta");
+const outgoingList = document.getElementById("outgoing-list");
+const incomingList = document.getElementById("incoming-list");
+const legend = document.getElementById("legend");
+const ns = "http://www.w3.org/2000/svg";
+const palette = ["#2563eb", "#dc2626", "#16a34a", "#9333ea", "#f97316", "#0891b2", "#be123c", "#4f46e5", "#65a30d"];
+const availableDepths = Object.keys(pagePayload.depths).map((depth) => Number(depth)).sort((left, right) => left - right);
+let payload = pagePayload.depths[String(pagePayload.initialDepth)];
+let nodes = [];
+let nodeById = new Map();
+let edges = [];
+let groups = [];
+let groupColor = new Map();
+let edgeViews = [];
+let nodeViews = [];
+let selectedId = null;
+let dragState = null;
+let suppressNextClick = false;
+let width = 900;
+let height = 620;
+let edgeLayer = null;
+let nodeLayer = null;
+
+function graphPayloadForDepth(depth) {
+  const graphPayload = pagePayload.depths[String(depth)];
+  if (!graphPayload) {
+    throw new Error(`No graph payload for depth ${depth}`);
+  }
+  return graphPayload;
+}
+
+function initializeGraphData(depth) {
+  payload = graphPayloadForDepth(depth);
+  nodes = payload.nodes.map((node) => ({ ...node, x: 0, y: 0, vx: 0, vy: 0, r: 18, pinned: false }));
+  nodeById = new Map(nodes.map((node) => [node.id, node]));
+  edges = payload.edges
+    .map((edge) => ({ ...edge, sourceNode: nodeById.get(edge.source), targetNode: nodeById.get(edge.target) }))
+    .filter((edge) => edge.sourceNode && edge.targetNode);
+  assignParallelOffsets();
+  groups = [...new Set(nodes.map((node) => node.group))].sort();
+  groupColor = new Map(groups.map((group, index) => [group, palette[index % palette.length]]));
+  selectedId = null;
+  nodeCount.textContent = String(nodes.length);
+  edgeCount.textContent = String(edges.length);
+  moduleCount.textContent = String(payload.moduleCount);
+}
+
+function assignParallelOffsets() {
+  const directedPairs = new Set(edges.map((edge) => directedEdgeKey(edge.source, edge.target)));
+  for (const edge of edges) {
+    const hasReverseEdge = directedPairs.has(directedEdgeKey(edge.target, edge.source));
+    edge.parallelOffset = hasReverseEdge ? 9 : 0;
+  }
+}
+
+function directedEdgeKey(source, target) {
+  return `${source}\u0000${target}`;
+}
+
+function el(name, attrs) {
+  const element = document.createElementNS(ns, name);
+  for (const [key, value] of Object.entries(attrs)) {
+    element.setAttribute(key, String(value));
+  }
+  return element;
+}
+
+function addArrow(id, color) {
+  const marker = el("marker", { id, markerWidth: 7, markerHeight: 7, refX: 6.2, refY: 2.5, orient: "auto", markerUnits: "strokeWidth" });
+  marker.append(el("path", { d: "M0,0 L0,5 L6.5,2.5 z", fill: color }));
+  return marker;
+}
+
+function mountSvg() {
+  svg.replaceChildren();
+  const defs = el("defs", {});
+  defs.append(addArrow("arrow-default", "#94a3b8"), addArrow("arrow-in", "#0ea5e9"), addArrow("arrow-out", "#f97316"));
+  edgeLayer = el("g", { class: "edge-layer" });
+  nodeLayer = el("g", { class: "node-layer" });
+  svg.append(defs, edgeLayer, nodeLayer);
+}
+
+function mountGraphElements() {
+  if (!edgeLayer || !nodeLayer) {
+    return;
+  }
+  edgeViews = edges.map((edge) => {
+    const line = el("path", { class: "edge", "marker-end": "url(#arrow-default)" });
+    edgeLayer.append(line);
+    return { edge, line };
+  });
+  nodeViews = nodes.map((node) => {
+    const group = el("g", { class: "node" });
+    const circle = el("circle", { r: node.r, fill: groupColor.get(node.group) });
+    const label = el("text", { y: 4 });
+    const title = el("title", {});
+    label.textContent = node.label;
+    title.textContent = node.id;
+    group.append(circle, label, title);
+    group.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      const point = svgPointFromEvent(event);
+      dragState = {
+        node,
+        pointerId: event.pointerId,
+        offsetX: node.x - point.x,
+        offsetY: node.y - point.y,
+        startX: point.x,
+        startY: point.y,
+        moved: false,
+      };
+      group.setPointerCapture(event.pointerId);
+    });
+    group.addEventListener("pointermove", (event) => {
+      if (!dragState || dragState.node !== node || dragState.pointerId !== event.pointerId) {
+        return;
+      }
+      const point = svgPointFromEvent(event);
+      dragState.moved = dragState.moved || Math.hypot(point.x - dragState.startX, point.y - dragState.startY) > 3;
+      node.x = Math.min(width - node.r - 12, Math.max(node.r + 12, point.x + dragState.offsetX));
+      node.y = Math.min(height - node.r - 12, Math.max(node.r + 12, point.y + dragState.offsetY));
+      node.vx = 0;
+      node.vy = 0;
+      draw();
+    });
+    group.addEventListener("pointerup", (event) => {
+      finishDrag(event, group, node);
+    });
+    group.addEventListener("pointercancel", (event) => {
+      finishDrag(event, group, node);
+    });
+    group.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (suppressNextClick) {
+        suppressNextClick = false;
+        return;
+      }
+      selectedId = selectedId === node.id ? null : node.id;
+      paint();
+    });
+    nodeLayer.append(group);
+    return { node, group, circle, label };
+  });
+}
+
+function setDepth(depth) {
+  initializeGraphData(depth);
+  mountSvg();
+  mountGraphElements();
+  resize();
+  renderLegend();
+  paint();
+}
+
+function populateDepthSelect() {
+  depthSelect.replaceChildren();
+  for (const depth of availableDepths) {
+    const depthPayload = graphPayloadForDepth(depth);
+    const option = document.createElement("option");
+    option.value = String(depth);
+    option.textContent = `Depth ${depth}: ${depthPayload.nodes.length} nodes`;
+    depthSelect.append(option);
+  }
+  depthSelect.value = String(pagePayload.initialDepth);
+}
+
+svg.addEventListener("click", () => {
+  selectedId = null;
+  paint();
+});
+
+reset.addEventListener("click", () => {
+  selectedId = null;
+  search.value = "";
+  for (const node of nodes) {
+    node.pinned = false;
+  }
+  seedPositions();
+  paint();
+});
+
+search.addEventListener("input", paint);
+
+depthSelect.addEventListener("change", () => {
+  setDepth(Number(depthSelect.value));
+});

@@ -1,0 +1,192 @@
+function svgPointFromEvent(event) {
+  const point = svg.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+  const screenCtm = svg.getScreenCTM();
+  if (!screenCtm) {
+    return { x: point.x, y: point.y };
+  }
+  return point.matrixTransform(screenCtm.inverse());
+}
+
+function finishDrag(event, group, node) {
+  if (!dragState || dragState.node !== node || dragState.pointerId !== event.pointerId) {
+    return;
+  }
+  group.releasePointerCapture(event.pointerId);
+  if (dragState.moved) {
+    node.pinned = true;
+    selectedId = node.id;
+    suppressNextClick = true;
+    paint();
+  }
+  dragState = null;
+}
+
+function resize() {
+  const rect = svg.getBoundingClientRect();
+  width = Math.max(640, Math.round(rect.width));
+  height = Math.max(480, Math.round(rect.height));
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  seedPositions();
+}
+
+function seedPositions() {
+  const radius = Math.min(width, height) * 0.34;
+  for (const node of nodes) {
+    const index = Math.max(0, groups.indexOf(node.group));
+    const angle = (index / Math.max(1, groups.length)) * Math.PI * 2;
+    const hash = [...node.id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    node.r = Math.max(13, Math.min(24, 11 + Math.sqrt(node.fileCount + node.moduleCount) * 2.2));
+    node.x = width / 2 + Math.cos(angle) * radius + (hash % 90) - 45;
+    node.y = height / 2 + Math.sin(angle) * radius + ((hash * 7) % 90) - 45;
+    node.vx = 0;
+    node.vy = 0;
+  }
+}
+
+function tick() {
+  for (const edge of edges) {
+    const dx = edge.targetNode.x - edge.sourceNode.x;
+    const dy = edge.targetNode.y - edge.sourceNode.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const desired = 168 + Math.min(96, Math.sqrt(edge.count) * 18);
+    const force = (distance - desired) * 0.009;
+    const fx = (dx / distance) * force;
+    const fy = (dy / distance) * force;
+    applyForce(edge.sourceNode, fx, fy);
+    applyForce(edge.targetNode, -fx, -fy);
+  }
+  for (let index = 0; index < nodes.length; index += 1) {
+    for (let otherIndex = index + 1; otherIndex < nodes.length; otherIndex += 1) {
+      const left = nodes[index];
+      const right = nodes[otherIndex];
+      const dx = right.x - left.x;
+      const dy = right.y - left.y;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const minimum = left.r + right.r + 32;
+      const strength = distance < minimum ? (minimum - distance) * 0.052 : 70 / (distance * distance);
+      const fx = (dx / distance) * strength;
+      const fy = (dy / distance) * strength;
+      applyForce(left, -fx, -fy);
+      applyForce(right, fx, fy);
+    }
+  }
+  for (const node of nodes) {
+    if (node.pinned) {
+      continue;
+    }
+    const index = Math.max(0, groups.indexOf(node.group));
+    const angle = (index / Math.max(1, groups.length)) * Math.PI * 2;
+    const targetX = width / 2 + Math.cos(angle) * width * 0.24;
+    const targetY = height / 2 + Math.sin(angle) * height * 0.22;
+    node.vx += (targetX - node.x) * 0.006;
+    node.vy += (targetY - node.y) * 0.006;
+    node.vx *= 0.82;
+    node.vy *= 0.82;
+    node.x = Math.min(width - node.r - 12, Math.max(node.r + 12, node.x + node.vx));
+    node.y = Math.min(height - node.r - 12, Math.max(node.r + 12, node.y + node.vy));
+  }
+}
+
+function applyForce(node, fx, fy) {
+  if (node.pinned) {
+    return;
+  }
+  node.vx += fx;
+  node.vy += fy;
+}
+
+function draw() {
+  for (const { edge, line } of edgeViews) {
+    const dx = edge.targetNode.x - edge.sourceNode.x;
+    const dy = edge.targetNode.y - edge.sourceNode.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const shorten = edge.targetNode.r + 5;
+    const normalX = -dy / distance;
+    const normalY = dx / distance;
+    const offset = edge.parallelOffset;
+    const startX = edge.sourceNode.x + normalX * offset;
+    const startY = edge.sourceNode.y + normalY * offset;
+    const endX = edge.targetNode.x + normalX * offset - (dx / distance) * shorten;
+    const endY = edge.targetNode.y + normalY * offset - (dy / distance) * shorten;
+    line.setAttribute("d", `M${startX},${startY} L${endX},${endY}`);
+    line.setAttribute("stroke-width", Math.min(2.2, 0.45 + Math.sqrt(edge.count) * 0.18));
+  }
+  for (const { node, group, circle } of nodeViews) {
+    group.setAttribute("transform", `translate(${node.x}, ${node.y})`);
+    circle.setAttribute("r", node.r);
+  }
+}
+
+function paint() {
+  const query = search.value.trim().toLowerCase();
+  const outgoing = new Set(edges.filter((edge) => edge.source === selectedId).map((edge) => edge.target));
+  const incoming = new Set(edges.filter((edge) => edge.target === selectedId).map((edge) => edge.source));
+  for (const { edge, line } of edgeViews) {
+    const isOutgoing = edge.source === selectedId;
+    const isIncoming = edge.target === selectedId;
+    const visibleByQuery = query === "" || edge.source.toLowerCase().includes(query) || edge.target.toLowerCase().includes(query);
+    line.setAttribute("class", ["edge", isOutgoing ? "outgoing" : "", isIncoming ? "incoming" : "", visibleByQuery ? "" : "dim"].join(" "));
+    line.setAttribute("marker-end", isOutgoing ? "url(#arrow-out)" : isIncoming ? "url(#arrow-in)" : "url(#arrow-default)");
+  }
+  for (const { node, group } of nodeViews) {
+    const connected = node.id === selectedId || outgoing.has(node.id) || incoming.has(node.id);
+    const matches = query === "" || node.id.toLowerCase().includes(query) || node.label.toLowerCase().includes(query);
+    const dim = (selectedId !== null && !connected) || !matches;
+    group.setAttribute("class", ["node", node.id === selectedId ? "selected" : "", dim ? "dim" : ""].join(" "));
+  }
+  renderDetails();
+}
+
+function renderDetails() {
+  const node = selectedId ? nodeById.get(selectedId) : null;
+  detailTitle.textContent = node ? node.id : "Dependency Graph";
+  detailMeta.textContent = node
+    ? `${node.moduleCount} modules, ${node.fileCount} files, group ${node.group}`
+    : `${payload.packageName}, depth ${payload.depth}, generated ${payload.generatedAt}`;
+  renderEdgeList(outgoingList, edges.filter((edge) => edge.source === selectedId), "target");
+  renderEdgeList(incomingList, edges.filter((edge) => edge.target === selectedId), "source");
+}
+
+function renderEdgeList(list, items, key) {
+  list.replaceChildren();
+  if (items.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = "None";
+    list.append(empty);
+    return;
+  }
+  for (const item of items.sort((left, right) => right.count - left.count || left[key].localeCompare(right[key]))) {
+    const row = document.createElement("li");
+    const name = document.createElement("b");
+    const count = document.createElement("em");
+    name.textContent = item[key];
+    count.textContent = String(item.count);
+    row.append(name, count);
+    list.append(row);
+  }
+}
+
+function renderLegend() {
+  legend.replaceChildren();
+  for (const group of groups) {
+    const item = document.createElement("span");
+    const swatch = document.createElement("i");
+    swatch.style.background = groupColor.get(group);
+    item.append(swatch, document.createTextNode(group));
+    legend.append(item);
+  }
+}
+
+function animate() {
+  tick();
+  draw();
+  window.requestAnimationFrame(animate);
+}
+
+window.addEventListener("resize", resize);
+populateDepthSelect();
+setDepth(pagePayload.initialDepth);
+animate();
