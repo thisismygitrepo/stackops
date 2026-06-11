@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from stackops.scripts.python.helpers.helpers_utils.read_db_cli_tui_backend import BACKEND_LOOSE
+    from stackops.utils.read_db_cli_tui_backend import BACKEND_LOOSE
 
 
 def app(
@@ -22,7 +22,7 @@ def app(
     find_root  – root directory for `find` (default: current working directory).
     recursive  – search subdirectories when using `find`.
     """
-    from stackops.scripts.python.helpers.helpers_utils.read_db_cli_tui_backend import run_read_db_cli_tui
+    from stackops.utils.read_db_cli_tui_backend import run_read_db_cli_tui
 
     run_read_db_cli_tui(
         path=path,

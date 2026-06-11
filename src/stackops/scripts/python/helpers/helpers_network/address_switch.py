@@ -5,7 +5,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from stackops.scripts.python.helpers.helpers_network.address import get_public_ip_address
+from stackops.utils.network_address import get_public_ip_address
 
 
 def _ip_is_acceptable(ip: str, current_ip: str | None, target_ip_addresses: list[str] | None) -> bool:

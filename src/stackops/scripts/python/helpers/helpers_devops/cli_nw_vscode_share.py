@@ -72,7 +72,7 @@ def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
     from rich.panel import Panel
     from rich.table import Table
     from rich.text import Text
-    import stackops.scripts.python.helpers.helpers_network.address as helper
+    import stackops.utils.network_address as helper
 
     host, port, server_base_path = _get_serve_web_details(cmd)
     normalized_host = host.strip().lower()

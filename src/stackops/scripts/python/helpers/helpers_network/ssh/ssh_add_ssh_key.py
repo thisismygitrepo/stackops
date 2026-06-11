@@ -208,7 +208,7 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
 
         run_shell_script(script=program, display_script=True, clean_env=False)
 
-    import stackops.scripts.python.helpers.helpers_network.address as helper
+    import stackops.utils.network_address as helper
 
     res = helper.select_lan_ipv4(prefer_vpn=False)
     if res is None:

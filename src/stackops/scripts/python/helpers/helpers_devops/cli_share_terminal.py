@@ -110,7 +110,7 @@ def share_terminal(
             print(f"❌ Error: SSL CA file not found: {ssl_ca}")
             raise typer.Exit(code=1)
 
-    import stackops.scripts.python.helpers.helpers_network.address as helper
+    import stackops.utils.network_address as helper
     res = helper.select_lan_ipv4(prefer_vpn=False)
     if res is None:
         print("❌ Error: Could not determine local LAN IPv4 address for terminal.")

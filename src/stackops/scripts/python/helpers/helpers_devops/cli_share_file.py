@@ -178,7 +178,7 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
                 install_if_missing(which="croc", binary_name=None, verbose=True)
 
             # Get relay server IP from environment or use default
-            import stackops.scripts.python.helpers.helpers_network.address as helper
+            import stackops.utils.network_address as helper
             res = helper.select_lan_ipv4(prefer_vpn=False)
             if res is None:
                 typer.echo("❌ Error: Could not determine local LAN IPv4 address for relay.", err=True)

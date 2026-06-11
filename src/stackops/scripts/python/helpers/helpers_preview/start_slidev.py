@@ -98,7 +98,7 @@ def main(
     if md_file.name != "slides.md":
         path_core.with_name(SLIDEV_REPO.joinpath(md_file.name), name="slides.md", inplace=True, overwrite=True)
 
-    import stackops.scripts.python.helpers.helpers_network.address as helper
+    import stackops.utils.network_address as helper
     local_ip_v4 = helper.select_lan_ipv4(prefer_vpn=False)
     if local_ip_v4 is None:
         print("❌ Error: Could not determine local LAN IPv4 address for presentation.")
