@@ -257,7 +257,7 @@ def _record_upload(
     encryption_mode: EncryptionMode | None,
     rel2home: bool,
     record_group: str,
-    record_name: str | None,
+    record_name: str,
     record_os: str,
     expand_symbol: str,
 ) -> tuple[Path, str, bool]:
@@ -287,13 +287,21 @@ def _record_upload(
     )
 
 
+def _resolve_record_name(record_name: str | None) -> str | None:
+    if record_name is None:
+        return None
+    normalized_record_name = record_name.strip()
+    if normalized_record_name == "":
+        raise ValueError("--record-name must be non-empty.")
+    return normalized_record_name
+
+
 def main(
     source: str,
     target: str,
     overwrite: bool,
     share_scope: ShareScopeChoice | None,
     share_type: ShareLinkTypeChoice | None,
-    record: bool,
     record_group: str,
     record_name: str | None,
     record_os: str,
@@ -316,6 +324,7 @@ def main(
     try:
         encrypt_effective, encryption_mode = _resolve_encryption_settings(encrypt_requested=encrypt, encryption=encryption, pwd=pwd)
         share_options = _resolve_share_options(share_scope=share_scope, share_type=share_type)
+        resolved_record_name = _resolve_record_name(record_name)
     except ValueError as error:
         console.print(Panel(f"❌ ERROR: Invalid cloud copy configuration\n{error}", title="[bold red]Error[/bold red]", border_style="red", width=152))
         raise SystemExit(1) from None
@@ -340,8 +349,8 @@ def main(
         target=target,
     )
     if cloud in source:
-        if record:
-            console.print(Panel("❌ --record is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+        if resolved_record_name is not None:
+            console.print(Panel("❌ --record-name is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))
             raise SystemExit(1)
         console.print(Panel(f"📥 DOWNLOADING FROM CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}", title="[bold blue]Download[/bold blue]", border_style="blue", width=152))
         target_path = Path(target).expanduser().absolute()
@@ -393,9 +402,6 @@ def main(
         console.print(Panel(f"📤 UPLOADING TO CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}", title="[bold blue]Upload[/bold blue]", border_style="blue", width=152))
         source_path = Path(source).expanduser().absolute()
         remote_path = Path(target.replace(cloud + ":", ""))
-        if record and (record_name is None or not record_name.strip()):
-            console.print(Panel("❌ --record requires --record-name so mapper/data.yaml gets an explicit entry name.", title="[bold red]Error[/bold red]", border_style="red", width=152))
-            raise SystemExit(1)
         temp_paths: list[Path] = []
         share_url: str | None = None
         try:
@@ -451,7 +457,7 @@ def main(
 
         if cloud_config_explicit["share"] and share_url is None:
             raise RuntimeError("Share was requested but rclone did not return a share URL.")
-        if record:
+        if resolved_record_name is not None:
             backup_path, entry_name, replaced = _record_upload(
                 source_path=source_path,
                 original_target=original_target,
@@ -463,7 +469,7 @@ def main(
                 encryption_mode=cloud_config_explicit["encryption"],
                 rel2home=cloud_config_explicit["rel2home"],
                 record_group=record_group,
-                record_name=record_name,
+                record_name=resolved_record_name,
                 record_os=record_os,
                 expand_symbol=ES,
             )
