@@ -18,6 +18,7 @@ Recursively Searched Predefined Directories:
 """
 
 
+import shlex
 import typer
 import platform
 from pathlib import Path
@@ -36,6 +37,42 @@ IGNORED_SCRIPT_MATCH_DIR_NAMES: frozenset[str] = frozenset({
     ".venv",
     "node_modules",
 })
+
+
+def _quote_script_arg_posix(arg: str) -> str:
+    return shlex.quote(arg)
+
+
+def _quote_script_arg_powershell(arg: str) -> str:
+    return "'" + arg.replace("'", "''") + "'"
+
+
+def _quote_script_args(args: list[str]) -> str:
+    match platform.system():
+        case "Windows":
+            return " ".join(_quote_script_arg_powershell(arg) for arg in args)
+        case _:
+            return shlex.join(args)
+
+
+def _append_forwarded_args(shell_script: str, forwarded_args: list[str]) -> str:
+    if len(forwarded_args) == 0:
+        return shell_script
+    return f"{shell_script.rstrip()} {_quote_script_args(args=forwarded_args)}"
+
+
+def _get_shell_script_invoking_file(script_path: Path, forwarded_args: list[str]) -> str:
+    quoted_args = _quote_script_args(args=forwarded_args)
+    match platform.system():
+        case "Windows":
+            command_parts = ["&", _quote_script_arg_powershell(str(script_path))]
+        case "Linux" | "Darwin":
+            command_parts = ["source", _quote_script_arg_posix(str(script_path))]
+        case platform_name:
+            raise NotImplementedError(f"Platform {platform_name} not supported.")
+    if quoted_args != "":
+        command_parts.append(quoted_args)
+    return " ".join(command_parts)
 
 
 def _get_supported_script_suffixes(name: str) -> tuple[str, ...]:
@@ -73,6 +110,8 @@ def run_py_script(ctx: typer.Context,
                   interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
                   command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
+                  *,
+                  forwarded_args: list[str],
                 ) -> None:
     if command:
         if not name:
@@ -80,7 +119,7 @@ def run_py_script(ctx: typer.Context,
             raise typer.Exit(code=1)
         from stackops.utils.code import exit_then_run_shell_script
 
-        exit_then_run_shell_script(script=name, strict=False)
+        exit_then_run_shell_script(script=_append_forwarded_args(shell_script=name, forwarded_args=forwarded_args), strict=False)
         return
     if list_scripts:
         from stackops.scripts.python.helpers.helpers_search.script_help import list_available_scripts
@@ -196,10 +235,12 @@ def run_py_script(ctx: typer.Context,
     if target_file.suffix == ".py":
         from stackops.utils.code import get_uv_command_executing_python_file, exit_then_run_shell_script
         shell_script = get_uv_command_executing_python_file(python_file=str(target_file), uv_project_dir=None, uv_with=None, prepend_print=False)
+        shell_script = _append_forwarded_args(shell_script=shell_script, forwarded_args=forwarded_args)
         exit_then_run_shell_script(script=shell_script)
     else:
-        from stackops.utils.code import exit_then_run_shell_file
-        exit_then_run_shell_file(script_path=str(target_file), strict=True)
+        from stackops.utils.code import exit_then_run_shell_script
+        shell_script = _get_shell_script_invoking_file(script_path=target_file, forwarded_args=forwarded_args)
+        exit_then_run_shell_script(script=shell_script, strict=True)
 
 
 def copy_script_to_local(ctx: typer.Context,

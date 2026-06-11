@@ -128,7 +128,16 @@ def execute(
     """🚀 Execute python/shell scripts from pre-defined directories or as command."""
     import stackops.scripts.python.helpers.helpers_devops.run_script as run_py_script_module
 
-    run_py_script_module.run_py_script(ctx=ctx, name=name, where=where, interactive=interactive, command=command, list_scripts=list_scripts)
+    forwarded_args = [str(arg) for arg in ctx.args]
+    run_py_script_module.run_py_script(
+        ctx=ctx,
+        name=name,
+        where=where,
+        interactive=interactive,
+        command=command,
+        list_scripts=list_scripts,
+        forwarded_args=forwarded_args,
+    )
 
 
 def vault(ctx: typer.Context) -> None:
@@ -161,10 +170,13 @@ def get_app() -> typer.Typer:
     cli_app.command("network", help="🌐 <n> Network management", context_settings=ctx_settings)(network)
     cli_app.command("n", hidden=True, context_settings=ctx_settings)(network)
 
-    cli_app.command("execute", no_args_is_help=True, short_help="🚀 <e> Execute python/shell scripts from pre-defined directories or as command")(
-        execute
-    )
-    cli_app.command("e", no_args_is_help=True, hidden=True)(execute)
+    cli_app.command(
+        "execute",
+        no_args_is_help=True,
+        short_help="🚀 <e> Execute python/shell scripts from pre-defined directories or as command",
+        context_settings=ctx_settings,
+    )(execute)
+    cli_app.command("e", no_args_is_help=True, hidden=True, context_settings=ctx_settings)(execute)
 
     cli_app.command("vault", help="🔐 <v> Search Bitwarden credentials and manage vault sessions", context_settings=ctx_settings)(vault)
     cli_app.command("v", hidden=True, context_settings=ctx_settings)(vault)
