@@ -207,7 +207,7 @@ class RemoteMachine:
         if self.config.ssh_host is not None:
             ssh = self._ensure_ssh()
             try:
-                ssh.copy_to_here(source=str(self.file_manager.execution_log_dir), target=None, compress_with_zip=True, recursive=True)
+                ssh.copy_to_here(source=str(self.file_manager.execution_log_dir), target=None, compress_with_zip=True, recursive=True, internal_call=False)
             except Exception:
                 pass
         end_time_file = log_dir / "end_time.txt"
@@ -239,7 +239,7 @@ class RemoteMachine:
             return self
         if self.config.ssh_host is not None:
             ssh = self._ensure_ssh()
-            ssh.copy_to_here(source=str(self.results_path), target=target, compress_with_zip=True, recursive=True)
+            ssh.copy_to_here(source=str(self.results_path), target=target, compress_with_zip=True, recursive=True, internal_call=False)
         self.results_downloaded = True
         return self
 

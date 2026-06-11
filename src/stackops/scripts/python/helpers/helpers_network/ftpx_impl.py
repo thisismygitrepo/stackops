@@ -242,7 +242,7 @@ def _handle_direct_transfer(
                 padding=(1, 2),
             )
         )
-        ssh.copy_to_here(source=resolved_source, target=resolved_target, compress_with_zip=zipFirst, recursive=recursive)
+        ssh.copy_to_here(source=resolved_source, target=resolved_target, compress_with_zip=zipFirst, recursive=recursive, internal_call=False)
         if resolved_target is None:
             received_file = None
         else:
