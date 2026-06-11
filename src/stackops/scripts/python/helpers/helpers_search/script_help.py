@@ -5,16 +5,16 @@ from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, SCRIPTS_RO
 from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
 
-WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "dynamic", "d"]
+SCRIPT_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l", "dynamic", "d"]
 
 
-def list_available_scripts(where: WHERE) -> None:
+def list_available_scripts(source: SCRIPT_SOURCE) -> None:
     repo_root = current_repo_stackops_path(path_kind="scripts")
     private_root = SCRIPTS_ROOT_PRIVATE
     public_root = CONFIG_ROOT.joinpath("scripts")
     library_root = LIBRARY_ROOT.joinpath("jobs", "scripts")
     locations: dict[str, Path | str] = {}
-    match where:
+    match source:
         case "all" | "a":
             locations = {"private": private_root, "public": public_root, "library": library_root}
             if repo_root is not None:

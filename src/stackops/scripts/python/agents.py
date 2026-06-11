@@ -7,10 +7,10 @@ import typer
 
 from stackops.scripts.python.agents_browser import get_app as get_browser_app
 from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
-from stackops.scripts.python.helpers.helpers_agents.agents_run_context import PROMPTS_WHERE
+from stackops.scripts.python.helpers.helpers_agents.agents_run_context import PROMPTS_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
-from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
+from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_SCOPE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 
@@ -95,7 +95,7 @@ def add_mcp(
     scope: Annotated[
         MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config or skill files into repo-local or user-global agent config.")
     ] = "local",
-    where: Annotated[MCP_CATALOG_WHERE, typer.Option(..., "--where", "-w", help="Where to resolve or edit MCP catalog files.")] = "all",
+    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", help="Source to resolve or edit MCP catalog files.")] = "all",
     edit: Annotated[
         bool,
         typer.Option(
@@ -110,7 +110,7 @@ def add_mcp(
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl
 
-        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, where=where, edit=edit, report=typer.echo)
+        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, source=source, edit=edit, report=typer.echo)
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
@@ -190,9 +190,9 @@ def run_prompt(
             help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.",
         ),
     ] = None,
-    where: Annotated[
-        PROMPTS_WHERE,
-        typer.Option(..., "--where", "-w", help="Where to look for context YAML files when --context-yaml-path is not provided."),
+    source: Annotated[
+        PROMPTS_SOURCE,
+        typer.Option(..., "--source", help="Source to look for context YAML files when --context-yaml-path is not provided."),
     ] = "all",
     show_prompts_yaml_format: Annotated[
         bool,
@@ -225,7 +225,7 @@ def run_prompt(
             context_path=context_path,
             prompts_yaml_path=context_yaml_path,
             context_name=context_name,
-            where=where,
+            source=source,
             edit=edit,
             show_prompts_yaml_format=show_prompts_yaml_format,
         )

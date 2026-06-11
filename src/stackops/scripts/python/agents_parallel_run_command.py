@@ -4,7 +4,7 @@ from typing import Annotated, get_args
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import PARALLEL_RUNS_WHERE, ParallelCreateValues
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import PARALLEL_RUNS_SOURCE, ParallelCreateValues
 from stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -14,8 +14,8 @@ def run_parallel(
     parallel_yaml_path: Annotated[
         str | None, typer.Option(..., "--yaml-path", "-y", help="YAML file containing named parallel runs. Auto-created with a template if missing.")
     ] = None,
-    where: Annotated[
-        PARALLEL_RUNS_WHERE, typer.Option(..., "--where", "-w", help="Where to look for parallel YAML files when --yaml-path is not provided.")
+    source: Annotated[
+        PARALLEL_RUNS_SOURCE, typer.Option(..., "--source", help="Source to look for parallel YAML files when --yaml-path is not provided.")
     ] = "all",
     show_parallel_yaml_format: Annotated[
         bool, typer.Option(..., "--show-format", "-Y", help="Show parallel YAML format guidance and resolved file paths.")
@@ -77,7 +77,7 @@ def run_parallel(
         run_parallel_from_yaml(
             config_name=run_name,
             parallel_yaml_path=parallel_yaml_path,
-            where=where,
+            source=source,
             overrides=ParallelCreateValues(
                 agent=agent,
                 model=model,

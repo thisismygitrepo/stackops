@@ -24,7 +24,7 @@ import platform
 from pathlib import Path
 from typing import Annotated
 
-from stackops.scripts.python.helpers.helpers_search.script_help import WHERE
+from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
 
 
 IGNORED_SCRIPT_MATCH_DIR_NAMES: frozenset[str] = frozenset({
@@ -106,7 +106,7 @@ def run_py_script(ctx: typer.Context,
                           help="Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute"
                       ),
                   ] = "",
-                  where: Annotated[WHERE, typer.Option("--where", "-w", help="Where to look for the script")] = "all",
+                  source: Annotated[SCRIPT_SOURCE, typer.Option("--source", help="Source to look for the script")] = "all",
                   interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
                   command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
@@ -123,13 +123,13 @@ def run_py_script(ctx: typer.Context,
         return
     if list_scripts:
         from stackops.scripts.python.helpers.helpers_search.script_help import list_available_scripts
-        list_available_scripts(where=where)
+        list_available_scripts(source=source)
         return
     if not interactive and not name:
         typer.echo("❌ ERROR: You must provide a script name or use --interactive option to select a script.")
         raise typer.Exit(code=1)
     target_file: Path | None = None
-    if where in ["dynamic", "d"]:
+    if source in ["dynamic", "d"]:
         # src/stackops/jobs/scripts_dynamic/system_compute_analyzer.py
         if "." in name:
             resolved_names: list[str] = [name]
@@ -164,7 +164,7 @@ def run_py_script(ctx: typer.Context,
     from stackops.utils.source_of_truth import SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY
 
     roots: list[Path] = []
-    match where:
+    match source:
         case "all" | "a":
             roots = [SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY]
             repo_scripts = current_repo_stackops_path(path_kind="scripts")

@@ -35,5 +35,5 @@ def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
 def require_current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path:
     stackops_path = current_repo_stackops_path(path_kind=path_kind)
     if stackops_path is None:
-        raise ValueError("--where repo requires running inside a git repository")
+        raise ValueError("--source repo requires running inside a git repository")
     return stackops_path

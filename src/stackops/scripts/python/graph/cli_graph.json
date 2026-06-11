@@ -13378,9 +13378,9 @@
                 "        str,",
                 "        typer.Argument(help=\"Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute\"),",
                 "    ] = \"\",",
-                "    where: Annotated[",
-                "        WHERE,",
-                "        typer.Option(\"--where\", \"-w\", help=\"Where to look for the script\"),",
+                "    source: Annotated[",
+                "        SCRIPT_SOURCE,",
+                "        typer.Option(\"--source\", help=\"Source to look for the script\"),",
                 "    ] = \"all\",",
                 "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Interactive selection of scripts to run\")] = False,",
                 "    command: Annotated[bool | None, typer.Option(..., \"--command\", \"-c\", help=\"Run as command\")] = False,",
@@ -13389,7 +13389,16 @@
                 "    \"\"\"🚀 Execute python/shell scripts from pre-defined directories or as command.\"\"\"",
                 "    import stackops.scripts.python.helpers.helpers_devops.run_script as run_py_script_module",
                 "",
-                "    run_py_script_module.run_py_script(ctx=ctx, name=name, where=where, interactive=interactive, command=command, list_scripts=list_scripts)"
+                "    forwarded_args = [str(arg) for arg in ctx.args]",
+                "    run_py_script_module.run_py_script(",
+                "        ctx=ctx,",
+                "        name=name,",
+                "        source=source,",
+                "        interactive=interactive,",
+                "        command=command,",
+                "        list_scripts=list_scripts,",
+                "        forwarded_args=forwarded_args,",
+                "    )"
               ],
               "name": "execute",
               "parameters": [
@@ -13417,25 +13426,22 @@
                   }
                 },
                 {
-                  "name": "where",
+                  "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "WHERE",
+                  "type": "SCRIPT_SOURCE",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[WHERE, typer.Option('--where', '-w', help='Where to look for the script')]",
+                  "annotation_raw": "Annotated[SCRIPT_SOURCE, typer.Option('--source', help='Source to look for the script')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--where",
-                      "-w"
+                      "--source"
                     ],
                     "long_flags": [
-                      "--where"
+                      "--source"
                     ],
-                    "short_flags": [
-                      "-w"
-                    ],
-                    "help": "Where to look for the script"
+                    "short_flags": [],
+                    "help": "Source to look for the script"
                   }
                 },
                 {
@@ -13511,6 +13517,12 @@
               "return": "None"
             },
             "short_help": "🚀 <e> Execute python/shell scripts from pre-defined directories or as command",
+            "command_context_settings": {
+              "allow_extra_args": true,
+              "allow_interspersed_args": true,
+              "ignore_unknown_options": true,
+              "help_option_names": []
+            },
             "typer": {
               "no_args_is_help": true
             },
@@ -17951,7 +17963,7 @@
                     "                context_path=None,",
                     "                prompts_yaml_path=None,",
                     "                context_name=None,",
-                    "                where=\"all\",",
+                    "                source=\"all\",",
                     "                edit=False,",
                     "                show_prompts_yaml_format=False,",
                     "            )",
@@ -18085,8 +18097,8 @@
                     "    parallel_yaml_path: Annotated[",
                     "        str | None, typer.Option(..., \"--yaml-path\", \"-y\", help=\"YAML file containing named parallel runs. Auto-created with a template if missing.\")",
                     "    ] = None,",
-                    "    where: Annotated[",
-                    "        PARALLEL_RUNS_WHERE, typer.Option(..., \"--where\", \"-w\", help=\"Where to look for parallel YAML files when --yaml-path is not provided.\")",
+                    "    source: Annotated[",
+                    "        PARALLEL_RUNS_SOURCE, typer.Option(..., \"--source\", help=\"Source to look for parallel YAML files when --yaml-path is not provided.\")",
                     "    ] = \"all\",",
                     "    show_parallel_yaml_format: Annotated[",
                     "        bool, typer.Option(..., \"--show-format\", \"-Y\", help=\"Show parallel YAML format guidance and resolved file paths.\")",
@@ -18148,7 +18160,7 @@
                     "        run_parallel_from_yaml(",
                     "            config_name=run_name,",
                     "            parallel_yaml_path=parallel_yaml_path,",
-                    "            where=where,",
+                    "            source=source,",
                     "            overrides=ParallelCreateValues(",
                     "                agent=agent,",
                     "                model=model,",
@@ -18221,25 +18233,22 @@
                       }
                     },
                     {
-                      "name": "where",
+                      "name": "source",
                       "kind": "positional_or_keyword",
-                      "type": "PARALLEL_RUNS_WHERE",
+                      "type": "PARALLEL_RUNS_SOURCE",
                       "default": "all",
                       "required": false,
-                      "annotation_raw": "Annotated[PARALLEL_RUNS_WHERE, typer.Option(..., '--where', '-w', help='Where to look for parallel YAML files when --yaml-path is not provided.')]",
+                      "annotation_raw": "Annotated[PARALLEL_RUNS_SOURCE, typer.Option(..., '--source', help='Source to look for parallel YAML files when --yaml-path is not provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--where",
-                          "-w"
+                          "--source"
                         ],
                         "long_flags": [
-                          "--where"
+                          "--source"
                         ],
-                        "short_flags": [
-                          "-w"
-                        ],
-                        "help": "Where to look for parallel YAML files when --yaml-path is not provided.",
+                        "short_flags": [],
+                        "help": "Source to look for parallel YAML files when --yaml-path is not provided.",
                         "default": "..."
                       }
                     },
@@ -19224,7 +19233,7 @@
                 "    scope: Annotated[",
                 "        MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP config or skill files into repo-local or user-global agent config.\")",
                 "    ] = \"local\",",
-                "    where: Annotated[MCP_CATALOG_WHERE, typer.Option(..., \"--where\", \"-w\", help=\"Where to resolve or edit MCP catalog files.\")] = \"all\",",
+                "    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., \"--source\", help=\"Source to resolve or edit MCP catalog files.\")] = \"all\",",
                 "    edit: Annotated[",
                 "        bool,",
                 "        typer.Option(",
@@ -19239,7 +19248,7 @@
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl",
                 "",
-                "        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, where=where, edit=edit, report=typer.echo)",
+                "        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, source=source, edit=edit, report=typer.echo)",
                 "    except ValueError as e:",
                 "        raise typer.BadParameter(str(e)) from e"
               ],
@@ -19304,25 +19313,22 @@
                   }
                 },
                 {
-                  "name": "where",
+                  "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "MCP_CATALOG_WHERE",
+                  "type": "MCP_CATALOG_SOURCE",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[MCP_CATALOG_WHERE, typer.Option(..., '--where', '-w', help='Where to resolve or edit MCP catalog files.')]",
+                  "annotation_raw": "Annotated[MCP_CATALOG_SOURCE, typer.Option(..., '--source', help='Source to resolve or edit MCP catalog files.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--where",
-                      "-w"
+                      "--source"
                     ],
                     "long_flags": [
-                      "--where"
+                      "--source"
                     ],
-                    "short_flags": [
-                      "-w"
-                    ],
-                    "help": "Where to resolve or edit MCP catalog files.",
+                    "short_flags": [],
+                    "help": "Source to resolve or edit MCP catalog files.",
                     "default": "..."
                   }
                 },
@@ -20069,9 +20075,9 @@
                 "            help=\"YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.\",",
                 "        ),",
                 "    ] = None,",
-                "    where: Annotated[",
-                "        PROMPTS_WHERE,",
-                "        typer.Option(..., \"--where\", \"-w\", help=\"Where to look for context YAML files when --context-yaml-path is not provided.\"),",
+                "    source: Annotated[",
+                "        PROMPTS_SOURCE,",
+                "        typer.Option(..., \"--source\", help=\"Source to look for context YAML files when --context-yaml-path is not provided.\"),",
                 "    ] = \"all\",",
                 "    show_prompts_yaml_format: Annotated[",
                 "        bool,",
@@ -20104,7 +20110,7 @@
                 "            context_path=context_path,",
                 "            prompts_yaml_path=context_yaml_path,",
                 "            context_name=context_name,",
-                "            where=where,",
+                "            source=source,",
                 "            edit=edit,",
                 "            show_prompts_yaml_format=show_prompts_yaml_format,",
                 "        )",
@@ -20267,25 +20273,22 @@
                   }
                 },
                 {
-                  "name": "where",
+                  "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "PROMPTS_WHERE",
+                  "type": "PROMPTS_SOURCE",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[PROMPTS_WHERE, typer.Option(..., '--where', '-w', help='Where to look for context YAML files when --context-yaml-path is not provided.')]",
+                  "annotation_raw": "Annotated[PROMPTS_SOURCE, typer.Option(..., '--source', help='Source to look for context YAML files when --context-yaml-path is not provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--where",
-                      "-w"
+                      "--source"
                     ],
                     "long_flags": [
-                      "--where"
+                      "--source"
                     ],
-                    "short_flags": [
-                      "-w"
-                    ],
-                    "help": "Where to look for context YAML files when --context-yaml-path is not provided.",
+                    "short_flags": [],
+                    "help": "Source to look for context YAML files when --context-yaml-path is not provided.",
                     "default": "..."
                   }
                 },

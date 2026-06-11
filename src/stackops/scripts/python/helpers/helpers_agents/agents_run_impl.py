@@ -5,7 +5,7 @@ from typing import cast
 from stackops.utils.accessories import randstr
 
 from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
-    PROMPTS_WHERE,
+    PROMPTS_SOURCE,
     edit_prompts_yaml,
     ensure_prompts_yaml_exists,
     prompts_yaml_format_explanation,
@@ -180,7 +180,7 @@ def run(
     context_path: str | None,
     prompts_yaml_path: str | None,
     context_name: str | None,
-    where: PROMPTS_WHERE,
+    source: PROMPTS_SOURCE,
     edit: bool,
     show_prompts_yaml_format: bool,
 ) -> None:
@@ -191,10 +191,10 @@ def run(
         edit=edit,
         show_prompts_yaml_format=show_prompts_yaml_format,
     ):
-        yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
+        yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
         created_yaml_paths: list[Path] = []
         for location_name, yaml_path in yaml_locations:
-            should_create = _should_scaffold_prompts_yaml(location_name=location_name, prompts_yaml_path=prompts_yaml_path, where=where)
+            should_create = _should_scaffold_prompts_yaml(location_name=location_name, prompts_yaml_path=prompts_yaml_path, source=source)
             if should_create and ensure_prompts_yaml_exists(yaml_path=yaml_path):
                 created_yaml_paths.append(yaml_path)
         if len(created_yaml_paths) > 0:
@@ -213,7 +213,13 @@ def run(
     has_explicit_context = context is not None or context_path is not None or context_name is not None
     if (edit or show_prompts_yaml_format) and prompt is None and not has_explicit_context:
         return
-    resolved_context = resolve_context(context=context, context_path=context_path, prompts_yaml_path=prompts_yaml_path, context_name=context_name, where=where)
+    resolved_context = resolve_context(
+        context=context,
+        context_path=context_path,
+        prompts_yaml_path=prompts_yaml_path,
+        context_name=context_name,
+        source=source,
+    )
     prompt_text = prompt if prompt is not None else ""
     prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context)
     _print_prompt_file_preview(prompt_file=prompt_file)
@@ -238,10 +244,10 @@ def _should_prepare_prompts_yaml(
     return context is None and context_path is None
 
 
-def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str | None, where: PROMPTS_WHERE) -> bool:
+def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str | None, source: PROMPTS_SOURCE) -> bool:
     if prompts_yaml_path is not None:
         return True
-    match where:
+    match source:
         case "all" | "a" | "repo" | "r":
             return location_name == "repo"
         case "private" | "p":

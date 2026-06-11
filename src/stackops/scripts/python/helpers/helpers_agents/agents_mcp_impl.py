@@ -17,7 +17,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_install import (
     install_resolved_mcp_servers,
     parse_requested_agents,
 )
-from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_WHERE
+from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
     build_agent_skill_install_commands,
     is_supported_agent_skill_name,
@@ -56,13 +56,13 @@ def resolve_local_install_root(*, current_dir: Path) -> Path | None:
 
 
 def add_mcp(
-    *, requested_mcp_servers: str | None, agents: str, scope: MCP_INSTALL_SCOPE, where: MCP_CATALOG_WHERE, edit: bool, report: Reporter
+    *, requested_mcp_servers: str | None, agents: str, scope: MCP_INSTALL_SCOPE, source: MCP_CATALOG_SOURCE, edit: bool, report: Reporter
 ) -> None:
-    search_locations = resolve_mcp_catalog_locations(where=where)
+    search_locations = resolve_mcp_catalog_locations(source=source)
     if edit:
         created_catalog_paths: list[Path] = []
         for location in search_locations:
-            should_create_or_validate = location["scope"] != "repo" or location["path"].exists() or where in ("repo", "r")
+            should_create_or_validate = location["scope"] != "repo" or location["path"].exists() or source in ("repo", "r")
             if should_create_or_validate and ensure_mcp_catalog_exists(location=location):
                 created_catalog_paths.append(location["path"])
         for created_catalog_path in created_catalog_paths:
@@ -71,7 +71,7 @@ def add_mcp(
         editable_catalog_paths = tuple(location["path"] for location in search_locations if location["path"].exists() and location["path"].is_file())
         if len(editable_catalog_paths) == 0:
             searched = ", ".join(str(location["path"]) for location in search_locations)
-            raise ValueError(f"No MCP catalog files found for --where '{where}'. Searched: {searched}")
+            raise ValueError(f"No MCP catalog files found for --source '{source}'. Searched: {searched}")
         for catalog_path in editable_catalog_paths:
             edit_mcp_catalog(path=catalog_path)
 

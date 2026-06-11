@@ -4,7 +4,7 @@ from typing import Annotated, Callable, TypedDict
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_search.script_help import WHERE
+from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
 
 
 class EmojiDisplayDiagnostic(TypedDict):
@@ -117,9 +117,9 @@ def execute(
         str,
         typer.Argument(help="Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute"),
     ] = "",
-    where: Annotated[
-        WHERE,
-        typer.Option("--where", "-w", help="Where to look for the script"),
+    source: Annotated[
+        SCRIPT_SOURCE,
+        typer.Option("--source", help="Source to look for the script"),
     ] = "all",
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
     command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
@@ -132,7 +132,7 @@ def execute(
     run_py_script_module.run_py_script(
         ctx=ctx,
         name=name,
-        where=where,
+        source=source,
         interactive=interactive,
         command=command,
         list_scripts=list_scripts,

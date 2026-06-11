@@ -8,7 +8,7 @@ from typing import Final
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
     McpCatalogFile,
     McpCatalogLocation,
-    MCP_CATALOG_WHERE,
+    MCP_CATALOG_SOURCE,
     McpServerDefinitionRaw,
     ResolvedMcpServer,
     ResolvedMcpServerDefinition,
@@ -66,9 +66,9 @@ def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
     return tuple(locations)
 
 
-def resolve_mcp_catalog_locations(where: MCP_CATALOG_WHERE) -> tuple[McpCatalogLocation, ...]:
+def resolve_mcp_catalog_locations(source: MCP_CATALOG_SOURCE) -> tuple[McpCatalogLocation, ...]:
     locations = default_mcp_catalog_locations()
-    match where:
+    match source:
         case "all" | "a":
             return locations
         case "repo" | "r":

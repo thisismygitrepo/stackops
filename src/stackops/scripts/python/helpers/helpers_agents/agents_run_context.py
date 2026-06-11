@@ -8,7 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import e
 from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
-PROMPTS_WHERE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+PROMPTS_SOURCE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
 _PROMPTS_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 
@@ -181,7 +181,7 @@ def _build_prompt_selection_maps(
     return preview_map, context_map
 
 
-def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
+def _get_default_prompts_yaml_locations(source: PROMPTS_SOURCE) -> list[tuple[str, Path]]:
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, CONFIG_ROOT, LIBRARY_ROOT
     from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
 
@@ -190,7 +190,7 @@ def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str,
     public_prompts = CONFIG_ROOT / "agents" / "prompts" / "prompts.yaml"
     library_prompts = LIBRARY_ROOT / "agents" / "prompts" / "prompts.yaml"
 
-    match where:
+    match source:
         case "all" | "a":
             locations = [("private", private_prompts), ("public", public_prompts), ("library", library_prompts)]
             if repo_prompts is None:
@@ -206,16 +206,16 @@ def _get_default_prompts_yaml_locations(where: PROMPTS_WHERE) -> list[tuple[str,
             return [("library", library_prompts)]
 
 
-def resolve_prompts_yaml_paths(prompts_yaml_path: str | None, where: PROMPTS_WHERE) -> list[tuple[str, Path]]:
+def resolve_prompts_yaml_paths(prompts_yaml_path: str | None, source: PROMPTS_SOURCE) -> list[tuple[str, Path]]:
     if prompts_yaml_path is not None:
         return [("explicit", Path(prompts_yaml_path).expanduser().resolve())]
-    return _get_default_prompts_yaml_locations(where=where)
+    return _get_default_prompts_yaml_locations(source=source)
 
 
-def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_name: str, where: PROMPTS_WHERE, entry_label: str) -> str:
+def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_name: str, source: PROMPTS_SOURCE, entry_label: str) -> str:
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
-    yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
+    yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
     if prompts_yaml_path is not None and len(yaml_locations) == 1:
         ensure_prompts_yaml_exists(yaml_path=yaml_locations[0][1])
 
@@ -224,7 +224,7 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
         if prompts_yaml_path is not None:
             raise ValueError(f"No prompts YAML entries found in explicit file: {yaml_locations[0][1]}")
         searched = ", ".join(str(yaml_path) for _, yaml_path in yaml_locations)
-        raise ValueError(f"No prompts YAML files found for --where '{where}'. Searched: {searched}")
+        raise ValueError(f"No prompts YAML files found for --source '{source}'. Searched: {searched}")
 
     found_entry = None
     for _, yaml_path in existing_yaml_locations:
@@ -308,7 +308,7 @@ def edit_prompts_yaml(yaml_path: Path) -> None:
 
 
 def resolve_context(
-    context: str | None, context_path: str | None, prompts_yaml_path: str | None, context_name: str | None, where: PROMPTS_WHERE
+    context: str | None, context_path: str | None, prompts_yaml_path: str | None, context_name: str | None, source: PROMPTS_SOURCE
 ) -> str:
     if context is not None and context_path is not None:
         raise ValueError("Provide only one of --context or --context-path")
@@ -332,11 +332,11 @@ def resolve_context(
         return resolve_named_prompts_yaml_entry(
             prompts_yaml_path=prompts_yaml_path,
             entry_name=context_name,
-            where=where,
+            source=source,
             entry_label="Context name",
         )
 
-    yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, where=where)
+    yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
     if prompts_yaml_path is not None and len(yaml_locations) == 1:
         ensure_prompts_yaml_exists(yaml_path=yaml_locations[0][1])
 
@@ -345,7 +345,7 @@ def resolve_context(
         if prompts_yaml_path is not None:
             raise ValueError(f"No prompts YAML entries found in explicit file: {yaml_locations[0][1]}")
         searched = ", ".join(str(yaml_path) for _, yaml_path in yaml_locations)
-        raise ValueError(f"No prompts YAML files found for --where '{where}'. Searched: {searched}")
+        raise ValueError(f"No prompts YAML files found for --source '{source}'. Searched: {searched}")
 
     preview_map, context_map = _build_prompt_selection_maps(existing_yaml_locations=existing_yaml_locations)
     if len(preview_map) == 0:

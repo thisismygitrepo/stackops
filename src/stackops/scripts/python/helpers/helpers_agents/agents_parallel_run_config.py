@@ -17,7 +17,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 from stackops.utils.yaml_schema import yaml_language_server_schema_comment
 
 
-PARALLEL_RUNS_WHERE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+PARALLEL_RUNS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 ParallelYamlEntry: TypeAlias = tuple[str, Path, object]
 _PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 CREATE_CONFIG_KEYS: Final[frozenset[str]] = PARALLEL_CREATE_CONFIG_KEYS
@@ -155,7 +155,7 @@ def parallel_yaml_template_for_path(*, yaml_path: Path) -> str:
     return f"{parallel_yaml_header_for_path(yaml_path=yaml_path)}{yaml_body}"
 
 
-def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE) -> list[tuple[str, Path]]:
+def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARALLEL_RUNS_SOURCE) -> list[tuple[str, Path]]:
     if parallel_yaml_path is not None:
         return [("explicit", Path(parallel_yaml_path).expanduser().resolve())]
 
@@ -167,7 +167,7 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, where: PARALL
     public_yaml = CONFIG_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     library_yaml = LIBRARY_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
 
-    match where:
+    match source:
         case "all" | "a":
             paths = [("private", private_yaml), ("public", public_yaml), ("library", library_yaml)]
             if repo_yaml is None:

@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
-    PARALLEL_RUNS_WHERE,
+    PARALLEL_RUNS_SOURCE,
     ParallelCreateValues,
     ParallelYamlEntry,
     empty_parallel_create_values,
@@ -21,16 +21,20 @@ def run_parallel_from_yaml(
     *,
     config_name: str | None,
     parallel_yaml_path: str | None,
-    where: PARALLEL_RUNS_WHERE,
+    source: PARALLEL_RUNS_SOURCE,
     overrides: ParallelCreateValues,
     edit: bool,
     add_entry: bool,
     show_parallel_yaml_format: bool,
 ) -> None:
-    yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, where=where)
+    yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, source=source)
     created_yaml_paths: list[Path] = []
     if not add_entry:
-        created_yaml_paths = _ensure_writable_parallel_yaml_files(yaml_locations=yaml_locations, parallel_yaml_path=parallel_yaml_path, where=where)
+        created_yaml_paths = _ensure_writable_parallel_yaml_files(
+            yaml_locations=yaml_locations,
+            parallel_yaml_path=parallel_yaml_path,
+            source=source,
+        )
     _report_created_yaml_paths(created_yaml_paths=created_yaml_paths)
     if add_entry:
         _add_parallel_yaml_entry(yaml_locations=yaml_locations, config_name=config_name)
@@ -105,11 +109,11 @@ def edit_parallel_yaml(*, yaml_path: Path) -> None:
 
 
 def _ensure_writable_parallel_yaml_files(
-    *, yaml_locations: list[tuple[str, Path]], parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE
+    *, yaml_locations: list[tuple[str, Path]], parallel_yaml_path: str | None, source: PARALLEL_RUNS_SOURCE
 ) -> list[Path]:
     created_yaml_paths: list[Path] = []
     for location_name, yaml_path in yaml_locations:
-        should_create = _should_scaffold_parallel_yaml(location_name=location_name, parallel_yaml_path=parallel_yaml_path, where=where)
+        should_create = _should_scaffold_parallel_yaml(location_name=location_name, parallel_yaml_path=parallel_yaml_path, source=source)
         if should_create and ensure_parallel_yaml_exists(yaml_path=yaml_path):
             created_yaml_paths.append(yaml_path)
     return created_yaml_paths
@@ -161,10 +165,10 @@ def _select_parallel_yaml_entry_target(*, yaml_locations: list[tuple[str, Path]]
     return yaml_locations[0][1]
 
 
-def _should_scaffold_parallel_yaml(*, location_name: str, parallel_yaml_path: str | None, where: PARALLEL_RUNS_WHERE) -> bool:
+def _should_scaffold_parallel_yaml(*, location_name: str, parallel_yaml_path: str | None, source: PARALLEL_RUNS_SOURCE) -> bool:
     if parallel_yaml_path is not None:
         return True
-    match where:
+    match source:
         case "all" | "a" | "repo" | "r":
             return location_name == "repo"
         case "private" | "p":

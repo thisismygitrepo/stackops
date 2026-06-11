@@ -67,7 +67,7 @@ def resolve_prompt_input(*, prompt: str | None, prompt_path: str | None, prompt_
         prompt_text = resolve_named_prompts_yaml_entry(
             prompts_yaml_path=None,
             entry_name=prompt_name,
-            where="all",
+            source="all",
             entry_label="Prompt name",
         )
         return ResolvedPromptInput(
