@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Final, Literal, TypeAlias
+from typing import Final, Literal, TypedDict, TypeAlias
 import json
 import os
 import shlex
@@ -28,8 +27,7 @@ _MISSING_PATH_MARKERS: Final[tuple[str, ...]] = (
 _REMOTE_WRAPPER_BACKENDS: Final[frozenset[str]] = frozenset({"alias", "crypt", "chunker", "hasher"})
 
 
-@dataclass(frozen=True)
-class ShareLinkOptions:
+class ShareLinkOptions(TypedDict):
     scope: ShareScope | None
     link_type: ShareLinkType | None
 
@@ -248,17 +246,17 @@ def _share_link_backend_flags(*, remote_name: str, share_options: ShareLinkOptio
     match backend_type:
         case "onedrive":
             command: list[str] = []
-            if share_options.scope is not None:
-                command.append(f"--onedrive-link-scope={share_options.scope}")
-            if share_options.link_type is not None:
-                command.append(f"--onedrive-link-type={share_options.link_type}")
+            if share_options["scope"] is not None:
+                command.append(f"--onedrive-link-scope={share_options['scope']}")
+            if share_options["link_type"] is not None:
+                command.append(f"--onedrive-link-type={share_options['link_type']}")
             return command
         case _:
             unsupported_options: list[str] = []
-            if share_options.scope not in {None, "anonymous"}:
-                unsupported_options.append(f"--share-scope {share_options.scope}")
-            if share_options.link_type not in {None, "view"}:
-                unsupported_options.append(f"--share-type {share_options.link_type}")
+            if share_options["scope"] not in {None, "anonymous"}:
+                unsupported_options.append(f"--share-scope {share_options['scope']}")
+            if share_options["link_type"] not in {None, "view"}:
+                unsupported_options.append(f"--share-type {share_options['link_type']}")
             if unsupported_options:
                 raise RcloneConfigError(f"Share option(s) {', '.join(unsupported_options)} are not supported for rclone backend '{backend_type}'.")
             return []
