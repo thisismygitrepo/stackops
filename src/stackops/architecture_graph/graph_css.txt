@@ -128,9 +128,9 @@ h3 {
 
 .graph-panel {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .toolbar {

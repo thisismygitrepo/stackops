@@ -291,7 +291,7 @@ def _dump_profile_example(*, which: Literal["data", "dotfiles"], data: bool, sch
 
 
 def _dump_secrets_example(*, data: bool, schema: bool, default_path: bool, force: bool) -> None:
-    import stackops.secrets as secrets_assets
+    import stackops.secrets.assets as secrets_assets
     from stackops.secrets.paths import SECRETS_DOFILE
 
     if default_path:

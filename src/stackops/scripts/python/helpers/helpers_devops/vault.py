@@ -21,7 +21,8 @@ from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
-from stackops.secrets import Login, SecretsFileError, search_logins
+from stackops.secrets.models import Login
+from stackops.secrets.search import SecretsFileError, search_logins
 from stackops.utils.io import GpgCommandError, decrypt_bytes_asymmetric, encrypt_bytes_asymmetric
 from stackops.secrets.paths import SECRETS_DOFILE
 

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
-from stackops.secrets.types import Login, SecretRecord, SecretRotation, SecretStringMap, SecretsFile, SecretValueMap
+from stackops.secrets.models import Login, SecretRecord, SecretRotation, SecretStringMap, SecretsFile, SecretValueMap
 
 
 class SecretsSchemaError(ValueError):

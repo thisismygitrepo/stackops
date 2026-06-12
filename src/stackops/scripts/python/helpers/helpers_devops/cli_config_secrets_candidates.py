@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interacti
     choose_interactive_option,
 )
 from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
-from stackops.secrets.types import Login, SecretRecord, SecretStringMap, SecretsFile, SecretValueMap
+from stackops.secrets.models import Login, SecretRecord, SecretStringMap, SecretsFile, SecretValueMap
 
 __all__ = [
     "SecretCandidate",

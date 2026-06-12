@@ -1,12 +1,11 @@
 import json
 
 from stackops.secrets.paths import SECRETS_DOFILE
-from stackops.secrets.types import Login
+from stackops.secrets.models import Login
+from stackops.secrets.search import search_logins
 
 
 def read_quick_password() -> str:
-    from stackops.secrets import search_logins
-
     secrets = search_logins(path=SECRETS_DOFILE, login_name="quickPassword", keys=("PASSWORD",))
     if not secrets:
         expected_entry: Login = {
@@ -36,8 +35,6 @@ def read_quick_password() -> str:
 
 
 def read_virus_total_api_key() -> str:
-    from stackops.secrets import search_logins
-
     secrets = search_logins(path=SECRETS_DOFILE, login_name="virusTotal", keys=("API_KEY",))
     if not secrets:
         expected_entry: Login = {

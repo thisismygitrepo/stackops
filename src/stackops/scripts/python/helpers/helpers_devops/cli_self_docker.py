@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, NoReturn
 
-from stackops.secrets import Login, SecretsFileError, render_secret_value, search_logins
+from stackops.secrets.models import Login
+from stackops.secrets.search import SecretsFileError, render_secret_value, search_logins
 
 DOCKER_DEFAULT_LOGIN_NAME = "docker"
 DOCKER_TOKEN_KEY_CANDIDATES = ("DOCKER_TOKEN", "DOCKERHUB_TOKEN", "DOCKER_PASSWORD", "DOCKER_PAT")

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
-from stackops.secrets.types import SecretRecord
+from stackops.secrets.models import SecretRecord
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

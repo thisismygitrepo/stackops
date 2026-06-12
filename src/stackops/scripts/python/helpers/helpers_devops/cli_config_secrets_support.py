@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidate
     load_secret_candidates,
 )
 from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
-from stackops.secrets.types import Login, SecretsFile
+from stackops.secrets.models import Login, SecretsFile
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME

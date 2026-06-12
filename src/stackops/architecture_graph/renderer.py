@@ -47,6 +47,10 @@ def render_html(payload: GraphPagePayload) -> str:
         <button id="reset" type="button">Reset</button>
       </div>
       <svg id="graph" role="img" aria-label="StackOps dependency graph"></svg>
+      <section id="bidi-summary-section" class="bidi-summary" hidden>
+        <h3>Bidirectional Dependencies</h3>
+        <table id="bidi-summary" class="bidi-table"></table>
+      </section>
     </section>
     <aside class="details" aria-label="Selected dependency details">
       <div class="details-head">
@@ -62,10 +66,6 @@ def render_html(payload: GraphPagePayload) -> str:
       <section>
         <h3>Imported By</h3>
         <ul id="incoming-list" class="edge-list"></ul>
-      </section>
-      <section id="bidi-summary-section" hidden>
-        <h3>Bidirectional Dependencies</h3>
-        <table id="bidi-summary" class="bidi-table"></table>
       </section>
     </aside>
   </main>
