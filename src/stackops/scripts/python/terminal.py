@@ -1,90 +1,9 @@
 """Terminal management commands - lazy loading subcommands."""
 
 from typing import Literal, Annotated, cast
-import re
 import typer
 
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose, SessionConflictActionLoose2Strict
-from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
-
-
-def _parse_tmux_target(target: str) -> tuple[str, str, str]:
-    if target.startswith("%"):
-        return (f"(id {target})", "-", "-")
-    if ":" in target:
-        session, _, rest = target.partition(":")
-        if "." in rest:
-            window, _, pane = rest.partition(".")
-            return (session, window, pane)
-        return (session, rest, "-")
-    return (target, "-", "-")
-
-
-def _print_kill_summary(
-    script: str,
-    killed_targets: list[KilledTarget],
-) -> None:
-    from rich import box
-    from rich.console import Console
-    from rich.table import Table
-
-    rows: list[tuple[str, str, str, str]] = []
-    if killed_targets:
-        for target in killed_targets:
-            rows.append((target["action"], target["session"], target["window"], target["detail"]))
-    else:
-        for line in script.splitlines():
-            line = line.strip()
-            if match := re.match(r"tmux kill-session\s+-t\s+(.+)", line):
-                target = match.group(1).strip("'\"")
-                rows.append(("session", target, "-", "-"))
-            elif match := re.match(r"tmux kill-window\s+-t\s+(.+)", line):
-                target = match.group(1).strip("'\"")
-                session, window, _ = _parse_tmux_target(target)
-                rows.append(("window", session, window, "-"))
-            elif match := re.match(r"tmux kill-pane\s+-t\s+(.+)", line):
-                target = match.group(1).strip("'\"")
-                session, window, pane = _parse_tmux_target(target)
-                rows.append(("pane", session, window, pane))
-    if not rows:
-        return
-    console = Console()
-    table = Table(title="Killed", box=box.SIMPLE, header_style="bold cyan")
-    table.add_column("Action", style="bold")
-    table.add_column("Session", style="magenta")
-    table.add_column("Window", style="green")
-    table.add_column("Detail")
-    for action, session, window, detail in rows:
-        table.add_row(action, session, window, detail)
-    console.print(table)
-
-
-def _resolve_session_backend(
-    backend: Literal["zellij", "z", "tmux", "t", "herdr", "h", "auto", "a"],
-) -> Literal["zellij", "tmux", "herdr"]:
-    import platform
-
-    system = platform.system().lower()
-    match backend:
-        case "zellij" | "z":
-            if system == "windows":
-                typer.echo("Error: Zellij is not supported on Windows.", err=True, color=True)
-                raise typer.Exit(code=1)
-            return "zellij"
-        case "tmux" | "t":
-            return "tmux"
-        case "herdr" | "h":
-            if system == "windows":
-                typer.echo("Error: Herdr is not supported on Windows.", err=True, color=True)
-                raise typer.Exit(code=1)
-            return "herdr"
-        case "auto" | "a":
-            if system == "windows":
-                return "tmux"
-            return "zellij"
-        case _:
-            typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
-            raise typer.Exit(code=1)
 
 
 def balance_load(
@@ -216,7 +135,8 @@ def attach_to_session(
     if name is not None and window:
         typer.echo("Error: NAME cannot be used together with --window.", err=True, color=True)
         raise typer.Exit(code=1)
-    backend_resolved = _resolve_session_backend(backend)
+    from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import resolve_session_backend
+    backend_resolved = resolve_session_backend(backend)
     from stackops.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl
     action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)
     if action == "error":
@@ -254,7 +174,8 @@ def kill_session_target(
     if idle and window:
         typer.echo("Error: --idle cannot be used together with --window.", err=True, color=True)
         raise typer.Exit(code=1)
-    backend_resolved = _resolve_session_backend(backend)
+    from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import print_kill_summary, resolve_session_backend
+    backend_resolved = resolve_session_backend(backend)
     from stackops.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl
 
     action, payload, killed_targets = impl(
@@ -282,14 +203,14 @@ def kill_session_target(
                     script=script,
                     timeout_seconds=30.0,
                 )
-                _print_kill_summary(script=script, killed_targets=killed_targets)
+                print_kill_summary(script=script, killed_targets=killed_targets)
                 return
             except RuntimeError as error:
                 typer.echo(f"Error: {error}", err=True, color=True)
                 raise typer.Exit(code=1) from error
         from stackops.utils.code import exit_then_run_shell_script
 
-        _print_kill_summary(script=script, killed_targets=killed_targets)
+        print_kill_summary(script=script, killed_targets=killed_targets)
         exit_then_run_shell_script(script=script, strict=True)
         return
     typer.echo("Error: kill operation did not return a final script.", err=True, color=True)

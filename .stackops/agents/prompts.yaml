@@ -12,8 +12,8 @@ ensureLightweightCommands:
     Please look into every cli typer py file that has (import typer).
     In essense, we want to ensure that those typer cli remain lightweight so user doesn't experience delay.
     We achieve this by,
-    * Avoid unncessary import to happen upfront, e.g. if only one command needs it, then the import can occur within that command.
-    * Only include imports needed to type hint the variables, and ensuer they come from modules that are lightweight themselves, otherwise some redesign need to occur with those imported files.
+    * Avoid unncessary import to happen upfront, e.g. if only one command needs it, then the import can occur within that command (not global import)
+    * Only include global imports needed to type hint the variables and light weigh modules, and ensuer they come from modules that are lightweight themselves, otherwise some redesign need to occur with those imported files.
     * We want to have both python API and CLI experirence of functions, so, the actual py function must exist somewhere, and the cli function is only calling that function internally and passing on (a cli interface to an existing py function).
     Convey those messages to the new agent instances, but its up to you to decide which one is worth working on and which one is already reasonably optimized, plese don't be overzelous.
 
