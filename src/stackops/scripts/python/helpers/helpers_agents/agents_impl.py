@@ -56,30 +56,7 @@ def agents_create(
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
     _validate_stagger_max(stagger_max=stagger_max)
     if interactive:
-        from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
-
-        main(
-            agent=agent,
-            host=host,
-            model=model,
-            reasoning_effort=normalized_reasoning_effort,
-            provider=provider,
-            stagger_max=stagger_max,
-            agent_load=agent_load,
-            context=context,
-            context_path=context_path,
-            separator=separator,
-            prompt=prompt,
-            prompt_path=prompt_path,
-            prompt_name=prompt_name,
-            job_name=job_name,
-            join_prompt_and_context=join_prompt_and_context,
-            run=run,
-            output_path=output_path,
-            agents_dir=agents_dir,
-            save_as_yaml=save_as_yaml,
-        )
-        return
+        raise RuntimeError("Interactive agent creation must be dispatched before agents_impl.agents_create.")
     from stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch import (
         get_agents_launch_layout,
         get_prompt_directories,
@@ -244,13 +221,13 @@ def _validate_stagger_max(*, stagger_max: float) -> None:
 
 
 def _run_generated_layout(*, layout_output_path: Path) -> None:
+    from click import Command
     import typer
-    from typer.main import get_command
 
-    from stackops.scripts.python.terminal import get_app, run as terminal_run
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli
 
-    terminal_run(
-        ctx=typer.Context(get_command(get_app())),
+    run_cli(
+        ctx=typer.Context(Command("stackops-terminal-run")),
         layouts_file=str(layout_output_path),
         test_layout=False,
         choose_layouts=None,

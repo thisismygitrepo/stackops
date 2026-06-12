@@ -2823,7 +2823,7 @@
                     "        return",
                     "",
                     "    from stackops.scripts.python.helpers.helpers_devops import cli_share_server",
-                    "    from stackops.scripts.python.helpers.helpers_network.address import select_lan_ipv4",
+                    "    from stackops.utils.network_address import select_lan_ipv4",
                     "",
                     "    local_ipv4 = select_lan_ipv4(prefer_vpn=False)",
                     "    if local_ipv4 is None:",
@@ -5658,7 +5658,7 @@
                     "    ] = DEFAULT_OS_FILTER,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
                     ") -> None:",
-                    "    from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import register_backup_entry",
+                    "    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry",
                     "",
                     "    if interactive:",
                     "        path_local, group, name, path_cloud, share_url, zip_, encrypt, encryption, rel2home, os = _prompt_register_data_options(",
@@ -5995,7 +5995,7 @@
                     "    import shutil",
                     "    import subprocess",
                     "",
-                    "    from stackops.scripts.python.helpers.helpers_devops.backup_config import (",
+                    "    from stackops.scripts.python.helpers.helpers_cloud.backup_config import (",
                     "        LIBRARY_BACKUP_PATH,",
                     "        USER_BACKUP_PATH,",
                     "        DEFAULT_BACKUP_HEADER,",
@@ -8722,6 +8722,90 @@
                 ]
               },
               {
+                "kind": "command",
+                "name": "build-graph",
+                "fullPath": "devops self build-graph",
+                "shortPath": "d s g",
+                "help": "🕸 <g> Build the architecture dependency graph.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_self",
+                  "callable": "build_graph"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def build_graph(",
+                    "    view: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--view\", \"-v\", help=\"Preview the generated HTML graph in the browser.\"),",
+                    "    ] = False,",
+                    ") -> None:",
+                    "    \"\"\"🕸 <g> Build the architecture dependency graph.\"\"\"",
+                    "    repo_root = _developer_repo_root()",
+                    "    if repo_root is None:",
+                    "        typer.echo(\"❌ Developer repo not found: ~/code/stackops\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    from stackops.architecture_graph.cli import DEFAULT_OUTPUT_PATH, DEFAULT_PACKAGE_NAME, DEFAULT_SOURCE_ROOT",
+                    "    from stackops.architecture_graph.graph import build_graph_page_payload",
+                    "    from stackops.architecture_graph.renderer import write_html",
+                    "",
+                    "    source_root = repo_root.joinpath(DEFAULT_SOURCE_ROOT)",
+                    "    output_path = repo_root.joinpath(DEFAULT_OUTPUT_PATH)",
+                    "    payload = build_graph_page_payload(",
+                    "        source_root=source_root,",
+                    "        package_name=DEFAULT_PACKAGE_NAME,",
+                    "        initial_depth=1,",
+                    "        max_depth=3,",
+                    "    )",
+                    "    written = write_html(payload=payload, output_path=output_path)",
+                    "    typer.echo(f\"Wrote {written}\")",
+                    "",
+                    "    if view:",
+                    "        from stackops.utils.code import exit_then_run_shell_script",
+                    "",
+                    "        exit_then_run_shell_script(f'preview --backend browser \"{written}\"', strict=True)"
+                  ],
+                  "name": "build_graph",
+                  "parameters": [
+                    {
+                      "name": "view",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--view', '-v', help='Preview the generated HTML graph in the browser.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--view",
+                          "-v"
+                        ],
+                        "long_flags": [
+                          "--view"
+                        ],
+                        "short_flags": [
+                          "-v"
+                        ],
+                        "help": "Preview the generated HTML graph in the browser."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "🕸 <g> Build the architecture dependency graph.",
+                "aliases": [
+                  {
+                    "name": "g",
+                    "hidden": true,
+                    "help": "Build the architecture dependency graph."
+                  }
+                ]
+              },
+              {
                 "kind": "group",
                 "name": "build-assets",
                 "fullPath": "devops self build-assets",
@@ -10844,7 +10928,7 @@
                     "            print(f\"❌ Error: SSL CA file not found: {ssl_ca}\")",
                     "            raise typer.Exit(code=1)",
                     "",
-                    "    import stackops.scripts.python.helpers.helpers_network.address as helper",
+                    "    import stackops.utils.network_address as helper",
                     "    res = helper.select_lan_ipv4(prefer_vpn=False)",
                     "    if res is None:",
                     "        print(\"❌ Error: Could not determine local LAN IPv4 address for terminal.\")",
@@ -11265,7 +11349,7 @@
                     "    if over_internet and install_missing_dependencies:",
                     "        install_if_missing(which=\"ngrok\", binary_name=None, verbose=True)",
                     "",
-                    "    import stackops.scripts.python.helpers.helpers_network.address as helper",
+                    "    import stackops.utils.network_address as helper",
                     "    res = helper.select_lan_ipv4(prefer_vpn=False)",
                     "    if res is None:",
                     "        typer.echo(\"❌ ERROR: Could not determine local LAN IPv4 address for share server.\", err=True)",
@@ -11599,7 +11683,7 @@
                     "                install_if_missing(which=\"croc\", binary_name=None, verbose=True)",
                     "",
                     "            # Get relay server IP from environment or use default",
-                    "            import stackops.scripts.python.helpers.helpers_network.address as helper",
+                    "            import stackops.utils.network_address as helper",
                     "            res = helper.select_lan_ipv4(prefer_vpn=False)",
                     "            if res is None:",
                     "                typer.echo(\"❌ Error: Could not determine local LAN IPv4 address for relay.\", err=True)",
@@ -11634,7 +11718,8 @@
                     "            print_desc = \"🚀 sending file with croc\"",
                     "",
                     "    typer.echo(f\"🚀 Sending {send_target}. Use: {receive_hint}\")",
-                    "    from stackops.utils.code import exit_then_run_shell_script, print_code",
+                    "    from stackops.utils.code import exit_then_run_shell_script",
+                    "    from stackops.utils.meta import print_code",
                     "    print_code(code=script, desc=print_desc, lexer=\"powershell\" if is_windows else \"bash\")",
                     "    exit_then_run_shell_script(script=script, strict=False)"
                   ],
@@ -11926,7 +12011,8 @@
                     "        script = f\"\"\"export CROC_SECRET={shlex.quote(secret_code)}",
                     "croc {relay_arg} --yes\"\"\".strip()",
                     "",
-                    "    from stackops.utils.code import exit_then_run_shell_script, print_code",
+                    "    from stackops.utils.code import exit_then_run_shell_script",
+                    "    from stackops.utils.meta import print_code",
                     "    print_code(code=script, desc=\"🚀 Receiving file with croc\", lexer=\"powershell\" if is_windows else \"bash\")",
                     "    exit_then_run_shell_script(script=script, strict=False)"
                   ],
@@ -12914,7 +13000,8 @@
                         "",
                         "\"\"\"",
                         "",
-                        "    from stackops.utils.code import exit_then_run_shell_script, print_code",
+                        "    from stackops.utils.code import exit_then_run_shell_script",
+                        "    from stackops.utils.meta import print_code",
                         "",
                         "    print_code(code, lexer=\"bash\", desc=\"code to achieve the goal\")",
                         "    yes = typer.confirm(\"Do you want to run the above commands now?\", default=False)",
@@ -13017,7 +13104,8 @@
                         "echo \"Reconnecting WARP...\"",
                         "sudo warp-cli connect",
                         "\"\"\"",
-                        "    from stackops.utils.code import exit_then_run_shell_script, print_code",
+                        "    from stackops.utils.code import exit_then_run_shell_script",
+                        "    from stackops.utils.meta import print_code",
                         "",
                         "    print_code(code, lexer=\"bash\", desc=\"code to achieve the goal\")",
                         "    yes = typer.confirm(\"Do you want to run the above commands now?\", default=False)",
@@ -13086,7 +13174,7 @@
                     "    \"\"\"📌 Show this computer addresses on network\"\"\"",
                     "    import subprocess",
                     "",
-                    "    import stackops.scripts.python.helpers.helpers_network.address as helper",
+                    "    import stackops.utils.network_address as helper",
                     "",
                     "    public_ip_address: str | None = None",
                     "    try:",
@@ -13202,7 +13290,8 @@
                     "        case _:",
                     "            print(f\"Unknown action: {action_normalized}\")",
                     "            return",
-                    "    from stackops.utils.code import print_code, exit_then_run_shell_script",
+                    "    from stackops.utils.code import exit_then_run_shell_script",
+                    "    from stackops.utils.meta import print_code",
                     "",
                     "    print_code(cmd, lexer=\"bash\", desc=desc)",
                     "    if action_normalized == \"share-local\":",
@@ -17178,7 +17267,7 @@
                 "    from rich.console import Console",
                 "    from rich.panel import Panel",
                 "    from rich.table import Table",
-                "    from stackops.utils.io import remove_c_style_comments",
+                "    from stackops.utils.files.read import remove_c_style_comments",
                 "",
                 "    console = Console()",
                 "    layout_path_obj = Path(layout_path).expanduser().absolute()",
@@ -17449,10 +17538,36 @@
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"Create agents layout file, ready to run.\"\"\"",
-                    "    from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl",
-                    "",
                     "    try:",
                     "        normalized_separator = _decode_separator(separator=separator)",
+                    "        if interactive:",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main",
+                    "",
+                    "            main(",
+                    "                agent=agent,",
+                    "                host=host,",
+                    "                model=model,",
+                    "                reasoning_effort=reasoning_effort,",
+                    "                provider=provider,",
+                    "                context=context,",
+                    "                context_path=context_path,",
+                    "                separator=normalized_separator,",
+                    "                agent_load=agent_load,",
+                    "                stagger_max=stagger_max,",
+                    "                prompt=prompt,",
+                    "                prompt_path=prompt_path,",
+                    "                prompt_name=prompt_name,",
+                    "                job_name=job_name,",
+                    "                join_prompt_and_context=join_prompt_and_context,",
+                    "                run=run,",
+                    "                output_path=output_path,",
+                    "                agents_dir=agents_dir,",
+                    "                save_as_yaml=save_as_yaml,",
+                    "            )",
+                    "            return",
+                    "",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl",
+                    "",
                     "        impl(",
                     "            agent=agent,",
                     "            host=host,",
@@ -17473,7 +17588,7 @@
                     "            output_path=output_path,",
                     "            agents_dir=agents_dir,",
                     "            save_as_yaml=save_as_yaml,",
-                    "            interactive=interactive,",
+                    "            interactive=False,",
                     "        )",
                     "    except ValueError as e:",
                     "        raise typer.BadParameter(str(e)) from e",
@@ -20412,6 +20527,126 @@
           },
           {
             "kind": "command",
+            "name": "run-interactive",
+            "fullPath": "agents run-interactive",
+            "shortPath": "a i",
+            "help": "Launch an agent with reasonable defaults.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "callable": "run_interactive"
+            },
+            "signature": {
+              "raw_lines": [
+                "def run_interactive(",
+                "    agent: Annotated[",
+                "        INTERACTIVE_AGENT,",
+                "        typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch: codex/x, copilot/c, pi/p, or omp/o.\"),",
+                "    ] = \"codex\",",
+                "    caveman: Annotated[",
+                "        bool,",
+                "        typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with the caveman wenyan-full prompt.\"),",
+                "    ] = False,",
+                "    overhead: Annotated[",
+                "        bool,",
+                "        typer.Option(..., \"--overhead\", \"-o\", help=\"Launch the session through overhead.\"),",
+                "    ] = False,",
+                ") -> None:",
+                "    \"\"\"Launch an agent with reasonable defaults.\"\"\"",
+                "    resolved_agent = _resolve_interactive_agent(agent=agent)",
+                "    command = _apply_overhead(command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), overhead=overhead)",
+                "    from stackops.utils.code import exit_then_run_shell_script",
+                "",
+                "    exit_then_run_shell_script(script=shlex.join(command), strict=False)"
+              ],
+              "name": "run_interactive",
+              "parameters": [
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "INTERACTIVE_AGENT",
+                  "default": "codex",
+                  "required": false,
+                  "annotation_raw": "Annotated[INTERACTIVE_AGENT, typer.Option(..., '--agent', '-a', help='Agent to launch: codex/x, copilot/c, pi/p, or omp/o.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Agent to launch: codex/x, copilot/c, pi/p, or omp/o.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "caveman",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--caveman', '-c', help='Start the session with the caveman wenyan-full prompt.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--caveman",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--caveman"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Start the session with the caveman wenyan-full prompt.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "overhead",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--overhead', '-o', help='Launch the session through overhead.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--overhead",
+                      "-o"
+                    ],
+                    "long_flags": [
+                      "--overhead"
+                    ],
+                    "short_flags": [
+                      "-o"
+                    ],
+                    "help": "Launch the session through overhead.",
+                    "default": "..."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<i> Launch an agent with reasonable defaults",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Launch an agent with reasonable defaults.",
+            "aliases": [
+              {
+                "name": "i",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
             "name": "ask",
             "fullPath": "agents ask",
             "shortPath": "a a",
@@ -20785,13 +21020,17 @@
                     ") -> None:",
                     "    import json",
                     "",
-                    "    from stackops.scripts.python.helpers.helpers_utils.python import get_machine_specs as impl",
                     "    from stackops.utils.source_of_truth import CONFIG_ROOT",
                     "",
                     "    if hardware:",
-                    "        impl(hardware=hardware)",
+                    "        from stackops.scripts.python.helpers.helpers_utils.specs import main",
+                    "",
+                    "        main()",
                     "        return",
-                    "    specs = impl(hardware=hardware)",
+                    "",
+                    "    from stackops.utils.machine_specs import get_machine_specs as impl",
+                    "",
+                    "    specs = impl()",
                     "    typer.echo(specs)",
                     "    CONFIG_ROOT.mkdir(parents=True, exist_ok=True)",
                     "    path = CONFIG_ROOT.joinpath(\"machine_specs.json\")",
@@ -21653,7 +21892,7 @@
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
                   "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app",
-                  "dispatches_to": "stackops.scripts.python.helpers.helpers_utils.type_fix.get_app"
+                  "dispatches_to": "stackops.scripts.python.agents_type_fix.get_app"
                 },
                 "app": {
                   "help": "🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
@@ -21678,7 +21917,7 @@
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
                   "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app",
-                  "dispatches_to": "stackops.scripts.python.helpers.helpers_utils.test_runtime.get_app"
+                  "dispatches_to": "stackops.scripts.python.agents_test_runtime.get_app"
                 },
                 "app": {
                   "help": "🧪 <tr> Create and run the runtime-test workflow for Python files under the current directory.",
@@ -21923,7 +22162,7 @@
                     "    output: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"The output file path.\")] = None,",
                     "    output_dir: Annotated[str | None, typer.Option(\"--output-dir\", \"-O\", help=\"Directory to place the downloaded file in.\")] = None,",
                     ") -> None:",
-                    "    from stackops.scripts.python.helpers.helpers_utils.download import download as impl",
+                    "    from stackops.utils.download import download as impl",
                     "",
                     "    impl(url=url, decompress=decompress, output=output, output_dir=output_dir)"
                   ],

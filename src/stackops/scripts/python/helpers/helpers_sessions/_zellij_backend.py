@@ -18,7 +18,7 @@ from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_preview im
     session_name as _session_name_impl,
     session_sort_key as _session_sort_key_impl,
 )
-from stackops.scripts.python.helpers.helpers_sessions.attach_impl import (
+from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     AttachSessionChoice,
     KILL_ALL_AND_NEW_LABEL,
     NEW_SESSION_LABEL,
@@ -120,8 +120,6 @@ def choose_session(
             msg="Choose a Zellij tab or pane to attach to:",
             options_to_preview_mapping=options_to_preview_mapping,
         )
-        if selection is None:
-            return ("error", "No Zellij tab or pane selected.")
         if selection == NEW_SESSION_LABEL:
             return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
         if selection == KILL_ALL_AND_NEW_LABEL:
@@ -157,8 +155,6 @@ def choose_session(
         msg="Choose a Zellij session to attach to:",
         options_to_preview_mapping=options_to_preview_mapping,
     )
-    if session_label is None:
-        return ("error", "No Zellij session selected.")
     if session_label == NEW_SESSION_LABEL:
         return ("handoff_script", new_session_script(standard_layout=STANDARD, quote_fn=quote, kill_all=kill_all))
     if session_label == KILL_ALL_AND_NEW_LABEL:

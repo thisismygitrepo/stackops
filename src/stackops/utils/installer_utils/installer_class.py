@@ -11,7 +11,8 @@ from stackops.utils.installer_utils.installer_main_protocol import (
     load_installer_python_script_main,
 )
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LIBRARY_ROOT
-from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows, check_tool_exists
+from stackops.utils.command_lookup import check_tool_exists
+from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
 from stackops.utils.schemas.installer.installer_types import (
     InstallRequest,
     InstallationResult,

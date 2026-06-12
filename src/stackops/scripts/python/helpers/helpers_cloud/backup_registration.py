@@ -3,7 +3,7 @@ from pathlib import Path
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
-from stackops.scripts.python.helpers.helpers_devops.backup_config import (
+from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     BackupConfig,
     USER_BACKUP_PATH,
     VALID_OS,

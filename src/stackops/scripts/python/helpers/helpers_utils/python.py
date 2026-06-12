@@ -73,7 +73,7 @@ def _build_path_selection_data() -> tuple[dict[str, str], dict[str, str]]:
 
 
 def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str | None]:
-    from stackops.utils.installer_utils.installer_locator_utils import check_tool_exists
+    from stackops.utils.command_lookup import check_tool_exists
 
     if not check_tool_exists("tv"):
         return False, None

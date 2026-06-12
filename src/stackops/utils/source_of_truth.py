@@ -130,13 +130,6 @@ def read_stackops_config_string(key: StackOpsConfigStringKey) -> str:
 def dotfiles_llm_api_keys_path(provider: str) -> Path:
     return DOTFILES_LLM_CREDS_ROOT.joinpath(provider, "api_keys.ini")
 
-
-
-
-def read_email():
-    pass
-
-
 if __name__ == "__main__":
     # print(res)
     pass

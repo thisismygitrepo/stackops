@@ -32,7 +32,7 @@ console = Console()
 
 
 def display_header() -> None:
-    from stackops.utils.installer_utils.installer_runner import get_stackops_version
+    from stackops.version import get_stackops_version
     from rich.align import Align
 
     # Fancy ASCII art header

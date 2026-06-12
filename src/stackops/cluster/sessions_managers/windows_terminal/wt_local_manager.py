@@ -364,8 +364,3 @@ class WTLocalManager:
                 return {"success": True, "total_windows": 0, "windows": [], "managed_sessions": len(self.managers), "message": "No Windows Terminal processes found"}
         except Exception as e:
             return {"success": False, "error": str(e), "managed_sessions": len(self.managers)}
-
-if __name__ == "__main__":
-    from stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples.wt_local_manager_demo import run_demo
-
-    run_demo()

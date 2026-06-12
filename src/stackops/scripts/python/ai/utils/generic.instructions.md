@@ -1,0 +1,91 @@
+
+---
+applyTo: "**/*.py"
+---
+
+# Python Development Environment and tooling:
+
+* Please run any python file using `uv run $file.py`
+* Same for tools, e.g. `un run python pytest $file_path`
+* To add a package, use `cd $repo_root; uv add <package_name>`.
+    * Please never mention versions of package, so uv will bring the latest.
+    * On this note, I have to say that I am seriously concerned about AI using very outdated coding style.
+        * Use python 3.13 & 3.14 syntax features.
+        * Use modern standards, e.g. Path from pathlib.
+* Never touch `pyproject.toml` manually, this file is strictly managed by `uv` tool on your behalf.
+* If you are writing a test or any temporary script for discovering or undestanding something as an intermediate step, then,
+  please keep all your temp scripts and files under ./.ai/tmp_scripts directory, its included in .gitignore and won't litter the repo.
+  Its also nice if you create a subdirectory therein to contain relevant files for the task at hand, to avoid confusion with other files from other ai agents working simulataneously on other things.
+* When you run a command in the terminal, please don't assume that it will run in the correct repo root directory. Always cd first to the repo root, or the desired directory, then run the command.
+
+# Python Coding Rules
+
+* Please type hint all the code. Use fully quilaified types, not just generics like dict, list, etc, rather dict[str, int], list[float], 'npt.NDarray[np.float32]', etc.
+* Please avoid the type `Any`, unless absoloutely necessary.
+* Please use `# type: ignore blah blah`, to silence any warning from pyright or other linters and type checkers, but only when necessary. Otherwise, listen to them and adjust accordingly, or use cast from typing.
+* Use typeddict, dataclasses and literals when necessary to avoid blackbox str or dict[str, str] etc.
+* ALL functions / methods etc must clearly indicate the return type in signature, even if its None.
+* Don't make file name `types.py` it conflicts with built-in modules.
+* Avoid `from futures import annotations` and the like, we are using python 3.13+ so no need for that.
+* Avoid writing code in __init__.py files, I hate black magic, avoid shims, and export files.
+* Avoid writing short functions with one or two lines, in-line instead.
+* Do not leave dangling imports or variables unused, prefix their name with underscore if necessary to indicate they are unused.
+* Please prefer to use absolute imports, avoid relatives when possible.
+* Use triple quotes and triple double quotes f-strings for string formatting and avoid when possible all goofy escaping when interpolation.
+* If needed, opt for polars not pandas, whenever possible.
+* when finished, run a linting static analysis check against files you touched, Any fix any mistakes.
+* Please run `uv run -m pyright $file_touched` and address all issues.
+* For all type checkers and linters, like mypy, pyright, pyrefly and pylint, there are config files at different levels of the repo all the way up to home directory level. You don't need to worry about them, just be mindful that they exist. The tools themselves will respect the configs therein.
+* If you want to run all linters and pycheckers agains the entire project to make sure everything is clean, I prepared a shared type-checking script, you can run it from the repo root as `uv run ./scripts/lint_and_type_check.py`. It will produce markdown files that are you are meant to look at @ ./.ai/linters/*.md
+* Rust-inspired style, e.g.
+
+```python
+
+from typing import Literal, Optional, TypeAlias
+class Success:
+  def __init__(self, value: int):
+    self.value = value
+FAILURE_REASON: TypeAlias = Literal["cache_missing", "service_history_missing"]
+class Failure:
+    def __init__(self, reason: FAILURE_REASON, message: str | None = None):
+        self.reason: FAILURE_REASON = reason
+        self.message = message
+def fallible_function(a: int, b: int) -> Success | Failure:
+    if a > b: return Success(value=a+b)
+    else: return Failure(reason="service_history_missing", message="a is not greater than b")
+def example_usage() -> None:
+    result = fallible_function(2, 3)
+    match result:
+        case Success():  # Correct
+            print("Addition succeeded, and the result is:", result.value)
+        case Failure():  # <--- Looks wrong, because no argument is passed, but its correct, it works like this in python3.11+
+            # Now this only matches if result is instance of `Failure` class.
+            print("Addition failed.")
+            print(f"Reason: {result.reason}, Message: {result.message}")
+            q = result.reason
+            match q:
+                case "cache_missing":
+                    print("Handle cache missing scenario.")
+                case "service_history_missing":
+                    print("Handle service history missing scenario.")
+```
+
+# General Programming Ethos:
+
+* Please be obsessed about one thing: how to write the code in a way, so that if there is any change anywhere that can make something else break, then the static analsyis tools will catch it and point to all the places that need to be changed, so that there is no chance of human error of forgetting to change something somewhere. Every other consideration is subserviant to this overriding requirement.
+* Assuming types will be respected, then, if and only if, the written code can't be statically gauranteed to be perfect by the linters and type checkers, then we write a test for it. E.g.; if its data-dependent functionality interfacing with user input, etc. Otherwise, tests are discouraged.
+* Test file convention: it should go under $repo_root/tests/mirror/$same_file_path_relative_to_repo_root
+* Don't write toleratnt code, e.g. try this, no worries, lets try something else, unless user asked for it explicitly.
+* I hate "legacy code", "backward compatilbity", "fallback position", never do this nonsense, when you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.
+* Please don't be psychophantic, don't just try to please the user by doing exactly what they say, e.g. there is a typo in their request and you follow the typo! Also, if request is unreasonable from design perspective, push back and explain and suggest. If the impelmentation will multiply the complexity of codebase, refrain from implementation and let the user know.
+* Make sure all the code is rigorous, no lazy stuff.
+* Always avoid default values in arguments of functions. Those are evil and cause confusion. Always be explicit in parameter passing. I only accept them in cli apps and when interacting with user in general, otherwise, deep in codebase, no.
+* If you absolutely have to set a value, then make `constants.py` file and put it there and import it.
+* Your code is minimal, no unrequested features, no bloat.
+* Please avoid writing README files and avoid docstring and comments in code unless absolutely necessary. Use clear naming conventions instead of documenting.
+* Always prefer to functional style of programming over OOP.
+* Please avoid making files longer ~ 200 lines or so, always cosider breaking to meaningful self-contained nicely related modules.
+* When asked to fix something, never, ever do a hacky patch where the error is located or near it, instead, you find the root cause and do a radical fix.
+
+# Privacy:
+* No matter what, never ever open/read/write/list anything under ~/dotfiles

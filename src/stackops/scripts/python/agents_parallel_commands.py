@@ -68,10 +68,36 @@ def agents_create(
     ] = False,
 ) -> None:
     """Create agents layout file, ready to run."""
-    from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
-
     try:
         normalized_separator = _decode_separator(separator=separator)
+        if interactive:
+            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
+
+            main(
+                agent=agent,
+                host=host,
+                model=model,
+                reasoning_effort=reasoning_effort,
+                provider=provider,
+                context=context,
+                context_path=context_path,
+                separator=normalized_separator,
+                agent_load=agent_load,
+                stagger_max=stagger_max,
+                prompt=prompt,
+                prompt_path=prompt_path,
+                prompt_name=prompt_name,
+                job_name=job_name,
+                join_prompt_and_context=join_prompt_and_context,
+                run=run,
+                output_path=output_path,
+                agents_dir=agents_dir,
+                save_as_yaml=save_as_yaml,
+            )
+            return
+
+        from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
+
         impl(
             agent=agent,
             host=host,
@@ -92,7 +118,7 @@ def agents_create(
             output_path=output_path,
             agents_dir=agents_dir,
             save_as_yaml=save_as_yaml,
-            interactive=interactive,
+            interactive=False,
         )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e

@@ -160,7 +160,7 @@ def explore_installers_by_category_labels(install_request: InstallRequest, categ
     from rich.panel import Panel
 
     from stackops.utils.installer_utils.installer_class import Installer
-    from stackops.utils.installer_utils.installer_locator_utils import check_tool_exists
+    from stackops.utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_runner import get_installers
     from stackops.utils.installer_utils.installer_summary import render_installation_summary
     from stackops.utils.options import choose_from_options

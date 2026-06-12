@@ -261,7 +261,7 @@ def _record_upload(
     record_os: str,
     expand_symbol: str,
 ) -> tuple[Path, str, bool]:
-    from stackops.scripts.python.helpers.helpers_devops.backup_registration import register_backup_entry
+    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
 
     original_target_parts = _split_remote_spec(original_target)
     if original_target_parts is not None and original_target_parts[1] == expand_symbol:

@@ -11,7 +11,7 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_processes im
     classify_pane_status,
     find_meaningful_pane_process_label,
 )
-from stackops.scripts.python.helpers.helpers_sessions.attach_impl import run_command
+from stackops.scripts.python.helpers.helpers_sessions._attach_common import run_command
 
 
 TraceUntil: TypeAlias = Literal["idle-shell", "all-exited", "exit-code", "session-missing"]

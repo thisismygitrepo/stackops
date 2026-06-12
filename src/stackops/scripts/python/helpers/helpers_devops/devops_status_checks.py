@@ -200,7 +200,7 @@ def check_backup_config() -> dict[str, Any]:
         cloud_config = "Not configured"
 
     try:
-        from stackops.scripts.python.helpers.helpers_devops.backup_config import LIBRARY_BACKUP_PATH, read_backup_config
+        from stackops.scripts.python.helpers.helpers_cloud.backup_config import LIBRARY_BACKUP_PATH, read_backup_config
 
         backup_file = LIBRARY_BACKUP_PATH
         if backup_file.exists():

@@ -47,7 +47,11 @@ def should_skip_install(
 
 
 def validate_install_request(install_target: InstallTarget, install_request: InstallRequest) -> InstallRequestResolution:
-    supports_update = install_target.installer_kind in {"binary_url", "github_release", "script"} or _is_winget_install_command(install_target.installer_value)
+    supports_update = (
+        install_target.installer_kind in {"binary_url", "github_release", "script"}
+        or _is_winget_install_command(install_target.installer_value)
+        or _is_uv_tool_install_command(install_target.installer_value)
+    )
     supports_version = install_target.installer_kind in {"github_release", "script"} or _is_winget_install_command(install_target.installer_value)
 
     warnings: list[str] = []
@@ -71,6 +75,8 @@ def validate_install_request(install_target: InstallTarget, install_request: Ins
 
 
 def resolve_installer_value(install_target: InstallTarget, install_request: InstallRequest) -> str:
+    if _is_uv_tool_install_command(install_target.installer_value) and install_request.update:
+        return _add_uv_upgrade(install_target.installer_value)
     if not _is_winget_install_command(install_target.installer_value):
         return install_target.installer_value
     if not install_request.update and install_request.version is None:
@@ -84,3 +90,14 @@ def resolve_installer_value(install_target: InstallTarget, install_request: Inst
 
 def _is_winget_install_command(installer_value: str) -> bool:
     return installer_value.strip().startswith("winget install ")
+
+
+def _is_uv_tool_install_command(installer_value: str) -> bool:
+    return installer_value.strip().startswith("uv tool install ")
+
+
+def _add_uv_upgrade(installer_value: str) -> str:
+    parts = installer_value.strip().split()
+    if "--upgrade" in parts:
+        return installer_value
+    return f"{installer_value.strip()} --upgrade"

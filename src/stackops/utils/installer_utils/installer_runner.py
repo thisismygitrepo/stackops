@@ -26,7 +26,6 @@ from stackops.utils.path_reference import get_path_reference_path
 from rich.console import Console
 from rich.panel import Panel
 import platform
-import tomllib
 from joblib import Parallel, delayed
 
 
@@ -177,22 +176,3 @@ def install_bulk(
     print("\n")
     print("✨ INSTALLATION COMPLETE ✨".center(100, "="))
     print("\n" * 2)
-
-
-def get_stackops_version() -> str:
-    from importlib.metadata import PackageNotFoundError, version as _pkg_version
-    name: str = "stackops"
-    try:
-        return _pkg_version(name)
-    except PackageNotFoundError:
-        pass
-    root: Path = Path(__file__).resolve().parents[2]
-    pyproject: Path = root / "pyproject.toml"
-    if pyproject.is_file():
-        data: dict[str, object] = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-        project = data.get("project")
-        if isinstance(project, dict):
-            version = project.get("version")
-            if isinstance(version, str) and version:
-                return version
-    return "0.0.0"

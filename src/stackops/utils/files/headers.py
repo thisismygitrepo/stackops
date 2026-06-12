@@ -26,7 +26,7 @@ def print_header():
     table.add_row("Virtual Environment", os.getenv('VIRTUAL_ENV', 'None'))
     table.add_row("Running @", str(Path.cwd()))
 
-    from stackops.utils.installer_utils.installer_runner import get_stackops_version
+    from stackops.version import get_stackops_version
 
     console.print(Panel(table, title=f"[bold blue]✨ 🐊 StackOps Shell {get_stackops_version()} ✨ Made with 🐍 | Built with ❤️[/bold blue]", border_style="blue"))
 def print_logo(logo: str):
@@ -45,7 +45,7 @@ def print_logo(logo: str):
             _default_art = Path(random.choice([item for item in glob.glob(str(Path(__file__).parent.joinpath("art", "*"))) if Path(item).is_file() and item.endswith(".txt")]))
             print(_default_art.read_text())
     elif platform.system() in ["Linux", "Darwin"]:  # Explicitly handle both Linux and macOS
-        from stackops.utils.installer_utils.installer_locator_utils import is_executable_in_path
+        from stackops.utils.command_lookup import is_executable_in_path
         avail_cowsay = is_executable_in_path("cowsay")
         avail_lolcat = is_executable_in_path("lolcatjs")
         avail_boxes = is_executable_in_path("boxes")

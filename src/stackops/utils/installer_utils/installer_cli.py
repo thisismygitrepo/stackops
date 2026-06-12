@@ -128,7 +128,7 @@ def main_installer_cli(
 def install_interactively(install_request: InstallRequest) -> None:
     from stackops.utils.options import choose_from_options
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-    from stackops.utils.installer_utils.installer_locator_utils import check_tool_exists
+    from stackops.utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_summary import render_installation_summary
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from stackops.utils.installer_utils.installer_runner import get_installers
@@ -241,7 +241,7 @@ def install_clis(clis_names: list[str], install_request: InstallRequest) -> None
 
 
 def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bool:
-    from stackops.utils.installer_utils.installer_locator_utils import check_tool_exists
+    from stackops.utils.command_lookup import check_tool_exists
     if binary_name is None:
         binary_name = which
     exists = check_tool_exists(binary_name)

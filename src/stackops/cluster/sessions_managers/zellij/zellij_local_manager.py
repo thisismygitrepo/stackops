@@ -19,7 +19,7 @@ from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types imp
 from stackops.utils.scheduler import Scheduler
 from stackops.cluster.sessions_managers.zellij.zellij_local import ZellijLayoutGenerator
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
-from stackops.cluster.sessions_managers.zellij.zellij_utils import zellij_local_manager_helper as helper
+from stackops.cluster.sessions_managers.zellij import zellij_local_manager_helper as helper
 
 
 logging.basicConfig(level=logging.INFO)

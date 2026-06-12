@@ -1,14 +1,11 @@
+from importlib.resources import files
 from pathlib import Path
-import stackops.scripts.python.ai.solutions.copilot.instructions.python as copilot_instructions
 
-from stackops.utils.path_reference import get_path_reference_path
+
+GENERIC_INSTRUCTIONS_PATH = "generic.instructions.md"
 
 def get_generic_instructions_path() -> Path:
-    path = get_path_reference_path(
-        module=copilot_instructions,
-        path_reference=copilot_instructions.DEV_INSTRUCTIONS_PATH_REFERENCE,
-    )
-    text = path.read_text(encoding="utf-8")
+    text = files("stackops.scripts.python.ai.utils").joinpath(GENERIC_INSTRUCTIONS_PATH).read_text(encoding="utf-8")
     import platform
     if platform.system().lower() == "windows":
         text = text.replace("bash", "powershell").replace(".sh", ".ps1")

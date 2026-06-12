@@ -51,7 +51,7 @@ def _ordered_os_tokens(os_filter: str) -> list[str]:
 
 
 def _default_data_entry_name(path_local: str, os_filter: str) -> str:
-    from stackops.scripts.python.helpers.helpers_devops.backup_registration import sanitize_entry_name
+    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import sanitize_entry_name
 
     base_name = sanitize_entry_name(Path(path_local).expanduser().stem)
     os_tokens = _ordered_os_tokens(os_filter)
@@ -176,7 +176,7 @@ def register_data(
     ] = DEFAULT_OS_FILTER,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_devops.backup_registration import register_backup_entry
+    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
 
     if interactive:
         path_local, group, name, path_cloud, share_url, zip_, encrypt, encryption, rel2home, os = _prompt_register_data_options(
@@ -230,7 +230,7 @@ def edit_data(
     import shutil
     import subprocess
 
-    from stackops.scripts.python.helpers.helpers_devops.backup_config import (
+    from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
         LIBRARY_BACKUP_PATH,
         USER_BACKUP_PATH,
         DEFAULT_BACKUP_HEADER,

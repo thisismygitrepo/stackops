@@ -5,12 +5,11 @@ from pathlib import Path
 from typing import Literal, TypeAlias, overload
 
 import stackops.settings.zellij.layouts as layouts
-from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.command_lookup import check_tool_exists
 from stackops.utils.options import choose_from_options
+from stackops.utils.path_reference import get_path_reference_path
 
 STANDARD = get_path_reference_path(module=layouts, path_reference=layouts.ST2_PATH_REFERENCE)
-
 NEW_SESSION_LABEL = "NEW SESSION"
 KILL_ALL_AND_NEW_LABEL = "KILL ALL SESSIONS & START NEW"
 _ANSI_ESCAPE_RE = re.compile(
@@ -42,7 +41,7 @@ def interactive_choose_with_preview(
     msg: str,
     options_to_preview_mapping: dict[str, str],
     multi: Literal[False] = False,
-) -> str | None: ...
+) -> str: ...
 
 
 @overload
@@ -57,8 +56,10 @@ def interactive_choose_with_preview(
     msg: str,
     options_to_preview_mapping: dict[str, str],
     multi: bool = False,
-) -> str | list[str] | None:
-    if options_to_preview_mapping and check_tool_exists("tv"):
+) -> str | list[str]:
+    if len(options_to_preview_mapping) == 0:
+        raise RuntimeError("No options available.")
+    if check_tool_exists("tv"):
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
         try:
@@ -70,17 +71,17 @@ def interactive_choose_with_preview(
                     preview_size_percent=70.0,
                 )
                 return chosen_multi
-            else:
-                chosen_single = choose_from_dict_with_preview(
-                    options_to_preview_mapping=options_to_preview_mapping,
-                    extension="md",
-                    multi=False,
-                    preview_size_percent=70.0,
-                )
-                return chosen_single
+            chosen_single = choose_from_dict_with_preview(
+                options_to_preview_mapping=options_to_preview_mapping,
+                extension="md",
+                multi=False,
+                preview_size_percent=70.0,
+            )
+            if chosen_single is None:
+                raise RuntimeError("Expected one selection.")
+            return chosen_single
         except Exception:
             pass
-
     if multi:
         chosen_multi_options = choose_from_options(
             msg=msg,
@@ -89,42 +90,16 @@ def interactive_choose_with_preview(
             tv=True,
             custom_input=False,
         )
-        return chosen_multi_options or []
-    else:
-        chosen_single = choose_from_options(
-            msg=msg,
-            multi=False,
-            options=list(options_to_preview_mapping.keys()),
-            tv=True,
-            custom_input=False,
-        )
-        return chosen_single
-
-
-def choose_session(
-    backend: Literal["zellij", "tmux", "herdr"],
-    name: str | None,
-    new_session: bool,
-    kill_all: bool,
-    window: bool = False,
-) -> AttachSessionChoice:
-    match backend:
-        case "zellij":
-            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_session as _zellij
-
-            return _zellij(name=name, new_session=new_session, kill_all=kill_all, window=window)
-        case "tmux":
-            from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_session as _tmux
-
-            return _tmux(name=name, new_session=new_session, kill_all=kill_all, window=window)
-        case "herdr":
-            from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import choose_session as _herdr
-
-            return _herdr(name=name, new_session=new_session, kill_all=kill_all, window=window)
-    raise ValueError(f"Unsupported backend: {backend}")
-
-
-def get_session_tabs() -> list[tuple[str, str]]:
-    from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import get_session_tabs as _impl
-
-    return _impl()
+        if not isinstance(chosen_multi_options, list):
+            raise RuntimeError("Expected multiple selections.")
+        return chosen_multi_options
+    chosen_single_option = choose_from_options(
+        msg=msg,
+        multi=False,
+        options=list(options_to_preview_mapping.keys()),
+        tv=True,
+        custom_input=False,
+    )
+    if not isinstance(chosen_single_option, str):
+        raise RuntimeError("Expected one selection.")
+    return chosen_single_option

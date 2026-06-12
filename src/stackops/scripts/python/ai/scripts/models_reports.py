@@ -2,14 +2,14 @@ import json
 from pathlib import Path
 
 try:
-    from models import ReportStats, ToolSpec  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+    from models_core import ReportStats, ToolSpec  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
     from models_json import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
         extract_json_entries,
         extract_json_metadata,
         parse_json_output,
     )
 except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts.models import ReportStats, ToolSpec
+    from stackops.scripts.python.ai.scripts.models_core import ReportStats, ToolSpec
     from stackops.scripts.python.ai.scripts.models_json import (
         extract_json_entries,
         extract_json_metadata,
