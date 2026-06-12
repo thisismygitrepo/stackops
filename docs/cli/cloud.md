@@ -78,7 +78,7 @@ Current options from live help:
 | `--share-type`, `-t` | Share link type: `view`/`v`, `edit`/`e`, or `embed`/`m`; implies sharing |
 | `--record-group`, `-g` | Group name for the recorded upload; used when `--record-name` is passed |
 | `--record-name`, `-n` | Record the upload in `mapper/data.yaml` with this entry name |
-| `--record-os` | OS filter for recorded uploads; defaults to all supported OS values |
+| `--record-os`, `-F` | OS filter for recorded uploads; defaults to all supported OS values |
 | `--relative2home`, `-r` | Treat remote paths as relative to `myhome` |
 | `--root`, `-R` | Remote root |
 | `--password`, `-p` | Symmetric GPG encryption password; implies `--encrypt --encryption symmetric` |

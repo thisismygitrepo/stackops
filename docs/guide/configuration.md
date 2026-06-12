@@ -106,3 +106,4 @@ Inside `devops config terminal --help`, the current terminal commands are:
 - `wezterm-theme`
 - `ghostty-theme`
 - `windows-terminal-theme`
+- `tmux-style`

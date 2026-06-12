@@ -77,6 +77,7 @@ These are the child commands exposed by the current live help.
 - `copy-assets`
 - `dump`
 - `terminal`
+- `secrets`
 
 `data`:
 
@@ -97,6 +98,7 @@ These are the child commands exposed by the current live help.
 - `build-installer`
 - `download-installer`
 - `build-docker`
+- `build-graph`
 - `build-assets`
 - `workflows`
 
@@ -140,7 +142,7 @@ Examples:
 
 ```bash
 devops execute --list
-devops execute deploy -w library
+devops execute deploy -s library
 devops execute "echo hello" --command
 ```
 

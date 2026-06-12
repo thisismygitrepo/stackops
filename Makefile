@@ -3,5 +3,5 @@
 .PHONY: docs
 
 docs:
-	pip install .[docs]
-	pdoc stackops --output-dir docs
+	uv sync --group dev --frozen
+	uv run zensical build

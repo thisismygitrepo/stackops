@@ -21,5 +21,6 @@ devops [OPTIONS] COMMAND [ARGS]...
 | `self` | `s` | Self management |
 | `network` | `n` | Network management |
 | `execute` | `e` | Execute scripts |
+| `vault` | `v` | Search Bitwarden credentials and manage vault sessions |
 
 ---

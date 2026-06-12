@@ -1,5 +1,15 @@
 # StackOps Python Module Intent Inventory
 
+> **Staleness notice:** This report was generated against an earlier revision of the codebase.
+> The source tree has since been restructured: modules were moved into subpackages
+> (e.g. `utils.cloud.*`, `utils.ssh_utils.*`, `utils.schemas.*`, `utils.machine.*`,
+> `utils.network.*`, `utils.python.*`, `utils.repos.*`, `profile.linking.*`),
+> `stackops.secrets` became a package, new packages were added
+> (`architecture_graph`, `settings.procs`, `settings.wsl`), and several top-level
+> `utils.*` modules were relocated or removed. The per-module tables below still
+> reflect the old layout and should be regenerated before making marker decisions.
+> The total module count has been updated to match the current tree.
+
 Generated first-pass report for deciding which Python modules are intended as downstream import API, CLI implementation, CLI helpers, or packaged assets.
 
 This is intentionally a filter, not the final truth. Use the `Manual review queue` section to correct edge cases before adding source-level markers.
@@ -33,7 +43,7 @@ These marker values are suggestions for a later source-level pass, for example `
 
 ## Counts
 
-Total installed `stackops` Python modules: **622**
+Total installed `stackops` Python modules: **652**
 
 | First-pass label | Count |
 | --- | ---: |
@@ -185,7 +195,7 @@ These **96** modules are the strongest candidates for `api` markers after manual
 | `stackops.logger` | `python-api` | `high` | api-doc, funcs:2 | src/stackops/logger.py |  |
 | `stackops.profile.create_helper` | `python-api-candidate` | `medium` | funcs:2 | src/stackops/profile/create_helper.py |  |
 | `stackops.profile.dotfiles_mapper` | `python-api-candidate` | `medium` | classes:1, funcs:11 | src/stackops/profile/dotfiles_mapper.py |  |
-| `stackops.secrets` | `python-api-candidate` | `medium` | __all__, classes:2, funcs:7 | src/stackops/secrets.py |  |
+| `stackops.secrets` | `package` | `package-marker` | `medium` | __init__, assets, loader, models, paths, readers, search | src/stackops/secrets/__init__.py | Was a single module; now a package with submodules. |
 | `stackops.utils.cloud.onedrive.auth` | `python-api-candidate` | `medium` | funcs:15 | src/stackops/utils/cloud/onedrive/auth.py |  |
 | `stackops.utils.cloud.onedrive.file_ops` | `python-api-candidate` | `medium` | funcs:5 | src/stackops/utils/cloud/onedrive/file_ops.py |  |
 | `stackops.utils.cloud_defaults` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/utils/cloud_defaults.py |  |
@@ -1183,7 +1193,7 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.setup.macos` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/scripts/setup/macos/__init__.py |  |
 | `stackops.scripts.setup.windows` | `package` | `package-marker` | `high` | 1 | 5 | - | src/stackops/scripts/setup/windows/__init__.py |  |
 | `stackops.scripts.windows` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/scripts/windows/__init__.py |  |
-| `stackops.secrets` | `api` | `python-api-candidate` | `medium` | 6 | 166 | __all__, classes:2, funcs:7 | src/stackops/secrets.py |  |
+| `stackops.secrets` | `package` | `package-marker` | `medium` | 6 | 7 | - | src/stackops/secrets/__init__.py | Was `secrets.py`; now a package with submodules: assets, loader, models, paths, readers, search. |
 | `stackops.settings` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/settings/__init__.py |  |
 | `stackops.settings.atuin` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/settings/atuin/__init__.py |  |
 | `stackops.settings.atuin.themes` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/settings/atuin/themes/__init__.py |  |

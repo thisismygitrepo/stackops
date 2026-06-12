@@ -25,7 +25,7 @@ fire [OPTIONS] [PATH] [FUNCTION]
 | --- | --- |
 | General execution | `--script`, `--module`, `--interactive`, `--debug`, `--optimized`, `--jit` (`-J`), `--frozen` (`-F`) |
 | Function selection | `--choose-function` |
-| Notebook and app launch | `--jupyter`, `--marimo`, `--streamlit`, `--environment` |
+| Notebook and app launch | `--jupyter`, `--marimo`, `--streamlit` |
 | Shell and background helpers | `--cmd`, `--loop`, `--watch`, `--git-pull` |
 | Path and repo handling | `--root-repo`, `--holdDirectory`, `--PathExport` |
 | Remote launch | `--remote` |

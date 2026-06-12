@@ -7,9 +7,9 @@ The current modules are:
 | Module | Purpose |
 | --- | --- |
 | `stackops.utils.accessories` | Small shared helpers such as random strings, list/timeframe splitting, rich formatting, and git-root discovery |
-| `stackops.utils.options` | Terminal choice helpers, plus cloud and SSH selectors |
+| `stackops.utils.options_utils.options` | Terminal choice helpers, plus cloud and SSH selectors |
 | `stackops.utils.options_utils.tv_options` | Preview-based selection from a mapping of names to payloads |
-| `stackops.utils.notifications` | Markdown-to-HTML rendering plus SMTP email sending |
+| `stackops.cluster.remote.notifications` | Markdown-to-HTML rendering plus SMTP email sending |
 
 ---
 
@@ -29,7 +29,7 @@ These are intentionally small, but they show up throughout the CLI and helper la
 
 ## `choose_from_options`
 
-`stackops.utils.options.choose_from_options()` is the main interactive picker.
+`stackops.utils.options_utils.options.choose_from_options()` is the main interactive picker.
 
 Current behavior:
 

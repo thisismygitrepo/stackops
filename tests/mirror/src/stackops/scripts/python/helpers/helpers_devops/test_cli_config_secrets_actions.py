@@ -7,8 +7,8 @@ from typer.testing import CliRunner
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as actions
-from stackops.utils.schemas.secrets.secrets_loader import load_secrets_file
-from stackops.utils.schemas.secrets.secrets_types import Login, SecretRecord, SecretsFile
+from stackops.secrets.loader import load_secrets_file
+from stackops.secrets.models import Login, SecretRecord, SecretsFile
 
 
 def test_subset_secrets_file_append_adds_selected_entries_to_existing_output(

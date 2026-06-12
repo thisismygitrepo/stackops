@@ -218,7 +218,7 @@ These modules power the status summaries returned by the manager classes rather 
 
 ## Zellij example usage
 
-::: stackops.cluster.sessions_managers.zellij.zellij_utils.example_usage
+::: stackops.cluster.sessions_managers.zellij.zellij_remote_example
     options:
       show_root_heading: true
       show_source: false
@@ -266,7 +266,7 @@ These modules power the status summaries returned by the manager classes rather 
 
 ## Windows Terminal local manager demo
 
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples.wt_local_manager_demo
+::: stackops.cluster.sessions_managers.windows_terminal.wt_local_manager_demo
     options:
       show_root_heading: true
       show_source: false

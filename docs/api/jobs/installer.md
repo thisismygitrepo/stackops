@@ -203,6 +203,7 @@ main_installer_cli(
     which="fd,bat,rg",
     group=False,
     interactive=False,
+    explore=False,
     update=False,
     version=None,
 )
@@ -215,6 +216,7 @@ Parameters:
 | `which` | Comma-separated app names, group names, or URLs |
 | `group` | Treat `which` as package-group names |
 | `interactive` | Launch interactive selection instead of parsing `which` |
+| `explore` | Explore installer categoryLabels before installing |
 | `update` | Allow reinstall or upgrade when supported |
 | `version` | Request a specific version or tag when supported |
 
@@ -242,7 +244,7 @@ Interactive mode currently:
 
 ## Package groups
 
-The installer runtime consumes the groups defined in `stackops.jobs.installer.package_groups.PACKAGE_GROUP2NAMES`.
+The installer runtime consumes the groups defined in `stackops.utils.schemas.installer.package_groups.PACKAGE_GROUP2NAMES`.
 
 Current group names:
 
@@ -273,7 +275,7 @@ Current group names:
 Example:
 
 ```python
-from stackops.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
+from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
 
 print(PACKAGE_GROUP2NAMES["agents"])
 ```
@@ -366,7 +368,7 @@ Security and reporting helpers live under `stackops.jobs.installer.checks.*`. Th
 
 ## Package groups
 
-::: stackops.jobs.installer.package_groups
+::: stackops.utils.schemas.installer.package_groups
     options:
       show_root_heading: true
       show_source: false
@@ -439,6 +441,14 @@ Security and reporting helpers live under `stackops.jobs.installer.checks.*`. Th
 ## Installer CLI helpers
 
 ::: stackops.utils.installer_utils.installer_cli
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installer Python script main protocol
+
+::: stackops.utils.installer_utils.installer_main_protocol
     options:
       show_root_heading: true
       show_source: false

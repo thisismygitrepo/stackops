@@ -35,8 +35,8 @@ graph LR
 | `stackops.cluster.remote.data_transfer` | SFTP and cloud-transfer helpers used by `RemoteMachine.submit()` |
 | `stackops.cluster.remote.execution_script` | Template renderer for the generated Python wrapper |
 | `stackops.cluster.remote.distribute` | Multi-host distribution utilities built around `RemoteMachine` |
-| `stackops.utils.ssh` | SSH transport, remote Python execution, remote shell execution, and file copy helpers |
-| `stackops.scripts.python.helpers.helpers_network.address` | Public-IP lookup and local IPv4 selection |
+| `stackops.utils.ssh_utils.ssh` | SSH transport, remote Python execution, remote shell execution, and file copy helpers |
+| `stackops.utils.network.address` | Public-IP lookup and local IPv4 selection |
 | `stackops.scripts.python.helpers.helpers_network.address_switch` | Public-IP rotation flow based on `warp-cli` |
 
 ---
@@ -207,7 +207,7 @@ This is the path to use when the same callable should be partitioned across seve
 
 ## SSH helper
 
-`stackops.utils.ssh.SSH` is the lower-level transport used by the remote layer.
+`stackops.utils.ssh_utils.ssh.SSH` is the lower-level transport used by the remote layer.
 
 `SSH.from_config_file(host)` calls the `SSH` constructor with the host string. The constructor first tries `~/.ssh/config`; if no matching entry exists, it parses `user@host[:port]`, `user@host`, or `host:port` syntax. The class opens:
 
@@ -228,7 +228,7 @@ Representative operations include:
 
 ## Networking helpers
 
-### `helpers_network.address`
+### `utils.network.address`
 
 - `get_public_ip_address()` installs `ipinfo` if needed, then shells out to `ipinfo myip --json`
 - `get_all_ipv4_addresses()` returns `(interface, ip)` tuples for every local IPv4 address
@@ -322,9 +322,17 @@ Representative operations include:
       show_source: false
       members_order: source
 
+## Notifications
+
+::: stackops.cluster.remote.notifications
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
 ## SSH helper
 
-::: stackops.utils.ssh
+::: stackops.utils.ssh_utils.ssh
     options:
       show_root_heading: true
       show_source: false
@@ -348,7 +356,7 @@ Representative operations include:
 
 ## Address helpers
 
-::: stackops.scripts.python.helpers.helpers_network.address
+::: stackops.utils.network.address
     options:
       show_root_heading: true
       show_source: false

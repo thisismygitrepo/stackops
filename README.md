@@ -13,7 +13,7 @@
 
 </div>
 
-StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile/secrets manager, data and code sync solution, command launcher, processes orchestator (is there anything else?) all wrapped into one solution. As such, it should take a few minutes to make a fresh new machine to look like the machine you were customizing for 10 years.
+StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile/secrets manager, data and code sync solution, command launcher, processes orchestrator (is there anything else?) all wrapped into one solution. As such, it should take a few minutes to make a fresh new machine to look like the machine you were customizing for 10 years.
 
 
 | Before | After |
@@ -74,11 +74,30 @@ devops config copy-assets all
 devops config sync down \
   --sensitivity public \
   --method copy \
-  --on-conflict overwrite-default-path \
+  --on-conflict throw-error \
   --which all
 devops config terminal config-shell --which default
 devops install --group termabc
 ```
+
+
+## CLI
+
+StackOps exposes standalone commands and an umbrella wrapper:
+
+| Command | Purpose |
+| --- | --- |
+| `devops` | Package installation, repo automation, config/data sync, self-management, networking, script execution, vault |
+| `cloud` | Cloud sync, copy, mount, and SSH transfer helpers |
+| `terminal` | Terminal session and layout management |
+| `agents` | AI agent scaffolding, MCP catalog installs, prompt runs, parallel workflows |
+| `utils` | General-purpose utility commands |
+| `fire` | File, function, notebook, and app runner |
+| `preview` | File preview and `uv run` backend launcher |
+| `seek` | Interactive search across files, text matches, and symbols |
+| `stackops` | Umbrella wrapper that routes into all of the above |
+
+Run `<command> --help` for details, or `stackops --help` to see the full tree.
 
 
 ## Author

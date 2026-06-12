@@ -21,6 +21,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `add-todo` | Generate filtered checklist files for repo contents |
 | `add-symlinks` | Create `~/code_copies/<repo>_copy_<n>` symlinks to the current repo |
 | `run-prompt` | Run one prompt through a selected agent, with inline, file, or YAML-backed context |
+| `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
 | `add-skill` | Add a supported skill into an agent directory |
 
@@ -108,6 +109,20 @@ agents run-prompt --agent pi --reasoning high --context-path ./context.md "inspe
 agents run-prompt --show-format
 ```
 
+`run-interactive` launches an agent directly with sensible defaults. Current options:
+
+- `--agent`/`-a` accepts `codex`/`x`, `copilot`/`c`, `pi`/`p`, or `opencode`/`omp`/`o`
+- `--caveman`/`-c` starts the session with the caveman wenyan-full prompt
+- `--overhead`/`-o` launches the session through overhead
+
+Examples:
+
+```bash
+agents run-interactive --agent codex
+agents run-interactive --agent copilot --caveman
+agents run-interactive --agent pi --overhead
+```
+
 `ask` is the lighter-weight direct path. Current behavior to keep in mind:
 
 - default agent is `pi`
@@ -178,11 +193,12 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome or Brave with CDP enabled and an isolated profile for tools that attach to an existing browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`.
+`agents browser launch-browser` launches Chrome or Brave with CDP enabled and an isolated profile for tools that attach to an existing browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. `--lan`/`-l` binds CDP to `0.0.0.0` instead of localhost.
 
 ```bash
 agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
 agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
+agents browser launch-browser --browser chrome --port 9331 --lan
 ```
 
 ---
@@ -211,6 +227,7 @@ agents add-mcp --help
 agents add-todo --help
 agents add-symlinks --help
 agents run-prompt --help
+agents run-interactive --help
 agents ask --help
 agents add-skill --help
 agents browser install-tech --help

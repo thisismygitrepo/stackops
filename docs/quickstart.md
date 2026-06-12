@@ -49,14 +49,18 @@ devops data sync --help
 
 These help screens show the current required arguments and options for dotfiles/config sync and backup sync.
 
-## 5. Explore the rest of the CLI
+## Explore the rest of the CLI
 
 ```bash
+devops --help
 cloud --help
 terminal --help
 agents --help
 utils --help
+fire --help
 preview --help
+seek --help
+stackops --help
 ```
 
 

@@ -1,6 +1,6 @@
 # Environment and Project Wiring
 
-The environment helpers in `stackops` now live across `stackops.utils.python_env` and `stackops.utils.cloud_defaults`. They answer two practical questions:
+The environment helpers in `stackops` now live across `stackops.utils.cloud.defaults`. They answer two practical questions:
 
 - which virtualenv should this project use?
 - what cloud-transfer defaults should commands start from?
@@ -13,7 +13,7 @@ The environment helpers in `stackops` now live across `stackops.utils.python_env
 | --- | --- |
 | `find_virtualenv_root(init_path)` | Walks upward from a path and resolves the first project-local `.venv` |
 | `build_virtualenv_activation_line(virtualenv_root)` | Builds the platform-specific shell line that activates a virtualenv |
-| `CloudConfig` | Typed cloud metadata for keys such as `cloud`, `root`, `encrypt`, `encryption`, `share`, and `overwrite` |
+| `CloudConfig` | Typed cloud metadata for keys such as `cloud`, `root`, `rel2home`, `pwd`, `encrypt`, `encryption`, `os_specific`, `zip`, `share`, and `overwrite` |
 | `read_default_cloud_config()` | Returns the default `CloudConfig` payload used by callers as a baseline |
 
 ---
@@ -60,31 +60,18 @@ The Windows path must be under the user's home directory because the implementat
 ```python
 from pathlib import Path
 
-from stackops.utils.cloud_defaults import read_default_cloud_config
-from stackops.utils.python_env import build_virtualenv_activation_line, find_virtualenv_root
+from stackops.utils.cloud.defaults import read_default_cloud_config
 
-project_path = Path.cwd()
-virtualenv_root = find_virtualenv_root(project_path)
 cloud_defaults = read_default_cloud_config()
 
-print(virtualenv_root)
 print(cloud_defaults["root"])
-
-if virtualenv_root is not None:
-    print(build_virtualenv_activation_line(virtualenv_root))
 ```
 
 ---
 
 ## API reference
 
-::: stackops.utils.python_env
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-::: stackops.utils.cloud_defaults
+::: stackops.utils.cloud.defaults
     options:
       show_root_heading: true
       show_source: false
@@ -140,7 +127,7 @@ if virtualenv_root is not None:
 
 ## Rclone helpers
 
-::: stackops.utils.rclone
+::: stackops.utils.cloud.rclone
     options:
       show_root_heading: true
       show_source: false
@@ -148,7 +135,7 @@ if virtualenv_root is not None:
 
 ## Rclone wrapper
 
-::: stackops.utils.rclone_wrapper
+::: stackops.utils.cloud.rclone_wrapper
     options:
       show_root_heading: true
       show_source: false
@@ -156,7 +143,7 @@ if virtualenv_root is not None:
 
 ## StackOps repository helpers
 
-::: stackops.utils.repo_stackops
+::: stackops.utils.repos.stackops_paths
     options:
       show_root_heading: true
       show_source: false
@@ -181,22 +168,6 @@ if virtualenv_root is not None:
 ## Repository schema
 
 ::: stackops.utils.schemas.repos.repos_types
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Secrets loader schema
-
-::: stackops.utils.schemas.secrets.secrets_loader
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Secrets types schema
-
-::: stackops.utils.schemas.secrets.secrets_types
     options:
       show_root_heading: true
       show_source: false

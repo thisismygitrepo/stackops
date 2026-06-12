@@ -16,7 +16,7 @@ The runtime installation engine that consumes those assets lives under `stackops
 
 | Area | What it provides | Main modules |
 | --- | --- | --- |
-| Package groups | Named collections of apps such as `termabc`, `agents`, `dev`, and `db-cli` | `stackops.jobs.installer.package_groups` |
+| Package groups | Named collections of apps such as `termabc`, `agents`, `dev`, and `db-cli` | `stackops.utils.schemas.installer.package_groups` |
 | Installer catalog assets | `installer_data.json`, installer schema, and typed installer records | `stackops.utils.schemas.installer.*` |
 | Installer scripts | Packaged Python, shell, and PowerShell installers | `stackops.jobs.installer.python_scripts.*`, `stackops.jobs.installer.linux_scripts.*`, `stackops.jobs.installer.powershell_scripts.*` |
 | Installer runtime | CLI entrypoints, installer selection, bulk install orchestration, direct URL install | `stackops.utils.installer_utils.*` |
@@ -58,7 +58,7 @@ These are the exact package-group keys accepted by the runtime. CLI name aliases
 Example:
 
 ```python
-from stackops.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
+from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
 
 print(PACKAGE_GROUP2NAMES["agents"])
 print(PACKAGE_GROUP2NAMES["termabc"])
@@ -71,7 +71,7 @@ print(PACKAGE_GROUP2NAMES["termabc"])
 The runtime path looks like this:
 
 1. `utils/schemas/installer/installer_data.json` defines the catalog.
-2. `jobs/installer/package_groups.py` defines named bundles.
+2. `utils/schemas/installer/package_groups.py` defines named bundles.
 3. `stackops.utils.installer_utils.installer_runner.get_installers()` filters that catalog for the current OS, architecture, and optional groups.
 4. `stackops.utils.installer_utils.installer_class.Installer` resolves and executes one install target.
 5. `stackops.utils.installer_utils.installer_cli` exposes the higher-level CLI-style entrypoints.
@@ -86,12 +86,13 @@ So this section documents both the packaged job assets and the installer APIs th
 utils/schemas/installer/
 ├── installer_data.json           # Catalog of installer definitions
 ├── installer_type.schema.json    # JSON Schema for the catalog
-└── installer_types.py            # TypedDicts and platform helpers
+├── installer_types.py            # TypedDicts and platform helpers
+└── package_groups.py             # Named package bundles
 
 jobs/installer/
-├── package_groups.py       # Named package bundles
 ├── checks/                 # Security and reporting helpers
 ├── linux_scripts/          # Linux and macOS shell installers
+├── macos_scripts/          # macOS-specific installers
 ├── powershell_scripts/     # Windows PowerShell installers
 └── python_scripts/         # Custom Python installers
 ```

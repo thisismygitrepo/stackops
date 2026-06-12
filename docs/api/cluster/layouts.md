@@ -224,7 +224,7 @@ Those classes are responsible for rendering backend-specific layout artifacts:
 
 ## Zellij local manager helper
 
-::: stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_manager_helper
+::: stackops.cluster.sessions_managers.zellij.zellij_local_manager_helper
     options:
       show_root_heading: true
       show_source: false

@@ -19,6 +19,8 @@ devops install [OPTIONS] [WHICH]
 | `--group` | `-g` | Treat `WHICH` as a package group name |
 | `--interactive` | `-i` | Interactive selection with TV/fzf interface |
 | `--explore` | `-x` | Explore installer `categoryLabels`, then choose matching installers |
+| `--update` | `-u` | Reinstall or upgrade when supported |
+| `--version` | `-v` | Specific version or tag to install when supported |
 
 ### Installation Modes
 

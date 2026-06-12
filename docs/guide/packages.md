@@ -64,15 +64,15 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>shell</code></td>
-      <td>zellij | mprocs | mcfly | atuin | starship | gotty | ttyd | cb</td>
+      <td>nerdfont | psmux | tmux | mcfly | starship | cb</td>
     </tr>
     <tr>
       <td><code>search</code></td>
-      <td>nerdfont | fd | fzf | tv | broot | rg | rga | ugrep | ouch | pistol | bat | viu | yazi | tere | lsd | zoxide | diskonaut | dua | dust | cpz | rmz</td>
+      <td>fd | fzf | tv | broot | rg | rga | ugrep | ouch | pistol | bat | viu | superfile | yazi | tere | lsd | zoxide | diskonaut | dua | dust | pdu | cpz | rmz</td>
     </tr>
     <tr>
       <td><code>sys-monitor</code></td>
-      <td>btop | btm | ntop | procs | cpufetch | fastfetch</td>
+      <td>btop | btm | ntop | procs | cpufetch | fastfetch | psnet | pstop</td>
     </tr>
     <tr>
       <td><code>code-analysis</code></td>
@@ -82,18 +82,19 @@ Here are the available groups as currently defined by the installer:
       <td><code>termabc</code></td>
       <td>
         nano | lazygit | onefetch | gitcs | lazydocker | hyperfine | kondo | tokei | navi | tealdeer | gitui | delta | gh | watchexec | jq<br>
-        btop | btm | ntop | procs | cpufetch | fastfetch<br>
-        zellij | mprocs | mcfly | atuin | starship | gotty | ttyd | cb<br>
-        nerdfont | fd | fzf | tv | broot | rg | rga | ugrep | ouch | pistol | bat | viu | yazi | tere | lsd | zoxide | diskonaut | dua | dust | cpz | rmz
+        btop | btm | ntop | procs | cpufetch | fastfetch | psnet | pstop<br>
+        nerdfont | psmux | tmux | mcfly | starship | cb<br>
+        fd | fzf | tv | broot | rg | rga | ugrep | ouch | pistol | bat | viu | superfile | yazi | tere | lsd | zoxide | diskonaut | dua | dust | pdu | cpz | rmz
       </td>
     </tr>
     <tr>
       <td><code>dev</code></td>
       <td>
         alacritty | wezterm | warp | vtm | edex-ui | extraterm | nushell<br>
-        brave | bypass-paywalls-chrome | browsh | carbonyl | code | hx<br>
-        rainfrog | lazysql | dblab | usql | harlequin | sqlit | duckdb | postgresql-client | sqlite3 | redis-cli | dbgate | dbeaver | sqliteBrowser | pgadmin | pgweb<br>
-        ytui-music | youtube-tui | termusic | kronos | OBS Background removal<br>
+        brave | bypass-paywalls-chrome | browsh | carbonyl<br>
+        code | hx | zed<br>
+        rainfrog | lazysql | dblab | usql | harlequin | sqlit | dolt | duckdb | postgresql-client | sqlite3 | redis-cli | dbgate | dbeaver | sqliteBrowser | pgadmin | pgweb<br>
+        ytui-music | youtube-tui | termusic | rmpc | kronos | OBS Background removal<br>
         ngrok | devtunnel | cloudflared | forward-cli | ffsend | portal | qrcp | termscp | filebrowser | qr | qrscan | sharewifi | share-wifi | easy-sharing | ezshare | restic | syncthing | cloudreve | ots<br>
         devcontainer | rust-analyzer | evcxr | geckodriver | git | m365<br>
         nano | lazygit | onefetch | gitcs | lazydocker | hyperfine | kondo | tokei | navi | tealdeer | gitui | delta | gh | watchexec | jq<br>
@@ -111,7 +112,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>agents</code></td>
-      <td>aider | aoe | aichat | copilot | antigravity/agy | crush | opencode-ai | chatgpt | mods | q | qwen-code | cursor-cli | droid | kilocode | cline | auggie | agentofempires | agent-deck | agenthand</td>
+      <td>aider | aoe | aichat | copilot | antigravity | crush | opencode-ai | chatgpt | forge | headroom | hermes | mods | oz | q | qodercli | qwen-code | cursor-cli | droid | dmux | pi | omp | orca | kilocode | cline | auggie | agentofempires | agent-deck | agenthand | beads | beads_viewer | gastown | symphony</td>
     </tr>
     <tr>
       <td><code>terminal</code></td>
@@ -123,7 +124,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>editors</code></td>
-      <td>code | hx</td>
+      <td>code | hx | zed</td>
     </tr>
     <tr>
       <td><code>db-all</code></td>
@@ -131,7 +132,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>db-cli</code></td>
-      <td>duckdb | postgresql-client | sqlite3 | redis-cli</td>
+      <td>dolt | duckdb | postgresql-client | sqlite3 | redis-cli</td>
     </tr>
     <tr>
       <td><code>db-desktop</code></td>

@@ -23,7 +23,9 @@ Current `devops self --help` exposes:
 | `build-installer` | Export installation files for an offline installer image | Always |
 | `download-installer` | Download and extract a published offline installer image | Always |
 | `build-docker` | Build Docker images from the repo script | Only when `~/code/stackops` exists |
+| `build-graph` | Build the architecture dependency graph | Only when `~/code/stackops` exists |
 | `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/stackops` exists |
+| `workflows` | Developer AI workflows | Only when `~/code/stackops` exists |
 
 The nested help screens render shortened usage such as `Usage: devops update ...`, but the full entrypoints remain `devops self ...` and `devops self security ...`.
 
@@ -499,12 +501,65 @@ Current `devops self build-assets --help` exposes:
 |---------|-------------|
 | `update-cli-graph` | Rewrite `src/stackops/scripts/python/graph/cli_graph.json` from the current Typer source |
 | `regenerate-charts` | Rewrite `docs/assets/devops-self-explore/sunburst.html` from the current graph snapshot |
+| `update-skill-refs` | Regenerate the StackOps skill CLI reference maps |
 
 Examples:
 
 ```bash
 devops self build-assets update-cli-graph
 devops self build-assets regenerate-charts
+devops self build-assets update-skill-refs
+```
+
+This sub-app is only registered when `~/code/stackops` exists locally.
+
+### build-graph
+
+Build the architecture dependency graph from the local repo checkout and write the HTML output.
+
+```bash
+devops self build-graph [OPTIONS]
+```
+
+Key option:
+
+| Option | Description |
+|--------|-------------|
+| `--view`, `-v` | Preview the generated HTML graph in the browser |
+
+Example:
+
+```bash
+devops self build-graph
+devops self build-graph --view
+```
+
+This command is only registered when `~/code/stackops` exists locally.
+
+### workflows
+
+Developer AI workflow helpers live under a nested Typer app:
+
+```bash
+devops self workflows [SUBCOMMAND] [ARGS]...
+```
+
+Current `devops self workflows --help` exposes:
+
+| Command | Description |
+|---------|-------------|
+| `update-installer` | Create an agents layout for updating `installer_data.json` |
+| `update-test` | Create an agents layout for writing tests from repo Python sources |
+| `update-docs` | Create an agents layout for updating CLI and API docs only |
+| `update-logic` | Create an agents layout for checking CLI command logic |
+
+Examples:
+
+```bash
+devops self workflows update-installer
+devops self workflows update-test
+devops self workflows update-docs
+devops self workflows update-logic
 ```
 
 This sub-app is only registered when `~/code/stackops` exists locally.

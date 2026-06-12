@@ -44,7 +44,7 @@ terminal run [OPTIONS]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--layouts-file` | `-f` | Override the default layout file |
-| `--test-layout` | - | Use the generated mock layout instead of reading a file |
+| `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--choose-layouts` | `-l` | Comma-separated layout names, or `""` for interactive selection |
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection across all layouts |
 | `--sleep-inbetween` | `-S` | Delay between launching layouts |
@@ -128,20 +128,20 @@ terminal run-aoe [OPTIONS]
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection |
 | `--sleep-inbetween` | `-S` | Delay between AoE launches |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for selected layouts |
-| `--agent` | - | Agent/tool name; defaults to `codex` |
+| `--agent` | `-a` | Agent/tool name; defaults to `codex` |
 | `--model` | `-m` | Model forwarded to the launched CLI when supported |
 | `--provider` | `-p` | Provider forwarded to the launched CLI when supported |
-| `--sandbox` | - | Forward `--sandbox <value>` when supported |
-| `--yolo` | - | Enable YOLO mode when supported |
-| `--cmd` | - | Override the launched agent binary/command |
-| `--args` | - | Repeatable extra argument forwarded to the launched CLI |
-| `--env` | - | Repeatable `KEY=VALUE` pair forwarded to AoE when supported |
-| `--force` | - | Forward force/overwrite when supported |
-| `--dry-run` | - | Print generated `aoe add` commands without executing them |
-| `--aoe-bin` | - | AoE executable to invoke |
-| `--tab-command-mode` | - | `prompt`, `cmd`, or `ignore` for each tab's `command` field |
+| `--sandbox` | `-s` | Forward `--sandbox <value>` when supported |
+| `--yolo` | `-y` | Enable YOLO mode when supported |
+| `--cmd` | `-C` | Override the launched agent binary/command |
+| `--args` | `-A` | Repeatable extra argument forwarded to the launched CLI |
+| `--env` | `-e` | Repeatable `KEY=VALUE` pair forwarded to AoE when supported |
+| `--force` | `-F` | Forward force/overwrite when supported |
+| `--dry-run` | `-d` | Print generated `aoe add` commands without executing them |
+| `--aoe-bin` | `-b` | AoE executable to invoke |
+| `--tab-command-mode` | `-M` | `prompt`, `cmd`, or `ignore` for each tab's `command` field |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside selected tabs |
-| `--no-launch` | - | Accepted flag; current parsing still launches sessions immediately |
+| `--no-launch` | `-n` | Create each AoE session without launching it immediately |
 
 Examples:
 
@@ -222,7 +222,7 @@ terminal trace [SESSION_NAME] [OPTIONS]
 | `--interactive` | `-i` | Choose an existing tmux session interactively |
 | `--every` | `-e` | Polling interval in seconds |
 | `--until` | `-u` | `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
-| `--exit-code` | - | Required exit code when `--until exit-code` is selected |
+| `--exit-code` | `-c` | Required exit code when `--until exit-code` is selected |
 
 Examples:
 

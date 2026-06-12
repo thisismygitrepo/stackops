@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-09.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-12.
 
 This reference intentionally uses:
 - direct commands only
@@ -32,11 +32,13 @@ Defined in `pyproject.toml` `[project.scripts]`:
 stackops
 ├─ devops
 │  ├─ install
+│  ├─ data
+│  │  ├─ sync
+│  │  ├─ register
+│  │  └─ edit
 │  ├─ repos
 │  │  ├─ sync
 │  │  ├─ register
-│  │  ├─ checkout-to-commit
-│  │  ├─ checkout-to-branch
 │  │  ├─ action
 │  │  ├─ analyze
 │  │  ├─ guard
@@ -73,41 +75,10 @@ stackops
 │  │  │  ├─ add
 │  │  │  └─ edit
 │  │  └─ dump
-│  ├─ data
-│  │  ├─ sync
-│  │  ├─ register
-│  │  └─ edit
-│  ├─ self
-│  │  ├─ install
-│  │  ├─ clone
-│  │  ├─ update
-│  │  ├─ status
-│  │  ├─ security
-│  │  │  ├─ scan
-│  │  │  ├─ list
-│  │  │  ├─ upload
-│  │  │  ├─ download
-│  │  │  ├─ install
-│  │  │  └─ report
-│  │  ├─ explore
-│  │  │  ├─ search
-│  │  │  ├─ tree
-│  │  │  ├─ dot
-│  │  │  ├─ view
-│  │  │  └─ tui
-│  │  ├─ readme
-│  │  ├─ docs
-│  │  ├─ build-installer
-│  │  ├─ build-docker
-│  │  ├─ build-assets
-│  │  │  ├─ update-cli-graph
-│  │  │  ├─ regenerate-charts
-│  │  │  └─ update-skill-refs
-│  │  └─ workflows
-│  │     ├─ update-installer
-│  │     ├─ update-test
-│  │     ├─ update-docs
-│  │     └─ update-logic
+│  ├─ vault
+│  │  ├─ search
+│  │  ├─ login-and-unlock
+│  │  └─ clean-cache
 │  ├─ network
 │  │  ├─ share-terminal
 │  │  ├─ share-server
@@ -130,10 +101,39 @@ stackops
 │  │  ├─ show-address
 │  │  └─ vscode-share
 │  ├─ execute
-│  └─ vault
-│     ├─ search
-│     ├─ login-and-unlock
-│     └─ clean-cache
+│  └─ self
+│     ├─ install
+│     ├─ clone
+│     ├─ update
+│     ├─ status
+│     ├─ security
+│     │  ├─ scan
+│     │  ├─ list
+│     │  ├─ upload
+│     │  ├─ download
+│     │  ├─ install
+│     │  └─ report
+│     ├─ explore
+│     │  ├─ search
+│     │  ├─ tree
+│     │  ├─ dot
+│     │  ├─ view
+│     │  └─ tui
+│     ├─ readme
+│     ├─ docs
+│     ├─ build-installer
+│     ├─ download-installer
+│     ├─ build-docker
+│     ├─ build-graph
+│     ├─ build-assets
+│     │  ├─ update-cli-graph
+│     │  ├─ regenerate-charts
+│     │  └─ update-skill-refs
+│     └─ workflows
+│        ├─ update-installer
+│        ├─ update-test
+│        ├─ update-docs
+│        └─ update-logic
 ├─ cloud
 │  ├─ sync
 │  ├─ copy
@@ -166,6 +166,7 @@ stackops
 │  ├─ add-symlinks
 │  ├─ add-config
 │  ├─ run-prompt
+│  ├─ run-interactive
 │  └─ ask
 ├─ utils
 │  ├─ machine
