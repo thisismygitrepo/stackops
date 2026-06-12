@@ -70,6 +70,8 @@ def choose_existing_session_name(
         msg=msg,
         options_to_preview_mapping={session_name: _build_preview(session_name) for session_name in sessions},
     )
+    if session_name is None:
+        return ("error", "No tmux session selected.")
     return ("session_name", session_name)
 
 
@@ -110,6 +112,8 @@ def choose_session(
             msg="Choose a tmux window or pane to attach to:",
             options_to_preview_mapping=options_to_preview_mapping,
         )
+        if selection is None:
+            return ("error", "No tmux target selected.")
         if selection == NEW_SESSION_LABEL:
             return ("handoff_script", new_session_script(kill_all=kill_all))
         if selection == KILL_ALL_AND_NEW_LABEL:
@@ -131,6 +135,8 @@ def choose_session(
         msg="Choose a tmux session to attach to:",
         options_to_preview_mapping=options_to_preview_mapping,
     )
+    if session_name is None:
+        return ("error", "No tmux session selected.")
     if session_name == NEW_SESSION_LABEL:
         return ("handoff_script", new_session_script(kill_all=kill_all))
     if session_name == KILL_ALL_AND_NEW_LABEL:

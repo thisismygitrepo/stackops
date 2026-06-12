@@ -1,9 +1,54 @@
 """Terminal management commands - lazy loading subcommands."""
 
 from typing import Literal, Annotated, cast
+import re
 import typer
 
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose, SessionConflictActionLoose2Strict
+
+
+def _parse_tmux_target(target: str) -> tuple[str, str, str]:
+    if target.startswith("%"):
+        return (f"(id {target})", "-", "-")
+    if ":" in target:
+        session, _, rest = target.partition(":")
+        if "." in rest:
+            window, _, pane = rest.partition(".")
+            return (session, window, pane)
+        return (session, rest, "-")
+    return (target, "-", "-")
+
+
+def _print_kill_summary(script: str) -> None:
+    from rich import box
+    from rich.console import Console
+    from rich.table import Table
+
+    rows: list[tuple[str, str, str, str]] = []
+    for line in script.splitlines():
+        line = line.strip()
+        if match := re.match(r"tmux kill-session\s+-t\s+(.+)", line):
+            target = match.group(1).strip("'\"")
+            rows.append(("session", target, "-", "-"))
+        elif match := re.match(r"tmux kill-window\s+-t\s+(.+)", line):
+            target = match.group(1).strip("'\"")
+            session, window, _ = _parse_tmux_target(target)
+            rows.append(("window", session, window, "-"))
+        elif match := re.match(r"tmux kill-pane\s+-t\s+(.+)", line):
+            target = match.group(1).strip("'\"")
+            session, window, pane = _parse_tmux_target(target)
+            rows.append(("pane", session, window, pane))
+    if not rows:
+        return
+    console = Console()
+    table = Table(title="Killed", box=box.SIMPLE, header_style="bold cyan")
+    table.add_column("Action", style="bold")
+    table.add_column("Session", style="magenta")
+    table.add_column("Window", justify="right")
+    table.add_column("Pane", justify="right")
+    for action, session, window, pane in rows:
+        table.add_row(action, session, window, pane)
+    console.print(table)
 
 
 def _resolve_session_backend(
@@ -229,12 +274,14 @@ def kill_session_target(
                     script=script,
                     timeout_seconds=30.0,
                 )
+                _print_kill_summary(script=script)
                 return
             except RuntimeError as error:
                 typer.echo(f"Error: {error}", err=True, color=True)
                 raise typer.Exit(code=1) from error
         from stackops.utils.code import exit_then_run_shell_script
 
+        _print_kill_summary(script=script)
         exit_then_run_shell_script(script=script, strict=True)
         return
     typer.echo("Error: kill operation did not return a final script.", err=True, color=True)

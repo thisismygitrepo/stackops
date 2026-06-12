@@ -41,7 +41,7 @@ def interactive_choose_with_preview(
     msg: str,
     options_to_preview_mapping: dict[str, str],
     multi: Literal[False] = False,
-) -> str: ...
+) -> str | None: ...
 
 
 @overload
@@ -56,7 +56,7 @@ def interactive_choose_with_preview(
     msg: str,
     options_to_preview_mapping: dict[str, str],
     multi: bool = False,
-) -> str | list[str]:
+) -> str | list[str] | None:
     if len(options_to_preview_mapping) == 0:
         raise RuntimeError("No options available.")
     if check_tool_exists("tv"):
@@ -71,15 +71,12 @@ def interactive_choose_with_preview(
                     preview_size_percent=70.0,
                 )
                 return chosen_multi
-            chosen_single = choose_from_dict_with_preview(
+            return choose_from_dict_with_preview(
                 options_to_preview_mapping=options_to_preview_mapping,
                 extension="md",
                 multi=False,
                 preview_size_percent=70.0,
             )
-            if chosen_single is None:
-                raise RuntimeError("Expected one selection.")
-            return chosen_single
         except Exception:
             pass
     if multi:
@@ -91,15 +88,12 @@ def interactive_choose_with_preview(
             custom_input=False,
         )
         if not isinstance(chosen_multi_options, list):
-            raise RuntimeError("Expected multiple selections.")
+            return []
         return chosen_multi_options
-    chosen_single_option = choose_from_options(
+    return choose_from_options(
         msg=msg,
         multi=False,
         options=list(options_to_preview_mapping.keys()),
         tv=True,
         custom_input=False,
     )
-    if not isinstance(chosen_single_option, str):
-        raise RuntimeError("Expected one selection.")
-    return chosen_single_option

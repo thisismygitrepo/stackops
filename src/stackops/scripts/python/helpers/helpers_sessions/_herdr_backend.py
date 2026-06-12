@@ -323,6 +323,8 @@ def choose_session(
             msg="Choose a Herdr tab or pane to attach to:",
             options_to_preview_mapping=options_to_preview_mapping,
         )
+        if selection is None:
+            return ("error", "No Herdr target selected.")
         if selection == NEW_SESSION_LABEL:
             return ("handoff_script", new_session_script(kill_all=kill_all, sessions=sessions))
         if selection == KILL_ALL_AND_NEW_LABEL:
@@ -360,6 +362,8 @@ def choose_session(
         msg="Choose a Herdr session to attach to:",
         options_to_preview_mapping=options_to_preview_mapping,
     )
+    if session_label is None:
+        return ("error", "No Herdr session selected.")
     if session_label == NEW_SESSION_LABEL:
         return ("handoff_script", new_session_script(kill_all=kill_all, sessions=sessions))
     if session_label == KILL_ALL_AND_NEW_LABEL:
