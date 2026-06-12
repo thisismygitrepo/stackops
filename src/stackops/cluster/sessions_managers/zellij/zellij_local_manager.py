@@ -129,6 +129,13 @@ class ZellijLocalManager:
         )
         for manager, plan in zip(self.managers, launch_plan, strict=True):
             original_session_name = manager.session_name
+            if plan.get("skip_launch", False):
+                session_name = plan["session_name"]
+                results[session_name] = {
+                    "success": True,
+                    "message": f"Skipped existing session '{session_name}'",
+                }
+                continue
             if plan["session_name"] != original_session_name:
                 console.print(
                     f"[bold yellow]📝 Renaming session[/bold yellow] [yellow]'{original_session_name}'[/yellow] "

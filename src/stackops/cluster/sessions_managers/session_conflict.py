@@ -10,13 +10,15 @@ SessionConflictActionLoose = Literal[
     "restart", "r",
     "rename", "n",
     "error", "e",
+    "skip", "s",
     "mergeOverwrite", "m",
-    "mergeSkip", "s",
+    "mergeSkip", "M",
 ]
 SessionConflictAction = Literal[
     "restart",
     "rename",
     "error",
+    "skip",
     "mergeOverwrite",
     "mergeSkip",
 ]
@@ -27,10 +29,12 @@ SessionConflictActionLoose2Strict: dict[SessionConflictActionLoose, SessionConfl
     "n": "rename",
     "error": "error",
     "e": "error",
+    "skip": "skip",
+    "s": "skip",
     "mergeOverwrite": "mergeOverwrite",
     "m": "mergeOverwrite",
     "mergeSkip": "mergeSkip",
-    "s": "mergeSkip",
+    "M": "mergeSkip",
 }
 
 ConflictSource = Literal["existing", "duplicate"]
@@ -39,6 +43,7 @@ SUPPORTED_SESSION_CONFLICT_ACTIONS = frozenset(
         "restart",
         "rename",
         "error",
+        "skip",
         "mergeOverwrite",
         "mergeSkip",
     }
@@ -99,21 +104,21 @@ def _build_launch_plan(
 def _existing_conflict_hint(backend: SessionBackend) -> str:
     if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
         return (
-            "Use --on-conflict restart, --on-conflict rename, "
+            "Use --on-conflict restart, --on-conflict rename, --on-conflict skip, "
             "--on-conflict mergeOverwrite, or "
             "--on-conflict mergeSkip."
         )
-    return "Use --on-conflict restart or --on-conflict rename."
+    return "Use --on-conflict restart, --on-conflict rename, or --on-conflict skip."
 
 
 def _duplicate_conflict_hint(backend: SessionBackend) -> str:
     if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
         return (
-            "Use unique layout names, --on-conflict rename, "
+            "Use unique layout names, --on-conflict rename, --on-conflict skip, "
             "--on-conflict mergeOverwrite, or "
             "--on-conflict mergeSkip."
         )
-    return "Use unique layout names or --on-conflict rename."
+    return "Use unique layout names, --on-conflict rename, or --on-conflict skip."
 
 
 def list_existing_sessions(backend: SessionBackend) -> set[str]:
@@ -265,6 +270,18 @@ def build_session_launch_plan(
                 )
                 planned_sessions.add(requested_name)
                 continue
+            case "skip":
+                if conflict_with_existing or conflict_with_planned:
+                    plans.append(
+                        _build_launch_plan(
+                            requested_name=requested_name,
+                            session_name=requested_name,
+                            restart_required=False,
+                            conflict_source=conflict_source,
+                            skip_launch=True,
+                        )
+                    )
+                    continue
             case "error":
                 if conflict_with_planned:
                     raise SessionConflictError(

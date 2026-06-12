@@ -73,6 +73,12 @@ class TmuxLocalManager:
         for manager, plan in zip(self.managers, launch_plan, strict=True):
             original_session_name = manager.session_name or "unknown"
             session_name = original_session_name
+            if plan.get("skip_launch", False):
+                results[session_name] = {
+                    "success": True,
+                    "message": f"Skipped existing session '{session_name}'",
+                }
+                continue
             try:
                 manager.apply_launch_plan(
                     launch_plan=plan,

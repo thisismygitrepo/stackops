@@ -195,7 +195,13 @@ class TmuxLayoutGenerator:
         self,
         launch_plan: SessionLaunchPlan,
         on_conflict: SessionConflictAction,
-    ) -> None:
+    ) -> bool:
+        if launch_plan.get("skip_launch", False):
+            console.print(
+                f"[bold cyan]⏭️ Skipping tmux session[/bold cyan] [cyan]'{launch_plan['session_name']}'[/cyan]"
+            )
+            self.launch_commands = []
+            return False
         if launch_plan["session_name"] != self.session_name:
             console.print(
                 f"[bold yellow]📝 Renaming tmux session[/bold yellow] [yellow]'{self.session_name}'[/yellow] "
@@ -208,13 +214,16 @@ class TmuxLayoutGenerator:
             )
             kill_existing_session("tmux", self.session_name)
         self.prepare_launch_script(on_conflict=on_conflict)
+        return True
 
     def run(self, on_conflict: SessionConflictAction) -> dict[str, str | int]:
         launch_plan = build_session_launch_plan([self.session_name], backend="tmux", on_conflict=on_conflict)[0]
-        self.apply_launch_plan(
+        should_launch = self.apply_launch_plan(
             launch_plan=launch_plan,
             on_conflict=on_conflict,
         )
+        if not should_launch:
+            return {"returncode": 0, "stdout": "", "stderr": ""}
         if len(self.launch_commands) == 0:
             raise RuntimeError("tmux launch commands were not prepared")
         run_tmux_commands(
