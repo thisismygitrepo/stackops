@@ -1,5 +1,3 @@
-import shutil
-import subprocess
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
@@ -14,7 +12,6 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config i
     resolve_parallel_yaml_paths,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_yaml import select_parallel_create_values_from_locations
-from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 
 
 def run_parallel_from_yaml(
@@ -95,6 +92,11 @@ def require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedP
 
 
 def edit_parallel_yaml(*, yaml_path: Path) -> None:
+    import shutil
+    import subprocess
+
+    from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
+
     editor = shutil.which("hx")
     if editor is None:
         editor = shutil.which("nano")

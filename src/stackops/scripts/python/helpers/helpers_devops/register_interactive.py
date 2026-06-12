@@ -1,11 +1,18 @@
 from collections.abc import Sequence
+from functools import cache
+from typing import TYPE_CHECKING
 
 import typer
-from rich.console import Console
-from rich.panel import Panel
+
+if TYPE_CHECKING:
+    from rich.console import Console
 
 
-console = Console()
+@cache
+def _get_console() -> "Console":
+    from rich.console import Console
+
+    return Console()
 
 
 def _format_default(default: object | None) -> str:
@@ -15,11 +22,14 @@ def _format_default(default: object | None) -> str:
 
 
 def print_step(title: str, help_text: str, default: object | None = None) -> None:
-    console.print(Panel(f"{help_text}\n\nDefault: {_format_default(default)}", title=title, border_style="cyan", padding=(1, 2)))
+    from rich.panel import Panel
+
+    _get_console().print(Panel(f"{help_text}\n\nDefault: {_format_default(default)}", title=title, border_style="cyan", padding=(1, 2)))
 
 
 def ask_text(label: str, *, help_text: str, default: str | None = None, allow_empty: bool = False) -> str | None:
     print_step(title=label, help_text=help_text, default=default)
+    console = _get_console()
     while True:
         value = str(typer.prompt(label, default=default or "", show_default=default is not None and default != "")).strip()
         if value:
@@ -35,6 +45,7 @@ def ask_bool(label: str, *, help_text: str, default: bool) -> bool:
 
 
 def ask_choice(label: str, *, help_text: str, choices: Sequence[str], default: str) -> str:
+    console = _get_console()
     normalized_choices = tuple(choice.lower() for choice in choices)
     if default.lower() not in normalized_choices:
         raise ValueError(f"Default value {default!r} must be one of: {', '.join(choices)}")
@@ -49,6 +60,9 @@ def ask_choice(label: str, *, help_text: str, choices: Sequence[str], default: s
 
 
 def confirm_summary(title: str, lines: Sequence[str]) -> None:
+    from rich.panel import Panel
+
+    console = _get_console()
     console.print(Panel("\n".join(lines), title=title, border_style="green", padding=(1, 2)))
     if not typer.confirm("Create or update this entry?", default=True):
         raise typer.Exit(code=0)

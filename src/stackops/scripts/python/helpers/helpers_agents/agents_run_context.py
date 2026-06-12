@@ -1,11 +1,6 @@
 from pathlib import Path
 from typing import Any, Final, Literal
 import json
-import shutil
-import subprocess
-
-from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
-from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 
 
 PROMPTS_SOURCE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
@@ -264,6 +259,8 @@ def _prompts_yaml_template() -> str:
 
 
 def _prompts_yaml_template_for_path(*, yaml_path: Path) -> str:
+    from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
+
     return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
 # prompts.yaml used by `agents run-prompt`
 # Top-level keys show up in interactive selection.
@@ -274,6 +271,8 @@ def _prompts_yaml_template_for_path(*, yaml_path: Path) -> str:
 
 
 def ensure_prompts_yaml_exists(yaml_path: Path) -> bool:
+    from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
+
     ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="prompts")
     if yaml_path.exists():
         if not yaml_path.is_file():
@@ -294,6 +293,11 @@ Expected format:
 
 
 def edit_prompts_yaml(yaml_path: Path) -> None:
+    import shutil
+    import subprocess
+
+    from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
+
     editor = shutil.which("hx")
     if editor is None:
         editor = shutil.which("nano")

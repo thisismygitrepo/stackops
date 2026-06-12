@@ -1,26 +1,16 @@
 from pathlib import Path
 from platform import system
-from typing import cast
+from typing import Literal, TypeAlias, cast
 
-from stackops.utils.accessories import randstr
-
-from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
-    PROMPTS_SOURCE,
-    edit_prompts_yaml,
-    ensure_prompts_yaml_exists,
-    prompts_yaml_format_explanation,
-    resolve_context,
-    resolve_prompts_yaml_paths,
-)
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER
-from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix, resolve_oz_mcp_config_paths
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
     copilot_reasoning_args,
     normalize_reasoning_effort,
 )
-from stackops.utils.accessories import get_repo_root
+
+PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 
 
 def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
@@ -30,6 +20,8 @@ def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
 
 
 def make_prompt_file(prompt: str, context: str) -> Path:
+    from stackops.utils.accessories import randstr
+
     prompt_file = Path.home().joinpath("tmp_results", "tmp_files", "agents", f"run_prompt_{randstr()}.md")
     prompt_file.parent.mkdir(parents=True, exist_ok=True)
     payload = f"""# Context
@@ -89,11 +81,19 @@ def _build_oz_model_arg(model: str | None, is_windows: bool) -> str:
 
 
 def _build_oz_mcp_args(repo_root: Path | None, is_windows: bool) -> str:
+    from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_oz_mcp_config_paths
+
     mcp_paths = resolve_oz_mcp_config_paths(repo_root=repo_root, home_dir=Path.home())
     args: list[str] = []
     for mcp_path in mcp_paths:
         args.extend(["--mcp", str(mcp_path)])
     return _format_shell_args(args, is_windows=is_windows)
+
+
+def _resolve_current_repo_root() -> Path | None:
+    from stackops.utils.accessories import get_repo_root
+
+    return get_repo_root(Path.cwd())
 
 
 def build_agent_command(
@@ -108,9 +108,6 @@ def build_agent_command(
     resolved_is_windows = system() == "Windows" if is_windows is None else is_windows
     prompt_file_q = agent_shell.quote_for_shell(str(prompt_file), is_windows=resolved_is_windows)
     agent_cli = cast(str, agent)
-    repo_root = get_repo_root(Path.cwd())
-    agent_launch_prefix = resolve_agent_launch_prefix(agent=agent, repo_root=repo_root)
-    agent_launch_prefix_q = _format_shell_args(agent_launch_prefix, is_windows=resolved_is_windows)
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
 
     if resolved_is_windows:
@@ -150,11 +147,17 @@ def build_agent_command(
         case "kilocode":
             return f"{agent_cli} {prompt_content_expr}"
         case "cline":
+            from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix
+
+            repo_root = _resolve_current_repo_root()
+            agent_launch_prefix = resolve_agent_launch_prefix(agent=agent, repo_root=repo_root)
+            agent_launch_prefix_q = _format_shell_args(agent_launch_prefix, is_windows=resolved_is_windows)
             return f"{agent_cli}{agent_launch_prefix_q} --yolo {prompt_content_expr}"
         case "auggie":
             return f"{agent_cli} --print {prompt_content_expr}"
         case "oz":
             model_arg = _build_oz_model_arg(model=model, is_windows=resolved_is_windows)
+            repo_root = _resolve_current_repo_root()
             mcp_arg = _build_oz_mcp_args(repo_root=repo_root, is_windows=resolved_is_windows)
             return f"{agent_cli} agent run{model_arg}{mcp_arg} --prompt {prompt_content_expr}"
         case "droid":
@@ -184,6 +187,14 @@ def run(
     edit: bool,
     show_prompts_yaml_format: bool,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
+        edit_prompts_yaml,
+        ensure_prompts_yaml_exists,
+        prompts_yaml_format_explanation,
+        resolve_context,
+        resolve_prompts_yaml_paths,
+    )
+
     if _should_prepare_prompts_yaml(
         context=context,
         context_path=context_path,

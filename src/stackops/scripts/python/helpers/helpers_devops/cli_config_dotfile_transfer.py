@@ -8,8 +8,6 @@ import zipfile
 
 import typer
 
-from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
-
 
 def _format_home_relative_path(path: Path) -> str:
     home = Path.home()
@@ -36,6 +34,8 @@ def export_dotfiles(
     if over_internet:
         print("❌ Internet-based transfer is not yet implemented.")
         raise typer.Exit(code=1)
+
+    from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
 
     dotfiles_dir = DOTFILES_ROOT
     if not dotfiles_dir.exists() or not dotfiles_dir.is_dir():
@@ -147,6 +147,8 @@ def import_dotfiles(
         typer.Option("--use-ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles."),
     ] = False,
 ) -> None:
+    from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
+
     if use_ssh:
         print("🔗 Importing dotfiles via SSH-based transfer (scp).")
         dotfiles_display_path = _format_home_relative_path(DOTFILES_ROOT)

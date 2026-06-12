@@ -4,8 +4,6 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
-
 ENV_SUMMARY_LIMIT = 96
 
 
@@ -109,6 +107,7 @@ def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
     else:
         path = Path(navigator.__file__).resolve().parent.joinpath(navigator.ENV_MANAGER_TUI_PATH_REFERENCE)
     from stackops.utils.code import run_shell_script, get_uv_command_executing_python_script
+    from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
     uv_with = ["textual"]
     uv_project_dir = None

@@ -1,14 +1,17 @@
 from pathlib import Path
-import os
-import shlex
-import subprocess
 
 import typer
 
 
 def _format_command(command: list[str]) -> str:
+    import os
+
     if os.name == "nt":
+        import subprocess
+
         return subprocess.list2cmdline(command)
+    import shlex
+
     return shlex.join(command)
 
 
@@ -79,6 +82,8 @@ def run_scrape(
     )
 
     typer.echo(_format_command(command))
+    import subprocess
+
     try:
         completed = subprocess.run(command, check=False)
     except FileNotFoundError:

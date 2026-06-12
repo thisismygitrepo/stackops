@@ -4,8 +4,6 @@ from pathlib import Path
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Literal
 
-from stackops.jobs.installer.checks.vt_utils import summarize_scan_results
-
 if TYPE_CHECKING:
     from rich.table import Table
 
@@ -118,6 +116,8 @@ def _build_empty_app_data(app_row: AppMetadataRow) -> AppData:
 
 
 def build_app_data_list(app_rows: Sequence[AppMetadataRow], engine_rows: Sequence[StoredEngineReportRow]) -> list[AppData]:
+    from stackops.jobs.installer.checks.vt_utils import summarize_scan_results
+
     engine_rows_by_app: dict[str, list[StoredEngineReportRow]] = {}
     for engine_row in engine_rows:
         engine_rows_by_app.setdefault(engine_row["app_name"], []).append(engine_row)

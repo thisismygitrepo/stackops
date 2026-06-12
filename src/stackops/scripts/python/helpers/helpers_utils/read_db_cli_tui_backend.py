@@ -1,11 +1,7 @@
 import glob as glob_module
-import os
 from functools import cache
 from pathlib import Path
 import re
-import shlex
-import shutil
-import subprocess
 import sys
 from typing import Literal, TypeAlias
 from urllib.parse import urlsplit
@@ -103,8 +99,14 @@ def _looks_like_url(value: str) -> bool:
 
 
 def _format_command(command: list[str]) -> str:
+    import os
+
     if os.name == "nt":
+        import subprocess
+
         return subprocess.list2cmdline(command)
+    import shlex
+
     return shlex.join(command)
 
 
@@ -118,6 +120,9 @@ def _strip_ansi(value: str) -> str:
 
 @cache
 def _harlequin_installed_adapters() -> frozenset[str] | None:
+    import shutil
+    import subprocess
+
     if shutil.which("harlequin") is None:
         return None
     result = subprocess.run(["harlequin", "--help"], capture_output=True, check=False, text=True)
@@ -205,6 +210,9 @@ def _harlequin_command(resolved: list[Path], url: str | None, read_only: bool, t
 
 
 def _launch_interactive_command(command: list[str]) -> None:
+    import shutil
+    import subprocess
+
     executable = command[0]
     if shutil.which(executable) is None:
         raise FileNotFoundError(f"Command not found: {executable}")

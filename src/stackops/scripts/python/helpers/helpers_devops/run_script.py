@@ -268,12 +268,17 @@ def copy_script_to_local(ctx: typer.Context,
     typer.echo(typer.style(f"✅ Script '{name}.py' has been copied to '{local_path}'.", fg=typer.colors.GREEN))
 
 
-def get_app():
+def _run_system_compute_analyzer() -> None:
+    from stackops.jobs.scripts_dynamic import system_compute_analyzer
+
+    system_compute_analyzer.main()
+
+
+def get_app() -> typer.Typer:
     app = typer.Typer(
         name="dynamic-scripts",
         help="Helper to run dynamic scripts stored in stackops/jobs/scripts_dynamic",
         no_args_is_help=True,
     )
-    from stackops.jobs.scripts_dynamic import system_compute_analyzer
-    app.command(name="system-compute-analyzer")(system_compute_analyzer.main)
+    app.command(name="system-compute-analyzer")(_run_system_compute_analyzer)
     return app

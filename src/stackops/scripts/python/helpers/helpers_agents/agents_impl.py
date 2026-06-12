@@ -5,29 +5,9 @@ from math import isfinite
 from pathlib import Path
 from time import perf_counter
 
-import typer
-
-from stackops.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
-    CreateContextArtifactsInput,
-    CreatePromptArtifactsInput,
-    write_create_artifacts,
-)
-from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import (
-    resolve_context_input,
-    resolve_agents_output_dir,
-    resolve_agents_workspace_root,
-    resolve_prompt_input,
-)
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
-from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
-    show_agents_create_overview,
-    show_created_artifacts_panel,
-    show_generated_agents_table,
-)
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, normalize_reasoning_effort
-import stackops.scripts.python.helpers.helpers_agents.templates as template_assets
-from stackops.utils.path_reference import get_path_reference_path
 
 
 def agents_create(
@@ -57,10 +37,26 @@ def agents_create(
     _validate_stagger_max(stagger_max=stagger_max)
     if interactive:
         raise RuntimeError("Interactive agent creation must be dispatched before agents_impl.agents_create.")
+    from stackops.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
+        CreateContextArtifactsInput,
+        CreatePromptArtifactsInput,
+        write_create_artifacts,
+    )
+    from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import (
+        resolve_context_input,
+        resolve_agents_output_dir,
+        resolve_agents_workspace_root,
+        resolve_prompt_input,
+    )
     from stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch import (
         get_agents_launch_layout,
         get_prompt_directories,
         prep_agent_launch,
+    )
+    from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
+        show_agents_create_overview,
+        show_created_artifacts_panel,
+        show_generated_agents_table,
     )
     from stackops.utils.accessories import get_repo_root
     import json
@@ -193,6 +189,8 @@ def agents_create(
             output_path=output_path,
             agents_dir=requested_agents_dir,
         )
+        import typer
+
         typer.echo(f"Saved parallel YAML entry '{job_name_resolved}' to: {saved_yaml_path}")
     if run:
         _run_generated_layout(layout_output_path=layout_output_path.resolve())
@@ -207,6 +205,8 @@ def _confirm_existing_agents_dir_cleanup(*, agents_dir_obj: Path) -> None:
         raise RuntimeError(
             f"Refusing to delete an existing agents directory in non-interactive mode: {agents_dir_obj}\nRe-run interactively to confirm."
         )
+    import typer
+
     proceed = typer.confirm(
         f"Agents directory already exists and will be deleted to create a clean workspace:\n{agents_dir_obj}\nContinue?", default=False
     )
@@ -407,6 +407,8 @@ def collect(agent_dir: str, output_path: str, separator: str, pattern: str | Non
 def make_agents_command_template() -> None:
     """Create a template for fire agents."""
     from platform import system
+    import stackops.scripts.python.helpers.helpers_agents.templates as template_assets
+    from stackops.utils.path_reference import get_path_reference_path
 
     os_name = system()
     match os_name:
