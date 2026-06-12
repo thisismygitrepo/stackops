@@ -221,13 +221,10 @@ def _validate_stagger_max(*, stagger_max: float) -> None:
 
 
 def _run_generated_layout(*, layout_output_path: Path) -> None:
-    from click import Command
-    import typer
-
     from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli
 
     run_cli(
-        ctx=typer.Context(Command("stackops-terminal-run")),
+        ctx=None,
         layouts_file=str(layout_output_path),
         test_layout=False,
         choose_layouts=None,

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 def run_cli(
-    ctx: typer.Context,
+    ctx: typer.Context | None,
     layouts_file: str | None,
     test_layout: bool,
     choose_layouts: str | None,

@@ -20,7 +20,7 @@ type ParallelWorkflowEntry = dict[str, object]
 def write_workflows_to_yaml() -> Path:
     repo_root = _require_current_repo_root()
     yaml_path = repo_root / ".stackops" / "agents" / "parallel.yaml"
-    yaml_mapping = _load_parallel_yaml_mapping(yaml_path=yaml_path)
+    yaml_mapping = _load_raw_parallel_yaml_mapping(yaml_path=yaml_path)
     yaml_mapping.update(_build_workflow_entries(repo_root=repo_root))
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
     ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="parallel")
@@ -35,7 +35,7 @@ def _require_current_repo_root() -> Path:
     return repo_root.resolve()
 
 
-def _load_parallel_yaml_mapping(*, yaml_path: Path) -> dict[str, object]:
+def _load_raw_parallel_yaml_mapping(*, yaml_path: Path) -> dict[str, object]:
     raw_text = yaml_path.read_text(encoding="utf-8") if yaml_path.is_file() else parallel_yaml_template()
     loaded_yaml: object = yaml.safe_load(raw_text)
     if loaded_yaml is None:

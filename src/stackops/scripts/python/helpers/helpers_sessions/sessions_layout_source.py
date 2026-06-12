@@ -25,7 +25,7 @@ def _clone_layouts(layouts: list[LayoutConfig]) -> list[LayoutConfig]:
     return deepcopy(layouts)
 
 
-def _resolve_layouts_file_path(ctx: typer.Context, layouts_file: str | None) -> Path:
+def _resolve_layouts_file_path(ctx: typer.Context | None, layouts_file: str | None) -> Path:
     if layouts_file is not None:
         from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import find_layout_file
         layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
@@ -33,13 +33,14 @@ def _resolve_layouts_file_path(ctx: typer.Context, layouts_file: str | None) -> 
         layouts_file_resolved = DOTFILES_LAYOUTS_JSON_PATH
     if layouts_file_resolved.exists():
         return layouts_file_resolved
-    typer.echo(ctx.get_help())
+    if ctx is not None:
+        typer.echo(ctx.get_help())
     typer.echo(f"❌ Layouts file not found: {layouts_file_resolved}", err=True)
     raise typer.Exit(code=1)
 
 
 def resolve_layout_source(
-    ctx: typer.Context,
+    ctx: typer.Context | None,
     layouts_file: str | None,
     test_layout: bool,
 ) -> LayoutSource:
