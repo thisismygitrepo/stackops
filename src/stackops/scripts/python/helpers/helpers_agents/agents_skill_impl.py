@@ -4,7 +4,7 @@ from pathlib import Path
 import shlex
 from typing import Final, Literal, TypeAlias
 
-from stackops.utils.options import choose_from_options
+from stackops.utils.options_utils.options import choose_from_options
 
 SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"

@@ -6,16 +6,16 @@ This script Takes away all config files from the computer, place them in one dir
 
 from pathlib import Path
 
-from stackops.utils.links import ActionType, OperationRecord, OperationResult
+from stackops.profile.linking.operations import ActionType, OperationRecord, OperationResult
 from rich.console import Console
 from rich.panel import Panel
 from rich.pretty import Pretty
 from rich.text import Text
 from rich.table import Table
 
-from stackops.utils.links import symlink_map, copy_map
-from stackops.profile.link_options import CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
-from stackops.utils.link_conflict import ON_CONFLICT_STRICT
+from stackops.profile.linking.operations import symlink_map, copy_map
+from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
+from stackops.profile.linking.conflict import ON_CONFLICT_STRICT
 from stackops.profile.dotfiles_mapper import (
     LIBRARY_MAPPER_PATH,
     USER_MAPPER_PATH,

@@ -223,7 +223,7 @@ def run_py_script(ctx: typer.Context,
             if not interactive:
                 typer.echo("Re-run with --interactive to choose one explicitly.")
                 raise typer.Exit(code=1)
-            from stackops.utils.options import choose_from_options
+            from stackops.utils.options_utils.options import choose_from_options
             options = [str(p) for p in potential_matches]
             chosen_file_part = choose_from_options(options, multi=False, msg="Select the script to run:", tv=True, preview="bat")
             if chosen_file_part is None:

@@ -46,7 +46,7 @@ def _resolve_backend_choice(backend: BACKENDS_LOOSE) -> BACKENDS:
 
 
 def _choose_backend_interactively(path: str | None) -> BACKENDS:
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
 
     choice = choose_from_options(
         options=_interactive_backend_options(path=path),

@@ -59,7 +59,7 @@ def mount(
         print("❌ Error: --cloud is required when --no-interactive is set")
         raise typer.Exit(code=1)
 
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
     from pathlib import Path
     import platform
     import subprocess

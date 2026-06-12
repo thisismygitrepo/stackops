@@ -12,7 +12,7 @@ from rich.console import Console
 from stackops.utils.accessories import randstr, pprint
 from stackops.utils.io import save_json
 from stackops.utils.files.read import read_json
-from stackops.utils.ssh import SSH
+from stackops.utils.ssh_utils.ssh import SSH
 from stackops.cluster.remote.models import RemoteStackOpsConfig, WorkloadParams
 from stackops.cluster.remote.remote_machine import RemoteMachine
 

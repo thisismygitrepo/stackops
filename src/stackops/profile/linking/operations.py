@@ -1,7 +1,7 @@
 from stackops.utils.path_core import PathLike, delete_path
 from pathlib import Path
 import stackops.utils.path_core as path_core
-from stackops.utils.link_conflict import ON_CONFLICT_STRICT
+from stackops.profile.linking.conflict import ON_CONFLICT_STRICT
 from stackops.utils.accessories import randstr
 from rich.console import Console
 from rich.panel import Panel

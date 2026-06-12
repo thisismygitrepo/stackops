@@ -3,7 +3,7 @@ from stackops.scripts.python.helpers.helpers_devops.mount_helpers.utils import f
 
 
 def pick_device(entries: list[DeviceEntry], header: str) -> DeviceEntry:
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
 
     options: list[str] = []
     map_option: dict[str, DeviceEntry] = {}

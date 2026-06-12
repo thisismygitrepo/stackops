@@ -14,7 +14,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
-from stackops.utils.yaml_schema import yaml_language_server_schema_comment
+from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 
 
 PARALLEL_RUNS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]

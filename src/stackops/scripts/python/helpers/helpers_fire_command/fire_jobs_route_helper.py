@@ -4,7 +4,7 @@ import platform
 import tomllib
 from pathlib import Path
 from stackops.utils.accessories import randstr
-from stackops.utils.options import choose_from_options
+from stackops.utils.options_utils.options import choose_from_options
 
 
 def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) -> tuple[str | None, Path, dict[str, object]]:

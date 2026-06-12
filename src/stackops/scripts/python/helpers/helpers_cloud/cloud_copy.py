@@ -24,7 +24,7 @@ from stackops.utils.rclone import (
     parse_share_link_type,
     parse_share_scope,
 )
-from stackops.utils.cloud_defaults import CloudConfig, read_default_cloud_config
+from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
 
 
 defaults = read_default_cloud_config()

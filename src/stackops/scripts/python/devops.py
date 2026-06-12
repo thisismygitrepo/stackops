@@ -159,14 +159,18 @@ def get_app() -> typer.Typer:
     cli_app.command("install", no_args_is_help=True, help=install.__doc__, short_help="🔧 <i> Install essential packages")(install)
     cli_app.command("i", no_args_is_help=True, help=install.__doc__, hidden=True)(install)
 
-    cli_app.command("repos", help="📁 <r> Manage development repositories", context_settings=ctx_settings)(repos)
-    cli_app.command("r", hidden=True, context_settings=ctx_settings)(repos)
-    cli_app.command("config", help="🔩 <c> Configuration management", context_settings=ctx_settings)(config)
-    cli_app.command("c", hidden=True, context_settings=ctx_settings)(config)
     cli_app.command("data", help="💾 <d> Data management", context_settings=ctx_settings)(data)
     cli_app.command("d", hidden=True, context_settings=ctx_settings)(data)
-    cli_app.command("self", help="🔧 <s> Self management", context_settings=ctx_settings)(self_cmd)
-    cli_app.command("s", hidden=True, context_settings=ctx_settings)(self_cmd)
+
+    cli_app.command("repos", help="📁 <r> Manage development repositories", context_settings=ctx_settings)(repos)
+    cli_app.command("r", hidden=True, context_settings=ctx_settings)(repos)
+
+    cli_app.command("config", help="🔩 <c> Configuration management", context_settings=ctx_settings)(config)
+    cli_app.command("c", hidden=True, context_settings=ctx_settings)(config)
+
+    cli_app.command("vault", help="🔐 <v> Search Bitwarden credentials and manage vault sessions", context_settings=ctx_settings)(vault)
+    cli_app.command("v", hidden=True, context_settings=ctx_settings)(vault)
+
     cli_app.command("network", help="🌐 <n> Network management", context_settings=ctx_settings)(network)
     cli_app.command("n", hidden=True, context_settings=ctx_settings)(network)
 
@@ -178,8 +182,9 @@ def get_app() -> typer.Typer:
     )(execute)
     cli_app.command("e", no_args_is_help=True, hidden=True, context_settings=ctx_settings)(execute)
 
-    cli_app.command("vault", help="🔐 <v> Search Bitwarden credentials and manage vault sessions", context_settings=ctx_settings)(vault)
-    cli_app.command("v", hidden=True, context_settings=ctx_settings)(vault)
+    cli_app.command("self", help="🔧 <s> Self management", context_settings=ctx_settings)(self_cmd)
+    cli_app.command("s", hidden=True, context_settings=ctx_settings)(self_cmd)
+
 
     return cli_app
 

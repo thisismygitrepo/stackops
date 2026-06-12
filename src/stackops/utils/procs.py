@@ -150,7 +150,7 @@ class ProcessManager:
         # all_lines = formatted_data.split("\n")
         # header_and_separator = all_lines[:2]  # First two lines: header and separator
         # options = all_lines[2:]  # Skip header and separator, only process lines
-        # from stackops.utils.options import choose_from_options
+        # from stackops.utils.options_utils.options import choose_from_options
         # res = choose_from_options(options=all_lines, msg="📋 Select processes to manage:", tv=True, multi=True)
         # # Filter out header and separator if they were selected
         # selected_lines = [line for line in res if line not in header_and_separator]

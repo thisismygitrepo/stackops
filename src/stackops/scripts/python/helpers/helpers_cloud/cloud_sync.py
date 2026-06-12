@@ -1,4 +1,4 @@
-from stackops.utils.cloud_defaults import CloudConfig, read_default_cloud_config
+from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
 
 
 defaults = read_default_cloud_config()

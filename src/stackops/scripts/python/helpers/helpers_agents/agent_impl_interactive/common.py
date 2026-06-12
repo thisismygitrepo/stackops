@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 from stackops.utils.accessories import get_repo_root, randstr
-from stackops.utils.options import choose_from_options
+from stackops.utils.options_utils.options import choose_from_options
 
 
 NONE_LABEL = "<leave empty>"

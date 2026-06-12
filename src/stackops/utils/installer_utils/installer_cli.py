@@ -126,7 +126,7 @@ def main_installer_cli(
 
 
 def install_interactively(install_request: InstallRequest) -> None:
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
     from stackops.utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_summary import render_installation_summary

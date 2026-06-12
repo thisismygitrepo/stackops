@@ -2,7 +2,7 @@
 Choose a theme for Wezterm
 """
 
-from stackops.utils.options import choose_from_options
+from stackops.utils.options_utils.options import choose_from_options
 from pathlib import Path
 from typing import Any
 import time

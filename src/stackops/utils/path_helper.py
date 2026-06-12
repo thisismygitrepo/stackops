@@ -80,7 +80,7 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
         if len(reduced_scripts) == 1:
             return Path(reduced_scripts[0])
         elif len(reduced_scripts) > 1:
-            from stackops.utils.options import choose_from_options
+            from stackops.utils.options_utils.options import choose_from_options
             choice = choose_from_options(multi=False, msg="Multiple matches found", options=reduced_scripts, tv=True)
             if choice is None:
                 raise FileNotFoundError("No file selected from multiple matches.")
@@ -182,7 +182,7 @@ def get_choice_file(path: str, suffixes: set[str] | None, search_root: Path | No
         print(f"🔍 Searching recursively for Python, PowerShell and Shell scripts in directory `{path_obj}`")
         files = search_for_files_of_interest(path_obj, suffixes=suffixes)
         print(f"🔍 Got #{len(files)} results.")
-        from stackops.utils.options import choose_from_options
+        from stackops.utils.options_utils.options import choose_from_options
         selected_file = choose_from_options(multi=False, options=files, tv=True, msg="Choose one option")
         if selected_file is None:
             raise FileNotFoundError("No file selected.")

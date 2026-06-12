@@ -133,7 +133,7 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
             console.print(Panel("⚠️  No public keys found in ~/.ssh", title="[bold yellow]Warning[/bold yellow]", border_style="yellow"))
             return
         info_lines.append(f"📄 Source: Local ~/.ssh │ Found {len(pub_keys_all)} key(s)")
-        from stackops.utils.options import choose_from_options
+        from stackops.utils.options_utils.options import choose_from_options
 
         options_str = choose_from_options(options=[str(x) for x in pub_keys_all], msg="Select public key(s) to authorize", multi=True, tv=True)
         if options_str is None or len(options_str) == 0:

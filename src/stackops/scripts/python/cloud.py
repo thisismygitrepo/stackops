@@ -3,7 +3,7 @@
 import typer
 from typing import Annotated, Literal
 from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER
-from stackops.utils.cloud_defaults import read_default_cloud_config
+from stackops.utils.cloud.defaults import read_default_cloud_config
 from stackops.utils.encryption import EncryptionModeChoice
 from stackops.utils.rclone import ShareLinkTypeChoice, ShareScopeChoice
 

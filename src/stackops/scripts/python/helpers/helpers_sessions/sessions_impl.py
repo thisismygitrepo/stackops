@@ -32,7 +32,7 @@ def select_layout(layouts_json_file: str, selected_layouts_names: list[str], sel
         if not select_interactively:
             return layout_file["layouts"]
         # options = [layout["layoutName"] for layout in layout_file["layouts"]]
-        # from stackops.utils.options import choose_from_options
+        # from stackops.utils.options_utils.options import choose_from_options
         # selected_layouts_names = choose_from_options(multi=True, options=options, prompt="Choose a layout configuration:", tv=True, msg="Choose one option")
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
         selected_layouts_names = choose_from_dict_with_preview(
@@ -57,7 +57,7 @@ def select_layout(layouts_json_file: str, selected_layouts_names: list[str], sel
 def find_layout_file(layout_path: str) -> str:
     """Find layout file from a path."""
     from stackops.utils.path_helper import search_for_files_of_interest, match_file_name, sanitize_path
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
     path_obj = sanitize_path(layout_path)
     if not path_obj.exists():
         choice_file = match_file_name(sub_string=layout_path, search_root=Path.cwd(), suffixes={".json"})

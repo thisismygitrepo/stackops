@@ -10,7 +10,7 @@ def create_from_function(
         function: Annotated[str | None, typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
 ):
     from stackops.utils.python_env import find_virtualenv_root
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
     from stackops.utils.path_helper import match_file_name, sanitize_path
     from stackops.utils.accessories import get_repo_root
     from pathlib import Path

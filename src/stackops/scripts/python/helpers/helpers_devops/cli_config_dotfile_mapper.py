@@ -19,13 +19,13 @@ from stackops.profile.dotfiles_mapper import (
     normalize_os_filter,
     write_dotfiles_mapper,
 )
-from stackops.profile.link_options import (
+from stackops.profile.linking.options import (
     CONFIG_FILE_SOURCE_LOOSE,
     CONFIG_FILE_SOURCE_MAP,
     METHOD_LOOSE,
     METHOD_MAP,
 )
-from stackops.utils.link_conflict import (
+from stackops.profile.linking.conflict import (
     ON_CONFLICT_LOOSE,
     ON_CONFLICT_MAPPER,
 )
@@ -328,7 +328,7 @@ def register_dotfile(
 ) -> None:
     from rich.console import Console
     from rich.panel import Panel
-    from stackops.utils.links import symlink_map, copy_map
+    from stackops.profile.linking.operations import symlink_map, copy_map
 
     console = Console()
     if interactive:

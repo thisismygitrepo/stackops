@@ -163,7 +163,7 @@ def explore_installers_by_category_labels(install_request: InstallRequest, categ
     from stackops.utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_runner import get_installers
     from stackops.utils.installer_utils.installer_summary import render_installation_summary
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
 

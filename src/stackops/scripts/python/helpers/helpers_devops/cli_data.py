@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
-from stackops.profile.link_options import CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_MAP, CONFIG_SOURCE_LOOSE
+from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_MAP, CONFIG_SOURCE_LOOSE
 
 
 def sync(

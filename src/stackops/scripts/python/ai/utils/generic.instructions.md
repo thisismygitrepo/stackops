@@ -76,7 +76,7 @@ def example_usage() -> None:
 * Assuming types will be respected, then, if and only if, the written code can't be statically gauranteed to be perfect by the linters and type checkers, then we write a test for it. E.g.; if its data-dependent functionality interfacing with user input, etc. Otherwise, tests are discouraged.
 * Test file convention: it should go under $repo_root/tests/mirror/$same_file_path_relative_to_repo_root
 * Don't write toleratnt code, e.g. try this, no worries, lets try something else, unless user asked for it explicitly.
-* I hate "legacy code", "backward compatilbity", "fallback position", never do this nonsense, when you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.
+* I hate "legacy code", "backward compatilbity", "fallback position", never do this, because we are just prototyping, ignore any data that will now be invalid. When you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.
 * Please don't be psychophantic, don't just try to please the user by doing exactly what they say, e.g. there is a typo in their request and you follow the typo! Also, if request is unreasonable from design perspective, push back and explain and suggest. If the impelmentation will multiply the complexity of codebase, refrain from implementation and let the user know.
 * Make sure all the code is rigorous, no lazy stuff.
 * Always avoid default values in arguments of functions. Those are evil and cause confusion. Always be explicit in parameter passing. I only accept them in cli apps and when interacting with user in general, otherwise, deep in codebase, no.

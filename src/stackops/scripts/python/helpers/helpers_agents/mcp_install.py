@@ -9,7 +9,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
 from stackops.utils.files.read import remove_c_style_comments
-from stackops.utils.options import choose_from_options
+from stackops.utils.options_utils.options import choose_from_options
 
 
 MCP_INSTALL_SCOPE = Literal["local", "global"]

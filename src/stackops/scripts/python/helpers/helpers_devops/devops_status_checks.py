@@ -10,7 +10,7 @@ import stackops.settings.shells.bash as bash_shell_assets
 import stackops.settings.shells.pwsh as pwsh_shell_assets
 import stackops.utils.path_core as path_core
 from stackops.utils.source_of_truth import CONFIG_ROOT, read_stackops_config_string, resolve_source_of_truth_path
-from stackops.utils.links import files_are_identical
+from stackops.profile.linking.operations import files_are_identical
 from stackops.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
 from stackops.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
 from stackops.utils.path_reference import get_path_reference_library_relative_path

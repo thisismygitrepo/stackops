@@ -45,7 +45,7 @@ def handle_installer_not_found(search_term: str, app_apps: list[InstallerData]) 
     )
 
     order_matches_with_docs = [f"{app_name:<20} : " + name_to_doc.get(app_name, "") for app_name in ordered_matches]
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
 
     chosen = choose_from_options(
         options=order_matches_with_docs,

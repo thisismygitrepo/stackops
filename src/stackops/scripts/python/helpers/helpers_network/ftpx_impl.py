@@ -10,7 +10,7 @@ import stackops.utils.path_core as path_core
 if TYPE_CHECKING:
     from rich.console import Console
 
-    from stackops.utils.ssh import SSH
+    from stackops.utils.ssh_utils.ssh import SSH
 
 
 def ftpx(source: str, target: str, recursive: bool, zipFirst: bool, cloud: bool, overwrite_existing: bool) -> None:
@@ -159,7 +159,7 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
 
 def _create_ssh_connection(machine: str, console: Console) -> SSH:
     """Create SSH connection, handling authentication."""
-    from stackops.utils.ssh import SSH
+    from stackops.utils.ssh_utils.ssh import SSH
     from paramiko.ssh_exception import AuthenticationException
     from rich.panel import Panel
 

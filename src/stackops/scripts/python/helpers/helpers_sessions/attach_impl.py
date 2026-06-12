@@ -7,7 +7,7 @@ from typing import Literal, TypeAlias, overload
 import stackops.settings.zellij.layouts as layouts
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.command_lookup import check_tool_exists
-from stackops.utils.options import choose_from_options
+from stackops.utils.options_utils.options import choose_from_options
 
 STANDARD = get_path_reference_path(module=layouts, path_reference=layouts.ST2_PATH_REFERENCE)
 

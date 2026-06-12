@@ -4,7 +4,7 @@ from rich.panel import Panel
 from rich import box
 import base64
 
-from stackops.utils.ssh import SSH
+from stackops.utils.ssh_utils.ssh import SSH
 
 
 console = Console()

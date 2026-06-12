@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from stackops.utils.ssh import SSH
+    from stackops.utils.ssh_utils.ssh import SSH
     from stackops.cluster.remote.file_manager import FileManager
     from stackops.cluster.remote.models import RemoteStackOpsConfig
     from stackops.cluster.remote.job_params import JobParams

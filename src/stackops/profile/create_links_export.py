@@ -2,7 +2,7 @@ from typing import Annotated, Never
 
 import typer
 
-from stackops.profile.link_options import (
+from stackops.profile.linking.options import (
     CONFIG_SOURCE_LOOSE,
     CONFIG_SOURCE_MAP,
     DIRECTION_LOOSE,
@@ -12,7 +12,7 @@ from stackops.profile.link_options import (
     SENSITIVITY_LOOSE,
     SENSITIVITY_MAP,
 )
-from stackops.utils.link_conflict import ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER
+from stackops.profile.linking.conflict import ON_CONFLICT_LOOSE, ON_CONFLICT_MAPPER
 
 
 def _exit_with_error(message: str) -> Never:

@@ -155,7 +155,7 @@ def _finalize_install(repo_name: str, asset_name: str | None, version: str, extr
 
 
 def install_from_github_url(github_url: str) -> None:
-    from stackops.utils.options import choose_from_options
+    from stackops.utils.options_utils.options import choose_from_options
     from rich.console import Console
     from rich.panel import Panel
 

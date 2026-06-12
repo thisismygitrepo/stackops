@@ -10,7 +10,7 @@ from rich.panel import Panel
 
 from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.meta import print_code
-from stackops.utils.options import choose_cloud_interactively
+from stackops.utils.options_utils.options import choose_cloud_interactively
 from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
 from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     BackupConfig,
@@ -22,7 +22,7 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     read_backup_config,
 )
 from stackops.scripts.python.helpers.helpers_cloud.backup_registration import all_os_values
-from stackops.profile.link_options import CONFIG_SOURCE_LOOSE
+from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
 
 DIRECTION = Literal["BACKUP", "RETRIEVE"]
 

@@ -13,7 +13,7 @@ from rich.syntax import Syntax
 from stackops.utils.accessories import randstr
 from stackops.utils.io import save_json
 from stackops.utils.files.read import read_json
-from stackops.utils.ssh import SSH
+from stackops.utils.ssh_utils.ssh import SSH
 from stackops.cluster.remote.models import RemoteStackOpsConfig, EmailParams
 from stackops.cluster.remote.job_params import JobParams
 from stackops.cluster.remote.file_manager import FileManager

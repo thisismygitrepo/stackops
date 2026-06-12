@@ -4,7 +4,7 @@ from typing import Final, Literal, cast
 import stackops.utils.schemas.agents as agents_schema_assets
 from stackops.utils.files.read import read_json
 from stackops.utils.path_reference import get_path_reference_path
-from stackops.utils.yaml_schema import JsonObject, ensure_yaml_schema_exists
+from stackops.utils.schemas.yaml_schema import JsonObject, ensure_yaml_schema_exists
 
 
 type StackopsYamlSchemaKind = Literal["prompts", "parallel"]
