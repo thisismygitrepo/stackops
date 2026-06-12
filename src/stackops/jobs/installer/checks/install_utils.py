@@ -14,7 +14,7 @@ from pathlib import Path
 import stackops.utils.path_core as path_core
 from rich.console import Console
 
-from stackops.utils.rclone_wrapper import get_remote_path, to_cloud
+from stackops.utils.cloud.rclone_wrapper import get_remote_path, to_cloud
 from stackops.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 # Constants

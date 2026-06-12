@@ -1,7 +1,7 @@
 from stackops.utils.io import encrypt_file_asymmetric
 import stackops.utils.path_compression as path_compression
 from stackops.utils.path_core import delete_path
-from stackops.utils.rclone_wrapper import get_remote_path, to_cloud
+from stackops.utils.cloud.rclone_wrapper import get_remote_path, to_cloud
 import platform
 from pathlib import Path
 from rich.console import Console

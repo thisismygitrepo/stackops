@@ -11,7 +11,7 @@ import yaml
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
-from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
+from stackops.utils.cloud.encryption import EncryptionMode, parse_encryption_mode
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH
 

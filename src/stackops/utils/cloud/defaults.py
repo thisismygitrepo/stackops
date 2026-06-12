@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from stackops.utils.encryption import EncryptionMode
+from stackops.utils.cloud.encryption import EncryptionMode
 
 
 class CloudConfig(TypedDict, total=True):

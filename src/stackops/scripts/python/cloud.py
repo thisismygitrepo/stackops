@@ -4,8 +4,8 @@ import typer
 from typing import Annotated, Literal
 from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER
 from stackops.utils.cloud.defaults import read_default_cloud_config
-from stackops.utils.encryption import EncryptionModeChoice
-from stackops.utils.rclone import ShareLinkTypeChoice, ShareScopeChoice
+from stackops.utils.cloud.encryption import EncryptionModeChoice
+from stackops.utils.cloud.rclone import ShareLinkTypeChoice, ShareScopeChoice
 
 
 defaults = read_default_cloud_config()

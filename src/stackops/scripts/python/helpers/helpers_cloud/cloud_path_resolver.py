@@ -1,6 +1,6 @@
 from stackops.scripts.python.helpers.helpers_cloud.cloud_helpers import my_abs
 from stackops.utils.cloud.defaults import CloudConfig
-from stackops.utils.rclone_wrapper import get_remote_path
+from stackops.utils.cloud.rclone_wrapper import get_remote_path
 from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.accessories import pprint
 from rich.console import Console

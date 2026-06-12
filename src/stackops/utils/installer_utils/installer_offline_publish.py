@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-from stackops.utils import rclone_wrapper
+from stackops.utils.cloud import rclone_wrapper
 from stackops.utils.installer_utils import installer_offline_constants as constants
 from stackops.utils.installer_utils.installer_offline_models import ExportStepResult
 

@@ -20,8 +20,8 @@ from stackops.utils.io import (
 )
 from stackops.utils.path_core import delete_path
 import stackops.utils.path_compression as path_compression
-from stackops.utils.rclone import RcloneCommandError, is_missing_remote_path_error
-import stackops.utils.rclone_wrapper as rclone_wrapper
+from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
+import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
 from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (
     ConflictResolutionOption,

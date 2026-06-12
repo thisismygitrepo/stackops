@@ -11,7 +11,7 @@ from typing import Any, Final, Literal
 from rich.console import Console
 
 from stackops.cluster.remote.models import JOB_STATUS, LogEntry
-from stackops.utils import rclone as rclone_utils
+from stackops.utils.cloud import rclone as rclone_utils
 from stackops.utils.files.read import read_json
 from stackops.utils.io import save_json
 from stackops.utils.source_of_truth import read_stackops_config_string

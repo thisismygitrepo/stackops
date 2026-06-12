@@ -1,6 +1,6 @@
 import pytest
 
-from stackops.utils.encryption import parse_encryption_mode
+from stackops.utils.cloud.encryption import parse_encryption_mode
 
 
 def test_parse_encryption_mode_accepts_aliases() -> None:

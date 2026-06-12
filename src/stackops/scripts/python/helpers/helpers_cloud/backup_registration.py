@@ -11,7 +11,7 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     read_user_backup_config_for_update,
     write_backup_config,
 )
-from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
+from stackops.utils.cloud.encryption import EncryptionMode, parse_encryption_mode
 
 
 def sanitize_entry_name(value: str) -> str:

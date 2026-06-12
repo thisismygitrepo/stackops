@@ -2,7 +2,7 @@ from pathlib import Path
 import platform
 from urllib.parse import parse_qs, quote, urlparse
 
-from stackops.utils import rclone as rclone_utils
+from stackops.utils.cloud import rclone as rclone_utils
 
 
 def _absolute_path(path: Path) -> Path:

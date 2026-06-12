@@ -12,10 +12,10 @@ from stackops.utils.io import (
     encrypt_file_asymmetric,
     encrypt_file_symmetric,
 )
-from stackops.utils.encryption import EncryptionMode, parse_encryption_mode
+from stackops.utils.cloud.encryption import EncryptionMode, parse_encryption_mode
 from stackops.utils.path_core import delete_path
-import stackops.utils.rclone_wrapper as rclone_wrapper
-from stackops.utils.rclone import (
+import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
+from stackops.utils.cloud.rclone import (
     RcloneCommandError,
     RcloneConfigError,
     ShareLinkOptions,

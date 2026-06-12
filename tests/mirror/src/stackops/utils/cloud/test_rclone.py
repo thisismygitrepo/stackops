@@ -5,11 +5,11 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-import stackops.utils.rclone as rclone
+import stackops.utils.cloud.rclone as rclone
 from stackops.scripts.python import cloud as cloud_cli
 from stackops.scripts.python.helpers.helpers_cloud import cloud_copy
 from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import _resolve_share_options
-from stackops.utils.encryption import EncryptionMode
+from stackops.utils.cloud.encryption import EncryptionMode
 
 
 def test_link_maps_generic_share_options_to_onedrive_flags(monkeypatch: pytest.MonkeyPatch) -> None:
