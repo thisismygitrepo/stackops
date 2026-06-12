@@ -54,7 +54,7 @@ Other exported helpers in the same module:
 Example:
 
 ```python
-from stackops.utils.options import choose_from_options, choose_ssh_host
+from stackops.utils.options_utils.options import choose_from_options, choose_ssh_host
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
 target = choose_from_options(
@@ -101,7 +101,7 @@ The implementation dispatches to Windows- or Unix-specific Television helpers.
 
 ## Notifications
 
-`stackops.utils.notifications` currently exposes three main layers:
+`stackops.cluster.remote.notifications` currently exposes three main layers:
 
 - `download_to_memory()` for fetching a remote asset into memory
 - `md2html()` for turning Markdown into HTML through Rich's HTML exporter
@@ -109,16 +109,16 @@ The implementation dispatches to Windows- or Unix-specific Television helpers.
 
 Current `Email` behavior:
 
-- `Email.get_source_of_truth()` reads config from `~/dotfiles/stackops/emails.ini`
+- `Email.__init__(config_name)` reads config from the `stackops.secrets` module
 - `Email.__init__()` uses `smtplib.SMTP_SSL` when `encryption = ssl`; when `encryption = tls`, it constructs `smtplib.SMTP` and logs in without calling `starttls()`
 - `send_message()` appends an automation footer, converts Markdown to HTML by default, and attaches the body as an HTML MIME part
 - the `attachments` argument is accepted but ignored by the current implementation
-- `send_and_close()` requires a `config_name`; `config_name=None` currently raises `NotImplementedError`
+- `send_and_close()` requires a `config_name`
 
 Example:
 
 ```python
-from stackops.utils.notifications import Email, md2html
+from stackops.cluster.remote.notifications import Email, md2html
 
 html = md2html("# Report\nAll tasks finished.")
 print(html[:120])
@@ -145,7 +145,7 @@ Email.send_and_close(
 
 ## Options
 
-::: stackops.utils.options
+::: stackops.utils.options_utils.options
     options:
       show_root_heading: true
       show_source: false
@@ -169,7 +169,7 @@ Email.send_and_close(
 
 ## Terminal helpers
 
-::: stackops.utils.terminal
+::: stackops.utils.cli_utils.terminal
     options:
       show_root_heading: true
       show_source: false
@@ -177,7 +177,7 @@ Email.send_and_close(
 
 ## Notifications
 
-::: stackops.utils.notifications
+::: stackops.cluster.remote.notifications
     options:
       show_root_heading: true
       show_source: false

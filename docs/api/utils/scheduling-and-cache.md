@@ -1,6 +1,6 @@
 # Scheduling and Cache
 
-`stackops.utils.scheduler` currently contains three distinct utilities:
+`stackops.cluster.scheduler` currently contains three distinct utilities:
 
 | API | Role |
 | --- | --- |
@@ -51,7 +51,7 @@ Current refresh semantics are important:
 - `fresh=True` always repopulates immediately
 - otherwise it refreshes only when the cached age is greater than `expire`
 
-`tolerance_seconds` is accepted for API parity, but in the current `CacheMemory` implementation it does not control refresh behavior once the wrapper reaches the main cache path.
+`tolerance_seconds` is passed to `__call__` and controls refresh behavior when `fresh=True`: the cache refreshes only if the cached age exceeds `tolerance_seconds`.
 
 `CacheMemory.as_decorator(...)` returns a `CacheMemory` wrapper object around the decorated function.
 
@@ -96,7 +96,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from stackops.logger import get_logger
-from stackops.utils.scheduler import Cache, CacheMemory, Scheduler
+from stackops.cluster.scheduler import Cache, CacheMemory, Scheduler
 
 logger = get_logger("demo")
 
@@ -136,7 +136,7 @@ Scheduler(
 
 ## API reference
 
-::: stackops.utils.scheduler
+::: stackops.cluster.scheduler
     options:
       show_root_heading: true
       show_source: false

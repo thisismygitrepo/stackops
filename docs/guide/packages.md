@@ -128,7 +128,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>db-all</code></td>
-      <td>rainfrog | lazysql | dblab | usql | harlequin | sqlit | duckdb | postgresql-client | sqlite3 | redis-cli | dbgate | dbeaver | sqliteBrowser | pgadmin | pgweb</td>
+      <td>rainfrog | lazysql | dblab | usql | harlequin | sqlit | dolt | duckdb | postgresql-client | sqlite3 | redis-cli | dbgate | dbeaver | sqliteBrowser | pgadmin | pgweb</td>
     </tr>
     <tr>
       <td><code>db-cli</code></td>
@@ -148,15 +148,15 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>media</code></td>
-      <td>ytui-music | youtube-tui | termusic | kronos | OBS Background removal</td>
+      <td>ytui-music | youtube-tui | termusic | rmpc | kronos | OBS Background removal</td>
     </tr>
     <tr>
       <td><code>gui</code></td>
-      <td>brave | code | zoomit | wezterm | mouse-without-borders</td>
+      <td>brave | code | wezterm</td>
     </tr>
     <tr>
       <td><code>nw</code></td>
-      <td>bandwhich | ipinfo | sniffnet | topgrade | speedtest | rclone</td>
+      <td>bandwhich | psnet | ipinfo | sniffnet | topgrade | speedtest | rclone</td>
     </tr>
     <tr>
       <td><code>file-sharing</code></td>

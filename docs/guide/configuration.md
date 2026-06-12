@@ -97,6 +97,7 @@ Beyond sync, register, edit, export, and import, `devops config --help` also lis
 - `copy-assets`
 - `dump`
 - `terminal`
+- `secrets`
 
 Inside `devops config terminal --help`, the current terminal commands are:
 

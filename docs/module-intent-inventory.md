@@ -136,12 +136,7 @@ These **60** modules need a human decision before source markers are added.
 | `stackops.utils.options_utils.options_tv_linux` | `api-or-script` | `manual-review` | __main__, funcs:7 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.options_utils.options_tv_windows` | `api-or-script` | `manual-review` | __main__, funcs:5 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.options_utils.textual_options_form_types` | `api-or-script` | `manual-review` | __main__, classes:2, funcs:2 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
-| `stackops.utils.procs` | `api-or-script` | `manual-review` | __main__, classes:3, funcs:3 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
-| `stackops.utils.ssh_utils.copy_from_here` | `api-or-script` | `manual-review` | __main__, funcs:2 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
-| `stackops.utils.ssh_utils.copy_to_here` | `api-or-script` | `manual-review` | __main__, funcs:1 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
-| `stackops.utils.ssh_utils.utils` | `api-or-script` | `manual-review` | __main__, funcs:5 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.ssh_utils.wsl` | `api-or-script` | `manual-review` | __main__, funcs:7 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
-| `stackops.utils.upgrade_packages` | `api-or-script` | `manual-review` | __main__, classes:2, funcs:14 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 
 ## Clear API Candidates
 
@@ -198,9 +193,9 @@ These **96** modules are the strongest candidates for `api` markers after manual
 | `stackops.secrets` | `package` | `package-marker` | `medium` | __init__, assets, loader, models, paths, readers, search | src/stackops/secrets/__init__.py | Was a single module; now a package with submodules. |
 | `stackops.utils.cloud.onedrive.auth` | `python-api-candidate` | `medium` | funcs:15 | src/stackops/utils/cloud/onedrive/auth.py |  |
 | `stackops.utils.cloud.onedrive.file_ops` | `python-api-candidate` | `medium` | funcs:5 | src/stackops/utils/cloud/onedrive/file_ops.py |  |
-| `stackops.utils.cloud_defaults` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/utils/cloud_defaults.py |  |
+| `stackops.utils.cloud.defaults` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/utils/cloud/defaults.py | Was `utils.cloud_defaults`; moved under `cloud/`. |
 | `stackops.utils.code` | `python-api` | `high` | api-doc, funcs:11 | src/stackops/utils/code.py |  |
-| `stackops.utils.encryption` | `python-api-candidate` | `medium` | funcs:1 | src/stackops/utils/encryption.py |  |
+| `stackops.utils.cloud.encryption` | `python-api-candidate` | `medium` | funcs:1 | src/stackops/utils/cloud/encryption.py | Was `utils.encryption`; moved under `cloud/`. |
 | `stackops.utils.files.f` | `python-api-candidate` | `medium` | classes:1, funcs:1 | src/stackops/utils/files/f.py |  |
 | `stackops.utils.files.headers` | `python-api-candidate` | `medium` | funcs:2 | src/stackops/utils/files/headers.py |  |
 | `stackops.utils.files.notebook` | `python-api-candidate` | `medium` | funcs:1 | src/stackops/utils/files/notebook.py |  |
@@ -222,29 +217,22 @@ These **96** modules are the strongest candidates for `api` markers after manual
 | `stackops.utils.installer_utils.installer_runner` | `python-api` | `high` | api-doc, funcs:6 | src/stackops/utils/installer_utils/installer_runner.py |  |
 | `stackops.utils.installer_utils.installer_summary` | `python-api` | `high` | api-doc, funcs:8 | src/stackops/utils/installer_utils/installer_summary.py |  |
 | `stackops.utils.io` | `python-api` | `high` | api-doc, classes:1, funcs:24 | src/stackops/utils/io.py |  |
-| `stackops.utils.links` | `python-api-candidate` | `medium` | classes:2, funcs:4 | src/stackops/utils/links.py |  |
-| `stackops.utils.options` | `python-api` | `high` | api-doc, funcs:8 | src/stackops/utils/options.py |  |
+| `stackops.utils.options` | `python-api` | `high` | api-doc, funcs:8 | src/stackops/utils/options_utils/options.py | Was `utils.options`; moved under `options_utils/`. |
 | `stackops.utils.options_utils.textual_options_form` | `python-api-candidate` | `medium` | classes:5, funcs:12 | src/stackops/utils/options_utils/textual_options_form.py |  |
-| `stackops.utils.path_compression` | `python-api-candidate` | `medium` | __all__, funcs:17 | src/stackops/utils/path_compression.py |  |
 | `stackops.utils.path_core` | `python-api` | `high` | api-doc, __all__, funcs:20 | src/stackops/utils/path_core.py |  |
-| `stackops.utils.path_helper` | `python-api` | `high` | api-doc, funcs:7 | src/stackops/utils/path_helper.py |  |
 | `stackops.utils.path_reference` | `python-api` | `high` | api-doc, funcs:3 | src/stackops/utils/path_reference.py |  |
-| `stackops.utils.python_env` | `python-api` | `high` | api-doc, funcs:2 | src/stackops/utils/python_env.py |  |
-| `stackops.utils.rclone` | `python-api-candidate` | `medium` | classes:1, funcs:10 | src/stackops/utils/rclone.py |  |
-| `stackops.utils.rclone_wrapper` | `python-api-candidate` | `medium` | funcs:8 | src/stackops/utils/rclone_wrapper.py |  |
-| `stackops.utils.repo_stackops` | `python-api-candidate` | `medium` | funcs:2 | src/stackops/utils/repo_stackops.py |  |
-| `stackops.utils.scheduler` | `python-api` | `high` | api-doc, classes:4, funcs:2 | src/stackops/utils/scheduler.py |  |
+| `stackops.utils.cloud.rclone` | `python-api-candidate` | `medium` | classes:1, funcs:10 | src/stackops/utils/cloud/rclone.py | Was `utils.rclone`; moved under `cloud/`. |
+| `stackops.utils.cloud.rclone_wrapper` | `python-api-candidate` | `medium` | funcs:8 | src/stackops/utils/cloud/rclone_wrapper.py | Was `utils.rclone_wrapper`; moved under `cloud/`. |
+| `stackops.cluster.scheduler` | `python-api` | `high` | api-doc, classes:4, funcs:2 | src/stackops/cluster/scheduler.py | Was `utils.scheduler`; moved to `cluster/`. |
 | `stackops.utils.schemas.config.config_types` | `python-api-candidate` | `medium` | - | src/stackops/utils/schemas/config/config_types.py |  |
 | `stackops.utils.schemas.fire_agents.fire_agents_input` | `python-api-candidate` | `medium` | classes:6 | src/stackops/utils/schemas/fire_agents/fire_agents_input.py |  |
 | `stackops.utils.schemas.installer.installer_types` | `python-api` | `high` | api-doc, classes:6, funcs:2 | src/stackops/utils/schemas/installer/installer_types.py |  |
 | `stackops.utils.schemas.layouts.layout_types` | `python-api` | `high` | api-doc, classes:3, funcs:2 | src/stackops/utils/schemas/layouts/layout_types.py |  |
 | `stackops.utils.schemas.repos.repos_types` | `python-api-candidate` | `medium` | classes:4 | src/stackops/utils/schemas/repos/repos_types.py |  |
-| `stackops.utils.schemas.secrets.secrets_loader` | `python-api-candidate` | `medium` | classes:1, funcs:15 | src/stackops/utils/schemas/secrets/secrets_loader.py |  |
-| `stackops.utils.schemas.secrets.secrets_types` | `python-api-candidate` | `medium` | classes:3 | src/stackops/utils/schemas/secrets/secrets_types.py |  |
 | `stackops.utils.ssh_utils.abc` | `python-api-candidate` | `medium` | - | src/stackops/utils/ssh_utils/abc.py |  |
 | `stackops.utils.ssh_utils.wsl_helper` | `python-api-candidate` | `medium` | funcs:15 | src/stackops/utils/ssh_utils/wsl_helper.py |  |
-| `stackops.utils.terminal` | `python-api-candidate` | `medium` | classes:2 | src/stackops/utils/terminal.py |  |
-| `stackops.utils.yaml_schema` | `python-api-candidate` | `medium` | funcs:3 | src/stackops/utils/yaml_schema.py |  |
+| `stackops.utils.cli_utils.terminal` | `python-api-candidate` | `medium` | classes:2 | src/stackops/utils/cli_utils/terminal.py | Was `utils.terminal`; moved under `cli_utils/`. |
+| `stackops.utils.schemas.yaml_schema` | `python-api-candidate` | `medium` | funcs:3 | src/stackops/utils/schemas/yaml_schema.py | Was `utils.yaml_schema`; moved under `schemas/`. |
 
 ## Clear CLI And CLI Helpers
 
@@ -1273,9 +1261,9 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.utils.cloud.onedrive.auth` | `api` | `python-api-candidate` | `medium` | 2 | 290 | funcs:15 | src/stackops/utils/cloud/onedrive/auth.py |  |
 | `stackops.utils.cloud.onedrive.file_ops` | `api` | `python-api-candidate` | `medium` | 0 | 167 | funcs:5 | src/stackops/utils/cloud/onedrive/file_ops.py |  |
 | `stackops.utils.cloud.onedrive.setup_oauth` | `api-or-script` | `manual-review` | `medium` | 0 | 61 | main, __main__, funcs:1 | src/stackops/utils/cloud/onedrive/setup_oauth.py |  |
-| `stackops.utils.cloud_defaults` | `api` | `python-api` | `high` | 4 | 32 | api-doc, classes:1, funcs:1 | src/stackops/utils/cloud_defaults.py |  |
+| `stackops.utils.cloud.defaults` | `api` | `python-api` | `high` | 4 | 32 | api-doc, classes:1, funcs:1 | src/stackops/utils/cloud/defaults.py | Was `utils.cloud_defaults`; moved under `cloud/`. |
 | `stackops.utils.code` | `api` | `python-api` | `high` | 46 | 232 | api-doc, funcs:11 | src/stackops/utils/code.py |  |
-| `stackops.utils.encryption` | `api` | `python-api-candidate` | `medium` | 4 | 15 | funcs:1 | src/stackops/utils/encryption.py |  |
+| `stackops.utils.cloud.encryption` | `api` | `python-api-candidate` | `medium` | 4 | 15 | funcs:1 | src/stackops/utils/cloud/encryption.py | Was `utils.encryption`; moved under `cloud/`. |
 | `stackops.utils.files.art` | `package` | `package-marker` | `high` | 0 | 5 | - | src/stackops/utils/files/art/__init__.py |  |
 | `stackops.utils.files.ascii_art` | `api-or-script` | `manual-review` | `medium` | 1 | 118 | __main__, classes:3, funcs:4 | src/stackops/utils/files/ascii_art.py |  |
 | `stackops.utils.files.dbms` | `api-or-script` | `manual-review` | `medium` | 1 | 300 | __main__, classes:1, funcs:3 | src/stackops/utils/files/dbms.py |  |
@@ -1306,26 +1294,19 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.utils.installer_utils.installer_runner` | `api` | `python-api` | `high` | 5 | 199 | api-doc, funcs:6 | src/stackops/utils/installer_utils/installer_runner.py |  |
 | `stackops.utils.installer_utils.installer_summary` | `api` | `python-api` | `high` | 3 | 124 | api-doc, funcs:8 | src/stackops/utils/installer_utils/installer_summary.py |  |
 | `stackops.utils.io` | `api` | `python-api` | `high` | 20 | 374 | api-doc, classes:1, funcs:24 | src/stackops/utils/io.py |  |
-| `stackops.utils.links` | `api` | `python-api-candidate` | `medium` | 3 | 365 | classes:2, funcs:4 | src/stackops/utils/links.py |  |
 | `stackops.utils.meta` | `api` | `api-cli-bridge` | `medium` | 12 | 259 | api-doc, __main__, funcs:2 | src/stackops/utils/meta.py |  |
-| `stackops.utils.notifications` | `api` | `api-cli-bridge` | `medium` | 0 | 189 | api-doc, __main__, classes:1, funcs:3 | src/stackops/utils/notifications.py |  |
-| `stackops.utils.options` | `api` | `python-api` | `high` | 19 | 325 | api-doc, funcs:8 | src/stackops/utils/options.py |  |
+| `stackops.utils.options_utils.options` | `api` | `python-api` | `high` | 19 | 325 | api-doc, funcs:8 | src/stackops/utils/options_utils/options.py | Was `utils.options`; moved under `options_utils/`. |
 | `stackops.utils.options_utils` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/utils/options_utils/__init__.py |  |
 | `stackops.utils.options_utils.options_tv_linux` | `api-or-script` | `manual-review` | `medium` | 1 | 215 | __main__, funcs:7 | src/stackops/utils/options_utils/options_tv_linux.py |  |
 | `stackops.utils.options_utils.options_tv_windows` | `api-or-script` | `manual-review` | `medium` | 1 | 101 | __main__, funcs:5 | src/stackops/utils/options_utils/options_tv_windows.py |  |
 | `stackops.utils.options_utils.textual_options_form` | `api` | `python-api-candidate` | `medium` | 1 | 339 | classes:5, funcs:12 | src/stackops/utils/options_utils/textual_options_form.py |  |
 | `stackops.utils.options_utils.textual_options_form_types` | `api-or-script` | `manual-review` | `medium` | 2 | 108 | __main__, classes:2, funcs:2 | src/stackops/utils/options_utils/textual_options_form_types.py |  |
 | `stackops.utils.options_utils.tv_options` | `api` | `api-cli-bridge` | `medium` | 17 | 44 | api-doc, __main__, funcs:3 | src/stackops/utils/options_utils/tv_options.py |  |
-| `stackops.utils.path_compression` | `api` | `python-api-candidate` | `medium` | 5 | 355 | __all__, funcs:17 | src/stackops/utils/path_compression.py |  |
 | `stackops.utils.path_core` | `api` | `python-api` | `high` | 26 | 393 | api-doc, __all__, funcs:20 | src/stackops/utils/path_core.py |  |
-| `stackops.utils.path_helper` | `api` | `python-api` | `high` | 4 | 193 | api-doc, funcs:7 | src/stackops/utils/path_helper.py |  |
 | `stackops.utils.path_reference` | `api` | `python-api` | `high` | 36 | 20 | api-doc, funcs:3 | src/stackops/utils/path_reference.py |  |
-| `stackops.utils.procs` | `api-or-script` | `manual-review` | `medium` | 1 | 275 | __main__, classes:3, funcs:3 | src/stackops/utils/procs.py |  |
-| `stackops.utils.python_env` | `api` | `python-api` | `high` | 3 | 28 | api-doc, funcs:2 | src/stackops/utils/python_env.py |  |
-| `stackops.utils.rclone` | `api` | `python-api-candidate` | `medium` | 2 | 177 | classes:1, funcs:10 | src/stackops/utils/rclone.py |  |
-| `stackops.utils.rclone_wrapper` | `api` | `python-api-candidate` | `medium` | 5 | 166 | funcs:8 | src/stackops/utils/rclone_wrapper.py |  |
-| `stackops.utils.repo_stackops` | `api` | `python-api-candidate` | `medium` | 5 | 40 | funcs:2 | src/stackops/utils/repo_stackops.py |  |
-| `stackops.utils.scheduler` | `api` | `python-api` | `high` | 6 | 268 | api-doc, classes:4, funcs:2 | src/stackops/utils/scheduler.py |  |
+| `stackops.utils.cloud.rclone` | `api` | `python-api-candidate` | `medium` | 2 | 177 | classes:1, funcs:10 | src/stackops/utils/cloud/rclone.py | Was `utils.rclone`; moved under `cloud/`. |
+| `stackops.utils.cloud.rclone_wrapper` | `api` | `python-api-candidate` | `medium` | 5 | 166 | funcs:8 | src/stackops/utils/cloud/rclone_wrapper.py | Was `utils.rclone_wrapper`; moved under `cloud/`. |
+| `stackops.cluster.scheduler` | `api` | `python-api` | `high` | 6 | 268 | api-doc, classes:4, funcs:2 | src/stackops/cluster/scheduler.py | Was `utils.scheduler`; moved to `cluster/`. |
 | `stackops.utils.schemas` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/utils/schemas/__init__.py |  |
 | `stackops.utils.schemas.agents` | `package` | `package-marker` | `high` | 1 | 3 | - | src/stackops/utils/schemas/agents/__init__.py |  |
 | `stackops.utils.schemas.config` | `package` | `package-marker` | `high` | 1 | 15 | __all__ | src/stackops/utils/schemas/config/__init__.py |  |
@@ -1338,20 +1319,12 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.utils.schemas.mapper` | `package` | `package-marker` | `high` | 3 | 5 | - | src/stackops/utils/schemas/mapper/__init__.py |  |
 | `stackops.utils.schemas.repos` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/utils/schemas/repos/__init__.py |  |
 | `stackops.utils.schemas.repos.repos_types` | `api` | `python-api-candidate` | `medium` | 3 | 26 | classes:4 | src/stackops/utils/schemas/repos/repos_types.py |  |
-| `stackops.utils.schemas.secrets` | `package` | `package-marker` | `high` | 2 | 3 | - | src/stackops/utils/schemas/secrets/__init__.py |  |
-| `stackops.utils.schemas.secrets.secrets_loader` | `api` | `python-api-candidate` | `medium` | 4 | 228 | classes:1, funcs:15 | src/stackops/utils/schemas/secrets/secrets_loader.py |  |
-| `stackops.utils.schemas.secrets.secrets_types` | `api` | `python-api-candidate` | `medium` | 5 | 39 | classes:3 | src/stackops/utils/schemas/secrets/secrets_types.py |  |
 | `stackops.utils.source_of_truth` | `api` | `api-cli-bridge` | `medium` | 55 | 208 | api-doc, __main__, funcs:11 | src/stackops/utils/source_of_truth.py |  |
-| `stackops.utils.ssh` | `api` | `api-cli-bridge` | `medium` | 8 | 469 | api-doc, __main__, classes:1 | src/stackops/utils/ssh.py |  |
+| `stackops.utils.ssh_utils.ssh` | `api` | `api-cli-bridge` | `medium` | 8 | 469 | api-doc, __main__, classes:1 | src/stackops/utils/ssh_utils/ssh.py | Was `utils.ssh`; moved under `ssh_utils/`. |
 | `stackops.utils.ssh_utils.abc` | `api` | `python-api-candidate` | `medium` | 8 | 6 | - | src/stackops/utils/ssh_utils/abc.py |  |
-| `stackops.utils.ssh_utils.copy_from_here` | `api-or-script` | `manual-review` | `medium` | 1 | 159 | __main__, funcs:2 | src/stackops/utils/ssh_utils/copy_from_here.py |  |
-| `stackops.utils.ssh_utils.copy_to_here` | `api-or-script` | `manual-review` | `medium` | 1 | 301 | __main__, funcs:1 | src/stackops/utils/ssh_utils/copy_to_here.py |  |
-| `stackops.utils.ssh_utils.utils` | `api-or-script` | `manual-review` | `medium` | 1 | 134 | __main__, funcs:5 | src/stackops/utils/ssh_utils/utils.py |  |
 | `stackops.utils.ssh_utils.wsl` | `api-or-script` | `manual-review` | `medium` | 3 | 173 | __main__, funcs:7 | src/stackops/utils/ssh_utils/wsl.py |  |
 | `stackops.utils.ssh_utils.wsl_helper` | `api` | `python-api-candidate` | `medium` | 1 | 218 | funcs:15 | src/stackops/utils/ssh_utils/wsl_helper.py |  |
-| `stackops.utils.terminal` | `api` | `python-api-candidate` | `medium` | 2 | 102 | classes:2 | src/stackops/utils/terminal.py |  |
-| `stackops.utils.upgrade_packages` | `api-or-script` | `manual-review` | `medium` | 1 | 357 | __main__, classes:2, funcs:14 | src/stackops/utils/upgrade_packages.py |  |
-| `stackops.utils.yaml_schema` | `api` | `python-api-candidate` | `medium` | 3 | 31 | funcs:3 | src/stackops/utils/yaml_schema.py |  |
+| `stackops.utils.schemas.yaml_schema` | `api` | `python-api-candidate` | `medium` | 3 | 31 | funcs:3 | src/stackops/utils/schemas/yaml_schema.py | Was `utils.yaml_schema`; moved under `schemas/`. |
 
 ## Next Manual Pass
 

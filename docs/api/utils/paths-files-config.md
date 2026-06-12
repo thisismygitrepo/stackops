@@ -5,9 +5,7 @@ This part of the utility API is the filesystem and configuration layer that curr
 | Module | Role |
 | --- | --- |
 | `stackops.utils.path_core` | Core path operations such as copy, move, delete, symlink, download, temp-path creation, and safe naming |
-| `stackops.utils.path_helper` | File resolution and interactive path selection helpers |
 | `stackops.utils.path_reference` | Resolve package-relative asset paths from imported modules |
-| `stackops.utils.python_env` | `.venv` discovery and activation helpers |
 | `stackops.utils.io` | JSON / INI / pickle IO plus GPG-backed file encryption helpers |
 
 Older wording around `PathExtended` has been removed here because the current repo centers these modules instead.
@@ -41,26 +39,6 @@ Two behaviors worth knowing:
 
 ---
 
-## `path_helper`
-
-`stackops.utils.path_helper` is the higher-level file chooser used by commands like `fire` and `preview`.
-
-Current responsibilities:
-
-- `sanitize_path()` remaps pasted home-directory paths across Linux, macOS, and Windows conventions when needed
-- `find_scripts()` and `match_file_name()` search for matching files under a root
-- `search_for_files_of_interest()` recursively collects candidate files with suffix filtering
-- `get_choice_file()` combines all of that into one path-resolution flow
-
-`get_choice_file()` currently:
-
-- accepts explicit absolute paths directly
-- optionally treats relative paths as relative to a provided search root
-- defaults suffix filtering by OS when you do not provide one
-- recursively searches directories and prompts the user when multiple candidates exist
-
----
-
 ## `path_reference`
 
 `stackops.utils.path_reference` is the small bridge between Python modules and package data files.
@@ -71,23 +49,6 @@ Use it when a helper module stores shell scripts or other assets next to its Pyt
 - `get_path_reference_library_relative_path(module, path_reference)` returns the path relative to `LIBRARY_ROOT`
 
 This is the mechanism used by the current `seek` text-search helpers to load platform-specific shell scripts.
-
----
-
-## `python_env`
-
-`stackops.utils.python_env` handles project-local virtualenv discovery and activation helpers.
-
-Key pieces:
-
-- `find_virtualenv_root()` walks upward from a path looking for `.venv`
-- `build_virtualenv_activation_line()` builds the platform-specific activation command
-
-Current `.venv` lookup behavior:
-
-- normalizes file inputs to their parent directory
-- checks that directory and each parent for a sibling `.venv`
-- returns the first match it finds
 
 ---
 
@@ -102,7 +63,6 @@ Main helpers:
 | `save_json()` / `read_json()` | Persist and read JSON |
 | `save_ini()` / `read_ini()` | Persist and read INI files |
 | `save_pickle()` / `from_pickle()` | Persist and restore Python objects |
-| `remove_c_style_comments()` | Strip `//` and `/* ... */` comments while preserving URLs |
 | `encrypt_file_symmetric()` / `decrypt_file_symmetric()` | GPG symmetric encryption using loopback passphrase mode |
 | `encrypt_file_asymmetric()` / `decrypt_file_asymmetric()` | GPG public-key encryption and decryption |
 | `GpgCommandError` | Rich error wrapper for failed GPG subprocess calls |
@@ -123,17 +83,11 @@ from pathlib import Path
 
 from stackops.utils.io import read_ini, save_json
 from stackops.utils.path_core import tmpfile, validate_name
-from stackops.utils.path_helper import get_choice_file
-from stackops.utils.python_env import find_virtualenv_root
 
 target_path = tmpfile(name=validate_name("example config"), suffix=".json")
 save_json({"workers": 8, "queue": "jobs"}, target_path, indent=2)
 
-choice = get_choice_file(path=str(target_path), suffixes={".json"}, search_root=None)
-virtualenv_path = find_virtualenv_root(Path(choice))
-
-print(choice)
-print(virtualenv_path)
+print(target_path)
 print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no ini file")
 ```
 
@@ -149,9 +103,9 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
       show_source: false
       members_order: source
 
-## Path Helper
+## File compression
 
-::: stackops.utils.path_helper
+::: stackops.utils.files.compression
     options:
       show_root_heading: true
       show_source: false
@@ -173,22 +127,6 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
       show_source: false
       members_order: source
 
-## Path compression
-
-::: stackops.utils.path_compression
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Virtual Environment Helpers
-
-::: stackops.utils.python_env
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
 ## IO
 
 ::: stackops.utils.io
@@ -199,7 +137,7 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
 
 ## Encryption mode helpers
 
-::: stackops.utils.encryption
+::: stackops.utils.cloud.encryption
     options:
       show_root_heading: true
       show_source: false
@@ -237,9 +175,9 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
       show_source: false
       members_order: source
 
-## Link helpers
+## File reading helpers
 
-::: stackops.utils.links
+::: stackops.utils.files.read
     options:
       show_root_heading: true
       show_source: false
@@ -247,7 +185,7 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
 
 ## YAML schema helpers
 
-::: stackops.utils.yaml_schema
+::: stackops.utils.schemas.yaml_schema
     options:
       show_root_heading: true
       show_source: false
