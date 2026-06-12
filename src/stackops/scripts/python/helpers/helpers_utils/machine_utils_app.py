@@ -51,7 +51,7 @@ def kill_process(
         case _:
             typer.echo(f"Invalid search_by value: {search_by}", err=True)
             raise typer.Exit(code=1)
-    from stackops.utils.procs import ProcessManager
+    from stackops.scripts.python.helpers.helpers_utils.processes import ProcessManager
 
     proc = ProcessManager()
     proc.choose_and_kill(search_by=search_field)
@@ -79,7 +79,7 @@ def get_machine_specs(
         main()
         return
 
-    from stackops.utils.machine_specs import get_machine_specs as impl
+    from stackops.utils.machine.specs import get_machine_specs as impl
 
     specs = impl()
     typer.echo(specs)

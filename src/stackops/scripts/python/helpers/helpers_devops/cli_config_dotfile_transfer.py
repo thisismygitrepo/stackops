@@ -73,7 +73,7 @@ def export_dotfiles(
         return
 
     from stackops.scripts.python.helpers.helpers_devops import cli_share_server
-    from stackops.utils.network_address import select_lan_ipv4
+    from stackops.utils.network.address import select_lan_ipv4
 
     local_ipv4 = select_lan_ipv4(prefer_vpn=False)
     if local_ipv4 is None:
@@ -125,7 +125,7 @@ def _resolve_import_dotfiles_source(url: str) -> Path:
             raise IsADirectoryError(f"Expected an encrypted dotfiles archive file, got: {local_path}")
         return local_path.resolve()
 
-    from stackops.utils.download import download
+    from stackops.utils.files.download import download
 
     downloaded_file = download(url=url, decompress=False, output_dir=str(Path.home()))
     if downloaded_file is None or not downloaded_file.exists():

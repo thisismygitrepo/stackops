@@ -240,7 +240,7 @@ class CloudManager:
         self.write_log(log=log)
 
     def serve(self) -> None:
-        from stackops.utils.scheduler import Scheduler
+        from stackops.cluster.scheduler import Scheduler
         self.clean_interrupted_jobs(return_to_queue=True)
 
         def routine(_sched: object) -> None:
@@ -252,7 +252,7 @@ class CloudManager:
         sched.run()
 
     def run_monitor(self) -> None:
-        from stackops.utils.scheduler import Scheduler
+        from stackops.cluster.scheduler import Scheduler
 
         def routine(_sched: object) -> None:
             lock_path = self.base_path.expanduser() / "lock.txt"

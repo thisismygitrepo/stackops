@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from stackops.utils.upgrade_packages import (
+from stackops.scripts.python.helpers.helpers_utils.upgrade_packages import (
     format_stackops_display_version,
     get_next_stackops_version,
     parse_stackops_calver,

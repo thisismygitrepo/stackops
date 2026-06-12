@@ -26,7 +26,7 @@ def print_code(code: str, lexer: str, desc: str, subtitle: str = "") -> None:
 
 
 def get_import_module_string(py_file: str) -> str:
-    from stackops.utils.module_import import get_import_module_code
+    from stackops.utils.python.imports import get_import_module_code
     from stackops.utils.accessories import get_repo_root
     from pathlib import Path
     repo_root = get_repo_root(Path(py_file))

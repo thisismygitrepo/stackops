@@ -183,7 +183,7 @@ def _build_prompt_selection_maps(
 
 def _get_default_prompts_yaml_locations(source: PROMPTS_SOURCE) -> list[tuple[str, Path]]:
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, CONFIG_ROOT, LIBRARY_ROOT
-    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
+    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
 
     repo_prompts = current_repo_stackops_path(path_kind="prompts_yaml")
     private_prompts = DOTFILES_STACKOPS_ROOT / "agents" / "prompts" / "prompts.yaml"

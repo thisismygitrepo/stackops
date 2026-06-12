@@ -62,7 +62,7 @@ def preview(
     from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
     from stackops.utils.accessories import randstr
-    from stackops.utils.python_env import find_virtualenv_root
+    from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
     import json
     from rich.console import Console
     from rich.panel import Panel
@@ -70,7 +70,7 @@ def preview(
 
     ipython_profile: str | None = profile
     if path is not None:
-        from stackops.utils.path_helper import get_choice_file
+        from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file
         if backend in PATH_BACKENDS:
             choice_file = _resolve_path_backend_target(path=path)
             _run_path_backend(
@@ -189,7 +189,7 @@ except Exception as e:
 
 
 def _resolve_path_backend_target(path: str) -> Path:
-    from stackops.utils.path_helper import get_choice_file, sanitize_path
+    from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file, sanitize_path
 
     if Path(path).expanduser().exists():
         return sanitize_path(path)

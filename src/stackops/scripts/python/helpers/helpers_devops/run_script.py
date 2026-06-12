@@ -160,7 +160,7 @@ def run_py_script(ctx: typer.Context,
             print(f"❌ Error: File '{name}' is not a recognized script type. Supported types are {'.py', '.sh', '.ps1', '.bat', '.cmd', ''}.")
             raise typer.Exit(code=1)
 
-    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
+    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
     from stackops.utils.source_of_truth import SCRIPTS_ROOT_PRIVATE, SCRIPTS_ROOT_PUBLIC, SCRIPTS_ROOT_LIBRARY
 
     roots: list[Path] = []

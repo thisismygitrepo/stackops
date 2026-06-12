@@ -1,0 +1,244 @@
+"use strict";
+
+const pagePayload = JSON.parse(requireElement("graph-data").textContent ?? "{}");
+const svg = requireElement("graph");
+const search = requireElement("search");
+const depthSelect = requireElement("depth-select");
+const moduleSelect = requireElement("module-select");
+const reset = requireElement("reset");
+const toggleBidi = requireElement("toggle-bidi");
+const moduleCount = requireElement("module-count");
+const nodeCount = requireElement("node-count");
+const edgeCount = requireElement("edge-count");
+const detailTitle = requireElement("detail-title");
+const detailMeta = requireElement("detail-meta");
+const outgoingList = requireElement("outgoing-list");
+const incomingList = requireElement("incoming-list");
+const bidiSummarySection = requireElement("bidi-summary-section");
+const bidiSummary = requireElement("bidi-summary");
+const legend = requireElement("legend");
+
+const ns = "http://www.w3.org/2000/svg";
+const palette = [
+  "#2563eb",
+  "#dc2626",
+  "#059669",
+  "#9333ea",
+  "#ea580c",
+  "#0891b2",
+  "#db2777",
+  "#4f46e5",
+  "#65a30d",
+  "#475569",
+];
+const availableDepths = Object.keys(pagePayload.depths)
+  .map((depth) => Number(depth))
+  .sort((left, right) => left - right);
+
+let payload = graphPayloadForDepth(pagePayload.initialDepth);
+let nodes = [];
+let edges = [];
+let nodeById = new Map();
+let edgeViews = [];
+let nodeViews = [];
+let groups = [];
+let groupColors = new Map();
+let edgeLayer = null;
+let nodeLayer = null;
+let selectedId = null;
+let focusedModuleId = null;
+let highlightBidirectional = false;
+let bidiEdgeKeys = new Set();
+let bidiNodeIds = new Set();
+let dragState = null;
+let suppressNextClick = false;
+let width = 900;
+let height = 620;
+
+function requireElement(id) {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`missing element #${id}`);
+  }
+  return element;
+}
+
+function graphPayloadForDepth(depth) {
+  const graphPayload = pagePayload.depths[String(depth)];
+  if (!graphPayload) {
+    throw new Error(`missing graph payload for depth ${depth}`);
+  }
+  return graphPayload;
+}
+
+function svgElement(name, attributes) {
+  const element = document.createElementNS(ns, name);
+  for (const [key, value] of Object.entries(attributes)) {
+    element.setAttribute(key, String(value));
+  }
+  return element;
+}
+
+function directedEdgeKey(source, target) {
+  return `${source}\u0000${target}`;
+}
+
+function nodeRadius(node) {
+  const importWeight = Math.log2(Math.max(1, node.moduleCount) + 1) * 4;
+  return Math.max(15, Math.min(34, 15 + importWeight));
+}
+
+function shortLabel(label) {
+  if (label.length <= 20) {
+    return label;
+  }
+  return `${label.slice(0, 17)}...`;
+}
+
+function labelForId(id) {
+  const node = nodeById.get(id);
+  return node ? node.label : id;
+}
+
+function addArrow(id, color) {
+  const marker = svgElement("marker", {
+    id,
+    markerWidth: 8,
+    markerHeight: 6,
+    refX: 7.2,
+    refY: 3,
+    orient: "auto",
+    markerUnits: "strokeWidth",
+  });
+  marker.append(svgElement("path", { d: "M0,0 L8,3 L0,6 Z", fill: color }));
+  return marker;
+}
+
+function mountSvg() {
+  svg.replaceChildren();
+  const defs = svgElement("defs", {});
+  defs.append(
+    addArrow("arrow-default", "#94a3b8"),
+    addArrow("arrow-in", "#0891b2"),
+    addArrow("arrow-out", "#ea580c"),
+    addArrow("arrow-focus", "#2563eb"),
+    addArrow("arrow-bidi", "#db2777"),
+  );
+  edgeLayer = svgElement("g", { class: "edge-layer" });
+  nodeLayer = svgElement("g", { class: "node-layer" });
+  svg.append(defs, edgeLayer, nodeLayer);
+}
+
+function buildGraphState() {
+  nodes = payload.nodes.map((node, index) => ({
+    ...node,
+    index,
+    pinned: false,
+    r: nodeRadius(node),
+    vx: 0,
+    vy: 0,
+    x: 0,
+    y: 0,
+  }));
+  nodeById = new Map(nodes.map((node) => [node.id, node]));
+  edges = payload.edges.flatMap((edge) => {
+    const sourceNode = nodeById.get(edge.source);
+    const targetNode = nodeById.get(edge.target);
+    if (!sourceNode || !targetNode) {
+      return [];
+    }
+    return [{ ...edge, sourceNode, targetNode, parallelOffset: 0 }];
+  });
+  groups = Array.from(new Set(nodes.map((node) => node.group))).sort((left, right) =>
+    left.localeCompare(right),
+  );
+  groupColors = new Map(groups.map((group, index) => [group, palette[index % palette.length]]));
+  rebuildBidirectionalSets();
+  assignParallelOffsets();
+  mountGraphElements();
+  seedPositions();
+  updateCounts();
+  renderLegend();
+  paint();
+}
+
+function rebuildBidirectionalSets() {
+  const directedKeys = new Set(edges.map((edge) => directedEdgeKey(edge.source, edge.target)));
+  bidiEdgeKeys = new Set();
+  bidiNodeIds = new Set();
+  for (const edge of edges) {
+    if (edge.source === edge.target) {
+      continue;
+    }
+    const reverseKey = directedEdgeKey(edge.target, edge.source);
+    if (directedKeys.has(reverseKey)) {
+      bidiEdgeKeys.add(directedEdgeKey(edge.source, edge.target));
+      bidiNodeIds.add(edge.source);
+      bidiNodeIds.add(edge.target);
+    }
+  }
+}
+
+function assignParallelOffsets() {
+  for (const edge of edges) {
+    const isBidirectional = bidiEdgeKeys.has(directedEdgeKey(edge.source, edge.target));
+    if (!isBidirectional || edge.source === edge.target) {
+      edge.parallelOffset = 0;
+      continue;
+    }
+    edge.parallelOffset = edge.source < edge.target ? 12 : -12;
+  }
+}
+
+function mountGraphElements() {
+  if (!edgeLayer || !nodeLayer) {
+    return;
+  }
+  edgeLayer.replaceChildren();
+  nodeLayer.replaceChildren();
+  edgeViews = edges.map((edge) => {
+    const line = svgElement("path", { class: "edge", "marker-end": "url(#arrow-default)" });
+    edgeLayer.append(line);
+    return { edge, line };
+  });
+  nodeViews = nodes.map((node) => {
+    const group = svgElement("g", {
+      class: "node",
+      tabindex: "0",
+      role: "button",
+      "aria-label": node.id,
+    });
+    const circle = svgElement("circle", {
+      r: node.r,
+      fill: groupColors.get(node.group) ?? "#64748b",
+    });
+    const text = svgElement("text", { dy: "0.35em" });
+    const title = svgElement("title", {});
+    text.textContent = shortLabel(node.label);
+    title.textContent = node.id;
+    group.append(circle, text, title);
+    group.addEventListener("pointerdown", (event) => startDrag(event, group, node));
+    group.addEventListener("pointermove", (event) => moveDrag(event, node));
+    group.addEventListener("pointerup", (event) => finishDrag(event, group, node));
+    group.addEventListener("pointercancel", (event) => finishDrag(event, group, node));
+    group.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (suppressNextClick) {
+        suppressNextClick = false;
+        return;
+      }
+      selectedId = node.id;
+      paint();
+    });
+    group.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      event.preventDefault();
+      selectedId = node.id;
+      paint();
+    });
+    nodeLayer.append(group);
+    return { node, group, circle, text };
+  });
+}

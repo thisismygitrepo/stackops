@@ -1,0 +1,479 @@
+function populateDepthSelect() {
+  depthSelect.replaceChildren();
+  for (const depth of availableDepths) {
+    const depthPayload = graphPayloadForDepth(depth);
+    const option = document.createElement("option");
+    option.value = String(depth);
+    option.textContent = `Depth ${depth} (${depthPayload.nodes.length} nodes)`;
+    depthSelect.append(option);
+  }
+  depthSelect.value = String(pagePayload.initialDepth);
+}
+
+function populateModuleSelect() {
+  moduleSelect.replaceChildren();
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All modules";
+  moduleSelect.append(allOption);
+  for (const node of [...nodes].sort((left, right) => left.id.localeCompare(right.id))) {
+    const option = document.createElement("option");
+    option.value = node.id;
+    option.textContent = node.id;
+    moduleSelect.append(option);
+  }
+  moduleSelect.value = focusedModuleId ?? "";
+}
+
+function setDepth(depth) {
+  payload = graphPayloadForDepth(depth);
+  selectedId = null;
+  focusedModuleId = null;
+  search.value = "";
+  buildGraphState();
+  populateModuleSelect();
+}
+
+function svgPointFromEvent(event) {
+  const point = svg.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+  const screenCtm = svg.getScreenCTM();
+  if (!screenCtm) {
+    return { x: event.offsetX, y: event.offsetY };
+  }
+  return point.matrixTransform(screenCtm.inverse());
+}
+
+function startDrag(event, group, node) {
+  event.preventDefault();
+  event.stopPropagation();
+  group.setPointerCapture(event.pointerId);
+  const point = svgPointFromEvent(event);
+  dragState = {
+    node,
+    pointerId: event.pointerId,
+    moved: false,
+    originX: node.x,
+    originY: node.y,
+    startX: point.x,
+    startY: point.y,
+  };
+}
+
+function moveDrag(event, node) {
+  if (!dragState || dragState.node !== node || dragState.pointerId !== event.pointerId) {
+    return;
+  }
+  const point = svgPointFromEvent(event);
+  const dx = point.x - dragState.startX;
+  const dy = point.y - dragState.startY;
+  if (Math.hypot(dx, dy) > 3) {
+    dragState.moved = true;
+  }
+  node.x = dragState.originX + dx;
+  node.y = dragState.originY + dy;
+  node.vx = 0;
+  node.vy = 0;
+  updateGraphGeometry();
+}
+
+function finishDrag(event, group, node) {
+  if (!dragState || dragState.node !== node || dragState.pointerId !== event.pointerId) {
+    return;
+  }
+  group.releasePointerCapture(event.pointerId);
+  if (dragState.moved) {
+    node.pinned = true;
+    selectedId = node.id;
+    suppressNextClick = true;
+    paint();
+  }
+  dragState = null;
+}
+
+function resize() {
+  const rect = svg.getBoundingClientRect();
+  width = Math.max(420, Math.round(rect.width));
+  height = Math.max(420, Math.round(rect.height));
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  for (const node of nodes) {
+    node.x = Math.max(node.r + 18, Math.min(width - node.r - 18, node.x || width / 2));
+    node.y = Math.max(node.r + 18, Math.min(height - node.r - 18, node.y || height / 2));
+  }
+  updateGraphGeometry();
+}
+
+function seedPositions() {
+  const radius = Math.min(width, height) * 0.34;
+  for (const node of nodes) {
+    const groupIndex = Math.max(0, groups.indexOf(node.group));
+    const groupAngle = ((groupIndex + 0.5) / Math.max(1, groups.length)) * Math.PI * 2;
+    const localAngle = ((node.index % 11) / 11) * Math.PI * 2;
+    const localRadius = 18 + (node.index % 5) * 12;
+    node.x = width / 2 + Math.cos(groupAngle) * radius + Math.cos(localAngle) * localRadius;
+    node.y = height / 2 + Math.sin(groupAngle) * radius + Math.sin(localAngle) * localRadius;
+    node.vx = 0;
+    node.vy = 0;
+  }
+}
+
+function animate() {
+  tick();
+  updateGraphGeometry();
+  window.requestAnimationFrame(animate);
+}
+
+function tick() {
+  for (const edge of edges) {
+    if (edge.sourceNode === edge.targetNode) {
+      continue;
+    }
+    const dx = edge.targetNode.x - edge.sourceNode.x;
+    const dy = edge.targetNode.y - edge.sourceNode.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const targetDistance = edge.sourceNode.r + edge.targetNode.r + 92 + Math.min(26, edge.count) * 1.6;
+    const strength = (distance - targetDistance) * 0.0045;
+    const fx = (dx / distance) * strength;
+    const fy = (dy / distance) * strength;
+    applyForce(edge.sourceNode, fx, fy);
+    applyForce(edge.targetNode, -fx, -fy);
+  }
+
+  for (let index = 0; index < nodes.length; index += 1) {
+    const left = nodes[index];
+    for (let otherIndex = index + 1; otherIndex < nodes.length; otherIndex += 1) {
+      const right = nodes[otherIndex];
+      const dx = right.x - left.x;
+      const dy = right.y - left.y;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const minimum = left.r + right.r + 34;
+      if (distance >= minimum) {
+        continue;
+      }
+      const strength = (minimum - distance) * 0.018;
+      const fx = (dx / distance) * strength;
+      const fy = (dy / distance) * strength;
+      applyForce(left, -fx, -fy);
+      applyForce(right, fx, fy);
+    }
+  }
+
+  for (const node of nodes) {
+    const groupIndex = Math.max(0, groups.indexOf(node.group));
+    const angle = ((groupIndex + 0.5) / Math.max(1, groups.length)) * Math.PI * 2;
+    const targetX = width / 2 + Math.cos(angle) * width * 0.24;
+    const targetY = height / 2 + Math.sin(angle) * height * 0.22;
+    applyForce(node, (targetX - node.x) * 0.006, (targetY - node.y) * 0.006);
+    if (node.pinned) {
+      node.vx = 0;
+      node.vy = 0;
+      continue;
+    }
+    node.vx *= 0.82;
+    node.vy *= 0.82;
+    node.x = Math.max(node.r + 18, Math.min(width - node.r - 18, node.x + node.vx));
+    node.y = Math.max(node.r + 18, Math.min(height - node.r - 18, node.y + node.vy));
+  }
+}
+
+function applyForce(node, fx, fy) {
+  if (node.pinned) {
+    return;
+  }
+  node.vx += fx;
+  node.vy += fy;
+}
+
+function updateGraphGeometry() {
+  for (const { edge, line } of edgeViews) {
+    line.setAttribute("d", edgePath(edge));
+  }
+  for (const { node, group } of nodeViews) {
+    group.setAttribute("transform", `translate(${node.x},${node.y})`);
+  }
+}
+
+function edgePath(edge) {
+  if (edge.sourceNode === edge.targetNode) {
+    const x = edge.sourceNode.x;
+    const y = edge.sourceNode.y;
+    const r = edge.sourceNode.r + 12;
+    return `M${x + r},${y - r} C${x + r * 2.2},${y - r * 3} ${x - r * 2.2},${
+      y - r * 3
+    } ${x - r},${y - r}`;
+  }
+  const dx = edge.targetNode.x - edge.sourceNode.x;
+  const dy = edge.targetNode.y - edge.sourceNode.y;
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  const normalX = -dy / distance;
+  const normalY = dx / distance;
+  const startX = edge.sourceNode.x + normalX * edge.parallelOffset;
+  const startY = edge.sourceNode.y + normalY * edge.parallelOffset;
+  const endX =
+    edge.targetNode.x + normalX * edge.parallelOffset - (dx / distance) * (edge.targetNode.r + 4);
+  const endY =
+    edge.targetNode.y + normalY * edge.parallelOffset - (dy / distance) * (edge.targetNode.r + 4);
+  if (edge.parallelOffset === 0) {
+    return `M${startX},${startY} L${endX},${endY}`;
+  }
+  const controlX = (startX + endX) / 2 + normalX * edge.parallelOffset * 2.5;
+  const controlY = (startY + endY) / 2 + normalY * edge.parallelOffset * 2.5;
+  return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
+}
+
+function paint() {
+  const query = search.value.trim().toLowerCase();
+  const outgoing = new Set(edges.filter((edge) => edge.source === selectedId).map((edge) => edge.target));
+  const incoming = new Set(edges.filter((edge) => edge.target === selectedId).map((edge) => edge.source));
+  const focusedOutgoing = new Set(
+    edges.filter((edge) => edge.source === focusedModuleId).map((edge) => edge.target),
+  );
+  const focusedIncoming = new Set(
+    edges.filter((edge) => edge.target === focusedModuleId).map((edge) => edge.source),
+  );
+
+  for (const { edge, line } of edgeViews) {
+    const isOutgoing = edge.source === selectedId;
+    const isIncoming = edge.target === selectedId;
+    const isFocused = edge.source === focusedModuleId || edge.target === focusedModuleId;
+    const isBidi = highlightBidirectional && bidiEdgeKeys.has(directedEdgeKey(edge.source, edge.target));
+    const matchesQuery =
+      !query || edge.source.toLowerCase().includes(query) || edge.target.toLowerCase().includes(query);
+    const outsideSelection = selectedId ? !isOutgoing && !isIncoming : false;
+    const outsideFocus = focusedModuleId ? !isFocused : false;
+    const classes = ["edge"];
+    if (isIncoming) {
+      classes.push("incoming");
+    }
+    if (isOutgoing) {
+      classes.push("outgoing");
+    }
+    if (isFocused) {
+      classes.push("focused");
+    }
+    if (isBidi) {
+      classes.push("bidi");
+    }
+    if (!matchesQuery || outsideSelection || outsideFocus) {
+      classes.push("dim");
+    }
+    line.setAttribute("class", classes.join(" "));
+    line.setAttribute("marker-end", markerForEdge(isOutgoing, isIncoming, isFocused, isBidi));
+  }
+
+  for (const { node, group } of nodeViews) {
+    const matchesQuery =
+      !query ||
+      node.id.toLowerCase().includes(query) ||
+      node.label.toLowerCase().includes(query) ||
+      node.group.toLowerCase().includes(query);
+    const selectedConnected = !selectedId || node.id === selectedId || outgoing.has(node.id) || incoming.has(node.id);
+    const focusConnected =
+      !focusedModuleId ||
+      node.id === focusedModuleId ||
+      focusedOutgoing.has(node.id) ||
+      focusedIncoming.has(node.id);
+    const classes = ["node"];
+    if (node.id === selectedId) {
+      classes.push("selected");
+    }
+    if (node.id === focusedModuleId) {
+      classes.push("focused");
+    }
+    if (highlightBidirectional && bidiNodeIds.has(node.id)) {
+      classes.push("bidi");
+    }
+    if (!matchesQuery || !selectedConnected || !focusConnected) {
+      classes.push("dim");
+    }
+    group.setAttribute("class", classes.join(" "));
+  }
+
+  renderDetails();
+  renderBidiSummary();
+}
+
+function markerForEdge(isOutgoing, isIncoming, isFocused, isBidi) {
+  if (isBidi) {
+    return "url(#arrow-bidi)";
+  }
+  if (isOutgoing) {
+    return "url(#arrow-out)";
+  }
+  if (isIncoming) {
+    return "url(#arrow-in)";
+  }
+  if (isFocused) {
+    return "url(#arrow-focus)";
+  }
+  return "url(#arrow-default)";
+}
+
+function renderDetails() {
+  const activeId = selectedId ?? focusedModuleId;
+  const node = activeId ? nodeById.get(activeId) : null;
+  if (!node) {
+    detailTitle.textContent = "Dependency Graph";
+    detailMeta.textContent = `${payload.packageName}, depth ${payload.depth}, generated ${payload.generatedAt}`;
+    renderEdgeList(outgoingList, [], "Select a module to inspect outgoing imports.");
+    renderEdgeList(incomingList, [], "Select a module to inspect incoming imports.");
+    return;
+  }
+  detailTitle.textContent = node.id;
+  detailMeta.textContent = `${node.moduleCount} modules, ${node.fileCount} files, group ${node.group}`;
+  renderEdgeList(
+    outgoingList,
+    edges.filter((edge) => edge.source === node.id).sort(edgeSort),
+    "No outgoing imports at this depth.",
+  );
+  renderEdgeList(
+    incomingList,
+    edges.filter((edge) => edge.target === node.id).sort(edgeSort),
+    "No incoming imports at this depth.",
+  );
+}
+
+function renderEdgeList(list, items, emptyText) {
+  list.replaceChildren();
+  if (items.length === 0) {
+    const item = document.createElement("li");
+    item.className = "empty";
+    item.textContent = emptyText;
+    list.append(item);
+    return;
+  }
+  for (const edge of items) {
+    const item = document.createElement("li");
+    const name = document.createElement("b");
+    const count = document.createElement("em");
+    const opposite = edge.source === (selectedId ?? focusedModuleId) ? edge.target : edge.source;
+    name.textContent = labelForId(opposite);
+    name.title = opposite;
+    count.textContent = String(edge.count);
+    item.append(name, count);
+    list.append(item);
+  }
+}
+
+function edgeSort(left, right) {
+  return right.count - left.count || left.source.localeCompare(right.source) || left.target.localeCompare(right.target);
+}
+
+function renderBidiSummary() {
+  bidiSummarySection.hidden = !highlightBidirectional;
+  if (!highlightBidirectional) {
+    return;
+  }
+  bidiSummary.replaceChildren();
+  const pairs = bidirectionalPairs();
+  const header = bidiSummary.createTHead().insertRow();
+  for (const text of ["Module A", "Module B", "A to B", "B to A"]) {
+    const cell = document.createElement("th");
+    cell.textContent = text;
+    header.append(cell);
+  }
+  const body = bidiSummary.createTBody();
+  if (pairs.length === 0) {
+    const row = body.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 4;
+    cell.textContent = "No bidirectional dependencies at this depth.";
+    return;
+  }
+  for (const pair of pairs.slice(0, 12)) {
+    const row = body.insertRow();
+    row.insertCell().textContent = labelForId(pair.source);
+    row.insertCell().textContent = labelForId(pair.target);
+    const forward = row.insertCell();
+    forward.textContent = String(pair.forwardCount);
+    forward.className = "count";
+    const reverse = row.insertCell();
+    reverse.textContent = String(pair.reverseCount);
+    reverse.className = "count";
+  }
+}
+
+function bidirectionalPairs() {
+  const seen = new Set();
+  const byKey = new Map(edges.map((edge) => [directedEdgeKey(edge.source, edge.target), edge]));
+  const pairs = [];
+  for (const edge of edges) {
+    const key = directedEdgeKey(edge.source, edge.target);
+    const reverseKey = directedEdgeKey(edge.target, edge.source);
+    if (edge.source === edge.target || seen.has(key) || !byKey.has(reverseKey)) {
+      continue;
+    }
+    const reverse = byKey.get(reverseKey);
+    seen.add(key);
+    seen.add(reverseKey);
+    pairs.push({
+      source: edge.source,
+      target: edge.target,
+      forwardCount: edge.count,
+      reverseCount: reverse.count,
+    });
+  }
+  return pairs.sort((left, right) => right.forwardCount + right.reverseCount - left.forwardCount - left.reverseCount);
+}
+
+function renderLegend() {
+  legend.replaceChildren();
+  for (const group of groups) {
+    const item = document.createElement("span");
+    const swatch = document.createElement("i");
+    swatch.style.background = groupColors.get(group) ?? "#64748b";
+    item.append(swatch, document.createTextNode(group));
+    legend.append(item);
+  }
+}
+
+function updateCounts() {
+  moduleCount.textContent = String(payload.moduleCount);
+  nodeCount.textContent = String(nodes.length);
+  edgeCount.textContent = String(edges.length);
+}
+
+svg.addEventListener("click", () => {
+  if (suppressNextClick) {
+    suppressNextClick = false;
+    return;
+  }
+  selectedId = null;
+  paint();
+});
+
+reset.addEventListener("click", () => {
+  selectedId = null;
+  focusedModuleId = null;
+  search.value = "";
+  moduleSelect.value = "";
+  for (const node of nodes) {
+    node.pinned = false;
+  }
+  seedPositions();
+  paint();
+});
+
+toggleBidi.addEventListener("click", () => {
+  highlightBidirectional = !highlightBidirectional;
+  toggleBidi.setAttribute("aria-pressed", String(highlightBidirectional));
+  paint();
+});
+
+search.addEventListener("input", paint);
+depthSelect.addEventListener("change", () => {
+  setDepth(Number(depthSelect.value));
+});
+moduleSelect.addEventListener("change", () => {
+  focusedModuleId = moduleSelect.value || null;
+  selectedId = focusedModuleId;
+  paint();
+});
+window.addEventListener("resize", resize);
+
+mountSvg();
+populateDepthSelect();
+setDepth(pagePayload.initialDepth);
+resize();
+animate();

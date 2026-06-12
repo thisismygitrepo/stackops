@@ -25,7 +25,7 @@ FILE_VIEWER_BACKENDS: tuple[str, ...] = (
 
 
 def _database_backends() -> tuple[str, ...]:
-    from stackops.utils.read_db_cli_tui_backend import BACKEND_CHOICES
+    from stackops.scripts.python.helpers.helpers_utils.read_db_cli_tui_backend import BACKEND_CHOICES
 
     return BACKEND_CHOICES
 

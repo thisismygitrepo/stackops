@@ -2,10 +2,10 @@ from typing import Callable, Any, cast, Union, Literal
 import subprocess
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import platform
-from stackops.utils.machine_specs import MachineSpecs
+from stackops.utils.machine.specs import MachineSpecs
 from stackops.utils.code import get_uv_command
 import rich.console
-from stackops.utils.terminal import Response
+from stackops.utils.cli_utils.terminal import Response
 from stackops.utils.accessories import pprint, randstr
 from stackops.utils.meta import lambda_to_python_script
 from stackops.utils.ssh_utils.abc import DEFAULT_PICKLE_SUBDIR, STACKOPS_REQUIREMENT
@@ -194,7 +194,7 @@ class SSH:
                     self.progress.update(self.task, completed=transferred, total=total)
 
         self.tqdm_wrap = RichProgressWrapper
-        from stackops.utils.machine_specs import get_machine_specs, MACHINE_SPECS_COMMAND_NAME
+        from stackops.utils.machine.specs import get_machine_specs, MACHINE_SPECS_COMMAND_NAME
 
         self.local_specs: MachineSpecs = get_machine_specs()
         resp = self.run_shell_cmd_on_remote(

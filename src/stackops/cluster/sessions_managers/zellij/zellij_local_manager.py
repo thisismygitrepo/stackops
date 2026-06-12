@@ -16,7 +16,7 @@ from stackops.cluster.sessions_managers.session_conflict import (
     kill_existing_session,
 )
 from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import SessionReport, GlobalSummary, StartResult, ActiveSessionInfo
-from stackops.utils.scheduler import Scheduler
+from stackops.cluster.scheduler import Scheduler
 from stackops.cluster.sessions_managers.zellij.zellij_local import ZellijLayoutGenerator
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 from stackops.cluster.sessions_managers.zellij import zellij_local_manager_helper as helper
@@ -345,7 +345,7 @@ class ZellijLocalManager:
                 print(f"""📊 Quick Summary: {global_summary['running_commands']}/{global_summary['total_commands']} commands running across {global_summary['healthy_sessions']}/{global_summary['total_sessions']} sessions""")
 
         logger.info(f"Starting monitoring routine with {wait_ms}ms intervals")
-        from stackops.utils.scheduler import LoggerTemplate
+        from stackops.cluster.scheduler import LoggerTemplate
         from typing import cast
         sched = Scheduler(routine=routine, wait_ms=wait_ms, logger=cast(LoggerTemplate, logger))
         sched.run()

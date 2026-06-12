@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias, overload
 
 import stackops.settings.zellij.layouts as layouts
-from stackops.utils.command_lookup import check_tool_exists
+from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.options_utils.options import choose_from_options
 from stackops.utils.path_reference import get_path_reference_path
 

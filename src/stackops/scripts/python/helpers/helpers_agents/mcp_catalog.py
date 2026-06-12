@@ -15,7 +15,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
 )
 from stackops.utils.files.read import read_json
 from stackops.utils.path_reference import get_path_reference_path
-from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
+from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
 import stackops.jobs.agents.mcps as mcp_assets
 
 _HOME_PLACEHOLDER: Final[str] = "{home}"

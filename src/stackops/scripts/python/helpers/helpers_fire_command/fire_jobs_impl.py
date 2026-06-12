@@ -12,7 +12,7 @@ type SupportedPlatformSystem = Literal["Windows", "Linux", "Darwin"]
 
 def route(args: FireJobArgs, fire_args: str) -> None:
     """Route execution based on args configuration."""
-    from stackops.utils.path_helper import get_choice_file
+    from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file
     from stackops.utils.accessories import get_repo_root, randstr
 
     search_root = _get_search_root(root_repo=args.root_repo)
@@ -199,7 +199,7 @@ def _create_import_script(
     choice_file: Path, choice_function: str | None, kwargs_dict: dict[str, object], repo_root: Path | None, randstr_func: RandStrFunc
 ) -> Path:
     """Create a script that imports the module and calls the function."""
-    from stackops.utils.module_import import get_import_module_code
+    from stackops.utils.python.imports import get_import_module_code
     from stackops.scripts.python.helpers.helpers_fire_command.file_wrangler import wrap_import_in_try_except
     from stackops.utils.meta import lambda_to_python_script, print_code
 

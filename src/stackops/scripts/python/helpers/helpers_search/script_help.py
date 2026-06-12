@@ -8,7 +8,7 @@ SCRIPT_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "pub
 
 def list_available_scripts(source: SCRIPT_SOURCE) -> None:
     from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, SCRIPTS_ROOT_PRIVATE
-    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
+    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
 
     repo_root = current_repo_stackops_path(path_kind="scripts")
     private_root = SCRIPTS_ROOT_PRIVATE

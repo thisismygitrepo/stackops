@@ -2,7 +2,7 @@ from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
 from stackops.utils.path_core import delete_path
 from stackops.utils.schemas.installer.installer_types import InstallerData
 from pathlib import Path
-from stackops.utils.path_compression import DECOMPRESS_SUPPORTED_FORMATS, decompress_path
+from stackops.utils.files.compression import DECOMPRESS_SUPPORTED_FORMATS, decompress_path
 from stackops.utils.source_of_truth import INSTALL_TMP_DIR
 
 
@@ -151,7 +151,7 @@ def install_msi_package(downloaded: Path) -> None:
 
 
 def download_and_prepare(download_url: str) -> Path:
-    from stackops.utils.download import download
+    from stackops.utils.files.download import download
     downloaded_object = download(download_url, output_dir=str(INSTALL_TMP_DIR))
     if downloaded_object is None:
         raise ValueError(f"Failed to download from URL: {download_url}")

@@ -92,7 +92,7 @@ def _display_docs_url(url: str) -> None:
 
 
 def _print_docs_urls() -> None:
-    from stackops.utils import network_address as address_helper
+    from stackops.utils.network import address as address_helper
 
     localhost_url = _build_docs_url("127.0.0.1")
     typer.echo(f"""Local docs URL: {localhost_url}""")

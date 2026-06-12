@@ -289,7 +289,7 @@ def upgrade_packages(
         ),
     ] = False,
 ) -> None:
-    from stackops.utils.upgrade_packages import (
+    from stackops.scripts.python.helpers.helpers_utils.upgrade_packages import (
         clean_dependency_groups,
         delete_project_venv,
         generate_uv_add_commands,

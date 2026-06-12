@@ -1,7 +1,7 @@
 from typing import Any, Callable, Protocol, TYPE_CHECKING
 from pathlib import Path
-from stackops.utils.machine_specs import MachineSpecs
-from stackops.utils.terminal import Response
+from stackops.utils.cli_utils.terminal import Response
+from stackops.utils.machine.specs import MachineSpecs
 
 if TYPE_CHECKING:
     import paramiko

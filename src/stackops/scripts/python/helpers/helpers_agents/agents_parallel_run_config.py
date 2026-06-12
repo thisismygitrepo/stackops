@@ -159,7 +159,7 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARAL
     if parallel_yaml_path is not None:
         return [("explicit", Path(parallel_yaml_path).expanduser().resolve())]
 
-    from stackops.utils.repo_stackops import current_repo_stackops_path, require_current_repo_stackops_path
+    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
 
     repo_yaml = current_repo_stackops_path(path_kind="parallel_yaml")

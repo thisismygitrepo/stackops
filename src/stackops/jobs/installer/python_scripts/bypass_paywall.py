@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import stackops.utils.path_compression as path_compression
+import stackops.utils.files.compression as path_compression
 from rich import box
 from rich.console import Console
 from rich.panel import Panel

@@ -9,7 +9,7 @@ from stackops.cluster.sessions_managers.session_conflict import (
 )
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from stackops.logger import get_logger
-from stackops.utils.scheduler import Scheduler
+from stackops.cluster.scheduler import Scheduler
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 from stackops.cluster.sessions_managers.tmux.tmux_local import TmuxLayoutGenerator, TmuxLayoutSummary
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
@@ -177,7 +177,7 @@ class TmuxLocalManager:
             if not active_sessions:
                 print("⚠️  No active sessions detected. Stopping monitoring.")
                 scheduler.max_cycles = scheduler.cycle
-        from stackops.utils.scheduler import LoggerTemplate
+        from stackops.cluster.scheduler import LoggerTemplate
         from typing import cast
         sched = Scheduler(routine=routine, wait_ms=wait_ms, logger=cast(LoggerTemplate, logger))
         sched.run(max_cycles=None)

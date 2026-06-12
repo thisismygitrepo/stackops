@@ -53,7 +53,7 @@ def resolve_target(arguments: Sequence[str]) -> Path:
 
 
 def build_database_command(target_path: Path, database_backend: str = "harlequin") -> Command:
-    from stackops.utils.read_db_cli_tui_backend import BACKEND_LOOSE, build_read_db_cli_tui_command
+    from stackops.scripts.python.helpers.helpers_utils.read_db_cli_tui_backend import BACKEND_LOOSE, build_read_db_cli_tui_command
 
     if target_path.suffix.lower() not in DUCKDB_SUFFIXES | SQLITE_SUFFIXES:
         raise ValueError(f"No database view command is configured for {target_path.suffix or 'files without an extension'}.")

@@ -24,7 +24,7 @@ def download(
     output: Annotated[str | None, typer.Option("--output", "-o", help="The output file path.")] = None,
     output_dir: Annotated[str | None, typer.Option("--output-dir", "-O", help="Directory to place the downloaded file in.")] = None,
 ) -> None:
-    from stackops.utils.download import download as impl
+    from stackops.utils.files.download import download as impl
 
     impl(url=url, decompress=decompress, output=output, output_dir=output_dir)
 

@@ -54,7 +54,7 @@ def choose_from_options[T](
     options_strings: list[str] = [str(x) for x in options_list]
     default_string = str(default) if default is not None else None
     console = Console()
-    from stackops.utils.command_lookup import check_tool_exists
+    from stackops.utils.cli_utils.command_lookup import check_tool_exists
 
     # from stackops.utils.installer_utils.installer_cli import check_tool_exists
     # print("ch1")

@@ -56,7 +56,7 @@ def select_layout(layouts_json_file: str, selected_layouts_names: list[str], sel
 
 def find_layout_file(layout_path: str) -> str:
     """Find layout file from a path."""
-    from stackops.utils.path_helper import search_for_files_of_interest, match_file_name, sanitize_path
+    from stackops.scripts.python.helpers.helpers_utils.path_helper import search_for_files_of_interest, match_file_name, sanitize_path
     from stackops.utils.options_utils.options import choose_from_options
     path_obj = sanitize_path(layout_path)
     if not path_obj.exists():

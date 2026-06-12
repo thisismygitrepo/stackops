@@ -4,7 +4,7 @@ CC
 
 from pathlib import Path
 
-import stackops.utils.path_compression as path_compression
+import stackops.utils.files.compression as path_compression
 from stackops.utils.io import (
     GpgCommandError,
     decrypt_file_asymmetric,

@@ -73,7 +73,7 @@ def _build_path_selection_data() -> tuple[dict[str, str], dict[str, str]]:
 
 
 def _choose_with_tv(which: Literal["PATH", "p", "ENV", "e"]) -> tuple[bool, str | None]:
-    from stackops.utils.command_lookup import check_tool_exists
+    from stackops.utils.cli_utils.command_lookup import check_tool_exists
 
     if not check_tool_exists("tv"):
         return False, None
@@ -208,7 +208,7 @@ uv venv
             total_packages["plot"] = ["python-magic", "matplotlib", "plotly", "kaleido"]
         if "d" in packages:
             total_packages["data"] = ["numpy", "pandas", "polars", "duckdb-engine", "sqlalchemy", "psycopg2-binary", "pyarrow", "tqdm", "openpyxl"]
-    from stackops.utils.python_env import build_virtualenv_activation_line
+    from stackops.scripts.python.helpers.helpers_utils.python_env import build_virtualenv_activation_line
     groups_packages_lines = "\n".join(
         [f"uv add --group {group_name} {' '.join(packages)}" for group_name, packages in total_packages.items()]
     )   
@@ -261,5 +261,5 @@ source ./.venv/bin/activate
 
 
 if __name__ == "__main__":
-    from stackops.utils.machine_specs import get_machine_specs
+    from stackops.utils.machine.specs import get_machine_specs
     get_machine_specs()

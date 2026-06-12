@@ -9,9 +9,9 @@ def create_from_function(
         path: Annotated[str, typer.Option(..., "--path", "-p", help="Path to a Python or Shell script file or a directory containing such files")] = ".",
         function: Annotated[str | None, typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
 ):
-    from stackops.utils.python_env import find_virtualenv_root
+    from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
     from stackops.utils.options_utils.options import choose_from_options
-    from stackops.utils.path_helper import match_file_name, sanitize_path
+    from stackops.scripts.python.helpers.helpers_utils.path_helper import match_file_name, sanitize_path
     from stackops.utils.accessories import get_repo_root
     from pathlib import Path
 
@@ -20,7 +20,7 @@ def create_from_function(
         suffixes = {".py"}
         choice_file = match_file_name(sub_string=path, search_root=Path.cwd(), suffixes=suffixes)
     elif path_obj.is_dir():
-        from stackops.utils.path_helper import search_for_files_of_interest
+        from stackops.scripts.python.helpers.helpers_utils.path_helper import search_for_files_of_interest
         print(f"🔍 Searching recursively for Python, PowerShell and Shell scripts in directory `{path_obj}`")
         files = search_for_files_of_interest(path_obj, suffixes={".py", ".sh", ".ps1"})
         print(f"🔍 Got #{len(files)} results.")

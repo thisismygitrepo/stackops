@@ -59,7 +59,7 @@ def resolve_sections(
 
 
 def _run_system_section() -> None:
-    from stackops.utils.machine_specs import get_machine_specs
+    from stackops.utils.machine.specs import get_machine_specs
 
     system_info = get_machine_specs()
     display_system_info(cast(dict[str, str], system_info))

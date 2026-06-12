@@ -65,7 +65,7 @@ def web_file_explorer(
     if over_internet and install_missing_dependencies:
         install_if_missing(which="ngrok", binary_name=None, verbose=True)
 
-    import stackops.utils.network_address as helper
+    import stackops.utils.network.address as helper
     res = helper.select_lan_ipv4(prefer_vpn=False)
     if res is None:
         typer.echo("❌ ERROR: Could not determine local LAN IPv4 address for share server.", err=True)

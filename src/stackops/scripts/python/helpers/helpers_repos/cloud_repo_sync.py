@@ -19,7 +19,7 @@ from stackops.utils.io import (
     encrypt_file_symmetric,
 )
 from stackops.utils.path_core import delete_path
-import stackops.utils.path_compression as path_compression
+import stackops.utils.files.compression as path_compression
 from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
 import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
 from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT

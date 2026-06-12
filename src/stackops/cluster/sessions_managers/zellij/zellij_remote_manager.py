@@ -3,7 +3,7 @@ from typing import TypedDict
 from datetime import datetime
 import json
 import uuid
-from stackops.utils.scheduler import Scheduler
+from stackops.cluster.scheduler import Scheduler
 from stackops.cluster.sessions_managers.zellij.zellij_local import run_command_in_zellij_tab
 from stackops.cluster.sessions_managers.zellij.zellij_remote import ZellijRemoteLayoutGenerator
 from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus
@@ -94,7 +94,7 @@ class ZellijSessionManager:
                 # Print statuses
                 for i, status in enumerate(statuses):
                     print(f"Manager {i}: {status}")
-        from stackops.utils.scheduler import LoggerTemplate
+        from stackops.cluster.scheduler import LoggerTemplate
         from typing import cast
         sched = Scheduler(routine=routine, wait_ms=60_000, logger=cast(LoggerTemplate, logger))
         sched.run()

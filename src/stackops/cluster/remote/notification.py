@@ -3,7 +3,7 @@ from stackops.cluster.remote.models import EmailParams
 
 NOTIFICATION_TEMPLATE = '''
 try:
-    from stackops.utils.notifications import Email
+    from stackops.cluster.remote.notifications import Email
     msg = f"""
 Hi `{addressee}`, I'm `{speaker}`.
 

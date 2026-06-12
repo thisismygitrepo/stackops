@@ -8,7 +8,7 @@ from typing import Any, TypedDict, cast
 
 from rich.console import Console
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
-from stackops.utils.scheduler import Scheduler, LoggerTemplate
+from stackops.cluster.scheduler import Scheduler, LoggerTemplate
 from stackops.cluster.sessions_managers.windows_terminal.wt_local import WTLayoutGenerator
 from stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import check_wt_session_status
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig

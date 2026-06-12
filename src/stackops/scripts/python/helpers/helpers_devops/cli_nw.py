@@ -17,7 +17,7 @@ def show_address() -> None:
     """📌 Show this computer addresses on network"""
     import subprocess
 
-    import stackops.utils.network_address as helper
+    import stackops.utils.network.address as helper
 
     public_ip_address: str | None = None
     try:
