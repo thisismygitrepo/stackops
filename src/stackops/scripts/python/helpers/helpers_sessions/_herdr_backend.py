@@ -13,6 +13,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     quote,
     run_command,
 )
+from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
 
 
 JsonObject = dict[str, Any]
@@ -378,24 +379,24 @@ def choose_kill_target(
     kill_all: bool,
     idle: bool,
     window: bool,
-) -> tuple[str, str | None]:
+) -> tuple[str, str | None, list[KilledTarget]]:
     if idle:
-        return ("error", "--idle is only supported for the tmux backend because Herdr shell-idle status is not available.")
+        return ("error", "--idle is only supported for the tmux backend because Herdr shell-idle status is not available.", [])
     sessions = _session_entries()
     if sessions is None:
-        return ("error", "Unable to list Herdr sessions. Confirm `herdr session list --json` works.")
+        return ("error", "Unable to list Herdr sessions. Confirm `herdr session list --json` works.", [])
 
     if kill_all:
         scripts = [stop_session_script(session_name) for session_name in _running_session_names(sessions)]
         if len(scripts) == 0:
-            return ("error", "No running Herdr sessions are available to kill.")
-        return ("run_script", "\n".join(scripts))
+            return ("error", "No running Herdr sessions are available to kill.", [])
+        return ("run_script", "\n".join(scripts), [])
 
     if name is not None:
-        return ("run_script", stop_session_script(name))
+        return ("run_script", stop_session_script(name), [])
 
     if len(sessions) == 0:
-        return ("error", "No Herdr sessions are available to kill.")
+        return ("error", "No Herdr sessions are available to kill.", [])
 
     options_to_script: dict[str, str] = {}
     options_to_preview_mapping: dict[str, str] = {}
@@ -435,7 +436,7 @@ def choose_kill_target(
         multi=True,
     )
     if len(selections) == 0:
-        return ("error", "No Herdr target selected.")
+        return ("error", "No Herdr target selected.", [])
     scripts: list[str] = []
     seen: set[str] = set()
     for selection in selections:
@@ -444,6 +445,6 @@ def choose_kill_target(
         seen.add(selection)
         script = options_to_script.get(selection)
         if script is None:
-            return ("error", f"Unknown Herdr target selected: {selection}")
+            return ("error", f"Unknown Herdr target selected: {selection}", [])
         scripts.append(script)
-    return ("run_script", "\n".join(scripts))
+    return ("run_script", "\n".join(scripts), [])

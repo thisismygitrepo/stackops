@@ -29,6 +29,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     run_command,
     strip_ansi_codes,
 )
+from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
 
 
 def _session_sort_key(raw_line: str) -> tuple[bool, list[int | str]]:
@@ -188,13 +189,13 @@ def choose_kill_target(
     kill_all: bool,
     idle: bool,
     window: bool,
-) -> tuple[str, str | None]:
+) -> tuple[str, str | None, list[KilledTarget]]:
     if idle:
-        return ("error", "--idle is only supported for the tmux backend because Zellij shell-idle status is not available.")
+        return ("error", "--idle is only supported for the tmux backend because Zellij shell-idle status is not available.", [])
     if kill_all:
-        return ("run_script", "zellij kill-all-sessions --yes")
+        return ("run_script", "zellij kill-all-sessions --yes", [])
     if name is not None:
-        return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote))
+        return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote), [])
 
     result = run_command(["zellij", "list-sessions"])
     sessions = result.stdout.strip().splitlines() if result.returncode == 0 else []
@@ -202,7 +203,7 @@ def choose_kill_target(
     sessions.sort(key=_session_sort_key)
 
     if len(sessions) == 0:
-        return ("error", "No Zellij sessions are available to kill.")
+        return ("error", "No Zellij sessions are available to kill.", [])
 
     if window:
         options_to_script: dict[str, str] = {}
@@ -235,7 +236,7 @@ def choose_kill_target(
             multi=True,
         )
         if len(selections) == 0:
-            return ("error", "No Zellij target selected.")
+            return ("error", "No Zellij target selected.", [])
         scripts: list[str] = []
         seen: set[str] = set()
         for selection in selections:
@@ -244,9 +245,9 @@ def choose_kill_target(
             seen.add(selection)
             script = options_to_script.get(selection)
             if script is None:
-                return ("error", f"Unknown Zellij target selected: {selection}")
+                return ("error", f"Unknown Zellij target selected: {selection}", [])
             scripts.append(script)
-        return ("run_script", "\n".join(scripts))
+        return ("run_script", "\n".join(scripts), [])
 
     display_to_raw_session = {strip_ansi_codes(session): session for session in sessions}
     options_to_script = {
@@ -266,7 +267,7 @@ def choose_kill_target(
         multi=True,
     )
     if len(session_labels) == 0:
-        return ("error", "No Zellij session selected.")
+        return ("error", "No Zellij session selected.", [])
     session_scripts: list[str] = []
     seen_session_labels: set[str] = set()
     for session_label in session_labels:
@@ -275,6 +276,6 @@ def choose_kill_target(
         seen_session_labels.add(session_label)
         script = options_to_script.get(session_label)
         if script is None:
-            return ("error", f"Unknown Zellij session selected: {session_label}")
+            return ("error", f"Unknown Zellij session selected: {session_label}", [])
         session_scripts.append(script)
-    return ("run_script", "\n".join(session_scripts))
+    return ("run_script", "\n".join(session_scripts), [])

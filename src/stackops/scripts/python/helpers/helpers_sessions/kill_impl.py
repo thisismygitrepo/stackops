@@ -1,4 +1,11 @@
-from typing import Literal
+from typing import Literal, TypedDict
+
+
+class KilledTarget(TypedDict):
+    action: Literal["session", "window", "pane"]
+    session: str
+    window: str
+    detail: str
 
 
 def choose_kill_target(
@@ -7,7 +14,7 @@ def choose_kill_target(
     kill_all: bool,
     idle: bool,
     window: bool,
-) -> tuple[str, str | None]:
+) -> tuple[str, str | None, list[KilledTarget]]:
     match backend:
         case "zellij":
             from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_kill_target as _zellij

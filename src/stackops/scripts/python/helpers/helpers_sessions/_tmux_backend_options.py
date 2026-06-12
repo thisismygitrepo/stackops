@@ -11,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview impo
     build_window_preview,
     collect_session_snapshot,
 )
+from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
 
 
 def new_session_script(kill_all: bool) -> str:
@@ -73,8 +74,9 @@ def build_idle_kill_script_for_sessions(
     run_command_fn: Callable[[list[str]], CompletedProcess[str]],
     classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
     quote_fn: Callable[[str], str],
-) -> str:
+) -> tuple[str, list[KilledTarget]]:
     commands: list[str] = []
+    killed_targets: list[KilledTarget] = []
     for session_name in sessions:
         windows, panes_by_window, pane_warning = collect_session_snapshot(
             session_name=session_name,
@@ -99,10 +101,23 @@ def build_idle_kill_script_for_sessions(
                 continue
             if len(idle_panes) == len(window_panes):
                 commands.append(f"tmux kill-window -t {quote_fn(_window_kill_target(session_name, window))}")
+                killed_targets.append(KilledTarget(
+                    action="window",
+                    session=session_name,
+                    window=window["window_name"],
+                    detail=f"{len(window_panes)} pane(s)",
+                ))
                 continue
             for pane in idle_panes:
                 commands.append(f"tmux kill-pane -t {quote_fn(_pane_kill_target(session_name, window, pane))}")
-    return "\n".join(commands)
+                _, status_text = classify_pane_status_fn(pane)
+                killed_targets.append(KilledTarget(
+                    action="pane",
+                    session=session_name,
+                    window=window["window_name"],
+                    detail=pane.get("pane_command", "") or status_text,
+                ))
+    return "\n".join(commands), killed_targets
 
 
 def attach_script_from_name(name: str, quote_fn: Callable[[str], str]) -> str:

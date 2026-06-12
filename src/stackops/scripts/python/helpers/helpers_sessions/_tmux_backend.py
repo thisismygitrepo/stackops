@@ -24,6 +24,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     run_command,
     strip_ansi_codes,
 )
+from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
 
 
 def _find_meaningful_pane_process_label(pane_pid: str) -> str | None:
@@ -144,23 +145,23 @@ def choose_session(
     return ("handoff_script", attach_script_from_name(name=session_name, quote_fn=quote))
 
 
-def _choose_idle_kill_target(sessions: list[str]) -> tuple[str, str | None]:
+def _choose_idle_kill_target(sessions: list[str]) -> tuple[str, str | None, list[KilledTarget]]:
     if len(sessions) == 0:
-        return ("error", "No tmux sessions are available to inspect for idle panes or windows.")
+        return ("error", "No tmux sessions are available to inspect for idle panes or windows.", [])
     try:
-        script = build_idle_kill_script_for_sessions(
+        script, killed_targets = build_idle_kill_script_for_sessions(
             sessions=sessions,
             run_command_fn=run_command,
             classify_pane_status_fn=_classify_pane_status,
             quote_fn=quote,
         )
     except ValueError as error:
-        return ("error", str(error))
+        return ("error", str(error), [])
     if script.strip():
-        return ("run_script", script)
+        return ("run_script", script, killed_targets)
     if len(sessions) == 1:
-        return ("error", f"No idle-shell tmux panes or windows are available to kill in session '{sessions[0]}'.")
-    return ("error", "No idle-shell tmux panes or windows are available to kill.")
+        return ("error", f"No idle-shell tmux panes or windows are available to kill in session '{sessions[0]}'.", [])
+    return ("error", "No idle-shell tmux panes or windows are available to kill.", [])
 
 
 def choose_kill_target(
@@ -168,10 +169,10 @@ def choose_kill_target(
     kill_all: bool,
     idle: bool,
     window: bool,
-) -> tuple[str, str | None]:
+) -> tuple[str, str | None, list[KilledTarget]]:
     if idle:
         if window:
-            return ("error", "--idle cannot be used together with --window.")
+            return ("error", "--idle cannot be used together with --window.", [])
         if kill_all:
             return _choose_idle_kill_target(sessions=list_session_names())
         if name is not None:
@@ -180,18 +181,18 @@ def choose_kill_target(
             msg="Choose a tmux session to clean idle panes/windows:",
         )
         if action != "session_name":
-            return ("error", payload)
+            return ("error", payload, [])
         return _choose_idle_kill_target(sessions=[payload])
 
     if kill_all:
-        return ("run_script", "tmux kill-server")
+        return ("run_script", "tmux kill-server", [])
     if name is not None:
-        return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote))
+        return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote), [])
 
     sessions = list_session_names()
 
     if len(sessions) == 0:
-        return ("error", "No tmux sessions are available to kill.")
+        return ("error", "No tmux sessions are available to kill.", [])
 
     options_to_script: dict[str, str] = {}
     options_to_preview_mapping: dict[str, str] = {}
@@ -228,7 +229,7 @@ def choose_kill_target(
         multi=True,
     )
     if len(selections) == 0:
-        return ("error", "No tmux target selected.")
+        return ("error", "No tmux target selected.", [])
     scripts: list[str] = []
     seen: set[str] = set()
     for selection in selections:
@@ -237,6 +238,6 @@ def choose_kill_target(
         seen.add(selection)
         script = options_to_script.get(selection)
         if script is None:
-            return ("error", f"Unknown tmux target selected: {selection}")
+            return ("error", f"Unknown tmux target selected: {selection}", [])
         scripts.append(script)
-    return ("run_script", "\n".join(scripts))
+    return ("run_script", "\n".join(scripts), [])

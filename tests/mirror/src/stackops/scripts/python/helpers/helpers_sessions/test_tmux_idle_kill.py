@@ -7,6 +7,7 @@ from stackops.scripts.python.helpers.helpers_sessions import _tmux_backend
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options import (
     build_idle_kill_script_for_sessions,
 )
+from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
 
 
 def _single_quote(value: str) -> str:
@@ -45,7 +46,7 @@ def test_idle_kill_script_kills_idle_windows_and_mixed_idle_panes() -> None:
             )
         return subprocess.CompletedProcess(command, 1, "", "unexpected command")
 
-    script = build_idle_kill_script_for_sessions(
+    script, killed_targets = build_idle_kill_script_for_sessions(
         sessions=["alpha"],
         run_command_fn=fake_run_command,
         classify_pane_status_fn=_classify_by_pane_command,
@@ -55,6 +56,10 @@ def test_idle_kill_script_kills_idle_windows_and_mixed_idle_panes() -> None:
     assert script.splitlines() == [
         "tmux kill-window -t '@10'",
         "tmux kill-pane -t '%12'",
+    ]
+    assert killed_targets == [
+        KilledTarget(action="window", session="alpha", window="main", detail="2 pane(s)"),
+        KilledTarget(action="pane", session="alpha", window="work", detail="bash"),
     ]
 
 
@@ -86,10 +91,10 @@ def test_choose_idle_kill_with_all_uses_all_sessions(monkeypatch: pytest.MonkeyP
         run_command_fn: Callable[[list[str]], subprocess.CompletedProcess[str]],
         classify_pane_status_fn: Callable[[dict[str, str]], tuple[str, str]],
         quote_fn: Callable[[str], str],
-    ) -> str:
+    ) -> tuple[str, list[KilledTarget]]:
         _ = run_command_fn, classify_pane_status_fn, quote_fn
         observed_sessions.append(sessions)
-        return "tmux kill-pane -t %1"
+        return "tmux kill-pane -t %1", []
 
     monkeypatch.setattr(_tmux_backend, "list_session_names", fake_list_session_names)
     monkeypatch.setattr(
@@ -98,7 +103,7 @@ def test_choose_idle_kill_with_all_uses_all_sessions(monkeypatch: pytest.MonkeyP
         fake_build_idle_kill_script_for_sessions,
     )
 
-    action, payload = _tmux_backend.choose_kill_target(
+    action, payload, killed_targets = _tmux_backend.choose_kill_target(
         name=None,
         kill_all=True,
         idle=True,
@@ -107,4 +112,5 @@ def test_choose_idle_kill_with_all_uses_all_sessions(monkeypatch: pytest.MonkeyP
 
     assert action == "run_script"
     assert payload == "tmux kill-pane -t %1"
+    assert killed_targets == []
     assert observed_sessions == [["alpha", "beta"]]
