@@ -10,16 +10,17 @@ ensureLightweightCommands:
   prompt: |
     $caveman weynan full.
     Please look into every cli typer py file that has (import typer).
-    For each one, please spin up another veresion of you (whether you are codex, claude, opencode, copilot etc)
-    but not as a sub agent, instead, the new instances go to new panes/windows in this tmux session
-    Each instance handle one file that you deem problematic and you hand it over to that agent to fix.
     In essense, we want to ensure that those typer cli remain lightweight so user doesn't experience delay.
     We achieve this by,
     * Avoid unncessary import to happen upfront, e.g. if only one command needs it, then the import can occur within that command.
     * Only include imports needed to type hint the variables, and ensuer they come from modules that are lightweight themselves, otherwise some redesign need to occur with those imported files.
     * We want to have both python API and CLI experirence of functions, so, the actual py function must exist somewhere, and the cli function is only calling that function internally and passing on (a cli interface to an existing py function).
     Convey those messages to the new agent instances, but its up to you to decide which one is worth working on and which one is already reasonably optimized, plese don't be overzelous.
-    
+
+    Because the number of files is too big, please spin up another veresion of you (whether you are codex, claude, opencode, copilot etc)
+    but not as a sub agent, instead, the new instances go to new panes/windows in this tmux session and give them pane names matchning their name
+    Each instance handle 5 files only, you distribute the load, and pass on the instructions.
+
 
 createParallelAgents:
       description: Design args and create an agents layout only, without launching it
