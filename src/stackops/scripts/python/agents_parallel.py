@@ -4,12 +4,12 @@ from typing import get_args
 
 import typer
 
-from stackops.scripts.python.agents_parallel_commands import agents_create, collect, create_context, make_agents_command_template
-from stackops.scripts.python.agents_parallel_run_command import run_parallel
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER
-
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.agents_parallel_commands import agents_create, collect, create_context, make_agents_command_template
+    from stackops.scripts.python.agents_parallel_run_command import run_parallel
+    from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER
+
     parallel_app = typer.Typer(
         help="🧵 <p> Parallel agent workflow commands",
         no_args_is_help=True,

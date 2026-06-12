@@ -1,16 +1,6 @@
-import shlex
 from typing import Annotated, Literal
 
 import typer
-
-from stackops.scripts.python.helpers.helpers_devops import (
-    cli_device,
-    cli_share_file,
-    cli_share_server,
-    cli_share_temp,
-    cli_share_terminal,
-    cli_ssh,
-)
 
 
 def show_address() -> None:
@@ -78,6 +68,8 @@ def vscode_share(
     Note: this helper prints recommended commands and optionally runs them.
     If you need more functionality, consult VS Code Tunnels docs: https://code.visualstudio.com/docs/remote/tunnels
     """
+    import shlex
+
     accept = "--accept-server-license-terms"
     name_part = f"--name {shlex.quote(name)}" if name else ""
     extra = extra_args or ""
@@ -122,6 +114,15 @@ def vscode_share(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops import (
+        cli_device,
+        cli_share_file,
+        cli_share_server,
+        cli_share_temp,
+        cli_share_terminal,
+        cli_ssh,
+    )
+
     nw_apps = typer.Typer(help="🔐 <n> Network subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     nw_apps.command(name="share-terminal", help="📡 <t> Share terminal via web browser")(cli_share_terminal.share_terminal)
     nw_apps.command(name="t", help="Share terminal via web browser", hidden=True)(cli_share_terminal.share_terminal)

@@ -1,20 +1,13 @@
 """CLI implementation for sessions run command."""
 
+from typing import TYPE_CHECKING
+
 import typer
 
-from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
-from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
-from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
-    SessionBackendOption,
-    resolve_standard_backend,
-    substitute_home_in_layouts,
-)
-from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
-    choose_tabs_from_source,
-    load_selected_layouts_from_source,
-    resolve_layout_source,
-)
-from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
+if TYPE_CHECKING:
+    from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
+    from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import SessionBackendOption
 
 
 def run_cli(
@@ -27,9 +20,9 @@ def run_cli(
     parallel_layouts: int | None,
     max_tabs: int,
     max_layouts: int,
-    backend: SessionBackendOption,
-    on_conflict: SessionConflictAction,
-    exit_mode: SessionExitMode,
+    backend: "SessionBackendOption",
+    on_conflict: "SessionConflictAction",
+    exit_mode: "SessionExitMode",
     monitor: bool,
     kill_upon_completion: bool,
     subsitute_home: bool,
@@ -37,6 +30,18 @@ def run_cli(
     try:
         if sleep_inbetween < 0:
             raise ValueError("--sleep-inbetween must be >= 0.")
+
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
+            resolve_standard_backend,
+            substitute_home_in_layouts,
+        )
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
+            choose_tabs_from_source,
+            load_selected_layouts_from_source,
+            resolve_layout_source,
+        )
+
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
@@ -58,7 +63,8 @@ def run_cli(
             raise ValueError("--parallel-layouts must be a positive integer.")
         if parallel_layouts is None and len(layouts_selected) > max_layouts:
             raise ValueError(
-                f"Number of layouts {len(layouts_selected)} exceeds the maximum allowed {max_layouts}. Please adjust your layout file."
+                f"Number of layouts {len(layouts_selected)} exceeds the maximum allowed {max_layouts}. "
+                "Please adjust your layout file."
             )
         if parallel_layouts is not None and parallel_layouts > max_layouts:
             raise ValueError(
@@ -67,7 +73,8 @@ def run_cli(
         for a_layout in layouts_selected:
             if len(a_layout["layoutTabs"]) > max_tabs:
                 raise ValueError(
-                    f"Layout '{a_layout.get('layoutName', 'Unnamed')}' has {len(a_layout['layoutTabs'])} tabs which exceeds the max of {max_tabs}."
+                    f"Layout '{a_layout.get('layoutName', 'Unnamed')}' has "
+                    f"{len(a_layout['layoutTabs'])} tabs which exceeds the max of {max_tabs}."
                 )
 
         run_layouts(

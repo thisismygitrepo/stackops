@@ -1,24 +1,16 @@
 """Shared layout source resolution for sessions run-style commands."""
 
-
-
-from copy import deepcopy
 from dataclasses import dataclass
-import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import (
-    find_layout_file,
-    select_layout,
-)
-from stackops.scripts.python.helpers.helpers_sessions.sessions_test_layouts import (
-    build_test_layouts,
-    count_tabs_in_layouts,
-)
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+
+if TYPE_CHECKING:
+    pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,11 +21,13 @@ class LayoutSource:
 
 
 def _clone_layouts(layouts: list[LayoutConfig]) -> list[LayoutConfig]:
+    from copy import deepcopy
     return deepcopy(layouts)
 
 
 def _resolve_layouts_file_path(ctx: typer.Context, layouts_file: str | None) -> Path:
     if layouts_file is not None:
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import find_layout_file
         layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
     else:
         layouts_file_resolved = DOTFILES_LAYOUTS_JSON_PATH
@@ -52,6 +46,10 @@ def resolve_layout_source(
     if test_layout:
         if layouts_file is not None:
             raise ValueError("--test-layout cannot be used together with --layouts-file.")
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_test_layouts import (
+            build_test_layouts,
+            count_tabs_in_layouts,
+        )
         layouts = build_test_layouts(base_dir=Path.cwd())
         typer.echo(
             f"Using generated test layout with {len(layouts)} layouts and "
@@ -63,6 +61,7 @@ def resolve_layout_source(
             is_test_layout=True,
         )
     layouts_file_resolved = _resolve_layouts_file_path(ctx=ctx, layouts_file=layouts_file)
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import select_layout
     layouts = select_layout(
         layouts_json_file=str(layouts_file_resolved),
         selected_layouts_names=[],
@@ -80,9 +79,8 @@ def load_all_layouts_from_source(layout_source: LayoutSource) -> list[LayoutConf
 
 
 def _choose_layout_names_interactively(layouts: list[LayoutConfig]) -> list[str]:
-    from stackops.utils.options_utils.tv_options import (
-        choose_from_dict_with_preview,
-    )
+    import json
+    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     return choose_from_dict_with_preview(
         {
@@ -166,9 +164,8 @@ def choose_tabs_from_source(
 
     selected_tab_refs: set[tuple[str, int]] = set()
     if choose_tabs == "":
-        from stackops.utils.options_utils.tv_options import (
-            choose_from_dict_with_preview,
-        )
+        import json
+        from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
         options_to_preview_mapping: dict[str, str] = {}
         key_to_ref: dict[str, tuple[str, int]] = {}

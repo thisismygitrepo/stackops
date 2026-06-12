@@ -2,23 +2,20 @@
 
 from pathlib import Path
 from typing import Annotated
-import subprocess
-import platform
-import zipfile
+
 import typer
 
 
 def get_gource_install_dir() -> Path:
-    """Get the installation directory for portable Gource."""
+    import platform
     if platform.system() == "Windows":
         appdata = Path.home() / "AppData" / "Local"
         return appdata / "gource"
-    else:
-        return Path.home() / ".local" / "bin" / "gource"
+    return Path.home() / ".local" / "bin" / "gource"
 
 
 def get_gource_executable() -> Path:
-    """Get the path to the gource executable (inside the extracted directory with DLLs)."""
+    import platform
     install_dir = get_gource_install_dir()
     if platform.system() == "Windows":
         possible_paths = [
@@ -29,22 +26,22 @@ def get_gource_executable() -> Path:
             if path.exists():
                 return path
         return install_dir / f"gource-{get_default_version()}.win64" / "gource.exe"
-    else:
-        return install_dir / "gource"
+    return install_dir / "gource"
 
 
 def get_default_version() -> str:
-    """Get the default gource version."""
     return "0.53"
 
 
 def install_gource_windows(version: str | None = None) -> None:
-    """Install portable Gource on Windows by downloading and extracting the zip archive."""
-    if platform.system() != "Windows":
-        raise OSError(f"This installer is for Windows only. Current OS: {platform.system()}")
+    import platform
+    import zipfile
 
     from stackops.utils.path_core import download
     from stackops.utils.source_of_truth import INSTALL_TMP_DIR
+
+    if platform.system() != "Windows":
+        raise OSError(f"This installer is for Windows only. Current OS: {platform.system()}")
 
     print("\n" + "=" * 80)
     print("🚀 GOURCE PORTABLE INSTALLATION 🚀")
@@ -58,7 +55,7 @@ def install_gource_windows(version: str | None = None) -> None:
     downloaded_zip = download(portable_url, folder=INSTALL_TMP_DIR)
     print(f"✅ Downloaded to: {downloaded_zip}")
 
-    print(f"\n� Extracting to: {install_dir}")
+    print(f"\n Extracting to: {install_dir}")
     install_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -121,28 +118,9 @@ def visualize(
     font_size: Annotated[int, typer.Option("--font-size", "-z", help="Font size")] = 22,
     camera_mode: Annotated[str, typer.Option("--camera-mode", "-C", help="Camera mode: overview or track")] = "overview",
 ) -> None:
-    """
-    Visualize git repository history using Gource with reasonable defaults.
-    
-    Examples:
-        # Basic visualization of current directory
-        python grource.py visualize
-        
-        # Visualize specific repository
-        python grource.py visualize --repo-path /path/to/repo
-        
-        # Create video output
-        python grource.py visualize --output output.mp4
-        
-        # Fast visualization with custom title
-        python grource.py visualize --seconds-per-day 0.01 --title "My Project"
-        
-        # Hide specific elements
-        python grource.py visualize --hide filenames --hide date
-        
-        # Custom resolution and viewport
-        python grource.py visualize --resolution 2560x1440 --viewport 1200x1200
-    """
+    import platform
+    import subprocess
+
     print("\n" + "=" * 80)
     print("🎬 GOURCE VISUALIZATION 🎬")
     print("=" * 80 + "\n")
@@ -169,7 +147,7 @@ def visualize(
         if platform.system() == "Windows":
             print(f"⚠️  Portable gource not found at {gource_exe}, installing...")
             install_gource_windows()
-            gource_exe = get_gource_executable()  # Re-fetch path after installation
+            gource_exe = get_gource_executable()
             if gource_exe.exists():
                 print(f"✅ Gource installed successfully at: {gource_exe}")
                 gource_cmd: str = str(gource_exe)
@@ -311,7 +289,7 @@ def visualize(
                 print("   For Linux/Mac, use your package manager:")
                 print("     - Ubuntu/Debian: sudo apt install gource")
                 print("     - macOS: brew install gource")
-                print("     - Fedora: sudo dnf install gource")
+                print("     - Fedora: sudo dinstall gource")
             raise typer.Exit(1) from e
 
     print("\n" + "=" * 80)
@@ -322,7 +300,7 @@ def visualize(
 def install(
     version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Gource version to install")] = "0.53",
 ) -> None:
-    """Install portable Gource on Windows (no admin privileges required)."""
+    import platform
     if platform.system() == "Windows":
         install_gource_windows(version=version)
     else:
@@ -330,7 +308,7 @@ def install(
         print("For Linux/Mac, please use your package manager:")
         print("  - Ubuntu/Debian: sudo apt install gource")
         print("  - macOS: brew install gource")
-        print("  - Fedora: sudo dnf install gource")
+        print("  - Fedora: sudo dinstall gource")
         raise typer.Exit(1)
 
 

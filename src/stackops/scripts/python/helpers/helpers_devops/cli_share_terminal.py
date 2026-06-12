@@ -2,9 +2,6 @@
 from typing import Annotated
 import typer
 
-from stackops.utils.source_of_truth import DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH
-from stackops.secrets.readers import read_quick_password
-
 """
 reference:
 # https://github.com/tsl0922/ttyd/wiki/Serving-web-fonts
@@ -59,6 +56,8 @@ def share_terminal(
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
 
 ) -> None:
+    from stackops.utils.source_of_truth import DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH
+    from stackops.secrets.readers import read_quick_password
     if install_missing_dependencies:
         from stackops.utils.installer_utils.installer_cli import install_if_missing
         install_if_missing(which="ttyd", binary_name=None, verbose=True)

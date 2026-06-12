@@ -1,12 +1,7 @@
 from pathlib import Path
-import os
-import platform
-import subprocess
 from typing import Annotated, Literal, assert_never
 
 import typer
-import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
-from stackops.utils.path_reference import get_path_reference_path
 
 
 def configure_shell_profile(
@@ -28,8 +23,13 @@ def configure_shell_profile(
 
 
 def pwsh_theme() -> None:
-    """🔗 Select powershell prompt theme."""
+    """Select powershell prompt theme."""
+    import platform
+    import subprocess
+
+    import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
     from stackops.utils.code import exit_then_run_shell_file
+    from stackops.utils.path_reference import get_path_reference_path
 
     script_path = get_path_reference_path(
         module=theme_assets,
@@ -38,7 +38,6 @@ def pwsh_theme() -> None:
     if platform.system() == "Windows":
         exit_then_run_shell_file(script_path=str(script_path), strict=False)
         return
-
     try:
         subprocess.run(["pwsh", "-File", str(script_path)], check=True)
     except FileNotFoundError as exc:
@@ -47,7 +46,13 @@ def pwsh_theme() -> None:
 
 
 def starship_theme() -> None:
-    """🔗 Select starship prompt theme."""
+    """Select starship prompt theme."""
+    import platform
+    import subprocess
+
+    import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
+    from stackops.utils.path_reference import get_path_reference_path
+
     if platform.system() == "Windows":
         script_path = get_path_reference_path(
             module=theme_assets,
@@ -62,7 +67,6 @@ def starship_theme() -> None:
                 missing_error = exc
             except subprocess.CalledProcessError as exc:
                 raise typer.Exit(code=exc.returncode) from exc
-
         typer.echo("Error: pwsh or powershell is required to select a starship prompt theme.", err=True)
         raise typer.Exit(code=1) from missing_error
 
@@ -80,17 +84,20 @@ def starship_theme() -> None:
 
 
 def configure_wezterm_theme() -> None:
-    """🔗 Select WezTerm theme with interactive live preview."""
+    """Select WezTerm theme with interactive live preview."""
     from stackops.scripts.python.helpers.helpers_devops.themes import choose_wezterm_theme
 
     choose_wezterm_theme.main()
 
 
 def configure_ghostty_theme() -> None:
-    """🔗 Select Ghostty theme with interactive preview."""
+    """Select Ghostty theme with interactive preview."""
+    import os
+    import platform
+    import subprocess
+
     ghostty_config_path = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser() / "ghostty" / "config"
     auto_theme_include = "config-file = ?auto/theme.ghostty"
-
     existing_lines = ghostty_config_path.read_text(encoding="utf-8").splitlines() if ghostty_config_path.exists() else []
     existing_lines_stripped = [line.strip() for line in existing_lines]
     if auto_theme_include not in existing_lines_stripped:
@@ -99,19 +106,23 @@ def configure_ghostty_theme() -> None:
             existing_lines.append("")
         existing_lines.append(auto_theme_include)
         ghostty_config_path.write_text("\n".join(existing_lines) + "\n", encoding="utf-8")
-
     reload_hint = "cmd+shift+," if platform.system() == "Darwin" else "ctrl+shift+,"
-    typer.echo("🎨 Opening Ghostty interactive theme preview. Use arrows/j/k to browse, Enter then w to save.")
-    typer.echo(f"💡 After saving, reload Ghostty config with {reload_hint} to apply.")
+    typer.echo("Opening Ghostty interactive theme preview. Use arrows/j/k to browse, Enter then w to save.")
+    typer.echo(f"After saving, reload Ghostty config with {reload_hint} to apply.")
     subprocess.run(["ghostty", "+list-themes"], check=True)
 
 
 def configure_windows_terminal_theme() -> None:
-    """🔗 Select Windows Terminal color scheme with interactive live preview."""
+    """Select Windows Terminal color scheme with interactive live preview."""
+    import platform
+    import subprocess
+
+    import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
+    from stackops.utils.path_reference import get_path_reference_path
+
     if platform.system().lower() != "windows":
         typer.echo("Error: Windows Terminal theme selection is only supported on Windows systems.", err=True)
         raise typer.Exit(code=1)
-
     script_path = get_path_reference_path(
         module=theme_assets,
         path_reference=theme_assets.CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE,
@@ -122,7 +133,6 @@ def configure_windows_terminal_theme() -> None:
             return
         except FileNotFoundError:
             continue
-
     typer.echo("Error: pwsh or powershell is required to select a Windows Terminal color scheme.", err=True)
     raise typer.Exit(code=1)
 
@@ -137,28 +147,20 @@ def shell_group(ctx: typer.Context) -> None:
 def get_app() -> typer.Typer:
     import stackops.scripts.python.helpers.helpers_devops.cli_config_tmux as cli_config_tmux
 
-    shell_app = typer.Typer(help="🐚 <t> Configure your terminal profile.", no_args_is_help=False, add_help_option=True, add_completion=False)
+    shell_app = typer.Typer(help="Configure your terminal profile.", no_args_is_help=False, add_help_option=True, add_completion=False)
     shell_app.callback(invoke_without_command=True)(shell_group)
-
-    shell_app.command("config-shell", no_args_is_help=False, help="🐚 <s> Create or configure a shell profile.")(configure_shell_profile)
+    shell_app.command("config-shell", no_args_is_help=False, help="Create or configure a shell profile.")(configure_shell_profile)
     shell_app.command("s", no_args_is_help=False, help="Create or configure a shell profile.", hidden=True)(configure_shell_profile)
-    shell_app.command("starship-theme", no_args_is_help=False, help="⭐ <r> Select starship prompt theme.")(starship_theme)
+    shell_app.command("starship-theme", no_args_is_help=False, help="Select starship prompt theme.")(starship_theme)
     shell_app.command("r", no_args_is_help=False, help="Select starship prompt theme.", hidden=True)(starship_theme)
-    shell_app.command("pwsh-theme", no_args_is_help=False, help="⚡ <T> Select powershell prompt theme.")(pwsh_theme)
+    shell_app.command("pwsh-theme", no_args_is_help=False, help="Select powershell prompt theme.")(pwsh_theme)
     shell_app.command("T", no_args_is_help=False, help="Select powershell prompt theme.", hidden=True)(pwsh_theme)
-    shell_app.command("wezterm-theme", no_args_is_help=False, help="💻 <W> Select WezTerm terminal theme.")(configure_wezterm_theme)
+    shell_app.command("wezterm-theme", no_args_is_help=False, help="Select WezTerm terminal theme.")(configure_wezterm_theme)
     shell_app.command("W", no_args_is_help=False, help="Select WezTerm terminal theme.", hidden=True)(configure_wezterm_theme)
-    shell_app.command("ghostty-theme", no_args_is_help=False, help="👻 <g> Select Ghostty terminal theme.")(configure_ghostty_theme)
+    shell_app.command("ghostty-theme", no_args_is_help=False, help="Select Ghostty terminal theme.")(configure_ghostty_theme)
     shell_app.command("g", no_args_is_help=False, help="Select Ghostty terminal theme.", hidden=True)(configure_ghostty_theme)
-    shell_app.command("windows-terminal-theme", no_args_is_help=False, help="🪟 <x> Select Windows Terminal color scheme.")(
-        configure_windows_terminal_theme
-    )
+    shell_app.command("windows-terminal-theme", no_args_is_help=False, help="Select Windows Terminal color scheme.")(configure_windows_terminal_theme)
     shell_app.command("x", no_args_is_help=False, help="Select Windows Terminal color scheme.", hidden=True)(configure_windows_terminal_theme)
-    shell_app.add_typer(
-        cli_config_tmux.get_app(),
-        name="tmux-style",
-        help="🎨 <t> Style tmux through the Oh My Tmux framework.",
-    )
-    shell_app.add_typer(cli_config_tmux.get_app(), name="t", help="🎨 <t> Style tmux through the Oh My Tmux framework.", hidden=True)
-
+    shell_app.add_typer(cli_config_tmux.get_app(), name="tmux-style", help="Style tmux through the Oh My Tmux framework.")
+    shell_app.add_typer(cli_config_tmux.get_app(), name="t", help="Style tmux through the Oh My Tmux framework.", hidden=True)
     return shell_app

@@ -20,11 +20,15 @@ ensureLightweightCommands:
     Because the number of files is too big, please spin up another veresion of you (whether you are codex, claude, opencode, copilot etc)
     but not as a sub agent, instead, the new instances go to new panes/windows in this tmux session and give them pane names matchning their names.
 
+    # Instructions for agents:
     * Pass sufficient instructions to them to be able to get the job done 
     * let them know that there exist other agents working on similar tasks for other files, so they are no surprised by occasional unexpected change of some shared code upstream.
     * Additionally, tell them to use caveman weynan full skill.
 
-    Each instance handle 10 files only, you distribute the load.
+    # Agent Specs
+    * Each instance handle 5 files only, you distribute the load.
+    * Please start the agents interactively, i.e. start the cli, then paste/type the prompt intended for that agent and press enter to let it go at it.
+    * You want to make sure that they are actually working, by seeing some progress, just in case your launch failed, only then, you job is finished, you don't need to monitor them until they finish.
 
 
 createParallelAgents:

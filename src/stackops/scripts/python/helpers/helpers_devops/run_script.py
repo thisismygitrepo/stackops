@@ -18,9 +18,7 @@ Recursively Searched Predefined Directories:
 """
 
 
-import shlex
 import typer
-import platform
 from pathlib import Path
 from typing import Annotated
 
@@ -40,6 +38,7 @@ IGNORED_SCRIPT_MATCH_DIR_NAMES: frozenset[str] = frozenset({
 
 
 def _quote_script_arg_posix(arg: str) -> str:
+    import shlex
     return shlex.quote(arg)
 
 
@@ -48,6 +47,8 @@ def _quote_script_arg_powershell(arg: str) -> str:
 
 
 def _quote_script_args(args: list[str]) -> str:
+    import platform
+    import shlex
     match platform.system():
         case "Windows":
             return " ".join(_quote_script_arg_powershell(arg) for arg in args)
@@ -62,6 +63,7 @@ def _append_forwarded_args(shell_script: str, forwarded_args: list[str]) -> str:
 
 
 def _get_shell_script_invoking_file(script_path: Path, forwarded_args: list[str]) -> str:
+    import platform
     quoted_args = _quote_script_args(args=forwarded_args)
     match platform.system():
         case "Windows":
@@ -76,6 +78,7 @@ def _get_shell_script_invoking_file(script_path: Path, forwarded_args: list[str]
 
 
 def _get_supported_script_suffixes(name: str) -> tuple[str, ...]:
+    import platform
     if "." in name:
         return (Path(name).suffix,)
 

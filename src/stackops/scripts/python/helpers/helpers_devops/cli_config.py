@@ -1,10 +1,12 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from types import ModuleType
-from typing import Annotated, Literal, TypeAlias
+from typing import TYPE_CHECKING, Annotated, Literal, TypeAlias
 
 import typer
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 InitScriptKind: TypeAlias = Literal["init", "ia", "live"]
 AssetDumpKind: TypeAlias = Literal["layout", "data", "dotfiles", "secrets", "config"]
@@ -211,7 +213,7 @@ def _echo_created_paths(paths: Sequence[Path]) -> None:
     typer.echo(msg)
 
 
-def _get_path_reference_asset_path(*, module: ModuleType, path_reference: str) -> Path:
+def _get_path_reference_asset_path(*, module: "ModuleType", path_reference: str) -> Path:
     from stackops.utils.path_reference import get_path_reference_path
 
     return get_path_reference_path(module=module, path_reference=path_reference)

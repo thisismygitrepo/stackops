@@ -1,22 +1,9 @@
 """CLI implementation for sessions run-aoe command."""
 
-
-
 from pathlib import Path
 from typing import Literal
 
 import typer
-
-from stackops.scripts.python.helpers.helpers_sessions.sessions_aoe_impl import (
-    AoeLaunchOptions,
-    run_layouts_via_aoe,
-)
-from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import (
-    find_layout_file,
-    select_layout,
-)
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig, substitute_home
-from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
 
 def run_aoe_cli(
@@ -42,6 +29,13 @@ def run_aoe_cli(
     launch: bool,
 ) -> None:
     try:
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import (
+            find_layout_file,
+            select_layout,
+        )
+        from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig, substitute_home
+        from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+
         if layouts_file is not None:
             layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
         else:
@@ -82,6 +76,7 @@ def run_aoe_cli(
             selected_tab_refs: set[tuple[str, int]] = set()
             if choose_tabs == "":
                 import json
+
                 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
                 options_to_preview_mapping: dict[str, str] = {}
@@ -151,6 +146,11 @@ def run_aoe_cli(
                     f"Layout '{a_layout.get('layoutName', 'Unnamed')}' has "
                     f"{len(a_layout['layoutTabs'])} tabs which exceeds the max of {max_tabs}."
                 )
+
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_aoe_impl import (
+            AoeLaunchOptions,
+            run_layouts_via_aoe,
+        )
 
         options = AoeLaunchOptions(
             aoe_bin=aoe_bin,

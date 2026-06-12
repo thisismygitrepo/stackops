@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import json
 from pathlib import Path
 from typing import Literal
 
@@ -104,6 +103,8 @@ def _print_docs_urls() -> None:
 
 
 def write_cli_graph_snapshot(repo_root: Path) -> Path:
+    import json
+
     from stackops.scripts.python.graph.generate_cli_graph import build_cli_graph
 
     _require_editable_repo_root(repo_root)

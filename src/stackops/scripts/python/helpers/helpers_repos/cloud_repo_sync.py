@@ -2,33 +2,16 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-import shlex
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
-from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError
-from git.remote import Remote
-from git.repo import Repo
-from rich.console import Console
-from rich.panel import Panel
 import typer
 
-from stackops.utils.io import (
-    decrypt_file_asymmetric,
-    decrypt_file_symmetric,
-    encrypt_file_asymmetric,
-    encrypt_file_symmetric,
-)
-from stackops.utils.path_core import delete_path
-import stackops.utils.files.compression as path_compression
-from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
-import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
-from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
-from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (
-    ConflictResolutionOption,
-    build_merge_accept_program,
-    powershell_single_quote,
-    resolve_conflict_action,
-)
+if TYPE_CHECKING:
+    from git.remote import Remote
+    from git.repo import Repo
+    from rich.console import Console
+
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionOption
 
 
 REMOTE_NAME = "originEnc"
@@ -47,31 +30,29 @@ def get_tmp_file() -> Path:
     from stackops.utils.accessories import randstr
 
     name = randstr(8)
-    if platform.system() == "Windows":
-        suffix = "ps1"
-    else:
-        suffix = "sh"
+    suffix = "ps1" if platform.system() == "Windows" else "sh"
     tmp_file = Path.home().joinpath(f"tmp_results/tmp_files/{name}.{suffix}")
     tmp_file.parent.mkdir(parents=True, exist_ok=True)
     return tmp_file
 
 
-def _print_section(console: Console, title: str) -> None:
+def _print_section(console: "Console", title: str) -> None:
     console.print("")
     console.print(f"[bold blue]═════ {title} ═════[/bold blue]")
 
 
 def _bash_quote(value: str) -> str:
+    import shlex
     return shlex.quote(value)
 
 
-def _has_staged_changes(repo: Repo) -> bool:
+def _has_staged_changes(repo: "Repo") -> bool:
     if repo.head.is_valid():
         return len(repo.index.diff("HEAD")) > 0
     return repo.git.diff("--cached", "--name-only").strip() != ""
 
 
-def _commit_local_changes(repo: Repo, message: str, console: Console) -> None:
+def _commit_local_changes(repo: "Repo", message: str, console: "Console") -> None:
     _print_section(console=console, title="COMMITTING LOCAL CHANGES")
     print(repo.git.status())
     repo.git.add(A=True)
@@ -83,36 +64,39 @@ def _commit_local_changes(repo: Repo, message: str, console: Console) -> None:
         print(commit_output)
 
 
-def _find_remote(repo: Repo, remote_name: str) -> Remote | None:
+def _find_remote(repo: "Repo", remote_name: str) -> "Remote | None":
     for remote in repo.remotes:
         if remote.name == remote_name:
             return remote
     return None
 
 
-def _remove_remote_if_present(repo: Repo, remote_name: str) -> None:
+def _remove_remote_if_present(repo: "Repo", remote_name: str) -> None:
+    from git.remote import Remote
     remote = _find_remote(repo=repo, remote_name=remote_name)
     if remote is not None:
         Remote.remove(repo, remote_name)
 
 
-def _get_remote_reference_name(remote: Remote, branch_name: str) -> str:
+def _get_remote_reference_name(remote: "Remote", branch_name: str) -> str:
     for reference in remote.refs:
         if reference.remote_head == branch_name:
             return reference.name
     raise RuntimeError(f"Remote branch '{branch_name}' was not fetched from '{remote.name}'.")
 
 
-def _get_conflict_paths(repo: Repo) -> tuple[str, ...]:
+def _get_conflict_paths(repo: "Repo") -> tuple[str, ...]:
     return tuple(sorted(str(path) for path in repo.index.unmerged_blobs().keys()))
 
 
 def _cleanup_temp_paths(paths: tuple[Path, ...]) -> None:
+    from stackops.utils.path_core import delete_path
     for temp_path in paths:
         delete_path(temp_path, verbose=False)
 
 
 def _get_repo_remote_archive_path(repo_root: Path) -> Path:
+    import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
     base_remote_path = rclone_wrapper.get_remote_path(
         local_path=repo_root,
         root="myhome",
@@ -124,6 +108,10 @@ def _get_repo_remote_archive_path(repo_root: Path) -> Path:
 
 
 def _upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> None:
+    import stackops.utils.files.compression as path_compression
+    import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
+    from stackops.utils.io import encrypt_file_asymmetric, encrypt_file_symmetric
+
     archive_path = path_compression.zip_path(
         repo_root,
         path=None,
@@ -155,6 +143,11 @@ def _upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: st
 
 
 def _download_repo_archive(repo_remote_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> Path:
+    import stackops.utils.files.compression as path_compression
+    import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
+    from stackops.utils.io import decrypt_file_asymmetric, decrypt_file_symmetric
+    from stackops.utils.path_core import delete_path
+
     encrypted_archive_path = Path(f"{repo_remote_root}.zip.gpg")
     rclone_wrapper.from_cloud(
         local_path=encrypted_archive_path,
@@ -185,7 +178,9 @@ def _download_repo_archive(repo_remote_root: Path, cloud: str, remote_path: Path
     )
 
 
-def _merge_remote_copy(repo: Repo, remote_path: Path, console: Console) -> MergeAttemptResult:
+def _merge_remote_copy(repo: "Repo", remote_path: Path, console: "Console") -> MergeAttemptResult:
+    from git.exc import GitCommandError
+
     _print_section(console=console, title="PULLING LATEST FROM REMOTE")
     print(f"-> Trying to removing {REMOTE_NAME} remote from local repo if it exists.")
     _remove_remote_if_present(repo=repo, remote_name=REMOTE_NAME)
@@ -215,14 +210,27 @@ def main(
     repo: Annotated[str, typer.Argument(help="Path to the local repository. Defaults to current working directory.")] = ".",
     cloud: Annotated[str | None, typer.Option(..., "--cloud", "-C", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
-    on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
+    on_conflict: Annotated["ConflictResolutionOption", typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
 ) -> str | None:
-    on_conflict = resolve_conflict_action(on_conflict=on_conflict)
     import platform
+    from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError
+    from git.repo import Repo
+    from rich.console import Console
+    from rich.panel import Panel
 
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (
+        build_merge_accept_program,
+        powershell_single_quote,
+        resolve_conflict_action,
+    )
+    from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
     from stackops.utils.code import get_uv_command_executing_python_script
+    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string
+    from stackops.utils.path_core import delete_path
+    from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
+
+    on_conflict = resolve_conflict_action(on_conflict=on_conflict)
     console = Console()
 
     if cloud is None:
@@ -241,7 +249,7 @@ def main(
         msg = typer.style("Error: ", fg=typer.colors.RED) + f"The specified path '{repo_local_root}' is not a valid git repository."
         typer.echo(msg)
         raise typer.Exit(code=1) from exc
-    repo_local_root = Path(repo_local_obj.working_dir)  # cwd might have been in a sub directory of repo_root, so its better to redefine it.
+    repo_local_root = Path(repo_local_obj.working_dir)
     try:
         local_relative_home = repo_local_root.expanduser().absolute().relative_to(Path.home())
     except ValueError as exc:
@@ -315,19 +323,16 @@ def main(
     conflict_details = f"\n\nConflicting paths:\n{conflict_paths_text}" if conflict_paths_text != "" else ""
     console.print(Panel(f"⚠️  MERGE FAILED\n💾 Keeping local copy of remote at:\n📂 {repo_remote_root}{conflict_details}", title="Merge Failed", border_style="red"))
 
-    # ================================================================================
     option1 = "Delete remote copy and push local:"
     from stackops.utils.meta import lambda_to_python_script
 
     def func2(remote_repo: str, local_repo: str, cloud: str) -> None:
         from stackops.scripts.python.helpers.helpers_repos.sync import delete_remote_repo_copy_and_push_local
-
         delete_remote_repo_copy_and_push_local(remote_repo=remote_repo, local_repo=local_repo, cloud=cloud)
 
     program_1_py = lambda_to_python_script(lambda: func2(remote_repo=str(repo_remote_root), local_repo=str(repo_local_root), cloud=str(cloud_resolved)),
                                                     in_global=True, import_module=False)
     program1, _pyfile1 = get_uv_command_executing_python_script(python_script=program_1_py, uv_with=uv_with, uv_project_dir=uv_project_dir)
-    # ================================================================================
 
     option2 = "Delete local repo and replace it with remote copy:"
     if platform.system() == "Windows":
@@ -350,18 +355,15 @@ sudo chmod +x {_bash_quote(str(dotfiles_linux_scripts))} -R
     shell_file_2 = get_tmp_file()
     shell_file_2.write_text(program_2, encoding="utf-8")
 
-    # ================================================================================
     option3 = "Inspect repos:"
 
     def func(repo_local_root: str, repo_remote_root: str) -> None:
         from stackops.scripts.python.helpers.helpers_repos.sync import inspect_repos
-
         inspect_repos(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)
 
     program_3_py = lambda_to_python_script(lambda: func(repo_local_root=str(repo_local_root), repo_remote_root=str(repo_remote_root)),
                                                     in_global=True, import_module=False)
     program3, _pyfile3 = get_uv_command_executing_python_script(python_script=program_3_py, uv_with=uv_with, uv_project_dir=uv_project_dir)
-    # ================================================================================
 
     option4 = "Remove problematic rclone file from repo and replace with remote:"
     remote_dotfiles_rclone_conf = CONFIG_ROOT.joinpath("remote", "dotfiles", "creds", "rclone", "rclone.conf")
@@ -384,7 +386,6 @@ git commit -am "finished merging"
     """
     shell_file_4 = get_tmp_file()
     shell_file_4.write_text(program_4, encoding="utf-8")
-    # ================================================================================
 
     option5 = "Finish merge and accept remote only for conflicting files:"
     program_5 = build_merge_accept_program(
@@ -407,7 +408,6 @@ git commit -am "finished merging"
     )
     shell_file_6 = get_tmp_file()
     shell_file_6.write_text(program_6, encoding="utf-8")
-    # ================================================================================
 
     console.print(Panel("🔄 RESOLVE MERGE CONFLICT\nChoose an option to resolve the conflict:", title_align="left", border_style="blue"))
 

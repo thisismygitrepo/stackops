@@ -1,12 +1,12 @@
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs as update_docs_module
-from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_installer as update_installer_module
-from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_logic as update_logic_module
-from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_test as update_test_module
-
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_docs as update_docs_module
+    from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_installer as update_installer_module
+    from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_logic as update_logic_module
+    from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import update_test as update_test_module
+
     cli_app = typer.Typer(help="🤖 <w> Developer AI workflows.", no_args_is_help=True, add_help_option=True, add_completion=False)
     cli_app.command(
         name="update-installer",

@@ -1,11 +1,9 @@
 from pathlib import Path
-import subprocess
 from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as agents_create_impl
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -24,7 +22,57 @@ def get_developer_repo_root() -> Path:
     return Path.home().joinpath("code", "stackops")
 
 
+def agents_create_impl(
+    *,
+    agent: AGENTS,
+    model: str | None,
+    agent_load: int,
+    context: str | None,
+    context_path: str | None,
+    separator: str,
+    prompt: str | None,
+    prompt_path: str | None,
+    prompt_name: str | None,
+    job_name: str | None,
+    join_prompt_and_context: bool,
+    output_path: str | None,
+    agents_dir: str | None,
+    save_as_yaml: bool,
+    host: HOST,
+    reasoning: ReasoningEffort | None,
+    provider: PROVIDER | None,
+    interactive: bool,
+    run: bool,
+    stagger_max: float = DEFAULT_STAGGER_MAX,
+) -> None:
+    from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
+
+    impl(
+        agent=agent,
+        model=model,
+        agent_load=agent_load,
+        context=context,
+        context_path=context_path,
+        separator=separator,
+        prompt=prompt,
+        prompt_path=prompt_path,
+        prompt_name=prompt_name,
+        job_name=job_name,
+        join_prompt_and_context=join_prompt_and_context,
+        output_path=output_path,
+        agents_dir=agents_dir,
+        save_as_yaml=save_as_yaml,
+        host=host,
+        reasoning=reasoning,
+        provider=provider,
+        interactive=interactive,
+        run=run,
+        stagger_max=stagger_max,
+    )
+
+
 def _list_git_visible_files(*, repo_root: Path) -> tuple[Path, ...]:
+    import subprocess
     completed_process = subprocess.run(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--full-name"], cwd=repo_root, capture_output=True, text=True, check=False
     )

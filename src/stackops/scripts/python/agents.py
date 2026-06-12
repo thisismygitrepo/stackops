@@ -1,19 +1,17 @@
 """Agents management commands - lazy loading subcommands."""
 
 from pathlib import Path
-import shlex
 from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 
 import typer
 
-from stackops.scripts.python.agents_browser import get_app as get_browser_app
-from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
-from stackops.scripts.python.helpers.helpers_agents.agents_run_context import PROMPTS_SOURCE
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
-from stackops.scripts.python.helpers.helpers_agents.mcp_install import MCP_INSTALL_SCOPE
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
-from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_SCOPE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+
+_MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
+_PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+_SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
@@ -108,7 +106,7 @@ def add_mcp(
         str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
     ] = "",
     scope: Annotated[
-        MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config or skill files into repo-local or user-global agent config.")
+        _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config or skill files into repo-local or user-global agent config.")
     ] = "local",
     source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", "-S", help="Source to resolve or edit MCP catalog files.")] = "all",
     edit: Annotated[
@@ -222,6 +220,8 @@ def run_interactive(
     ] = False,
 ) -> None:
     """Launch an agent with reasonable defaults."""
+    import shlex
+
     resolved_agent = _resolve_interactive_agent(agent=agent)
     command = _apply_overhead(command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), overhead=overhead)
     from stackops.utils.code import exit_then_run_shell_script
@@ -264,7 +264,7 @@ def run_prompt(
         ),
     ] = None,
     source: Annotated[
-        PROMPTS_SOURCE,
+        _PROMPTS_SOURCE,
         typer.Option(..., "--source", "-s", help="Source to look for context YAML files when --context-yaml-path is not provided."),
     ] = "all",
     show_prompts_yaml_format: Annotated[
@@ -337,7 +337,7 @@ def add_skill(
         ),
     ] = None,
     scope: Annotated[
-        SKILL_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install the skill into the repo-local or user-global agent skill directory.")
+        _SKILL_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install the skill into the repo-local or user-global agent skill directory.")
     ] = "local",
     directory: Annotated[
         str | None,
@@ -355,6 +355,9 @@ def add_skill(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.agents_browser import get_app as get_browser_app
+    from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
+
     agents_app = typer.Typer(help="🤖 AI Agents management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     agents_app.add_typer(
         get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="<p> Parallel agent workflow commands"

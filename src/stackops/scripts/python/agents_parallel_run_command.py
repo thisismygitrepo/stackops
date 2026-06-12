@@ -1,12 +1,13 @@
 """Run-parallel command wrapper."""
 
-from typing import Annotated, get_args
+from typing import Annotated, Literal, get_args
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import PARALLEL_RUNS_SOURCE, ParallelCreateValues
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
+
+_PARALLEL_RUNS_SOURCE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 
 
 def run_parallel(
@@ -15,7 +16,7 @@ def run_parallel(
         str | None, typer.Option(..., "--yaml-path", "-y", help="YAML file containing named parallel runs. Auto-created with a template if missing.")
     ] = None,
     source: Annotated[
-        PARALLEL_RUNS_SOURCE,
+        _PARALLEL_RUNS_SOURCE,
         typer.Option(..., "--source", "-S", help="Source to look for parallel YAML files when --yaml-path is not provided."),
     ] = "all",
     show_parallel_yaml_format: Annotated[
@@ -72,6 +73,7 @@ def run_parallel(
     ] = None,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
+    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ParallelCreateValues
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_impl import run_parallel_from_yaml
 
     try:

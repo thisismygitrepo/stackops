@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import NoReturn
@@ -9,7 +8,6 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interacti
     InteractivePickerOption,
     choose_interactive_option,
 )
-from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
 from stackops.secrets.models import Login, SecretRecord, SecretStringMap, SecretsFile, SecretValueMap
 
 __all__ = [
@@ -20,7 +18,6 @@ __all__ = [
     "format_secret_candidate_label",
     "format_secret_selection",
     "load_secret_candidates",
-    "load_secrets_file",
     "resolve_candidate",
 ]
 
@@ -65,6 +62,8 @@ class SecretSelectors:
 
 
 def load_secret_candidates(secrets_path: Path, *, source_name: str | None = None) -> list[SecretCandidate]:
+    from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+
     try:
         secrets_file = load_secrets_file(secrets_path)
     except SecretsSchemaError as exc:
@@ -222,6 +221,8 @@ def _choose_candidate_interactively(candidates: list[SecretCandidate], *, previe
 
 
 def _candidate_preview(candidate: SecretCandidate, *, include_secret_values: bool = False) -> str:
+    import json
+
     lines = [f"# {_candidate_label(candidate)}", "", f"- Path: `{candidate.json_path}`"]
     if candidate.source_name is not None:
         lines.append(f"- Source: `{candidate.source_name}`")

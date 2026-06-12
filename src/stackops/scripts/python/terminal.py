@@ -1,9 +1,16 @@
 """Terminal management commands - lazy loading subcommands."""
 
-from typing import Literal, Annotated, cast
+from typing import Literal, Annotated
 import typer
 
-from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose, SessionConflictActionLoose2Strict
+_SessionConflictActionLoose = Literal[
+    "restart", "r",
+    "rename", "n",
+    "error", "e",
+    "skip", "s",
+    "mergeOverwrite", "m",
+    "mergeSkip", "M",
+]
 
 
 def balance_load(
@@ -36,7 +43,7 @@ def run(
     parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
 
     backend: Annotated[Literal["zellij", "z", "windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal.")] = "error",
+    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal.")] = "error",
     exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
@@ -52,6 +59,7 @@ def run(
 
     The type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.
     """
+    from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose2Strict
     on_conflict = SessionConflictActionLoose2Strict[on_conflict]
     from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
     impl(
@@ -82,7 +90,7 @@ def run_all(
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
     backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
-    on_conflict: Annotated[SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.")] = "error",
+    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.")] = "error",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
     """Run every tab from every layout in a layout configuration file at a controlled pace.
@@ -96,6 +104,7 @@ def run_all(
         typer.echo("Error: --poll-seconds must be greater than 0.", err=True, color=True)
         raise typer.Exit(code=1)
 
+    from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose2Strict
     on_conflict = SessionConflictActionLoose2Strict[on_conflict]
     if on_conflict in {"mergeOverwrite", "mergeSkip"}:
         typer.echo(
@@ -242,128 +251,6 @@ def create_from_function(
     impl(num_process=num_process, path=path, function=function)
 
 
-def summarize(
-    layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
-) -> None:
-    """Summarize a layout file with counts for layouts and tabs."""
-    import json
-    from pathlib import Path
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.table import Table
-    from stackops.utils.files.read import remove_c_style_comments
-
-    console = Console()
-    layout_path_obj = Path(layout_path).expanduser().absolute()
-
-    if not layout_path_obj.exists():
-        console.print(
-            Panel(
-                f"❌ Layout file not found:\n{layout_path_obj}",
-                title="Error",
-                border_style="red",
-            )
-        )
-        raise typer.Exit(code=1)
-    if not layout_path_obj.is_file():
-        console.print(
-            Panel(
-                f"❌ Layout path is not a file:\n{layout_path_obj}",
-                title="Error",
-                border_style="red",
-            )
-        )
-        raise typer.Exit(code=1)
-
-    try:
-        json_str = layout_path_obj.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        console.print(
-            Panel(
-                f"❌ Failed to read layout file:\n{layout_path_obj}\n\n{error}",
-                title="Error",
-                border_style="red",
-            )
-        )
-        raise typer.Exit(code=1) from error
-    try:
-        layout_file_obj: object = json.loads(json_str)
-    except json.JSONDecodeError:
-        try:
-            layout_file_obj = json.loads(remove_c_style_comments(json_str))
-        except json.JSONDecodeError as error:
-            console.print(
-                Panel(
-                    f"❌ Failed to parse JSON file:\n{layout_path_obj}\n\n{error}",
-                    title="Error",
-                    border_style="red",
-                )
-            )
-            raise typer.Exit(code=1) from error
-
-    if not isinstance(layout_file_obj, dict):
-        console.print(Panel("❌ Layout file root must be a JSON object.", title="Error", border_style="red"))
-        raise typer.Exit(code=1)
-
-    layout_file: dict[object, object] = layout_file_obj
-    layouts_raw = layout_file.get("layouts")
-    if not isinstance(layouts_raw, list):
-        console.print(Panel("❌ Missing or invalid 'layouts' array.", title="Error", border_style="red"))
-        raise typer.Exit(code=1)
-
-    rows: list[tuple[int, str, int]] = []
-    total_tabs = 0
-    for index, layout_raw in enumerate(layouts_raw, start=1):
-        if not isinstance(layout_raw, dict):
-            console.print(Panel(f"❌ Layout #{index} must be a JSON object.", title="Error", border_style="red"))
-            raise typer.Exit(code=1)
-
-        layout = cast(dict[object, object], layout_raw)
-        layout_name_raw = layout.get("layoutName")
-        if layout_name_raw is None:
-            layout_name = f"layout#{index}"
-        elif isinstance(layout_name_raw, str):
-            layout_name = layout_name_raw
-        else:
-            console.print(Panel(f"❌ Layout #{index} has invalid 'layoutName'.", title="Error", border_style="red"))
-            raise typer.Exit(code=1)
-
-        layout_tabs = layout.get("layoutTabs")
-        if not isinstance(layout_tabs, list):
-            console.print(Panel(f"❌ Layout '{layout_name}' is missing a valid 'layoutTabs' array.", title="Error", border_style="red"))
-            raise typer.Exit(code=1)
-
-        tab_count = len(layout_tabs)
-        rows.append((index, layout_name, tab_count))
-        total_tabs += tab_count
-
-    total_layouts = len(rows)
-    avg_tabs = (total_tabs / total_layouts) if total_layouts > 0 else 0.0
-    version = str(layout_file.get("version", "unknown"))
-
-    summary_lines = [
-        f"[bold]File:[/bold] {layout_path_obj}",
-        f"[bold]Version:[/bold] {version}",
-        f"[bold]Layouts:[/bold] {total_layouts}",
-        f"[bold]Tabs:[/bold] {total_tabs}",
-        f"[bold]Avg tabs/layout:[/bold] {avg_tabs:.2f}",
-    ]
-    if rows:
-        max_row = max(rows, key=lambda row: row[2])
-        min_row = min(rows, key=lambda row: row[2])
-        summary_lines.append(f"[bold]Max tabs layout:[/bold] {max_row[1]} ({max_row[2]})")
-        summary_lines.append(f"[bold]Min tabs layout:[/bold] {min_row[1]} ({min_row[2]})")
-
-    console.print(Panel("\n".join(summary_lines), title="[bold blue]Layout Summary[/bold blue]", border_style="blue"))
-
-    table = Table(title=f"[bold cyan]Layouts ({total_layouts})[/bold cyan]")
-    table.add_column("#", justify="right")
-    table.add_column("Layout Name", style="white")
-    table.add_column("Tabs", justify="right", style="green")
-    for index, layout_name, tab_count in rows:
-        table.add_row(str(index), layout_name, str(tab_count))
-    console.print(table)
-
 
 def trace(
     session_name: Annotated[str | None, typer.Argument(help="Name of the tmux session to trace. Required unless --interactive is set.")] = None,
@@ -463,6 +350,8 @@ def run_aoe(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.terminal_summarize import summarize
+
     layouts_app = typer.Typer(help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
 
     layouts_app.command("run", no_args_is_help=True, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)

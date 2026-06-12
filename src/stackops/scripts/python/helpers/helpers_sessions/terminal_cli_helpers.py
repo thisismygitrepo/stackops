@@ -1,7 +1,5 @@
 """Shared helpers for terminal CLI commands."""
 
-import platform
-import re
 from typing import Literal
 
 import typer
@@ -25,6 +23,7 @@ def print_kill_summary(
     script: str,
     killed_targets: list[KilledTarget],
 ) -> None:
+    import re
     from rich import box
     from rich.console import Console
     from rich.table import Table
@@ -63,6 +62,7 @@ def print_kill_summary(
 def resolve_session_backend(
     backend: Literal["zellij", "z", "tmux", "t", "herdr", "h", "auto", "a"],
 ) -> Literal["zellij", "tmux", "herdr"]:
+    import platform
     system = platform.system().lower()
     match backend:
         case "zellij" | "z":

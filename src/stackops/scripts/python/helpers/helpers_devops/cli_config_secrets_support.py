@@ -1,5 +1,3 @@
-import re
-import shlex
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,14 +10,10 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidate
     SecretCandidate,
     load_secret_candidates,
 )
-from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
 from stackops.secrets.models import Login, SecretsFile
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
 SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME
-SECRETS_FILE_VERSION = secret_actions.SECRETS_FILE_VERSION
-ENV_VAR_NAME_RE = secret_actions.ENV_VAR_NAME_RE
-LOGIN_ENTRY_PATH_RE = re.compile(r"^(entries\[\d+\])(?:\.|$)")
 
 SecretsSource: TypeAlias = Literal["local", "l", "global", "g", "both", "b"]
 WritableSecretsSource: TypeAlias = Literal["local", "l", "global", "g"]
@@ -159,6 +153,8 @@ def _load_secret_stats_from_sources(*, secret_sources: list[SecretsFileSource], 
 
 
 def _load_secret_stats(*, secret_source: SecretsFileSource, show_paths: bool) -> SecretsFileStats:
+    from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+
     try:
         secrets_file = load_secrets_file(secret_source.path)
     except SecretsSchemaError as exc:
@@ -221,7 +217,7 @@ def _build_secret_stats(*, secrets_file: SecretsFile, secret_source: SecretsFile
             env_vars += len(key_values)
             max_keys_per_secret = max(max_keys_per_secret, len(key_values))
             env_key_counts.update(key_values.keys())
-            invalid_env_keys += sum(1 for key in key_values if ENV_VAR_NAME_RE.fullmatch(key) is None)
+            invalid_env_keys += sum(1 for key in key_values if not secret_actions.is_valid_env_name(key))
 
     duplicate_env_key_occurrences = sum(count - 1 for count in env_key_counts.values() if count > 1)
     return SecretsFileStats(
@@ -420,11 +416,15 @@ def _echo_jq_login_entry_hint(*, candidate: SecretCandidate, secrets_path: Path)
 
 
 def _jq_login_entry_command(*, candidate: SecretCandidate, secrets_path: Path) -> str:
+    import shlex
+
     return f"jq {shlex.quote(_jq_login_entry_filter(candidate))} {shlex.quote(str(secrets_path))}"
 
 
 def _jq_login_entry_filter(candidate: SecretCandidate) -> str:
-    match = LOGIN_ENTRY_PATH_RE.match(candidate.json_path)
+    import re
+
+    match = re.match(r"^(entries\[\d+\])(?:\.|$)", candidate.json_path)
     if match is None:
         return ".entries[]"
     return f".{match.group(1)}"

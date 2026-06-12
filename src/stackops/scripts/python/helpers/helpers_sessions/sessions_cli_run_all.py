@@ -1,19 +1,12 @@
 """CLI implementation for sessions run-all command."""
 
+from typing import TYPE_CHECKING
+
 import typer
 
-from stackops.cluster.sessions_managers.session_conflict import (
-    SessionConflictAction,
-)
-from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
-    DynamicSessionBackendOption,
-    substitute_home_in_layouts,
-)
-from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
-    load_all_layouts_from_source,
-    resolve_layout_source,
-)
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig
+if TYPE_CHECKING:
+    from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import DynamicSessionBackendOption
 
 
 def run_all_cli(
@@ -23,15 +16,26 @@ def run_all_cli(
     max_parallel_tabs: int,
     poll_seconds: float,
     kill_finished_tabs: bool,
-    backend: DynamicSessionBackendOption,
-    on_conflict: SessionConflictAction,
+    backend: "DynamicSessionBackendOption",
+    on_conflict: "SessionConflictAction",
     subsitute_home: bool,
 ) -> None:
     try:
         if on_conflict in {"mergeOverwrite", "mergeSkip"}:
             raise ValueError(
-                "--on-conflict mergeOverwrite and mergeSkip are not supported for run-all because the dynamic scheduler requires exclusive control of the session."
+                "--on-conflict mergeOverwrite and mergeSkip are not supported for run-all "
+                "because the dynamic scheduler requires exclusive control of the session."
             )
+
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
+            substitute_home_in_layouts,
+        )
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
+            load_all_layouts_from_source,
+            resolve_layout_source,
+        )
+        from stackops.utils.schemas.layouts.layout_types import LayoutConfig
+
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
@@ -51,6 +55,7 @@ def run_all_cli(
             "layoutName": "all-layouts-dynamic",
             "layoutTabs": merged_tabs,
         }
+
         from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic import (
             run_dynamic as run_dynamic_impl,
         )

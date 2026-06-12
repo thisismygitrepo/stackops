@@ -1,10 +1,5 @@
-import glob as glob_module
-from functools import cache
 from pathlib import Path
-import re
-import sys
 from typing import Literal, TypeAlias
-from urllib.parse import urlsplit
 
 import typer
 
@@ -79,6 +74,7 @@ HARLEQUIN_URL_ADAPTERS: dict[str, str] = {
 
 
 def _find_files(pattern: str, root: Path, recursive: bool) -> list[Path]:
+    import glob as glob_module
     glob_base = str(root / "**" / pattern) if recursive else str(root / pattern)
     return sorted(Path(p).resolve() for p in glob_module.glob(glob_base, recursive=recursive))
 
@@ -94,6 +90,7 @@ def _rainfrog_sqlite_read_only_url(path: Path) -> str:
 
 
 def _looks_like_url(value: str) -> bool:
+    from urllib.parse import urlsplit
     parsed = urlsplit(value)
     return bool(parsed.scheme) and "://" in value
 
@@ -103,39 +100,45 @@ def _format_command(command: list[str]) -> str:
 
     if os.name == "nt":
         import subprocess
-
         return subprocess.list2cmdline(command)
     import shlex
-
     return shlex.join(command)
 
 
 def _print_built_command(command: list[str]) -> None:
+    import sys
     print(f"Built command: {_format_command(command)}", file=sys.stderr, flush=True)
 
 
 def _strip_ansi(value: str) -> str:
+    import re
     return re.sub(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", value)
 
 
-@cache
 def _harlequin_installed_adapters() -> frozenset[str] | None:
+    import re
     import shutil
     import subprocess
+    from functools import cache
 
-    if shutil.which("harlequin") is None:
-        return None
-    result = subprocess.run(["harlequin", "--help"], capture_output=True, check=False, text=True)
-    if result.returncode != 0:
-        return None
-    normalized_stdout = _strip_ansi(result.stdout)
-    match = re.search(r"--adapter.*?\n[^\n]*\(([^)]+)\)", normalized_stdout, re.DOTALL)
-    if match is None:
-        return None
-    return frozenset(choice.strip() for choice in match.group(1).split("|") if choice.strip() != "")
+    @cache
+    def _cached() -> frozenset[str] | None:
+        if shutil.which("harlequin") is None:
+            return None
+        result = subprocess.run(["harlequin", "--help"], capture_output=True, check=False, text=True)
+        if result.returncode != 0:
+            return None
+        normalized_stdout = _strip_ansi(result.stdout)
+        match = re.search(r"--adapter.*?\n[^\n]*\(([^)]+)\)", normalized_stdout, re.DOTALL)
+        if match is None:
+            return None
+        return frozenset(choice.strip() for choice in match.group(1).split("|") if choice.strip() != "")
+
+    return _cached()
 
 
 def _harlequin_url_adapter(url: str) -> str | None:
+    from urllib.parse import urlsplit
     return HARLEQUIN_URL_ADAPTERS.get(urlsplit(url).scheme.lower())
 
 

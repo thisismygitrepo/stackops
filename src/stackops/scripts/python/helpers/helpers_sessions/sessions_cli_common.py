@@ -1,38 +1,28 @@
 """Shared helpers for sessions run-style CLI commands."""
 
 from pathlib import Path
-import platform
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import (
-    find_layout_file,
-    select_layout,
-)
-from stackops.utils.schemas.layouts.layout_types import (
-    LayoutConfig,
-    TabConfig,
-    substitute_home,
-)
-from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+if TYPE_CHECKING:
+    from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
 type SessionBackendOption = Literal[
-    "zellij",
-    "z",
-    "windows-terminal",
-    "wt",
-    "tmux",
-    "t",
-    "auto",
-    "a",
+    "zellij", "z",
+    "windows-terminal", "wt",
+    "tmux", "t",
+    "auto", "a",
 ]
 type DynamicSessionBackendOption = Literal["zellij", "z", "tmux", "t", "auto", "a"]
 type ResolvedSessionBackend = Literal["zellij", "windows-terminal", "tmux"]
 
 
 def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
+    from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+
     if layouts_file is not None:
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import find_layout_file
         layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
     else:
         layouts_file_resolved = DOTFILES_LAYOUTS_JSON_PATH
@@ -46,7 +36,9 @@ def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
 def load_selected_layouts(
     layouts_file_resolved: Path,
     choose_layouts: str | None,
-) -> list[LayoutConfig]:
+) -> "list[LayoutConfig]":
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import select_layout
+
     if choose_layouts is None:
         layout_names: list[str] = []
         choose_layouts_interactively = False
@@ -54,11 +46,7 @@ def load_selected_layouts(
         layout_names = []
         choose_layouts_interactively = True
     else:
-        layout_names = [
-            name.strip()
-            for name in choose_layouts.split(",")
-            if name.strip()
-        ]
+        layout_names = [name.strip() for name in choose_layouts.split(",") if name.strip()]
         choose_layouts_interactively = False
     return select_layout(
         layouts_json_file=str(layouts_file_resolved),
@@ -67,7 +55,9 @@ def load_selected_layouts(
     )
 
 
-def load_all_layouts(layouts_file_resolved: Path) -> list[LayoutConfig]:
+def load_all_layouts(layouts_file_resolved: Path) -> "list[LayoutConfig]":
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import select_layout
+
     return select_layout(
         layouts_json_file=str(layouts_file_resolved),
         selected_layouts_names=[],
@@ -77,9 +67,9 @@ def load_all_layouts(layouts_file_resolved: Path) -> list[LayoutConfig]:
 
 def choose_tabs_from_layouts(
     layouts_file_resolved: Path,
-    layouts_selected: list[LayoutConfig],
+    layouts_selected: "list[LayoutConfig]",
     choose_tabs: str | None,
-) -> list[LayoutConfig]:
+) -> "list[LayoutConfig]":
     if choose_tabs is None:
         return layouts_selected
     all_layouts = load_all_layouts(layouts_file_resolved)
@@ -93,9 +83,7 @@ def choose_tabs_from_layouts(
     if choose_tabs == "":
         import json
 
-        from stackops.utils.options_utils.tv_options import (
-            choose_from_dict_with_preview,
-        )
+        from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
         options_to_preview_mapping: dict[str, str] = {}
         key_to_ref: dict[str, tuple[str, int]] = {}
@@ -117,11 +105,7 @@ def choose_tabs_from_layouts(
         )
         selected_tab_refs = {key_to_ref[key] for key in chosen_keys}
     else:
-        tab_tokens = [
-            token.strip()
-            for token in choose_tabs.split(",")
-            if token.strip()
-        ]
+        tab_tokens = [token.strip() for token in choose_tabs.split(",") if token.strip()]
         for token in tab_tokens:
             if "::" in token:
                 layout_name_token, tab_name_token = token.split("::", 1)
@@ -157,8 +141,10 @@ def choose_tabs_from_layouts(
 
 
 def substitute_home_in_layouts(
-    layouts_selected: list[LayoutConfig],
-) -> list[LayoutConfig]:
+    layouts_selected: "list[LayoutConfig]",
+) -> "list[LayoutConfig]":
+    from stackops.utils.schemas.layouts.layout_types import substitute_home
+
     layouts_modified: list[LayoutConfig] = []
     for a_layout in layouts_selected:
         layout_modified: LayoutConfig = {
@@ -172,6 +158,8 @@ def substitute_home_in_layouts(
 def resolve_standard_backend(
     backend: SessionBackendOption,
 ) -> ResolvedSessionBackend:
+    import platform
+
     match backend:
         case "windows-terminal" | "wt":
             if platform.system().lower() != "windows":

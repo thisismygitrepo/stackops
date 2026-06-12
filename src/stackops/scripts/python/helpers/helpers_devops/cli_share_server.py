@@ -1,12 +1,9 @@
-import shlex
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_share_file import share_file_receive, share_file_send
-from stackops.utils.accessories import display_with_flashy_style
-from stackops.secrets.readers import read_quick_password
 
 
 def web_file_explorer(
@@ -20,6 +17,9 @@ def web_file_explorer(
     backend: Annotated[str, typer.Option("--backend", "-b", help="Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing")] = "miniserve",
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
 ) -> None:
+    import shlex
+    from stackops.utils.accessories import display_with_flashy_style
+    from stackops.secrets.readers import read_quick_password
     from stackops.utils.installer_utils.installer_cli import install_if_missing
 
     if backend not in ["filebrowser", "miniserve", "qrcp", "easy-sharing"]:
