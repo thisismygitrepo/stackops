@@ -18,6 +18,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     AttachSessionChoice,
     KILL_ALL_AND_NEW_LABEL,
     NEW_SESSION_LABEL,
+    collect_selected_option_scripts,
     interactive_choose_with_preview,
     natural_sort_key,
     quote,
@@ -25,6 +26,23 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     strip_ansi_codes,
 )
 from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+
+
+def _strip_active_marker(label: str) -> str:
+    if label.endswith(" *"):
+        return label[:-2]
+    return label
+
+
+def _parent_tmux_window_label(*, selection_label: str, labels_by_normalized_label: dict[str, str]) -> str | None:
+    normalized_label = _strip_active_marker(selection_label)
+    prefix, separator, _process_label = normalized_label.rpartition(" ")
+    if separator == "":
+        return None
+    window_label, pane_separator, pane_index = prefix.rpartition(".")
+    if pane_separator == "" or not pane_index.isdecimal():
+        return None
+    return labels_by_normalized_label.get(window_label)
 
 
 def _find_meaningful_pane_process_label(pane_pid: str) -> str | None:
@@ -196,6 +214,7 @@ def choose_kill_target(
 
     options_to_script: dict[str, str] = {}
     options_to_preview_mapping: dict[str, str] = {}
+    option_parent_labels: dict[str, tuple[str, ...]] = {}
 
     if window:
         for session_name in sessions:
@@ -205,6 +224,7 @@ def choose_kill_target(
                 quote_fn=quote,
             )
             options_to_preview_mapping[session_label] = _build_preview(session_name)
+            option_parent_labels[session_label] = ()
             window_scripts, window_previews = build_kill_target_options(
                 sessions=[session_name],
                 run_command_fn=run_command,
@@ -213,6 +233,19 @@ def choose_kill_target(
             )
             options_to_script.update(window_scripts)
             options_to_preview_mapping.update(window_previews)
+            labels_by_normalized_label = {
+                _strip_active_marker(target_label): target_label
+                for target_label in window_scripts
+            }
+            for target_label in window_scripts:
+                parent_labels = [session_label]
+                window_parent_label = _parent_tmux_window_label(
+                    selection_label=target_label,
+                    labels_by_normalized_label=labels_by_normalized_label,
+                )
+                if window_parent_label is not None:
+                    parent_labels.append(window_parent_label)
+                option_parent_labels[target_label] = tuple(parent_labels)
         msg = "Choose a tmux session, window, or pane to kill:"
     else:
         for session_name in sessions:
@@ -221,6 +254,7 @@ def choose_kill_target(
                 quote_fn=quote,
             )
             options_to_preview_mapping[session_name] = _build_preview(session_name)
+            option_parent_labels[session_name] = ()
         msg = "Choose a tmux session to kill:"
 
     selections = interactive_choose_with_preview(
@@ -230,14 +264,11 @@ def choose_kill_target(
     )
     if len(selections) == 0:
         return ("error", "No tmux target selected.", [])
-    scripts: list[str] = []
-    seen: set[str] = set()
-    for selection in selections:
-        if selection in seen:
-            continue
-        seen.add(selection)
-        script = options_to_script.get(selection)
-        if script is None:
-            return ("error", f"Unknown tmux target selected: {selection}", [])
-        scripts.append(script)
+    scripts, unknown_selection = collect_selected_option_scripts(
+        selections=selections,
+        options_to_script=options_to_script,
+        option_parent_labels=option_parent_labels,
+    )
+    if unknown_selection is not None:
+        return ("error", f"Unknown tmux target selected: {unknown_selection}", [])
     return ("run_script", "\n".join(scripts), [])

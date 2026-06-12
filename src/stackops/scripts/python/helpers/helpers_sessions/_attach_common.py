@@ -20,6 +20,25 @@ AttachSessionAction: TypeAlias = Literal["error", "handoff_script"]
 AttachSessionChoice: TypeAlias = tuple[AttachSessionAction, str]
 
 
+def collect_selected_option_scripts(
+    selections: list[str],
+    options_to_script: dict[str, str],
+    option_parent_labels: dict[str, tuple[str, ...]],
+) -> tuple[list[str], str | None]:
+    selected_labels = tuple(dict.fromkeys(selections))
+    selected_label_set = set(selected_labels)
+    scripts: list[str] = []
+    for selection in selected_labels:
+        script = options_to_script.get(selection)
+        if script is None:
+            return [], selection
+        parent_labels = option_parent_labels.get(selection, ())
+        if any(parent_label in selected_label_set for parent_label in parent_labels):
+            continue
+        scripts.append(script)
+    return scripts, None
+
+
 def strip_ansi_codes(text: str) -> str:
     return _ANSI_ESCAPE_RE.sub("", text)
 

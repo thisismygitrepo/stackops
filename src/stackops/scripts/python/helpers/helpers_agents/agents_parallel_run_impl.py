@@ -52,34 +52,40 @@ def run_parallel_from_yaml(
         return
 
     yaml_entries = _read_existing_parallel_yaml_entries(yaml_locations=yaml_locations)
-    selected_name, base_values = select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name=config_name)
-    resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
-    require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
+    selected_entries = select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name=config_name)
+    _reject_multi_run_collision_overrides(selected_entries=selected_entries, overrides=overrides)
+    resolved_entries: list[tuple[str, ResolvedParallelCreateValues]] = []
+    for selected_name, base_values in selected_entries:
+        resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
+        require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
+        resolved_entries.append((selected_name, resolved))
+    _reject_duplicate_multi_run_outputs(resolved_entries=tuple(resolved_entries))
 
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
 
-    agents_create(
-        agent=resolved.agent,
-        model=resolved.model,
-        reasoning=resolved.reasoning_effort,
-        provider=resolved.provider,
-        host=resolved.host,
-        context=resolved.context,
-        context_path=resolved.context_path,
-        separator=resolved.separator,
-        agent_load=resolved.agent_load,
-        stagger_max=resolved.stagger_max,
-        prompt=resolved.prompt,
-        prompt_path=resolved.prompt_path,
-        prompt_name=resolved.prompt_name,
-        job_name=resolved.job_name,
-        join_prompt_and_context=resolved.join_prompt_and_context,
-        run=resolved.run,
-        output_path=resolved.output_path,
-        agents_dir=resolved.agents_dir,
-        save_as_yaml=False,
-        interactive=resolved.interactive,
-    )
+    for _selected_name, resolved in resolved_entries:
+        agents_create(
+            agent=resolved.agent,
+            model=resolved.model,
+            reasoning=resolved.reasoning_effort,
+            provider=resolved.provider,
+            host=resolved.host,
+            context=resolved.context,
+            context_path=resolved.context_path,
+            separator=resolved.separator,
+            agent_load=resolved.agent_load,
+            stagger_max=resolved.stagger_max,
+            prompt=resolved.prompt,
+            prompt_path=resolved.prompt_path,
+            prompt_name=resolved.prompt_name,
+            job_name=resolved.job_name,
+            join_prompt_and_context=resolved.join_prompt_and_context,
+            run=resolved.run,
+            output_path=resolved.output_path,
+            agents_dir=resolved.agents_dir,
+            save_as_yaml=False,
+            interactive=resolved.interactive,
+        )
 
 
 def require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedParallelCreateValues) -> None:
@@ -89,6 +95,48 @@ def require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedP
         f"Parallel run '{selected_name}' does not define context or context_path. "
         "Add context_path to the YAML entry, or pass --context-path PATH when running it."
     )
+
+
+def _reject_multi_run_collision_overrides(
+    *, selected_entries: tuple[tuple[str, ParallelCreateValues], ...], overrides: ParallelCreateValues
+) -> None:
+    if len(selected_entries) < 2:
+        return
+    colliding_options: list[str] = []
+    if overrides.job_name is not None:
+        colliding_options.append("--job-name")
+    if overrides.output_path is not None:
+        colliding_options.append("--output-path")
+    if overrides.agents_dir is not None:
+        colliding_options.append("--agents-dir")
+    if len(colliding_options) == 0:
+        return
+    joined_options = ", ".join(colliding_options)
+    raise ValueError(f"{joined_options} cannot be used when multiple parallel runs are selected.")
+
+
+def _reject_duplicate_multi_run_outputs(*, resolved_entries: tuple[tuple[str, ResolvedParallelCreateValues], ...]) -> None:
+    if len(resolved_entries) < 2:
+        return
+    workspace_owner: dict[str, str] = {}
+    layout_owner: dict[str, str] = {}
+    for selected_name, resolved in resolved_entries:
+        workspace_key = resolved.agents_dir if resolved.agents_dir is not None else f"job:{resolved.job_name}"
+        layout_key = resolved.output_path if resolved.output_path is not None else f"workspace:{workspace_key}/layout.json"
+        existing_workspace_owner = workspace_owner.get(workspace_key)
+        if existing_workspace_owner is not None:
+            raise ValueError(
+                f"Parallel runs '{existing_workspace_owner}' and '{selected_name}' resolve to the same agents workspace. "
+                "Give each selected YAML entry a distinct job_name or agents_dir."
+            )
+        existing_layout_owner = layout_owner.get(layout_key)
+        if existing_layout_owner is not None:
+            raise ValueError(
+                f"Parallel runs '{existing_layout_owner}' and '{selected_name}' resolve to the same layout output. "
+                "Give each selected YAML entry a distinct output_path."
+            )
+        workspace_owner[workspace_key] = selected_name
+        layout_owner[layout_key] = selected_name
 
 
 def edit_parallel_yaml(*, yaml_path: Path) -> None:

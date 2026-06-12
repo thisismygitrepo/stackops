@@ -23,6 +23,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     KILL_ALL_AND_NEW_LABEL,
     NEW_SESSION_LABEL,
     STANDARD,
+    collect_selected_option_scripts,
     interactive_choose_with_preview,
     natural_sort_key,
     quote,
@@ -30,6 +31,20 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     strip_ansi_codes,
 )
 from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+
+
+def _strip_active_marker(label: str) -> str:
+    if label.endswith(" *"):
+        return label[:-2]
+    return label
+
+
+def _parent_zellij_tab_label(*, selection_label: str, labels_by_normalized_label: dict[str, str]) -> str | None:
+    normalized_label = _strip_active_marker(selection_label)
+    tab_label, separator, _pane_label = normalized_label.partition(" / ")
+    if separator == "":
+        return None
+    return labels_by_normalized_label.get(tab_label)
 
 
 def _session_sort_key(raw_line: str) -> tuple[bool, list[int | str]]:
@@ -208,6 +223,7 @@ def choose_kill_target(
     if window:
         options_to_script: dict[str, str] = {}
         options_to_preview_mapping: dict[str, str] = {}
+        option_parent_labels: dict[str, tuple[str, ...]] = {}
         for raw_session in sessions:
             session_name = _session_name(raw_session)
             session_label = f"[{session_name}] SESSION"
@@ -220,6 +236,7 @@ def choose_kill_target(
                 quote_fn=quote,
             )
             options_to_preview_mapping[session_label] = _build_preview(raw_session)
+            option_parent_labels[session_label] = ()
             if _session_is_exited(raw_session):
                 continue
             kill_scripts, kill_previews = build_kill_target_options(
@@ -230,6 +247,19 @@ def choose_kill_target(
             )
             options_to_script.update(kill_scripts)
             options_to_preview_mapping.update(kill_previews)
+            labels_by_normalized_label = {
+                _strip_active_marker(target_label): target_label
+                for target_label in kill_scripts
+            }
+            for target_label in kill_scripts:
+                parent_labels = [session_label]
+                tab_parent_label = _parent_zellij_tab_label(
+                    selection_label=target_label,
+                    labels_by_normalized_label=labels_by_normalized_label,
+                )
+                if tab_parent_label is not None:
+                    parent_labels.append(tab_parent_label)
+                option_parent_labels[target_label] = tuple(parent_labels)
         selections = interactive_choose_with_preview(
             msg="Choose a Zellij session, tab, or pane to kill:",
             options_to_preview_mapping=options_to_preview_mapping,
@@ -237,16 +267,13 @@ def choose_kill_target(
         )
         if len(selections) == 0:
             return ("error", "No Zellij target selected.", [])
-        scripts: list[str] = []
-        seen: set[str] = set()
-        for selection in selections:
-            if selection in seen:
-                continue
-            seen.add(selection)
-            script = options_to_script.get(selection)
-            if script is None:
-                return ("error", f"Unknown Zellij target selected: {selection}", [])
-            scripts.append(script)
+        scripts, unknown_selection = collect_selected_option_scripts(
+            selections=selections,
+            options_to_script=options_to_script,
+            option_parent_labels=option_parent_labels,
+        )
+        if unknown_selection is not None:
+            return ("error", f"Unknown Zellij target selected: {unknown_selection}", [])
         return ("run_script", "\n".join(scripts), [])
 
     display_to_raw_session = {strip_ansi_codes(session): session for session in sessions}
@@ -269,13 +296,12 @@ def choose_kill_target(
     if len(session_labels) == 0:
         return ("error", "No Zellij session selected.", [])
     session_scripts: list[str] = []
-    seen_session_labels: set[str] = set()
-    for session_label in session_labels:
-        if session_label in seen_session_labels:
-            continue
-        seen_session_labels.add(session_label)
-        script = options_to_script.get(session_label)
-        if script is None:
-            return ("error", f"Unknown Zellij session selected: {session_label}", [])
-        session_scripts.append(script)
+    option_parent_labels = {session_label: () for session_label in options_to_script}
+    session_scripts, unknown_selection = collect_selected_option_scripts(
+        selections=session_labels,
+        options_to_script=options_to_script,
+        option_parent_labels=option_parent_labels,
+    )
+    if unknown_selection is not None:
+        return ("error", f"Unknown Zellij session selected: {unknown_selection}", [])
     return ("run_script", "\n".join(session_scripts), [])

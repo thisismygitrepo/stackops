@@ -8,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     AttachSessionChoice,
     KILL_ALL_AND_NEW_LABEL,
     NEW_SESSION_LABEL,
+    collect_selected_option_scripts,
     interactive_choose_with_preview,
     natural_sort_key,
     quote,
@@ -17,6 +18,20 @@ from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTar
 
 
 JsonObject = dict[str, Any]
+
+
+def _strip_focused_marker(label: str) -> str:
+    if label.endswith(" *"):
+        return label[:-2]
+    return label
+
+
+def _parent_herdr_tab_label(*, selection_label: str, labels_by_normalized_label: dict[str, str]) -> str | None:
+    normalized_label = _strip_focused_marker(selection_label)
+    tab_label, separator, _pane_label = normalized_label.partition(" / ")
+    if separator == "":
+        return None
+    return labels_by_normalized_label.get(tab_label)
 
 
 def _run_json_command(args: list[str]) -> JsonObject | None:
@@ -205,6 +220,27 @@ def _session_preview(session: JsonObject) -> str:
         panes = _pane_entries(name)
         lines.extend(["", f"tabs: {len(tabs)}", f"panes: {len(panes)}"])
     return "\n".join(lines)
+
+
+def _session_label_for_kill_option(session: JsonObject) -> str | None:
+    session_name = _session_name(session)
+    if session_name is None:
+        return None
+    label = f"[{session_name}] SESSION"
+    if bool(session.get("default")):
+        label += " (default)"
+    if bool(session.get("running")):
+        label += " (running)"
+    return label
+
+
+def _session_name_from_target_label(label: str) -> str | None:
+    if not label.startswith("["):
+        return None
+    closing_bracket_index = label.find("]")
+    if closing_bracket_index <= 1:
+        return None
+    return label[1:closing_bracket_index]
 
 
 def _attach_tab_script(session_name: str, tab_id: str) -> str:
@@ -400,19 +436,19 @@ def choose_kill_target(
 
     options_to_script: dict[str, str] = {}
     options_to_preview_mapping: dict[str, str] = {}
+    option_parent_labels: dict[str, tuple[str, ...]] = {}
 
     if window:
         for session in sessions:
             session_name = _session_name(session)
             if session_name is None:
                 continue
-            session_label = f"[{session_name}] SESSION"
-            if bool(session.get("default")):
-                session_label += " (default)"
-            if bool(session.get("running")):
-                session_label += " (running)"
+            session_label = _session_label_for_kill_option(session)
+            if session_label is None:
+                continue
             options_to_script[session_label] = stop_session_script(session_name)
             options_to_preview_mapping[session_label] = _session_preview(session)
+            option_parent_labels[session_label] = ()
         active_sessions = _running_session_names(sessions)
         target_scripts, target_previews = _build_window_target_options(
             active_sessions,
@@ -420,6 +456,30 @@ def choose_kill_target(
         )
         options_to_script.update(target_scripts)
         options_to_preview_mapping.update(target_previews)
+        session_label_by_name: dict[str, str] = {}
+        for session in sessions:
+            session_name = _session_name(session)
+            session_label = _session_label_for_kill_option(session)
+            if session_name is not None and session_label is not None:
+                session_label_by_name[session_name] = session_label
+        labels_by_normalized_label = {
+            _strip_focused_marker(target_label): target_label
+            for target_label in target_scripts
+        }
+        for target_label in target_scripts:
+            parent_labels: list[str] = []
+            session_name = _session_name_from_target_label(target_label)
+            if session_name is not None:
+                session_parent_label = session_label_by_name.get(session_name)
+                if session_parent_label is not None:
+                    parent_labels.append(session_parent_label)
+            tab_parent_label = _parent_herdr_tab_label(
+                selection_label=target_label,
+                labels_by_normalized_label=labels_by_normalized_label,
+            )
+            if tab_parent_label is not None:
+                parent_labels.append(tab_parent_label)
+            option_parent_labels[target_label] = tuple(parent_labels)
         msg = "Choose a Herdr session, tab, or pane to kill:"
     else:
         for session in sessions:
@@ -428,6 +488,7 @@ def choose_kill_target(
                 continue
             options_to_script[session_name] = stop_session_script(session_name)
             options_to_preview_mapping[session_name] = _session_preview(session)
+            option_parent_labels[session_name] = ()
         msg = "Choose a Herdr session to kill:"
 
     selections = interactive_choose_with_preview(
@@ -437,14 +498,11 @@ def choose_kill_target(
     )
     if len(selections) == 0:
         return ("error", "No Herdr target selected.", [])
-    scripts: list[str] = []
-    seen: set[str] = set()
-    for selection in selections:
-        if selection in seen:
-            continue
-        seen.add(selection)
-        script = options_to_script.get(selection)
-        if script is None:
-            return ("error", f"Unknown Herdr target selected: {selection}", [])
-        scripts.append(script)
+    scripts, unknown_selection = collect_selected_option_scripts(
+        selections=selections,
+        options_to_script=options_to_script,
+        option_parent_labels=option_parent_labels,
+    )
+    if unknown_selection is not None:
+        return ("error", f"Unknown Herdr target selected: {unknown_selection}", [])
     return ("run_script", "\n".join(scripts), [])

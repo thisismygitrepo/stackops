@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Final, cast, get_args
+from typing import Final, TypeAlias, cast, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import CREATE_CONFIG_KEYS, ParallelCreateValues, ParallelYamlEntry
@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 PARALLEL_RUN_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
+SelectedParallelCreateValues: TypeAlias = tuple[str, ParallelCreateValues]
 
 
 def validate_parallel_run_name(*, entry_name: str) -> str:
@@ -72,35 +73,38 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
     )
 
 
-def select_parallel_create_values(*, raw_data: object, requested_name: str | None) -> tuple[str, ParallelCreateValues]:
+def select_parallel_create_values(*, raw_data: object, requested_name: str | None) -> tuple[SelectedParallelCreateValues, ...]:
     if requested_name is not None:
         normalized_name = validate_parallel_run_name(entry_name=requested_name)
         raw_entry = _resolve_named_entry(raw_data=raw_data, entry_name=normalized_name)
-        return normalized_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)
+        return ((normalized_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)),)
 
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     candidates = _collect_entry_candidates(raw_data=raw_data)
     if len(candidates) == 0:
         raise ValueError("No parallel run entries found in parallel YAML")
-    chosen_name = choose_from_dict_with_preview(
-        options_to_preview_mapping=candidates, extension="yaml", multi=False, preview_size_percent=PARALLEL_RUN_PREVIEW_SIZE_PERCENT
+    chosen_names = choose_from_dict_with_preview(
+        options_to_preview_mapping=candidates, extension="yaml", multi=True, preview_size_percent=PARALLEL_RUN_PREVIEW_SIZE_PERCENT
     )
-    if chosen_name is None:
+    if len(chosen_names) == 0:
         raise SystemExit(1)
-    raw_entry = _resolve_named_entry(raw_data=raw_data, entry_name=chosen_name)
-    return chosen_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=chosen_name)
+    selected_entries: list[SelectedParallelCreateValues] = []
+    for chosen_name in chosen_names:
+        raw_entry = _resolve_named_entry(raw_data=raw_data, entry_name=chosen_name)
+        selected_entries.append((chosen_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=chosen_name)))
+    return tuple(selected_entries)
 
 
 def select_parallel_create_values_from_locations(
     *, yaml_entries: list[ParallelYamlEntry], requested_name: str | None
-) -> tuple[str, ParallelCreateValues]:
+) -> tuple[SelectedParallelCreateValues, ...]:
     if requested_name is not None:
         normalized_name = validate_parallel_run_name(entry_name=requested_name)
         for _location_name, _yaml_path, raw_data in yaml_entries:
             raw_entry = _try_resolve_named_entry(raw_data=raw_data, entry_name=normalized_name)
             if raw_entry is not None:
-                return normalized_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)
+                return ((normalized_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)),)
         raise ValueError(f"Parallel run '{normalized_name}' was not found in parallel YAML")
 
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
@@ -119,14 +123,17 @@ def select_parallel_create_values_from_locations(
 
     if len(candidate_previews) == 0:
         raise ValueError("No parallel run entries found in parallel YAML")
-    chosen_label = choose_from_dict_with_preview(
-        options_to_preview_mapping=candidate_previews, extension="yaml", multi=False, preview_size_percent=PARALLEL_RUN_PREVIEW_SIZE_PERCENT
+    chosen_labels = choose_from_dict_with_preview(
+        options_to_preview_mapping=candidate_previews, extension="yaml", multi=True, preview_size_percent=PARALLEL_RUN_PREVIEW_SIZE_PERCENT
     )
-    if chosen_label is None:
+    if len(chosen_labels) == 0:
         raise SystemExit(1)
-    chosen_name, chosen_data = candidate_sources[chosen_label]
-    raw_entry = _resolve_named_entry(raw_data=chosen_data, entry_name=chosen_name)
-    return chosen_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=chosen_name)
+    selected_entries: list[SelectedParallelCreateValues] = []
+    for chosen_label in chosen_labels:
+        chosen_name, chosen_data = candidate_sources[chosen_label]
+        raw_entry = _resolve_named_entry(raw_data=chosen_data, entry_name=chosen_name)
+        selected_entries.append((chosen_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=chosen_name)))
+    return tuple(selected_entries)
 
 
 def _object_to_string_mapping(*, raw_value: object, label: str) -> dict[str, object]:
