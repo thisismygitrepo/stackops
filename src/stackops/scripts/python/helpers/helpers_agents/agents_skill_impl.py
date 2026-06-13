@@ -7,6 +7,7 @@ from typing import Final, Literal, TypeAlias
 from stackops.utils.options_utils.options import choose_from_options
 
 SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
+SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 
 
@@ -18,8 +19,10 @@ class AgentSkillSource:
 
 _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "agent-browser": AgentSkillSource("vercel-labs/agent-browser"),
+    "agent-skills": AgentSkillSource("addyosmani/agent-skills"),
     "caveman": AgentSkillSource("JuliusBrussee/caveman"),
     "grill-me": AgentSkillSource("mattpocock/skills/grill-me"),
+    "last30days": AgentSkillSource("mvanhorn/last30days-skill"),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
 }
 
@@ -62,7 +65,7 @@ def parse_requested_skill_agent_targets(*, raw_value: str | None) -> tuple[str, 
 
 
 def build_agent_skill_install_commands(
-    *, skill_names: Sequence[str], agent_targets: Sequence[str], scope: SKILL_INSTALL_SCOPE
+    *, skill_names: Sequence[str], agent_targets: Sequence[str], scope: SKILL_INSTALL_SCOPE, backend: SKILL_INSTALL_BACKEND
 ) -> tuple[tuple[str, ...], ...]:
     commands: list[tuple[str, ...]] = []
     for skill_name in skill_names:
@@ -70,7 +73,7 @@ def build_agent_skill_install_commands(
         if source is None:
             raise ValueError(f"Skill '{skill_name}' is not recognized. Supported skills: {', '.join(supported_agent_skill_names())}")
 
-        command = ["bunx", SKILLS_CLI_PACKAGE, "add", source.source]
+        command = [backend, SKILLS_CLI_PACKAGE, "add", source.source]
         if source.skill is not None:
             command.extend(("--skill", source.skill))
         command.append("--yes")
@@ -102,9 +105,13 @@ def run_agent_skill_install_commands(*, install_root: Path, commands: Sequence[t
     return proc.returncode
 
 
-def add_skill(*, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None) -> int:
+def add_skill(
+    *, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None, backend: SKILL_INSTALL_BACKEND
+) -> int:
     install_root = resolve_agent_skill_install_root(directory=directory)
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
     resolved_skill_name = choose_requested_skill_name() if skill_name is None else skill_name
-    commands = build_agent_skill_install_commands(skill_names=(resolved_skill_name,), agent_targets=agent_targets, scope=scope)
+    commands = build_agent_skill_install_commands(
+        skill_names=(resolved_skill_name,), agent_targets=agent_targets, scope=scope, backend=backend
+    )
     return run_agent_skill_install_commands(install_root=install_root, commands=commands)

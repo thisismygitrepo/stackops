@@ -96,7 +96,9 @@ def add_mcp(
             raise ValueError(f"Local skill installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
         install_root = repo_root if repo_root is not None else Path.cwd()
         agent_targets = parse_requested_skill_agent_targets(raw_value=agents)
-        commands = build_agent_skill_install_commands(skill_names=requested_skill_names, agent_targets=agent_targets, scope=scope)
+        commands = build_agent_skill_install_commands(
+            skill_names=requested_skill_names, agent_targets=agent_targets, scope=scope, backend="bunx"
+        )
         report(f"Installing agent skills through skills CLI: {', '.join(requested_skill_names)}")
         run_agent_skill_install_commands(install_root=install_root, commands=commands)
         return

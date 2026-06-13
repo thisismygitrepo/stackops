@@ -162,7 +162,7 @@ agents add-config --agent codex,copilot,agy,pi --root . --include-scripts --add-
 - `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
 - `oz` means Warp Oz CLI. Local MCP config is written to `.warp/mcp.json` in Oz's direct `--mcp` file shape, and StackOps passes that file to `oz agent run --mcp` when it exists.
 - `pi` local MCP config is written to `.pi/mcp.json`; global MCP config is written to `~/.pi/agent/mcp.json`
-- `agent-browser`, `caveman`, `grill-me`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
+- `agent-browser`, `agent-skills`, `caveman`, `grill-me`, `last30days`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
 For `add-mcp`, `--source repo` or `-S repo` resolves to `<git-root>/.stackops/mcp.json`.
@@ -205,11 +205,13 @@ agents browser launch-browser --browser chrome --port 9331 --lan
 
 ## `add-skill`
 
-`add-skill` installs supported open agent skills through `bunx skills@latest add`. The shipped source aliases are `agent-browser`, `caveman`, `grill-me`, and `stackops`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping, and omitting it lets the upstream tool choose or prompt for agent targets. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` installs supported open agent skills through `bunx skills@latest add` by default. Use `--backend npx` to run `npx skills@latest add` instead. The shipped source aliases are `agent-browser`, `agent-skills`, `caveman`, `grill-me`, `last30days`, and `stackops`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping, and omitting it lets the upstream tool choose or prompt for agent targets. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
 
 ```bash
 agents add-skill --scope local
 agents add-skill stackops --agent codex --scope local
+agents add-skill agent-skills --agent codex --scope global
+agents add-skill last30days --agent codex --scope global --backend npx
 agents add-skill grill-me --scope local
 agents add-skill caveman --agent codex --scope local
 agents add-skill caveman --agent github-copilot --scope global

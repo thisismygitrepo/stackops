@@ -12,6 +12,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
+_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx"]
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
@@ -343,12 +344,16 @@ def add_skill(
         str | None,
         typer.Option(..., "--directory", "-d", help="Directory to add the skill to. If not provided, defaults to current working directory."),
     ] = None,
+    backend: Annotated[
+        _SKILL_INSTALL_BACKEND,
+        typer.Option("--backend", "-b", help="Package runner backend for the upstream skills CLI."),
+    ] = "bunx",
 ) -> None:
     """Add a skill through the upstream skills CLI."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
-        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory)
+        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory, backend=backend)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     raise typer.Exit(code=return_code)
