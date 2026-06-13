@@ -1,0 +1,1 @@
+{"id":"int-23b8909e","kind":"field_change","created_at":"2026-06-13T22:49:49.067117867Z","actor":"Alex Al-Saffar","issue_id":"stackops-b72","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"beads_viewer installer data entry already exists and was verified against current GitHub release assets"}}
