@@ -12,10 +12,8 @@ The session-manager layer takes `LayoutConfig` objects and turns them into runni
 
 | Manager | Module path | What it manages |
 | --- | --- | --- |
-| `ZellijLocalManager` | `stackops.cluster.sessions_managers.zellij.zellij_local_manager` | Local zellij sessions generated from `list[LayoutConfig]` |
 | `TmuxLocalManager` | `stackops.cluster.sessions_managers.tmux.tmux_local_manager` | Local tmux sessions generated from `list[LayoutConfig]` |
 | `WTLocalManager` | `stackops.cluster.sessions_managers.windows_terminal.wt_local_manager` | Local Windows Terminal sessions generated from `list[LayoutConfig]` |
-| `ZellijSessionManager` | `stackops.cluster.sessions_managers.zellij.zellij_remote_manager` | Remote zellij sessions across SSH hosts |
 | `WTSessionManager` | `stackops.cluster.sessions_managers.windows_terminal.wt_remote_manager` | Remote Windows Terminal sessions across remote machines |
 
 ---
@@ -40,21 +38,16 @@ The two merge actions are only valid for the `tmux` and `windows-terminal` backe
 
 ## Backend-specific behavior
 
-### Zellij local
 
-`ZellijLocalManager`:
 
 - always prefixes managed session names with `LocalJobMgr_`
 - requires `start_all_sessions(on_conflict, poll_seconds, poll_interval)`
-- launches zellij sessions non-blockingly and then polls `zellij list-sessions`
 - supports `attach_to_session()`, `check_all_sessions_status()`, `run_monitoring_routine()`, `save(session_id)`, `load()`, and `list_active_sessions()`
 
 Example:
 
 ```python
-from stackops.cluster.sessions_managers.zellij.zellij_local_manager import ZellijLocalManager
 
-manager = ZellijLocalManager(session_layouts=[layout])
 manager.start_all_sessions(
     on_conflict="rename",
     poll_seconds=10.0,
@@ -100,13 +93,11 @@ Useful current helpers include:
 
 The remote managers keep the same status and persistence ideas, but their inputs are backend-specific:
 
-- `ZellijSessionManager(machine_layouts: dict[str, LayoutConfig], session_name_prefix: str)`
 - `WTSessionManager(machine2wt_tabs: dict[str, dict[str, tuple[str, str]]], session_name_prefix: str | None = "WTJobMgr")`
 
 Representative helpers:
 
 - `ssh_to_all_machines()`
-- `start_all_sessions()` or `start_zellij_sessions()`
 - `run_monitoring_routine()`
 - `save(session_id)` / `load()`
 - `list_saved_sessions()` / `delete_session()`
@@ -117,8 +108,6 @@ Representative helpers:
 
 Representative utility modules include:
 
-- `stackops.cluster.sessions_managers.zellij.zellij_utils.process_monitor`
-- `stackops.cluster.sessions_managers.zellij.zellij_utils.status_reporter`
 - `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting`
 - `stackops.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence`
 
@@ -160,9 +149,7 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
-## Zellij local manager
 
-::: stackops.cluster.sessions_managers.zellij.zellij_local_manager
     options:
       show_root_heading: true
       show_source: false
@@ -184,17 +171,13 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
-## Zellij remote manager
 
-::: stackops.cluster.sessions_managers.zellij.zellij_remote_manager
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Zellij remote sessions
 
-::: stackops.cluster.sessions_managers.zellij.zellij_remote
     options:
       show_root_heading: true
       show_source: false
@@ -216,49 +199,37 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
-## Zellij example usage
 
-::: stackops.cluster.sessions_managers.zellij.zellij_remote_example
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Zellij monitoring types
 
-::: stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Zellij process monitor
 
-::: stackops.cluster.sessions_managers.zellij.zellij_utils.process_monitor
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Zellij remote executor
 
-::: stackops.cluster.sessions_managers.zellij.zellij_utils.remote_executor
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Zellij session manager utility
 
-::: stackops.cluster.sessions_managers.zellij.zellij_utils.session_manager
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Zellij status reporter
 
-::: stackops.cluster.sessions_managers.zellij.zellij_utils.status_reporter
     options:
       show_root_heading: true
       show_source: false

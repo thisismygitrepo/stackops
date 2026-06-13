@@ -1,5 +1,0 @@
-HIST_PATH_REFERENCE = "hist"
-PANES_PATH_REFERENCE = "panes.kdl"
-ST_PATH_REFERENCE = "st.kdl"
-ST2_PATH_REFERENCE = "st2.kdl"
-STACKED_PANES_PATH_REFERENCE = "stacked_panes.kdl"

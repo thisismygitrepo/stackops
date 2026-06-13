@@ -8,7 +8,7 @@ def create_from_function(
         num_process: Annotated[int, typer.Option(..., "--num-process", "-n", help="Number of parallel processes to run")],
         path: Annotated[str, typer.Option(..., "--path", "-p", help="Path to a Python or Shell script file or a directory containing such files")] = ".",
         function: Annotated[str | None, typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
-):
+) -> None:
     from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
     from stackops.utils.options_utils.options import choose_from_options
     from stackops.scripts.python.helpers.helpers_utils.path_helper import match_file_name, sanitize_path
@@ -48,7 +48,7 @@ def create_from_function(
     else:
         choice_function = function
 
-    from stackops.cluster.sessions_managers.zellij.zellij_local import run_zellij_layout
+    from stackops.cluster.sessions_managers.tmux.tmux_local import run_tmux_layout
     from stackops.utils.schemas.layouts.layout_types import LayoutConfig
     layout: LayoutConfig = {"layoutName": "fireNprocess", "layoutTabs": []}
     for an_arg in range(num_process):
@@ -58,4 +58,4 @@ def create_from_function(
             "command": f"uv run python -m fire {choice_file} {choice_function} --idx={an_arg} --idx_max={num_process}"
             })
     print(layout)
-    run_zellij_layout(layout_config=layout, on_conflict="error")
+    run_tmux_layout(layout_config=layout, on_conflict="error")

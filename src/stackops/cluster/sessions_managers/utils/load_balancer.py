@@ -48,9 +48,9 @@ def limit_tab_weight(layout_configs: list[LayoutConfig], max_weight: int, comman
     return new_layout_configs
 
 
-def run(layouts: list[LayoutConfig], on_conflict: SessionConflictAction):
-    from stackops.cluster.sessions_managers.zellij.zellij_local_manager import ZellijLocalManager
-    manager = ZellijLocalManager(session_layouts=layouts)
-    manager.start_all_sessions(on_conflict=on_conflict, poll_interval=2, poll_seconds=2)
+def run(layouts: list[LayoutConfig], on_conflict: SessionConflictAction) -> None:
+    from stackops.cluster.sessions_managers.tmux.tmux_local_manager import TmuxLocalManager
+    manager = TmuxLocalManager(session_layouts=layouts, session_name_prefix=None, exit_mode="backToShell")
+    manager.start_all_sessions(on_conflict=on_conflict)
     manager.run_monitoring_routine(wait_ms=2000)
     manager.kill_all_sessions()

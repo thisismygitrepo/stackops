@@ -9,13 +9,12 @@ if TYPE_CHECKING:
     from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
 type SessionBackendOption = Literal[
-    "zellij", "z",
     "windows-terminal", "wt",
     "tmux", "t",
     "auto", "a",
 ]
-type DynamicSessionBackendOption = Literal["zellij", "z", "tmux", "t", "auto", "a"]
-type ResolvedSessionBackend = Literal["zellij", "windows-terminal", "tmux"]
+type DynamicSessionBackendOption = Literal["tmux", "t", "auto", "a"]
+type ResolvedSessionBackend = Literal["windows-terminal", "tmux"]
 
 
 def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
@@ -171,15 +170,10 @@ def resolve_standard_backend(
             return "windows-terminal"
         case "tmux" | "t":
             return "tmux"
-        case "zellij" | "z":
-            if platform.system().lower() == "windows":
-                typer.echo("Error: Zellij is not supported on Windows.", err=True)
-                raise typer.Exit(code=1)
-            return "zellij"
         case "auto" | "a":
             if platform.system().lower() == "windows":
                 return "windows-terminal"
-            return "zellij"
+            return "tmux"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True)
             raise typer.Exit(code=1)

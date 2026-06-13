@@ -4,12 +4,8 @@ import subprocess
 from pathlib import Path
 from typing import Literal, TypeAlias, overload
 
-import stackops.settings.zellij.layouts as layouts
-from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.options_utils.options import choose_from_options
-
-STANDARD = get_path_reference_path(module=layouts, path_reference=layouts.ST2_PATH_REFERENCE)
 
 NEW_SESSION_LABEL = "NEW SESSION"
 KILL_ALL_AND_NEW_LABEL = "KILL ALL SESSIONS & START NEW"
@@ -102,17 +98,13 @@ def interactive_choose_with_preview(
 
 
 def choose_session(
-    backend: Literal["zellij", "tmux", "herdr"],
+    backend: Literal["tmux", "herdr"],
     name: str | None,
     new_session: bool,
     kill_all: bool,
     window: bool = False,
 ) -> AttachSessionChoice:
     match backend:
-        case "zellij":
-            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_session as _zellij
-
-            return _zellij(name=name, new_session=new_session, kill_all=kill_all, window=window)
         case "tmux":
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_session as _tmux
 
@@ -125,6 +117,15 @@ def choose_session(
 
 
 def get_session_tabs() -> list[tuple[str, str]]:
-    from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import get_session_tabs as _impl
+    from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import run_command
 
-    return _impl()
+    result = run_command(["tmux", "list-windows", "-a", "-F", "#S\t#W"])
+    if result.returncode != 0:
+        return []
+    session_tabs: list[tuple[str, str]] = []
+    for line in result.stdout.splitlines():
+        session_name, separator, window_name = line.partition("\t")
+        if separator == "" or session_name == "" or window_name == "":
+            continue
+        session_tabs.append((session_name, window_name))
+    return session_tabs

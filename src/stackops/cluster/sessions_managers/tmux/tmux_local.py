@@ -27,7 +27,7 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout import (
     build_tmux_script_from_commands,
     validate_layout_config,
 )
-from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus
+from stackops.cluster.sessions_managers.monitoring_types import CommandStatus
 
 
 console = Console()

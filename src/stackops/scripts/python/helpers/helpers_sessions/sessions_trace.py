@@ -11,7 +11,7 @@ if TYPE_CHECKING:
         evaluate_trace_snapshot,
     )
 
-type TraceBackend = Literal["tmux", "zellij"]
+type TraceBackend = Literal["tmux"]
 
 
 def _get_trace_loader(
@@ -20,11 +20,6 @@ def _get_trace_loader(
     match backend:
         case "tmux":
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
-                load_trace_snapshot as loader,
-            )
-            return loader
-        case "zellij":
-            from stackops.scripts.python.helpers.helpers_sessions.session_trace_zellij import (
                 load_trace_snapshot as loader,
             )
             return loader

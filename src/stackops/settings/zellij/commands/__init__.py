@@ -1,2 +1,0 @@
-MONITOR_PATH_REFERENCE = "monitor"
-STANDARD_PANES_PATH_REFERENCE = "standard_panes"

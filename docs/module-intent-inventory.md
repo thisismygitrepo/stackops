@@ -89,11 +89,6 @@ These **60** modules need a human decision before source markers are added.
 | `stackops.cluster.sessions_managers.windows_terminal.wt_remote` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.cluster.sessions_managers.windows_terminal.wt_remote_manager` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples.wt_local_manager_demo` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_local` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1, funcs:3 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_local_manager` | `api` | `api-cli-bridge` | api-doc, __main__, classes:2, funcs:3 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_remote` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.example_usage` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper_with_panes` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:8 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.jobs.installer.checks.check_installations` | `api` | `api-cli-bridge` | api-doc, main, __main__, funcs:12 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.jobs.installer.checks.security_cli` | `api` | `api-cli-bridge` | api-doc, typer, typer-app, cli-registration, get_app, funcs:12 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.jobs.installer.checks.security_helper` | `api` | `api-cli-bridge` | api-doc, typer, funcs:18 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
@@ -173,16 +168,6 @@ These **96** modules are the strongest candidates for `api` markers after manual
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporter` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporter.py |  |
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting` | `python-api` | `high` | api-doc, funcs:5 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporting.py |  |
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers` | `python-api` | `high` | api-doc, funcs:7 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/wt_helpers.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_remote_manager` | `python-api` | `high` | api-doc, classes:2 | src/stackops/cluster/sessions_managers/zellij/zellij_remote_manager.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.layout_generator` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/layout_generator.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types` | `python-api` | `high` | api-doc, classes:12 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/monitoring_types.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.process_monitor` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/process_monitor.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.remote_executor` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/remote_executor.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.session_manager` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/session_manager.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.status_reporter` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/status_reporter.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper` | `python-api` | `high` | api-doc, funcs:10 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/zellij_local_helper.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper_restart` | `python-api` | `high` | api-doc, funcs:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/zellij_local_helper_restart.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_manager_helper` | `python-api` | `high` | api-doc, funcs:8 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/zellij_local_manager_helper.py |  |
 | `stackops.jobs.installer.checks.install_utils` | `python-api` | `high` | api-doc, funcs:7 | src/stackops/jobs/installer/checks/install_utils.py |  |
 | `stackops.jobs.installer.checks.report_utils` | `python-api` | `high` | api-doc, classes:6, funcs:19 | src/stackops/jobs/installer/checks/report_utils.py |  |
 | `stackops.jobs.installer.checks.vt_utils` | `python-api` | `high` | api-doc, classes:2, funcs:7 | src/stackops/jobs/installer/checks/vt_utils.py |  |
@@ -362,7 +347,6 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_helpers` | `cli-helper` | `cli-helper` | `medium` | funcs:8 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_helpers.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_mount` | `cli` | `cli-module` | `high` | typer, typer-app, cli-registration, get_app, __main__, funcs:4 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_mount.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_mount_tmux.py |  |
-| `stackops.scripts.python.helpers.helpers_cloud.cloud_mount_zellij` | `cli-helper` | `cli-helper` | `medium` | funcs:5 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_mount_zellij.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_path_resolver.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_sync` | `cli-helper` | `cli-helper` | `medium` | main, funcs:1 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_sync.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.backup_config` | `cli-helper` | `cli-helper` | `medium` | classes:1, funcs:20 | src/stackops/scripts/python/helpers/helpers_devops/backup_config.py |  |
@@ -457,16 +441,9 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options` | `cli-helper` | `cli-helper` | `medium` | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_tmux_backend_options.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview` | `cli-helper` | `cli-helper` | `medium` | funcs:9 | src/stackops/scripts/python/helpers/helpers_sessions/_tmux_backend_preview.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions._tmux_backend_processes` | `cli-helper` | `cli-helper` | `medium` | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_tmux_backend_processes.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend` | `cli-helper` | `cli-helper` | `medium` | funcs:10 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_focus` | `cli-helper` | `cli-helper` | `medium` | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_focus.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_layout` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:4 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_layout.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_metadata` | `cli-helper` | `cli-helper` | `medium` | funcs:10 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_metadata.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_options` | `cli-helper` | `cli-helper` | `medium` | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_options.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_preview` | `cli-helper` | `cli-helper` | `medium` | funcs:5 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_preview.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.attach_impl` | `cli-helper` | `cli-helper` | `medium` | funcs:9 | src/stackops/scripts/python/helpers/helpers_sessions/attach_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.kill_impl` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/kill_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:6 | src/stackops/scripts/python/helpers/helpers_sessions/session_trace_tmux.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions.session_trace_zellij` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/session_trace_zellij.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_aoe_impl` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:12 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_aoe_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common` | `cli` | `cli-module` | `high` | typer, funcs:6 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_cli_common.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run` | `cli` | `cli-module` | `high` | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_cli_run.py |  |
@@ -475,7 +452,6 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic` | `cli-helper` | `cli-helper` | `medium` | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display` | `cli-helper` | `cli-helper` | `medium` | classes:3, funcs:11 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic_display.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tmux` | `cli-helper` | `cli-helper` | `medium` | funcs:9 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic_tmux.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_zellij` | `cli-helper` | `cli-helper` | `medium` | funcs:6 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic_zellij.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_impl` | `cli-helper` | `cli-helper` | `medium` | __main__, funcs:5 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source` | `cli` | `cli-module` | `high` | typer, classes:1, funcs:8 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_layout_source.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_multiprocess` | `cli` | `cli-module` | `high` | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_multiprocess.py |  |
@@ -518,7 +494,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.cluster.sessions_managers.utils` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/utils/__init__.py |  |
 | `stackops.cluster.sessions_managers.windows_terminal` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/windows_terminal/__init__.py |  |
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/examples/__init__.py |  |
-| `stackops.cluster.sessions_managers.zellij` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/zellij/__init__.py |  |
 | `stackops.jobs` | `package` | `package-marker` | `high` | api-doc | src/stackops/jobs/__init__.py |  |
 | `stackops.jobs.agents.mcps` | `package` | `package-marker` | `high` | - | src/stackops/jobs/agents/mcps/__init__.py |  |
 | `stackops.jobs.installer` | `package` | `package-marker` | `high` | api-doc | src/stackops/jobs/installer/__init__.py |  |
@@ -694,9 +669,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.settings.yazi.scripts.serve_browser_file` | `script-asset` | `script-asset` | `medium` | main, __main__, classes:1, funcs:12 | src/stackops/settings/yazi/scripts/serve_browser_file.py |  |
 | `stackops.settings.yazi.shell` | `package` | `package-marker` | `high` | - | src/stackops/settings/yazi/shell/__init__.py |  |
 | `stackops.settings.zed` | `package` | `package-marker` | `high` | - | src/stackops/settings/zed/__init__.py |  |
-| `stackops.settings.zellij` | `package` | `package-marker` | `high` | - | src/stackops/settings/zellij/__init__.py |  |
-| `stackops.settings.zellij.commands` | `package` | `package-marker` | `high` | - | src/stackops/settings/zellij/commands/__init__.py |  |
-| `stackops.settings.zellij.layouts` | `package` | `package-marker` | `high` | - | src/stackops/settings/zellij/layouts/__init__.py |  |
 | `stackops.utils` | `package` | `package-marker` | `high` | api-doc | src/stackops/utils/__init__.py |  |
 | `stackops.utils.ai` | `package` | `package-marker` | `high` | - | src/stackops/utils/ai/__init__.py |  |
 | `stackops.utils.cli_utils` | `package` | `package-marker` | `high` | - | src/stackops/utils/cli_utils/__init__.py |  |
@@ -762,22 +734,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporter` | `api` | `python-api` | `high` | 1 | 205 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporter.py |  |
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting` | `api` | `python-api` | `high` | 3 | 77 | api-doc, funcs:5 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporting.py |  |
 | `stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers` | `api` | `python-api` | `high` | 4 | 211 | api-doc, funcs:7 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/wt_helpers.py |  |
-| `stackops.cluster.sessions_managers.zellij` | `package` | `package-marker` | `high` | 0 | 0 | api-doc | src/stackops/cluster/sessions_managers/zellij/__init__.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_local` | `api` | `api-cli-bridge` | `medium` | 4 | 239 | api-doc, __main__, classes:1, funcs:3 | src/stackops/cluster/sessions_managers/zellij/zellij_local.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_local_manager` | `api` | `api-cli-bridge` | `medium` | 3 | 448 | api-doc, __main__, classes:2, funcs:3 | src/stackops/cluster/sessions_managers/zellij/zellij_local_manager.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_remote` | `api` | `api-cli-bridge` | `medium` | 2 | 195 | api-doc, __main__, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_remote.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_remote_manager` | `api` | `python-api` | `high` | 0 | 197 | api-doc, classes:2 | src/stackops/cluster/sessions_managers/zellij/zellij_remote_manager.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.example_usage` | `api` | `api-cli-bridge` | `medium` | 1 | 73 | api-doc, __main__, funcs:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/example_usage.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.layout_generator` | `api` | `python-api` | `high` | 2 | 127 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/layout_generator.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types` | `api` | `python-api` | `high` | 11 | 105 | api-doc, classes:12 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/monitoring_types.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.process_monitor` | `api` | `python-api` | `high` | 3 | 287 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/process_monitor.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.remote_executor` | `api` | `python-api` | `high` | 4 | 65 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/remote_executor.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.session_manager` | `api` | `python-api` | `high` | 2 | 92 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/session_manager.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.status_reporter` | `api` | `python-api` | `high` | 1 | 90 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/status_reporter.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper` | `api` | `python-api` | `high` | 3 | 345 | api-doc, funcs:10 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/zellij_local_helper.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper_restart` | `api` | `python-api` | `high` | 1 | 78 | api-doc, funcs:1 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/zellij_local_helper_restart.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_helper_with_panes` | `api` | `api-cli-bridge` | `medium` | 0 | 229 | api-doc, __main__, funcs:8 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/zellij_local_helper_with_panes.py |  |
-| `stackops.cluster.sessions_managers.zellij.zellij_utils.zellij_local_manager_helper` | `api` | `python-api` | `high` | 1 | 166 | api-doc, funcs:8 | src/stackops/cluster/sessions_managers/zellij/zellij_utils/zellij_local_manager_helper.py |  |
 | `stackops.jobs` | `package` | `package-marker` | `high` | 2 | 0 | api-doc | src/stackops/jobs/__init__.py |  |
 | `stackops.jobs.agents.mcps` | `package` | `package-marker` | `high` | 1 | 3 | - | src/stackops/jobs/agents/mcps/__init__.py |  |
 | `stackops.jobs.installer` | `package` | `package-marker` | `high` | 1 | 2 | api-doc | src/stackops/jobs/installer/__init__.py |  |
@@ -1004,7 +960,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_helpers` | `cli-helper` | `cli-helper` | `medium` | 1 | 46 | funcs:8 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_helpers.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_mount` | `cli` | `cli-module` | `high` | 2 | 198 | typer, typer-app, cli-registration, get_app, __main__, funcs:4 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_mount.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux` | `cli-helper` | `cli-helper` | `medium` | 1 | 42 | funcs:1 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_mount_tmux.py |  |
-| `stackops.scripts.python.helpers.helpers_cloud.cloud_mount_zellij` | `cli-helper` | `cli-helper` | `medium` | 1 | 90 | funcs:5 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_mount_zellij.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver` | `cli-helper` | `cli-helper` | `medium` | 5 | 92 | funcs:1 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_path_resolver.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_sync` | `cli-helper` | `cli-helper` | `medium` | 1 | 79 | main, funcs:1 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_sync.py |  |
 | `stackops.scripts.python.helpers.helpers_devops` | `package` | `package-marker` | `high` | 11 | 0 | - | src/stackops/scripts/python/helpers/helpers_devops/__init__.py |  |
@@ -1133,16 +1088,9 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options` | `cli-helper` | `cli-helper` | `medium` | 1 | 144 | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_tmux_backend_options.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview` | `cli-helper` | `cli-helper` | `medium` | 3 | 205 | funcs:9 | src/stackops/scripts/python/helpers/helpers_sessions/_tmux_backend_preview.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions._tmux_backend_processes` | `cli-helper` | `cli-helper` | `medium` | 3 | 136 | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_tmux_backend_processes.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend` | `cli-helper` | `cli-helper` | `medium` | 2 | 278 | funcs:10 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_focus` | `cli-helper` | `cli-helper` | `medium` | 1 | 146 | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_focus.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_layout` | `cli-helper` | `cli-helper` | `medium` | 1 | 118 | classes:2, funcs:4 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_layout.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_metadata` | `cli-helper` | `cli-helper` | `medium` | 2 | 161 | funcs:10 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_metadata.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_options` | `cli-helper` | `cli-helper` | `medium` | 1 | 257 | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_options.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions._zellij_backend_preview` | `cli-helper` | `cli-helper` | `medium` | 1 | 82 | funcs:5 | src/stackops/scripts/python/helpers/helpers_sessions/_zellij_backend_preview.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.attach_impl` | `cli-helper` | `cli-helper` | `medium` | 5 | 131 | funcs:9 | src/stackops/scripts/python/helpers/helpers_sessions/attach_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.kill_impl` | `cli-helper` | `cli-helper` | `medium` | 1 | 24 | funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/kill_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux` | `cli-helper` | `cli-helper` | `medium` | 2 | 219 | classes:2, funcs:6 | src/stackops/scripts/python/helpers/helpers_sessions/session_trace_tmux.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions.session_trace_zellij` | `cli-helper` | `cli-helper` | `medium` | 1 | 16 | funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/session_trace_zellij.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_aoe_impl` | `cli-helper` | `cli-helper` | `medium` | 1 | 279 | classes:2, funcs:12 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_aoe_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common` | `cli` | `cli-module` | `high` | 2 | 198 | typer, funcs:6 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_cli_common.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run` | `cli` | `cli-module` | `high` | 1 | 86 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_cli_run.py |  |
@@ -1151,7 +1099,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic` | `cli-helper` | `cli-helper` | `medium` | 1 | 262 | funcs:7 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display` | `cli-helper` | `cli-helper` | `medium` | 3 | 189 | classes:3, funcs:11 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic_display.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tmux` | `cli-helper` | `cli-helper` | `medium` | 0 | 98 | funcs:9 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic_tmux.py |  |
-| `stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_zellij` | `cli-helper` | `cli-helper` | `medium` | 0 | 80 | funcs:6 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_dynamic_zellij.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_impl` | `cli-helper` | `cli-helper` | `medium` | 4 | 226 | __main__, funcs:5 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source` | `cli` | `cli-module` | `high` | 2 | 229 | typer, classes:1, funcs:8 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_layout_source.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.sessions_multiprocess` | `cli` | `cli-module` | `high` | 1 | 62 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_sessions/sessions_multiprocess.py |  |
@@ -1248,9 +1195,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.settings.yazi.scripts.serve_browser_file` | `script-asset` | `script-asset` | `medium` | 0 | 252 | main, __main__, classes:1, funcs:12 | src/stackops/settings/yazi/scripts/serve_browser_file.py |  |
 | `stackops.settings.yazi.shell` | `package` | `package-marker` | `high` | 0 | 3 | - | src/stackops/settings/yazi/shell/__init__.py |  |
 | `stackops.settings.zed` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/settings/zed/__init__.py |  |
-| `stackops.settings.zellij` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/settings/zellij/__init__.py |  |
-| `stackops.settings.zellij.commands` | `package` | `package-marker` | `high` | 0 | 3 | - | src/stackops/settings/zellij/commands/__init__.py |  |
-| `stackops.settings.zellij.layouts` | `package` | `package-marker` | `high` | 1 | 6 | - | src/stackops/settings/zellij/layouts/__init__.py |  |
 | `stackops.utils` | `package` | `package-marker` | `high` | 3 | 0 | api-doc | src/stackops/utils/__init__.py |  |
 | `stackops.utils.accessories` | `api` | `api-cli-bridge` | `medium` | 48 | 137 | api-doc, __main__, funcs:8 | src/stackops/utils/accessories.py |  |
 | `stackops.utils.ai` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/utils/ai/__init__.py |  |

@@ -602,20 +602,6 @@ psmux_windows:
     self_managed: CONFIG_ROOT/settings/psmux/install-ppm.ps1
     os:
     - windows
-zellij_linux:
-  config:
-    original: ~/.config/zellij
-    self_managed: CONFIG_ROOT/settings/zellij
-    os:
-    - linux
-    - darwin
-  layouts:
-    original: ~/.config/zellij/layouts
-    self_managed: CONFIG_ROOT/settings/zellij/layouts
-    os:
-    - linux
-    - darwin
-
 # ============ Code Editors ============
 zed_linux:
   settings:

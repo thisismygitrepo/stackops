@@ -14306,7 +14306,7 @@
                 "    cloud: Annotated[str | None, typer.Option(..., \"--cloud\", \"-c\", help=\"cloud to mount.\")] = None,",
                 "    destination: Annotated[str | None, typer.Option(..., \"--destination\", \"-d\", help=\"destination to mount\")] = None,",
                 "    network: Annotated[str | None, typer.Option(..., \"--network\", \"-n\", help=\"Windows network mount target, for example X:\")] = None,",
-                "    backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(\"--backend\", \"-b\", help=\"terminal backend for Linux/macOS\")] = \"tmux\",",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"auto\", \"a\"], typer.Option(\"--backend\", \"-b\", help=\"terminal backend for Linux/macOS\")] = \"tmux\",",
                 "    interactive: Annotated[bool, typer.Option(\"--no-interactive\", \"-I\", help=\"Require --cloud instead of choosing interactively from config.\")] = True,",
                 "",
                 ") -> None:",
@@ -14388,10 +14388,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'auto', 'a'], typer.Option('--backend', '-b', help='terminal backend for Linux/macOS')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'auto', 'a'], typer.Option('--backend', '-b', help='terminal backend for Linux/macOS')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -14664,7 +14664,7 @@
                 "    monitor: Annotated[bool, typer.Option(..., \"--monitor\", \"-m\", help=\"Monitor the layout sessions for completion (implied by --parallel-layouts)\")] = False,",
                 "    parallel_layouts: Annotated[int | None, typer.Option(..., \"--parallel-layouts\", \"-p\", help=\"Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.\")] = None,",
                 "",
-                "    backend: Annotated[Literal[\"zellij\", \"z\", \"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"tmux\",",
+                "    backend: Annotated[Literal[\"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"tmux\",",
                 "    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal.\")] = \"error\",",
                 "    exit_mode: Annotated[Literal[\"backToShell\", \"terminate\", \"killWindow\"], typer.Option(\"--exit\", \"-e\", help=\"What each tab/window should do after its command exits.\")] = \"backToShell\",",
                 "    kill_upon_completion: Annotated[bool, typer.Option(..., \"--kill-upon-completion\", \"-k\", help=\"Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)\")] = False,",
@@ -14922,10 +14922,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['zellij', 'z', 'windows-terminal', 'wt', 'tmux', 't', 'auto', 'a']",
+                  "type": "Literal['windows-terminal', 'wt', 'tmux', 't', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'windows-terminal', 'wt', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer or emulator to use')]",
+                  "annotation_raw": "Annotated[Literal['windows-terminal', 'wt', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer or emulator to use')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -15069,7 +15069,7 @@
                 "    max_parallel_tabs: Annotated[int, typer.Option(..., \"--max-parallel-tabs\", \"-t\", help=\"Maximum number of tabs to keep active while dynamically working through the whole file.\")],",
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-seconds\", \"-p\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
                 "    kill_finished_tabs: Annotated[bool, typer.Option(\"--kill-finished-tabs\", \"-k\", help=\"Close each tab once its command is finished.\")] = False,",
-                "    backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use\")] = \"tmux\",",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use\")] = \"tmux\",",
                 "    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.\")] = \"error\",",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
                 ") -> None:",
@@ -15232,10 +15232,10 @@
                 {
                   "name": "backend",
                   "kind": "keyword_only",
-                  "type": "Literal['zellij', 'z', 'tmux', 't', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer to use')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -15848,7 +15848,7 @@
                 "        new_session: Annotated[bool, typer.Option(\"--new-session\", \"-n\", help=\"Create a new session instead of attaching to an existing one.\", show_default=True)] = False,",
                 "        kill_all: Annotated[bool, typer.Option(\"--kill-all\", \"-k\", help=\"Kill all existing sessions before creating a new one.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Choose a window/tab or pane target instead of only choosing from sessions.\", show_default=True)] = False,",
-                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
+                "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose a session or deeper target to attach to.\"\"\"",
                 "    if name is not None and new_session:",
@@ -15964,10 +15964,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16018,7 +16018,7 @@
                 "        kill_all: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Kill all sessions. With --idle, inspect all sessions for idle panes/windows.\", show_default=True)] = False,",
                 "        idle: Annotated[bool, typer.Option(\"--idle\", \"-i\", help=\"Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.\", show_default=True)] = False,",
-                "        backend: Annotated[Literal[\"zellij\", \"z\", \"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
+                "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose one or more session targets to kill.\"\"\"",
                 "    if kill_all and name is not None:",
@@ -16161,10 +16161,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['zellij', 'z', 'tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16713,9 +16713,70 @@
           },
           {
             "kind": "command",
+            "name": "summary",
+            "fullPath": "terminal summary",
+            "shortPath": "t s",
+            "help": "summary.__doc__",
+            "source": {
+              "file": "src/stackops/scripts/python/terminal_summary.py",
+              "module": "stackops.scripts.python.terminal_summary",
+              "callable": "summary"
+            },
+            "signature": {
+              "raw_lines": [
+                "def summary(",
+                "    backend: Annotated[Literal[\"tmux\", \"t\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to summarize.\")] = \"tmux\",",
+                ") -> None:",
+                "    \"\"\"Print a rich table of running terminal sessions.\"\"\"",
+                "    match backend:",
+                "        case \"tmux\" | \"t\":",
+                "            _print_tmux_summary()"
+              ],
+              "name": "summary",
+              "parameters": [
+                {
+                  "name": "backend",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['tmux', 't']",
+                  "default": "tmux",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['tmux', 't'], typer.Option('--backend', '-b', help='Backend to summarize.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--backend",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--backend"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Backend to summarize."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<s> Print running session summary",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Print a rich table of running terminal sessions.",
+            "aliases": [
+              {
+                "name": "s",
+                "hidden": true,
+                "help": "summary.__doc__"
+              }
+            ]
+          },
+          {
+            "kind": "command",
             "name": "summarize",
             "fullPath": "terminal summarize",
-            "shortPath": "t s",
+            "shortPath": "t S",
             "help": "summarize.__doc__",
             "source": {
               "file": "src/stackops/scripts/python/terminal_summarize.py",
@@ -16867,14 +16928,14 @@
               ],
               "return": "None"
             },
-            "short_help": "<s> Summarize a layout file",
+            "short_help": "<S> Summarize a layout file",
             "typer": {
               "no_args_is_help": true
             },
             "doc": "Summarize a layout file with counts for layouts and tabs.",
             "aliases": [
               {
-                "name": "s",
+                "name": "S",
                 "hidden": true,
                 "help": "summarize.__doc__"
               }

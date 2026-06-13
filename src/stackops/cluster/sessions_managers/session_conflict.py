@@ -5,7 +5,7 @@ import subprocess
 from typing import Literal, NotRequired, TypedDict
 
 
-SessionBackend = Literal["zellij", "tmux", "windows-terminal"]
+SessionBackend = Literal["tmux", "windows-terminal"]
 SessionConflictActionLoose = Literal[
     "restart", "r",
     "rename", "n",
@@ -137,24 +137,6 @@ def list_existing_sessions(backend: SessionBackend) -> set[str]:
                     return set()
                 return set()
             return {line.strip() for line in result.stdout.splitlines() if line.strip()}
-
-        if backend == "zellij":
-            result = subprocess.run(
-                ["zellij", "list-sessions"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-            if result.returncode != 0:
-                return set()
-            sessions: set[str] = set()
-            for line in result.stdout.splitlines():
-                cleaned = line.strip()
-                if not cleaned:
-                    continue
-                sessions.add(cleaned.split()[0])
-            return sessions
 
         if backend == "windows-terminal":
             from stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import POWERSHELL_CMD
@@ -353,16 +335,6 @@ def kill_existing_session(backend: SessionBackend, session_name: str) -> None:
         if backend == "tmux":
             subprocess.run(
                 ["tmux", "kill-session", "-t", session_name],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-            return
-
-        if backend == "zellij":
-            subprocess.run(
-                ["zellij", "delete-session", "--force", session_name],
                 capture_output=True,
                 text=True,
                 timeout=10,

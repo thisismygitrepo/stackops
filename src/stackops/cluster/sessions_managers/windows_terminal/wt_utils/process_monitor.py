@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Process monitoring and status checking utilities for Windows Terminal commands.
-Adapted from zellij process monitor but focused on Windows processes.
 """
 
 import json

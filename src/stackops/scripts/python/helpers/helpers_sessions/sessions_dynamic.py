@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
-from stackops.scripts.python.helpers.helpers_sessions import sessions_dynamic_tmux, sessions_dynamic_zellij
+from stackops.scripts.python.helpers.helpers_sessions import sessions_dynamic_tmux
 from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display import (
     LIVE_REFRESH_PER_SECOND,
     DynamicRunPhase,
@@ -38,50 +38,34 @@ def _start_backend_session(
     on_conflict: SessionConflictAction,
 ) -> tuple[list[str], dict[str, DynamicStartResult]]:
     match backend:
-        case "zellij":
-            return sessions_dynamic_zellij.start_initial_session(layout=initial_layout, on_conflict=on_conflict)
         case "tmux":
             return sessions_dynamic_tmux.start_initial_session(layout_name=layout_name, initial_tasks=initial_tasks, on_conflict=on_conflict)
 
 
 def _spawn_backend_tab(backend: DynamicSessionBackend, session_name: str, task: DynamicTabTask) -> None:
     match backend:
-        case "zellij":
-            sessions_dynamic_zellij.spawn_tab(session_name=session_name, task=task)
         case "tmux":
             sessions_dynamic_tmux.spawn_tab(session_name=session_name, task=task)
 
 
 def _close_backend_tab(backend: DynamicSessionBackend, session_name: str, runtime_tab_name: str) -> None:
     match backend:
-        case "zellij":
-            sessions_dynamic_zellij.close_tab(session_name=session_name, runtime_tab_name=runtime_tab_name)
         case "tmux":
             sessions_dynamic_tmux.close_tab(session_name=session_name, runtime_tab_name=runtime_tab_name)
 
 
 def _is_dynamic_task_running(backend: DynamicSessionBackend, session_name: str, task: DynamicTabTask) -> bool:
     match backend:
-        case "zellij":
-            return sessions_dynamic_zellij.is_task_running(task=task)
         case "tmux":
             return sessions_dynamic_tmux.is_task_running(session_name=session_name, task=task)
 
 
-def _validate_backend(backend: Literal["zellij", "z", "tmux", "t", "auto", "a"]) -> Literal["zellij", "tmux"]:
-    import platform
-
+def _validate_backend(backend: Literal["tmux", "t", "auto", "a"]) -> Literal["tmux"]:
     backend_lower = backend.lower()
-    if backend_lower in {"zellij", "z"}:
-        if platform.system().lower() == "windows":
-            raise ValueError("Dynamic tab runner requires zellij and is not supported on Windows.")
-        return "zellij"
     if backend_lower in {"tmux", "t"}:
         return "tmux"
     if backend_lower in {"auto", "a"}:
-        if platform.system().lower() == "windows":
-            return "tmux"
-        return "zellij"
+        return "tmux"
     raise ValueError(f"Unsupported backend for dynamic tabs: {backend}")
 
 
@@ -89,7 +73,7 @@ def run_dynamic(
     layout: LayoutConfig,
     max_parallel_tabs: int,
     kill_finished_tabs: bool,
-    backend: Literal["zellij", "z", "tmux", "t", "auto", "a"],
+    backend: Literal["tmux", "t", "auto", "a"],
     on_conflict: SessionConflictAction,
     poll_seconds: float,
 ) -> None:

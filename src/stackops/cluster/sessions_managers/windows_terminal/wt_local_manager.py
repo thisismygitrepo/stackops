@@ -12,7 +12,7 @@ from stackops.cluster.scheduler import Scheduler, LoggerTemplate
 from stackops.cluster.sessions_managers.windows_terminal.wt_local import WTLayoutGenerator
 from stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import check_wt_session_status
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
-from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult, ActiveSessionInfo
+from stackops.cluster.sessions_managers.monitoring_types import ActiveSessionInfo, StartResult
 from stackops.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence import (
     generate_session_id, save_json_file, load_json_file, list_saved_sessions_in_dir, delete_session_dir, ensure_session_dir_exists
 )

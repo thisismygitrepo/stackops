@@ -51,8 +51,7 @@ def mount(
     cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
     destination: Annotated[str | None, typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option(..., "--network", "-n", help="Windows network mount target, for example X:")] = None,
-    zellij_session: Annotated[str | None, typer.Option(None, "--zellij-session", "-z", help="zellij session name for Linux/macOS")] = None,
-    backend: Annotated[Literal["zellij", "z", "tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
     interactive: Annotated[bool, typer.Option("--no-interactive", "-I", help="Require --cloud instead of choosing interactively from config.")] = True,
 ) -> None:
     if cloud is None and not interactive:
@@ -65,11 +64,9 @@ def mount(
     import subprocess
     from rich.console import Console
     from rich.panel import Panel
-    from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_zellij import build_zellij_launch_command
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux import build_tmux_launch_command
     console = Console()
     DEFAULT_MOUNT = "~/data/rclone"
-    DEFAULT_ZELLIJ_SESSION = "cloud-mount"
 
     title = "☁️  Cloud Mount Utility"
     console.print(Panel(title, title_align="left", border_style="blue"))
@@ -145,9 +142,6 @@ def mount(
     console.print(Panel(f"🚀 Preparing mount command(s):\n{mount_command_info}", border_style="blue"))
 
     if system_name == "Windows":
-        if backend in ["zellij", "z"]:
-            print("❌ Error: zellij backend is only available on Linux/macOS for cloud mount")
-            raise typer.Exit(code=1)
         if len(clouds) > 1:
             print("❌ Error: Multiple clouds in one command is only supported on Linux/macOS")
             raise typer.Exit(code=1)
@@ -160,21 +154,15 @@ wt --window 0 --profile "Windows PowerShell" --startingDirectory "$HOME/data/rcl
         import string
         import random
         three_random_letters = ''.join(random.choices(string.ascii_lowercase, k=3))
-        session_name = zellij_session if zellij_session else (DEFAULT_ZELLIJ_SESSION + "-" + three_random_letters)
-        backend_resolved: Literal["zellij", "tmux"]
+        session_name = "cloud-mount-" + three_random_letters
         match backend:
-            case "zellij" | "z" | "auto" | "a":
-                backend_resolved = "zellij"
-            case "tmux" | "t":
-                backend_resolved = "tmux"
+            case "tmux" | "t" | "auto" | "a":
+                pass
             case _:
                 print(f"❌ Error: Unsupported backend '{backend}'")
                 raise typer.Exit(code=1)
 
-        if backend_resolved == "zellij":
-            txt = build_zellij_launch_command(mount_commands=mount_commands, mount_locations=mount_locations, session_name=session_name)
-        else:
-            txt = build_tmux_launch_command(mount_commands=mount_commands, mount_locations=mount_locations, session_name=session_name)
+        txt = build_tmux_launch_command(mount_commands=mount_commands, mount_locations=mount_locations, session_name=session_name)
     else:
         print("❌ Error: Unsupported platform")
         raise typer.Exit(code=1)

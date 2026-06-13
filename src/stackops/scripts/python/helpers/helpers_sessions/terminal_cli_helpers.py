@@ -60,16 +60,11 @@ def print_kill_summary(
 
 
 def resolve_session_backend(
-    backend: Literal["zellij", "z", "tmux", "t", "herdr", "h", "auto", "a"],
-) -> Literal["zellij", "tmux", "herdr"]:
+    backend: Literal["tmux", "t", "herdr", "h", "auto", "a"],
+) -> Literal["tmux", "herdr"]:
     import platform
     system = platform.system().lower()
     match backend:
-        case "zellij" | "z":
-            if system == "windows":
-                typer.echo("Error: Zellij is not supported on Windows.", err=True, color=True)
-                raise typer.Exit(code=1)
-            return "zellij"
         case "tmux" | "t":
             return "tmux"
         case "herdr" | "h":
@@ -78,9 +73,7 @@ def resolve_session_backend(
                 raise typer.Exit(code=1)
             return "herdr"
         case "auto" | "a":
-            if system == "windows":
-                return "tmux"
-            return "zellij"
+            return "tmux"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
             raise typer.Exit(code=1)

@@ -1,1 +1,0 @@
-CONFIG_PATH_REFERENCE = "config.kdl"

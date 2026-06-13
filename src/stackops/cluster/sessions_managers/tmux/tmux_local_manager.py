@@ -21,7 +21,7 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
     build_unknown_command_status,
     check_tmux_session_status,
 )
-from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult, CommandStatus
+from stackops.cluster.sessions_managers.monitoring_types import CommandStatus, StartResult
 from stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting import calculate_global_summary_from_status
 
 

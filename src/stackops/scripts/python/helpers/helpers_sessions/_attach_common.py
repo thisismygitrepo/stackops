@@ -4,12 +4,9 @@ import subprocess
 from pathlib import Path
 from typing import Literal, TypeAlias, overload
 
-import stackops.settings.zellij.layouts as layouts
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.options_utils.options import choose_from_options
-from stackops.utils.path_reference import get_path_reference_path
 
-STANDARD = get_path_reference_path(module=layouts, path_reference=layouts.ST2_PATH_REFERENCE)
 NEW_SESSION_LABEL = "NEW SESSION"
 KILL_ALL_AND_NEW_LABEL = "KILL ALL SESSIONS & START NEW"
 _ANSI_ESCAPE_RE = re.compile(

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Remote command execution utilities for SSH operations with Windows Terminal.
-Adapted from zellij remote executor but focused on Windows Terminal commands.
 """
 
 import subprocess

@@ -10,9 +10,9 @@ from stackops.cluster.sessions_managers.session_conflict import (
     kill_existing_session,
 )
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
-from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import StartResult
+from stackops.cluster.sessions_managers.monitoring_types import StartResult
 
-BackendName = Literal["zellij", "windows-terminal", "tmux"]
+BackendName = Literal["windows-terminal", "tmux"]
 
 
 def select_layout(layouts_json_file: str, selected_layouts_names: list[str], select_interactively: bool) -> list["LayoutConfig"]:
@@ -75,12 +75,10 @@ def find_layout_file(layout_path: str) -> str:
 
 
 def _session_name_for_layout(layout_name: str, backend: BackendName) -> str:
-    if backend in {"zellij", "tmux"}:
+    if backend == "tmux":
         name_core = layout_name.replace(" ", "_")
     else:
         name_core = layout_name
-    if backend == "zellij":
-        return f"LocalJobMgr_{name_core}"
     return name_core
 
 
@@ -152,29 +150,12 @@ def run_layouts(
         iterable: list[list["LayoutConfig"]] = [layouts_selected]
     else:
         iterable = [layouts_selected[index:index + parallel_layouts] for index in range(0, len(layouts_selected), parallel_layouts)]
-    if backend == "zellij" and exit_mode != "backToShell":
-        raise ValueError(
-            "--exit modes other than backToShell are currently supported only for tmux and windows-terminal."
-        )
-
     def raise_on_failed_start(start_results: dict[str, StartResult], backend_name: str) -> None:
         failures = {name: result for name, result in start_results.items() if not result.get("success", False)}
         if failures:
             details = "; ".join(f"{name}: {result.get('error', 'unknown error')}" for name, result in failures.items())
             raise ValueError(f"{backend_name} session start failure(s): {details}")
     match backend:
-        case "zellij":
-            from stackops.cluster.sessions_managers.zellij.zellij_local_manager import ZellijLocalManager
-            for i, a_layouts in enumerate(iterable):
-                manager = ZellijLocalManager(session_layouts=a_layouts)
-                start_results = manager.start_all_sessions(on_conflict=on_conflict, poll_interval=2, poll_seconds=10)
-                raise_on_failed_start(start_results, "Zellij")
-                if monitor:
-                    manager.run_monitoring_routine(wait_ms=2000)
-                    if kill_upon_completion:
-                        manager.kill_all_sessions()
-                if i < len(iterable) - 1:
-                    time.sleep(sleep_inbetween)
         case "windows-terminal":
             from stackops.cluster.sessions_managers.windows_terminal.wt_local_manager import WTLocalManager
             for i, a_layouts in enumerate(iterable):

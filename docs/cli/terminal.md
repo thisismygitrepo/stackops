@@ -1,6 +1,5 @@
 # terminal
 
-Launch and manage layout-driven terminal sessions for `tmux`, `zellij`, Windows Terminal, and agent-of-empires, plus attach/kill helpers for Herdr.
 
 ## Usage
 
@@ -51,7 +50,6 @@ terminal run [OPTIONS]
 | `--parallel-layouts` | `-p` | Maximum number of layouts to launch per monitored batch |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
-| `--backend` | `-b` | `tmux`, `zellij`, `windows-terminal`, or `auto` |
 | `--on-conflict` | `-c` | `error`, `restart`, `rename`, `mergeOverwrite`, or `mergeSkip` |
 | `--exit` | `-e` | `backToShell`, `terminate`, or `killWindow` after each command exits |
 | `--monitor` | `-m` | Monitor launched sessions for completion |
@@ -92,7 +90,6 @@ terminal run-all [OPTIONS]
 | `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
 | `--poll-seconds` | `-p` | Polling interval for finished-tab detection |
 | `--kill-finished-tabs` | `-k` | Close each tab as soon as its command finishes |
-| `--backend` | `-b` | `tmux`, `zellij`, or `auto` |
 | `--on-conflict` | `-c` | `error`, `restart`, or `rename`; merge policies are rejected |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside selected tabs |
 
@@ -170,7 +167,6 @@ terminal attach [OPTIONS] [NAME]
 | `--new-session` | `-n` | Create a new session instead of attaching |
 | `--kill-all` | `-k` | Kill all existing sessions before creating a new one |
 | `--window` | `-w` | Choose a window/tab or pane target instead of only sessions |
-| `--backend` | `-b` | `tmux`, `zellij`, `herdr`, or `auto` |
 
 Example:
 
@@ -196,7 +192,6 @@ terminal kill [OPTIONS] [NAME]
 | `--all` | `-a` | Kill all sessions; with `--idle`, inspect all sessions for idle panes/windows |
 | `--idle` | `-i` | Kill idle-shell panes/windows in `NAME` or a chosen session; combine with `--all` to inspect all sessions |
 | `--window` | `-w` | Include sessions, windows/tabs, and panes in the chooser |
-| `--backend` | `-b` | `tmux`, `zellij`, `herdr`, or `auto` |
 
 Example:
 
@@ -242,7 +237,6 @@ terminal trace build-session --until exit-code --exit-code 0
 
 ## create-from-function
 
-Create and immediately launch a zellij layout that runs the same script function in multiple tabs. If `--function` is omitted, StackOps prompts for a function; if `--path` is a directory, it searches for `.py`, `.sh`, and `.ps1` candidates.
 
 ```bash
 terminal create-from-function [OPTIONS]
@@ -347,8 +341,4 @@ Older examples that use `tabs` or `cwd` are stale. The current schema uses `layo
 
 ## Backend Notes
 
-- `run` supports `tmux`, `zellij`, `windows-terminal`, and `auto`. `auto` resolves to `zellij` on non-Windows systems and `windows-terminal` on Windows.
-- `run-all` supports `tmux`, `zellij`, and `auto`. `auto` resolves to `zellij` on non-Windows systems and `tmux` on Windows.
-- `attach` and `kill` support `tmux`, `zellij`, and `auto`. Their `auto` mode resolves to `zellij` on non-Windows systems and `tmux` on Windows.
 - `trace` is tmux-only.
-- `create-from-function` launches through zellij.

@@ -117,7 +117,6 @@ Current options:
 | `--cloud`, `-c` | Cloud name to mount |
 | `--destination`, `-d` | Mount destination |
 | `--network`, `-n` | Network mount target |
-| `--backend`, `-b` | Linux/macOS terminal backend: `zellij`, `tmux`, or `auto` |
 | `--no-interactive`, `-I` | Require `--cloud` instead of choosing interactively from config |
 
 Current defaults:

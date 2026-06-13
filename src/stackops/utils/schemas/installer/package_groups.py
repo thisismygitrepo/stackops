@@ -256,7 +256,6 @@ NETWORK = [
 # Terminal & Shell Enhancements - Terminal multiplexers, shell history, and prompts
 PACKAGES_TERMINAL_SHELL = [
     "nerdfont",
-    # "zellij",
     "psmux",
     "tmux",
     # "mprocs",

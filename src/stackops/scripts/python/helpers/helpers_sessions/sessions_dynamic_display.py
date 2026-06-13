@@ -12,7 +12,7 @@ from rich.table import Table
 
 from stackops.utils.schemas.layouts.layout_types import TabConfig
 
-DynamicSessionBackend: TypeAlias = Literal["zellij", "tmux"]
+DynamicSessionBackend: TypeAlias = Literal["tmux"]
 DynamicRunPhase: TypeAlias = Literal["starting", "monitoring", "completed"]
 
 LIVE_REFRESH_PER_SECOND = 8

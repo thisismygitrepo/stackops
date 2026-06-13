@@ -22,7 +22,6 @@ BINARY_NAMES: list[str] = [
     "rmz",
     "tv",
     "watchexec",
-    "zellij",
     "broot",
     "delta",
     "fastfetch",

@@ -10,18 +10,15 @@ from rich.panel import Panel
 console = Console()
 
 
-def get_zellij_cmd(wd1: Path, wd2: Path) -> str:
-    _ = wd1, wd2
+def get_tmux_cmd(wd1: Path, wd2: Path) -> str:
     lines = [
-        """ zellij action new-tab --name gitdiff""",
-        """zellij action new-pane --direction down --name local --cwd ./data """,
-        """zellij action write-chars "cd '{wd1}'; git status" """,
-        """zellij action move-focus up; zellij action close-pane """,
-        """zellij action new-pane --direction down --name remote --cwd code """,
-        """zellij action write-chars "cd '{wd2}' """,
-        """git status" """,
+        f"""tmux new-session -d -s gitdiff -c {wd1}""",
+        """tmux send-keys -t gitdiff 'git status' C-m""",
+        f"""tmux split-window -h -t gitdiff -c {wd2}""",
+        """tmux send-keys -t gitdiff 'git status' C-m""",
+        """tmux attach-session -t gitdiff""",
     ]
-    return "; ".join(lines)
+    return "\n".join(lines)
 
 def delete_remote_repo_copy_and_push_local(remote_repo: str, local_repo: str, cloud: str):
     console.print(Panel("🗑️  Deleting remote repo copy and pushing local copy", title="[bold blue]Repo Sync[/bold blue]", border_style="blue"))
@@ -84,7 +81,7 @@ def inspect_repos(repo_local_root: str, repo_remote_root: str):
     if platform.system() == "Windows":
         program = get_wt_cmd(wd1=Path(repo_local_root), wd2=Path(repo_local_root))
     elif platform.system() in ["Linux", "Darwin"]:
-        program = get_zellij_cmd(wd1=Path(repo_local_root), wd2=Path(repo_remote_root))
+        program = get_tmux_cmd(wd1=Path(repo_local_root), wd2=Path(repo_remote_root))
     else:
         raise NotImplementedError(f"Platform {platform.system()} not implemented.")
     import tempfile

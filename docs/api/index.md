@@ -19,7 +19,6 @@ This reference follows those workflows instead of mirroring the raw package tree
 | Scheduling and cache | Repeating routines, memory cache, disk-backed cache | `stackops.utils.scheduler` | [Scheduling and cache](utils/scheduling-and-cache.md) |
 | Interactive helpers and notifications | IDs, list splitting, fuzzy / TV-backed choices, HTML email | `stackops.utils.accessories`, `stackops.utils.options`, `stackops.utils.notifications` | [Interactive helpers and notifications](utils/interactive-helpers.md) |
 | Code generation and command launching | Lambda-to-script conversion, `uv` command builders, shell execution, shell handoff, missing-tool install guards | `stackops.utils.meta`, `stackops.utils.code`, `stackops.utils.installer_utils.installer_cli` | [Code generation and command launching](utils/code-generation.md) |
-| Session layouts and orchestration | Layout schema, tab builders, tab splitting, zellij / tmux / Windows Terminal backends | `stackops.utils.schemas.layouts.layout_types`, `stackops.cluster.sessions_managers.*` | [Layouts](cluster/layouts.md), [Sessions](cluster/sessions.md) |
 | Remote execution and networking | Remote job config and state, transfer, SSH, public-IP and LAN helpers | `stackops.cluster.remote.*`, `stackops.utils.ssh`, `stackops.scripts.python.helpers.helpers_network.*` | [Remote execution and networking](cluster/remote.md) |
 | Installer catalog and package groups | Installer data, package groups, install request handling, install orchestration, direct URL installers | `stackops.utils.schemas.installer.*`, `stackops.jobs.installer.*`, `stackops.utils.installer_utils.*` | [Jobs and installer APIs](jobs/index.md) |
 
@@ -31,7 +30,6 @@ This reference follows those workflows instead of mirroring the raw package tree
 stackops/
 ├── cluster/
 │   ├── remote/                    # Remote job models, transfer, script generation
-│   └── sessions_managers/         # zellij, tmux, Windows Terminal backends
 ├── jobs/
 │   └── installer/                 # package groups and install scripts
 ├── scripts/python/helpers/

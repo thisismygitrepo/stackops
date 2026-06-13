@@ -117,7 +117,6 @@ devops install https://example.com/tool-v1.0-linux-amd64.tar.gz
 | `term-eye-candy` | Terminal visuals | lolcatjs, figlet-cli, boxes, cowsay |
 | `agents` | AI assistants | aider, aichat, copilot, antigravity/agy, opencode-ai, mods, q, ... |
 | `terminal-emulator` | Terminal emulators | Alacritty, Wezterm, warp, vtm, nushell |
-| `shell` | Shell enhancements | zellij, mprocs, mcfly, atuin, starship |
 | `browsers` | Web browsers | Brave, browsh, carbonyl |
 | `code-editors` | Code editors | code, Cursor, lvim |
 | `code-analysis` | Code & Git tools | lazygit, gitui, delta, gh, tokei, hyperfine |

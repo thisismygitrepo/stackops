@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Windows Terminal local layout generator and session manager.
-Equivalent to zellij_local.py but for Windows Terminal.
 
 """
 

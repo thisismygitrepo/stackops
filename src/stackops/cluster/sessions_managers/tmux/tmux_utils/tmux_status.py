@@ -2,7 +2,7 @@
 import subprocess
 from typing import NotRequired, TypedDict
 
-from stackops.cluster.sessions_managers.zellij.zellij_utils.monitoring_types import CommandStatus
+from stackops.cluster.sessions_managers.monitoring_types import CommandStatus
 from stackops.utils.schemas.layouts.layout_types import TabConfig
 
 

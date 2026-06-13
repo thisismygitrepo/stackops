@@ -23,7 +23,7 @@ add_to_path_if_not_already \
     "$HOME/.cargo/bin" \
     "$HOME/.duckdb/cli/latest" \
     "/usr/games"
-# this way, if the script was run multiple times, e.g. due to nested shells in zellij, there will be no duplicates in the path
+# this way, if the script was run multiple times due to nested shells, there will be no duplicates in the path
 # export DISPLAY=localhost:0.0  # xming server
     # "$HOME/.nix-profile/bin" \
     # "/home/linuxbrew/.linuxbrew/bin" \

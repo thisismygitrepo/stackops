@@ -143,8 +143,8 @@ plot = [
 ]
 
 
-[tool.uv]
-default-groups = []
+# [tool.uv]
+# default-groups = []
 
 [tool.pycrucible]
 entry = "src/stackops/scripts/python/devops.py"
