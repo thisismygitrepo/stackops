@@ -56,6 +56,10 @@ def _classify_pane_status(pane: dict[str, str]) -> tuple[str, str]:
     )
 
 
+def classify_pane_status(pane: dict[str, str]) -> tuple[str, str]:
+    return _classify_pane_status(pane=pane)
+
+
 def _build_preview(session_name: str) -> str:
     return _build_preview_impl(
         session_name=session_name,

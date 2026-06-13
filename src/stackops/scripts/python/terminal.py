@@ -350,6 +350,7 @@ def run_aoe(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.terminal_summary import summary
     from stackops.scripts.python.terminal_summarize import summarize
 
     layouts_app = typer.Typer(help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
@@ -381,8 +382,11 @@ def get_app() -> typer.Typer:
     layouts_app.command("create-template", no_args_is_help=False, help=create_template.__doc__, short_help="<p> Create a layout template file")(create_template)
     layouts_app.command("p", no_args_is_help=False, help=create_template.__doc__, hidden=True)(create_template)
 
-    layouts_app.command("summarize", no_args_is_help=True, help=summarize.__doc__, short_help="<s> Summarize a layout file")(summarize)
-    layouts_app.command("s", no_args_is_help=True, help=summarize.__doc__, hidden=True)(summarize)
+    layouts_app.command("summary", no_args_is_help=False, help=summary.__doc__, short_help="<s> Print running session summary")(summary)
+    layouts_app.command("s", no_args_is_help=False, help=summary.__doc__, hidden=True)(summary)
+
+    layouts_app.command("summarize", no_args_is_help=True, help=summarize.__doc__, short_help="<S> Summarize a layout file")(summarize)
+    layouts_app.command("S", no_args_is_help=True, help=summarize.__doc__, hidden=True)(summarize)
     return layouts_app
 
 
