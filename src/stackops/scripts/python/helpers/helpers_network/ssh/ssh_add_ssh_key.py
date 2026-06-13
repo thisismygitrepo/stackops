@@ -41,7 +41,6 @@ import sys
 
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_key_windows import add_ssh_key_windows
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_cloud_init import check_cloud_init_overrides, generate_cloud_init_fix_script
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_deploy_key_remote import deploy_key_to_remote, deploy_multiple_keys_to_remote
 
 
 console = Console()
@@ -183,6 +182,8 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
         sys.exit(1)
 
     if remote is not None:
+        from stackops.scripts.python.helpers.helpers_network.ssh.ssh_deploy_key_remote import deploy_key_to_remote, deploy_multiple_keys_to_remote
+
         if len(key_paths) == 1:
             success = deploy_key_to_remote(remote_target=remote, pubkey_path=key_paths[0], password=None)
         else:

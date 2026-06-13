@@ -6038,6 +6038,27 @@
       "categoryLabels": [
         "search-navigation"
       ]
+    },
+    {
+      "appName": "specify-cli",
+      "license": "MIT",
+      "repoURL": "https://github.com/github/spec-kit",
+      "doc": "GitHub Spec Kit CLI for specifying and scaffolding projects.",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git",
+          "windows": "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git",
+          "darwin": "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git"
+        },
+        "arm64": {
+          "linux": "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git",
+          "windows": "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git",
+          "darwin": "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git"
+        }
+      }
     }
   ]
 }

@@ -2,6 +2,12 @@ import typer
 from typing import Annotated
 
 
+def _run_add_ssh_key_with_paramiko(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str) -> None:
+    import stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key as helper
+
+    helper.main(pub_path=pub_path, pub_choose=pub_choose, pub_val=pub_val, from_github=from_github, remote=remote)
+
+
 def install_ssh_server() -> None:
     """📡 Install SSH server"""
     import platform
@@ -156,7 +162,27 @@ def add_ssh_key(
 
         sys.exit(1)
 
+    if remote is not None:
+        from stackops.utils.code import run_lambda_function
+        from stackops.utils.optional_dependencies import PARAMIKO_UV_WITH
+
+        proc = run_lambda_function(
+            lambda: _run_add_ssh_key_with_paramiko(
+                pub_path=path,
+                pub_choose=choose,
+                pub_val=value,
+                from_github=github,
+                remote=remote,
+            ),
+            uv_with=list(PARAMIKO_UV_WITH),
+            uv_project_dir=None,
+        )
+        if proc.returncode != 0:
+            raise typer.Exit(code=proc.returncode)
+        return
+
     import stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key as helper
+
     helper.main(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote)
 
 

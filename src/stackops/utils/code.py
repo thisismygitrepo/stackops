@@ -61,9 +61,9 @@ def get_shell_script_running_lambda_function(lmb: Callable[[], Any], uv_with: li
                                             in_global=True, import_module=False)
     uv_command, py_file = get_uv_command_executing_python_script(python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
     return uv_command, py_file
-def run_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> None:
+def run_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> subprocess.CompletedProcess[bytes]:
     uv_command, _py_file = get_shell_script_running_lambda_function(lmb=lmb, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
-    run_shell_script(uv_command, display_script=True, clean_env=False)
+    return run_shell_script(uv_command, display_script=True, clean_env=False)
 
 
 def run_python_script_in_marimo(py_script: str, uv_project_with: str | None) -> None:

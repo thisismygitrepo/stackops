@@ -1,14 +1,12 @@
 """Cloud management commands - lazy loading subcommands."""
 
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import Annotated, Literal
 
 import typer
 
 from stackops.utils.cloud.defaults import read_default_cloud_config
 from stackops.utils.cloud.encryption import EncryptionModeChoice
-
-if TYPE_CHECKING:
-    from stackops.utils.cloud.rclone import ShareLinkTypeChoice, ShareScopeChoice
+from stackops.utils.cloud.rclone import ShareLinkTypeChoice, ShareScopeChoice
 
 
 defaults = read_default_cloud_config()
@@ -35,8 +33,8 @@ def copy(
     source: Annotated[str, typer.Argument(help="📂 file/folder path to be taken from here.")],
     target: Annotated[str, typer.Argument(help="🎯 file/folder path to be be sent to here.")],
     overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="📝 Overwrite existing file.")] = defaults["overwrite"],
-    share_scope: Annotated["ShareScopeChoice | None", typer.Option("--share-scope", "-s", help="🔗 Share link scope: anonymous/a or organization/o.")] = None,
-    share_type: Annotated["ShareLinkTypeChoice | None", typer.Option("--share-type", "-t", help="🔗 Share link type: view/v, edit/e, or embed/m.")] = None,
+    share_scope: Annotated[ShareScopeChoice | None, typer.Option("--share-scope", "-s", help="🔗 Share link scope: anonymous/a or organization/o.")] = None,
+    share_type: Annotated[ShareLinkTypeChoice | None, typer.Option("--share-type", "-t", help="🔗 Share link type: view/v, edit/e, or embed/m.")] = None,
     record_group: Annotated[str, typer.Option("--record-group", "-g", help="🗂 Group name for mapper/data.yaml. Used when --record-name is passed.")] = "default",
     record_name: Annotated[str | None, typer.Option("--record-name", "-n", help="🏷 Record the upload in mapper/data.yaml with this entry name.")] = None,
     record_os: Annotated[str, typer.Option("--record-os", "-F", help="💻 OS filter for recorded uploads. Comma-separated: linux,darwin,windows. Defaults to all.")] = "linux,darwin,windows",

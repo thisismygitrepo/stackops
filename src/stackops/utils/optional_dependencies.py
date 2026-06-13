@@ -1,0 +1,5 @@
+from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
+
+
+PARAMIKO_REQUIREMENT = "paramiko"
+PARAMIKO_UV_WITH: tuple[str, str] = (STACKOPS_REQUIREMENT, PARAMIKO_REQUIREMENT)
