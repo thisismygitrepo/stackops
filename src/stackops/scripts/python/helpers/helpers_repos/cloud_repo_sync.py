@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionOption
+
 if TYPE_CHECKING:
     from git.remote import Remote
     from git.repo import Repo
     from rich.console import Console
-
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionOption
 
 
 REMOTE_NAME = "originEnc"
@@ -210,7 +210,7 @@ def main(
     repo: Annotated[str, typer.Argument(help="Path to the local repository. Defaults to current working directory.")] = ".",
     cloud: Annotated[str | None, typer.Option(..., "--cloud", "-C", help="Cloud storage profile name. If not provided, uses default from config.")] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
-    on_conflict: Annotated["ConflictResolutionOption", typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
+    on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
 ) -> str | None:
     import platform

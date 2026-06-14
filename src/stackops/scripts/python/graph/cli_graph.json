@@ -1455,7 +1455,7 @@
                     "    repo: Annotated[str, typer.Argument(help=\"Path to the local repository. Defaults to current working directory.\")] = \".\",",
                     "    cloud: Annotated[str | None, typer.Option(..., \"--cloud\", \"-C\", help=\"Cloud storage profile name. If not provided, uses default from config.\")] = None,",
                     "    message: Annotated[str | None, typer.Option(..., \"--message\", \"-m\", help=\"Commit message for local changes.\")] = None,",
-                    "    on_conflict: Annotated[\"ConflictResolutionOption\", typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on merge conflict. Default is 'ask'.\")] = \"ask\",",
+                    "    on_conflict: Annotated[ConflictResolutionOption, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on merge conflict. Default is 'ask'.\")] = \"ask\",",
                     "    pwd: Annotated[str | None, typer.Option(..., \"--password\", \"-p\", help=\"Password for encryption/decryption of the remote repository.\")] = None,",
                     ") -> str | None:",
                     "    import platform",
@@ -1770,10 +1770,10 @@
                     {
                       "name": "on_conflict",
                       "kind": "positional_or_keyword",
-                      "type": "'ConflictResolutionOption'",
+                      "type": "ConflictResolutionOption",
                       "default": "ask",
                       "required": false,
-                      "annotation_raw": "Annotated['ConflictResolutionOption', typer.Option(..., '--on-conflict', '-c', help=\"Action to take on merge conflict. Default is 'ask'.\")]",
+                      "annotation_raw": "Annotated[ConflictResolutionOption, typer.Option(..., '--on-conflict', '-c', help=\"Action to take on merge conflict. Default is 'ask'.\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -19617,12 +19617,16 @@
                 "        _SKILL_INSTALL_BACKEND,",
                 "        typer.Option(\"--backend\", \"-b\", help=\"Package runner backend for the upstream skills CLI.\"),",
                 "    ] = \"bunx\",",
+                "    yes: Annotated[",
+                "        bool,",
+                "        typer.Option(\"--yes\", \"-y\", help=\"Pass --yes to the upstream skills CLI.\"),",
+                "    ] = False,",
                 ") -> None:",
                 "    \"\"\"Add a skill through the upstream skills CLI.\"\"\"",
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl",
                 "",
-                "        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory, backend=backend)",
+                "        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory, backend=backend, yes=yes)",
                 "    except ValueError as error:",
                 "        raise typer.BadParameter(str(error)) from error",
                 "    raise typer.Exit(code=return_code)"
@@ -19732,6 +19736,28 @@
                       "-b"
                     ],
                     "help": "Package runner backend for the upstream skills CLI."
+                  }
+                },
+                {
+                  "name": "yes",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--yes', '-y', help='Pass --yes to the upstream skills CLI.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--yes",
+                      "-y"
+                    ],
+                    "long_flags": [
+                      "--yes"
+                    ],
+                    "short_flags": [
+                      "-y"
+                    ],
+                    "help": "Pass --yes to the upstream skills CLI."
                   }
                 }
               ],
