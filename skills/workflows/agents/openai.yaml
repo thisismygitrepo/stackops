@@ -1,4 +1,4 @@
 interface:
   display_name: "Workflows"
-  short_description: "Hand over active work to a fresh interactive agent window."
-  default_prompt: "Use the workflows handover command to transfer the current task to a new interactive agent window."
+  short_description: "Hand off work or manage external agent windows in tmux."
+  default_prompt: "Use workflows to hand over active work or manage external interactive agents in the current tmux session."
