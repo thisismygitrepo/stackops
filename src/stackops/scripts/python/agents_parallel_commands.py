@@ -8,6 +8,54 @@ import typer
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
+PARALLEL_CREATE_EXAMPLE = """Create a parallel-agent layout without launching agents.
+
+Use this when one user request should be split into isolated agent tasks.
+Prepare one shared prompt file and one context file with one chunk per intended agent.
+
+Example input files:
+
+.ai/agents/_inputs/toy-calculator-ops/prompt.md
+```markdown
+Work on the toy calculator project.
+Use only your assigned context chunk as your task boundary.
+Keep edits scoped, and add or update tests only where runtime behavior is data-dependent.
+```
+
+.ai/agents/_inputs/toy-calculator-ops/context.md
+```markdown
+Agent 1 context:
+Inspect calculator.py. Implement or fix add(a, b) and subtract(a, b).
+Keep public function names stable.
+@-@
+Agent 2 context:
+Inspect calculator.py. Implement or fix multiply(a, b) and divide(a, b).
+For division by zero, raise ZeroDivisionError with a clear message.
+@-@
+Agent 3 context:
+Inspect README and tests. Make sure documented behavior matches all four calculator operations.
+```
+
+Create the layout only:
+
+```bash
+uv run agents parallel create \\
+  --agent codex \\
+  --job-name toy-calculator-ops \\
+  --prompt-path .ai/agents/_inputs/toy-calculator-ops/prompt.md \\
+  --context-path .ai/agents/_inputs/toy-calculator-ops/context.md \\
+  --separator '@-@' \\
+  --agent-load 1
+```
+
+Concept:
+- The prompt file is shared by every generated agent prompt.
+- The context file is split by the separator.
+- With three context chunks and --agent-load 1, StackOps creates three agents.
+- Agent 1 receives only chunk 1, agent 2 receives only chunk 2, and agent 3 receives only chunk 3.
+- Omit --run when you only want the layout and agent files.
+"""
+
 
 def agents_create(
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")] = "codex",
@@ -63,12 +111,20 @@ def agents_create(
             ..., "--save-as-yaml", "-y", help="Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name."
         ),
     ] = False,
+    show_example: Annotated[
+        bool,
+        typer.Option(..., "--show-example", "-e", help="Show a long parallel YAML create configuration example."),
+    ] = False,
     interactive: Annotated[
         bool, typer.Option(..., "--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
     ] = False,
 ) -> None:
     """Create agents layout file, ready to run."""
     try:
+        if show_example:
+            typer.echo(PARALLEL_CREATE_EXAMPLE)
+            return
+
         normalized_separator = _decode_separator(separator=separator)
         if interactive:
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
