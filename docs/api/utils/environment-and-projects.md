@@ -67,6 +67,13 @@ cloud_defaults = read_default_cloud_config()
 print(cloud_defaults["root"])
 ```
 
+## Profile helpers
+
+Use `stackops.profile.create_helper.copy_assets_to_machine(...)` when a script needs to install the
+packaged shell/script assets into the StackOps config root. Use `stackops.profile.dotfiles_mapper`
+for typed dotfile mapper reads and writes. The profile modules that parse CLI options or apply
+machine-local symlink changes are command implementation modules, not general-purpose public APIs.
+
 ---
 
 ## API reference

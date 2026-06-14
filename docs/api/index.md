@@ -6,7 +6,11 @@
 - `stackops.cluster` for layouts, terminal sessions, and remote job execution
 - `stackops.utils.schemas.installer`, `stackops.jobs.installer`, and `stackops.utils.installer_utils` for curated, grouped, and URL-driven installers
 
-This reference follows those workflows instead of mirroring the raw package tree.
+This reference follows those workflows instead of mirroring the raw package tree. It is the
+user-facing API surface: typed models, orchestration classes, installer entrypoints, path and IO
+helpers, schedulers, interactive helpers, and config schemas. Private helpers, generated assets,
+platform probes, and modules whose main job is CLI wiring are internal unless a page below names
+them as an import pattern.
 
 ---
 
@@ -81,7 +85,7 @@ Start here if you need the curated installer catalog, group definitions, or inst
 from stackops.cluster.remote.models import RemoteStackOpsConfig
 from stackops.cluster.remote.remote_machine import RemoteMachine
 from stackops.cluster.sessions_managers.utils.maker import make_layout_from_functions
-from stackops.jobs.installer.package_groups import PACKAGE_GROUP2NAMES
+from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
 from stackops.utils.code import run_shell_script
 from stackops.utils.installer_utils.installer_cli import install_if_missing
 from stackops.utils.scheduler import Scheduler, Cache
