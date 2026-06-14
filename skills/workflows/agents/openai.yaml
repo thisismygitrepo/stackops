@@ -1,0 +1,4 @@
+interface:
+  display_name: "Workflows"
+  short_description: "Hand over active work to a fresh interactive agent window."
+  default_prompt: "Use the workflows handover command to transfer the current task to a new interactive agent window."
