@@ -2,6 +2,9 @@ from datetime import date
 
 from typer.testing import CliRunner
 
+from stackops.scripts.python.graph.cli_graph_apps import load_app_model
+from stackops.scripts.python.graph.cli_graph_nodes import build_children
+from stackops.scripts.python.graph.cli_graph_shared import AppRef
 from stackops.scripts.python.helpers.helpers_devops import cli_self_assets, stackops_skill_refs
 
 
@@ -72,3 +75,28 @@ def test_update_skill_refs_command_is_registered() -> None:
 
     assert result.exit_code == 0
     assert "update-skill-refs" in result.stdout
+
+
+def test_cli_graph_expands_static_loop_command_registrations() -> None:
+    app_model = load_app_model(
+        AppRef(
+            module="stackops.scripts.python.helpers.helpers_devops.cli_config_tmux",
+            factory="get_app",
+        )
+    )
+
+    children = build_children(
+        app_model=app_model,
+        parent_full_tokens=("devops", "config", "terminal", "tmux-style"),
+        parent_short_tokens=("d", "c", "t", "s"),
+    )
+    child_names = {child["name"] for child in children}
+
+    assert {
+        "install-oh-my-tmux",
+        "apply-stackops-local",
+        "preset",
+        "set-option",
+        "reload",
+        "status",
+    } <= child_names

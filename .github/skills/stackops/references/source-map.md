@@ -1,6 +1,6 @@
 # StackOps Source Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-12.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-14.
 
 Use this map to jump from a command path to the file that registers or implements it. For signatures, options, aliases, and full node metadata, inspect `src/stackops/scripts/python/graph/cli_graph.json`.
 
@@ -56,10 +56,10 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops repos sync` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `clone`
 - `devops repos register` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `capture`
 - `devops repos action` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `action`
-- `devops repos analyze` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `analyze_repo_development`
+- `devops repos analyze` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py` -> `analyze_repo_development`
 - `devops repos guard` -> `src/stackops/scripts/python/helpers/helpers_repos/cloud_repo_sync.py` -> `main`
-- `devops repos viz` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `gource_viz`
-- `devops repos count-lines` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `count_lines_in_repo`
+- `devops repos viz` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py` -> `gource_viz`
+- `devops repos count-lines` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py` -> `count_lines_in_repo`
 - `devops repos config-linters` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `config_linters`
 - `devops repos cleanup` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `cleanup`
 - `devops config sync` -> `src/stackops/profile/create_links_export.py` -> `main_from_parser`
@@ -110,7 +110,7 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops network vscode-share` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `vscode_share`
 - `devops execute` -> `src/stackops/scripts/python/devops.py` -> `execute`
 - `devops self install` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `install`
-- `devops self clone` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `clone`
+- `devops self clone` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_clone.py` -> `clone`
 - `devops self update` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `update`
 - `devops self status` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `status`
 - `devops self security scan` -> `src/stackops/jobs/installer/checks/security_cli.py` -> `scan`
@@ -124,12 +124,12 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops self explore dot` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `dot`
 - `devops self explore view` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `chart`
 - `devops self explore tui` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `navigate`
-- `devops self readme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `readme`
-- `devops self docs` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `docs`
-- `devops self build-installer` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `export`
-- `devops self download-installer` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `download_installer`
-- `devops self build-docker` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `build_docker`
-- `devops self build-graph` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `build_graph`
+- `devops self readme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_info.py` -> `readme`
+- `devops self docs` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_info.py` -> `docs`
+- `devops self build-installer` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_export.py` -> `export`
+- `devops self download-installer` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_export.py` -> `download_installer`
+- `devops self build-docker` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_info.py` -> `build_docker`
+- `devops self build-graph` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_info.py` -> `build_graph`
 - `devops self build-assets update-cli-graph` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_assets.py` -> `update_cli_graph`
 - `devops self build-assets regenerate-charts` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_assets.py` -> `regenerate_charts`
 - `devops self build-assets update-skill-refs` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_assets.py` -> `update_stackops_skill_refs`
@@ -150,7 +150,8 @@ Use this map to jump from a command path to the file that registers or implement
 - `terminal create-from-function` -> `src/stackops/scripts/python/terminal.py` -> `create_from_function`
 - `terminal balance-load` -> `src/stackops/scripts/python/terminal.py` -> `balance_load`
 - `terminal create-template` -> `src/stackops/scripts/python/terminal.py` -> `create_template`
-- `terminal summarize` -> `src/stackops/scripts/python/terminal.py` -> `summarize`
+- `terminal summary` -> `src/stackops/scripts/python/terminal_summary.py` -> `summary`
+- `terminal summarize` -> `src/stackops/scripts/python/terminal_summarize.py` -> `summarize`
 - `agents parallel create` -> `src/stackops/scripts/python/agents_parallel_commands.py` -> `agents_create`
 - `agents parallel create-context` -> `src/stackops/scripts/python/agents_parallel_commands.py` -> `create_context`
 - `agents parallel run-parallel` -> `src/stackops/scripts/python/agents_parallel_run_command.py` -> `run_parallel`
@@ -171,11 +172,11 @@ Use this map to jump from a command path to the file that registers or implement
 - `utils machine get-machine-specs` -> `src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py` -> `get_machine_specs`
 - `utils machine list-devices` -> `src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py` -> `list_devices`
 - `utils machine mount` -> `src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py` -> `mount_device`
-- `utils pyproject init-project` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `init_project`
-- `utils pyproject upgrade-packages` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `upgrade_packages`
-- `utils pyproject type-hint` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `type_hint`
-- `utils pyproject type-check` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `type_check`
-- `utils pyproject test-reference` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py` -> `reference_test`
+- `utils pyproject init-project` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_setup.py` -> `init_project`
+- `utils pyproject upgrade-packages` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_setup.py` -> `upgrade_packages`
+- `utils pyproject type-hint` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_setup.py` -> `type_hint`
+- `utils pyproject type-check` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_check.py` -> `type_check`
+- `utils pyproject test-reference` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_check.py` -> `reference_test`
 - `utils file edit` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `edit_file_with_hx`
 - `utils file download` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `download`
 - `utils file scrape` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `scrape`

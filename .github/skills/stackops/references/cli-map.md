@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-12.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-14.
 
 This reference intentionally uses:
 - direct commands only
@@ -149,6 +149,7 @@ stackops
 │  ├─ create-from-function
 │  ├─ balance-load
 │  ├─ create-template
+│  ├─ summary
 │  └─ summarize
 ├─ agents
 │  ├─ parallel

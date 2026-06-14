@@ -4135,6 +4135,504 @@
                     "children": [
                       {
                         "kind": "command",
+                        "name": "install-oh-my-tmux",
+                        "fullPath": "devops config terminal tmux-style install-oh-my-tmux",
+                        "shortPath": "d c t t i",
+                        "help": "Install Oh My Tmux and link tmux to it.",
+                        "source": {
+                          "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py",
+                          "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_tmux",
+                          "callable": "install_oh_my_tmux"
+                        },
+                        "signature": {
+                          "raw_lines": [
+                            "def install_oh_my_tmux(",
+                            "    update: Annotated[bool, typer.Option(\"--update\", \"-u\", help=\"Fast-forward an existing Oh My Tmux checkout.\")] = False,",
+                            "    apply_stackops_local_config: Annotated[bool, typer.Option(\"--apply-stackops-local\", \"-a\", help=\"Replace ~/.tmux.conf.local with the StackOps Oh My Tmux local config after installation.\")] = False,",
+                            "    force_local: Annotated[bool, typer.Option(\"--force-local\", \"-f\", help=\"Back up and replace an existing ~/.tmux.conf.local.\")] = False,",
+                            ") -> None:",
+                            "    \"\"\"Install Oh My Tmux through the shared StackOps installer.\"\"\"",
+                            "    _reject_native_windows()",
+                            "    from stackops.utils.installer_utils.installer_cli import main_installer_cli",
+                            "    main_installer_cli(which=\"oh-my-tmux\", group=False, interactive=False, explore=False, update=update, version=None)",
+                            "    if apply_stackops_local_config:",
+                            "        _write_stackops_local(_paths(\"home\"), force=force_local)",
+                            "    typer.echo(\"Done. Restart tmux or run `devops config terminal tmux-style reload --location home`.\")"
+                          ],
+                          "name": "install_oh_my_tmux",
+                          "parameters": [
+                            {
+                              "name": "update",
+                              "kind": "positional_or_keyword",
+                              "type": "bool",
+                              "default": false,
+                              "required": false,
+                              "annotation_raw": "Annotated[bool, typer.Option('--update', '-u', help='Fast-forward an existing Oh My Tmux checkout.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--update",
+                                  "-u"
+                                ],
+                                "long_flags": [
+                                  "--update"
+                                ],
+                                "short_flags": [
+                                  "-u"
+                                ],
+                                "help": "Fast-forward an existing Oh My Tmux checkout."
+                              }
+                            },
+                            {
+                              "name": "apply_stackops_local_config",
+                              "kind": "positional_or_keyword",
+                              "type": "bool",
+                              "default": false,
+                              "required": false,
+                              "annotation_raw": "Annotated[bool, typer.Option('--apply-stackops-local', '-a', help='Replace ~/.tmux.conf.local with the StackOps Oh My Tmux local config after installation.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--apply-stackops-local",
+                                  "-a"
+                                ],
+                                "long_flags": [
+                                  "--apply-stackops-local"
+                                ],
+                                "short_flags": [
+                                  "-a"
+                                ],
+                                "help": "Replace ~/.tmux.conf.local with the StackOps Oh My Tmux local config after installation."
+                              }
+                            },
+                            {
+                              "name": "force_local",
+                              "kind": "positional_or_keyword",
+                              "type": "bool",
+                              "default": false,
+                              "required": false,
+                              "annotation_raw": "Annotated[bool, typer.Option('--force-local', '-f', help='Back up and replace an existing ~/.tmux.conf.local.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--force-local",
+                                  "-f"
+                                ],
+                                "long_flags": [
+                                  "--force-local"
+                                ],
+                                "short_flags": [
+                                  "-f"
+                                ],
+                                "help": "Back up and replace an existing ~/.tmux.conf.local."
+                              }
+                            }
+                          ],
+                          "return": "None"
+                        },
+                        "typer": {
+                          "no_args_is_help": false
+                        },
+                        "doc": "Install Oh My Tmux through the shared StackOps installer.",
+                        "aliases": [
+                          {
+                            "name": "i",
+                            "hidden": true,
+                            "help": "Install Oh My Tmux and link tmux to it."
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "command",
+                        "name": "apply-stackops-local",
+                        "fullPath": "devops config terminal tmux-style apply-stackops-local",
+                        "shortPath": "d c t t l",
+                        "help": "Copy the StackOps Oh My Tmux local config.",
+                        "source": {
+                          "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py",
+                          "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_tmux",
+                          "callable": "apply_stackops_local"
+                        },
+                        "signature": {
+                          "raw_lines": [
+                            "def apply_stackops_local(",
+                            "    location: Annotated[TmuxInstallLocation, typer.Option(\"--location\", \"-l\", help=\"tmux config location to update.\")] = \"home\",",
+                            "    force: Annotated[bool, typer.Option(\"--force\", \"-f\", help=\"Back up and replace an existing local config.\")] = False,",
+                            ") -> None:",
+                            "    \"\"\"Copy StackOps' Oh My Tmux local customization file.\"\"\"",
+                            "    _reject_native_windows()",
+                            "    _write_stackops_local(_paths(location), force=force)"
+                          ],
+                          "name": "apply_stackops_local",
+                          "parameters": [
+                            {
+                              "name": "location",
+                              "kind": "positional_or_keyword",
+                              "type": "TmuxInstallLocation",
+                              "default": "home",
+                              "required": false,
+                              "annotation_raw": "Annotated[TmuxInstallLocation, typer.Option('--location', '-l', help='tmux config location to update.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--location",
+                                  "-l"
+                                ],
+                                "long_flags": [
+                                  "--location"
+                                ],
+                                "short_flags": [
+                                  "-l"
+                                ],
+                                "help": "tmux config location to update."
+                              }
+                            },
+                            {
+                              "name": "force",
+                              "kind": "positional_or_keyword",
+                              "type": "bool",
+                              "default": false,
+                              "required": false,
+                              "annotation_raw": "Annotated[bool, typer.Option('--force', '-f', help='Back up and replace an existing local config.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--force",
+                                  "-f"
+                                ],
+                                "long_flags": [
+                                  "--force"
+                                ],
+                                "short_flags": [
+                                  "-f"
+                                ],
+                                "help": "Back up and replace an existing local config."
+                              }
+                            }
+                          ],
+                          "return": "None"
+                        },
+                        "typer": {
+                          "no_args_is_help": false
+                        },
+                        "doc": "Copy StackOps' Oh My Tmux local customization file.",
+                        "aliases": [
+                          {
+                            "name": "l",
+                            "hidden": true,
+                            "help": "Copy the StackOps Oh My Tmux local config."
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "command",
+                        "name": "preset",
+                        "fullPath": "devops config terminal tmux-style preset",
+                        "shortPath": "d c t t p",
+                        "help": "Apply an Oh My Tmux color preset.",
+                        "source": {
+                          "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py",
+                          "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_tmux",
+                          "callable": "preset"
+                        },
+                        "signature": {
+                          "raw_lines": [
+                            "def preset(",
+                            "    which: Annotated[TmuxPreset, typer.Argument(help=\"Oh My Tmux color preset to apply.\")],",
+                            "    location: Annotated[TmuxInstallLocation, typer.Option(\"--location\", \"-l\", help=\"tmux config location to update.\")] = \"home\",",
+                            "    reload_config: Annotated[bool, typer.Option(\"--reload\", \"-r\", help=\"Reload tmux after updating the local config.\")] = False,",
+                            ") -> None:",
+                            "    \"\"\"Apply a color preset using Oh My Tmux theme variables.\"\"\"",
+                            "    _reject_native_windows()",
+                            "    paths = _paths(location)",
+                            "    for index, colour in enumerate(TMUX_PRESET_COLOURS[which], start=1):",
+                            "        _set_tmux_conf_assignment(paths.local_config_path, f\"tmux_conf_theme_colour_{index}\", colour, raw=False)",
+                            "    typer.echo(f\"Applied {which} preset to {paths.local_config_path}\")",
+                            "    if reload_config:",
+                            "        reload_tmux(location=location)"
+                          ],
+                          "name": "preset",
+                          "parameters": [
+                            {
+                              "name": "which",
+                              "kind": "positional_or_keyword",
+                              "type": "TmuxPreset",
+                              "default": null,
+                              "required": true,
+                              "annotation_raw": "Annotated[TmuxPreset, typer.Argument(help='Oh My Tmux color preset to apply.')]",
+                              "typer": {
+                                "kind": "argument",
+                                "param_decls": [],
+                                "long_flags": [],
+                                "short_flags": [],
+                                "help": "Oh My Tmux color preset to apply."
+                              }
+                            },
+                            {
+                              "name": "location",
+                              "kind": "positional_or_keyword",
+                              "type": "TmuxInstallLocation",
+                              "default": "home",
+                              "required": false,
+                              "annotation_raw": "Annotated[TmuxInstallLocation, typer.Option('--location', '-l', help='tmux config location to update.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--location",
+                                  "-l"
+                                ],
+                                "long_flags": [
+                                  "--location"
+                                ],
+                                "short_flags": [
+                                  "-l"
+                                ],
+                                "help": "tmux config location to update."
+                              }
+                            },
+                            {
+                              "name": "reload_config",
+                              "kind": "positional_or_keyword",
+                              "type": "bool",
+                              "default": false,
+                              "required": false,
+                              "annotation_raw": "Annotated[bool, typer.Option('--reload', '-r', help='Reload tmux after updating the local config.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--reload",
+                                  "-r"
+                                ],
+                                "long_flags": [
+                                  "--reload"
+                                ],
+                                "short_flags": [
+                                  "-r"
+                                ],
+                                "help": "Reload tmux after updating the local config."
+                              }
+                            }
+                          ],
+                          "return": "None"
+                        },
+                        "typer": {
+                          "no_args_is_help": false
+                        },
+                        "doc": "Apply a color preset using Oh My Tmux theme variables.",
+                        "aliases": [
+                          {
+                            "name": "p",
+                            "hidden": true,
+                            "help": "Apply an Oh My Tmux color preset."
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "command",
+                        "name": "set-option",
+                        "fullPath": "devops config terminal tmux-style set-option",
+                        "shortPath": "d c t t s",
+                        "help": "Set an Oh My Tmux tmux_conf_* option.",
+                        "source": {
+                          "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py",
+                          "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_tmux",
+                          "callable": "set_option"
+                        },
+                        "signature": {
+                          "raw_lines": [
+                            "def set_option(",
+                            "    name: Annotated[str, typer.Argument(help=\"Oh My Tmux variable name, for example tmux_conf_theme_colour_4.\")],",
+                            "    value: Annotated[str, typer.Argument(help=\"Value to write into the local config.\")],",
+                            "    location: Annotated[TmuxInstallLocation, typer.Option(\"--location\", \"-l\", help=\"tmux config location to update.\")] = \"home\",",
+                            "    raw: Annotated[bool, typer.Option(\"--raw\", \"-R\", help=\"Write VALUE without shell quoting.\")] = False,",
+                            "    reload_config: Annotated[bool, typer.Option(\"--reload\", \"-r\", help=\"Reload tmux after updating the local config.\")] = False,",
+                            ") -> None:",
+                            "    \"\"\"Set one Oh My Tmux variable in the local customization file.\"\"\"",
+                            "    _reject_native_windows()",
+                            "    paths = _paths(location)",
+                            "    _set_tmux_conf_assignment(paths.local_config_path, name, value, raw=raw)",
+                            "    if reload_config:",
+                            "        reload_tmux(location=location)"
+                          ],
+                          "name": "set_option",
+                          "parameters": [
+                            {
+                              "name": "name",
+                              "kind": "positional_or_keyword",
+                              "type": "str",
+                              "default": null,
+                              "required": true,
+                              "annotation_raw": "Annotated[str, typer.Argument(help='Oh My Tmux variable name, for example tmux_conf_theme_colour_4.')]",
+                              "typer": {
+                                "kind": "argument",
+                                "param_decls": [],
+                                "long_flags": [],
+                                "short_flags": [],
+                                "help": "Oh My Tmux variable name, for example tmux_conf_theme_colour_4."
+                              }
+                            },
+                            {
+                              "name": "value",
+                              "kind": "positional_or_keyword",
+                              "type": "str",
+                              "default": null,
+                              "required": true,
+                              "annotation_raw": "Annotated[str, typer.Argument(help='Value to write into the local config.')]",
+                              "typer": {
+                                "kind": "argument",
+                                "param_decls": [],
+                                "long_flags": [],
+                                "short_flags": [],
+                                "help": "Value to write into the local config."
+                              }
+                            },
+                            {
+                              "name": "location",
+                              "kind": "positional_or_keyword",
+                              "type": "TmuxInstallLocation",
+                              "default": "home",
+                              "required": false,
+                              "annotation_raw": "Annotated[TmuxInstallLocation, typer.Option('--location', '-l', help='tmux config location to update.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--location",
+                                  "-l"
+                                ],
+                                "long_flags": [
+                                  "--location"
+                                ],
+                                "short_flags": [
+                                  "-l"
+                                ],
+                                "help": "tmux config location to update."
+                              }
+                            },
+                            {
+                              "name": "raw",
+                              "kind": "positional_or_keyword",
+                              "type": "bool",
+                              "default": false,
+                              "required": false,
+                              "annotation_raw": "Annotated[bool, typer.Option('--raw', '-R', help='Write VALUE without shell quoting.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--raw",
+                                  "-R"
+                                ],
+                                "long_flags": [
+                                  "--raw"
+                                ],
+                                "short_flags": [
+                                  "-R"
+                                ],
+                                "help": "Write VALUE without shell quoting."
+                              }
+                            },
+                            {
+                              "name": "reload_config",
+                              "kind": "positional_or_keyword",
+                              "type": "bool",
+                              "default": false,
+                              "required": false,
+                              "annotation_raw": "Annotated[bool, typer.Option('--reload', '-r', help='Reload tmux after updating the local config.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--reload",
+                                  "-r"
+                                ],
+                                "long_flags": [
+                                  "--reload"
+                                ],
+                                "short_flags": [
+                                  "-r"
+                                ],
+                                "help": "Reload tmux after updating the local config."
+                              }
+                            }
+                          ],
+                          "return": "None"
+                        },
+                        "typer": {
+                          "no_args_is_help": false
+                        },
+                        "doc": "Set one Oh My Tmux variable in the local customization file.",
+                        "aliases": [
+                          {
+                            "name": "s",
+                            "hidden": true,
+                            "help": "Set an Oh My Tmux tmux_conf_* option."
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "command",
+                        "name": "reload",
+                        "fullPath": "devops config terminal tmux-style reload",
+                        "shortPath": "d c t t r",
+                        "help": "Reload tmux config.",
+                        "source": {
+                          "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_tmux.py",
+                          "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_tmux",
+                          "callable": "reload_tmux"
+                        },
+                        "signature": {
+                          "raw_lines": [
+                            "def reload_tmux(",
+                            "    location: Annotated[TmuxInstallLocation, typer.Option(\"--location\", \"-l\", help=\"tmux config location to reload.\")] = \"home\",",
+                            ") -> None:",
+                            "    \"\"\"Reload tmux from the Oh My Tmux main config.\"\"\"",
+                            "    _reject_native_windows()",
+                            "    paths = _paths(location)",
+                            "    if not paths.config_path.exists():",
+                            "        typer.echo(f\"Error: tmux config does not exist at {paths.config_path}\", err=True)",
+                            "        raise typer.Exit(code=1)",
+                            "    _run_checked([\"tmux\", \"source-file\", str(paths.config_path)])",
+                            "    typer.echo(f\"Reloaded {paths.config_path}\")"
+                          ],
+                          "name": "reload_tmux",
+                          "parameters": [
+                            {
+                              "name": "location",
+                              "kind": "positional_or_keyword",
+                              "type": "TmuxInstallLocation",
+                              "default": "home",
+                              "required": false,
+                              "annotation_raw": "Annotated[TmuxInstallLocation, typer.Option('--location', '-l', help='tmux config location to reload.')]",
+                              "typer": {
+                                "kind": "option",
+                                "param_decls": [
+                                  "--location",
+                                  "-l"
+                                ],
+                                "long_flags": [
+                                  "--location"
+                                ],
+                                "short_flags": [
+                                  "-l"
+                                ],
+                                "help": "tmux config location to reload."
+                              }
+                            }
+                          ],
+                          "return": "None"
+                        },
+                        "typer": {
+                          "no_args_is_help": false
+                        },
+                        "doc": "Reload tmux from the Oh My Tmux main config.",
+                        "aliases": [
+                          {
+                            "name": "r",
+                            "hidden": true,
+                            "help": "Reload tmux config."
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "command",
                         "name": "status",
                         "fullPath": "devops config terminal tmux-style status",
                         "shortPath": "d c t t status",
@@ -7581,7 +8079,27 @@
                         "",
                         "        sys.exit(1)",
                         "",
+                        "    if remote is not None:",
+                        "        from stackops.utils.code import run_lambda_function",
+                        "        from stackops.utils.optional_dependencies import PARAMIKO_UV_WITH",
+                        "",
+                        "        proc = run_lambda_function(",
+                        "            lambda: _run_add_ssh_key_with_paramiko(",
+                        "                pub_path=path,",
+                        "                pub_choose=choose,",
+                        "                pub_val=value,",
+                        "                from_github=github,",
+                        "                remote=remote,",
+                        "            ),",
+                        "            uv_with=list(PARAMIKO_UV_WITH),",
+                        "            uv_project_dir=None,",
+                        "        )",
+                        "        if proc.returncode != 0:",
+                        "            raise typer.Exit(code=proc.returncode)",
+                        "        return",
+                        "",
                         "    import stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key as helper",
+                        "",
                         "    helper.main(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote)"
                       ],
                       "name": "add_ssh_key",
@@ -13922,8 +14440,8 @@
                 "    source: Annotated[str, typer.Argument(help=\"📂 file/folder path to be taken from here.\")],",
                 "    target: Annotated[str, typer.Argument(help=\"🎯 file/folder path to be be sent to here.\")],",
                 "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-o\", help=\"📝 Overwrite existing file.\")] = defaults[\"overwrite\"],",
-                "    share_scope: Annotated[\"ShareScopeChoice | None\", typer.Option(\"--share-scope\", \"-s\", help=\"🔗 Share link scope: anonymous/a or organization/o.\")] = None,",
-                "    share_type: Annotated[\"ShareLinkTypeChoice | None\", typer.Option(\"--share-type\", \"-t\", help=\"🔗 Share link type: view/v, edit/e, or embed/m.\")] = None,",
+                "    share_scope: Annotated[ShareScopeChoice | None, typer.Option(\"--share-scope\", \"-s\", help=\"🔗 Share link scope: anonymous/a or organization/o.\")] = None,",
+                "    share_type: Annotated[ShareLinkTypeChoice | None, typer.Option(\"--share-type\", \"-t\", help=\"🔗 Share link type: view/v, edit/e, or embed/m.\")] = None,",
                 "    record_group: Annotated[str, typer.Option(\"--record-group\", \"-g\", help=\"🗂 Group name for mapper/data.yaml. Used when --record-name is passed.\")] = \"default\",",
                 "    record_name: Annotated[str | None, typer.Option(\"--record-name\", \"-n\", help=\"🏷 Record the upload in mapper/data.yaml with this entry name.\")] = None,",
                 "    record_os: Annotated[str, typer.Option(\"--record-os\", \"-F\", help=\"💻 OS filter for recorded uploads. Comma-separated: linux,darwin,windows. Defaults to all.\")] = \"linux,darwin,windows\",",
@@ -14013,10 +14531,10 @@
                 {
                   "name": "share_scope",
                   "kind": "positional_or_keyword",
-                  "type": "'ShareScopeChoice | None'",
+                  "type": "ShareScopeChoice | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated['ShareScopeChoice | None', typer.Option('--share-scope', '-s', help='🔗 Share link scope: anonymous/a or organization/o.')]",
+                  "annotation_raw": "Annotated[ShareScopeChoice | None, typer.Option('--share-scope', '-s', help='🔗 Share link scope: anonymous/a or organization/o.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -14035,10 +14553,10 @@
                 {
                   "name": "share_type",
                   "kind": "positional_or_keyword",
-                  "type": "'ShareLinkTypeChoice | None'",
+                  "type": "ShareLinkTypeChoice | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated['ShareLinkTypeChoice | None', typer.Option('--share-type', '-t', help='🔗 Share link type: view/v, edit/e, or embed/m.')]",
+                  "annotation_raw": "Annotated[ShareLinkTypeChoice | None, typer.Option('--share-type', '-t', help='🔗 Share link type: view/v, edit/e, or embed/m.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [

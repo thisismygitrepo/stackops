@@ -1,4 +1,5 @@
 import ast
+from copy import deepcopy
 from typing import Any
 
 from stackops.scripts.python.graph.cli_graph_eval import evaluate_typer_config
@@ -50,8 +51,23 @@ def extract_app_model(
     order = 0
     local_modules, local_names = collect_local_imports(function_info)
 
-    def process_statements(statements: list[ast.stmt]) -> None:
+    def process_registration_expr(expr: ast.AST) -> None:
         nonlocal order
+
+        registration = parse_registration(
+            expr,
+            module_info=module_info,
+            env=env,
+            function_docs=function_docs,
+            local_modules=local_modules,
+            local_names=local_names,
+            order=order,
+        )
+        if registration is not None:
+            order += 1
+            registrations.append(registration)
+
+    def process_statements(statements: list[ast.stmt]) -> None:
         nonlocal return_app_var
 
         for statement in statements:
@@ -107,24 +123,23 @@ def extract_app_model(
                     process_statements(statement.orelse)
                 continue
 
+            if isinstance(statement, ast.For):
+                loop_bindings = build_static_loop_bindings(statement)
+                if loop_bindings is None:
+                    continue
+                for binding in loop_bindings:
+                    for body_statement in statement.body:
+                        bound_statement = replace_bound_names(body_statement, binding)
+                        process_statements([bound_statement])
+                continue
+
             if isinstance(statement, ast.Return):
                 if isinstance(statement.value, ast.Name):
                     return_app_var = statement.value.id
                 continue
 
             if isinstance(statement, ast.Expr):
-                registration = parse_registration(
-                    statement.value,
-                    module_info=module_info,
-                    env=env,
-                    function_docs=function_docs,
-                    local_modules=local_modules,
-                    local_names=local_names,
-                    order=order,
-                )
-                if registration is not None:
-                    order += 1
-                    registrations.append(registration)
+                process_registration_expr(statement.value)
                 continue
 
     process_statements(function_info.body)
@@ -145,3 +160,55 @@ def extract_app_model(
         app_config=app_config,
         registrations=registrations,
     )
+
+
+def build_static_loop_bindings(statement: ast.For) -> list[dict[str, ast.AST]] | None:
+    if not isinstance(statement.iter, ast.Tuple | ast.List):
+        return None
+
+    bindings: list[dict[str, ast.AST]] = []
+    for item in statement.iter.elts:
+        binding = bind_loop_target(statement.target, item)
+        if binding is None:
+            return None
+        bindings.append(binding)
+    return bindings
+
+
+def bind_loop_target(target: ast.AST, value: ast.AST) -> dict[str, ast.AST] | None:
+    if isinstance(target, ast.Name):
+        return {target.id: value}
+
+    if not isinstance(target, ast.Tuple):
+        return None
+    if not isinstance(value, ast.Tuple | ast.List):
+        return None
+    if len(target.elts) != len(value.elts):
+        return None
+
+    binding: dict[str, ast.AST] = {}
+    for target_item, value_item in zip(target.elts, value.elts, strict=True):
+        if not isinstance(target_item, ast.Name):
+            return None
+        binding[target_item.id] = value_item
+    return binding
+
+
+class BoundNameReplacer(ast.NodeTransformer):
+    def __init__(self, bindings: dict[str, ast.AST]) -> None:
+        self.bindings = bindings
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if not isinstance(node.ctx, ast.Load):
+            return node
+        replacement = self.bindings.get(node.id)
+        if replacement is None:
+            return node
+        return deepcopy(replacement)
+
+
+def replace_bound_names(statement: ast.stmt, bindings: dict[str, ast.AST]) -> ast.stmt:
+    replaced = BoundNameReplacer(bindings).visit(deepcopy(statement))
+    if not isinstance(replaced, ast.stmt):
+        raise TypeError(f"Expected statement replacement, got {type(replaced).__name__}")
+    return replaced
