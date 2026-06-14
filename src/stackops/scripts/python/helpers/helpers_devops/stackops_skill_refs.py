@@ -8,7 +8,7 @@ from typing import Any
 from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
 
 
-STACKOPS_SKILL_REFERENCES_RELATIVE_PATH = Path(".github", "skills", "stackops", "references")
+STACKOPS_SKILL_REFERENCES_RELATIVE_PATH = Path("skills", "stackops", "references")
 STACKOPS_SKILL_CLI_MAP_RELATIVE_PATH = STACKOPS_SKILL_REFERENCES_RELATIVE_PATH.joinpath("cli-map.md")
 STACKOPS_SKILL_SOURCE_MAP_RELATIVE_PATH = STACKOPS_SKILL_REFERENCES_RELATIVE_PATH.joinpath("source-map.md")
 

@@ -40,7 +40,7 @@
     "stackops": {
       "source": "thisismygitrepo/stackops",
       "sourceType": "github",
-      "skillPath": ".github/skills/stackops/SKILL.md",
+      "skillPath": "skills/stackops/SKILL.md",
       "computedHash": "17219d4e0f949908709d52f0e0be025e4554aba4e464e0f6b1f5197f345835d6"
     }
   }

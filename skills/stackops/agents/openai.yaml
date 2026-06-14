@@ -1,0 +1,4 @@
+interface:
+  display_name: "StackOps"
+  short_description: "Use StackOps CLI and source maps"
+  default_prompt: "Use $stackops to inspect a StackOps command path and map it to source."

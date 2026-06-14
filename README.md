@@ -64,6 +64,15 @@ stackops --help
 </details>
 
 
+## Codex Skill
+
+Install the StackOps skill for Codex with:
+
+```bash
+bunx skills add thisismygitrepo/stackops --skill stackops --global --agent codex --yes
+```
+
+
 ## Quick Init
 
 Run these once StackOps is installed.
