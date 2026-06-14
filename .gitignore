@@ -9,6 +9,9 @@
 .specify
 bin
 .ai
+.augment
+.kilocode
+.qwen
 workspace
 .idea
 .vs
@@ -166,6 +169,7 @@ dmypy.json
 .links
 notebooks
 CLAUDE.md
+.claude/
 .cursor
 # scripts
 .github/instructions
@@ -179,7 +183,6 @@ CRUSH.md
 
 AGENTS.md
 node_modules
-.claude/settings.local.json
 CLAUDE.local.md
 .dmux/
 

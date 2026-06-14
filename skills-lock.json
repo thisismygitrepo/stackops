@@ -36,6 +36,12 @@
       "sourceType": "github",
       "skillPath": "skills/productivity/grill-me/SKILL.md",
       "computedHash": "784f0dbb7403b0f00324bce9a112f715342777a0daee7bbb7385f9c6f0a170ea"
+    },
+    "stackops": {
+      "source": "thisismygitrepo/stackops",
+      "sourceType": "github",
+      "skillPath": ".github/skills/stackops/SKILL.md",
+      "computedHash": "17219d4e0f949908709d52f0e0be025e4554aba4e464e0f6b1f5197f345835d6"
     }
   }
 }
