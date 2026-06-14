@@ -363,12 +363,16 @@ def add_skill(
         _SKILL_INSTALL_BACKEND,
         typer.Option("--backend", "-b", help="Package runner backend for the upstream skills CLI."),
     ] = "bunx",
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Pass --yes to the upstream skills CLI."),
+    ] = False,
 ) -> None:
     """Add a skill through the upstream skills CLI."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
-        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory, backend=backend)
+        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory, backend=backend, yes=yes)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     raise typer.Exit(code=return_code)

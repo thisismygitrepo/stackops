@@ -65,7 +65,12 @@ def parse_requested_skill_agent_targets(*, raw_value: str | None) -> tuple[str, 
 
 
 def build_agent_skill_install_commands(
-    *, skill_names: Sequence[str], agent_targets: Sequence[str], scope: SKILL_INSTALL_SCOPE, backend: SKILL_INSTALL_BACKEND
+    *,
+    skill_names: Sequence[str],
+    agent_targets: Sequence[str],
+    scope: SKILL_INSTALL_SCOPE,
+    backend: SKILL_INSTALL_BACKEND,
+    yes: bool,
 ) -> tuple[tuple[str, ...], ...]:
     commands: list[tuple[str, ...]] = []
     for skill_name in skill_names:
@@ -76,7 +81,8 @@ def build_agent_skill_install_commands(
         command = [backend, SKILLS_CLI_PACKAGE, "add", source.source]
         if source.skill is not None:
             command.extend(("--skill", source.skill))
-        command.append("--yes")
+        if yes:
+            command.append("--yes")
         if scope == "global":
             command.append("--global")
         if len(agent_targets) > 0:
@@ -106,12 +112,22 @@ def run_agent_skill_install_commands(*, install_root: Path, commands: Sequence[t
 
 
 def add_skill(
-    *, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None, backend: SKILL_INSTALL_BACKEND
+    *,
+    skill_name: str | None,
+    agent: str | None,
+    scope: SKILL_INSTALL_SCOPE,
+    directory: str | None,
+    backend: SKILL_INSTALL_BACKEND,
+    yes: bool,
 ) -> int:
     install_root = resolve_agent_skill_install_root(directory=directory)
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
     resolved_skill_name = choose_requested_skill_name() if skill_name is None else skill_name
     commands = build_agent_skill_install_commands(
-        skill_names=(resolved_skill_name,), agent_targets=agent_targets, scope=scope, backend=backend
+        skill_names=(resolved_skill_name,),
+        agent_targets=agent_targets,
+        scope=scope,
+        backend=backend,
+        yes=yes,
     )
     return run_agent_skill_install_commands(install_root=install_root, commands=commands)
