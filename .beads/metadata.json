@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "embedded",
-  "dolt_database": "stackops",
-  "project_id": "d3745187-5bb2-4a26-b5fa-b041f2a8818a"
-}
