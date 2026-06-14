@@ -113,14 +113,14 @@ agents run-prompt --show-format
 
 - `--agent`/`-a` accepts `codex`/`x`, `copilot`/`c`, `pi`/`p`, or `opencode`/`omp`/`o`
 - `--caveman`/`-c` starts the session with the caveman wenyan-full prompt
-- `--overhead`/`-o` launches the session through overhead
+- `--headroom`/`-h` launches `codex` or `copilot` through headroom
 
 Examples:
 
 ```bash
 agents run-interactive --agent codex
 agents run-interactive --agent copilot --caveman
-agents run-interactive --agent pi --overhead
+agents run-interactive --agent codex --caveman --headroom
 ```
 
 `ask` is the lighter-weight direct path. Current behavior to keep in mind:

@@ -1,6 +1,7 @@
 """Agents management commands - lazy loading subcommands."""
 
 from pathlib import Path
+import shutil
 from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 
 import typer
@@ -13,13 +14,15 @@ _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx"]
+_HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
 INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "omp", "o"]
 _CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $caveman wenyan-full for this entire session."
-_OVERHEAD_COMMAND: Final[str] = "overhead"
+_HEADROOM_COMMAND: Final[str] = "headroom"
+_HEADROOM_AGENTS: Final[tuple[_HEADROOM_AGENT, ...]] = ("codex", "copilot")
 _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, AGENTS]] = {
     "codex": "codex",
     "x": "codex",
@@ -200,9 +203,16 @@ def _interactive_agent_command(agent: AGENTS, caveman: bool) -> list[str]:
             raise ValueError(f"Unsupported interactive agent: {agent}")
 
 
-def _apply_overhead(command: list[str], overhead: bool) -> list[str]:
-    if overhead:
-        return [_OVERHEAD_COMMAND, "--", *command]
+def _apply_headroom(command: list[str], agent: AGENTS, headroom: bool) -> list[str]:
+    if headroom:
+        resolved_headroom = shutil.which(_HEADROOM_COMMAND)
+        if resolved_headroom is None:
+            raise ValueError("Required command not found: headroom. Install headroom or run without --headroom.")
+        if agent not in _HEADROOM_AGENTS:
+            supported_agents = ", ".join(_HEADROOM_AGENTS)
+            raise ValueError(f"headroom does not support {agent}. Supported agents: {supported_agents}.")
+        passthrough_args = command[1:]
+        return [resolved_headroom, "wrap", agent, "--", *passthrough_args]
     return command
 
 
@@ -215,16 +225,21 @@ def run_interactive(
         bool,
         typer.Option(..., "--caveman", "-c", help="Start the session with the caveman wenyan-full prompt."),
     ] = False,
-    overhead: Annotated[
+    headroom: Annotated[
         bool,
-        typer.Option(..., "--overhead", "-o", help="Launch the session through overhead."),
+        typer.Option(..., "--headroom", "-h", help="Launch the session through headroom."),
     ] = False,
 ) -> None:
     """Launch an agent with reasonable defaults."""
     import shlex
 
     resolved_agent = _resolve_interactive_agent(agent=agent)
-    command = _apply_overhead(command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), overhead=overhead)
+    try:
+        command = _apply_headroom(
+            command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
     from stackops.utils.code import exit_then_run_shell_script
 
     exit_then_run_shell_script(script=shlex.join(command), strict=False)

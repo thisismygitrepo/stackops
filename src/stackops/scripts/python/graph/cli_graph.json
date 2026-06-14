@@ -20619,16 +20619,21 @@
                 "        bool,",
                 "        typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with the caveman wenyan-full prompt.\"),",
                 "    ] = False,",
-                "    overhead: Annotated[",
+                "    headroom: Annotated[",
                 "        bool,",
-                "        typer.Option(..., \"--overhead\", \"-o\", help=\"Launch the session through overhead.\"),",
+                "        typer.Option(..., \"--headroom\", \"-h\", help=\"Launch the session through headroom.\"),",
                 "    ] = False,",
                 ") -> None:",
                 "    \"\"\"Launch an agent with reasonable defaults.\"\"\"",
                 "    import shlex",
                 "",
                 "    resolved_agent = _resolve_interactive_agent(agent=agent)",
-                "    command = _apply_overhead(command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), overhead=overhead)",
+                "    try:",
+                "        command = _apply_headroom(",
+                "            command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom",
+                "        )",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error",
                 "    from stackops.utils.code import exit_then_run_shell_script",
                 "",
                 "    exit_then_run_shell_script(script=shlex.join(command), strict=False)"
@@ -20682,25 +20687,25 @@
                   }
                 },
                 {
-                  "name": "overhead",
+                  "name": "headroom",
                   "kind": "positional_or_keyword",
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--overhead', '-o', help='Launch the session through overhead.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--headroom', '-h', help='Launch the session through headroom.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--overhead",
-                      "-o"
+                      "--headroom",
+                      "-h"
                     ],
                     "long_flags": [
-                      "--overhead"
+                      "--headroom"
                     ],
                     "short_flags": [
-                      "-o"
+                      "-h"
                     ],
-                    "help": "Launch the session through overhead.",
+                    "help": "Launch the session through headroom.",
                     "default": "..."
                   }
                 }
