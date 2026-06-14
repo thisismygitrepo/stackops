@@ -114,3 +114,25 @@ def test_choose_idle_kill_with_all_uses_all_sessions(monkeypatch: pytest.MonkeyP
     assert payload == "tmux kill-pane -t %1"
     assert killed_targets == []
     assert observed_sessions == [["alpha", "beta"]]
+
+
+def test_choose_kill_all_reports_all_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_list_session_names() -> list[str]:
+        return ["alpha", "beta"]
+
+    monkeypatch.setattr(_tmux_backend, "list_session_names", fake_list_session_names)
+
+    action, payload, killed_targets = _tmux_backend.choose_kill_target(
+        name=None,
+        kill_all=True,
+        idle=False,
+        window=False,
+    )
+
+    expected_targets: list[KilledTarget] = [
+        {"action": "session", "session": "alpha", "window": "-", "detail": "-"},
+        {"action": "session", "session": "beta", "window": "-", "detail": "-"},
+    ]
+    assert action == "run_script"
+    assert payload == "tmux kill-server"
+    assert killed_targets == expected_targets

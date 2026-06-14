@@ -207,7 +207,17 @@ def choose_kill_target(
         return _choose_idle_kill_target(sessions=[payload])
 
     if kill_all:
-        return ("run_script", "tmux kill-server", [])
+        sessions = list_session_names()
+        killed_targets: list[KilledTarget] = [
+            {
+                "action": "session",
+                "session": session_name,
+                "window": "-",
+                "detail": "-",
+            }
+            for session_name in sessions
+        ]
+        return ("run_script", "tmux kill-server", killed_targets)
     if name is not None:
         return ("run_script", kill_script_for_target(session_name=name, quote_fn=quote), [])
 
