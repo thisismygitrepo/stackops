@@ -95,13 +95,16 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 - `--context-yaml-path` plus `--context-name`
 - `--source`, `-s` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, or `library`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
+- free-form prompt parts after `--`; option-looking tokens after the delimiter are prompt text, not StackOps flags
 
 For `run-prompt`, `--agent` defaults to `copilot`. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
+Shell metacharacters such as `|`, `>`, `$`, and `*` are still interpreted by your shell before StackOps receives the prompt.
 
 Examples:
 
 ```bash
 agents run-prompt --agent codex --reasoning high --context-path ./context.md "inspect this repo"
+agents run-prompt --agent codex --reasoning high --context-path ./context.md -- inspect this repo --include-hidden
 agents run-prompt --agent copilot --reasoning high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --context-name docs.cli -s all "update the assigned docs"
 agents run-prompt --agent agy --context-path ./context.md "inspect this repo"

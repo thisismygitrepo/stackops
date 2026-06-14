@@ -246,7 +246,13 @@ def run_interactive(
 
 
 def run_prompt(
-    prompt: Annotated[str | None, typer.Argument(help="Prompt text (optional positional argument). If omitted, an empty prompt is used.")] = None,
+    prompt: Annotated[
+        list[str],
+        typer.Argument(
+            default_factory=list,
+            help="Prompt text. Use -- before the prompt to pass option-looking text as prompt content.",
+        ),
+    ],
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
     reasoning_effort: Annotated[
         ReasoningEffort | None,
@@ -307,7 +313,7 @@ def run_prompt(
 
     try:
         impl(
-            prompt=prompt,
+            prompt=" ".join(prompt) if prompt else None,
             agent=agent,
             reasoning_effort=reasoning_effort,
             context=context,

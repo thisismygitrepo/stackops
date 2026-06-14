@@ -1,6 +1,29 @@
 import pytest
+from typer.testing import CliRunner
 
 from stackops.scripts.python import agents
+from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
+
+
+def _capture_run_prompt(monkeypatch: pytest.MonkeyPatch) -> list[str | None]:
+    captured_prompts: list[str | None] = []
+
+    def fake_run(
+        prompt: str | None,
+        agent: object,
+        reasoning_effort: object,
+        context: str | None,
+        context_path: str | None,
+        prompts_yaml_path: str | None,
+        context_name: str | None,
+        source: object,
+        edit: bool,
+        show_prompts_yaml_format: bool,
+    ) -> None:
+        captured_prompts.append(prompt)
+
+    monkeypatch.setattr(agents_run_impl, "run", fake_run)
+    return captured_prompts
 
 
 def test_apply_headroom_uses_resolved_executable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -35,3 +58,21 @@ def test_apply_headroom_rejects_unsupported_agent(monkeypatch: pytest.MonkeyPatc
 
     with pytest.raises(ValueError, match="headroom does not support opencode"):
         agents._apply_headroom(command=["omp"], agent="opencode", headroom=True)
+
+
+def test_run_prompt_accepts_unquoted_prompt_parts(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_prompts = _capture_run_prompt(monkeypatch=monkeypatch)
+
+    result = CliRunner().invoke(agents.get_app(), ["run-prompt", "inspect", "this", "repo"])
+
+    assert result.exit_code == 0, result.output
+    assert captured_prompts == ["inspect this repo"]
+
+
+def test_run_prompt_accepts_option_looking_prompt_after_delimiter(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_prompts = _capture_run_prompt(monkeypatch=monkeypatch)
+
+    result = CliRunner().invoke(agents.get_app(), ["run-prompt", "--", "review", "--flag-like", "-x"])
+
+    assert result.exit_code == 0, result.output
+    assert captured_prompts == ["review --flag-like -x"]
