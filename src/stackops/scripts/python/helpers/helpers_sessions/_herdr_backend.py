@@ -96,6 +96,38 @@ def _running_session_names(sessions: Iterable[JsonObject]) -> list[str]:
     return names
 
 
+def _running_sessions(sessions: Iterable[JsonObject]) -> list[JsonObject]:
+    running_sessions: list[JsonObject] = []
+    for session in sessions:
+        if bool(session.get("running")):
+            running_sessions.append(session)
+    return running_sessions
+
+
+def _stopped_sessions(sessions: Iterable[JsonObject]) -> list[JsonObject]:
+    stopped_sessions: list[JsonObject] = []
+    for session in sessions:
+        if not bool(session.get("running")):
+            stopped_sessions.append(session)
+    return stopped_sessions
+
+
+def _stopped_session_names(sessions: Iterable[JsonObject]) -> list[str]:
+    names: list[str] = []
+    for session in sessions:
+        name = _session_name(session)
+        if name is not None and not bool(session.get("running")):
+            names.append(name)
+    return names
+
+
+def _session_by_name(sessions: Iterable[JsonObject], name: str) -> JsonObject | None:
+    for session in sessions:
+        if _session_name(session) == name:
+            return session
+    return None
+
+
 def _new_session_name() -> str:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     suffix = uuid.uuid4().hex[:6]
@@ -119,6 +151,10 @@ def new_session_script(kill_all: bool, sessions: list[JsonObject] | None = None)
 
 def stop_session_script(name: str) -> str:
     return f"herdr session stop {quote(name)} --json"
+
+
+def delete_session_script(name: str) -> str:
+    return f"herdr session delete {quote(name)} --json"
 
 
 def _tab_entries(session_name: str) -> list[JsonObject]:
@@ -226,11 +262,25 @@ def _session_label_for_kill_option(session: JsonObject) -> str | None:
     session_name = _session_name(session)
     if session_name is None:
         return None
+    if not bool(session.get("running")):
+        return None
     label = f"[{session_name}] SESSION"
     if bool(session.get("default")):
         label += " (default)"
+    label += " (running)"
+    return label
+
+
+def _session_label_for_delete_option(session: JsonObject) -> str | None:
+    session_name = _session_name(session)
+    if session_name is None:
+        return None
     if bool(session.get("running")):
-        label += " (running)"
+        return None
+    label = f"[{session_name}] SESSION"
+    if bool(session.get("default")):
+        label += " (default)"
+    label += " (stopped)"
     return label
 
 
@@ -332,11 +382,13 @@ def choose_session(
     if new_session:
         return ("handoff_script", new_session_script(kill_all=kill_all, sessions=sessions))
 
-    if len(sessions) == 0:
+    running_sessions = _running_sessions(sessions)
+
+    if len(running_sessions) == 0:
         return ("handoff_script", "herdr")
 
     if window:
-        active_sessions = _running_session_names(sessions)
+        active_sessions = _running_session_names(running_sessions)
         if len(active_sessions) == 0:
             return ("error", "No running Herdr sessions are available for --window selection.")
         option_to_script, options_to_preview_mapping = _build_window_target_options(
@@ -371,15 +423,15 @@ def choose_session(
             return ("error", f"Unknown Herdr target selected: {selection}")
         return ("handoff_script", script)
 
-    if len(sessions) == 1:
-        session_name = _session_name(sessions[0])
+    if len(running_sessions) == 1:
+        session_name = _session_name(running_sessions[0])
         if session_name is None:
             return ("error", "Herdr session list did not include a usable session name.")
         return ("handoff_script", attach_script_from_name(session_name))
 
     display_to_session = {
         session_name: session
-        for session in sessions
+        for session in running_sessions
         if (session_name := _session_name(session)) is not None
     }
     options_to_preview_mapping = {
@@ -415,31 +467,88 @@ def choose_kill_target(
     kill_all: bool,
     idle: bool,
     window: bool,
+    delete: bool,
 ) -> tuple[str, str | None, list[KilledTarget]]:
     if idle:
         return ("error", "--idle is only supported for the tmux backend because Herdr shell-idle status is not available.", [])
     sessions = _session_entries()
     if sessions is None:
         return ("error", "Unable to list Herdr sessions. Confirm `herdr session list --json` works.", [])
+    running_sessions = _running_sessions(sessions)
+    stopped_sessions = _stopped_sessions(sessions)
+
+    if delete:
+        if window:
+            return ("error", "--delete cannot be used together with --window.", [])
+
+        if kill_all:
+            scripts = [delete_session_script(session_name) for session_name in _stopped_session_names(stopped_sessions)]
+            if len(scripts) == 0:
+                return ("error", "No stopped Herdr sessions are available to delete.", [])
+            return ("run_script", "\n".join(scripts), [])
+
+        if name is not None:
+            session = _session_by_name(sessions, name)
+            if session is None:
+                return ("error", f"No Herdr session named '{name}' is available to delete.", [])
+            if bool(session.get("running")):
+                return ("error", f"Herdr session '{name}' is running and cannot be deleted.", [])
+            return ("run_script", delete_session_script(name), [])
+
+        if len(stopped_sessions) == 0:
+            return ("error", "No stopped Herdr sessions are available to delete.", [])
+
+        options_to_script: dict[str, str] = {}
+        options_to_preview_mapping: dict[str, str] = {}
+        option_parent_labels: dict[str, tuple[str, ...]] = {}
+        for session in stopped_sessions:
+            session_name = _session_name(session)
+            session_label = _session_label_for_delete_option(session)
+            if session_name is None or session_label is None:
+                continue
+            options_to_script[session_label] = delete_session_script(session_name)
+            options_to_preview_mapping[session_label] = _session_preview(session)
+            option_parent_labels[session_label] = ()
+
+        selections = interactive_choose_with_preview(
+            msg="Choose a stopped Herdr session to delete:",
+            options_to_preview_mapping=options_to_preview_mapping,
+            multi=True,
+        )
+        if len(selections) == 0:
+            return ("error", "No Herdr session selected for deletion.", [])
+        scripts, unknown_selection = collect_selected_option_scripts(
+            selections=selections,
+            options_to_script=options_to_script,
+            option_parent_labels=option_parent_labels,
+        )
+        if unknown_selection is not None:
+            return ("error", f"Unknown Herdr session selected for deletion: {unknown_selection}", [])
+        return ("run_script", "\n".join(scripts), [])
 
     if kill_all:
-        scripts = [stop_session_script(session_name) for session_name in _running_session_names(sessions)]
+        scripts = [stop_session_script(session_name) for session_name in _running_session_names(running_sessions)]
         if len(scripts) == 0:
             return ("error", "No running Herdr sessions are available to kill.", [])
         return ("run_script", "\n".join(scripts), [])
 
     if name is not None:
+        session = _session_by_name(sessions, name)
+        if session is None:
+            return ("error", f"No Herdr session named '{name}' is available to kill.", [])
+        if not bool(session.get("running")):
+            return ("error", f"Herdr session '{name}' is stopped and cannot be killed.", [])
         return ("run_script", stop_session_script(name), [])
 
-    if len(sessions) == 0:
-        return ("error", "No Herdr sessions are available to kill.", [])
+    if len(running_sessions) == 0:
+        return ("error", "No running Herdr sessions are available to kill.", [])
 
     options_to_script: dict[str, str] = {}
     options_to_preview_mapping: dict[str, str] = {}
     option_parent_labels: dict[str, tuple[str, ...]] = {}
 
     if window:
-        for session in sessions:
+        for session in running_sessions:
             session_name = _session_name(session)
             if session_name is None:
                 continue
@@ -449,7 +558,7 @@ def choose_kill_target(
             options_to_script[session_label] = stop_session_script(session_name)
             options_to_preview_mapping[session_label] = _session_preview(session)
             option_parent_labels[session_label] = ()
-        active_sessions = _running_session_names(sessions)
+        active_sessions = _running_session_names(running_sessions)
         target_scripts, target_previews = _build_window_target_options(
             active_sessions,
             for_kill=True,
@@ -457,7 +566,7 @@ def choose_kill_target(
         options_to_script.update(target_scripts)
         options_to_preview_mapping.update(target_previews)
         session_label_by_name: dict[str, str] = {}
-        for session in sessions:
+        for session in running_sessions:
             session_name = _session_name(session)
             session_label = _session_label_for_kill_option(session)
             if session_name is not None and session_label is not None:
@@ -482,7 +591,7 @@ def choose_kill_target(
             option_parent_labels[target_label] = tuple(parent_labels)
         msg = "Choose a Herdr session, tab, or pane to kill:"
     else:
-        for session in sessions:
+        for session in running_sessions:
             session_name = _session_name(session)
             if session_name is None:
                 continue

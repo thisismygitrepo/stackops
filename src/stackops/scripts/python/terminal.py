@@ -168,6 +168,7 @@ def kill_session_target(
         kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions. With --idle, inspect all sessions for idle panes/windows.", show_default=True)] = False,
         idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
+        delete: Annotated[bool, typer.Option("--delete", help="Delete stopped Herdr session records instead of killing running sessions.", show_default=True)] = False,
         backend: Annotated[Literal["tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
         ) -> None:
     """Choose one or more session targets to kill."""
@@ -193,6 +194,7 @@ def kill_session_target(
         kill_all=kill_all,
         idle=idle,
         window=window,
+        delete=delete,
     )
     if action == "error":
         typer.echo(payload, err=True, color=True)
