@@ -186,6 +186,15 @@ def kill_session_target(
         raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import print_kill_summary, resolve_session_backend
     backend_resolved = resolve_session_backend(backend)
+    if delete and backend_resolved != "herdr":
+        typer.echo("Error: --delete is only supported by the Herdr backend.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if delete and window:
+        typer.echo("Error: --delete cannot be used together with --window.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if delete and idle:
+        typer.echo("Error: --delete cannot be used together with --idle.", err=True, color=True)
+        raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl
 
     action, payload, killed_targets = impl(

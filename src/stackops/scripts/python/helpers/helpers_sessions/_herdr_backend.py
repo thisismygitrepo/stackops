@@ -509,6 +509,8 @@ def choose_kill_target(
             options_to_script[session_label] = delete_session_script(session_name)
             options_to_preview_mapping[session_label] = _session_preview(session)
             option_parent_labels[session_label] = ()
+        if len(options_to_script) == 0:
+            return ("error", "No stopped Herdr sessions with usable names are available to delete.", [])
 
         selections = interactive_choose_with_preview(
             msg="Choose a stopped Herdr session to delete:",
