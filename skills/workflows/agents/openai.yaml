@@ -1,4 +1,4 @@
 interface:
   display_name: "Workflows"
   short_description: "Use handover, parallel-agents, or parallel-isolated-agents workflows for herdr-managed agents."
-  default_prompt: "Use workflows `handover` to transfer active work, `parallel-agents` to coordinate external interactive agents, or `parallel-isolated-agents` to create isolated worktree agents through herdr."
+  default_prompt: "Use workflows `handover` to transfer active work, `parallel-agents` to coordinate external interactive agents, or `parallel-isolated-agents` to create isolated worktree agents through herdr. Default to one agent per tab/window; use multiple panes in one tab/window only when explicitly requested, and keep requested panes roughly equal."
