@@ -423,12 +423,6 @@ def choose_session(
             return ("error", f"Unknown Herdr target selected: {selection}")
         return ("handoff_script", script)
 
-    if len(running_sessions) == 1:
-        session_name = _session_name(running_sessions[0])
-        if session_name is None:
-            return ("error", "Herdr session list did not include a usable session name.")
-        return ("handoff_script", attach_script_from_name(session_name))
-
     display_to_session = {
         session_name: session
         for session in running_sessions

@@ -1,6 +1,6 @@
 ---
 name: workflows
-description: Manage external interactive agent workflows through herdr. Use when the user invokes handover, parallel-isolated-agents, asks to hand off current work, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/another CLI agent to continue or coordinate work.
+description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, parallel-isolated-agents, asks to hand off current work, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/another CLI agent to continue or coordinate work.
 ---
 
 # Workflows
@@ -9,11 +9,39 @@ This skill provides three commands:
 
 - `handover`: transfer active work to a new interactive agent session.
 - `parallel-agents`: coordinate the user's external parallel agents.
-- `parallel-isolated-agents`: create isolated worktrees and start one herdr-managed agent per worktree.
+- `parallel-isolated-agents`: create `wt`/Worktrunk-managed isolated worktrees and start one herdr-managed agent per worktree.
 
-Use `herdr` as the process and session coordinator. `herdr` is the source of truth for external agent sessions and status. Check `herdr --help` and the relevant subcommand help before using a command shape that is not listed here.
+Use `herdr` as the process and session coordinator. `herdr` is the source of truth for external agent sessions, status, pane output, and live metadata. Keep project files only as small recovery indexes for stable Herdr identifiers, worktrees, and exceptional notes; do not mirror Herdr status, full command transcripts, message timestamps, or result timestamps into JSON unless Herdr lacks the identifier needed later. Check `herdr --help` and the relevant subcommand help before using a command shape that is not listed here.
 
 For every workflow and every `herdr` command, keep the distinction between tabs/windows and panes explicit. Herdr exposes top-level terminal targets as `tab` resources inside a `workspace`; treat a user request for tabs or windows as one Herdr tab per agent unless the installed CLI exposes a separate window concept. A pane is only a split inside one tab/window. The default layout is one agent per separate Herdr tab, or one named `herdr` session per agent when workspace/tab commands are not available. Do not put multiple agents into panes inside one tab/window unless the user explicitly asks for that pane-based layout. If the user does ask for multiple agents as panes in one tab/window, split the screen roughly equally across panes, verify the pane count matches the requested agents through `herdr pane list` or equivalent metadata, and keep each pane tied to exactly one agent.
+
+## Herdr Activity Ledger
+
+Use Herdr commands for registration, status, command visibility, and short operational annotations before writing local JSON:
+
+```bash
+herdr workspace list
+herdr tab list --workspace '<workspace_id>'
+herdr agent list
+herdr agent get '<agent target>'
+herdr agent read '<agent target>' --source recent --lines 200
+herdr agent send '<agent target>' '<text>'
+herdr agent wait '<agent target>' --status '<idle|working|blocked|unknown>' --timeout <ms>
+herdr agent explain '<agent target>' --json
+herdr pane list --workspace '<workspace_id>'
+herdr pane read '<pane_id>' --source recent --lines 200
+herdr pane run '<pane_id>' '<command>'
+herdr pane send-text '<pane_id>' '<text>'
+herdr pane report-agent '<pane_id>' --source '<workflow-source>' --agent '<label>' --state '<idle|working|blocked|unknown>' --message '<short note>'
+herdr pane report-agent-session '<pane_id>' --source '<workflow-source>' --agent '<label>' --agent-session-id '<id>' --agent-session-path '<path>'
+herdr pane report-metadata '<pane_id>' --source '<workflow-source>' --agent '<label>' --title '<short title>' --custom-status '<short status>'
+herdr wait agent-status '<pane_id>' --status '<idle|working|blocked|done|unknown>' --timeout <ms>
+herdr wait output '<pane_id>' --match '<text>' --lines 200 --timeout <ms>
+```
+
+Use a stable `--source` value such as `workflows:<run-id>:<agent-id>` for report commands. Use `herdr agent start` to create registered agent targets whenever possible, then refresh with `herdr agent list`, `herdr tab list`, and `herdr pane list` instead of manually inventing IDs. Use `herdr pane report-agent`, `herdr pane report-agent-session`, and `herdr pane report-metadata` only for state or metadata Herdr cannot infer from the agent process. Use `herdr pane run` when the controller needs to run a shell command inside a managed pane because that keeps the command visible in Herdr scrollback; use `herdr agent send` for agent instructions.
+
+Local JSON must stay small: record which Herdr target belongs to which delegated role, which worktree belongs to which agent, and any lifecycle exception that Herdr cannot represent. Do not update local JSON after every send, read, wait, or observed status change. Re-query Herdr when current status, recent output, commands, or metadata are needed.
 
 ## Command: handover
 
@@ -139,41 +167,47 @@ Before creating or messaging agents:
 1. Inspect `herdr --help` and `herdr session --help`; if layout commands exist, inspect the relevant tab/window/pane help before creating agents.
 2. Read `herdr session list --json` to understand existing sessions and visible statuses.
 3. Identify the parallel-agents controller command from the process tree.
-4. Create `.ai/workflows/parallel-agents/contracts/agents.json` if it does not exist.
-5. Read the current `agents.json` before creating, messaging, collecting from, or terminating agents.
+4. Create `.ai/workflows/parallel-agents/contracts/agents.json` only when this workflow needs a durable recovery index across multiple operations.
+5. If the index exists, read it before creating, messaging, collecting from, or terminating agents so ownership is clear.
 
-### Agent Contract File
+### Agent Index File
 
-Store managed-agent state in `.ai/workflows/parallel-agents/contracts/agents.json`. Keep the file strict JSON.
+Store only durable ownership state in `.ai/workflows/parallel-agents/contracts/agents.json`. Keep the file strict JSON. Herdr remains the live registry and activity ledger.
 
 ```json
 {
   "controller": {
-    "agent_command": "<controller agent command>"
+    "agent_command": "<controller agent command>",
+    "run_id": "<stable run id>",
+    "herdr_workspace": "<workspace id or null>"
   },
   "agents": [
     {
       "id": "<stable short id>",
       "role": "<delegated role or task>",
       "agent_command": "<cli command>",
+      "herdr_target": "<unique Herdr agent target name, terminal id, or null>",
       "herdr_session": "<owning session name or null>",
-      "herdr_agent": "<unique Herdr agent target name or null>",
       "herdr_workspace": "<workspace id or null>",
       "herdr_tab": "<tab id or null>",
       "herdr_pane": "<pane id or null>",
-      "herdr_status": "<status from herdr, when available>",
       "worktree": "<absolute worktree path or null>",
-      "status": "starting | idle | working | done | terminated | failed",
-      "created_at": "<ISO-8601 timestamp>",
-      "last_message_at": "<ISO-8601 timestamp or null>",
-      "last_result_at": "<ISO-8601 timestamp or null>",
-      "notes": "<short operational note>"
+      "branch": "<worktree branch name or null>",
+      "created_at": "<ISO-8601 timestamp>"
+    }
+  ],
+  "exceptions": [
+    {
+      "at": "<ISO-8601 timestamp>",
+      "agent_id": "<stable short id or null>",
+      "event": "<failed-to-start | failed-to-message | failed-to-collect | failed-to-terminate | other>",
+      "note": "<short operational note>"
     }
   ]
 }
 ```
 
-Update this file after creating a session, agent target, workspace, tab, or pane; sending a message; collecting a result; observing failure; or terminating an agent.
+Update this file only when durable ownership changes: creating or closing a session, workspace, tab, pane, agent target, or worktree; assigning a stable delegated role; or recording an exception Herdr cannot represent. Do not store `herdr_status`, full prompts, full outputs, commands run, or routine timestamps here. Use `herdr agent list`, `herdr agent get`, `herdr pane list`, `herdr agent read`, `herdr pane read`, `herdr agent explain --json`, and Herdr report commands whenever current status or activity details are needed.
 
 ### Interactive Agents
 
@@ -186,10 +220,12 @@ herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<parallel-a
 herdr agent start '<parallel-agent-name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <agent argv...>
 herdr session list --json
 herdr agent list
+herdr agent get '<parallel-agent-name>'
 herdr pane list --workspace '<workspace_id>'
+herdr pane report-metadata '<pane_id>' --source 'workflows:<run-id>:<agent-id>' --agent '<parallel-agent-name>' --title '<role>' --custom-status 'delegated'
 ```
 
-After creating the session or agent target, wait for the CLI to initialize and verify it is visible through `herdr session list --json`, `herdr agent list`, or the closest status command exposed by the installed `herdr`. If `herdr` reports tab/window or pane metadata, verify the default case has one agent per Herdr tab and exactly one pane in that tab. Send messages through the documented `herdr` interface; current Herdr exposes `herdr agent send <target> <text>` and `herdr pane send-text <pane_id> <text>`. Prefer `herdr agent send` when a unique agent target exists.
+After creating the session or agent target, wait for the CLI to initialize and verify it is visible through `herdr session list --json`, `herdr agent list`, `herdr agent get`, or the closest status command exposed by the installed `herdr`. If `herdr` reports tab/window or pane metadata, verify the default case has one agent per Herdr tab and exactly one pane in that tab. Report a short role/title through `herdr pane report-metadata` when useful. Send messages through the documented `herdr` interface; current Herdr exposes `herdr agent send <target> <text>` and `herdr pane send-text <pane_id> <text>`. Prefer `herdr agent send` when a unique agent target exists.
 
 Use `.ai/tmp_scripts` or another ignored project-local temporary directory for message files. Do not place temporary prompts outside the current project unless there is no ignored project-local option.
 
@@ -214,12 +250,15 @@ Use `herdr` to inspect each agent session and collect visible status:
 ```bash
 herdr session list --json
 herdr agent list
+herdr agent get '<agent target>'
+herdr agent explain '<agent target>' --json
 herdr agent read '<agent target>' --source recent --lines 200
 herdr pane read '<pane_id>' --source recent --lines 200
+herdr wait agent-status '<pane_id>' --status done --timeout <ms>
 herdr session attach '<session name>'
 ```
 
-If an agent is still working according to `herdr`, leave it running and mark it `working`. If it has completed, summarize its result for the user, update `agents.json`, and terminate it when no further work is needed.
+If an agent is still working according to `herdr`, leave it running and report the Herdr status. If it has completed, summarize its recent Herdr output for the user and terminate it when no further work is needed. Record only lifecycle exceptions in the local index.
 
 Terminate agents through `herdr` only. Close the smallest Herdr target that belongs to the managed agent:
 
@@ -230,53 +269,69 @@ herdr session stop '<session name>' --json
 herdr session delete '<session name>' --json
 ```
 
-For the default one-agent-per-tab layout, close the recorded tab when the work is complete and no further interaction is needed. For a user-requested pane layout, close only the recorded pane. Use `herdr session stop` or `herdr session delete` only for the named-session fallback or when the whole recorded session belongs to that one managed agent. Never terminate sessions, tabs, or panes that are not recorded in `.ai/workflows/parallel-agents/contracts/agents.json` unless the user explicitly instructs and the target is visible through Herdr status commands.
+For the default one-agent-per-tab layout, close the indexed tab when the work is complete and no further interaction is needed. For a user-requested pane layout, close only the indexed pane. Use `herdr session stop` or `herdr session delete` only for the named-session fallback or when the whole indexed session belongs to that one managed agent. Never terminate sessions, tabs, or panes that are not owned by this workflow index unless the user explicitly instructs and the target is visible through Herdr status commands.
 
 ## Command: parallel-isolated-agents
 
 Use `parallel-isolated-agents` when the user wants multiple external agents to work in isolation on the same repository state, usually to test different hypotheses, compare approaches, or modify different files without colliding.
 
-`parallel-isolated-agents` creates one git worktree per agent from the current repository, current branch, and current commit. Each agent starts inside its own worktree through `herdr`. Use a separate `herdr` workspace for the run when the installed CLI supports workspaces, then one Herdr tab per agent inside that workspace. Never place multiple agents as panes inside the same tab/window unless the user explicitly asks for that layout; if they do, split the panes roughly equally.
+`parallel-isolated-agents` creates one `wt`/Worktrunk-managed git worktree per agent from the current repository, current branch, and current commit. Each agent starts inside its own worktree through `herdr`. Use `wt` as the worktree lifecycle manager when it is available: it computes configured paths, runs configured hooks, supports JSON output for path capture, and provides cleanup/merge commands. Use a separate `herdr` workspace for the run when the installed CLI supports workspaces, then one Herdr tab per agent inside that workspace. Never place multiple agents as panes inside the same tab/window unless the user explicitly asks for that layout; if they do, split the panes roughly equally.
+
+Keep the source repository's main worktree and git history clean. During isolated-agent startup, the only allowed git state change is the temporary local worktree/branch metadata required by `wt switch --create` or the documented fallback. Do not commit, stash, merge, push, tag, create PRs, run `wt merge`, run `wt step commit`, run `wt step squash`, run `wt step push`, or change the main/default branch unless the user explicitly asks after reviewing the work. If the user requires zero git metadata registration at startup, stop and explain that real git worktrees cannot be created without local git metadata; ask whether to proceed with temporary `wt` worktrees or use a non-worktree copy strategy.
 
 ### Required Behavior
 
 1. Determine how many agents the user requested. If the count is missing, ask for the count before creating worktrees.
-2. Inspect `herdr --help` and relevant subcommand help for workspace, tab/window, pane, session, message, or handoff commands.
+2. Inspect `herdr --help` and relevant subcommand help for workspace, tab/window, pane, session, message, or handoff commands. Inspect `wt --help`, `wt switch --help`, and `wt list -h` or `wt list --format json` before creating worktrees.
 3. Capture the source repository state:
    - repository root from `git rev-parse --show-toplevel`
    - repository name from the root directory name
    - current branch from `git branch --show-current`
    - current commit from `git rev-parse HEAD`
    - current status from `git status --short`
-4. If the source repository has uncommitted changes, do not silently copy them. Ask whether the user wants to commit, stash, or continue from `HEAD` only.
-5. Create a parallel-isolated-agents root under:
+4. If the source repository has uncommitted changes, do not silently copy them. Ask whether the user wants to continue from `HEAD` only, or explicitly wants the controller to commit or stash first. Do not commit or stash without that explicit request.
+5. Create a stable run id and unique branch names derived from the repo name, source branch, run id, and agent index:
 
 ```text
-~/.config/stackops/.ai/skills/workflows/<repo-name>-<branch-name>/<unique-id>
+parallel-isolated/<repo-name>-<branch-name>-<unique-id>-agent-01
+parallel-isolated/<repo-name>-<branch-name>-<unique-id>-agent-02
 ```
 
-6. Create one worktree per agent under the parallel-isolated-agents root. Use branch names derived from the current branch and unique id, for example:
+6. Create one worktree per agent with `wt switch`. Do not choose the worktree path manually when `wt` is available; record the `path` field reported by `wt --format json`.
 
-```text
-<parallel-isolated-agents-root>/agent-01
-<parallel-isolated-agents-root>/agent-02
+```bash
+wt -C '<repo-root>' switch --create '<agent-branch>' --base=@ --format json --no-cd
 ```
 
 7. Start one agent per worktree through `herdr`. If `herdr workspace create`, `herdr tab create`, and `herdr agent start` exist, create one workspace for the parallel-isolated-agents run, create one tab per agent with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`, then launch the agent with `herdr agent start <agent-name> --cwd <worktree> --workspace <workspace_id> --tab <tab_id> --no-focus -- <agent argv...>`. If workspaces are unavailable but tabs exist, create one tab per agent and verify each tab has exactly one pane. Otherwise use one named `herdr` session per agent. Use panes only when the user explicitly asked for a pane-based layout; in that case, create one tab/window, split it into roughly equal panes, and launch exactly one agent per pane.
 8. Send each agent a complete, standalone instruction describing its assigned hypothesis, file area, or change strategy.
-9. Record every worktree and Herdr session/agent/workspace/tab/pane identifier in `.ai/workflows/parallel-agents/contracts/agents.json`.
-10. Report the parallel-isolated-agents root, agent count, worktree paths, Herdr target names and IDs, and visible `herdr` statuses to the user.
+9. Index every worktree and Herdr session/agent/workspace/tab/pane identifier in `.ai/workflows/parallel-agents/contracts/agents.json`; leave status, recent output, command history, and routine timestamps in Herdr.
+10. Report the run id, agent count, branch names, `wt` worktree paths, Herdr target names and IDs, and visible `herdr` statuses to the user.
 
 ### Worktree Commands
 
-Use strict git worktrees from the captured commit. Do not create loose copies.
+Use strict git worktrees through Worktrunk (`wt`) from the captured source state. Do not create loose copies. Use `--no-cd` because controller agents should pass the returned worktree path to `herdr --cwd` instead of relying on shell integration to change directories. Record the `path` field from JSON output as the worktree path.
 
 ```bash
-git worktree add -b '<branch-name>' '<worktree-path>' '<commit>'
-git worktree list
+wt -C '<repo-root>' switch --create '<agent-branch>' --base=@ --format json --no-cd
+wt -C '<repo-root>' list --format json
 ```
 
-Branch and path names must be shell-safe and derived from the repo name, current branch, parallel-isolated-agents id, and agent index. If the current branch name is empty, use `detached` in the parallel-isolated-agents path name and create explicit parallel-isolated-agents branch names for the worktrees.
+Branch names must be shell-safe and derived from the repo name, current branch, parallel-isolated-agents id, and agent index. If the current branch name is empty, use `detached` in the branch name and create explicit branches from the captured commit before opening them through `wt`:
+
+```bash
+git -C '<repo-root>' branch '<agent-branch>' '<commit>'
+wt -C '<repo-root>' switch '<agent-branch>' --format json --no-cd
+```
+
+If exact captured-commit isolation is required and the source branch may move before worktree creation, use the same `git branch <agent-branch> <commit>` plus `wt switch <agent-branch>` sequence. If `wt` is unavailable or cannot create a required worktree, fall back to raw git worktrees under a private run root and record the exception:
+
+```bash
+git -C '<repo-root>' worktree add -b '<agent-branch>' '<worktree-path>' '<commit>'
+git -C '<repo-root>' worktree list
+```
+
+Use `wt remove '<agent-branch>'` for cleanup when the user is done with an isolated agent worktree. Use `wt merge` from an agent worktree only when the user explicitly asks to integrate that agent's branch after the work is done; otherwise collect results and leave review/merge decisions to the controller and user.
 
 ### Herdr Layout
 
@@ -310,15 +365,16 @@ Each agent instruction must include:
 - expected output format
 - instruction to verify local state before editing
 - instruction to avoid touching other parallel-isolated-agents worktrees
+- instruction not to commit, stash, merge, push, tag, create PRs, run `wt merge`, or otherwise change git history/refs unless the controller later relays an explicit user request
 
 ### Failure Handling
 
-If any worktree or `herdr` session cannot be created, stop creating additional agents, report the exact failure, and keep `agents.json` consistent with only the worktrees and sessions that actually exist. Do not delete created worktrees or terminate sessions unless the user asks or the failed operation left an unusable partial resource.
+If any worktree or `herdr` session cannot be created, stop creating additional agents, report the exact failure, and keep the local index consistent with only the worktrees and Herdr targets that actually exist. Add a short exception entry only when Herdr cannot represent the failure. Do not delete created worktrees or terminate sessions unless the user asks or the failed operation left an unusable partial resource.
 
 ### Non-Interactive Agents
 
-Only use non-interactive mode when required. Read the target agent CLI documentation or help output to learn the correct one-line invocation. Record the command in `agents.json` and capture the result for the user.
+Only use non-interactive mode when required. Read the target agent CLI documentation or help output to learn the correct one-line invocation. Prefer running the command through a managed Herdr pane with `herdr pane run` so the command and output stay in Herdr scrollback. If Herdr cannot represent the command, record a short exception in the local index and capture the result for the user.
 
 ### Failure Handling
 
-If `herdr` is unavailable, the current agent type cannot be identified, a session cannot be created, or an agent cannot be reached, report the exact failure and do not claim the agent exists. Keep `agents.json` consistent with what actually happened.
+If `herdr` is unavailable, the current agent type cannot be identified, a session cannot be created, or an agent cannot be reached, report the exact failure and do not claim the agent exists. Keep the local index consistent with what actually happened.

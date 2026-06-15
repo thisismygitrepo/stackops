@@ -566,6 +566,13 @@ tmux_linux:
     os:
     - linux
     - darwin
+herdr:
+  config:
+    original: ~/.config/herdr/config.toml
+    self_managed: CONFIG_ROOT/settings/herdr/config.toml
+    os:
+    - linux
+    - darwin
 psmux_windows:
   config:
     original: ~/.config/psmux/psmux.conf

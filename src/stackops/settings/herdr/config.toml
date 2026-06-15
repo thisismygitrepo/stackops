@@ -1,0 +1,75 @@
+# Herdr configuration.
+# Herdr reads this file from ~/.config/herdr/config.toml.
+#
+# To refresh this template from the installed Herdr binary:
+# herdr --default-config
+
+[theme]
+# Built-in examples: catppuccin, terminal, tokyo-night, dracula, nord,
+# gruvbox, one-dark, solarized, kanagawa, rose-pine, vesper.
+# name = "catppuccin"
+
+[terminal]
+# default_shell = ""
+# shell_mode = "auto"
+# new_cwd = "follow"
+
+[update]
+# channel = "stable"
+
+[keys]
+prefix = "ctrl+a"
+# reload_config = "prefix+shift+r"
+# new_workspace = "prefix+shift+n"
+# new_worktree = "prefix+shift+g"
+# new_tab = "prefix+c"
+# previous_tab = "prefix+p"
+# next_tab = "prefix+n"
+# switch_tab = "prefix+1..9"
+# split_vertical = "prefix+v"
+# split_horizontal = "prefix+minus"
+# close_pane = "prefix+x"
+# zoom = "prefix+z"
+# toggle_sidebar = "prefix+b"
+
+[worktrees]
+# directory = "~/.herdr/worktrees"
+
+[ui]
+# sidebar_width = 26
+# mouse_capture = true
+# confirm_close = true
+# prompt_new_tab_name = true
+# agent_panel_scope = "all"
+
+[ui.toast]
+# delivery = "off"
+# delay_seconds = 1
+
+[ui.toast.herdr]
+# position = "bottom-right"
+
+[ui.toast.clipboard]
+# enabled = true
+# position = "bottom-center"
+
+[ui.sound]
+# enabled = true
+# path = "sounds/notification.mp3"
+# done_path = "sounds/done.mp3"
+# request_path = "sounds/request.mp3"
+
+[session]
+# resume_agents_on_restore = true
+
+[remote]
+# manage_ssh_config = true
+
+[experimental]
+# allow_nested = false
+# kitty_graphics = false
+# pane_history = false
+# reveal_hidden_cursor_for_cjk_ime = false
+
+[advanced]
+# scrollback_limit_bytes = 10000000
