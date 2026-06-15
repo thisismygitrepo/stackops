@@ -22,6 +22,7 @@ def test_check_installations_group_agents_table(monkeypatch: pytest.MonkeyPatch,
     assert "headroom" in output
     assert "herdr" in output
     assert "tmux" in output
+    assert "wt" in output
     assert "✅" in output
     assert "❌" in output
 
