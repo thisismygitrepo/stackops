@@ -1,4 +1,4 @@
 interface:
   display_name: "Workflows"
-  short_description: "Hand off work or manage external agent windows in tmux."
-  default_prompt: "Use workflows to hand over active work or manage external interactive agents in the current tmux session."
+  short_description: "Use handover, parallel-agents, or parallel-isolated-agents workflows for herdr-managed agents."
+  default_prompt: "Use workflows `handover` to transfer active work, `parallel-agents` to coordinate external interactive agents, or `parallel-isolated-agents` to create isolated worktree agents through herdr."
