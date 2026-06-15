@@ -20,7 +20,7 @@ class AgentSkillSource:
 _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "agent-browser": AgentSkillSource("vercel-labs/agent-browser"),
     "agent-skills": AgentSkillSource("addyosmani/agent-skills"),
-    "caveman": AgentSkillSource("JuliusBrussee/caveman"),
+    "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
     "grill-me": AgentSkillSource("mattpocock/skills/grill-me"),
     "last30days": AgentSkillSource("mvanhorn/last30days-skill"),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
