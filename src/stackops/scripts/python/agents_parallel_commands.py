@@ -7,6 +7,7 @@ import typer
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
+    AGENT_PARALLEL_BACKEND_HELP,
     DEFAULT_AGENT_PARALLEL_BACKEND,
     AgentParallelBackendOption,
 )
@@ -74,7 +75,7 @@ def agents_create(
     host: Annotated[HOST, typer.Option(..., "--host", "-h", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
     backend: Annotated[
         AgentParallelBackendOption,
-        typer.Option(..., "--backend", "-b", help="Backend used when --run launches the generated layout. One of tmux, herdr."),
+        typer.Option(..., "--backend", "-b", help=f"Backend used when --run launches the generated layout. One of {AGENT_PARALLEL_BACKEND_HELP}."),
     ] = DEFAULT_AGENT_PARALLEL_BACKEND,
     context: Annotated[
         str | None, typer.Option(..., "--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path.")
@@ -116,13 +117,13 @@ def agents_create(
     save_as_yaml: Annotated[
         bool,
         typer.Option(
-            ..., "--save-as-yaml", "-y", help="Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name."
+            ...,
+            "--save-as-yaml",
+            "-y",
+            help="Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.",
         ),
     ] = False,
-    show_example: Annotated[
-        bool,
-        typer.Option(..., "--show-example", "-e", help="Show a long parallel YAML create configuration example."),
-    ] = False,
+    show_example: Annotated[bool, typer.Option(..., "--show-example", "-e", help="Show a long parallel YAML create configuration example.")] = False,
     interactive: Annotated[
         bool, typer.Option(..., "--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
     ] = False,

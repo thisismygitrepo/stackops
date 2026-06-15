@@ -17,10 +17,7 @@ def test_select_parallel_create_values_accepts_multiple_interactive_choices(monk
     }
 
     def fake_choose_from_dict_with_preview(
-        options_to_preview_mapping: dict[str, object],
-        extension: str | None,
-        multi: bool,
-        preview_size_percent: float,
+        options_to_preview_mapping: dict[str, object], extension: str | None, multi: bool, preview_size_percent: float
     ) -> list[str] | str | None:
         assert set(options_to_preview_mapping) == {"alpha", "beta"}
         assert extension == "yaml"
@@ -43,19 +40,20 @@ def test_parse_parallel_create_values_accepts_backend() -> None:
     assert parsed.backend == "herdr"
 
 
-def test_select_parallel_create_values_from_locations_preserves_multi_choice_order(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_parse_parallel_create_values_accepts_aoe_backend() -> None:
+    parsed = parse_parallel_create_values(raw_entry={"backend": "aoe"}, entry_name="alpha")
+
+    assert parsed.backend == "aoe"
+
+
+def test_select_parallel_create_values_from_locations_preserves_multi_choice_order(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     yaml_entries = [
         ("repo", tmp_path / "repo.yaml", {"alpha": {"context": "alpha context", "job_name": "alpha"}}),
         ("private", tmp_path / "private.yaml", {"beta": {"context": "beta context", "job_name": "beta"}}),
     ]
 
     def fake_choose_from_dict_with_preview(
-        options_to_preview_mapping: dict[str, object],
-        extension: str | None,
-        multi: bool,
-        preview_size_percent: float,
+        options_to_preview_mapping: dict[str, object], extension: str | None, multi: bool, preview_size_percent: float
     ) -> list[str] | str | None:
         assert set(options_to_preview_mapping) == {"repo:alpha", "private:beta"}
         assert extension == "yaml"
@@ -65,10 +63,7 @@ def test_select_parallel_create_values_from_locations_preserves_multi_choice_ord
 
     monkeypatch.setattr(tv_options, "choose_from_dict_with_preview", fake_choose_from_dict_with_preview)
 
-    selected_entries = select_parallel_create_values_from_locations(
-        yaml_entries=yaml_entries,
-        requested_name=None,
-    )
+    selected_entries = select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name=None)
 
     assert tuple(selected_name for selected_name, _base_values in selected_entries) == ("beta", "alpha")
     assert selected_entries[0][1].context == "beta context"
@@ -76,14 +71,9 @@ def test_select_parallel_create_values_from_locations_preserves_multi_choice_ord
 
 
 def test_select_parallel_create_values_from_locations_keeps_requested_name_single(tmp_path: Path) -> None:
-    yaml_entries = [
-        ("repo", tmp_path / "repo.yaml", {"alpha": {"context": "alpha context", "job_name": "alpha"}}),
-    ]
+    yaml_entries = [("repo", tmp_path / "repo.yaml", {"alpha": {"context": "alpha context", "job_name": "alpha"}})]
 
-    selected_entries = select_parallel_create_values_from_locations(
-        yaml_entries=yaml_entries,
-        requested_name="alpha",
-    )
+    selected_entries = select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name="alpha")
 
     assert tuple(selected_name for selected_name, _base_values in selected_entries) == ("alpha",)
     assert selected_entries[0][1].context == "alpha context"

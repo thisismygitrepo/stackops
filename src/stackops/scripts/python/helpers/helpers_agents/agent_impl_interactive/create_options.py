@@ -3,7 +3,7 @@ from math import isfinite
 from typing import Literal, TypeAlias, cast, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import order_current_first
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AGENT_PARALLEL_BACKENDS, AgentParallelBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import reasoning_support
 from stackops.utils.options_utils.textual_options_form import use_textual_options_form
@@ -220,7 +220,7 @@ def _build_create_options_form(
         ),
         review_options["run"]: _select_option_spec(default=run, options=_to_option_values([run, not run])),
         review_options["backend"]: _select_option_spec(
-            default=backend, options=_to_option_values(order_current_first(options=("tmux", "herdr"), current=backend))
+            default=backend, options=_to_option_values(order_current_first(options=AGENT_PARALLEL_BACKENDS, current=backend))
         ),
         review_options["output_path"]: _text_option_spec(
             default=output_path, allow_blank=True, placeholder="Leave blank to auto-create layout.json inside agents_dir"
@@ -368,7 +368,7 @@ def _collect_create_options_form_selection(
     return _CreateOptionsFormSelection(
         join_prompt_and_context=_require_bool_value(selected_values=selected_values, key=review_options["join_prompt_and_context"]),
         run=_require_bool_value(selected_values=selected_values, key=review_options["run"]),
-        backend=_require_choice(selected_values=selected_values, key=review_options["backend"], options=("tmux", "herdr")),
+        backend=_require_choice(selected_values=selected_values, key=review_options["backend"], options=AGENT_PARALLEL_BACKENDS),
         output_path=_require_optional_text_value(selected_values=selected_values, key=review_options["output_path"]),
         agents_dir=_require_optional_text_value(selected_values=selected_values, key=review_options["agents_dir"]),
         host=_require_choice(selected_values=selected_values, key=review_options["host"], options=cast(tuple[HOST, ...], get_args(HOST))),

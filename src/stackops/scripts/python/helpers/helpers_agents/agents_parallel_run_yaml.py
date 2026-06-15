@@ -3,7 +3,11 @@ from pathlib import Path
 from typing import Final, TypeAlias, cast, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, resolve_agent_parallel_backend
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
+    AGENT_PARALLEL_BACKEND_HELP,
+    AgentParallelBackend,
+    resolve_agent_parallel_backend,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import CREATE_CONFIG_KEYS, ParallelCreateValues, ParallelYamlEntry
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
@@ -262,7 +266,7 @@ def _optional_backend(*, mapping: Mapping[str, object], key: str) -> AgentParall
     try:
         return resolve_agent_parallel_backend(cast(AgentParallelBackend, value))
     except ValueError as exc:
-        raise ValueError(f"{key} must be one of: tmux, herdr") from exc
+        raise ValueError(f"{key} must be one of: {AGENT_PARALLEL_BACKEND_HELP}") from exc
 
 
 def _optional_provider(*, mapping: Mapping[str, object], key: str) -> PROVIDER | None:
