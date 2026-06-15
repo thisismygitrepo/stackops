@@ -4,6 +4,10 @@ from typing import Annotated
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
+    DEFAULT_AGENT_PARALLEL_BACKEND,
+    AgentParallelBackendOption,
+)
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -57,6 +61,7 @@ def agents_create_impl(
     provider: PROVIDER | None,
     interactive: bool,
     run: bool,
+    backend: AgentParallelBackendOption = DEFAULT_AGENT_PARALLEL_BACKEND,
     stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
@@ -81,6 +86,7 @@ def agents_create_impl(
         provider=provider,
         interactive=interactive,
         run=run,
+        backend=backend,
         stagger_max=stagger_max,
     )
 

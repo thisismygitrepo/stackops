@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Protocol
+from typing import Protocol, cast
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ParallelCreateValues
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
@@ -34,11 +34,17 @@ class AgentsCreateImpl(Protocol):
         reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
         interactive: bool,
+        backend: AgentParallelBackendOption = DEFAULT_AGENT_PARALLEL_BACKEND,
         stagger_max: float = DEFAULT_STAGGER_MAX,
     ) -> None: ...
 
 
 class WorkflowModule(Protocol):
+    @property
+    def agents_create_impl(self) -> AgentsCreateImpl: ...
+
+
+class MutableWorkflowModule(Protocol):
     agents_create_impl: AgentsCreateImpl
 
 
@@ -94,12 +100,13 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
             interactive=interactive,
         )
 
+    mutable_workflow_module = cast(MutableWorkflowModule, workflow_module)
     original_agents_create_impl = workflow_module.agents_create_impl
-    workflow_module.agents_create_impl = capture_agents_create
+    mutable_workflow_module.agents_create_impl = capture_agents_create
     try:
         workflow_function()
     finally:
-        workflow_module.agents_create_impl = original_agents_create_impl
+        mutable_workflow_module.agents_create_impl = original_agents_create_impl
 
     if captured_values is None:
         raise RuntimeError("Workflow did not call agents_create_impl")
