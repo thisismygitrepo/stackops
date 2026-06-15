@@ -21,5 +21,3 @@ persistence = "none"
 
 [feedback]
 enabled = false
-
-[mcp_servers]
