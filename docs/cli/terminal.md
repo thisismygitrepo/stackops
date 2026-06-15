@@ -168,6 +168,7 @@ terminal attach [OPTIONS] [NAME]
 | `--new-session` | `-n` | Create a new session instead of attaching |
 | `--kill-all` | `-k` | Kill all existing sessions before creating a new one |
 | `--window` | `-w` | Choose a window/tab or pane target instead of only sessions |
+| `--backend` | `-b` | `tmux`, `herdr`, `aoe`, or `auto` |
 
 Example:
 
@@ -177,6 +178,9 @@ terminal attach --window
 
 # Attach to a Herdr session
 terminal attach --backend herdr
+
+# Attach to an Agent of Empires session
+terminal attach --backend aoe
 ```
 
 ## kill
@@ -193,6 +197,7 @@ terminal kill [OPTIONS] [NAME]
 | `--all` | `-a` | Kill all sessions; with `--idle`, inspect all sessions for idle panes/windows |
 | `--idle` | `-i` | Kill idle-shell panes/windows in `NAME` or a chosen session; combine with `--all` to inspect all sessions |
 | `--window` | `-w` | Include sessions, windows/tabs, and panes in the chooser |
+| `--backend` | `-b` | `tmux`, `herdr`, `aoe`, or `auto` |
 
 Example:
 
@@ -202,6 +207,9 @@ terminal kill --window
 
 # Kill idle-shell panes/windows across every tmux session
 terminal kill --idle --all
+
+# Stop an Agent of Empires session
+terminal kill --backend aoe
 ```
 
 ## trace

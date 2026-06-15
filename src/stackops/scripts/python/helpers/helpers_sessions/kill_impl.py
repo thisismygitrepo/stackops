@@ -9,7 +9,7 @@ class KilledTarget(TypedDict):
 
 
 def choose_kill_target(
-    backend: Literal["tmux", "herdr"],
+    backend: Literal["tmux", "herdr", "aoe"],
     name: str | None,
     kill_all: bool,
     idle: bool,
@@ -27,4 +27,10 @@ def choose_kill_target(
             from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import choose_kill_target as _herdr
 
             return _herdr(name=name, kill_all=kill_all, idle=idle, window=window, delete=delete)
+        case "aoe":
+            if delete:
+                return ("error", "--delete is only supported by the Herdr backend.", [])
+            from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import choose_kill_target as _aoe
+
+            return _aoe(name=name, kill_all=kill_all, idle=idle, window=window)
     raise ValueError(f"Unsupported backend: {backend}")
