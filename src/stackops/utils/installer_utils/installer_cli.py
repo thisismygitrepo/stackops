@@ -258,3 +258,47 @@ def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bo
         if verbose:
             print(f"❌ Error installing {which}: {e}")
     return False
+
+
+_CHECK_GROUP2NAMES: Final[dict[str, tuple[str, ...]]] = {
+    "agents": ("beads", "gastown", "headroom", "herdr", "tmux"),
+}
+
+
+def _resolve_check_names(which: str, group: bool) -> tuple[str, ...]:
+    requested_names = tuple(name.strip() for name in which.split(",") if name.strip())
+    if len(requested_names) == 0:
+        target_name = "group name" if group else "program name"
+        raise typer.BadParameter(f"at least one {target_name} is required")
+
+    if not group:
+        return requested_names
+
+    if len(requested_names) > 1:
+        raise typer.BadParameter("only one group name is supported")
+
+    group_name = requested_names[0]
+    group_names = _CHECK_GROUP2NAMES.get(group_name)
+    if group_names is None:
+        available_groups = ", ".join(sorted(_CHECK_GROUP2NAMES))
+        raise typer.BadParameter(f"unknown check group: {group_name}. Available groups: {available_groups}")
+
+    return group_names
+
+
+def check_installations(which: str, group: bool) -> None:
+    from rich.console import Console
+    from rich.table import Table
+    from stackops.utils.cli_utils.command_lookup import check_tool_exists
+
+    check_names = _resolve_check_names(which=which, group=group)
+    table = Table(title="CLI Check")
+    table.add_column("Name", style="cyan", no_wrap=True)
+    table.add_column("Installed", justify="center")
+
+    for check_name in check_names:
+        installed = check_tool_exists(check_name)
+        marker = "[green]✅[/green]" if installed else "[red]❌[/red]"
+        table.add_row(check_name, marker)
+
+    Console().print(table)

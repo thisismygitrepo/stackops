@@ -211,12 +211,12 @@ Never terminate sessions that are not recorded in `.ai/workflows/parallel-agents
 
 Use `parallel-isolated-agents` when the user wants multiple external agents to work in isolation on the same repository state, usually to test different hypotheses, compare approaches, or modify different files without colliding.
 
-`parallel-isolated-agents` creates one git worktree per agent from the current repository, current branch, and current commit. Each agent starts inside its own worktree through `herdr`, in a new `herdr` space when the installed CLI supports spaces, with one tab or session per agent.
+`parallel-isolated-agents` creates one git worktree per agent from the current repository, current branch, and current commit. Each agent starts inside its own worktree through `herdr`. Use a separate `herdr` workspace for the run when the installed CLI supports workspaces, then one tab per agent inside that workspace. Never place multiple agents as panes inside the same tab.
 
 ### Required Behavior
 
 1. Determine how many agents the user requested. If the count is missing, ask for the count before creating worktrees.
-2. Inspect `herdr --help` and relevant subcommand help for space, tab, session, and message or handoff commands.
+2. Inspect `herdr --help` and relevant subcommand help for workspace, tab, session, message, or handoff commands.
 3. Capture the source repository state:
    - repository root from `git rev-parse --show-toplevel`
    - repository name from the root directory name
@@ -237,7 +237,7 @@ Use `parallel-isolated-agents` when the user wants multiple external agents to w
 <parallel-isolated-agents-root>/agent-02
 ```
 
-7. Start one agent per worktree through `herdr`. Use a shared `herdr` space for the parallel-isolated-agents run when the installed CLI supports spaces. Use one tab per agent when the installed CLI supports tabs; otherwise use one named `herdr` session per agent.
+7. Start one agent per worktree through `herdr`. If `herdr workspace create` exists, create one workspace for the parallel-isolated-agents run, then create one tab per agent in that workspace with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`. If workspaces are unavailable but tabs exist, create one tab per agent and verify each tab has `pane_count: 1`. Otherwise use one named `herdr` session per agent.
 8. Send each agent a complete, standalone instruction describing its assigned hypothesis, file area, or change strategy.
 9. Record every worktree and `herdr` session in `.ai/workflows/parallel-agents/contracts/agents.json`.
 10. Report the parallel-isolated-agents root, agent count, worktree paths, session names, and visible `herdr` statuses to the user.
@@ -255,11 +255,13 @@ Branch and path names must be shell-safe and derived from the repo name, current
 
 ### Herdr Layout
 
-Prefer the most specific `herdr` layout the installed CLI supports:
+Prefer the least crowded `herdr` layout the installed CLI supports:
 
-- one space for the whole parallel-isolated-agents run
-- one tab per agent inside that space
-- one named session per agent when tabs are not exposed by `herdr --help`
+- one workspace for the whole parallel-isolated-agents run, created with `herdr workspace create --cwd <repo-root> --label <run-name> --no-focus`
+- one tab per agent inside that workspace, created with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`
+- one named session per agent only when workspace or tab commands are not exposed by `herdr --help`
+
+Do not create more than one agent pane in a tab. Before launching agents, check `herdr tab list`; after each launch, verify the target tab has `pane_count: 1`. If a command would add a pane to an existing tab, stop and choose workspace/tab creation instead.
 
 Use names that connect the agent to the worktree:
 

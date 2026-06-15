@@ -60,18 +60,24 @@ def install(
     which: Annotated[
         str | None,
         typer.Argument(
-            ...,
-            help="Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.",
+            help="Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set."
         ),
     ] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
+    check: Annotated[bool, typer.Option(..., "--check", "-c", help="Check installation status instead of installing.")] = False,
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
     explore: Annotated[bool, typer.Option(..., "--explore", "-x", help="Explore installer categoryLabels before installing.")] = False,
     update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
     version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
 ) -> None:
-    """📦 Install packages"""
-    import stackops.utils.installer_utils.installer_cli as installer_entry_point
+    """📦 Install packages."""
+    from stackops.utils.installer_utils import installer_cli as installer_entry_point
+
+    if check:
+        if which is None:
+            raise typer.BadParameter("program name or group name is required when --check is set")
+        installer_entry_point.check_installations(which=which, group=group)
+        return
 
     installer_entry_point.main_installer_cli(ctx=ctx, which=which, group=group, interactive=interactive, explore=explore, update=update, version=version)
 
