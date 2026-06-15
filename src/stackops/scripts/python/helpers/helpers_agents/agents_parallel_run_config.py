@@ -11,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
     PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY,
     PARALLEL_YAML_TEMPLATE_ENTRY_NAME,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
@@ -30,6 +31,7 @@ class ParallelCreateValues:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST | None
+    backend: AgentParallelBackend | None
     context: str | None
     context_path: str | None
     separator: str | None
@@ -53,6 +55,7 @@ class ResolvedParallelCreateValues:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST
+    backend: AgentParallelBackend
     context: str | None
     context_path: str | None
     separator: str
@@ -76,6 +79,7 @@ def empty_parallel_create_values() -> ParallelCreateValues:
         reasoning_effort=None,
         provider=None,
         host=None,
+        backend=None,
         context=None,
         context_path=None,
         separator=None,
@@ -96,6 +100,7 @@ def empty_parallel_create_values() -> ParallelCreateValues:
 def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: ParallelCreateValues) -> ResolvedParallelCreateValues:
     agent = overrides.agent if overrides.agent is not None else base.agent
     host = overrides.host if overrides.host is not None else base.host
+    backend = overrides.backend if overrides.backend is not None else base.backend
     separator = overrides.separator if overrides.separator is not None else base.separator
     agent_load = overrides.agent_load if overrides.agent_load is not None else base.agent_load
     stagger_max = overrides.stagger_max if overrides.stagger_max is not None else base.stagger_max
@@ -114,6 +119,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         reasoning_effort=overrides.reasoning_effort if overrides.reasoning_effort is not None else base.reasoning_effort,
         provider=overrides.provider if overrides.provider is not None else base.provider,
         host="local" if host is None else host,
+        backend=DEFAULT_AGENT_PARALLEL_BACKEND if backend is None else backend,
         context=overrides.context if overrides.context is not None else base.context,
         context_path=overrides.context_path if overrides.context_path is not None else base.context_path,
         separator=decode_separator_value(separator=resolved_separator),

@@ -8,6 +8,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -58,6 +59,7 @@ def build_agents_create_overview_panel(
     job_name: str,
     agent: AGENTS,
     host: HOST,
+    backend: AgentParallelBackend,
     provider: PROVIDER | None,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
@@ -74,6 +76,7 @@ def build_agents_create_overview_panel(
     table.add_row("Job", job_name)
     table.add_row("Agent", agent)
     table.add_row("Host", host)
+    table.add_row("Backend", backend)
     table.add_row("Provider", _optional_label(value=provider))
     table.add_row("Model", _optional_label(value=model))
     table.add_row("Reasoning", _optional_label(value=reasoning_effort))
@@ -91,6 +94,7 @@ def show_agents_create_overview(
     job_name: str,
     agent: AGENTS,
     host: HOST,
+    backend: AgentParallelBackend,
     provider: PROVIDER | None,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
@@ -106,6 +110,7 @@ def show_agents_create_overview(
             job_name=job_name,
             agent=agent,
             host=host,
+            backend=backend,
             provider=provider,
             model=model,
             reasoning_effort=reasoning_effort,

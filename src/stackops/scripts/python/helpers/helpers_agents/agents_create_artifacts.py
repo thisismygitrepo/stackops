@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -78,6 +79,7 @@ def _build_recreate_command_args(
     *,
     agent: AGENTS,
     host: HOST,
+    backend: AgentParallelBackend,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -104,6 +106,8 @@ def _build_recreate_command_args(
         agent,
         "--host",
         host,
+        "--backend",
+        backend,
         "--context-path",
         str(context_recreate_path),
         "--separator",
@@ -221,6 +225,7 @@ def write_create_artifacts(
     layout_output_path: Path,
     agent: AGENTS,
     host: HOST,
+    backend: AgentParallelBackend,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -247,6 +252,7 @@ def write_create_artifacts(
     recreate_command_args = _build_recreate_command_args(
         agent=agent,
         host=host,
+        backend=backend,
         model=model,
         reasoning_effort=reasoning_effort,
         provider=provider,
@@ -289,6 +295,7 @@ def write_create_artifacts(
         "job_name": job_name,
         "agent": agent,
         "host": host,
+        "backend": backend,
         "model": model,
         "reasoning_effort": reasoning_effort,
         "provider": provider,

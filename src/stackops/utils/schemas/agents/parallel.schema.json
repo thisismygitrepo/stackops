@@ -86,6 +86,14 @@
             null
           ]
         },
+        "backend": {
+          "description": "Backend used when run launches the generated layout.",
+          "enum": [
+            "tmux",
+            "herdr",
+            null
+          ]
+        },
         "context": {
           "description": "Inline context shared with generated agent prompts.",
           "type": [

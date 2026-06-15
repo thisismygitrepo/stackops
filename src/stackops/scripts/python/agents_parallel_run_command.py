@@ -5,6 +5,10 @@ from typing import Annotated, Literal, get_args
 import typer
 
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
+    AgentParallelBackendOption,
+    resolve_agent_parallel_backend,
+)
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 
 _PARALLEL_RUNS_SOURCE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
@@ -40,6 +44,10 @@ def run_parallel(
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Override provider.")] = None,
     host: Annotated[HOST | None, typer.Option(..., "--host", "-h", help=f"Override machine. One of {', '.join(get_args(HOST))}")] = None,
+    backend: Annotated[
+        AgentParallelBackendOption | None,
+        typer.Option(..., "--backend", "-b", help="Override backend used when --run launches the generated layout."),
+    ] = None,
     context: Annotated[
         str | None, typer.Option(..., "--context", "-c", help="Override context as a direct string. Mutually exclusive with --context-path.")
     ] = None,
@@ -87,6 +95,7 @@ def run_parallel(
                 reasoning_effort=reasoning_effort,
                 provider=provider,
                 host=host,
+                backend=None if backend is None else resolve_agent_parallel_backend(backend),
                 context=context,
                 context_path=context_path,
                 separator=separator,

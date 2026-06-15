@@ -12,6 +12,12 @@ from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.commo
     separator_is_applicable_for_context_path,
 )
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import collect_reviewed_create_options
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
+    AgentParallelBackend,
+    AgentParallelBackendOption,
+    DEFAULT_AGENT_PARALLEL_BACKEND,
+    resolve_agent_parallel_backend,
+)
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     DEFAULT_SEAPRATOR,
@@ -48,6 +54,7 @@ class InteractiveAgentCreateParams:
     job_name: str
     join_prompt_and_context: bool
     run: bool
+    backend: AgentParallelBackend
     output_path: str | None
     agents_dir: str | None
 
@@ -57,6 +64,7 @@ def _collect_inputs(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
+    backend: AgentParallelBackend,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -81,6 +89,7 @@ def _collect_inputs(
         agent=agent_selected,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
+        backend=backend,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -147,6 +156,7 @@ def _collect_inputs(
         job_name=reviewed_create_options.job_name,
         join_prompt_and_context=reviewed_create_options.join_prompt_and_context,
         run=reviewed_create_options.run,
+        backend=reviewed_create_options.backend,
         output_path=reviewed_create_options.output_path,
         agents_dir=reviewed_create_options.agents_dir,
     )
@@ -176,14 +186,17 @@ def main(
     job_name: str | None = None,
     join_prompt_and_context: bool = False,
     run: bool = False,
+    backend: AgentParallelBackendOption | AgentParallelBackend = DEFAULT_AGENT_PARALLEL_BACKEND,
     output_path: str | None = None,
     agents_dir: str | None = None,
     save_as_yaml: bool = False,
 ) -> None:
+    backend_resolved = resolve_agent_parallel_backend(backend)
     collected = _collect_inputs(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
+        backend=backend_resolved,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -219,6 +232,7 @@ def main(
         job_name=collected.job_name,
         join_prompt_and_context=collected.join_prompt_and_context,
         run=collected.run,
+        backend=collected.backend,
         output_path=collected.output_path,
         agents_dir=collected.agents_dir,
         save_as_yaml=save_as_yaml,

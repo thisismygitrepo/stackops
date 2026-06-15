@@ -6,6 +6,10 @@ from typing import Annotated, get_args
 import typer
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
+    DEFAULT_AGENT_PARALLEL_BACKEND,
+    AgentParallelBackendOption,
+)
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 PARALLEL_CREATE_EXAMPLE = """Create a parallel-agent layout without launching agents.
@@ -68,6 +72,10 @@ def agents_create(
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
     host: Annotated[HOST, typer.Option(..., "--host", "-h", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
+    backend: Annotated[
+        AgentParallelBackendOption,
+        typer.Option(..., "--backend", "-b", help="Backend used when --run launches the generated layout. One of tmux, herdr."),
+    ] = DEFAULT_AGENT_PARALLEL_BACKEND,
     context: Annotated[
         str | None, typer.Option(..., "--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path.")
     ] = None,
@@ -132,6 +140,7 @@ def agents_create(
             main(
                 agent=agent,
                 host=host,
+                backend=backend,
                 model=model,
                 reasoning_effort=reasoning_effort,
                 provider=provider,
@@ -157,6 +166,7 @@ def agents_create(
         impl(
             agent=agent,
             host=host,
+            backend=backend,
             model=model,
             reasoning=reasoning_effort,
             provider=provider,

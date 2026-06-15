@@ -2,6 +2,11 @@ from collections.abc import Callable
 from typing import Protocol
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ParallelCreateValues
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
+    DEFAULT_AGENT_PARALLEL_BACKEND,
+    AgentParallelBackendOption,
+    resolve_agent_parallel_backend,
+)
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -61,6 +66,7 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
         reasoning: ReasoningEffort | None,
         provider: PROVIDER | None,
         interactive: bool,
+        backend: AgentParallelBackendOption = DEFAULT_AGENT_PARALLEL_BACKEND,
         stagger_max: float = DEFAULT_STAGGER_MAX,
     ) -> None:
         del save_as_yaml
@@ -71,6 +77,7 @@ def capture_agents_create_values(*, workflow_module: WorkflowModule, workflow_fu
             reasoning_effort=reasoning,
             provider=provider,
             host=host,
+            backend=resolve_agent_parallel_backend(backend),
             context=context,
             context_path=context_path,
             separator=separator,

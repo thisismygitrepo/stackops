@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Final, TypeAlias, cast, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, resolve_agent_parallel_backend
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import CREATE_CONFIG_KEYS, ParallelCreateValues, ParallelYamlEntry
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
@@ -34,6 +35,7 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
         "reasoning": _optional_reasoning(mapping=raw_mapping, key="reasoning"),
         "provider": _optional_provider(mapping=raw_mapping, key="provider"),
         "host": _optional_host(mapping=raw_mapping, key="host"),
+        "backend": _optional_backend(mapping=raw_mapping, key="backend"),
         "context": _optional_string(mapping=raw_mapping, key="context"),
         "context_path": _optional_string(mapping=raw_mapping, key="context_path"),
         "separator": _optional_string(mapping=raw_mapping, key="separator"),
@@ -56,6 +58,7 @@ def parse_parallel_create_values(*, raw_entry: object, entry_name: str) -> Paral
         reasoning_effort=parsed_entry["reasoning"],
         provider=parsed_entry["provider"],
         host=parsed_entry["host"],
+        backend=parsed_entry["backend"],
         context=parsed_entry["context"],
         context_path=parsed_entry["context_path"],
         separator=parsed_entry["separator"],
@@ -185,7 +188,7 @@ def _collect_entry_candidates(*, raw_data: object) -> dict[str, str]:
 
 def _preview_entry(*, mapping: Mapping[str, object]) -> str:
     preview_lines: list[str] = []
-    for key in ("agent", "job_name", "agent_load", "stagger_max", "prompt", "prompt_path", "prompt_name", "context", "context_path"):
+    for key in ("agent", "backend", "job_name", "agent_load", "stagger_max", "prompt", "prompt_path", "prompt_name", "context", "context_path"):
         value = mapping.get(key)
         if value is not None:
             preview_lines.append(f"{key}: {value}")
@@ -250,6 +253,16 @@ def _optional_host(*, mapping: Mapping[str, object], key: str) -> HOST | None:
     if value not in get_args(HOST):
         raise ValueError(f"{key} must be one of: {', '.join(get_args(HOST))}")
     return cast(HOST, value)
+
+
+def _optional_backend(*, mapping: Mapping[str, object], key: str) -> AgentParallelBackend | None:
+    value = _optional_string(mapping=mapping, key=key)
+    if value is None:
+        return None
+    try:
+        return resolve_agent_parallel_backend(cast(AgentParallelBackend, value))
+    except ValueError as exc:
+        raise ValueError(f"{key} must be one of: tmux, herdr") from exc
 
 
 def _optional_provider(*, mapping: Mapping[str, object], key: str) -> PROVIDER | None:

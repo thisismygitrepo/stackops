@@ -1,6 +1,7 @@
 from typing import Final, TypedDict
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
@@ -16,6 +17,7 @@ class ParallelCreateYamlEntry(TypedDict):
     reasoning: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST | None
+    backend: AgentParallelBackend | None
     context: str | None
     context_path: str | None
     separator: str | None
@@ -39,6 +41,7 @@ PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY: Final[ParallelCreateYamlEntry] = {
     "reasoning": None,
     "provider": None,
     "host": "local",
+    "backend": DEFAULT_AGENT_PARALLEL_BACKEND,
     "context": None,
     "context_path": None,
     "separator": _ESCAPED_DEFAULT_SEPARATOR,

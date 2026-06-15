@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_yaml import (
+    parse_parallel_create_values,
     select_parallel_create_values,
     select_parallel_create_values_from_locations,
 )
@@ -34,6 +35,12 @@ def test_select_parallel_create_values_accepts_multiple_interactive_choices(monk
     assert tuple(selected_name for selected_name, _base_values in selected_entries) == ("alpha", "beta")
     assert selected_entries[0][1].context == "alpha context"
     assert selected_entries[1][1].context == "beta context"
+
+
+def test_parse_parallel_create_values_accepts_backend() -> None:
+    parsed = parse_parallel_create_values(raw_entry={"backend": "herdr"}, entry_name="alpha")
+
+    assert parsed.backend == "herdr"
 
 
 def test_select_parallel_create_values_from_locations_preserves_multi_choice_order(

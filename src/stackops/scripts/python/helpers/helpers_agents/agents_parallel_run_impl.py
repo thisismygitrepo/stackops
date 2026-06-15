@@ -70,6 +70,7 @@ def run_parallel_from_yaml(
             reasoning=resolved.reasoning_effort,
             provider=resolved.provider,
             host=resolved.host,
+            backend=resolved.backend,
             context=resolved.context,
             context_path=resolved.context_path,
             separator=resolved.separator,

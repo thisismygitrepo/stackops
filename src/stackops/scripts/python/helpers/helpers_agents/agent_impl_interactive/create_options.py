@@ -3,6 +3,7 @@ from math import isfinite
 from typing import Literal, TypeAlias, cast, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import order_current_first
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import reasoning_support
 from stackops.utils.options_utils.textual_options_form import use_textual_options_form
@@ -17,6 +18,7 @@ from stackops.utils.options_utils.textual_options_form_types import (
 EditableCreateOption: TypeAlias = Literal[
     "join_prompt_and_context",
     "run",
+    "backend",
     "output_path",
     "agents_dir",
     "host",
@@ -33,6 +35,7 @@ EditableCreateOption: TypeAlias = Literal[
 class InteractiveCreateReviewOptions:
     join_prompt_and_context: bool
     run: bool
+    backend: AgentParallelBackend
     output_path: str | None
     agents_dir: str | None
     host: HOST
@@ -48,6 +51,7 @@ class InteractiveCreateReviewOptions:
 class _CreateOptionsFormSelection:
     join_prompt_and_context: bool
     run: bool
+    backend: AgentParallelBackend
     output_path: str | None
     agents_dir: str | None
     host: HOST
@@ -81,6 +85,10 @@ def _format_output_path_value(value: str | None) -> str:
 def _format_agents_dir_value(value: str | None) -> str:
     if value is None:
         return "auto: .ai/agents derived from job_name"
+    return value
+
+
+def _format_backend_value(value: AgentParallelBackend) -> str:
     return value
 
 
@@ -127,6 +135,7 @@ def _build_review_option_labels(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
+    backend: AgentParallelBackend,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -140,6 +149,7 @@ def _build_review_option_labels(
     return {
         "join_prompt_and_context": f"join_prompt_and_context = {join_prompt_and_context}",
         "run": f"run = {run}",
+        "backend": f"backend = {_format_backend_value(backend)}",
         "output_path": f"output_path = {_format_output_path_value(output_path)}",
         "agents_dir": f"agents_dir = {_format_agents_dir_value(agents_dir)}",
         "host": f"host = {host}",
@@ -169,6 +179,7 @@ def _build_create_options_form(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
+    backend: AgentParallelBackend,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -192,6 +203,7 @@ def _build_create_options_form(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
+        backend=backend,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -207,6 +219,9 @@ def _build_create_options_form(
             default=join_prompt_and_context, options=_to_option_values([join_prompt_and_context, not join_prompt_and_context])
         ),
         review_options["run"]: _select_option_spec(default=run, options=_to_option_values([run, not run])),
+        review_options["backend"]: _select_option_spec(
+            default=backend, options=_to_option_values(order_current_first(options=("tmux", "herdr"), current=backend))
+        ),
         review_options["output_path"]: _text_option_spec(
             default=output_path, allow_blank=True, placeholder="Leave blank to auto-create layout.json inside agents_dir"
         ),
@@ -303,6 +318,7 @@ def _collect_create_options_form_selection(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
+    backend: AgentParallelBackend,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -317,6 +333,7 @@ def _collect_create_options_form_selection(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
+        backend=backend,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -334,6 +351,7 @@ def _collect_create_options_form_selection(
                 agent=agent,
                 join_prompt_and_context=join_prompt_and_context,
                 run=run,
+                backend=backend,
                 output_path=output_path,
                 agents_dir=agents_dir,
                 host=host,
@@ -350,6 +368,7 @@ def _collect_create_options_form_selection(
     return _CreateOptionsFormSelection(
         join_prompt_and_context=_require_bool_value(selected_values=selected_values, key=review_options["join_prompt_and_context"]),
         run=_require_bool_value(selected_values=selected_values, key=review_options["run"]),
+        backend=_require_choice(selected_values=selected_values, key=review_options["backend"], options=("tmux", "herdr")),
         output_path=_require_optional_text_value(selected_values=selected_values, key=review_options["output_path"]),
         agents_dir=_require_optional_text_value(selected_values=selected_values, key=review_options["agents_dir"]),
         host=_require_choice(selected_values=selected_values, key=review_options["host"], options=cast(tuple[HOST, ...], get_args(HOST))),
@@ -369,6 +388,7 @@ def collect_reviewed_create_options(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
+    backend: AgentParallelBackend,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -387,6 +407,7 @@ def collect_reviewed_create_options(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
+        backend=backend,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,
@@ -401,6 +422,7 @@ def collect_reviewed_create_options(
     return InteractiveCreateReviewOptions(
         join_prompt_and_context=selection.join_prompt_and_context,
         run=selection.run,
+        backend=selection.backend,
         output_path=selection.output_path,
         agents_dir=selection.agents_dir,
         host=selection.host,
