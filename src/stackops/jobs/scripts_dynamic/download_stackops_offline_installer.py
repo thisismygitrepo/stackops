@@ -17,12 +17,13 @@ URL_MAP_FALLBACK_URL: Final[str] = (
     "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/"
     f"src/stackops/jobs/scripts_dynamic/{URL_MAP_FILE_NAME}"
 )
-DEFAULT_OUTPUT_DIR: Final[Path] = Path.home().joinpath(
+DEFAULT_OUTPUT_ROOT: Final[Path] = Path.home().joinpath(
     ".config",
     "stackops",
     "offline_installers",
-    "stackops-offline-installer",
 )
+DEFAULT_OUTPUT_DIR_NAME: Final[str] = "stackops-offline-installer"
+DEFAULT_OUTPUT_DIR: Final[Path] = DEFAULT_OUTPUT_ROOT.joinpath(DEFAULT_OUTPUT_DIR_NAME)
 KNOWN_TARGETS: Final[tuple[str, ...]] = (
     "linux-x64",
     "linux-arm",
@@ -52,8 +53,9 @@ def download_installer(*, target_key: str | None, output_dir: Path | None) -> Pa
         selected_target = _resolve_target(targets=targets, target_key=target_key)
     if selected_target.url is None:
         raise RuntimeError(f"No Google Drive URL is configured yet for {selected_target.pair}.")
-    resolved_output_dir = (output_dir or DEFAULT_OUTPUT_DIR).expanduser().resolve()
+    resolved_output_dir = _resolve_output_dir(output_dir=output_dir, target_pair=selected_target.pair)
     print(f"Downloading {selected_target.pair} offline installer into {resolved_output_dir}")
+    print(f"Download URL: {selected_target.url}")
     _download_and_extract(url=selected_target.url, output_dir=resolved_output_dir)
     print(f"Offline installer extracted to {resolved_output_dir}")
     return resolved_output_dir
@@ -91,8 +93,10 @@ def _prompt_for_target(*, targets: list[InstallerTarget]) -> InstallerTarget:
         raise RuntimeError("No offline installer targets are configured.")
     print("Choose the OS/arch pair to download:")
     for index, target in enumerate(targets, start=1):
-        status = "ready" if target.url is not None else "missing URL"
-        print(f"{index}. {target.pair} [{status}]")
+        if target.url is None:
+            print(f"{index}. {target.pair} [missing URL]")
+        else:
+            print(f"{index}. {target.pair} [URL: {target.url}]")
     while True:
         selection = input("Select a number: ").strip()
         if not selection.isdigit():
@@ -110,6 +114,12 @@ def _resolve_target(*, targets: list[InstallerTarget], target_key: str) -> Insta
             return target
     supported_targets = ", ".join(target.pair for target in targets)
     raise RuntimeError(f"Unsupported offline installer target: {target_key}. Supported targets: {supported_targets}")
+
+
+def _resolve_output_dir(*, output_dir: Path | None, target_pair: str) -> Path:
+    if output_dir is not None:
+        return output_dir.expanduser().resolve()
+    return DEFAULT_OUTPUT_ROOT.joinpath(f"{DEFAULT_OUTPUT_DIR_NAME}-{target_pair}").expanduser().resolve()
 
 
 def _download_and_extract(*, url: str, output_dir: Path) -> None:
