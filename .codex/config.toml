@@ -10,9 +10,6 @@ mcp_oauth_credentials_store = "auto"
 network_access = true
 
 [features]
-# --- Headroom init features ---
-hooks = true
-# --- end Headroom init features ---
 multi_agent = true
 remote_models = true
 

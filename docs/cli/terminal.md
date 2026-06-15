@@ -17,6 +17,7 @@ terminal [OPTIONS] COMMAND [ARGS]...
 | `attach` | Attach to an existing session, window/tab, or pane |
 | `kill` | Kill a session target |
 | `trace` | Trace a tmux session until a strict stop condition is met |
+| `summary` | Print running session summaries or one session's details |
 | `create-from-function` | Build and launch a multiprocess layout from a script function |
 | `balance-load` | Re-split a layout file by tab count or weight |
 | `create-template` | Create a starter layout file in the current directory |
@@ -233,6 +234,33 @@ terminal trace build-session --every 5 --until all-exited
 
 # Require successful exit codes from every pane
 terminal trace build-session --until exit-code --exit-code 0
+```
+
+## summary
+
+Print running terminal session summaries, or show details for one chosen session.
+
+```bash
+terminal summary [OPTIONS]
+```
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--backend` | `-b` | Backend to summarize; currently `tmux` or `t` |
+| `--session` | `-s` | Show details for one session by name |
+| `--choose-session` | `-c` | Choose one session interactively and show details |
+
+Examples:
+
+```bash
+# Show the aggregate tmux session table
+terminal summary
+
+# Show windows and panes for one named session
+terminal summary --session build-session
+
+# Choose a session interactively, with preview, then show details
+terminal summary --choose-session
 ```
 
 ## create-from-function

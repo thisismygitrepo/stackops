@@ -140,10 +140,61 @@ def _print_tmux_summary() -> None:
     console.print(table)
 
 
+def _print_tmux_session_details(session_name: str) -> None:
+    from rich.console import Console
+    from rich.markdown import Markdown
+    from stackops.scripts.python.helpers.helpers_sessions._attach_common import run_command
+    from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import classify_pane_status
+    from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview import build_preview
+
+    preview = build_preview(
+        session_name=session_name,
+        run_command_fn=run_command,
+        classify_pane_status_fn=classify_pane_status,
+    )
+    Console().print(Markdown(preview))
+
+
+def _resolve_tmux_session_name(session_name: str | None, choose_session: bool) -> str | None:
+    from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import (
+        choose_existing_session_name,
+        list_session_names,
+    )
+
+    if session_name is not None and choose_session:
+        typer.echo("Error: --session cannot be used together with --choose-session.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if choose_session:
+        action, payload = choose_existing_session_name(msg="Choose a tmux session to summarize:")
+        if action != "session_name":
+            typer.echo(f"Error: {payload}", err=True, color=True)
+            raise typer.Exit(code=1)
+        return payload
+    if session_name is None:
+        return None
+
+    available_sessions = list_session_names()
+    if session_name not in available_sessions:
+        available = ", ".join(available_sessions) if available_sessions else "none"
+        typer.echo(
+            f"Error: tmux session '{session_name}' not found. Available sessions: {available}",
+            err=True,
+            color=True,
+        )
+        raise typer.Exit(code=1)
+    return session_name
+
+
 def summary(
     backend: Annotated[Literal["tmux", "t"], typer.Option("--backend", "-b", help="Backend to summarize.")] = "tmux",
+    session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one session by name.")] = None,
+    choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one session interactively and show details.")] = False,
 ) -> None:
-    """Print a rich table of running terminal sessions."""
+    """Print running terminal session summaries or details for one session."""
     match backend:
         case "tmux" | "t":
-            _print_tmux_summary()
+            session_name = _resolve_tmux_session_name(session_name=session, choose_session=choose_session)
+            if session_name is None:
+                _print_tmux_summary()
+                return
+            _print_tmux_session_details(session_name=session_name)
