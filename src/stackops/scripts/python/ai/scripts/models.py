@@ -3,24 +3,44 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, TextIO, cast
 
-from stackops.scripts.python.ai.scripts.models_core import (
-    CleanupStatus,
-    COMPLETED_KIND,
-    DONE_LABEL,
-    ERROR_LABEL,
-    FAILURE_LABEL,
-    ISSUES_LABEL,
-    REPORTS_DIR,
-    RUNNING_LABEL,
-    ReportStats,
-    START_FAILED_KIND,
-    SUCCESS_LABEL,
-    SUMMARY_PATH,
-    ToolOutcome,
-    ToolResultKind,
-    ToolRunState,
-    ToolSpec,
-)
+try:
+    from models_core import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
+        CleanupStatus,
+        COMPLETED_KIND,
+        DONE_LABEL,
+        ERROR_LABEL,
+        FAILURE_LABEL,
+        ISSUES_LABEL,
+        REPORTS_DIR,
+        RUNNING_LABEL,
+        ReportStats,
+        START_FAILED_KIND,
+        SUCCESS_LABEL,
+        SUMMARY_PATH,
+        ToolOutcome,
+        ToolResultKind,
+        ToolRunState,
+        ToolSpec,
+    )
+except ModuleNotFoundError:
+    from stackops.scripts.python.ai.scripts.models_core import (
+        CleanupStatus,
+        COMPLETED_KIND,
+        DONE_LABEL,
+        ERROR_LABEL,
+        FAILURE_LABEL,
+        ISSUES_LABEL,
+        REPORTS_DIR,
+        RUNNING_LABEL,
+        ReportStats,
+        START_FAILED_KIND,
+        SUCCESS_LABEL,
+        SUMMARY_PATH,
+        ToolOutcome,
+        ToolResultKind,
+        ToolRunState,
+        ToolSpec,
+    )
 
 try:
     import models_diagnostics as models_diagnostics_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
