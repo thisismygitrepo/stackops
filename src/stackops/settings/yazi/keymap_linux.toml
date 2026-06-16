@@ -74,11 +74,11 @@ run  = 'shell --block -- hx "$0"'
 desc = "edit the file with helix"
 [[mgr.prepend_keymap]]
 on   = "v"
-run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/fullscreen_preview.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/fullscreen_preview.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Open a standalone fullscreen preview"
 [[mgr.prepend_keymap]]
 on   = "V"
-run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Open an interactive file-specific viewer, serving HTML over the network"
 [[mgr.prepend_keymap]]
 on   = "n"
@@ -97,7 +97,7 @@ desc = "Read with vscode"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "o"]
-run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/open_default_app.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/open_default_app.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Read with OS default app"
 
 [[mgr.prepend_keymap]]
@@ -124,7 +124,7 @@ desc = "Read with VS Code (blocking shell)"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "c"]
-run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/compress_selected.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/compress_selected.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "compress with ouch"
 
 [[mgr.prepend_keymap]]
@@ -169,15 +169,15 @@ desc = "Scroll one column to the right"
 
 [[mgr.prepend_keymap]]
 on = ["g", "o"]
-run = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/open_db_readonly.py" "$0"'
+run = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/open_db_readonly.py" "$0"'
 desc = "open with duckdb (read-only)"
 
 [[mgr.prepend_keymap]]
 on = ["g", "u"]
-run = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/open_db_readonly.py" --ui "$0"'
+run = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/open_db_readonly.py" --ui "$0"'
 desc = "open with duckdb ui (read-only target)"
 
 [[mgr.append_keymap]]
 on   = ["c", "t"]
-run  = 'shell --block -- uv run --isolated --no-project --python 3.14 "$HOME/.config/yazi/scripts/copy_file_content.py" %h'
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/copy_file_content.py" %h'
 desc = "Copy file content"
