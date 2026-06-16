@@ -132,7 +132,7 @@ def attach_to_session(
         new_session: Annotated[bool, typer.Option("--new-session", "-n", help="Create a new session instead of attaching to an existing one.", show_default=True)] = False,
         kill_all: Annotated[bool, typer.Option("--kill-all", "-k", help="Kill all existing sessions before creating a new one.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Choose a window/tab or pane target instead of only choosing from sessions.", show_default=True)] = False,
-        backend: Annotated[Literal["tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
+        backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
         ) -> None:
     """Choose a session or deeper target to attach to."""
     if name is not None and new_session:
@@ -169,7 +169,7 @@ def kill_session_target(
         idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
         delete: Annotated[bool, typer.Option("--delete", help="Delete stopped Herdr session records instead of killing running sessions.", show_default=True)] = False,
-        backend: Annotated[Literal["tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use")] = "tmux",
+        backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
         ) -> None:
     """Choose one or more session targets to kill."""
     if kill_all and name is not None:

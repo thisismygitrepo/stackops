@@ -9,12 +9,15 @@ from typing import Final, Literal, TypeAlias, cast
 
 import typer
 
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts import read_generated_layouts
+from stackops.utils.schemas.layouts.layout_types import TabConfig
 
 
-AgentParallelBackend: TypeAlias = Literal["tmux", "herdr"]
-AgentParallelBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h"]
+AgentParallelBackend: TypeAlias = Literal["tmux", "herdr", "aoe"]
+AgentParallelBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "aoe", "e"]
 DEFAULT_AGENT_PARALLEL_BACKEND: Final[AgentParallelBackend] = "tmux"
+AGENT_PARALLEL_BACKENDS: Final[tuple[AgentParallelBackend, ...]] = ("tmux", "herdr", "aoe")
+AGENT_PARALLEL_BACKEND_HELP: Final[str] = "tmux, herdr, or aoe"
 
 JsonObject: TypeAlias = dict[str, object]
 
@@ -39,23 +42,29 @@ def resolve_agent_parallel_backend(backend: AgentParallelBackendOption | AgentPa
             return "tmux"
         case "herdr" | "h":
             return "herdr"
+        case "aoe" | "e":
+            return "aoe"
         case _:
-            raise ValueError(f"Unsupported backend '{backend}'. Use tmux or herdr.")
+            raise ValueError(f"Unsupported backend '{backend}'. Use {AGENT_PARALLEL_BACKEND_HELP}.")
 
 
-def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBackend) -> None:
+def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBackend, agent: str | None = None) -> None:
     match backend:
         case "tmux":
             _run_generated_layout_with_tmux(layout_output_path=layout_output_path)
         case "herdr":
             summary = run_generated_layout_with_herdr(layout_output_path=layout_output_path)
             _show_herdr_launch_summary(summary=summary)
+        case "aoe":
+            from stackops.scripts.python.helpers.helpers_agents.agents_parallel_aoe_backend import run_generated_layout_with_aoe
+
+            run_generated_layout_with_aoe(layout_output_path=layout_output_path, agent=agent)
         case _:
-            raise ValueError(f"Unsupported backend '{backend}'. Use tmux or herdr.")
+            raise ValueError(f"Unsupported backend '{backend}'. Use {AGENT_PARALLEL_BACKEND_HELP}.")
 
 
 def run_generated_layout_with_herdr(*, layout_output_path: Path) -> HerdrLaunchSummary:
-    layouts = _read_layouts(layout_output_path=layout_output_path)
+    layouts = read_generated_layouts(layout_output_path=layout_output_path)
     if len(layouts) != 1:
         raise RuntimeError(f"Herdr backend expects one generated layout, found {len(layouts)} in {layout_output_path}")
     layout = layouts[0]
@@ -65,16 +74,7 @@ def run_generated_layout_with_herdr(*, layout_output_path: Path) -> HerdrLaunchS
 
     first_tab = tabs[0]
     workspace_payload = _run_herdr_json(
-        [
-            "herdr",
-            "workspace",
-            "create",
-            "--cwd",
-            first_tab["startDir"],
-            "--label",
-            layout["layoutName"],
-            "--no-focus",
-        ]
+        ["herdr", "workspace", "create", "--cwd", first_tab["startDir"], "--label", layout["layoutName"], "--no-focus"]
     )
     workspace = _result_object(payload=workspace_payload, key="workspace")
     root_pane = _result_object(payload=workspace_payload, key="root_pane")
@@ -90,18 +90,7 @@ def run_generated_layout_with_herdr(*, layout_output_path: Path) -> HerdrLaunchS
 
     for tab in tabs[1:]:
         tab_payload = _run_herdr_json(
-            [
-                "herdr",
-                "tab",
-                "create",
-                "--workspace",
-                workspace_id,
-                "--cwd",
-                tab["startDir"],
-                "--label",
-                tab["tabName"],
-                "--no-focus",
-            ]
+            ["herdr", "tab", "create", "--workspace", workspace_id, "--cwd", tab["startDir"], "--label", tab["tabName"], "--no-focus"]
         )
         created_tab = _result_object(payload=tab_payload, key="tab")
         created_pane = _result_object(payload=tab_payload, key="root_pane")
@@ -137,19 +126,6 @@ def _run_generated_layout_with_tmux(*, layout_output_path: Path) -> None:
         kill_upon_completion=False,
         subsitute_home=False,
     )
-
-
-def _read_layouts(*, layout_output_path: Path) -> list[LayoutConfig]:
-    try:
-        raw_payload = json.loads(layout_output_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Generated layout is not valid JSON: {layout_output_path}") from exc
-    if not isinstance(raw_payload, dict):
-        raise RuntimeError(f"Generated layout root must be a JSON object: {layout_output_path}")
-    raw_layouts = raw_payload.get("layouts")
-    if not isinstance(raw_layouts, list):
-        raise RuntimeError(f"Generated layout must contain a layouts list: {layout_output_path}")
-    return cast(list[LayoutConfig], raw_layouts)
 
 
 def _run_herdr(args: list[str]) -> str:

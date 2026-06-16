@@ -1,13 +1,16 @@
 
 #!/usr/bin/env python3
 import base64
+import os
 import pathlib
 import pprint
+import shlex
 import shutil
 import subprocess
 import tempfile
-import os
 from typing import Any, overload, Literal, Union
+
+TV_TEMP_DIR_ENV = "STACKOPS_TV_TEMP_DIR"
 
 
 def _format_preview_value(value: Any) -> str:
@@ -22,9 +25,24 @@ def _toml_inline_table(values: dict[str, str]) -> str:
     parts: list[str] = []
     for key in sorted(values.keys()):
         raw_value = values[key]
-        escaped = raw_value.replace("\\", "\\\\").replace('"', '\\"')
-        parts.append(f'{key} = "{escaped}"')
+        parts.append(f"{key} = {_toml_basic_string(raw_value)}")
     return "env = { " + ", ".join(parts) + " }\n"
+
+
+def _toml_basic_string(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _tv_temp_parent() -> pathlib.Path:
+    configured_dir = os.getenv(TV_TEMP_DIR_ENV)
+    temp_parent = (
+        pathlib.Path(configured_dir).expanduser()
+        if configured_dir
+        else pathlib.Path.home() / "tmp_results" / "tmp_files"
+    )
+    temp_parent.mkdir(parents=True, exist_ok=True)
+    return temp_parent
 
 
 def _normalize_extension(extension: str | None) -> str | None:
@@ -62,7 +80,7 @@ def select_from_options(options_to_preview_mapping: dict[str, Any], extension: s
     preview_panel_size = max(10, min(90, int(preview_size_percent)))
     terminal_width = shutil.get_terminal_size(fallback=(120, 40)).columns
     preview_width = max(20, int(terminal_width * preview_panel_size / 100) - 4)
-    with tempfile.TemporaryDirectory(prefix="tv_channel_") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="tv_channel_", dir=_tv_temp_parent()) as tmpdir:
         tempdir = pathlib.Path(tmpdir)
         entries: list[str] = []
         index_map: dict[int, str] = {}
@@ -146,17 +164,19 @@ fi
         if preview_width > 0:
             preview_env["STACKOPS_PREVIEW_WIDTH"] = str(preview_width)
         preview_env_line = _toml_inline_table(preview_env)
+        entries_command_path = shlex.quote(str(entries_path))
+        preview_script_command_path = shlex.quote(str(preview_script))
         channel_config = f"""[metadata]
 name = "temp_options"
 description = "Temporary channel for selecting options"
 
 [source]
-command = "bat '{entries_path}'"
+command = {_toml_basic_string(f"bat {entries_command_path}")}
 display = "{{split:\\t:1}}"
 output = "{{split:\\t:0}}"
 
 [preview]
-command = "{preview_script} {{split:\\t:0}}"
+command = {_toml_basic_string(f"{preview_script_command_path} {{split:\\t:0}}")}
 {preview_env_line}
 
 [ui.preview_panel]

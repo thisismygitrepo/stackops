@@ -91,6 +91,7 @@
           "enum": [
             "tmux",
             "herdr",
+            "aoe",
             null
           ]
         },

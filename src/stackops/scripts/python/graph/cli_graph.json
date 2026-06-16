@@ -71,7 +71,7 @@
             "name": "install",
             "fullPath": "devops install",
             "shortPath": "d i",
-            "help": "📦 Install packages",
+            "help": "📦 Install packages.",
             "source": {
               "file": "src/stackops/scripts/python/devops.py",
               "module": "stackops.scripts.python.devops",
@@ -84,18 +84,24 @@
                 "    which: Annotated[",
                 "        str | None,",
                 "        typer.Argument(",
-                "            ...,",
-                "            help=\"Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.\",",
+                "            help=\"Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.\"",
                 "        ),",
                 "    ] = None,",
                 "    group: Annotated[bool, typer.Option(..., \"--group\", \"-g\", help=\"Treat 'which' as a group name. A group is bundle of apps.\")] = False,",
+                "    check: Annotated[bool, typer.Option(..., \"--check\", \"-c\", help=\"Check installation status instead of installing.\")] = False,",
                 "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Interactive selection of programs to install.\")] = False,",
                 "    explore: Annotated[bool, typer.Option(..., \"--explore\", \"-x\", help=\"Explore installer categoryLabels before installing.\")] = False,",
                 "    update: Annotated[bool, typer.Option(..., \"--update\", \"-u\", help=\"Allow reinstalling or upgrading already installed apps when supported.\")] = False,",
                 "    version: Annotated[str | None, typer.Option(..., \"--version\", \"-v\", help=\"Specific version or tag to install when supported.\")] = None,",
                 ") -> None:",
-                "    \"\"\"📦 Install packages\"\"\"",
-                "    import stackops.utils.installer_utils.installer_cli as installer_entry_point",
+                "    \"\"\"📦 Install packages.\"\"\"",
+                "    from stackops.utils.installer_utils import installer_cli as installer_entry_point",
+                "",
+                "    if check:",
+                "        if which is None:",
+                "            raise typer.BadParameter(\"program name or group name is required when --check is set\")",
+                "        installer_entry_point.check_installations(which=which, group=group)",
+                "        return",
                 "",
                 "    installer_entry_point.main_installer_cli(ctx=ctx, which=which, group=group, interactive=interactive, explore=explore, update=update, version=version)"
               ],
@@ -115,14 +121,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(..., help='Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.",
-                    "default": "..."
+                    "help": "Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set."
                   }
                 },
                 {
@@ -145,6 +150,29 @@
                       "-g"
                     ],
                     "help": "Treat 'which' as a group name. A group is bundle of apps.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "check",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--check', '-c', help='Check installation status instead of installing.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--check",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--check"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Check installation status instead of installing.",
                     "default": "..."
                   }
                 },
@@ -247,12 +275,12 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "📦 Install packages",
+            "doc": "📦 Install packages.",
             "aliases": [
               {
                 "name": "i",
                 "hidden": true,
-                "help": "📦 Install packages"
+                "help": "📦 Install packages."
               }
             ]
           },
@@ -16366,7 +16394,7 @@
                 "        new_session: Annotated[bool, typer.Option(\"--new-session\", \"-n\", help=\"Create a new session instead of attaching to an existing one.\", show_default=True)] = False,",
                 "        kill_all: Annotated[bool, typer.Option(\"--kill-all\", \"-k\", help=\"Kill all existing sessions before creating a new one.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Choose a window/tab or pane target instead of only choosing from sessions.\", show_default=True)] = False,",
-                "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
+                "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"aoe\", \"e\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use: tmux, herdr, aoe, or auto\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose a session or deeper target to attach to.\"\"\"",
                 "    if name is not None and new_session:",
@@ -16482,10 +16510,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['tmux', 't', 'herdr', 'h', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'aoe', 'e', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'aoe', 'e', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use: tmux, herdr, aoe, or auto')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16498,7 +16526,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend multiplexer to use",
+                    "help": "Backend multiplexer to use: tmux, herdr, aoe, or auto",
                     "default": "..."
                   }
                 }
@@ -16536,7 +16564,8 @@
                 "        kill_all: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Kill all sessions. With --idle, inspect all sessions for idle panes/windows.\", show_default=True)] = False,",
                 "        idle: Annotated[bool, typer.Option(\"--idle\", \"-i\", help=\"Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.\", show_default=True)] = False,",
-                "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use\")] = \"tmux\",",
+                "        delete: Annotated[bool, typer.Option(\"--delete\", help=\"Delete stopped Herdr session records instead of killing running sessions.\", show_default=True)] = False,",
+                "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"aoe\", \"e\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use: tmux, herdr, aoe, or auto\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose one or more session targets to kill.\"\"\"",
                 "    if kill_all and name is not None:",
@@ -16553,6 +16582,15 @@
                 "        raise typer.Exit(code=1)",
                 "    from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import print_kill_summary, resolve_session_backend",
                 "    backend_resolved = resolve_session_backend(backend)",
+                "    if delete and backend_resolved != \"herdr\":",
+                "        typer.echo(\"Error: --delete is only supported by the Herdr backend.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if delete and window:",
+                "        typer.echo(\"Error: --delete cannot be used together with --window.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if delete and idle:",
+                "        typer.echo(\"Error: --delete cannot be used together with --idle.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
                 "    from stackops.scripts.python.helpers.helpers_sessions.kill_impl import choose_kill_target as impl",
                 "",
                 "    action, payload, killed_targets = impl(",
@@ -16561,6 +16599,7 @@
                 "        kill_all=kill_all,",
                 "        idle=idle,",
                 "        window=window,",
+                "        delete=delete,",
                 "    )",
                 "    if action == \"error\":",
                 "        typer.echo(payload, err=True, color=True)",
@@ -16677,12 +16716,31 @@
                   }
                 },
                 {
+                  "name": "delete",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--delete', help='Delete stopped Herdr session records instead of killing running sessions.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--delete"
+                    ],
+                    "long_flags": [
+                      "--delete"
+                    ],
+                    "short_flags": [],
+                    "help": "Delete stopped Herdr session records instead of killing running sessions."
+                  }
+                },
+                {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['tmux', 't', 'herdr', 'h', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'aoe', 'e', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'aoe', 'e', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend multiplexer to use: tmux, herdr, aoe, or auto')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16695,7 +16753,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend multiplexer to use",
+                    "help": "Backend multiplexer to use: tmux, herdr, aoe, or auto",
                     "default": "..."
                   }
                 }
@@ -17244,11 +17302,17 @@
               "raw_lines": [
                 "def summary(",
                 "    backend: Annotated[Literal[\"tmux\", \"t\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to summarize.\")] = \"tmux\",",
+                "    session: Annotated[str | None, typer.Option(\"--session\", \"-s\", help=\"Show details for one session by name.\")] = None,",
+                "    choose_session: Annotated[bool, typer.Option(\"--choose-session\", \"-c\", help=\"Choose one session interactively and show details.\")] = False,",
                 ") -> None:",
-                "    \"\"\"Print a rich table of running terminal sessions.\"\"\"",
+                "    \"\"\"Print running terminal session summaries or details for one session.\"\"\"",
                 "    match backend:",
                 "        case \"tmux\" | \"t\":",
-                "            _print_tmux_summary()"
+                "            session_name = _resolve_tmux_session_name(session_name=session, choose_session=choose_session)",
+                "            if session_name is None:",
+                "                _print_tmux_summary()",
+                "                return",
+                "            _print_tmux_session_details(session_name=session_name)"
               ],
               "name": "summary",
               "parameters": [
@@ -17273,6 +17337,50 @@
                     ],
                     "help": "Backend to summarize."
                   }
+                },
+                {
+                  "name": "session",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--session', '-s', help='Show details for one session by name.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--session",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--session"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Show details for one session by name."
+                  }
+                },
+                {
+                  "name": "choose_session",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--choose-session', '-c', help='Choose one session interactively and show details.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--choose-session",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--choose-session"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Choose one session interactively and show details."
+                  }
                 }
               ],
               "return": "None"
@@ -17281,7 +17389,7 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "Print a rich table of running terminal sessions.",
+            "doc": "Print running terminal session summaries or details for one session.",
             "aliases": [
               {
                 "name": "s",
@@ -17535,6 +17643,10 @@
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Provider to use (if agent support many)\")] = None,",
                     "    host: Annotated[HOST, typer.Option(..., \"--host\", \"-h\", help=f\"Machine to run agents on. One of {', '.join(get_args(HOST))}\")] = \"local\",",
+                    "    backend: Annotated[",
+                    "        AgentParallelBackendOption,",
+                    "        typer.Option(..., \"--backend\", \"-b\", help=f\"Backend used when --run launches the generated layout. One of {AGENT_PARALLEL_BACKEND_HELP}.\"),",
+                    "    ] = DEFAULT_AGENT_PARALLEL_BACKEND,",
                     "    context: Annotated[",
                     "        str | None, typer.Option(..., \"--context\", \"-c\", help=\"Context as a direct string. Mutually exclusive with --context-path.\")",
                     "    ] = None,",
@@ -17575,15 +17687,23 @@
                     "    save_as_yaml: Annotated[",
                     "        bool,",
                     "        typer.Option(",
-                    "            ..., \"--save-as-yaml\", \"-y\", help=\"Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.\"",
+                    "            ...,",
+                    "            \"--save-as-yaml\",",
+                    "            \"-y\",",
+                    "            help=\"Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.\",",
                     "        ),",
                     "    ] = False,",
+                    "    show_example: Annotated[bool, typer.Option(..., \"--show-example\", \"-e\", help=\"Show a long parallel YAML create configuration example.\")] = False,",
                     "    interactive: Annotated[",
                     "        bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Whether to run in interactive mode, asking for missing parameters.\")",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"Create agents layout file, ready to run.\"\"\"",
                     "    try:",
+                    "        if show_example:",
+                    "            typer.echo(PARALLEL_CREATE_EXAMPLE)",
+                    "            return",
+                    "",
                     "        normalized_separator = _decode_separator(separator=separator)",
                     "        if interactive:",
                     "            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main",
@@ -17591,6 +17711,7 @@
                     "            main(",
                     "                agent=agent,",
                     "                host=host,",
+                    "                backend=backend,",
                     "                model=model,",
                     "                reasoning_effort=reasoning_effort,",
                     "                provider=provider,",
@@ -17616,6 +17737,7 @@
                     "        impl(",
                     "            agent=agent,",
                     "            host=host,",
+                    "            backend=backend,",
                     "            model=model,",
                     "            reasoning=reasoning_effort,",
                     "            provider=provider,",
@@ -17753,6 +17875,28 @@
                         ],
                         "short_flags": [
                           "-h"
+                        ],
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "backend",
+                      "kind": "positional_or_keyword",
+                      "type": "AgentParallelBackendOption",
+                      "default": "DEFAULT_AGENT_PARALLEL_BACKEND",
+                      "required": false,
+                      "annotation_raw": "Annotated[AgentParallelBackendOption, typer.Option(..., '--backend', '-b', help=f'Backend used when --run launches the generated layout. One of {AGENT_PARALLEL_BACKEND_HELP}.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backend",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backend"
+                        ],
+                        "short_flags": [
+                          "-b"
                         ],
                         "default": "..."
                       }
@@ -18080,6 +18224,29 @@
                       }
                     },
                     {
+                      "name": "show_example",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--show-example', '-e', help='Show a long parallel YAML create configuration example.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--show-example",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--show-example"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "Show a long parallel YAML create configuration example.",
+                        "default": "..."
+                      }
+                    },
+                    {
                       "name": "interactive",
                       "kind": "positional_or_keyword",
                       "type": "bool",
@@ -18329,6 +18496,10 @@
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Override provider.\")] = None,",
                     "    host: Annotated[HOST | None, typer.Option(..., \"--host\", \"-h\", help=f\"Override machine. One of {', '.join(get_args(HOST))}\")] = None,",
+                    "    backend: Annotated[",
+                    "        AgentParallelBackendOption | None,",
+                    "        typer.Option(..., \"--backend\", \"-b\", help=\"Override backend used when --run launches the generated layout.\"),",
+                    "    ] = None,",
                     "    context: Annotated[",
                     "        str | None, typer.Option(..., \"--context\", \"-c\", help=\"Override context as a direct string. Mutually exclusive with --context-path.\")",
                     "    ] = None,",
@@ -18376,6 +18547,7 @@
                     "                reasoning_effort=reasoning_effort,",
                     "                provider=provider,",
                     "                host=host,",
+                    "                backend=None if backend is None else resolve_agent_parallel_backend(backend),",
                     "                context=context,",
                     "                context_path=context_path,",
                     "                separator=separator,",
@@ -18644,6 +18816,29 @@
                         "short_flags": [
                           "-h"
                         ],
+                        "default": "..."
+                      }
+                    },
+                    {
+                      "name": "backend",
+                      "kind": "positional_or_keyword",
+                      "type": "AgentParallelBackendOption | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[AgentParallelBackendOption | None, typer.Option(..., '--backend', '-b', help='Override backend used when --run launches the generated layout.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backend",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backend"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Override backend used when --run launches the generated layout.",
                         "default": "..."
                       }
                     },
@@ -20309,7 +20504,13 @@
             "signature": {
               "raw_lines": [
                 "def run_prompt(",
-                "    prompt: Annotated[str | None, typer.Argument(help=\"Prompt text (optional positional argument). If omitted, an empty prompt is used.\")] = None,",
+                "    prompt: Annotated[",
+                "        list[str],",
+                "        typer.Argument(",
+                "            default_factory=list,",
+                "            help=\"Prompt text. Use -- before the prompt to pass option-looking text as prompt content.\",",
+                "        ),",
+                "    ],",
                 "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = \"copilot\",",
                 "    reasoning_effort: Annotated[",
                 "        ReasoningEffort | None,",
@@ -20370,7 +20571,7 @@
                 "",
                 "    try:",
                 "        impl(",
-                "            prompt=prompt,",
+                "            prompt=\" \".join(prompt) if prompt else None,",
                 "            agent=agent,",
                 "            reasoning_effort=reasoning_effort,",
                 "            context=context,",
@@ -20389,16 +20590,16 @@
                 {
                   "name": "prompt",
                   "kind": "positional_or_keyword",
-                  "type": "str | None",
+                  "type": "list[str]",
                   "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Prompt text (optional positional argument). If omitted, an empty prompt is used.')]",
+                  "required": true,
+                  "annotation_raw": "Annotated[list[str], typer.Argument(default_factory=list, help='Prompt text. Use -- before the prompt to pass option-looking text as prompt content.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Prompt text (optional positional argument). If omitted, an empty prompt is used."
+                    "help": "Prompt text. Use -- before the prompt to pass option-looking text as prompt content."
                   }
                 },
                 {

@@ -91,7 +91,7 @@ def download_installer(
     ] = None,
     output_dir: Annotated[
         Path | None,
-        typer.Option("--output-dir", "-o", help="Directory where the downloaded offline installer will be extracted."),
+        typer.Option("--output-dir", "-o", help="Override the extraction directory. By default, the directory name includes the target OS/arch."),
     ] = None,
 ) -> None:
     """📥 Download and extract a published offline installer."""

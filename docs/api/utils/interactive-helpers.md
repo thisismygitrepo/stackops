@@ -95,7 +95,8 @@ It takes:
 - `multi=True` or `False`
 - a preview size percentage
 
-The implementation dispatches to Windows- or Unix-specific Television helpers.
+The implementation dispatches to Windows- or Unix-specific Television helpers. Unix preview scratch files are written under
+`~/tmp_results/tmp_files` by default; set `STACKOPS_TV_TEMP_DIR` to override that location.
 
 ---
 

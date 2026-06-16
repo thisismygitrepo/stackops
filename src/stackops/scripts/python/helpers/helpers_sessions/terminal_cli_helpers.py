@@ -60,8 +60,8 @@ def print_kill_summary(
 
 
 def resolve_session_backend(
-    backend: Literal["tmux", "t", "herdr", "h", "auto", "a"],
-) -> Literal["tmux", "herdr"]:
+    backend: Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"],
+) -> Literal["tmux", "herdr", "aoe"]:
     import platform
     system = platform.system().lower()
     match backend:
@@ -72,6 +72,11 @@ def resolve_session_backend(
                 typer.echo("Error: Herdr is not supported on Windows.", err=True, color=True)
                 raise typer.Exit(code=1)
             return "herdr"
+        case "aoe" | "e":
+            if system == "windows":
+                typer.echo("Error: AoE is not supported on Windows.", err=True, color=True)
+                raise typer.Exit(code=1)
+            return "aoe"
         case "auto" | "a":
             return "tmux"
         case _:

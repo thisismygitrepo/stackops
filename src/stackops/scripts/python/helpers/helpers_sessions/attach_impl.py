@@ -98,7 +98,7 @@ def interactive_choose_with_preview(
 
 
 def choose_session(
-    backend: Literal["tmux", "herdr"],
+    backend: Literal["tmux", "herdr", "aoe"],
     name: str | None,
     new_session: bool,
     kill_all: bool,
@@ -113,6 +113,10 @@ def choose_session(
             from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import choose_session as _herdr
 
             return _herdr(name=name, new_session=new_session, kill_all=kill_all, window=window)
+        case "aoe":
+            from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import choose_session as _aoe
+
+            return _aoe(name=name, new_session=new_session, kill_all=kill_all, window=window)
     raise ValueError(f"Unsupported backend: {backend}")
 
 

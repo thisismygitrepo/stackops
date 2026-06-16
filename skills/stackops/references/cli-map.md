@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-14.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-15.
 
 This reference intentionally uses:
 - direct commands only

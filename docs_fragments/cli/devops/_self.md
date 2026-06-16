@@ -152,10 +152,10 @@ Download and extract an offline installer published in `download_stackops_offlin
 ```bash
 devops self download-installer
 devops self download-installer --target linux-x64
-devops self download-installer --target macos-arm --output-dir ~/.config/stackops/offline_installers/stackops-offline-installer
+devops self download-installer --target macos-arm --output-dir ~/.config/stackops/offline_installers/stackops-offline-installer-macos-arm
 ```
 
-When `--target` is omitted, StackOps prompts for one of the configured OS/architecture pairs.
+When `--target` is omitted, StackOps prompts for one of the configured OS/architecture pairs. By default, the installer is extracted to `~/.config/stackops/offline_installers/stackops-offline-installer-<target>`.
 
 ### explore
 

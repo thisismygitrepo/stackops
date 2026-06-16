@@ -205,7 +205,7 @@ def agents_create(
 
         typer.echo(f"Saved parallel YAML entry '{job_name_resolved}' to: {saved_yaml_path}")
     if run:
-        run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=backend_resolved)
+        run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=backend_resolved, agent=agent_selected)
 
 
 def _confirm_existing_agents_dir_cleanup(*, agents_dir_obj: Path) -> None:
