@@ -18,14 +18,10 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
-try:
-    import dashboard as dashboard_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-    import models as models_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts import (
-        dashboard as dashboard_module,
-        models as models_module,
-    )
+from stackops.scripts.python.ai.scripts import (
+    dashboard as dashboard_module,
+    models as models_module,
+)
 
 
 CHECKER_REFRESH_SECONDS = models_module.CHECKER_REFRESH_SECONDS

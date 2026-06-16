@@ -1,53 +1,31 @@
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, TextIO, cast
+from typing import Final, TextIO
 
-try:
-    from models_core import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-        CleanupStatus,
-        COMPLETED_KIND,
-        DONE_LABEL,
-        ERROR_LABEL,
-        FAILURE_LABEL,
-        ISSUES_LABEL,
-        REPORTS_DIR,
-        RUNNING_LABEL,
-        ReportStats,
-        START_FAILED_KIND,
-        SUCCESS_LABEL,
-        SUMMARY_PATH,
-        ToolOutcome,
-        ToolResultKind,
-        ToolRunState,
-        ToolSpec,
-    )
-except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts.models_core import (
-        CleanupStatus,
-        COMPLETED_KIND,
-        DONE_LABEL,
-        ERROR_LABEL,
-        FAILURE_LABEL,
-        ISSUES_LABEL,
-        REPORTS_DIR,
-        RUNNING_LABEL,
-        ReportStats,
-        START_FAILED_KIND,
-        SUCCESS_LABEL,
-        SUMMARY_PATH,
-        ToolOutcome,
-        ToolResultKind,
-        ToolRunState,
-        ToolSpec,
-    )
-
-try:
-    import models_diagnostics as models_diagnostics_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts import (
-        models_diagnostics as models_diagnostics_module,
-    )
+from stackops.scripts.python.ai.scripts import models_diagnostics as models_diagnostics_module
+from stackops.scripts.python.ai.scripts import (
+    models_config as models_config_module,
+    models_reports as models_reports_module,
+)
+from stackops.scripts.python.ai.scripts.models_core import (
+    CleanupStatus,
+    COMPLETED_KIND,
+    DONE_LABEL,
+    ERROR_LABEL,
+    FAILURE_LABEL,
+    ISSUES_LABEL,
+    REPORTS_DIR,
+    RUNNING_LABEL,
+    ReportStats,
+    START_FAILED_KIND,
+    SUCCESS_LABEL,
+    SUMMARY_PATH,
+    ToolOutcome,
+    ToolResultKind,
+    ToolRunState,
+    ToolSpec,
+)
 
 
 DiagnosticBucket = models_diagnostics_module.DiagnosticBucket
@@ -120,16 +98,6 @@ class RunningTool:
     started_at: float
 
 
-try:
-    import models_config as models_config_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-    import models_reports as models_reports_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts import (
-        models_config as models_config_module,
-        models_reports as models_reports_module,
-    )
-
-
 PYRIGHT_CONFIG_OVERRIDE_PATH = models_config_module.PYRIGHT_CONFIG_OVERRIDE_PATH
 TYPE_CHECK_EXCLUDES_ENV_VAR = models_config_module.TYPE_CHECK_EXCLUDES_ENV_VAR
 build_checker_specs = models_config_module.build_checker_specs
@@ -153,8 +121,8 @@ TYPE_CHECK_EXCLUDED_DIRECTORIES: Final[tuple[str, ...]] = (
 CLEANUP_COMMANDS: Final[tuple[tuple[str, ...], ...]] = build_cleanup_commands(
     TYPE_CHECK_EXCLUDED_DIRECTORIES
 )
-CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = cast(
-    tuple[ToolSpec, ...], build_checker_specs(TYPE_CHECK_EXCLUDED_DIRECTORIES)
+CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = build_checker_specs(
+    TYPE_CHECK_EXCLUDED_DIRECTORIES
 )
 
 __all__ = (

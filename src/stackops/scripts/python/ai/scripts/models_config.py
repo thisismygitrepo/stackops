@@ -7,10 +7,7 @@ import tomllib
 from pathlib import Path
 from typing import Final
 
-try:
-    from models_core import REPORTS_DIR, ToolSpec  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR, ToolSpec
+from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR, ToolSpec
 
 
 TYPE_CHECK_EXCLUDES_ENV_VAR: Final[str] = "STACKOPS_TYPE_CHECK_EXCLUDES"

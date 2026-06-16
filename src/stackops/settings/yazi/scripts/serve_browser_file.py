@@ -2,6 +2,7 @@ import argparse
 import functools
 import html
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import ipaddress
 from pathlib import Path
 import platform
 import socket
@@ -14,6 +15,11 @@ import webbrowser
 
 DEFAULT_HOST: Final[str] = "0.0.0.0"
 DEFAULT_PORT: Final[int] = 0
+LAN_PROBE_TARGETS: Final[tuple[tuple[str, int], ...]] = (
+    ("192.168.0.1", 80),
+    ("10.255.255.255", 80),
+    ("1.1.1.1", 80),
+)
 BROWSER_DOCUMENT_SUFFIXES: Final[frozenset[str]] = frozenset({".html", ".htm", ".pdf"})
 BROWSER_IMAGE_SUFFIXES: Final[frozenset[str]] = frozenset(
     {".apng", ".avif", ".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
@@ -36,13 +42,65 @@ def find_free_port(host: str) -> int:
         return int(sock.getsockname()[1])
 
 
-def get_lan_addresses() -> list[str]:
-    from stackops.utils.network.address import select_lan_ipv4
+def is_usable_ipv4(address: str) -> bool:
+    try:
+        parsed_address = ipaddress.IPv4Address(address)
+    except ipaddress.AddressValueError:
+        return False
+    return not (
+        parsed_address.is_loopback
+        or parsed_address.is_link_local
+        or parsed_address.is_multicast
+        or parsed_address.is_unspecified
+    )
 
-    lan_ipv4 = select_lan_ipv4(prefer_vpn=False)
-    if lan_ipv4 is None:
+
+def collect_hostname_ipv4_addresses() -> list[str]:
+    try:
+        address_infos = socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET, socket.SOCK_DGRAM)
+    except socket.gaierror:
         return []
-    return [lan_ipv4]
+    addresses: list[str] = []
+    for address_info in address_infos:
+        socket_address = address_info[4]
+        if not socket_address:
+            continue
+        raw_address = socket_address[0]
+        if isinstance(raw_address, str) and is_usable_ipv4(address=raw_address):
+            addresses.append(raw_address)
+    return addresses
+
+
+def collect_route_ipv4_addresses() -> list[str]:
+    addresses: list[str] = []
+    for target_host, target_port in LAN_PROBE_TARGETS:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe_socket:
+                probe_socket.connect((target_host, target_port))
+                address = probe_socket.getsockname()[0]
+        except OSError:
+            continue
+        if is_usable_ipv4(address=address):
+            addresses.append(address)
+    return addresses
+
+
+def get_lan_addresses() -> list[str]:
+    candidates = [
+        *collect_hostname_ipv4_addresses(),
+        *collect_route_ipv4_addresses(),
+    ]
+    unique_candidates: list[str] = []
+    seen_candidates: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen_candidates:
+            continue
+        seen_candidates.add(candidate)
+        unique_candidates.append(candidate)
+    return sorted(
+        unique_candidates,
+        key=lambda address: (not ipaddress.IPv4Address(address).is_private, address),
+    )
 
 
 def make_url_path(path: Path, root: Path) -> str:

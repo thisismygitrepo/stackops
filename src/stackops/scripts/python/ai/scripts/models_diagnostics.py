@@ -2,16 +2,10 @@ import json
 from dataclasses import dataclass
 from typing import Final, Literal, TypeAlias
 
-try:
-    from models_json import (  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-        extract_json_entries,
-        parse_json_output,
-    )
-except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts.models_json import (
-        extract_json_entries,
-        parse_json_output,
-    )
+from stackops.scripts.python.ai.scripts.models_json import (
+    extract_json_entries,
+    parse_json_output,
+)
 
 
 DIAGNOSTIC_DISTRIBUTION_LIMIT: Final[int] = 4
