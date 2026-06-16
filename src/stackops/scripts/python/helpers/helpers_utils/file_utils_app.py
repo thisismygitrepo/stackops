@@ -30,6 +30,7 @@ def download(
 
 
 def scrape(
+    ctx: typer.Context,
     url: Annotated[str | None, typer.Argument(..., help="The URL to scrape.")] = None,
     output_path: Annotated[str | None, typer.Argument(help="The output markdown file path. Defaults to f.md.")] = None,
     output: Annotated[str | None, typer.Option("--output", "-o", help="The output markdown file path.")] = None,
@@ -55,10 +56,8 @@ def scrape(
     if wait_selector is not None and wait_selector.strip() == "":
         raise typer.BadParameter("Wait selector cannot be empty.", param_hint="--wait-selector")
 
-    import click
     from stackops.scripts.python.helpers.helpers_utils.scrape import run_scrape as impl
 
-    click_context = click.get_current_context(silent=True)
     returncode = impl(
         url=url,
         output_path=output or output_path or "f.md",
@@ -68,7 +67,7 @@ def scrape(
         timeout=timeout,
         enable_resources=enable_resources,
         package_spec=package_spec.strip(),
-        extra_args=list(click_context.args) if click_context is not None else [],
+        extra_args=list(ctx.args),
     )
     if returncode != 0:
         raise typer.Exit(code=returncode)
@@ -177,6 +176,7 @@ def compress_pdf(
 
 
 def surya(
+    ctx: typer.Context,
     data_path: Annotated[str, typer.Argument(..., help="Path to an image, PDF, or folder for Surya.")],
     task: Annotated[SuryaTask, typer.Option("--task", "-t", help="Surya task to run.")] = "ocr",
     output_dir: Annotated[str | None, typer.Option("--output-dir", "-o", help="Directory for Surya results.")] = None,
@@ -209,10 +209,7 @@ def surya(
             raise typer.BadParameter(f"Output path is not a directory: {resolved_output_dir}", param_hint="--output-dir")
         output_dir_path = str(resolved_output_dir)
 
-    import click
     from stackops.scripts.python.helpers.helpers_utils.surya import run_surya as impl
-
-    click_context = click.get_current_context(silent=True)
 
     returncode = impl(
         data_path=str(input_path),
@@ -224,7 +221,7 @@ def surya(
         keep_server=keep_server,
         skip_table_detection=skip_table_detection,
         package_spec=package_spec,
-        extra_args=list(click_context.args) if click_context is not None else [],
+        extra_args=list(ctx.args),
     )
     if returncode != 0:
         raise typer.Exit(code=returncode)
