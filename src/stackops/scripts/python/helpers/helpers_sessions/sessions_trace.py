@@ -9,8 +9,8 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_models impor
     TraceUntil,
 )
 
-type TraceBackend = Literal["tmux", "herdr"]
-type TraceBackendOption = Literal["tmux", "t", "herdr", "h"]
+type TraceBackend = Literal["tmux", "herdr", "aoe"]
+type TraceBackendOption = Literal["tmux", "t", "herdr", "h", "aoe", "a", "e"]
 
 
 def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
@@ -24,6 +24,11 @@ def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
                 typer.echo("Error: Herdr is not supported on Windows.", err=True, color=True)
                 raise typer.Exit(code=1)
             return "herdr"
+        case "aoe" | "a" | "e":
+            if platform.system().lower() == "windows":
+                typer.echo("Error: AoE is not supported on Windows.", err=True, color=True)
+                raise typer.Exit(code=1)
+            return "aoe"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
             raise typer.Exit(code=1)
@@ -40,6 +45,11 @@ def _get_trace_loader(
             return loader
         case "herdr":
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_herdr import (
+                load_trace_snapshot as loader,
+            )
+            return loader
+        case "aoe":
+            from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import (
                 load_trace_snapshot as loader,
             )
             return loader

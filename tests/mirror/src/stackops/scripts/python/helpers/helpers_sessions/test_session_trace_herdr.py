@@ -8,6 +8,9 @@ def test_resolve_trace_backend_accepts_herdr_alias() -> None:
     assert sessions_trace.resolve_trace_backend("t") == "tmux"
     assert sessions_trace.resolve_trace_backend("herdr") == "herdr"
     assert sessions_trace.resolve_trace_backend("h") == "herdr"
+    assert sessions_trace.resolve_trace_backend("aoe") == "aoe"
+    assert sessions_trace.resolve_trace_backend("a") == "aoe"
+    assert sessions_trace.resolve_trace_backend("e") == "aoe"
 
 
 def test_evaluate_trace_snapshot_maps_herdr_agent_statuses() -> None:

@@ -170,7 +170,7 @@ terminal kill --backend aoe
 
 ## trace
 
-Trace a tmux session or Herdr workspace until every observable target matches a strict stop criterion.
+Trace a tmux session, Herdr workspace, or Agent of Empires session until every observable target matches a strict stop criterion.
 
 ```bash
 terminal trace [SESSION_NAME] [OPTIONS]
@@ -178,8 +178,8 @@ terminal trace [SESSION_NAME] [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `SESSION_NAME` | - | tmux session name or Herdr workspace label/id to trace; omit when using `--interactive` |
-| `--backend` | `-b` | Backend to trace; `tmux`/`t` or `herdr`/`h` |
+| `SESSION_NAME` | - | tmux session name, Herdr workspace label/id, or AoE session title/id to trace; omit when using `--interactive` |
+| `--backend` | `-b` | Backend to trace; `tmux`/`t`, `herdr`/`h`, or `aoe`/`a`/`e` |
 | `--interactive` | `-i` | Choose an existing backend session/workspace interactively |
 | `--every` | `-e` | Polling interval in seconds |
 | `--until` | `-u` | `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
@@ -200,6 +200,9 @@ terminal trace build-session --every 5 --until all-exited
 # Trace a Herdr workspace by label
 terminal trace build-workspace --backend herdr
 
+# Trace an Agent of Empires session by title
+terminal trace build-session --backend aoe
+
 # Require successful exit codes from every pane
 terminal trace build-session --until exit-code --exit-code 0
 ```
@@ -214,9 +217,9 @@ terminal summary [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--backend` | `-b` | Backend to summarize; `tmux`/`t`, `herdr`/`h`, or `auto`/`a` |
-| `--session` | `-s` | Show details for one tmux session or Herdr workspace by name |
-| `--choose-session` | `-c` | Choose one tmux session or Herdr workspace interactively and show details |
+| `--backend` | `-b` | Backend to summarize; `tmux`/`t`, `herdr`/`h`, `aoe`/`a`, or `auto` |
+| `--session` | `-s` | Show details for one tmux session, Herdr workspace, or AoE session by name |
+| `--choose-session` | `-c` | Choose one tmux session, Herdr workspace, or AoE session interactively and show details |
 
 Examples:
 
@@ -232,6 +235,9 @@ terminal summary --choose-session
 
 # Show Herdr workspaces
 terminal summary --backend herdr
+
+# Show Agent of Empires sessions
+terminal summary --backend aoe
 ```
 
 ## create-from-function
@@ -307,7 +313,7 @@ Current behavior:
 
 - Prints the file path, version, total layout count, total tab count, average tabs per layout, and min/max tab counts.
 - Accepts the current wrapped layout-file shape with a top-level `layouts` array.
-- Use `--backend herdr` to summarize the same layout file with Herdr workspace terminology.
+- Use `--vocabulary herdr` to summarize the same layout file with Herdr workspace terminology.
 
 ## Layout File Format
 
@@ -341,4 +347,4 @@ Older examples that use `tabs` or `cwd` are stale. The current schema uses `layo
 
 ## Backend Notes
 
-- `trace` supports tmux sessions and Herdr workspaces.
+- `trace` supports tmux sessions, Herdr workspaces, and Agent of Empires sessions.

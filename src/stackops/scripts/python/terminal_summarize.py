@@ -5,21 +5,29 @@ from typing import Annotated, Literal, TypeAlias, cast
 import typer
 
 
-SummarizeBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "auto", "a"]
-ResolvedSummarizeBackend: TypeAlias = Literal["tmux", "herdr"]
+SummarizeVocabulary: TypeAlias = Literal["layout", "l", "herdr", "h"]
+LegacySummarizeBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "auto", "a"]
+ResolvedSummarizeVocabulary: TypeAlias = Literal["layout", "herdr"]
 
 
-def _resolve_backend(backend: SummarizeBackend) -> ResolvedSummarizeBackend:
-    match backend:
-        case "tmux" | "t" | "auto" | "a":
-            return "tmux"
+def _resolve_vocabulary(vocabulary: SummarizeVocabulary | LegacySummarizeBackend) -> ResolvedSummarizeVocabulary:
+    match vocabulary:
+        case "layout" | "l" | "tmux" | "t" | "auto" | "a":
+            return "layout"
         case "herdr" | "h":
             return "herdr"
 
 
 def summarize(
     layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
-    backend: Annotated[SummarizeBackend, typer.Option("--backend", "-b", help="Backend vocabulary to use: tmux, herdr, or auto.")] = "tmux",
+    vocabulary: Annotated[
+        SummarizeVocabulary,
+        typer.Option("--vocabulary", "-v", help="Output vocabulary to use: layout or herdr."),
+    ] = "layout",
+    backend: Annotated[
+        LegacySummarizeBackend | None,
+        typer.Option("--backend", "-b", help="Deprecated alias for --vocabulary.", hidden=True),
+    ] = None,
 ) -> None:
     """Summarize a layout file with counts for layouts and tabs."""
     import json
@@ -31,7 +39,7 @@ def summarize(
 
     console = Console()
     layout_path_obj = Path(layout_path).expanduser().absolute()
-    backend_resolved = _resolve_backend(backend)
+    vocabulary_resolved = _resolve_vocabulary(backend) if backend is not None else _resolve_vocabulary(vocabulary)
 
     if not layout_path_obj.exists():
         console.print(
@@ -117,7 +125,7 @@ def summarize(
     total_layouts = len(rows)
     avg_tabs = (total_tabs / total_layouts) if total_layouts > 0 else 0.0
     version = str(layout_file.get("version", "unknown"))
-    if backend_resolved == "herdr":
+    if vocabulary_resolved == "herdr":
         summary_title = "[bold blue]Herdr Layout Summary[/bold blue]"
         layout_count_label = "Workspaces"
         average_label = "Avg tabs/workspace"
@@ -135,7 +143,7 @@ def summarize(
         name_column = "Layout Name"
 
     summary_lines = [
-        f"[bold]Backend:[/bold] {backend_resolved}",
+        f"[bold]Vocabulary:[/bold] {vocabulary_resolved}",
         f"[bold]File:[/bold] {layout_path_obj}",
         f"[bold]Version:[/bold] {version}",
         f"[bold]{layout_count_label}:[/bold] {total_layouts}",

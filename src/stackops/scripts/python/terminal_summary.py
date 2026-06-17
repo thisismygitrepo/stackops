@@ -8,8 +8,8 @@ import typer
 
 
 PaneCategory: TypeAlias = Literal["idle", "running", "exited", "unknown"]
-SummaryBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "auto", "a"]
-ResolvedSummaryBackend: TypeAlias = Literal["tmux", "herdr"]
+SummaryBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "aoe", "a", "auto"]
+ResolvedSummaryBackend: TypeAlias = Literal["tmux", "herdr", "aoe"]
 
 
 @dataclass(frozen=True)
@@ -38,6 +38,16 @@ class HerdrWorkspaceSummary:
     focused_panes: int
     agent_statuses: str
     cwd: str
+
+
+@dataclass(frozen=True)
+class AoeSessionSummary:
+    name: str
+    session_id: str
+    status: str
+    group: str
+    agent: str
+    path: str
 
 
 JsonObject: TypeAlias = dict[str, Any]
@@ -69,10 +79,12 @@ def _format_process_names(process_counts: Counter[str]) -> str:
 
 def _resolve_summary_backend(backend: SummaryBackend) -> ResolvedSummaryBackend:
     match backend:
-        case "tmux" | "t" | "auto" | "a":
+        case "tmux" | "t" | "auto":
             return "tmux"
         case "herdr" | "h":
             return "herdr"
+        case "aoe" | "a":
+            return "aoe"
 
 
 def _format_counts(counts: Counter[str]) -> str:
@@ -80,6 +92,181 @@ def _format_counts(counts: Counter[str]) -> str:
         return "-"
     rows = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
     return ", ".join(f"{name} x{count}" if count > 1 else name for name, count in rows)
+
+
+def _aoe_session_entries_or_exit() -> list[JsonObject]:
+    from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
+
+    sessions = _aoe_backend.list_session_entries()
+    if sessions is None:
+        typer.echo(
+            "Error: Unable to list AoE sessions. Confirm `aoe list --json` works.",
+            err=True,
+            color=True,
+        )
+        raise typer.Exit(code=1)
+    return sessions
+
+
+def _collect_aoe_summary(session: JsonObject) -> AoeSessionSummary:
+    from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
+
+    return AoeSessionSummary(
+        name=_aoe_backend.session_title(session) or _aoe_backend.session_id(session) or "-",
+        session_id=_aoe_backend.session_id(session) or "-",
+        status=_aoe_backend.session_status(session) or "-",
+        group=_aoe_backend.entry_text(session, "group", "group_path", "groupPath") or "-",
+        agent=_aoe_backend.entry_text(session, "agent", "tool", "command") or "-",
+        path=_aoe_backend.entry_text(session, "path", "project_path", "projectPath", "workspace", "cwd") or "-",
+    )
+
+
+def _print_aoe_summary() -> None:
+    from rich import box
+    from rich.console import Console
+    from rich.table import Table
+
+    sessions = _aoe_session_entries_or_exit()
+    table = Table(
+        title=f"AoE sessions ({len(sessions)})",
+        box=box.SIMPLE_HEAVY,
+        show_lines=False,
+    )
+    table.add_column("Session", style="bold cyan")
+    table.add_column("ID")
+    table.add_column("Status", style="green")
+    table.add_column("Group", overflow="fold")
+    table.add_column("Agent")
+    table.add_column("Path", overflow="fold")
+
+    for session in [_collect_aoe_summary(session=session) for session in sessions]:
+        table.add_row(
+            session.name,
+            session.session_id,
+            session.status,
+            session.group,
+            session.agent,
+            session.path,
+        )
+    Console().print(table)
+
+
+def _aoe_session_detail_markdown(session: JsonObject) -> str:
+    summary = _collect_aoe_summary(session)
+    return "\n".join(
+        [
+            f"# AoE Session: {summary.name}",
+            "",
+            "**backend:** aoe",
+            f"**id:** {summary.session_id}",
+            f"**status:** {summary.status}",
+            f"**group:** {summary.group}",
+            f"**agent:** {summary.agent}",
+            f"**path:** {summary.path}",
+        ]
+    )
+
+
+def _find_aoe_session(sessions: list[JsonObject], name: str) -> JsonObject | None:
+    from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
+
+    for session in sessions:
+        candidates = {
+            _aoe_backend.session_title(session),
+            _aoe_backend.session_id(session),
+            _aoe_backend.session_identifier(session),
+            _aoe_backend.session_display_name(session),
+        }
+        if name in candidates:
+            return session
+    return None
+
+
+def _available_aoe_session_names(sessions: list[JsonObject]) -> list[str]:
+    from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
+
+    names: list[str] = []
+    for session in sessions:
+        name = _aoe_backend.session_identifier(session)
+        if name is not None:
+            names.append(name)
+    return names
+
+
+def _resolve_aoe_session_name(session_name: str | None, choose_session: bool) -> str | None:
+    from stackops.scripts.python.helpers.helpers_sessions._attach_common import interactive_choose_with_preview
+    from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
+
+    if session_name is not None and choose_session:
+        typer.echo("Error: --session cannot be used together with --choose-session.", err=True, color=True)
+        raise typer.Exit(code=1)
+
+    sessions = _aoe_session_entries_or_exit()
+    if choose_session:
+        option_to_identifier: dict[str, str] = {}
+        options_to_preview_mapping: dict[str, str] = {}
+        seen_labels: dict[str, int] = {}
+        for session in sessions:
+            identifier = _aoe_backend.session_identifier(session)
+            if identifier is None:
+                continue
+            label = _aoe_backend.session_display_name(session)
+            seen = seen_labels.get(label, 0)
+            seen_labels[label] = seen + 1
+            if seen:
+                label = f"{label} ({_aoe_backend.session_id(session) or seen + 1})"
+            option_to_identifier[label] = identifier
+            options_to_preview_mapping[label] = _aoe_session_detail_markdown(session)
+
+        if len(options_to_preview_mapping) == 0:
+            typer.echo("Error: No AoE sessions are available.", err=True, color=True)
+            raise typer.Exit(code=1)
+
+        selection = interactive_choose_with_preview(
+            msg="Choose an AoE session to summarize:",
+            options_to_preview_mapping=options_to_preview_mapping,
+        )
+        if selection is None:
+            typer.echo("Error: No AoE session selected.", err=True, color=True)
+            raise typer.Exit(code=1)
+        if isinstance(selection, list):
+            selection = selection[0] if selection else None
+        if selection not in option_to_identifier:
+            typer.echo(f"Error: Unknown AoE session selected: {selection}", err=True, color=True)
+            raise typer.Exit(code=1)
+        return option_to_identifier[selection]
+
+    if session_name is None:
+        return None
+
+    if _find_aoe_session(sessions, session_name) is None:
+        available_names = _available_aoe_session_names(sessions)
+        available = ", ".join(available_names) if available_names else "none"
+        typer.echo(
+            f"Error: AoE session '{session_name}' not found. Available sessions: {available}",
+            err=True,
+            color=True,
+        )
+        raise typer.Exit(code=1)
+    return session_name
+
+
+def _print_aoe_session_details(session_name: str) -> None:
+    from rich.console import Console
+    from rich.markdown import Markdown
+
+    sessions = _aoe_session_entries_or_exit()
+    session = _find_aoe_session(sessions, session_name)
+    if session is None:
+        available_names = _available_aoe_session_names(sessions)
+        available = ", ".join(available_names) if available_names else "none"
+        typer.echo(
+            f"Error: AoE session '{session_name}' not found. Available sessions: {available}",
+            err=True,
+            color=True,
+        )
+        raise typer.Exit(code=1)
+    Console().print(Markdown(_aoe_session_detail_markdown(session)))
 
 
 def _collect_tmux_summary(session_name: str) -> SessionSummary:
@@ -513,9 +700,9 @@ def _resolve_herdr_workspace_name(workspace_name: str | None, choose_session: bo
 
 
 def summary(
-    backend: Annotated[SummaryBackend, typer.Option("--backend", "-b", help="Backend to summarize: tmux, herdr, or auto.")] = "tmux",
-    session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one tmux session or Herdr workspace by name.")] = None,
-    choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one tmux session or Herdr workspace interactively and show details.")] = False,
+    backend: Annotated[SummaryBackend, typer.Option("--backend", "-b", help="Backend to summarize: tmux, herdr, aoe, or auto.")] = "tmux",
+    session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one tmux session, Herdr workspace, or AoE session by name.")] = None,
+    choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one tmux session, Herdr workspace, or AoE session interactively and show details.")] = False,
 ) -> None:
     """Print running terminal session summaries or details for one session."""
     match _resolve_summary_backend(backend):
@@ -531,3 +718,9 @@ def summary(
                 _print_herdr_summary()
                 return
             _print_herdr_workspace_details(workspace_name=workspace_name)
+        case "aoe":
+            session_name = _resolve_aoe_session_name(session_name=session, choose_session=choose_session)
+            if session_name is None:
+                _print_aoe_summary()
+                return
+            _print_aoe_session_details(session_name=session_name)

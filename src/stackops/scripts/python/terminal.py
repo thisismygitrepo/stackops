@@ -263,12 +263,12 @@ def create_from_function(
 
 
 def trace(
-    session_name: Annotated[str | None, typer.Argument(help="Name of the tmux session or Herdr workspace to trace. Required unless --interactive is set.")] = None,
+    session_name: Annotated[str | None, typer.Argument(help="Name of the tmux session, Herdr workspace, or AoE session to trace. Required unless --interactive is set.")] = None,
     every: Annotated[float, typer.Option("--every", "-e", help="Polling interval in seconds between backend checks")] = 10.0,
     until: Annotated[Literal["idle-shell", "all-exited", "exit-code", "session-missing"], typer.Option("--until", "-u", help="Stop only when the selected criterion is satisfied")] = "idle-shell",
     exit_code: Annotated[int | None, typer.Option("--exit-code", "-c", help="Required pane exit code when `--until exit-code` is selected")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose an existing backend session/workspace interactively")] = False,
-    backend: Annotated[Literal["tmux", "t", "herdr", "h"], typer.Option("--backend", "-b", help="Backend to trace: tmux/t or herdr/h")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "a", "e"], typer.Option("--backend", "-b", help="Backend to trace: tmux/t, herdr/h, or aoe/a/e")] = "tmux",
 ) -> None:
     """Trace a terminal backend session until every target matches a strict stop criterion."""
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import (
@@ -298,12 +298,18 @@ def trace(
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_name
 
             action, payload = choose_existing_session_name(msg="Choose a tmux session to trace:")
-        else:
+        elif backend_resolved == "herdr":
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_herdr import (
                 choose_existing_workspace_name,
             )
 
             action, payload = choose_existing_workspace_name(msg="Choose a Herdr workspace to trace:")
+        else:
+            from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import (
+                choose_existing_session_name,
+            )
+
+            action, payload = choose_existing_session_name(msg="Choose an AoE session to trace:")
         if action == "error":
             typer.echo(f"Error: {payload}", err=True, color=True)
             raise typer.Exit(code=1)

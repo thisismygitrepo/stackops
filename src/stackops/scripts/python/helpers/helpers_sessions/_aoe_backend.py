@@ -74,6 +74,10 @@ def _session_entries() -> list[JsonObject] | None:
     return sessions
 
 
+def list_session_entries() -> list[JsonObject] | None:
+    return _session_entries()
+
+
 def _entry_text(entry: JsonObject, *keys: str) -> str | None:
     for key in keys:
         value = entry.get(key)
@@ -82,24 +86,48 @@ def _entry_text(entry: JsonObject, *keys: str) -> str | None:
     return None
 
 
+def entry_text(entry: JsonObject, *keys: str) -> str | None:
+    return _entry_text(entry, *keys)
+
+
 def _session_title(session: JsonObject) -> str | None:
     return _entry_text(session, "title", "name")
+
+
+def session_title(session: JsonObject) -> str | None:
+    return _session_title(session)
 
 
 def _session_id(session: JsonObject) -> str | None:
     return _entry_text(session, "id", "session_id", "sessionId")
 
 
+def session_id(session: JsonObject) -> str | None:
+    return _session_id(session)
+
+
 def _session_identifier(session: JsonObject) -> str | None:
     return _session_title(session) or _session_id(session)
+
+
+def session_identifier(session: JsonObject) -> str | None:
+    return _session_identifier(session)
 
 
 def _session_display_name(session: JsonObject) -> str:
     return _session_identifier(session) or "session"
 
 
+def session_display_name(session: JsonObject) -> str:
+    return _session_display_name(session)
+
+
 def _session_status(session: JsonObject) -> str | None:
     return _entry_text(session, "status", "state", "run_status", "runStatus")
+
+
+def session_status(session: JsonObject) -> str | None:
+    return _session_status(session)
 
 
 def _session_is_killable(session: JsonObject) -> bool:

@@ -31,6 +31,34 @@ def test_summary_with_herdr_backend_prints_aggregate_table(monkeypatch) -> None:
     assert "w1" in result.output
 
 
+def test_summary_with_aoe_backend_prints_session_table(monkeypatch) -> None:
+    from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
+
+    monkeypatch.setattr(
+        _aoe_backend,
+        "list_session_entries",
+        lambda: [
+            {
+                "title": "alpha",
+                "id": "id-alpha",
+                "status": "running",
+                "group": "build",
+                "path": "/tmp/project",
+                "agent": "codex",
+            }
+        ],
+    )
+
+    result = CliRunner().invoke(terminal.get_app(), ["summary", "--backend", "aoe"])
+
+    assert result.exit_code == 0
+    assert "AoE sessions" in result.output
+    assert "alpha" in result.output
+    assert "id-alpha" in result.output
+    assert "build" in result.output
+    assert "codex" in result.output
+
+
 def test_summary_with_named_session_prints_session_details(monkeypatch) -> None:
     observed: list[str] = []
 
@@ -58,6 +86,24 @@ def test_summary_with_named_herdr_workspace_prints_workspace_details(monkeypatch
     assert "Herdr tabs" in result.output
     assert "Herdr panes" in result.output
     assert "one" in result.output
+
+
+def test_summary_with_aoe_alias_prints_session_details(monkeypatch) -> None:
+    from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
+
+    monkeypatch.setattr(
+        _aoe_backend,
+        "list_session_entries",
+        lambda: [{"title": "alpha", "id": "id-alpha", "status": "running", "group": "build"}],
+    )
+
+    result = CliRunner().invoke(terminal.get_app(), ["summary", "--backend", "a", "--session", "alpha"])
+
+    assert result.exit_code == 0
+    assert "AoE Session: alpha" in result.output
+    assert "id-alpha" in result.output
+    assert "running" in result.output
+    assert "build" in result.output
 
 
 def test_summary_choose_session_prints_session_details(monkeypatch) -> None:
