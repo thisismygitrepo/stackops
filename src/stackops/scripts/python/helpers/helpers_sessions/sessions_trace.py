@@ -1,32 +1,52 @@
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import Any, Callable, Literal
 
 import typer
 
-if TYPE_CHECKING:
-    from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
-        PaneCategory,
-        TracePaneState,
-        TraceSnapshot,
-        TraceUntil,
-        evaluate_trace_snapshot,
-    )
+from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
+    PaneCategory,
+    TracePaneState,
+    TraceSnapshot,
+    TraceUntil,
+)
 
-type TraceBackend = Literal["tmux"]
+type TraceBackend = Literal["tmux", "herdr"]
+type TraceBackendOption = Literal["tmux", "t", "herdr", "h"]
+
+
+def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
+    import platform
+
+    match backend:
+        case "tmux" | "t":
+            return "tmux"
+        case "herdr" | "h":
+            if platform.system().lower() == "windows":
+                typer.echo("Error: Herdr is not supported on Windows.", err=True, color=True)
+                raise typer.Exit(code=1)
+            return "herdr"
+        case _:
+            typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
+            raise typer.Exit(code=1)
 
 
 def _get_trace_loader(
     backend: TraceBackend,
-) -> Callable[[str, "TraceUntil", int | None], "TraceSnapshot"]:
+) -> Callable[[str, TraceUntil, int | None], TraceSnapshot]:
     match backend:
         case "tmux":
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
                 load_trace_snapshot as loader,
             )
             return loader
+        case "herdr":
+            from stackops.scripts.python.helpers.helpers_sessions.session_trace_herdr import (
+                load_trace_snapshot as loader,
+            )
+            return loader
 
 
 def _validate_trace_options(
-    until: "TraceUntil",
+    until: TraceUntil,
     every_seconds: float,
     exit_code: int | None,
 ) -> None:
@@ -41,7 +61,7 @@ def _validate_trace_options(
 def trace_session_for_backend(
     backend: TraceBackend,
     session_name: str,
-    until: "TraceUntil",
+    until: TraceUntil,
     every_seconds: float,
     exit_code: int | None,
 ) -> None:
@@ -51,7 +71,7 @@ def trace_session_for_backend(
     from rich.live import Live
     from rich.panel import Panel
 
-    from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
+    from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
         build_missing_snapshot,
     )
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace_render import (
@@ -135,7 +155,7 @@ def trace_session_for_backend(
 
 def trace_session(
     session_name: str,
-    until: "TraceUntil",
+    until: TraceUntil,
     every_seconds: float,
     exit_code: int | None,
 ) -> None:
@@ -148,20 +168,27 @@ def trace_session(
     )
 
 
+def evaluate_trace_snapshot(*args: Any, **kwargs: Any) -> TraceSnapshot:
+    from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
+        evaluate_trace_snapshot as impl,
+    )
+
+    return impl(*args, **kwargs)
+
+
 __all__: list[str] = [
     "PaneCategory",
     "TracePaneState",
     "TraceSnapshot",
     "TraceUntil",
     "TraceBackend",
+    "TraceBackendOption",
     "evaluate_trace_snapshot",
+    "resolve_trace_backend",
     "trace_session",
     "trace_session_for_backend",
 ]
 
 
 def __getattr__(name: str) -> object:
-    if name in {"PaneCategory", "TracePaneState", "TraceSnapshot", "TraceUntil", "evaluate_trace_snapshot"}:
-        from stackops.scripts.python.helpers.helpers_sessions import session_trace_tmux
-        return getattr(session_trace_tmux, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

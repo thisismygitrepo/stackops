@@ -80,6 +80,22 @@ def _session_entries() -> list[JsonObject] | None:
     return sessions
 
 
+def list_workspace_entries() -> list[JsonObject] | None:
+    payload = _run_json_command(["herdr", "workspace", "list"])
+    if payload is None:
+        return None
+    workspaces = _result_entries(payload, "workspaces")
+    workspaces.sort(
+        key=lambda workspace: (
+            not bool(workspace.get("focused")),
+            natural_sort_key(str(workspace.get("number") or "")),
+            natural_sort_key(str(workspace.get("label") or "")),
+            natural_sort_key(str(workspace.get("workspace_id") or "")),
+        )
+    )
+    return workspaces
+
+
 def _session_name(session: JsonObject) -> str | None:
     name = session.get("name")
     if isinstance(name, str) and name:
@@ -167,11 +183,25 @@ def _pane_entries(session_name: str) -> list[JsonObject]:
     return _result_entries(payload, "panes")
 
 
+def list_workspace_tab_entries(workspace_id: str) -> list[JsonObject]:
+    payload = _run_json_command(["herdr", "tab", "list", "--workspace", workspace_id])
+    return _result_entries(payload, "tabs")
+
+
+def list_workspace_pane_entries(workspace_id: str) -> list[JsonObject]:
+    payload = _run_json_command(["herdr", "pane", "list", "--workspace", workspace_id])
+    return _result_entries(payload, "panes")
+
+
 def _entry_text(entry: JsonObject, key: str) -> str | None:
     value = entry.get(key)
     if isinstance(value, str) and value:
         return value
     return None
+
+
+def entry_text(entry: JsonObject, key: str) -> str | None:
+    return _entry_text(entry, key)
 
 
 def _tab_display(tab: JsonObject) -> str:
@@ -181,6 +211,10 @@ def _tab_display(tab: JsonObject) -> str:
     if isinstance(number, int):
         return f"{number}:{label}"
     return label
+
+
+def tab_display(tab: JsonObject) -> str:
+    return _tab_display(tab)
 
 
 def _pane_display(pane: JsonObject, tab_display_by_id: dict[str, str]) -> str:
@@ -197,6 +231,10 @@ def _pane_display(pane: JsonObject, tab_display_by_id: dict[str, str]) -> str:
         if tab_display is not None:
             return f"{tab_display} / {label}"
     return label
+
+
+def pane_display(pane: JsonObject, tab_display_by_id: dict[str, str]) -> str:
+    return _pane_display(pane, tab_display_by_id)
 
 
 def _tab_preview(session_name: str, tab: JsonObject) -> str:

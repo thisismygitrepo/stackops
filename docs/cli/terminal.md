@@ -218,7 +218,7 @@ terminal kill --backend aoe
 
 ## trace
 
-Trace a tmux session until every observable target matches a strict stop criterion.
+Trace a tmux session or Herdr workspace until every observable target matches a strict stop criterion.
 
 ```bash
 terminal trace [SESSION_NAME] [OPTIONS]
@@ -226,8 +226,9 @@ terminal trace [SESSION_NAME] [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `SESSION_NAME` | - | Session name to trace; omit when using `--interactive` |
-| `--interactive` | `-i` | Choose an existing tmux session interactively |
+| `SESSION_NAME` | - | tmux session name or Herdr workspace label/id to trace; omit when using `--interactive` |
+| `--backend` | `-b` | Backend to trace; `tmux`/`t` or `herdr`/`h` |
+| `--interactive` | `-i` | Choose an existing backend session/workspace interactively |
 | `--every` | `-e` | Polling interval in seconds |
 | `--until` | `-u` | `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
 | `--exit-code` | `-c` | Required exit code when `--until exit-code` is selected |
@@ -244,6 +245,9 @@ terminal trace build-session
 # Wait until every pane has exited
 terminal trace build-session --every 5 --until all-exited
 
+# Trace a Herdr workspace by label
+terminal trace build-workspace --backend herdr
+
 # Require successful exit codes from every pane
 terminal trace build-session --until exit-code --exit-code 0
 ```
@@ -258,9 +262,9 @@ terminal summary [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--backend` | `-b` | Backend to summarize; currently `tmux` or `t` |
-| `--session` | `-s` | Show details for one session by name |
-| `--choose-session` | `-c` | Choose one session interactively and show details |
+| `--backend` | `-b` | Backend to summarize; `tmux`/`t`, `herdr`/`h`, or `auto`/`a` |
+| `--session` | `-s` | Show details for one tmux session or Herdr workspace by name |
+| `--choose-session` | `-c` | Choose one tmux session or Herdr workspace interactively and show details |
 
 Examples:
 
@@ -273,6 +277,9 @@ terminal summary --session build-session
 
 # Choose a session interactively, with preview, then show details
 terminal summary --choose-session
+
+# Show Herdr workspaces
+terminal summary --backend herdr
 ```
 
 ## create-from-function
@@ -341,13 +348,14 @@ Current behavior:
 Print layout counts and per-layout tab totals.
 
 ```bash
-terminal summarize LAYOUT_PATH
+terminal summarize LAYOUT_PATH [OPTIONS]
 ```
 
 Current behavior:
 
 - Prints the file path, version, total layout count, total tab count, average tabs per layout, and min/max tab counts.
 - Accepts the current wrapped layout-file shape with a top-level `layouts` array.
+- Use `--backend herdr` to summarize the same layout file with Herdr workspace terminology.
 
 ## Layout File Format
 
@@ -381,4 +389,4 @@ Older examples that use `tabs` or `cwd` are stale. The current schema uses `layo
 
 ## Backend Notes
 
-- `trace` is tmux-only.
+- `trace` supports tmux sessions and Herdr workspaces.

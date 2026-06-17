@@ -1,12 +1,25 @@
 """Summarize a layout file with counts for layouts and tabs."""
 
-from typing import Annotated, cast
+from typing import Annotated, Literal, TypeAlias, cast
 
 import typer
 
 
+SummarizeBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "auto", "a"]
+ResolvedSummarizeBackend: TypeAlias = Literal["tmux", "herdr"]
+
+
+def _resolve_backend(backend: SummarizeBackend) -> ResolvedSummarizeBackend:
+    match backend:
+        case "tmux" | "t" | "auto" | "a":
+            return "tmux"
+        case "herdr" | "h":
+            return "herdr"
+
+
 def summarize(
     layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
+    backend: Annotated[SummarizeBackend, typer.Option("--backend", "-b", help="Backend vocabulary to use: tmux, herdr, or auto.")] = "tmux",
 ) -> None:
     """Summarize a layout file with counts for layouts and tabs."""
     import json
@@ -18,6 +31,7 @@ def summarize(
 
     console = Console()
     layout_path_obj = Path(layout_path).expanduser().absolute()
+    backend_resolved = _resolve_backend(backend)
 
     if not layout_path_obj.exists():
         console.print(
@@ -103,25 +117,42 @@ def summarize(
     total_layouts = len(rows)
     avg_tabs = (total_tabs / total_layouts) if total_layouts > 0 else 0.0
     version = str(layout_file.get("version", "unknown"))
+    if backend_resolved == "herdr":
+        summary_title = "[bold blue]Herdr Layout Summary[/bold blue]"
+        layout_count_label = "Workspaces"
+        average_label = "Avg tabs/workspace"
+        max_label = "Max tabs workspace"
+        min_label = "Min tabs workspace"
+        table_title = f"[bold cyan]Herdr Workspaces ({total_layouts})[/bold cyan]"
+        name_column = "Workspace Label"
+    else:
+        summary_title = "[bold blue]Layout Summary[/bold blue]"
+        layout_count_label = "Layouts"
+        average_label = "Avg tabs/layout"
+        max_label = "Max tabs layout"
+        min_label = "Min tabs layout"
+        table_title = f"[bold cyan]Layouts ({total_layouts})[/bold cyan]"
+        name_column = "Layout Name"
 
     summary_lines = [
+        f"[bold]Backend:[/bold] {backend_resolved}",
         f"[bold]File:[/bold] {layout_path_obj}",
         f"[bold]Version:[/bold] {version}",
-        f"[bold]Layouts:[/bold] {total_layouts}",
+        f"[bold]{layout_count_label}:[/bold] {total_layouts}",
         f"[bold]Tabs:[/bold] {total_tabs}",
-        f"[bold]Avg tabs/layout:[/bold] {avg_tabs:.2f}",
+        f"[bold]{average_label}:[/bold] {avg_tabs:.2f}",
     ]
     if rows:
         max_row = max(rows, key=lambda row: row[2])
         min_row = min(rows, key=lambda row: row[2])
-        summary_lines.append(f"[bold]Max tabs layout:[/bold] {max_row[1]} ({max_row[2]})")
-        summary_lines.append(f"[bold]Min tabs layout:[/bold] {min_row[1]} ({min_row[2]})")
+        summary_lines.append(f"[bold]{max_label}:[/bold] {max_row[1]} ({max_row[2]})")
+        summary_lines.append(f"[bold]{min_label}:[/bold] {min_row[1]} ({min_row[2]})")
 
-    console.print(Panel("\n".join(summary_lines), title="[bold blue]Layout Summary[/bold blue]", border_style="blue"))
+    console.print(Panel("\n".join(summary_lines), title=summary_title, border_style="blue"))
 
-    table = Table(title=f"[bold cyan]Layouts ({total_layouts})[/bold cyan]")
+    table = Table(title=table_title)
     table.add_column("#", justify="right")
-    table.add_column("Layout Name", style="white")
+    table.add_column(name_column, style="white")
     table.add_column("Tabs", justify="right", style="green")
     for index, layout_name, tab_count in rows:
         table.add_row(str(index), layout_name, str(tab_count))

@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     from rich.console import RenderableType
     from rich.panel import Panel
     from rich.table import Table
-    from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
+    from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
         TracePaneState,
         TraceSnapshot,
         TraceUntil,
