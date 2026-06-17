@@ -149,7 +149,6 @@ stackops
 ├─ terminal
 │  ├─ run
 │  ├─ run-all
-│  ├─ run-aoe
 │  ├─ attach
 │  ├─ kill
 │  ├─ trace

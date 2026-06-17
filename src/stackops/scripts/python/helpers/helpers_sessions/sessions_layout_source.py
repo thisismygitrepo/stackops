@@ -154,6 +154,7 @@ def choose_tabs_from_source(
     layout_source: LayoutSource,
     layouts_selected: list[LayoutConfig],
     choose_tabs: str | None,
+    preserve_layout_groups: bool = False,
 ) -> list[LayoutConfig]:
     if choose_tabs is None:
         return layouts_selected
@@ -210,6 +211,24 @@ def choose_tabs_from_source(
             if len(token_matches) == 0:
                 raise ValueError(f"Tab selector '{token}' matched no tabs.")
             selected_tab_refs.update(token_matches)
+
+    if preserve_layout_groups:
+        grouped_tabs: dict[str, list[TabConfig]] = {
+            layout["layoutName"]: []
+            for layout in layouts_selected
+        }
+        for layout_name, tab_index, tab in flat_tab_refs:
+            if layout_name in allowed_layout_names and (layout_name, tab_index) in selected_tab_refs:
+                grouped_tabs.setdefault(layout_name, []).append(tab)
+
+        layouts_filtered: list[LayoutConfig] = []
+        for layout in layouts_selected:
+            tabs = grouped_tabs.get(layout["layoutName"], [])
+            if len(tabs) > 0:
+                layouts_filtered.append({"layoutName": layout["layoutName"], "layoutTabs": tabs})
+        if len(layouts_filtered) == 0:
+            raise ValueError("No tabs were selected in the chosen layouts.")
+        return layouts_filtered
 
     merged_tabs = [
         tab

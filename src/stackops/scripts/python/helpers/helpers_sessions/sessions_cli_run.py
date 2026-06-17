@@ -42,6 +42,7 @@ def run_cli(
             resolve_layout_source,
         )
 
+        backend_resolved = resolve_standard_backend(backend)
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
@@ -55,10 +56,10 @@ def run_cli(
             layout_source=layout_source,
             layouts_selected=layouts_selected,
             choose_tabs=choose_tabs,
+            preserve_layout_groups=backend_resolved == "aoe",
         )
         if subsitute_home:
             layouts_selected = substitute_home_in_layouts(layouts_selected)
-        backend_resolved = resolve_standard_backend(backend)
         if parallel_layouts is not None and parallel_layouts <= 0:
             raise ValueError("--parallel-layouts must be a positive integer.")
         if parallel_layouts is None and len(layouts_selected) > max_layouts:
@@ -76,6 +77,42 @@ def run_cli(
                     f"Layout '{a_layout.get('layoutName', 'Unnamed')}' has "
                     f"{len(a_layout['layoutTabs'])} tabs which exceeds the max of {max_tabs}."
                 )
+
+        if backend_resolved == "aoe":
+            if monitor:
+                raise ValueError("--monitor is not supported by the AoE backend.")
+            if parallel_layouts is not None:
+                raise ValueError("--parallel-layouts is not supported by the AoE backend.")
+            if kill_upon_completion:
+                raise ValueError("--kill-upon-completion is not supported by the AoE backend.")
+            if exit_mode != "backToShell":
+                raise ValueError("--exit is not supported by the AoE backend; use backToShell.")
+            if on_conflict != "error":
+                raise ValueError("--on-conflict is not supported by the AoE backend.")
+
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_aoe_impl import (
+                AoeLaunchOptions,
+                run_layouts_via_aoe,
+            )
+
+            options = AoeLaunchOptions(
+                aoe_bin="aoe",
+                agent="codex",
+                model=None,
+                provider=None,
+                sandbox=None,
+                yolo=False,
+                cmd=None,
+                extra_agent_args=(),
+                env_vars=(),
+                force=False,
+                dry_run=False,
+                sleep_inbetween=sleep_inbetween,
+                tab_command_mode="prompt",
+                launch=True,
+            )
+            run_layouts_via_aoe(layouts_selected=layouts_selected, options=options)
+            return
 
         run_layouts(
             sleep_inbetween=sleep_inbetween,

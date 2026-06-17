@@ -948,13 +948,6 @@ STACKOPS_TERMINAL_RUN_ALL_COMMAND: "StackOpsTerminalRunAllCommand" = {
     "subcommands": {},
 }
 
-STACKOPS_TERMINAL_RUN_AOE_COMMAND: "StackOpsTerminalRunAoeCommand" = {
-    "command_name": "run-aoe",
-    "short_name": "e",
-    "help": "<e> Run selected layout(s) through agent-of-empires",
-    "subcommands": {},
-}
-
 STACKOPS_TERMINAL_ATTACH_COMMAND: "StackOpsTerminalAttachCommand" = {
     "command_name": "attach",
     "short_name": "a",
@@ -1007,7 +1000,6 @@ STACKOPS_TERMINAL_SUMMARIZE_COMMAND: "StackOpsTerminalSummarizeCommand" = {
 STACKOPS_TERMINAL_SUBCOMMANDS: "StackOpsTerminalSubcommands" = {
     "run": STACKOPS_TERMINAL_RUN_COMMAND,
     "run-all": STACKOPS_TERMINAL_RUN_ALL_COMMAND,
-    "run-aoe": STACKOPS_TERMINAL_RUN_AOE_COMMAND,
     "attach": STACKOPS_TERMINAL_ATTACH_COMMAND,
     "kill": STACKOPS_TERMINAL_KILL_COMMAND,
     "trace": STACKOPS_TERMINAL_TRACE_COMMAND,

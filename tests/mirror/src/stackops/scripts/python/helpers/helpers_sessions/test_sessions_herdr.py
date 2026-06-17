@@ -17,6 +17,16 @@ def test_resolve_standard_backend_accepts_herdr_alias(monkeypatch: pytest.Monkey
     assert sessions_cli_common.resolve_standard_backend("h") == "herdr"
 
 
+def test_resolve_standard_backend_accepts_aoe_alias(monkeypatch: pytest.MonkeyPatch) -> None:
+    import platform
+
+    monkeypatch.setattr(platform, "system", lambda: "Darwin")
+
+    assert sessions_cli_common.resolve_standard_backend("aoe") == "aoe"
+    assert sessions_cli_common.resolve_standard_backend("a") == "aoe"
+    assert sessions_cli_common.resolve_standard_backend("auto") == "tmux"
+
+
 def test_herdr_launcher_uses_one_tab_per_layout_tab(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path,

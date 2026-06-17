@@ -150,7 +150,6 @@ Use this map to jump from a command path to the file that registers or implement
 - `cloud ftpx` -> `src/stackops/scripts/python/cloud.py` -> `ftpx`
 - `terminal run` -> `src/stackops/scripts/python/terminal.py` -> `run`
 - `terminal run-all` -> `src/stackops/scripts/python/terminal.py` -> `run_all`
-- `terminal run-aoe` -> `src/stackops/scripts/python/terminal.py` -> `run_aoe`
 - `terminal attach` -> `src/stackops/scripts/python/terminal.py` -> `attach_to_session`
 - `terminal kill` -> `src/stackops/scripts/python/terminal.py` -> `kill_session_target`
 - `terminal trace` -> `src/stackops/scripts/python/terminal.py` -> `trace`

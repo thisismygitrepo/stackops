@@ -42,12 +42,11 @@ def run(
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
 
-    backend: Annotated[Literal["tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "a", "auto"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
     on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.")] = "error",
     exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
-
 ) -> None:
     """Launch selected layouts from a layout configuration file.
 
@@ -319,61 +318,6 @@ def trace(
     )
 
 
-def run_aoe(
-    ctx: typer.Context,
-    layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-c", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
-    choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
-    sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between AoE session launches")] = 1.0,
-    max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A sanity checker that throws an error if any selected layout exceeds this number of tabs.")] = 25,
-    agent: Annotated[str | None, typer.Option("--agent", "-a", help="AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.")] = "codex",
-    model: Annotated[str | None, typer.Option("--model", "-m", help="Model forwarded to the underlying AoE/agent CLI when supported.")] = None,
-    provider: Annotated[str | None, typer.Option("--provider", "-p", help="Provider forwarded to the underlying AoE/agent CLI when supported.")] = None,
-    sandbox: Annotated[str | None, typer.Option("--sandbox", "-s", help="Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.")] = None,
-    yolo: Annotated[bool, typer.Option("--yolo", "-y", help="Enable AoE/agent YOLO mode when supported.")] = False,
-    cmd: Annotated[str | None, typer.Option("--cmd", "-C", help="Override the launched agent binary/command.")] = None,
-    args: Annotated[list[str] | None, typer.Option("--args", "-A", help="Repeatable extra argument forwarded to the launched agent CLI.")] = None,
-    env: Annotated[list[str] | None, typer.Option("--env", "-e", help="Repeatable KEY=VALUE pair forwarded to AoE when supported.")] = None,
-    force: Annotated[bool, typer.Option("--force", "-F", help="Pass force/overwrite to AoE when supported.")] = False,
-    dry_run: Annotated[bool, typer.Option("--dry-run", "-d", help="Print generated `aoe add` commands instead of executing them.")] = False,
-    aoe_bin: Annotated[str, typer.Option("--aoe-bin", "-b", help="AoE executable to invoke.")] = "aoe",
-    tab_command_mode: Annotated[Literal["prompt", "cmd", "ignore"], typer.Option("--tab-command-mode", "-M", help="How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.")] = "prompt",
-    subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
-    launch: Annotated[bool, typer.Option("--no-launch", "-n", help="Create each AoE session without launching it immediately.")] = True,
-) -> None:
-    """Launch selected layout tabs as agent-of-empires sessions.
-
-    Mapping:
-    - layoutName -> aoe --group
-    - tabName -> aoe --title
-    - startDir -> aoe add <path>
-    - command -> initial prompt by default
-    """
-    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run_aoe import run_aoe_cli as impl
-    impl(
-        ctx=ctx,
-        layouts_file=layouts_file,
-        choose_layouts=choose_layouts,
-        choose_tabs=choose_tabs,
-        sleep_inbetween=sleep_inbetween,
-        max_tabs=max_tabs,
-        agent=agent,
-        model=model,
-        provider=provider,
-        sandbox=sandbox,
-        yolo=yolo,
-        cmd=cmd,
-        args=args or [],
-        env=env or [],
-        force=force,
-        dry_run=dry_run,
-        aoe_bin=aoe_bin,
-        tab_command_mode=tab_command_mode,
-        subsitute_home=subsitute_home,
-        launch=launch,
-    )
-
-
 def get_app() -> typer.Typer:
     from stackops.scripts.python.terminal_summary import summary
     from stackops.scripts.python.terminal_summarize import summarize
@@ -385,9 +329,6 @@ def get_app() -> typer.Typer:
 
     layouts_app.command("run-all", no_args_is_help=True, help=run_all.__doc__, short_help="<R> Dynamically run every layout in a file")(run_all)
     layouts_app.command("R", no_args_is_help=True, help=run_all.__doc__, hidden=True)(run_all)
-    
-    layouts_app.command("run-aoe", no_args_is_help=True, help=run_aoe.__doc__, short_help="<e> Run selected layout(s) through agent-of-empires")(run_aoe)
-    layouts_app.command("e", no_args_is_help=True, help=run_aoe.__doc__, hidden=True)(run_aoe)
 
     layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="<a> Attach to a session target")(attach_to_session)
     layouts_app.command("a", no_args_is_help=False, help=attach_to_session.__doc__, hidden=True)(attach_to_session)

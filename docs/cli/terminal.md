@@ -13,7 +13,6 @@ terminal [OPTIONS] COMMAND [ARGS]...
 |---------|-------------|
 | `run` | Launch selected layouts from a layout file or generated test layout |
 | `run-all` | Dynamically work through every tab in one merged run |
-| `run-aoe` | Launch selected layout tabs through agent-of-empires |
 | `attach` | Attach to an existing session, window/tab, or pane |
 | `kill` | Kill a session target |
 | `trace` | Trace a tmux session until a strict stop condition is met |
@@ -27,7 +26,7 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 ## Common Layout Source Rules
 
-- `run`, `run-all`, and `run-aoe` default to `~/dotfiles/stackops/layouts.json` when `--layouts-file` is omitted.
+- `run` and `run-all` default to `~/dotfiles/stackops/layouts.json` when `--layouts-file` is omitted.
 - `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `--layouts-file`.
 - `--choose-layouts ""` opens interactive layout selection.
 - `--choose-tabs ""` opens interactive tab selection.
@@ -51,7 +50,7 @@ terminal run [OPTIONS]
 | `--parallel-layouts` | `-p` | Maximum number of layouts to launch per monitored batch |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
-| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, or `auto`/`a` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `aoe`/`a`, or `auto` |
 | `--on-conflict` | `-c` | `error`, `restart`, `rename`, `mergeOverwrite`, or `mergeSkip` |
 | `--exit` | `-e` | `backToShell`, `terminate`, or `killWindow` after each command exits |
 | `--monitor` | `-m` | Monitor launched sessions for completion |
@@ -78,6 +77,9 @@ terminal run --layouts-file layouts.json --on-conflict restart
 
 # Launch selected layouts through Herdr
 terminal run --layouts-file layouts.json --backend herdr
+
+# Launch selected layout tabs through Agent of Empires
+terminal run --layouts-file layout.json --backend aoe
 ```
 
 ## run-all
@@ -106,56 +108,6 @@ terminal run-all --layouts-file layouts.json --max-parallel-tabs 8
 
 # Use the generated test layout and close finished tabs as work drains
 terminal run-all --test-layout --max-parallel-tabs 6 --kill-finished-tabs
-```
-
-## run-aoe
-
-Launch selected layout tabs through [agent-of-empires](https://github.com/njbrake/agent-of-empires).
-
-Mapping:
-
-- `layoutName` -> AoE group
-- `tabName` -> AoE title
-- `startDir` -> AoE target path
-- `command` -> initial prompt by default
-
-```bash
-terminal run-aoe [OPTIONS]
-```
-
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--layouts-file` | `-f` | Override the default layout file |
-| `--choose-layouts` | `-c` | Comma-separated layout names, or `""` for interactive selection |
-| `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection |
-| `--sleep-inbetween` | `-S` | Delay between AoE launches |
-| `--max-tabs-per-layout` | `-T` | Sanity limit for selected layouts |
-| `--agent` | `-a` | Agent/tool name; defaults to `codex` |
-| `--model` | `-m` | Model forwarded to the launched CLI when supported |
-| `--provider` | `-p` | Provider forwarded to the launched CLI when supported |
-| `--sandbox` | `-s` | Forward `--sandbox <value>` when supported |
-| `--yolo` | `-y` | Enable YOLO mode when supported |
-| `--cmd` | `-C` | Override the launched agent binary/command |
-| `--args` | `-A` | Repeatable extra argument forwarded to the launched CLI |
-| `--env` | `-e` | Repeatable `KEY=VALUE` pair forwarded to AoE when supported |
-| `--force` | `-F` | Forward force/overwrite when supported |
-| `--dry-run` | `-d` | Print generated `aoe add` commands without executing them |
-| `--aoe-bin` | `-b` | AoE executable to invoke |
-| `--tab-command-mode` | `-M` | `prompt`, `cmd`, or `ignore` for each tab's `command` field |
-| `--substitute-home` | `-H` | Expand `~` and `$HOME` inside selected tabs |
-| `--no-launch` | `-n` | Create each AoE session without launching it immediately |
-
-Examples:
-
-```bash
-# Treat each tab command as the initial prompt
-terminal run-aoe --layouts-file layout.json --model <model-name> --sandbox workspace-write --yolo
-
-# Use each tab command as an agent-command override instead
-terminal run-aoe --layouts-file layout.json --tab-command-mode cmd
-
-# Preview generated aoe commands without executing them
-terminal run-aoe --layouts-file layout.json --dry-run
 ```
 
 ## attach

@@ -15933,12 +15933,11 @@
                 "    monitor: Annotated[bool, typer.Option(..., \"--monitor\", \"-m\", help=\"Monitor the layout sessions for completion (implied by --parallel-layouts)\")] = False,",
                 "    parallel_layouts: Annotated[int | None, typer.Option(..., \"--parallel-layouts\", \"-p\", help=\"Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.\")] = None,",
                 "",
-                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use\")] = \"tmux\",",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"aoe\", \"a\", \"auto\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use: tmux, herdr, aoe, or auto\")] = \"tmux\",",
                 "    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.\")] = \"error\",",
                 "    exit_mode: Annotated[Literal[\"backToShell\", \"terminate\", \"killWindow\"], typer.Option(\"--exit\", \"-e\", help=\"What each tab/window should do after its command exits.\")] = \"backToShell\",",
                 "    kill_upon_completion: Annotated[bool, typer.Option(..., \"--kill-upon-completion\", \"-k\", help=\"Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)\")] = False,",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
-                "",
                 ") -> None:",
                 "    \"\"\"Launch selected layouts from a layout configuration file.",
                 "",
@@ -16191,10 +16190,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['tmux', 't', 'herdr', 'h', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'aoe', 'a', 'auto']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer to use')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'aoe', 'a', 'auto'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer to use: tmux, herdr, aoe, or auto')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16207,7 +16206,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend terminal multiplexer to use",
+                    "help": "Backend terminal multiplexer to use: tmux, herdr, aoe, or auto",
                     "default": "..."
                   }
                 },
@@ -16579,523 +16578,6 @@
                 "name": "R",
                 "hidden": true,
                 "help": "Run every tab from every layout in a layout configuration file at a controlled pace.\nNew tab kicks in as soon as another tab finishes, keeping the total number of active tabs under the specified maximum.\nUse this if problem is embarresingly parallel and is only constrained by resources."
-              }
-            ]
-          },
-          {
-            "kind": "command",
-            "name": "run-aoe",
-            "fullPath": "terminal run-aoe",
-            "shortPath": "t e",
-            "help": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default",
-            "source": {
-              "file": "src/stackops/scripts/python/terminal.py",
-              "module": "stackops.scripts.python.terminal",
-              "callable": "run_aoe"
-            },
-            "signature": {
-              "raw_lines": [
-                "def run_aoe(",
-                "    ctx: typer.Context,",
-                "    layouts_file: Annotated[str | None, typer.Option(..., \"--layouts-file\", \"-f\", help=\"Path to the layout.json file\")] = None,",
-                "    choose_layouts: Annotated[str | None, typer.Option(..., \"--choose-layouts\", \"-c\", help=\"Comma separated layout names. Pass empty string to select layouts interactively.\")] = None,",
-                "    choose_tabs: Annotated[str | None, typer.Option(..., \"--choose-tabs\", \"-t\", help=\"Comma separated tab names. Pass empty string to select tabs interactively from all layouts.\")] = None,",
-                "    sleep_inbetween: Annotated[float, typer.Option(..., \"--sleep-inbetween\", \"-S\", help=\"Sleep time in seconds between AoE session launches\")] = 1.0,",
-                "    max_tabs: Annotated[int, typer.Option(..., \"--max-tabs-per-layout\", \"-T\", help=\"A sanity checker that throws an error if any selected layout exceeds this number of tabs.\")] = 25,",
-                "    agent: Annotated[str | None, typer.Option(\"--agent\", \"-a\", help=\"AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.\")] = \"codex\",",
-                "    model: Annotated[str | None, typer.Option(\"--model\", \"-m\", help=\"Model forwarded to the underlying AoE/agent CLI when supported.\")] = None,",
-                "    provider: Annotated[str | None, typer.Option(\"--provider\", \"-p\", help=\"Provider forwarded to the underlying AoE/agent CLI when supported.\")] = None,",
-                "    sandbox: Annotated[str | None, typer.Option(\"--sandbox\", \"-s\", help=\"Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.\")] = None,",
-                "    yolo: Annotated[bool, typer.Option(\"--yolo\", \"-y\", help=\"Enable AoE/agent YOLO mode when supported.\")] = False,",
-                "    cmd: Annotated[str | None, typer.Option(\"--cmd\", \"-C\", help=\"Override the launched agent binary/command.\")] = None,",
-                "    args: Annotated[list[str] | None, typer.Option(\"--args\", \"-A\", help=\"Repeatable extra argument forwarded to the launched agent CLI.\")] = None,",
-                "    env: Annotated[list[str] | None, typer.Option(\"--env\", \"-e\", help=\"Repeatable KEY=VALUE pair forwarded to AoE when supported.\")] = None,",
-                "    force: Annotated[bool, typer.Option(\"--force\", \"-F\", help=\"Pass force/overwrite to AoE when supported.\")] = False,",
-                "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-d\", help=\"Print generated `aoe add` commands instead of executing them.\")] = False,",
-                "    aoe_bin: Annotated[str, typer.Option(\"--aoe-bin\", \"-b\", help=\"AoE executable to invoke.\")] = \"aoe\",",
-                "    tab_command_mode: Annotated[Literal[\"prompt\", \"cmd\", \"ignore\"], typer.Option(\"--tab-command-mode\", \"-M\", help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")] = \"prompt\",",
-                "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
-                "    launch: Annotated[bool, typer.Option(\"--no-launch\", \"-n\", help=\"Create each AoE session without launching it immediately.\")] = True,",
-                ") -> None:",
-                "    \"\"\"Launch selected layout tabs as agent-of-empires sessions.",
-                "",
-                "    Mapping:",
-                "    - layoutName -> aoe --group",
-                "    - tabName -> aoe --title",
-                "    - startDir -> aoe add <path>",
-                "    - command -> initial prompt by default",
-                "    \"\"\"",
-                "    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run_aoe import run_aoe_cli as impl",
-                "    impl(",
-                "        ctx=ctx,",
-                "        layouts_file=layouts_file,",
-                "        choose_layouts=choose_layouts,",
-                "        choose_tabs=choose_tabs,",
-                "        sleep_inbetween=sleep_inbetween,",
-                "        max_tabs=max_tabs,",
-                "        agent=agent,",
-                "        model=model,",
-                "        provider=provider,",
-                "        sandbox=sandbox,",
-                "        yolo=yolo,",
-                "        cmd=cmd,",
-                "        args=args or [],",
-                "        env=env or [],",
-                "        force=force,",
-                "        dry_run=dry_run,",
-                "        aoe_bin=aoe_bin,",
-                "        tab_command_mode=tab_command_mode,",
-                "        subsitute_home=subsitute_home,",
-                "        launch=launch,",
-                "    )"
-              ],
-              "name": "run_aoe",
-              "parameters": [
-                {
-                  "name": "ctx",
-                  "kind": "positional_or_keyword",
-                  "type": "typer.Context",
-                  "default": null,
-                  "required": true,
-                  "annotation_raw": "typer.Context"
-                },
-                {
-                  "name": "layouts_file",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--layouts-file', '-f', help='Path to the layout.json file')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--layouts-file",
-                      "-f"
-                    ],
-                    "long_flags": [
-                      "--layouts-file"
-                    ],
-                    "short_flags": [
-                      "-f"
-                    ],
-                    "help": "Path to the layout.json file",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "choose_layouts",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--choose-layouts', '-c', help='Comma separated layout names. Pass empty string to select layouts interactively.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--choose-layouts",
-                      "-c"
-                    ],
-                    "long_flags": [
-                      "--choose-layouts"
-                    ],
-                    "short_flags": [
-                      "-c"
-                    ],
-                    "help": "Comma separated layout names. Pass empty string to select layouts interactively.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "choose_tabs",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--choose-tabs', '-t', help='Comma separated tab names. Pass empty string to select tabs interactively from all layouts.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--choose-tabs",
-                      "-t"
-                    ],
-                    "long_flags": [
-                      "--choose-tabs"
-                    ],
-                    "short_flags": [
-                      "-t"
-                    ],
-                    "help": "Comma separated tab names. Pass empty string to select tabs interactively from all layouts.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "sleep_inbetween",
-                  "kind": "positional_or_keyword",
-                  "type": "float",
-                  "default": 1.0,
-                  "required": false,
-                  "annotation_raw": "Annotated[float, typer.Option(..., '--sleep-inbetween', '-S', help='Sleep time in seconds between AoE session launches')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--sleep-inbetween",
-                      "-S"
-                    ],
-                    "long_flags": [
-                      "--sleep-inbetween"
-                    ],
-                    "short_flags": [
-                      "-S"
-                    ],
-                    "help": "Sleep time in seconds between AoE session launches",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "max_tabs",
-                  "kind": "positional_or_keyword",
-                  "type": "int",
-                  "default": 25,
-                  "required": false,
-                  "annotation_raw": "Annotated[int, typer.Option(..., '--max-tabs-per-layout', '-T', help='A sanity checker that throws an error if any selected layout exceeds this number of tabs.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--max-tabs-per-layout",
-                      "-T"
-                    ],
-                    "long_flags": [
-                      "--max-tabs-per-layout"
-                    ],
-                    "short_flags": [
-                      "-T"
-                    ],
-                    "help": "A sanity checker that throws an error if any selected layout exceeds this number of tabs.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "agent",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": "codex",
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--agent', '-a', help='AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--agent",
-                      "-a"
-                    ],
-                    "long_flags": [
-                      "--agent"
-                    ],
-                    "short_flags": [
-                      "-a"
-                    ],
-                    "help": "AoE tool/agent name. Defaults to codex so --model/--sandbox/--yolo are immediately useful."
-                  }
-                },
-                {
-                  "name": "model",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--model', '-m', help='Model forwarded to the underlying AoE/agent CLI when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--model",
-                      "-m"
-                    ],
-                    "long_flags": [
-                      "--model"
-                    ],
-                    "short_flags": [
-                      "-m"
-                    ],
-                    "help": "Model forwarded to the underlying AoE/agent CLI when supported."
-                  }
-                },
-                {
-                  "name": "provider",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--provider', '-p', help='Provider forwarded to the underlying AoE/agent CLI when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--provider",
-                      "-p"
-                    ],
-                    "long_flags": [
-                      "--provider"
-                    ],
-                    "short_flags": [
-                      "-p"
-                    ],
-                    "help": "Provider forwarded to the underlying AoE/agent CLI when supported."
-                  }
-                },
-                {
-                  "name": "sandbox",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--sandbox', '-s', help='Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--sandbox",
-                      "-s"
-                    ],
-                    "long_flags": [
-                      "--sandbox"
-                    ],
-                    "short_flags": [
-                      "-s"
-                    ],
-                    "help": "Convenience flag forwarded to the launched agent CLI as `--sandbox <value>` when supported."
-                  }
-                },
-                {
-                  "name": "yolo",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--yolo', '-y', help='Enable AoE/agent YOLO mode when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--yolo",
-                      "-y"
-                    ],
-                    "long_flags": [
-                      "--yolo"
-                    ],
-                    "short_flags": [
-                      "-y"
-                    ],
-                    "help": "Enable AoE/agent YOLO mode when supported."
-                  }
-                },
-                {
-                  "name": "cmd",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--cmd', '-C', help='Override the launched agent binary/command.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--cmd",
-                      "-C"
-                    ],
-                    "long_flags": [
-                      "--cmd"
-                    ],
-                    "short_flags": [
-                      "-C"
-                    ],
-                    "help": "Override the launched agent binary/command."
-                  }
-                },
-                {
-                  "name": "args",
-                  "kind": "positional_or_keyword",
-                  "type": "list[str] | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--args', '-A', help='Repeatable extra argument forwarded to the launched agent CLI.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--args",
-                      "-A"
-                    ],
-                    "long_flags": [
-                      "--args"
-                    ],
-                    "short_flags": [
-                      "-A"
-                    ],
-                    "help": "Repeatable extra argument forwarded to the launched agent CLI."
-                  }
-                },
-                {
-                  "name": "env",
-                  "kind": "positional_or_keyword",
-                  "type": "list[str] | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--env', '-e', help='Repeatable KEY=VALUE pair forwarded to AoE when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--env",
-                      "-e"
-                    ],
-                    "long_flags": [
-                      "--env"
-                    ],
-                    "short_flags": [
-                      "-e"
-                    ],
-                    "help": "Repeatable KEY=VALUE pair forwarded to AoE when supported."
-                  }
-                },
-                {
-                  "name": "force",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--force', '-F', help='Pass force/overwrite to AoE when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--force",
-                      "-F"
-                    ],
-                    "long_flags": [
-                      "--force"
-                    ],
-                    "short_flags": [
-                      "-F"
-                    ],
-                    "help": "Pass force/overwrite to AoE when supported."
-                  }
-                },
-                {
-                  "name": "dry_run",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-d', help='Print generated `aoe add` commands instead of executing them.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--dry-run",
-                      "-d"
-                    ],
-                    "long_flags": [
-                      "--dry-run"
-                    ],
-                    "short_flags": [
-                      "-d"
-                    ],
-                    "help": "Print generated `aoe add` commands instead of executing them."
-                  }
-                },
-                {
-                  "name": "aoe_bin",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": "aoe",
-                  "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--aoe-bin', '-b', help='AoE executable to invoke.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--aoe-bin",
-                      "-b"
-                    ],
-                    "long_flags": [
-                      "--aoe-bin"
-                    ],
-                    "short_flags": [
-                      "-b"
-                    ],
-                    "help": "AoE executable to invoke."
-                  }
-                },
-                {
-                  "name": "tab_command_mode",
-                  "kind": "positional_or_keyword",
-                  "type": "Literal['prompt', 'cmd', 'ignore']",
-                  "default": "prompt",
-                  "required": false,
-                  "annotation_raw": "Annotated[Literal['prompt', 'cmd', 'ignore'], typer.Option('--tab-command-mode', '-M', help=\"How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it.\")]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--tab-command-mode",
-                      "-M"
-                    ],
-                    "long_flags": [
-                      "--tab-command-mode"
-                    ],
-                    "short_flags": [
-                      "-M"
-                    ],
-                    "help": "How to use each tab's `command` field: as the initial prompt, as an agent-command override, or ignore it."
-                  }
-                },
-                {
-                  "name": "subsitute_home",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--substitute-home', '-H', help='Substitute ~ and $HOME in layout file with actual home directory path')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--substitute-home",
-                      "-H"
-                    ],
-                    "long_flags": [
-                      "--substitute-home"
-                    ],
-                    "short_flags": [
-                      "-H"
-                    ],
-                    "help": "Substitute ~ and $HOME in layout file with actual home directory path",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "launch",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": true,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--no-launch', '-n', help='Create each AoE session without launching it immediately.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--no-launch",
-                      "-n"
-                    ],
-                    "long_flags": [
-                      "--no-launch"
-                    ],
-                    "short_flags": [
-                      "-n"
-                    ],
-                    "help": "Create each AoE session without launching it immediately."
-                  }
-                }
-              ],
-              "return": "None"
-            },
-            "short_help": "<e> Run selected layout(s) through agent-of-empires",
-            "typer": {
-              "no_args_is_help": true
-            },
-            "doc": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default",
-            "aliases": [
-              {
-                "name": "e",
-                "hidden": true,
-                "help": "Launch selected layout tabs as agent-of-empires sessions.\n\nMapping:\n- layoutName -> aoe --group\n- tabName -> aoe --title\n- startDir -> aoe add <path>\n- command -> initial prompt by default"
               }
             ]
           },
@@ -17501,7 +16983,7 @@
             "name": "trace",
             "fullPath": "terminal trace",
             "shortPath": "t t",
-            "help": "Trace a tmux session until every target matches a strict stop criterion.",
+            "help": "Trace a terminal backend session until every target matches a strict stop criterion.",
             "source": {
               "file": "src/stackops/scripts/python/terminal.py",
               "module": "stackops.scripts.python.terminal",
@@ -17510,14 +16992,20 @@
             "signature": {
               "raw_lines": [
                 "def trace(",
-                "    session_name: Annotated[str | None, typer.Argument(help=\"Name of the tmux session to trace. Required unless --interactive is set.\")] = None,",
-                "    every: Annotated[float, typer.Option(\"--every\", \"-e\", help=\"Polling interval in seconds between tmux checks\")] = 10.0,",
+                "    session_name: Annotated[str | None, typer.Argument(help=\"Name of the tmux session or Herdr workspace to trace. Required unless --interactive is set.\")] = None,",
+                "    every: Annotated[float, typer.Option(\"--every\", \"-e\", help=\"Polling interval in seconds between backend checks\")] = 10.0,",
                 "    until: Annotated[Literal[\"idle-shell\", \"all-exited\", \"exit-code\", \"session-missing\"], typer.Option(\"--until\", \"-u\", help=\"Stop only when the selected criterion is satisfied\")] = \"idle-shell\",",
                 "    exit_code: Annotated[int | None, typer.Option(\"--exit-code\", \"-c\", help=\"Required pane exit code when `--until exit-code` is selected\")] = None,",
-                "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose an existing tmux session interactively\")] = False,",
+                "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose an existing backend session/workspace interactively\")] = False,",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to trace: tmux/t or herdr/h\")] = \"tmux\",",
                 ") -> None:",
-                "    \"\"\"Trace a tmux session until every target matches a strict stop criterion.\"\"\"",
-                "    from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import trace_session as impl",
+                "    \"\"\"Trace a terminal backend session until every target matches a strict stop criterion.\"\"\"",
+                "    from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import (",
+                "        resolve_trace_backend,",
+                "        trace_session_for_backend as impl,",
+                "    )",
+                "",
+                "    backend_resolved = resolve_trace_backend(backend)",
                 "",
                 "    if every <= 0:",
                 "        typer.echo(\"Error: --every must be greater than 0.\", err=True, color=True)",
@@ -17535,15 +17023,23 @@
                 "        if not interactive:",
                 "            typer.echo(\"Error: SESSION_NAME is required unless --interactive is set.\", err=True, color=True)",
                 "            raise typer.Exit(code=1)",
-                "        from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_name",
+                "        if backend_resolved == \"tmux\":",
+                "            from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_name",
                 "",
-                "        action, payload = choose_existing_session_name(msg=\"Choose a tmux session to trace:\")",
+                "            action, payload = choose_existing_session_name(msg=\"Choose a tmux session to trace:\")",
+                "        else:",
+                "            from stackops.scripts.python.helpers.helpers_sessions.session_trace_herdr import (",
+                "                choose_existing_workspace_name,",
+                "            )",
+                "",
+                "            action, payload = choose_existing_workspace_name(msg=\"Choose a Herdr workspace to trace:\")",
                 "        if action == \"error\":",
                 "            typer.echo(f\"Error: {payload}\", err=True, color=True)",
                 "            raise typer.Exit(code=1)",
                 "        session_name = payload",
                 "",
                 "    impl(",
+                "        backend=backend_resolved,",
                 "        session_name=session_name,",
                 "        until=until,",
                 "        every_seconds=every,",
@@ -17558,13 +17054,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the tmux session to trace. Required unless --interactive is set.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the tmux session or Herdr workspace to trace. Required unless --interactive is set.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the tmux session to trace. Required unless --interactive is set."
+                    "help": "Name of the tmux session or Herdr workspace to trace. Required unless --interactive is set."
                   }
                 },
                 {
@@ -17573,7 +17069,7 @@
                   "type": "float",
                   "default": 10.0,
                   "required": false,
-                  "annotation_raw": "Annotated[float, typer.Option('--every', '-e', help='Polling interval in seconds between tmux checks')]",
+                  "annotation_raw": "Annotated[float, typer.Option('--every', '-e', help='Polling interval in seconds between backend checks')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -17586,7 +17082,7 @@
                     "short_flags": [
                       "-e"
                     ],
-                    "help": "Polling interval in seconds between tmux checks"
+                    "help": "Polling interval in seconds between backend checks"
                   }
                 },
                 {
@@ -17639,7 +17135,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose an existing tmux session interactively')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose an existing backend session/workspace interactively')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -17652,22 +17148,44 @@
                     "short_flags": [
                       "-i"
                     ],
-                    "help": "Choose an existing tmux session interactively"
+                    "help": "Choose an existing backend session/workspace interactively"
+                  }
+                },
+                {
+                  "name": "backend",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['tmux', 't', 'herdr', 'h']",
+                  "default": "tmux",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h'], typer.Option('--backend', '-b', help='Backend to trace: tmux/t or herdr/h')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--backend",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--backend"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Backend to trace: tmux/t or herdr/h"
                   }
                 }
               ],
               "return": "None"
             },
-            "short_help": "<t> Trace a tmux session until it settles",
+            "short_help": "<t> Trace a terminal session until it settles",
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Trace a tmux session until every target matches a strict stop criterion.",
+            "doc": "Trace a terminal backend session until every target matches a strict stop criterion.",
             "aliases": [
               {
                 "name": "t",
                 "hidden": true,
-                "help": "Trace a tmux session until every target matches a strict stop criterion."
+                "help": "Trace a terminal backend session until every target matches a strict stop criterion."
               }
             ]
           },
@@ -18024,28 +17542,34 @@
             "signature": {
               "raw_lines": [
                 "def summary(",
-                "    backend: Annotated[Literal[\"tmux\", \"t\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to summarize.\")] = \"tmux\",",
-                "    session: Annotated[str | None, typer.Option(\"--session\", \"-s\", help=\"Show details for one session by name.\")] = None,",
-                "    choose_session: Annotated[bool, typer.Option(\"--choose-session\", \"-c\", help=\"Choose one session interactively and show details.\")] = False,",
+                "    backend: Annotated[SummaryBackend, typer.Option(\"--backend\", \"-b\", help=\"Backend to summarize: tmux, herdr, or auto.\")] = \"tmux\",",
+                "    session: Annotated[str | None, typer.Option(\"--session\", \"-s\", help=\"Show details for one tmux session or Herdr workspace by name.\")] = None,",
+                "    choose_session: Annotated[bool, typer.Option(\"--choose-session\", \"-c\", help=\"Choose one tmux session or Herdr workspace interactively and show details.\")] = False,",
                 ") -> None:",
                 "    \"\"\"Print running terminal session summaries or details for one session.\"\"\"",
-                "    match backend:",
-                "        case \"tmux\" | \"t\":",
+                "    match _resolve_summary_backend(backend):",
+                "        case \"tmux\":",
                 "            session_name = _resolve_tmux_session_name(session_name=session, choose_session=choose_session)",
                 "            if session_name is None:",
                 "                _print_tmux_summary()",
                 "                return",
-                "            _print_tmux_session_details(session_name=session_name)"
+                "            _print_tmux_session_details(session_name=session_name)",
+                "        case \"herdr\":",
+                "            workspace_name = _resolve_herdr_workspace_name(workspace_name=session, choose_session=choose_session)",
+                "            if workspace_name is None:",
+                "                _print_herdr_summary()",
+                "                return",
+                "            _print_herdr_workspace_details(workspace_name=workspace_name)"
               ],
               "name": "summary",
               "parameters": [
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['tmux', 't']",
+                  "type": "SummaryBackend",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['tmux', 't'], typer.Option('--backend', '-b', help='Backend to summarize.')]",
+                  "annotation_raw": "Annotated[SummaryBackend, typer.Option('--backend', '-b', help='Backend to summarize: tmux, herdr, or auto.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -18058,7 +17582,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend to summarize."
+                    "help": "Backend to summarize: tmux, herdr, or auto."
                   }
                 },
                 {
@@ -18067,7 +17591,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--session', '-s', help='Show details for one session by name.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--session', '-s', help='Show details for one tmux session or Herdr workspace by name.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -18080,7 +17604,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Show details for one session by name."
+                    "help": "Show details for one tmux session or Herdr workspace by name."
                   }
                 },
                 {
@@ -18089,7 +17613,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--choose-session', '-c', help='Choose one session interactively and show details.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--choose-session', '-c', help='Choose one tmux session or Herdr workspace interactively and show details.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -18102,7 +17626,7 @@
                     "short_flags": [
                       "-c"
                     ],
-                    "help": "Choose one session interactively and show details."
+                    "help": "Choose one tmux session or Herdr workspace interactively and show details."
                   }
                 }
               ],
@@ -18136,6 +17660,7 @@
               "raw_lines": [
                 "def summarize(",
                 "    layout_path: Annotated[str, typer.Argument(..., help=\"Path to the layout.json file\")],",
+                "    backend: Annotated[SummarizeBackend, typer.Option(\"--backend\", \"-b\", help=\"Backend vocabulary to use: tmux, herdr, or auto.\")] = \"tmux\",",
                 ") -> None:",
                 "    \"\"\"Summarize a layout file with counts for layouts and tabs.\"\"\"",
                 "    import json",
@@ -18147,6 +17672,7 @@
                 "",
                 "    console = Console()",
                 "    layout_path_obj = Path(layout_path).expanduser().absolute()",
+                "    backend_resolved = _resolve_backend(backend)",
                 "",
                 "    if not layout_path_obj.exists():",
                 "        console.print(",
@@ -18232,25 +17758,42 @@
                 "    total_layouts = len(rows)",
                 "    avg_tabs = (total_tabs / total_layouts) if total_layouts > 0 else 0.0",
                 "    version = str(layout_file.get(\"version\", \"unknown\"))",
+                "    if backend_resolved == \"herdr\":",
+                "        summary_title = \"[bold blue]Herdr Layout Summary[/bold blue]\"",
+                "        layout_count_label = \"Workspaces\"",
+                "        average_label = \"Avg tabs/workspace\"",
+                "        max_label = \"Max tabs workspace\"",
+                "        min_label = \"Min tabs workspace\"",
+                "        table_title = f\"[bold cyan]Herdr Workspaces ({total_layouts})[/bold cyan]\"",
+                "        name_column = \"Workspace Label\"",
+                "    else:",
+                "        summary_title = \"[bold blue]Layout Summary[/bold blue]\"",
+                "        layout_count_label = \"Layouts\"",
+                "        average_label = \"Avg tabs/layout\"",
+                "        max_label = \"Max tabs layout\"",
+                "        min_label = \"Min tabs layout\"",
+                "        table_title = f\"[bold cyan]Layouts ({total_layouts})[/bold cyan]\"",
+                "        name_column = \"Layout Name\"",
                 "",
                 "    summary_lines = [",
+                "        f\"[bold]Backend:[/bold] {backend_resolved}\",",
                 "        f\"[bold]File:[/bold] {layout_path_obj}\",",
                 "        f\"[bold]Version:[/bold] {version}\",",
-                "        f\"[bold]Layouts:[/bold] {total_layouts}\",",
+                "        f\"[bold]{layout_count_label}:[/bold] {total_layouts}\",",
                 "        f\"[bold]Tabs:[/bold] {total_tabs}\",",
-                "        f\"[bold]Avg tabs/layout:[/bold] {avg_tabs:.2f}\",",
+                "        f\"[bold]{average_label}:[/bold] {avg_tabs:.2f}\",",
                 "    ]",
                 "    if rows:",
                 "        max_row = max(rows, key=lambda row: row[2])",
                 "        min_row = min(rows, key=lambda row: row[2])",
-                "        summary_lines.append(f\"[bold]Max tabs layout:[/bold] {max_row[1]} ({max_row[2]})\")",
-                "        summary_lines.append(f\"[bold]Min tabs layout:[/bold] {min_row[1]} ({min_row[2]})\")",
+                "        summary_lines.append(f\"[bold]{max_label}:[/bold] {max_row[1]} ({max_row[2]})\")",
+                "        summary_lines.append(f\"[bold]{min_label}:[/bold] {min_row[1]} ({min_row[2]})\")",
                 "",
-                "    console.print(Panel(\"\\n\".join(summary_lines), title=\"[bold blue]Layout Summary[/bold blue]\", border_style=\"blue\"))",
+                "    console.print(Panel(\"\\n\".join(summary_lines), title=summary_title, border_style=\"blue\"))",
                 "",
-                "    table = Table(title=f\"[bold cyan]Layouts ({total_layouts})[/bold cyan]\")",
+                "    table = Table(title=table_title)",
                 "    table.add_column(\"#\", justify=\"right\")",
-                "    table.add_column(\"Layout Name\", style=\"white\")",
+                "    table.add_column(name_column, style=\"white\")",
                 "    table.add_column(\"Tabs\", justify=\"right\", style=\"green\")",
                 "    for index, layout_name, tab_count in rows:",
                 "        table.add_row(str(index), layout_name, str(tab_count))",
@@ -18272,6 +17815,28 @@
                     "short_flags": [],
                     "help": "Path to the layout.json file",
                     "default": "..."
+                  }
+                },
+                {
+                  "name": "backend",
+                  "kind": "positional_or_keyword",
+                  "type": "SummarizeBackend",
+                  "default": "tmux",
+                  "required": false,
+                  "annotation_raw": "Annotated[SummarizeBackend, typer.Option('--backend', '-b', help='Backend vocabulary to use: tmux, herdr, or auto.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--backend",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--backend"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Backend vocabulary to use: tmux, herdr, or auto."
                   }
                 }
               ],

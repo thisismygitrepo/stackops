@@ -1,4 +1,4 @@
-"""Pure Python implementations for sessions run-aoe command."""
+"""Pure Python implementation for the sessions AoE run backend."""
 
 
 
@@ -228,7 +228,7 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
     if not options.dry_run and not _command_exists(options.aoe_bin):
         raise ValueError(
             f"Could not find AoE executable '{options.aoe_bin}'. "
-            "Install agent-of-empires or pass --aoe-bin with an explicit path."
+            "Install agent-of-empires and make sure `aoe` is available on PATH."
         )
 
     _validate_env_vars(options.env_vars)

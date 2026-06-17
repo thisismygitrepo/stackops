@@ -170,7 +170,7 @@ def choose_session(
     if name is not None:
         return ("handoff_script", attach_script_from_name(name))
     if new_session:
-        return ("error", "AoE backend cannot create an empty session. Use `terminal run-aoe` to add sessions from a layout.")
+        return ("error", "AoE backend cannot create an empty session. Use `terminal run --backend aoe` to add sessions from a layout.")
     if kill_all:
         return ("error", "AoE backend does not support --kill-all while attaching.")
     if window:

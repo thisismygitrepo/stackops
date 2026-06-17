@@ -1061,16 +1061,6 @@ StackOpsTerminalRunAllCommand = TypedDict(
     },
 )
 
-StackOpsTerminalRunAoeCommand = TypedDict(
-    "StackOpsTerminalRunAoeCommand",
-    {
-        "command_name": Literal["run-aoe"],
-        "short_name": Literal["e"],
-        "help": Literal["<e> Run selected layout(s) through agent-of-empires"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
 StackOpsTerminalAttachCommand = TypedDict(
     "StackOpsTerminalAttachCommand",
     {
@@ -1141,7 +1131,6 @@ StackOpsTerminalSubcommands = TypedDict(
     {
         "run": StackOpsTerminalRunCommand,
         "run-all": StackOpsTerminalRunAllCommand,
-        "run-aoe": StackOpsTerminalRunAoeCommand,
         "attach": StackOpsTerminalAttachCommand,
         "kill": StackOpsTerminalKillCommand,
         "trace": StackOpsTerminalTraceCommand,
