@@ -10694,15 +10694,15 @@
               },
               {
                 "kind": "group",
-                "name": "explore",
-                "fullPath": "devops self explore",
+                "name": "explore-cli",
+                "fullPath": "devops self explore-cli",
                 "shortPath": "d s x",
                 "help": "🧭 <x> Explore the StackOps CLI graph.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_self",
                   "dispatches_to": "stackops.scripts.python.graph.visualize.cli_graph_app.get_app",
-                  "callable": "explore"
+                  "callable": "explore_cli"
                 },
                 "app": {
                   "help": "🧭 <g> Visualize the StackOps CLI graph in multiple formats.",
@@ -10714,7 +10714,7 @@
                   {
                     "kind": "command",
                     "name": "search",
-                    "fullPath": "devops self explore search",
+                    "fullPath": "devops self explore-cli search",
                     "shortPath": "d s x s",
                     "help": "🔎 <s> Search CLI graph entries and show the selected command summary.",
                     "source": {
@@ -10819,7 +10819,7 @@
                   {
                     "kind": "command",
                     "name": "tree",
-                    "fullPath": "devops self explore tree",
+                    "fullPath": "devops self explore-cli tree",
                     "shortPath": "d s x t",
                     "help": "🌳 <t> Render a rich tree view in the terminal.",
                     "source": {
@@ -10941,7 +10941,7 @@
                   {
                     "kind": "command",
                     "name": "dot",
-                    "fullPath": "devops self explore dot",
+                    "fullPath": "devops self explore-cli dot",
                     "shortPath": "d s x d",
                     "help": "🧩 <d> Export the graph as Graphviz DOT.",
                     "source": {
@@ -11071,7 +11071,7 @@
                   {
                     "kind": "command",
                     "name": "view",
-                    "fullPath": "devops self explore view",
+                    "fullPath": "devops self explore-cli view",
                     "shortPath": "d s x v",
                     "help": "📊 <v> Render a Plotly hierarchy chart.",
                     "source": {
@@ -11253,7 +11253,7 @@
                   {
                     "kind": "command",
                     "name": "tui",
-                    "fullPath": "devops self explore tui",
+                    "fullPath": "devops self explore-cli tui",
                     "shortPath": "d s x u",
                     "help": "📚 <u> NAVIGATE command structure with TUI",
                     "source": {
@@ -11307,7 +11307,730 @@
                 "doc": "🧭 <x> Explore the StackOps CLI graph.",
                 "aliases": [
                   {
+                    "name": "explore",
+                    "hidden": true,
+                    "help": "Explore the StackOps CLI graph."
+                  },
+                  {
                     "name": "x",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "group",
+                "name": "explore-python-api",
+                "fullPath": "devops self explore-python-api",
+                "shortPath": "d s p",
+                "help": "🧭 <p> Explore the StackOps Python API graph.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_self.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_self",
+                  "dispatches_to": "stackops.scripts.python.graph.visualize.python_api_graph_app.get_app",
+                  "callable": "explore_python_api"
+                },
+                "app": {
+                  "help": "🧭 <p> Visualize the StackOps Python API graph in multiple formats.",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "search",
+                    "fullPath": "devops self explore-python-api search",
+                    "shortPath": "d s p s",
+                    "help": "🔎 <s> Search Python API entries and show the selected import summary.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/graph/visualize/python_api_graph_app.py",
+                      "module": "stackops.scripts.python.graph.visualize.python_api_graph_app",
+                      "callable": "search"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def search(",
+                        "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Use an existing Python API graph JSON file.\")] = None,",
+                        "    json_output: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--json\", \"-j\", help=\"Print the selected graph entry instead of the rendered summary.\"),",
+                        "    ] = False,",
+                        ") -> None:",
+                        "    \"\"\"Search Python API entries and show the selected import summary.\"\"\"",
+                        "",
+                        "    def func(graph_path_str: str | None, json_output: bool) -> None:",
+                        "        from pathlib import Path",
+                        "",
+                        "        import typer",
+                        "",
+                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path",
+                        "        from stackops.scripts.python.graph.visualize.python_api_graph_search import search_python_api_graph",
+                        "",
+                        "        graph_file = Path(_materialize_python_api_graph_path(graph_path_str))",
+                        "        return_code = search_python_api_graph(graph_path=graph_file, json_output=json_output)",
+                        "        if return_code != 0:",
+                        "            raise typer.Exit(code=return_code)",
+                        "",
+                        "    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
+                        "",
+                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
+                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "    )",
+                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
+                      ],
+                      "name": "search",
+                      "parameters": [
+                        {
+                          "name": "graph_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--graph-path', '-g', help='Use an existing Python API graph JSON file.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--graph-path",
+                              "-g"
+                            ],
+                            "long_flags": [
+                              "--graph-path"
+                            ],
+                            "short_flags": [
+                              "-g"
+                            ],
+                            "help": "Use an existing Python API graph JSON file."
+                          }
+                        },
+                        {
+                          "name": "json_output",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the selected graph entry instead of the rendered summary.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--json",
+                              "-j"
+                            ],
+                            "long_flags": [
+                              "--json"
+                            ],
+                            "short_flags": [
+                              "-j"
+                            ],
+                            "help": "Print the selected graph entry instead of the rendered summary."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Search Python API entries and show the selected import summary.",
+                    "aliases": [
+                      {
+                        "name": "s",
+                        "hidden": true,
+                        "help": "Search Python API entries and show the selected import summary."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "tree",
+                    "fullPath": "devops self explore-python-api tree",
+                    "shortPath": "d s p t",
+                    "help": "🌳 <t> Render a rich tree view in the terminal.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/graph/visualize/python_api_graph_app.py",
+                      "module": "stackops.scripts.python.graph.visualize.python_api_graph_app",
+                      "callable": "tree"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def tree(",
+                        "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Use an existing Python API graph JSON file.\")] = None,",
+                        "    show_help: Annotated[bool, typer.Option(\"--no-show-help\", \"-H\", help=\"Hide help text in labels\")] = True,",
+                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the tree\")] = None,",
+                        ") -> None:",
+                        "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
+                        "",
+                        "    def func(graph_path_str: str | None, show_help: bool, max_depth: int | None) -> None:",
+                        "        from stackops.scripts.python.graph.visualize.rich_tree import render_tree",
+                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path",
+                        "",
+                        "        render_tree(path=_materialize_python_api_graph_path(graph_path_str), show_help=show_help, show_aliases=False, max_depth=max_depth)",
+                        "",
+                        "    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
+                        "",
+                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
+                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_help=show_help, max_depth=max_depth),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "    )",
+                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
+                      ],
+                      "name": "tree",
+                      "parameters": [
+                        {
+                          "name": "graph_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--graph-path', '-g', help='Use an existing Python API graph JSON file.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--graph-path",
+                              "-g"
+                            ],
+                            "long_flags": [
+                              "--graph-path"
+                            ],
+                            "short_flags": [
+                              "-g"
+                            ],
+                            "help": "Use an existing Python API graph JSON file."
+                          }
+                        },
+                        {
+                          "name": "show_help",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": true,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--no-show-help', '-H', help='Hide help text in labels')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--no-show-help",
+                              "-H"
+                            ],
+                            "long_flags": [
+                              "--no-show-help"
+                            ],
+                            "short_flags": [
+                              "-H"
+                            ],
+                            "help": "Hide help text in labels"
+                          }
+                        },
+                        {
+                          "name": "max_depth",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', min=0, help='Limit depth of the tree')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-depth",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--max-depth"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Limit depth of the tree"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Render a rich tree view in the terminal.",
+                    "aliases": [
+                      {
+                        "name": "t",
+                        "hidden": true,
+                        "help": "Render a rich tree view in the terminal."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "dot",
+                    "fullPath": "devops self explore-python-api dot",
+                    "shortPath": "d s p d",
+                    "help": "🧩 <d> Export the graph as Graphviz DOT.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/graph/visualize/python_api_graph_app.py",
+                      "module": "stackops.scripts.python.graph.visualize.python_api_graph_app",
+                      "callable": "dot"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def dot(",
+                        "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Use an existing Python API graph JSON file.\")] = None,",
+                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write DOT output to a file\")] = None,",
+                        "    include_help: Annotated[bool, typer.Option(\"--no-include-help\", \"-H\", help=\"Hide help text in labels\")] = True,",
+                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", help=\"Limit depth of the graph\")] = None,",
+                        ") -> None:",
+                        "    \"\"\"Export the graph as Graphviz DOT.\"\"\"",
+                        "",
+                        "    def func(graph_path_str: str | None, output_str: str | None, include_help: bool, max_depth: int | None) -> None:",
+                        "        from pathlib import Path",
+                        "",
+                        "        from stackops.scripts.python.graph.visualize.dot_export import render_dot",
+                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path",
+                        "",
+                        "        dot_text = render_dot(path=_materialize_python_api_graph_path(graph_path_str), max_depth=max_depth, include_help=include_help)",
+                        "        if output_str is None:",
+                        "            print(dot_text)",
+                        "        else:",
+                        "            output_path = Path(output_str)",
+                        "            output_path.write_text(dot_text, encoding=\"utf-8\")",
+                        "            print(f\"Wrote {output_path}\")",
+                        "",
+                        "    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
+                        "",
+                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
+                        "        lambda: func(",
+                        "            graph_path_str=str(graph_path) if graph_path else None,",
+                        "            output_str=str(output) if output else None,",
+                        "            include_help=include_help,",
+                        "            max_depth=max_depth,",
+                        "        ),",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "    )",
+                        "    exit_then_run_shell_script(str(shell_script), strict=False)"
+                      ],
+                      "name": "dot",
+                      "parameters": [
+                        {
+                          "name": "graph_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--graph-path', '-g', help='Use an existing Python API graph JSON file.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--graph-path",
+                              "-g"
+                            ],
+                            "long_flags": [
+                              "--graph-path"
+                            ],
+                            "short_flags": [
+                              "-g"
+                            ],
+                            "help": "Use an existing Python API graph JSON file."
+                          }
+                        },
+                        {
+                          "name": "output",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write DOT output to a file')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Write DOT output to a file"
+                          }
+                        },
+                        {
+                          "name": "include_help",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": true,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--no-include-help', '-H', help='Hide help text in labels')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--no-include-help",
+                              "-H"
+                            ],
+                            "long_flags": [
+                              "--no-include-help"
+                            ],
+                            "short_flags": [
+                              "-H"
+                            ],
+                            "help": "Hide help text in labels"
+                          }
+                        },
+                        {
+                          "name": "max_depth",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', help='Limit depth of the graph')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-depth",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--max-depth"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Limit depth of the graph"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Export the graph as Graphviz DOT.",
+                    "aliases": [
+                      {
+                        "name": "d",
+                        "hidden": true,
+                        "help": "Export the graph as Graphviz DOT."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "view",
+                    "fullPath": "devops self explore-python-api view",
+                    "shortPath": "d s p v",
+                    "help": "📊 <v> Render a Plotly hierarchy chart.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/graph/visualize/python_api_graph_app.py",
+                      "module": "stackops.scripts.python.graph.visualize.python_api_graph_app",
+                      "callable": "chart"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def chart(",
+                        "    view: Annotated[",
+                        "        PlotlyView,",
+                        "        typer.Argument(help=f\"\"\"Plotly chart view. Choose from {\", \".join(get_args(PlotlyView))}.\"\"\"),",
+                        "    ] = \"sunburst\",",
+                        "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Use an existing Python API graph JSON file.\")] = None,",
+                        "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", help=\"Write HTML or image output\")] = None,",
+                        "    max_depth: Annotated[int | None, typer.Option(\"--max-depth\", \"-d\", min=0, help=\"Limit depth of the graph\")] = None,",
+                        "    template: Annotated[str, typer.Option(\"--template\", \"-t\", help=\"Plotly template name\")] = \"plotly_dark\",",
+                        "    height: Annotated[int, typer.Option(\"--height\", \"-H\", help=\"Image height (for static output)\")] = 900,",
+                        "    width: Annotated[int, typer.Option(\"--width\", \"-w\", help=\"Image width (for static output)\")] = 1200,",
+                        ") -> None:",
+                        "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
+                        "    graph_file = _materialize_python_api_graph_path(str(graph_path) if graph_path else None)",
+                        "",
+                        "    from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly",
+                        "",
+                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=None, external_uv_with=[])",
+                        "    use_render_plotly(",
+                        "        view=view,",
+                        "        output=str(output) if output else None,",
+                        "        height=height,",
+                        "        width=width,",
+                        "        template=template,",
+                        "        max_depth=max_depth,",
+                        "        path=graph_file,",
+                        "        uv_with=uv_with,",
+                        "        uv_project_dir=uv_project_dir,",
+                        "        title=f\"Python API Graph - {view.title()}\",",
+                        "        item_label=\"Import\",",
+                        "    )"
+                      ],
+                      "name": "chart",
+                      "parameters": [
+                        {
+                          "name": "view",
+                          "kind": "positional_or_keyword",
+                          "type": "PlotlyView",
+                          "default": "sunburst",
+                          "required": false,
+                          "annotation_raw": "Annotated[PlotlyView, typer.Argument(help=f\"Plotly chart view. Choose from {', '.join(get_args(PlotlyView))}.\")]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": []
+                          }
+                        },
+                        {
+                          "name": "graph_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--graph-path', '-g', help='Use an existing Python API graph JSON file.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--graph-path",
+                              "-g"
+                            ],
+                            "long_flags": [
+                              "--graph-path"
+                            ],
+                            "short_flags": [
+                              "-g"
+                            ],
+                            "help": "Use an existing Python API graph JSON file."
+                          }
+                        },
+                        {
+                          "name": "output",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='Write HTML or image output')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Write HTML or image output"
+                          }
+                        },
+                        {
+                          "name": "max_depth",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--max-depth', '-d', min=0, help='Limit depth of the graph')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-depth",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--max-depth"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Limit depth of the graph"
+                          }
+                        },
+                        {
+                          "name": "template",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "plotly_dark",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option('--template', '-t', help='Plotly template name')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--template",
+                              "-t"
+                            ],
+                            "long_flags": [
+                              "--template"
+                            ],
+                            "short_flags": [
+                              "-t"
+                            ],
+                            "help": "Plotly template name"
+                          }
+                        },
+                        {
+                          "name": "height",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 900,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option('--height', '-H', help='Image height (for static output)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--height",
+                              "-H"
+                            ],
+                            "long_flags": [
+                              "--height"
+                            ],
+                            "short_flags": [
+                              "-H"
+                            ],
+                            "help": "Image height (for static output)"
+                          }
+                        },
+                        {
+                          "name": "width",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 1200,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option('--width', '-w', help='Image width (for static output)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--width",
+                              "-w"
+                            ],
+                            "long_flags": [
+                              "--width"
+                            ],
+                            "short_flags": [
+                              "-w"
+                            ],
+                            "help": "Image width (for static output)"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Render a Plotly hierarchy chart.",
+                    "aliases": [
+                      {
+                        "name": "v",
+                        "hidden": true,
+                        "help": "Render a Plotly hierarchy chart."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "dump",
+                    "fullPath": "devops self explore-python-api dump",
+                    "shortPath": "d s p j",
+                    "help": "📦 <j> Write the generated Python API graph JSON.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/graph/visualize/python_api_graph_app.py",
+                      "module": "stackops.scripts.python.graph.visualize.python_api_graph_app",
+                      "callable": "dump"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def dump(",
+                        "    output: Annotated[Path, typer.Argument(help=\"Write the Python API graph JSON to this path.\")],",
+                        ") -> None:",
+                        "    \"\"\"Write the generated Python API graph JSON.\"\"\"",
+                        "    from stackops.scripts.python.graph.python_api_graph import write_python_api_graph_json",
+                        "",
+                        "    written = write_python_api_graph_json(output=output)",
+                        "    typer.echo(f\"Wrote {written}\")"
+                      ],
+                      "name": "dump",
+                      "parameters": [
+                        {
+                          "name": "output",
+                          "kind": "positional_or_keyword",
+                          "type": "Path",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[Path, typer.Argument(help='Write the Python API graph JSON to this path.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Write the Python API graph JSON to this path."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
+                    "doc": "Write the generated Python API graph JSON.",
+                    "aliases": [
+                      {
+                        "name": "j",
+                        "hidden": true,
+                        "help": "Write the generated Python API graph JSON."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "explain-filter",
+                    "fullPath": "devops self explore-python-api explain-filter",
+                    "shortPath": "d s p f",
+                    "help": "🧪 <f> Explain how API files and members are selected.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/graph/visualize/python_api_graph_app.py",
+                      "module": "stackops.scripts.python.graph.visualize.python_api_graph_app",
+                      "callable": "explain_filter"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def explain_filter() -> None:",
+                        "    \"\"\"Explain how Python API modules and members are selected.\"\"\"",
+                        "    from rich.console import Console",
+                        "    from rich.markdown import Markdown",
+                        "    from rich.panel import Panel",
+                        "",
+                        "    Console().print(Panel(Markdown(_filter_explanation()), title=\"Python API Filter\", border_style=\"cyan\"))"
+                      ],
+                      "name": "explain_filter",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "doc": "Explain how Python API modules and members are selected.",
+                    "aliases": [
+                      {
+                        "name": "f",
+                        "hidden": true,
+                        "help": "Explain how API files and members are selected."
+                      }
+                    ]
+                  }
+                ],
+                "command_context_settings": {
+                  "allow_extra_args": true,
+                  "allow_interspersed_args": true,
+                  "ignore_unknown_options": true,
+                  "help_option_names": []
+                },
+                "doc": "🧭 <p> Explore the StackOps Python API graph.",
+                "aliases": [
+                  {
+                    "name": "explore-api",
+                    "hidden": true,
+                    "help": "Explore the StackOps Python API graph."
+                  },
+                  {
+                    "name": "p",
                     "hidden": true
                   }
                 ]
@@ -11699,7 +12422,7 @@
                     "    ] = None,",
                     "    output_dir: Annotated[",
                     "        Path | None,",
-                    "        typer.Option(\"--output-dir\", \"-o\", help=\"Directory where the downloaded offline installer will be extracted.\"),",
+                    "        typer.Option(\"--output-dir\", \"-o\", help=\"Override the extraction directory. By default, the directory name includes the target OS/arch.\"),",
                     "    ] = None,",
                     ") -> None:",
                     "    \"\"\"📥 Download and extract a published offline installer.\"\"\"",
@@ -11741,7 +12464,7 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--output-dir', '-o', help='Directory where the downloaded offline installer will be extracted.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--output-dir', '-o', help='Override the extraction directory. By default, the directory name includes the target OS/arch.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -11754,7 +12477,7 @@
                         "short_flags": [
                           "-o"
                         ],
-                        "help": "Directory where the downloaded offline installer will be extracted."
+                        "help": "Override the extraction directory. By default, the directory name includes the target OS/arch."
                       }
                     }
                   ],
@@ -19791,7 +20514,9 @@
             "signature": {
               "raw_lines": [
                 "def add_skill(",
-                "    skill_name: Annotated[str | None, typer.Argument(help=\"Name of the skill to add. If omitted, opens an interactive picker.\")] = None,",
+                "    skill_name: Annotated[",
+                "        str | None, typer.Argument(help=\"Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker.\")",
+                "    ] = None,",
                 "    agent: Annotated[",
                 "        str | None,",
                 "        typer.Option(",
@@ -19834,13 +20559,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the skill to add. If omitted, opens an interactive picker.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the skill to add. If omitted, opens an interactive picker."
+                    "help": "Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker."
                   }
                 },
                 {
@@ -22588,6 +23313,7 @@
                 "signature": {
                   "raw_lines": [
                     "def scrape(",
+                    "    ctx: typer.Context,",
                     "    url: Annotated[str | None, typer.Argument(..., help=\"The URL to scrape.\")] = None,",
                     "    output_path: Annotated[str | None, typer.Argument(help=\"The output markdown file path. Defaults to f.md.\")] = None,",
                     "    output: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"The output markdown file path.\")] = None,",
@@ -22613,10 +23339,8 @@
                     "    if wait_selector is not None and wait_selector.strip() == \"\":",
                     "        raise typer.BadParameter(\"Wait selector cannot be empty.\", param_hint=\"--wait-selector\")",
                     "",
-                    "    import click",
                     "    from stackops.scripts.python.helpers.helpers_utils.scrape import run_scrape as impl",
                     "",
-                    "    click_context = click.get_current_context(silent=True)",
                     "    returncode = impl(",
                     "        url=url,",
                     "        output_path=output or output_path or \"f.md\",",
@@ -22626,13 +23350,21 @@
                     "        timeout=timeout,",
                     "        enable_resources=enable_resources,",
                     "        package_spec=package_spec.strip(),",
-                    "        extra_args=list(click_context.args) if click_context is not None else [],",
+                    "        extra_args=list(ctx.args),",
                     "    )",
                     "    if returncode != 0:",
                     "        raise typer.Exit(code=returncode)"
                   ],
                   "name": "scrape",
                   "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
                     {
                       "name": "url",
                       "kind": "positional_or_keyword",
@@ -23190,6 +23922,7 @@
                 "signature": {
                   "raw_lines": [
                     "def surya(",
+                    "    ctx: typer.Context,",
                     "    data_path: Annotated[str, typer.Argument(..., help=\"Path to an image, PDF, or folder for Surya.\")],",
                     "    task: Annotated[SuryaTask, typer.Option(\"--task\", \"-t\", help=\"Surya task to run.\")] = \"ocr\",",
                     "    output_dir: Annotated[str | None, typer.Option(\"--output-dir\", \"-o\", help=\"Directory for Surya results.\")] = None,",
@@ -23222,10 +23955,7 @@
                     "            raise typer.BadParameter(f\"Output path is not a directory: {resolved_output_dir}\", param_hint=\"--output-dir\")",
                     "        output_dir_path = str(resolved_output_dir)",
                     "",
-                    "    import click",
                     "    from stackops.scripts.python.helpers.helpers_utils.surya import run_surya as impl",
-                    "",
-                    "    click_context = click.get_current_context(silent=True)",
                     "",
                     "    returncode = impl(",
                     "        data_path=str(input_path),",
@@ -23237,13 +23967,21 @@
                     "        keep_server=keep_server,",
                     "        skip_table_detection=skip_table_detection,",
                     "        package_spec=package_spec,",
-                    "        extra_args=list(click_context.args) if click_context is not None else [],",
+                    "        extra_args=list(ctx.args),",
                     "    )",
                     "    if returncode != 0:",
                     "        raise typer.Exit(code=returncode)"
                   ],
                   "name": "surya",
                   "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
                     {
                       "name": "data_path",
                       "kind": "positional_or_keyword",

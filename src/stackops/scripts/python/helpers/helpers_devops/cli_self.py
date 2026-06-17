@@ -159,7 +159,8 @@ def get_app() -> typer.Typer:
         build_docker,
         build_graph,
         docs,
-        explore,
+        explore_cli,
+        explore_python_api,
         readme,
         security,
     )
@@ -183,8 +184,16 @@ def get_app() -> typer.Typer:
     cli_app.command(name="security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
     cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
 
-    cli_app.command(name="explore", help="🧭 <x> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore)
-    cli_app.command(name="x", hidden=True, context_settings=ctx_settings)(explore)
+    cli_app.command(name="explore-cli", help="🧭 <x> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore_cli)
+    cli_app.command(name="explore", help="Explore the StackOps CLI graph.", hidden=True, context_settings=ctx_settings)(explore_cli)
+    cli_app.command(name="x", hidden=True, context_settings=ctx_settings)(explore_cli)
+    cli_app.command(name="explore-python-api", help="🧭 <p> Explore the StackOps Python API graph.", context_settings=ctx_settings)(
+        explore_python_api
+    )
+    cli_app.command(name="explore-api", help="Explore the StackOps Python API graph.", hidden=True, context_settings=ctx_settings)(
+        explore_python_api
+    )
+    cli_app.command(name="p", hidden=True, context_settings=ctx_settings)(explore_python_api)
 
     cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
     cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)

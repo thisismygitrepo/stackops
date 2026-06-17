@@ -6,13 +6,14 @@ import re
 from typing import Final, Literal, cast, get_args
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
-from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import build_agent_skill_preview_mapping
+from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_requested_mcp_servers
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
 from stackops.utils.files.read import remove_c_style_comments
-from stackops.utils.options_utils.options import choose_from_options
 
 
 MCP_INSTALL_SCOPE = Literal["local", "global"]
+MCP_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _AUTHORIZATION_BEARER_ENV_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -41,18 +42,47 @@ def parse_requested_agents(raw_value: str) -> tuple[AGENTS, ...]:
     return tuple(resolved_agents)
 
 
-def choose_requested_mcp_names(*, locations: tuple[McpCatalogLocation, ...]) -> tuple[str, ...]:
-    available_names = collect_available_mcp_names(locations=locations)
-    selection = choose_from_options(
-        options=available_names,
-        msg="Choose MCP servers to install",
-        multi=True,
-        custom_input=False,
-        header="MCP Servers",
-        tv=True,
+def _format_mcp_selection_preview(*, resolved_server: ResolvedMcpServer) -> str:
+    definition = resolved_server["definition"]
+    return json.dumps(
+        {
+            "type": "mcp-server",
+            "name": resolved_server["name"],
+            "scope": resolved_server["scope"],
+            "source_path": str(resolved_server["source_path"]),
+            "transport": definition["transport"],
+            "command": definition["command"],
+            "args": definition["args"],
+            "url": definition["url"],
+            "cwd": definition["cwd"],
+            "enabled": definition["enabled"],
+            "description": definition["description"],
+            "env_keys": sorted(definition["env"]),
+            "header_keys": sorted(definition["headers"]),
+        },
+        indent=2,
     )
-    if selection is None or len(selection) == 0:
-        raise ValueError("Selection cancelled for MCP servers")
+
+
+def build_mcp_selection_preview_mapping(*, locations: tuple[McpCatalogLocation, ...]) -> dict[str, str]:
+    available_names = collect_available_mcp_names(locations=locations)
+    resolved_servers = resolve_requested_mcp_servers(requested_names=available_names, locations=locations)
+    return {resolved_server["name"]: _format_mcp_selection_preview(resolved_server=resolved_server) for resolved_server in resolved_servers}
+
+
+def choose_requested_mcp_names(*, locations: tuple[McpCatalogLocation, ...]) -> tuple[str, ...]:
+    from stackops.utils.options_utils import tv_options
+
+    selection_preview_mapping = build_mcp_selection_preview_mapping(locations=locations)
+    selection_preview_mapping.update(build_agent_skill_preview_mapping())
+    selection = tv_options.choose_from_dict_with_preview(
+        options_to_preview_mapping=selection_preview_mapping,
+        extension="json",
+        multi=True,
+        preview_size_percent=MCP_PREVIEW_SIZE_PERCENT,
+    )
+    if len(selection) == 0:
+        raise ValueError("Selection cancelled for MCP servers or agent skills")
     return tuple(selection)
 
 

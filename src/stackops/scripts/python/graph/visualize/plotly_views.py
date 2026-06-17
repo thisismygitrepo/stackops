@@ -12,6 +12,8 @@ def _render_plotly(
     width: int = 1200,
     template: str = "plotly_dark",
     max_depth: int | None,
+    title: str | None = None,
+    item_label: str = "Command",
 ) -> None:
     from stackops.scripts.python.graph.visualize.graph_data import (
         GraphNode,
@@ -23,6 +25,14 @@ def _render_plotly(
         "root": "#1f2937",
         "group": "#2563eb",
         "command": "#059669",
+        "package": "#2563eb",
+        "module": "#0284c7",
+        "class": "#9333ea",
+        "function": "#059669",
+        "async-function": "#0f766e",
+        "method": "#4d7c0f",
+        "constant": "#ca8a04",
+        "export": "#ca8a04",
     }
 
     SUPPORTED_VIEWS = {"sunburst", "treemap", "icicle"}
@@ -34,6 +44,7 @@ def _render_plotly(
         view: str,
         template: str = "plotly_dark",
         max_depth: int | None,
+        title: str | None,
     ):
         view_key = view.lower().strip()
         if view_key not in SUPPORTED_VIEWS:
@@ -43,7 +54,7 @@ def _render_plotly(
 
         hovertemplate = (
             "<b>%{label}</b><br>"
-            "Command: %{customdata[0]}<br>"
+            f"{item_label}: %{{customdata[0]}}<br>"
             "Kind: %{customdata[1]}<br>"
             "Aliases: %{customdata[2]}<br>"
             "%{customdata[3]}<extra></extra>"
@@ -88,7 +99,7 @@ def _render_plotly(
         fig.update_layout(
             template=template,
             margin={"l": 20, "r": 20, "t": 50, "b": 20},
-            title={"text": f"CLI Graph - {view_key.title()}", "x": 0.5},
+            title={"text": title or f"CLI Graph - {view_key.title()}", "x": 0.5},
             height=900,
         )
         return fig
@@ -121,7 +132,7 @@ def _render_plotly(
         return ids, labels, parents, values, customdata, colors
 
     root = build_graph(path)
-    fig = build_figure(root, view=view, template=template, max_depth=max_depth)
+    fig = build_figure(root, view=view, template=template, max_depth=max_depth, title=title)
     if output is None:
         fig.show()
     else:
@@ -146,6 +157,8 @@ def use_render_plotly(
     max_depth: int | None,
     uv_with: list[str] | None,
     uv_project_dir: str | None,
+    title: str | None = None,
+    item_label: str = "Command",
 ) -> None:
     from stackops.utils.code import run_lambda_function
     # from stackops.utils.source_of_truth import REPO_ROOT
@@ -166,6 +179,8 @@ def use_render_plotly(
             max_depth=max_depth,
             height=height,
             width=width,
+            title=title,
+            item_label=item_label,
         ),
         uv_with=resolved_uv_with,
         uv_project_dir=uv_project_dir,

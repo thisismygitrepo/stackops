@@ -10,6 +10,14 @@ KIND_STYLES = {
     "root": {"shape": "doubleoctagon", "fillcolor": "#f1f1f1", "color": "#555555"},
     "group": {"shape": "box", "fillcolor": "#dbeafe", "color": "#2563eb"},
     "command": {"shape": "box", "fillcolor": "#dcfce7", "color": "#15803d"},
+    "package": {"shape": "folder", "fillcolor": "#dbeafe", "color": "#2563eb"},
+    "module": {"shape": "component", "fillcolor": "#e0f2fe", "color": "#0284c7"},
+    "class": {"shape": "box", "fillcolor": "#f3e8ff", "color": "#9333ea"},
+    "function": {"shape": "box", "fillcolor": "#dcfce7", "color": "#15803d"},
+    "async-function": {"shape": "box", "fillcolor": "#ccfbf1", "color": "#0f766e"},
+    "method": {"shape": "box", "fillcolor": "#ecfccb", "color": "#4d7c0f"},
+    "constant": {"shape": "note", "fillcolor": "#fef9c3", "color": "#ca8a04"},
+    "export": {"shape": "note", "fillcolor": "#fef9c3", "color": "#ca8a04"},
 }
 
 

@@ -1,6 +1,6 @@
 # StackOps Source Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-15.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-17.
 
 Use this map to jump from a command path to the file that registers or implements it. For signatures, options, aliases, and full node metadata, inspect `src/stackops/scripts/python/graph/cli_graph.json`.
 
@@ -31,7 +31,8 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops network device` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_device.get_app` via `device`
 - `devops self` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self.get_app` via `self`
 - `devops self security` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.jobs.installer.checks.security_cli.get_app` via `security`
-- `devops self explore` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.graph.visualize.cli_graph_app.get_app` via `explore`
+- `devops self explore-cli` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.graph.visualize.cli_graph_app.get_app` via `explore-cli`
+- `devops self explore-python-api` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.graph.visualize.python_api_graph_app.get_app` via `explore-python-api`
 - `devops self build-assets` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self_assets.get_app` via `build-assets`
 - `devops self workflows` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self_ai.app.get_app` via `workflows`
 - `cloud` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.cloud.get_app` via `cloud`
@@ -119,11 +120,17 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops self security download` -> `src/stackops/jobs/installer/checks/security_cli.py` -> `download`
 - `devops self security install` -> `src/stackops/jobs/installer/checks/security_cli.py` -> `install`
 - `devops self security report` -> `src/stackops/jobs/installer/checks/security_cli.py` -> `report`
-- `devops self explore search` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `search`
-- `devops self explore tree` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `tree`
-- `devops self explore dot` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `dot`
-- `devops self explore view` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `chart`
-- `devops self explore tui` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `navigate`
+- `devops self explore-cli search` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `search`
+- `devops self explore-cli tree` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `tree`
+- `devops self explore-cli dot` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `dot`
+- `devops self explore-cli view` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `chart`
+- `devops self explore-cli tui` -> `src/stackops/scripts/python/graph/visualize/cli_graph_app.py` -> `navigate`
+- `devops self explore-python-api search` -> `src/stackops/scripts/python/graph/visualize/python_api_graph_app.py` -> `search`
+- `devops self explore-python-api tree` -> `src/stackops/scripts/python/graph/visualize/python_api_graph_app.py` -> `tree`
+- `devops self explore-python-api dot` -> `src/stackops/scripts/python/graph/visualize/python_api_graph_app.py` -> `dot`
+- `devops self explore-python-api view` -> `src/stackops/scripts/python/graph/visualize/python_api_graph_app.py` -> `chart`
+- `devops self explore-python-api dump` -> `src/stackops/scripts/python/graph/visualize/python_api_graph_app.py` -> `dump`
+- `devops self explore-python-api explain-filter` -> `src/stackops/scripts/python/graph/visualize/python_api_graph_app.py` -> `explain_filter`
 - `devops self readme` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_info.py` -> `readme`
 - `devops self docs` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_info.py` -> `docs`
 - `devops self build-installer` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_export.py` -> `export`

@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Final
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import (
-    collect_available_mcp_names,
     edit_mcp_catalog,
     ensure_mcp_catalog_exists,
     format_resolved_mcp_servers,
@@ -78,8 +77,6 @@ def add_mcp(
     if requested_mcp_servers is None:
         if edit:
             return
-        if len(collect_available_mcp_names(locations=search_locations)) == 0:
-            raise ValueError("No MCP servers are available to choose from in the selected catalog locations")
         requested_mcp_names = choose_requested_mcp_names(locations=search_locations)
     else:
         requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
@@ -87,31 +84,31 @@ def add_mcp(
     requested_skill_names = tuple(
         requested_mcp_name for requested_mcp_name in requested_mcp_names if is_supported_agent_skill_name(skill_name=requested_mcp_name)
     )
-    if len(requested_skill_names) > 0:
-        if len(requested_skill_names) != len(requested_mcp_names):
-            raise ValueError("Do not mix MCP server names and agent skill names in one add-mcp invocation")
+    requested_mcp_server_names = tuple(
+        requested_mcp_name for requested_mcp_name in requested_mcp_names if not is_supported_agent_skill_name(skill_name=requested_mcp_name)
+    )
+    repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
+    if scope == "local" and repo_root is None:
+        raise ValueError(f"Local installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
 
-        repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
-        if scope == "local" and repo_root is None:
-            raise ValueError(f"Local skill installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
+    if len(requested_skill_names) > 0:
         install_root = repo_root if repo_root is not None else Path.cwd()
         agent_targets = parse_requested_skill_agent_targets(raw_value=agents)
         commands = build_agent_skill_install_commands(
-        skill_names=requested_skill_names,
-        agent_targets=agent_targets,
-        scope=scope,
-        backend="bunx",
-        yes=False,
+            skill_names=requested_skill_names,
+            agent_targets=agent_targets,
+            scope=scope,
+            backend="bunx",
+            yes=False,
         )
         report(f"Installing agent skills through skills CLI: {', '.join(requested_skill_names)}")
         run_agent_skill_install_commands(install_root=install_root, commands=commands)
+
+    if len(requested_mcp_server_names) == 0:
         return
 
-    resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
+    resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_server_names, locations=search_locations)
     selected_agents = parse_requested_agents(raw_value=agents)
-    repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
-    if scope == "local" and repo_root is None:
-        raise ValueError(f"Local MCP installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
 
     report(f"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}")
     for selected_agent in selected_agents:

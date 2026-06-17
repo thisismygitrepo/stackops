@@ -10,6 +10,14 @@ STYLE_BY_KIND = {
     "root": "bold white",
     "group": "bold cyan",
     "command": "green",
+    "package": "bold cyan",
+    "module": "blue",
+    "class": "magenta",
+    "function": "green",
+    "async-function": "green",
+    "method": "bright_green",
+    "constant": "yellow",
+    "export": "yellow",
 }
 
 

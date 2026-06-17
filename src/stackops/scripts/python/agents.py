@@ -348,7 +348,9 @@ def ask(
 
 
 def add_skill(
-    skill_name: Annotated[str | None, typer.Argument(help="Name of the skill to add. If omitted, opens an interactive picker.")] = None,
+    skill_name: Annotated[
+        str | None, typer.Argument(help="Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker.")
+    ] = None,
     agent: Annotated[
         str | None,
         typer.Option(

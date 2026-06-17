@@ -59,7 +59,8 @@ def _build_node(
     kind = node.get("kind") or "command"
     name = node.get("name") or fallback_name
     tokens = parent_tokens + ([name] if name else [])
-    command = " ".join(tokens).strip()
+    qualified_name = node.get("qualified_name")
+    command = qualified_name if isinstance(qualified_name, str) and qualified_name else " ".join(tokens).strip()
     node_id = command or _fallback_id(parent_tokens, depth)
 
     description = _node_description(node)

@@ -1,14 +1,14 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
+import json
 from pathlib import Path
 import shlex
 from typing import Final, Literal, TypeAlias
 
-from stackops.utils.options_utils.options import choose_from_options
-
 SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
+AGENT_SKILL_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 
 
 @dataclass(frozen=True)
@@ -36,13 +36,54 @@ def supported_agent_skill_names() -> tuple[str, ...]:
     return tuple(_OPEN_SOURCE_SKILL_SOURCES)
 
 
-def choose_requested_skill_name() -> str:
-    selection = choose_from_options(
-        options=supported_agent_skill_names(), msg="Choose skill to install", multi=False, custom_input=False, header="Agent Skills", tv=True
+def build_agent_skill_preview_mapping() -> dict[str, str]:
+    preview_mapping: dict[str, str] = {}
+    for skill_name, source in _OPEN_SOURCE_SKILL_SOURCES.items():
+        preview_mapping[skill_name] = json.dumps(
+            {
+                "type": "agent-skill",
+                "name": skill_name,
+                "source": source.source,
+                "skill": source.skill,
+            },
+            indent=2,
+        )
+    return preview_mapping
+
+
+def choose_requested_skill_names() -> tuple[str, ...]:
+    from stackops.utils.options_utils import tv_options
+
+    selection = tv_options.choose_from_dict_with_preview(
+        options_to_preview_mapping=build_agent_skill_preview_mapping(),
+        extension="json",
+        multi=True,
+        preview_size_percent=AGENT_SKILL_PREVIEW_SIZE_PERCENT,
     )
-    if selection is None:
+    if len(selection) == 0:
         raise ValueError("Selection cancelled for agent skill")
-    return selection
+    return tuple(selection)
+
+
+def parse_requested_skill_names(*, raw_value: str) -> tuple[str, ...]:
+    if raw_value.strip() == "":
+        raise ValueError("Provide at least one skill name")
+
+    parts = [part.strip() for part in raw_value.split(",")]
+    if any(part == "" for part in parts):
+        raise ValueError("Skill names must be a comma-separated list without empty entries")
+
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for part in parts:
+        if part in seen:
+            duplicates.append(part)
+            continue
+        seen.add(part)
+    if len(duplicates) > 0:
+        raise ValueError(f"Duplicate skill names are not allowed: {', '.join(dict.fromkeys(duplicates))}")
+
+    return tuple(parts)
 
 
 def resolve_agent_skill_install_root(*, directory: str | None) -> Path:
@@ -123,9 +164,9 @@ def add_skill(
 ) -> int:
     install_root = resolve_agent_skill_install_root(directory=directory)
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
-    resolved_skill_name = choose_requested_skill_name() if skill_name is None else skill_name
+    resolved_skill_names = choose_requested_skill_names() if skill_name is None else parse_requested_skill_names(raw_value=skill_name)
     commands = build_agent_skill_install_commands(
-        skill_names=(resolved_skill_name,),
+        skill_names=resolved_skill_names,
         agent_targets=agent_targets,
         scope=scope,
         backend=backend,

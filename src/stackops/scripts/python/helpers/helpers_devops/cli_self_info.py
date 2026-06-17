@@ -167,11 +167,18 @@ def build_graph(
         exit_then_run_shell_script(f'preview --backend browser "{written}"', strict=True)
 
 
-def explore(ctx: typer.Context) -> None:
+def explore_cli(ctx: typer.Context) -> None:
     """🧭 <x> Explore the StackOps CLI graph."""
     from stackops.scripts.python.graph.visualize import cli_graph_app
 
     cli_graph_app.get_app()(ctx.args, standalone_mode=False)
+
+
+def explore_python_api(ctx: typer.Context) -> None:
+    """🧭 <p> Explore the StackOps Python API graph."""
+    from stackops.scripts.python.graph.visualize import python_api_graph_app
+
+    python_api_graph_app.get_app()(ctx.args, standalone_mode=False)
 
 
 def security(ctx: typer.Context) -> None:

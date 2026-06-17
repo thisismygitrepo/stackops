@@ -17,7 +17,8 @@ Current `devops self --help` exposes:
 | `update` | Upgrade stackops, refresh packaged assets, and optionally relink public configs | Always |
 | `status` | Inspect machine, shell, repo, SSH, config, app, or backup state | Always |
 | `security` | Run security and installer-audit helpers | Always |
-| `explore` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
+| `explore-cli` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
+| `explore-python-api` | Inspect the documented Python API graph in terminal, DOT, Plotly, or search form | Always |
 | `readme` | Fetch and render the project README in the terminal | Always |
 | `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/stackops` exists |
 | `build-installer` | Export installation files for an offline installer image | Always |
@@ -157,15 +158,15 @@ devops self download-installer --target macos-arm --output-dir ~/.config/stackop
 
 When `--target` is omitted, StackOps prompts for one of the configured OS/architecture pairs. By default, the installer is extracted to `~/.config/stackops/offline_installers/stackops-offline-installer-<target>`.
 
-### explore
+### explore-cli
 
 CLI graph inspection lives under a nested Typer app:
 
 ```bash
-devops self explore [SUBCOMMAND] [ARGS]...
+devops self explore-cli [SUBCOMMAND] [ARGS]...
 ```
 
-Current `devops self explore --help` exposes:
+Current `devops self explore-cli --help` exposes:
 
 | Command | Description |
 |---------|-------------|
@@ -182,7 +183,7 @@ rendered Markdown summary for the selected command or group; use `--json` or `-j
 to print the raw graph entry.
 
 ```bash
-devops self explore search [OPTIONS]
+devops self explore-cli search [OPTIONS]
 ```
 
 Key option:
@@ -197,7 +198,7 @@ Key option:
 Render the graph as a terminal tree.
 
 ```bash
-devops self explore tree [OPTIONS]
+devops self explore-cli tree [OPTIONS]
 ```
 
 Key options from current help:
@@ -211,7 +212,7 @@ Key options from current help:
 Example:
 
 ```bash
-devops self explore tree --max-depth 2
+devops self explore-cli tree --max-depth 2
 ```
 
 #### dot
@@ -219,7 +220,7 @@ devops self explore tree --max-depth 2
 Export the graph as Graphviz DOT text.
 
 ```bash
-devops self explore dot [OPTIONS]
+devops self explore-cli dot [OPTIONS]
 ```
 
 Key options from current help:
@@ -233,7 +234,7 @@ Key options from current help:
 Example:
 
 ```bash
-devops self explore dot --max-depth 2
+devops self explore-cli dot --max-depth 2
 ```
 
 #### view
@@ -241,7 +242,7 @@ devops self explore dot --max-depth 2
 Render the graph as a Plotly hierarchy chart. The default view is `sunburst`.
 
 ```bash
-devops self explore view [OPTIONS] [VIEW]
+devops self explore-cli view [OPTIONS] [VIEW]
 ```
 
 Supported `VIEW` values from current help:
@@ -265,9 +266,9 @@ Key options from current help:
 Examples:
 
 ```bash
-devops self explore view
-devops self explore view treemap
-devops self explore view icicle --output /tmp/icicle.html
+devops self explore-cli view
+devops self explore-cli view treemap
+devops self explore-cli view icicle --output /tmp/icicle.html
 ```
 
 <iframe
@@ -286,7 +287,7 @@ Only the sunburst artifact is checked in by default. Use `--output` if you want 
 Open the full-screen Textual navigator.
 
 ```bash
-devops self explore tui
+devops self explore-cli tui
 ```
 
 Interactive controls:
@@ -299,6 +300,36 @@ Interactive controls:
 - `q` quits
 
 No static screenshot is checked into the docs for the TUI. Launch it locally to inspect the current command tree.
+
+### explore-python-api
+
+Python API graph inspection lives under a separate nested Typer app:
+
+```bash
+devops self explore-python-api [SUBCOMMAND] [ARGS]...
+```
+
+Current `devops self explore-python-api --help` exposes:
+
+| Command | Description |
+|---------|-------------|
+| `search` | Search API entries and show the selected import summary |
+| `tree` | Render a rich tree view in the terminal |
+| `dot` | Export the graph as Graphviz DOT |
+| `view` | Render a Plotly hierarchy chart (`sunburst`, `treemap`, or `icicle`) |
+| `dump` | Write the generated Python API graph JSON |
+| `explain-filter` | Explain how API files and members are selected |
+
+The API graph starts from `docs/api` instead of the raw source tree. It includes modules named by mkdocstrings directives and explicit docs imports, then uses AST inspection to include public classes, functions, async functions, and uppercase constants. Private names and common CLI wiring helpers such as `main`, `get_app`, `app`, and `cli_app` are skipped.
+
+Examples:
+
+```bash
+devops self explore-python-api tree --max-depth 3
+devops self explore-python-api dot --max-depth 2
+devops self explore-python-api dump /tmp/stackops-python-api.json
+devops self explore-python-api explain-filter
+```
 
 ### build-docker
 
