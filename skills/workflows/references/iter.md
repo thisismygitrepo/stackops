@@ -40,8 +40,9 @@ The user may specify whether spawned agents are interactive or non-interactive. 
 
 6. Create or update root-level iteration records before launching the first agent. Use Markdown by default. Do not mirror full Herdr transcripts, routine timestamps, or live statuses into local files; Herdr remains the activity ledger.
 7. Launch `iter-001` in one Herdr workspace dedicated to this chain. Use one Herdr tab/window per iteration agent with exactly one pane by default. Treat a user request for a "window" as a Herdr tab unless the installed CLI exposes a separate window concept.
-8. Send the first agent a complete instruction using the Iteration Agent Prompt Format below.
-9. Tell the user the slug, records path, Herdr workspace, first agent target, visible status, and mode.
+8. Send the first agent a complete instruction using the Iteration Agent Prompt Format below. Prefer `herdr agent send` when a unique agent target exists because it submits the message rather than only placing text in a terminal input buffer.
+9. After sending the prompt, verify the agent is actually running before reporting success: refresh the Herdr target, read recent output, and wait for a visible `working` status or other clear evidence that the prompt was accepted and execution started. If the prompt appears to be sitting unsubmitted in the terminal input line, explicitly send Return/Enter through the documented Herdr mechanism or resend through `herdr agent send`, then verify again.
+10. Tell the user the slug, records path, Herdr workspace, first agent target, visible status, and mode.
 
 ## Iteration Records
 
@@ -141,11 +142,13 @@ Your task:
 6. Update this iteration's records under iter-<NNN>/.
 7. Update the root attempt ledger with attempted ideas, outcomes, evidence, and do-not-repeat notes.
 8. If the success criteria are reached, write final results and do not start another agent.
-9. If the success criteria are not reached but credible next ideas remain, write iter-<NNN>/handoff.md, start iter-<NNN+1> in the same Herdr workspace with a tab/window name that includes the next iteration number, submit a complete prompt that includes this protocol and the necessary history, then report what you launched.
+9. If the success criteria are not reached but credible next ideas remain, write iter-<NNN>/handoff.md, start iter-<NNN+1> in the same Herdr workspace with a tab/window name that includes the next iteration number, submit a complete prompt that includes this protocol and the necessary history, verify the new agent is actually running before wrapping up, then report what you launched.
 10. If you are blocked or have no credible next ideas, write final results and do not start another agent.
 
 Do not assume access to the original conversation. Use Herdr for agent coordination and the iteration records for durable context.
 ```
+
+When starting the next iteration, do not treat a created tab, a visible CLI prompt, or text pasted into an input line as a completed handoff. Prefer `herdr agent send` to submit the prompt. Then confirm through Herdr status and recent output that `iter-<NNN+1>` accepted the prompt and began working. If the text is present but unsubmitted, send Return/Enter through the documented Herdr mechanism or resend with `herdr agent send`, and only finish after the new agent is visibly running. If this cannot be confirmed, write the failure and prepared prompt into the records instead of claiming the next iteration was launched.
 
 ## Handoff Requirements
 
