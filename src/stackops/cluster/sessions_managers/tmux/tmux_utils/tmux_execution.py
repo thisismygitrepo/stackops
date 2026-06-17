@@ -11,22 +11,41 @@ _TMUX_ATTACH_OR_SWITCH_PREFIX = 'if [ -n "${TMUX:-}" ]; then '
 _TMUX_ATTACH_OR_SWITCH_SEPARATOR = '; else '
 _TMUX_ATTACH_OR_SWITCH_SUFFIX = '; fi'
 _TMUX_NEW_SESSION_COMMAND = (
-    'if [ -n "${TMUX:-}" ]; then '
-    """new_session_name=$(tmux new-session -d -P -F '#{session_name}') && """
-    'tmux switch-client -t "$new_session_name"; '
-    'else '
-    'tmux new-session; '
-    'fi'
+    "stackops_next_tmux_session_name() {\n"
+    "    session_name=1\n"
+    "    existing_sessions=\"$(tmux list-sessions -F '#{session_name}' 2>/dev/null || true)\"\n"
+    "    while printf '%s\\n' \"$existing_sessions\" | grep -Fxq \"$session_name\"; do\n"
+    "        session_name=$((session_name + 1))\n"
+    "    done\n"
+    "    printf '%s\\n' \"$session_name\"\n"
+    "}\n"
+    "new_session_name=\"$(stackops_next_tmux_session_name)\"\n"
+    'if [ -n "${TMUX:-}" ]; then\n'
+    '    tmux new-session -d -s "$new_session_name" && tmux switch-client -t "$new_session_name"\n'
+    "else\n"
+    '    tmux new-session -s "$new_session_name"\n'
+    "fi"
 )
 _TMUX_NEW_SESSION_POWERSHELL_COMMAND = (
+    "$existingSessions = @(tmux list-sessions -F '#{session_name}' 2>$null); "
+    "if ($LASTEXITCODE -ne 0) { $existingSessions = @() }; "
+    "$newSessionName = 1; "
+    "while ($existingSessions -contains [string]$newSessionName) { $newSessionName += 1 }; "
     "if ($env:TMUX) { "
-    "$newSessionName = tmux new-session -d -P -F '#{session_name}'; "
+    "tmux new-session -d -s $newSessionName; "
     "if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; "
     "tmux switch-client -t $newSessionName "
     "} else { "
-    "tmux new-session "
+    "tmux new-session -s $newSessionName "
     "}"
 )
+
+
+def build_next_numeric_tmux_session_name(existing_sessions: set[str]) -> str:
+    candidate = 1
+    while str(candidate) in existing_sessions:
+        candidate += 1
+    return str(candidate)
 
 
 def build_tmux_attach_or_switch_command(session_name: str) -> str:
@@ -160,6 +179,57 @@ def _resolve_attach_or_switch_command(command: str) -> str:
     return attach_or_switch_commands[1]
 
 
+def _list_tmux_session_names(timeout_seconds: float | None) -> set[str]:
+    result = subprocess.run(
+        ["tmux", "list-sessions", "-F", "#{session_name}"],
+        capture_output=True,
+        text=True,
+        timeout=timeout_seconds,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip().lower()
+        if "no server running" in detail or "failed to connect to server" in detail:
+            return set()
+        return set()
+    return {line.strip() for line in (result.stdout or "").splitlines() if line.strip()}
+
+
+def _normalize_tmux_script_lines(script: str) -> list[str]:
+    return [
+        line.strip()
+        for line in script.splitlines()
+        if line.strip() and not line.startswith("#!") and line.strip() != "set -e"
+    ]
+
+
+def _new_tmux_session(
+    *,
+    session_name: str,
+    detached: bool,
+    timeout_seconds: float | None,
+) -> subprocess.CompletedProcess[str]:
+    command = ["tmux", "new-session"]
+    if detached:
+        command.append("-d")
+    command.extend(["-s", session_name])
+    return subprocess.run(
+        command,
+        capture_output=detached,
+        text=True,
+        timeout=_resolve_tmux_timeout(
+            command=f"tmux new-session {'-d ' if detached else ''}-s {shell_quote(session_name)}",
+            timeout_seconds=timeout_seconds,
+        ),
+        check=False,
+    )
+
+
+def _is_duplicate_session_error(result: subprocess.CompletedProcess[str]) -> bool:
+    detail = (result.stderr or result.stdout or "").strip().lower()
+    return "duplicate session" in detail or "session already exists" in detail
+
+
 def start_tmux_new_session(
     kill_all: bool,
     timeout_seconds: float | None,
@@ -170,39 +240,31 @@ def start_tmux_new_session(
             ignore_missing_server=True,
         )
 
-    if os.environ.get("TMUX"):
-        result = subprocess.run(
-            ["tmux", "new-session", "-d", "-P", "-F", "#{session_name}"],
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-            check=False,
+    for _ in range(100):
+        session_name = build_next_numeric_tmux_session_name(
+            _list_tmux_session_names(timeout_seconds=timeout_seconds),
         )
+        result = _new_tmux_session(
+            session_name=session_name,
+            detached=bool(os.environ.get("TMUX")),
+            timeout_seconds=timeout_seconds,
+        )
+        if result.returncode != 0 and _is_duplicate_session_error(result):
+            continue
         if result.returncode != 0:
             _raise_tmux_command_failure(
-                command="tmux new-session -d -P -F '#{session_name}'",
+                command=f"tmux new-session -s {shell_quote(session_name)}",
                 result=result,
             )
-        lines = [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
-        if len(lines) == 0:
-            raise RuntimeError("tmux did not report the new session name.")
-        _run_tmux_command(
-            command=f"tmux switch-client -t {shell_quote(lines[-1])}",
-            timeout_seconds=timeout_seconds,
-            capture_output=True,
-        )
+        if os.environ.get("TMUX"):
+            _run_tmux_command(
+                command=f"tmux switch-client -t {shell_quote(session_name)}",
+                timeout_seconds=timeout_seconds,
+                capture_output=True,
+            )
         return
 
-    result = subprocess.run(
-        ["tmux", "new-session"],
-        timeout=_resolve_tmux_timeout(
-            command="tmux new-session",
-            timeout_seconds=timeout_seconds,
-        ),
-        check=False,
-    )
-    if result.returncode != 0:
-        raise RuntimeError("tmux command failed: tmux new-session")
+    raise RuntimeError("Unable to allocate a free numeric tmux session name.")
 
 
 def run_tmux_commands(
@@ -230,25 +292,22 @@ def run_tmux_script(
     timeout_seconds: float | None,
     capture_output: bool = True,
 ) -> list[subprocess.CompletedProcess[str]]:
-    commands = [
-        line.strip()
-        for line in script.splitlines()
-        if line.strip() and not line.startswith("#!") and line.strip() != "set -e"
-    ]
+    commands = _normalize_tmux_script_lines(script)
+    new_session_commands = _normalize_tmux_script_lines(_TMUX_NEW_SESSION_COMMAND)
     results: list[subprocess.CompletedProcess[str]] = []
-    for index, command in enumerate(commands):
-        if command == _TMUX_NEW_SESSION_COMMAND:
+    index = 0
+    while index < len(commands):
+        command = commands[index]
+        if commands[index:index + len(new_session_commands)] == new_session_commands:
             start_tmux_new_session(kill_all=False, timeout_seconds=timeout_seconds)
+            index += len(new_session_commands)
             continue
         if (
             command == "tmux kill-server"
-            and index < len(commands) - 1
-            and commands[index + 1] == _TMUX_NEW_SESSION_COMMAND
+            and commands[index + 1:index + 1 + len(new_session_commands)] == new_session_commands
         ):
-            _run_tmux_kill_server(
-                timeout_seconds=timeout_seconds,
-                ignore_missing_server=True,
-            )
+            start_tmux_new_session(kill_all=True, timeout_seconds=timeout_seconds)
+            index += 1 + len(new_session_commands)
             continue
         results.append(
             _run_tmux_command(
@@ -257,4 +316,5 @@ def run_tmux_script(
                 capture_output=capture_output,
             )
         )
+        index += 1
     return results

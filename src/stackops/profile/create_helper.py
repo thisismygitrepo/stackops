@@ -1,6 +1,7 @@
 
 from typing import Literal
 from pathlib import Path
+import stat
 import shutil
 from stackops.utils.source_of_truth import LIBRARY_ROOT, CONFIG_ROOT
 
@@ -26,9 +27,19 @@ def _copy_path(source: Path, target: Path, overwrite: bool) -> None:
         raise ValueError(f"Source is neither file nor directory: {source}")
 
 
+def _add_execute_bit(path: Path) -> None:
+    mode = path.stat().st_mode
+    path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+
+def _make_scripts_executable(scripts_path: Path) -> None:
+    _add_execute_bit(scripts_path)
+    for path in scripts_path.rglob("*"):
+        _add_execute_bit(path)
+
+
 def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
     import platform
-    import subprocess
     system_name = platform.system().lower()
     if system_name == "windows":
         system = "windows"
@@ -54,12 +65,12 @@ def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
         wrap_stackops_target.parent.mkdir(parents=True, exist_ok=True)
         _copy_path(source=wrap_stackops_source, target=wrap_stackops_target, overwrite=True)
 
-        if system_name == "linux":
+        if system_name in {"linux", "darwin"}:
             from rich.console import Console
             console = Console()
             console.print("\n[bold]📜 Setting executable permissions for scripts...[/bold]")
             scripts_path = CONFIG_ROOT.joinpath("scripts")
-            subprocess.run(f"chmod +x {scripts_path} -R", shell=True, capture_output=True, text=True, check=False)
+            _make_scripts_executable(scripts_path)
             console.print("[green]✅ Script permissions updated[/green]")
         return
 
