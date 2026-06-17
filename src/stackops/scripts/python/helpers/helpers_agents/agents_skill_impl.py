@@ -6,7 +6,9 @@ import shlex
 from typing import Final, Literal, TypeAlias
 
 SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
-SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx"]
+SKILL_INSTALL_COMMAND_BACKEND: TypeAlias = Literal["bunx", "npx"]
+SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
+RESOLVED_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 AGENT_SKILL_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 
@@ -34,6 +36,18 @@ def is_supported_agent_skill_name(*, skill_name: str) -> bool:
 
 def supported_agent_skill_names() -> tuple[str, ...]:
     return tuple(_OPEN_SOURCE_SKILL_SOURCES)
+
+
+def resolve_agent_skill_install_backend(*, backend: SKILL_INSTALL_BACKEND) -> RESOLVED_SKILL_INSTALL_BACKEND:
+    if backend == "s":
+        return "stackops"
+    if backend in ("bunx", "npx", "stackops"):
+        return backend
+    raise ValueError("Unsupported skill install backend. Use bunx, npx, stackops, or s.")
+
+
+def build_stackops_skill_folder_names() -> dict[str, str]:
+    return {skill_name: source.skill or skill_name for skill_name, source in _OPEN_SOURCE_SKILL_SOURCES.items()}
 
 
 def build_agent_skill_preview_mapping() -> dict[str, str]:
@@ -111,7 +125,7 @@ def build_agent_skill_install_commands(
     skill_names: Sequence[str],
     agent_targets: Sequence[str],
     scope: SKILL_INSTALL_SCOPE,
-    backend: SKILL_INSTALL_BACKEND,
+    backend: SKILL_INSTALL_COMMAND_BACKEND,
     yes: bool,
 ) -> tuple[tuple[str, ...], ...]:
     commands: list[tuple[str, ...]] = []
@@ -165,11 +179,24 @@ def add_skill(
     install_root = resolve_agent_skill_install_root(directory=directory)
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
     resolved_skill_names = choose_requested_skill_names() if skill_name is None else parse_requested_skill_names(raw_value=skill_name)
+    resolved_backend = resolve_agent_skill_install_backend(backend=backend)
+    if resolved_backend == "stackops":
+        from stackops.scripts.python.helpers.helpers_agents import agents_skill_stackops_backend
+
+        results = agents_skill_stackops_backend.install_stackops_agent_skills(
+            skill_names=resolved_skill_names,
+            skill_folder_names=build_stackops_skill_folder_names(),
+            install_root=install_root,
+            scope=scope,
+        )
+        agents_skill_stackops_backend.print_stackops_agent_skill_install_summary(results=results)
+        return 0
+
     commands = build_agent_skill_install_commands(
         skill_names=resolved_skill_names,
         agent_targets=agent_targets,
         scope=scope,
-        backend=backend,
+        backend=resolved_backend,
         yes=yes,
     )
     return run_agent_skill_install_commands(install_root=install_root, commands=commands)

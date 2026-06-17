@@ -3,10 +3,12 @@ from pathlib import Path
 import pytest
 
 from stackops.scripts.python.helpers.helpers_agents import agents_skill_impl
+from stackops.scripts.python.helpers.helpers_agents import agents_skill_stackops_backend
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
     AGENT_SKILL_PREVIEW_SIZE_PERCENT,
     build_agent_skill_install_commands,
     parse_requested_skill_names,
+    resolve_agent_skill_install_backend,
     supported_agent_skill_names,
 )
 from stackops.utils.options_utils import tv_options
@@ -23,6 +25,11 @@ def test_parse_requested_skill_names_accepts_comma_separated_values() -> None:
 def test_parse_requested_skill_names_rejects_duplicates() -> None:
     with pytest.raises(ValueError, match="Duplicate skill names"):
         parse_requested_skill_names(raw_value="agent-skills,last30days,agent-skills")
+
+
+def test_resolve_agent_skill_install_backend_accepts_stackops_alias() -> None:
+    assert resolve_agent_skill_install_backend(backend="stackops") == "stackops"
+    assert resolve_agent_skill_install_backend(backend="s") == "stackops"
 
 
 def test_agent_skills_builds_skills_cli_install_command() -> None:
@@ -96,6 +103,72 @@ def test_add_skill_installs_multiple_interactive_choices(monkeypatch: pytest.Mon
             "--agent",
             "codex",
             "copilot",
+        ),
+    )
+
+
+def test_add_skill_dispatches_stackops_backend_alias(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    observed: dict[str, object] = {}
+
+    def fake_install_stackops_agent_skills(
+        *,
+        skill_names: tuple[str, ...],
+        skill_folder_names: dict[str, str],
+        install_root: Path,
+        scope: object,
+    ) -> tuple[agents_skill_stackops_backend.StackopsAgentSkillInstallResult, ...]:
+        results = (
+            agents_skill_stackops_backend.StackopsAgentSkillInstallResult(
+                skill_name="stackops",
+                source_path=tmp_path / "source" / "stackops",
+                target_path=tmp_path / ".agents" / "skills" / "stackops",
+            ),
+        )
+        observed["skill_names"] = skill_names
+        observed["skill_folder_names"] = skill_folder_names
+        observed["install_root"] = install_root
+        observed["scope"] = scope
+        return results
+
+    def fake_print_stackops_agent_skill_install_summary(
+        *, results: tuple[agents_skill_stackops_backend.StackopsAgentSkillInstallResult, ...]
+    ) -> None:
+        observed["summary_results"] = results
+
+    monkeypatch.setattr(agents_skill_stackops_backend, "install_stackops_agent_skills", fake_install_stackops_agent_skills)
+    monkeypatch.setattr(
+        agents_skill_stackops_backend,
+        "print_stackops_agent_skill_install_summary",
+        fake_print_stackops_agent_skill_install_summary,
+    )
+
+    result = agents_skill_impl.add_skill(
+        skill_name="stackops,workflows",
+        agent="codex",
+        scope="local",
+        directory=str(tmp_path),
+        backend="s",
+        yes=True,
+    )
+
+    assert result == 0
+    assert observed["skill_names"] == ("stackops", "workflows")
+    assert observed["skill_folder_names"] == {
+        "agent-browser": "agent-browser",
+        "agent-skills": "agent-skills",
+        "caveman": "caveman",
+        "grill-me": "grill-me",
+        "last30days": "last30days",
+        "stackops": "stackops",
+        "workflows": "workflows",
+    }
+    assert observed["install_root"] == tmp_path.resolve()
+    assert observed["scope"] == "local"
+    assert observed["summary_results"] == (
+        agents_skill_stackops_backend.StackopsAgentSkillInstallResult(
+            skill_name="stackops",
+            source_path=tmp_path / "source" / "stackops",
+            target_path=tmp_path / ".agents" / "skills" / "stackops",
         ),
     )
 

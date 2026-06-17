@@ -13,7 +13,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
-_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx"]
+_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
@@ -369,14 +369,14 @@ def add_skill(
     ] = None,
     backend: Annotated[
         _SKILL_INSTALL_BACKEND,
-        typer.Option("--backend", "-b", help="Package runner backend for the upstream skills CLI."),
+        typer.Option("--backend", "-b", help="Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally."),
     ] = "bunx",
     yes: Annotated[
         bool,
         typer.Option("--yes", "-y", help="Pass --yes to the upstream skills CLI."),
     ] = False,
 ) -> None:
-    """Add a skill through the upstream skills CLI."""
+    """Add a skill through an installer backend."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
