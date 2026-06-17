@@ -8,10 +8,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeEl
 from rich.table import Table
 from rich.text import Text
 
-try:
-    import models as models_module  # type: ignore[import-not-found] # sibling script, resolved at runtime via sys.path
-except ModuleNotFoundError:
-    from stackops.scripts.python.ai.scripts import models as models_module
+from stackops.scripts.python.ai.scripts import models as models_module
 
 
 CHECKER_SPECS = models_module.CHECKER_SPECS
