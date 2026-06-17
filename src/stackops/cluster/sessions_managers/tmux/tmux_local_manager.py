@@ -22,7 +22,7 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
     check_tmux_session_status,
 )
 from stackops.cluster.sessions_managers.monitoring_types import CommandStatus, StartResult
-from stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting import calculate_global_summary_from_status
+from stackops.cluster.sessions_managers.status_reporting import calculate_global_summary_from_status
 
 
 logger = get_logger("cluster.sessions_managers.tmux_local_manager")

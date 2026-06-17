@@ -4,59 +4,38 @@ The session-manager layer takes `LayoutConfig` objects and turns them into runni
 
 - session-name conflict planning
 - backend-specific layout launchers
-- attach, status, monitoring, and persistence helpers
+- attach, status, and monitoring helpers
 
 ---
 
-## Supported managers
+## Supported Managers
 
 | Manager | Module path | What it manages |
 | --- | --- | --- |
 | `TmuxLocalManager` | `stackops.cluster.sessions_managers.tmux.tmux_local_manager` | Local tmux sessions generated from `list[LayoutConfig]` |
-| `WTLocalManager` | `stackops.cluster.sessions_managers.windows_terminal.wt_local_manager` | Local Windows Terminal sessions generated from `list[LayoutConfig]` |
-| `WTSessionManager` | `stackops.cluster.sessions_managers.windows_terminal.wt_remote_manager` | Remote Windows Terminal sessions across remote machines |
 
 ---
 
-## Conflict policies
+## Conflict Policies
 
 `stackops.cluster.sessions_managers.session_conflict` defines the shared conflict planner.
 
-### Supported actions
+### Supported Actions
 
 | Action | Meaning |
 | --- | --- |
 | `error` | Fail if a requested session already exists or if two requested layouts target the same name |
 | `restart` | Reuse the requested name and restart an existing session when necessary |
 | `rename` | Keep the requested name as a base and allocate `name_1`, `name_2`, and so on |
-| `mergeOverwrite` | Keep the requested session name and merge new windows into an existing tmux or Windows Terminal session, overwriting matching windows where supported |
-| `mergeSkip` | Keep the requested session name and merge only missing windows where supported |
+| `skip` | Keep existing sessions and skip conflicting launches |
+| `mergeOverwrite` | Keep the requested tmux session name and overwrite matching windows where supported |
+| `mergeSkip` | Keep the requested tmux session name and add only missing windows where supported |
 
-The two merge actions are only valid for the `tmux` and `windows-terminal` backends. For Windows Terminal, `mergeOverwrite` restarts an existing matching window and `mergeSkip` skips launch when the requested window already exists. For tmux, merge behavior is implemented by generating merge commands for an existing session.
+The two merge actions are valid for the `tmux` backend. For tmux, merge behavior is implemented by generating merge commands for an existing session.
 
 ---
 
-## Backend-specific behavior
-
-
-
-- always prefixes managed session names with `LocalJobMgr_`
-- requires `start_all_sessions(on_conflict, poll_seconds, poll_interval)`
-- supports `attach_to_session()`, `check_all_sessions_status()`, `run_monitoring_routine()`, `save(session_id)`, `load()`, and `list_active_sessions()`
-
-Example:
-
-```python
-
-manager.start_all_sessions(
-    on_conflict="rename",
-    poll_seconds=10.0,
-    poll_interval=0.5,
-)
-print(manager.attach_to_session(None))
-```
-
-### tmux local
+## tmux Local
 
 `TmuxLocalManager` requires `session_name_prefix` and `exit_mode` constructor arguments. Pass `None` as the prefix to use each layout name directly:
 
@@ -76,46 +55,20 @@ report = manager.check_all_sessions_status()
 
 tmux is also the backend where merge conflict actions produce merge commands instead of only rename-or-restart plans.
 
-### Windows Terminal local
-
-`WTLocalManager` also takes `session_layouts`, `session_name_prefix`, and `exit_mode`, but the current local implementation stores the prefix without applying it to generated session names. `start_all_sessions()` currently has no `on_conflict` parameter. It simply runs the generated PowerShell launcher for each managed layout.
-
-Useful current helpers include:
-
-- `attach_to_session()`
-- `check_all_sessions_status()`
-- `run_monitoring_routine()`
-- `save()` / `load()`
-- `get_wt_overview()`
-- `list_active_sessions()`
-
-### Remote managers
-
-The remote managers keep the same status and persistence ideas, but their inputs are backend-specific:
-
-- `WTSessionManager(machine2wt_tabs: dict[str, dict[str, tuple[str, str]]], session_name_prefix: str | None = "WTJobMgr")`
-
-Representative helpers:
-
-- `ssh_to_all_machines()`
-- `run_monitoring_routine()`
-- `save(session_id)` / `load()`
-- `list_saved_sessions()` / `delete_session()`
-
 ---
 
-## Monitoring and reporting helpers
+## Monitoring And Reporting Helpers
 
 Representative utility modules include:
 
-- `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting`
-- `stackops.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence`
+- `stackops.cluster.sessions_managers.status_reporting`
+- `stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status`
 
 These modules power the status summaries returned by the manager classes rather than replacing them.
 
 ---
 
-## See also
+## See Also
 
 - [Layouts](layouts.md) for `LayoutConfig`, layout serialization, and tab generation
 - [Remote execution and networking](remote.md) for remote-job flows that feed these backends
@@ -123,9 +76,9 @@ These modules power the status summaries returned by the manager classes rather 
 
 ---
 
-## API reference
+## API Reference
 
-## Conflict planning
+## Conflict Planning
 
 ::: stackops.cluster.sessions_managers.session_conflict
     options:
@@ -133,7 +86,7 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
-## Session exit mode
+## Session Exit Mode
 
 ::: stackops.cluster.sessions_managers.session_exit_mode
     options:
@@ -141,7 +94,15 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
-## Enhanced command runner
+## Status Reporting
+
+::: stackops.cluster.sessions_managers.status_reporting
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Enhanced Command Runner
 
 ::: stackops.cluster.sessions_managers.helpers.enhanced_command_runner
     options:
@@ -149,159 +110,9 @@ These modules power the status summaries returned by the manager classes rather 
       show_source: false
       members_order: source
 
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## tmux local manager
+## tmux Local Manager
 
 ::: stackops.cluster.sessions_managers.tmux.tmux_local_manager
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal local manager
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_local_manager
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal remote manager
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_remote_manager
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal remote sessions
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_remote
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal local manager demo
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_local_manager_demo
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal local monitoring
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.local_monitoring
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal manager persistence
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal monitoring helpers
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.monitoring_helpers
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal process monitor
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.process_monitor
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal remote executor
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.remote_executor
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal session manager utility
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.session_manager
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal status reporter
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporter
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal status reporting
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting
     options:
       show_root_heading: true
       show_source: false

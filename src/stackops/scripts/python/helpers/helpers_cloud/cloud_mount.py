@@ -147,9 +147,12 @@ def mount(
             raise typer.Exit(code=1)
         cloud_name = clouds[0]
         mount_cmd = mount_commands[cloud_name]
-        txt = f"""
-wt --window 0 --profile "Windows PowerShell" --startingDirectory "$HOME/data/rclone" `; split-pane --horizontal  --profile "Command Prompt" --size 0.2 powershell -Command "{mount_cmd}" `; split-pane --vertical --profile "Windows PowerShell" --size 0.2 powershell -NoExit -Command "rclone about {cloud_name}:"  `; move-focus up
-"""
+        cloud_brand = config[cloud_name].get("type", cloud_name)
+        txt = get_mprocs_mount_txt(
+            cloud=cloud_name,
+            rclone_cmd=mount_cmd,
+            cloud_brand=cloud_brand,
+        )
     elif system_name in ["Linux", "Darwin"]:
         import string
         import random

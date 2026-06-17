@@ -42,8 +42,8 @@ def run(
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
 
-    backend: Annotated[Literal["windows-terminal", "wt", "tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer or emulator to use")] = "tmux",
-    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal.")] = "error",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
+    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.")] = "error",
     exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
@@ -54,7 +54,7 @@ def run(
     Use --on-conflict to choose behavior when a target session already exists:
     error, restart, rename, mergeOverwrite, or
     mergeSkip. Those two merge policies are
-    supported for tmux and Windows Terminal.
+    supported for tmux.
     Use `run-all` for the paced whole-file dynamic scheduler.
 
     The type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.

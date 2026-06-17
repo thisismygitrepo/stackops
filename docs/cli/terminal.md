@@ -51,6 +51,7 @@ terminal run [OPTIONS]
 | `--parallel-layouts` | `-p` | Maximum number of layouts to launch per monitored batch |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, or `auto`/`a` |
 | `--on-conflict` | `-c` | `error`, `restart`, `rename`, `mergeOverwrite`, or `mergeSkip` |
 | `--exit` | `-e` | `backToShell`, `terminate`, or `killWindow` after each command exits |
 | `--monitor` | `-m` | Monitor launched sessions for completion |
@@ -74,6 +75,9 @@ terminal run --layouts-file layouts.json --choose-tabs "server,build::tests"
 
 # Restart matching sessions before relaunching
 terminal run --layouts-file layouts.json --on-conflict restart
+
+# Launch selected layouts through Herdr
+terminal run --layouts-file layouts.json --backend herdr
 ```
 
 ## run-all

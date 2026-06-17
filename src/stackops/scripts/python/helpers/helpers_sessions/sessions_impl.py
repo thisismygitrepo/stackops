@@ -6,13 +6,11 @@ from typing import Literal
 
 from stackops.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
-    build_session_launch_plan,
-    kill_existing_session,
 )
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from stackops.cluster.sessions_managers.monitoring_types import StartResult
 
-BackendName = Literal["windows-terminal", "tmux"]
+BackendName = Literal["tmux", "herdr"]
 
 
 def select_layout(layouts_json_file: str, selected_layouts_names: list[str], select_interactively: bool) -> list["LayoutConfig"]:
@@ -74,60 +72,6 @@ def find_layout_file(layout_path: str) -> str:
     return str(choice_file)
 
 
-def _session_name_for_layout(layout_name: str, backend: BackendName) -> str:
-    if backend == "tmux":
-        name_core = layout_name.replace(" ", "_")
-    else:
-        name_core = layout_name
-    return name_core
-
-
-def resolve_conflicts_for_batch(
-    layouts_batch: list["LayoutConfig"],
-    backend: BackendName,
-    on_conflict: SessionConflictAction,
-) -> tuple[list["LayoutConfig"], set[str]]:
-    launch_plan = build_session_launch_plan(
-        requested_session_names=[
-            _session_name_for_layout(layout["layoutName"], backend)
-            for layout in layouts_batch
-        ],
-        backend=backend,
-        on_conflict=on_conflict,
-    )
-    layouts_to_run: list["LayoutConfig"] = []
-    sessions_to_restart: set[str] = set()
-
-    for layout, plan in zip(layouts_batch, launch_plan, strict=True):
-        original_layout_name = layout["layoutName"]
-        target_session_name = plan["session_name"]
-        if plan.get("skip_launch", False):
-            print(
-                f"⏭️ Skipping layout '{original_layout_name}' because session "
-                f"'{target_session_name}' already exists."
-            )
-            continue
-        if plan["restart_required"]:
-            print(
-                f"♻️ Restarting existing session '{target_session_name}' "
-                f"for layout '{original_layout_name}'."
-            )
-            sessions_to_restart.add(target_session_name)
-        if target_session_name != original_layout_name:
-            print(
-                f"📝 Renaming layout '{original_layout_name}' to '{target_session_name}' "
-                f"to avoid session conflict."
-            )
-            renamed_layout: "LayoutConfig" = {
-                "layoutName": target_session_name,
-                "layoutTabs": layout["layoutTabs"],
-            }
-            layout = renamed_layout
-        layouts_to_run.append(layout)
-
-    return layouts_to_run, sessions_to_restart
-
-
 def run_layouts(
     sleep_inbetween: float,
     monitor: bool,
@@ -156,31 +100,6 @@ def run_layouts(
             details = "; ".join(f"{name}: {result.get('error', 'unknown error')}" for name, result in failures.items())
             raise ValueError(f"{backend_name} session start failure(s): {details}")
     match backend:
-        case "windows-terminal":
-            from stackops.cluster.sessions_managers.windows_terminal.wt_local_manager import WTLocalManager
-            for i, a_layouts in enumerate(iterable):
-                layouts_to_run, sessions_to_restart = resolve_conflicts_for_batch(a_layouts, backend, on_conflict)
-                if len(sessions_to_restart) > 0:
-                    for session_name in sorted(sessions_to_restart):
-                        kill_existing_session(backend, session_name)
-                if len(layouts_to_run) == 0:
-                    print("No layouts to launch for this batch after conflict resolution.")
-                    if i < len(iterable) - 1:
-                        time.sleep(sleep_inbetween)
-                    continue
-                wt_manager = WTLocalManager(
-                    session_layouts=layouts_to_run,
-                    session_name_prefix=None,
-                    exit_mode=exit_mode,
-                )
-                start_results = wt_manager.start_all_sessions()
-                raise_on_failed_start(start_results, "Windows Terminal")
-                if monitor:
-                    wt_manager.run_monitoring_routine(wait_ms=2000)
-                    if kill_upon_completion:
-                        wt_manager.kill_all_sessions()
-                if i < len(iterable) - 1:
-                    time.sleep(sleep_inbetween)
         case "tmux":
             from stackops.cluster.sessions_managers.tmux.tmux_local_manager import TmuxLocalManager
             for i, a_layouts in enumerate(iterable):
@@ -195,6 +114,26 @@ def run_layouts(
                     tmux_manager.run_monitoring_routine(wait_ms=2000)
                     if kill_upon_completion:
                         tmux_manager.kill_all_sessions()
+                if i < len(iterable) - 1:
+                    time.sleep(sleep_inbetween)
+        case "herdr":
+            if monitor_requested:
+                raise ValueError("--monitor is not supported by the Herdr backend.")
+            if parallel_layouts is not None:
+                raise ValueError("--parallel-layouts is not supported by the Herdr backend.")
+            if kill_upon_completion:
+                raise ValueError("--kill-upon-completion is not supported by the Herdr backend.")
+            if exit_mode != "backToShell":
+                raise ValueError("--exit is not supported by the Herdr backend; use backToShell.")
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_herdr import (
+                run_layouts_with_herdr,
+            )
+            for i, a_layouts in enumerate(iterable):
+                start_results = run_layouts_with_herdr(
+                    layouts_selected=a_layouts,
+                    on_conflict=on_conflict,
+                )
+                raise_on_failed_start(start_results, "Herdr")
                 if i < len(iterable) - 1:
                     time.sleep(sleep_inbetween)
         case _:

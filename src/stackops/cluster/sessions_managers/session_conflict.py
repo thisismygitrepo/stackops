@@ -5,7 +5,7 @@ import subprocess
 from typing import Literal, NotRequired, TypedDict
 
 
-SessionBackend = Literal["tmux", "windows-terminal"]
+SessionBackend = Literal["tmux", "herdr"]
 SessionConflictActionLoose = Literal[
     "restart", "r",
     "rename", "n",
@@ -48,13 +48,13 @@ SUPPORTED_SESSION_CONFLICT_ACTIONS = frozenset(
         "mergeSkip",
     }
 )
-MERGE_NEW_WINDOWS_SESSION_CONFLICT_ACTIONS = frozenset(
+MERGE_SESSION_CONFLICT_ACTIONS = frozenset(
     {
         "mergeOverwrite",
         "mergeSkip",
     }
 )
-MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS = frozenset({"tmux", "windows-terminal"})
+MERGE_SUPPORTED_BACKENDS = frozenset({"tmux"})
 
 
 class SessionLaunchPlan(TypedDict):
@@ -102,7 +102,7 @@ def _build_launch_plan(
 
 
 def _existing_conflict_hint(backend: SessionBackend) -> str:
-    if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
+    if backend in MERGE_SUPPORTED_BACKENDS:
         return (
             "Use --on-conflict restart, --on-conflict rename, --on-conflict skip, "
             "--on-conflict mergeOverwrite, or "
@@ -112,7 +112,7 @@ def _existing_conflict_hint(backend: SessionBackend) -> str:
 
 
 def _duplicate_conflict_hint(backend: SessionBackend) -> str:
-    if backend in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS:
+    if backend in MERGE_SUPPORTED_BACKENDS:
         return (
             "Use unique layout names, --on-conflict rename, --on-conflict skip, "
             "--on-conflict mergeOverwrite, or "
@@ -138,16 +138,9 @@ def list_existing_sessions(backend: SessionBackend) -> set[str]:
                 return set()
             return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
-        if backend == "windows-terminal":
-            from stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import POWERSHELL_CMD
-
-            ps_script = """
-Get-Process -Name 'WindowsTerminal' -ErrorAction SilentlyContinue |
-Select-Object MainWindowTitle |
-ConvertTo-Json -Depth 2
-"""
+        if backend == "herdr":
             result = subprocess.run(
-                [POWERSHELL_CMD, "-Command", ps_script],
+                ["herdr", "workspace", "list"],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -159,14 +152,17 @@ ConvertTo-Json -Depth 2
             if not output:
                 return set()
             payload = json.loads(output)
-            if not isinstance(payload, list):
-                payload = [payload]
-            titles = {
-                str(item.get("MainWindowTitle", "")).strip()
-                for item in payload
-                if isinstance(item, dict) and str(item.get("MainWindowTitle", "")).strip()
+            result_payload = payload.get("result") if isinstance(payload, dict) else None
+            if not isinstance(result_payload, dict):
+                return set()
+            workspaces = result_payload.get("workspaces")
+            if not isinstance(workspaces, list):
+                return set()
+            return {
+                str(item.get("label", "")).strip()
+                for item in workspaces
+                if isinstance(item, dict) and str(item.get("label", "")).strip()
             }
-            return titles
     except Exception:
         return set()
 
@@ -174,13 +170,7 @@ ConvertTo-Json -Depth 2
 
 
 def session_exists(session_name: str, existing_sessions: set[str], backend: SessionBackend) -> bool:
-    if backend != "windows-terminal":
-        return session_name in existing_sessions
-    session_name_lc = session_name.casefold()
-    return any(
-        candidate.casefold() == session_name_lc or session_name_lc in candidate.casefold()
-        for candidate in existing_sessions
-    )
+    return session_name in existing_sessions
 
 
 def build_session_launch_plan(
@@ -189,16 +179,15 @@ def build_session_launch_plan(
     on_conflict: SessionConflictAction,
 ) -> list[SessionLaunchPlan]:
     if (
-        on_conflict in MERGE_NEW_WINDOWS_SESSION_CONFLICT_ACTIONS
-        and backend not in MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS
+        on_conflict in MERGE_SESSION_CONFLICT_ACTIONS
+        and backend not in MERGE_SUPPORTED_BACKENDS
     ):
-        supported_backends_text = ", ".join(sorted(MERGE_NEW_WINDOWS_SUPPORTED_BACKENDS))
+        supported_backends_text = ", ".join(sorted(MERGE_SUPPORTED_BACKENDS))
         raise SessionConflictError(
             f"{on_conflict} is only supported for {supported_backends_text} backends."
         )
     existing_sessions = list_existing_sessions(backend)
     planned_sessions: set[str] = set()
-    restarted_sessions: set[str] = set()
     plans: list[SessionLaunchPlan] = []
 
     for requested_name in requested_session_names:
@@ -211,18 +200,11 @@ def build_session_launch_plan(
 
         match on_conflict:
             case "mergeOverwrite":
-                should_restart_existing = (
-                    backend == "windows-terminal"
-                    and conflict_with_existing
-                    and requested_name not in restarted_sessions
-                )
-                if should_restart_existing:
-                    restarted_sessions.add(requested_name)
                 plans.append(
                     _build_launch_plan(
                         requested_name=requested_name,
                         session_name=requested_name,
-                        restart_required=should_restart_existing,
+                        restart_required=False,
                         conflict_source=conflict_source,
                         skip_launch=False,
                     )
@@ -230,17 +212,6 @@ def build_session_launch_plan(
                 planned_sessions.add(requested_name)
                 continue
             case "mergeSkip":
-                if backend == "windows-terminal" and conflict_with_existing:
-                    plans.append(
-                        _build_launch_plan(
-                            requested_name=requested_name,
-                            session_name=requested_name,
-                            restart_required=False,
-                            conflict_source="existing",
-                            skip_launch=True,
-                        )
-                    )
-                    continue
                 plans.append(
                     _build_launch_plan(
                         requested_name=requested_name,
@@ -342,22 +313,40 @@ def kill_existing_session(backend: SessionBackend, session_name: str) -> None:
             )
             return
 
-        if backend == "windows-terminal":
-            from stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers import POWERSHELL_CMD
-
-            safe_name = session_name.replace("'", "''")
-            ps_script = f"""
-$name = '{safe_name}'
-Get-Process -Name 'WindowsTerminal' -ErrorAction SilentlyContinue |
-Where-Object {{ $_.MainWindowTitle -like "*$name*" }} |
-Stop-Process -Force -ErrorAction SilentlyContinue
-"""
-            subprocess.run(
-                [POWERSHELL_CMD, "-Command", ps_script],
+        if backend == "herdr":
+            result = subprocess.run(
+                ["herdr", "workspace", "list"],
                 capture_output=True,
                 text=True,
                 timeout=10,
                 check=False,
             )
+            if result.returncode != 0:
+                return
+            output = result.stdout.strip()
+            if not output:
+                return
+            payload = json.loads(output)
+            result_payload = payload.get("result") if isinstance(payload, dict) else None
+            if not isinstance(result_payload, dict):
+                return
+            workspaces = result_payload.get("workspaces")
+            if not isinstance(workspaces, list):
+                return
+            for item in workspaces:
+                if not isinstance(item, dict):
+                    continue
+                if str(item.get("label", "")).strip() != session_name:
+                    continue
+                workspace_id = str(item.get("workspace_id", "")).strip()
+                if workspace_id == "":
+                    continue
+                subprocess.run(
+                    ["herdr", "workspace", "close", workspace_id],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                )
     except Exception:
         return

@@ -84,11 +84,6 @@ These **60** modules need a human decision before source markers are added.
 | --- | --- | --- | --- | --- | --- |
 | `stackops.cluster.sessions_managers.helpers.enhanced_command_runner` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:2 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.cluster.sessions_managers.tmux.tmux_local` | `api` | `api-cli-bridge` | api-doc, __main__, classes:3, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_local` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1, funcs:3 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_local_manager` | `api` | `api-cli-bridge` | api-doc, __main__, classes:2, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_remote` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_remote_manager` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples.wt_local_manager_demo` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.jobs.installer.checks.check_installations` | `api` | `api-cli-bridge` | api-doc, main, __main__, funcs:12 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.jobs.installer.checks.security_cli` | `api` | `api-cli-bridge` | api-doc, typer, typer-app, cli-registration, get_app, funcs:12 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.jobs.installer.checks.security_helper` | `api` | `api-cli-bridge` | api-doc, typer, funcs:18 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
@@ -158,16 +153,6 @@ These **96** modules are the strongest candidates for `api` markers after manual
 | `stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status` | `python-api` | `high` | api-doc, classes:1, funcs:2 | src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_status.py |  |
 | `stackops.cluster.sessions_managers.utils.load_balancer` | `python-api` | `high` | api-doc, classes:1, funcs:3 | src/stackops/cluster/sessions_managers/utils/load_balancer.py |  |
 | `stackops.cluster.sessions_managers.utils.maker` | `python-api` | `high` | api-doc, funcs:4 | src/stackops/cluster/sessions_managers/utils/maker.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.layout_generator` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/layout_generator.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.local_monitoring` | `python-api` | `high` | api-doc, classes:1, funcs:5 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/local_monitoring.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence` | `python-api` | `high` | api-doc, funcs:6 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/manager_persistence.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.monitoring_helpers` | `python-api` | `high` | api-doc, funcs:6 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/monitoring_helpers.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.process_monitor` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/process_monitor.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.remote_executor` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/remote_executor.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.session_manager` | `python-api` | `high` | api-doc, classes:7 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/session_manager.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporter` | `python-api` | `high` | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporter.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting` | `python-api` | `high` | api-doc, funcs:5 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporting.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers` | `python-api` | `high` | api-doc, funcs:7 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/wt_helpers.py |  |
 | `stackops.jobs.installer.checks.install_utils` | `python-api` | `high` | api-doc, funcs:7 | src/stackops/jobs/installer/checks/install_utils.py |  |
 | `stackops.jobs.installer.checks.report_utils` | `python-api` | `high` | api-doc, classes:6, funcs:19 | src/stackops/jobs/installer/checks/report_utils.py |  |
 | `stackops.jobs.installer.checks.vt_utils` | `python-api` | `high` | api-doc, classes:2, funcs:7 | src/stackops/jobs/installer/checks/vt_utils.py |  |
@@ -492,8 +477,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.cluster.sessions_managers` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/__init__.py |  |
 | `stackops.cluster.sessions_managers.tmux` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/tmux/__init__.py |  |
 | `stackops.cluster.sessions_managers.utils` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/utils/__init__.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/windows_terminal/__init__.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/examples/__init__.py |  |
 | `stackops.jobs` | `package` | `package-marker` | `high` | api-doc | src/stackops/jobs/__init__.py |  |
 | `stackops.jobs.agents.mcps` | `package` | `package-marker` | `high` | - | src/stackops/jobs/agents/mcps/__init__.py |  |
 | `stackops.jobs.installer` | `package` | `package-marker` | `high` | api-doc | src/stackops/jobs/installer/__init__.py |  |
@@ -717,23 +700,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.cluster.sessions_managers.utils` | `package` | `package-marker` | `high` | 0 | 2 | api-doc | src/stackops/cluster/sessions_managers/utils/__init__.py |  |
 | `stackops.cluster.sessions_managers.utils.load_balancer` | `api` | `python-api` | `high` | 1 | 57 | api-doc, classes:1, funcs:3 | src/stackops/cluster/sessions_managers/utils/load_balancer.py |  |
 | `stackops.cluster.sessions_managers.utils.maker` | `api` | `python-api` | `high` | 0 | 105 | api-doc, funcs:4 | src/stackops/cluster/sessions_managers/utils/maker.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal` | `package` | `package-marker` | `high` | 0 | 0 | api-doc | src/stackops/cluster/sessions_managers/windows_terminal/__init__.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_local` | `api` | `api-cli-bridge` | `medium` | 2 | 254 | api-doc, __main__, classes:1, funcs:3 | src/stackops/cluster/sessions_managers/windows_terminal/wt_local.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_local_manager` | `api` | `api-cli-bridge` | `medium` | 2 | 372 | api-doc, __main__, classes:2, funcs:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_local_manager.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_remote` | `api` | `api-cli-bridge` | `medium` | 1 | 212 | api-doc, __main__, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_remote.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_remote_manager` | `api` | `api-cli-bridge` | `medium` | 0 | 315 | api-doc, __main__, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_remote_manager.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples` | `package` | `package-marker` | `high` | 0 | 0 | api-doc | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/examples/__init__.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.examples.wt_local_manager_demo` | `api` | `api-cli-bridge` | `medium` | 1 | 79 | api-doc, __main__, funcs:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/examples/wt_local_manager_demo.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.layout_generator` | `api` | `python-api` | `high` | 1 | 176 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/layout_generator.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.local_monitoring` | `api` | `python-api` | `high` | 1 | 84 | api-doc, classes:1, funcs:5 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/local_monitoring.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.manager_persistence` | `api` | `python-api` | `high` | 2 | 53 | api-doc, funcs:6 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/manager_persistence.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.monitoring_helpers` | `api` | `python-api` | `high` | 1 | 51 | api-doc, funcs:6 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/monitoring_helpers.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.process_monitor` | `api` | `python-api` | `high` | 2 | 324 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/process_monitor.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.remote_executor` | `api` | `python-api` | `high` | 3 | 143 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/remote_executor.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.session_manager` | `api` | `python-api` | `high` | 2 | 271 | api-doc, classes:7 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/session_manager.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporter` | `api` | `python-api` | `high` | 1 | 205 | api-doc, classes:1 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporter.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.status_reporting` | `api` | `python-api` | `high` | 3 | 77 | api-doc, funcs:5 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/status_reporting.py |  |
-| `stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers` | `api` | `python-api` | `high` | 4 | 211 | api-doc, funcs:7 | src/stackops/cluster/sessions_managers/windows_terminal/wt_utils/wt_helpers.py |  |
 | `stackops.jobs` | `package` | `package-marker` | `high` | 2 | 0 | api-doc | src/stackops/jobs/__init__.py |  |
 | `stackops.jobs.agents.mcps` | `package` | `package-marker` | `high` | 1 | 3 | - | src/stackops/jobs/agents/mcps/__init__.py |  |
 | `stackops.jobs.installer` | `package` | `package-marker` | `high` | 1 | 2 | api-doc | src/stackops/jobs/installer/__init__.py |  |

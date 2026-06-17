@@ -9,12 +9,12 @@ if TYPE_CHECKING:
     from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
 type SessionBackendOption = Literal[
-    "windows-terminal", "wt",
     "tmux", "t",
+    "herdr", "h",
     "auto", "a",
 ]
 type DynamicSessionBackendOption = Literal["tmux", "t", "auto", "a"]
-type ResolvedSessionBackend = Literal["windows-terminal", "tmux"]
+type ResolvedSessionBackend = Literal["tmux", "herdr"]
 
 
 def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
@@ -160,19 +160,17 @@ def resolve_standard_backend(
     import platform
 
     match backend:
-        case "windows-terminal" | "wt":
-            if platform.system().lower() != "windows":
+        case "tmux" | "t":
+            return "tmux"
+        case "herdr" | "h":
+            if platform.system().lower() == "windows":
                 typer.echo(
-                    "Error: Windows Terminal layouts can only be started on Windows systems.",
+                    "Error: Herdr layouts cannot be started on Windows systems.",
                     err=True,
                 )
                 raise typer.Exit(code=1)
-            return "windows-terminal"
-        case "tmux" | "t":
-            return "tmux"
+            return "herdr"
         case "auto" | "a":
-            if platform.system().lower() == "windows":
-                return "windows-terminal"
             return "tmux"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True)

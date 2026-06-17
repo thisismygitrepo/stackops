@@ -15912,7 +15912,7 @@
             "name": "run",
             "fullPath": "terminal run",
             "shortPath": "t r",
-            "help": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeOverwrite, or\nmergeSkip. Those two merge policies are\nsupported for tmux and Windows Terminal.\nUse `run-all` for the paced whole-file dynamic scheduler.\n\nThe type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.",
+            "help": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeOverwrite, or\nmergeSkip. Those two merge policies are\nsupported for tmux.\nUse `run-all` for the paced whole-file dynamic scheduler.\n\nThe type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.",
             "source": {
               "file": "src/stackops/scripts/python/terminal.py",
               "module": "stackops.scripts.python.terminal",
@@ -15933,8 +15933,8 @@
                 "    monitor: Annotated[bool, typer.Option(..., \"--monitor\", \"-m\", help=\"Monitor the layout sessions for completion (implied by --parallel-layouts)\")] = False,",
                 "    parallel_layouts: Annotated[int | None, typer.Option(..., \"--parallel-layouts\", \"-p\", help=\"Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.\")] = None,",
                 "",
-                "    backend: Annotated[Literal[\"windows-terminal\", \"wt\", \"tmux\", \"t\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer or emulator to use\")] = \"tmux\",",
-                "    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal.\")] = \"error\",",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use\")] = \"tmux\",",
+                "    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.\")] = \"error\",",
                 "    exit_mode: Annotated[Literal[\"backToShell\", \"terminate\", \"killWindow\"], typer.Option(\"--exit\", \"-e\", help=\"What each tab/window should do after its command exits.\")] = \"backToShell\",",
                 "    kill_upon_completion: Annotated[bool, typer.Option(..., \"--kill-upon-completion\", \"-k\", help=\"Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)\")] = False,",
                 "    subsitute_home: Annotated[bool, typer.Option(..., \"--substitute-home\", \"-H\", help=\"Substitute ~ and $HOME in layout file with actual home directory path\")] = False,",
@@ -15945,7 +15945,7 @@
                 "    Use --on-conflict to choose behavior when a target session already exists:",
                 "    error, restart, rename, mergeOverwrite, or",
                 "    mergeSkip. Those two merge policies are",
-                "    supported for tmux and Windows Terminal.",
+                "    supported for tmux.",
                 "    Use `run-all` for the paced whole-file dynamic scheduler.",
                 "",
                 "    The type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.",
@@ -16191,10 +16191,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['windows-terminal', 'wt', 'tmux', 't', 'auto', 'a']",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'auto', 'a']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['windows-terminal', 'wt', 'tmux', 't', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer or emulator to use')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'auto', 'a'], typer.Option(..., '--backend', '-b', help='Backend terminal multiplexer to use')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16207,7 +16207,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend terminal multiplexer or emulator to use",
+                    "help": "Backend terminal multiplexer to use",
                     "default": "..."
                   }
                 },
@@ -16217,7 +16217,7 @@
                   "type": "_SessionConflictActionLoose",
                   "default": "error",
                   "required": false,
-                  "annotation_raw": "Annotated[_SessionConflictActionLoose, typer.Option('--on-conflict', '-c', help='How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal.')]",
+                  "annotation_raw": "Annotated[_SessionConflictActionLoose, typer.Option('--on-conflict', '-c', help='How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16230,7 +16230,7 @@
                     "short_flags": [
                       "-c"
                     ],
-                    "help": "How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and Windows Terminal."
+                    "help": "How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux."
                   }
                 },
                 {
@@ -16308,12 +16308,12 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeOverwrite, or\nmergeSkip. Those two merge policies are\nsupported for tmux and Windows Terminal.\nUse `run-all` for the paced whole-file dynamic scheduler.\n\nThe type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.",
+            "doc": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeOverwrite, or\nmergeSkip. Those two merge policies are\nsupported for tmux.\nUse `run-all` for the paced whole-file dynamic scheduler.\n\nThe type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.",
             "aliases": [
               {
                 "name": "r",
                 "hidden": true,
-                "help": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeOverwrite, or\nmergeSkip. Those two merge policies are\nsupported for tmux and Windows Terminal.\nUse `run-all` for the paced whole-file dynamic scheduler.\n\nThe type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead."
+                "help": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeOverwrite, or\nmergeSkip. Those two merge policies are\nsupported for tmux.\nUse `run-all` for the paced whole-file dynamic scheduler.\n\nThe type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead."
               }
             ]
           },
@@ -20505,7 +20505,7 @@
             "name": "add-skill",
             "fullPath": "agents add-skill",
             "shortPath": "a s",
-            "help": "Add a skill through the upstream skills CLI.",
+            "help": "Add a skill through an installer backend.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
@@ -20535,14 +20535,14 @@
                 "    ] = None,",
                 "    backend: Annotated[",
                 "        _SKILL_INSTALL_BACKEND,",
-                "        typer.Option(\"--backend\", \"-b\", help=\"Package runner backend for the upstream skills CLI.\"),",
+                "        typer.Option(\"--backend\", \"-b\", help=\"Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally.\"),",
                 "    ] = \"bunx\",",
                 "    yes: Annotated[",
                 "        bool,",
                 "        typer.Option(\"--yes\", \"-y\", help=\"Pass --yes to the upstream skills CLI.\"),",
                 "    ] = False,",
                 ") -> None:",
-                "    \"\"\"Add a skill through the upstream skills CLI.\"\"\"",
+                "    \"\"\"Add a skill through an installer backend.\"\"\"",
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl",
                 "",
@@ -20642,7 +20642,7 @@
                   "type": "_SKILL_INSTALL_BACKEND",
                   "default": "bunx",
                   "required": false,
-                  "annotation_raw": "Annotated[_SKILL_INSTALL_BACKEND, typer.Option('--backend', '-b', help='Package runner backend for the upstream skills CLI.')]",
+                  "annotation_raw": "Annotated[_SKILL_INSTALL_BACKEND, typer.Option('--backend', '-b', help='Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -20655,7 +20655,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Package runner backend for the upstream skills CLI."
+                    "help": "Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally."
                   }
                 },
                 {
@@ -20684,7 +20684,7 @@
               "return": "None"
             },
             "short_help": "<s> Add a skill to an agent",
-            "doc": "Add a skill through the upstream skills CLI.",
+            "doc": "Add a skill through an installer backend.",
             "aliases": [
               {
                 "name": "s",

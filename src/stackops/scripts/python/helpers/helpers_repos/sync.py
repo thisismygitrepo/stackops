@@ -67,19 +67,24 @@ def delete_remote_repo_copy_and_push_local(remote_repo: str, local_repo: str, cl
 
 
 
-def get_wt_cmd(wd1: Path, wd2: Path) -> str:
+def _quote_powershell_literal(value: Path) -> str:
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def get_windows_inspect_cmd(wd1: Path, wd2: Path) -> str:
+    local_path = _quote_powershell_literal(wd1)
+    remote_path = _quote_powershell_literal(wd2)
     lines = [
-        f"""wt --window 0 new-tab --profile pwsh --title "gitdiff" --tabColor `#3b04d1 --startingDirectory {wd1} ` --colorScheme "Solarized Dark" """,
-        f"""split-pane --horizontal --profile pwsh --startingDirectory {wd2} --size 0.5 --colorScheme "Tango Dark" -- pwsh -Interactive """,
+        f'mprocs "git -C {local_path} status" "git -C {remote_path} status" --names "local,remote"',
     ]
-    return " `; ".join(lines)
+    return "\n".join(lines)
 
 
 def inspect_repos(repo_local_root: str, repo_remote_root: str):
     console.print(Panel(f"📂 Local:  {repo_local_root}\n📂 Remote: {repo_remote_root}", title="[bold blue]🔍 Inspecting Repositories[/bold blue]", border_style="blue"))
 
     if platform.system() == "Windows":
-        program = get_wt_cmd(wd1=Path(repo_local_root), wd2=Path(repo_local_root))
+        program = get_windows_inspect_cmd(wd1=Path(repo_local_root), wd2=Path(repo_remote_root))
     elif platform.system() in ["Linux", "Darwin"]:
         program = get_tmux_cmd(wd1=Path(repo_local_root), wd2=Path(repo_remote_root))
     else:

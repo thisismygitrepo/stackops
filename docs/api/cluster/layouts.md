@@ -125,20 +125,17 @@ Supported `breaking_method` values:
 
 ## Backend-specific layout generators
 
-The same `LayoutConfig` can be handed to multiple backends:
+The same `LayoutConfig` can be handed to the tmux backend:
 
 - `run_tmux_layout(layout_config, on_conflict)` using `exit_mode="backToShell"`
-- `run_wt_layout(layout_config, exit_mode)`
 
-Their generator classes are:
+The generator class is:
 
 - `TmuxLayoutGenerator`
-- `WTLayoutGenerator`
 
-Those classes are responsible for rendering backend-specific layout artifacts:
+That class is responsible for rendering backend-specific layout artifacts:
 
 - tmux shell scripts
-- Windows Terminal PowerShell scripts
 
 ---
 
@@ -247,30 +244,6 @@ Those classes are responsible for rendering backend-specific layout artifacts:
 ## tmux status helpers
 
 ::: stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal layout helpers
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_local
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal layout generator
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.layout_generator
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Windows Terminal helpers
-
-::: stackops.cluster.sessions_managers.windows_terminal.wt_utils.wt_helpers
     options:
       show_root_heading: true
       show_source: false

@@ -24,7 +24,6 @@ graph TB
     A[LayoutConfig / TabConfig] --> B[maker.py / load_balancer.py]
     B --> C[Local session managers]
     C --> D[tmux]
-    C --> F[Windows Terminal]
 
     G[RemoteStackOpsConfig] --> H[RemoteMachine]
     H --> I[JobParams]
