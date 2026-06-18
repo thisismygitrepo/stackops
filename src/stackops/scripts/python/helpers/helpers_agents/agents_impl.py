@@ -3,7 +3,6 @@
 import sys
 from math import isfinite
 from pathlib import Path
-from time import perf_counter
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
@@ -448,13 +447,10 @@ def init_config(
     """Initialize AI configurations in the current repository."""
     from stackops.scripts.python.ai.initai import add_ai_configs
 
-    started_at = perf_counter()
-    print("[init-config] Starting configuration")
     if root is None:
         repo_root = Path.cwd()
     else:
         repo_root = Path(root).expanduser().resolve()
-    print(f"[init-config] Repository root input: {repo_root}")
     from typing import get_args
 
     if len(frameworks) > 0:
@@ -464,12 +460,9 @@ def init_config(
                 raise ValueError(f"Unsupported framework: {framework}. The supported frameworks are: {', '.join(get_args(AGENTS))}")
             selected_frameworks_list.append(framework)
         selected_frameworks: tuple[AGENTS, ...] = tuple(dict.fromkeys(selected_frameworks_list))
-        print(f"[init-config] Selected frameworks: {', '.join(selected_frameworks)}")
     else:
         raise ValueError("Provide at least one --framework option, or pass --all-frameworks")
 
-    before_add_configs = perf_counter()
-    print("[init-config] Running add_ai_configs")
     add_ai_configs(
         repo_root=repo_root,
         frameworks=selected_frameworks,
@@ -479,10 +472,6 @@ def init_config(
         add_private_config=add_config,
         add_instructions=add_instructions,
     )
-    add_configs_elapsed = perf_counter() - before_add_configs
-    total_elapsed = perf_counter() - started_at
-    print(f"[init-config] add_ai_configs finished in {add_configs_elapsed:.3f}s")
-    print(f"[init-config] Completed in {total_elapsed:.3f}s")
 
 
 # def main() -> None:

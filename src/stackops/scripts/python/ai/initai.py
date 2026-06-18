@@ -1,94 +1,51 @@
-from pathlib import Path
 from collections.abc import Sequence
+from os import walk
+from pathlib import Path
 from time import perf_counter
+from typing import Final, get_args
 
 import stackops.scripts.python.ai.scripts.paths as ai_script_paths
+from stackops.scripts.python.ai.initai_frameworks import build_framework_config
+from stackops.scripts.python.ai.initai_models import ArtifactChange, FileState, InitConfigPlan, InitConfigResult
+from stackops.scripts.python.ai.initai_rich_output import create_phase_status, show_init_config_plan, show_init_config_result, show_phase_complete
 from stackops.scripts.python.ai.utils import generic
-from stackops.scripts.python.ai.solutions.antigravity import antigravity
-from stackops.scripts.python.ai.solutions.claude import claude
-from stackops.scripts.python.ai.solutions.cline import cline
-from stackops.scripts.python.ai.solutions.copilot import github_copilot
-from stackops.scripts.python.ai.solutions.crush import crush
-from stackops.scripts.python.ai.solutions.cursor import cursors
-from stackops.scripts.python.ai.solutions.forge import forge
-from stackops.scripts.python.ai.solutions.qwen_code import qwen_code
-from stackops.scripts.python.ai.solutions.codex import codex
-from stackops.scripts.python.ai.solutions.q import amazon_q
-from stackops.scripts.python.ai.solutions.opencode import opencode
-from stackops.scripts.python.ai.solutions.kilocode import kilocode
-from stackops.scripts.python.ai.solutions.auggie import auggie
-from stackops.scripts.python.ai.solutions.oz import oz
-from stackops.scripts.python.ai.solutions.droid import droid
-from stackops.scripts.python.ai.solutions.pi import pi
-from stackops.scripts.python.ai.utils.vscode_tasks import (
-    add_lint_and_type_check_task,
-)
-from stackops.utils.schemas.fire_agents.fire_agents_types import (
-    AGENTS,
-)
+from stackops.scripts.python.ai.utils.vscode_tasks import add_lint_and_type_check_task
 from stackops.utils.accessories import get_repo_root
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+
+_SNAPSHOT_EXCLUDED_DIRECTORY_NAMES: Final[frozenset[str]] = frozenset(
+    {".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".tox", ".venv", "__pycache__", "node_modules"}
+)
 
 
-def _snapshot_repo_files(repo_root: Path) -> dict[Path, tuple[int, int]]:
-    files_state: dict[Path, tuple[int, int]] = {}
-    for path in repo_root.rglob("*"):
-        if path.is_file() is False:
-            continue
-        if ".git" in path.parts:
-            continue
-        file_stat = path.stat()
-        files_state[path.relative_to(repo_root)] = (file_stat.st_mtime_ns, file_stat.st_size)
+def _snapshot_repo_files(repo_root: Path) -> dict[Path, FileState]:
+    files_state: dict[Path, FileState] = {}
+    for current_root, directory_names, file_names in walk(repo_root):
+        directory_names[:] = [directory_name for directory_name in directory_names if directory_name not in _SNAPSHOT_EXCLUDED_DIRECTORY_NAMES]
+        current_root_path = Path(current_root)
+        for file_name in file_names:
+            path = current_root_path / file_name
+            file_stat = path.lstat()
+            files_state[path.relative_to(repo_root)] = (file_stat.st_mtime_ns, file_stat.st_size)
     return files_state
 
 
-def _collect_touched_files(before: dict[Path, tuple[int, int]], after: dict[Path, tuple[int, int]]) -> list[str]:
-    touched_files: list[str] = []
-    for path, after_state in after.items():
+def _collect_artifact_changes(*, before: dict[Path, FileState], after: dict[Path, FileState]) -> tuple[ArtifactChange, ...]:
+    changes: list[ArtifactChange] = []
+    for path in sorted(before.keys() | after.keys()):
         before_state = before.get(path)
-        if before_state is None or before_state != after_state:
-            relative_path = path.as_posix()
-            if relative_path != ".gitignore":
-                touched_files.append(relative_path)
-    touched_files.sort()
-    return touched_files
+        after_state = after.get(path)
+        if before_state is None:
+            changes.append(ArtifactChange(path=path, action="created"))
+        elif after_state is None:
+            changes.append(ArtifactChange(path=path, action="removed"))
+        elif before_state != after_state:
+            changes.append(ArtifactChange(path=path, action="written"))
+    return tuple(changes)
 
 
-def _build_framework_config(repo_root: Path, framework: AGENTS, add_private_config: bool, add_instructions: bool) -> None:
-    match framework:
-        case "agy":
-            antigravity.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "copilot":
-            github_copilot.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "cursor-agent":
-            cursors.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "claude":
-            claude.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "crush":
-            crush.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "cline":
-            cline.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "qwen":
-            qwen_code.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "codex":
-            codex.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "forge":
-            forge.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "q":
-            amazon_q.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "opencode":
-            opencode.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "kilocode":
-            kilocode.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "auggie":
-            auggie.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "oz":
-            oz.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "droid":
-            droid.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case "pi":
-            pi.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
-        case _:
-            raise ValueError(f"Unsupported agent configuration target: {framework}")
+def _collect_gitignore_entries(*, changes: tuple[ArtifactChange, ...]) -> tuple[str, ...]:
+    return tuple(change.path.as_posix() for change in changes if change.action != "removed" and change.path != Path(".gitignore"))
 
 
 def add_ai_configs(
@@ -99,90 +56,85 @@ def add_ai_configs(
     add_vscode_task: bool,
     add_private_config: bool,
     add_instructions: bool,
-) -> None:
+) -> InitConfigResult:
     if len(frameworks) == 0:
         raise ValueError("At least one framework must be provided")
 
     started_at = perf_counter()
-    print(
-        f"[init-config] add_ai_configs:start frameworks={','.join(frameworks)} include_common={include_common_scaffold} add_gitignore={add_all_touched_configs_to_gitignore} add_lint_task={add_vscode_task} add_private_config={add_private_config} add_instructions={add_instructions}"
-    )
-
     repo_root_resolved = get_repo_root(repo_root)
     if repo_root_resolved is not None:
-        repo_root = repo_root_resolved  # this means you can run the command from any subdirectory of the repo.
-    print(f"[init-config] repository root resolved: {repo_root}")
-
-    should_track_touched_files = add_all_touched_configs_to_gitignore
-    files_before_configuration: dict[Path, tuple[int, int]] = {}
-    if should_track_touched_files:
-        phase_started = perf_counter()
-        files_before_configuration = _snapshot_repo_files(repo_root=repo_root)
-        snapshot_before_elapsed = perf_counter() - phase_started
-        total_elapsed_after_snapshot_before = perf_counter() - started_at
-        print(f"[init-config] snapshot before done in {snapshot_before_elapsed:.3f}s (total {total_elapsed_after_snapshot_before:.3f}s)")
-    else:
-        total_elapsed_without_snapshot = perf_counter() - started_at
-        print(f"[init-config] snapshot before skipped (total {total_elapsed_without_snapshot:.3f}s)")
-
-    if include_common_scaffold:
-        phase_started = perf_counter()
-        print("[init-config] creating common scaffold")
-        dot_ai_dir = repo_root.joinpath(".ai")
-        dot_ai_dir.mkdir(parents=True, exist_ok=True)
-        scripts_dir = repo_root.joinpath(
-            ai_script_paths.TYPE_CHECKING_SCRIPTS_DIRECTORY.parent
-        )
-        scripts_dir.mkdir(parents=True, exist_ok=True)
-        generic.create_dot_scripts(repo_root=repo_root)
-        common_scaffold_elapsed = perf_counter() - phase_started
-        total_elapsed_after_common_scaffold = perf_counter() - started_at
-        print(f"[init-config] common scaffold done in {common_scaffold_elapsed:.3f}s (total {total_elapsed_after_common_scaffold:.3f}s)")
-
-    if add_vscode_task:
-        phase_started = perf_counter()
-        print("[init-config] adding VS Code lint/type-check task")
-        add_lint_and_type_check_task(repo_root=repo_root)
-        vscode_task_elapsed = perf_counter() - phase_started
-        total_elapsed_after_vscode_task = perf_counter() - started_at
-        print(f"[init-config] VS Code task update done in {vscode_task_elapsed:.3f}s (total {total_elapsed_after_vscode_task:.3f}s)")
-
+        repo_root = repo_root_resolved
+    repo_root = repo_root.resolve()
+    supported_frameworks = get_args(AGENTS)
     selected_frameworks: tuple[AGENTS, ...] = tuple(dict.fromkeys(frameworks))
     for framework in selected_frameworks:
-        framework_started = perf_counter()
-        print(f"[init-config] framework start: {framework}")
-        _build_framework_config(repo_root=repo_root, framework=framework, add_private_config=add_private_config, add_instructions=add_instructions)
-        framework_elapsed = perf_counter() - framework_started
-        framework_total_elapsed = perf_counter() - started_at
-        print(f"[init-config] framework done: {framework} in {framework_elapsed:.3f}s (total {framework_total_elapsed:.3f}s)")
+        if framework not in supported_frameworks:
+            raise ValueError(f"Unsupported framework: {framework}. The supported frameworks are: {', '.join(supported_frameworks)}")
 
-    touched_config_files: list[str] = []
-    if should_track_touched_files:
+    plan = InitConfigPlan(
+        repo_root=repo_root,
+        frameworks=selected_frameworks,
+        include_common_scaffold=include_common_scaffold,
+        add_all_touched_configs_to_gitignore=add_all_touched_configs_to_gitignore,
+        add_vscode_task=add_vscode_task,
+        add_private_config=add_private_config,
+        add_instructions=add_instructions,
+    )
+    show_init_config_plan(plan=plan)
+
+    with create_phase_status(label="Scanning current repository state", destination=str(repo_root)):
+        phase_started = perf_counter()
+        files_before_configuration = _snapshot_repo_files(repo_root=repo_root)
+    show_phase_complete(label="Scanned current repository state", destination=str(repo_root), elapsed_seconds=perf_counter() - phase_started)
+
+    if include_common_scaffold:
+        destination = f"./{ai_script_paths.TYPE_CHECKING_SCRIPTS_DIRECTORY.as_posix()}"
+        with create_phase_status(label="Installing shared validation scripts", destination=destination):
+            phase_started = perf_counter()
+            repo_root.joinpath(".ai").mkdir(parents=True, exist_ok=True)
+            repo_root.joinpath(ai_script_paths.TYPE_CHECKING_SCRIPTS_DIRECTORY.parent).mkdir(parents=True, exist_ok=True)
+            generic.create_dot_scripts(repo_root=repo_root)
+        show_phase_complete(label="Installed shared validation scripts", destination=destination, elapsed_seconds=perf_counter() - phase_started)
+
+    if add_vscode_task:
+        destination = "./.vscode/tasks.json"
+        with create_phase_status(label="Updating VS Code validation task", destination=destination):
+            phase_started = perf_counter()
+            add_lint_and_type_check_task(repo_root=repo_root)
+        show_phase_complete(label="Updated VS Code validation task", destination=destination, elapsed_seconds=perf_counter() - phase_started)
+
+    for framework in selected_frameworks:
+        with create_phase_status(label=f"Configuring {framework}", destination="agent-specific repository files"):
+            phase_started = perf_counter()
+            build_framework_config(repo_root=repo_root, framework=framework, add_private_config=add_private_config, add_instructions=add_instructions)
+        show_phase_complete(
+            label=f"Configured {framework}", destination="agent-specific repository files", elapsed_seconds=perf_counter() - phase_started
+        )
+
+    with create_phase_status(label="Measuring filesystem changes", destination=str(repo_root)):
         phase_started = perf_counter()
         files_after_configuration = _snapshot_repo_files(repo_root=repo_root)
-        snapshot_after_elapsed = perf_counter() - phase_started
-        total_elapsed_after_snapshot_after = perf_counter() - started_at
-        print(f"[init-config] snapshot after done in {snapshot_after_elapsed:.3f}s (total {total_elapsed_after_snapshot_after:.3f}s)")
+        configuration_changes = _collect_artifact_changes(before=files_before_configuration, after=files_after_configuration)
+    show_phase_complete(label="Measured filesystem changes", destination=str(repo_root), elapsed_seconds=perf_counter() - phase_started)
 
-        phase_started = perf_counter()
-        touched_config_files = _collect_touched_files(before=files_before_configuration, after=files_after_configuration)
-        touched_files_elapsed = perf_counter() - phase_started
-        total_elapsed_after_touched = perf_counter() - started_at
-        print(f"[init-config] touched files collected in {touched_files_elapsed:.3f}s (total {total_elapsed_after_touched:.3f}s, files={len(touched_config_files)})")
-    else:
-        total_elapsed_without_snapshot_after = perf_counter() - started_at
-        print(f"[init-config] snapshot after skipped (total {total_elapsed_without_snapshot_after:.3f}s)")
+    if add_all_touched_configs_to_gitignore:
+        destination = "./.gitignore"
+        with create_phase_status(label="Recording generated config paths", destination=destination):
+            phase_started = perf_counter()
+            dot_git_ignore_path = repo_root.joinpath(".gitignore")
+            if dot_git_ignore_path.exists() is False:
+                dot_git_ignore_path.touch()
+            generic.adjust_gitignore(
+                repo_root=repo_root, include_default_entries=False, extra_entries=_collect_gitignore_entries(changes=configuration_changes)
+            )
+            gitignore_stat = dot_git_ignore_path.stat()
+            files_after_configuration[Path(".gitignore")] = (gitignore_stat.st_mtime_ns, gitignore_stat.st_size)
+        show_phase_complete(label="Recorded generated config paths", destination=destination, elapsed_seconds=perf_counter() - phase_started)
 
-    if should_track_touched_files:
-        phase_started = perf_counter()
-        print("[init-config] updating .gitignore entries")
-        dot_git_ignore_path = repo_root.joinpath(".gitignore")
-        if dot_git_ignore_path.exists() is False:
-            dot_git_ignore_path.touch()
-        generic.adjust_gitignore(repo_root=repo_root, include_default_entries=False, extra_entries=touched_config_files)
-        gitignore_elapsed = perf_counter() - phase_started
-        total_elapsed_after_gitignore = perf_counter() - started_at
-        print(f"[init-config] .gitignore update done in {gitignore_elapsed:.3f}s (total {total_elapsed_after_gitignore:.3f}s)")
-
-    total_elapsed = perf_counter() - started_at
-    print(f"[init-config] add_ai_configs:complete total={total_elapsed:.3f}s")
+    result = InitConfigResult(
+        plan=plan,
+        artifact_changes=_collect_artifact_changes(before=files_before_configuration, after=files_after_configuration),
+        elapsed_seconds=perf_counter() - started_at,
+    )
+    show_init_config_result(result=result)
+    return result
