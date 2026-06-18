@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from typer.testing import CliRunner
 
@@ -76,3 +78,15 @@ def test_run_prompt_accepts_option_looking_prompt_after_delimiter(monkeypatch: p
 
     assert result.exit_code == 0, result.output
     assert captured_prompts == ["review --flag-like -x"]
+
+
+def test_add_config_reports_plan_phases_and_files(tmp_path: Path) -> None:
+    result = CliRunner().invoke(agents.get_app(), ["add-config", "--agent", "codex", "--root", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert "Agent configuration plan" in result.output
+    assert "Configured codex" in result.output
+    assert "Configuration complete" in result.output
+    assert "Filesystem changes (2)" in result.output
+    assert "./.codex/config.toml" in result.output
+    assert "./AGENTS.md" in result.output
