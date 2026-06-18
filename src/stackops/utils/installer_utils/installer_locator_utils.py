@@ -167,6 +167,15 @@ def _select_best_linux_match(*, files: list[Path], search_variants: tuple[str, .
     )[0]
 
 
+def _cleanup_installer_temp_path(path: Path) -> bool:
+    try:
+        delete_path(path, verbose=True)
+        return True
+    except OSError as error:
+        print(f"⚠️  Temporary cleanup failed for {path}: {error}")
+        return False
+
+
 def find_move_delete_windows(downloaded_file_path: Path, tool_name: str | None, delete: bool, rename_to: str | None):
     # print("🔍 PROCESSING WINDOWS EXECUTABLE 🔍")
     # if exe_name is not None and len(exe_name.split("+")) > 1:
@@ -210,8 +219,8 @@ def find_move_delete_windows(downloaded_file_path: Path, tool_name: str | None, 
 
     if delete:
         print("🗑️  Cleaning up temporary files...")
-        delete_path(downloaded_file_path, verbose=True)
-        print("✅ Temporary files removed")
+        if _cleanup_installer_temp_path(downloaded_file_path):
+            print("✅ Temporary files removed")
 
     print(f"{'=' * 80}")
     return exe_new_location
@@ -288,8 +297,8 @@ def find_move_delete_linux(downloaded: Path, tool_name: str | None, delete: bool
 
     if delete:
         print("🗑️  Cleaning up temporary files...")
-        delete_path(downloaded, verbose=True)
-        print("✅ Temporary files removed")
+        if _cleanup_installer_temp_path(downloaded):
+            print("✅ Temporary files removed")
 
     exe_new_location = Path(LINUX_INSTALL_PATH).joinpath(exe.name)
     print(f"✅ Executable installed at: {exe_new_location}")
