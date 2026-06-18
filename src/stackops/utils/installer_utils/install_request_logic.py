@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from collections.abc import Mapping
+import platform
+import shlex
 from typing import Callable, Literal
 
 from stackops.utils.schemas.installer.installer_types import InstallRequest
@@ -6,6 +9,26 @@ from stackops.utils.schemas.installer.installer_types import InstallRequest
 
 INSTALLER_KIND = Literal["binary_url", "cmd_raw", "github_release", "package_manager", "script"]
 PACKAGE_MANAGERS: tuple[str, ...] = ("bun", "npm", "pip", "uv", "winget", "powershell", "irm", "brew", "curl", "sudo", "cargo")
+APT_FAMILY_PACKAGE_MANAGERS: frozenset[str] = frozenset({"apt", "apt-get", "nala"})
+APT_FAMILY_LINUX_IDS: frozenset[str] = frozenset(
+    {
+        "debian",
+        "ubuntu",
+        "linuxmint",
+        "pop",
+        "elementary",
+        "zorin",
+        "neon",
+        "raspbian",
+        "kali",
+        "parrot",
+        "mx",
+        "devuan",
+        "deepin",
+        "peppermint",
+        "tuxedo",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,3 +124,67 @@ def _add_uv_upgrade(installer_value: str) -> str:
     if "--upgrade" in parts:
         return installer_value
     return f"{installer_value.strip()} --upgrade"
+
+
+def get_unsupported_apt_family_command_reason(installer_value: str) -> str | None:
+    if not _starts_with_sudo_apt_family_command(installer_value):
+        return None
+    if is_apt_family_linux():
+        return None
+    command_display = _first_shell_command_display(installer_value)
+    return (
+        f"apt/nala installer skipped: `{command_display}` is only supported on Debian/Ubuntu-style Linux; "
+        f"detected {_describe_current_os()}."
+    )
+
+
+def is_apt_family_linux(os_release: Mapping[str, str] | None = None) -> bool:
+    if os_release is None:
+        if platform.system() != "Linux":
+            return False
+        release_info = _read_linux_os_release()
+    else:
+        release_info = os_release
+    release_ids = _linux_os_release_ids(release_info)
+    return len(release_ids & APT_FAMILY_LINUX_IDS) > 0
+
+
+def _starts_with_sudo_apt_family_command(installer_value: str) -> bool:
+    try:
+        command_parts = shlex.split(_first_shell_command_display(installer_value))
+    except ValueError:
+        command_parts = installer_value.strip().split()
+    return len(command_parts) >= 2 and command_parts[0] == "sudo" and command_parts[1] in APT_FAMILY_PACKAGE_MANAGERS
+
+
+def _first_shell_command_display(installer_value: str) -> str:
+    return installer_value.strip().split(";", maxsplit=1)[0].strip()
+
+
+def _read_linux_os_release() -> Mapping[str, str]:
+    try:
+        return platform.freedesktop_os_release()
+    except OSError:
+        return {}
+
+
+def _linux_os_release_ids(os_release: Mapping[str, str]) -> frozenset[str]:
+    release_ids: set[str] = set()
+    for key in ("ID", "ID_LIKE"):
+        raw_value = os_release.get(key, "")
+        for token in raw_value.replace(",", " ").split():
+            normalized_token = token.strip().lower()
+            if normalized_token != "":
+                release_ids.add(normalized_token)
+    return frozenset(release_ids)
+
+
+def _describe_current_os() -> str:
+    system_name = platform.system()
+    if system_name != "Linux":
+        return system_name
+    release_info = _read_linux_os_release()
+    release_ids = _linux_os_release_ids(release_info)
+    if len(release_ids) == 0:
+        return "unknown Linux distribution"
+    return "Linux distribution " + "/".join(sorted(release_ids))

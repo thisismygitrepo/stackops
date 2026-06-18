@@ -1,6 +1,7 @@
 import stackops.utils.path_core as path_core
 from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_deb_package, install_msi_package
 from stackops.utils.installer_utils.install_request_logic import (
+    get_unsupported_apt_family_command_reason,
     InstallTarget,
     build_install_target,
     resolve_installer_value,
@@ -44,6 +45,12 @@ ALIASED_EXE_NAMES: dict[str, str] = {
     "powershellgithub": "pwsh",
     "superfile": "spf",
 }
+
+
+class InstallerSkippedGracefully(Exception):
+    def __init__(self, detail: str):
+        super().__init__(detail)
+        self.detail = detail
 
 
 class Installer:
@@ -92,13 +99,13 @@ class Installer:
             print(f"⚠️ WARNING: {warning}")
         return install_target, install_request_resolution.install_request
 
-    def _build_skipped_result(self, exe_name: str) -> InstallationResultSkipped:
+    def _build_skipped_result(self, exe_name: str, detail: str = "already installed, skipped") -> InstallationResultSkipped:
         return InstallationResultSkipped(
             kind="skipped",
             appName=self.installer_data["appName"],
             exeName=exe_name,
             emoji="⏭️",
-            detail="already installed, skipped",
+            detail=detail,
         )
 
     def _build_same_version_result(self, exe_name: str, version: str) -> InstallationResultSameVersion:
@@ -140,7 +147,10 @@ class Installer:
 
     def install_requested(self, install_request: InstallRequest) -> None:
         install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
-        self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
+        try:
+            self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
+        except InstallerSkippedGracefully:
+            return
 
     def install_robust(self, install_request: InstallRequest) -> InstallationResult:
         try:
@@ -155,17 +165,23 @@ class Installer:
             if old_version_cli == new_version_cli:
                 return self._build_same_version_result(exe_name=exe_name, version=old_version_cli)
             return self._build_updated_result(exe_name=exe_name, old_version=old_version_cli, new_version=new_version_cli)
+        except InstallerSkippedGracefully as skipped:
+            exe_name = self._get_exe_name()
+            return self._build_skipped_result(exe_name=exe_name, detail=skipped.detail)
         except Exception as ex:
             exe_name = self._get_exe_name()
             print(f"❌ ERROR: Installation failed for {exe_name}: {ex}")
             return self._build_failed_result(exe_name=exe_name, error=str(ex))
 
     def install(self, version: str | None) -> None:
-        self._install_from_value(
-            installer_arch_os=self._get_installer_value(),
-            version=version,
-            update=False,
-        )
+        try:
+            self._install_from_value(
+                installer_arch_os=self._get_installer_value(),
+                version=version,
+                update=False,
+            )
+        except InstallerSkippedGracefully:
+            return
 
     def _install_from_value(
         self,
@@ -186,6 +202,10 @@ class Installer:
                 from rich import print as rprint
                 from rich.panel import Panel
                 from rich.console import Group
+                unsupported_apt_reason = get_unsupported_apt_family_command_reason(installer_arch_os)
+                if unsupported_apt_reason is not None:
+                    print(f"⏭️ {unsupported_apt_reason}")
+                    raise InstallerSkippedGracefully(unsupported_apt_reason)
                 package_manager = installer_arch_os.split(" ", maxsplit=1)[0]
                 print(f"📦 Using package manager: {installer_arch_os}")
                 desc = package_manager + " installation"
