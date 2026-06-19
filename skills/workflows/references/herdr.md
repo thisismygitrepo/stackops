@@ -19,6 +19,7 @@ herdr pane list --workspace '<workspace_id>'
 herdr pane read '<pane_id>' --source recent --lines 200
 herdr pane run '<pane_id>' '<command>'
 herdr pane send-text '<pane_id>' '<text>'
+herdr pane send-keys '<pane_id>' Enter
 herdr pane report-agent '<pane_id>' --source '<workflow-source>' --agent '<label>' --state '<idle|working|blocked|unknown>' --message '<short note>'
 herdr pane report-agent-session '<pane_id>' --source '<workflow-source>' --agent '<label>' --agent-session-id '<id>' --agent-session-path '<path>'
 herdr pane report-metadata '<pane_id>' --source '<workflow-source>' --agent '<label>' --title '<short title>' --custom-status '<short status>'
@@ -32,7 +33,15 @@ Use `herdr agent start` to create registered agent targets whenever possible, th
 
 Use `herdr pane report-agent`, `herdr pane report-agent-session`, and `herdr pane report-metadata` only for state or metadata Herdr cannot infer from the agent process.
 
-Use `herdr pane run` when the controller needs to run a shell command inside a managed pane because that keeps the command visible in Herdr scrollback. Use `herdr agent send` for agent instructions when a unique agent target exists.
+Use `herdr pane run` when the controller needs to run a shell command inside a managed pane because that keeps the command visible in Herdr scrollback. Use `herdr agent send` or `herdr pane send-text` for agent instructions, but treat them as text insertion only unless the installed `herdr` help explicitly says the selected command submits the prompt.
+
+For interactive agent prompts, submit deliberately:
+
+1. Wait until the target CLI is initialized and ready for input.
+2. Send the instruction text with `herdr agent send <target> <text>` when a unique agent target exists, or `herdr pane send-text <pane_id> <text>` when working directly with a pane.
+3. Resolve the target pane id from `herdr agent get`, `herdr agent explain --json`, or `herdr pane list`, then send `herdr pane send-keys <pane_id> Enter`.
+4. Refresh status and recent output. Do not count the prompt as submitted until Herdr shows `working` or recent output clearly shows the agent accepted the prompt and began responding.
+5. If the prompt text is visible but still unsubmitted, send one more explicit `Enter`, verify again, and report failure instead of claiming success if acceptance still cannot be confirmed.
 
 ## Local Records
 

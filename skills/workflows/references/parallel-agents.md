@@ -101,7 +101,7 @@ After creating the session or agent target, wait for the CLI to initialize and v
 
 If `herdr` reports tab/window or pane metadata, verify the default case has one agent per Herdr tab and exactly one pane in that tab. Report a short role/title through `herdr pane report-metadata` when useful.
 
-Send messages through the documented `herdr` interface; current Herdr exposes `herdr agent send <target> <text>` and `herdr pane send-text <pane_id> <text>`. Prefer `herdr agent send` when a unique agent target exists.
+Send messages through the documented `herdr` interface; current Herdr exposes `herdr agent send <target> <text>` and `herdr pane send-text <pane_id> <text>`. Prefer `herdr agent send` when a unique agent target exists, but treat send commands as text insertion unless installed help explicitly says otherwise. For interactive agent instructions, follow the shared prompt submission protocol: send the text, send `herdr pane send-keys <pane_id> Enter`, and verify the agent accepted the prompt before reporting it as delegated.
 
 Use `.ai/tmp_scripts` or another ignored project-local temporary directory for message files. Do not place temporary prompts outside the current project unless there is no ignored project-local option.
 

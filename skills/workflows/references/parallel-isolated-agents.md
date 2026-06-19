@@ -54,7 +54,7 @@ wt -C '<repo-root>' switch --create '<agent-branch>' --base=@ --format json --no
 
 7. Start one agent per worktree through `herdr`. If `herdr workspace create`, `herdr tab create`, and `herdr agent start` exist, create one workspace for the parallel-isolated-agents run, create one tab per agent with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`, then launch the agent with `herdr agent start <agent-name> --cwd <worktree> --workspace <workspace_id> --tab <tab_id> --no-focus -- <agent argv...>`.
 8. If workspaces are unavailable but tabs exist, create one tab per agent and verify each tab has exactly one pane. Otherwise use one named `herdr` session per agent. Use panes only when the user explicitly asked for a pane-based layout; in that case, create one tab/window, split it into roughly equal panes, and launch exactly one agent per pane.
-9. Send each agent a complete, standalone instruction describing its assigned hypothesis, file area, or change strategy.
+9. Send each agent a complete, standalone instruction describing its assigned hypothesis, file area, or change strategy. For interactive agents, follow the shared Herdr prompt submission protocol: send the text, send an explicit `Enter` key to the target pane, and verify the agent accepted it.
 10. Index every worktree and Herdr session/agent/workspace/tab/pane identifier in `.ai/workflows/parallel-agents/contracts/agents.json`; leave status, recent output, command history, and routine timestamps in Herdr.
 11. Report the run id, agent count, branch names, `wt` worktree paths, Herdr target names and IDs, and visible `herdr` statuses to the user.
 
