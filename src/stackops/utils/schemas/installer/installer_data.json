@@ -982,6 +982,27 @@
       }
     },
     {
+      "appName": "diffnav",
+      "license": "MIT license",
+      "repoURL": "https://github.com/dlvhdr/diffnav",
+      "doc": "🧭 A git diff pager based on delta with a file tree.",
+      "categoryLabels": [
+        "version-control"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "diffnav_Linux_x86_64.tar.gz",
+          "darwin": "diffnav_Darwin_x86_64.tar.gz",
+          "windows": "diffnav_Windows_x86_64.zip"
+        },
+        "arm64": {
+          "linux": "diffnav_Linux_arm64.tar.gz",
+          "darwin": "diffnav_Darwin_arm64.tar.gz",
+          "windows": "diffnav_Windows_arm64.zip"
+        }
+      }
+    },
+    {
       "appName": "dua",
       "license": "MIT license",
       "repoURL": "https://github.com/Byron/dua-cli",
