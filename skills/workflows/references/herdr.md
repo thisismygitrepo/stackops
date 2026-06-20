@@ -41,7 +41,7 @@ For interactive agent prompts, submit deliberately:
 2. Send the instruction text with `herdr agent send <target> <text>` when a unique agent target exists, or `herdr pane send-text <pane_id> <text>` when working directly with a pane.
 3. Resolve the target pane id from `herdr agent get`, `herdr agent explain --json`, or `herdr pane list`, then send `herdr pane send-keys <pane_id> Enter`.
 4. Refresh status and recent output. Do not count the prompt as submitted until Herdr shows `working` or recent output clearly shows the agent accepted the prompt and began responding.
-5. If the prompt text is visible but still unsubmitted, send one more explicit `Enter`, verify again, and report failure instead of claiming success if acceptance still cannot be confirmed.
+5. Before stopping, wrapping up, or claiming the spawn/delegation succeeded, verify the new agent is actually working. If the prompt text is visible but still unsubmitted, send one more explicit `Enter`, verify again, and report failure instead of claiming success if acceptance still cannot be confirmed.
 
 ## Local Records
 

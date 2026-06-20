@@ -143,13 +143,13 @@ Your task:
 6. Update this iteration's records under iter-<NNN>/.
 7. Update the root attempt ledger with attempted ideas, outcomes, evidence, and do-not-repeat notes.
 8. If the success criteria are reached, write final results and do not start another agent.
-9. If the success criteria are not reached but credible next ideas remain, write iter-<NNN>/handoff.md, start iter-<NNN+1> in the same Herdr workspace with a tab/window name that includes the next iteration number, submit a complete prompt that includes this protocol and the necessary history, verify the new agent is actually running before wrapping up, then report what you launched.
+9. If the success criteria are not reached but credible next ideas remain, write iter-<NNN>/handoff.md, start iter-<NNN+1> in the same Herdr workspace with a tab/window name that includes the next iteration number, submit a complete prompt that includes this protocol and the necessary history, verify the new agent is actually running before stopping or wrapping up, then report what you launched.
 10. If you are blocked or have no credible next ideas, write final results and do not start another agent.
 
 Do not assume access to the original conversation. Use Herdr for agent coordination and the iteration records for durable context.
 ```
 
-When starting the next iteration, do not treat a created tab, a visible CLI prompt, or text pasted into an input line as a completed handoff. Send the prompt text, send an explicit `Enter` key to the target pane, then confirm through Herdr status and recent output that `iter-<NNN+1>` accepted the prompt and began working. If the text is present but unsubmitted, send one more explicit `Enter` and verify again. Only finish after the new agent is visibly running. If this cannot be confirmed, write the failure and prepared prompt into the records instead of claiming the next iteration was launched.
+When starting the next iteration, do not treat a created tab, a visible CLI prompt, or text pasted into an input line as a completed handoff. Send the prompt text, send an explicit `Enter` key to the target pane, then confirm through Herdr status and recent output that `iter-<NNN+1>` accepted the prompt and began working. If the text is present but unsubmitted, send one more explicit `Enter` and verify again. Only stop or finish after the new agent is visibly running. If this cannot be confirmed, write the failure and prepared prompt into the records instead of claiming the next iteration was launched.
 
 ## Handoff Requirements
 

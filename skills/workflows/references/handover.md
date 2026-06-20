@@ -22,7 +22,7 @@ The handover must start a normal interactive agent through `herdr`, not an inter
    - unresolved errors, blockers, and next steps
 4. Write a concise handover note that is actionable for the next agent.
 5. Launch the selected agent CLI through a new named `herdr` session and, when supported, its own Herdr tab with exactly one pane. When using `herdr agent start`, target a fresh tab with `--tab <tab_id>` or a workspace with `--workspace <workspace_id>` and do not pass `--split` unless the user requested panes.
-6. Submit the handover note to the new agent with the shared Herdr prompt submission protocol: send the text, send an explicit `Enter` key to the target pane, and verify the agent accepted it.
+6. Submit the handover note to the new agent with the shared Herdr prompt submission protocol: send the text, send an explicit `Enter` key to the target pane, and verify the agent accepted it before stopping or reporting the handover as done.
 7. Tell the user the new `herdr` session name, visible status, and whether the note was confirmed submitted.
 
 ## Handover Note Format
@@ -82,7 +82,7 @@ Prefer storing the handover note in a temporary location that is already ignored
 
 If `herdr` supports direct handoff submission through `herdr update --handoff`, use that path only when the installed help or observed behavior shows it submits to the target agent. If the installed help indicates a different direct message mechanism, use the documented `herdr` mechanism.
 
-Do not count the handover as complete just because the note text was sent or appears in the target terminal. `herdr agent send` and `herdr pane send-text` can leave literal text in the agent input buffer. Resolve the target pane id, send `herdr pane send-keys <pane_id> Enter`, then refresh Herdr status and recent output. If the note remains unsubmitted, send one additional `Enter` and verify again. Only report the note as submitted when Herdr shows the agent working or recent output clearly shows the prompt was accepted.
+Do not count the handover as complete just because the note text was sent or appears in the target terminal. `herdr agent send` and `herdr pane send-text` can leave literal text in the agent input buffer. Resolve the target pane id, send `herdr pane send-keys <pane_id> Enter`, then refresh Herdr status and recent output. If the note remains unsubmitted, send one additional `Enter` and verify again. Before stopping or wrapping up, confirm Herdr shows the agent working or recent output clearly shows the prompt was accepted.
 
 ## Failure Handling
 
