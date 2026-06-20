@@ -223,7 +223,7 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "ImageMagick-9fbd2b7-gcc-x86_64.AppImage",
+          "linux": "ImageMagick-{version}-gcc-x86_64.AppImage",
           "windows": "ImageMagick-{version}-portable-Q16-x64.7z",
           "darwin": "brew install imagemagick"
         },
@@ -329,12 +329,12 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "btop-x86_64-unknown-linux-musl.tbz",
+          "linux": "btop-x86_64-unknown-linux-musl.tar.gz",
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": "btop-aarch64-unknown-linux-musl.tbz",
+          "linux": "btop-aarch64-unknown-linux-musl.tar.gz",
           "darwin": null,
           "windows": null
         }
@@ -846,7 +846,7 @@
         "arm64": {
           "linux": "bottom_aarch64-unknown-linux-musl.tar.gz",
           "darwin": "bottom_aarch64-apple-darwin.tar.gz",
-          "windows": "bottom_aarch64-pc-windows-msvc.tar.gz"
+          "windows": "bottom_aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -1056,7 +1056,7 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "fastfetch-linux-amd64.tar.gz",
+          "linux": "fastfetch-musl-amd64.tar.gz",
           "darwin": "fastfetch-macos-amd64.tar.gz",
           "windows": "fastfetch-windows-amd64.zip"
         },
@@ -1358,7 +1358,7 @@
         },
         "arm64": {
           "linux": "ouch-aarch64-unknown-linux-musl.tar.gz",
-          "darwin": null,
+          "darwin": "ouch-aarch64-apple-darwin.tar.gz",
           "windows": "ouch-aarch64-pc-windows-msvc.zip"
         }
       }
@@ -2299,7 +2299,7 @@
         "arm64": {
           "linux": "dbgate-{version}-linux_arm64.AppImage",
           "darwin": "dbgate-{version}-mac_arm64.zip",
-          "windows": "dbgate-{version}-win_arm64.exe"
+          "windows": "dbgate-{version}-win_arm64.zip"
         }
       }
     },
@@ -3784,7 +3784,7 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "ExtratermQt-{version}.glibc2.34-x86_64.AppImage",
+          "linux": "ExtratermQt-{version}.glibc2.38-x86_64.AppImage",
           "darwin": "ExtratermQt_{version}.dmg",
           "windows": "extratermqt-setup-{version}.exe"
         },
@@ -4359,7 +4359,7 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "orca_{version}_amd64.deb",
+          "linux": "orca-ide_{version}_amd64.deb",
           "darwin": "Orca-{version}-mac.zip",
           "windows": "orca.py"
         },
@@ -4506,12 +4506,12 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "forge-x86_64-unknown-linux-gnu",
+          "linux": "forge-x86_64-unknown-linux-musl",
           "windows": "forge-x86_64-pc-windows-msvc.exe",
           "darwin": "forge-x86_64-apple-darwin"
         },
         "arm64": {
-          "linux": "forge-aarch64-unknown-linux-gnu",
+          "linux": "forge-aarch64-unknown-linux-musl",
           "windows": "forge-aarch64-pc-windows-msvc.exe",
           "darwin": "forge-aarch64-apple-darwin"
         }

@@ -97,7 +97,7 @@ stackopsMaintinanceUpdateInstaller:
     Use the `$workflows` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to update GitHub release filename patterns in `src/stackops/utils/schemas/installer/installer_data.json`.
-    Split installer entries across agents. Tell agents to edit only entries assigned to them.
+    Split installer entries across agents, with 10 entries per agent. Tell agents to edit only entries assigned to them.
 
     Tell each agent:
     - If `repoURL` is not a GitHub repository, skip that entry.
@@ -168,29 +168,27 @@ stackopsMaintinanceUpdateLogic:
     Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
-updateAgentsConfigs:
+stackopsUpdateAgentsConfig:
   description: Check latest supported agent config docs and update agents add-config outputs.
   prompt: |
     Please update StackOps `agents add-config` support against the latest official docs for every supported agent.
 
-    Start by inspecting the live command and source:
+    Start by inspecting the live command, then discover the relevant implementation, templates, privacy helpers, and tests from the repository:
     - `uv run stackops agents add-config --help`
-    - `src/stackops/scripts/python/agents.py`
-    - `src/stackops/scripts/python/helpers/helpers_agents/agents_impl.py`
-    - `src/stackops/scripts/python/ai/initai.py`
-    - `src/stackops/scripts/python/ai/initai_frameworks.py`
-    - related templates, privacy config helpers, and tests under `tests/mirror/src/stackops/scripts/python/test_agents.py`
+    - Use fast repository search to find the command registration, implementation, generated templates, privacy config helpers, and tests.
+    - Do not assume file locations from this prompt; verify the current source layout before editing.
 
-    Supported `agents add-config --agent` values currently include:
-    `agy`, `cursor-agent`, `claude`, `qwen`, `copilot`, `codex`, `forge`, `crush`, `q`, `opencode`, `kilocode`, `cline`, `auggie`, `oz`, `droid`, `pi`.
+    Determine the supported `agents add-config --agent` values from the live command and current source. Do not rely on this prompt for a hardcoded agent list.
 
     For each supported agent:
     - Look up the latest official documentation for repository config, user config, instruction files, ignore files, privacy/telemetry controls, and any required config file names or locations.
     - Prefer primary sources: official docs, official repos, and current CLI `--help` output.
     - Compare the docs against what StackOps currently writes through `agents add-config`.
     - Update generated config/instruction templates only where current StackOps output is stale, missing, or wrong.
-    - Keep generated defaults conservative: privacy-conscious, minimal, portable, and safe to commit unless the file is intentionally private.
-    - Preserve existing tests where behavior is still correct, and add focused tests for changed output paths or content.
+    - Configure maximum privacy wherever the agent supports it: disable telemetry, analytics, training/data sharing, prompt logging, crash/upload reporting, and remote diagnostics.
+    - Give the local agent maximum execution autonomy wherever the agent supports it: full tool/file/shell powers, no permission prompts, and no approval prompts.
+    - Keep generated defaults minimal, portable, and safe to commit unless the file is intentionally private.
+    - Preserve existing tests where behavior is still correct, and add focused tests for changed generated outputs or content.
     - Do not make cosmetic rewrites unrelated to agent config correctness.
 
     Final response:
