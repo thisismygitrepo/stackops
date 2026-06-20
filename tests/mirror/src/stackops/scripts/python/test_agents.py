@@ -4,11 +4,15 @@ import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python import agents
+from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive import main as interactive_main
+from stackops.scripts.python.helpers.helpers_agents import agents_ask_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
+from stackops.utils.schemas.fire_agents.fire_agents_types import DEFAULT_AGENT
+import stackops.utils.accessories as accessories
 
 
-def _capture_run_prompt(monkeypatch: pytest.MonkeyPatch) -> list[str | None]:
-    captured_prompts: list[str | None] = []
+def _capture_run_prompt(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str | None, object]]:
+    captured_calls: list[tuple[str | None, object]] = []
 
     def fake_run(
         prompt: str | None,
@@ -22,10 +26,10 @@ def _capture_run_prompt(monkeypatch: pytest.MonkeyPatch) -> list[str | None]:
         edit: bool,
         show_prompts_yaml_format: bool,
     ) -> None:
-        captured_prompts.append(prompt)
+        captured_calls.append((prompt, agent))
 
     monkeypatch.setattr(agents_run_impl, "run", fake_run)
-    return captured_prompts
+    return captured_calls
 
 
 def test_apply_headroom_uses_resolved_executable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -63,21 +67,56 @@ def test_apply_headroom_rejects_unsupported_agent(monkeypatch: pytest.MonkeyPatc
 
 
 def test_run_prompt_accepts_unquoted_prompt_parts(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured_prompts = _capture_run_prompt(monkeypatch=monkeypatch)
+    captured_calls = _capture_run_prompt(monkeypatch=monkeypatch)
 
     result = CliRunner().invoke(agents.get_app(), ["run-prompt", "inspect", "this", "repo"])
 
     assert result.exit_code == 0, result.output
-    assert captured_prompts == ["inspect this repo"]
+    assert captured_calls == [("inspect this repo", DEFAULT_AGENT)]
 
 
 def test_run_prompt_accepts_option_looking_prompt_after_delimiter(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured_prompts = _capture_run_prompt(monkeypatch=monkeypatch)
+    captured_calls = _capture_run_prompt(monkeypatch=monkeypatch)
 
     result = CliRunner().invoke(agents.get_app(), ["run-prompt", "--", "review", "--flag-like", "-x"])
 
     assert result.exit_code == 0, result.output
-    assert captured_prompts == ["review --flag-like -x"]
+    assert captured_calls == [("review --flag-like -x", DEFAULT_AGENT)]
+
+
+def test_parallel_create_context_defaults_to_codex(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    captured_calls = _capture_run_prompt(monkeypatch=monkeypatch)
+    monkeypatch.setattr(accessories, "get_repo_root", lambda path: tmp_path)
+
+    result = CliRunner().invoke(agents.get_app(), ["parallel", "create-context", "split this work", "--job-name", "split-job"])
+
+    assert result.exit_code == 0, result.output
+    assert len(captured_calls) == 1
+    prompt, agent = captured_calls[0]
+    assert agent == DEFAULT_AGENT
+    assert prompt is not None
+    assert "split this work" in prompt
+    assert "./.ai/agents/split-job/context.md" in prompt
+
+
+def test_ask_defaults_to_shared_default_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_agents: list[object] = []
+
+    def fake_run_ask(prompt_parts: object, agent: object, reasoning: object, file_prompt: object, quiet: bool) -> int:
+        captured_agents.append(agent)
+        return 0
+
+    monkeypatch.setattr(agents_ask_impl, "run_ask", fake_run_ask)
+
+    result = CliRunner().invoke(agents.get_app(), ["ask", "summarize"])
+
+    assert result.exit_code == 0, result.output
+    assert captured_agents == [DEFAULT_AGENT]
+
+
+def test_interactive_create_defaults_to_codex() -> None:
+    assert interactive_main.main.__kwdefaults__ is not None
+    assert interactive_main.main.__kwdefaults__["agent"] == DEFAULT_AGENT
 
 
 def test_add_config_reports_plan_phases_and_files(tmp_path: Path) -> None:

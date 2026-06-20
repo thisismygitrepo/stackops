@@ -8,7 +8,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
@@ -220,7 +220,7 @@ def run_interactive(
     agent: Annotated[
         INTERACTIVE_AGENT,
         typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, or omp/o."),
-    ] = "codex",
+    ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),
     caveman: Annotated[
         bool,
         typer.Option(..., "--caveman", "-c", help="Start the session with the caveman wenyan-full prompt."),
@@ -253,7 +253,7 @@ def run_prompt(
             help="Prompt text. Use -- before the prompt to pass option-looking text as prompt content.",
         ),
     ],
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
+    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = DEFAULT_AGENT,
     reasoning_effort: Annotated[
         ReasoningEffort | None,
         typer.Option(
@@ -330,7 +330,7 @@ def run_prompt(
 
 def ask(
     prompt: Annotated[list[str], typer.Argument(help="Prompt text to pass to the selected agent.")],
-    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = "pi",
+    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = DEFAULT_AGENT,
     reasoning: Annotated[ReasoningShortcut | None, typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP)] = None,
     file_prompt: Annotated[
         Path | None, typer.Option("--file-prompt", "-f", help="Append the contents of this file to PROMPT before asking the selected agent.")

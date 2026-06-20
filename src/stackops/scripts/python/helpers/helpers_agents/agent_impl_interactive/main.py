@@ -20,6 +20,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend impo
 )
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
+    DEFAULT_AGENT,
     DEFAULT_SEAPRATOR,
     HOST,
     PROVIDER,
@@ -170,7 +171,7 @@ def _resolve_initial_job_name(job_name: str | None) -> str:
 
 def main(
     *,
-    agent: AGENTS = "copilot",
+    agent: AGENTS = DEFAULT_AGENT,
     host: HOST = "local",
     model: str | None = None,
     reasoning_effort: ReasoningEffort | None = None,

@@ -3,7 +3,7 @@ from typing import Annotated, Literal, TypeAlias
 import typer
 
 from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 from stackops.scripts.python.terminal import run as terminal_run_command
 
 
@@ -28,7 +28,7 @@ def _get_layout_path(*, checker_name: CheckerName) -> str:
 
 def launch_type_fix(
     ctx: typer.Context,
-    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = "codex",
+    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = DEFAULT_AGENT,
     agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of diagnostics per prompt.")] = 10,
     which_checker: Annotated[
         CheckerName,

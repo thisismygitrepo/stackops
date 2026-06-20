@@ -1,4 +1,4 @@
-from typing import Literal, TypeAlias, TypedDict
+from typing import Final, Literal, TypeAlias, TypedDict
 
 
 AGENTS: TypeAlias = Literal[
@@ -19,6 +19,7 @@ AGENTS: TypeAlias = Literal[
     "droid",
     "pi",
 ]
+DEFAULT_AGENT: Final[AGENTS] = "codex"
 HOST: TypeAlias = Literal["local", "docker"]
 PROVIDER: TypeAlias = Literal[
     "azure",

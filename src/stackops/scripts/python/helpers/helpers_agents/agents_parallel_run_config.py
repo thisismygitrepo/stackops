@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 
@@ -114,7 +114,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         raise ValueError("stagger_max must be a finite number greater than or equal to 0")
     resolved_separator = DEFAULT_SEAPRATOR if separator is None else separator
     return ResolvedParallelCreateValues(
-        agent="codex" if agent is None else agent,
+        agent=DEFAULT_AGENT if agent is None else agent,
         model=overrides.model if overrides.model is not None else base.model,
         reasoning_effort=overrides.reasoning_effort if overrides.reasoning_effort is not None else base.reasoning_effort,
         provider=overrides.provider if overrides.provider is not None else base.provider,

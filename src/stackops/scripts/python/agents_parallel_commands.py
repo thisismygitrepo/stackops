@@ -5,7 +5,7 @@ from typing import Annotated, get_args
 
 import typer
 
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
     AGENT_PARALLEL_BACKEND_HELP,
     DEFAULT_AGENT_PARALLEL_BACKEND,
@@ -63,7 +63,7 @@ Concept:
 
 
 def agents_create(
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")] = "codex",
+    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")] = DEFAULT_AGENT,
     model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
     reasoning_effort: Annotated[
         ReasoningEffort | None,
@@ -235,7 +235,7 @@ def _decode_separator(separator: str) -> str:
 def create_context(
     prompt: Annotated[str, typer.Argument(help="Prompt text to send to the selected agent.")],
     job_name: Annotated[str, typer.Option(..., "--job-name", "-n", help="Job name used in ./.ai/agents/<jobName>/context.md output path.")],
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = "copilot",
+    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = DEFAULT_AGENT,
     separator: Annotated[
         str, typer.Option(..., "--separator", "-s", help="Separator between individual results in context.md. Supports escaped values like '\\n'.")
     ] = DEFAULT_SEAPRATOR,

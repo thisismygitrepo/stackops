@@ -1,6 +1,6 @@
 from typing import Final, TypedDict
 
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -36,7 +36,7 @@ class ParallelCreateYamlEntry(TypedDict):
 
 PARALLEL_CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(ParallelCreateYamlEntry.__annotations__.keys())
 PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY: Final[ParallelCreateYamlEntry] = {
-    "agent": "codex",
+    "agent": DEFAULT_AGENT,
     "model": None,
     "reasoning": None,
     "provider": None,

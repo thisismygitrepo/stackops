@@ -5,7 +5,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 from stackops.scripts.python.terminal import run as terminal_run_command
 from stackops.utils.accessories import get_repo_root
 
@@ -122,7 +122,7 @@ def _build_prompt() -> str:
 
 def launch_test_runtime(
     ctx: typer.Context,
-    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = "codex",
+    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = DEFAULT_AGENT,
     agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of files per prompt.")] = 10,
     max_tabs: Annotated[
         int,
