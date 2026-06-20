@@ -48,6 +48,7 @@ def run_layouts_with_herdr(
     for layout, plan in zip(layouts_selected, launch_plan, strict=True):
         original_workspace_label = layout["layoutName"]
         workspace_label = original_workspace_label
+        layout_to_launch: LayoutConfig = layout
         if plan.get("skip_launch", False):
             results[workspace_label] = {
                 "success": True,
@@ -60,7 +61,7 @@ def run_layouts_with_herdr(
                 f"'{plan['session_name']}' to avoid workspace conflict."
             )
             workspace_label = plan["session_name"]
-            layout = {
+            layout_to_launch = {
                 "layoutName": workspace_label,
                 "layoutTabs": layout["layoutTabs"],
             }
@@ -68,7 +69,7 @@ def run_layouts_with_herdr(
             typer.echo(f"Restarting existing Herdr workspace '{workspace_label}'.")
             kill_existing_session("herdr", workspace_label)
         try:
-            summary = launch_layout_with_herdr(layout=layout)
+            summary = launch_layout_with_herdr(layout=layout_to_launch)
         except Exception as exc:
             results[workspace_label] = {"success": False, "error": str(exc)}
             continue

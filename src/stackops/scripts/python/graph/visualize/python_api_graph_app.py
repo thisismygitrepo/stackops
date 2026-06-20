@@ -3,7 +3,7 @@ from typing import Annotated, Literal, TypeAlias, get_args
 
 import typer
 
-from stackops.scripts.python.graph.visualize.cli_graph_app import _resolve_uv_context
+from stackops.scripts.python.graph.visualize.cli_graph_app import resolve_uv_context
 
 
 PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
@@ -22,7 +22,7 @@ def _filter_explanation() -> str:
 """
 
 
-def _materialize_python_api_graph_path(graph_path_str: str | None) -> str:
+def materialize_python_api_graph_path(graph_path_str: str | None) -> str:
     if graph_path_str:
         return graph_path_str
 
@@ -49,13 +49,13 @@ def tree(
 
     def func(graph_path_str: str | None, show_help: bool, max_depth: int | None) -> None:
         from stackops.scripts.python.graph.visualize.rich_tree import render_tree
-        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path
+        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path
 
-        render_tree(path=_materialize_python_api_graph_path(graph_path_str), show_help=show_help, show_aliases=False, max_depth=max_depth)
+        render_tree(path=materialize_python_api_graph_path(graph_path_str), show_help=show_help, show_aliases=False, max_depth=max_depth)
 
     from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
     shell_script, _pyfile = get_shell_script_running_lambda_function(
         lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_help=show_help, max_depth=max_depth),
         uv_with=uv_with,
@@ -76,9 +76,9 @@ def dot(
         from pathlib import Path
 
         from stackops.scripts.python.graph.visualize.dot_export import render_dot
-        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path
+        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path
 
-        dot_text = render_dot(path=_materialize_python_api_graph_path(graph_path_str), max_depth=max_depth, include_help=include_help)
+        dot_text = render_dot(path=materialize_python_api_graph_path(graph_path_str), max_depth=max_depth, include_help=include_help)
         if output_str is None:
             print(dot_text)
         else:
@@ -88,7 +88,7 @@ def dot(
 
     from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
     shell_script, _pyfile = get_shell_script_running_lambda_function(
         lambda: func(
             graph_path_str=str(graph_path) if graph_path else None,
@@ -115,11 +115,11 @@ def chart(
     width: Annotated[int, typer.Option("--width", "-w", help="Image width (for static output)")] = 1200,
 ) -> None:
     """Render a Plotly hierarchy chart."""
-    graph_file = _materialize_python_api_graph_path(str(graph_path) if graph_path else None)
+    graph_file = materialize_python_api_graph_path(str(graph_path) if graph_path else None)
 
     from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=None, external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=None, external_uv_with=[])
     use_render_plotly(
         view=view,
         output=str(output) if output else None,
@@ -149,17 +149,17 @@ def search(
 
         import typer
 
-        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path
+        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path
         from stackops.scripts.python.graph.visualize.python_api_graph_search import search_python_api_graph
 
-        graph_file = Path(_materialize_python_api_graph_path(graph_path_str))
+        graph_file = Path(materialize_python_api_graph_path(graph_path_str))
         return_code = search_python_api_graph(graph_path=graph_file, json_output=json_output)
         if return_code != 0:
             raise typer.Exit(code=return_code)
 
     from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
     shell_script, _pyfile = get_shell_script_running_lambda_function(
         lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),
         uv_with=uv_with,

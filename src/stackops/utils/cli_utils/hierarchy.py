@@ -109,7 +109,6 @@ if TYPE_CHECKING:
         StackOpsCloudCommand,
         StackOpsTerminalRunCommand,
         StackOpsTerminalRunAllCommand,
-        StackOpsTerminalRunAoeCommand,
         StackOpsTerminalAttachCommand,
         StackOpsTerminalKillCommand,
         StackOpsTerminalTraceCommand,

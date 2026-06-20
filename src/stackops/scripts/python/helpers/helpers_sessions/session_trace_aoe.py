@@ -2,12 +2,12 @@ from typing import Literal
 
 from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import (
     JsonObject,
-    _entry_text,
-    _session_entries,
-    _session_id,
-    _session_preview,
-    _session_status,
-    _session_title,
+    entry_text as _entry_text,
+    list_session_entries as _session_entries,
+    session_id as _session_id,
+    session_preview as _session_preview,
+    session_status as _session_status,
+    session_title as _session_title,
 )
 from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     interactive_choose_with_preview,

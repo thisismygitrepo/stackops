@@ -141,7 +141,7 @@ def _session_is_killable(session: JsonObject) -> bool:
     return True
 
 
-def _session_preview(session: JsonObject) -> str:
+def session_preview(session: JsonObject) -> str:
     lines = [
         "backend: aoe",
         f"session: {_session_title(session) or ''}",
@@ -177,7 +177,7 @@ def _build_option_maps(sessions: Iterable[JsonObject]) -> tuple[dict[str, str], 
         if seen:
             label = f"{label} ({_session_id(session) or seen + 1})"
         options_to_script[label] = identifier
-        options_to_preview_mapping[label] = _session_preview(session)
+        options_to_preview_mapping[label] = session_preview(session)
     return options_to_script, options_to_preview_mapping
 
 

@@ -982,6 +982,28 @@
       }
     },
     {
+      "appName": "hunk",
+      "license": "MIT License",
+      "repoURL": "https://github.com/modem-dev/hunk",
+      "doc": "Review-first terminal diff viewer for agent-authored changesets.",
+      "categoryLabels": [
+        "version-control",
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g hunkdiff",
+          "darwin": "bun install -g hunkdiff",
+          "windows": "bun install -g hunkdiff"
+        },
+        "arm64": {
+          "linux": "bun install -g hunkdiff",
+          "darwin": "bun install -g hunkdiff",
+          "windows": "bun install -g hunkdiff"
+        }
+      }
+    },
+    {
       "appName": "diffnav",
       "license": "MIT license",
       "repoURL": "https://github.com/dlvhdr/diffnav",

@@ -71,17 +71,16 @@ def example_usage() -> None:
 ```
 
 # General Programming Ethos:
-
+* Follow YAGNI in your coding style.
 * Please be obsessed about one thing: how to write the code in a way, so that if there is any change anywhere that can make something else break, then the static analsyis tools will catch it and point to all the places that need to be changed, so that there is no chance of human error of forgetting to change something somewhere. Every other consideration is subserviant to this overriding requirement.
 * Assuming types will be respected, then, if and only if, the written code can't be statically gauranteed to be perfect by the linters and type checkers, then we write a test for it. E.g.; if its data-dependent functionality interfacing with user input, etc. Otherwise, tests are discouraged.
 * Test file convention: it should go under $repo_root/tests/mirror/$same_file_path_relative_to_repo_root
 * Don't write toleratnt code, e.g. try this, no worries, lets try something else, unless user asked for it explicitly.
-* I hate "legacy code", "backward compatilbity", "fallback position", never do this, because we are just prototyping, ignore any data that will now be invalid. When you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.
+* I hate "legacy code", "backward compatilbity", "fallback position", never do this, because we are just prototyping, ignore any data that will be invalidated. When you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.
 * Please don't be psychophantic, don't just try to please the user by doing exactly what they say, e.g. there is a typo in their request and you follow the typo! Also, if request is unreasonable from design perspective, push back and explain and suggest. If the impelmentation will multiply the complexity of codebase, refrain from implementation and let the user know.
 * Make sure all the code is rigorous, no lazy stuff.
 * Always avoid default values in arguments of functions. Those are evil and cause confusion. Always be explicit in parameter passing. I only accept them in cli apps and when interacting with user in general, otherwise, deep in codebase, no.
 * If you absolutely have to set a value, then make `constants.py` file and put it there and import it.
-* Your code is minimal, no unrequested features, no bloat.
 * Please avoid writing README files and avoid docstring and comments in code unless absolutely necessary. Use clear naming conventions instead of documenting.
 * Always prefer to functional style of programming over OOP.
 * Please avoid making files longer ~ 200 lines or so, always cosider breaking to meaningful self-contained nicely related modules.

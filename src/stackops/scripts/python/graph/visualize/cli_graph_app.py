@@ -9,7 +9,7 @@ import typer
 PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
 
 
-def _resolve_uv_context(*, local_uv_with: list[str] | None, external_uv_with: list[str]) -> tuple[list[str] | None, str | None]:
+def resolve_uv_context(*, local_uv_with: list[str] | None, external_uv_with: list[str]) -> tuple[list[str] | None, str | None]:
     stackops_repo = Path.home().joinpath("code", "stackops")
     if stackops_repo.exists():
         return local_uv_with, str(stackops_repo)
@@ -32,7 +32,7 @@ def tree(
 
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
 
     shell_script, _pyfile = get_shell_script_running_lambda_function(
         lambda: func(
@@ -67,7 +67,7 @@ def dot(
 
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
 
     shell_script, _pyfile = get_shell_script_running_lambda_function(
         lambda: func(
@@ -95,7 +95,7 @@ def chart(
     """Render a Plotly hierarchy chart."""
     from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=None, external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=None, external_uv_with=[])
 
     use_render_plotly(
         view=view,
@@ -124,7 +124,7 @@ def navigate():
         from stackops.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator
         main_devops_navigator()
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=["textual"], external_uv_with=["textual"])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=["textual"], external_uv_with=["textual"])
     shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),
             uv_with=uv_with, uv_project_dir=uv_project_dir)
     exit_then_run_shell_script(str(shell_script), strict=False)
@@ -153,7 +153,7 @@ def search(
 
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
 
-    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])
+    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
     shell_script, _pyfile = get_shell_script_running_lambda_function(
         lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),
         uv_with=uv_with,
