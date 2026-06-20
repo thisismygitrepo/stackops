@@ -152,7 +152,6 @@ def status(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_self_assets
-    from stackops.scripts.python.helpers.helpers_devops.cli_self_ai import app as cli_self_ai_app
     from stackops.scripts.python.helpers.helpers_devops.cli_self_clone import clone
     from stackops.scripts.python.helpers.helpers_devops.cli_self_export import download_installer, export
     from stackops.scripts.python.helpers.helpers_devops.cli_self_info import (
@@ -221,7 +220,5 @@ def get_app() -> typer.Typer:
         cli_app.command(name="g", no_args_is_help=False, help="Build the architecture dependency graph.", hidden=True)(build_graph)
         cli_app.add_typer(cli_self_assets.get_app(), name="build-assets", help="🗂 <a> Regenerate repo-local CLI and skill assets.")
         cli_app.add_typer(cli_self_assets.get_app(), name="a", help="Regenerate repo-local CLI and skill assets.", hidden=True)
-        cli_app.add_typer(cli_self_ai_app.get_app(), name="workflows", help="🤖 <w> Developer AI workflows.")
-        cli_app.add_typer(cli_self_ai_app.get_app(), name="w", help="Developer AI workflows.", hidden=True)
 
     return cli_app

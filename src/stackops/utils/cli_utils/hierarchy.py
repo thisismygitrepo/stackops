@@ -66,12 +66,6 @@ if TYPE_CHECKING:
         StackOpsDevopsSelfBuildAssetsRegenerateChartsCommand,
         StackOpsDevopsSelfBuildAssetsSubcommands,
         StackOpsDevopsSelfBuildAssetsCommand,
-        StackOpsDevopsSelfWorkflowsUpdateInstallerCommand,
-        StackOpsDevopsSelfWorkflowsUpdateTestCommand,
-        StackOpsDevopsSelfWorkflowsUpdateDocsCommand,
-        StackOpsDevopsSelfWorkflowsUpdateLogicCommand,
-        StackOpsDevopsSelfWorkflowsSubcommands,
-        StackOpsDevopsSelfWorkflowsCommand,
         StackOpsDevopsSelfSubcommands,
         StackOpsDevopsSelfCommand,
         StackOpsDevopsNetworkShareTerminalCommand,
@@ -626,48 +620,6 @@ STACKOPS_DEVOPS_SELF_BUILD_ASSETS_COMMAND: "StackOpsDevopsSelfBuildAssetsCommand
     "subcommands": STACKOPS_DEVOPS_SELF_BUILD_ASSETS_SUBCOMMANDS,
 }
 
-STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_INSTALLER_COMMAND: "StackOpsDevopsSelfWorkflowsUpdateInstallerCommand" = {
-    "command_name": "update-installer",
-    "short_name": "u",
-    "help": "🔄 <u> Create an agents layout for updating installer_data.json.",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_TEST_COMMAND: "StackOpsDevopsSelfWorkflowsUpdateTestCommand" = {
-    "command_name": "update-test",
-    "short_name": "t",
-    "help": "🧪 <t> Create an agents layout for writing tests from repo Python sources.",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_DOCS_COMMAND: "StackOpsDevopsSelfWorkflowsUpdateDocsCommand" = {
-    "command_name": "update-docs",
-    "short_name": "d",
-    "help": "📚 <d> Create an agents layout for updating CLI and API docs only.",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_LOGIC_COMMAND: "StackOpsDevopsSelfWorkflowsUpdateLogicCommand" = {
-    "command_name": "update-logic",
-    "short_name": "l",
-    "help": "🧠 <l> Create an agents layout for checking CLI command logic.",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_SELF_WORKFLOWS_SUBCOMMANDS: "StackOpsDevopsSelfWorkflowsSubcommands" = {
-    "update-installer": STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_INSTALLER_COMMAND,
-    "update-test": STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_TEST_COMMAND,
-    "update-docs": STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_DOCS_COMMAND,
-    "update-logic": STACKOPS_DEVOPS_SELF_WORKFLOWS_UPDATE_LOGIC_COMMAND,
-}
-
-STACKOPS_DEVOPS_SELF_WORKFLOWS_COMMAND: "StackOpsDevopsSelfWorkflowsCommand" = {
-    "command_name": "workflows",
-    "short_name": "w",
-    "help": "🤖 <w> Developer AI workflows.",
-    "subcommands": STACKOPS_DEVOPS_SELF_WORKFLOWS_SUBCOMMANDS,
-}
-
 STACKOPS_DEVOPS_SELF_SUBCOMMANDS: "StackOpsDevopsSelfSubcommands" = {
     "install": STACKOPS_DEVOPS_SELF_INSTALL_COMMAND,
     "update": STACKOPS_DEVOPS_SELF_UPDATE_COMMAND,
@@ -681,7 +633,6 @@ STACKOPS_DEVOPS_SELF_SUBCOMMANDS: "StackOpsDevopsSelfSubcommands" = {
     "build-docker": STACKOPS_DEVOPS_SELF_BUILD_DOCKER_COMMAND,
     "build-graph": STACKOPS_DEVOPS_SELF_BUILD_GRAPH_COMMAND,
     "build-assets": STACKOPS_DEVOPS_SELF_BUILD_ASSETS_COMMAND,
-    "workflows": STACKOPS_DEVOPS_SELF_WORKFLOWS_COMMAND,
 }
 
 STACKOPS_DEVOPS_SELF_COMMAND: "StackOpsDevopsSelfCommand" = {

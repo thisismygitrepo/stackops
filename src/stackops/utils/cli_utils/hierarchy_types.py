@@ -631,66 +631,6 @@ StackOpsDevopsSelfBuildAssetsCommand = TypedDict(
     },
 )
 
-StackOpsDevopsSelfWorkflowsUpdateInstallerCommand = TypedDict(
-    "StackOpsDevopsSelfWorkflowsUpdateInstallerCommand",
-    {
-        "command_name": Literal["update-installer"],
-        "short_name": Literal["u"],
-        "help": Literal["🔄 <u> Create an agents layout for updating installer_data.json."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsSelfWorkflowsUpdateTestCommand = TypedDict(
-    "StackOpsDevopsSelfWorkflowsUpdateTestCommand",
-    {
-        "command_name": Literal["update-test"],
-        "short_name": Literal["t"],
-        "help": Literal["🧪 <t> Create an agents layout for writing tests from repo Python sources."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsSelfWorkflowsUpdateDocsCommand = TypedDict(
-    "StackOpsDevopsSelfWorkflowsUpdateDocsCommand",
-    {
-        "command_name": Literal["update-docs"],
-        "short_name": Literal["d"],
-        "help": Literal["📚 <d> Create an agents layout for updating CLI and API docs only."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsSelfWorkflowsUpdateLogicCommand = TypedDict(
-    "StackOpsDevopsSelfWorkflowsUpdateLogicCommand",
-    {
-        "command_name": Literal["update-logic"],
-        "short_name": Literal["l"],
-        "help": Literal["🧠 <l> Create an agents layout for checking CLI command logic."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsSelfWorkflowsSubcommands = TypedDict(
-    "StackOpsDevopsSelfWorkflowsSubcommands",
-    {
-        "update-installer": StackOpsDevopsSelfWorkflowsUpdateInstallerCommand,
-        "update-test": StackOpsDevopsSelfWorkflowsUpdateTestCommand,
-        "update-docs": StackOpsDevopsSelfWorkflowsUpdateDocsCommand,
-        "update-logic": StackOpsDevopsSelfWorkflowsUpdateLogicCommand,
-    },
-)
-
-StackOpsDevopsSelfWorkflowsCommand = TypedDict(
-    "StackOpsDevopsSelfWorkflowsCommand",
-    {
-        "command_name": Literal["workflows"],
-        "short_name": Literal["w"],
-        "help": Literal["🤖 <w> Developer AI workflows."],
-        "subcommands": StackOpsDevopsSelfWorkflowsSubcommands,
-    },
-)
-
 StackOpsDevopsSelfSubcommands = TypedDict(
     "StackOpsDevopsSelfSubcommands",
     {
@@ -706,7 +646,6 @@ StackOpsDevopsSelfSubcommands = TypedDict(
         "build-docker": StackOpsDevopsSelfBuildDockerCommand,
         "build-graph": StackOpsDevopsSelfBuildGraphCommand,
         "build-assets": StackOpsDevopsSelfBuildAssetsCommand,
-        "workflows": StackOpsDevopsSelfWorkflowsCommand,
     },
 )
 

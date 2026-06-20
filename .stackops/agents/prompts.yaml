@@ -8,6 +8,8 @@
 ensureLightweightCommands:
   description: we want typer cli files to remain light weight and prevent uncncessary upfront loading.
   prompt: |
+    Use the `$workflows` skill with the `parallel-agents` command.
+
     $caveman weynan full.
     Please look into every cli typer py file that has (import typer).
     In essense, we want to ensure that those typer cli remain lightweight so user doesn't experience delay.
@@ -18,10 +20,10 @@ ensureLightweightCommands:
     Convey those messages to the new agent instances, but its up to you to decide which one is worth working on and which one is already reasonably optimized, plese don't be overzelous.
 
     Because the number of files is too big, please spin up another veresion of you (whether you are codex, claude, opencode, copilot etc)
-    but not as a sub agent, instead, the new instances go to new panes/windows in this tmux session and give them pane names matchning their names.
+    but not as a sub agent. Use Herdr-managed tabs/windows/panes as directed by the `$workflows` skill and give each agent a clear name matching its task.
 
     # Instructions for agents:
-    * Pass sufficient instructions to them to be able to get the job done 
+    * Pass sufficient instructions to them to be able to get the job done
     * let them know that there exist other agents working on similar tasks for other files, so they are no surprised by occasional unexpected change of some shared code upstream.
     * Additionally, tell them to use caveman weynan full skill.
 
@@ -30,125 +32,168 @@ ensureLightweightCommands:
     * Please start the agents interactively, i.e. start the cli, then paste/type the prompt intended for that agent and press enter to let it go at it.
     * You want to make sure that they are actually working, by seeing some progress, just in case your launch failed, only then, you job is finished, you don't need to monitor them until they finish.
 
+    Do not use internal subagents. Use `$workflows parallel-agents`, submit each prompt, verify each agent accepted it, then report the Herdr targets and visible status.
 
 createParallelAgents:
-      description: Design args and create an agents layout only, without launching it
-      prompt: |
-        You are preparing a StackOps parallel-agent layout for the user requirement in the appended prompt.
+  description: Use workflows parallel-agents for an appended requirement.
+  prompt: |
+    Use the `$workflows` skill with the `parallel-agents` command for the appended user requirement.
 
-        Your job:
-        1. Read the appended user requirement as the source of truth.
-        2. Design the full `agents parallel create` invocation: agent choice, prompt source, context source, chunking, paths, and output names.
-        3. Create task-specific prompt/context input files needed for a robust command.
-        4. Execute only the `agents parallel create` command yourself so the layout and agent files are generated.
-        5. Stop there. Do not launch the generated layout, do not start agents, and do not run the generated terminal layout.
+    You are preparing a StackOps external parallel-agent run for the user requirement in the appended prompt.
 
-        This is an orchestration prompt. Do not pass this prompt itself to the spawned agents via `--prompt-name agents.parallel.create` unless the user explicitly asks for a layout that creates more layouts. Write or select a prompt that tells the spawned agents how to do the user's actual work.
+    Your job:
+    1. Read the appended user requirement as the source of truth.
+    2. Design the full external-agent split: agent choice, task boundaries, context source, chunking, paths, and agent names.
+    3. Create task-specific standalone instructions needed for robust delegation.
+    4. Start Herdr-managed interactive agents through `$workflows parallel-agents`.
+    5. Submit the intended prompt to each agent and verify each agent accepted it.
 
-        Command:
+    This is an orchestration prompt. Do not pass this prompt itself to spawned agents. Write or select a prompt that tells spawned agents how to do the user's actual work.
 
-        ```bash
-        agents parallel create [OPTIONS]
-        ```
+    Creation and launch contract:
 
-        If you are running from the StackOps source checkout and the `agents` executable is not available, use:
+    - The purpose is to launch external interactive agents through `$workflows parallel-agents`.
+    - The purpose is not to create generated `agents parallel create` layout files.
+    - Do not use internal subagents.
+    - Do not use `agents parallel create`, `agents parallel run-parallel`, `--run`, `--Run`, or `-R`.
+    - After launch, report the Herdr targets, task split, and visible status.
 
-        ```bash
-        uv run agents parallel create [OPTIONS]
-        ```
+    Design rules:
 
-        Creation-only contract:
+    - Use `codex` unless the user asks for another agent or the task clearly needs another installed agent.
+    - Use high reasoning for complex coding/research delegation when the selected agent supports it, unless the user asks otherwise.
+    - Prefer one task per agent when isolation matters; group small independent tasks only when that is more efficient.
+    - Use short filesystem-safe names for agent labels.
+    - Avoid destructive cleanup. If old agent sessions or work dirs exist, choose fresh labels unless the user explicitly requested replacement.
+    - Make every agent prompt standalone and include the exact files, commands, or context needed.
 
-        - The purpose is to create files: input files, per-agent task files, and the layout JSON.
-        - The purpose is not to run the workload. Do not start terminals, do not launch agents, and do not execute any generated agent commands.
-        - Hard rule: never include `--run`, `--Run`, or `-R`.
-        - The final `agents parallel create` command must only create the layout and supporting files.
-        - After it succeeds, report the generated layout path and the command the user can run later if they want to launch it.
+    Simple three-agent example:
 
-        Before designing args, inspect the live command help:
+    Suppose the appended user requirement is: "In a toy calculator project, split work across three agents: implement arithmetic, add tests, and update docs."
 
-        ```bash
-        agents parallel create --help
-        ```
+    Delegate:
 
-        Treat the live help as the authority for option names, defaults, accepted enum values, and mutual exclusions. Do not rely on memory if help output differs from this prompt.
+    Agent 1 context:
+    Inspect `calculator.py`. Implement or fix `add(a, b)` and `subtract(a, b)`.
+    Keep the public function names stable.
 
-        Design rules that help output will not decide for you:
+    Agent 2 context:
+    Inspect `calculator.py`. Implement or fix `multiply(a, b)` and `divide(a, b)`.
+    For division by zero, raise `ZeroDivisionError` with a clear message.
 
-        - Use `codex` unless the user asks for another agent or the task clearly needs another installed agent.
-        - Use high reasoning for complex coding/research layout generation when the selected agent supports it, unless the user asks otherwise.
-        - Prefer a task-specific prompt file over a long inline prompt.
-        - Prefer a context file over a context directory when paths, task boundaries, or per-chunk instructions matter.
-        - Do not rely on implicit context defaults; provide explicit context unless you have verified the default file exists and is correct.
-        - Make the context file use the same separator you pass to the command.
-        - Use one task per agent when isolation matters; group small independent tasks only when that is more efficient.
-        - Use a short filesystem-safe job name. Prefer a unique name when an existing `.ai/agents/<job-name>` directory could cause cleanup prompts.
-        - Save a reusable YAML entry only when the user asks for a reusable workflow.
-        - Avoid interactive mode unless the user explicitly wants it.
+    Agent 3 context:
+    Inspect the README and tests. Add usage examples for all four calculator operations and add focused tests for the expected behavior.
 
-        Input-file pattern:
+    Final response after launching:
 
-        - For long prompts, write a prompt file such as `.ai/agents/_inputs/<job-name>/prompt.md`.
-        - For multiple work items, write a context file such as `.ai/agents/_inputs/<job-name>/context.md`.
-        - Separate context work items with the chosen separator, commonly a line containing `@-@`.
-        - Keep generated input files outside the final `--agents-dir` when you pass `--agents-dir`, so creating the input files does not make the agent directory pre-exist.
+    - State whether all prompts were accepted.
+    - Give the Herdr target names/ids.
+    - Summarize each agent's assignment.
+    - Mention any agent that failed to start or accept its prompt.
 
-        Simple three-agent example:
+stackopsMaintinanceUpdateInstaller:
+  description: Use workflows parallel-agents to update installer filename patterns.
+  prompt: |
+    Use the `$workflows` skill with the `parallel-agents` command.
 
-        Suppose the appended user requirement is: "In a toy calculator project, split work across three agents: implement arithmetic, add tests, and update docs."
+    Goal: coordinate external agents to update GitHub release filename patterns in `src/stackops/utils/schemas/installer/installer_data.json`.
+    Split installer entries across agents. Tell agents to edit only entries assigned to them.
 
-        Create a shared prompt file at `.ai/agents/_inputs/toy-calculator-ops/prompt.md`:
+    Tell each agent:
+    - If `repoURL` is not a GitHub repository, skip that entry.
+    - Verify current release asset names before changing a `fileNamePattern`.
+    - Never add a literal `v` before `{version}` just because release tags or assets contain one.
+    - Do not touch values that are custom Python installer scripts such as `<name>.py`.
+    - Do not touch custom package install commands.
+    - Only edit `fileNamePattern` fields.
+    - Prefer musl Linux binaries over gnu binaries when both are available.
 
-        ```markdown
-        You are one agent in a parallel StackOps workflow for a toy calculator project.
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
-        Use only your assigned context chunk as your task boundary.
-        Make the requested change, keep edits scoped, add or update tests when your chunk asks for them, and report the files you changed.
-        ```
+stackopsMaintinanceUpdateTest:
+  description: Use workflows parallel-agents to write mirrored runtime tests.
+  prompt: |
+    Use the `$workflows` skill with the `parallel-agents` command.
 
-        Create a context file at `.ai/agents/_inputs/toy-calculator-ops/context.md` with one chunk per intended agent:
+    Goal: coordinate external agents to add focused runtime tests for StackOps Python files.
+    Build the work list from git-visible `.py` files, excluding `tests` and ignored/generated directories. Give each agent about 10 files.
 
-        ```markdown
-        Agent 1 context:
-        Inspect `calculator.py`. Implement or fix `add(a, b)` and `subtract(a, b)`.
-        Keep the public function names stable.
-        @-@
-        Agent 2 context:
-        Inspect `calculator.py`. Implement or fix `multiply(a, b)` and `divide(a, b)`.
-        For division by zero, raise `ZeroDivisionError` with a clear message.
-        @-@
-        Agent 3 context:
-        Inspect the README and tests. Add usage examples for all four calculator operations and add focused tests for the expected behavior.
-        ```
+    Tell each agent:
+    - Use `$caveman wenyan`.
+    - Create one test file per assigned Python file.
+    - Put tests under `tests/mirror/<same repo-relative path>`.
+    - Test runtime behavior that static type checking cannot catch.
+    - Do not write tests whose only value is checking type correctness.
+    - Keep edits scoped to assigned tests unless a tiny source fix is clearly necessary.
 
-        Then create the layout only:
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
-        ```bash
-        uv run agents parallel create \
-          --agent codex \
-          --reasoning high \
-          --job-name toy-calculator-ops \
-          --prompt-path .ai/agents/_inputs/toy-calculator-ops/prompt.md \
-          --context-path .ai/agents/_inputs/toy-calculator-ops/context.md \
-          --separator '@-@' \
-          --agent-load 1
-        ```
+stackopsMaintinanceUpdateDocs:
+  description: Use workflows parallel-agents to update CLI and API docs.
+  prompt: |
+    Use the `$workflows` skill with the `parallel-agents` command.
 
-        In that example, the prompt is shared by all spawned agents. The context is split at each `@-@` separator. Because there are three context chunks and `--agent-load 1`, StackOps creates three agent tasks: agent 1 receives only the first chunk, agent 2 receives only the second chunk, and agent 3 receives only the third chunk. The command creates the layout; it does not run the agents because `--run` is intentionally omitted.
+    Goal: coordinate external agents to update documentation under `docs/cli` and `docs/api`.
+    Build the work list from git-visible Markdown files in those two directories. Give agents clear file chunks.
 
-        Command construction checklist:
+    Tell each agent:
+    - Only edit files under `docs/cli` and `docs/api`.
+    - Do not edit `docs/index.md`, `docs/quickstart.md`, `docs/guide/**`, Home, User Guide, or other documentation tabs.
+    - Treat assigned context entries as docs files to update directly.
+    - Inspect current Python sources and CLI/API behavior as needed.
+    - Prefer current implemented behavior. Remove stale wording instead of documenting legacy behavior.
 
-        - Choose a concrete `--job-name`.
-        - Choose exactly one of `--prompt`, `--prompt-path`, or `--prompt-name`.
-        - Choose at most one of `--context` or `--context-path`; normally use `--context-path`.
-        - Ensure `--agent-load` and `--separator` match how you split the context.
-        - Use shell-safe quoting for paths and values.
-        - Avoid destructive cleanup. If a target agent directory exists, choose a new job name or output directory unless the user explicitly requested replacement.
-        - Run `agents parallel create --help` if local behavior appears different from this prompt.
-        - Run the final `agents parallel create` command without `--run`.
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
-        Final response after running:
+stackopsMaintinanceUpdateLogic:
+  description: Use workflows parallel-agents to review command logic.
+  prompt: |
+    Use the `$workflows` skill with the `parallel-agents` command.
 
-        - State the command succeeded or explain the failure.
-        - Give the layout path and agents directory.
-        - Mention that the layout was not launched because `--run` was intentionally omitted.
+    Goal: coordinate external agents to review StackOps CLI command logic and fix real issues.
+    Build the work list from CLI command source locations, with each task naming the repo-relative source file and command path.
+
+    Tell each agent:
+    - Use the assigned file and command path to find the command.
+    - Fix actual logic bugs, inconsistent behavior, or meaningful failure modes.
+    - If the command works as is, leave it alone.
+    - Keep CLI files fast by moving unnecessary heavy imports into the functions that need them.
+    - Do not over-split into tiny shim modules.
+    - Use modern Python style, including `| None` instead of `Optional`.
+    - Expect other external agents may edit nearby command code.
+
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
+
+updateAgentsConfigs:
+  description: Check latest supported agent config docs and update agents add-config outputs.
+  prompt: |
+    Please update StackOps `agents add-config` support against the latest official docs for every supported agent.
+
+    Start by inspecting the live command and source:
+    - `uv run stackops agents add-config --help`
+    - `src/stackops/scripts/python/agents.py`
+    - `src/stackops/scripts/python/helpers/helpers_agents/agents_impl.py`
+    - `src/stackops/scripts/python/ai/initai.py`
+    - `src/stackops/scripts/python/ai/initai_frameworks.py`
+    - related templates, privacy config helpers, and tests under `tests/mirror/src/stackops/scripts/python/test_agents.py`
+
+    Supported `agents add-config --agent` values currently include:
+    `agy`, `cursor-agent`, `claude`, `qwen`, `copilot`, `codex`, `forge`, `crush`, `q`, `opencode`, `kilocode`, `cline`, `auggie`, `oz`, `droid`, `pi`.
+
+    For each supported agent:
+    - Look up the latest official documentation for repository config, user config, instruction files, ignore files, privacy/telemetry controls, and any required config file names or locations.
+    - Prefer primary sources: official docs, official repos, and current CLI `--help` output.
+    - Compare the docs against what StackOps currently writes through `agents add-config`.
+    - Update generated config/instruction templates only where current StackOps output is stale, missing, or wrong.
+    - Keep generated defaults conservative: privacy-conscious, minimal, portable, and safe to commit unless the file is intentionally private.
+    - Preserve existing tests where behavior is still correct, and add focused tests for changed output paths or content.
+    - Do not make cosmetic rewrites unrelated to agent config correctness.
+
+    Final response:
+    - List each agent checked.
+    - Summarize which config outputs changed.
+    - Cite or name the official documentation used for any behavior change.
