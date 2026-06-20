@@ -10747,7 +10747,7 @@
                         "",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
                         "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),",
                         "        uv_with=uv_with,",
@@ -10842,7 +10842,7 @@
                         "",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
                         "        lambda: func(",
@@ -10972,7 +10972,7 @@
                         "",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])",
                         "",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
                         "        lambda: func(",
@@ -11095,7 +11095,7 @@
                         "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
                         "    from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=None, external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=None, external_uv_with=[])",
                         "",
                         "    use_render_plotly(",
                         "        view=view,",
@@ -11277,7 +11277,7 @@
                         "        from stackops.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator",
                         "        main_devops_navigator()",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[\"textual\"], external_uv_with=[\"textual\"])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[\"textual\"], external_uv_with=[\"textual\"])",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),",
                         "            uv_with=uv_with, uv_project_dir=uv_project_dir)",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
@@ -11363,17 +11363,17 @@
                         "",
                         "        import typer",
                         "",
-                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path",
+                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path",
                         "        from stackops.scripts.python.graph.visualize.python_api_graph_search import search_python_api_graph",
                         "",
-                        "        graph_file = Path(_materialize_python_api_graph_path(graph_path_str))",
+                        "        graph_file = Path(materialize_python_api_graph_path(graph_path_str))",
                         "        return_code = search_python_api_graph(graph_path=graph_file, json_output=json_output)",
                         "        if return_code != 0:",
                         "            raise typer.Exit(code=return_code)",
                         "",
                         "    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
                         "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),",
                         "        uv_with=uv_with,",
@@ -11464,13 +11464,13 @@
                         "",
                         "    def func(graph_path_str: str | None, show_help: bool, max_depth: int | None) -> None:",
                         "        from stackops.scripts.python.graph.visualize.rich_tree import render_tree",
-                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path",
+                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path",
                         "",
-                        "        render_tree(path=_materialize_python_api_graph_path(graph_path_str), show_help=show_help, show_aliases=False, max_depth=max_depth)",
+                        "        render_tree(path=materialize_python_api_graph_path(graph_path_str), show_help=show_help, show_aliases=False, max_depth=max_depth)",
                         "",
                         "    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
                         "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_help=show_help, max_depth=max_depth),",
                         "        uv_with=uv_with,",
@@ -11586,9 +11586,9 @@
                         "        from pathlib import Path",
                         "",
                         "        from stackops.scripts.python.graph.visualize.dot_export import render_dot",
-                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import _materialize_python_api_graph_path",
+                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path",
                         "",
-                        "        dot_text = render_dot(path=_materialize_python_api_graph_path(graph_path_str), max_depth=max_depth, include_help=include_help)",
+                        "        dot_text = render_dot(path=materialize_python_api_graph_path(graph_path_str), max_depth=max_depth, include_help=include_help)",
                         "        if output_str is None:",
                         "            print(dot_text)",
                         "        else:",
@@ -11598,7 +11598,7 @@
                         "",
                         "    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=[], external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
                         "        lambda: func(",
                         "            graph_path_str=str(graph_path) if graph_path else None,",
@@ -11742,11 +11742,11 @@
                         "    width: Annotated[int, typer.Option(\"--width\", \"-w\", help=\"Image width (for static output)\")] = 1200,",
                         ") -> None:",
                         "    \"\"\"Render a Plotly hierarchy chart.\"\"\"",
-                        "    graph_file = _materialize_python_api_graph_path(str(graph_path) if graph_path else None)",
+                        "    graph_file = materialize_python_api_graph_path(str(graph_path) if graph_path else None)",
                         "",
                         "    from stackops.scripts.python.graph.visualize.plotly_views import use_render_plotly",
                         "",
-                        "    uv_with, uv_project_dir = _resolve_uv_context(local_uv_with=None, external_uv_with=[])",
+                        "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=None, external_uv_with=[])",
                         "    use_render_plotly(",
                         "        view=view,",
                         "        output=str(output) if output else None,",
@@ -16992,12 +16992,12 @@
             "signature": {
               "raw_lines": [
                 "def trace(",
-                "    session_name: Annotated[str | None, typer.Argument(help=\"Name of the tmux session or Herdr workspace to trace. Required unless --interactive is set.\")] = None,",
+                "    session_name: Annotated[str | None, typer.Argument(help=\"Name of the tmux session, Herdr workspace, or AoE session to trace. Required unless --interactive is set.\")] = None,",
                 "    every: Annotated[float, typer.Option(\"--every\", \"-e\", help=\"Polling interval in seconds between backend checks\")] = 10.0,",
                 "    until: Annotated[Literal[\"idle-shell\", \"all-exited\", \"exit-code\", \"session-missing\"], typer.Option(\"--until\", \"-u\", help=\"Stop only when the selected criterion is satisfied\")] = \"idle-shell\",",
                 "    exit_code: Annotated[int | None, typer.Option(\"--exit-code\", \"-c\", help=\"Required pane exit code when `--until exit-code` is selected\")] = None,",
                 "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose an existing backend session/workspace interactively\")] = False,",
-                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to trace: tmux/t or herdr/h\")] = \"tmux\",",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"aoe\", \"a\", \"e\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to trace: tmux/t, herdr/h, or aoe/a/e\")] = \"tmux\",",
                 ") -> None:",
                 "    \"\"\"Trace a terminal backend session until every target matches a strict stop criterion.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import (",
@@ -17027,12 +17027,18 @@
                 "            from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_name",
                 "",
                 "            action, payload = choose_existing_session_name(msg=\"Choose a tmux session to trace:\")",
-                "        else:",
+                "        elif backend_resolved == \"herdr\":",
                 "            from stackops.scripts.python.helpers.helpers_sessions.session_trace_herdr import (",
                 "                choose_existing_workspace_name,",
                 "            )",
                 "",
                 "            action, payload = choose_existing_workspace_name(msg=\"Choose a Herdr workspace to trace:\")",
+                "        else:",
+                "            from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import (",
+                "                choose_existing_session_name,",
+                "            )",
+                "",
+                "            action, payload = choose_existing_session_name(msg=\"Choose an AoE session to trace:\")",
                 "        if action == \"error\":",
                 "            typer.echo(f\"Error: {payload}\", err=True, color=True)",
                 "            raise typer.Exit(code=1)",
@@ -17054,13 +17060,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the tmux session or Herdr workspace to trace. Required unless --interactive is set.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the tmux session, Herdr workspace, or AoE session to trace. Required unless --interactive is set.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the tmux session or Herdr workspace to trace. Required unless --interactive is set."
+                    "help": "Name of the tmux session, Herdr workspace, or AoE session to trace. Required unless --interactive is set."
                   }
                 },
                 {
@@ -17154,10 +17160,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['tmux', 't', 'herdr', 'h']",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'aoe', 'a', 'e']",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h'], typer.Option('--backend', '-b', help='Backend to trace: tmux/t or herdr/h')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'aoe', 'a', 'e'], typer.Option('--backend', '-b', help='Backend to trace: tmux/t, herdr/h, or aoe/a/e')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -17170,7 +17176,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend to trace: tmux/t or herdr/h"
+                    "help": "Backend to trace: tmux/t, herdr/h, or aoe/a/e"
                   }
                 }
               ],
@@ -17542,9 +17548,9 @@
             "signature": {
               "raw_lines": [
                 "def summary(",
-                "    backend: Annotated[SummaryBackend, typer.Option(\"--backend\", \"-b\", help=\"Backend to summarize: tmux, herdr, or auto.\")] = \"tmux\",",
-                "    session: Annotated[str | None, typer.Option(\"--session\", \"-s\", help=\"Show details for one tmux session or Herdr workspace by name.\")] = None,",
-                "    choose_session: Annotated[bool, typer.Option(\"--choose-session\", \"-c\", help=\"Choose one tmux session or Herdr workspace interactively and show details.\")] = False,",
+                "    backend: Annotated[SummaryBackend, typer.Option(\"--backend\", \"-b\", help=\"Backend to summarize: tmux, herdr, aoe, or auto.\")] = \"tmux\",",
+                "    session: Annotated[str | None, typer.Option(\"--session\", \"-s\", help=\"Show details for one tmux session, Herdr workspace, or AoE session by name.\")] = None,",
+                "    choose_session: Annotated[bool, typer.Option(\"--choose-session\", \"-c\", help=\"Choose one tmux session, Herdr workspace, or AoE session interactively and show details.\")] = False,",
                 ") -> None:",
                 "    \"\"\"Print running terminal session summaries or details for one session.\"\"\"",
                 "    match _resolve_summary_backend(backend):",
@@ -17559,7 +17565,13 @@
                 "            if workspace_name is None:",
                 "                _print_herdr_summary()",
                 "                return",
-                "            _print_herdr_workspace_details(workspace_name=workspace_name)"
+                "            _print_herdr_workspace_details(workspace_name=workspace_name)",
+                "        case \"aoe\":",
+                "            session_name = _resolve_aoe_session_name(session_name=session, choose_session=choose_session)",
+                "            if session_name is None:",
+                "                _print_aoe_summary()",
+                "                return",
+                "            _print_aoe_session_details(session_name=session_name)"
               ],
               "name": "summary",
               "parameters": [
@@ -17569,7 +17581,7 @@
                   "type": "SummaryBackend",
                   "default": "tmux",
                   "required": false,
-                  "annotation_raw": "Annotated[SummaryBackend, typer.Option('--backend', '-b', help='Backend to summarize: tmux, herdr, or auto.')]",
+                  "annotation_raw": "Annotated[SummaryBackend, typer.Option('--backend', '-b', help='Backend to summarize: tmux, herdr, aoe, or auto.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -17582,7 +17594,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend to summarize: tmux, herdr, or auto."
+                    "help": "Backend to summarize: tmux, herdr, aoe, or auto."
                   }
                 },
                 {
@@ -17591,7 +17603,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--session', '-s', help='Show details for one tmux session or Herdr workspace by name.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--session', '-s', help='Show details for one tmux session, Herdr workspace, or AoE session by name.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -17604,7 +17616,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Show details for one tmux session or Herdr workspace by name."
+                    "help": "Show details for one tmux session, Herdr workspace, or AoE session by name."
                   }
                 },
                 {
@@ -17613,7 +17625,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--choose-session', '-c', help='Choose one tmux session or Herdr workspace interactively and show details.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--choose-session', '-c', help='Choose one tmux session, Herdr workspace, or AoE session interactively and show details.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -17626,7 +17638,7 @@
                     "short_flags": [
                       "-c"
                     ],
-                    "help": "Choose one tmux session or Herdr workspace interactively and show details."
+                    "help": "Choose one tmux session, Herdr workspace, or AoE session interactively and show details."
                   }
                 }
               ],
@@ -17660,7 +17672,14 @@
               "raw_lines": [
                 "def summarize(",
                 "    layout_path: Annotated[str, typer.Argument(..., help=\"Path to the layout.json file\")],",
-                "    backend: Annotated[SummarizeBackend, typer.Option(\"--backend\", \"-b\", help=\"Backend vocabulary to use: tmux, herdr, or auto.\")] = \"tmux\",",
+                "    vocabulary: Annotated[",
+                "        SummarizeVocabulary,",
+                "        typer.Option(\"--vocabulary\", \"-v\", help=\"Output vocabulary to use: layout or herdr.\"),",
+                "    ] = \"layout\",",
+                "    backend: Annotated[",
+                "        LegacySummarizeBackend | None,",
+                "        typer.Option(\"--backend\", \"-b\", help=\"Deprecated alias for --vocabulary.\", hidden=True),",
+                "    ] = None,",
                 ") -> None:",
                 "    \"\"\"Summarize a layout file with counts for layouts and tabs.\"\"\"",
                 "    import json",
@@ -17672,7 +17691,7 @@
                 "",
                 "    console = Console()",
                 "    layout_path_obj = Path(layout_path).expanduser().absolute()",
-                "    backend_resolved = _resolve_backend(backend)",
+                "    vocabulary_resolved = _resolve_vocabulary(backend) if backend is not None else _resolve_vocabulary(vocabulary)",
                 "",
                 "    if not layout_path_obj.exists():",
                 "        console.print(",
@@ -17758,7 +17777,7 @@
                 "    total_layouts = len(rows)",
                 "    avg_tabs = (total_tabs / total_layouts) if total_layouts > 0 else 0.0",
                 "    version = str(layout_file.get(\"version\", \"unknown\"))",
-                "    if backend_resolved == \"herdr\":",
+                "    if vocabulary_resolved == \"herdr\":",
                 "        summary_title = \"[bold blue]Herdr Layout Summary[/bold blue]\"",
                 "        layout_count_label = \"Workspaces\"",
                 "        average_label = \"Avg tabs/workspace\"",
@@ -17776,7 +17795,7 @@
                 "        name_column = \"Layout Name\"",
                 "",
                 "    summary_lines = [",
-                "        f\"[bold]Backend:[/bold] {backend_resolved}\",",
+                "        f\"[bold]Vocabulary:[/bold] {vocabulary_resolved}\",",
                 "        f\"[bold]File:[/bold] {layout_path_obj}\",",
                 "        f\"[bold]Version:[/bold] {version}\",",
                 "        f\"[bold]{layout_count_label}:[/bold] {total_layouts}\",",
@@ -17818,12 +17837,34 @@
                   }
                 },
                 {
+                  "name": "vocabulary",
+                  "kind": "positional_or_keyword",
+                  "type": "SummarizeVocabulary",
+                  "default": "layout",
+                  "required": false,
+                  "annotation_raw": "Annotated[SummarizeVocabulary, typer.Option('--vocabulary', '-v', help='Output vocabulary to use: layout or herdr.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--vocabulary",
+                      "-v"
+                    ],
+                    "long_flags": [
+                      "--vocabulary"
+                    ],
+                    "short_flags": [
+                      "-v"
+                    ],
+                    "help": "Output vocabulary to use: layout or herdr."
+                  }
+                },
+                {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "SummarizeBackend",
-                  "default": "tmux",
+                  "type": "LegacySummarizeBackend | None",
+                  "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[SummarizeBackend, typer.Option('--backend', '-b', help='Backend vocabulary to use: tmux, herdr, or auto.')]",
+                  "annotation_raw": "Annotated[LegacySummarizeBackend | None, typer.Option('--backend', '-b', help='Deprecated alias for --vocabulary.', hidden=True)]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -17836,7 +17877,7 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend vocabulary to use: tmux, herdr, or auto."
+                    "help": "Deprecated alias for --vocabulary."
                   }
                 }
               ],
@@ -20559,7 +20600,7 @@
             "kind": "command",
             "name": "add-config",
             "fullPath": "agents add-config",
-            "shortPath": "a g",
+            "shortPath": "a c",
             "help": "Initialize AI configurations in the current repository.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
@@ -20767,14 +20808,14 @@
               ],
               "return": "None"
             },
-            "short_help": "<g> Initialize AI configurations in the current repository",
+            "short_help": "<c> Initialize AI configurations in the current repository",
             "typer": {
               "no_args_is_help": true
             },
             "doc": "Initialize AI configurations in the current repository.",
             "aliases": [
               {
-                "name": "g",
+                "name": "c",
                 "hidden": true,
                 "help": "Initialize AI configurations in the current repository."
               }

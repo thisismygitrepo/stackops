@@ -90,3 +90,13 @@ def test_add_config_reports_plan_phases_and_files(tmp_path: Path) -> None:
     assert "Filesystem changes (2)" in result.output
     assert "./.codex/config.toml" in result.output
     assert "./AGENTS.md" in result.output
+    config_content = tmp_path.joinpath(".codex", "config.toml").read_text(encoding="utf-8")
+    assert "[otel]" not in config_content
+    assert "remote_models" not in config_content
+
+
+def test_add_config_short_alias_is_c(tmp_path: Path) -> None:
+    result = CliRunner().invoke(agents.get_app(), ["c", "--agent", "codex", "--root", str(tmp_path), "--no-add-instructions"])
+
+    assert result.exit_code == 0, result.output
+    assert tmp_path.joinpath(".codex", "config.toml").is_file()

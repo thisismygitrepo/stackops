@@ -1301,8 +1301,8 @@ StackOpsAgentsAddConfigCommand = TypedDict(
     "StackOpsAgentsAddConfigCommand",
     {
         "command_name": Literal["add-config"],
-        "short_name": Literal["g"],
-        "help": Literal["<g> Initialize AI configurations in the current repository"],
+        "short_name": Literal["c"],
+        "help": Literal["<c> Initialize AI configurations in the current repository"],
         "subcommands": EmptySubcommands,
     },
 )

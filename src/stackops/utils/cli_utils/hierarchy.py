@@ -1121,8 +1121,8 @@ STACKOPS_AGENTS_ADD_SYMLINKS_COMMAND: "StackOpsAgentsAddSymlinksCommand" = {
 
 STACKOPS_AGENTS_ADD_CONFIG_COMMAND: "StackOpsAgentsAddConfigCommand" = {
     "command_name": "add-config",
-    "short_name": "g",
-    "help": "<g> Initialize AI configurations in the current repository",
+    "short_name": "c",
+    "help": "<c> Initialize AI configurations in the current repository",
     "subcommands": {},
 }
 

@@ -413,9 +413,9 @@ def get_app() -> typer.Typer:
     )
     agents_app.command(name="l", no_args_is_help=True, hidden=True)(create_symlink_command)
     agents_app.command(
-        "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<g> Initialize AI configurations in the current repository"
+        "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<c> Initialize AI configurations in the current repository"
     )(init_config)
-    agents_app.command("g", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
+    agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)
