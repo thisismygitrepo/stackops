@@ -23,8 +23,8 @@ Coordinate the user's parallel agents: create external agent sessions, delegate 
 3. Every managed agent must have exactly one recorded Herdr target. Prefer a unique `herdr agent start <name>` target plus its workspace/tab/pane identifiers; use a named `herdr` session only as the fallback when agent/tab commands are unavailable.
 4. Every managed agent should have its own Herdr tab by default, with one pane in that tab. Multiple agents in panes of one tab/window are allowed only when the user explicitly requests that layout; then panes must be split into roughly equal screen areas.
 5. Use interactive CLI agents by default:
-   - for Codex, start `codex`
-   - for OpenCode, start `opencode`
+   - for Codex, start `codex --dangerously-bypass-approvals-and-sandbox --cd '<cwd>'`
+   - for OpenCode, start `opencode run --interactive --dangerously-skip-permissions --dir '<cwd>'`
 6. Use a different agent type only when the user asks.
 7. Use non-interactive CLI invocation only when the user explicitly asks for it or the target agent has no interactive mode.
 
@@ -89,7 +89,7 @@ If `herdr` has no workspace/tab command surface, fall back to one named session 
 herdr --session '<parallel-agent-name>'
 herdr workspace create --cwd '<cwd>' --label '<run-name>' --no-focus
 herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<parallel-agent-name>' --no-focus
-herdr agent start '<parallel-agent-name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <agent argv...>
+herdr agent start '<parallel-agent-name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
 herdr session list --json
 herdr agent list
 herdr agent get '<parallel-agent-name>'
@@ -112,6 +112,7 @@ Send each agent a complete, standalone instruction. Include:
 - the user's objective or delegated slice of work
 - current working directory
 - relevant project/session rules
+- the autonomous launch/permission mode already used for the worker
 - exact files, commands, or context needed
 - expected output format
 - whether the agent may edit files or should only inspect and report

@@ -2,6 +2,23 @@
 
 Read this reference before using any workflow command. Use it together with the specific command reference linked from `SKILL.md`.
 
+## Managed Agent Launch Permissions
+
+Managed workflow agents are autonomous workers. Launch every managed Codex/OpenCode/CLI agent with the target workdir set explicitly and with the target CLI's no-approval/full-permission mode enabled, unless the user explicitly requests inspect-only or supervised execution. Do not start a managed agent with default permission prompts and hope it asks the user later; that commonly leaves Herdr sessions blocked on directory creation, file edits, command execution, network access, or sandbox escalation.
+
+Before using `herdr agent start`, `herdr --session`, or a pane fallback, inspect the target CLI help when the required launch flags are not already known. If the target CLI exposes no no-approval/full-permission mode, report that limitation before delegation instead of creating a worker that is likely to stall.
+
+Known autonomous launch argv:
+
+```bash
+codex --dangerously-bypass-approvals-and-sandbox --cd '<workdir>'
+opencode run --interactive --dangerously-skip-permissions --dir '<workdir>'
+```
+
+When a workflow example uses `<autonomous agent argv...>`, substitute the autonomous argv for that agent type. For Codex, `--dangerously-bypass-approvals-and-sandbox` disables approval prompts and sandboxing for the delegated worker; keep `--cd '<workdir>'` even when Herdr also sets `--cwd` so the agent's own project root is explicit. For OpenCode, use `opencode run --interactive --dangerously-skip-permissions --dir '<workdir>'` rather than plain `opencode` when autonomous tool use is required. Use other CLIs' equivalent documented flags when delegating to another agent type.
+
+These launch permissions do not widen the delegated task scope. The agent prompt must still restrict work to the requested repository/worktree, project rules, and explicit user objective.
+
 ## Activity Ledger
 
 Use Herdr commands for registration, status, command visibility, and short operational annotations before writing local JSON:
@@ -73,7 +90,7 @@ Known command surface:
 herdr --session '<short descriptive name>'
 herdr workspace create --cwd '<cwd>' --label '<short descriptive name>' --no-focus
 herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<short descriptive name>' --no-focus
-herdr agent start '<short descriptive name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <agent argv...>
+herdr agent start '<short descriptive name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
 herdr update --handoff
 herdr session list --json
 herdr agent list

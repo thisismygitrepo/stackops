@@ -21,7 +21,7 @@ The handover must start a normal interactive agent through `herdr`, not an inter
    - commands run and outcomes
    - unresolved errors, blockers, and next steps
 4. Write a concise handover note that is actionable for the next agent.
-5. Launch the selected agent CLI through a new named `herdr` session and, when supported, its own Herdr tab with exactly one pane. When using `herdr agent start`, target a fresh tab with `--tab <tab_id>` or a workspace with `--workspace <workspace_id>` and do not pass `--split` unless the user requested panes.
+5. Launch the selected agent CLI with the autonomous launch argv from [herdr.md](herdr.md) through a new named `herdr` session and, when supported, its own Herdr tab with exactly one pane. When using `herdr agent start`, target a fresh tab with `--tab <tab_id>` or a workspace with `--workspace <workspace_id>` and do not pass `--split` unless the user requested panes.
 6. Submit the handover note to the new agent with the shared Herdr prompt submission protocol: send the text, send an explicit `Enter` key to the target pane, and verify the agent accepted it before stopping or reporting the handover as done.
 7. Tell the user the new `herdr` session name, visible status, and whether the note was confirmed submitted.
 
@@ -37,7 +37,7 @@ Current directory:
 <absolute path>
 
 Agent command:
-<agent executable and important flags>
+<agent executable and autonomous launch flags>
 
 Project/session rules:
 <critical instructions that affect command execution, privacy, tests, commits, deployment, or task tracking>
@@ -68,7 +68,7 @@ Preserve the global `herdr` layout rule for handover: one new agent means one ne
 
 If the user explicitly requests a handover into a pane, keep the existing and new panes roughly equal with `herdr pane layout`, `herdr pane resize`, or the closest available pane command.
 
-If the target agent command requires flags or a specific entrypoint, include them when launching or configuring the `herdr` session according to `herdr --help`.
+Use the shared autonomous launch argv from [herdr.md](herdr.md). If the target agent command requires additional flags or a specific entrypoint, include them when launching or configuring the `herdr` session according to `herdr --help`.
 
 Use a name that identifies the work without being noisy:
 

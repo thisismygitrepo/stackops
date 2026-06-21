@@ -1,6 +1,6 @@
 ---
 name: workflows
-description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-isolated-agents, asks to hand off current work, asks for iterative improvement agents, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/another CLI agent to continue or coordinate work.
+description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/another CLI agent to continue or coordinate work.
 ---
 
 # Workflows
@@ -10,7 +10,7 @@ Use this skill to coordinate external agent workflows through `herdr`, including
 This skill provides four commands:
 
 - `handover`: transfer active work to a new interactive agent session.
-- `iter`: run an iterative improvement chain where each agent either reaches the goal or records results and starts the next iteration agent in the same Herdr workspace.
+- `iter`: run an unbounded improvement chain where each agent performs one pass and starts the next iteration agent in the same Herdr workspace.
 - `parallel-agents`: coordinate the user's external parallel agents.
 - `parallel-isolated-agents`: create `wt`/Worktrunk-managed isolated worktrees and start one Herdr-managed agent per worktree.
 

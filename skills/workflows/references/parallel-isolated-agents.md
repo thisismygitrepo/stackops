@@ -52,7 +52,7 @@ parallel-isolated/<repo-name>-<branch-name>-<unique-id>-agent-02
 wt -C '<repo-root>' switch --create '<agent-branch>' --base=@ --format json --no-cd
 ```
 
-7. Start one agent per worktree through `herdr`. If `herdr workspace create`, `herdr tab create`, and `herdr agent start` exist, create one workspace for the parallel-isolated-agents run, create one tab per agent with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`, then launch the agent with `herdr agent start <agent-name> --cwd <worktree> --workspace <workspace_id> --tab <tab_id> --no-focus -- <agent argv...>`.
+7. Start one agent per worktree through `herdr` with autonomous launch argv. If `herdr workspace create`, `herdr tab create`, and `herdr agent start` exist, create one workspace for the parallel-isolated-agents run, create one tab per agent with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`, then launch the agent with `herdr agent start <agent-name> --cwd <worktree> --workspace <workspace_id> --tab <tab_id> --no-focus -- <autonomous agent argv...>`.
 8. If workspaces are unavailable but tabs exist, create one tab per agent and verify each tab has exactly one pane. Otherwise use one named `herdr` session per agent. Use panes only when the user explicitly asked for a pane-based layout; in that case, create one tab/window, split it into roughly equal panes, and launch exactly one agent per pane.
 9. Send each agent a complete, standalone instruction describing its assigned hypothesis, file area, or change strategy. For interactive agents, follow the shared Herdr prompt submission protocol: send the text, send an explicit `Enter` key to the target pane, and verify the agent accepted it before stopping or reporting the run as launched.
 10. Index every worktree and Herdr session/agent/workspace/tab/pane identifier in `.ai/workflows/parallel-agents/contracts/agents.json`; leave status, recent output, command history, and routine timestamps in Herdr.
@@ -96,9 +96,9 @@ Use `wt merge` from an agent worktree only when the user explicitly asks to inte
 Prefer the least crowded `herdr` layout the installed CLI supports:
 
 - one workspace for the whole parallel-isolated-agents run, created with `herdr workspace create --cwd <repo-root> --label <run-name> --no-focus`
-- one Herdr tab per agent inside that workspace, created with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`, followed by `herdr agent start <agent-name> --cwd <worktree> --workspace <workspace_id> --tab <tab_id> --no-focus -- <agent argv...>`
+- one Herdr tab per agent inside that workspace, created with `herdr tab create --workspace <workspace_id> --cwd <worktree> --label <agent-name> --no-focus`, followed by `herdr agent start <agent-name> --cwd <worktree> --workspace <workspace_id> --tab <tab_id> --no-focus -- <autonomous agent argv...>`
 - one named session per agent only when workspace or tab/window commands are not exposed by `herdr --help`
-- one shared tab/window with multiple panes only when the user explicitly asks for panes; use `herdr agent start ... --split right|down -- <agent argv...>` or `herdr pane split ... --ratio FLOAT` according to installed help, split panes into roughly equal sizes, and run exactly one agent per pane
+- one shared tab/window with multiple panes only when the user explicitly asks for panes; use `herdr agent start ... --split right|down -- <autonomous agent argv...>` or `herdr pane split ... --ratio FLOAT` according to installed help, split panes into roughly equal sizes, and run exactly one agent per pane
 
 Do not create more than one agent pane in a tab/window by default. If a command would add a pane to an existing tab/window and the user did not request panes, stop and choose workspace/tab creation instead.
 
@@ -123,6 +123,7 @@ Each agent instruction must include:
 - absolute worktree path
 - source repo, source branch, and source commit
 - project/session rules
+- autonomous launch/permission mode already used for that worker
 - allowed scope of edits
 - expected output format
 - instruction to verify local state before editing
