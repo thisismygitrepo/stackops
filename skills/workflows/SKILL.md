@@ -32,6 +32,8 @@ Use `herdr` as the process and session coordinator. `herdr` is the source of tru
 
 Keep project files small and durable. Store stable identifiers, worktree ownership, iteration records, and exceptional notes only where the command reference requires them. Do not mirror Herdr status, full transcripts, message timestamps, result timestamps, or routine activity into local JSON or Markdown.
 
+Use pointer-first cross-agent communication. For any non-trivial delegated context, write a Markdown packet under the workflow run directory and send the agent only a short Herdr prompt that points to the packet path. Each agent owns its own record directory; shared files must stay bounded summaries and pointer indexes.
+
 Keep the distinction between tabs/windows and panes explicit. Herdr exposes top-level terminal targets as `tab` resources inside a `workspace`; treat a user request for tabs or windows as one Herdr tab per agent unless the installed CLI exposes a separate window concept. A pane is only a split inside one tab/window.
 
 Use one agent per separate Herdr tab by default, or one named `herdr` session per agent when workspace/tab commands are unavailable. Do not put multiple agents into panes inside one tab/window unless the user explicitly asks for a pane-based layout.
