@@ -169,18 +169,28 @@ stackopsMaintinanceUpdateLogic:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsUpdateAgentsConfig:
-  description: Check latest supported agent config docs and update agents add-config outputs.
+  description: Use workflows parallel-agents to update agents add-config outputs, one external agent per supported target.
   prompt: |
+    Use the `$workflows` skill with the `parallel-agents` command.
+
     Please update StackOps `agents add-config` support against the latest official docs for every supported agent.
 
-    Start by inspecting the live command, then discover the relevant implementation, templates, privacy helpers, and tests from the repository:
+    This is an orchestration prompt. Start by inspecting the live command, then discover the relevant implementation, templates, privacy helpers, and tests from the repository:
     - `uv run stackops agents add-config --help`
     - Use fast repository search to find the command registration, implementation, generated templates, privacy config helpers, and tests.
     - Do not assume file locations from this prompt; verify the current source layout before editing.
 
     Determine the supported `agents add-config --agent` values from the live command and current source. Do not rely on this prompt for a hardcoded agent list.
 
-    For each supported agent:
+    After determining the supported values, launch Herdr-managed interactive agents through `$workflows parallel-agents`:
+    - Start exactly one external agent per supported `agents add-config --agent` value.
+    - Give each spawned agent one supported target only, and name the Herdr target after that assigned target.
+    - Do not group multiple supported targets into one spawned agent.
+    - Do not split one supported target across multiple spawned agents unless the user explicitly asks for that later.
+    - Do not use internal subagents, `agents parallel create`, `agents parallel run-parallel`, generated layout workflows, `--run`, `--Run`, or `-R`.
+    - Submit every spawned-agent prompt and verify each agent accepted it before reporting launch status.
+
+    Tell each spawned agent to handle only its assigned supported target:
     - Look up the latest official documentation for repository config, user config, instruction files, ignore files, privacy/telemetry controls, and any required config file names or locations.
     - Prefer primary sources: official docs, official repos, and current CLI `--help` output.
     - Compare the docs against what StackOps currently writes through `agents add-config`.
@@ -190,8 +200,10 @@ stackopsUpdateAgentsConfig:
     - Keep generated defaults minimal, portable, and safe to commit unless the file is intentionally private.
     - Preserve existing tests where behavior is still correct, and add focused tests for changed generated outputs or content.
     - Do not make cosmetic rewrites unrelated to agent config correctness.
+    - Expect other external agents may edit adjacent agent config code or shared tests; keep changes scoped to the assigned target and reconcile conflicts conservatively.
 
     Final response:
     - List each agent checked.
+    - Report the Herdr target for each spawned agent and whether its prompt was accepted.
     - Summarize which config outputs changed.
     - Cite or name the official documentation used for any behavior change.

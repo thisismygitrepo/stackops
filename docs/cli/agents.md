@@ -100,7 +100,7 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 - free-form prompt parts after `--`; option-looking tokens after the delimiter are prompt text, not StackOps flags
 
-For `run-prompt`, `--agent` defaults to `copilot`. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
+For `run-prompt`, `--agent` defaults to `codex`. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
 Shell metacharacters such as `|`, `>`, `$`, and `*` are still interpreted by your shell before StackOps receives the prompt.
 
 Examples:
@@ -131,7 +131,7 @@ agents run-interactive --agent codex --caveman --headroom
 
 `ask` is the lighter-weight direct path. Current behavior to keep in mind:
 
-- default agent is `pi`
+- default agent is `codex`
 - `--reasoning` accepts `n`, `l`, `m`, `h`, `x`
 - that shortcut is only supported for `codex`, `copilot`, and `pi`
 - `--file-prompt` appends the file contents into the final prompt with explicit file boundary markers
