@@ -69,7 +69,7 @@ Use pointer-first communication:
 - Write non-trivial task, result, handoff, and review context to Markdown under the workflow run directory.
 - Send agents a short Herdr prompt that names the packet path and the action to take.
 - Do not paste the same long context into both the Herdr prompt and Markdown records.
-- Do not make later agents read every previous agent directory. They read the shared run contract, a bounded shared state file, and the packet addressed to them. They open older records only when the shared state or packet points to a specific file.
+- Do not make later agents read every previous agent directory. They read the shared run contract and the packet addressed to them. They read bounded shared state or older records only when the workflow reference requires it or the addressed packet points to a specific file.
 
 Use agent-owned directories for Markdown records:
 

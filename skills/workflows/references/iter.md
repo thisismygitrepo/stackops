@@ -36,23 +36,21 @@ Avoid hidden global state, broad rewrites without stable boundaries, duplication
 Keep durable context under `.ai/workflows/iterations/<slug>/`:
 
 - `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
-- `state.md`: bounded rolling state with current best result, active risks, blockers, anti-repeat notes, and useful next directions. Rewrite or compact this file each pass; do not append indefinitely.
-- `index.md`: one compact row per iteration with Herdr target, packet paths, result path, handoff path, files touched, validation, and short outcome.
+- `state.md`: bounded rolling state with current best result, active risks, blockers, and anti-repeat notes. Rewrite or compact this file only when those shared facts change; do not append indefinitely.
+- `index.md`: one compact row per iteration with Herdr target, task path, result path, recommendation path, files touched, validation, and short outcome.
 - `iter-001/task.md`: the task packet addressed to that iteration.
 - `iter-001/notes.md`: optional local notes for that iteration; not required reading for later iterations.
 - `iter-001/result.md`: files changed, commands run, validation evidence, criteria status, risks, and state/index updates made.
-- `iter-001/handoff.md`: the packet from this iteration to the next one. It must point to relevant records instead of copying old handoffs.
+- `iter-001/recommendation.md`: the compact recommendation from this iteration to the next one. It must point to relevant records only when the next iteration may need detail.
 
-Do not maintain a growing prompt transcript in Markdown. Do not paste prior handoffs into the next prompt. The Markdown packet is the source of truth; the Herdr prompt points to it.
+Do not maintain a growing prompt transcript in Markdown. Do not paste prior recommendations into the next prompt. The Markdown packet is the source of truth; the Herdr prompt points to it.
 
 Every iteration reads only:
 
 - `run.md`
-- `state.md`
 - its own `iter-<NNN>/task.md`
-- the immediately previous `iter-<NNN-1>/handoff.md`, when the task packet points to it
 
-An iteration may open older records only when `state.md`, `index.md`, or the incoming handoff points to a specific file, or when it needs to verify a suspected duplicate idea. It must not bulk-read all prior `iter-*` directories.
+The previous iteration's recommendation must be copied into `iter-<NNN>/task.md` as a short starting hypothesis, not delegated as required reading. An iteration may open `state.md`, `index.md`, older results, or older recommendations only when it needs detail to verify the recommendation, avoid a duplicate idea, or understand a concrete blocker. It must not bulk-read all prior `iter-*` directories.
 
 ## Naming And Launch
 
@@ -79,7 +77,7 @@ herdr tab list --workspace '<workspace_id>'
 herdr pane list --workspace '<workspace_id>'
 ```
 
-For non-interactive mode, run the target CLI's documented one-shot invocation through Herdr. If the one-shot agent cannot launch the next generation itself, the controller that reads its written handoff must launch the next agent from the packet path.
+For non-interactive mode, run the target CLI's documented one-shot invocation through Herdr. If the one-shot agent cannot launch the next generation itself, the controller that reads its written recommendation must launch the next agent from the packet path.
 
 ## Task Packet
 
@@ -93,12 +91,13 @@ Run records:
 
 Read first:
 - run.md
-- state.md
 - iter-<NNN>/task.md
-- iter-<NNN-1>/handoff.md, if this packet names one
 
-Incoming handoff:
-<path to previous handoff, or "none for iter-001">
+Previous recommendation:
+<one short recommendation from iter-<NNN-1>, or "none for iter-001">
+
+Optional detail pointers:
+<specific paths only if useful; do not read these by default>
 
 Current focus:
 <one focused improvement direction, or instruction to independently inspect within scope>
@@ -106,9 +105,12 @@ Current focus:
 Hard rules:
 - Do exactly one focused improvement pass.
 - Verify local state before editing.
+- Treat the previous recommendation as a starting hypothesis, not a command; inspect enough to confirm it is still the best next move.
+- Read optional detail pointers, state.md, index.md, or older iteration records only when they help confirm facts, understand a blocker, or avoid repeating work.
 - Validate with the strongest practical evidence.
-- Update state.md, index.md, iter-<NNN>/result.md, and iter-<NNN>/handoff.md.
-- Create iter-<NNN+1>/task.md before launching the next agent.
+- Write iter-<NNN>/result.md and iter-<NNN>/recommendation.md.
+- Update index.md with one compact row. Update state.md only when shared best state, risks, blockers, or anti-repeat notes changed.
+- Create iter-<NNN+1>/task.md before launching the next agent, and copy the recommendation into it inline.
 - Start iter-<NNN+1> in the same Herdr workspace and submit only a short prompt pointing to its task packet.
 - Never stop because criteria look satisfied or no obvious idea remains.
 - Stop only for explicit external stop/pause, launch failure, concrete blocker, or scope/safety violation.
@@ -117,23 +119,23 @@ Expected final report:
 <changes made, validation run, next Herdr target/status, blockers if any>
 ```
 
-## Handoff Packet
+## Recommendation Packet
 
-The handoff to the next agent is a file, not a large Herdr prompt. `iter-<NNN>/handoff.md` must include:
+The recommendation to the next agent is a compact file, not a large Herdr prompt. `iter-<NNN>/recommendation.md` must include:
 
-- current iteration summary
-- files changed and validation evidence from this iteration
-- state/index updates made
-- current best result and active risks
-- bad or low-value directions to avoid
-- credible next ideas, or instruction to independently inspect for marginal improvements
-- specific older record paths only when the next agent truly needs them
-- mode-specific launch instructions
-- the same unbounded continuation protocol
+- one recommended next move, or instruction to independently inspect for marginal improvements
+- why that move is credible
+- the latest validation signal that matters to the recommendation
+- active risk or blocker only if it changes the next move
+- specific detail paths only when the next agent may need them
+- mode-specific launch differences only when they differ from `run.md`
+- a pointer back to the unbounded continuation protocol in `run.md`
 
-The handoff must not include prior handoffs verbatim, full command output, full Herdr transcripts, or a copied list of every previous iteration.
+Keep it short enough to copy into the next task packet without consuming meaningful context; prefer 5-10 lines. Put full files changed, commands run, validation evidence, criteria status, and state/index updates in `iter-<NNN>/result.md`, not in the recommendation.
 
-Before launching `iter-<NNN+1>`, write `iter-<NNN+1>/task.md` that points to `run.md`, `state.md`, and `iter-<NNN>/handoff.md`. Then submit a short prompt:
+The recommendation must not include prior recommendations verbatim, full command output, full Herdr transcripts, or a copied list of every previous iteration.
+
+Before launching `iter-<NNN+1>`, write `iter-<NNN+1>/task.md` that points to `run.md`, includes the previous recommendation inline, and lists optional detail paths only when useful. Then submit a short prompt:
 
 ```text
 Read <records>/iter-<NNN+1>/task.md and follow it. Do not assume access to prior conversation.
