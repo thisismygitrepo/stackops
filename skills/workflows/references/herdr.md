@@ -1,14 +1,31 @@
 # Herdr Mechanics
 
-Read this reference before using any workflow command. Use it together with the specific command reference linked from `SKILL.md`.
+Read this before any workflow command. `herdr` is the live ledger for external agent process state, terminal output, pane metadata, and prompt delivery.
 
-## Activity Ledger
+## Launch
 
-Use Herdr commands for registration, status, command visibility, and short operational annotations before writing local JSON:
+Managed agents are autonomous workers. Start Codex/OpenCode/CLI agents with the target workdir set explicitly and with the target CLI's no-approval/full-permission mode enabled unless the user asks for inspect-only or supervised execution.
+
+Known autonomous argv:
 
 ```bash
+codex --dangerously-bypass-approvals-and-sandbox --cd '<workdir>'
+opencode run --interactive --dangerously-skip-permissions --dir '<workdir>'
+```
+
+When examples use `<autonomous agent argv...>`, substitute the matching argv. Keep the delegated prompt scoped to the requested repo/worktree, project rules, and user objective.
+
+## Commands
+
+Use these command families for workflow control:
+
+```bash
+herdr --help
+herdr workspace create --cwd '<cwd>' --label '<name>' --no-focus
 herdr workspace list
+herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<name>' --no-focus
 herdr tab list --workspace '<workspace_id>'
+herdr agent start '<name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
 herdr agent list
 herdr agent get '<agent target>'
 herdr agent read '<agent target>' --source recent --lines 200
@@ -20,68 +37,69 @@ herdr pane read '<pane_id>' --source recent --lines 200
 herdr pane run '<pane_id>' '<command>'
 herdr pane send-text '<pane_id>' '<text>'
 herdr pane send-keys '<pane_id>' Enter
-herdr pane report-agent '<pane_id>' --source '<workflow-source>' --agent '<label>' --state '<idle|working|blocked|unknown>' --message '<short note>'
+herdr pane report-agent '<pane_id>' --source '<workflow-source>' --agent '<label>' --state '<idle|working|blocked|unknown>' --message '<note>'
 herdr pane report-agent-session '<pane_id>' --source '<workflow-source>' --agent '<label>' --agent-session-id '<id>' --agent-session-path '<path>'
-herdr pane report-metadata '<pane_id>' --source '<workflow-source>' --agent '<label>' --title '<short title>' --custom-status '<short status>'
+herdr pane report-metadata '<pane_id>' --source '<workflow-source>' --agent '<label>' --title '<title>' --custom-status '<status>'
 herdr wait agent-status '<pane_id>' --status '<idle|working|blocked|done|unknown>' --timeout <ms>
 herdr wait output '<pane_id>' --match '<text>' --lines 200 --timeout <ms>
+herdr tab close '<tab_id>'
+herdr pane close '<pane_id>'
 ```
 
-Use a stable `--source` value such as `workflows:<run-id>:<agent-id>` for report commands.
+Inspect `herdr --help` and relevant subcommand help before using a command shape not listed here. Use stable report sources like `workflows:<run-id>:<agent-id>`.
 
-Use `herdr agent start` to create registered agent targets whenever possible, then refresh with `herdr agent list`, `herdr tab list`, and `herdr pane list` instead of manually inventing IDs.
+## Prompt Submission
 
-Use `herdr pane report-agent`, `herdr pane report-agent-session`, and `herdr pane report-metadata` only for state or metadata Herdr cannot infer from the agent process.
+For interactive agents:
 
-Use `herdr pane run` when the controller needs to run a shell command inside a managed pane because that keeps the command visible in Herdr scrollback. Use `herdr agent send` or `herdr pane send-text` for agent instructions, but treat them as text insertion only unless the installed `herdr` help explicitly says the selected command submits the prompt.
+1. Wait until the target CLI is ready.
+2. Send text with `herdr agent send` when a unique agent target exists; otherwise use `herdr pane send-text`.
+3. Resolve the pane id from `herdr agent get`, `herdr agent explain --json`, or `herdr pane list`.
+4. Send `herdr pane send-keys '<pane_id>' Enter`.
+5. Confirm Herdr shows `working` or recent output shows the prompt was accepted. If the text is still sitting in the input line, send one more `Enter` and verify again.
 
-For interactive agent prompts, submit deliberately:
+Do not report a spawn, delegation, handoff, or iteration as complete until prompt acceptance is visible.
 
-1. Wait until the target CLI is initialized and ready for input.
-2. Send the instruction text with `herdr agent send <target> <text>` when a unique agent target exists, or `herdr pane send-text <pane_id> <text>` when working directly with a pane.
-3. Resolve the target pane id from `herdr agent get`, `herdr agent explain --json`, or `herdr pane list`, then send `herdr pane send-keys <pane_id> Enter`.
-4. Refresh status and recent output. Do not count the prompt as submitted until Herdr shows `working` or recent output clearly shows the agent accepted the prompt and began responding.
-5. Before stopping, wrapping up, or claiming the spawn/delegation succeeded, verify the new agent is actually working. If the prompt text is visible but still unsubmitted, send one more explicit `Enter`, verify again, and report failure instead of claiming success if acceptance still cannot be confirmed.
+## Records
 
-## Local Records
+Local workflow files are durable contracts and cross-agent packets, not a second transcript.
 
-Local JSON must stay small: record which Herdr target belongs to which delegated role, which worktree belongs to which agent, and any lifecycle exception that Herdr cannot represent.
+Use pointer-first communication:
 
-Do not update local JSON after every send, read, wait, or observed status change. Re-query Herdr when current status, recent output, commands, or metadata are needed.
+- Write non-trivial task, result, handoff, and review context to Markdown under the workflow run directory.
+- Send agents a short Herdr prompt that names the packet path and the action to take.
+- Do not paste the same long context into both the Herdr prompt and Markdown records.
+- Do not make later agents read every previous agent directory. They read the shared run contract and the packet addressed to them. They read bounded shared state or older records only when the workflow reference requires it or the addressed packet points to a specific file.
 
-Markdown records may be used for human-readable handoffs and iteration history when a command reference requires them. Keep those records concise and focused on durable context, decisions, evidence, and next steps.
+Use agent-owned directories for Markdown records:
 
-## Layout Rules
-
-Herdr exposes top-level terminal targets as `tab` resources inside a `workspace`. Treat a user request for tabs or windows as one Herdr tab per agent unless the installed CLI exposes a separate window concept. A pane is only a split inside one tab/window.
-
-The default layout is one agent per separate Herdr tab, or one named `herdr` session per agent when workspace/tab commands are not available.
-
-Do not put multiple agents into panes inside one tab/window unless the user explicitly asks for that pane-based layout. If the user does ask for multiple agents as panes in one tab/window, split the screen roughly equally across panes, verify the pane count matches the requested agents through `herdr pane list` or equivalent metadata, and keep each pane tied to exactly one agent.
-
-Before launching agents, check `herdr tab list --workspace <workspace_id>` and `herdr pane list --workspace <workspace_id>` when available. After launch, verify the target tab has exactly one pane unless the user requested panes.
-
-Avoid `herdr agent start --split`, `herdr pane split`, or any command that would add a pane to an existing tab/window unless panes were explicitly requested.
-
-## Help And Discovery
-
-Inspect `herdr --help` and the relevant subcommand help before using a command shape that is not listed in the command reference.
-
-Known command surface:
-
-```bash
-herdr --session '<short descriptive name>'
-herdr workspace create --cwd '<cwd>' --label '<short descriptive name>' --no-focus
-herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<short descriptive name>' --no-focus
-herdr agent start '<short descriptive name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <agent argv...>
-herdr update --handoff
-herdr session list --json
-herdr agent list
-herdr tab list --workspace '<workspace_id>'
-herdr pane list --workspace '<workspace_id>'
-herdr session attach '<session name>'
-herdr session stop '<session name>' --json
-herdr session delete '<session name>' --json
+```text
+.ai/workflows/<workflow>/<run-id>/
+  run.md
+  state.md
+  index.md
+  agents/<agent-id>/
+    task.md
+    result.md
+    handoff.md
 ```
 
-If the installed CLI uses different terms, map them carefully from `herdr --help`. Preserve one-agent-per-tab by default.
+Workflow references may use a more specific directory name such as `iter-001/`, but the ownership rule is the same: each agent writes its own directory and only updates bounded shared files named by the workflow reference.
+
+Keep shared files bounded:
+
+- `run.md`: stable objective, scope, mode, workspace, launch argv, and constraints.
+- `state.md`: current best state, active blockers, anti-repeat notes, and next useful directions. Rewrite or compact it instead of appending indefinitely.
+- `index.md`: one compact row per agent or iteration with pointers to that agent's packets and short outcome.
+
+Local JSON stays small: record Herdr targets, delegated roles, worktree ownership, packet paths, and lifecycle exceptions Herdr cannot represent. Do not mirror live status, full prompts, transcripts, command output, or routine timestamps. Re-query Herdr for current state.
+
+Markdown records should preserve decisions, evidence, blockers, and next actions. Keep shell transcripts and routine activity in Herdr.
+
+## Layout
+
+Herdr top-level terminal targets are `tab` resources inside a `workspace`; a pane is a split inside one tab. Treat user requests for tabs or windows as one Herdr tab per agent unless installed help exposes a separate window concept.
+
+Default layout: one agent per Herdr tab, exactly one pane per tab. Use panes only when the user explicitly requests a pane layout. Then split evenly, verify pane count, and keep exactly one agent per pane.
+
+Avoid `herdr agent start --split`, `herdr pane split`, and any command that adds a pane to an existing tab unless panes were requested.

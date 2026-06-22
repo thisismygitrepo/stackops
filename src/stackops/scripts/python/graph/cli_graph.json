@@ -16097,7 +16097,7 @@
                 "signature": {
                   "raw_lines": [
                     "def agents_create(",
-                    "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent type.\")] = \"codex\",",
+                    "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent type.\")] = DEFAULT_AGENT,",
                     "    model: Annotated[str | None, typer.Option(..., \"--model\", \"-m\", help=\"Model to use, agent will use its default otherwise.\")] = None,",
                     "    reasoning_effort: Annotated[",
                     "        ReasoningEffort | None,",
@@ -16233,7 +16233,7 @@
                       "name": "agent",
                       "kind": "positional_or_keyword",
                       "type": "AGENTS",
-                      "default": "codex",
+                      "default": "DEFAULT_AGENT",
                       "required": false,
                       "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent type.')]",
                       "typer": {
@@ -16765,7 +16765,7 @@
                     "def create_context(",
                     "    prompt: Annotated[str, typer.Argument(help=\"Prompt text to send to the selected agent.\")],",
                     "    job_name: Annotated[str, typer.Option(..., \"--job-name\", \"-n\", help=\"Job name used in ./.ai/agents/<jobName>/context.md output path.\")],",
-                    "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = \"copilot\",",
+                    "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = DEFAULT_AGENT,",
                     "    separator: Annotated[",
                     "        str, typer.Option(..., \"--separator\", \"-s\", help=\"Separator between individual results in context.md. Supports escaped values like '\\\\n'.\")",
                     "    ] = DEFAULT_SEAPRATOR,",
@@ -16860,7 +16860,7 @@
                       "name": "agent",
                       "kind": "positional_or_keyword",
                       "type": "AGENTS",
-                      "default": "copilot",
+                      "default": "DEFAULT_AGENT",
                       "required": false,
                       "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent to launch.')]",
                       "typer": {
@@ -18977,7 +18977,7 @@
                 "            help=\"Prompt text. Use -- before the prompt to pass option-looking text as prompt content.\",",
                 "        ),",
                 "    ],",
-                "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = \"copilot\",",
+                "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = DEFAULT_AGENT,",
                 "    reasoning_effort: Annotated[",
                 "        ReasoningEffort | None,",
                 "        typer.Option(",
@@ -19072,7 +19072,7 @@
                   "name": "agent",
                   "kind": "positional_or_keyword",
                   "type": "AGENTS",
-                  "default": "copilot",
+                  "default": "DEFAULT_AGENT",
                   "required": false,
                   "annotation_raw": "Annotated[AGENTS, typer.Option(..., '--agent', '-a', help='Agent to launch.')]",
                   "typer": {
@@ -19307,7 +19307,7 @@
                 "    agent: Annotated[",
                 "        INTERACTIVE_AGENT,",
                 "        typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch: codex/x, copilot/c, pi/p, or omp/o.\"),",
-                "    ] = \"codex\",",
+                "    ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),",
                 "    caveman: Annotated[",
                 "        bool,",
                 "        typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with the caveman wenyan-full prompt.\"),",
@@ -19337,7 +19337,7 @@
                   "name": "agent",
                   "kind": "positional_or_keyword",
                   "type": "INTERACTIVE_AGENT",
-                  "default": "codex",
+                  "default": "cast(INTERACTIVE_AGENT, DEFAULT_AGENT)",
                   "required": false,
                   "annotation_raw": "Annotated[INTERACTIVE_AGENT, typer.Option(..., '--agent', '-a', help='Agent to launch: codex/x, copilot/c, pi/p, or omp/o.')]",
                   "typer": {
@@ -19432,7 +19432,7 @@
               "raw_lines": [
                 "def ask(",
                 "    prompt: Annotated[list[str], typer.Argument(help=\"Prompt text to pass to the selected agent.\")],",
-                "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to ask directly.\")] = \"pi\",",
+                "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to ask directly.\")] = DEFAULT_AGENT,",
                 "    reasoning: Annotated[ReasoningShortcut | None, typer.Option(\"--reasoning\", \"-r\", help=_ASK_REASONING_HELP)] = None,",
                 "    file_prompt: Annotated[",
                 "        Path | None, typer.Option(\"--file-prompt\", \"-f\", help=\"Append the contents of this file to PROMPT before asking the selected agent.\")",
@@ -19469,7 +19469,7 @@
                   "name": "agent",
                   "kind": "positional_or_keyword",
                   "type": "AGENTS",
-                  "default": "pi",
+                  "default": "DEFAULT_AGENT",
                   "required": false,
                   "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent to ask directly.')]",
                   "typer": {

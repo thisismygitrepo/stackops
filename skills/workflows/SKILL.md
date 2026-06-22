@@ -1,6 +1,6 @@
 ---
 name: workflows
-description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-isolated-agents, asks to hand off current work, asks for iterative improvement agents, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/another CLI agent to continue or coordinate work.
+description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/another CLI agent to continue or coordinate work.
 ---
 
 # Workflows
@@ -10,7 +10,7 @@ Use this skill to coordinate external agent workflows through `herdr`, including
 This skill provides four commands:
 
 - `handover`: transfer active work to a new interactive agent session.
-- `iter`: run an iterative improvement chain where each agent either reaches the goal or records results and starts the next iteration agent in the same Herdr workspace.
+- `iter`: run an unbounded improvement chain where each agent performs one pass and starts the next iteration agent in the same Herdr workspace.
 - `parallel-agents`: coordinate the user's external parallel agents.
 - `parallel-isolated-agents`: create `wt`/Worktrunk-managed isolated worktrees and start one Herdr-managed agent per worktree.
 
@@ -31,6 +31,8 @@ Do not start agents, create tabs, split panes, write workflow records, or create
 Use `herdr` as the process and session coordinator. `herdr` is the source of truth for external agent sessions, status, pane output, and live metadata.
 
 Keep project files small and durable. Store stable identifiers, worktree ownership, iteration records, and exceptional notes only where the command reference requires them. Do not mirror Herdr status, full transcripts, message timestamps, result timestamps, or routine activity into local JSON or Markdown.
+
+Use pointer-first cross-agent communication. For any non-trivial delegated context, write a Markdown packet under the workflow run directory and send the agent only a short Herdr prompt that points to the packet path. Each agent owns its own record directory; shared files must stay bounded summaries and pointer indexes.
 
 Keep the distinction between tabs/windows and panes explicit. Herdr exposes top-level terminal targets as `tab` resources inside a `workspace`; treat a user request for tabs or windows as one Herdr tab per agent unless the installed CLI exposes a separate window concept. A pane is only a split inside one tab/window.
 

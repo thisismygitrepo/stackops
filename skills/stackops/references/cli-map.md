@@ -1,212 +1,48 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-20.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-21.
 
 This reference intentionally uses:
 - direct commands only
 - canonical command names only
+- one-level command expansion through linked command reference files
 
 This reference intentionally excludes:
 - short aliases
 - hidden alias-only paths
+- nested command trees
 
-The tree is root-relative: use `devops repos sync` directly, or `stackops devops repos sync` through the umbrella entrypoint.
+Open exactly the next command reference you need instead of loading the full CLI tree.
 
 ## Direct Entry Points
 
 Defined in `pyproject.toml` `[project.scripts]`:
 
-- `devops` -> `stackops.scripts.python.devops:main`
-- `cloud` -> `stackops.scripts.python.cloud:main`
-- `fire` -> `stackops.scripts.python.fire_jobs:main`
-- `agents` -> `stackops.scripts.python.agents:main`
-- `terminal` -> `stackops.scripts.python.terminal:main`
-- `preview` -> `stackops.scripts.python.preview:main`
-- `utils` -> `stackops.scripts.python.utils:main`
-- `stackops` -> `stackops.scripts.python.stackops_entry:main`
-- `seek` -> `stackops.scripts.python.seek:main`
+- `devops` -> `stackops.scripts.python.devops:main`. Reference: [`devops`](commands/command--devops.md)
+- `cloud` -> `stackops.scripts.python.cloud:main`. Reference: [`cloud`](commands/command--cloud.md)
+- `fire` -> `stackops.scripts.python.fire_jobs:main`. Reference: [`fire`](commands/command--fire.md)
+- `agents` -> `stackops.scripts.python.agents:main`. Reference: [`agents`](commands/command--agents.md)
+- `terminal` -> `stackops.scripts.python.terminal:main`. Reference: [`terminal`](commands/command--terminal.md)
+- `preview` -> `stackops.scripts.python.preview:main`. Reference: [`preview`](commands/command--preview.md)
+- `utils` -> `stackops.scripts.python.utils:main`. Reference: [`utils`](commands/command--utils.md)
+- `stackops` -> `stackops.scripts.python.stackops_entry:main`. Reference: [`stackops`](commands/command--stackops.md)
+- `seek` -> `stackops.scripts.python.seek:main`. Reference: [`seek`](commands/command--seek.md)
 
-## Command Tree
+## Top-Level Command References
 
-```text
-stackops
-├─ devops
-│  ├─ install
-│  ├─ data
-│  │  ├─ sync
-│  │  ├─ register
-│  │  └─ edit
-│  ├─ repos
-│  │  ├─ sync
-│  │  ├─ register
-│  │  ├─ action
-│  │  ├─ analyze
-│  │  ├─ guard
-│  │  ├─ viz
-│  │  ├─ count-lines
-│  │  ├─ config-linters
-│  │  └─ cleanup
-│  ├─ config
-│  │  ├─ sync
-│  │  ├─ register
-│  │  ├─ edit
-│  │  ├─ export-dotfiles
-│  │  ├─ import-dotfiles
-│  │  ├─ terminal
-│  │  │  ├─ config-shell
-│  │  │  ├─ starship-theme
-│  │  │  ├─ pwsh-theme
-│  │  │  ├─ wezterm-theme
-│  │  │  ├─ ghostty-theme
-│  │  │  ├─ windows-terminal-theme
-│  │  │  └─ tmux-style
-│  │  │     ├─ install-oh-my-tmux
-│  │  │     ├─ apply-stackops-local
-│  │  │     ├─ preset
-│  │  │     ├─ set-option
-│  │  │     ├─ reload
-│  │  │     └─ status
-│  │  ├─ interactive
-│  │  ├─ copy-assets
-│  │  ├─ secrets
-│  │  │  ├─ search
-│  │  │  ├─ stats
-│  │  │  ├─ subset
-│  │  │  ├─ add
-│  │  │  └─ edit
-│  │  └─ dump
-│  ├─ vault
-│  │  ├─ search
-│  │  ├─ login-and-unlock
-│  │  └─ clean-cache
-│  ├─ network
-│  │  ├─ share-terminal
-│  │  ├─ share-server
-│  │  ├─ send
-│  │  ├─ receive
-│  │  ├─ share-temp-file
-│  │  ├─ ssh
-│  │  │  ├─ install-server
-│  │  │  ├─ change-port
-│  │  │  ├─ add-key
-│  │  │  └─ debug
-│  │  ├─ device
-│  │  │  ├─ switch-public-ip
-│  │  │  ├─ wifi-select
-│  │  │  ├─ bind-wsl-port
-│  │  │  ├─ open-wsl-port
-│  │  │  ├─ link-wsl-windows
-│  │  │  ├─ reset-cloudflare-tunnel
-│  │  │  └─ add-ip-exclusion-to-warp
-│  │  ├─ show-address
-│  │  └─ vscode-share
-│  ├─ execute
-│  └─ self
-│     ├─ install
-│     ├─ clone
-│     ├─ update
-│     ├─ status
-│     ├─ security
-│     │  ├─ scan
-│     │  ├─ list
-│     │  ├─ upload
-│     │  ├─ download
-│     │  ├─ install
-│     │  └─ report
-│     ├─ explore-cli
-│     │  ├─ search
-│     │  ├─ tree
-│     │  ├─ dot
-│     │  ├─ view
-│     │  └─ tui
-│     ├─ explore-python-api
-│     │  ├─ search
-│     │  ├─ tree
-│     │  ├─ dot
-│     │  ├─ view
-│     │  ├─ dump
-│     │  └─ explain-filter
-│     ├─ readme
-│     ├─ docs
-│     ├─ build-installer
-│     ├─ download-installer
-│     ├─ build-docker
-│     ├─ build-graph
-│     ├─ build-assets
-│     │  ├─ update-cli-graph
-│     │  ├─ regenerate-charts
-│     │  └─ update-skill-refs
-│     └─ workflows
-│        ├─ update-installer
-│        ├─ update-test
-│        ├─ update-docs
-│        └─ update-logic
-├─ cloud
-│  ├─ sync
-│  ├─ copy
-│  ├─ mount
-│  └─ ftpx
-├─ terminal
-│  ├─ run
-│  ├─ run-all
-│  ├─ attach
-│  ├─ kill
-│  ├─ trace
-│  ├─ create-from-function
-│  ├─ balance-load
-│  ├─ create-template
-│  ├─ summary
-│  └─ summarize
-├─ agents
-│  ├─ parallel
-│  │  ├─ create
-│  │  ├─ create-context
-│  │  ├─ run-parallel
-│  │  ├─ collect
-│  │  └─ make-template
-│  ├─ browser
-│  │  ├─ install-tech
-│  │  └─ launch-browser
-│  ├─ add-mcp
-│  ├─ add-skill
-│  ├─ add-todo
-│  ├─ add-symlinks
-│  ├─ add-config
-│  ├─ run-prompt
-│  ├─ run-interactive
-│  └─ ask
-├─ utils
-│  ├─ machine
-│  │  ├─ kill-process
-│  │  ├─ environment
-│  │  ├─ get-machine-specs
-│  │  ├─ list-devices
-│  │  └─ mount
-│  ├─ pyproject
-│  │  ├─ init-project
-│  │  ├─ upgrade-packages
-│  │  ├─ type-hint
-│  │  ├─ type-check
-│  │  ├─ type-fix (callback group)
-│  │  ├─ test-runtime (callback group)
-│  │  └─ test-reference
-│  └─ file
-│     ├─ edit
-│     ├─ download
-│     ├─ scrape
-│     ├─ pdf-merge
-│     ├─ pdf-compress
-│     ├─ ocr
-│     └─ read-db
-├─ seek
-│  └─ seek
-├─ fire
-└─ preview
-```
+- [`stackops`](commands/command--stackops.md) - umbrella dispatcher and root source.
+- [`devops`](commands/command--devops.md) - group with 8 immediate child commands.
+- [`cloud`](commands/command--cloud.md) - group with 4 immediate child commands.
+- [`terminal`](commands/command--terminal.md) - group with 10 immediate child commands.
+- [`agents`](commands/command--agents.md) - group with 10 immediate child commands.
+- [`utils`](commands/command--utils.md) - group with 3 immediate child commands.
+- [`seek`](commands/command--seek.md) - group with 1 immediate child command.
+- [`fire`](commands/command--fire.md) - command with no child commands.
+- [`preview`](commands/command--preview.md) - command with no child commands.
 
 ## Important Nuances
 
-- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self workflows` are registered only when the developer checkout exists at `~/code/stackops`.
-- Callback groups such as `utils pyproject type-fix` and `utils pyproject test-runtime` are invoked as the group command itself.
+- Developer-only command groups under `devops self` depend on the developer checkout at `~/code/stackops`.
+- Callback groups are invoked as the group command itself when their command reference has no children.
 - The generated graph stores aliases on each node. Use `src/stackops/scripts/python/graph/cli_graph.json` when alias details matter.
 - Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

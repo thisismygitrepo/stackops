@@ -1,46 +1,31 @@
 # Parallel Agents
 
-Use `parallel-agents` when the user invokes this workflow, asks for parallel agents, asks to spin up agents, asks to delegate work to external agents, or asks to coordinate multiple interactive CLI agents.
+Use `parallel-agents` when the user asks for parallel external agents, delegation to Herdr-managed agents, or coordination of multiple interactive CLI agents. Read [herdr.md](herdr.md) first.
 
-Read [herdr.md](herdr.md) before using this command.
-
-Coordinate the user's parallel agents: create external agent sessions, delegate the user's messages, collect results, report results to the user, and terminate agents when complete.
-
-## Contents
-
-- [Boundaries](#boundaries)
-- [Startup](#startup)
-- [Agent Index File](#agent-index-file)
-- [Interactive Agents](#interactive-agents)
-- [Delegating Work](#delegating-work)
-- [Collecting Results](#collecting-results)
-- [Failure Handling](#failure-handling)
+Coordinate agent creation, delegation, result collection, reporting, and shutdown through `herdr`.
 
 ## Boundaries
 
-1. All managed-agent work must happen through `herdr`.
-2. Do not use internal subagents, hidden multi-agent mechanisms, or internal workflow delegation for managed-agent work.
-3. Every managed agent must have exactly one recorded Herdr target. Prefer a unique `herdr agent start <name>` target plus its workspace/tab/pane identifiers; use a named `herdr` session only as the fallback when agent/tab commands are unavailable.
-4. Every managed agent should have its own Herdr tab by default, with one pane in that tab. Multiple agents in panes of one tab/window are allowed only when the user explicitly requests that layout; then panes must be split into roughly equal screen areas.
-5. Use interactive CLI agents by default:
-   - for Codex, start `codex`
-   - for OpenCode, start `opencode`
-6. Use a different agent type only when the user asks.
-7. Use non-interactive CLI invocation only when the user explicitly asks for it or the target agent has no interactive mode.
+1. Managed-agent work must happen through `herdr`.
+2. Do not use internal subagents or hidden delegation.
+3. Use one recorded Herdr target per managed agent.
+4. Default to one Herdr tab per agent, one pane per tab. Use multi-pane layouts only when the user asks.
+5. Use interactive agents by default with the autonomous argv from [herdr.md](herdr.md).
+6. Use a different agent type or non-interactive mode only when requested or when the target has no interactive mode.
 
 ## Startup
 
 Before creating or messaging agents:
 
-1. Inspect `herdr --help` and `herdr session --help`; if layout commands exist, inspect the relevant tab/window/pane help before creating agents.
-2. Read `herdr session list --json` to understand existing sessions and visible statuses.
-3. Identify the parallel-agents controller command from the process tree.
-4. Create `.ai/workflows/parallel-agents/contracts/agents.json` only when this workflow needs a durable recovery index across multiple operations.
-5. If the index exists, read it before creating, messaging, collecting from, or terminating agents so ownership is clear.
+1. Inspect `herdr --help` and relevant workspace/tab/pane/agent help.
+2. Read existing Herdr sessions/agents so ownership is clear.
+3. Identify the controller command from the process tree.
+4. Create `.ai/workflows/parallel-agents/contracts/agents.json` only when durable recovery across multiple operations is needed.
+5. If the index exists, read it before creating, messaging, collecting from, or terminating agents.
 
-## Agent Index File
+## Agent Index
 
-Store only durable ownership state in `.ai/workflows/parallel-agents/contracts/agents.json`. Keep the file strict JSON. Herdr remains the live registry and activity ledger.
+Store only durable ownership state in `.ai/workflows/parallel-agents/contracts/agents.json`. Herdr remains the live registry.
 
 ```json
 {
@@ -54,13 +39,14 @@ Store only durable ownership state in `.ai/workflows/parallel-agents/contracts/a
       "id": "<stable short id>",
       "role": "<delegated role or task>",
       "agent_command": "<cli command>",
-      "herdr_target": "<unique Herdr agent target name, terminal id, or null>",
-      "herdr_session": "<owning session name or null>",
+      "herdr_target": "<Herdr agent target or null>",
       "herdr_workspace": "<workspace id or null>",
       "herdr_tab": "<tab id or null>",
       "herdr_pane": "<pane id or null>",
       "worktree": "<absolute worktree path or null>",
       "branch": "<worktree branch name or null>",
+      "task_path": "<agent task packet path or null>",
+      "result_path": "<agent result packet path or null>",
       "created_at": "<ISO-8601 timestamp>"
     }
   ],
@@ -75,84 +61,81 @@ Store only durable ownership state in `.ai/workflows/parallel-agents/contracts/a
 }
 ```
 
-Update this file only when durable ownership changes: creating or closing a session, workspace, tab, pane, agent target, or worktree; assigning a stable delegated role; or recording an exception Herdr cannot represent.
+Update the index only for durable ownership changes, packet paths, or exceptions Herdr cannot represent. Do not store live statuses, full prompts, full outputs, command history, or routine timestamps.
 
-Do not store `herdr_status`, full prompts, full outputs, commands run, or routine timestamps here. Use `herdr agent list`, `herdr agent get`, `herdr pane list`, `herdr agent read`, `herdr pane read`, `herdr agent explain --json`, and Herdr report commands whenever current status or activity details are needed.
+## Communication Records
 
-## Interactive Agents
+For non-trivial delegation, create per-agent packets under:
 
-Create one `herdr` session or uniquely named Herdr agent target per agent. Use one separate Herdr tab per agent by default, each with a single pane, and use the current working directory unless the user explicitly asks for another directory.
-
-If `herdr` has no workspace/tab command surface, fall back to one named session per agent. Do not create multiple agents as panes inside one tab/window unless the user explicitly requested that; when requested, make the pane splits roughly equal and verify the pane count.
-
-```bash
-herdr --session '<parallel-agent-name>'
-herdr workspace create --cwd '<cwd>' --label '<run-name>' --no-focus
-herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<parallel-agent-name>' --no-focus
-herdr agent start '<parallel-agent-name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <agent argv...>
-herdr session list --json
-herdr agent list
-herdr agent get '<parallel-agent-name>'
-herdr pane list --workspace '<workspace_id>'
-herdr pane report-metadata '<pane_id>' --source 'workflows:<run-id>:<agent-id>' --agent '<parallel-agent-name>' --title '<role>' --custom-status 'delegated'
+```text
+.ai/workflows/parallel-agents/runs/<run-id>/
+  run.md
+  state.md
+  index.md
+  agents/<agent-id>/task.md
+  agents/<agent-id>/result.md
 ```
 
-After creating the session or agent target, wait for the CLI to initialize and verify it is visible through `herdr session list --json`, `herdr agent list`, `herdr agent get`, or the closest status command exposed by the installed `herdr`.
+Use `run.md` for shared objective, scope, project rules, and controller metadata. Use `state.md` only for bounded coordination state that every agent may need. Use `index.md` for compact pointers to agent task/result packets.
 
-If `herdr` reports tab/window or pane metadata, verify the default case has one agent per Herdr tab and exactly one pane in that tab. Report a short role/title through `herdr pane report-metadata` when useful.
+Each agent owns its `agents/<agent-id>/` directory. Agents must write results there instead of relying on the controller to scrape long terminal output. Herdr still remains the source of live status and recent output.
 
-Send messages through the documented `herdr` interface; current Herdr exposes `herdr agent send <target> <text>` and `herdr pane send-text <pane_id> <text>`. Prefer `herdr agent send` when a unique agent target exists, but treat send commands as text insertion unless installed help explicitly says otherwise. For interactive agent instructions, follow the shared prompt submission protocol: send the text, send `herdr pane send-keys <pane_id> Enter`, and verify the agent accepted the prompt before stopping or reporting it as delegated.
+## Create Agents
 
-Use `.ai/tmp_scripts` or another ignored project-local temporary directory for message files. Do not place temporary prompts outside the current project unless there is no ignored project-local option.
-
-## Delegating Work
-
-Send each agent a complete, standalone instruction. Include:
-
-- the user's objective or delegated slice of work
-- current working directory
-- relevant project/session rules
-- exact files, commands, or context needed
-- expected output format
-- whether the agent may edit files or should only inspect and report
-- reminder to verify local state before acting
-
-Do not assume agents can see the controller's conversation. Communicate through `herdr` only.
-
-## Collecting Results
-
-Use `herdr` to inspect each agent session and collect visible status:
+Use the current cwd unless the user asks for another directory.
 
 ```bash
-herdr session list --json
+herdr workspace create --cwd '<cwd>' --label '<run-name>' --no-focus
+herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<agent-name>' --no-focus
+herdr agent start '<agent-name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
+herdr agent list
+herdr agent get '<agent-name>'
+herdr pane list --workspace '<workspace_id>'
+herdr pane report-metadata '<pane_id>' --source 'workflows:<run-id>:<agent-id>' --agent '<agent-name>' --title '<role>' --custom-status 'delegated'
+```
+
+After launch, verify the agent target exists, the tab has one pane, and the CLI is ready. Submit the task packet path using the Herdr prompt protocol from [herdr.md](herdr.md).
+
+## Delegation Prompt
+
+Write each agent's standalone instruction to `agents/<agent-id>/task.md`. Include:
+
+- user objective or delegated slice
+- current working directory
+- project/session rules
+- autonomous launch/permission mode already used
+- exact files, commands, or context needed
+- expected output format
+- whether edits are allowed or the agent should inspect only
+- requirement to verify local state before acting
+- result packet path to write before reporting complete
+
+Do not assume agents can see the controller conversation.
+
+Then send only:
+
+```text
+Read <task-packet-path> and follow it. Do not assume access to prior conversation.
+```
+
+## Collect And Close
+
+Inspect agents through Herdr:
+
+```bash
 herdr agent list
 herdr agent get '<agent target>'
 herdr agent explain '<agent target>' --json
 herdr agent read '<agent target>' --source recent --lines 200
 herdr pane read '<pane_id>' --source recent --lines 200
 herdr wait agent-status '<pane_id>' --status done --timeout <ms>
-herdr session attach '<session name>'
 ```
 
-If an agent is still working according to `herdr`, leave it running and report the Herdr status. If it has completed, summarize its recent Herdr output for the user and terminate it when no further work is needed. Record only lifecycle exceptions in the local index.
-
-Terminate agents through `herdr` only. Close the smallest Herdr target that belongs to the managed agent:
+If an agent is still working, report Herdr status and leave it running. If complete, read its result packet first, use Herdr recent output only to clarify visible status or missing results, and close the smallest owned Herdr target:
 
 ```bash
 herdr tab close '<tab_id>'
 herdr pane close '<pane_id>'
-herdr session stop '<session name>' --json
-herdr session delete '<session name>' --json
 ```
 
-For the default one-agent-per-tab layout, close the indexed tab when the work is complete and no further interaction is needed. For a user-requested pane layout, close only the indexed pane.
-
-Use `herdr session stop` or `herdr session delete` only for the named-session fallback or when the whole indexed session belongs to that one managed agent.
-
-Never terminate sessions, tabs, or panes that are not owned by this workflow index unless the user explicitly instructs and the target is visible through Herdr status commands.
-
-## Failure Handling
-
-If `herdr` is unavailable, the current agent type cannot be identified, a session cannot be created, or an agent cannot be reached, report the exact failure and do not claim the agent exists.
-
-Keep the local index consistent with what actually happened.
+Never terminate targets not owned by this workflow index unless the user explicitly asks.
