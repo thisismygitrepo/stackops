@@ -59,10 +59,7 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
 def get_command_streamlit(choice_file: Path) -> str:
     # from stackops.scripts.python.helpers.helpers_utils.path import get_machine_specs
     from stackops.utils.network.address import select_lan_ipv4
-    res = select_lan_ipv4(prefer_vpn=False)
-    if res is None:
-        raise RuntimeError("Could not determine local LAN IPv4 address for streamlit app.")
-    local_ip_v4 = res
+    local_ip_v4 = select_lan_ipv4(prefer_vpn=False)
 
     computer_name = platform.node()
     port = 8501
@@ -82,18 +79,18 @@ def get_command_streamlit(choice_file: Path) -> str:
                 port = config["server"]["port"]
     from stackops.utils.installer_utils.installer_cli import install_if_missing
     install_if_missing(which="qrterminal", binary_name=None, verbose=True)
-    script = f"""
-qrterminal "http://{local_ip_v4}:{port}"
-echo "http://{local_ip_v4}:{port}"
-qrterminal "http://{computer_name}:{port}"
-echo "http://{computer_name}:{port}"
-"""
+    access_hosts = [computer_name, "localhost"]
+    if local_ip_v4 is not None:
+        access_hosts.insert(0, local_ip_v4)
+    access_urls = [f"http://{host}:{port}" for host in dict.fromkeys(access_hosts)]
+    script = "\n".join(f'''qrterminal "{url}"\necho "{url}"''' for url in access_urls)
     # from stackops.utils.code import run_shell_script
     # run_shell_script(script)
     from stackops.utils.meta import print_code
     print_code(code=script, lexer="shell", desc="Streamlit QR Codes and URLs")
 
-    message = f"🚀 Streamlit app is running @:\n1- http://{local_ip_v4}:{port}\n2- http://{computer_name}:{port}\n3- http://localhost:{port}"
+    numbered_access_urls = "\n".join(f"{index}- {url}" for index, url in enumerate(access_urls, start=1))
+    message = f"🚀 Streamlit app is running @:\n{numbered_access_urls}"
     from rich.panel import Panel
     from rich import print as rprint
 
