@@ -1,6 +1,6 @@
 ---
 name: workflows
-description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/another CLI agent to continue or coordinate work.
+description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
 ---
 
 # Workflows

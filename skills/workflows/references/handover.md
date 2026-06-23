@@ -10,6 +10,7 @@ Start a normal external agent through `herdr`, not an internal subagent. Use a f
 2. Identify the current interactive agent executable from the process tree:
    - `codex` hands over to `codex`
    - `opencode` hands over to `opencode`
+   - `pi` hands over to `pi`
    - another CLI hands over to the same executable
 3. Gather fresh context: cwd, branch, git status, changed files, task tracker state, commands run, outcomes, blockers, and next steps.
 4. Write the handoff packet using the format below.

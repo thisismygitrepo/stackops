@@ -4,13 +4,20 @@ Read this before any workflow command. `herdr` is the live ledger for external a
 
 ## Launch
 
-Managed agents are autonomous workers. Start Codex/OpenCode/CLI agents with the target workdir set explicitly and with the target CLI's no-approval/full-permission mode enabled unless the user asks for inspect-only or supervised execution.
+Managed agents are autonomous workers. Start Codex/OpenCode/Pi/CLI agents with the target workdir set explicitly and with the target CLI's no-approval/full-permission mode enabled unless the user asks for inspect-only or supervised execution.
 
 Known autonomous argv:
 
 ```bash
 codex --dangerously-bypass-approvals-and-sandbox --cd '<workdir>'
 opencode run --interactive --dangerously-skip-permissions --dir '<workdir>'
+pi --approve
+```
+
+Pi uses Herdr's `--cwd` to set the workdir; do not add a cwd flag to the Pi argv unless Pi adds one. If Pi status reporting is needed, install the Herdr integration first:
+
+```bash
+herdr integration install pi
 ```
 
 When examples use `<autonomous agent argv...>`, substitute the matching argv. Keep the delegated prompt scoped to the requested repo/worktree, project rules, and user objective.
