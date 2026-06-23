@@ -224,13 +224,14 @@ def get_app() -> typer.Typer:
     tmux_app = typer.Typer(help="Style tmux through the Oh My Tmux framework.", no_args_is_help=False, add_help_option=True, add_completion=False)
     tmux_app.callback(invoke_without_command=True)(tmux_style_group)
     for name, short, help_text, fn in (
-        ("install-oh-my-tmux", "i", "Install Oh My Tmux and link tmux to it.", install_oh_my_tmux),
-        ("apply-stackops-local", "l", "Copy the StackOps Oh My Tmux local config.", apply_stackops_local),
-        ("preset", "p", "Apply an Oh My Tmux color preset.", preset),
-        ("set-option", "s", "Set an Oh My Tmux tmux_conf_* option.", set_option),
-        ("reload", "r", "Reload tmux config.", reload_tmux),
+        ("install-oh-my-tmux", "i", "<i> Install Oh My Tmux and link tmux to it.", install_oh_my_tmux),
+        ("apply-stackops-local", "l", "<l> Copy the StackOps Oh My Tmux local config.", apply_stackops_local),
+        ("preset", "p", "<p> Apply an Oh My Tmux color preset.", preset),
+        ("set-option", "s", "<s> Set an Oh My Tmux tmux_conf_* option.", set_option),
+        ("reload", "r", "<r> Reload tmux config.", reload_tmux),
     ):
         tmux_app.command(name, no_args_is_help=False, help=help_text)(fn)  # type: ignore[arg-type]
         tmux_app.command(short, no_args_is_help=False, help=help_text, hidden=True)(fn)  # type: ignore[arg-type]
-    tmux_app.command("status", no_args_is_help=False, help="Show tmux styling status.")(status)
+    tmux_app.command("status", no_args_is_help=False, help="<S> Show tmux styling status.")(status)
+    tmux_app.command("S", no_args_is_help=False, help="Show tmux styling status.", hidden=True)(status)
     return tmux_app

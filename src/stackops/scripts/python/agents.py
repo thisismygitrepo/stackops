@@ -8,6 +8,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
@@ -425,7 +426,7 @@ def get_app() -> typer.Typer:
     agents_app.command(name="i", no_args_is_help=False, hidden=True)(run_interactive)
     agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
-    return agents_app
+    return apply_alias_markers(agents_app)
 
 
 def main() -> None:

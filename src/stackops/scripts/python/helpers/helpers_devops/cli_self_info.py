@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_self import developer_repo_root
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 
 def readme() -> None:
@@ -171,21 +172,21 @@ def explore_cli(ctx: typer.Context) -> None:
     """🧭 <x> Explore the StackOps CLI graph."""
     from stackops.scripts.python.graph.visualize import cli_graph_app
 
-    cli_graph_app.get_app()(ctx.args, standalone_mode=False)
+    apply_alias_markers(cli_graph_app.get_app())(ctx.args, standalone_mode=False)
 
 
 def explore_python_api(ctx: typer.Context) -> None:
     """🧭 <p> Explore the StackOps Python API graph."""
     from stackops.scripts.python.graph.visualize import python_api_graph_app
 
-    python_api_graph_app.get_app()(ctx.args, standalone_mode=False)
+    apply_alias_markers(python_api_graph_app.get_app())(ctx.args, standalone_mode=False)
 
 
 def security(ctx: typer.Context) -> None:
     """🔐 <y> Security related CLI tools."""
     import stackops.jobs.installer.checks.security_cli as security_cli_module
 
-    security_cli_module.get_app()(ctx.args, standalone_mode=False)
+    apply_alias_markers(security_cli_module.get_app())(ctx.args, standalone_mode=False)
 
 
 def docs(

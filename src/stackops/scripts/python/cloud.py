@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 import typer
 
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.cloud.defaults import read_default_cloud_config
 from stackops.utils.cloud.encryption import EncryptionModeChoice
 from stackops.utils.cloud.rclone import ShareLinkTypeChoice, ShareScopeChoice
@@ -109,7 +110,7 @@ def get_app() -> typer.Typer:
     app.command(name="ftpx", no_args_is_help=True, short_help="📦 <f> File transfer utility through SSH.")(ftpx)
     app.command(name="f", no_args_is_help=True, hidden=True)(ftpx)
 
-    return app
+    return apply_alias_markers(app)
 
 
 def main() -> None:

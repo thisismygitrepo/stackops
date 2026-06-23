@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Annotated, Literal, TypeAlias
 
 import typer
 
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+
 if TYPE_CHECKING:
     from types import ModuleType
 
@@ -32,7 +34,7 @@ def terminal(ctx: typer.Context) -> None:
     """🐚 <t> Configure your terminal profile."""
     from stackops.scripts.python.helpers.helpers_devops import cli_config_terminal
 
-    cli_config_terminal.get_app()(ctx.args, standalone_mode=False)
+    apply_alias_markers(cli_config_terminal.get_app())(ctx.args, standalone_mode=False)
 
 
 def _read_init_script(which: InitScriptKind) -> str:

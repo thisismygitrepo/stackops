@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import typer
 
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+
 if TYPE_CHECKING:
     from stackops.scripts.python.devops import EmojiDisplayDiagnostic
 
@@ -47,7 +49,7 @@ def get_app() -> typer.Typer:
     app.add_typer(get_pyproject_app(), name="p", help="Pyproject bootstrap and typing utilities", hidden=True)
     app.add_typer(get_file_app(), name="file", help="📁 <f> File, document, and database utilities")
     app.add_typer(get_file_app(), name="f", help="File, document, and database utilities", hidden=True)
-    return app
+    return apply_alias_markers(app)
 
 
 def main() -> None:

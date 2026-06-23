@@ -5,6 +5,7 @@ from typing import Annotated, Callable, TypedDict
 import typer
 
 from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 
 class EmojiDisplayDiagnostic(TypedDict):
@@ -47,10 +48,11 @@ def inspect_devops_help_emojis() -> list[EmojiDisplayDiagnostic]:
 
 
 def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer], *, prog_name: str | None = None) -> None:
+    nested_app = apply_alias_markers(app_factory())
     if prog_name is None:
-        nested_result: object = app_factory()(ctx.args, standalone_mode=False)
+        nested_result: object = nested_app(ctx.args, standalone_mode=False)
     else:
-        nested_result = app_factory()(ctx.args, prog_name=prog_name, standalone_mode=False)
+        nested_result = nested_app(ctx.args, prog_name=prog_name, standalone_mode=False)
     if isinstance(nested_result, int):
         raise typer.Exit(code=nested_result)
 
@@ -192,7 +194,7 @@ def get_app() -> typer.Typer:
     cli_app.command("s", hidden=True, context_settings=ctx_settings)(self_cmd)
 
 
-    return cli_app
+    return apply_alias_markers(cli_app)
 
 
 def main() -> None:

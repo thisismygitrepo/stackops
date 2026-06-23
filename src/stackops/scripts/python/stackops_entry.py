@@ -8,10 +8,12 @@ from typing import Annotated
 
 import typer
 from stackops.scripts.python.enums import BACKENDS_LOOSE
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 
 def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) -> None:
-    nested_result: object = app_factory()(ctx.args, standalone_mode=not ctx.args)
+    nested_app = apply_alias_markers(app_factory())
+    nested_result: object = nested_app(ctx.args, standalone_mode=not ctx.args)
     if isinstance(nested_result, int):
         raise typer.Exit(code=nested_result)
 
@@ -140,7 +142,7 @@ def get_app() -> typer.Typer:
     app.command("preview", no_args_is_help=False, help="<p> Preview files and launch reader backends")(preview)
     app.command("p", no_args_is_help=False, hidden=True)(preview)
 
-    return app
+    return apply_alias_markers(app)
 
 
 def main() -> None:

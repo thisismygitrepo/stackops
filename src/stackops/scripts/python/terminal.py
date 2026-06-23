@@ -3,6 +3,8 @@
 from typing import Literal, Annotated
 import typer
 
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+
 _SessionConflictActionLoose = Literal[
     "restart", "r",
     "rename", "n",
@@ -359,7 +361,7 @@ def get_app() -> typer.Typer:
 
     layouts_app.command("summarize", no_args_is_help=True, help=summarize.__doc__, short_help="<S> Summarize a layout file")(summarize)
     layouts_app.command("S", no_args_is_help=True, help=summarize.__doc__, hidden=True)(summarize)
-    return layouts_app
+    return apply_alias_markers(layouts_app)
 
 
 def main() -> None:
