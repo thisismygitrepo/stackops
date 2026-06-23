@@ -1,5 +1,4 @@
 from datetime import date
-from pathlib import Path
 
 from typer.testing import CliRunner
 
@@ -76,12 +75,13 @@ def test_cli_map_uses_high_level_references_without_alias_nodes() -> None:
     )
 
     assert "Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-09." in rendered
-    assert "- `devops` -> `stackops.scripts.python.devops:main`. Reference: [`devops`](commands/command--devops.md)" in rendered
-    assert "- [`stackops`](commands/command--stackops.md) - umbrella dispatcher and root source." in rendered
-    assert "- [`devops`](commands/command--devops.md) - group with 2 immediate child commands." in rendered
+    assert "- `devops` -> `stackops.scripts.python.devops:main`" in rendered
+    assert "- `UV_CACHE_DIR=/tmp/uv-cache uv run stackops --help`" in rendered
+    assert "- `UV_CACHE_DIR=/tmp/uv-cache uv run devops --help`" in rendered
     assert "devops install" not in rendered
     assert "devops data sync" not in rendered
-    assert "\n- [`d`](commands/command--d.md)" not in rendered
+    assert "commands/command--" not in rendered
+    assert "\n- [`d`" not in rendered
 
 
 def test_source_map_links_root_entrypoints_only() -> None:
@@ -89,28 +89,12 @@ def test_source_map_links_root_entrypoints_only() -> None:
 
     assert (
         "- `devops` -> `src/stackops/scripts/python/stackops_entry.py` -> "
-        "`stackops.scripts.python.devops.get_app` via `devops`. Reference: [`devops`](commands/command--devops.md)"
+        "`stackops.scripts.python.devops.get_app` via `devops`"
     ) in rendered
     assert "devops install" not in rendered
     assert "devops data sync" not in rendered
-    assert "devops self build-assets update-skill-refs" not in rendered
-
-
-def test_command_references_expand_one_level_at_a_time() -> None:
-    references = stackops_skill_refs.render_command_references(
-        cli_graph_payload=SAMPLE_GRAPH,
-        generated_on=date(2026, 6, 9),
-    )
-
-    devops_reference = references[Path("skills/stackops/references/commands/command--devops.md")]
-    data_reference = references[Path("skills/stackops/references/commands/command--devops--data.md")]
-    sync_reference = references[Path("skills/stackops/references/commands/command--devops--data--sync.md")]
-
-    assert "[`devops install`](command--devops--install.md)" in devops_reference
-    assert "[`devops data`](command--devops--data.md)" in devops_reference
-    assert "devops data sync" not in devops_reference
-    assert "[`devops data sync`](command--devops--data--sync.md)" in data_reference
-    assert "`src/stackops/scripts/python/helpers/helpers_devops/cli_data.py` -> `sync`" in sync_reference
+    assert "commands/command--" not in rendered
+    assert "commands/command--" not in rendered
 
 
 def test_update_skill_refs_command_is_registered() -> None:
