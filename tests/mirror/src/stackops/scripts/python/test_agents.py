@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 from stackops.scripts.python import agents
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive import main as interactive_main
 from stackops.scripts.python.helpers.helpers_agents import agents_ask_impl
+from stackops.scripts.python.helpers.helpers_agents import agents_iter_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
 from stackops.utils.schemas.fire_agents.fire_agents_types import DEFAULT_AGENT
 import stackops.utils.accessories as accessories
@@ -139,3 +140,39 @@ def test_add_config_short_alias_is_c(tmp_path: Path) -> None:
 
     assert result.exit_code == 0, result.output
     assert tmp_path.joinpath(".codex", "config.toml").is_file()
+
+
+def test_iter_status_command_calls_impl(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    def fake_show_iter_status() -> None:
+        calls.append("status")
+
+    monkeypatch.setattr(agents_iter_impl, "show_iter_status", fake_show_iter_status)
+
+    result = CliRunner().invoke(agents.get_app(), ["iter", "status"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == ["status"]
+
+
+def test_iter_short_alias_is_uppercase_i() -> None:
+    result = CliRunner().invoke(agents.get_app(), ["I", "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "Iter workflow maintenance" in result.output
+    assert "clean" in result.output
+
+
+def test_add_skill_short_alias_is_s() -> None:
+    result = CliRunner().invoke(agents.get_app(), ["s", "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "Add a skill" in result.output
+
+
+def test_symlink_short_alias_is_uppercase_l() -> None:
+    result = CliRunner().invoke(agents.get_app(), ["L", "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "Create symlinks" in result.output

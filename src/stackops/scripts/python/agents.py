@@ -389,6 +389,7 @@ def add_skill(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
+    from stackops.scripts.python.agents_iter import get_app as get_iter_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
 
     agents_app = typer.Typer(help="🤖 AI Agents management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
@@ -400,6 +401,8 @@ def get_app() -> typer.Typer:
         get_browser_app(), name="browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="<b> Browser automation for agent CLIs/MCP"
     )
     agents_app.add_typer(get_browser_app(), name="b", help="Browser automation for agent CLIs and MCP", hidden=True)
+    agents_app.add_typer(get_iter_app(), name="iter", help="🔁 <I> Iter workflow maintenance commands", short_help="<I> Iter workflow maintenance")
+    agents_app.add_typer(get_iter_app(), name="I", help="Iter workflow maintenance commands", hidden=True)
 
     agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries or supported skills")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)
@@ -409,10 +412,10 @@ def get_app() -> typer.Typer:
         make_todo_files
     )
     agents_app.command("d", no_args_is_help=True, hidden=True)(make_todo_files)
-    agents_app.command(name="add-symlinks", no_args_is_help=True, short_help="<l> Create symlinks to the current repo in ~/code_copies/")(
+    agents_app.command(name="add-symlinks", no_args_is_help=True, short_help="<L> Create symlinks to the current repo in ~/code_copies/")(
         create_symlink_command
     )
-    agents_app.command(name="l", no_args_is_help=True, hidden=True)(create_symlink_command)
+    agents_app.command(name="L", no_args_is_help=True, hidden=True)(create_symlink_command)
     agents_app.command(
         "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<c> Initialize AI configurations in the current repository"
     )(init_config)

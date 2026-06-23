@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-23.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-24.
 
 Use this as a root index only. Discover command groups, options, defaults, aliases, and help text from the live CLI with `--help`.
 

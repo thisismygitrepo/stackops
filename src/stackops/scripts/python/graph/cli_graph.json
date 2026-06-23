@@ -15449,6 +15449,134 @@
             ]
           },
           {
+            "kind": "group",
+            "name": "iter",
+            "fullPath": "agents iter",
+            "shortPath": "a I",
+            "help": "🔁 <I> Iter workflow maintenance commands",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "dispatches_to": "stackops.scripts.python.agents_iter.get_app"
+            },
+            "app": {
+              "help": "🔁 <c> Iter workflow maintenance commands",
+              "no_args_is_help": true,
+              "add_help_option": true,
+              "add_completion": false
+            },
+            "children": [
+              {
+                "kind": "command",
+                "name": "clean",
+                "fullPath": "agents iter clean",
+                "shortPath": "a I c",
+                "help": "Close old Herdr tabs in iter workspaces, keeping the last 3 tabs per workspace.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_iter.py",
+                  "module": "stackops.scripts.python.agents_iter",
+                  "callable": "clean"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def clean(continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat cleanup every 5 minutes.\")] = False) -> None:",
+                    "    \"\"\"Close old Herdr tabs in iter workspaces, keeping the last 3 tabs per workspace.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import clean_iter_workspaces_loop",
+                    "",
+                    "        clean_iter_workspaces_loop(continuous=continuous, report=typer.echo)",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error"
+                  ],
+                  "name": "clean",
+                  "parameters": [
+                    {
+                      "name": "continuous",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--loop', '-l', help='Repeat cleanup every 5 minutes.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--loop",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--loop"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Repeat cleanup every 5 minutes."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<c> Clean old Herdr tabs from iter workspaces",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Close old Herdr tabs in iter workspaces, keeping the last 3 tabs per workspace.",
+                "aliases": [
+                  {
+                    "name": "c",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "status",
+                "fullPath": "agents iter status",
+                "shortPath": "a I s",
+                "help": "Show each iter loop's latest iteration agent and live Herdr status.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_iter.py",
+                  "module": "stackops.scripts.python.agents_iter",
+                  "callable": "status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def status() -> None:",
+                    "    \"\"\"Show each iter loop's latest iteration agent and live Herdr status.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import show_iter_status",
+                    "",
+                    "        show_iter_status()",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error"
+                  ],
+                  "name": "status",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "<s> Show iter workspace status",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Show each iter loop's latest iteration agent and live Herdr status.",
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true
+                  }
+                ]
+              }
+            ],
+            "aliases": [
+              {
+                "name": "I",
+                "hidden": true,
+                "help": "Iter workflow maintenance commands"
+              }
+            ]
+          },
+          {
             "kind": "command",
             "name": "add-mcp",
             "fullPath": "agents add-mcp",
@@ -16051,7 +16179,7 @@
             "kind": "command",
             "name": "add-symlinks",
             "fullPath": "agents add-symlinks",
-            "shortPath": "a l",
+            "shortPath": "a L",
             "help": "Create symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
@@ -16086,14 +16214,14 @@
               ],
               "return": "None"
             },
-            "short_help": "<l> Create symlinks to the current repo in ~/code_copies/",
+            "short_help": "<L> Create symlinks to the current repo in ~/code_copies/",
             "typer": {
               "no_args_is_help": true
             },
             "doc": "Create symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}.",
             "aliases": [
               {
-                "name": "l",
+                "name": "L",
                 "hidden": true
               }
             ]
