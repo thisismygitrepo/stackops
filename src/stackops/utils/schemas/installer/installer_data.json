@@ -4434,6 +4434,27 @@
       }
     },
     {
+      "appName": "claude-code",
+      "license": "Proprietary",
+      "repoURL": "CMD",
+      "doc": "Claude Code terminal CLI for agentic coding assistance.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -fsSL https://claude.ai/install.sh | bash",
+          "windows": "powershell -c \"irm https://claude.ai/install.ps1 | iex\"",
+          "darwin": "curl -fsSL https://claude.ai/install.sh | bash"
+        },
+        "arm64": {
+          "linux": "curl -fsSL https://claude.ai/install.sh | bash",
+          "windows": "powershell -c \"irm https://claude.ai/install.ps1 | iex\"",
+          "darwin": "curl -fsSL https://claude.ai/install.sh | bash"
+        }
+      }
+    },
+    {
       "appName": "crush",
       "license": "FSL-1.1-MIT",
       "repoURL": "CMD",
