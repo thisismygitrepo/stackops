@@ -108,17 +108,17 @@ def preview(
                     program += f"""
 # p = {reader_name}("{str(choice_file)}")
 from rich.panel import Panel
-from rich.text import Text
 from rich.console import Console
+from stackops.scripts.python.helpers.helpers_preview.preview_read import print_data_preview
 from pathlib import Path
 console = Console()
 p = Path(rf"{choice_file}").absolute()
 try:
     dat = read_file(p)
-    panel_title = f"📄 Successfully read the file: {{p.name}}"
-    console.print(Panel(Text(str(dat), justify="left"), title=panel_title, expand=False))
+    print_data_preview(console=console, path=p, dat=dat)
 except Exception as e:
     error_message = f'''❌ ERROR READING FILE\nFile: {{p.name}}\nError: {{e}}'''
+    from rich.text import Text
     console.print(Panel(Text(error_message, justify="left"), title="Error", expand=False, border_style="red"))
 
 """
