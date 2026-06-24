@@ -14,6 +14,10 @@ Each generation must leave the project easier for later generations to improve. 
 
 Avoid hidden global state, broad rewrites without stable boundaries, duplication, long functions, magic configuration, tangled imports, implicit data contracts, and speculative abstractions. Prefer modest structural cleanup over a narrow local fix when it unlocks safer later work and can be validated.
 
+Calibrate the next iteration's workload dynamically. If the current pass was too small to make meaningful progress, recommend a broader next pass. If it was too broad, slow, risky, or left too much unfinished, recommend a narrower next pass. The next task should stay reasonable for one focused iteration, not preserve the previous scope by inertia.
+
+Within one iteration, use the agent's own internal sub-agent mechanism when the current agent spots a clearly parallelizable chunk of substantial work, such as independent audits, file families, benchmarks, or implementation alternatives. Keep sub-agent tasks bounded, merge their results before writing the iteration result, and do not let sub-agent coordination replace the required next-iteration launch.
+
 ## Startup
 
 1. Identify objective, evaluation criteria, and constraints. Ask only if the objective is missing; otherwise write a concrete working interpretation into the records.
@@ -107,6 +111,8 @@ Hard rules:
 - Verify local state before editing.
 - Treat the previous recommendation as a starting hypothesis, not a command; inspect enough to confirm it is still the best next move.
 - Read optional detail pointers, state.md, index.md, or older iteration records only when they help confirm facts, understand a blocker, or avoid repeating work.
+- Dynamically size the next iteration: broaden it if this pass was too small to matter, narrow it if this pass was too broad, risky, slow, or left too much unfinished.
+- When substantial work inside this pass is clearly parallelizable, use bounded internal sub-agents, then merge their findings before writing result.md.
 - Validate with the strongest practical evidence.
 - Write iter-<NNN>/result.md and iter-<NNN>/recommendation.md.
 - Update index.md with one compact row. Update state.md only when shared best state, risks, blockers, or anti-repeat notes changed.
@@ -125,6 +131,8 @@ The recommendation to the next agent is a compact file, not a large Herdr prompt
 
 - one recommended next move, or instruction to independently inspect for marginal improvements
 - why that move is credible
+- workload calibration for the next iteration: broader, narrower, or same scope, with one short reason
+- parallelization opportunity for non-communicating internal sub-agents, if one exists and is substantial enough to justify splitting work
 - the latest validation signal that matters to the recommendation
 - active risk or blocker only if it changes the next move
 - specific detail paths only when the next agent may need them
