@@ -54,7 +54,7 @@ prefix = "ctrl+a"
 # position = "bottom-center"
 
 [ui.sound]
-# enabled = true
+enabled = false
 # path = "sounds/notification.mp3"
 # done_path = "sounds/done.mp3"
 # request_path = "sounds/request.mp3"
