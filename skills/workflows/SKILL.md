@@ -1,16 +1,17 @@
 ---
 name: workflows
-description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
+description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for multiple scope-separated iter loops, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
 ---
 
 # Workflows
 
-Use this skill to coordinate external agent workflows through `herdr`, including handovers, iterative improvement chains, parallel agents, and Worktrunk-isolated parallel agents.
+Use this skill to coordinate external agent workflows through `herdr`, including handovers, iterative improvement chains, scope-separated parallel iter loops, parallel agents, and Worktrunk-isolated parallel agents.
 
-This skill provides four commands:
+This skill provides five commands:
 
 - `handover`: transfer active work to a new interactive agent session.
 - `iter`: run an unbounded improvement chain where each agent performs one pass and starts the next iteration agent in the same Herdr workspace.
+- `parallel-iters`: decompose one final goal into scope-separated lines of work, then launch one iterative agent loop per line in the same working directory so the user can integrate the finished lines later.
 - `parallel-agents`: coordinate the user's external parallel agents.
 - `parallel-isolated-agents`: create `wt`/Worktrunk-managed isolated worktrees and start one Herdr-managed agent per worktree.
 
@@ -21,6 +22,7 @@ Before acting, read the shared Herdr rules and the specific command reference:
 - Shared Herdr rules: [references/herdr.md](references/herdr.md)
 - `handover`: [references/handover.md](references/handover.md)
 - `iter`: [references/iter.md](references/iter.md)
+- `parallel-iters`: [references/parallel-iters.md](references/parallel-iters.md)
 - `parallel-agents`: [references/parallel-agents.md](references/parallel-agents.md)
 - `parallel-isolated-agents`: [references/parallel-isolated-agents.md](references/parallel-isolated-agents.md)
 

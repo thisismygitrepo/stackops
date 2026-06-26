@@ -1,4 +1,4 @@
 interface:
   display_name: "Workflows"
   short_description: "Coordinate Herdr workflows and iterative agents."
-  default_prompt: "Use $workflows to hand over work, run unbounded iter improvements, or coordinate Herdr-managed parallel agents with autonomous launch permissions."
+  default_prompt: "Use $workflows to hand over work, run unbounded iter improvements, launch scope-separated parallel iter loops, or coordinate Herdr-managed parallel agents with autonomous launch permissions."
