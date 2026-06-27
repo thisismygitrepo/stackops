@@ -15,7 +15,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | Command | Current behavior |
 | --- | --- |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
-| `browser` | Prepare browser automation tooling or launch Chrome / Brave with CDP enabled |
+| `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
 | `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
 | `add-todo` | Generate filtered checklist files for repo contents |
@@ -199,10 +199,11 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome or Brave with CDP enabled and an isolated profile for tools that attach to an existing browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. `--lan`/`-l` keeps Chrome on a localhost-only CDP port and exposes the requested port through a StackOps relay on `0.0.0.0`.
+`agents browser launch-browser` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. `--lan`/`-l` keeps the browser endpoint on localhost and exposes the requested port through a StackOps relay on `0.0.0.0`.
 
 ```bash
 agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
+agents browser launch-browser --browser edge --port 9331 --profile agent-browser
 agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
 agents browser launch-browser --browser chrome --port 9331 --lan
 agent-browser connect http://OTHER_COMPUTER_IP:9331

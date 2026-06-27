@@ -1176,7 +1176,7 @@ StackOpsAgentsBrowserLaunchBrowserCommand = TypedDict(
     {
         "command_name": Literal["launch-browser"],
         "short_name": Literal["l"],
-        "help": Literal["<l> Launch Chrome or Brave with CDP profile"],
+        "help": Literal["<l> Launch browser automation endpoint"],
         "subcommands": EmptySubcommands,
     },
 )
