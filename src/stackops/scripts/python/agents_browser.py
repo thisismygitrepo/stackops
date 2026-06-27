@@ -52,7 +52,7 @@ def launch_browser(
             help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile.",
         ),
     ] = None,
-    lan: Annotated[bool, typer.Option("--lan", "-l", help="Bind CDP to 0.0.0.0 instead of localhost.")] = False,
+    lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose CDP on 0.0.0.0 through a localhost relay.")] = False,
 ) -> None:
     """Launch Chrome or Brave with CDP enabled and an isolated profile."""
     try:
@@ -68,16 +68,18 @@ def launch_browser(
     typer.echo(f"Launched {result.browser}: pid={result.process_id}")
     typer.echo(f"Executable: {result.browser_path}")
     typer.echo(f"CDP: {result.host}:{result.port}")
+    if result.relay_process_id is not None:
+        typer.echo(f"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}")
     typer.echo(f"Profile: {result.profile_path}")
     typer.echo(f"Prompt: {result.prompt_path}")
     if lan:
-        typer.echo("CDP is bound to 0.0.0.0; use this only on a trusted network.")
+        typer.echo("CDP is exposed on 0.0.0.0 through a relay; use this only on a trusted network.")
 
 
 def get_app() -> typer.Typer:
     browser_app = typer.Typer(help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False)
     browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install agent-browser, playwright-cli, or MCP configs")(install_tech)
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
-    browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch Chrome or Brave with CDP profile")(launch_browser)
-    browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
+    browser_app.command(name="launch-browser", no_args_is_help=True, short_help="<l> Launch Chrome or Brave with CDP profile")(launch_browser)
+    browser_app.command(name="l", no_args_is_help=True, hidden=True)(launch_browser)
     return browser_app

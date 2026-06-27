@@ -199,12 +199,13 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome or Brave with CDP enabled and an isolated profile for tools that attach to an existing browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. `--lan`/`-l` binds CDP to `0.0.0.0` instead of localhost.
+`agents browser launch-browser` launches Chrome or Brave with CDP enabled and an isolated profile for tools that attach to an existing browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. `--lan`/`-l` keeps Chrome on a localhost-only CDP port and exposes the requested port through a StackOps relay on `0.0.0.0`.
 
 ```bash
 agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
 agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
 agents browser launch-browser --browser chrome --port 9331 --lan
+agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 
 ---

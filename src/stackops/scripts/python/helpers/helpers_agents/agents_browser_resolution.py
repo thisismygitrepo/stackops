@@ -33,15 +33,13 @@ def resolve_profile_path(*, browser: BrowserName, profile_name: str | None, port
     return BROWSER_PROFILES_ROOT.expanduser().joinpath(browser, normalized_profile_name)
 
 
-def build_browser_launch_command(*, browser_path: Path, port: int, host: str, profile_path: Path) -> tuple[str, ...]:
+def build_browser_launch_command(*, browser_path: Path, port: int, profile_path: Path) -> tuple[str, ...]:
     return (
         str(browser_path),
         f"--remote-debugging-port={port}",
-        f"--remote-debugging-address={host}",
         f"--user-data-dir={profile_path}",
         "--no-first-run",
         "--no-default-browser-check",
-        "--remote-allow-origins=*",
         "about:blank",
     )
 
