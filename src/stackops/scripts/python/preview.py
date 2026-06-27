@@ -30,11 +30,8 @@ def _database_backends() -> tuple[str, ...]:
     return BACKEND_CHOICES
 
 
-def _interactive_backend_options(path: str | None) -> list[str]:
+def _interactive_backend_options() -> list[str]:
     options = [str(backend) for backend in BASE_INTERACTIVE_BACKENDS]
-    if path is None:
-        return options
-
     options.extend(AUTO_PATH_BACKENDS)
     options.extend(FILE_VIEWER_BACKENDS)
     options.extend(_database_backends())
@@ -45,11 +42,11 @@ def _resolve_backend_choice(backend: BACKENDS_LOOSE) -> BACKENDS:
     return BACKENDS_MAP[backend]
 
 
-def _choose_backend_interactively(path: str | None) -> BACKENDS:
+def _choose_backend_interactively() -> BACKENDS:
     from stackops.utils.options_utils.options import choose_from_options
 
     choice = choose_from_options(
-        options=_interactive_backend_options(path=path),
+        options=_interactive_backend_options(),
         msg="Select preview backend",
         multi=False,
         custom_input=False,
@@ -63,7 +60,7 @@ def _choose_backend_interactively(path: str | None) -> BACKENDS:
 
 
 def preview(
-    path: Annotated[str | None, typer.Argument(help="path of file to read.")] = None,
+    path: Annotated[str, typer.Argument(help="path of file to read.")] = ".",
     project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
     backend: Annotated[BACKENDS_LOOSE, typer.Option("--backend", "-b", help="specify the backend to use")] = "ipython",
@@ -81,7 +78,7 @@ def preview(
             pass
     resolved_backend: BACKENDS
     if interactive:
-        resolved_backend = _choose_backend_interactively(path=path)
+        resolved_backend = _choose_backend_interactively()
     else:
         resolved_backend = _resolve_backend_choice(backend=backend)
 

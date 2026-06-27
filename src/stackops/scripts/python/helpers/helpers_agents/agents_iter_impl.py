@@ -17,6 +17,7 @@ KEEP_RECENT_TABS: Final[int] = 3
 LOOP_INTERVAL_SECONDS: Final[int] = 300
 ITER_WORKSPACE_PREFIX: Final[str] = "iter"
 ITER_AGENT_LABEL_PATTERN: Final[re.Pattern[str]] = re.compile(r"^iter-.+-(?P<iteration>[0-9]{3})$")
+LAUNCH_SOURCE_AGENT_STATUSES: Final[frozenset[str]] = frozenset({"working", "unknown"})
 _CONSOLE: Final[Console] = Console()
 
 
@@ -60,7 +61,17 @@ class HerdrAgent:
 class IterWorkspaceCleanup:
     workspace: HerdrWorkspace
     kept_tabs: tuple[HerdrTab, ...]
+    guarded_tabs: tuple[HerdrTab, ...]
     closed_tabs: tuple[HerdrTab, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class IterWorkspaceCleanupPlan:
+    workspace: HerdrWorkspace
+    tabs: tuple[HerdrTab, ...]
+    kept_tabs: tuple[HerdrTab, ...]
+    guarded_tabs: tuple[HerdrTab, ...]
+    closable_tabs: tuple[HerdrTab, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +79,7 @@ class IterWorkspaceStatus:
     workspace: HerdrWorkspace
     tabs: tuple[HerdrTab, ...]
     kept_tabs: tuple[HerdrTab, ...]
+    guarded_tabs: tuple[HerdrTab, ...]
     closable_tabs: tuple[HerdrTab, ...]
     latest_iteration: int | None
     latest_agent: HerdrAgent | None
@@ -76,10 +88,11 @@ class IterWorkspaceStatus:
 
 def clean_iter_workspaces_loop(*, continuous: bool, report: Callable[[str], None]) -> None:
     while True:
-        summaries = clean_iter_workspaces()
+        summaries = clean_iter_workspaces(report=report)
         _report_summaries(summaries=summaries, report=report)
         if not continuous:
             return
+        report(f"Next cleanup pass in {LOOP_INTERVAL_SECONDS} second(s).")
         sleep(LOOP_INTERVAL_SECONDS)
 
 
@@ -94,15 +107,16 @@ def get_iter_workspace_statuses() -> tuple[IterWorkspaceStatus, ...]:
     statuses: list[IterWorkspaceStatus] = []
     for workspace in workspaces:
         tabs = tuple(sorted(tabs_by_workspace_id.get(workspace.workspace_id, ()), key=lambda tab: tab.number))
+        agents = agents_by_workspace_id.get(workspace.workspace_id, ())
         latest_agent = _latest_iter_agent(agents=agents_by_workspace_id.get(workspace.workspace_id, ()))
-        kept_tabs = _kept_tabs(tabs=tabs)
-        closable_tabs = _closable_tabs(tabs=tabs, kept_tabs=kept_tabs)
+        cleanup_plan = _workspace_cleanup_plan(workspace=workspace, tabs=tabs, agents=agents)
         statuses.append(
             IterWorkspaceStatus(
                 workspace=workspace,
                 tabs=tabs,
-                kept_tabs=kept_tabs,
-                closable_tabs=closable_tabs,
+                kept_tabs=cleanup_plan.kept_tabs,
+                guarded_tabs=cleanup_plan.guarded_tabs,
+                closable_tabs=cleanup_plan.closable_tabs,
                 latest_iteration=_latest_iteration(agent=latest_agent),
                 latest_agent=latest_agent,
                 latest_agent_tab=_find_tab(tabs=tabs, tab_id=latest_agent.tab_id) if latest_agent is not None else None,
@@ -131,18 +145,65 @@ def build_iter_status_table(*, statuses: tuple[IterWorkspaceStatus, ...]) -> Tab
     return table
 
 
-def clean_iter_workspaces() -> tuple[IterWorkspaceCleanup, ...]:
+def clean_iter_workspaces(*, report: Callable[[str], None]) -> tuple[IterWorkspaceCleanup, ...]:
+    cleanup_plans = plan_iter_workspace_cleanups()
+    _report_cleanup_plan(cleanup_plans=cleanup_plans, report=report)
+    total_to_close = sum(len(cleanup_plan.closable_tabs) for cleanup_plan in cleanup_plans)
+    closed_count = 0
+    summaries: list[IterWorkspaceCleanup] = []
+    for cleanup_plan in cleanup_plans:
+        closed_tabs: list[HerdrTab] = []
+        for tab in cleanup_plan.closable_tabs:
+            closed_count += 1
+            report(
+                f"Closing {closed_count}/{total_to_close}: {cleanup_plan.workspace.label} "
+                f"{_format_tab_for_report(tab=tab)}"
+            )
+            _run_herdr(["herdr", "tab", "close", tab.tab_id])
+            closed_tabs.append(tab)
+        summaries.append(
+            IterWorkspaceCleanup(
+                workspace=cleanup_plan.workspace,
+                kept_tabs=cleanup_plan.kept_tabs,
+                guarded_tabs=cleanup_plan.guarded_tabs,
+                closed_tabs=tuple(closed_tabs),
+            )
+        )
+    return tuple(summaries)
+
+
+def plan_iter_workspace_cleanups() -> tuple[IterWorkspaceCleanupPlan, ...]:
     workspaces = _iter_workspaces(workspaces=_list_workspaces())
     tabs_by_workspace_id = _tabs_by_workspace_id(tabs=_list_tabs())
-    summaries: list[IterWorkspaceCleanup] = []
+    agents_by_workspace_id = _agents_by_workspace_id(agents=_list_agents())
+    cleanup_plans: list[IterWorkspaceCleanupPlan] = []
     for workspace in workspaces:
-        tabs = tabs_by_workspace_id.get(workspace.workspace_id, ())
-        kept_tabs = _kept_tabs(tabs=tabs)
-        closed_tabs = _closable_tabs(tabs=tabs, kept_tabs=kept_tabs)
-        for tab in closed_tabs:
-            _run_herdr(["herdr", "tab", "close", tab.tab_id])
-        summaries.append(IterWorkspaceCleanup(workspace=workspace, kept_tabs=kept_tabs, closed_tabs=closed_tabs))
-    return tuple(summaries)
+        tabs = tuple(sorted(tabs_by_workspace_id.get(workspace.workspace_id, ()), key=lambda tab: tab.number))
+        agents = agents_by_workspace_id.get(workspace.workspace_id, ())
+        cleanup_plans.append(_workspace_cleanup_plan(workspace=workspace, tabs=tabs, agents=agents))
+    return tuple(cleanup_plans)
+
+
+def _report_cleanup_plan(*, cleanup_plans: tuple[IterWorkspaceCleanupPlan, ...], report: Callable[[str], None]) -> None:
+    if len(cleanup_plans) == 0:
+        report("Planning iter cleanup: no iter workspaces found.")
+        return
+    total_tabs = sum(len(cleanup_plan.tabs) for cleanup_plan in cleanup_plans)
+    total_to_close = sum(len(cleanup_plan.closable_tabs) for cleanup_plan in cleanup_plans)
+    total_to_keep = sum(len(cleanup_plan.kept_tabs) for cleanup_plan in cleanup_plans)
+    total_guarded = sum(len(cleanup_plan.guarded_tabs) for cleanup_plan in cleanup_plans)
+    report(
+        f"Planning iter cleanup: {len(cleanup_plans)} workspace(s), {total_tabs} tab(s), "
+        f"closing {total_to_close}, keeping {total_to_keep}, launch-guarded {total_guarded}."
+    )
+    for cleanup_plan in cleanup_plans:
+        report(
+            f"- {cleanup_plan.workspace.label}: tabs={len(cleanup_plan.tabs)} "
+            f"close={len(cleanup_plan.closable_tabs)} keep={len(cleanup_plan.kept_tabs)} "
+            f"launch_guard={len(cleanup_plan.guarded_tabs)} workspace={cleanup_plan.workspace.workspace_id}"
+        )
+        for tab in cleanup_plan.closable_tabs:
+            report(f"  will close {_format_tab_for_report(tab=tab)}")
 
 
 def _report_summaries(*, summaries: tuple[IterWorkspaceCleanup, ...], report: Callable[[str], None]) -> None:
@@ -154,7 +215,7 @@ def _report_summaries(*, summaries: tuple[IterWorkspaceCleanup, ...], report: Ca
     for summary in summaries:
         report(
             f"- {summary.workspace.label}: closed={len(summary.closed_tabs)} kept={len(summary.kept_tabs)} "
-            f"workspace={summary.workspace.workspace_id}"
+            f"launch_guard={len(summary.guarded_tabs)} workspace={summary.workspace.workspace_id}"
         )
 
 
@@ -162,8 +223,63 @@ def _iter_workspaces(*, workspaces: tuple[HerdrWorkspace, ...]) -> tuple[HerdrWo
     return tuple(workspace for workspace in workspaces if workspace.label.startswith(ITER_WORKSPACE_PREFIX))
 
 
-def _kept_tabs(*, tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
+def _workspace_cleanup_plan(
+    *, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...]
+) -> IterWorkspaceCleanupPlan:
+    guarded_tabs = _guarded_tabs(workspace=workspace, tabs=tabs, agents=agents)
+    kept_tabs = _unique_tabs(tabs=(*_kept_recent_tabs(tabs=tabs), *guarded_tabs))
+    return IterWorkspaceCleanupPlan(
+        workspace=workspace,
+        tabs=tabs,
+        kept_tabs=kept_tabs,
+        guarded_tabs=guarded_tabs,
+        closable_tabs=_closable_tabs(tabs=tabs, kept_tabs=kept_tabs),
+    )
+
+
+def _kept_recent_tabs(*, tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
     return tuple(sorted(tabs, key=lambda tab: tab.number, reverse=True)[:KEEP_RECENT_TABS])
+
+
+def _guarded_tabs(*, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...]) -> tuple[HerdrTab, ...]:
+    launch_source_tabs = _launch_source_tabs(workspace=workspace, tabs=tabs, agents=agents)
+    guarded_tabs: list[HerdrTab] = []
+    for tab in launch_source_tabs:
+        guarded_tabs.append(tab)
+        next_tab = _next_tab(tab=tab, tabs=tabs)
+        if next_tab is not None:
+            guarded_tabs.append(next_tab)
+    return _unique_tabs(tabs=tuple(guarded_tabs))
+
+
+def _launch_source_tabs(*, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...]) -> tuple[HerdrTab, ...]:
+    source_tabs: list[HerdrTab] = []
+    for tab in tabs:
+        if tab.agent_status in LAUNCH_SOURCE_AGENT_STATUSES:
+            source_tabs.append(tab)
+    if workspace.agent_status in LAUNCH_SOURCE_AGENT_STATUSES:
+        active_tab = _find_tab(tabs=tabs, tab_id=workspace.active_tab_id)
+        if active_tab is not None:
+            source_tabs.append(active_tab)
+    for agent in agents:
+        if agent.agent_status not in LAUNCH_SOURCE_AGENT_STATUSES:
+            continue
+        agent_tab = _find_tab(tabs=tabs, tab_id=agent.tab_id)
+        if agent_tab is not None:
+            source_tabs.append(agent_tab)
+    return _unique_tabs(tabs=tuple(source_tabs))
+
+
+def _next_tab(*, tab: HerdrTab, tabs: tuple[HerdrTab, ...]) -> HerdrTab | None:
+    for candidate in sorted(tabs, key=lambda item: item.number):
+        if candidate.number > tab.number:
+            return candidate
+    return None
+
+
+def _unique_tabs(*, tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
+    tab_by_id = {tab.tab_id: tab for tab in tabs}
+    return tuple(sorted(tab_by_id.values(), key=lambda tab: tab.number))
 
 
 def _closable_tabs(*, tabs: tuple[HerdrTab, ...], kept_tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
@@ -325,7 +441,11 @@ def _format_agent_where(*, tab: HerdrTab | None, agent: HerdrAgent | None) -> st
 
 
 def _format_tab_counts(*, status: IterWorkspaceStatus) -> str:
-    return f"{len(status.tabs)} old {len(status.closable_tabs)}"
+    return f"{len(status.tabs)} total {len(status.closable_tabs)} close {len(status.guarded_tabs)} guard"
+
+
+def _format_tab_for_report(*, tab: HerdrTab) -> str:
+    return f"tab #{tab.number} {tab.label} [{tab.agent_status}] {tab.tab_id}"
 
 
 def _result_object(*, payload: JsonObject) -> JsonObject:

@@ -132,6 +132,7 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
 
 
 def search_for_files_of_interest(path_obj: Path, suffixes: set[str]) -> list[Path]:
+    include_all_suffixes = ".*" in suffixes
     if path_obj.is_file():
         return [path_obj]
     files: list[Path] = []
@@ -144,7 +145,7 @@ def search_for_files_of_interest(path_obj: Path, suffixes: set[str]) -> list[Pat
                     continue
                 directories_to_visit.append(entry)
                 continue
-            if entry.suffix not in suffixes:
+            if not include_all_suffixes and entry.suffix not in suffixes:
                 continue
             if entry.suffix == ".py" and entry.name == "__init__.py":
                 continue

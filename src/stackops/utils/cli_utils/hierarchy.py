@@ -1026,7 +1026,7 @@ STACKOPS_AGENTS_BROWSER_INSTALL_TECH_COMMAND: "StackOpsAgentsBrowserInstallTechC
 STACKOPS_AGENTS_BROWSER_LAUNCH_BROWSER_COMMAND: "StackOpsAgentsBrowserLaunchBrowserCommand" = {
     "command_name": "launch-browser",
     "short_name": "l",
-    "help": "<l> Launch Chrome or Brave with CDP profile",
+    "help": "<l> Launch browser automation endpoint",
     "subcommands": {},
 }
 

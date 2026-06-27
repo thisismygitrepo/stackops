@@ -15,7 +15,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | Command | Current behavior |
 | --- | --- |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
-| `browser` | Prepare browser automation tooling or launch Chrome / Brave with CDP enabled |
+| `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
 | `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
 | `add-todo` | Generate filtered checklist files for repo contents |
@@ -199,12 +199,16 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome or Brave with CDP enabled and an isolated profile for tools that attach to an existing browser. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. `--lan`/`-l` binds CDP to `0.0.0.0` instead of localhost.
+`agents browser launch-browser` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. By default, StackOps runs browser endpoints in one `stackops-browser` tmux session with qualified windows such as `chrome-profile-agent-browser-p9331-endpoint`; `--lan`/`-l` adds a matching relay window and exposes the requested port through a StackOps relay on `0.0.0.0`. Pass `--detached` to launch background processes instead of tmux windows.
 
 ```bash
 agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
+agents browser launch-browser --browser edge --port 9331 --profile agent-browser
 agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
 agents browser launch-browser --browser chrome --port 9331 --lan
+agents browser launch-browser --browser chrome --port 9331 --profile agent-browser --detached
+agents browser status
+agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 
 ---

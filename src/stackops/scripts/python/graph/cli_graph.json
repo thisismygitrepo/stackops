@@ -15291,7 +15291,7 @@
                 "name": "launch-browser",
                 "fullPath": "agents browser launch-browser",
                 "shortPath": "a b l",
-                "help": "Launch Chrome or Brave with CDP enabled and an isolated profile.",
+                "help": "Launch browser automation endpoint with an isolated profile when supported.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_browser.py",
                   "module": "stackops.scripts.python.agents_browser",
@@ -15300,10 +15300,10 @@
                 "signature": {
                   "raw_lines": [
                     "def launch_browser(",
-                    "    port: Annotated[int, typer.Option(\"--port\", \"-p\", help=\"Chrome DevTools Protocol remote debugging port.\")] = DEFAULT_BROWSER_PORT,",
+                    "    port: Annotated[int, typer.Option(\"--port\", \"-p\", help=\"Browser automation endpoint port.\")] = DEFAULT_BROWSER_PORT,",
                     "    browser: Annotated[",
                     "        BrowserName,",
-                    "        typer.Option(\"--browser\", \"-b\", help=\"Browser to launch for CDP automation.\", case_sensitive=False, show_choices=True),",
+                    "        typer.Option(\"--browser\", \"-b\", help=\"Browser to launch for agent automation.\", case_sensitive=False, show_choices=True),",
                     "    ] = \"chrome\",",
                     "    profile: Annotated[",
                     "        str | None,",
@@ -15313,9 +15313,9 @@
                     "            help=\"StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile.\",",
                     "        ),",
                     "    ] = None,",
-                    "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Bind CDP to 0.0.0.0 instead of localhost.\")] = False,",
+                    "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Expose endpoint on 0.0.0.0 through a localhost relay.\")] = False,",
                     ") -> None:",
-                    "    \"\"\"Launch Chrome or Brave with CDP enabled and an isolated profile.\"\"\"",
+                    "    \"\"\"Launch browser automation endpoint with an isolated profile when supported.\"\"\"",
                     "    try:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import launch_browser as launch_browser_impl",
                     "",
@@ -15326,13 +15326,16 @@
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error",
                     "",
-                    "    typer.echo(f\"Launched {result.browser}: pid={result.process_id}\")",
+                    "    typer.echo(f\"Launched {result.process_label}: pid={result.process_id}\")",
                     "    typer.echo(f\"Executable: {result.browser_path}\")",
-                    "    typer.echo(f\"CDP: {result.host}:{result.port}\")",
-                    "    typer.echo(f\"Profile: {result.profile_path}\")",
+                    "    typer.echo(f\"{result.endpoint_short_label}: {result.host}:{result.port}\")",
+                    "    if result.relay_process_id is not None:",
+                    "        typer.echo(f\"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}\")",
+                    "    if result.profile_path is not None:",
+                    "        typer.echo(f\"Profile: {result.profile_path}\")",
                     "    typer.echo(f\"Prompt: {result.prompt_path}\")",
                     "    if lan:",
-                    "        typer.echo(\"CDP is bound to 0.0.0.0; use this only on a trusted network.\")"
+                    "        typer.echo(f\"{result.endpoint_short_label} is exposed on 0.0.0.0 through a relay; use this only on a trusted network.\")"
                   ],
                   "name": "launch_browser",
                   "parameters": [
@@ -15342,7 +15345,7 @@
                       "type": "int",
                       "default": "DEFAULT_BROWSER_PORT",
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--port', '-p', help='Chrome DevTools Protocol remote debugging port.')]",
+                      "annotation_raw": "Annotated[int, typer.Option('--port', '-p', help='Browser automation endpoint port.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -15355,7 +15358,7 @@
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Chrome DevTools Protocol remote debugging port."
+                        "help": "Browser automation endpoint port."
                       }
                     },
                     {
@@ -15364,7 +15367,7 @@
                       "type": "BrowserName",
                       "default": "chrome",
                       "required": false,
-                      "annotation_raw": "Annotated[BrowserName, typer.Option('--browser', '-b', help='Browser to launch for CDP automation.', case_sensitive=False, show_choices=True)]",
+                      "annotation_raw": "Annotated[BrowserName, typer.Option('--browser', '-b', help='Browser to launch for agent automation.', case_sensitive=False, show_choices=True)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -15377,7 +15380,7 @@
                         "short_flags": [
                           "-b"
                         ],
-                        "help": "Browser to launch for CDP automation."
+                        "help": "Browser to launch for agent automation."
                       }
                     },
                     {
@@ -15408,7 +15411,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--lan', '-l', help='Bind CDP to 0.0.0.0 instead of localhost.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--lan', '-l', help='Expose endpoint on 0.0.0.0 through a localhost relay.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -15421,17 +15424,17 @@
                         "short_flags": [
                           "-l"
                         ],
-                        "help": "Bind CDP to 0.0.0.0 instead of localhost."
+                        "help": "Expose endpoint on 0.0.0.0 through a localhost relay."
                       }
                     }
                   ],
                   "return": "None"
                 },
-                "short_help": "<l> Launch Chrome or Brave with CDP profile",
+                "short_help": "<l> Launch browser automation endpoint",
                 "typer": {
-                  "no_args_is_help": false
+                  "no_args_is_help": true
                 },
-                "doc": "Launch Chrome or Brave with CDP enabled and an isolated profile.",
+                "doc": "Launch browser automation endpoint with an isolated profile when supported.",
                 "aliases": [
                   {
                     "name": "l",
@@ -20556,7 +20559,7 @@
         "signature": {
           "raw_lines": [
             "def preview(",
-            "    path: Annotated[str | None, typer.Argument(help=\"path of file to read.\")] = None,",
+            "    path: Annotated[str, typer.Argument(help=\"path of file to read.\")] = \".\",",
             "    project_path: Annotated[str | None, typer.Option(\"--project\", \"-p\", help=\"specify uv project to use\")] = None,",
             "    uv_with: Annotated[str | None, typer.Option(\"--uv-with\", \"-w\", help=\"specify uv with packages to use\")] = None,",
             "    backend: Annotated[BACKENDS_LOOSE, typer.Option(\"--backend\", \"-b\", help=\"specify the backend to use\")] = \"ipython\",",
@@ -20583,10 +20586,10 @@
             {
               "name": "path",
               "kind": "positional_or_keyword",
-              "type": "str | None",
-              "default": null,
+              "type": "str",
+              "default": ".",
               "required": false,
-              "annotation_raw": "Annotated[str | None, typer.Argument(help='path of file to read.')]",
+              "annotation_raw": "Annotated[str, typer.Argument(help='path of file to read.')]",
               "typer": {
                 "kind": "argument",
                 "param_decls": [],
