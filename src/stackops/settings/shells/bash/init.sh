@@ -105,5 +105,7 @@ else
         printf "\033[A"
         # _enable_bracketed_paste
     }
-    bind -x '"\C-r": tv_shell_history'
+    if [[ $- == *i* ]] && [[ -t 0 ]] && [[ -t 1 ]]; then
+        bind -x '"\C-r": tv_shell_history'
+    fi
 fi

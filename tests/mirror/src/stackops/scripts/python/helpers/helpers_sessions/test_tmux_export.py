@@ -74,6 +74,66 @@ def test_build_layouts_from_tmux_sessions_can_export_start_commands(monkeypatch:
     assert layouts[0]["layoutTabs"][1]["command"] == "python -m http.server"
 
 
+def test_build_layouts_from_tmux_sessions_exports_current_command_argv(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(tmux_export, "run_command", _fake_tmux_command)
+
+    def fake_find_current_pane_command_line(pane: dict[str, str]) -> str | None:
+        if pane["pane_pid"] == "101":
+            return "python -m http.server --bind 127.0.0.1"
+        return None
+
+    monkeypatch.setattr(
+        tmux_export,
+        "find_current_pane_command_line",
+        fake_find_current_pane_command_line,
+    )
+
+    layouts = tmux_export.build_layouts_from_tmux_sessions(
+        session_names=["alpha"],
+        command_source="current-command",
+    )
+
+    assert layouts[0]["layoutTabs"][0]["command"] == "zsh"
+    assert layouts[0]["layoutTabs"][1]["command"] == "python -m http.server --bind 127.0.0.1"
+
+
+def test_build_layouts_from_tmux_sessions_does_not_truncate_uv_run_current_command(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        if command == ["tmux", "list-sessions", "-F", "#S"]:
+            return subprocess.CompletedProcess(command, 0, "alpha\n", "")
+        if command[:3] == ["tmux", "list-windows", "-t"]:
+            return subprocess.CompletedProcess(command, 0, "0\tworker\t1\tactive\t@10\n", "")
+        if command[:3] == ["tmux", "list-panes", "-s"]:
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                "0\t0\t/tmp/worker\tuv\tactive\t\t\t200\t@10\t%10\tuv run python -m worker",
+                "",
+            )
+        return subprocess.CompletedProcess(command, 1, "", "unexpected tmux command")
+
+    def fake_find_current_pane_command_line(pane: dict[str, str]) -> str | None:
+        if pane["pane_pid"] == "200":
+            return "uv run python -m worker --count 2"
+        return None
+
+    monkeypatch.setattr(tmux_export, "run_command", fake_run_command)
+    monkeypatch.setattr(
+        tmux_export,
+        "find_current_pane_command_line",
+        fake_find_current_pane_command_line,
+    )
+
+    layouts = tmux_export.build_layouts_from_tmux_sessions(
+        session_names=["alpha"],
+        command_source="current-command",
+    )
+
+    assert layouts[0]["layoutTabs"][0]["command"] == "uv run python -m worker --count 2"
+
+
 def test_terminal_export_writes_layout_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     output_path = tmp_path / "tmux_layout.json"
     observed_sessions: list[str] = []

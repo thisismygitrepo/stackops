@@ -8,6 +8,9 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import (
     list_session_names,
     run_command,
 )
+from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_process_commands import (
+    find_current_pane_command_line,
+)
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview import (
     build_preview,
     collect_session_snapshot,
@@ -115,7 +118,10 @@ def _command_from_pane(
         case "shell":
             return TMUX_EXPORT_SHELL_COMMAND
         case "current-command":
-            command = pane.get("pane_command", "").strip()
+            command = (
+                find_current_pane_command_line(pane=pane)
+                or pane.get("pane_command", "").strip()
+            )
         case "start-command":
             command = pane.get("pane_start_command", "").strip()
     if command == "":
