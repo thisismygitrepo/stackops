@@ -15,6 +15,7 @@ terminal [OPTIONS] COMMAND [ARGS]...
 | `run-all` | Dynamically work through every tab in one merged run |
 | `attach` | Attach to an existing session, window/tab, or pane |
 | `kill` | Kill a session target |
+| `export` | Export running tmux sessions into a layout file |
 | `trace` | Trace a tmux session until a strict stop condition is met |
 | `summary` | Print running session summaries or one session's details |
 | `create-from-function` | Build and launch a multiprocess layout from a script function |
@@ -166,6 +167,37 @@ terminal kill --idle --all
 
 # Stop an Agent of Empires session
 terminal kill --backend aoe
+```
+
+## export
+
+Export running tmux sessions into a layout file that `terminal run` can launch.
+
+```bash
+terminal export [OPTIONS]
+```
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--sessions` | `-s` | Comma-separated tmux session names; omit for interactive multi-select |
+| `--all` | `-A` | Export all running tmux sessions without prompting |
+| `--output-path` | `-o` | Output layout file; defaults to `./tmux_export_layout.json` |
+| `--overwrite` | `-w` | Replace the output file if it already exists |
+| `--merge` | `-m` | Merge exported sessions into an existing layout file by `layoutName` |
+| `--command-source` | `-c` | `shell`, `current-command`, or `start-command`; defaults to `shell` |
+
+Examples:
+
+```bash
+# Choose tmux sessions interactively, with previews
+terminal export
+
+# Export specific sessions into a runnable layout file
+terminal export --sessions "dev,build" --output-path exported_layout.json
+
+# Export every running tmux session, then replay it with run
+terminal export --all --output-path exported_layout.json --overwrite
+terminal run --layouts-file exported_layout.json
 ```
 
 ## trace
