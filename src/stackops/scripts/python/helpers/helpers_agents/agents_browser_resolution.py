@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BrowserName,
     TEMP_BROWSER_PROFILES_ROOT,
 )
+from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
 def validate_port(*, port: int) -> None:
@@ -18,30 +19,30 @@ def validate_port(*, port: int) -> None:
 
 def resolve_browser_executable(*, browser: BrowserName) -> Path:
     system_name = platform.system()
-    candidates = _dedupe_paths(paths=(*_known_browser_paths(browser=browser, system_name=system_name), *_paths_from_names(names=_browser_command_names(browser=browser))))
+    launcher = get_browser_launcher(browser=browser)
+    candidates = _dedupe_paths(paths=(*launcher.known_paths(system_name=system_name), *_paths_from_names(names=launcher.command_names)))
     for candidate in candidates:
         if _is_executable_file(path=candidate, system_name=system_name):
             return candidate.expanduser()
     searched = "\n".join(str(candidate) for candidate in candidates)
-    raise RuntimeError(f"""Could not find {browser} executable for {system_name}. Searched:\n{searched}""")
+    raise RuntimeError(f"""Could not find {launcher.process_label} executable for {system_name}. Searched:\n{searched}""")
 
 
-def resolve_profile_path(*, browser: BrowserName, profile_name: str | None, port: int) -> Path:
+def resolve_profile_path(*, browser: BrowserName, profile_name: str | None, port: int) -> Path | None:
+    launcher = get_browser_launcher(browser=browser)
+    if launcher.profile_mode == "unsupported":
+        if profile_name is not None:
+            raise ValueError(f"""{launcher.display_name} does not support --profile""")
+        return None
     if profile_name is None:
         return TEMP_BROWSER_PROFILES_ROOT.expanduser().joinpath(browser, f"port-{port}")
     normalized_profile_name = _normalize_profile_name(profile_name=profile_name)
     return BROWSER_PROFILES_ROOT.expanduser().joinpath(browser, normalized_profile_name)
 
 
-def build_browser_launch_command(*, browser_path: Path, port: int, profile_path: Path) -> tuple[str, ...]:
-    return (
-        str(browser_path),
-        f"--remote-debugging-port={port}",
-        f"--user-data-dir={profile_path}",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "about:blank",
-    )
+def build_browser_launch_command(*, browser: BrowserName, browser_path: Path, port: int, profile_path: Path | None) -> tuple[str, ...]:
+    launcher = get_browser_launcher(browser=browser)
+    return launcher.build_command(browser_path=browser_path, port=port, profile_path=profile_path)
 
 
 def _normalize_profile_name(*, profile_name: str) -> str:
@@ -56,43 +57,6 @@ def _normalize_profile_name(*, profile_name: str) -> str:
     if Path(normalized_profile_name).is_absolute():
         raise ValueError("--profile must be a profile name, not an absolute path")
     return normalized_profile_name
-
-
-def _browser_command_names(*, browser: BrowserName) -> tuple[str, ...]:
-    match browser:
-        case "chrome":
-            return ("google-chrome-stable", "google-chrome", "chrome", "chrome.exe")
-        case "brave":
-            return ("brave-browser", "brave-browser-stable", "brave", "brave.exe")
-
-
-def _known_browser_paths(*, browser: BrowserName, system_name: str) -> tuple[Path, ...]:
-    match (system_name, browser):
-        case ("Windows", "chrome"):
-            return _windows_app_paths(relative_parts=("Google", "Chrome", "Application", "chrome.exe"))
-        case ("Windows", "brave"):
-            return _windows_app_paths(relative_parts=("BraveSoftware", "Brave-Browser", "Application", "brave.exe"))
-        case ("Darwin", "chrome"):
-            return (
-                Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
-                Path.home().joinpath("Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome"),
-            )
-        case ("Darwin", "brave"):
-            return (
-                Path("/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"),
-                Path.home().joinpath("Applications", "Brave Browser.app", "Contents", "MacOS", "Brave Browser"),
-            )
-        case _:
-            return ()
-
-
-def _windows_app_paths(*, relative_parts: tuple[str, ...]) -> tuple[Path, ...]:
-    paths: list[Path] = []
-    for environment_variable in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
-        environment_value = os.environ.get(environment_variable)
-        if environment_value is not None and environment_value.strip() != "":
-            paths.append(Path(environment_value).joinpath(*relative_parts))
-    return tuple(paths)
 
 
 def _paths_from_names(*, names: Sequence[str]) -> tuple[Path, ...]:

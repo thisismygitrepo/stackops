@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import gettempdir
 from typing import Final, Literal, TypeAlias
 
-BrowserName: TypeAlias = Literal["chrome", "brave"]
+BrowserName: TypeAlias = Literal["chrome", "brave", "firefox", "safari"]
 BrowserTechName: TypeAlias = Literal["agent-browser", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
 
 DEFAULT_BROWSER_PORT: Final[int] = 9331
