@@ -360,11 +360,9 @@ class Installer:
         actual_version = release_info.get("tag_name", "unknown") or "unknown"
         filename = filename_pattern.format(version=actual_version)
 
-        available_filenames: list[str] = []
-        for asset in release_info["assets"]:
-            an_dl = asset["browser_download_url"]
-            available_filenames.append(an_dl.split("/")[-1])
-        if filename not in available_filenames:
+        assets_by_filename = {asset["name"]: asset for asset in release_info["assets"]}
+        selected_asset = assets_by_filename.get(filename)
+        if selected_asset is None:
             candidates = [
                 filename,
                 filename_pattern.format(version=actual_version),
@@ -377,9 +375,9 @@ class Installer:
                 variants += [f, f.replace("-", "_"), f.replace("_", "-")]
 
             attempted_filenames = list(dict.fromkeys(variants))
-            for f in attempted_filenames:
-                if f in available_filenames:
-                    filename = f
+            for attempted_filename in attempted_filenames:
+                selected_asset = assets_by_filename.get(attempted_filename)
+                if selected_asset is not None:
                     break
             else:
                 from rich.console import Console
@@ -387,6 +385,7 @@ class Installer:
                 from rich.table import Table
 
                 console = Console()
+                available_filenames = list(assets_by_filename)
                 table = Table(show_header=True, header_style="bold magenta", expand=True)
                 table.add_column("Tried", style="yellow", overflow="fold")
                 table.add_column("Available", style="green", overflow="fold")
@@ -407,5 +406,7 @@ class Installer:
                     )
                 )
                 return None, None
-        browser_download_url = f"{repo_url}/releases/download/{actual_version}/{filename}"
+        browser_download_url = selected_asset["browser_download_url"]
+        if not browser_download_url:
+            raise ValueError(f"Release asset {selected_asset['name']} has no download URL")
         return browser_download_url, actual_version
