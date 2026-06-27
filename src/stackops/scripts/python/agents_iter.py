@@ -4,7 +4,7 @@ import typer
 
 
 def clean(continuous: Annotated[bool, typer.Option("--loop", "-l", help="Repeat cleanup every 5 minutes.")] = False) -> None:
-    """Close old Herdr tabs in iter workspaces, keeping the last 3 tabs per workspace."""
+    """Close old Herdr tabs in iter workspaces while preserving recent and launching tabs."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import clean_iter_workspaces_loop
 
