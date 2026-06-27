@@ -171,7 +171,7 @@ terminal kill --backend aoe
 
 ## export
 
-Export running tmux sessions into a layout file that `terminal run` can launch.
+Export running tmux sessions or Herdr workspaces into a layout file that `terminal run` can launch.
 
 ```bash
 terminal export [OPTIONS]
@@ -179,11 +179,12 @@ terminal export [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--sessions` | `-s` | Comma-separated tmux session names; omit for interactive multi-select |
-| `--all` | `-A` | Export all running tmux sessions without prompting |
+| `--sessions` | `-s` | Comma-separated tmux session names or Herdr workspace labels/IDs; omit for interactive multi-select |
+| `--all` | `-A` | Export all running backend sessions/workspaces without prompting |
 | `--output-path` | `-o` | Output layout file; defaults to `./tmux_export_layout.json` |
 | `--overwrite` | `-w` | Replace the output file if it already exists |
 | `--merge` | `-m` | Merge exported sessions into an existing layout file by `layoutName` |
+| `--backend` | `-b` | `tmux`/`t` or `herdr`/`h`; defaults to `tmux` |
 | `--command-source` | `-c` | `shell`, `current-command`, or `start-command`; defaults to `shell` |
 
 Examples:
@@ -198,6 +199,10 @@ terminal export --sessions "dev,build" --output-path exported_layout.json
 # Export every running tmux session, then replay it with run
 terminal export --all --output-path exported_layout.json --overwrite
 terminal run --layouts-file exported_layout.json
+
+# Export Herdr workspaces, then replay them with run
+terminal export --backend herdr --all --output-path exported_layout.json --overwrite
+terminal run --backend herdr --layouts-file exported_layout.json
 ```
 
 ## trace

@@ -239,32 +239,37 @@ def kill_session_target(
 
 
 def export(
-    sessions: Annotated[str | None, typer.Option("--sessions", "-s", help="Comma-separated tmux session names. Pass an empty value or omit it to select sessions interactively.")] = None,
-    all_sessions: Annotated[bool, typer.Option("--all", "-A", help="Export all running tmux sessions without prompting.", show_default=True)] = False,
+    sessions: Annotated[str | None, typer.Option("--sessions", "-s", help="Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively.")] = None,
+    all_sessions: Annotated[bool, typer.Option("--all", "-A", help="Export all running backend sessions/workspaces without prompting.", show_default=True)] = False,
     output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.json.")] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-w", help="Replace the output file if it already exists.", show_default=True)] = False,
     merge: Annotated[bool, typer.Option("--merge", "-m", help="Merge exported sessions into an existing layout file by layoutName.", show_default=True)] = False,
+    backend: Annotated[Literal["tmux", "t", "herdr", "h"], typer.Option("--backend", "-b", help="Backend to export from: tmux/t or herdr/h.")] = "tmux",
     command_source: Annotated[Literal["shell", "current-command", "start-command"], typer.Option("--command-source", "-c", help="Command to put in each exported tab: shell, current-command, or start-command.")] = "shell",
 ) -> None:
-    """Export running tmux sessions as a layout file runnable by `run`."""
-    from stackops.scripts.python.helpers.helpers_sessions.tmux_export import (
-        export_tmux_sessions,
+    """Export running backend sessions/workspaces as a layout file runnable by `run`."""
+    from stackops.scripts.python.helpers.helpers_sessions.terminal_export import (
+        export_terminal_sessions,
     )
 
     try:
-        exported_path = export_tmux_sessions(
+        exported_path, resolved_backend = export_terminal_sessions(
             session_names=sessions,
             export_all_sessions=all_sessions,
             output_path=output_path,
             overwrite=overwrite,
             merge=merge,
             command_source=command_source,
+            backend=backend,
         )
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True, color=True)
         raise typer.Exit(code=1) from error
-    typer.echo(f"Exported tmux layout to {exported_path}")
-    typer.echo(f"Run it with: stackops terminal run --layouts-file {exported_path}")
+    typer.echo(f"Exported {resolved_backend} layout to {exported_path}")
+    if resolved_backend == "tmux":
+        typer.echo(f"Run it with: stackops terminal run --layouts-file {exported_path}")
+    else:
+        typer.echo(f"Run it with: stackops terminal run --backend herdr --layouts-file {exported_path}")
 
 
 
@@ -373,7 +378,7 @@ def get_app() -> typer.Typer:
     layouts_app.command("kill", no_args_is_help=False, help=kill_session_target.__doc__, short_help="<k> Kill a session target")(kill_session_target)
     layouts_app.command("k", no_args_is_help=False, help=kill_session_target.__doc__, hidden=True)(kill_session_target)
 
-    layouts_app.command("export", no_args_is_help=False, help=export.__doc__, short_help="<e> Export tmux sessions as a layout")(export)
+    layouts_app.command("export", no_args_is_help=False, help=export.__doc__, short_help="<e> Export sessions as a layout")(export)
     layouts_app.command("e", no_args_is_help=False, help=export.__doc__, hidden=True)(export)
 
     layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="<t> Trace a terminal session until it settles")(trace)
