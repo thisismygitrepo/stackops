@@ -199,13 +199,15 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. `--lan`/`-l` keeps the browser endpoint on localhost and exposes the requested port through a StackOps relay on `0.0.0.0`.
+`agents browser launch-browser` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. By default, StackOps runs the browser endpoint in a named tmux session with a named endpoint window; `--lan`/`-l` adds a second relay window and exposes the requested port through a StackOps relay on `0.0.0.0`. Pass `--detached` to launch background processes instead of tmux windows.
 
 ```bash
 agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
 agents browser launch-browser --browser edge --port 9331 --profile agent-browser
 agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
 agents browser launch-browser --browser chrome --port 9331 --lan
+agents browser launch-browser --browser chrome --port 9331 --profile agent-browser --detached
+agents browser status
 agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 

@@ -3,6 +3,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName, BrowserTechName, DEFAULT_BROWSER_PORT
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import DetachedBrowserLaunchResult, TmuxBrowserLaunchResult
 
 
 def install_tech(
@@ -53,28 +54,104 @@ def launch_browser(
         ),
     ] = None,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoint on 0.0.0.0 through a localhost relay.")] = False,
+    detached: Annotated[bool, typer.Option("--detached", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
     """Launch browser automation endpoint with an isolated profile when supported."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import launch_browser as launch_browser_impl
 
-        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan)
+        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan, detached=detached)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo(f"Launched {result.process_label}: pid={result.process_id}")
+    match result:
+        case DetachedBrowserLaunchResult():
+            typer.echo(f"Launched {result.process_label}: pid={result.process_id}")
+            if result.relay_process_id is not None:
+                typer.echo(f"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}")
+        case TmuxBrowserLaunchResult():
+            typer.echo(f"Launched {result.process_label} in tmux session: {result.tmux.session_name}")
+            typer.echo(f"Browser window: {result.tmux.browser_window_name}")
+            if result.tmux.relay_window_name is not None:
+                typer.echo(f"Relay window: {result.tmux.relay_window_name} target=127.0.0.1:{result.browser_port}")
+            typer.echo(f"Attach: {' '.join(result.tmux.attach_command)}")
     typer.echo(f"Executable: {result.browser_path}")
     typer.echo(f"{result.endpoint_short_label}: {result.host}:{result.port}")
-    if result.relay_process_id is not None:
-        typer.echo(f"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}")
     if result.profile_path is not None:
         typer.echo(f"Profile: {result.profile_path}")
     typer.echo(f"Prompt: {result.prompt_path}")
     if lan:
         typer.echo(f"{result.endpoint_short_label} is exposed on 0.0.0.0 through a relay; use this only on a trusted network.")
+    if isinstance(result, TmuxBrowserLaunchResult):
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_session
+
+        try:
+            attach_or_switch_tmux_session(session_name=result.tmux.session_name)
+        except RuntimeError as error:
+            typer.echo(str(error), err=True)
+            raise typer.Exit(code=1) from error
+
+
+def status() -> None:
+    """Show active StackOps browser tmux sessions."""
+    try:
+        from rich import box
+        from rich.console import Console
+        from rich.table import Table
+
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import collect_browser_tmux_status
+
+        rows = collect_browser_tmux_status()
+    except RuntimeError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=1) from error
+
+    launch_count = len({row.metadata.launch_id for row in rows})
+    window_count = len({row.window_id for row in rows})
+    table = Table(
+        title=f"StackOps browser tmux: {launch_count} launch(es), {window_count} window(s), {len(rows)} pane(s)",
+        box=box.SIMPLE_HEAVY,
+        show_lines=False,
+    )
+    table.add_column("Session", style="cyan", overflow="fold")
+    table.add_column("Launch", overflow="fold")
+    table.add_column("Role")
+    table.add_column("Browser")
+    table.add_column("Profile", overflow="fold")
+    table.add_column("Endpoint")
+    table.add_column("Window")
+    table.add_column("Pane")
+    table.add_column("State")
+    table.add_column("PID", justify="right")
+    table.add_column("Command")
+    table.add_column("Profile Path", overflow="fold")
+    table.add_column("Prompt", overflow="fold")
+
+    for row in rows:
+        state = "dead" if row.pane_dead else "running"
+        endpoint = f"{row.metadata.host}:{row.metadata.port}"
+        if row.metadata.lan == "yes":
+            endpoint = f"{endpoint} -> 127.0.0.1:{row.metadata.browser_port}"
+        table.add_row(
+            row.session_name,
+            row.metadata.launch_id,
+            row.metadata.role,
+            row.metadata.browser,
+            row.metadata.profile,
+            endpoint,
+            f"{row.window_index}:{row.window_name}",
+            f"{row.pane_index} {row.pane_id}",
+            state,
+            row.pane_pid,
+            row.pane_current_command,
+            row.metadata.profile_path,
+            row.metadata.prompt_path,
+        )
+
+    Console().print(table)
 
 
 def get_app() -> typer.Typer:
@@ -83,4 +160,6 @@ def get_app() -> typer.Typer:
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=True, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=True, hidden=True)(launch_browser)
+    browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser tmux sessions")(status)
+    browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     return browser_app

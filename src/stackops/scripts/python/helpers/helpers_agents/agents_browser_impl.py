@@ -5,7 +5,7 @@ import platform
 import socket
 import subprocess
 import sys
-from typing import assert_never
+from typing import TypeAlias, assert_never
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     AGENT_BROWSER_INSTALLER_NAME,
@@ -31,6 +31,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_resolution im
     resolve_profile_path,
     validate_port,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import BrowserTmuxLaunch, launch_browser_tmux
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
@@ -50,7 +51,7 @@ class BrowserTechInstallResult:
 
 
 @dataclass(frozen=True)
-class BrowserLaunchResult:
+class BrowserLaunchDetails:
     browser: BrowserName
     browser_path: Path
     command: tuple[str, ...]
@@ -62,8 +63,20 @@ class BrowserLaunchResult:
     browser_port: int
     profile_path: Path | None
     prompt_path: Path
+
+
+@dataclass(frozen=True)
+class DetachedBrowserLaunchResult(BrowserLaunchDetails):
     process_id: int
     relay_process_id: int | None
+
+
+@dataclass(frozen=True)
+class TmuxBrowserLaunchResult(BrowserLaunchDetails):
+    tmux: BrowserTmuxLaunch
+
+
+BrowserLaunchResult: TypeAlias = DetachedBrowserLaunchResult | TmuxBrowserLaunchResult
 
 
 def install_agent_browser_skill() -> BrowserSkillInstallResult:
@@ -124,7 +137,7 @@ def install_browser_tech(*, which: BrowserTechName) -> BrowserTechInstallResult:
             assert_never(which)
 
 
-def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None, lan: bool) -> BrowserLaunchResult:
+def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None, lan: bool, detached: bool) -> BrowserLaunchResult:
     validate_port(port=port)
     launcher = get_browser_launcher(browser=browser)
     profile_path = resolve_profile_path(browser=browser, profile_name=profile_name, port=port)
@@ -134,8 +147,6 @@ def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None,
     if profile_path is not None:
         profile_path.mkdir(parents=True, exist_ok=True)
     command = build_browser_launch_command(browser=browser, browser_path=browser_path, port=browser_port, profile_path=profile_path)
-    process = _start_browser_process(command=command, system_name=platform.system(), process_label=launcher.process_label)
-    relay_process = _start_endpoint_relay(listen_port=port, target_port=browser_port, system_name=platform.system()) if lan else None
     prompt_path = write_browser_prompt(
         browsing_root=BROWSING_ROOT,
         browser=browser,
@@ -145,7 +156,7 @@ def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None,
         lan=lan,
         profile_path=profile_path,
     )
-    return BrowserLaunchResult(
+    details = BrowserLaunchDetails(
         browser=browser,
         browser_path=browser_path,
         command=command,
@@ -157,8 +168,63 @@ def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None,
         browser_port=browser_port,
         profile_path=profile_path,
         prompt_path=prompt_path,
-        process_id=process.pid,
-        relay_process_id=None if relay_process is None else relay_process.pid,
+    )
+    relay_command = _build_relay_command(listen_port=port, target_port=browser_port) if lan else None
+    if detached:
+        process = _start_browser_process(command=command, system_name=platform.system(), process_label=launcher.process_label)
+        relay_process = _start_endpoint_relay(listen_port=port, target_port=browser_port, system_name=platform.system()) if lan else None
+        return _build_detached_launch_result(
+            details=details,
+            process_id=process.pid,
+            relay_process_id=None if relay_process is None else relay_process.pid,
+        )
+    tmux_launch = launch_browser_tmux(
+        browser=browser,
+        profile_name=profile_name,
+        profile_path=profile_path,
+        port=port,
+        browser_port=browser_port,
+        host=host,
+        lan=lan,
+        browser_command=command,
+        relay_command=relay_command,
+        prompt_path=prompt_path,
+    )
+    return _build_tmux_launch_result(details=details, tmux=tmux_launch)
+
+
+def _build_detached_launch_result(*, details: BrowserLaunchDetails, process_id: int, relay_process_id: int | None) -> DetachedBrowserLaunchResult:
+    return DetachedBrowserLaunchResult(
+        browser=details.browser,
+        browser_path=details.browser_path,
+        command=details.command,
+        endpoint_label=details.endpoint_label,
+        endpoint_short_label=details.endpoint_short_label,
+        process_label=details.process_label,
+        host=details.host,
+        port=details.port,
+        browser_port=details.browser_port,
+        profile_path=details.profile_path,
+        prompt_path=details.prompt_path,
+        process_id=process_id,
+        relay_process_id=relay_process_id,
+    )
+
+
+def _build_tmux_launch_result(*, details: BrowserLaunchDetails, tmux: BrowserTmuxLaunch) -> TmuxBrowserLaunchResult:
+    return TmuxBrowserLaunchResult(
+        browser=details.browser,
+        browser_path=details.browser_path,
+        command=details.command,
+        endpoint_label=details.endpoint_label,
+        endpoint_short_label=details.endpoint_short_label,
+        process_label=details.process_label,
+        host=details.host,
+        port=details.port,
+        browser_port=details.browser_port,
+        profile_path=details.profile_path,
+        prompt_path=details.prompt_path,
+        tmux=tmux,
     )
 
 
