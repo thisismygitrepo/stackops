@@ -88,6 +88,28 @@
       }
     },
     {
+      "appName": "pkgx",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/pkgxdev/pkgx",
+      "doc": "Run any package, command, or project dependency on demand.",
+      "categoryLabels": [
+        "system-setup",
+        "languages-runtimes"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "pkgx-{version}+linux+x86-64.tar.gz",
+          "windows": "pkgx-{version}+windows+x86-64.zip",
+          "darwin": "pkgx-{version}+darwin+x86-64.tar.gz"
+        },
+        "arm64": {
+          "linux": "pkgx-{version}+linux+aarch64.tar.gz",
+          "windows": null,
+          "darwin": "pkgx-{version}+darwin+aarch64.tar.gz"
+        }
+      }
+    },
+    {
       "appName": "scrcpy",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/Genymobile/scrcpy",
@@ -1897,6 +1919,28 @@
           "linux": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_musllinux_aarch64",
           "darwin": null,
           "windows": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_arm64.exe"
+        }
+      }
+    },
+    {
+      "appName": "ostt",
+      "license": "MIT License",
+      "repoURL": "https://github.com/kristoferlund/ostt",
+      "doc": "Open source voice-to-text for the terminal.",
+      "categoryLabels": [
+        "media-audio-video",
+        "productivity-knowledge"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "ostt-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "ostt-x86_64-apple-darwin.tar.gz",
+          "windows": null
+        },
+        "arm64": {
+          "linux": "ostt-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "ostt-aarch64-apple-darwin.tar.gz",
+          "windows": null
         }
       }
     },
