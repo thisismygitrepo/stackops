@@ -96,7 +96,7 @@ def launch_browser(
 
 
 def status() -> None:
-    """Show active StackOps browser tmux sessions."""
+    """Show active StackOps browser tmux windows."""
     try:
         from rich import box
         from rich.console import Console
@@ -160,6 +160,6 @@ def get_app() -> typer.Typer:
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=True, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=True, hidden=True)(launch_browser)
-    browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser tmux sessions")(status)
+    browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser tmux windows")(status)
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     return browser_app

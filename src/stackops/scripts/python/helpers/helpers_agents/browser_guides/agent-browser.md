@@ -33,7 +33,7 @@ Use the background process launch mode only when you deliberately do not want tm
 stackops agents browser launch-browser --browser chrome --port 9331 --profile agent-browser --detached
 ```
 
-Inspect active StackOps browser tmux sessions:
+Inspect active StackOps browser tmux windows:
 
 ```bash
 stackops agents browser status
