@@ -24,7 +24,7 @@ STACKOPS_PLOT_REQUIREMENT = f"stackops[plot]>={STACKOPS_VERSION}"
 
 
 def preview(
-    path: str | None,
+    path: str,
     project_path: str | None,
     uv_with: str | None,
     backend: BACKENDS,
@@ -56,9 +56,6 @@ def preview(
         uv_project_line = ""
         uv_python_line = "--python 3.14"
 
-    if path is None and backend in PATH_BACKENDS:
-        raise ValueError(f"Backend '{backend}' requires a path.")
-
     from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
     from stackops.utils.accessories import randstr
@@ -69,43 +66,42 @@ def preview(
     console = Console()
 
     ipython_profile: str | None = profile
-    if path is not None:
-        from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file
-        if backend in PATH_BACKENDS:
-            choice_file = _resolve_path_backend_target(path=path)
-            _run_path_backend(
-                target_path=choice_file,
-                backend=backend,
-            )
-            return
-        choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
-        if project_path is None:
-            virtualenv_root = find_virtualenv_root(choice_file)
-            if virtualenv_root is not None:
-                uv_project_line = f'--project {virtualenv_root.parent}'
-                uv_python_line = ""
-        if choice_file.suffix == ".py":
-            program = choice_file.read_text(encoding="utf-8")
-            text = f"📄 Selected file: {choice_file.name}"
-            console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
+    from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file
+    if backend in PATH_BACKENDS:
+        choice_file = _resolve_path_backend_target(path=path)
+        _run_path_backend(
+            target_path=choice_file,
+            backend=backend,
+        )
+        return
+    choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
+    if project_path is None:
+        virtualenv_root = find_virtualenv_root(choice_file)
+        if virtualenv_root is not None:
+            uv_project_line = f'--project {virtualenv_root.parent}'
+            uv_python_line = ""
+    if choice_file.suffix == ".py":
+        program = choice_file.read_text(encoding="utf-8")
+        text = f"📄 Selected file: {choice_file.name}"
+        console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
+    else:
+        # from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_data_pycode
+        # program = lambda_to_python_script(
+        #     lambda: get_read_data_pycode(path=str(choice_file)),
+        #     in_global=True, import_module=False
+        # )
+        from stackops.utils.files import read as read_module
+        suffix = choice_file.suffix[1:]
+        if suffix == "":
+            program = "print('No file extension found. Cannot determine how to read the file.')"
         else:
-            # from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_data_pycode
-            # program = lambda_to_python_script(
-            #     lambda: get_read_data_pycode(path=str(choice_file)),
-            #     in_global=True, import_module=False
-            # )
-            from stackops.utils.files import read as read_module
-            suffix = Path(path).suffix[1:]
-            if suffix == "":
-                program = "print('No file extension found. Cannot determine how to read the file.')"
+            reader = read_module.READERS.get(suffix)
+            if reader is None:
+                program = f"print('No reader found for files with the .{suffix} extension.')"
             else:
-                reader = read_module.READERS.get(suffix)
-                if reader is None:
-                    program = f"print('No reader found for files with the .{suffix} extension.')"
-                else:
-                    reader_name = getattr(reader, "__name__", type(reader).__name__)
-                    program = Path(read_module.__file__).read_text(encoding="utf-8")
-                    program += f"""
+                reader_name = getattr(reader, "__name__", type(reader).__name__)
+                program = Path(read_module.__file__).read_text(encoding="utf-8")
+                program += f"""
 # p = {reader_name}("{str(choice_file)}")
 from rich.panel import Panel
 from rich.console import Console
@@ -122,15 +118,12 @@ except Exception as e:
     console.print(Panel(Text(error_message, justify="left"), title="Error", expand=False, border_style="red"))
 
 """
-                    # program = lambda_to_python_script(
-                    #     lambda: reader(path=choice_file),
-                    #     in_global=True, import_module=False
-                    # )
-            text = f"📄 Reading data from: {choice_file.name}"
-            console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
-    else:
-        choice_file = Path.cwd()
-        program = ""
+                # program = lambda_to_python_script(
+                #     lambda: reader(path=choice_file),
+                #     in_global=True, import_module=False
+                # )
+        text = f"📄 Reading data from: {choice_file.name}"
+        console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
 
     if Path.home().joinpath("code/stackops").exists() and uv_project_line == "":
         uv_project_line = f'--project "{str(Path.home().joinpath("code/stackops"))}"'

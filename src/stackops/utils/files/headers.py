@@ -1,35 +1,74 @@
-
 import glob
 import os
 import platform
 import random
 from pathlib import Path
-from rich import pretty
-from stackops.utils.source_of_truth import WINDOWS_INSTALL_PATH
+
+from rich import box, pretty
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+
+from stackops.utils.source_of_truth import WINDOWS_INSTALL_PATH
 
 
-def print_header():
+def print_header() -> None:
     console = Console()
     pretty.install()
+    console.print(_build_header_panel())
 
-    # Environment Information Panel
-    from rich.panel import Panel
-    from rich.table import Table
 
-    table = Table(show_header=False, show_edge=False, pad_edge=False)
-    table.add_column("Label", style="cyan", no_wrap=True)
-    table.add_column("Value", style="white")
-
-    table.add_row("Python Version", platform.python_version())
-    table.add_row("Operating System", platform.system())
-    table.add_row("Virtual Environment", os.getenv('VIRTUAL_ENV', 'None'))
-    table.add_row("Running @", str(Path.cwd()))
-
+def _build_header_panel() -> Panel:
     from stackops.version import get_stackops_version
 
-    console.print(Panel(table, title=f"[bold blue]✨ 🐊 StackOps Shell {get_stackops_version()} ✨ Made with 🐍 | Built with ❤️[/bold blue]", border_style="blue"))
-def print_logo(logo: str):
+    title = Text.assemble(
+        ("StackOps Shell", "bold white"),
+        (" "),
+        (get_stackops_version(), "bold cyan"),
+    )
+
+    return Panel(
+        _build_environment_table(),
+        title=title,
+        title_align="left",
+        subtitle=Text("Built with love", style="dim"),
+        subtitle_align="right",
+        border_style="cyan",
+        box=box.ROUNDED,
+        expand=False,
+        padding=(0, 1),
+    )
+
+
+def _build_environment_table() -> Table:
+    table = Table(show_header=False, box=None, padding=(0, 1), expand=False)
+    table.add_column("Label", style="bold cyan", no_wrap=True)
+    table.add_column("Value", style="white")
+    table.add_row("Python", platform.python_version())
+    table.add_row("System", platform.system())
+    table.add_row("Environment", _virtual_environment())
+    table.add_row("Directory", _display_path(Path.cwd()))
+    return table
+
+
+def _virtual_environment() -> str:
+    virtual_environment = os.getenv("VIRTUAL_ENV")
+    if virtual_environment is None or virtual_environment == "":
+        return "not active"
+    return _display_path(Path(virtual_environment))
+
+
+def _display_path(path: Path) -> str:
+    home = Path.home()
+    if path == home:
+        return "~"
+    if path.is_relative_to(home):
+        return f"~/{path.relative_to(home).as_posix()}"
+    return path.as_posix()
+
+
+def print_logo(logo: str) -> None:
     from stackops.utils.files.ascii_art import font_box_color, character_color, character_or_box_color
     if platform.system() == "Windows":
         _1x = Path.home().joinpath(r"AppData/Roaming/npm/figlet").exists()

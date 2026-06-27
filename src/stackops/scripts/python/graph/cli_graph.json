@@ -20556,7 +20556,7 @@
         "signature": {
           "raw_lines": [
             "def preview(",
-            "    path: Annotated[str | None, typer.Argument(help=\"path of file to read.\")] = None,",
+            "    path: Annotated[str, typer.Argument(help=\"path of file to read.\")] = \".\",",
             "    project_path: Annotated[str | None, typer.Option(\"--project\", \"-p\", help=\"specify uv project to use\")] = None,",
             "    uv_with: Annotated[str | None, typer.Option(\"--uv-with\", \"-w\", help=\"specify uv with packages to use\")] = None,",
             "    backend: Annotated[BACKENDS_LOOSE, typer.Option(\"--backend\", \"-b\", help=\"specify the backend to use\")] = \"ipython\",",
@@ -20583,10 +20583,10 @@
             {
               "name": "path",
               "kind": "positional_or_keyword",
-              "type": "str | None",
-              "default": null,
+              "type": "str",
+              "default": ".",
               "required": false,
-              "annotation_raw": "Annotated[str | None, typer.Argument(help='path of file to read.')]",
+              "annotation_raw": "Annotated[str, typer.Argument(help='path of file to read.')]",
               "typer": {
                 "kind": "argument",
                 "param_decls": [],
