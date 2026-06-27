@@ -2,10 +2,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 import platform
-import socket
 import subprocess
-import sys
-from typing import TypeAlias, assert_never
+from typing import assert_never
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     AGENT_BROWSER_INSTALLER_NAME,
@@ -31,7 +29,20 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_resolution im
     resolve_profile_path,
     validate_port,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import BrowserTmuxLaunch, launch_browser_tmux
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import (
+    BrowserLaunchDetails,
+    BrowserLaunchResult,
+    build_detached_launch_result,
+    build_tmux_launch_result,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_runtime import (
+    assert_tcp_port_available as _assert_tcp_port_available,
+    build_relay_command as _build_relay_command,
+    find_available_localhost_port as _find_available_localhost_port,
+    start_browser_process as _start_browser_process,
+    start_endpoint_relay as _start_endpoint_relay,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import launch_browser_tmux
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
@@ -48,35 +59,6 @@ class BrowserTechInstallResult:
     commands: tuple[tuple[str, ...], ...]
     guide_paths: tuple[Path, ...]
     mcp_servers: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class BrowserLaunchDetails:
-    browser: BrowserName
-    browser_path: Path
-    command: tuple[str, ...]
-    endpoint_label: str
-    endpoint_short_label: str
-    process_label: str
-    host: str
-    port: int
-    browser_port: int
-    profile_path: Path | None
-    prompt_path: Path
-
-
-@dataclass(frozen=True)
-class DetachedBrowserLaunchResult(BrowserLaunchDetails):
-    process_id: int
-    relay_process_id: int | None
-
-
-@dataclass(frozen=True)
-class TmuxBrowserLaunchResult(BrowserLaunchDetails):
-    tmux: BrowserTmuxLaunch
-
-
-BrowserLaunchResult: TypeAlias = DetachedBrowserLaunchResult | TmuxBrowserLaunchResult
 
 
 def install_agent_browser_skill() -> BrowserSkillInstallResult:
@@ -173,7 +155,7 @@ def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None,
     if detached:
         process = _start_browser_process(command=command, system_name=platform.system(), process_label=launcher.process_label)
         relay_process = _start_endpoint_relay(listen_port=port, target_port=browser_port, system_name=platform.system()) if lan else None
-        return _build_detached_launch_result(
+        return build_detached_launch_result(
             details=details,
             process_id=process.pid,
             relay_process_id=None if relay_process is None else relay_process.pid,
@@ -190,60 +172,7 @@ def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None,
         relay_command=relay_command,
         prompt_path=prompt_path,
     )
-    return _build_tmux_launch_result(details=details, tmux=tmux_launch)
-
-
-def _build_detached_launch_result(*, details: BrowserLaunchDetails, process_id: int, relay_process_id: int | None) -> DetachedBrowserLaunchResult:
-    return DetachedBrowserLaunchResult(
-        browser=details.browser,
-        browser_path=details.browser_path,
-        command=details.command,
-        endpoint_label=details.endpoint_label,
-        endpoint_short_label=details.endpoint_short_label,
-        process_label=details.process_label,
-        host=details.host,
-        port=details.port,
-        browser_port=details.browser_port,
-        profile_path=details.profile_path,
-        prompt_path=details.prompt_path,
-        process_id=process_id,
-        relay_process_id=relay_process_id,
-    )
-
-
-def _build_tmux_launch_result(*, details: BrowserLaunchDetails, tmux: BrowserTmuxLaunch) -> TmuxBrowserLaunchResult:
-    return TmuxBrowserLaunchResult(
-        browser=details.browser,
-        browser_path=details.browser_path,
-        command=details.command,
-        endpoint_label=details.endpoint_label,
-        endpoint_short_label=details.endpoint_short_label,
-        process_label=details.process_label,
-        host=details.host,
-        port=details.port,
-        browser_port=details.browser_port,
-        profile_path=details.profile_path,
-        prompt_path=details.prompt_path,
-        tmux=tmux,
-    )
-
-
-def _start_browser_process(*, command: Sequence[str], system_name: str, process_label: str) -> subprocess.Popen[bytes]:
-    return _start_background_process(command=command, system_name=system_name, failure_message=f"""Failed to launch {process_label}""")
-
-
-def _start_endpoint_relay(*, listen_port: int, target_port: int, system_name: str) -> subprocess.Popen[bytes]:
-    command = _build_relay_command(listen_port=listen_port, target_port=target_port)
-    return _start_background_process(command=command, system_name=system_name, failure_message="Failed to launch browser endpoint LAN relay")
-
-
-def _start_background_process(*, command: Sequence[str], system_name: str, failure_message: str) -> subprocess.Popen[bytes]:
-    try:
-        if system_name == "Windows":
-            return subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
-    except OSError as error:
-        raise RuntimeError(f"""{failure_message}: {error}""") from error
+    return build_tmux_launch_result(details=details, tmux=tmux_launch)
 
 
 def _run_required_command(*, command: Sequence[str], cwd: Path) -> None:
@@ -261,38 +190,3 @@ def _resolve_browser_endpoint_port(*, exposed_port: int, lan: bool) -> int:
         return _find_available_localhost_port(excluded_port=exposed_port)
     _assert_tcp_port_available(host=REMOTE_DEBUGGING_LOCALHOST, port=exposed_port)
     return exposed_port
-
-
-def _assert_tcp_port_available(*, host: str, port: int) -> None:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe_socket:
-        probe_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            probe_socket.bind((host, port))
-        except OSError as error:
-            raise RuntimeError(f"""TCP port {host}:{port} is not available: {error}""") from error
-
-
-def _find_available_localhost_port(*, excluded_port: int) -> int:
-    for _attempt in range(100):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe_socket:
-            probe_socket.bind((REMOTE_DEBUGGING_LOCALHOST, 0))
-            chosen_port = int(probe_socket.getsockname()[1])
-        if chosen_port != excluded_port:
-            return chosen_port
-    raise RuntimeError("Could not find an internal localhost browser endpoint port")
-
-
-def _build_relay_command(*, listen_port: int, target_port: int) -> tuple[str, ...]:
-    return (
-        sys.executable,
-        "-m",
-        "stackops.scripts.python.helpers.helpers_agents.browser_cdp_relay",
-        "--listen-host",
-        REMOTE_DEBUGGING_LAN,
-        "--listen-port",
-        str(listen_port),
-        "--target-host",
-        REMOTE_DEBUGGING_LOCALHOST,
-        "--target-port",
-        str(target_port),
-    )

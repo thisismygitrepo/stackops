@@ -3,7 +3,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName, BrowserTechName, DEFAULT_BROWSER_PORT
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import DetachedBrowserLaunchResult, TmuxBrowserLaunchResult
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import DetachedBrowserLaunchResult, TmuxBrowserLaunchResult
 
 
 def install_tech(

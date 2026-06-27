@@ -6,6 +6,8 @@ import pytest
 
 from stackops.scripts.python.helpers.helpers_agents import agents_browser_impl
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import AGENT_BROWSER_SKILL_REPO, BrowserName
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import DetachedBrowserLaunchResult, TmuxBrowserLaunchResult
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import BrowserTmuxLaunch
 
 
 @dataclass(frozen=True)
@@ -87,7 +89,7 @@ def test_launch_browser_detached_uses_isolated_profile_and_localhost_cdp(monkeyp
 
     result = agents_browser_impl.launch_browser(browser="chrome", port=9331, profile_name="agent-browser", lan=False, detached=True)
 
-    assert isinstance(result, agents_browser_impl.DetachedBrowserLaunchResult)
+    assert isinstance(result, DetachedBrowserLaunchResult)
     assert result.host == "127.0.0.1"
     assert result.port == 9331
     assert result.browser_port == 9331
@@ -130,7 +132,7 @@ def test_launch_browser_tmux_uses_named_session_and_window(monkeypatch: pytest.M
         browser_command: Sequence[str],
         relay_command: Sequence[str] | None,
         prompt_path: Path,
-    ) -> agents_browser_impl.BrowserTmuxLaunch:
+    ) -> BrowserTmuxLaunch:
         observed["tmux"] = {
             "browser": browser,
             "profile_name": profile_name,
@@ -143,7 +145,7 @@ def test_launch_browser_tmux_uses_named_session_and_window(monkeypatch: pytest.M
             "relay_command": relay_command,
             "prompt_path": prompt_path,
         }
-        return agents_browser_impl.BrowserTmuxLaunch(
+        return BrowserTmuxLaunch(
             session_name="stackops-browser",
             browser_window_name="chrome-profile-agent-browser-p9331-endpoint",
             relay_window_name=None,
@@ -169,7 +171,7 @@ def test_launch_browser_tmux_uses_named_session_and_window(monkeypatch: pytest.M
 
     result = agents_browser_impl.launch_browser(browser="chrome", port=9331, profile_name="agent-browser", lan=False, detached=False)
 
-    assert isinstance(result, agents_browser_impl.TmuxBrowserLaunchResult)
+    assert isinstance(result, TmuxBrowserLaunchResult)
     assert result.host == "127.0.0.1"
     assert result.port == 9331
     assert result.browser_port == 9331
@@ -247,7 +249,7 @@ def test_launch_browser_detached_lan_uses_localhost_browser_and_lan_relay(monkey
 
     result = agents_browser_impl.launch_browser(browser="chrome", port=9331, profile_name="agent-browser", lan=True, detached=True)
 
-    assert isinstance(result, agents_browser_impl.DetachedBrowserLaunchResult)
+    assert isinstance(result, DetachedBrowserLaunchResult)
     assert result.host == "0.0.0.0"
     assert result.port == 9331
     assert result.browser_port == 41837
@@ -310,7 +312,7 @@ def test_launch_firefox_uses_bidi_endpoint_and_firefox_profile(monkeypatch: pyte
 
     result = agents_browser_impl.launch_browser(browser="firefox", port=9331, profile_name="agent-browser", lan=False, detached=True)
 
-    assert isinstance(result, agents_browser_impl.DetachedBrowserLaunchResult)
+    assert isinstance(result, DetachedBrowserLaunchResult)
     assert result.endpoint_short_label == "WebDriver BiDi"
     assert result.process_label == "Firefox"
     assert result.profile_path == profile_path
@@ -365,7 +367,7 @@ def test_launch_edge_uses_cdp_endpoint_and_edge_profile(monkeypatch: pytest.Monk
 
     result = agents_browser_impl.launch_browser(browser="edge", port=9331, profile_name="agent-browser", lan=False, detached=True)
 
-    assert isinstance(result, agents_browser_impl.DetachedBrowserLaunchResult)
+    assert isinstance(result, DetachedBrowserLaunchResult)
     assert result.endpoint_short_label == "CDP"
     assert result.process_label == "Edge"
     assert result.profile_path == profile_path
@@ -418,7 +420,7 @@ def test_launch_safari_uses_safaridriver_without_profile(monkeypatch: pytest.Mon
 
     result = agents_browser_impl.launch_browser(browser="safari", port=9331, profile_name=None, lan=False, detached=True)
 
-    assert isinstance(result, agents_browser_impl.DetachedBrowserLaunchResult)
+    assert isinstance(result, DetachedBrowserLaunchResult)
     assert result.endpoint_short_label == "WebDriver"
     assert result.process_label == "safaridriver"
     assert result.profile_path is None

@@ -2,6 +2,7 @@ from collections.abc import Sequence
 import shlex
 import shutil
 import subprocess
+from typing import NoReturn
 
 
 def require_tmux() -> None:
@@ -25,11 +26,6 @@ def run_required_tmux_command(*, command: Sequence[str]) -> None:
         raise_tmux_command_failure(command=command, result=result)
 
 
-def is_duplicate_session_error(*, result: subprocess.CompletedProcess[str]) -> bool:
-    detail = (result.stderr or result.stdout or "").strip().lower()
-    return "duplicate session" in detail or "session already exists" in detail
-
-
-def raise_tmux_command_failure(*, command: Sequence[str], result: subprocess.CompletedProcess[str]) -> None:
+def raise_tmux_command_failure(*, command: Sequence[str], result: subprocess.CompletedProcess[str]) -> NoReturn:
     detail = (result.stderr or result.stdout or f"exit code {result.returncode}").strip()
     raise RuntimeError(f"""tmux command failed: {shlex.join(command)}: {detail}""")
