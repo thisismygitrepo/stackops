@@ -129,7 +129,7 @@ stackops
 │     │  ├─ update-cli-graph
 │     │  ├─ regenerate-charts
 │     │  └─ update-skill-refs
-│     └─ workflows
+│     └─ agentops
 │        ├─ update-installer
 │        ├─ update-test
 │        ├─ update-docs
@@ -200,7 +200,7 @@ stackops
 
 ## Important Nuances
 
-- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self workflows` are registered only when the developer checkout exists at `~/code/stackops`.
+- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self agentops` are registered only when the developer checkout exists at `~/code/stackops`.
 - Callback groups such as `utils pyproject type-fix` and `utils pyproject test-runtime` are invoked as the group command itself.
 - The generated graph stores aliases on each node. Use `src/stackops/scripts/python/graph/cli_graph.json` when alias details matter.
 - Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

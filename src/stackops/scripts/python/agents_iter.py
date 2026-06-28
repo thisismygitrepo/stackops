@@ -34,11 +34,11 @@ def close(
 
 
 def clean() -> None:
-    """Clean workflow cache records under .ai."""
+    """Clean AgentOps cache records under .ai."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_workflow_cache
+        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache
 
-        show_clean_workflow_cache(cwd=Path.cwd())
+        show_clean_agentops_cache(cwd=Path.cwd())
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
@@ -86,7 +86,7 @@ def status() -> None:
 
 def get_app() -> typer.Typer:
     iter_app = typer.Typer(help="🔁 <I> Iter workflow maintenance commands", no_args_is_help=True, add_help_option=True, add_completion=False)
-    iter_app.command(name="clean", no_args_is_help=False, short_help="<c> Clean workflow cache under .ai")(clean)
+    iter_app.command(name="clean", no_args_is_help=False, short_help="<c> Clean AgentOps cache under .ai")(clean)
     iter_app.command(name="c", no_args_is_help=False, hidden=True)(clean)
     iter_app.command(name="close", no_args_is_help=False, short_help="<x> Close old idle Herdr tabs from iter workspaces")(close)
     iter_app.command(name="x", no_args_is_help=False, hidden=True)(close)

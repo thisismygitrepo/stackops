@@ -33,7 +33,7 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops self security` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.jobs.installer.checks.security_cli.get_app` via `security`
 - `devops self explore` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.graph.visualize.cli_graph_app.get_app` via `explore`
 - `devops self build-assets` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self_assets.get_app` via `build-assets`
-- `devops self workflows` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self_ai.app.get_app` via `workflows`
+- `devops self agentops` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self_ai.app.get_app` via `agentops`
 - `cloud` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.cloud.get_app` via `cloud`
 - `terminal` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.terminal.get_app` via `terminal`
 - `agents` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.agents.get_app` via `agents`
@@ -133,10 +133,10 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops self build-assets update-cli-graph` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_assets.py` -> `update_cli_graph`
 - `devops self build-assets regenerate-charts` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_assets.py` -> `regenerate_charts`
 - `devops self build-assets update-skill-refs` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_assets.py` -> `update_stackops_skill_refs`
-- `devops self workflows update-installer` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_installer.py` -> `update_installer`
-- `devops self workflows update-test` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_test.py` -> `update_test`
-- `devops self workflows update-docs` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_docs.py` -> `update_docs`
-- `devops self workflows update-logic` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_logic.py` -> `update_logic`
+- `devops self agentops update-installer` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_installer.py` -> `update_installer`
+- `devops self agentops update-test` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_test.py` -> `update_test`
+- `devops self agentops update-docs` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_docs.py` -> `update_docs`
+- `devops self agentops update-logic` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/update_logic.py` -> `update_logic`
 - `cloud sync` -> `src/stackops/scripts/python/cloud.py` -> `sync`
 - `cloud copy` -> `src/stackops/scripts/python/cloud.py` -> `copy`
 - `cloud mount` -> `src/stackops/scripts/python/cloud.py` -> `mount`

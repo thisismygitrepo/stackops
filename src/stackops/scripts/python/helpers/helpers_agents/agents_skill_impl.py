@@ -26,8 +26,8 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
     "grill-me": AgentSkillSource("mattpocock/skills/grill-me"),
     "last30days": AgentSkillSource("mvanhorn/last30days-skill"),
+    "agentops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="agentops"),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
-    "workflows": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="workflows"),
 }
 
 

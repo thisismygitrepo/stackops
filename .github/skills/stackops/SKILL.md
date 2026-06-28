@@ -48,7 +48,7 @@ UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs
 Highlights:
 - Primary commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, `seek`, and umbrella `stackops`.
 - This skill intentionally excludes command aliases.
-- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self workflows` appear only when `~/code/stackops` exists.
+- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self agentops` appear only when `~/code/stackops` exists.
 
 ## Practical Rules
 

@@ -9,7 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents import agents_ask_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_rich_output
 from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_skill_impl
-from stackops.scripts.python.helpers.helpers_agents import agents_workflow_cache
+from stackops.scripts.python.helpers.helpers_agents import agents_agentops_cache
 from stackops.utils.schemas.fire_agents.fire_agents_types import DEFAULT_AGENT
 import stackops.utils.accessories as accessories
 
@@ -193,16 +193,16 @@ def test_iter_close_all_command_calls_impl_for_all_workspaces(monkeypatch: pytes
 def test_iter_clean_command_calls_cache_impl(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[Path] = []
 
-    def fake_clean_workflow_cache(*, cwd: Path, report: object) -> agents_workflow_cache.WorkflowCacheCleanResult:
+    def fake_clean_agentops_cache(*, cwd: Path, report: object) -> agents_agentops_cache.AgentopsCacheCleanResult:
         calls.append(cwd)
-        return agents_workflow_cache.WorkflowCacheCleanResult(
+        return agents_agentops_cache.AgentopsCacheCleanResult(
             repo_root=cwd,
-            cache_path=cwd.joinpath(".ai", "workflows"),
+            cache_path=cwd.joinpath(".ai", "agentops"),
             removed=False,
             removed_entries=0,
         )
 
-    monkeypatch.setattr(agents_workflow_cache, "clean_workflow_cache", fake_clean_workflow_cache)
+    monkeypatch.setattr(agents_iter_rich_output, "clean_agentops_cache", fake_clean_agentops_cache)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "clean"])
 

@@ -15817,7 +15817,7 @@
                 "name": "clean",
                 "fullPath": "agents iter clean",
                 "shortPath": "a I c",
-                "help": "Clean workflow cache records under .ai.",
+                "help": "Clean AgentOps cache records under .ai.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_iter.py",
                   "module": "stackops.scripts.python.agents_iter",
@@ -15826,11 +15826,11 @@
                 "signature": {
                   "raw_lines": [
                     "def clean() -> None:",
-                    "    \"\"\"Clean workflow cache records under .ai.\"\"\"",
+                    "    \"\"\"Clean AgentOps cache records under .ai.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_workflow_cache import clean_workflow_cache",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache",
                     "",
-                    "        clean_workflow_cache(cwd=Path.cwd(), report=typer.echo)",
+                    "        show_clean_agentops_cache(cwd=Path.cwd())",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
@@ -15839,11 +15839,11 @@
                   "parameters": [],
                   "return": "None"
                 },
-                "short_help": "<c> Clean workflow cache under .ai",
+                "short_help": "<c> Clean AgentOps cache under .ai",
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Clean workflow cache records under .ai.",
+                "doc": "Clean AgentOps cache records under .ai.",
                 "aliases": [
                   {
                     "name": "c",

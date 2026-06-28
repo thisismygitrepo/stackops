@@ -144,7 +144,7 @@ def test_add_skill_dispatches_stackops_backend_alias(monkeypatch: pytest.MonkeyP
     )
 
     result = agents_skill_impl.add_skill(
-        skill_name="stackops,workflows",
+        skill_name="stackops,agentops",
         agent="codex",
         scope="local",
         directory=str(tmp_path),
@@ -153,15 +153,15 @@ def test_add_skill_dispatches_stackops_backend_alias(monkeypatch: pytest.MonkeyP
     )
 
     assert result == 0
-    assert observed["skill_names"] == ("stackops", "workflows")
+    assert observed["skill_names"] == ("stackops", "agentops")
     assert observed["skill_folder_names"] == {
+        "agentops": "agentops",
         "agent-browser": "agent-browser",
         "agent-skills": "agent-skills",
         "caveman": "caveman",
         "grill-me": "grill-me",
         "last30days": "last30days",
         "stackops": "stackops",
-        "workflows": "workflows",
     }
     assert observed["install_root"] == tmp_path.resolve()
     assert observed["scope"] == "local"

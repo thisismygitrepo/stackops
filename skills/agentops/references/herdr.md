@@ -54,7 +54,7 @@ herdr tab close '<tab_id>'
 herdr pane close '<pane_id>'
 ```
 
-Inspect `herdr --help` and relevant subcommand help before using a command shape not listed here. Use stable report sources like `workflows:<run-id>:<agent-id>`.
+Inspect `herdr --help` and relevant subcommand help before using a command shape not listed here. Use stable report sources like `agentops:<run-id>:<agent-id>`.
 
 ## Prompt Submission
 
@@ -82,7 +82,7 @@ Use pointer-first communication:
 Use agent-owned directories for Markdown records:
 
 ```text
-.ai/workflows/<workflow>/<run-id>/
+.ai/agentops/<operation>/<run-id>/
   run.md
   state.md
   index.md

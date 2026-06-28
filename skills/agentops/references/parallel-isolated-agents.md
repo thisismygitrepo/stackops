@@ -45,7 +45,7 @@ herdr agent start '<agent-name>' --cwd '<worktree>' --workspace '<workspace_id>'
 ```
 
 7. Write each agent's task packet and send only the packet path using the Herdr prompt protocol from [herdr.md](herdr.md).
-8. Index every worktree, Herdr identifier, and packet path in `.ai/workflows/parallel-isolated-agents/contracts/agents.json`.
+8. Index every worktree, Herdr identifier, and packet path in `.ai/agentops/parallel-isolated-agents/contracts/agents.json`.
 9. Report run id, agent count, branch names, worktree paths, Herdr targets/IDs, and visible statuses.
 
 ## Worktrees
@@ -82,7 +82,7 @@ Always set each agent cwd to its own worktree. Verify visibility with `herdr age
 For non-trivial delegation, create per-agent packets under:
 
 ```text
-.ai/workflows/parallel-isolated-agents/runs/<run-id>/
+.ai/agentops/parallel-isolated-agents/runs/<run-id>/
   run.md
   state.md
   index.md

@@ -20,12 +20,12 @@ Before creating or messaging agents:
 1. Inspect `herdr --help` and relevant workspace/tab/pane/agent help.
 2. Read existing Herdr sessions/agents so ownership is clear.
 3. Identify the controller command from the process tree.
-4. Create `.ai/workflows/parallel-agents/contracts/agents.json` only when durable recovery across multiple operations is needed.
+4. Create `.ai/agentops/parallel-agents/contracts/agents.json` only when durable recovery across multiple operations is needed.
 5. If the index exists, read it before creating, messaging, collecting from, or terminating agents.
 
 ## Agent Index
 
-Store only durable ownership state in `.ai/workflows/parallel-agents/contracts/agents.json`. Herdr remains the live registry.
+Store only durable ownership state in `.ai/agentops/parallel-agents/contracts/agents.json`. Herdr remains the live registry.
 
 ```json
 {
@@ -68,7 +68,7 @@ Update the index only for durable ownership changes, packet paths, or exceptions
 For non-trivial delegation, create per-agent packets under:
 
 ```text
-.ai/workflows/parallel-agents/runs/<run-id>/
+.ai/agentops/parallel-agents/runs/<run-id>/
   run.md
   state.md
   index.md
@@ -91,7 +91,7 @@ herdr agent start '<agent-name>' --cwd '<cwd>' --workspace '<workspace_id>' --ta
 herdr agent list
 herdr agent get '<agent-name>'
 herdr pane list --workspace '<workspace_id>'
-herdr pane report-metadata '<pane_id>' --source 'workflows:<run-id>:<agent-id>' --agent '<agent-name>' --title '<role>' --custom-status 'delegated'
+herdr pane report-metadata '<pane_id>' --source 'agentops:<run-id>:<agent-id>' --agent '<agent-name>' --title '<role>' --custom-status 'delegated'
 ```
 
 After launch, verify the agent target exists, the tab has one pane, and the CLI is ready. Submit the task packet path using the Herdr prompt protocol from [herdr.md](herdr.md).

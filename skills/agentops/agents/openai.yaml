@@ -1,0 +1,4 @@
+interface:
+  display_name: "AgentOps"
+  short_description: "Coordinate Herdr agent operations and iterative agents."
+  default_prompt: "Use $agentops to hand over work, run unbounded iter improvements, launch scope-separated parallel iter loops, or coordinate Herdr-managed parallel agents with autonomous launch permissions."

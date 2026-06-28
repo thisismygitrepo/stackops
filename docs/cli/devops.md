@@ -100,7 +100,7 @@ These are the child commands exposed by the current live help.
 - `build-docker`
 - `build-graph`
 - `build-assets`
-- `workflows`
+- `agentops`
 
 `network`:
 

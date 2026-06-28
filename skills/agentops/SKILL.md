@@ -1,11 +1,11 @@
 ---
-name: workflows
-description: Manage external interactive agent workflows through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for multiple scope-separated iter loops, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
+name: agentops
+description: Manage external interactive agent operations through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for multiple scope-separated iter loops, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
 ---
 
-# Workflows
+# AgentOps
 
-Use this skill to coordinate external agent workflows through `herdr`, including handovers, iterative improvement chains, scope-separated parallel iter loops, parallel agents, and Worktrunk-isolated parallel agents.
+Use this skill to coordinate external agent operations through `herdr`, including handovers, iterative improvement chains, scope-separated parallel iter loops, parallel agents, and Worktrunk-isolated parallel agents.
 
 This skill provides five commands:
 
@@ -26,7 +26,7 @@ Before acting, read the shared Herdr rules and the specific command reference:
 - `parallel-agents`: [references/parallel-agents.md](references/parallel-agents.md)
 - `parallel-isolated-agents`: [references/parallel-isolated-agents.md](references/parallel-isolated-agents.md)
 
-Do not start agents, create tabs, split panes, write workflow records, or create worktrees until the relevant reference files have been read.
+Do not start agents, create tabs, split panes, write operation records, or create worktrees until the relevant reference files have been read.
 
 ## Shared Invariants
 
@@ -34,7 +34,7 @@ Use `herdr` as the process and session coordinator. `herdr` is the source of tru
 
 Keep project files small and durable. Store stable identifiers, worktree ownership, iteration records, and exceptional notes only where the command reference requires them. Do not mirror Herdr status, full transcripts, message timestamps, result timestamps, or routine activity into local JSON or Markdown.
 
-Use pointer-first cross-agent communication. For any non-trivial delegated context, write a Markdown packet under the workflow run directory and send the agent only a short Herdr prompt that points to the packet path. Each agent owns its own record directory; shared files must stay bounded summaries and pointer indexes.
+Use pointer-first cross-agent communication. For any non-trivial delegated context, write a Markdown packet under the operation run directory and send the agent only a short Herdr prompt that points to the packet path. Each agent owns its own record directory; shared files must stay bounded summaries and pointer indexes.
 
 Keep the distinction between tabs/windows and panes explicit. Herdr exposes top-level terminal targets as `tab` resources inside a `workspace`; treat a user request for tabs or windows as one Herdr tab per agent unless the installed CLI exposes a separate window concept. A pane is only a split inside one tab/window.
 

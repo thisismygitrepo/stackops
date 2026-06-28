@@ -43,10 +43,10 @@
       "skillPath": "skills/stackops/SKILL.md",
       "computedHash": "c44940313eaf0cdc82373508f59815674ea671ab02ed05e1e57baa2b1d33aa8b"
     },
-    "workflows": {
+    "agentops": {
       "source": "/Users/alex/code/stackops",
       "sourceType": "local",
-      "computedHash": "7fa494a31e66e630231f28a9b9cec362cca160800a5b2e16ee2c57868dfa3310"
+      "computedHash": "5619317b3e7ed0009673ef3e0bae51c37cd0280cdd126dd0c3b71e8ede1d7e1f"
     }
   }
 }

@@ -22,17 +22,17 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import (
     track_iter_workspace_once,
     validate_iter_workspace_track_inputs,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_workflow_cache import (
-    WorkflowCacheCleanResult,
-    clean_workflow_cache,
+from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import (
+    AgentopsCacheCleanResult,
+    clean_agentops_cache,
 )
 
 _CONSOLE: Final[Console] = Console()
 
 
-def show_clean_workflow_cache(*, cwd: Path) -> None:
-    result = clean_workflow_cache(cwd=cwd, report=_ignore_report)
-    _CONSOLE.print(build_workflow_cache_clean_panel(result=result))
+def show_clean_agentops_cache(*, cwd: Path) -> None:
+    result = clean_agentops_cache(cwd=cwd, report=_ignore_report)
+    _CONSOLE.print(build_agentops_cache_clean_panel(result=result))
 
 
 def show_close_iter_workspaces_loop(*, workspace_name: str | None, all_workspaces: bool, continuous: bool) -> None:
@@ -86,7 +86,7 @@ def show_iter_status() -> None:
     _CONSOLE.print(build_iter_status_table(statuses=statuses))
 
 
-def build_workflow_cache_clean_panel(*, result: WorkflowCacheCleanResult) -> Panel:
+def build_agentops_cache_clean_panel(*, result: AgentopsCacheCleanResult) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
     table.add_column("Value", overflow="fold")
@@ -95,9 +95,9 @@ def build_workflow_cache_clean_panel(*, result: WorkflowCacheCleanResult) -> Pan
     table.add_row("Entries", str(result.removed_entries))
     if result.removed:
         table.add_row("Status", "[green]removed[/green]")
-        return Panel(table, title="Workflow Cache", border_style="green")
+        return Panel(table, title="AgentOps Cache", border_style="green")
     table.add_row("Status", "[yellow]not found[/yellow]")
-    return Panel(table, title="Workflow Cache", border_style="yellow")
+    return Panel(table, title="AgentOps Cache", border_style="yellow")
 
 
 def build_iter_close_plan_table(*, close_plans: tuple[IterWorkspaceClosePlan, ...]) -> Table:

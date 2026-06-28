@@ -28,7 +28,7 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 6. Create records under:
 
 ```text
-.ai/workflows/iterations/<descriptive-slug>/
+.ai/agentops/iterations/<descriptive-slug>/
 ```
 
 7. Write the root records and `iter-001/task.md` before launch.
@@ -39,7 +39,7 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 
 ## Records
 
-Keep durable context under `.ai/workflows/iterations/<slug>/`:
+Keep durable context under `.ai/agentops/iterations/<slug>/`:
 
 - `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, tracker command, iteration budget, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
 - `state.md`: bounded rolling state with current best result, active risks, blockers, and anti-repeat notes. Rewrite or compact this file only when those shared facts change; do not append indefinitely.
@@ -96,7 +96,7 @@ Each `iter-<NNN>/task.md` must be standalone enough to bootstrap that iteration 
 # Iteration <NNN> Task
 
 Run records:
-<absolute or repo-relative path to .ai/workflows/iterations/<slug>/>
+<absolute or repo-relative path to .ai/agentops/iterations/<slug>/>
 
 Read first:
 - run.md

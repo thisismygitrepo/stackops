@@ -23,7 +23,7 @@ Start a normal external agent through `herdr`, not an internal subagent. Use a f
 Write handoff context once under:
 
 ```text
-.ai/workflows/handover/<short-task-name>/handoff.md
+.ai/agentops/handover/<short-task-name>/handoff.md
 ```
 
 Use this packet shape:

@@ -11,7 +11,7 @@ Each loop iterates until its own scoped line is complete, blocked, unsafe, or ex
 When invoking worker loops, use this intent unless the user gave a sharper one:
 
 ```text
-We want to run /workflows iter, but a single iter thread is very slow.
+We want to run /agentops iter, but a single iter thread is very slow.
 
 Identify what and how many parallel iter loops can accelerate this goal. After identifying independent lines of work, launch all of them in the same working directory. Each loop must iterate until it finishes its own line of work, and each line must be safely separated from the others by scope. When all loops are done, leave the results for the user to review and integrate toward the final task. I.e. it is implicitly understood that launching parallel-iters will not get us to the final goal, because there is more work to be done after the identified parallelizable iter loops are finished.
 ```

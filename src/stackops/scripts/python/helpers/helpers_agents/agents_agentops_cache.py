@@ -7,28 +7,28 @@ from stackops.utils.accessories import get_repo_root
 
 
 @dataclass(frozen=True, slots=True)
-class WorkflowCacheCleanResult:
+class AgentopsCacheCleanResult:
     repo_root: Path
     cache_path: Path
     removed: bool
     removed_entries: int
 
 
-def clean_workflow_cache(*, cwd: Path, report: Callable[[str], None]) -> WorkflowCacheCleanResult:
+def clean_agentops_cache(*, cwd: Path, report: Callable[[str], None]) -> AgentopsCacheCleanResult:
     repo_root = _resolve_repo_root(cwd=cwd)
-    cache_path = repo_root.joinpath(".ai", "workflows")
+    cache_path = repo_root.joinpath(".ai", "agentops")
     _ensure_path_under_ai(path=cache_path, repo_root=repo_root)
     if not cache_path.exists():
-        report(f"No workflow cache found at {_format_repo_path(path=cache_path, repo_root=repo_root)}.")
-        return WorkflowCacheCleanResult(repo_root=repo_root, cache_path=cache_path, removed=False, removed_entries=0)
+        report(f"No AgentOps cache found at {_format_repo_path(path=cache_path, repo_root=repo_root)}.")
+        return AgentopsCacheCleanResult(repo_root=repo_root, cache_path=cache_path, removed=False, removed_entries=0)
 
     removed_entries = _count_path_entries(path=cache_path)
     if cache_path.is_dir() and not cache_path.is_symlink():
         shutil.rmtree(cache_path)
     else:
         cache_path.unlink()
-    report(f"Removed workflow cache at {_format_repo_path(path=cache_path, repo_root=repo_root)} ({removed_entries} path(s)).")
-    return WorkflowCacheCleanResult(
+    report(f"Removed AgentOps cache at {_format_repo_path(path=cache_path, repo_root=repo_root)} ({removed_entries} path(s)).")
+    return AgentopsCacheCleanResult(
         repo_root=repo_root,
         cache_path=cache_path,
         removed=True,

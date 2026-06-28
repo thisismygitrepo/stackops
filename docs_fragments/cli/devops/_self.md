@@ -26,7 +26,7 @@ Current `devops self --help` exposes:
 | `build-docker` | Build Docker images from the repo script | Only when `~/code/stackops` exists |
 | `build-graph` | Build the architecture dependency graph | Only when `~/code/stackops` exists |
 | `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/stackops` exists |
-| `workflows` | Developer AI workflows | Only when `~/code/stackops` exists |
+| `agentops` | Developer AI agent operations | Only when `~/code/stackops` exists |
 
 The nested help screens render shortened usage such as `Usage: devops update ...`, but the full entrypoints remain `devops self ...` and `devops self security ...`.
 
@@ -567,15 +567,15 @@ devops self build-graph --view
 
 This command is only registered when `~/code/stackops` exists locally.
 
-### workflows
+### agentops
 
-Developer AI workflow helpers live under a nested Typer app:
+Developer AI agent-operation helpers live under a nested Typer app:
 
 ```bash
-devops self workflows [SUBCOMMAND] [ARGS]...
+devops self agentops [SUBCOMMAND] [ARGS]...
 ```
 
-Current `devops self workflows --help` exposes:
+Current `devops self agentops --help` exposes:
 
 | Command | Description |
 |---------|-------------|
@@ -587,10 +587,10 @@ Current `devops self workflows --help` exposes:
 Examples:
 
 ```bash
-devops self workflows update-installer
-devops self workflows update-test
-devops self workflows update-docs
-devops self workflows update-logic
+devops self agentops update-installer
+devops self agentops update-test
+devops self agentops update-docs
+devops self agentops update-logic
 ```
 
 This sub-app is only registered when `~/code/stackops` exists locally.

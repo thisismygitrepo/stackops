@@ -8,7 +8,7 @@
 ensureLightweightCommands:
   description: we want typer cli files to remain light weight and prevent uncncessary upfront loading.
   prompt: |
-    Use the `$workflows` skill with the `parallel-agents` command.
+    Use the `$agentops` skill with the `parallel-agents` command.
 
     $caveman weynan full.
     Please look into every cli typer py file that has (import typer).
@@ -20,7 +20,7 @@ ensureLightweightCommands:
     Convey those messages to the new agent instances, but its up to you to decide which one is worth working on and which one is already reasonably optimized, plese don't be overzelous.
 
     Because the number of files is too big, please spin up another veresion of you (whether you are codex, claude, opencode, copilot etc)
-    but not as a sub agent. Use Herdr-managed tabs/windows/panes as directed by the `$workflows` skill and give each agent a clear name matching its task.
+    but not as a sub agent. Use Herdr-managed tabs/windows/panes as directed by the `$agentops` skill and give each agent a clear name matching its task.
 
     # Instructions for agents:
     * Pass sufficient instructions to them to be able to get the job done
@@ -32,12 +32,12 @@ ensureLightweightCommands:
     * Please start the agents interactively, i.e. start the cli, then paste/type the prompt intended for that agent and press enter to let it go at it.
     * You want to make sure that they are actually working, by seeing some progress, just in case your launch failed, only then, you job is finished, you don't need to monitor them until they finish.
 
-    Do not use internal subagents. Use `$workflows parallel-agents`, submit each prompt, verify each agent accepted it, then report the Herdr targets and visible status.
+    Do not use internal subagents. Use `$agentops parallel-agents`, submit each prompt, verify each agent accepted it, then report the Herdr targets and visible status.
 
 createParallelAgents:
-  description: Use workflows parallel-agents for an appended requirement.
+  description: Use agentops parallel-agents for an appended requirement.
   prompt: |
-    Use the `$workflows` skill with the `parallel-agents` command for the appended user requirement.
+    Use the `$agentops` skill with the `parallel-agents` command for the appended user requirement.
 
     You are preparing a StackOps external parallel-agent run for the user requirement in the appended prompt.
 
@@ -45,14 +45,14 @@ createParallelAgents:
     1. Read the appended user requirement as the source of truth.
     2. Design the full external-agent split: agent choice, task boundaries, context source, chunking, paths, and agent names.
     3. Create task-specific standalone instructions needed for robust delegation.
-    4. Start Herdr-managed interactive agents through `$workflows parallel-agents`.
+    4. Start Herdr-managed interactive agents through `$agentops parallel-agents`.
     5. Submit the intended prompt to each agent and verify each agent accepted it.
 
     This is an orchestration prompt. Do not pass this prompt itself to spawned agents. Write or select a prompt that tells spawned agents how to do the user's actual work.
 
     Creation and launch contract:
 
-    - The purpose is to launch external interactive agents through `$workflows parallel-agents`.
+    - The purpose is to launch external interactive agents through `$agentops parallel-agents`.
     - The purpose is not to create generated `agents parallel create` layout files.
     - Do not use internal subagents.
     - Do not use `agents parallel create`, `agents parallel run-parallel`, `--run`, `--Run`, or `-R`.
@@ -92,9 +92,9 @@ createParallelAgents:
     - Mention any agent that failed to start or accept its prompt.
 
 stackopsMaintinanceUpdateInstaller:
-  description: Use workflows parallel-agents to update installer filename patterns.
+  description: Use agentops parallel-agents to update installer filename patterns.
   prompt: |
-    Use the `$workflows` skill with the `parallel-agents` command.
+    Use the `$agentops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to update GitHub release filename patterns in `src/stackops/utils/schemas/installer/installer_data.json`.
     Split installer entries across agents, with 10 entries per agent. Tell agents to edit only entries assigned to them.
@@ -112,9 +112,9 @@ stackopsMaintinanceUpdateInstaller:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsMaintinanceUpdateTest:
-  description: Use workflows parallel-agents to write mirrored runtime tests.
+  description: Use agentops parallel-agents to write mirrored runtime tests.
   prompt: |
-    Use the `$workflows` skill with the `parallel-agents` command.
+    Use the `$agentops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to add focused runtime tests for StackOps Python files.
     Build the work list from git-visible `.py` files, excluding `tests` and ignored/generated directories. Give each agent about 10 files.
@@ -131,9 +131,9 @@ stackopsMaintinanceUpdateTest:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsMaintinanceUpdateDocs:
-  description: Use workflows parallel-agents to update CLI and API docs.
+  description: Use agentops parallel-agents to update CLI and API docs.
   prompt: |
-    Use the `$workflows` skill with the `parallel-agents` command.
+    Use the `$agentops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to update documentation under `docs/cli` and `docs/api`.
     Build the work list from git-visible Markdown files in those two directories. Give agents clear file chunks.
@@ -149,9 +149,9 @@ stackopsMaintinanceUpdateDocs:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsMaintinanceUpdateLogic:
-  description: Use workflows parallel-agents to review command logic.
+  description: Use agentops parallel-agents to review command logic.
   prompt: |
-    Use the `$workflows` skill with the `parallel-agents` command.
+    Use the `$agentops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to review StackOps CLI command logic and fix real issues.
     Build the work list from CLI command source locations, with each task naming the repo-relative source file and command path.
@@ -169,9 +169,9 @@ stackopsMaintinanceUpdateLogic:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsUpdateAgentsConfig:
-  description: Use workflows parallel-agents to update agents add-config outputs, one external agent per supported target.
+  description: Use agentops parallel-agents to update agents add-config outputs, one external agent per supported target.
   prompt: |
-    Use the `$workflows` skill with the `parallel-agents` command.
+    Use the `$agentops` skill with the `parallel-agents` command.
 
     Please update StackOps `agents add-config` support against the latest official docs for every supported agent.
 
@@ -182,7 +182,7 @@ stackopsUpdateAgentsConfig:
 
     Determine the supported `agents add-config --agent` values from the live command and current source. Do not rely on this prompt for a hardcoded agent list.
 
-    After determining the supported values, launch Herdr-managed interactive agents through `$workflows parallel-agents`:
+    After determining the supported values, launch Herdr-managed interactive agents through `$agentops parallel-agents`:
     - Start exactly one external agent per supported `agents add-config --agent` value.
     - Give each spawned agent one supported target only, and name the Herdr target after that assigned target.
     - Do not group multiple supported targets into one spawned agent.
