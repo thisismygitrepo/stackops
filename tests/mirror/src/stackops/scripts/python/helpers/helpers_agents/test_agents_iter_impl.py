@@ -356,3 +356,64 @@ def test_check_iter_workspace_budget_keeps_workspace_at_budget(monkeypatch: pyte
     assert result.latest_iteration == 100
     assert ["herdr", "workspace", "close", "w1"] not in commands
     assert "iter-alpha: latest=100, budget=100; keeping workspace open." in reports
+
+
+def test_track_iter_workspace_once_reports_status_and_closes_old_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands: list[list[str]] = []
+    reports: list[str] = []
+
+    def fake_run_herdr(args: list[str]) -> str:
+        commands.append(args)
+        match args:
+            case ["herdr", "workspace", "list"]:
+                return """
+{"result":{"workspaces":[
+{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t4","agent_status":"idle","focused":false,"pane_count":4,"tab_count":4}
+]}}
+"""
+            case ["herdr", "tab", "list"]:
+                return """
+{"result":{"tabs":[
+{"tab_id":"w1:t1","workspace_id":"w1","label":"iter-alpha-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t2","workspace_id":"w1","label":"iter-alpha-002","number":2,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t3","workspace_id":"w1","label":"iter-alpha-003","number":3,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t4","workspace_id":"w1","label":"iter-alpha-004","number":4,"agent_status":"idle","focused":true,"pane_count":1}
+]}}
+"""
+            case ["herdr", "pane", "list"]:
+                return """
+{"result":{"panes":[
+{"pane_id":"w1:p1","workspace_id":"w1","tab_id":"w1:t1","agent_status":"done"},
+{"pane_id":"w1:p2","workspace_id":"w1","tab_id":"w1:t2","agent_status":"idle"},
+{"pane_id":"w1:p3","workspace_id":"w1","tab_id":"w1:t3","agent_status":"idle"},
+{"pane_id":"w1:p4","workspace_id":"w1","tab_id":"w1:t4","agent_status":"idle"}
+]}}
+"""
+            case ["herdr", "agent", "list"]:
+                return """
+{"result":{"agents":[
+{"agent":"codex","agent_status":"idle","workspace_id":"w1","tab_id":"w1:t4","pane_id":"w1:p4","cwd":"/repo","foreground_cwd":"/repo","focused":true,"name":"iter-alpha-004"}
+]}}
+"""
+            case ["herdr", "tab", "close", "w1:t1"]:
+                return ""
+            case _:
+                raise AssertionError(args)
+
+    monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
+
+    check = agents_iter_impl.track_iter_workspace_once(
+        workspace_name="iter-alpha",
+        max_iterations=10,
+        close_old_tabs=True,
+        report=reports.append,
+    )
+
+    assert check.status.latest_iteration == 4
+    assert check.budget.closed is False
+    assert check.close_summary is not None
+    assert [tab.tab_id for tab in check.close_summary.closed_tabs] == ["w1:t1"]
+    assert ["herdr", "workspace", "close", "w1"] not in commands
+    assert ["herdr", "tab", "close", "w1:t1"] in commands
+    assert "iter-alpha: iter=004 agent=codex status=idle tabs=4 close=1 guard=0." in reports
+    assert "iter-alpha: latest=004, budget=010; keeping workspace open." in reports

@@ -51,8 +51,12 @@ def track(
         int,
         typer.Option("--interval", "-i", min=1, help="Seconds to sleep between iteration-budget checks."),
     ] = TRACK_INTERVAL_SECONDS,
+    close_old_tabs: Annotated[
+        bool,
+        typer.Option("--close-old-tabs", "--close-old", "-x", help="Close old idle tabs in the tracked workspace after each check."),
+    ] = False,
 ) -> None:
-    """Track an iter Herdr workspace and close it after it exceeds the iteration budget."""
+    """Track an iter Herdr workspace status and close it after it exceeds the iteration budget."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_track_iter_workspace_loop
 
@@ -60,6 +64,7 @@ def track(
             workspace_name=space_name,
             max_iterations=max_iterations,
             interval_seconds=interval_seconds,
+            close_old_tabs=close_old_tabs,
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
@@ -85,7 +90,7 @@ def get_app() -> typer.Typer:
     iter_app.command(name="c", no_args_is_help=False, hidden=True)(clean)
     iter_app.command(name="close", no_args_is_help=False, short_help="<x> Close old idle Herdr tabs from iter workspaces")(close)
     iter_app.command(name="x", no_args_is_help=False, hidden=True)(close)
-    iter_app.command(name="track", no_args_is_help=False, short_help="<t> Track and close an iter workspace after its budget")(track)
+    iter_app.command(name="track", no_args_is_help=False, short_help="<t> Track status and close after budget")(track)
     iter_app.command(name="t", no_args_is_help=False, hidden=True)(track)
     iter_app.command(name="status", no_args_is_help=False, short_help="<s> Show iter workspace status")(status)
     iter_app.command(name="s", no_args_is_help=False, hidden=True)(status)

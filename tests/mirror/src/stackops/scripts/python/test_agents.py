@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 from stackops.scripts.python import agents
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive import main as interactive_main
 from stackops.scripts.python.helpers.helpers_agents import agents_ask_impl
-from stackops.scripts.python.helpers.helpers_agents import agents_iter_impl
+from stackops.scripts.python.helpers.helpers_agents import agents_iter_rich_output
 from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_skill_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_workflow_cache
@@ -150,7 +150,7 @@ def test_iter_status_command_calls_impl(monkeypatch: pytest.MonkeyPatch) -> None
     def fake_show_iter_status() -> None:
         calls.append("status")
 
-    monkeypatch.setattr(agents_iter_impl, "show_iter_status", fake_show_iter_status)
+    monkeypatch.setattr(agents_iter_rich_output, "show_iter_status", fake_show_iter_status)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "status"])
 
@@ -162,11 +162,11 @@ def test_iter_close_command_calls_impl_for_one_workspace(monkeypatch: pytest.Mon
     calls: list[tuple[str | None, bool, bool]] = []
 
     def fake_close_iter_workspaces_loop(
-        *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: object
+        *, workspace_name: str | None, all_workspaces: bool, continuous: bool
     ) -> None:
         calls.append((workspace_name, all_workspaces, continuous))
 
-    monkeypatch.setattr(agents_iter_impl, "close_iter_workspaces_loop", fake_close_iter_workspaces_loop)
+    monkeypatch.setattr(agents_iter_rich_output, "show_close_iter_workspaces_loop", fake_close_iter_workspaces_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "close", "iter-alpha"])
 
@@ -178,11 +178,11 @@ def test_iter_close_all_command_calls_impl_for_all_workspaces(monkeypatch: pytes
     calls: list[tuple[str | None, bool, bool]] = []
 
     def fake_close_iter_workspaces_loop(
-        *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: object
+        *, workspace_name: str | None, all_workspaces: bool, continuous: bool
     ) -> None:
         calls.append((workspace_name, all_workspaces, continuous))
 
-    monkeypatch.setattr(agents_iter_impl, "close_iter_workspaces_loop", fake_close_iter_workspaces_loop)
+    monkeypatch.setattr(agents_iter_rich_output, "show_close_iter_workspaces_loop", fake_close_iter_workspaces_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "close", "--all", "--loop"])
 
@@ -211,35 +211,51 @@ def test_iter_clean_command_calls_cache_impl(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_iter_track_command_calls_impl_with_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int]] = []
+    calls: list[tuple[str, int, int, bool]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, report: object
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
 
-    monkeypatch.setattr(agents_iter_impl, "track_iter_workspace_loop", fake_track_iter_workspace_loop)
+    monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 100, 60)]
+    assert calls == [("iter-alpha", 100, 60, False)]
 
 
 def test_iter_track_command_accepts_budget_and_interval(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int]] = []
+    calls: list[tuple[str, int, int, bool]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, report: object
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
 
-    monkeypatch.setattr(agents_iter_impl, "track_iter_workspace_loop", fake_track_iter_workspace_loop)
+    monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "7", "--interval", "2"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 7, 2)]
+    assert calls == [("iter-alpha", 7, 2, False)]
+
+
+def test_iter_track_command_accepts_close_old_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, int, int, bool]] = []
+
+    def fake_track_iter_workspace_loop(
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
+    ) -> None:
+        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
+
+    monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
+
+    result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "--close-old-tabs"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [("iter-alpha", 100, 60, True)]
 
 
 def test_iter_short_alias_is_uppercase_i() -> None:
