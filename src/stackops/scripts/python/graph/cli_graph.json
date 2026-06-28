@@ -15817,7 +15817,7 @@
                 "name": "clean",
                 "fullPath": "agents iter clean",
                 "shortPath": "a I c",
-                "help": "Close old Herdr tabs in iter workspaces while preserving recent and launching tabs.",
+                "help": "Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_iter.py",
                   "module": "stackops.scripts.python.agents_iter",
@@ -15825,18 +15825,50 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def clean(continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat cleanup every 5 minutes.\")] = False) -> None:",
-                    "    \"\"\"Close old Herdr tabs in iter workspaces while preserving recent and launching tabs.\"\"\"",
+                    "def clean(",
+                    "    space_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Argument(help=\"Exact Herdr iter workspace label to clean. Use --all to clean every iter workspace.\"),",
+                    "    ] = None,",
+                    "    continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat cleanup every 5 minutes.\")] = False,",
+                    "    all_workspaces: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--all\", \"-a\", help=\"Clean all iter workspaces.\"),",
+                    "    ] = False,",
+                    ") -> None:",
+                    "    \"\"\"Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all.\"\"\"",
                     "    try:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import clean_iter_workspaces_loop",
                     "",
-                    "        clean_iter_workspaces_loop(continuous=continuous, report=typer.echo)",
+                    "        clean_iter_workspaces_loop(",
+                    "            workspace_name=space_name,",
+                    "            all_workspaces=all_workspaces,",
+                    "            continuous=continuous,",
+                    "            report=typer.echo,",
+                    "        )",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
                   ],
                   "name": "clean",
                   "parameters": [
+                    {
+                      "name": "space_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Exact Herdr iter workspace label to clean. Use --all to clean every iter workspace.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Exact Herdr iter workspace label to clean. Use --all to clean every iter workspace."
+                      }
+                    },
                     {
                       "name": "continuous",
                       "kind": "positional_or_keyword",
@@ -15858,18 +15890,146 @@
                         ],
                         "help": "Repeat cleanup every 5 minutes."
                       }
+                    },
+                    {
+                      "name": "all_workspaces",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--all', '-a', help='Clean all iter workspaces.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--all",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--all"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Clean all iter workspaces."
+                      }
                     }
                   ],
                   "return": "None"
                 },
-                "short_help": "<c> Clean old Herdr tabs from iter workspaces",
+                "short_help": "<c> Clean old idle Herdr tabs from iter workspaces",
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Close old Herdr tabs in iter workspaces while preserving recent and launching tabs.",
+                "doc": "Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all.",
                 "aliases": [
                   {
                     "name": "c",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "track",
+                "fullPath": "agents iter track",
+                "shortPath": "a I t",
+                "help": "Track an iter Herdr workspace and close it after it exceeds the iteration budget.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_iter.py",
+                  "module": "stackops.scripts.python.agents_iter",
+                  "callable": "track"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def track(",
+                    "    space_name: Annotated[str, typer.Argument(help=\"Exact Herdr iter workspace label to track.\")],",
+                    "    max_iterations: Annotated[int, typer.Argument(help=\"Maximum allowed iteration number before the workspace is closed.\")] = DEFAULT_TRACK_MAX_ITERATIONS,",
+                    "    interval_seconds: Annotated[",
+                    "        int,",
+                    "        typer.Option(\"--interval\", \"-i\", min=1, help=\"Seconds to sleep between iteration-budget checks.\"),",
+                    "    ] = TRACK_INTERVAL_SECONDS,",
+                    ") -> None:",
+                    "    \"\"\"Track an iter Herdr workspace and close it after it exceeds the iteration budget.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import track_iter_workspace_loop",
+                    "",
+                    "        track_iter_workspace_loop(",
+                    "            workspace_name=space_name,",
+                    "            max_iterations=max_iterations,",
+                    "            interval_seconds=interval_seconds,",
+                    "            report=typer.echo,",
+                    "        )",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error"
+                  ],
+                  "name": "track",
+                  "parameters": [
+                    {
+                      "name": "space_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Exact Herdr iter workspace label to track.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Exact Herdr iter workspace label to track."
+                      }
+                    },
+                    {
+                      "name": "max_iterations",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_TRACK_MAX_ITERATIONS",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Argument(help='Maximum allowed iteration number before the workspace is closed.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Maximum allowed iteration number before the workspace is closed."
+                      }
+                    },
+                    {
+                      "name": "interval_seconds",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "TRACK_INTERVAL_SECONDS",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--interval', '-i', min=1, help='Seconds to sleep between iteration-budget checks.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interval",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interval"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Seconds to sleep between iteration-budget checks."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<t> Track and close an iter workspace after its budget",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Track an iter Herdr workspace and close it after it exceeds the iteration budget.",
+                "aliases": [
+                  {
+                    "name": "t",
                     "hidden": true
                   }
                 ]

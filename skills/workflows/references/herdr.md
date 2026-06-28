@@ -30,6 +30,7 @@ Use these command families for workflow control:
 herdr --help
 herdr workspace create --cwd '<cwd>' --label '<name>' --no-focus
 herdr workspace list
+herdr workspace close '<workspace_id>'
 herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<name>' --no-focus
 herdr tab list --workspace '<workspace_id>'
 herdr agent start '<name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>

@@ -156,6 +156,70 @@ def test_iter_status_command_calls_impl(monkeypatch: pytest.MonkeyPatch) -> None
     assert calls == ["status"]
 
 
+def test_iter_clean_command_calls_impl_for_one_workspace(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str | None, bool, bool]] = []
+
+    def fake_clean_iter_workspaces_loop(
+        *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: object
+    ) -> None:
+        calls.append((workspace_name, all_workspaces, continuous))
+
+    monkeypatch.setattr(agents_iter_impl, "clean_iter_workspaces_loop", fake_clean_iter_workspaces_loop)
+
+    result = CliRunner().invoke(agents.get_app(), ["iter", "clean", "iter-alpha"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [("iter-alpha", False, False)]
+
+
+def test_iter_clean_all_command_calls_impl_for_all_workspaces(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str | None, bool, bool]] = []
+
+    def fake_clean_iter_workspaces_loop(
+        *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: object
+    ) -> None:
+        calls.append((workspace_name, all_workspaces, continuous))
+
+    monkeypatch.setattr(agents_iter_impl, "clean_iter_workspaces_loop", fake_clean_iter_workspaces_loop)
+
+    result = CliRunner().invoke(agents.get_app(), ["iter", "clean", "--all", "--loop"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [(None, True, True)]
+
+
+def test_iter_track_command_calls_impl_with_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, int, int]] = []
+
+    def fake_track_iter_workspace_loop(
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, report: object
+    ) -> None:
+        calls.append((workspace_name, max_iterations, interval_seconds))
+
+    monkeypatch.setattr(agents_iter_impl, "track_iter_workspace_loop", fake_track_iter_workspace_loop)
+
+    result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [("iter-alpha", 100, 60)]
+
+
+def test_iter_track_command_accepts_budget_and_interval(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, int, int]] = []
+
+    def fake_track_iter_workspace_loop(
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, report: object
+    ) -> None:
+        calls.append((workspace_name, max_iterations, interval_seconds))
+
+    monkeypatch.setattr(agents_iter_impl, "track_iter_workspace_loop", fake_track_iter_workspace_loop)
+
+    result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "7", "--interval", "2"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [("iter-alpha", 7, 2)]
+
+
 def test_iter_short_alias_is_uppercase_i() -> None:
     result = CliRunner().invoke(agents.get_app(), ["I", "--help"])
 

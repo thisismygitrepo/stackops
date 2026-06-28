@@ -23,23 +23,25 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 1. Identify objective, evaluation criteria, and constraints. Ask only if the objective is missing; otherwise write a concrete working interpretation into the records.
 2. Select mode: interactive by default, non-interactive only when requested or required.
 3. Inspect `herdr --help` and relevant workspace/tab/pane/agent help. For non-interactive mode, inspect the target CLI help for one-shot invocation.
-4. Capture cwd, repo root, branch, commit, status, changed files, relevant commands already run, project rules, and blockers.
-5. Create records under:
+4. Determine the external iteration budget. If the user did not mention a budget, use 100.
+5. Capture cwd, repo root, branch, commit, status, changed files, relevant commands already run, project rules, and blockers.
+6. Create records under:
 
 ```text
 .ai/workflows/iterations/<descriptive-slug>/
 ```
 
-6. Write the root records and `iter-001/task.md` before launch.
-7. Launch `iter-001` in a dedicated Herdr workspace with one tab and one pane.
-8. Send only a short Herdr bootstrap prompt pointing to `iter-001/task.md`.
-9. Report slug, records path, Herdr workspace, first agent target, visible status, and mode.
+7. Write the root records and `iter-001/task.md` before launch.
+8. Launch `iter-001` in a dedicated Herdr workspace with one tab and one pane.
+9. Create a second Herdr tab/window in that same workspace named `iter-<slug>-tracker`, start `agents iter track iter-<slug> <iteration-budget>` in it, and leave it running. The tracker checks every 60 seconds by default and closes the Herdr workspace after the latest numbered iteration exceeds the budget.
+10. Send only a short Herdr bootstrap prompt pointing to `iter-001/task.md`.
+11. Report slug, records path, Herdr workspace, tracker tab, first agent target, visible status, mode, and iteration budget.
 
 ## Records
 
 Keep durable context under `.ai/workflows/iterations/<slug>/`:
 
-- `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
+- `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, tracker command, iteration budget, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
 - `state.md`: bounded rolling state with current best result, active risks, blockers, and anti-repeat notes. Rewrite or compact this file only when those shared facts change; do not append indefinitely.
 - `index.md`: one compact row per iteration with Herdr target, task path, result path, recommendation path, files touched, validation, and short outcome.
 - `iter-001/task.md`: the task packet addressed to that iteration.
@@ -73,6 +75,9 @@ Interactive command shape:
 ```bash
 herdr workspace create --cwd '<cwd>' --label 'iter-<slug>' --no-focus
 herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label 'iter-<slug>-001' --no-focus
+herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label 'iter-<slug>-tracker' --no-focus
+herdr pane list --workspace '<workspace_id>'
+herdr pane run '<tracker_pane_id>' 'agents iter track iter-<slug> <iteration-budget>'
 herdr agent start 'iter-<slug>-001' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
 herdr agent send 'iter-<slug>-001' 'Read <records>/iter-001/task.md and follow it. Do not assume access to prior conversation.'
 herdr pane send-keys '<pane_id>' Enter
@@ -119,6 +124,7 @@ Hard rules:
 - Create iter-<NNN+1>/task.md before launching the next agent, and copy the recommendation into it inline.
 - Start iter-<NNN+1> in the same Herdr workspace and submit only a short prompt pointing to its task packet.
 - Never stop because criteria look satisfied or no obvious idea remains.
+- Do not self-stop at the iteration budget; the external tracker tab enforces the budget by closing the Herdr workspace after the latest numbered iteration exceeds it.
 - Stop only for explicit external stop/pause, launch failure, concrete blocker, or scope/safety violation.
 
 Expected final report:

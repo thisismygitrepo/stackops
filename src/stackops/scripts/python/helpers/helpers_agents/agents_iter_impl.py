@@ -11,12 +11,15 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import TRACK_INTERVAL_SECONDS
 
 JsonObject: TypeAlias = dict[str, object]
 KEEP_RECENT_TABS: Final[int] = 3
 LOOP_INTERVAL_SECONDS: Final[int] = 300
 ITER_WORKSPACE_PREFIX: Final[str] = "iter"
 ITER_AGENT_LABEL_PATTERN: Final[re.Pattern[str]] = re.compile(r"^iter-.+-(?P<iteration>[0-9]{3})$")
+ITER_TRACKER_SUFFIX: Final[str] = "-tracker"
+CLOSABLE_AGENT_STATUSES: Final[frozenset[str]] = frozenset({"done", "idle"})
 LAUNCH_SOURCE_AGENT_STATUSES: Final[frozenset[str]] = frozenset({"working", "unknown"})
 _CONSOLE: Final[Console] = Console()
 
@@ -58,6 +61,16 @@ class HerdrAgent:
 
 
 @dataclass(frozen=True, slots=True)
+class HerdrPane:
+    pane_id: str
+    workspace_id: str
+    tab_id: str
+    agent_status: str
+    agent: str | None
+    label: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class IterWorkspaceCleanup:
     workspace: HerdrWorkspace
     kept_tabs: tuple[HerdrTab, ...]
@@ -86,9 +99,20 @@ class IterWorkspaceStatus:
     latest_agent_tab: HerdrTab | None
 
 
-def clean_iter_workspaces_loop(*, continuous: bool, report: Callable[[str], None]) -> None:
+@dataclass(frozen=True, slots=True)
+class IterWorkspaceTrackResult:
+    workspace: HerdrWorkspace
+    latest_iteration: int | None
+    max_iterations: int
+    closed: bool
+
+
+def clean_iter_workspaces_loop(
+    *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: Callable[[str], None]
+) -> None:
+    _validate_clean_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
     while True:
-        summaries = clean_iter_workspaces(report=report)
+        summaries = clean_iter_workspaces(workspace_name=workspace_name, all_workspaces=all_workspaces, report=report)
         _report_summaries(summaries=summaries, report=report)
         if not continuous:
             return
@@ -100,16 +124,68 @@ def show_iter_status() -> None:
     _CONSOLE.print(build_iter_status_table(statuses=get_iter_workspace_statuses()))
 
 
+def track_iter_workspace_loop(
+    *, workspace_name: str, max_iterations: int, interval_seconds: int, report: Callable[[str], None]
+) -> None:
+    _validate_track_inputs(workspace_name=workspace_name, max_iterations=max_iterations, interval_seconds=interval_seconds)
+    report(
+        f"Tracking iter workspace {workspace_name}: max_iterations={max_iterations}, "
+        f"interval={interval_seconds} second(s)."
+    )
+    while True:
+        result = check_iter_workspace_budget(workspace_name=workspace_name, max_iterations=max_iterations, report=report)
+        if result.closed:
+            return
+        report(f"Next track check in {interval_seconds} second(s).")
+        sleep(interval_seconds)
+
+
+def check_iter_workspace_budget(
+    *, workspace_name: str, max_iterations: int, report: Callable[[str], None]
+) -> IterWorkspaceTrackResult:
+    _validate_track_inputs(workspace_name=workspace_name, max_iterations=max_iterations, interval_seconds=TRACK_INTERVAL_SECONDS)
+    workspace = _get_iter_workspace_by_label(workspace_name=workspace_name)
+    tabs = tuple(tab for tab in _list_tabs() if tab.workspace_id == workspace.workspace_id)
+    agents = tuple(agent for agent in _list_agents() if agent.workspace_id == workspace.workspace_id)
+    latest_iteration = _latest_workspace_iteration(tabs=tabs, agents=agents)
+    if latest_iteration is None:
+        report(f"{workspace.label}: no numbered iter agents or tabs found; budget={max_iterations}.")
+        return IterWorkspaceTrackResult(
+            workspace=workspace,
+            latest_iteration=latest_iteration,
+            max_iterations=max_iterations,
+            closed=False,
+        )
+    if latest_iteration <= max_iterations:
+        report(f"{workspace.label}: latest={latest_iteration:03d}, budget={max_iterations:03d}; keeping workspace open.")
+        return IterWorkspaceTrackResult(
+            workspace=workspace,
+            latest_iteration=latest_iteration,
+            max_iterations=max_iterations,
+            closed=False,
+        )
+    report(f"{workspace.label}: latest={latest_iteration:03d} exceeded budget={max_iterations:03d}; closing workspace.")
+    _run_herdr(["herdr", "workspace", "close", workspace.workspace_id])
+    return IterWorkspaceTrackResult(
+        workspace=workspace,
+        latest_iteration=latest_iteration,
+        max_iterations=max_iterations,
+        closed=True,
+    )
+
+
 def get_iter_workspace_statuses() -> tuple[IterWorkspaceStatus, ...]:
     workspaces = _iter_workspaces(workspaces=_list_workspaces())
     tabs_by_workspace_id = _tabs_by_workspace_id(tabs=_list_tabs())
+    panes_by_tab_id = _panes_by_tab_id(panes=_list_panes())
     agents_by_workspace_id = _agents_by_workspace_id(agents=_list_agents())
     statuses: list[IterWorkspaceStatus] = []
     for workspace in workspaces:
         tabs = tuple(sorted(tabs_by_workspace_id.get(workspace.workspace_id, ()), key=lambda tab: tab.number))
+        panes = _panes_for_tabs(tabs=tabs, panes_by_tab_id=panes_by_tab_id)
         agents = agents_by_workspace_id.get(workspace.workspace_id, ())
         latest_agent = _latest_iter_agent(agents=agents_by_workspace_id.get(workspace.workspace_id, ()))
-        cleanup_plan = _workspace_cleanup_plan(workspace=workspace, tabs=tabs, agents=agents)
+        cleanup_plan = _workspace_cleanup_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents)
         statuses.append(
             IterWorkspaceStatus(
                 workspace=workspace,
@@ -145,8 +221,10 @@ def build_iter_status_table(*, statuses: tuple[IterWorkspaceStatus, ...]) -> Tab
     return table
 
 
-def clean_iter_workspaces(*, report: Callable[[str], None]) -> tuple[IterWorkspaceCleanup, ...]:
-    cleanup_plans = plan_iter_workspace_cleanups()
+def clean_iter_workspaces(
+    *, workspace_name: str | None, all_workspaces: bool, report: Callable[[str], None]
+) -> tuple[IterWorkspaceCleanup, ...]:
+    cleanup_plans = plan_iter_workspace_cleanups(workspace_name=workspace_name, all_workspaces=all_workspaces)
     _report_cleanup_plan(cleanup_plans=cleanup_plans, report=report)
     total_to_close = sum(len(cleanup_plan.closable_tabs) for cleanup_plan in cleanup_plans)
     closed_count = 0
@@ -172,15 +250,18 @@ def clean_iter_workspaces(*, report: Callable[[str], None]) -> tuple[IterWorkspa
     return tuple(summaries)
 
 
-def plan_iter_workspace_cleanups() -> tuple[IterWorkspaceCleanupPlan, ...]:
-    workspaces = _iter_workspaces(workspaces=_list_workspaces())
+def plan_iter_workspace_cleanups(*, workspace_name: str | None, all_workspaces: bool) -> tuple[IterWorkspaceCleanupPlan, ...]:
+    _validate_clean_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
+    workspaces = _selected_iter_workspaces(workspaces=_list_workspaces(), workspace_name=workspace_name, all_workspaces=all_workspaces)
     tabs_by_workspace_id = _tabs_by_workspace_id(tabs=_list_tabs())
+    panes_by_tab_id = _panes_by_tab_id(panes=_list_panes())
     agents_by_workspace_id = _agents_by_workspace_id(agents=_list_agents())
     cleanup_plans: list[IterWorkspaceCleanupPlan] = []
     for workspace in workspaces:
         tabs = tuple(sorted(tabs_by_workspace_id.get(workspace.workspace_id, ()), key=lambda tab: tab.number))
+        panes = _panes_for_tabs(tabs=tabs, panes_by_tab_id=panes_by_tab_id)
         agents = agents_by_workspace_id.get(workspace.workspace_id, ())
-        cleanup_plans.append(_workspace_cleanup_plan(workspace=workspace, tabs=tabs, agents=agents))
+        cleanup_plans.append(_workspace_cleanup_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents))
     return tuple(cleanup_plans)
 
 
@@ -223,10 +304,62 @@ def _iter_workspaces(*, workspaces: tuple[HerdrWorkspace, ...]) -> tuple[HerdrWo
     return tuple(workspace for workspace in workspaces if workspace.label.startswith(ITER_WORKSPACE_PREFIX))
 
 
+def _validate_clean_scope(*, workspace_name: str | None, all_workspaces: bool) -> None:
+    if workspace_name is not None and workspace_name.strip() == "":
+        raise ValueError("Workspace name must not be empty.")
+    if workspace_name is not None and all_workspaces:
+        raise ValueError("Pass either SPACE_NAME or --all, not both.")
+    if workspace_name is None and not all_workspaces:
+        raise ValueError("Pass SPACE_NAME to clean one iter workspace, or --all to clean every iter workspace.")
+
+
+def _selected_iter_workspaces(
+    *, workspaces: tuple[HerdrWorkspace, ...], workspace_name: str | None, all_workspaces: bool
+) -> tuple[HerdrWorkspace, ...]:
+    if all_workspaces:
+        return _iter_workspaces(workspaces=workspaces)
+    if workspace_name is None:
+        raise AssertionError("Workspace name is required when all_workspaces is false.")
+    matches = tuple(
+        workspace
+        for workspace in workspaces
+        if workspace.label == workspace_name or workspace.workspace_id == workspace_name
+    )
+    if len(matches) == 0:
+        raise RuntimeError(f"No Herdr iter workspace named {workspace_name!r} was found.")
+    if len(matches) > 1:
+        raise RuntimeError(f"Multiple Herdr workspaces named {workspace_name!r} were found; labels must be unique for cleanup.")
+    workspace = matches[0]
+    if not workspace.label.startswith(ITER_WORKSPACE_PREFIX):
+        raise RuntimeError(f"Herdr workspace {workspace_name!r} is not an iter workspace.")
+    return (workspace,)
+
+
+def _validate_track_inputs(*, workspace_name: str, max_iterations: int, interval_seconds: int) -> None:
+    if workspace_name.strip() == "":
+        raise ValueError("Workspace name must not be empty.")
+    if max_iterations < 1:
+        raise ValueError("Maximum iterations must be greater than zero.")
+    if interval_seconds < 1:
+        raise ValueError("Track interval must be greater than zero.")
+
+
+def _get_iter_workspace_by_label(*, workspace_name: str) -> HerdrWorkspace:
+    matches = tuple(workspace for workspace in _list_workspaces() if workspace.label == workspace_name)
+    if len(matches) == 0:
+        raise RuntimeError(f"No Herdr iter workspace named {workspace_name!r} was found.")
+    if len(matches) > 1:
+        raise RuntimeError(f"Multiple Herdr workspaces named {workspace_name!r} were found; labels must be unique for tracking.")
+    workspace = matches[0]
+    if not workspace.label.startswith(ITER_WORKSPACE_PREFIX):
+        raise RuntimeError(f"Herdr workspace {workspace_name!r} is not an iter workspace.")
+    return workspace
+
+
 def _workspace_cleanup_plan(
-    *, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...]
+    *, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], panes: tuple[HerdrPane, ...], agents: tuple[HerdrAgent, ...]
 ) -> IterWorkspaceCleanupPlan:
-    guarded_tabs = _guarded_tabs(workspace=workspace, tabs=tabs, agents=agents)
+    guarded_tabs = _guarded_tabs(workspace=workspace, tabs=tabs, panes=panes, agents=agents)
     kept_tabs = _unique_tabs(tabs=(*_kept_recent_tabs(tabs=tabs), *guarded_tabs))
     return IterWorkspaceCleanupPlan(
         workspace=workspace,
@@ -241,15 +374,37 @@ def _kept_recent_tabs(*, tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
     return tuple(sorted(tabs, key=lambda tab: tab.number, reverse=True)[:KEEP_RECENT_TABS])
 
 
-def _guarded_tabs(*, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...]) -> tuple[HerdrTab, ...]:
+def _guarded_tabs(
+    *, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], panes: tuple[HerdrPane, ...], agents: tuple[HerdrAgent, ...]
+) -> tuple[HerdrTab, ...]:
     launch_source_tabs = _launch_source_tabs(workspace=workspace, tabs=tabs, agents=agents)
     guarded_tabs: list[HerdrTab] = []
+    guarded_tabs.extend(_tracker_tabs(tabs=tabs))
+    guarded_tabs.extend(_non_closable_process_tabs(tabs=tabs, panes=panes))
     for tab in launch_source_tabs:
         guarded_tabs.append(tab)
         next_tab = _next_tab(tab=tab, tabs=tabs)
         if next_tab is not None:
             guarded_tabs.append(next_tab)
     return _unique_tabs(tabs=tuple(guarded_tabs))
+
+
+def _tracker_tabs(*, tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
+    return tuple(tab for tab in tabs if tab.label.endswith(ITER_TRACKER_SUFFIX))
+
+
+def _non_closable_process_tabs(*, tabs: tuple[HerdrTab, ...], panes: tuple[HerdrPane, ...]) -> tuple[HerdrTab, ...]:
+    panes_by_tab_id = _panes_by_tab_id(panes=panes)
+    return tuple(tab for tab in tabs if not _tab_has_only_closable_processes(tab=tab, panes=panes_by_tab_id.get(tab.tab_id, ())))
+
+
+def _tab_has_only_closable_processes(*, tab: HerdrTab, panes: tuple[HerdrPane, ...]) -> bool:
+    if tab.agent_status not in CLOSABLE_AGENT_STATUSES:
+        return False
+    for pane in panes:
+        if pane.agent_status not in CLOSABLE_AGENT_STATUSES:
+            return False
+    return True
 
 
 def _launch_source_tabs(*, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...]) -> tuple[HerdrTab, ...]:
@@ -294,6 +449,20 @@ def _tabs_by_workspace_id(*, tabs: tuple[HerdrTab, ...]) -> dict[str, tuple[Herd
     return {workspace_id: tuple(workspace_tabs) for workspace_id, workspace_tabs in grouped.items()}
 
 
+def _panes_by_tab_id(*, panes: tuple[HerdrPane, ...]) -> dict[str, tuple[HerdrPane, ...]]:
+    grouped: dict[str, list[HerdrPane]] = {}
+    for pane in panes:
+        grouped.setdefault(pane.tab_id, []).append(pane)
+    return {tab_id: tuple(tab_panes) for tab_id, tab_panes in grouped.items()}
+
+
+def _panes_for_tabs(*, tabs: tuple[HerdrTab, ...], panes_by_tab_id: dict[str, tuple[HerdrPane, ...]]) -> tuple[HerdrPane, ...]:
+    panes: list[HerdrPane] = []
+    for tab in tabs:
+        panes.extend(panes_by_tab_id.get(tab.tab_id, ()))
+    return tuple(panes)
+
+
 def _agents_by_workspace_id(*, agents: tuple[HerdrAgent, ...]) -> dict[str, tuple[HerdrAgent, ...]]:
     grouped: dict[str, list[HerdrAgent]] = {}
     for agent in agents:
@@ -314,6 +483,23 @@ def _latest_iter_agent(*, agents: tuple[HerdrAgent, ...]) -> HerdrAgent | None:
             latest_iteration = iteration
             latest_agent = agent
     return latest_agent
+
+
+def _latest_workspace_iteration(*, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...]) -> int | None:
+    iterations: list[int] = []
+    for tab in tabs:
+        tab_iteration = _iteration_from_label(label=tab.label)
+        if tab_iteration is not None:
+            iterations.append(tab_iteration)
+    for agent in agents:
+        if agent.name is None:
+            continue
+        agent_iteration = _iteration_from_label(label=agent.name)
+        if agent_iteration is not None:
+            iterations.append(agent_iteration)
+    if len(iterations) == 0:
+        return None
+    return max(iterations)
 
 
 def _list_workspaces() -> tuple[HerdrWorkspace, ...]:
@@ -341,6 +527,15 @@ def _list_agents() -> tuple[HerdrAgent, ...]:
     if not isinstance(agents_value, list):
         raise RuntimeError("Herdr agent list response did not include result.agents.")
     return tuple(_parse_agent(value=value) for value in agents_value)
+
+
+def _list_panes() -> tuple[HerdrPane, ...]:
+    payload = _run_herdr_json(["herdr", "pane", "list"])
+    result = _result_object(payload=payload)
+    panes_value = result.get("panes")
+    if not isinstance(panes_value, list):
+        raise RuntimeError("Herdr pane list response did not include result.panes.")
+    return tuple(_parse_pane(value=value) for value in panes_value)
 
 
 def _parse_workspace(*, value: object) -> HerdrWorkspace:
@@ -388,6 +583,20 @@ def _parse_agent(*, value: object) -> HerdrAgent:
         foreground_cwd=_required_string(mapping=mapping, key="foreground_cwd"),
         focused=_required_bool(mapping=mapping, key="focused"),
         name=_optional_string(mapping=mapping, key="name"),
+    )
+
+
+def _parse_pane(*, value: object) -> HerdrPane:
+    if not isinstance(value, dict):
+        raise RuntimeError("Herdr pane list included a non-object pane.")
+    mapping = cast(JsonObject, value)
+    return HerdrPane(
+        pane_id=_required_string(mapping=mapping, key="pane_id"),
+        workspace_id=_required_string(mapping=mapping, key="workspace_id"),
+        tab_id=_required_string(mapping=mapping, key="tab_id"),
+        agent_status=_required_string(mapping=mapping, key="agent_status"),
+        agent=_optional_string(mapping=mapping, key="agent"),
+        label=_optional_string(mapping=mapping, key="label"),
     )
 
 
