@@ -5,6 +5,7 @@ import shutil
 # from typing import Optional
 from stackops.scripts.python.enums import BACKENDS
 from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 PATH_BACKENDS = frozenset(
     {
@@ -160,8 +161,8 @@ except Exception as e:
         #     uv_project_line = f'--project {virtualenv_root.parent}'
         #     uv_python_line = ""
         # else:
-        if Path.home().joinpath("code/stackops").exists():
-            uv_project_line = f"""--project "{str(Path.home().joinpath("code/stackops"))}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """
+        if STACKOPS_REPO_DIR.exists():
+            uv_project_line = f"""--project "{str(STACKOPS_REPO_DIR)}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """
             uv_python_line = "--python 3.14"
         else:
             uv_project_line = f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """
@@ -274,7 +275,7 @@ def build_read_command(
         return f"""uv run {uv_python_line} {user_uv_with_line} {uv_project_line} --with visidata,pyarrow,openpyxl vd "{str(file_obj)}" """
 
     if backend == "marimo":
-        if Path.home().joinpath("code/stackops").exists():
+        if STACKOPS_REPO_DIR.exists():
             requirements = f"""{user_uv_with_line} {uv_project_line} --with marimo,sqlglot  """
         else:
             requirements = f"""{uv_python_line} {user_uv_with_line} {uv_project_line} --with "marimo,sqlglot,cowsay,{STACKOPS_PLOT_REQUIREMENT}" """
@@ -285,7 +286,7 @@ uv run {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
 """
 
     if backend == "jupyter":
-        if Path.home().joinpath("code/stackops").exists():
+        if STACKOPS_REPO_DIR.exists():
             requirements = f"""{user_uv_with_line}  {uv_project_line} --with jupyterlab """
         else:
             requirements = f"""{user_uv_with_line} {uv_project_line} --with "cowsay" --with "{STACKOPS_PLOT_REQUIREMENT}" """

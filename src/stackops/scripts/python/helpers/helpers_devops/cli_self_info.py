@@ -5,6 +5,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_self import developer_repo_root
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
 def readme() -> None:
@@ -88,7 +89,7 @@ def build_docker(
 
     repo_root = developer_repo_root()
     if repo_root is None:
-        typer.echo("❌ Developer repo not found: ~/code/stackops")
+        typer.echo(f"❌ Developer repo not found: {STACKOPS_REPO_DIR}")
         raise typer.Exit(code=1)
 
     script_path = repo_root.joinpath("jobs", "shell", "docker_build_and_publish.sh")
@@ -144,7 +145,7 @@ def build_graph(
     """🕸 <g> Build the architecture dependency graph."""
     repo_root = developer_repo_root()
     if repo_root is None:
-        typer.echo("❌ Developer repo not found: ~/code/stackops")
+        typer.echo(f"❌ Developer repo not found: {STACKOPS_REPO_DIR}")
         raise typer.Exit(code=1)
 
     from stackops.architecture_graph.cli import DEFAULT_OUTPUT_PATH, DEFAULT_PACKAGE_NAME, DEFAULT_SOURCE_ROOT

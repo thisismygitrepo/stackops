@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
-$REPO_ROOT = "$HOME/code/stackops"
+$STACKOPS_REPO_DIR = "$HOME/code/stackops"
+$REPO_ROOT = $STACKOPS_REPO_DIR
 $JOB_NAME = "agentsTrial"
 $CONTEXT_PATH = "$REPO_ROOT/.ai/agents/template/files.md"
 $PROMPT_PATH = "$REPO_ROOT/.ai/agents/template/prompt.txt"

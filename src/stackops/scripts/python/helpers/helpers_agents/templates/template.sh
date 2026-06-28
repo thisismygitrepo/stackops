@@ -3,7 +3,8 @@
 # set -e # Exit immediately if a command exits with a non-zero status.
 
 
-REPO_ROOT="$HOME/code/stackops"
+STACKOPS_REPO_DIR="$HOME/code/stackops"
+REPO_ROOT="$STACKOPS_REPO_DIR"
 
 JOB_NAME="agentsTrial"
 CONTEXT_PATH="$REPO_ROOT/.ai/agents/template/files.md"

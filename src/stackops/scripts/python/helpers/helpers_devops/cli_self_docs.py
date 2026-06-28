@@ -6,6 +6,7 @@ import typer
 import stackops.scripts.python.graph as graph_assets
 from stackops.scripts.python.graph import CLI_GRAPH_PATH_REFERENCE
 from stackops.utils.path_reference import get_path_reference_library_relative_path
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
 DOCS_BIND_ADDRESS = "0.0.0.0"
@@ -36,9 +37,8 @@ def _build_docs_url(host: str) -> str:
 
 
 def _developer_repo_root() -> Path | None:
-    repo_root = Path.home().joinpath("code", "stackops")
-    if repo_root.joinpath("pyproject.toml").is_file():
-        return repo_root
+    if STACKOPS_REPO_DIR.joinpath("pyproject.toml").is_file():
+        return STACKOPS_REPO_DIR
     return None
 
 

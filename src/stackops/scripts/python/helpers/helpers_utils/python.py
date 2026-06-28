@@ -109,13 +109,14 @@ def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
         path = Path(navigator.__file__).resolve().parent.joinpath(navigator.ENV_MANAGER_TUI_PATH_REFERENCE)
     from stackops.utils.code import run_shell_script, get_uv_command_executing_python_script
     from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
+    from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
     uv_with = ["textual"]
     uv_project_dir = None
-    if not Path.home().joinpath("code/stackops").exists():
+    if not STACKOPS_REPO_DIR.exists():
         uv_with.append(STACKOPS_REQUIREMENT)
     else:
-        uv_project_dir = str(Path.home().joinpath("code/stackops"))
+        uv_project_dir = str(STACKOPS_REPO_DIR)
     run_shell_script(
         get_uv_command_executing_python_script(python_script=path.read_text(encoding="utf-8"), uv_with=uv_with, uv_project_dir=uv_project_dir)[0],
         display_script=True,

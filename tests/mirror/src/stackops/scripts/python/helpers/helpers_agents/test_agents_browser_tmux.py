@@ -10,6 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents import (
     agents_browser_tmux_status,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import TMUX_FIELD_SEPARATOR
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
 def test_launch_browser_tmux_creates_named_session_windows_and_metadata(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -111,7 +112,7 @@ def test_collect_browser_tmux_status_reads_stackops_session_metadata(monkeypatch
                     "1234",
                     "Google Chrome",
                     "0",
-                    "/Users/alex/code/stackops",
+                    STACKOPS_REPO_DIR.as_posix(),
                 )
             )
             return subprocess.CompletedProcess(args=command_tuple, returncode=0, stdout=f"{pane_line}\n", stderr="")

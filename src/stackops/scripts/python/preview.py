@@ -6,6 +6,7 @@ from typing import Annotated, cast
 from stackops.scripts.python.helpers.helpers_preview.preview_impl import STACKOPS_PLOT_REQUIREMENT
 import typer
 from stackops.scripts.python.enums import BACKENDS, BACKENDS_LOOSE, BACKENDS_MAP
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 BASE_INTERACTIVE_BACKENDS: tuple[str, ...] = (
     "ipython",
@@ -72,9 +73,8 @@ def preview(
 ) -> None:
     """Preview files and launch reader backends."""
     if stackops_project:
-        from pathlib import Path
-        if Path.home().joinpath("code/stackops").exists():
-            project_path = str(Path.home().joinpath("code/stackops"))
+        if STACKOPS_REPO_DIR.exists():
+            project_path = str(STACKOPS_REPO_DIR)
         else:
             if uv_with is None:
                 uv_with = f""" --with "{STACKOPS_PLOT_REQUIREMENT}" """

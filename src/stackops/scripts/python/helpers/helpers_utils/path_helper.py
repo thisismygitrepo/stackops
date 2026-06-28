@@ -24,7 +24,9 @@ def sanitize_path(a_path: str) -> Path:
             assert path.exists(), f"File not found: {path}"
             source_os = "Linux" if path.as_posix().startswith("/home") else "macOS"
             console.print(Panel(f"🔗 PATH MAPPING | {source_os} → Windows: `{a_path}` ➡️ `{path}`", title="Path Mapping", expand=False))
-        elif platform.system() in ["Linux", "Darwin"] and Path.home().as_posix() not in path.as_posix():  # copied between Unix-like systems with different username
+        elif (
+            platform.system() in ["Linux", "Darwin"] and Path.home().as_posix() not in path.as_posix()
+        ):  # copied between Unix-like systems with different username
             skip_parts = 3  # Both /home/username and /Users/username have 3 parts to skip
             path = Path.home().joinpath(*path.parts[skip_parts:])
             assert path.exists(), f"File not found: {path}"
@@ -38,7 +40,9 @@ def sanitize_path(a_path: str) -> Path:
             assert path.exists(), f"File not found: {path}"
             target_os = "Linux" if platform.system() == "Linux" else "macOS"
             console.print(Panel(f"🔗 PATH MAPPING | Windows → {target_os}: `{a_path}` ➡️ `{path}`", title="Path Mapping", expand=False))
-        elif platform.system() == "Windows" and Path.home().as_posix() not in path.as_posix():  # copied from Windows to Windows with different username
+        elif (
+            platform.system() == "Windows" and Path.home().as_posix() not in path.as_posix()
+        ):  # copied from Windows to Windows with different username
             path = Path.home().joinpath(*path.parts[2:])
             assert path.exists(), f"File not found: {path}"
             console.print(Panel(f"🔗 PATH MAPPING | Windows → Windows: `{a_path}` ➡️ `{path}`", title="Path Mapping", expand=False))
@@ -70,17 +74,26 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
     filename_matches, partial_path_matches = find_scripts(search_root_obj, sub_string, suffixes)
     if len(filename_matches) == 1:
         return Path(filename_matches[0])
-    console.print(Panel(f"Partial filename {search_root_obj} match with case-insensitivity failed. This generated #{len(filename_matches)} results.", title="Search", expand=False))
+    console.print(
+        Panel(
+            f"Partial filename {search_root_obj} match with case-insensitivity failed. This generated #{len(filename_matches)} results.",
+            title="Search",
+            expand=False,
+        )
+    )
     if len(filename_matches) < 20:
         print("\n".join([a_potential_match.as_posix() for a_potential_match in filename_matches]))
     if len(filename_matches) > 1:
-        print(f"Try to narrow down filename_matches search by case-sensitivity, found {len(filename_matches)} results. First @ {filename_matches[0].as_posix()}")
+        print(
+            f"Try to narrow down filename_matches search by case-sensitivity, found {len(filename_matches)} results. First @ {filename_matches[0].as_posix()}"
+        )
         # let's see if avoiding .lower() helps narrowing down to one result
         reduced_scripts = [a_potential_match for a_potential_match in filename_matches if sub_string in a_potential_match.name]
         if len(reduced_scripts) == 1:
             return Path(reduced_scripts[0])
         elif len(reduced_scripts) > 1:
             from stackops.utils.options_utils.options import choose_from_options
+
             choice = choose_from_options(multi=False, msg="Multiple matches found", options=reduced_scripts, tv=True)
             if choice is None:
                 raise FileNotFoundError("No file selected from multiple matches.")
@@ -89,7 +102,11 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
         if len(reduced_scripts) < 10:
             print("\n".join([a_potential_match.as_posix() for a_potential_match in reduced_scripts]))
 
-    console.print(Panel(f"Partial path match with case-insensitivity failed. This generated #{len(partial_path_matches)} results.", title="Search", expand=False))
+    console.print(
+        Panel(
+            f"Partial path match with case-insensitivity failed. This generated #{len(partial_path_matches)} results.", title="Search", expand=False
+        )
+    )
     if len(partial_path_matches) == 1:
         return Path(partial_path_matches[0])
     elif len(partial_path_matches) > 1:
@@ -97,26 +114,34 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
         reduced_scripts = [a_potential_match for a_potential_match in partial_path_matches if sub_string in a_potential_match.as_posix()]
         if len(reduced_scripts) == 1:
             return Path(reduced_scripts[0])
-        print(f"Result: This still generated {len(reduced_scripts)} results.")        
+        print(f"Result: This still generated {len(reduced_scripts)} results.")
 
     try:
-
         if len(partial_path_matches) == 0:
             print("No partial path matches found, trying to do fd with --no-ignore ...")
             fzf_cmd = f"cd '{search_root_obj}'; fd --no-ignore --type file --strip-cwd-prefix | fzf --ignore-case --exact --query={sub_string}"
         else:
             fzf_cmd = f"cd '{search_root_obj}'; fd --type file --strip-cwd-prefix | fzf --ignore-case --exact --query={sub_string}"
-        console.print(Panel(f"🔍 Second attempt: SEARCH STRATEGY | Using fd to search for '{sub_string}' in '{search_root_obj}' ...\n{fzf_cmd}", title="Search Strategy", expand=False))
+        console.print(
+            Panel(
+                f"🔍 Second attempt: SEARCH STRATEGY | Using fd to search for '{sub_string}' in '{search_root_obj}' ...\n{fzf_cmd}",
+                title="Search Strategy",
+                expand=False,
+            )
+        )
         search_res_raw = subprocess.run(fzf_cmd, stdout=subprocess.PIPE, text=True, check=True, shell=True).stdout
-        search_res = search_res_raw.strip().split("\n")
+        search_res = search_res_raw.splitlines()
     except subprocess.CalledProcessError as cpe:
         console.print(Panel(f"❌ ERROR | FZF search failed with '{sub_string}' in '{search_root_obj}'.\n{cpe}", title="Error", expand=False))
         import sys
+
         sys.exit(f"💥 FILE NOT FOUND | Path {sub_string} does not exist @ root {search_root_obj}. No search results.")
     if len(search_res) == 1:
-        return search_root_obj.joinpath(search_res_raw)
+        return search_root_obj.joinpath(search_res[0])
     elif len(search_res) == 0:
-        msg = Panel(f"💥 FILE NOT FOUND | Path {sub_string} does not exist @ root {search_root_obj}. No search results", title="File Not Found", expand=False)
+        msg = Panel(
+            f"💥 FILE NOT FOUND | Path {sub_string} does not exist @ root {search_root_obj}. No search results", title="File Not Found", expand=False
+        )
         raise FileNotFoundError(msg)
 
     print(f"⚠️ WARNING | Multiple search results found for `{sub_string}`:\n'{search_res}'")
@@ -126,7 +151,9 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
         res = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, text=True, shell=True).stdout.strip()
     except subprocess.CalledProcessError as cpe:
         console.print(Panel(f"❌ ERROR | FZF search failed with '{sub_string}' in '{search_root_obj}'. {cpe}", title="Error", expand=False))
-        msg = Panel(f"💥 FILE NOT FOUND | Path {sub_string} does not exist @ root {search_root_obj}. No search results", title="File Not Found", expand=False)
+        msg = Panel(
+            f"💥 FILE NOT FOUND | Path {sub_string} does not exist @ root {search_root_obj}. No search results", title="File Not Found", expand=False
+        )
         raise FileNotFoundError(msg) from cpe
     return search_root_obj.joinpath(res)
 
@@ -184,6 +211,7 @@ def get_choice_file(path: str, suffixes: set[str] | None, search_root: Path | No
         files = search_for_files_of_interest(path_obj, suffixes=suffixes)
         print(f"🔍 Got #{len(files)} results.")
         from stackops.utils.options_utils.options import choose_from_options
+
         selected_file = choose_from_options(multi=False, options=files, tv=True, msg="Choose one option")
         if selected_file is None:
             raise FileNotFoundError("No file selected.")

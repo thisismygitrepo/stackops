@@ -5,6 +5,7 @@ import typer
 
 from stackops.utils.installer_utils import installer_offline_constants
 from stackops.scripts.python.helpers.helpers_devops.cli_self import developer_repo_root
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
 def export(
@@ -39,7 +40,7 @@ def export(
         dev_repo_root = developer_repo_root()
         if dev_repo_root is None:
             typer.echo(
-                "❌ --upload-to-cloud requires the developer checkout at ~/code/stackops so the downloader URL map update is written in-repo."
+                f"❌ --upload-to-cloud requires the developer checkout at {STACKOPS_REPO_DIR} so the downloader URL map update is written in-repo."
             )
             raise typer.Exit(code=1)
         dev_repo_root = dev_repo_root.resolve()
@@ -64,7 +65,7 @@ def export(
         ).resolve()
         if active_url_map_path != expected_url_map_path:
             typer.echo(
-                "❌ --upload-to-cloud requires an editable install backed by ~/code/stackops so the downloader URL map update persists in the repository."
+                f"❌ --upload-to-cloud requires an editable install backed by {STACKOPS_REPO_DIR} so the downloader URL map update persists in the repository."
             )
             raise typer.Exit(code=1)
 

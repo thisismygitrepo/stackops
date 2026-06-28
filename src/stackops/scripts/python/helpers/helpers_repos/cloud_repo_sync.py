@@ -297,8 +297,10 @@ def main(
         raise typer.Exit(code=1) from exc
     merge_result = _merge_remote_copy(repo=repo_local_obj, remote_path=repo_remote_root, console=console)
 
-    if Path.home().joinpath("code/stackops").exists():
-        uv_project_dir = f"""{str(Path.home().joinpath("code/stackops"))}"""
+    from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
+
+    if STACKOPS_REPO_DIR.exists():
+        uv_project_dir = str(STACKOPS_REPO_DIR)
         uv_with = None
     else:
         uv_with = [STACKOPS_REQUIREMENT]

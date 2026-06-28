@@ -1570,8 +1570,10 @@
                     "        raise typer.Exit(code=1) from exc",
                     "    merge_result = _merge_remote_copy(repo=repo_local_obj, remote_path=repo_remote_root, console=console)",
                     "",
-                    "    if Path.home().joinpath(\"code/stackops\").exists():",
-                    "        uv_project_dir = f\"\"\"{str(Path.home().joinpath(\"code/stackops\"))}\"\"\"",
+                    "    from stackops.utils.source_of_truth import STACKOPS_REPO_DIR",
+                    "",
+                    "    if STACKOPS_REPO_DIR.exists():",
+                    "        uv_project_dir = str(STACKOPS_REPO_DIR)",
                     "        uv_with = None",
                     "    else:",
                     "        uv_with = [STACKOPS_REQUIREMENT]",
@@ -8956,11 +8958,11 @@
                     "    \"\"\"🔄 UPDATE uv and stackops\"\"\"",
                     "    dev_repo_root = developer_repo_root()",
                     "    if dev_repo_root is not None:",
-                    "        shell_script = \"\"\"",
+                    "        shell_script = f\"\"\"",
                     "uv self update",
-                    "cd \"$HOME/code/stackops\"",
+                    "cd \"{STACKOPS_REPO_DIR}\"",
                     "git pull --ff-only",
-                    "uv tool install --no-cache --upgrade --editable \"$HOME/code/stackops\"",
+                    "uv tool install --no-cache --upgrade --editable \"{STACKOPS_REPO_DIR}\"",
                     "    \"\"\"",
                     "    else:",
                     "        shell_script = \"\"\"",
@@ -9598,7 +9600,7 @@
                     "        dev_repo_root = developer_repo_root()",
                     "        if dev_repo_root is None:",
                     "            typer.echo(",
-                    "                \"❌ --upload-to-cloud requires the developer checkout at ~/code/stackops so the downloader URL map update is written in-repo.\"",
+                    "                f\"❌ --upload-to-cloud requires the developer checkout at {STACKOPS_REPO_DIR} so the downloader URL map update is written in-repo.\"",
                     "            )",
                     "            raise typer.Exit(code=1)",
                     "        dev_repo_root = dev_repo_root.resolve()",
@@ -9623,7 +9625,7 @@
                     "        ).resolve()",
                     "        if active_url_map_path != expected_url_map_path:",
                     "            typer.echo(",
-                    "                \"❌ --upload-to-cloud requires an editable install backed by ~/code/stackops so the downloader URL map update persists in the repository.\"",
+                    "                f\"❌ --upload-to-cloud requires an editable install backed by {STACKOPS_REPO_DIR} so the downloader URL map update persists in the repository.\"",
                     "            )",
                     "            raise typer.Exit(code=1)",
                     "",
@@ -9915,7 +9917,7 @@
                     "",
                     "    repo_root = developer_repo_root()",
                     "    if repo_root is None:",
-                    "        typer.echo(\"❌ Developer repo not found: ~/code/stackops\")",
+                    "        typer.echo(f\"❌ Developer repo not found: {STACKOPS_REPO_DIR}\")",
                     "        raise typer.Exit(code=1)",
                     "",
                     "    script_path = repo_root.joinpath(\"jobs\", \"shell\", \"docker_build_and_publish.sh\")",
@@ -10169,7 +10171,7 @@
                     "    \"\"\"🕸 <g> Build the architecture dependency graph.\"\"\"",
                     "    repo_root = developer_repo_root()",
                     "    if repo_root is None:",
-                    "        typer.echo(\"❌ Developer repo not found: ~/code/stackops\")",
+                    "        typer.echo(f\"❌ Developer repo not found: {STACKOPS_REPO_DIR}\")",
                     "        raise typer.Exit(code=1)",
                     "",
                     "    from stackops.architecture_graph.cli import DEFAULT_OUTPUT_PATH, DEFAULT_PACKAGE_NAME, DEFAULT_SOURCE_ROOT",
@@ -12477,6 +12479,224 @@
                 "name": "k",
                 "hidden": true,
                 "help": "Choose one or more session targets to kill."
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "export",
+            "fullPath": "terminal export",
+            "shortPath": "t e",
+            "help": "Export running backend sessions/workspaces as a layout file runnable by `run`.",
+            "source": {
+              "file": "src/stackops/scripts/python/terminal.py",
+              "module": "stackops.scripts.python.terminal",
+              "callable": "export"
+            },
+            "signature": {
+              "raw_lines": [
+                "def export(",
+                "    sessions: Annotated[str | None, typer.Option(\"--sessions\", \"-s\", help=\"Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively.\")] = None,",
+                "    all_sessions: Annotated[bool, typer.Option(\"--all\", \"-A\", help=\"Export all running backend sessions/workspaces without prompting.\", show_default=True)] = False,",
+                "    output_path: Annotated[str | None, typer.Option(\"--output-path\", \"-o\", help=\"Path to write the generated layout file. Defaults to ./tmux_export_layout.json.\")] = None,",
+                "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-w\", help=\"Replace the output file if it already exists.\", show_default=True)] = False,",
+                "    merge: Annotated[bool, typer.Option(\"--merge\", \"-m\", help=\"Merge exported sessions into an existing layout file by layoutName.\", show_default=True)] = False,",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to export from: tmux/t or herdr/h.\")] = \"tmux\",",
+                "    command_source: Annotated[Literal[\"shell\", \"current-command\", \"start-command\"], typer.Option(\"--command-source\", \"-c\", help=\"Command to put in each exported tab: shell, current-command, or start-command.\")] = \"shell\",",
+                ") -> None:",
+                "    \"\"\"Export running backend sessions/workspaces as a layout file runnable by `run`.\"\"\"",
+                "    from stackops.scripts.python.helpers.helpers_sessions.terminal_export import (",
+                "        export_terminal_sessions,",
+                "    )",
+                "",
+                "    try:",
+                "        exported_path, resolved_backend = export_terminal_sessions(",
+                "            session_names=sessions,",
+                "            export_all_sessions=all_sessions,",
+                "            output_path=output_path,",
+                "            overwrite=overwrite,",
+                "            merge=merge,",
+                "            command_source=command_source,",
+                "            backend=backend,",
+                "        )",
+                "    except ValueError as error:",
+                "        typer.echo(f\"Error: {error}\", err=True, color=True)",
+                "        raise typer.Exit(code=1) from error",
+                "    typer.echo(f\"Exported {resolved_backend} layout to {exported_path}\")",
+                "    if resolved_backend == \"tmux\":",
+                "        typer.echo(f\"Run it with: stackops terminal run --layouts-file {exported_path}\")",
+                "    else:",
+                "        typer.echo(f\"Run it with: stackops terminal run --backend herdr --layouts-file {exported_path}\")"
+              ],
+              "name": "export",
+              "parameters": [
+                {
+                  "name": "sessions",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--sessions', '-s', help='Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--sessions",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--sessions"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively."
+                  }
+                },
+                {
+                  "name": "all_sessions",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--all', '-A', help='Export all running backend sessions/workspaces without prompting.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--all",
+                      "-A"
+                    ],
+                    "long_flags": [
+                      "--all"
+                    ],
+                    "short_flags": [
+                      "-A"
+                    ],
+                    "help": "Export all running backend sessions/workspaces without prompting."
+                  }
+                },
+                {
+                  "name": "output_path",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--output-path', '-o', help='Path to write the generated layout file. Defaults to ./tmux_export_layout.json.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--output-path",
+                      "-o"
+                    ],
+                    "long_flags": [
+                      "--output-path"
+                    ],
+                    "short_flags": [
+                      "-o"
+                    ],
+                    "help": "Path to write the generated layout file. Defaults to ./tmux_export_layout.json."
+                  }
+                },
+                {
+                  "name": "overwrite",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--overwrite', '-w', help='Replace the output file if it already exists.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--overwrite",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--overwrite"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Replace the output file if it already exists."
+                  }
+                },
+                {
+                  "name": "merge",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--merge', '-m', help='Merge exported sessions into an existing layout file by layoutName.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--merge",
+                      "-m"
+                    ],
+                    "long_flags": [
+                      "--merge"
+                    ],
+                    "short_flags": [
+                      "-m"
+                    ],
+                    "help": "Merge exported sessions into an existing layout file by layoutName."
+                  }
+                },
+                {
+                  "name": "backend",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['tmux', 't', 'herdr', 'h']",
+                  "default": "tmux",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h'], typer.Option('--backend', '-b', help='Backend to export from: tmux/t or herdr/h.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--backend",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--backend"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Backend to export from: tmux/t or herdr/h."
+                  }
+                },
+                {
+                  "name": "command_source",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['shell', 'current-command', 'start-command']",
+                  "default": "shell",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['shell', 'current-command', 'start-command'], typer.Option('--command-source', '-c', help='Command to put in each exported tab: shell, current-command, or start-command.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--command-source",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--command-source"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Command to put in each exported tab: shell, current-command, or start-command."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<e> Export sessions as a layout",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Export running backend sessions/workspaces as a layout file runnable by `run`.",
+            "aliases": [
+              {
+                "name": "e",
+                "hidden": true,
+                "help": "Export running backend sessions/workspaces as a layout file runnable by `run`."
               }
             ]
           },
@@ -15314,28 +15534,45 @@
                     "        ),",
                     "    ] = None,",
                     "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Expose endpoint on 0.0.0.0 through a localhost relay.\")] = False,",
+                    "    detached: Annotated[bool, typer.Option(\"--detached\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
                     ") -> None:",
                     "    \"\"\"Launch browser automation endpoint with an isolated profile when supported.\"\"\"",
                     "    try:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import launch_browser as launch_browser_impl",
                     "",
-                    "        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan)",
+                    "        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan, detached=detached)",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error",
                     "",
-                    "    typer.echo(f\"Launched {result.process_label}: pid={result.process_id}\")",
+                    "    match result:",
+                    "        case DetachedBrowserLaunchResult():",
+                    "            typer.echo(f\"Launched {result.process_label}: pid={result.process_id}\")",
+                    "            if result.relay_process_id is not None:",
+                    "                typer.echo(f\"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}\")",
+                    "        case TmuxBrowserLaunchResult():",
+                    "            typer.echo(f\"Launched {result.process_label} in tmux session: {result.tmux.session_name}\")",
+                    "            typer.echo(f\"Browser window: {result.tmux.browser_window_name}\")",
+                    "            if result.tmux.relay_window_name is not None:",
+                    "                typer.echo(f\"Relay window: {result.tmux.relay_window_name} target=127.0.0.1:{result.browser_port}\")",
+                    "            typer.echo(f\"Attach: {' '.join(result.tmux.attach_command)}\")",
                     "    typer.echo(f\"Executable: {result.browser_path}\")",
                     "    typer.echo(f\"{result.endpoint_short_label}: {result.host}:{result.port}\")",
-                    "    if result.relay_process_id is not None:",
-                    "        typer.echo(f\"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}\")",
                     "    if result.profile_path is not None:",
                     "        typer.echo(f\"Profile: {result.profile_path}\")",
                     "    typer.echo(f\"Prompt: {result.prompt_path}\")",
                     "    if lan:",
-                    "        typer.echo(f\"{result.endpoint_short_label} is exposed on 0.0.0.0 through a relay; use this only on a trusted network.\")"
+                    "        typer.echo(f\"{result.endpoint_short_label} is exposed on 0.0.0.0 through a relay; use this only on a trusted network.\")",
+                    "    if isinstance(result, TmuxBrowserLaunchResult):",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_session",
+                    "",
+                    "        try:",
+                    "            attach_or_switch_tmux_session(session_name=result.tmux.session_name)",
+                    "        except RuntimeError as error:",
+                    "            typer.echo(str(error), err=True)",
+                    "            raise typer.Exit(code=1) from error"
                   ],
                   "name": "launch_browser",
                   "parameters": [
@@ -15426,6 +15663,25 @@
                         ],
                         "help": "Expose endpoint on 0.0.0.0 through a localhost relay."
                       }
+                    },
+                    {
+                      "name": "detached",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--detached', help='Launch as background processes instead of tmux windows.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--detached"
+                        ],
+                        "long_flags": [
+                          "--detached"
+                        ],
+                        "short_flags": [],
+                        "help": "Launch as background processes instead of tmux windows."
+                      }
                     }
                   ],
                   "return": "None"
@@ -15438,6 +15694,93 @@
                 "aliases": [
                   {
                     "name": "l",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "status",
+                "fullPath": "agents browser status",
+                "shortPath": "a b s",
+                "help": "Show active StackOps browser tmux windows.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def status() -> None:",
+                    "    \"\"\"Show active StackOps browser tmux windows.\"\"\"",
+                    "    try:",
+                    "        from rich import box",
+                    "        from rich.console import Console",
+                    "        from rich.table import Table",
+                    "",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import collect_browser_tmux_status",
+                    "",
+                    "        rows = collect_browser_tmux_status()",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    launch_count = len({row.metadata.launch_id for row in rows})",
+                    "    window_count = len({row.window_id for row in rows})",
+                    "    table = Table(",
+                    "        title=f\"StackOps browser tmux: {launch_count} launch(es), {window_count} window(s), {len(rows)} pane(s)\",",
+                    "        box=box.SIMPLE_HEAVY,",
+                    "        show_lines=False,",
+                    "    )",
+                    "    table.add_column(\"Session\", style=\"cyan\", overflow=\"fold\")",
+                    "    table.add_column(\"Launch\", overflow=\"fold\")",
+                    "    table.add_column(\"Role\")",
+                    "    table.add_column(\"Browser\")",
+                    "    table.add_column(\"Profile\", overflow=\"fold\")",
+                    "    table.add_column(\"Endpoint\")",
+                    "    table.add_column(\"Window\")",
+                    "    table.add_column(\"Pane\")",
+                    "    table.add_column(\"State\")",
+                    "    table.add_column(\"PID\", justify=\"right\")",
+                    "    table.add_column(\"Command\")",
+                    "    table.add_column(\"Profile Path\", overflow=\"fold\")",
+                    "    table.add_column(\"Prompt\", overflow=\"fold\")",
+                    "",
+                    "    for row in rows:",
+                    "        state = \"dead\" if row.pane_dead else \"running\"",
+                    "        endpoint = f\"{row.metadata.host}:{row.metadata.port}\"",
+                    "        if row.metadata.lan == \"yes\":",
+                    "            endpoint = f\"{endpoint} -> 127.0.0.1:{row.metadata.browser_port}\"",
+                    "        table.add_row(",
+                    "            row.session_name,",
+                    "            row.metadata.launch_id,",
+                    "            row.metadata.role,",
+                    "            row.metadata.browser,",
+                    "            row.metadata.profile,",
+                    "            endpoint,",
+                    "            f\"{row.window_index}:{row.window_name}\",",
+                    "            f\"{row.pane_index} {row.pane_id}\",",
+                    "            state,",
+                    "            row.pane_pid,",
+                    "            row.pane_current_command,",
+                    "            row.metadata.profile_path,",
+                    "            row.metadata.prompt_path,",
+                    "        )",
+                    "",
+                    "    Console().print(table)"
+                  ],
+                  "name": "status",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "<s> Show active browser tmux windows",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Show active StackOps browser tmux windows.",
+                "aliases": [
+                  {
+                    "name": "s",
                     "hidden": true
                   }
                 ]
@@ -15474,7 +15817,7 @@
                 "name": "clean",
                 "fullPath": "agents iter clean",
                 "shortPath": "a I c",
-                "help": "Close old Herdr tabs in iter workspaces, keeping the last 3 tabs per workspace.",
+                "help": "Close old Herdr tabs in iter workspaces while preserving recent and launching tabs.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_iter.py",
                   "module": "stackops.scripts.python.agents_iter",
@@ -15483,7 +15826,7 @@
                 "signature": {
                   "raw_lines": [
                     "def clean(continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat cleanup every 5 minutes.\")] = False) -> None:",
-                    "    \"\"\"Close old Herdr tabs in iter workspaces, keeping the last 3 tabs per workspace.\"\"\"",
+                    "    \"\"\"Close old Herdr tabs in iter workspaces while preserving recent and launching tabs.\"\"\"",
                     "    try:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import clean_iter_workspaces_loop",
                     "",
@@ -15523,7 +15866,7 @@
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Close old Herdr tabs in iter workspaces, keeping the last 3 tabs per workspace.",
+                "doc": "Close old Herdr tabs in iter workspaces while preserving recent and launching tabs.",
                 "aliases": [
                   {
                     "name": "c",

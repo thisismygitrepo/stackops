@@ -10,9 +10,10 @@ PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
 
 
 def resolve_uv_context(*, local_uv_with: list[str] | None, external_uv_with: list[str]) -> tuple[list[str] | None, str | None]:
-    stackops_repo = Path.home().joinpath("code", "stackops")
-    if stackops_repo.exists():
-        return local_uv_with, str(stackops_repo)
+    from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
+
+    if STACKOPS_REPO_DIR.exists():
+        return local_uv_with, str(STACKOPS_REPO_DIR)
 
     from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
@@ -110,17 +111,9 @@ def chart(
     )
 
 
-def navigate():
+def navigate() -> None:
     """📚 NAVIGATE command structure with TUI"""
-    # import stackops.scripts.python.graph.visualize.helpers_navigator as navigator
-    # path = Path(navigator.__file__).resolve().parent.joinpath("devops_navigator.py")
-    # from stackops.utils.code import exit_then_run_shell_script
-    # if Path.home().joinpath("code", "stackops").exists():
-    #     executable = f"""--project "{str(Path.home().joinpath("code/stackops"))}" --with textual"""
-    # else:
-    #     executable = f"""--with "{STACKOPS_VERSION},textual" """
-    # exit_then_run_shell_script(f"""uv run {executable} {path}""")
-    def func():
+    def func() -> None:
         from stackops.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator
         main_devops_navigator()
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script

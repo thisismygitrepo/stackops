@@ -7,6 +7,7 @@ import tomllib
 from typing import TypeAlias, cast
 
 from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
 STACKOPS_SKILL_REFERENCES_RELATIVE_PATH = Path("skills", "stackops", "references")
@@ -146,7 +147,7 @@ def render_source_map(*, cli_graph_payload: JsonObject, generated_on: date) -> s
 
 def _important_nuance_lines() -> list[str]:
     return [
-        "- Developer-only command groups under `devops self` depend on the developer checkout at `~/code/stackops`.",
+        f"- Developer-only command groups under `devops self` depend on the developer checkout at `{STACKOPS_REPO_DIR}`.",
         "- Callback groups are invoked as the group command itself; confirm the exact behavior with `--help`.",
         f"- The generated graph stores aliases and metadata. Use `{CLI_GRAPH_DISPLAY_PATH}` only when live help or source is insufficient.",
         "- Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.",

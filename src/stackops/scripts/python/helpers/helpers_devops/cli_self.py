@@ -3,13 +3,12 @@ from typing import Annotated
 
 import typer
 
-DEFAULT_STACKOPS_CHECKOUT = Path.home().joinpath("code", "stackops")
+from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
 def developer_repo_root() -> Path | None:
-    repo_root = DEFAULT_STACKOPS_CHECKOUT
-    if repo_root.joinpath("pyproject.toml").is_file():
-        return repo_root
+    if STACKOPS_REPO_DIR.joinpath("pyproject.toml").is_file():
+        return STACKOPS_REPO_DIR
     return None
 
 
@@ -38,11 +37,11 @@ def update(
     """🔄 UPDATE uv and stackops"""
     dev_repo_root = developer_repo_root()
     if dev_repo_root is not None:
-        shell_script = """
+        shell_script = f"""
 uv self update
-cd "$HOME/code/stackops"
+cd "{STACKOPS_REPO_DIR}"
 git pull --ff-only
-uv tool install --no-cache --upgrade --editable "$HOME/code/stackops"
+uv tool install --no-cache --upgrade --editable "{STACKOPS_REPO_DIR}"
     """
     else:
         shell_script = """
@@ -87,7 +86,7 @@ def _install_stackops(dev: bool) -> None:
     from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
     import platform
 
-    stackops_path = Path.home().joinpath("code", "stackops")
+    stackops_path = STACKOPS_REPO_DIR
     if dev and not stackops_path.exists():
         import git
 

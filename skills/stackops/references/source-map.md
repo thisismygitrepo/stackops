@@ -1,6 +1,6 @@
 # StackOps Source Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-27.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-28.
 
 Use this map as a root source index. For command-level source details, inspect Typer registrations and verify the live command with `--help`.
 

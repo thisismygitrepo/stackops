@@ -2,7 +2,7 @@ import stackops
 import json
 import re
 from pathlib import Path
-from typing import cast
+from typing import Final, cast
 
 from stackops.utils.schemas.config.config_types import (
     StackOpsConfig,
@@ -17,6 +17,7 @@ EXCLUDE_DIRS = [".links", "notebooks",
                 ]
 LIBRARY_ROOT = Path(stackops.__file__).resolve().parent
 REPO_ROOT = LIBRARY_ROOT.parent.parent
+STACKOPS_REPO_DIR: Final[Path] = Path.home().joinpath("code", "stackops")
 DOTFILES_ROOT = Path.home().joinpath("dotfiles")
 DOTFILES_STACKOPS_ROOT = DOTFILES_ROOT.joinpath("stackops")
 DOTFILES_CREDS_ROOT = DOTFILES_ROOT.joinpath("creds")
