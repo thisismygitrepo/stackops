@@ -74,62 +74,57 @@ def preview(
             backend=backend,
         )
         return
-    choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
-    if project_path is None:
-        virtualenv_root = find_virtualenv_root(choice_file)
-        if virtualenv_root is not None:
-            uv_project_line = f'--project {virtualenv_root.parent}'
-            uv_python_line = ""
-    if choice_file.suffix == ".py":
-        program = choice_file.read_text(encoding="utf-8")
-        text = f"📄 Selected file: {choice_file.name}"
-        console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
+    if Path(path).absolute().expanduser().is_dir():
+        program = ""
+        choice_file = Path(path).absolute().expanduser()
     else:
-        # from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_data_pycode
-        # program = lambda_to_python_script(
-        #     lambda: get_read_data_pycode(path=str(choice_file)),
-        #     in_global=True, import_module=False
-        # )
-        from stackops.utils.files import read as read_module
-        suffix = choice_file.suffix[1:]
-        if suffix == "":
-            program = "print('No file extension found. Cannot determine how to read the file.')"
+        choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
+        if project_path is None:
+            virtualenv_root = find_virtualenv_root(choice_file)
+            if virtualenv_root is not None:
+                uv_project_line = f'--project {virtualenv_root.parent}'
+                uv_python_line = ""
+        if Path.home().joinpath("code/stackops").exists() and uv_project_line == "":
+            uv_project_line = f'--project "{str(Path.home().joinpath("code/stackops"))}"'
+
+        if choice_file.suffix == ".py":
+            program = choice_file.read_text(encoding="utf-8")
+            text = f"📄 Selected file: {choice_file.name}"
+            console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
         else:
-            reader = read_module.READERS.get(suffix)
-            if reader is None:
-                program = f"print('No reader found for files with the .{suffix} extension.')"
+            from stackops.utils.files import read as read_module
+            suffix = choice_file.suffix[1:]
+            if suffix == "":
+                program = "print('No file extension found. Cannot determine how to read the file.')"
             else:
-                reader_name = getattr(reader, "__name__", type(reader).__name__)
-                program = Path(read_module.__file__).read_text(encoding="utf-8")
-                program += f"""
-# p = {reader_name}("{str(choice_file)}")
-from rich.panel import Panel
-from rich.console import Console
-from stackops.scripts.python.helpers.helpers_preview.preview_read import print_data_preview
-from pathlib import Path
-console = Console()
-p = Path(rf"{choice_file}").absolute()
-try:
-    dat = read_file(p)
-    print_data_preview(console=console, path=p, dat=dat)
-except Exception as e:
-    error_message = f'''❌ ERROR READING FILE\nFile: {{p.name}}\nError: {{e}}'''
-    from rich.text import Text
-    console.print(Panel(Text(error_message, justify="left"), title="Error", expand=False, border_style="red"))
+                reader = read_module.READERS.get(suffix)
+                if reader is None:
+                    program = f"print('No reader found for files with the .{suffix} extension.')"
+                else:
+                    reader_name = getattr(reader, "__name__", type(reader).__name__)
+                    program = Path(read_module.__file__).read_text(encoding="utf-8")
+                    program += f"""
+    # p = {reader_name}("{str(choice_file)}")
+    from rich.panel import Panel
+    from rich.console import Console
+    from stackops.scripts.python.helpers.helpers_preview.preview_read import print_data_preview
+    from pathlib import Path
+    console = Console()
+    p = Path(rf"{choice_file}").absolute()
+    try:
+        dat = read_file(p)
+        print_data_preview(console=console, path=p, dat=dat)
+    except Exception as e:
+        error_message = f'''❌ ERROR READING FILE\nFile: {{p.name}}\nError: {{e}}'''
+        from rich.text import Text
+        console.print(Panel(Text(error_message, justify="left"), title="Error", expand=False, border_style="red"))
 
-"""
-                # program = lambda_to_python_script(
-                #     lambda: reader(path=choice_file),
-                #     in_global=True, import_module=False
-                # )
-        text = f"📄 Reading data from: {choice_file.name}"
-        console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
+    """
+            text = f"📄 Reading data from: {choice_file.name}"
+            console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
 
-    if Path.home().joinpath("code/stackops").exists() and uv_project_line == "":
-        uv_project_line = f'--project "{str(Path.home().joinpath("code/stackops"))}"'
 
     preprogram = _build_preprogram()
-
     pyfile = Path.home().joinpath(f"tmp_results/tmp_scripts/python/preview/{randstr()}/script.py")
     pyfile.parent.mkdir(parents=True, exist_ok=True)
     title = "Reading Data"
@@ -247,16 +242,9 @@ def _build_preprogram() -> str:
         try:
             from stackops.utils.files.headers import print_header, print_logo
             print_header()
-            from datetime import date
-            todays_date = date.today().strftime("%Y-%m-%d")
-            if todays_date == "2026-06-13":
-                print_logo("Happy Birthday, Ruby! 🎉")
-            else:
-                # print(todays_date)
-                print_logo("StackOps")
+            print_logo("StackOps")
         except ImportError:
             print("Preview: stackops is not installed in the current environment.")
-            print("Skipping logo printing and some utilities. Some features may not work as expected.")
     preprogram += get_body_simple_function_no_args(preprogram_func)
     return preprogram
 
@@ -316,7 +304,7 @@ code --new-window "{str(pyfile)}"
         interpreter = "python -m IPython"
         profile = f" --profile {ipython_profile} --no-banner"
     if Path.home().joinpath("code/stackops").exists():
-        ve_line = f"""{user_uv_with_line}  {uv_project_line} """
+        ve_line = f"""{user_uv_with_line} --project "{str(Path.home().joinpath("code/stackops"))}" """
     else:
         ve_line = f"""{uv_python_line} {user_uv_with_line} {uv_project_line} --with "cowsay,{STACKOPS_PLOT_REQUIREMENT}" """
     return f"uv run {ve_line} {interpreter} {interactivity} {profile} {str(pyfile)}"

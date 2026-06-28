@@ -60,7 +60,7 @@ def _choose_backend_interactively() -> BACKENDS:
 
 
 def preview(
-    path: Annotated[str, typer.Argument(help="path of file to read.")],
+    path: Annotated[str, typer.Argument(help="path of file to read.")] = ".",
     project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
     backend: Annotated[BACKENDS_LOOSE, typer.Option("--backend", "-b", help="specify the backend to use")] = "ipython",
