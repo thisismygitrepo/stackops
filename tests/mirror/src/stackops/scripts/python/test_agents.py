@@ -8,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive impor
 from stackops.scripts.python.helpers.helpers_agents import agents_ask_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
+from stackops.scripts.python.helpers.helpers_agents import agents_workflow_cache
 from stackops.utils.schemas.fire_agents.fire_agents_types import DEFAULT_AGENT
 import stackops.utils.accessories as accessories
 
@@ -156,36 +157,56 @@ def test_iter_status_command_calls_impl(monkeypatch: pytest.MonkeyPatch) -> None
     assert calls == ["status"]
 
 
-def test_iter_clean_command_calls_impl_for_one_workspace(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_iter_close_command_calls_impl_for_one_workspace(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[str | None, bool, bool]] = []
 
-    def fake_clean_iter_workspaces_loop(
+    def fake_close_iter_workspaces_loop(
         *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: object
     ) -> None:
         calls.append((workspace_name, all_workspaces, continuous))
 
-    monkeypatch.setattr(agents_iter_impl, "clean_iter_workspaces_loop", fake_clean_iter_workspaces_loop)
+    monkeypatch.setattr(agents_iter_impl, "close_iter_workspaces_loop", fake_close_iter_workspaces_loop)
 
-    result = CliRunner().invoke(agents.get_app(), ["iter", "clean", "iter-alpha"])
+    result = CliRunner().invoke(agents.get_app(), ["iter", "close", "iter-alpha"])
 
     assert result.exit_code == 0, result.output
     assert calls == [("iter-alpha", False, False)]
 
 
-def test_iter_clean_all_command_calls_impl_for_all_workspaces(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_iter_close_all_command_calls_impl_for_all_workspaces(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[str | None, bool, bool]] = []
 
-    def fake_clean_iter_workspaces_loop(
+    def fake_close_iter_workspaces_loop(
         *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: object
     ) -> None:
         calls.append((workspace_name, all_workspaces, continuous))
 
-    monkeypatch.setattr(agents_iter_impl, "clean_iter_workspaces_loop", fake_clean_iter_workspaces_loop)
+    monkeypatch.setattr(agents_iter_impl, "close_iter_workspaces_loop", fake_close_iter_workspaces_loop)
 
-    result = CliRunner().invoke(agents.get_app(), ["iter", "clean", "--all", "--loop"])
+    result = CliRunner().invoke(agents.get_app(), ["iter", "close", "--all", "--loop"])
 
     assert result.exit_code == 0, result.output
     assert calls == [(None, True, True)]
+
+
+def test_iter_clean_command_calls_cache_impl(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[Path] = []
+
+    def fake_clean_workflow_cache(*, cwd: Path, report: object) -> agents_workflow_cache.WorkflowCacheCleanResult:
+        calls.append(cwd)
+        return agents_workflow_cache.WorkflowCacheCleanResult(
+            repo_root=cwd,
+            cache_path=cwd.joinpath(".ai", "workflows"),
+            removed=False,
+            removed_entries=0,
+        )
+
+    monkeypatch.setattr(agents_workflow_cache, "clean_workflow_cache", fake_clean_workflow_cache)
+
+    result = CliRunner().invoke(agents.get_app(), ["iter", "clean"])
+
+    assert result.exit_code == 0, result.output
+    assert len(calls) == 1
 
 
 def test_iter_track_command_calls_impl_with_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -226,6 +247,7 @@ def test_iter_short_alias_is_uppercase_i() -> None:
     assert result.exit_code == 0, result.output
     assert "Iter workflow maintenance" in result.output
     assert "clean" in result.output
+    assert "close" in result.output
 
 
 def test_add_skill_short_alias_is_s() -> None:
@@ -235,8 +257,15 @@ def test_add_skill_short_alias_is_s() -> None:
     assert "Add a skill" in result.output
 
 
-def test_symlink_short_alias_is_uppercase_l() -> None:
-    result = CliRunner().invoke(agents.get_app(), ["L", "--help"])
+def test_removed_todo_and_symlink_commands_are_not_registered() -> None:
+    runner = CliRunner()
+    help_result = runner.invoke(agents.get_app(), ["--help"])
 
-    assert result.exit_code == 0, result.output
-    assert "Create symlinks" in result.output
+    assert help_result.exit_code == 0, help_result.output
+    assert "add-todo" not in help_result.output
+    assert "add-symlinks" not in help_result.output
+
+    for removed_command in ("add-todo", "d", "add-symlinks", "L"):
+        result = runner.invoke(agents.get_app(), [removed_command, "--help"])
+        assert result.exit_code != 0, result.output
+        assert f"No such command '{removed_command}'" in result.output

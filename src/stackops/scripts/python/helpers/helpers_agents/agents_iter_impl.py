@@ -71,7 +71,7 @@ class HerdrPane:
 
 
 @dataclass(frozen=True, slots=True)
-class IterWorkspaceCleanup:
+class IterWorkspaceClose:
     workspace: HerdrWorkspace
     kept_tabs: tuple[HerdrTab, ...]
     guarded_tabs: tuple[HerdrTab, ...]
@@ -79,7 +79,7 @@ class IterWorkspaceCleanup:
 
 
 @dataclass(frozen=True, slots=True)
-class IterWorkspaceCleanupPlan:
+class IterWorkspaceClosePlan:
     workspace: HerdrWorkspace
     tabs: tuple[HerdrTab, ...]
     kept_tabs: tuple[HerdrTab, ...]
@@ -107,16 +107,16 @@ class IterWorkspaceTrackResult:
     closed: bool
 
 
-def clean_iter_workspaces_loop(
+def close_iter_workspaces_loop(
     *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: Callable[[str], None]
 ) -> None:
-    _validate_clean_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
+    _validate_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
     while True:
-        summaries = clean_iter_workspaces(workspace_name=workspace_name, all_workspaces=all_workspaces, report=report)
+        summaries = close_iter_workspaces(workspace_name=workspace_name, all_workspaces=all_workspaces, report=report)
         _report_summaries(summaries=summaries, report=report)
         if not continuous:
             return
-        report(f"Next cleanup pass in {LOOP_INTERVAL_SECONDS} second(s).")
+        report(f"Next close pass in {LOOP_INTERVAL_SECONDS} second(s).")
         sleep(LOOP_INTERVAL_SECONDS)
 
 
@@ -185,14 +185,14 @@ def get_iter_workspace_statuses() -> tuple[IterWorkspaceStatus, ...]:
         panes = _panes_for_tabs(tabs=tabs, panes_by_tab_id=panes_by_tab_id)
         agents = agents_by_workspace_id.get(workspace.workspace_id, ())
         latest_agent = _latest_iter_agent(agents=agents_by_workspace_id.get(workspace.workspace_id, ()))
-        cleanup_plan = _workspace_cleanup_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents)
+        close_plan = _workspace_close_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents)
         statuses.append(
             IterWorkspaceStatus(
                 workspace=workspace,
                 tabs=tabs,
-                kept_tabs=cleanup_plan.kept_tabs,
-                guarded_tabs=cleanup_plan.guarded_tabs,
-                closable_tabs=cleanup_plan.closable_tabs,
+                kept_tabs=close_plan.kept_tabs,
+                guarded_tabs=close_plan.guarded_tabs,
+                closable_tabs=close_plan.closable_tabs,
                 latest_iteration=_latest_iteration(agent=latest_agent),
                 latest_agent=latest_agent,
                 latest_agent_tab=_find_tab(tabs=tabs, tab_id=latest_agent.tab_id) if latest_agent is not None else None,
@@ -221,73 +221,73 @@ def build_iter_status_table(*, statuses: tuple[IterWorkspaceStatus, ...]) -> Tab
     return table
 
 
-def clean_iter_workspaces(
+def close_iter_workspaces(
     *, workspace_name: str | None, all_workspaces: bool, report: Callable[[str], None]
-) -> tuple[IterWorkspaceCleanup, ...]:
-    cleanup_plans = plan_iter_workspace_cleanups(workspace_name=workspace_name, all_workspaces=all_workspaces)
-    _report_cleanup_plan(cleanup_plans=cleanup_plans, report=report)
-    total_to_close = sum(len(cleanup_plan.closable_tabs) for cleanup_plan in cleanup_plans)
+) -> tuple[IterWorkspaceClose, ...]:
+    close_plans = plan_iter_workspace_closes(workspace_name=workspace_name, all_workspaces=all_workspaces)
+    _report_close_plan(close_plans=close_plans, report=report)
+    total_to_close = sum(len(close_plan.closable_tabs) for close_plan in close_plans)
     closed_count = 0
-    summaries: list[IterWorkspaceCleanup] = []
-    for cleanup_plan in cleanup_plans:
+    summaries: list[IterWorkspaceClose] = []
+    for close_plan in close_plans:
         closed_tabs: list[HerdrTab] = []
-        for tab in cleanup_plan.closable_tabs:
+        for tab in close_plan.closable_tabs:
             closed_count += 1
             report(
-                f"Closing {closed_count}/{total_to_close}: {cleanup_plan.workspace.label} "
+                f"Closing {closed_count}/{total_to_close}: {close_plan.workspace.label} "
                 f"{_format_tab_for_report(tab=tab)}"
             )
             _run_herdr(["herdr", "tab", "close", tab.tab_id])
             closed_tabs.append(tab)
         summaries.append(
-            IterWorkspaceCleanup(
-                workspace=cleanup_plan.workspace,
-                kept_tabs=cleanup_plan.kept_tabs,
-                guarded_tabs=cleanup_plan.guarded_tabs,
+            IterWorkspaceClose(
+                workspace=close_plan.workspace,
+                kept_tabs=close_plan.kept_tabs,
+                guarded_tabs=close_plan.guarded_tabs,
                 closed_tabs=tuple(closed_tabs),
             )
         )
     return tuple(summaries)
 
 
-def plan_iter_workspace_cleanups(*, workspace_name: str | None, all_workspaces: bool) -> tuple[IterWorkspaceCleanupPlan, ...]:
-    _validate_clean_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
+def plan_iter_workspace_closes(*, workspace_name: str | None, all_workspaces: bool) -> tuple[IterWorkspaceClosePlan, ...]:
+    _validate_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
     workspaces = _selected_iter_workspaces(workspaces=_list_workspaces(), workspace_name=workspace_name, all_workspaces=all_workspaces)
     tabs_by_workspace_id = _tabs_by_workspace_id(tabs=_list_tabs())
     panes_by_tab_id = _panes_by_tab_id(panes=_list_panes())
     agents_by_workspace_id = _agents_by_workspace_id(agents=_list_agents())
-    cleanup_plans: list[IterWorkspaceCleanupPlan] = []
+    close_plans: list[IterWorkspaceClosePlan] = []
     for workspace in workspaces:
         tabs = tuple(sorted(tabs_by_workspace_id.get(workspace.workspace_id, ()), key=lambda tab: tab.number))
         panes = _panes_for_tabs(tabs=tabs, panes_by_tab_id=panes_by_tab_id)
         agents = agents_by_workspace_id.get(workspace.workspace_id, ())
-        cleanup_plans.append(_workspace_cleanup_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents))
-    return tuple(cleanup_plans)
+        close_plans.append(_workspace_close_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents))
+    return tuple(close_plans)
 
 
-def _report_cleanup_plan(*, cleanup_plans: tuple[IterWorkspaceCleanupPlan, ...], report: Callable[[str], None]) -> None:
-    if len(cleanup_plans) == 0:
-        report("Planning iter cleanup: no iter workspaces found.")
+def _report_close_plan(*, close_plans: tuple[IterWorkspaceClosePlan, ...], report: Callable[[str], None]) -> None:
+    if len(close_plans) == 0:
+        report("Planning iter close: no iter workspaces found.")
         return
-    total_tabs = sum(len(cleanup_plan.tabs) for cleanup_plan in cleanup_plans)
-    total_to_close = sum(len(cleanup_plan.closable_tabs) for cleanup_plan in cleanup_plans)
-    total_to_keep = sum(len(cleanup_plan.kept_tabs) for cleanup_plan in cleanup_plans)
-    total_guarded = sum(len(cleanup_plan.guarded_tabs) for cleanup_plan in cleanup_plans)
+    total_tabs = sum(len(close_plan.tabs) for close_plan in close_plans)
+    total_to_close = sum(len(close_plan.closable_tabs) for close_plan in close_plans)
+    total_to_keep = sum(len(close_plan.kept_tabs) for close_plan in close_plans)
+    total_guarded = sum(len(close_plan.guarded_tabs) for close_plan in close_plans)
     report(
-        f"Planning iter cleanup: {len(cleanup_plans)} workspace(s), {total_tabs} tab(s), "
+        f"Planning iter close: {len(close_plans)} workspace(s), {total_tabs} tab(s), "
         f"closing {total_to_close}, keeping {total_to_keep}, launch-guarded {total_guarded}."
     )
-    for cleanup_plan in cleanup_plans:
+    for close_plan in close_plans:
         report(
-            f"- {cleanup_plan.workspace.label}: tabs={len(cleanup_plan.tabs)} "
-            f"close={len(cleanup_plan.closable_tabs)} keep={len(cleanup_plan.kept_tabs)} "
-            f"launch_guard={len(cleanup_plan.guarded_tabs)} workspace={cleanup_plan.workspace.workspace_id}"
+            f"- {close_plan.workspace.label}: tabs={len(close_plan.tabs)} "
+            f"close={len(close_plan.closable_tabs)} keep={len(close_plan.kept_tabs)} "
+            f"launch_guard={len(close_plan.guarded_tabs)} workspace={close_plan.workspace.workspace_id}"
         )
-        for tab in cleanup_plan.closable_tabs:
+        for tab in close_plan.closable_tabs:
             report(f"  will close {_format_tab_for_report(tab=tab)}")
 
 
-def _report_summaries(*, summaries: tuple[IterWorkspaceCleanup, ...], report: Callable[[str], None]) -> None:
+def _report_summaries(*, summaries: tuple[IterWorkspaceClose, ...], report: Callable[[str], None]) -> None:
     if len(summaries) == 0:
         report("No iter workspaces found.")
         return
@@ -304,13 +304,13 @@ def _iter_workspaces(*, workspaces: tuple[HerdrWorkspace, ...]) -> tuple[HerdrWo
     return tuple(workspace for workspace in workspaces if workspace.label.startswith(ITER_WORKSPACE_PREFIX))
 
 
-def _validate_clean_scope(*, workspace_name: str | None, all_workspaces: bool) -> None:
+def _validate_close_scope(*, workspace_name: str | None, all_workspaces: bool) -> None:
     if workspace_name is not None and workspace_name.strip() == "":
         raise ValueError("Workspace name must not be empty.")
     if workspace_name is not None and all_workspaces:
         raise ValueError("Pass either SPACE_NAME or --all, not both.")
     if workspace_name is None and not all_workspaces:
-        raise ValueError("Pass SPACE_NAME to clean one iter workspace, or --all to clean every iter workspace.")
+        raise ValueError("Pass SPACE_NAME to close one iter workspace, or --all to close every iter workspace.")
 
 
 def _selected_iter_workspaces(
@@ -356,12 +356,12 @@ def _get_iter_workspace_by_label(*, workspace_name: str) -> HerdrWorkspace:
     return workspace
 
 
-def _workspace_cleanup_plan(
+def _workspace_close_plan(
     *, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], panes: tuple[HerdrPane, ...], agents: tuple[HerdrAgent, ...]
-) -> IterWorkspaceCleanupPlan:
+) -> IterWorkspaceClosePlan:
     guarded_tabs = _guarded_tabs(workspace=workspace, tabs=tabs, panes=panes, agents=agents)
     kept_tabs = _unique_tabs(tabs=(*_kept_recent_tabs(tabs=tabs), *guarded_tabs))
-    return IterWorkspaceCleanupPlan(
+    return IterWorkspaceClosePlan(
         workspace=workspace,
         tabs=tabs,
         kept_tabs=kept_tabs,

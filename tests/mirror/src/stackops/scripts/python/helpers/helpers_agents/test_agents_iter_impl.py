@@ -3,7 +3,7 @@ import pytest
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_impl
 
 
-def test_clean_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_close_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[list[str]] = []
     reports: list[str] = []
 
@@ -53,17 +53,17 @@ def test_clean_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytes
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.clean_iter_workspaces(workspace_name=None, all_workspaces=True, report=reports.append)
+    summaries = agents_iter_impl.close_iter_workspaces(workspace_name=None, all_workspaces=True, report=reports.append)
 
     assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [["herdr", "tab", "close", "w1:t1"]]
     assert [summary.workspace.label for summary in summaries] == ["iter-alpha", "iter-beta"]
     assert len(summaries[0].kept_tabs) == 3
     assert len(summaries[1].closed_tabs) == 0
-    assert "Planning iter cleanup: 2 workspace(s), 6 tab(s), closing 1" in reports[0]
+    assert "Planning iter close: 2 workspace(s), 6 tab(s), closing 1" in reports[0]
     assert "Closing 1/1: iter-alpha tab #1 one [done] w1:t1" in reports
 
 
-def test_clean_iter_workspaces_keeps_next_tab_after_running_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_close_iter_workspaces_keeps_next_tab_after_running_agent(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[list[str]] = []
 
     def fake_run_herdr(args: list[str]) -> str:
@@ -112,7 +112,7 @@ def test_clean_iter_workspaces_keeps_next_tab_after_running_agent(monkeypatch: p
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.clean_iter_workspaces(workspace_name=None, all_workspaces=True, report=lambda _message: None)
+    summaries = agents_iter_impl.close_iter_workspaces(workspace_name=None, all_workspaces=True, report=lambda _message: None)
 
     assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [
         ["herdr", "tab", "close", "w1:t1"],
@@ -174,7 +174,7 @@ def test_get_iter_workspace_statuses_reports_latest_agent_iteration_status_and_c
     assert [tab.label for tab in statuses[0].closable_tabs] == ["one"]
 
 
-def test_clean_iter_workspaces_targets_one_workspace(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_close_iter_workspaces_targets_one_workspace(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[list[str]] = []
 
     def fake_run_herdr(args: list[str]) -> str:
@@ -224,13 +224,13 @@ def test_clean_iter_workspaces_targets_one_workspace(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.clean_iter_workspaces(workspace_name="iter-alpha", all_workspaces=False, report=lambda _message: None)
+    summaries = agents_iter_impl.close_iter_workspaces(workspace_name="iter-alpha", all_workspaces=False, report=lambda _message: None)
 
     assert [summary.workspace.label for summary in summaries] == ["iter-alpha"]
     assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [["herdr", "tab", "close", "w1:t1"]]
 
 
-def test_clean_iter_workspaces_preserves_tracker_and_unknown_panes(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_close_iter_workspaces_preserves_tracker_and_unknown_panes(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[list[str]] = []
 
     def fake_run_herdr(args: list[str]) -> str:
@@ -275,7 +275,7 @@ def test_clean_iter_workspaces_preserves_tracker_and_unknown_panes(monkeypatch: 
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.clean_iter_workspaces(workspace_name="iter-alpha", all_workspaces=False, report=lambda _message: None)
+    summaries = agents_iter_impl.close_iter_workspaces(workspace_name="iter-alpha", all_workspaces=False, report=lambda _message: None)
 
     assert [tab.tab_id for tab in summaries[0].guarded_tabs] == ["w1:t1", "w1:t2"]
     assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [["herdr", "tab", "close", "w1:t3"]]

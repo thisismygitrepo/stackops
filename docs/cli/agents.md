@@ -18,8 +18,6 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
 | `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
-| `add-todo` | Generate filtered checklist files for repo contents |
-| `add-symlinks` | Create `~/code_copies/<repo>_copy_<n>` symlinks to the current repo |
 | `run-prompt` | Run one prompt through a selected agent, with inline, file, or YAML-backed context |
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
@@ -180,8 +178,6 @@ agents add-mcp caveman --agent codex --scope local
 agents add-mcp --edit -S library
 ```
 
-`add-todo` scans a repo or workspace and writes filtered checklist files under `.ai/todo/files` by default. `add-symlinks` creates repo symlinks under `~/code_copies/`.
-
 ---
 
 ## Browser Automation
@@ -238,8 +234,6 @@ agents --help
 agents parallel --help
 agents add-config --help
 agents add-mcp --help
-agents add-todo --help
-agents add-symlinks --help
 agents run-prompt --help
 agents run-interactive --help
 agents ask --help

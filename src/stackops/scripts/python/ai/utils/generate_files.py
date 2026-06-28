@@ -8,7 +8,6 @@ import typer
 
 from stackops.scripts.python.ai.utils.generate_files_content import generate_content
 from stackops.scripts.python.ai.utils.generate_files_utils import (
-    create_repo_symlinks,
     filter_files_by_content,
     filter_files_by_name,
     get_python_files,
@@ -101,21 +100,6 @@ def make_todo_files(
 📊 Total chunks: {len(file_chunks)}"""
     
     console.print(Panel(success_msg, border_style="bold blue", expand=False))
-
-
-def create_symlink_command(num: Annotated[int, typer.Argument(help="Number of symlinks to create (1-5).")] = 5) -> None:
-    """Create 5 symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}."""
-    from rich.console import Console
-    from rich.panel import Panel
-
-    if num < 1 or num > 5:
-        console = Console()
-        console.print(Panel("❌ ERROR | Number of symlinks must be between 1 and 5.", border_style="bold red", expand=False))
-        raise typer.Exit(code=1)
-    repo_root = Path.cwd().absolute()
-    create_repo_symlinks(repo_root)
-    console = Console()
-    console.print(Panel(f"✅ SUCCESS | Created {num} symlinks to {repo_root} in ~/code_copies/", border_style="bold green", expand=False))
 
 
 if __name__ == "__main__":

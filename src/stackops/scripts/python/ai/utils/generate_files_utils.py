@@ -122,15 +122,3 @@ def split_files_into_chunks(all_files: list[str], split_every: int | None = None
         return chunks
     else:
         return [all_files]
-
-
-def create_repo_symlinks(repo_root: Path) -> None:
-    """Create 5 symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}."""
-    repo_name: str = repo_root.name
-    symlink_dir: Path = Path.home() / "code_copies"
-    symlink_dir.mkdir(exist_ok=True)
-    for i in range(1, 6):
-        symlink_path: Path = symlink_dir / f"{repo_name}_copy_{i}"
-        if symlink_path.exists() or symlink_path.is_symlink():
-            symlink_path.unlink()
-        symlink_path.symlink_to(repo_root, target_is_directory=True)

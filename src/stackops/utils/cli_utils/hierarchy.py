@@ -125,8 +125,6 @@ if TYPE_CHECKING:
         StackOpsAgentsBrowserCommand,
         StackOpsAgentsAddMcpCommand,
         StackOpsAgentsAddSkillCommand,
-        StackOpsAgentsAddTodoCommand,
-        StackOpsAgentsAddSymlinksCommand,
         StackOpsAgentsAddConfigCommand,
         StackOpsAgentsRunPromptCommand,
         StackOpsAgentsAskCommand,
@@ -1056,20 +1054,6 @@ STACKOPS_AGENTS_ADD_SKILL_COMMAND: "StackOpsAgentsAddSkillCommand" = {
     "subcommands": {},
 }
 
-STACKOPS_AGENTS_ADD_TODO_COMMAND: "StackOpsAgentsAddTodoCommand" = {
-    "command_name": "add-todo",
-    "short_name": "d",
-    "help": "<d> Generate a markdown file listing all Python files in the repo",
-    "subcommands": {},
-}
-
-STACKOPS_AGENTS_ADD_SYMLINKS_COMMAND: "StackOpsAgentsAddSymlinksCommand" = {
-    "command_name": "add-symlinks",
-    "short_name": "l",
-    "help": "<l> Create symlinks to the current repo in ~/code_copies/",
-    "subcommands": {},
-}
-
 STACKOPS_AGENTS_ADD_CONFIG_COMMAND: "StackOpsAgentsAddConfigCommand" = {
     "command_name": "add-config",
     "short_name": "c",
@@ -1096,8 +1080,6 @@ STACKOPS_AGENTS_SUBCOMMANDS: "StackOpsAgentsSubcommands" = {
     "browser": STACKOPS_AGENTS_BROWSER_COMMAND,
     "add-mcp": STACKOPS_AGENTS_ADD_MCP_COMMAND,
     "add-skill": STACKOPS_AGENTS_ADD_SKILL_COMMAND,
-    "add-todo": STACKOPS_AGENTS_ADD_TODO_COMMAND,
-    "add-symlinks": STACKOPS_AGENTS_ADD_SYMLINKS_COMMAND,
     "add-config": STACKOPS_AGENTS_ADD_CONFIG_COMMAND,
     "run-prompt": STACKOPS_AGENTS_RUN_PROMPT_COMMAND,
     "ask": STACKOPS_AGENTS_ASK_COMMAND,

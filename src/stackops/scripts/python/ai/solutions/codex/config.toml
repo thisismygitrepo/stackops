@@ -12,6 +12,9 @@ network_access = true
 [features]
 multi_agent = true
 
+[tui]
+status_line = ["model-with-reasoning", "context-remaining", "current-dir", "model-name", "project-root", "git-branch", "context-used", "five-hour-limit"]
+
 [analytics]
 enabled = false
 

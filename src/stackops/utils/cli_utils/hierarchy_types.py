@@ -1216,26 +1216,6 @@ StackOpsAgentsAddSkillCommand = TypedDict(
     },
 )
 
-StackOpsAgentsAddTodoCommand = TypedDict(
-    "StackOpsAgentsAddTodoCommand",
-    {
-        "command_name": Literal["add-todo"],
-        "short_name": Literal["d"],
-        "help": Literal["<d> Generate a markdown file listing all Python files in the repo"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsAgentsAddSymlinksCommand = TypedDict(
-    "StackOpsAgentsAddSymlinksCommand",
-    {
-        "command_name": Literal["add-symlinks"],
-        "short_name": Literal["l"],
-        "help": Literal["<l> Create symlinks to the current repo in ~/code_copies/"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
 StackOpsAgentsAddConfigCommand = TypedDict(
     "StackOpsAgentsAddConfigCommand",
     {
@@ -1273,8 +1253,6 @@ StackOpsAgentsSubcommands = TypedDict(
         "browser": StackOpsAgentsBrowserCommand,
         "add-mcp": StackOpsAgentsAddMcpCommand,
         "add-skill": StackOpsAgentsAddSkillCommand,
-        "add-todo": StackOpsAgentsAddTodoCommand,
-        "add-symlinks": StackOpsAgentsAddSymlinksCommand,
         "add-config": StackOpsAgentsAddConfigCommand,
         "run-prompt": StackOpsAgentsRunPromptCommand,
         "ask": StackOpsAgentsAskCommand,

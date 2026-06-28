@@ -133,47 +133,6 @@ def add_mcp(
         raise typer.BadParameter(str(e)) from e
 
 
-def make_todo_files(
-    pattern: Annotated[str, typer.Argument(help="Pattern or keyword to match files by")] = ".py",
-    repo: Annotated[
-        str, typer.Argument(help="Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned.")
-    ] = ".",
-    strategy: Annotated[
-        Literal["name", "keywords"],
-        typer.Option("-s", "--strategy", help="Strategy to filter files: 'name' for filename matching, 'keywords' for content matching"),
-    ] = "name",
-    exclude_init: Annotated[bool, typer.Option("-x", "--exclude-init", help="Exclude __init__.py files from the checklist")] = True,
-    include_line_count: Annotated[bool, typer.Option("-l", "--line-count", help="Include line count column in the output")] = False,
-    output_path: Annotated[str, typer.Option("-o", "--output-path", help="Base path for output files relative to repo root")] = ".ai/todo/files",
-    format_type: Annotated[Literal["csv", "md", "txt"], typer.Option("-f", "--format", help="Output format: csv, md (markdown), or txt")] = "md",
-    split_every: Annotated[
-        int | None, typer.Option("--split-every", "-e", help="Split output into multiple files, each containing at most this many results")
-    ] = None,
-    split_to: Annotated[int | None, typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
-) -> None:
-    """Generate checklist with Python and shell script files in the repository or workspace filtered by pattern."""
-    from stackops.scripts.python.ai.utils.generate_files import make_todo_files as impl
-
-    impl(
-        pattern=pattern,
-        repo=repo,
-        strategy=strategy,
-        exclude_init=exclude_init,
-        include_line_count=include_line_count,
-        output_path=output_path,
-        format_type=format_type,
-        split_every=split_every,
-        split_to=split_to,
-    )
-
-
-def create_symlink_command(num: Annotated[int, typer.Argument(help="Number of symlinks to create (1-5).")] = 5) -> None:
-    """Create symlinks to repo_root at ~/code_copies/${repo_name}_copy_{i}."""
-    from stackops.scripts.python.ai.utils.generate_files import create_symlink_command as impl
-
-    impl(num=num)
-
-
 def _resolve_interactive_agent(agent: INTERACTIVE_AGENT) -> AGENTS:
     return _INTERACTIVE_AGENT_ALIASES[agent]
 
@@ -408,14 +367,6 @@ def get_app() -> typer.Typer:
     agents_app.command(name="m", hidden=True)(add_mcp)
     agents_app.command(name="add-skill", short_help="<s> Add a skill to an agent")(add_skill)
     agents_app.command(name="s", hidden=True)(add_skill)
-    agents_app.command("add-todo", no_args_is_help=True, short_help="<d> Generate a markdown file listing all Python files in the repo")(
-        make_todo_files
-    )
-    agents_app.command("d", no_args_is_help=True, hidden=True)(make_todo_files)
-    agents_app.command(name="add-symlinks", no_args_is_help=True, short_help="<L> Create symlinks to the current repo in ~/code_copies/")(
-        create_symlink_command
-    )
-    agents_app.command(name="L", no_args_is_help=True, hidden=True)(create_symlink_command)
     agents_app.command(
         "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<c> Initialize AI configurations in the current repository"
     )(init_config)
