@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -6,7 +7,9 @@ from typer.testing import CliRunner
 from stackops.scripts.python import agents
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive import main as interactive_main
 from stackops.scripts.python.helpers.helpers_agents import agents_ask_impl
+from stackops.scripts.python.helpers.helpers_agents import agents_execute_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_rich_output
+from stackops.scripts.python.helpers.helpers_agents import agents_plan_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_skill_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_agentops_cache
@@ -117,9 +120,236 @@ def test_ask_defaults_to_shared_default_agent(monkeypatch: pytest.MonkeyPatch) -
     assert captured_agents == [DEFAULT_AGENT]
 
 
+def test_plan_defaults_to_codex(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_calls: list[tuple[str, object]] = []
+
+    def fake_run_plan(*, user_prompt: str, agent: object) -> None:
+        captured_calls.append((user_prompt, agent))
+
+    monkeypatch.setattr(agents_plan_impl, "run_plan", fake_run_plan)
+
+    result = CliRunner().invoke(agents.get_app(), ["plan", "build", "typed", "scheduler"])
+
+    assert result.exit_code == 0, result.output
+    assert captured_calls == [("build typed scheduler", DEFAULT_AGENT)]
+
+
+def test_plan_accepts_agent_option(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_calls: list[tuple[str, object]] = []
+
+    def fake_run_plan(*, user_prompt: str, agent: object) -> None:
+        captured_calls.append((user_prompt, agent))
+
+    monkeypatch.setattr(agents_plan_impl, "run_plan", fake_run_plan)
+
+    result = CliRunner().invoke(agents.get_app(), ["plan", "--agent", "opencode", "--", "review", "--flag-like"])
+
+    assert result.exit_code == 0, result.output
+    assert captured_calls == [("review --flag-like", "opencode")]
+
+
+def test_plan_prompt_declares_schema_and_agentops_rules(tmp_path: Path) -> None:
+    schema = agents_plan_impl.plan_json_schema()
+    prompt = agents_plan_impl.build_plan_prompt(
+        user_prompt="Improve release workflow",
+        plan_path=tmp_path / "improve-release-workflow.plan.json",
+        schema_path=tmp_path / "plan.schema.json",
+        schema=schema,
+    )
+
+    assert '"agentOps"' in prompt
+    assert '"parallel-isolated-agents"' in prompt
+    assert "Using skill agentops, <agentOps>, work towards" in prompt
+    assert "`improve-release-workflow.plan.json`" in prompt
+    assert '"successCriteria"' not in prompt
+    assert '"outputs"' not in prompt
+    assert '"dependsOn"' not in prompt
+
+
+def test_run_plan_writes_schema_and_dispatches_agent_prompt(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    captured_calls: list[dict[str, object]] = []
+
+    def fake_run_agent_prompt(
+        prompt: str | None,
+        agent: object,
+        reasoning_effort: object,
+        context: str | None,
+        context_path: str | None,
+        prompts_yaml_path: str | None,
+        context_name: str | None,
+        source: object,
+        edit: bool,
+        show_prompts_yaml_format: bool,
+    ) -> None:
+        captured_calls.append(
+            {
+                "prompt": prompt,
+                "agent": agent,
+                "reasoning_effort": reasoning_effort,
+                "context": context,
+                "context_path": context_path,
+                "prompts_yaml_path": prompts_yaml_path,
+                "context_name": context_name,
+                "source": source,
+                "edit": edit,
+                "show_prompts_yaml_format": show_prompts_yaml_format,
+            }
+        )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(agents_plan_impl, "run_agent_prompt", fake_run_agent_prompt)
+
+    agents_plan_impl.run_plan(user_prompt="Improve release workflow", agent=DEFAULT_AGENT)
+
+    assert tmp_path.joinpath(".ai", "plans", "plan.schema.json").is_file()
+    assert len(captured_calls) == 1
+    assert captured_calls[0]["agent"] == DEFAULT_AGENT
+    assert captured_calls[0]["context"] == ""
+    dispatched_prompt = captured_calls[0]["prompt"]
+    assert isinstance(dispatched_prompt, str)
+    assert str(tmp_path.joinpath(".ai", "plans", "improve-release-workflow.plan.json")) in dispatched_prompt
+
+
+def test_plan_short_alias_is_uppercase_p() -> None:
+    result = CliRunner().invoke(agents.get_app(), ["P", "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "Generate an agentops plan JSON" in result.output
+
+
+def test_execute_command_dispatches_impl_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    captured_calls: list[dict[str, object]] = []
+
+    def fake_run_execute(*, plan_path: Path, checker_agent: object, interval_seconds: int, once: bool, report: object) -> None:
+        captured_calls.append(
+            {
+                "plan_path": plan_path,
+                "checker_agent": checker_agent,
+                "interval_seconds": interval_seconds,
+                "once": once,
+                "report": report,
+            }
+        )
+
+    plan_path = tmp_path / "example.plan.json"
+    monkeypatch.setattr(agents_execute_impl, "run_execute", fake_run_execute)
+
+    result = CliRunner().invoke(agents.get_app(), ["execute", str(plan_path), "--once"])
+
+    assert result.exit_code == 0, result.output
+    assert len(captured_calls) == 1
+    assert captured_calls[0]["plan_path"] == plan_path
+    assert captured_calls[0]["checker_agent"] == DEFAULT_AGENT
+    assert captured_calls[0]["interval_seconds"] == agents_execute_impl.EXECUTE_INTERVAL_SECONDS
+    assert captured_calls[0]["once"] is True
+
+
+def test_execute_once_launches_first_pending_phase(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    launched_phases: list[str] = []
+    plan_path = _write_example_execute_plan(tmp_path=tmp_path, first_status="pending", second_status="pending")
+
+    def fake_launch_phase_agent(*, plan: object, phase: agents_execute_impl.PlanPhase, plan_path: Path) -> int:
+        launched_phases.append(phase["id"])
+        return 1001
+
+    monkeypatch.setattr(agents_execute_impl, "launch_phase_agent", fake_launch_phase_agent)
+
+    agents_execute_impl.execute_plan_once(plan_path=plan_path, checker_agent=DEFAULT_AGENT, report=lambda _message: None)
+
+    updated = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert updated["phases"][0]["status"] == "running"
+    assert updated["phases"][1]["status"] == "pending"
+    assert launched_phases == ["phase-001"]
+
+
+def test_execute_once_completes_running_phase_and_launches_next(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    launched_phases: list[str] = []
+    plan_path = _write_example_execute_plan(tmp_path=tmp_path, first_status="running", second_status="pending")
+
+    def fake_ask_phase_finished(
+        *, plan: object, phase: agents_execute_impl.PlanPhase, plan_path: Path, checker_agent: object
+    ) -> bool:
+        return True
+
+    def fake_launch_phase_agent(*, plan: object, phase: agents_execute_impl.PlanPhase, plan_path: Path) -> int:
+        launched_phases.append(phase["id"])
+        return 1002
+
+    monkeypatch.setattr(agents_execute_impl, "ask_phase_finished", fake_ask_phase_finished)
+    monkeypatch.setattr(agents_execute_impl, "launch_phase_agent", fake_launch_phase_agent)
+
+    agents_execute_impl.execute_plan_once(plan_path=plan_path, checker_agent=DEFAULT_AGENT, report=lambda _message: None)
+
+    updated = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert updated["phases"][0]["status"] == "completed"
+    assert updated["phases"][1]["status"] == "running"
+    assert launched_phases == ["phase-002"]
+
+
+def test_execute_once_keeps_running_phase_when_checker_returns_false(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    plan_path = _write_example_execute_plan(tmp_path=tmp_path, first_status="running", second_status="pending")
+
+    def fake_ask_phase_finished(
+        *, plan: object, phase: agents_execute_impl.PlanPhase, plan_path: Path, checker_agent: object
+    ) -> bool:
+        return False
+
+    monkeypatch.setattr(agents_execute_impl, "ask_phase_finished", fake_ask_phase_finished)
+
+    agents_execute_impl.execute_plan_once(plan_path=plan_path, checker_agent=DEFAULT_AGENT, report=lambda _message: None)
+
+    updated = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert updated["phases"][0]["status"] == "running"
+    assert updated["phases"][1]["status"] == "pending"
+
+
+def test_execute_boolean_parser_requires_plain_boolean() -> None:
+    assert agents_execute_impl.parse_agent_boolean(output="true\n") is True
+    assert agents_execute_impl.parse_agent_boolean(output="false") is False
+    with pytest.raises(ValueError, match="exactly true or false"):
+        agents_execute_impl.parse_agent_boolean(output="The answer is true.")
+
+
+def test_execute_short_alias_is_uppercase_e() -> None:
+    result = CliRunner().invoke(agents.get_app(), ["E", "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "Execute an agentops plan JSON" in result.output
+
+
 def test_interactive_create_defaults_to_codex() -> None:
     assert interactive_main.main.__kwdefaults__ is not None
     assert interactive_main.main.__kwdefaults__["agent"] == DEFAULT_AGENT
+
+
+def _write_example_execute_plan(*, tmp_path: Path, first_status: str, second_status: str) -> Path:
+    plan_path = tmp_path / "example.plan.json"
+    plan = {
+        "$schema": "./plan.schema.json",
+        "schemaVersion": 1,
+        "slug": "example",
+        "objective": "Build example",
+        "phases": [
+            {
+                "id": "phase-001",
+                "title": "First",
+                "status": first_status,
+                "agent": DEFAULT_AGENT,
+                "agentOps": "handover",
+                "task": "Using skill agentops, handover, work towards first phase.",
+            },
+            {
+                "id": "phase-002",
+                "title": "Second",
+                "status": second_status,
+                "agent": DEFAULT_AGENT,
+                "agentOps": None,
+                "task": "Run second phase.",
+            },
+        ],
+    }
+    plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return plan_path
 
 
 def test_add_config_reports_plan_phases_and_files(tmp_path: Path) -> None:
