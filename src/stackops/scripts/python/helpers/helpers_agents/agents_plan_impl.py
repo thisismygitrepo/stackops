@@ -128,7 +128,7 @@ Planning rules:
 """
 
 
-def run_plan(*, user_prompt: str, agent: AGENTS) -> None:
+def run_plan(*, user_prompt: str, agent: AGENTS) -> Path:
     plan_path, schema_path = resolve_plan_paths(user_prompt=user_prompt, cwd=Path.cwd())
     schema = plan_json_schema()
     write_plan_schema(schema_path=schema_path, schema=schema)
@@ -145,3 +145,4 @@ def run_plan(*, user_prompt: str, agent: AGENTS) -> None:
         edit=False,
         show_prompts_yaml_format=False,
     )
+    return plan_path
