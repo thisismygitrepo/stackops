@@ -99,7 +99,7 @@ def preview(
             else:
                 reader = read_module.READERS.get(suffix)
                 if reader is None:
-                    program = f"""print('''No reader found for files with the .{suffix} extension.''')"""
+                    program = f"""print('''No reader found for files with the .{suffix} extension in file `{choice_file}`.''')"""
                 else:
                     reader_name = getattr(reader, "__name__", type(reader).__name__)
                     program = Path(read_module.__file__).read_text(encoding="utf-8")
