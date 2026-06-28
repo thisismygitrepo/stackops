@@ -4,7 +4,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+import re
+import shlex
 import shutil
+import stat
 import subprocess
 import tomllib
 from typing import Literal, TypedDict, cast
@@ -36,6 +39,9 @@ CLEANUP_KIND_ALIASES: dict[str, CleanupKind] = {
     "optional": "optional-dependency",
     "extra": "optional-dependency",
 }
+DEPENDENCY_NAME_PATTERN = re.compile(
+    r"^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?"
+)
 
 
 @dataclass(frozen=True)
@@ -176,14 +182,23 @@ def generate_uv_add_commands(pyproject_path: Path, output_path: Path) -> None:
         if dependencies:
             commands.append(build_uv_add_command(packages=dependencies, group_name=group_name, scope="dependency-group"))
 
-    script = f"""
-#!/bin/bash
-set -e
-uv cache clean --force
-rm -rfd .venv
-{"".join(f"{command}\n" for command in commands)}
-"""
-    output_path.write_text(script.strip() + "\n", encoding="utf-8")
+    script_lines = [
+        "#!/usr/bin/env bash",
+        "set -euo pipefail",
+        'cd -- "$(dirname -- "${BASH_SOURCE[0]}")"',
+        *commands,
+        "uv sync --upgrade --no-cache",
+    ]
+    output_path.write_text("\n".join(script_lines) + "\n", encoding="utf-8")
+    output_path.chmod(
+        stat.S_IRUSR
+        | stat.S_IWUSR
+        | stat.S_IXUSR
+        | stat.S_IRGRP
+        | stat.S_IXGRP
+        | stat.S_IROTH
+        | stat.S_IXOTH
+    )
     print(f"Generated {len(commands)} uv add commands in {output_path}")
 
 
@@ -202,7 +217,7 @@ def list_all_cleanup_target_selectors(pyproject_data: PyprojectTable) -> tuple[s
 def clean_dependency_groups(
     project_root: Path,
     group_names: Sequence[str],
-    clean_all_groups: bool = False,
+    clean_all_groups: bool,
 ) -> None:
     pyproject_path = project_root / "pyproject.toml"
     pyproject_data = read_pyproject(pyproject_path=pyproject_path)
@@ -215,11 +230,23 @@ def clean_dependency_groups(
         pyproject_data=pyproject_data,
         group_names=selected_group_names,
     )
+    pyproject_before_cleanup = pyproject_path.read_bytes()
+    try:
+        for cleanup_target in cleanup_targets:
+            if not cleanup_target.packages:
+                continue
+            subprocess.run(
+                build_uv_remove_command(cleanup_target=cleanup_target),
+                cwd=project_root,
+                check=True,
+            )
+    except BaseException:
+        pyproject_path.write_bytes(pyproject_before_cleanup)
+        raise
     for cleanup_target in cleanup_targets:
         if not cleanup_target.packages:
             print(f"{cleanup_target.kind} '{cleanup_target.group_name}' is already empty")
             continue
-        subprocess.run(build_uv_remove_command(cleanup_target=cleanup_target), cwd=project_root, check=True)
         print(f"Cleaned {cleanup_target.kind} '{cleanup_target.group_name}'")
 
 
@@ -341,30 +368,57 @@ def resolve_cleanup_targets(pyproject_data: PyprojectTable, group_names: Sequenc
 
 
 def build_uv_add_command(packages: Sequence[str], group_name: str | None, scope: AddCommandScope) -> str:
-    package_names = " ".join(f"'{extract_package_name(dependency_spec)}'" for dependency_spec in packages)
+    command = ["uv", "add", "--frozen"]
     match scope:
         case "main":
-            return f"uv add --no-cache {package_names}"
+            if group_name is not None:
+                raise ValueError("group_name must be omitted for main dependency commands")
         case "optional-dependency":
             if group_name is None:
                 raise ValueError("group_name is required for optional dependency commands")
-            return f"uv add --no-cache --optional {group_name} {package_names}"
+            command.extend(["--optional", group_name])
         case "dependency-group":
             if group_name is None:
                 raise ValueError("group_name is required for dependency group commands")
             if group_name == "dev":
-                return f"uv add --no-cache --dev {package_names}"
-            return f"uv add --no-cache --group {group_name} {package_names}"
+                command.append("--dev")
+            else:
+                command.extend(["--group", group_name])
+    command.extend(
+        build_upgrade_requirement(dependency_spec=dependency_spec)
+        for dependency_spec in packages
+    )
+    return shlex.join(command)
 
 
 def build_uv_remove_command(cleanup_target: CleanupTarget) -> list[str]:
     match cleanup_target.kind:
         case "optional-dependency":
-            return ["uv", "remove", "--optional", cleanup_target.group_name, *cleanup_target.packages, "--no-sync"]
+            return [
+                "uv",
+                "remove",
+                "--optional",
+                cleanup_target.group_name,
+                *cleanup_target.packages,
+                "--frozen",
+            ]
         case "dependency-group":
             if cleanup_target.group_name == "dev":
-                return ["uv", "remove", "--dev", *cleanup_target.packages, "--no-sync"]
-            return ["uv", "remove", "--group", cleanup_target.group_name, *cleanup_target.packages, "--no-sync"]
+                return [
+                    "uv",
+                    "remove",
+                    "--dev",
+                    *cleanup_target.packages,
+                    "--frozen",
+                ]
+            return [
+                "uv",
+                "remove",
+                "--group",
+                cleanup_target.group_name,
+                *cleanup_target.packages,
+                "--frozen",
+            ]
         case _:
             raise ValueError(f"Unsupported cleanup target kind: {cleanup_target.kind}")
 
@@ -388,11 +442,36 @@ def get_dependency_groups(pyproject_data: PyprojectTable) -> dict[str, list[str]
 
 
 def extract_package_name(dependency_spec: str) -> str:
-    dependency_spec_without_markers = dependency_spec.split(";", maxsplit=1)[0].strip()
-    for operator in [">=", "<=", "==", "!=", ">", "<", "~=", "===", "@"]:
-        if operator in dependency_spec_without_markers:
-            return dependency_spec_without_markers.split(operator, maxsplit=1)[0].strip()
-    return dependency_spec_without_markers
+    dependency_name_match = DEPENDENCY_NAME_PATTERN.match(dependency_spec.strip())
+    if dependency_name_match is None:
+        raise ValueError(f"Invalid dependency requirement: {dependency_spec!r}.")
+    return dependency_name_match.group()
+
+
+def build_upgrade_requirement(dependency_spec: str) -> str:
+    requirement, marker_separator, marker = dependency_spec.strip().partition(";")
+    dependency_name_match = DEPENDENCY_NAME_PATTERN.match(requirement)
+    if dependency_name_match is None:
+        raise ValueError(f"Invalid dependency requirement: {dependency_spec!r}.")
+    dependency_name = dependency_name_match.group()
+    requirement_suffix = requirement[dependency_name_match.end() :].strip()
+    extras = ""
+    if requirement_suffix.startswith("["):
+        extras_end = requirement_suffix.find("]")
+        if extras_end == -1:
+            raise ValueError(f"Invalid dependency requirement: {dependency_spec!r}.")
+        extras = requirement_suffix[: extras_end + 1]
+        requirement_suffix = requirement_suffix[extras_end + 1 :].strip()
+    if requirement_suffix.startswith("@"):
+        upgrade_requirement = requirement.strip()
+    else:
+        upgrade_requirement = f"{dependency_name}{extras}"
+    if marker_separator == "":
+        return upgrade_requirement
+    normalized_marker = marker.strip()
+    if normalized_marker == "":
+        raise ValueError(f"Invalid dependency requirement: {dependency_spec!r}.")
+    return f"{upgrade_requirement}; {normalized_marker}"
 
 
 def upgrade_machine_config_version() -> None:

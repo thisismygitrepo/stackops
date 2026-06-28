@@ -70,8 +70,8 @@ def download_google_drive_file(url: str) -> Path:
         # Create a temporary directory for download
         output_dir = path_core.tmpdir(prefix="gdown_")
         # gdown.download returns the output filename
-        import gdown
-        output_file = gdown.download(id=file_id, output=str(output_dir) + "/", quiet=False, fuzzy=True)
+        from gdown import download
+        output_file = download(id=file_id, output=str(output_dir) + "/", quiet=False, fuzzy=True)
         
         if not output_file:
             raise ValueError(f"Download failed for {url}")

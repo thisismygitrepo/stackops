@@ -23,7 +23,7 @@ def upgrade_packages(
         typer.Option(
             "--clean-group",
             "-c",
-            help="Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.",
+            help="Capture all dependencies in pyproject_init.sh, then empty the specified dependency group or optional-dependency extra. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.",
         ),
     ] = None,
     clean_all_groups: Annotated[
@@ -31,7 +31,7 @@ def upgrade_packages(
         typer.Option(
             "--clean-all-groups",
             "-C",
-            help="Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh.",
+            help="Capture all dependencies in pyproject_init.sh, then empty every dependency group and optional-dependency extra.",
         ),
     ] = False,
     delete_venv: Annotated[
@@ -39,7 +39,7 @@ def upgrade_packages(
         typer.Option(
             "--delete-venv",
             "-D",
-            help="Delete the project's .venv directory before regenerating pyproject_init.sh.",
+            help="Delete the project's .venv directory after generating pyproject_init.sh.",
         ),
     ] = False,
 ) -> None:
@@ -54,6 +54,10 @@ def upgrade_packages(
     try:
         project_root = resolve_pyproject_root(Path(root))
         selected_clean_groups = [] if clean_group is None else clean_group
+        generate_uv_add_commands(
+            pyproject_path=project_root / "pyproject.toml",
+            output_path=project_root / "pyproject_init.sh",
+        )
         if clean_all_groups or selected_clean_groups:
             clean_dependency_groups(
                 project_root=project_root,
@@ -62,10 +66,6 @@ def upgrade_packages(
             )
         if delete_venv:
             delete_project_venv(project_root=project_root)
-        generate_uv_add_commands(
-            pyproject_path=project_root / "pyproject.toml",
-            output_path=project_root / "pyproject_init.sh",
-        )
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=1) from error
