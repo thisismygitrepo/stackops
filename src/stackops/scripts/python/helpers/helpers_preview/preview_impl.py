@@ -95,30 +95,29 @@ def preview(
             from stackops.utils.files import read as read_module
             suffix = choice_file.suffix[1:]
             if suffix == "":
-                program = "print('No file extension found. Cannot determine how to read the file.')"
+                program = """print('''No file extension found. Cannot determine how to read the file.''')"""
             else:
                 reader = read_module.READERS.get(suffix)
                 if reader is None:
-                    program = f"print('No reader found for files with the .{suffix} extension.')"
+                    program = f"""print('''No reader found for files with the .{suffix} extension.''')"""
                 else:
                     reader_name = getattr(reader, "__name__", type(reader).__name__)
                     program = Path(read_module.__file__).read_text(encoding="utf-8")
                     program += f"""
-    # p = {reader_name}("{str(choice_file)}")
-    from rich.panel import Panel
-    from rich.console import Console
-    from stackops.scripts.python.helpers.helpers_preview.preview_read import print_data_preview
-    from pathlib import Path
-    console = Console()
-    p = Path(rf"{choice_file}").absolute()
-    try:
-        dat = read_file(p)
-        print_data_preview(console=console, path=p, dat=dat)
-    except Exception as e:
-        error_message = f'''❌ ERROR READING FILE\nFile: {{p.name}}\nError: {{e}}'''
-        from rich.text import Text
-        console.print(Panel(Text(error_message, justify="left"), title="Error", expand=False, border_style="red"))
-
+# p = {reader_name}("{str(choice_file)}")
+from rich.panel import Panel
+from rich.console import Console
+from stackops.scripts.python.helpers.helpers_preview.preview_read import print_data_preview
+from pathlib import Path
+console = Console()
+p = Path(rf"{choice_file}").absolute()
+try:
+    dat = read_file(p)
+    print_data_preview(console=console, path=p, dat=dat)
+except Exception as e:
+    error_message = f'''❌ ERROR READING FILE\nFile: {{p.name}}\nError: {{e}}'''
+    from rich.text import Text
+    console.print(Panel(Text(error_message, justify="left"), title="Error", expand=False, border_style="red"))
     """
             text = f"📄 Reading data from: {choice_file.name}"
             console.print(Panel(text, title="[bold blue]Info[/bold blue]"))
