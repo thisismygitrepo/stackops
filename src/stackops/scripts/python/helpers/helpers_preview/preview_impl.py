@@ -153,19 +153,19 @@ except Exception as e:
         uv_python_line = ""
     else:
 
-        from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
-        virtualenv_root = find_virtualenv_root(choice_file)
+        # from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
+        # virtualenv_root = find_virtualenv_root(choice_file)
 
-        if virtualenv_root is not None:
-            uv_project_line = f'--project {virtualenv_root.parent}'
-            uv_python_line = ""
+        # if virtualenv_root is not None:
+        #     uv_project_line = f'--project {virtualenv_root.parent}'
+        #     uv_python_line = ""
+        # else:
+        if Path.home().joinpath("code/stackops").exists():
+            uv_project_line = f"""--project "{str(Path.home().joinpath("code/stackops"))}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """
+            uv_python_line = "--python 3.14"
         else:
-            if Path.home().joinpath("code/stackops").exists():
-                uv_project_line = f"""--project "{str(Path.home().joinpath("code/stackops"))}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """
-                uv_python_line = "--python 3.14"
-            else:
-                uv_project_line = f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """
-                uv_python_line = "--python 3.14"
+            uv_project_line = f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """
+            uv_python_line = "--python 3.14"
 
     fire_line = build_read_command(
         file_obj=choice_file,
