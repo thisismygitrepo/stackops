@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
     build_agent_skill_install_commands,
     parse_requested_skill_names,
     resolve_agent_skill_install_backend,
+    SKILL_INSTALL_COMMAND_BACKEND,
     supported_agent_skill_names,
 )
 from stackops.utils.options_utils import tv_options
@@ -169,6 +170,64 @@ def test_add_skill_dispatches_stackops_backend_alias(monkeypatch: pytest.MonkeyP
             skill_name="stackops",
             source_path=tmp_path / "source" / "stackops",
             target_path=tmp_path / ".agents" / "skills" / "stackops",
+        ),
+    )
+
+
+def test_add_skill_stackops_backend_falls_back_to_bunx(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    observed: dict[str, object] = {}
+
+    def fake_install_stackops_agent_skills(
+        *,
+        skill_names: tuple[str, ...],
+        skill_folder_names: dict[str, str],
+        install_root: Path,
+        scope: object,
+    ) -> tuple[agents_skill_stackops_backend.StackopsAgentSkillInstallResult, ...]:
+        observed["stackops_skill_names"] = skill_names
+        observed["stackops_skill_folder_names"] = skill_folder_names
+        observed["stackops_install_root"] = install_root
+        observed["stackops_scope"] = scope
+        raise agents_skill_stackops_backend.StackopsAgentSkillBackendError("not bundled")
+
+    def fake_print_stackops_skill_install_fallback(*, error: ValueError, fallback_backend: SKILL_INSTALL_COMMAND_BACKEND) -> None:
+        observed["fallback_error"] = str(error)
+        observed["fallback_backend"] = fallback_backend
+
+    def fake_run_agent_skill_install_commands(*, install_root: Path, commands: tuple[tuple[str, ...], ...]) -> int:
+        observed["fallback_install_root"] = install_root
+        observed["fallback_commands"] = commands
+        return 7
+
+    monkeypatch.setattr(agents_skill_stackops_backend, "install_stackops_agent_skills", fake_install_stackops_agent_skills)
+    monkeypatch.setattr(agents_skill_impl, "print_stackops_skill_install_fallback", fake_print_stackops_skill_install_fallback)
+    monkeypatch.setattr(agents_skill_impl, "run_agent_skill_install_commands", fake_run_agent_skill_install_commands)
+
+    result = agents_skill_impl.add_skill(
+        skill_name="agent-skills",
+        agent="codex",
+        scope="local",
+        directory=str(tmp_path),
+        backend="stackops",
+        yes=True,
+    )
+
+    assert result == 7
+    assert observed["stackops_skill_names"] == ("agent-skills",)
+    assert observed["stackops_install_root"] == tmp_path.resolve()
+    assert observed["stackops_scope"] == "local"
+    assert observed["fallback_error"] == "not bundled"
+    assert observed["fallback_backend"] == "bunx"
+    assert observed["fallback_install_root"] == tmp_path.resolve()
+    assert observed["fallback_commands"] == (
+        (
+            "bunx",
+            "skills@latest",
+            "add",
+            "addyosmani/agent-skills",
+            "--yes",
+            "--agent",
+            "codex",
         ),
     )
 

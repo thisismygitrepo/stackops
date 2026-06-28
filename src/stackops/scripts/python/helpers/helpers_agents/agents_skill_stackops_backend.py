@@ -23,6 +23,10 @@ class StackopsAgentSkillInstallResult:
     target_path: Path
 
 
+class StackopsAgentSkillBackendError(ValueError):
+    pass
+
+
 def _dedupe_paths(paths: Sequence[Path]) -> tuple[Path, ...]:
     seen: set[Path] = set()
     deduped: list[Path] = []
@@ -62,7 +66,7 @@ def resolve_stackops_agent_skill_source_root(*, source_root: Path | None = None)
     if source_root is not None:
         resolved_source_root = source_root.expanduser().resolve(strict=False)
         if not _contains_agent_skills(resolved_source_root):
-            raise ValueError(f"StackOps skill source root does not contain skill directories: {resolved_source_root}")
+            raise StackopsAgentSkillBackendError(f"StackOps skill source root does not contain skill directories: {resolved_source_root}")
         return resolved_source_root
 
     for candidate in _candidate_source_roots():
@@ -70,12 +74,14 @@ def resolve_stackops_agent_skill_source_root(*, source_root: Path | None = None)
             return candidate
 
     searched = ", ".join(str(candidate) for candidate in _candidate_source_roots())
-    raise ValueError(f"StackOps skill source root was not found. Searched: {searched}")
+    raise StackopsAgentSkillBackendError(f"StackOps skill source root was not found. Searched: {searched}")
 
 
 def resolve_stackops_agent_skill_target_root(*, install_root: Path, scope: STACKOPS_SKILL_INSTALL_SCOPE) -> Path:
     if scope == "global":
-        raise ValueError("StackOps skill backend only supports --scope local. Use --backend bunx or --backend npx for global installs.")
+        raise StackopsAgentSkillBackendError(
+            "StackOps skill backend only supports --scope local. Use --backend bunx or --backend npx for global installs."
+        )
 
     repo_root = get_repo_root(install_root)
     resolved_install_root = (repo_root if repo_root is not None else install_root).expanduser().resolve(strict=False)
@@ -84,9 +90,37 @@ def resolve_stackops_agent_skill_target_root(*, install_root: Path, scope: STACK
 
 def _copy_skill_directory(*, source_path: Path, target_path: Path) -> None:
     if target_path.exists() and not target_path.is_dir():
-        raise ValueError(f"Cannot install skill because target exists and is not a directory: {target_path}")
+        raise StackopsAgentSkillBackendError(f"Cannot install skill because target exists and is not a directory: {target_path}")
     target_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source_path, target_path, dirs_exist_ok=True)
+
+
+def _resolve_stackops_agent_skill_install_plans(
+    *,
+    skill_names: Sequence[str],
+    skill_folder_names: Mapping[str, str],
+    resolved_source_root: Path,
+    target_root: Path,
+) -> tuple[StackopsAgentSkillInstallResult, ...]:
+    plans: list[StackopsAgentSkillInstallResult] = []
+    for skill_name in skill_names:
+        skill_folder_name = skill_folder_names.get(skill_name)
+        if skill_folder_name is None:
+            raise StackopsAgentSkillBackendError(f"Skill '{skill_name}' is not recognized. Supported skills: {', '.join(skill_folder_names)}")
+
+        source_path = resolved_source_root / skill_folder_name
+        if not source_path.joinpath(SKILL_FILE_NAME).is_file():
+            raise StackopsAgentSkillBackendError(
+                f"Skill '{skill_name}' is not bundled with the StackOps backend. "
+                "Use --backend bunx or --backend npx for this alias."
+            )
+
+        target_path = target_root / skill_folder_name
+        if target_path.exists() and not target_path.is_dir():
+            raise StackopsAgentSkillBackendError(f"Cannot install skill because target exists and is not a directory: {target_path}")
+        plans.append(StackopsAgentSkillInstallResult(skill_name=skill_name, source_path=source_path, target_path=target_path))
+
+    return tuple(plans)
 
 
 def install_stackops_agent_skills(
@@ -99,25 +133,17 @@ def install_stackops_agent_skills(
 ) -> tuple[StackopsAgentSkillInstallResult, ...]:
     resolved_source_root = resolve_stackops_agent_skill_source_root(source_root=source_root)
     target_root = resolve_stackops_agent_skill_target_root(install_root=install_root, scope=scope)
+    plans = _resolve_stackops_agent_skill_install_plans(
+        skill_names=skill_names,
+        skill_folder_names=skill_folder_names,
+        resolved_source_root=resolved_source_root,
+        target_root=target_root,
+    )
 
-    results: list[StackopsAgentSkillInstallResult] = []
-    for skill_name in skill_names:
-        skill_folder_name = skill_folder_names.get(skill_name)
-        if skill_folder_name is None:
-            raise ValueError(f"Skill '{skill_name}' is not recognized. Supported skills: {', '.join(skill_folder_names)}")
+    for plan in plans:
+        _copy_skill_directory(source_path=plan.source_path, target_path=plan.target_path)
 
-        source_path = resolved_source_root / skill_folder_name
-        if not source_path.joinpath(SKILL_FILE_NAME).is_file():
-            raise ValueError(
-                f"Skill '{skill_name}' is not bundled with the StackOps backend. "
-                "Use --backend bunx or --backend npx for this alias."
-            )
-
-        target_path = target_root / skill_folder_name
-        _copy_skill_directory(source_path=source_path, target_path=target_path)
-        results.append(StackopsAgentSkillInstallResult(skill_name=skill_name, source_path=source_path, target_path=target_path))
-
-    return tuple(results)
+    return plans
 
 
 def print_stackops_agent_skill_install_summary(*, results: Sequence[StackopsAgentSkillInstallResult], console: Console | None = None) -> None:

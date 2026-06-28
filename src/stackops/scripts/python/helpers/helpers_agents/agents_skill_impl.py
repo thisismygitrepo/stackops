@@ -10,6 +10,7 @@ SKILL_INSTALL_COMMAND_BACKEND: TypeAlias = Literal["bunx", "npx"]
 SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 RESOLVED_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
+STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND: Final[SKILL_INSTALL_COMMAND_BACKEND] = "bunx"
 AGENT_SKILL_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 
 
@@ -167,6 +168,14 @@ def run_agent_skill_install_commands(*, install_root: Path, commands: Sequence[t
     return proc.returncode
 
 
+def print_stackops_skill_install_fallback(*, error: ValueError, fallback_backend: SKILL_INSTALL_COMMAND_BACKEND) -> None:
+    from rich.console import Console
+
+    Console(stderr=True).print(
+        f"[yellow]StackOps skill backend unavailable; falling back to {fallback_backend} skills CLI.[/yellow]\n[dim]{error}[/dim]"
+    )
+
+
 def add_skill(
     *,
     skill_name: str | None,
@@ -183,14 +192,19 @@ def add_skill(
     if resolved_backend == "stackops":
         from stackops.scripts.python.helpers.helpers_agents import agents_skill_stackops_backend
 
-        results = agents_skill_stackops_backend.install_stackops_agent_skills(
-            skill_names=resolved_skill_names,
-            skill_folder_names=build_stackops_skill_folder_names(),
-            install_root=install_root,
-            scope=scope,
-        )
-        agents_skill_stackops_backend.print_stackops_agent_skill_install_summary(results=results)
-        return 0
+        try:
+            results = agents_skill_stackops_backend.install_stackops_agent_skills(
+                skill_names=resolved_skill_names,
+                skill_folder_names=build_stackops_skill_folder_names(),
+                install_root=install_root,
+                scope=scope,
+            )
+        except agents_skill_stackops_backend.StackopsAgentSkillBackendError as error:
+            print_stackops_skill_install_fallback(error=error, fallback_backend=STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND)
+            resolved_backend = STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND
+        else:
+            agents_skill_stackops_backend.print_stackops_agent_skill_install_summary(results=results)
+            return 0
 
     commands = build_agent_skill_install_commands(
         skill_names=resolved_skill_names,

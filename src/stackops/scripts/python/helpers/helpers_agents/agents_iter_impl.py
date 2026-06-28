@@ -110,7 +110,7 @@ class IterWorkspaceTrackResult:
 def close_iter_workspaces_loop(
     *, workspace_name: str | None, all_workspaces: bool, continuous: bool, report: Callable[[str], None]
 ) -> None:
-    _validate_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
+    validate_iter_workspace_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
     while True:
         summaries = close_iter_workspaces(workspace_name=workspace_name, all_workspaces=all_workspaces, report=report)
         _report_summaries(summaries=summaries, report=report)
@@ -127,7 +127,7 @@ def show_iter_status() -> None:
 def track_iter_workspace_loop(
     *, workspace_name: str, max_iterations: int, interval_seconds: int, report: Callable[[str], None]
 ) -> None:
-    _validate_track_inputs(workspace_name=workspace_name, max_iterations=max_iterations, interval_seconds=interval_seconds)
+    validate_iter_workspace_track_inputs(workspace_name=workspace_name, max_iterations=max_iterations, interval_seconds=interval_seconds)
     report(
         f"Tracking iter workspace {workspace_name}: max_iterations={max_iterations}, "
         f"interval={interval_seconds} second(s)."
@@ -143,7 +143,11 @@ def track_iter_workspace_loop(
 def check_iter_workspace_budget(
     *, workspace_name: str, max_iterations: int, report: Callable[[str], None]
 ) -> IterWorkspaceTrackResult:
-    _validate_track_inputs(workspace_name=workspace_name, max_iterations=max_iterations, interval_seconds=TRACK_INTERVAL_SECONDS)
+    validate_iter_workspace_track_inputs(
+        workspace_name=workspace_name,
+        max_iterations=max_iterations,
+        interval_seconds=TRACK_INTERVAL_SECONDS,
+    )
     workspace = _get_iter_workspace_by_label(workspace_name=workspace_name)
     tabs = tuple(tab for tab in _list_tabs() if tab.workspace_id == workspace.workspace_id)
     agents = tuple(agent for agent in _list_agents() if agent.workspace_id == workspace.workspace_id)
@@ -226,6 +230,12 @@ def close_iter_workspaces(
 ) -> tuple[IterWorkspaceClose, ...]:
     close_plans = plan_iter_workspace_closes(workspace_name=workspace_name, all_workspaces=all_workspaces)
     _report_close_plan(close_plans=close_plans, report=report)
+    return close_iter_workspace_plans(close_plans=close_plans, report=report)
+
+
+def close_iter_workspace_plans(
+    *, close_plans: tuple[IterWorkspaceClosePlan, ...], report: Callable[[str], None]
+) -> tuple[IterWorkspaceClose, ...]:
     total_to_close = sum(len(close_plan.closable_tabs) for close_plan in close_plans)
     closed_count = 0
     summaries: list[IterWorkspaceClose] = []
@@ -251,7 +261,7 @@ def close_iter_workspaces(
 
 
 def plan_iter_workspace_closes(*, workspace_name: str | None, all_workspaces: bool) -> tuple[IterWorkspaceClosePlan, ...]:
-    _validate_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
+    validate_iter_workspace_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
     workspaces = _selected_iter_workspaces(workspaces=_list_workspaces(), workspace_name=workspace_name, all_workspaces=all_workspaces)
     tabs_by_workspace_id = _tabs_by_workspace_id(tabs=_list_tabs())
     panes_by_tab_id = _panes_by_tab_id(panes=_list_panes())
@@ -304,7 +314,7 @@ def _iter_workspaces(*, workspaces: tuple[HerdrWorkspace, ...]) -> tuple[HerdrWo
     return tuple(workspace for workspace in workspaces if workspace.label.startswith(ITER_WORKSPACE_PREFIX))
 
 
-def _validate_close_scope(*, workspace_name: str | None, all_workspaces: bool) -> None:
+def validate_iter_workspace_close_scope(*, workspace_name: str | None, all_workspaces: bool) -> None:
     if workspace_name is not None and workspace_name.strip() == "":
         raise ValueError("Workspace name must not be empty.")
     if workspace_name is not None and all_workspaces:
@@ -335,7 +345,7 @@ def _selected_iter_workspaces(
     return (workspace,)
 
 
-def _validate_track_inputs(*, workspace_name: str, max_iterations: int, interval_seconds: int) -> None:
+def validate_iter_workspace_track_inputs(*, workspace_name: str, max_iterations: int, interval_seconds: int) -> None:
     if workspace_name.strip() == "":
         raise ValueError("Workspace name must not be empty.")
     if max_iterations < 1:

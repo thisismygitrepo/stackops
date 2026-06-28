@@ -8,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive impor
 from stackops.scripts.python.helpers.helpers_agents import agents_ask_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_run_impl
+from stackops.scripts.python.helpers.helpers_agents import agents_skill_impl
 from stackops.scripts.python.helpers.helpers_agents import agents_workflow_cache
 from stackops.utils.schemas.fire_agents.fire_agents_types import DEFAULT_AGENT
 import stackops.utils.accessories as accessories
@@ -255,6 +256,41 @@ def test_add_skill_short_alias_is_s() -> None:
 
     assert result.exit_code == 0, result.output
     assert "Add a skill" in result.output
+
+
+def test_add_skill_default_backend_is_stackops(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    observed: dict[str, object] = {}
+
+    def fake_add_skill(
+        *,
+        skill_name: str | None,
+        agent: str | None,
+        scope: object,
+        directory: str | None,
+        backend: object,
+        yes: bool,
+    ) -> int:
+        observed["skill_name"] = skill_name
+        observed["agent"] = agent
+        observed["scope"] = scope
+        observed["directory"] = directory
+        observed["backend"] = backend
+        observed["yes"] = yes
+        return 0
+
+    monkeypatch.setattr(agents_skill_impl, "add_skill", fake_add_skill)
+
+    result = CliRunner().invoke(agents.get_app(), ["add-skill", "stackops", "--directory", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert observed == {
+        "skill_name": "stackops",
+        "agent": None,
+        "scope": "local",
+        "directory": str(tmp_path),
+        "backend": "stackops",
+        "yes": False,
+    }
 
 
 def test_removed_todo_and_symlink_commands_are_not_registered() -> None:

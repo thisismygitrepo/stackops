@@ -19,13 +19,12 @@ def close(
 ) -> None:
     """Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import close_iter_workspaces_loop
+        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspaces_loop
 
-        close_iter_workspaces_loop(
+        show_close_iter_workspaces_loop(
             workspace_name=space_name,
             all_workspaces=all_workspaces,
             continuous=continuous,
-            report=typer.echo,
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
@@ -37,9 +36,9 @@ def close(
 def clean() -> None:
     """Clean workflow cache records under .ai."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_workflow_cache import clean_workflow_cache
+        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_workflow_cache
 
-        clean_workflow_cache(cwd=Path.cwd(), report=typer.echo)
+        show_clean_workflow_cache(cwd=Path.cwd())
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
@@ -55,13 +54,12 @@ def track(
 ) -> None:
     """Track an iter Herdr workspace and close it after it exceeds the iteration budget."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import track_iter_workspace_loop
+        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_track_iter_workspace_loop
 
-        track_iter_workspace_loop(
+        show_track_iter_workspace_loop(
             workspace_name=space_name,
             max_iterations=max_iterations,
             interval_seconds=interval_seconds,
-            report=typer.echo,
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
@@ -73,7 +71,7 @@ def track(
 def status() -> None:
     """Show each iter loop's latest iteration agent and live Herdr status."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import show_iter_status
+        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_iter_status
 
         show_iter_status()
     except RuntimeError as error:

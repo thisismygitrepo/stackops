@@ -330,7 +330,7 @@ def add_skill(
     backend: Annotated[
         _SKILL_INSTALL_BACKEND,
         typer.Option("--backend", "-b", help="Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally."),
-    ] = "bunx",
+    ] = "stackops",
     yes: Annotated[
         bool,
         typer.Option("--yes", "-y", help="Pass --yes to the upstream skills CLI."),
