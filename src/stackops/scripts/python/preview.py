@@ -3,6 +3,7 @@
 """preview - File preview and backend launcher."""
 
 from typing import Annotated, cast
+from stackops.scripts.python.helpers.helpers_preview.preview_impl import STACKOPS_PLOT_REQUIREMENT
 import typer
 from stackops.scripts.python.enums import BACKENDS, BACKENDS_LOOSE, BACKENDS_MAP
 
@@ -75,7 +76,10 @@ def preview(
         if Path.home().joinpath("code/stackops").exists():
             project_path = str(Path.home().joinpath("code/stackops"))
         else:
-            pass
+            if uv_with is None:
+                uv_with = f""" --with "{STACKOPS_PLOT_REQUIREMENT}" """
+            else:
+                uv_with += f""" --with "{STACKOPS_PLOT_REQUIREMENT}" """
     resolved_backend: BACKENDS
     if interactive:
         resolved_backend = _choose_backend_interactively()

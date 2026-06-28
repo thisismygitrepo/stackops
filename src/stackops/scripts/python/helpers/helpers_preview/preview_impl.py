@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import shutil
+# from typing import Optional
 from stackops.scripts.python.enums import BACKENDS
 from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
 
@@ -21,6 +22,7 @@ PATH_BACKENDS = frozenset(
 )
 DATABASE_BACKENDS = frozenset({"rainfrog", "lazysql", "dblab", "usql", "harlequin", "sqlit"})
 STACKOPS_PLOT_REQUIREMENT = f"stackops[plot]>={STACKOPS_VERSION}"
+INTERACITIVITY_FLAG = "-i"
 
 
 def preview(
@@ -32,34 +34,29 @@ def preview(
     frozen: bool,
 ) -> None:
     """Preview files and launch reader backends."""
-    interactivity = "-i"
-    user_uv_with_line = "INIT_VALUE_INVALID"
-    if uv_with is not None:
-        match backend:
-            case "ipython":
-                user_uv_with_line = f"--with {uv_with},ipython,rich"
-            case _:
-                user_uv_with_line = f"--with {uv_with}"
-    else:
-        match backend:
-            case "ipython":
-                user_uv_with_line = "--with ipython,rich"
-            case _:
-                user_uv_with_line = ""
+    uv_with_line_user: str = "INVALID_INIT_VALUE_FOR_UV_WITH"
     if frozen:
-        user_uv_with_line += " --frozen"
-
-    if project_path is not None:
-        uv_project_line = f'--project {project_path}'
-        uv_python_line = ""
+        uv_with_line_user += " --frozen"
+        if uv_with is not None:
+            raise RuntimeError("Frozen flag contradicts uv_with, you can't have both at the same time.")
     else:
-        uv_project_line = ""
-        uv_python_line = "--python 3.14"
+        if uv_with is not None:
+            match backend:
+                case "ipython":
+                    uv_with_line_user = f"--with {uv_with},ipython,rich"
+                case _:
+                    uv_with_line_user = f"--with {uv_with}"
+        else:
+            match backend:
+                case "ipython":
+                    uv_with_line_user = "--with ipython,rich"
+                case _:
+                    uv_with_line_user = ""
+
 
     from stackops.scripts.python.helpers.helpers_preview.preview_read import get_read_python_file_pycode
     from stackops.utils.meta import lambda_to_python_script
     from stackops.utils.accessories import randstr
-    from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
     import json
     from rich.console import Console
     from rich.panel import Panel
@@ -79,14 +76,6 @@ def preview(
         choice_file = Path(path).absolute().expanduser()
     else:
         choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
-        if project_path is None:
-            virtualenv_root = find_virtualenv_root(choice_file)
-            if virtualenv_root is not None:
-                uv_project_line = f'--project {virtualenv_root.parent}'
-                uv_python_line = ""
-        if Path.home().joinpath("code/stackops").exists() and uv_project_line == "":
-            uv_project_line = f'--project "{str(Path.home().joinpath("code/stackops"))}"'
-
         if choice_file.suffix == ".py":
             program = choice_file.read_text(encoding="utf-8")
             text = f"📄 Selected file: {choice_file.name}"
@@ -158,16 +147,35 @@ except Exception as e:
         except Exception:
             pass
 
-    fire_line = _build_fire_line(
+
+    if project_path is not None:
+        uv_project_line = f'--project {project_path}'
+        uv_python_line = ""
+    else:
+
+        from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
+        virtualenv_root = find_virtualenv_root(choice_file)
+
+        if virtualenv_root is not None:
+            uv_project_line = f'--project {virtualenv_root.parent}'
+            uv_python_line = ""
+        else:
+            if Path.home().joinpath("code/stackops").exists():
+                uv_project_line = f"""--project "{str(Path.home().joinpath("code/stackops"))}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """
+                uv_python_line = "--python 3.14"
+            else:
+                uv_project_line = f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """
+                uv_python_line = "--python 3.14"
+
+    fire_line = build_read_command(
         file_obj=choice_file,
         pyfile=pyfile,
         nb_target=nb_target,
         backend=backend,
-        interactivity=interactivity,
         ipython_profile=ipython_profile,
         uv_python_line=uv_python_line,
         uv_project_line=uv_project_line,
-        user_uv_with_line=user_uv_with_line,
+        user_uv_with_line=uv_with_line_user,
         uv_with=uv_with,
     )
 
@@ -248,12 +256,11 @@ def _build_preprogram() -> str:
     return preprogram
 
 
-def _build_fire_line(
+def build_read_command(
     file_obj: Path,
     pyfile: Path,
     nb_target: Path,
     backend: BACKENDS,
-    interactivity: str,
     ipython_profile: str,
     uv_python_line: str,
     uv_project_line: str,
@@ -292,18 +299,15 @@ uv init {uv_python_line}
 uv venv
 uv add "cowsay" "{STACKOPS_PLOT_REQUIREMENT}"
 {user_uv_add}
-# code serve-web
 code --new-window "{str(pyfile)}"
 """
 
+    # It must be that we are reading with Python or IPython:
     if backend == "python":
         interpreter = "python"
         profile = ""
     else:
         interpreter = "python -m IPython"
         profile = f" --profile {ipython_profile} --no-banner"
-    if Path.home().joinpath("code/stackops").exists():
-        ve_line = f"""{user_uv_with_line} --project "{str(Path.home().joinpath("code/stackops"))}" """
-    else:
-        ve_line = f"""{uv_python_line} {user_uv_with_line} {uv_project_line} --with "cowsay,{STACKOPS_PLOT_REQUIREMENT}" """
-    return f"uv run {ve_line} {interpreter} {interactivity} {profile} {str(pyfile)}"
+    ve_line = f"""{uv_python_line} {user_uv_with_line} {uv_project_line} """
+    return f"uv run {ve_line} {interpreter} {INTERACITIVITY_FLAG} {profile} {str(pyfile)}"
