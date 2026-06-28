@@ -13,6 +13,7 @@ BASE_INTERACTIVE_BACKENDS: tuple[str, ...] = (
     "python",
     "marimo",
     "jupyter",
+    "jupyter-ai",
     "vscode",
     "visidata",
 )

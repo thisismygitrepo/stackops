@@ -66,7 +66,7 @@ uv venv
         if "l" in packages:
             total_packages["linting"] = ["mypy", "pyright", "ruff", "pylint", "pyrefly", "cleanpy", "ipdb", "pudb"]
         if "i" in packages:
-            total_packages["interactive"] = ["ipython", "ipykernel", "jupyterlab", "nbformat", "marimo"]
+            total_packages["interactive"] = ["ipython", "ipykernel", "jupyterlab", "jupyter-ai", "nbformat", "marimo"]
         if "p" in packages:
             total_packages["plot"] = ["python-magic", "matplotlib", "plotly", "kaleido"]
         if "d" in packages:

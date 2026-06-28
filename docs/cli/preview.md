@@ -1,6 +1,6 @@
 # preview
 
-`preview` builds a temporary `uv run` launch context, then opens a selected file or directory in a preview, viewer, or interactive backend such as IPython, Python, Marimo, Jupyter, VS Code, or VisiData.
+`preview` builds a temporary `uv run` launch context, then opens a selected file or directory in a preview, viewer, or interactive backend such as IPython, Python, Marimo, Jupyter, Jupyter AI, VS Code, or VisiData.
 
 ---
 
@@ -24,7 +24,7 @@ preview [OPTIONS] [PATH]
 | --- | --- | --- |
 | `--project` | `-p` | Reuse a specific `uv` project directory |
 | `--uv-with` | `-w` | Add extra packages to the launch environment |
-| `--backend` | `-b` | Backend: `ipython`, `python`, `marimo`, `jupyter`, `vscode`, `visidata`, `auto`, `preview`, `browser`, `glow`, or a SQL client |
+| `--backend` | `-b` | Backend: `ipython`, `python`, `marimo`, `jupyter`, `jupyter-ai`, `vscode`, `visidata`, `auto`, `preview`, `browser`, `glow`, or a SQL client |
 | `--interactive` | `-i` | Select any available backend interactively |
 | `--profile` | `-r` | IPython profile name |
 | `--self` | `-s` | Point the project at `~/code/stackops` when that checkout exists |
@@ -36,6 +36,7 @@ The backend option also accepts short aliases from the current enum mapping:
 - `python` or `p`
 - `marimo` or `m`
 - `jupyter` or `j`
+- `jupyter-ai` or `ja`
 - `vscode` or `c`
 - `visidata` or `v`
 - `preview`
@@ -86,6 +87,7 @@ Project resolution is currently:
 - `python` runs the generated script with plain Python instead of IPython.
 - `marimo` converts the generated script to `marimo_nb.py` in a temporary directory, then runs `marimo edit --host 0.0.0.0`.
 - `jupyter` emits a temporary `.ipynb` and opens it in JupyterLab.
+- `jupyter-ai` emits a temporary `.ipynb` and opens it in JupyterLab with `jupyter-ai` installed.
 - `vscode` initializes a temporary `uv` workspace and opens the generated script in VS Code.
 - `visidata` opens the selected file directly with `vd`; JSON files use plain `visidata`, other files add `pyarrow`.
 - `preview` uses the fullscreen preview flow.
@@ -117,6 +119,9 @@ preview data.sqlite --backend rainfrog
 
 # Open a generated notebook in Marimo
 preview analysis.py --backend marimo --project .
+
+# Open a generated notebook in JupyterLab with Jupyter AI
+preview analysis.py --backend jupyter-ai --project .
 
 # Force the StackOps checkout as the uv project
 preview src/stackops/scripts/python/preview.py --self

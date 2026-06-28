@@ -22,6 +22,7 @@ PATH_BACKENDS = frozenset(
     }
 )
 DATABASE_BACKENDS = frozenset({"rainfrog", "lazysql", "dblab", "usql", "harlequin", "sqlit"})
+JUPYTER_BACKENDS = frozenset({"jupyter", "jupyter-ai"})
 STACKOPS_PLOT_REQUIREMENT = f"stackops[plot]>={STACKOPS_VERSION}"
 INTERACITIVITY_FLAG = "-i"
 
@@ -126,7 +127,7 @@ except Exception as e:
     ipython_profile = ipython_profile if ipython_profile is not None else "default"
 
     nb_target = pyfile.with_suffix(".ipynb")
-    if backend == "jupyter":
+    if backend in JUPYTER_BACKENDS:
         try:
             nb_path = pyfile.with_suffix(".ipynb")
             nb_content = {
@@ -285,11 +286,12 @@ uv run {uv_python_line} --with "marimo" marimo convert {pyfile.name} -o marimo_n
 uv run {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
 """
 
-    if backend == "jupyter":
+    if backend in JUPYTER_BACKENDS:
+        jupyter_ai_requirement = "--with jupyter-ai" if backend == "jupyter-ai" else ""
         if STACKOPS_REPO_DIR.exists():
-            requirements = f"""{user_uv_with_line}  {uv_project_line} --with jupyterlab """
+            requirements = f"""{user_uv_with_line}  {uv_project_line} --with jupyterlab {jupyter_ai_requirement} """
         else:
-            requirements = f"""{user_uv_with_line} {uv_project_line} --with "cowsay" --with "{STACKOPS_PLOT_REQUIREMENT}" """
+            requirements = f"""{user_uv_with_line} {uv_project_line} --with "cowsay" --with "{STACKOPS_PLOT_REQUIREMENT}" --with jupyterlab {jupyter_ai_requirement} """
         return f"uv run {requirements} jupyter-lab {str(nb_target)}"
 
     if backend == "vscode":
