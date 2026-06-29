@@ -14,9 +14,9 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import
 def close(
     space_name: Annotated[
         str | None,
-        typer.Argument(help="Exact Herdr iter workspace label to close. Use --all to close every iter workspace."),
+        typer.Argument(help="Herdr iter workspace label or stable ID to close. Use --all for every iter workspace."),
     ] = None,
-    continuous: Annotated[bool, typer.Option("--loop", "-l", help="Repeat close pass every 5 minutes.")] = False,
+    continuous: Annotated[bool, typer.Option("--loop", "-l", help="Repeat close passes until interrupted.")] = False,
     all_workspaces: Annotated[
         bool,
         typer.Option("--all", "-a", help="Close old idle tabs in all iter workspaces."),
@@ -69,7 +69,7 @@ def clean(
 
 
 def track(
-    space_name: Annotated[str, typer.Argument(help="Exact Herdr iter workspace label to track.")],
+    space_name: Annotated[str, typer.Argument(help="Herdr iter workspace label or stable ID to track.")],
     max_iterations: Annotated[int, typer.Argument(help="Maximum allowed iteration number before the workspace is closed.")] = DEFAULT_TRACK_MAX_ITERATIONS,
     interval_seconds: Annotated[
         int,
@@ -129,8 +129,8 @@ def get_app() -> typer.Typer:
     iter_app.command(name="c", no_args_is_help=False, hidden=True)(clean)
     iter_app.command(name="close", no_args_is_help=False, short_help="<x> Revalidate and close old idle iter tabs")(close)
     iter_app.command(name="x", no_args_is_help=False, hidden=True)(close)
-    iter_app.command(name="track", no_args_is_help=False, short_help="<t> Track status and close after budget")(track)
+    iter_app.command(name="track", no_args_is_help=False, short_help="<t> Track, prune old tabs, and enforce budget")(track)
     iter_app.command(name="t", no_args_is_help=False, hidden=True)(track)
-    iter_app.command(name="status", no_args_is_help=False, short_help="<s> Show iter workspace status")(status)
+    iter_app.command(name="status", no_args_is_help=False, short_help="<s> Show live iter state and safe close counts")(status)
     iter_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     return iter_app

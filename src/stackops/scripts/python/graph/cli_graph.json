@@ -3559,7 +3559,11 @@
                     "        typer.echo(msg, err=True)",
                     "        raise typer.Exit(code=1)",
                     "    port = 8888",
-                    "    display_with_flashy_style(msg=f\"On the remote machine, run:\\n d c I -u http://{local_ipv4}:{port} -p {pwd}\\n\", title=\"Remote Machine Instructions\")",
+                    "    display_with_flashy_style(msg=f\"\"\"",
+                    "On the remote machine, run:",
+                    "d c I -u http://{local_ipv4}:{port} -p {pwd}; d c s d -s all -m s -w all",
+                    "devops config interactive --url http://{local_ipv4}:{port} -p {pwd}; devops config sync down --sensitivity all --method symlink --which all",
+                    "\"\"\", title=\"Remote Machine Instructions\")",
                     "    cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)"
                   ],
                   "name": "export_dotfiles",
@@ -8435,8 +8439,16 @@
                 "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Interactive selection of scripts to run\")] = False,",
                 "    command: Annotated[bool | None, typer.Option(..., \"--command\", \"-c\", help=\"Run as command\")] = False,",
                 "    list_scripts: Annotated[bool, typer.Option(..., \"--list\", \"-l\", help=\"List available scripts in all locations\")] = False,",
+                "    run_in_subprocess: Annotated[",
+                "        bool,",
+                "        typer.Option(..., \"--subprocess\", help=\"Run shell scripts in a child shell instead of sourcing them in the caller\"),",
+                "    ] = False,",
                 ") -> None:",
                 "    \"\"\"🚀 Execute python/shell scripts from pre-defined directories or as command.\"\"\"",
+                "    if name == \"--help\":",
+                "        typer.echo(ctx.get_help())",
+                "        return",
+                "",
                 "    import stackops.scripts.python.helpers.helpers_devops.run_script as run_py_script_module",
                 "",
                 "    forwarded_args = [str(arg) for arg in ctx.args]",
@@ -8447,6 +8459,7 @@
                 "        interactive=interactive,",
                 "        command=command,",
                 "        list_scripts=list_scripts,",
+                "        run_in_subprocess=run_in_subprocess,",
                 "        forwarded_args=forwarded_args,",
                 "    )"
               ],
@@ -8563,6 +8576,26 @@
                       "-l"
                     ],
                     "help": "List available scripts in all locations",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "run_in_subprocess",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--subprocess', help='Run shell scripts in a child shell instead of sourcing them in the caller')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--subprocess"
+                    ],
+                    "long_flags": [
+                      "--subprocess"
+                    ],
+                    "short_flags": [],
+                    "help": "Run shell scripts in a child shell instead of sourcing them in the caller",
                     "default": "..."
                   }
                 }
@@ -15817,7 +15850,7 @@
                 "name": "clean",
                 "fullPath": "agents iter clean",
                 "shortPath": "a I c",
-                "help": "Clean AgentOps cache records under .ai.",
+                "help": "Remove stale iteration records while preserving live and unrelated AgentOps records.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_iter.py",
                   "module": "stackops.scripts.python.agents_iter",
@@ -15825,25 +15858,47 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def clean() -> None:",
-                    "    \"\"\"Clean AgentOps cache records under .ai.\"\"\"",
+                    "def clean(",
+                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show stale iteration records without removing them.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"Remove stale iteration records while preserving live and unrelated AgentOps records.\"\"\"",
                     "    try:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache",
                     "",
-                    "        show_clean_agentops_cache(cwd=Path.cwd())",
+                    "        show_clean_agentops_cache(cwd=Path.cwd(), dry_run=dry_run)",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
                   ],
                   "name": "clean",
-                  "parameters": [],
+                  "parameters": [
+                    {
+                      "name": "dry_run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', help='Show stale iteration records without removing them.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--dry-run"
+                        ],
+                        "long_flags": [
+                          "--dry-run"
+                        ],
+                        "short_flags": [],
+                        "help": "Show stale iteration records without removing them."
+                      }
+                    }
+                  ],
                   "return": "None"
                 },
-                "short_help": "<c> Clean AgentOps cache under .ai",
+                "short_help": "<c> Remove stale iter records under .ai",
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Clean AgentOps cache records under .ai.",
+                "doc": "Remove stale iteration records while preserving live and unrelated AgentOps records.",
                 "aliases": [
                   {
                     "name": "c",
@@ -15856,7 +15911,7 @@
                 "name": "close",
                 "fullPath": "agents iter close",
                 "shortPath": "a I x",
-                "help": "Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all.",
+                "help": "Safely close old idle iteration tabs after revalidating their live state.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_iter.py",
                   "module": "stackops.scripts.python.agents_iter",
@@ -15867,23 +15922,39 @@
                     "def close(",
                     "    space_name: Annotated[",
                     "        str | None,",
-                    "        typer.Argument(help=\"Exact Herdr iter workspace label to close. Use --all to close every iter workspace.\"),",
+                    "        typer.Argument(help=\"Herdr iter workspace label or stable ID to close. Use --all for every iter workspace.\"),",
                     "    ] = None,",
-                    "    continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat close pass every 5 minutes.\")] = False,",
+                    "    continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat close passes until interrupted.\")] = False,",
                     "    all_workspaces: Annotated[",
                     "        bool,",
                     "        typer.Option(\"--all\", \"-a\", help=\"Close old idle tabs in all iter workspaces.\"),",
                     "    ] = False,",
+                    "    retain_previous: Annotated[",
+                    "        int,",
+                    "        typer.Option(",
+                    "            \"--retain-previous\",",
+                    "            \"-k\",",
+                    "            min=0,",
+                    "            help=\"Retain the latest iteration plus this many previous iterations.\",",
+                    "        ),",
+                    "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
+                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show the close plan without closing tabs.\")] = False,",
+                    "    interval_seconds: Annotated[",
+                    "        int,",
+                    "        typer.Option(\"--interval\", \"-i\", min=1, help=\"Seconds between close passes when --loop is used.\"),",
+                    "    ] = CLOSE_LOOP_INTERVAL_SECONDS,",
                     ") -> None:",
-                    "    \"\"\"Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all.\"\"\"",
+                    "    \"\"\"Safely close old idle iteration tabs after revalidating their live state.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import close_iter_workspaces_loop",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspaces_loop",
                     "",
-                    "        close_iter_workspaces_loop(",
+                    "        show_close_iter_workspaces_loop(",
                     "            workspace_name=space_name,",
                     "            all_workspaces=all_workspaces,",
                     "            continuous=continuous,",
-                    "            report=typer.echo,",
+                    "            retain_previous=retain_previous,",
+                    "            dry_run=dry_run,",
+                    "            interval_seconds=interval_seconds,",
                     "        )",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
@@ -15899,13 +15970,13 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Exact Herdr iter workspace label to close. Use --all to close every iter workspace.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Herdr iter workspace label or stable ID to close. Use --all for every iter workspace.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Exact Herdr iter workspace label to close. Use --all to close every iter workspace."
+                        "help": "Herdr iter workspace label or stable ID to close. Use --all for every iter workspace."
                       }
                     },
                     {
@@ -15914,7 +15985,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--loop', '-l', help='Repeat close pass every 5 minutes.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--loop', '-l', help='Repeat close passes until interrupted.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -15927,7 +15998,7 @@
                         "short_flags": [
                           "-l"
                         ],
-                        "help": "Repeat close pass every 5 minutes."
+                        "help": "Repeat close passes until interrupted."
                       }
                     },
                     {
@@ -15951,15 +16022,78 @@
                         ],
                         "help": "Close old idle tabs in all iter workspaces."
                       }
+                    },
+                    {
+                      "name": "retain_previous",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_RETAIN_PREVIOUS_ITERATIONS",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--retain-previous', '-k', min=0, help='Retain the latest iteration plus this many previous iterations.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--retain-previous",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--retain-previous"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Retain the latest iteration plus this many previous iterations."
+                      }
+                    },
+                    {
+                      "name": "dry_run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', help='Show the close plan without closing tabs.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--dry-run"
+                        ],
+                        "long_flags": [
+                          "--dry-run"
+                        ],
+                        "short_flags": [],
+                        "help": "Show the close plan without closing tabs."
+                      }
+                    },
+                    {
+                      "name": "interval_seconds",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "CLOSE_LOOP_INTERVAL_SECONDS",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--interval', '-i', min=1, help='Seconds between close passes when --loop is used.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interval",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interval"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Seconds between close passes when --loop is used."
+                      }
                     }
                   ],
                   "return": "None"
                 },
-                "short_help": "<x> Close old idle Herdr tabs from iter workspaces",
+                "short_help": "<x> Revalidate and close old idle iter tabs",
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all.",
+                "doc": "Safely close old idle iteration tabs after revalidating their live state.",
                 "aliases": [
                   {
                     "name": "x",
@@ -15972,7 +16106,7 @@
                 "name": "track",
                 "fullPath": "agents iter track",
                 "shortPath": "a I t",
-                "help": "Track an iter Herdr workspace and close it after it exceeds the iteration budget.",
+                "help": "Track an iter Herdr workspace status, close old iteration tabs, and close after budget.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_iter.py",
                   "module": "stackops.scripts.python.agents_iter",
@@ -15981,22 +16115,31 @@
                 "signature": {
                   "raw_lines": [
                     "def track(",
-                    "    space_name: Annotated[str, typer.Argument(help=\"Exact Herdr iter workspace label to track.\")],",
+                    "    space_name: Annotated[str, typer.Argument(help=\"Herdr iter workspace label or stable ID to track.\")],",
                     "    max_iterations: Annotated[int, typer.Argument(help=\"Maximum allowed iteration number before the workspace is closed.\")] = DEFAULT_TRACK_MAX_ITERATIONS,",
                     "    interval_seconds: Annotated[",
                     "        int,",
                     "        typer.Option(\"--interval\", \"-i\", min=1, help=\"Seconds to sleep between iteration-budget checks.\"),",
                     "    ] = TRACK_INTERVAL_SECONDS,",
+                    "    retain_previous: Annotated[",
+                    "        int,",
+                    "        typer.Option(",
+                    "            \"--retain-previous\",",
+                    "            \"-k\",",
+                    "            min=0,",
+                    "            help=\"Retain the latest iteration plus this many previous iterations.\",",
+                    "        ),",
+                    "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
                     ") -> None:",
-                    "    \"\"\"Track an iter Herdr workspace and close it after it exceeds the iteration budget.\"\"\"",
+                    "    \"\"\"Track an iter Herdr workspace status, close old iteration tabs, and close after budget.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import track_iter_workspace_loop",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_track_iter_workspace_loop",
                     "",
-                    "        track_iter_workspace_loop(",
+                    "        show_track_iter_workspace_loop(",
                     "            workspace_name=space_name,",
                     "            max_iterations=max_iterations,",
                     "            interval_seconds=interval_seconds,",
-                    "            report=typer.echo,",
+                    "            retain_previous=retain_previous,",
                     "        )",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
@@ -16012,13 +16155,13 @@
                       "type": "str",
                       "default": null,
                       "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='Exact Herdr iter workspace label to track.')]",
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Herdr iter workspace label or stable ID to track.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Exact Herdr iter workspace label to track."
+                        "help": "Herdr iter workspace label or stable ID to track."
                       }
                     },
                     {
@@ -16057,15 +16200,37 @@
                         ],
                         "help": "Seconds to sleep between iteration-budget checks."
                       }
+                    },
+                    {
+                      "name": "retain_previous",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_RETAIN_PREVIOUS_ITERATIONS",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--retain-previous', '-k', min=0, help='Retain the latest iteration plus this many previous iterations.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--retain-previous",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--retain-previous"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Retain the latest iteration plus this many previous iterations."
+                      }
                     }
                   ],
                   "return": "None"
                 },
-                "short_help": "<t> Track and close an iter workspace after its budget",
+                "short_help": "<t> Track, prune old tabs, and enforce budget",
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Track an iter Herdr workspace and close it after it exceeds the iteration budget.",
+                "doc": "Track an iter Herdr workspace status, close old iteration tabs, and close after budget.",
                 "aliases": [
                   {
                     "name": "t",
@@ -16086,21 +16251,54 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def status() -> None:",
+                    "def status(",
+                    "    retain_previous: Annotated[",
+                    "        int,",
+                    "        typer.Option(",
+                    "            \"--retain-previous\",",
+                    "            \"-k\",",
+                    "            min=0,",
+                    "            help=\"Evaluate closable tabs while retaining this many previous iterations.\",",
+                    "        ),",
+                    "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
+                    ") -> None:",
                     "    \"\"\"Show each iter loop's latest iteration agent and live Herdr status.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import show_iter_status",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_iter_status",
                     "",
-                    "        show_iter_status()",
+                    "        show_iter_status(retain_previous=retain_previous)",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
                   ],
                   "name": "status",
-                  "parameters": [],
+                  "parameters": [
+                    {
+                      "name": "retain_previous",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_RETAIN_PREVIOUS_ITERATIONS",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--retain-previous', '-k', min=0, help='Evaluate closable tabs while retaining this many previous iterations.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--retain-previous",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--retain-previous"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Evaluate closable tabs while retaining this many previous iterations."
+                      }
+                    }
+                  ],
                   "return": "None"
                 },
-                "short_help": "<s> Show iter workspace status",
+                "short_help": "<s> Show live iter state and safe close counts",
                 "typer": {
                   "no_args_is_help": false
                 },
@@ -16317,7 +16515,7 @@
                 "    backend: Annotated[",
                 "        _SKILL_INSTALL_BACKEND,",
                 "        typer.Option(\"--backend\", \"-b\", help=\"Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally.\"),",
-                "    ] = \"bunx\",",
+                "    ] = \"stackops\",",
                 "    yes: Annotated[",
                 "        bool,",
                 "        typer.Option(\"--yes\", \"-y\", help=\"Pass --yes to the upstream skills CLI.\"),",
@@ -16421,7 +16619,7 @@
                   "name": "backend",
                   "kind": "positional_or_keyword",
                   "type": "_SKILL_INSTALL_BACKEND",
-                  "default": "bunx",
+                  "default": "stackops",
                   "required": false,
                   "annotation_raw": "Annotated[_SKILL_INSTALL_BACKEND, typer.Option('--backend', '-b', help='Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally.')]",
                   "typer": {
@@ -17308,6 +17506,218 @@
                 "hidden": true
               }
             ]
+          },
+          {
+            "kind": "command",
+            "name": "plan",
+            "fullPath": "agents plan",
+            "shortPath": "a P",
+            "help": "Generate an agentops plan JSON file via selected agent.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "callable": "plan"
+            },
+            "signature": {
+              "raw_lines": [
+                "def plan(",
+                "    prompt: Annotated[",
+                "        list[str],",
+                "        typer.Argument(",
+                "            help=\"Plan objective. Use -- before the objective to pass option-looking text as prompt content.\",",
+                "        ),",
+                "    ],",
+                "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to generate the plan.\")] = DEFAULT_AGENT,",
+                ") -> None:",
+                "    \"\"\"Generate an agentops plan JSON file via selected agent.\"\"\"",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_plan_impl import run_plan as impl",
+                "",
+                "    try:",
+                "        plan_path = impl(user_prompt=\" \".join(prompt), agent=agent)",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error",
+                "    typer.echo(f\"Plan target: {plan_path}\")"
+              ],
+              "name": "plan",
+              "parameters": [
+                {
+                  "name": "prompt",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str]",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "Annotated[list[str], typer.Argument(help='Plan objective. Use -- before the objective to pass option-looking text as prompt content.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Plan objective. Use -- before the objective to pass option-looking text as prompt content."
+                  }
+                },
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "AGENTS",
+                  "default": "DEFAULT_AGENT",
+                  "required": false,
+                  "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent to generate the plan.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Agent to generate the plan."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<P> Generate an agentops plan JSON via selected agent",
+            "typer": {
+              "no_args_is_help": true
+            },
+            "doc": "Generate an agentops plan JSON file via selected agent.",
+            "aliases": [
+              {
+                "name": "P",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "execute",
+            "fullPath": "agents execute",
+            "shortPath": "a E",
+            "help": "Execute an agentops plan JSON file.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "callable": "execute"
+            },
+            "signature": {
+              "raw_lines": [
+                "def execute(",
+                "    plan_json: Annotated[",
+                "        Path | None,",
+                "        typer.Argument(help=\"Plan JSON file generated by `agents plan`. If omitted, execute the only .ai/plans/*.plan.json file.\"),",
+                "    ] = None,",
+                "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent used to check whether the active phase is finished.\")] = DEFAULT_AGENT,",
+                "    interval_seconds: Annotated[int, typer.Option(\"--interval\", \"-i\", help=\"Seconds to sleep between executor passes.\")] = 300,",
+                "    once: Annotated[bool, typer.Option(\"--once\", help=\"Run one executor pass and exit.\")] = False,",
+                ") -> None:",
+                "    \"\"\"Execute an agentops plan JSON file.\"\"\"",
+                "    import typer as _typer",
+                "",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_execute_impl import run_execute as impl",
+                "",
+                "    try:",
+                "        impl(plan_path=plan_json, checker_agent=agent, interval_seconds=interval_seconds, once=once, report=_typer.echo)",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error"
+              ],
+              "name": "execute",
+              "parameters": [
+                {
+                  "name": "plan_json",
+                  "kind": "positional_or_keyword",
+                  "type": "Path | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Path | None, typer.Argument(help='Plan JSON file generated by `agents plan`. If omitted, execute the only .ai/plans/*.plan.json file.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Plan JSON file generated by `agents plan`. If omitted, execute the only .ai/plans/*.plan.json file."
+                  }
+                },
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "AGENTS",
+                  "default": "DEFAULT_AGENT",
+                  "required": false,
+                  "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent used to check whether the active phase is finished.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--agent"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Agent used to check whether the active phase is finished."
+                  }
+                },
+                {
+                  "name": "interval_seconds",
+                  "kind": "positional_or_keyword",
+                  "type": "int",
+                  "default": 300,
+                  "required": false,
+                  "annotation_raw": "Annotated[int, typer.Option('--interval', '-i', help='Seconds to sleep between executor passes.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--interval",
+                      "-i"
+                    ],
+                    "long_flags": [
+                      "--interval"
+                    ],
+                    "short_flags": [
+                      "-i"
+                    ],
+                    "help": "Seconds to sleep between executor passes."
+                  }
+                },
+                {
+                  "name": "once",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--once', help='Run one executor pass and exit.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--once"
+                    ],
+                    "long_flags": [
+                      "--once"
+                    ],
+                    "short_flags": [],
+                    "help": "Run one executor pass and exit."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<E> Execute an agentops plan JSON",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Execute an agentops plan JSON file.",
+            "aliases": [
+              {
+                "name": "E",
+                "hidden": true
+              }
+            ]
           }
         ],
         "command_context_settings": {
@@ -18009,7 +18419,7 @@
                     "        typer.Option(",
                     "            \"--clean-group\",",
                     "            \"-c\",",
-                    "            help=\"Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.\",",
+                    "            help=\"Capture all dependencies in pyproject_init.sh, then empty the specified dependency group or optional-dependency extra. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.\",",
                     "        ),",
                     "    ] = None,",
                     "    clean_all_groups: Annotated[",
@@ -18017,7 +18427,7 @@
                     "        typer.Option(",
                     "            \"--clean-all-groups\",",
                     "            \"-C\",",
-                    "            help=\"Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh.\",",
+                    "            help=\"Capture all dependencies in pyproject_init.sh, then empty every dependency group and optional-dependency extra.\",",
                     "        ),",
                     "    ] = False,",
                     "    delete_venv: Annotated[",
@@ -18025,7 +18435,7 @@
                     "        typer.Option(",
                     "            \"--delete-venv\",",
                     "            \"-D\",",
-                    "            help=\"Delete the project's .venv directory before regenerating pyproject_init.sh.\",",
+                    "            help=\"Delete the project's .venv directory after generating pyproject_init.sh.\",",
                     "        ),",
                     "    ] = False,",
                     ") -> None:",
@@ -18040,6 +18450,10 @@
                     "    try:",
                     "        project_root = resolve_pyproject_root(Path(root))",
                     "        selected_clean_groups = [] if clean_group is None else clean_group",
+                    "        generate_uv_add_commands(",
+                    "            pyproject_path=project_root / \"pyproject.toml\",",
+                    "            output_path=project_root / \"pyproject_init.sh\",",
+                    "        )",
                     "        if clean_all_groups or selected_clean_groups:",
                     "            clean_dependency_groups(",
                     "                project_root=project_root,",
@@ -18048,10 +18462,6 @@
                     "            )",
                     "        if delete_venv:",
                     "            delete_project_venv(project_root=project_root)",
-                    "        generate_uv_add_commands(",
-                    "            pyproject_path=project_root / \"pyproject.toml\",",
-                    "            output_path=project_root / \"pyproject_init.sh\",",
-                    "        )",
                     "    except ValueError as error:",
                     "        typer.echo(f\"Error: {error}\", err=True)",
                     "        raise typer.Exit(code=1) from error",
@@ -18088,7 +18498,7 @@
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--clean-group', '-c', help='Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--clean-group', '-c', help='Capture all dependencies in pyproject_init.sh, then empty the specified dependency group or optional-dependency extra. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -18101,7 +18511,7 @@
                         "short_flags": [
                           "-c"
                         ],
-                        "help": "Empty the specified dependency group or optional-dependency extra before regenerating pyproject_init.sh. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name."
+                        "help": "Capture all dependencies in pyproject_init.sh, then empty the specified dependency group or optional-dependency extra. Repeat for multiple groups. If a name exists in both tables, qualify it as dependency-group:name or optional-dependency:name."
                       }
                     },
                     {
@@ -18110,7 +18520,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--clean-all-groups', '-C', help='Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--clean-all-groups', '-C', help='Capture all dependencies in pyproject_init.sh, then empty every dependency group and optional-dependency extra.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -18123,7 +18533,7 @@
                         "short_flags": [
                           "-C"
                         ],
-                        "help": "Empty every dependency group and optional-dependency extra before regenerating pyproject_init.sh."
+                        "help": "Capture all dependencies in pyproject_init.sh, then empty every dependency group and optional-dependency extra."
                       }
                     },
                     {
@@ -18132,7 +18542,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--delete-venv', '-D', help=\"Delete the project's .venv directory before regenerating pyproject_init.sh.\")]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--delete-venv', '-D', help=\"Delete the project's .venv directory after generating pyproject_init.sh.\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -18145,7 +18555,7 @@
                         "short_flags": [
                           "-D"
                         ],
-                        "help": "Delete the project's .venv directory before regenerating pyproject_init.sh."
+                        "help": "Delete the project's .venv directory after generating pyproject_init.sh."
                       }
                     }
                   ],
@@ -18397,6 +18807,258 @@
                 "aliases": [
                   {
                     "name": "c",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "check-deps",
+                "fullPath": "utils pyproject check-deps",
+                "shortPath": "u p d",
+                "help": "🔗 <d> Check Python import dependencies and cycles.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_deps.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_deps",
+                  "callable": "check_deps"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def check_deps(",
+                    "    target: Annotated[",
+                    "        str,",
+                    "        typer.Argument(help=\"Repository root, package directory, or Python file to analyze.\"),",
+                    "    ] = \".\",",
+                    "    backend: Annotated[",
+                    "        DependencyBackend,",
+                    "        typer.Option(\"--backend\", \"-b\", help=\"Dependency analyzer backend.\"),",
+                    "    ] = \"pyan\",",
+                    "    output: Annotated[",
+                    "        DependencyOutput,",
+                    "        typer.Option(\"--output\", \"-o\", help=\"Output format: json, jsonic, or html.\"),",
+                    "    ] = \"json\",",
+                    "    output_path: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--output-path\", \"-O\", help=\"Write output to this path. Defaults to stdout for JSON and ./.ai/check_deps for HTML.\"),",
+                    "    ] = None,",
+                    "    focus: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Option(\"--focus\", \"-f\", help=\"Only keep edges touching this module prefix. Repeat for multiple prefixes.\"),",
+                    "    ] = None,",
+                    "    exclude: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Option(\"--exclude\", \"-x\", help=\"Exclude matching files or path parts. Repeat for multiple patterns.\"),",
+                    "    ] = None,",
+                    "    edge_filter: Annotated[",
+                    "        DependencyEdgeFilter,",
+                    "        typer.Option(\"--edge-filter\", \"-e\", help=\"Edges to show: all, cycles, or direct two-node dual dependencies.\"),",
+                    "    ] = \"all\",",
+                    "    rankdir: Annotated[",
+                    "        DependencyRankDirection,",
+                    "        typer.Option(\"--rankdir\", \"-r\", help=\"Graph rank direction used by the backend when applicable.\"),",
+                    "    ] = \"TB\",",
+                    ") -> None:",
+                    "    try:",
+                    "        report = build_dependency_report(",
+                    "            target=Path(target),",
+                    "            backend=backend,",
+                    "            edge_filter=edge_filter,",
+                    "            rankdir=rankdir,",
+                    "            focus=tuple(() if focus is None else focus),",
+                    "            excludes=tuple(() if exclude is None else exclude),",
+                    "        )",
+                    "        match output:",
+                    "            case \"json\":",
+                    "                _write_json_output(report=report, output_path=output_path)",
+                    "            case \"jsonic\":",
+                    "                _write_json_output(report=report, output_path=output_path)",
+                    "            case \"html\":",
+                    "                html_path = _write_html_output(report=report, output_path=output_path)",
+                    "                typer.echo(f\"Dependency report written to: {html_path}\")",
+                    "    except (RuntimeError, ValueError) as error:",
+                    "        typer.echo(f\"Error: {error}\", err=True)",
+                    "        raise typer.Exit(code=1) from error"
+                  ],
+                  "name": "check_deps",
+                  "parameters": [
+                    {
+                      "name": "target",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": ".",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Repository root, package directory, or Python file to analyze.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Repository root, package directory, or Python file to analyze."
+                      }
+                    },
+                    {
+                      "name": "backend",
+                      "kind": "positional_or_keyword",
+                      "type": "DependencyBackend",
+                      "default": "pyan",
+                      "required": false,
+                      "annotation_raw": "Annotated[DependencyBackend, typer.Option('--backend', '-b', help='Dependency analyzer backend.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backend",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backend"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Dependency analyzer backend."
+                      }
+                    },
+                    {
+                      "name": "output",
+                      "kind": "positional_or_keyword",
+                      "type": "DependencyOutput",
+                      "default": "json",
+                      "required": false,
+                      "annotation_raw": "Annotated[DependencyOutput, typer.Option('--output', '-o', help='Output format: json, jsonic, or html.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--output",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--output"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "Output format: json, jsonic, or html."
+                      }
+                    },
+                    {
+                      "name": "output_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--output-path', '-O', help='Write output to this path. Defaults to stdout for JSON and ./.ai/check_deps for HTML.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--output-path",
+                          "-O"
+                        ],
+                        "long_flags": [
+                          "--output-path"
+                        ],
+                        "short_flags": [
+                          "-O"
+                        ],
+                        "help": "Write output to this path. Defaults to stdout for JSON and ./.ai/check_deps for HTML."
+                      }
+                    },
+                    {
+                      "name": "focus",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--focus', '-f', help='Only keep edges touching this module prefix. Repeat for multiple prefixes.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--focus",
+                          "-f"
+                        ],
+                        "long_flags": [
+                          "--focus"
+                        ],
+                        "short_flags": [
+                          "-f"
+                        ],
+                        "help": "Only keep edges touching this module prefix. Repeat for multiple prefixes."
+                      }
+                    },
+                    {
+                      "name": "exclude",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--exclude', '-x', help='Exclude matching files or path parts. Repeat for multiple patterns.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--exclude",
+                          "-x"
+                        ],
+                        "long_flags": [
+                          "--exclude"
+                        ],
+                        "short_flags": [
+                          "-x"
+                        ],
+                        "help": "Exclude matching files or path parts. Repeat for multiple patterns."
+                      }
+                    },
+                    {
+                      "name": "edge_filter",
+                      "kind": "positional_or_keyword",
+                      "type": "DependencyEdgeFilter",
+                      "default": "all",
+                      "required": false,
+                      "annotation_raw": "Annotated[DependencyEdgeFilter, typer.Option('--edge-filter', '-e', help='Edges to show: all, cycles, or direct two-node dual dependencies.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--edge-filter",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--edge-filter"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "Edges to show: all, cycles, or direct two-node dual dependencies."
+                      }
+                    },
+                    {
+                      "name": "rankdir",
+                      "kind": "positional_or_keyword",
+                      "type": "DependencyRankDirection",
+                      "default": "TB",
+                      "required": false,
+                      "annotation_raw": "Annotated[DependencyRankDirection, typer.Option('--rankdir', '-r', help='Graph rank direction used by the backend when applicable.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--rankdir",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--rankdir"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Graph rank direction used by the backend when applicable."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "d",
                     "hidden": true
                   }
                 ]
