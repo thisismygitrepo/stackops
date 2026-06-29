@@ -150,24 +150,7 @@ except Exception as e:
             pass
 
 
-    if project_path is not None:
-        uv_project_line = f'--project {project_path}'
-        uv_python_line = ""
-    else:
-
-        # from stackops.scripts.python.helpers.helpers_utils.python_env import find_virtualenv_root
-        # virtualenv_root = find_virtualenv_root(choice_file)
-
-        # if virtualenv_root is not None:
-        #     uv_project_line = f'--project {virtualenv_root.parent}'
-        #     uv_python_line = ""
-        # else:
-        if STACKOPS_REPO_DIR.exists():
-            uv_project_line = f"""--project "{str(STACKOPS_REPO_DIR)}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """
-            uv_python_line = "--python 3.14"
-        else:
-            uv_project_line = f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """
-            uv_python_line = "--python 3.14"
+    uv_python_line, uv_project_line = _build_uv_runtime_options(project_path=project_path, backend=backend)
 
     fire_line = build_read_command(
         file_obj=choice_file,
@@ -232,6 +215,16 @@ def _run_path_backend(
             exec_command(command)
         case _:
             raise ValueError(f"Unsupported path backend: {backend}")
+
+
+def _build_uv_runtime_options(project_path: str | None, backend: BACKENDS) -> tuple[str, str]:
+    if project_path is not None:
+        return ("", f'--project "{project_path}"')
+    if backend == "visidata":
+        return ("--python 3.14", "--no-project")
+    if STACKOPS_REPO_DIR.exists():
+        return ("--python 3.14", f"""--project "{str(STACKOPS_REPO_DIR)}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """)
+    return ("--python 3.14", f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """)
 
 
 def _build_preprogram() -> str:

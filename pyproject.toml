@@ -22,7 +22,6 @@ requires-python = ">=3.13"
 dependencies = [
     "fire>=0.7.1",
     "gitpython>=3.1.46",
-    "joblib>=1.5.3",
     "psutil>=7.2.2",
     "pyyaml>=6.0.3",
     "questionary>=2.1.1",

@@ -28,6 +28,7 @@ UTILS_HELP_GLYPHS: list[str] = [
     "↧",
     "☀",
     "🗃",
+    "🔗",
 ]
 
 

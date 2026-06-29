@@ -11,10 +11,9 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import TRACK_INTERVAL_SECONDS
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import DEFAULT_CLOSE_N_OLD_ITERS, TRACK_INTERVAL_SECONDS
 
 JsonObject: TypeAlias = dict[str, object]
-KEEP_RECENT_TABS: Final[int] = 3
 LOOP_INTERVAL_SECONDS: Final[int] = 300
 ITER_WORKSPACE_PREFIX: Final[str] = "iter"
 ITER_AGENT_LABEL_PATTERN: Final[re.Pattern[str]] = re.compile(r"^iter-.+-(?P<iteration>[0-9]{3})$")
@@ -119,7 +118,12 @@ def close_iter_workspaces_loop(
 ) -> None:
     validate_iter_workspace_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
     while True:
-        summaries = close_iter_workspaces(workspace_name=workspace_name, all_workspaces=all_workspaces, report=report)
+        summaries = close_iter_workspaces(
+            workspace_name=workspace_name,
+            all_workspaces=all_workspaces,
+            close_n_old_iters=DEFAULT_CLOSE_N_OLD_ITERS,
+            report=report,
+        )
         _report_summaries(summaries=summaries, report=report)
         if not continuous:
             return
@@ -128,22 +132,27 @@ def close_iter_workspaces_loop(
 
 
 def show_iter_status() -> None:
-    _CONSOLE.print(build_iter_status_table(statuses=get_iter_workspace_statuses()))
+    _CONSOLE.print(build_iter_status_table(statuses=get_iter_workspace_statuses(close_n_old_iters=DEFAULT_CLOSE_N_OLD_ITERS)))
 
 
 def track_iter_workspace_loop(
-    *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool, report: Callable[[str], None]
+    *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int, report: Callable[[str], None]
 ) -> None:
-    validate_iter_workspace_track_inputs(workspace_name=workspace_name, max_iterations=max_iterations, interval_seconds=interval_seconds)
+    validate_iter_workspace_track_inputs(
+        workspace_name=workspace_name,
+        max_iterations=max_iterations,
+        interval_seconds=interval_seconds,
+        close_n_old_iters=close_n_old_iters,
+    )
     report(
         f"Tracking iter workspace {workspace_name}: max_iterations={max_iterations}, "
-        f"interval={interval_seconds} second(s), close_old_tabs={close_old_tabs}."
+        f"interval={interval_seconds} second(s), close_n_old_iters={close_n_old_iters}."
     )
     while True:
         check = track_iter_workspace_once(
             workspace_name=workspace_name,
             max_iterations=max_iterations,
-            close_old_tabs=close_old_tabs,
+            close_n_old_iters=close_n_old_iters,
             report=report,
         )
         if check.budget.closed:
@@ -153,19 +162,25 @@ def track_iter_workspace_loop(
 
 
 def track_iter_workspace_once(
-    *, workspace_name: str, max_iterations: int, close_old_tabs: bool, report: Callable[[str], None]
+    *, workspace_name: str, max_iterations: int, close_n_old_iters: int, report: Callable[[str], None]
 ) -> IterWorkspaceTrackCheck:
     validate_iter_workspace_track_inputs(
         workspace_name=workspace_name,
         max_iterations=max_iterations,
         interval_seconds=TRACK_INTERVAL_SECONDS,
+        close_n_old_iters=close_n_old_iters,
     )
-    status = get_iter_workspace_status(workspace_name=workspace_name)
+    status = get_iter_workspace_status(workspace_name=workspace_name, close_n_old_iters=close_n_old_iters)
     _report_track_status(status=status, report=report)
     budget = check_iter_workspace_budget(workspace_name=workspace_name, max_iterations=max_iterations, report=report)
     close_summary: IterWorkspaceClose | None = None
-    if not budget.closed and close_old_tabs:
-        summaries = close_iter_workspaces(workspace_name=workspace_name, all_workspaces=False, report=report)
+    if not budget.closed:
+        summaries = close_iter_workspaces(
+            workspace_name=workspace_name,
+            all_workspaces=False,
+            close_n_old_iters=close_n_old_iters,
+            report=report,
+        )
         if len(summaries) != 1:
             raise RuntimeError(f"Expected one close summary for tracked workspace {workspace_name!r}.")
         close_summary = summaries[0]
@@ -175,11 +190,7 @@ def track_iter_workspace_once(
 def check_iter_workspace_budget(
     *, workspace_name: str, max_iterations: int, report: Callable[[str], None]
 ) -> IterWorkspaceTrackResult:
-    validate_iter_workspace_track_inputs(
-        workspace_name=workspace_name,
-        max_iterations=max_iterations,
-        interval_seconds=TRACK_INTERVAL_SECONDS,
-    )
+    validate_iter_workspace_budget_inputs(workspace_name=workspace_name, max_iterations=max_iterations)
     workspace = _get_iter_workspace_by_label(workspace_name=workspace_name)
     tabs = tuple(tab for tab in _list_tabs() if tab.workspace_id == workspace.workspace_id)
     agents = tuple(agent for agent in _list_agents() if agent.workspace_id == workspace.workspace_id)
@@ -210,7 +221,8 @@ def check_iter_workspace_budget(
     )
 
 
-def get_iter_workspace_statuses() -> tuple[IterWorkspaceStatus, ...]:
+def get_iter_workspace_statuses(*, close_n_old_iters: int) -> tuple[IterWorkspaceStatus, ...]:
+    validate_close_n_old_iters(close_n_old_iters=close_n_old_iters)
     workspaces = _iter_workspaces(workspaces=_list_workspaces())
     tabs_by_workspace_id = _tabs_by_workspace_id(tabs=_list_tabs())
     panes_by_tab_id = _panes_by_tab_id(panes=_list_panes())
@@ -221,7 +233,13 @@ def get_iter_workspace_statuses() -> tuple[IterWorkspaceStatus, ...]:
         panes = _panes_for_tabs(tabs=tabs, panes_by_tab_id=panes_by_tab_id)
         agents = agents_by_workspace_id.get(workspace.workspace_id, ())
         latest_agent = _latest_iter_agent(agents=agents_by_workspace_id.get(workspace.workspace_id, ()))
-        close_plan = _workspace_close_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents)
+        close_plan = _workspace_close_plan(
+            workspace=workspace,
+            tabs=tabs,
+            panes=panes,
+            agents=agents,
+            close_n_old_iters=close_n_old_iters,
+        )
         statuses.append(
             IterWorkspaceStatus(
                 workspace=workspace,
@@ -237,8 +255,12 @@ def get_iter_workspace_statuses() -> tuple[IterWorkspaceStatus, ...]:
     return tuple(statuses)
 
 
-def get_iter_workspace_status(*, workspace_name: str) -> IterWorkspaceStatus:
-    matches = tuple(status for status in get_iter_workspace_statuses() if status.workspace.label == workspace_name)
+def get_iter_workspace_status(*, workspace_name: str, close_n_old_iters: int) -> IterWorkspaceStatus:
+    matches = tuple(
+        status
+        for status in get_iter_workspace_statuses(close_n_old_iters=close_n_old_iters)
+        if status.workspace.label == workspace_name
+    )
     if len(matches) == 0:
         raise RuntimeError(f"No Herdr iter workspace named {workspace_name!r} was found.")
     if len(matches) > 1:
@@ -267,9 +289,13 @@ def build_iter_status_table(*, statuses: tuple[IterWorkspaceStatus, ...]) -> Tab
 
 
 def close_iter_workspaces(
-    *, workspace_name: str | None, all_workspaces: bool, report: Callable[[str], None]
+    *, workspace_name: str | None, all_workspaces: bool, close_n_old_iters: int, report: Callable[[str], None]
 ) -> tuple[IterWorkspaceClose, ...]:
-    close_plans = plan_iter_workspace_closes(workspace_name=workspace_name, all_workspaces=all_workspaces)
+    close_plans = plan_iter_workspace_closes(
+        workspace_name=workspace_name,
+        all_workspaces=all_workspaces,
+        close_n_old_iters=close_n_old_iters,
+    )
     _report_close_plan(close_plans=close_plans, report=report)
     return close_iter_workspace_plans(close_plans=close_plans, report=report)
 
@@ -301,8 +327,11 @@ def close_iter_workspace_plans(
     return tuple(summaries)
 
 
-def plan_iter_workspace_closes(*, workspace_name: str | None, all_workspaces: bool) -> tuple[IterWorkspaceClosePlan, ...]:
+def plan_iter_workspace_closes(
+    *, workspace_name: str | None, all_workspaces: bool, close_n_old_iters: int
+) -> tuple[IterWorkspaceClosePlan, ...]:
     validate_iter_workspace_close_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
+    validate_close_n_old_iters(close_n_old_iters=close_n_old_iters)
     workspaces = _selected_iter_workspaces(workspaces=_list_workspaces(), workspace_name=workspace_name, all_workspaces=all_workspaces)
     tabs_by_workspace_id = _tabs_by_workspace_id(tabs=_list_tabs())
     panes_by_tab_id = _panes_by_tab_id(panes=_list_panes())
@@ -312,7 +341,15 @@ def plan_iter_workspace_closes(*, workspace_name: str | None, all_workspaces: bo
         tabs = tuple(sorted(tabs_by_workspace_id.get(workspace.workspace_id, ()), key=lambda tab: tab.number))
         panes = _panes_for_tabs(tabs=tabs, panes_by_tab_id=panes_by_tab_id)
         agents = agents_by_workspace_id.get(workspace.workspace_id, ())
-        close_plans.append(_workspace_close_plan(workspace=workspace, tabs=tabs, panes=panes, agents=agents))
+        close_plans.append(
+            _workspace_close_plan(
+                workspace=workspace,
+                tabs=tabs,
+                panes=panes,
+                agents=agents,
+                close_n_old_iters=close_n_old_iters,
+            )
+        )
     return tuple(close_plans)
 
 
@@ -394,13 +431,25 @@ def _selected_iter_workspaces(
     return (workspace,)
 
 
-def validate_iter_workspace_track_inputs(*, workspace_name: str, max_iterations: int, interval_seconds: int) -> None:
+def validate_iter_workspace_track_inputs(
+    *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
+) -> None:
+    validate_iter_workspace_budget_inputs(workspace_name=workspace_name, max_iterations=max_iterations)
+    if interval_seconds < 1:
+        raise ValueError("Track interval must be greater than zero.")
+    validate_close_n_old_iters(close_n_old_iters=close_n_old_iters)
+
+
+def validate_iter_workspace_budget_inputs(*, workspace_name: str, max_iterations: int) -> None:
     if workspace_name.strip() == "":
         raise ValueError("Workspace name must not be empty.")
     if max_iterations < 1:
         raise ValueError("Maximum iterations must be greater than zero.")
-    if interval_seconds < 1:
-        raise ValueError("Track interval must be greater than zero.")
+
+
+def validate_close_n_old_iters(*, close_n_old_iters: int) -> None:
+    if close_n_old_iters < 0:
+        raise ValueError("Close old iterations count must not be negative.")
 
 
 def _get_iter_workspace_by_label(*, workspace_name: str) -> HerdrWorkspace:
@@ -416,10 +465,20 @@ def _get_iter_workspace_by_label(*, workspace_name: str) -> HerdrWorkspace:
 
 
 def _workspace_close_plan(
-    *, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...], panes: tuple[HerdrPane, ...], agents: tuple[HerdrAgent, ...]
+    *,
+    workspace: HerdrWorkspace,
+    tabs: tuple[HerdrTab, ...],
+    panes: tuple[HerdrPane, ...],
+    agents: tuple[HerdrAgent, ...],
+    close_n_old_iters: int,
 ) -> IterWorkspaceClosePlan:
     guarded_tabs = _guarded_tabs(workspace=workspace, tabs=tabs, panes=panes, agents=agents)
-    kept_tabs = _unique_tabs(tabs=(*_kept_recent_tabs(tabs=tabs), *guarded_tabs))
+    kept_tabs = _unique_tabs(
+        tabs=(
+            *_kept_recent_iter_tabs(tabs=tabs, agents=agents, close_n_old_iters=close_n_old_iters),
+            *guarded_tabs,
+        )
+    )
     return IterWorkspaceClosePlan(
         workspace=workspace,
         tabs=tabs,
@@ -429,8 +488,19 @@ def _workspace_close_plan(
     )
 
 
-def _kept_recent_tabs(*, tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
-    return tuple(sorted(tabs, key=lambda tab: tab.number, reverse=True)[:KEEP_RECENT_TABS])
+def _kept_recent_iter_tabs(
+    *, tabs: tuple[HerdrTab, ...], agents: tuple[HerdrAgent, ...], close_n_old_iters: int
+) -> tuple[HerdrTab, ...]:
+    latest_iteration = _latest_workspace_iteration(tabs=tabs, agents=agents)
+    if latest_iteration is None:
+        return ()
+    oldest_kept_iteration = latest_iteration - close_n_old_iters
+    return tuple(
+        tab
+        for tab in sorted(tabs, key=lambda item: item.number)
+        if (iteration := _iteration_from_label(label=tab.label)) is not None
+        and oldest_kept_iteration <= iteration <= latest_iteration
+    )
 
 
 def _guarded_tabs(
@@ -498,7 +568,11 @@ def _unique_tabs(*, tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
 
 def _closable_tabs(*, tabs: tuple[HerdrTab, ...], kept_tabs: tuple[HerdrTab, ...]) -> tuple[HerdrTab, ...]:
     kept_tab_ids = {tab.tab_id for tab in kept_tabs}
-    return tuple(tab for tab in sorted(tabs, key=lambda tab: tab.number) if tab.tab_id not in kept_tab_ids)
+    return tuple(
+        tab
+        for tab in sorted(tabs, key=lambda item: item.number)
+        if tab.tab_id not in kept_tab_ids and _iteration_from_label(label=tab.label) is not None
+    )
 
 
 def _tabs_by_workspace_id(*, tabs: tuple[HerdrTab, ...]) -> dict[str, tuple[HerdrTab, ...]]:

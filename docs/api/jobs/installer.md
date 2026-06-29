@@ -302,7 +302,7 @@ install_bulk(
 Current behavior:
 
 - the first installer runs serially
-- the remaining installers run through `joblib.Parallel`
+- the remaining installers run through a stdlib process pool
 - `fresh=True` clears the version cache first
 - `safe` is accepted but currently has no behavior
 - a Rich summary is rendered after the batch finishes

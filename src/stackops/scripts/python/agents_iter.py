@@ -3,7 +3,11 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import DEFAULT_TRACK_MAX_ITERATIONS, TRACK_INTERVAL_SECONDS
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import (
+    DEFAULT_CLOSE_N_OLD_ITERS,
+    DEFAULT_TRACK_MAX_ITERATIONS,
+    TRACK_INTERVAL_SECONDS,
+)
 
 
 def close(
@@ -51,12 +55,17 @@ def track(
         int,
         typer.Option("--interval", "-i", min=1, help="Seconds to sleep between iteration-budget checks."),
     ] = TRACK_INTERVAL_SECONDS,
-    close_old_tabs: Annotated[
-        bool,
-        typer.Option("--close-old-tabs", "--close-old", "-x", help="Close old idle tabs in the tracked workspace after each check."),
-    ] = False,
+    close_n_old_iters: Annotated[
+        int,
+        typer.Option(
+            "--close-n-old-iters",
+            "-x",
+            min=0,
+            help="Close idle iter tabs older than the latest iteration plus this many previous iterations.",
+        ),
+    ] = DEFAULT_CLOSE_N_OLD_ITERS,
 ) -> None:
-    """Track an iter Herdr workspace status and close it after it exceeds the iteration budget."""
+    """Track an iter Herdr workspace status, close old iteration tabs, and close after budget."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_track_iter_workspace_loop
 
@@ -64,7 +73,7 @@ def track(
             workspace_name=space_name,
             max_iterations=max_iterations,
             interval_seconds=interval_seconds,
-            close_old_tabs=close_old_tabs,
+            close_n_old_iters=close_n_old_iters,
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error

@@ -6,6 +6,7 @@ from platform import system
 from time import sleep
 from typing import Final
 
+from stackops.scripts.python.helpers.helpers_agents.agents_plan_impl import PLAN_DIRECTORY
 from stackops.scripts.python.helpers.helpers_agents.agents_execute_models import (
     ADVANCE_STATUSES,
     READY_STATUSES,
@@ -20,17 +21,42 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
 EXECUTE_INTERVAL_SECONDS: Final[int] = 300
+_PLAN_GLOB: Final[str] = "*.plan.json"
 
 
-def run_execute(*, plan_path: Path, checker_agent: AGENTS, interval_seconds: int, once: bool, report: Callable[[str], None]) -> None:
+def run_execute(*, plan_path: Path | None, checker_agent: AGENTS, interval_seconds: int, once: bool, report: Callable[[str], None]) -> None:
     if interval_seconds < 1:
         raise ValueError("--interval must be at least 1 second")
+    resolved_plan_path = resolve_execute_plan_path(plan_path=plan_path, cwd=Path.cwd())
     while True:
-        execute_plan_once(plan_path=plan_path, checker_agent=checker_agent, report=report)
+        execute_plan_once(plan_path=resolved_plan_path, checker_agent=checker_agent, report=report)
         if once:
             return
         report(f"Next execute pass in {interval_seconds} second(s).")
         sleep(interval_seconds)
+
+
+def resolve_execute_plan_path(*, plan_path: Path | None, cwd: Path) -> Path:
+    if plan_path is not None:
+        return plan_path
+
+    plan_directory = cwd / PLAN_DIRECTORY
+    if not plan_directory.exists():
+        raise ValueError(f"No plan JSON path was provided and plan directory does not exist: {plan_directory}")
+    if not plan_directory.is_dir():
+        raise ValueError(f"Plan path discovery expected a directory but found another file type: {plan_directory}")
+
+    candidates = sorted(plan_directory.glob(_PLAN_GLOB))
+    match len(candidates):
+        case 0:
+            raise ValueError(f"No plan JSON path was provided and {plan_directory} contains no {_PLAN_GLOB} files")
+        case 1:
+            return candidates[0]
+        case _:
+            candidate_lines = "\n".join(str(candidate) for candidate in candidates)
+            raise ValueError(
+                f"No plan JSON path was provided and {plan_directory} contains multiple {_PLAN_GLOB} files:\n{candidate_lines}"
+            )
 
 
 def execute_plan_once(*, plan_path: Path, checker_agent: AGENTS, report: Callable[[str], None]) -> None:
@@ -129,4 +155,3 @@ def _shell_command(*, command_line: str) -> list[str]:
     if system() == "Windows":
         return ["powershell", "-NoProfile", "-Command", command_line]
     return ["bash", "-lc", command_line]
-

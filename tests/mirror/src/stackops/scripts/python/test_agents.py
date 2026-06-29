@@ -123,8 +123,9 @@ def test_ask_defaults_to_shared_default_agent(monkeypatch: pytest.MonkeyPatch) -
 def test_plan_defaults_to_codex(monkeypatch: pytest.MonkeyPatch) -> None:
     captured_calls: list[tuple[str, object]] = []
 
-    def fake_run_plan(*, user_prompt: str, agent: object) -> None:
+    def fake_run_plan(*, user_prompt: str, agent: object) -> Path:
         captured_calls.append((user_prompt, agent))
+        return Path(".ai/plans/build-typed-scheduler.plan.json")
 
     monkeypatch.setattr(agents_plan_impl, "run_plan", fake_run_plan)
 
@@ -132,13 +133,15 @@ def test_plan_defaults_to_codex(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result.exit_code == 0, result.output
     assert captured_calls == [("build typed scheduler", DEFAULT_AGENT)]
+    assert "Plan target: .ai/plans/build-typed-scheduler.plan.json" in result.output
 
 
 def test_plan_accepts_agent_option(monkeypatch: pytest.MonkeyPatch) -> None:
     captured_calls: list[tuple[str, object]] = []
 
-    def fake_run_plan(*, user_prompt: str, agent: object) -> None:
+    def fake_run_plan(*, user_prompt: str, agent: object) -> Path:
         captured_calls.append((user_prompt, agent))
+        return Path(".ai/plans/review-flag-like.plan.json")
 
     monkeypatch.setattr(agents_plan_impl, "run_plan", fake_run_plan)
 
@@ -199,9 +202,10 @@ def test_run_plan_writes_schema_and_dispatches_agent_prompt(monkeypatch: pytest.
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(agents_plan_impl, "run_agent_prompt", fake_run_agent_prompt)
 
-    agents_plan_impl.run_plan(user_prompt="Improve release workflow", agent=DEFAULT_AGENT)
+    plan_path = agents_plan_impl.run_plan(user_prompt="Improve release workflow", agent=DEFAULT_AGENT)
 
     assert tmp_path.joinpath(".ai", "plans", "plan.schema.json").is_file()
+    assert plan_path == tmp_path.joinpath(".ai", "plans", "improve-release-workflow.plan.json")
     assert len(captured_calls) == 1
     assert captured_calls[0]["agent"] == DEFAULT_AGENT
     assert captured_calls[0]["context"] == ""
@@ -220,7 +224,7 @@ def test_plan_short_alias_is_uppercase_p() -> None:
 def test_execute_command_dispatches_impl_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured_calls: list[dict[str, object]] = []
 
-    def fake_run_execute(*, plan_path: Path, checker_agent: object, interval_seconds: int, once: bool, report: object) -> None:
+    def fake_run_execute(*, plan_path: Path | None, checker_agent: object, interval_seconds: int, once: bool, report: object) -> None:
         captured_calls.append(
             {
                 "plan_path": plan_path,
@@ -242,6 +246,53 @@ def test_execute_command_dispatches_impl_defaults(monkeypatch: pytest.MonkeyPatc
     assert captured_calls[0]["checker_agent"] == DEFAULT_AGENT
     assert captured_calls[0]["interval_seconds"] == agents_execute_impl.EXECUTE_INTERVAL_SECONDS
     assert captured_calls[0]["once"] is True
+
+
+def test_execute_command_accepts_omitted_plan_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_calls: list[dict[str, object]] = []
+
+    def fake_run_execute(*, plan_path: Path | None, checker_agent: object, interval_seconds: int, once: bool, report: object) -> None:
+        captured_calls.append(
+            {
+                "plan_path": plan_path,
+                "checker_agent": checker_agent,
+                "interval_seconds": interval_seconds,
+                "once": once,
+                "report": report,
+            }
+        )
+
+    monkeypatch.setattr(agents_execute_impl, "run_execute", fake_run_execute)
+
+    result = CliRunner().invoke(agents.get_app(), ["execute", "--once"])
+
+    assert result.exit_code == 0, result.output
+    assert len(captured_calls) == 1
+    assert captured_calls[0]["plan_path"] is None
+    assert captured_calls[0]["checker_agent"] == DEFAULT_AGENT
+    assert captured_calls[0]["interval_seconds"] == agents_execute_impl.EXECUTE_INTERVAL_SECONDS
+    assert captured_calls[0]["once"] is True
+
+
+def test_execute_resolves_only_generated_plan_when_path_omitted(tmp_path: Path) -> None:
+    plan_directory = tmp_path / ".ai" / "plans"
+    plan_directory.mkdir(parents=True)
+    plan_path = plan_directory / "single.plan.json"
+    plan_path.write_text("{}\n", encoding="utf-8")
+
+    resolved = agents_execute_impl.resolve_execute_plan_path(plan_path=None, cwd=tmp_path)
+
+    assert resolved == plan_path
+
+
+def test_execute_rejects_omitted_path_when_multiple_plans_exist(tmp_path: Path) -> None:
+    plan_directory = tmp_path / ".ai" / "plans"
+    plan_directory.mkdir(parents=True)
+    plan_directory.joinpath("first.plan.json").write_text("{}\n", encoding="utf-8")
+    plan_directory.joinpath("second.plan.json").write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="multiple"):
+        agents_execute_impl.resolve_execute_plan_path(plan_path=None, cwd=tmp_path)
 
 
 def test_execute_once_launches_first_pending_phase(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -441,51 +492,51 @@ def test_iter_clean_command_calls_cache_impl(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_iter_track_command_calls_impl_with_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int, bool]] = []
+    calls: list[tuple[str, int, int, int]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_n_old_iters))
 
     monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 100, 60, False)]
+    assert calls == [("iter-alpha", 100, 60, 3)]
 
 
 def test_iter_track_command_accepts_budget_and_interval(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int, bool]] = []
+    calls: list[tuple[str, int, int, int]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_n_old_iters))
 
     monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "7", "--interval", "2"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 7, 2, False)]
+    assert calls == [("iter-alpha", 7, 2, 3)]
 
 
-def test_iter_track_command_accepts_close_old_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int, bool]] = []
+def test_iter_track_command_accepts_close_n_old_iters(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, int, int, int]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_n_old_iters))
 
     monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
-    result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "--close-old-tabs"])
+    result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "--close-n-old-iters", "8"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 100, 60, True)]
+    assert calls == [("iter-alpha", 100, 60, 8)]
 
 
 def test_iter_short_alias_is_uppercase_i() -> None:

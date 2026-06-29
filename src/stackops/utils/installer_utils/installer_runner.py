@@ -1,7 +1,7 @@
 """package manager"""
 
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from typing import cast
 
 import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.utils.installer_utils.installer_locator_utils import check_if_installed_already
@@ -26,7 +26,6 @@ from stackops.utils.path_reference import get_path_reference_path
 from rich.console import Console
 from rich.panel import Panel
 import platform
-from joblib import Parallel, delayed
 
 
 def check_latest():
@@ -152,8 +151,10 @@ def install_bulk(
     safe: bool = False,
     jobs: int = 10,
     fresh: bool = False,
-):
+) -> None:
     print("🚀 BULK INSTALLATION PROCESS 🚀")
+    if jobs < 1:
+        raise ValueError("jobs must be at least 1")
     if fresh:
         print("🧹 Fresh install requested - clearing version cache...")
         delete_path(Path(INSTALL_VERSION_ROOT), verbose=True)
@@ -166,8 +167,12 @@ def install_bulk(
     installers_remaining = installers_data[1:]
     print("📦 INSTALLING REMAINING PACKAGES 📦")
 
-    delayed_jobs = [delayed(_install_single_installer)(installer, install_request) for installer in installers_remaining]
-    remaining_results = cast(list[InstallationResult], list(Parallel(n_jobs=jobs)(delayed_jobs)))
+    if len(installers_remaining) == 0:
+        remaining_results: list[InstallationResult] = []
+    else:
+        install_requests = [install_request for _installer in installers_remaining]
+        with ProcessPoolExecutor(max_workers=jobs) as executor:
+            remaining_results = list(executor.map(_install_single_installer, installers_remaining, install_requests))
     res: list[InstallationResult] = [first_result, *remaining_results]
 
     console = Console()
