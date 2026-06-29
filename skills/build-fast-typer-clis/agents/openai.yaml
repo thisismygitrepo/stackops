@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fast Typer CLIs"
+  short_description: "Build lightweight, lazily nested Typer CLIs"
+  default_prompt: "Use $build-fast-typer-clis to profile and refactor this Typer CLI for fast startup and lazy nested commands."
