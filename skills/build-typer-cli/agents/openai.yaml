@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Typer CLI"
+  short_description: "Build fast Typer CLIs with hidden short aliases"
+  default_prompt: "Use $build-typer-cli to build or refactor a fast Typer CLI with lazy routing and one-letter hidden aliases."

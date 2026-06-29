@@ -81,6 +81,8 @@ uv run --no-dev my-cli group hidden-alias --help
 
 Also verify:
 
+- root help shows each one-letter short marker exactly once beside its canonical command and omits the hidden alias as a separate row;
+- canonical and short invocations preserve the same parsing, no-argument behavior, exit code, and side-effect boundary;
 - required arguments still fail at the selected leaf;
 - commands intended to execute with no arguments still execute;
 - commands intended to show help with no arguments still show help;

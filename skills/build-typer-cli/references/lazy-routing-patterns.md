@@ -6,9 +6,10 @@
 2. Body-local imports
 3. Lazy nested apps
 4. Lazy leaf callbacks
-5. Registration rules
-6. Runtime typing constraints
-7. Architecture choices
+5. One-letter command shorts
+6. Registration rules
+7. Runtime typing constraints
+8. Architecture choices
 
 ## 1. Import Budget
 
@@ -169,21 +170,58 @@ app.command(
 )(stream_proxy)
 ```
 
-Register a hidden alias against the same proxy:
+Add one-letter command shorts as described in the next section. Both names must use the same proxy callback.
+
+## 5. One-Letter Command Shorts
+
+A one-letter command short is a real hidden sibling command. It is not a dashed option, and an angle-bracket marker such as `<d>` in help text does not create it.
+
+Register the canonical name and short next to each other against the exact same callback:
 
 ```python
 app.command(
-    "s",
+    "data",
+    help="<d> Data management",
+    context_settings=PROXY_CONTEXT_SETTINGS,
+    no_args_is_help=False,
+    add_help_option=False,
+)(data_proxy)
+app.command(
+    "d",
     hidden=True,
     context_settings=PROXY_CONTEXT_SETTINGS,
     no_args_is_help=False,
     add_help_option=False,
-)(stream_proxy)
+)(data_proxy)
 ```
+
+The visible row advertises `<d>`, while the hidden registration makes `my-cli d` executable. Keep `context_settings`, `no_args_is_help`, `add_help_option`, and every other routing flag identical. Sharing the proxy preserves its local-import boundary for both names.
+
+For an eagerly composed lightweight group, register the same child app under both names:
+
+```python
+data_app = get_data_app()
+app.add_typer(data_app, name="data", help="<d> Data management")
+app.add_typer(data_app, name="d", hidden=True)
+```
+
+Do not build the child eagerly merely to add a short. When the child must remain lazy, use the paired proxy-command pattern instead.
+
+Choose a unique, case-sensitive one-character short within each sibling scope. Lowercase and uppercase names are different commands. Keep canonical names in documentation and primary behavior tests; test each short separately.
+
+If the repository provides an alias-marker helper, use its established contract. A StackOps-style `apply_alias_markers(app)` derives markers from hidden one-character registrations that share callback identity, updates explicit `help` or `short_help`, and recurses through eagerly composed child apps. Return the processed app from every router, and process a lazily built child after importing it. Still register the hidden command: marker injection is presentation, not routing.
+
+Inspect helper constraints before relying on automatic markers. In particular, preserve callback identity, provide explicit help text when required, register canonical and hidden `add_typer` entries adjacently when pairing is order-based, and reject alias collisions instead of selecting a fallback.
+
+Validate all of these properties:
+
+- Root help contains the canonical row with exactly one matching marker and no separate alias row.
+- Canonical and short help both succeed and preserve arguments, options, no-argument behavior, exit codes, and the selected `ctx.command_path`.
+- Root help imports neither the lazy child nor its leaves; short-selected help imports only the selected lightweight router or contract.
 
 Use explicit local imports per proxy. They let type checkers and repository-wide rename tools find every implementation edge.
 
-## 5. Registration Rules
+## 6. Registration Rules
 
 - Keep parent-level help strings in the lightweight router because help must render before the leaf import.
 - Centralize shared command metadata in a lightweight contract module when more than one router consumes it.
@@ -192,7 +230,7 @@ Use explicit local imports per proxy. They let type checkers and repository-wide
 - Use canonical commands in documentation and tests. Test aliases separately but keep them hidden.
 - Use direct entrypoints for large independent command families so common commands avoid umbrella routing overhead.
 
-## 6. Runtime Typing Constraints
+## 7. Runtime Typing Constraints
 
 Typer resolves annotations when it builds the selected Click command.
 
@@ -204,7 +242,7 @@ Typer resolves annotations when it builds the selected Click command.
 
 Python 3.14 lazy annotations delay evaluation, but Typer's runtime inspection still evaluates selected callback annotations. Lazy language semantics do not remove this constraint.
 
-## 7. Architecture Choices
+## 8. Architecture Choices
 
 Use this order:
 
