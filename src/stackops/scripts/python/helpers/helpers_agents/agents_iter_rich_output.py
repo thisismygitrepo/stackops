@@ -22,6 +22,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_impl import (
     track_iter_workspace_once,
     validate_iter_workspace_track_inputs,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import DEFAULT_CLOSE_N_OLD_ITERS
 from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import (
     AgentopsCacheCleanResult,
     clean_agentops_cache,
@@ -37,7 +38,11 @@ def show_clean_agentops_cache(*, cwd: Path) -> None:
 
 def show_close_iter_workspaces_loop(*, workspace_name: str | None, all_workspaces: bool, continuous: bool) -> None:
     while True:
-        close_plans = plan_iter_workspace_closes(workspace_name=workspace_name, all_workspaces=all_workspaces)
+        close_plans = plan_iter_workspace_closes(
+            workspace_name=workspace_name,
+            all_workspaces=all_workspaces,
+            close_n_old_iters=DEFAULT_CLOSE_N_OLD_ITERS,
+        )
         _CONSOLE.print(build_iter_close_plan_table(close_plans=close_plans))
         summaries = close_iter_workspace_plans(close_plans=close_plans, report=_show_close_progress)
         _CONSOLE.print(build_iter_close_summary_table(summaries=summaries))
@@ -47,25 +52,28 @@ def show_close_iter_workspaces_loop(*, workspace_name: str | None, all_workspace
         sleep(LOOP_INTERVAL_SECONDS)
 
 
-def show_track_iter_workspace_loop(*, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool) -> None:
+def show_track_iter_workspace_loop(
+    *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
+) -> None:
     validate_iter_workspace_track_inputs(
         workspace_name=workspace_name,
         max_iterations=max_iterations,
         interval_seconds=interval_seconds,
+        close_n_old_iters=close_n_old_iters,
     )
     _CONSOLE.print(
         build_iter_track_start_panel(
             workspace_name=workspace_name,
             max_iterations=max_iterations,
             interval_seconds=interval_seconds,
-            close_old_tabs=close_old_tabs,
+            close_n_old_iters=close_n_old_iters,
         )
     )
     while True:
         check = track_iter_workspace_once(
             workspace_name=workspace_name,
             max_iterations=max_iterations,
-            close_old_tabs=close_old_tabs,
+            close_n_old_iters=close_n_old_iters,
             report=_ignore_report,
         )
         _CONSOLE.print(build_iter_status_table(statuses=(check.status,)))
@@ -79,7 +87,7 @@ def show_track_iter_workspace_loop(*, workspace_name: str, max_iterations: int, 
 
 
 def show_iter_status() -> None:
-    statuses = get_iter_workspace_statuses()
+    statuses = get_iter_workspace_statuses(close_n_old_iters=DEFAULT_CLOSE_N_OLD_ITERS)
     if len(statuses) == 0:
         _CONSOLE.print(Panel("No iter workspaces found.", title="Iter Status", border_style="yellow"))
         return
@@ -145,14 +153,16 @@ def build_iter_close_summary_table(*, summaries: tuple[IterWorkspaceClose, ...])
     return table
 
 
-def build_iter_track_start_panel(*, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool) -> Panel:
+def build_iter_track_start_panel(
+    *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
+) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
     table.add_column("Value", overflow="fold")
     table.add_row("Workspace", escape(workspace_name))
     table.add_row("Budget", f"{max_iterations:03d}")
     table.add_row("Interval", f"{interval_seconds} second(s)")
-    table.add_row("Close old tabs", "yes" if close_old_tabs else "no")
+    table.add_row("Keep old iters", f"latest + {close_n_old_iters}")
     return Panel(table, title="Iter Tracker", border_style="blue")
 
 

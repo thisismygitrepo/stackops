@@ -11,6 +11,9 @@ from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models i
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render_css import (
     DEPENDENCY_REPORT_CSS,
 )
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render_js import (
+    DEPENDENCY_REPORT_JS,
+)
 
 
 def report_to_payload(report: DependencyReport) -> dict[str, JsonValue]:
@@ -49,7 +52,7 @@ def report_to_json(report: DependencyReport) -> str:
 
 
 def render_dependency_report_html(report: DependencyReport) -> str:
-    payload = report_to_json(report)
+    payload = _json_script_text(report)
     nodes_rows = _render_node_rows(report.nodes)
     edge_rows = _render_edge_rows(report.edges)
     dual_rows = _render_dual_rows(report.dual_dependencies)
@@ -74,6 +77,25 @@ def render_dependency_report_html(report: DependencyReport) -> str:
     <div class="metric"><span>Dual Dependencies</span><strong>{len(report.dual_dependencies)}</strong></div>
     <div class="metric"><span>Cycle Groups</span><strong>{len(report.cycle_groups)}</strong></div>
   </section>
+  <h2>Graph</h2>
+  <figure class="dependency-figure" id="dependency-figure">
+    <figcaption>Dependency graph</figcaption>
+    <div class="graph-toolbar" aria-label="Dependency graph controls">
+      <div class="graph-actions">
+        <button type="button" data-graph-action="fit">Fit</button>
+        <button type="button" data-graph-action="reset">Reset</button>
+        <button type="button" data-graph-action="toggle-cycles" aria-pressed="false">Cycles</button>
+      </div>
+      <div class="graph-nudge" aria-label="Move selected module">
+        <button type="button" data-graph-action="move-left" aria-label="Move selected module left">&larr;</button>
+        <button type="button" data-graph-action="move-up" aria-label="Move selected module up">&uarr;</button>
+        <button type="button" data-graph-action="move-down" aria-label="Move selected module down">&darr;</button>
+        <button type="button" data-graph-action="move-right" aria-label="Move selected module right">&rarr;</button>
+      </div>
+      <output id="graph-selection">No module selected</output>
+    </div>
+    <svg id="dependency-graph" role="img" aria-label="Interactive dependency graph" tabindex="0"></svg>
+  </figure>
   <h2>Direct Mutual Dependencies</h2>
   <table class="danger"><thead><tr><th>Left</th><th>Right</th></tr></thead><tbody>{dual_rows}</tbody></table>
   <h2>Cycle Groups</h2>
@@ -82,11 +104,20 @@ def render_dependency_report_html(report: DependencyReport) -> str:
   <table><thead><tr><th>Importer</th><th>Imported</th></tr></thead><tbody>{edge_rows}</tbody></table>
   <h2>Nodes</h2>
   <table><thead><tr><th>Module</th><th>Path</th></tr></thead><tbody>{nodes_rows}</tbody></table>
-  <script type="application/json" id="dependency-report">{escape(payload)}</script>
+  <script type="application/json" id="dependency-report">{payload}</script>
+  <script>
+{DEPENDENCY_REPORT_JS}
+  </script>
 </main>
 </body>
 </html>
 """
+
+
+def _json_script_text(report: DependencyReport) -> str:
+    payload = report_to_payload(report)
+    json_text = json.dumps(payload, indent=2, sort_keys=True)
+    return json_text.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e") + "\n"
 
 
 def _render_node_rows(nodes: tuple[DependencyNode, ...]) -> str:

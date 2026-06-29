@@ -3,7 +3,7 @@ import pytest
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_impl
 
 
-def test_close_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_close_iter_workspaces_keeps_latest_and_three_previous_iter_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[list[str]] = []
     reports: list[str] = []
 
@@ -13,7 +13,7 @@ def test_close_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytes
             case ["herdr", "workspace", "list"]:
                 return """
 {"result":{"workspaces":[
-{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t4","agent_status":"working","focused":false,"pane_count":4,"tab_count":4},
+{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t5","agent_status":"working","focused":false,"pane_count":5,"tab_count":5},
 {"workspace_id":"w2","label":"main","number":2,"active_tab_id":"w2:t1","agent_status":"idle","focused":false,"pane_count":1,"tab_count":1},
 {"workspace_id":"w3","label":"iter-beta","number":3,"active_tab_id":"w3:t2","agent_status":"done","focused":false,"pane_count":2,"tab_count":2}
 ]}}
@@ -21,13 +21,14 @@ def test_close_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytes
             case ["herdr", "tab", "list"]:
                 return """
 {"result":{"tabs":[
-{"tab_id":"w1:t1","workspace_id":"w1","label":"one","number":1,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t2","workspace_id":"w1","label":"two","number":2,"agent_status":"idle","focused":false,"pane_count":1},
-{"tab_id":"w1:t3","workspace_id":"w1","label":"three","number":3,"agent_status":"idle","focused":false,"pane_count":1},
-{"tab_id":"w1:t4","workspace_id":"w1","label":"four","number":4,"agent_status":"working","focused":true,"pane_count":1},
+{"tab_id":"w1:t1","workspace_id":"w1","label":"iter-alpha-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t2","workspace_id":"w1","label":"iter-alpha-002","number":2,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t3","workspace_id":"w1","label":"iter-alpha-004","number":3,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t4","workspace_id":"w1","label":"iter-alpha-005","number":4,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t5","workspace_id":"w1","label":"iter-alpha-006","number":5,"agent_status":"working","focused":true,"pane_count":1},
 {"tab_id":"w2:t1","workspace_id":"w2","label":"main","number":1,"agent_status":"idle","focused":false,"pane_count":1},
-{"tab_id":"w3:t1","workspace_id":"w3","label":"one","number":1,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w3:t2","workspace_id":"w3","label":"two","number":2,"agent_status":"done","focused":false,"pane_count":1}
+{"tab_id":"w3:t1","workspace_id":"w3","label":"iter-beta-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w3:t2","workspace_id":"w3","label":"iter-beta-002","number":2,"agent_status":"done","focused":false,"pane_count":1}
 ]}}
 """
             case ["herdr", "pane", "list"]:
@@ -36,7 +37,8 @@ def test_close_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytes
 {"pane_id":"w1:p1","workspace_id":"w1","tab_id":"w1:t1","agent_status":"done"},
 {"pane_id":"w1:p2","workspace_id":"w1","tab_id":"w1:t2","agent_status":"idle"},
 {"pane_id":"w1:p3","workspace_id":"w1","tab_id":"w1:t3","agent_status":"idle"},
-{"pane_id":"w1:p4","workspace_id":"w1","tab_id":"w1:t4","agent_status":"working"},
+{"pane_id":"w1:p4","workspace_id":"w1","tab_id":"w1:t4","agent_status":"idle"},
+{"pane_id":"w1:p5","workspace_id":"w1","tab_id":"w1:t5","agent_status":"working"},
 {"pane_id":"w2:p1","workspace_id":"w2","tab_id":"w2:t1","agent_status":"idle"},
 {"pane_id":"w3:p1","workspace_id":"w3","tab_id":"w3:t1","agent_status":"done"},
 {"pane_id":"w3:p2","workspace_id":"w3","tab_id":"w3:t2","agent_status":"done"}
@@ -53,14 +55,23 @@ def test_close_iter_workspaces_closes_all_but_last_three_tabs(monkeypatch: pytes
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.close_iter_workspaces(workspace_name=None, all_workspaces=True, report=reports.append)
+    summaries = agents_iter_impl.close_iter_workspaces(
+        workspace_name=None,
+        all_workspaces=True,
+        close_n_old_iters=3,
+        report=reports.append,
+    )
 
-    assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [["herdr", "tab", "close", "w1:t1"]]
+    assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [
+        ["herdr", "tab", "close", "w1:t1"],
+        ["herdr", "tab", "close", "w1:t2"],
+    ]
     assert [summary.workspace.label for summary in summaries] == ["iter-alpha", "iter-beta"]
-    assert len(summaries[0].kept_tabs) == 3
+    assert [tab.label for tab in summaries[0].kept_tabs] == ["iter-alpha-004", "iter-alpha-005", "iter-alpha-006"]
     assert len(summaries[1].closed_tabs) == 0
-    assert "Planning iter close: 2 workspace(s), 6 tab(s), closing 1" in reports[0]
-    assert "Closing 1/1: iter-alpha tab #1 one [done] w1:t1" in reports
+    assert "Planning iter close: 2 workspace(s), 7 tab(s), closing 2" in reports[0]
+    assert "Closing 1/2: iter-alpha tab #1 iter-alpha-001 [done] w1:t1" in reports
+    assert "Closing 2/2: iter-alpha tab #2 iter-alpha-002 [idle] w1:t2" in reports
 
 
 def test_close_iter_workspaces_keeps_next_tab_after_running_agent(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -78,13 +89,13 @@ def test_close_iter_workspaces_keeps_next_tab_after_running_agent(monkeypatch: p
             case ["herdr", "tab", "list"]:
                 return """
 {"result":{"tabs":[
-{"tab_id":"w1:t1","workspace_id":"w1","label":"one","number":1,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t2","workspace_id":"w1","label":"two","number":2,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t3","workspace_id":"w1","label":"three","number":3,"agent_status":"working","focused":true,"pane_count":1},
-{"tab_id":"w1:t4","workspace_id":"w1","label":"four","number":4,"agent_status":"idle","focused":false,"pane_count":1},
-{"tab_id":"w1:t5","workspace_id":"w1","label":"five","number":5,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t6","workspace_id":"w1","label":"six","number":6,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t7","workspace_id":"w1","label":"seven","number":7,"agent_status":"done","focused":false,"pane_count":1}
+{"tab_id":"w1:t1","workspace_id":"w1","label":"iter-alpha-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t2","workspace_id":"w1","label":"iter-alpha-002","number":2,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t3","workspace_id":"w1","label":"iter-alpha-003","number":3,"agent_status":"working","focused":true,"pane_count":1},
+{"tab_id":"w1:t4","workspace_id":"w1","label":"iter-alpha-004","number":4,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t5","workspace_id":"w1","label":"iter-alpha-005","number":5,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t6","workspace_id":"w1","label":"iter-alpha-006","number":6,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t7","workspace_id":"w1","label":"iter-alpha-007","number":7,"agent_status":"done","focused":false,"pane_count":1}
 ]}}
 """
             case ["herdr", "pane", "list"]:
@@ -112,7 +123,12 @@ def test_close_iter_workspaces_keeps_next_tab_after_running_agent(monkeypatch: p
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.close_iter_workspaces(workspace_name=None, all_workspaces=True, report=lambda _message: None)
+    summaries = agents_iter_impl.close_iter_workspaces(
+        workspace_name=None,
+        all_workspaces=True,
+        close_n_old_iters=3,
+        report=lambda _message: None,
+    )
 
     assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [
         ["herdr", "tab", "close", "w1:t1"],
@@ -134,9 +150,9 @@ def test_get_iter_workspace_statuses_reports_latest_agent_iteration_status_and_c
             case ["herdr", "tab", "list"]:
                 return """
 {"result":{"tabs":[
-{"tab_id":"w1:t1","workspace_id":"w1","label":"one","number":1,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t2","workspace_id":"w1","label":"two","number":2,"agent_status":"idle","focused":false,"pane_count":1},
-{"tab_id":"w1:t3","workspace_id":"w1","label":"three","number":3,"agent_status":"working","focused":true,"pane_count":1},
+{"tab_id":"w1:t1","workspace_id":"w1","label":"iter-alpha-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t2","workspace_id":"w1","label":"iter-alpha-002","number":2,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t3","workspace_id":"w1","label":"iter-alpha-003","number":3,"agent_status":"working","focused":true,"pane_count":1},
 {"tab_id":"w1:t4","workspace_id":"w1","label":"four","number":4,"agent_status":"idle","focused":false,"pane_count":1}
 ]}}
 """
@@ -161,7 +177,7 @@ def test_get_iter_workspace_statuses_reports_latest_agent_iteration_status_and_c
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    statuses = agents_iter_impl.get_iter_workspace_statuses()
+    statuses = agents_iter_impl.get_iter_workspace_statuses(close_n_old_iters=1)
 
     assert len(statuses) == 1
     assert statuses[0].workspace.label == "iter-alpha"
@@ -170,8 +186,8 @@ def test_get_iter_workspace_statuses_reports_latest_agent_iteration_status_and_c
     assert statuses[0].latest_agent.agent_status == "working"
     assert statuses[0].latest_agent.foreground_cwd == "/repo/src"
     assert statuses[0].latest_agent_tab is not None
-    assert statuses[0].latest_agent_tab.label == "three"
-    assert [tab.label for tab in statuses[0].closable_tabs] == ["one"]
+    assert statuses[0].latest_agent_tab.label == "iter-alpha-003"
+    assert [tab.label for tab in statuses[0].closable_tabs] == ["iter-alpha-001"]
 
 
 def test_close_iter_workspaces_targets_one_workspace(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -183,21 +199,23 @@ def test_close_iter_workspaces_targets_one_workspace(monkeypatch: pytest.MonkeyP
             case ["herdr", "workspace", "list"]:
                 return """
 {"result":{"workspaces":[
-{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t4","agent_status":"done","focused":false,"pane_count":4,"tab_count":4},
-{"workspace_id":"w2","label":"iter-beta","number":2,"active_tab_id":"w2:t4","agent_status":"done","focused":false,"pane_count":4,"tab_count":4}
+{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t5","agent_status":"done","focused":false,"pane_count":5,"tab_count":5},
+{"workspace_id":"w2","label":"iter-beta","number":2,"active_tab_id":"w2:t5","agent_status":"done","focused":false,"pane_count":5,"tab_count":5}
 ]}}
 """
             case ["herdr", "tab", "list"]:
                 return """
 {"result":{"tabs":[
-{"tab_id":"w1:t1","workspace_id":"w1","label":"alpha-one","number":1,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t2","workspace_id":"w1","label":"alpha-two","number":2,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t3","workspace_id":"w1","label":"alpha-three","number":3,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t4","workspace_id":"w1","label":"alpha-four","number":4,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w2:t1","workspace_id":"w2","label":"beta-one","number":1,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w2:t2","workspace_id":"w2","label":"beta-two","number":2,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w2:t3","workspace_id":"w2","label":"beta-three","number":3,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w2:t4","workspace_id":"w2","label":"beta-four","number":4,"agent_status":"done","focused":false,"pane_count":1}
+{"tab_id":"w1:t1","workspace_id":"w1","label":"iter-alpha-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t2","workspace_id":"w1","label":"iter-alpha-002","number":2,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t3","workspace_id":"w1","label":"iter-alpha-003","number":3,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t4","workspace_id":"w1","label":"iter-alpha-004","number":4,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t5","workspace_id":"w1","label":"iter-alpha-005","number":5,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w2:t1","workspace_id":"w2","label":"iter-beta-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w2:t2","workspace_id":"w2","label":"iter-beta-002","number":2,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w2:t3","workspace_id":"w2","label":"iter-beta-003","number":3,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w2:t4","workspace_id":"w2","label":"iter-beta-004","number":4,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w2:t5","workspace_id":"w2","label":"iter-beta-005","number":5,"agent_status":"done","focused":false,"pane_count":1}
 ]}}
 """
             case ["herdr", "pane", "list"]:
@@ -207,10 +225,12 @@ def test_close_iter_workspaces_targets_one_workspace(monkeypatch: pytest.MonkeyP
 {"pane_id":"w1:p2","workspace_id":"w1","tab_id":"w1:t2","agent_status":"done"},
 {"pane_id":"w1:p3","workspace_id":"w1","tab_id":"w1:t3","agent_status":"done"},
 {"pane_id":"w1:p4","workspace_id":"w1","tab_id":"w1:t4","agent_status":"done"},
+{"pane_id":"w1:p5","workspace_id":"w1","tab_id":"w1:t5","agent_status":"done"},
 {"pane_id":"w2:p1","workspace_id":"w2","tab_id":"w2:t1","agent_status":"done"},
 {"pane_id":"w2:p2","workspace_id":"w2","tab_id":"w2:t2","agent_status":"done"},
 {"pane_id":"w2:p3","workspace_id":"w2","tab_id":"w2:t3","agent_status":"done"},
-{"pane_id":"w2:p4","workspace_id":"w2","tab_id":"w2:t4","agent_status":"done"}
+{"pane_id":"w2:p4","workspace_id":"w2","tab_id":"w2:t4","agent_status":"done"},
+{"pane_id":"w2:p5","workspace_id":"w2","tab_id":"w2:t5","agent_status":"done"}
 ]}}
 """
             case ["herdr", "agent", "list"]:
@@ -224,7 +244,12 @@ def test_close_iter_workspaces_targets_one_workspace(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.close_iter_workspaces(workspace_name="iter-alpha", all_workspaces=False, report=lambda _message: None)
+    summaries = agents_iter_impl.close_iter_workspaces(
+        workspace_name="iter-alpha",
+        all_workspaces=False,
+        close_n_old_iters=3,
+        report=lambda _message: None,
+    )
 
     assert [summary.workspace.label for summary in summaries] == ["iter-alpha"]
     assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [["herdr", "tab", "close", "w1:t1"]]
@@ -239,7 +264,7 @@ def test_close_iter_workspaces_preserves_tracker_and_unknown_panes(monkeypatch: 
             case ["herdr", "workspace", "list"]:
                 return """
 {"result":{"workspaces":[
-{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t6","agent_status":"done","focused":false,"pane_count":6,"tab_count":6}
+{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t7","agent_status":"done","focused":false,"pane_count":7,"tab_count":7}
 ]}}
 """
             case ["herdr", "tab", "list"]:
@@ -247,10 +272,11 @@ def test_close_iter_workspaces_preserves_tracker_and_unknown_panes(monkeypatch: 
 {"result":{"tabs":[
 {"tab_id":"w1:t1","workspace_id":"w1","label":"iter-alpha-tracker","number":1,"agent_status":"idle","focused":false,"pane_count":1},
 {"tab_id":"w1:t2","workspace_id":"w1","label":"unknown-pane","number":2,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t3","workspace_id":"w1","label":"old-done","number":3,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t4","workspace_id":"w1","label":"new-one","number":4,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t5","workspace_id":"w1","label":"new-two","number":5,"agent_status":"done","focused":false,"pane_count":1},
-{"tab_id":"w1:t6","workspace_id":"w1","label":"new-three","number":6,"agent_status":"done","focused":false,"pane_count":1}
+{"tab_id":"w1:t3","workspace_id":"w1","label":"iter-alpha-001","number":3,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t4","workspace_id":"w1","label":"iter-alpha-002","number":4,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t5","workspace_id":"w1","label":"iter-alpha-003","number":5,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t6","workspace_id":"w1","label":"iter-alpha-004","number":6,"agent_status":"done","focused":false,"pane_count":1},
+{"tab_id":"w1:t7","workspace_id":"w1","label":"iter-alpha-005","number":7,"agent_status":"done","focused":false,"pane_count":1}
 ]}}
 """
             case ["herdr", "pane", "list"]:
@@ -261,7 +287,8 @@ def test_close_iter_workspaces_preserves_tracker_and_unknown_panes(monkeypatch: 
 {"pane_id":"w1:p3","workspace_id":"w1","tab_id":"w1:t3","agent_status":"done"},
 {"pane_id":"w1:p4","workspace_id":"w1","tab_id":"w1:t4","agent_status":"done"},
 {"pane_id":"w1:p5","workspace_id":"w1","tab_id":"w1:t5","agent_status":"done"},
-{"pane_id":"w1:p6","workspace_id":"w1","tab_id":"w1:t6","agent_status":"done"}
+{"pane_id":"w1:p6","workspace_id":"w1","tab_id":"w1:t6","agent_status":"done"},
+{"pane_id":"w1:p7","workspace_id":"w1","tab_id":"w1:t7","agent_status":"done"}
 ]}}
 """
             case ["herdr", "agent", "list"]:
@@ -275,7 +302,12 @@ def test_close_iter_workspaces_preserves_tracker_and_unknown_panes(monkeypatch: 
 
     monkeypatch.setattr(agents_iter_impl, "_run_herdr", fake_run_herdr)
 
-    summaries = agents_iter_impl.close_iter_workspaces(workspace_name="iter-alpha", all_workspaces=False, report=lambda _message: None)
+    summaries = agents_iter_impl.close_iter_workspaces(
+        workspace_name="iter-alpha",
+        all_workspaces=False,
+        close_n_old_iters=3,
+        report=lambda _message: None,
+    )
 
     assert [tab.tab_id for tab in summaries[0].guarded_tabs] == ["w1:t1", "w1:t2"]
     assert [command for command in commands if command[:3] == ["herdr", "tab", "close"]] == [["herdr", "tab", "close", "w1:t3"]]
@@ -358,7 +390,7 @@ def test_check_iter_workspace_budget_keeps_workspace_at_budget(monkeypatch: pyte
     assert "iter-alpha: latest=100, budget=100; keeping workspace open." in reports
 
 
-def test_track_iter_workspace_once_reports_status_and_closes_old_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_track_iter_workspace_once_reports_status_and_closes_old_iters(monkeypatch: pytest.MonkeyPatch) -> None:
     commands: list[list[str]] = []
     reports: list[str] = []
 
@@ -368,7 +400,7 @@ def test_track_iter_workspace_once_reports_status_and_closes_old_tabs(monkeypatc
             case ["herdr", "workspace", "list"]:
                 return """
 {"result":{"workspaces":[
-{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t4","agent_status":"idle","focused":false,"pane_count":4,"tab_count":4}
+{"workspace_id":"w1","label":"iter-alpha","number":1,"active_tab_id":"w1:t5","agent_status":"idle","focused":false,"pane_count":5,"tab_count":5}
 ]}}
 """
             case ["herdr", "tab", "list"]:
@@ -377,7 +409,8 @@ def test_track_iter_workspace_once_reports_status_and_closes_old_tabs(monkeypatc
 {"tab_id":"w1:t1","workspace_id":"w1","label":"iter-alpha-001","number":1,"agent_status":"done","focused":false,"pane_count":1},
 {"tab_id":"w1:t2","workspace_id":"w1","label":"iter-alpha-002","number":2,"agent_status":"idle","focused":false,"pane_count":1},
 {"tab_id":"w1:t3","workspace_id":"w1","label":"iter-alpha-003","number":3,"agent_status":"idle","focused":false,"pane_count":1},
-{"tab_id":"w1:t4","workspace_id":"w1","label":"iter-alpha-004","number":4,"agent_status":"idle","focused":true,"pane_count":1}
+{"tab_id":"w1:t4","workspace_id":"w1","label":"iter-alpha-004","number":4,"agent_status":"idle","focused":false,"pane_count":1},
+{"tab_id":"w1:t5","workspace_id":"w1","label":"iter-alpha-005","number":5,"agent_status":"idle","focused":true,"pane_count":1}
 ]}}
 """
             case ["herdr", "pane", "list"]:
@@ -386,13 +419,14 @@ def test_track_iter_workspace_once_reports_status_and_closes_old_tabs(monkeypatc
 {"pane_id":"w1:p1","workspace_id":"w1","tab_id":"w1:t1","agent_status":"done"},
 {"pane_id":"w1:p2","workspace_id":"w1","tab_id":"w1:t2","agent_status":"idle"},
 {"pane_id":"w1:p3","workspace_id":"w1","tab_id":"w1:t3","agent_status":"idle"},
-{"pane_id":"w1:p4","workspace_id":"w1","tab_id":"w1:t4","agent_status":"idle"}
+{"pane_id":"w1:p4","workspace_id":"w1","tab_id":"w1:t4","agent_status":"idle"},
+{"pane_id":"w1:p5","workspace_id":"w1","tab_id":"w1:t5","agent_status":"idle"}
 ]}}
 """
             case ["herdr", "agent", "list"]:
                 return """
 {"result":{"agents":[
-{"agent":"codex","agent_status":"idle","workspace_id":"w1","tab_id":"w1:t4","pane_id":"w1:p4","cwd":"/repo","foreground_cwd":"/repo","focused":true,"name":"iter-alpha-004"}
+{"agent":"codex","agent_status":"idle","workspace_id":"w1","tab_id":"w1:t5","pane_id":"w1:p5","cwd":"/repo","foreground_cwd":"/repo","focused":true,"name":"iter-alpha-005"}
 ]}}
 """
             case ["herdr", "tab", "close", "w1:t1"]:
@@ -405,15 +439,15 @@ def test_track_iter_workspace_once_reports_status_and_closes_old_tabs(monkeypatc
     check = agents_iter_impl.track_iter_workspace_once(
         workspace_name="iter-alpha",
         max_iterations=10,
-        close_old_tabs=True,
+        close_n_old_iters=3,
         report=reports.append,
     )
 
-    assert check.status.latest_iteration == 4
+    assert check.status.latest_iteration == 5
     assert check.budget.closed is False
     assert check.close_summary is not None
     assert [tab.tab_id for tab in check.close_summary.closed_tabs] == ["w1:t1"]
     assert ["herdr", "workspace", "close", "w1"] not in commands
     assert ["herdr", "tab", "close", "w1:t1"] in commands
-    assert "iter-alpha: iter=004 agent=codex status=idle tabs=4 close=1 guard=0." in reports
-    assert "iter-alpha: latest=004, budget=010; keeping workspace open." in reports
+    assert "iter-alpha: iter=005 agent=codex status=idle tabs=5 close=1 guard=0." in reports
+    assert "iter-alpha: latest=005, budget=010; keeping workspace open." in reports

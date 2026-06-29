@@ -492,51 +492,51 @@ def test_iter_clean_command_calls_cache_impl(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_iter_track_command_calls_impl_with_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int, bool]] = []
+    calls: list[tuple[str, int, int, int]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_n_old_iters))
 
     monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 100, 60, False)]
+    assert calls == [("iter-alpha", 100, 60, 3)]
 
 
 def test_iter_track_command_accepts_budget_and_interval(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int, bool]] = []
+    calls: list[tuple[str, int, int, int]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_n_old_iters))
 
     monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
     result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "7", "--interval", "2"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 7, 2, False)]
+    assert calls == [("iter-alpha", 7, 2, 3)]
 
 
-def test_iter_track_command_accepts_close_old_tabs(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, int, int, bool]] = []
+def test_iter_track_command_accepts_close_n_old_iters(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, int, int, int]] = []
 
     def fake_track_iter_workspace_loop(
-        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_old_tabs: bool
+        *, workspace_name: str, max_iterations: int, interval_seconds: int, close_n_old_iters: int
     ) -> None:
-        calls.append((workspace_name, max_iterations, interval_seconds, close_old_tabs))
+        calls.append((workspace_name, max_iterations, interval_seconds, close_n_old_iters))
 
     monkeypatch.setattr(agents_iter_rich_output, "show_track_iter_workspace_loop", fake_track_iter_workspace_loop)
 
-    result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "--close-old-tabs"])
+    result = CliRunner().invoke(agents.get_app(), ["iter", "track", "iter-alpha", "--close-n-old-iters", "8"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("iter-alpha", 100, 60, True)]
+    assert calls == [("iter-alpha", 100, 60, 8)]
 
 
 def test_iter_short_alias_is_uppercase_i() -> None:

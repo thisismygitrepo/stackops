@@ -75,7 +75,7 @@ Key behavior:
 - `type-hint [PATH]` validates a file or project root and defaults to `--dependency self-contained`, but type-hint generation currently exits with an error because the generator implementation is missing.
 - `type-check [REPO]` resolves the repository root from the nearest `pyproject.toml` and passes exclusions through the lint/type-check script.
 - If `--exclude` is omitted, `type-check` currently defaults to excluding `tests`, `.github`, `.codex`, `.ai`, `.links`, and `.venv`.
-- `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, emits JSON/JSONIC by default, can write HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups.
+- `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, emits JSON/JSONIC by default, can write interactive HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups.
 - `test-reference [REPO]` supports `--search-root` and `--verbose`.
 - `type-fix` is a nested app whose callback runs when invoked with no subcommand. It accepts `--agent`, `--agent-load`, `--which-checker`/`--which`, and `--max-agents`, generates a layout under `./.ai/agents/fix_<checker>_issues/`, then prompts to run it.
 - `test-runtime` runs from the current directory, writes context to `.ai/agents/test_runtime/context.md`, skips hidden paths, `.venv`, and existing repo test files, then prompts to run the generated layout.

@@ -1,4 +1,8 @@
-DEPENDENCY_REPORT_CSS = """
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render_graph_css import (
+    DEPENDENCY_REPORT_GRAPH_CSS,
+)
+
+DEPENDENCY_REPORT_BASE_CSS = """
 :root {
   color-scheme: light dark;
   --bg: #f7f7f4;
@@ -6,8 +10,14 @@ DEPENDENCY_REPORT_CSS = """
   --muted: #5b646b;
   --border: #cfd6dc;
   --accent: #1d6f78;
+  --accent-strong: #0b5963;
   --danger: #9f2d35;
   --table: #ffffff;
+  --panel: #ffffff;
+  --node: #ffffff;
+  --edge: #64727d;
+  --button: #eef3f4;
+  --button-hover: #dfe9eb;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -16,8 +26,14 @@ DEPENDENCY_REPORT_CSS = """
     --muted: #a8b0b7;
     --border: #384148;
     --accent: #77c7d2;
+    --accent-strong: #b5edf3;
     --danger: #ff8a96;
     --table: #171b1f;
+    --panel: #171b1f;
+    --node: #1e252a;
+    --edge: #83909a;
+    --button: #222b31;
+    --button-hover: #2f3b43;
   }
 }
 body {
@@ -102,3 +118,5 @@ script {
   display: none;
 }
 """
+
+DEPENDENCY_REPORT_CSS = f"{DEPENDENCY_REPORT_BASE_CSS}\n{DEPENDENCY_REPORT_GRAPH_CSS}"
