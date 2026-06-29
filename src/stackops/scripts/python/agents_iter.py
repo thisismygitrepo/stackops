@@ -4,7 +4,8 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import (
-    DEFAULT_CLOSE_N_OLD_ITERS,
+    CLOSE_LOOP_INTERVAL_SECONDS,
+    DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
     DEFAULT_TRACK_MAX_ITERATIONS,
     TRACK_INTERVAL_SECONDS,
 )
@@ -20,8 +21,22 @@ def close(
         bool,
         typer.Option("--all", "-a", help="Close old idle tabs in all iter workspaces."),
     ] = False,
+    retain_previous: Annotated[
+        int,
+        typer.Option(
+            "--retain-previous",
+            "-k",
+            min=0,
+            help="Retain the latest iteration plus this many previous iterations.",
+        ),
+    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Show the close plan without closing tabs.")] = False,
+    interval_seconds: Annotated[
+        int,
+        typer.Option("--interval", "-i", min=1, help="Seconds between close passes when --loop is used."),
+    ] = CLOSE_LOOP_INTERVAL_SECONDS,
 ) -> None:
-    """Close old idle Herdr tabs in one iter workspace, or all iter workspaces with --all."""
+    """Safely close old idle iteration tabs after revalidating their live state."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspaces_loop
 
@@ -29,6 +44,9 @@ def close(
             workspace_name=space_name,
             all_workspaces=all_workspaces,
             continuous=continuous,
+            retain_previous=retain_previous,
+            dry_run=dry_run,
+            interval_seconds=interval_seconds,
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
@@ -37,12 +55,14 @@ def close(
         raise typer.Exit(code=1) from error
 
 
-def clean() -> None:
-    """Clean AgentOps cache records under .ai."""
+def clean(
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Show stale iteration records without removing them.")] = False,
+) -> None:
+    """Remove stale iteration records while preserving live and unrelated AgentOps records."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache
 
-        show_clean_agentops_cache(cwd=Path.cwd())
+        show_clean_agentops_cache(cwd=Path.cwd(), dry_run=dry_run)
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
@@ -55,15 +75,15 @@ def track(
         int,
         typer.Option("--interval", "-i", min=1, help="Seconds to sleep between iteration-budget checks."),
     ] = TRACK_INTERVAL_SECONDS,
-    close_n_old_iters: Annotated[
+    retain_previous: Annotated[
         int,
         typer.Option(
-            "--close-n-old-iters",
-            "-x",
+            "--retain-previous",
+            "-k",
             min=0,
-            help="Close idle iter tabs older than the latest iteration plus this many previous iterations.",
+            help="Retain the latest iteration plus this many previous iterations.",
         ),
-    ] = DEFAULT_CLOSE_N_OLD_ITERS,
+    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
 ) -> None:
     """Track an iter Herdr workspace status, close old iteration tabs, and close after budget."""
     try:
@@ -73,7 +93,7 @@ def track(
             workspace_name=space_name,
             max_iterations=max_iterations,
             interval_seconds=interval_seconds,
-            close_n_old_iters=close_n_old_iters,
+            retain_previous=retain_previous,
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
@@ -82,12 +102,22 @@ def track(
         raise typer.Exit(code=1) from error
 
 
-def status() -> None:
+def status(
+    retain_previous: Annotated[
+        int,
+        typer.Option(
+            "--retain-previous",
+            "-k",
+            min=0,
+            help="Evaluate closable tabs while retaining this many previous iterations.",
+        ),
+    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
+) -> None:
     """Show each iter loop's latest iteration agent and live Herdr status."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_iter_status
 
-        show_iter_status()
+        show_iter_status(retain_previous=retain_previous)
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
@@ -95,9 +125,9 @@ def status() -> None:
 
 def get_app() -> typer.Typer:
     iter_app = typer.Typer(help="🔁 <I> Iter workflow maintenance commands", no_args_is_help=True, add_help_option=True, add_completion=False)
-    iter_app.command(name="clean", no_args_is_help=False, short_help="<c> Clean AgentOps cache under .ai")(clean)
+    iter_app.command(name="clean", no_args_is_help=False, short_help="<c> Remove stale iter records under .ai")(clean)
     iter_app.command(name="c", no_args_is_help=False, hidden=True)(clean)
-    iter_app.command(name="close", no_args_is_help=False, short_help="<x> Close old idle Herdr tabs from iter workspaces")(close)
+    iter_app.command(name="close", no_args_is_help=False, short_help="<x> Revalidate and close old idle iter tabs")(close)
     iter_app.command(name="x", no_args_is_help=False, hidden=True)(close)
     iter_app.command(name="track", no_args_is_help=False, short_help="<t> Track status and close after budget")(track)
     iter_app.command(name="t", no_args_is_help=False, hidden=True)(track)

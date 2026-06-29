@@ -137,12 +137,14 @@ Current behavior:
 - `--interactive` enables interactive selection
 - `--command` runs the input as a command
 - `--list` prints the available scripts
+- `--subprocess` runs shell scripts in a child Bash or PowerShell process instead of sourcing them in the caller
 
 Examples:
 
 ```bash
 devops execute --list
 devops execute deploy -s library
+devops execute deploy.sh --subprocess
 devops execute "echo hello" --command
 ```
 

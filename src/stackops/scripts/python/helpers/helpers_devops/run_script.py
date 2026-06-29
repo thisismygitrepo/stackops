@@ -62,14 +62,41 @@ def _append_forwarded_args(shell_script: str, forwarded_args: list[str]) -> str:
     return f"{shell_script.rstrip()} {_quote_script_args(args=forwarded_args)}"
 
 
-def _get_shell_script_invoking_file(script_path: Path, forwarded_args: list[str]) -> str:
+def _get_shell_script_invoking_file(
+    script_path: Path,
+    forwarded_args: list[str],
+    *,
+    run_in_subprocess: bool,
+) -> str:
     import platform
     quoted_args = _quote_script_args(args=forwarded_args)
+    script_suffix = script_path.suffix.casefold()
     match platform.system():
         case "Windows":
-            command_parts = ["&", _quote_script_arg_powershell(str(script_path))]
+            quoted_script_path = _quote_script_arg_powershell(str(script_path))
+            if run_in_subprocess and script_suffix == ".ps1":
+                command_parts = [
+                    "&",
+                    "((Get-Process -Id $PID).Path)",
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    quoted_script_path,
+                ]
+            elif run_in_subprocess and script_suffix == ".sh":
+                command_parts = ["bash", "--", quoted_script_path]
+            else:
+                command_parts = ["&", quoted_script_path]
         case "Linux" | "Darwin":
-            command_parts = ["source", _quote_script_arg_posix(str(script_path))]
+            quoted_script_path = _quote_script_arg_posix(str(script_path))
+            if script_suffix == ".ps1":
+                command_parts = ["pwsh", "-NoLogo", "-NoProfile", "-File", quoted_script_path]
+            elif run_in_subprocess:
+                command_parts = ["bash", "--", quoted_script_path]
+            else:
+                command_parts = ["source", quoted_script_path]
         case platform_name:
             raise NotImplementedError(f"Platform {platform_name} not supported.")
     if quoted_args != "":
@@ -113,6 +140,10 @@ def run_py_script(ctx: typer.Context,
                   interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
                   command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
+                  run_in_subprocess: Annotated[
+                      bool,
+                      typer.Option(..., "--subprocess", help="Run shell scripts in a child shell instead of sourcing them in the caller"),
+                  ] = False,
                   *,
                   forwarded_args: list[str],
                 ) -> None:
@@ -242,7 +273,11 @@ def run_py_script(ctx: typer.Context,
         exit_then_run_shell_script(script=shell_script)
     else:
         from stackops.utils.code import exit_then_run_shell_script
-        shell_script = _get_shell_script_invoking_file(script_path=target_file, forwarded_args=forwarded_args)
+        shell_script = _get_shell_script_invoking_file(
+            script_path=target_file,
+            forwarded_args=forwarded_args,
+            run_in_subprocess=run_in_subprocess,
+        )
         exit_then_run_shell_script(script=shell_script, strict=True)
 
 

@@ -132,8 +132,16 @@ def execute(
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of scripts to run")] = False,
     command: Annotated[bool | None, typer.Option(..., "--command", "-c", help="Run as command")] = False,
     list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
+    run_in_subprocess: Annotated[
+        bool,
+        typer.Option(..., "--subprocess", help="Run shell scripts in a child shell instead of sourcing them in the caller"),
+    ] = False,
 ) -> None:
     """🚀 Execute python/shell scripts from pre-defined directories or as command."""
+    if name == "--help":
+        typer.echo(ctx.get_help())
+        return
+
     import stackops.scripts.python.helpers.helpers_devops.run_script as run_py_script_module
 
     forwarded_args = [str(arg) for arg in ctx.args]
@@ -144,6 +152,7 @@ def execute(
         interactive=interactive,
         command=command,
         list_scripts=list_scripts,
+        run_in_subprocess=run_in_subprocess,
         forwarded_args=forwarded_args,
     )
 
