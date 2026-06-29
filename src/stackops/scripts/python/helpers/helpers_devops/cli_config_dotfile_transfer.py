@@ -60,7 +60,11 @@ def export_dotfiles(
         typer.echo(msg, err=True)
         raise typer.Exit(code=1)
     port = 8888
-    display_with_flashy_style(msg=f"On the remote machine, run:\n d c I -u http://{local_ipv4}:{port} -p {pwd}\n", title="Remote Machine Instructions")
+    display_with_flashy_style(msg=f"""
+On the remote machine, run:
+d c I -u http://{local_ipv4}:{port} -p {pwd}; d c s d -s all -m s -w all
+devops config interactive --url http://{local_ipv4}:{port} -p {pwd}; devops config sync down --sensitivity all --method symlink --which all
+""", title="Remote Machine Instructions")
     cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)
 
 
