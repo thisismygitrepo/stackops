@@ -12,15 +12,14 @@ def developer_repo_root() -> Path | None:
     return None
 
 
-def copy_both_assets() -> None:
+def copy_assets_all() -> None:
     from stackops.profile import create_helper
 
     create_helper.copy_assets_to_machine(which="scripts")
     create_helper.copy_assets_to_machine(which="settings")
 
 
-def copy_assets_and_link_public_configs() -> None:
-    copy_both_assets()
+def link_public_configs() -> None:
     from stackops.profile import create_links_export
 
     create_links_export.main_from_parser(
@@ -28,13 +27,41 @@ def copy_assets_and_link_public_configs() -> None:
     )
 
 
+def configure_default_shell() -> None:
+    from stackops.profile.create_shell_profile import create_default_shell_profile
+
+    create_default_shell_profile()
+
+
 def update(
-    link_public_configs: Annotated[
+    copy_assets: Annotated[
         bool,
-        typer.Option("--link-public-configs", "-b", help="Link public configs after update (overwrites your configs!)"),
+        typer.Option(
+            "--copy-assets", "-a", help="Copy assets to machine after update (scripts + settings, overwrites local assets)."
+        ),
+    ] = False,
+    sync_public: Annotated[
+        bool,
+        typer.Option(
+            "--link-public-configs",
+            "-l",
+            help="Sync public configs down after update (overwrites your configs at their default paths).",
+        ),
+    ] = False,
+    config_shell: Annotated[
+        bool,
+        typer.Option(
+            "--config-shell", "-s", help="Create or configure the default shell profile after update."
+        ),
     ] = False,
 ) -> None:
-    """🔄 UPDATE uv and stackops"""
+    """🔄 UPDATE uv and stackops
+
+    Each flag independently triggers one post-update action:
+    --copy-assets        -> devops config copy-assets all
+    --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
+    --config-shell       -> devops config terminal config-shell --which default
+    """
     dev_repo_root = developer_repo_root()
     if dev_repo_root is not None:
         shell_script = f"""
@@ -42,32 +69,33 @@ uv self update
 cd "{STACKOPS_REPO_DIR}"
 git pull --ff-only
 uv tool install --no-cache --upgrade --editable "{STACKOPS_REPO_DIR}"
-    """
+"""
     else:
         shell_script = """
 uv self update
 uv tool install --no-cache --upgrade stackops
-    """
+"""
     import platform
 
     if platform.system() == "Windows":
-        from stackops.utils.code import exit_then_run_shell_script, get_uv_command_executing_python_script
-        from stackops.utils.meta import lambda_to_python_script
+        from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
 
-        if link_public_configs:
-            python_script = lambda_to_python_script(
-                lambda: copy_assets_and_link_public_configs(),  # pylint: disable=unnecessary-lambda
-                in_global=True,
-                import_module=False,
+        any_post = copy_assets or sync_public or config_shell
+        full_script = shell_script
+        if any_post:
+            def _post_update() -> None:
+                if copy_assets:
+                    copy_assets_all()
+                if sync_public:
+                    link_public_configs()
+                if config_shell:
+                    configure_default_shell()
+
+            uv_command, _py_file = get_shell_script_running_lambda_function(
+                lmb=_post_update, uv_with=["stackops"], uv_project_dir=None
             )
-        else:
-            python_script = lambda_to_python_script(
-                lambda: copy_both_assets(),  # pylint: disable=unnecessary-lambda
-                in_global=True,
-                import_module=False,
-            )
-        uv_command, _py_file = get_uv_command_executing_python_script(python_script=python_script, uv_with=["stackops"], uv_project_dir=None)
-        exit_then_run_shell_script(shell_script + "\n" + uv_command, strict=True)
+            full_script = shell_script + "\n" + uv_command
+        exit_then_run_shell_script(full_script, strict=True)
     else:
         from stackops.utils.code import run_shell_script
 
@@ -75,10 +103,12 @@ uv tool install --no-cache --upgrade stackops
         if proc.returncode != 0:
             typer.echo(f"❌ Update script failed with return code {proc.returncode}")
             raise typer.Exit(code=proc.returncode)
-        if link_public_configs:
-            copy_assets_and_link_public_configs()
-        else:
-            copy_both_assets()
+        if copy_assets:
+            copy_assets_all()
+        if sync_public:
+            link_public_configs()
+        if config_shell:
+            configure_default_shell()
 
 
 def _install_stackops(dev: bool) -> None:

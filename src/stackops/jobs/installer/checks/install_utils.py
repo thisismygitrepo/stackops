@@ -10,6 +10,7 @@ from io import StringIO
 import platform
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import cast
 
 import stackops.utils.path_core as path_core
 from rich.console import Console
@@ -69,14 +70,14 @@ def download_google_drive_file(url: str) -> Path:
 
         # Create a temporary directory for download
         output_dir = path_core.tmpdir(prefix="gdown_")
-        # gdown.download returns the output filename
-        from gdown import download
-        output_file = download(id=file_id, output=str(output_dir) + "/", quiet=False, fuzzy=True)
-        
+        # gdown.download returns the output filename when output is a directory path
+        from gdown.download import download
+        output_file = download(id=file_id, output=str(output_dir) + "/", quiet=False)
+
         if not output_file:
             raise ValueError(f"Download failed for {url}")
-            
-        return Path(output_file)
+
+        return Path(cast(str, output_file))
     except Exception as e:
         raise RuntimeError(f"Failed to download from Google Drive: {e}") from e
 
