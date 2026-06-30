@@ -2,8 +2,6 @@
 """
 Interactive StackOps Setup Script
 
-
-TODO: add option for importing dotfiles
 """
 
 import sys
@@ -224,14 +222,13 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
 
 def main() -> None:
     display_header()
-    selected_options = get_installation_choices()
-    if not selected_options:
+    try:
+        selected_options = get_installation_choices()
+    except KeyboardInterrupt:
         console.print("❌ No options selected. Exiting...", style="bold red")
         sys.exit(0)
-    console.print(f"\n✅ Selected options: {'\n'.join(selected_options)}", style="bold green")
-    proceed = questionary.confirm("🚀 Proceed with installation?", default=True).ask()
-    if not proceed:
-        console.print("❌ Installation cancelled.", style="bold red")
+    if not selected_options:
+        console.print("❌ No options selected. Exiting...", style="bold red")
         sys.exit(0)
     execute_installations(selected_options=selected_options)
     completion_text = Text("INSTALLATION COMPLETE", style="bold green")
