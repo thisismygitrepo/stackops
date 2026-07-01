@@ -132,7 +132,7 @@ def _downloaded_browser_path(browser_root: Path) -> Path | None:
 def _downloaded_browser_relative_path() -> Path | None:
     from choreographer.cli._cli_utils import get_google_supported_platform_string
 
-    platform_string, _, _, _ = get_google_supported_platform_string()
+    platform_string = get_google_supported_platform_string()
     if not platform_string:
         return None
     if platform_string.startswith("linux"):
