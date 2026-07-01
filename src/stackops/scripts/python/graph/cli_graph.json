@@ -8983,12 +8983,34 @@
                 "signature": {
                   "raw_lines": [
                     "def update(",
-                    "    link_public_configs: Annotated[",
+                    "    copy_assets: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--link-public-configs\", \"-b\", help=\"Link public configs after update (overwrites your configs!)\"),",
+                    "        typer.Option(",
+                    "            \"--copy-assets\", \"-a\", help=\"Copy assets to machine after update (scripts + settings, overwrites local assets).\"",
+                    "        ),",
+                    "    ] = False,",
+                    "    sync_public: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--link-public-configs\",",
+                    "            \"-l\",",
+                    "            help=\"Sync public configs down after update (overwrites your configs at their default paths).\",",
+                    "        ),",
+                    "    ] = False,",
+                    "    config_shell: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--config-shell\", \"-s\", help=\"Create or configure the default shell profile after update.\"",
+                    "        ),",
                     "    ] = False,",
                     ") -> None:",
-                    "    \"\"\"🔄 UPDATE uv and stackops\"\"\"",
+                    "    \"\"\"🔄 UPDATE uv and stackops",
+                    "",
+                    "    Each flag independently triggers one post-update action:",
+                    "    --copy-assets        -> devops config copy-assets all",
+                    "    --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all",
+                    "    --config-shell       -> devops config terminal config-shell --which default",
+                    "    \"\"\"",
                     "    dev_repo_root = developer_repo_root()",
                     "    if dev_repo_root is not None:",
                     "        shell_script = f\"\"\"",
@@ -8996,32 +9018,33 @@
                     "cd \"{STACKOPS_REPO_DIR}\"",
                     "git pull --ff-only",
                     "uv tool install --no-cache --upgrade --editable \"{STACKOPS_REPO_DIR}\"",
-                    "    \"\"\"",
+                    "\"\"\"",
                     "    else:",
                     "        shell_script = \"\"\"",
                     "uv self update",
                     "uv tool install --no-cache --upgrade stackops",
-                    "    \"\"\"",
+                    "\"\"\"",
                     "    import platform",
                     "",
                     "    if platform.system() == \"Windows\":",
-                    "        from stackops.utils.code import exit_then_run_shell_script, get_uv_command_executing_python_script",
-                    "        from stackops.utils.meta import lambda_to_python_script",
+                    "        from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
                     "",
-                    "        if link_public_configs:",
-                    "            python_script = lambda_to_python_script(",
-                    "                lambda: copy_assets_and_link_public_configs(),  # pylint: disable=unnecessary-lambda",
-                    "                in_global=True,",
-                    "                import_module=False,",
+                    "        any_post = copy_assets or sync_public or config_shell",
+                    "        full_script = shell_script",
+                    "        if any_post:",
+                    "            def _post_update() -> None:",
+                    "                if copy_assets:",
+                    "                    copy_assets_all()",
+                    "                if sync_public:",
+                    "                    link_public_configs()",
+                    "                if config_shell:",
+                    "                    configure_default_shell()",
+                    "",
+                    "            uv_command, _py_file = get_shell_script_running_lambda_function(",
+                    "                lmb=_post_update, uv_with=[\"stackops\"], uv_project_dir=None",
                     "            )",
-                    "        else:",
-                    "            python_script = lambda_to_python_script(",
-                    "                lambda: copy_both_assets(),  # pylint: disable=unnecessary-lambda",
-                    "                in_global=True,",
-                    "                import_module=False,",
-                    "            )",
-                    "        uv_command, _py_file = get_uv_command_executing_python_script(python_script=python_script, uv_with=[\"stackops\"], uv_project_dir=None)",
-                    "        exit_then_run_shell_script(shell_script + \"\\n\" + uv_command, strict=True)",
+                    "            full_script = shell_script + \"\\n\" + uv_command",
+                    "        exit_then_run_shell_script(full_script, strict=True)",
                     "    else:",
                     "        from stackops.utils.code import run_shell_script",
                     "",
@@ -9029,33 +9052,79 @@
                     "        if proc.returncode != 0:",
                     "            typer.echo(f\"❌ Update script failed with return code {proc.returncode}\")",
                     "            raise typer.Exit(code=proc.returncode)",
-                    "        if link_public_configs:",
-                    "            copy_assets_and_link_public_configs()",
-                    "        else:",
-                    "            copy_both_assets()"
+                    "        if copy_assets:",
+                    "            copy_assets_all()",
+                    "        if sync_public:",
+                    "            link_public_configs()",
+                    "        if config_shell:",
+                    "            configure_default_shell()"
                   ],
                   "name": "update",
                   "parameters": [
                     {
-                      "name": "link_public_configs",
+                      "name": "copy_assets",
                       "kind": "positional_or_keyword",
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--link-public-configs', '-b', help='Link public configs after update (overwrites your configs!)')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--copy-assets', '-a', help='Copy assets to machine after update (scripts + settings, overwrites local assets).')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--copy-assets",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--copy-assets"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Copy assets to machine after update (scripts + settings, overwrites local assets)."
+                      }
+                    },
+                    {
+                      "name": "sync_public",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--link-public-configs', '-l', help='Sync public configs down after update (overwrites your configs at their default paths).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--link-public-configs",
-                          "-b"
+                          "-l"
                         ],
                         "long_flags": [
                           "--link-public-configs"
                         ],
                         "short_flags": [
-                          "-b"
+                          "-l"
                         ],
-                        "help": "Link public configs after update (overwrites your configs!)"
+                        "help": "Sync public configs down after update (overwrites your configs at their default paths)."
+                      }
+                    },
+                    {
+                      "name": "config_shell",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--config-shell', '-s', help='Create or configure the default shell profile after update.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--config-shell",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--config-shell"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Create or configure the default shell profile after update."
                       }
                     }
                   ],
@@ -9064,7 +9133,7 @@
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "🔄 UPDATE uv and stackops",
+                "doc": "🔄 UPDATE uv and stackops\n\nEach flag independently triggers one post-update action:\n--copy-assets        -> devops config copy-assets all\n--link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all\n--config-shell       -> devops config terminal config-shell --which default",
                 "aliases": [
                   {
                     "name": "u",
@@ -10736,6 +10805,7 @@
                 "    rel2home: Annotated[bool, typer.Option(\"--relative2home\", \"-r\", help=\"🏠 Relative to `myhome` folder\")] = defaults[\"rel2home\"],",
                 "    root: Annotated[str, typer.Option(\"--root\", \"-R\", help=\"🌳 Remote root.\")] = defaults[\"root\"],",
                 "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.\")] = defaults[\"pwd\"],",
+                "    password_name: Annotated[str | None, typer.Option(\"--password-name\", \"-P\", help=\"🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encrypt --encryption symmetric.\")] = None,",
                 "    encrypt: Annotated[bool, typer.Option(\"--encrypt\", \"-e\", help=\"🔐 Encrypt before sending.\")] = defaults[\"encrypt\"],",
                 "    encryption: Annotated[EncryptionModeChoice | None, typer.Option(\"--encryption\", \"-E\", help=\"🔐 Encryption mode when --encrypt is set: symmetric/s or asymmetric/a.\")] = defaults[\"encryption\"],",
                 "    zip_: Annotated[bool, typer.Option(\"--zip\", \"-z\", help=\"📦 unzip after receiving.\")] = defaults[\"zip\"],",
@@ -10756,6 +10826,7 @@
                 "        rel2home=rel2home,",
                 "        root=root,",
                 "        pwd=pwd,",
+                "        password_name=password_name,",
                 "        encrypt=encrypt,",
                 "        encryption=encryption,",
                 "        zip_=zip_,",
@@ -10990,6 +11061,28 @@
                       "-p"
                     ],
                     "help": "🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric."
+                  }
+                },
+                {
+                  "name": "password_name",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--password-name', '-P', help='🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encrypt --encryption symmetric.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--password-name",
+                      "-P"
+                    ],
+                    "long_flags": [
+                      "--password-name"
+                    ],
+                    "short_flags": [
+                      "-P"
+                    ],
+                    "help": "🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encrypt --encryption symmetric."
                   }
                 },
                 {

@@ -6,6 +6,7 @@ import pytest
 from typer.testing import CliRunner
 
 import stackops.utils.cloud.rclone as rclone
+from stackops.secrets import passwords
 from stackops.scripts.python import cloud as cloud_cli
 from stackops.scripts.python.helpers.helpers_cloud import cloud_copy
 from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import _resolve_share_options
@@ -107,7 +108,27 @@ def test_cloud_copy_help_uses_record_name_as_recording_trigger() -> None:
     assert result.exit_code == 0
     assert "--record-name" in result.output
     assert "--record-group" in result.output
+    assert "--password-name" in result.output
+    assert re.search(r"--password-name\s+-P", result.output) is not None
     assert re.search(r"(?<![\w-])--record(?![\w-])", result.output) is None
+
+
+def test_cloud_copy_password_name_implies_symmetric_encryption(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_read_named_password(*, password_name: str) -> str:
+        assert password_name == "bitsense"
+        return "not-a-real-secret"
+
+    monkeypatch.setattr(passwords, "read_named_password", fake_read_named_password)
+
+    resolved_password = cloud_copy._resolve_password(pwd=None, password_name="bitsense")
+
+    assert resolved_password == "not-a-real-secret"
+    assert cloud_copy._resolve_encryption_settings(encrypt_requested=False, encryption=None, pwd=resolved_password) == (True, "symmetric")
+
+
+def test_cloud_copy_rejects_literal_and_named_password_together() -> None:
+    with pytest.raises(ValueError, match="cannot be used together"):
+        cloud_copy._resolve_password(pwd="not-a-real-secret", password_name="bitsense")
 
 
 def test_cloud_copy_record_name_records_upload(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -183,6 +204,7 @@ def test_cloud_copy_record_name_records_upload(monkeypatch: pytest.MonkeyPatch, 
         rel2home=False,
         root="myhome",
         pwd=None,
+        password_name=None,
         encrypt=False,
         encryption=None,
         zip_=False,

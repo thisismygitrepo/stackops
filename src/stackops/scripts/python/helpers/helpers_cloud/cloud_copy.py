@@ -65,6 +65,17 @@ def _resolve_encryption_settings(*, encrypt_requested: bool, encryption: str | N
     return True, encryption_mode
 
 
+def _resolve_password(*, pwd: str | None, password_name: str | None) -> str | None:
+    if pwd is not None and password_name is not None:
+        raise ValueError("--password and --password-name cannot be used together.")
+    if password_name is None:
+        return pwd
+
+    from stackops.secrets.passwords import read_named_password
+
+    return read_named_password(password_name=password_name)
+
+
 def _resolve_share_options(*, share_scope: ShareScopeChoice | None, share_type: ShareLinkTypeChoice | None) -> ShareLinkOptions | None:
     if share_scope is None and share_type is None:
         return None
@@ -309,6 +320,7 @@ def main(
     rel2home: bool,
     root: str,
     pwd: str | None,
+    password_name: str | None,
     encrypt: bool,
     encryption: str | None,
     zip_: bool,
@@ -323,10 +335,11 @@ def main(
     original_target = target
 
     try:
-        encrypt_effective, encryption_mode = _resolve_encryption_settings(encrypt_requested=encrypt, encryption=encryption, pwd=pwd)
+        resolved_pwd = _resolve_password(pwd=pwd, password_name=password_name)
+        encrypt_effective, encryption_mode = _resolve_encryption_settings(encrypt_requested=encrypt, encryption=encryption, pwd=resolved_pwd)
         share_options = _resolve_share_options(share_scope=share_scope, share_type=share_type)
         resolved_record_name = _resolve_record_name(record_name)
-    except ValueError as error:
+    except (TypeError, ValueError) as error:
         console.print(Panel(f"❌ ERROR: Invalid cloud copy configuration\n{error}", title="[bold red]Error[/bold red]", border_style="red", width=152))
         raise SystemExit(1) from None
 
@@ -336,7 +349,7 @@ def main(
         share=share_options is not None,
         rel2home=rel2home,
         root=root,
-        pwd=pwd,
+        pwd=resolved_pwd,
         encrypt=encrypt_effective,
         encryption=encryption_mode,
         zip=zip_,
