@@ -2,11 +2,7 @@ import pytest
 
 from stackops.profile.dotfiles_mapper import OsName
 from stackops.scripts.python.helpers.helpers_cloud.backup_config import BackupConfig, BackupItem
-from stackops.scripts.python.helpers.helpers_cloud.backup_selection import (
-    BackupEntryKey,
-    parse_backup_entry_selectors,
-    resolve_backup_entry_keys,
-)
+from stackops.scripts.python.helpers.helpers_cloud.backup_selection import BackupEntryKey, parse_backup_entry_selectors, resolve_backup_entry_keys
 
 
 def test_resolve_backup_entry_keys_combines_specific_entries_and_whole_groups() -> None:
@@ -28,10 +24,7 @@ def test_resolve_backup_entry_keys_deduplicates_overlapping_selectors() -> None:
     selectors = parse_backup_entry_selectors("alpha.two,alpha,alpha.two")
     selected_keys = resolve_backup_entry_keys(config=config, selectors=selectors)
 
-    assert selected_keys == [
-        BackupEntryKey(group_name="alpha", item_name="two"),
-        BackupEntryKey(group_name="alpha", item_name="one"),
-    ]
+    assert selected_keys == [BackupEntryKey(group_name="alpha", item_name="two"), BackupEntryKey(group_name="alpha", item_name="one")]
 
 
 @pytest.mark.parametrize("which", ["", "alpha,", ",alpha", "alpha,,beta", "all,alpha"])
