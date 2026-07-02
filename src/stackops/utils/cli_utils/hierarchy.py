@@ -11,8 +11,6 @@ if TYPE_CHECKING:
         StackOpsDevopsReposGuardCommand,
         StackOpsDevopsReposVizCommand,
         StackOpsDevopsReposCountLinesCommand,
-        StackOpsDevopsReposConfigLintersCommand,
-        StackOpsDevopsReposCleanupCommand,
         StackOpsDevopsReposSubcommands,
         StackOpsDevopsReposCommand,
         StackOpsDevopsConfigSyncCommand,
@@ -141,6 +139,8 @@ if TYPE_CHECKING:
         StackOpsUtilsPyprojectUpgradePackagesCommand,
         StackOpsUtilsPyprojectTypeHintCommand,
         StackOpsUtilsPyprojectTypeCheckCommand,
+        StackOpsUtilsPyprojectConfigLintersCommand,
+        StackOpsUtilsPyprojectCleanupCommand,
         StackOpsUtilsPyprojectTypeFixCommand,
         StackOpsUtilsPyprojectTestRuntimeCommand,
         StackOpsUtilsPyprojectTestReferenceCommand,
@@ -221,20 +221,6 @@ STACKOPS_DEVOPS_REPOS_COUNT_LINES_COMMAND: "StackOpsDevopsReposCountLinesCommand
     "subcommands": {},
 }
 
-STACKOPS_DEVOPS_REPOS_CONFIG_LINTERS_COMMAND: "StackOpsDevopsReposConfigLintersCommand" = {
-    "command_name": "config-linters",
-    "short_name": "l",
-    "help": "🧰 <l> Add linter config files to a git repository",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_REPOS_CLEANUP_COMMAND: "StackOpsDevopsReposCleanupCommand" = {
-    "command_name": "cleanup",
-    "short_name": "n",
-    "help": "🧹 <n> Clean repository directories from cache files",
-    "subcommands": {},
-}
-
 STACKOPS_DEVOPS_REPOS_SUBCOMMANDS: "StackOpsDevopsReposSubcommands" = {
     "sync": STACKOPS_DEVOPS_REPOS_SYNC_COMMAND,
     "register": STACKOPS_DEVOPS_REPOS_REGISTER_COMMAND,
@@ -243,8 +229,6 @@ STACKOPS_DEVOPS_REPOS_SUBCOMMANDS: "StackOpsDevopsReposSubcommands" = {
     "guard": STACKOPS_DEVOPS_REPOS_GUARD_COMMAND,
     "viz": STACKOPS_DEVOPS_REPOS_VIZ_COMMAND,
     "count-lines": STACKOPS_DEVOPS_REPOS_COUNT_LINES_COMMAND,
-    "config-linters": STACKOPS_DEVOPS_REPOS_CONFIG_LINTERS_COMMAND,
-    "cleanup": STACKOPS_DEVOPS_REPOS_CLEANUP_COMMAND,
 }
 
 STACKOPS_DEVOPS_REPOS_COMMAND: "StackOpsDevopsReposCommand" = {
@@ -1170,6 +1154,20 @@ STACKOPS_UTILS_PYPROJECT_TYPE_CHECK_COMMAND: "StackOpsUtilsPyprojectTypeCheckCom
     "subcommands": {},
 }
 
+STACKOPS_UTILS_PYPROJECT_CONFIG_LINTERS_COMMAND: "StackOpsUtilsPyprojectConfigLintersCommand" = {
+    "command_name": "config-linters",
+    "short_name": "l",
+    "help": "🧰 <l> Add linter config files to a git repository",
+    "subcommands": {},
+}
+
+STACKOPS_UTILS_PYPROJECT_CLEANUP_COMMAND: "StackOpsUtilsPyprojectCleanupCommand" = {
+    "command_name": "cleanup",
+    "short_name": "n",
+    "help": "🧹 <n> Clean repository directories from cache files",
+    "subcommands": {},
+}
+
 STACKOPS_UTILS_PYPROJECT_TYPE_FIX_COMMAND: "StackOpsUtilsPyprojectTypeFixCommand" = {
     "command_name": "type-fix",
     "short_name": "f",
@@ -1196,6 +1194,8 @@ STACKOPS_UTILS_PYPROJECT_SUBCOMMANDS: "StackOpsUtilsPyprojectSubcommands" = {
     "upgrade-packages": STACKOPS_UTILS_PYPROJECT_UPGRADE_PACKAGES_COMMAND,
     "type-hint": STACKOPS_UTILS_PYPROJECT_TYPE_HINT_COMMAND,
     "type-check": STACKOPS_UTILS_PYPROJECT_TYPE_CHECK_COMMAND,
+    "config-linters": STACKOPS_UTILS_PYPROJECT_CONFIG_LINTERS_COMMAND,
+    "cleanup": STACKOPS_UTILS_PYPROJECT_CLEANUP_COMMAND,
     "type-fix": STACKOPS_UTILS_PYPROJECT_TYPE_FIX_COMMAND,
     "test-runtime": STACKOPS_UTILS_PYPROJECT_TEST_RUNTIME_COMMAND,
     "test-reference": STACKOPS_UTILS_PYPROJECT_TEST_REFERENCE_COMMAND,

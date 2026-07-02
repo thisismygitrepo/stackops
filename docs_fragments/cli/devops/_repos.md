@@ -19,8 +19,6 @@ Current `devops repos --help` exposes:
 | `guard` | Securely sync a git repository to and from cloud storage with encryption |
 | `viz` | Visualize repository activity using Gource |
 | `count-lines` | Count current Python lines and historical edits |
-| `config-linters` | Add linter config files to a git repository |
-| `cleanup` | Clean repository directories from cache files |
 
 ### sync
 
@@ -193,55 +191,6 @@ Example:
 
 ```bash
 devops repos count-lines ~/code/stackops
-```
-
-### config-linters
-
-Copy standard linter config files into a git repository.
-
-```bash
-devops repos config-linters [DIRECTORY] [OPTIONS]
-```
-
-Key options from current help:
-
-| Option | Description |
-|--------|-------------|
-| `--linter`, `-t` | Restrict the copy to `ruff`, `mypy`, `pylint`, `flake8`, or `ty` |
-
-Without `--linter`, stackops copies the full supported set of linter config files.
-
-Examples:
-
-```bash
-devops repos config-linters ~/code/myrepo
-devops repos config-linters ~/code/myrepo --linter ruff
-```
-
-### cleanup
-
-Clean repository directories from cache files.
-
-```bash
-devops repos cleanup [REPO] [OPTIONS]
-```
-
-Key options from current help:
-
-| Option | Description |
-|--------|-------------|
-| `--recursive`, `-r` | Recurse into nested repositories under the given directory |
-
-Without `--recursive`, the target must already be a git repository. With `--recursive`, stackops searches for nested `.git` directories and cleans each repository it finds.
-
-Examples:
-
-```bash
-# Clean one repo
-devops repos cleanup ~/code/stackops
-
-# Clean every repo below a root directory
-devops repos cleanup ~/code --recursive
 ```
 
 The nested help screens render shortened usage such as `devops sync ...`, `devops action ...`, or `devops viz ...`, but the full entrypoints remain `devops repos sync ...`, `devops repos action ...`, and `devops repos viz ...`.

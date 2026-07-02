@@ -14,7 +14,7 @@ Current `devops data --help` exposes:
 |---------|-------------|
 | `sync` | Generate backup or retrieve commands through `cloud copy` |
 | `register` | Add or update a backup entry in the user data-mapping file |
-| `subset` | Interactively select entries and write a standalone data-mapping file |
+| `subset` | Select entries interactively or with `--which` and write a standalone data-mapping file |
 | `edit` | Open the user or library backup configuration file |
 
 ### sync
@@ -95,13 +95,13 @@ If `--name` is omitted, the command generates one from the local path and OS fil
 
 ### subset
 
-Interactively choose backup entries and write them to a separate YAML configuration.
+Choose backup entries and write them to a separate YAML configuration.
 
 ```bash
 devops data subset OUTPUT_PATH [OPTIONS]
 ```
 
-The command opens a multi-select `tv` picker and preserves each selected entry's group. It reads the user configuration by default; use `--source library` or `-s l` to select from the packaged library configuration.
+The command preserves each selected entry's group. Without `--which`, it opens a multi-select `tv` picker. For non-interactive use, pass comma-separated selectors: `group.item` selects one entry, a bare `group` selects every entry in that group, and `all` selects every entry. It reads the user configuration by default; use `--source library` or `-s l` to select from the packaged library configuration.
 
 Output handling is strict:
 
@@ -119,6 +119,9 @@ devops data subset ./laptop-data.yaml
 
 # Select entries from the packaged library
 devops data subset ./linux-data.yaml --source library
+
+# Select one dotfiles entry and the complete history group without opening the picker
+devops data subset ./laptop-data.yaml --which dotfiles.wezterm,history
 
 # Add newly selected entries to an existing output file
 devops data subset ./laptop-data.yaml --on-conflict append

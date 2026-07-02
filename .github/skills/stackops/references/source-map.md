@@ -60,8 +60,6 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops repos guard` -> `src/stackops/scripts/python/helpers/helpers_repos/cloud_repo_sync.py` -> `main`
 - `devops repos viz` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py` -> `gource_viz`
 - `devops repos count-lines` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py` -> `count_lines_in_repo`
-- `devops repos config-linters` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `config_linters`
-- `devops repos cleanup` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py` -> `cleanup`
 - `devops config sync` -> `src/stackops/profile/create_links_export.py` -> `main_from_parser`
 - `devops config register` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_mapper.py` -> `register_dotfile`
 - `devops config edit` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_mapper.py` -> `edit_dotfile`
@@ -176,6 +174,8 @@ Use this map to jump from a command path to the file that registers or implement
 - `utils pyproject upgrade-packages` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_setup.py` -> `upgrade_packages`
 - `utils pyproject type-hint` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_setup.py` -> `type_hint`
 - `utils pyproject type-check` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_check.py` -> `type_check`
+- `utils pyproject config-linters` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py` -> `config_linters`
+- `utils pyproject cleanup` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py` -> `cleanup`
 - `utils pyproject test-reference` -> `src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_check.py` -> `reference_test`
 - `utils file edit` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `edit_file_with_hx`
 - `utils file download` -> `src/stackops/scripts/python/helpers/helpers_utils/file_utils_app.py` -> `download`

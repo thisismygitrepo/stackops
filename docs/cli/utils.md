@@ -64,6 +64,8 @@ utils pyproject [OPTIONS] COMMAND [ARGS]...
 | `type-hint` | Type-hint a file or project directory |
 | `type-check` | Run the lint-and-type-check suite for a repository |
 | `check-deps` | Check Python import dependencies and cycles with `pyan3` or `pydeps` |
+| `config-linters` | Add standard linter configuration files to a git repository |
+| `cleanup` | Clean cache files from one or more git repositories |
 | `test-reference` | Validate `_PATH_REFERENCE` targets in a repository |
 | `type-fix` | Create and optionally launch an agent layout from `./.ai/linters/issues_<checker>.md` |
 | `test-runtime` | Create and optionally launch an agent layout for runtime-test generation |
@@ -76,6 +78,8 @@ Key behavior:
 - `type-check [REPO]` resolves the repository root from the nearest `pyproject.toml` and passes exclusions through the lint/type-check script.
 - If `--exclude` is omitted, `type-check` currently defaults to excluding `tests`, `.github`, `.codex`, `.ai`, `.links`, and `.venv`.
 - `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, emits JSON/JSONIC by default, can write interactive HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups.
+- `config-linters [DIRECTORY]` writes the standard `ruff`, `mypy`, `pylint`, `flake8`, and `ty` configurations at the git working-tree root. Use `--linter/-t` to select one; existing divergent files are never overwritten.
+- `cleanup [REPO]` cleans one git working tree by default. Use `--recursive/-r` to discover and clean repositories below a directory.
 - `test-reference [REPO]` supports `--search-root` and `--verbose`.
 - `type-fix` is a nested app whose callback runs when invoked with no subcommand. It accepts `--agent`, `--agent-load`, `--which-checker`/`--which`, and `--max-agents`, generates a layout under `./.ai/agents/fix_<checker>_issues/`, then prompts to run it.
 - `test-runtime` runs from the current directory, writes context to `.ai/agents/test_runtime/context.md`, skips hidden paths, `.venv`, and existing repo test files, then prompts to run the generated layout.
@@ -90,6 +94,9 @@ utils pyproject type-hint src/my_module.py
 utils pyproject type-check . --exclude tests --exclude .venv
 utils pyproject check-deps . --backend pyan --output html
 utils pyproject check-deps src/my_package --backend pydeps --focus my_package --edge-filter dual
+utils pyproject config-linters ~/code/myrepo --linter ruff
+utils pyproject cleanup ~/code/stackops
+utils pyproject cleanup ~/code --recursive
 utils pyproject test-reference . --verbose
 utils pyproject type-fix --which-checker pyright --agent codex
 utils pyproject test-runtime --agent codex --agent-load 5
@@ -147,6 +154,8 @@ utils machine --help
 utils machine mount --help
 utils pyproject --help
 utils pyproject type-check --help
+utils pyproject config-linters --help
+utils pyproject cleanup --help
 utils pyproject test-reference --help
 utils pyproject type-fix --help
 utils pyproject test-runtime --help

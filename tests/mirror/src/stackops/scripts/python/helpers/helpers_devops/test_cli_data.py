@@ -31,6 +31,8 @@ def test_data_subset_help_exposes_source_and_conflict_options() -> None:
     assert "-s" in result.output
     assert "--on-conflict" in result.output
     assert "-o" in result.output
+    assert "--which" in result.output
+    assert "-w" in result.output
     assert "--append" not in result.output
     assert "--overwrite" not in result.output
     assert "Create a backup configuration from selected data entries." in alias_result.output

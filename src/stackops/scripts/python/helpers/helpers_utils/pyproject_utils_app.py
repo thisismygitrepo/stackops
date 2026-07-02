@@ -3,6 +3,10 @@ import typer
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_deps import (
     check_deps,
 )
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_maintenance import (
+    cleanup,
+    config_linters,
+)
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_check import (
     reference_test,
     type_check,
@@ -34,6 +38,10 @@ def get_app() -> typer.Typer:
     pyproject_app.command(name="c", no_args_is_help=False, hidden=True)(type_check)
     pyproject_app.command(name="check-deps", no_args_is_help=False, help="🔗 <d> Check Python import dependencies and cycles.")(check_deps)
     pyproject_app.command(name="d", no_args_is_help=False, hidden=True)(check_deps)
+    pyproject_app.command(name="config-linters", no_args_is_help=False, help="🧰 <l> Add linter config files to a git repository")(config_linters)
+    pyproject_app.command(name="l", no_args_is_help=False, hidden=True)(config_linters)
+    pyproject_app.command(name="cleanup", no_args_is_help=False, help="🧹 <n> Clean repository directories from cache files")(cleanup)
+    pyproject_app.command(name="n", no_args_is_help=False, hidden=True)(cleanup)
     pyproject_app.add_typer(type_fix_module.get_app(), name="type-fix", help="🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.")
     pyproject_app.add_typer(type_fix_module.get_app(), name="f", hidden=True)
 

@@ -21,6 +21,7 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     os_applies,
     read_backup_config,
 )
+from stackops.scripts.python.helpers.helpers_cloud.backup_selection import parse_backup_entry_selectors, resolve_backup_entry_keys
 from stackops.scripts.python.helpers.helpers_cloud.backup_registration import all_os_values
 from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
 
@@ -114,15 +115,6 @@ def _retrieve_from_share_url(
 
 
 
-def _parse_requested_backup_entries(which: str) -> list[str]:
-    choices = [token.strip() for token in which.split(",")]
-    if not choices or any(not token for token in choices):
-        raise ValueError("Invalid --which value: expected a comma-separated list of non-empty group or group.item names, or 'all'.")
-    if "all" in choices and len(choices) != 1:
-        raise ValueError("Invalid --which value: 'all' cannot be combined with other entries.")
-    return choices
-
-
 def main_backup_retrieve(
     direction: DIRECTION,
     which: str | None,
@@ -183,13 +175,14 @@ def main_backup_retrieve(
 
     if which is None:
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-        choices = choose_from_dict_with_preview(
+        interactive_choices = choose_from_dict_with_preview(
             options_to_preview_mapping=bu_file, extension="yaml", multi=True, preview_size_percent=75.0,
         )
-        if len(choices) == 0:
+        if len(interactive_choices) == 0:
             raise ValueError("No backup entries selected.")
+        choices = tuple(interactive_choices)
     else:
-        choices = _parse_requested_backup_entries(which)
+        choices = parse_backup_entry_selectors(which)
         console.print(Panel(f"🔖 PRE-SELECTED ITEMS\n📝 Using: {', '.join(choices)}", title="[bold blue]Pre-selected Items[/bold blue]", border_style="blue"))
 
     items: BackupConfig
@@ -198,23 +191,9 @@ def main_backup_retrieve(
         console.print(Panel(f"📋 PROCESSING ALL ENTRIES\n🔢 Total entries to process: {sum(len(item) for item in bu_file.values())}", title="[bold blue]Process All Entries[/bold blue]", border_style="blue"))
     else:
         items = {}
-        unknown: list[str] = []
-        for choice in choices:
-            if not choice:
-                continue
-            if choice in bu_file:
-                items[choice] = bu_file[choice]
-                continue
-            if "." in choice:
-                group_name, item_name = choice.split(".", 1)
-                if group_name in bu_file and item_name in bu_file[group_name]:
-                    items.setdefault(group_name, {})[item_name] = bu_file[group_name][item_name]
-                    continue
-            unknown.append(choice)
-        if unknown:
-            raise ValueError(f"Unknown backup entries: {', '.join(unknown)}")
-        if not items:
-            raise ValueError("No backup entries selected.")
+        selected_keys = resolve_backup_entry_keys(config=bu_file, selectors=choices)
+        for selected_key in selected_keys:
+            items.setdefault(selected_key.group_name, {})[selected_key.item_name] = bu_file[selected_key.group_name][selected_key.item_name]
         console.print(Panel(f"📋 PROCESSING SELECTED ENTRIES\n🔢 Total entries to process: {sum(len(item) for item in items.values())}", title="[bold blue]Process Selected Entries[/bold blue]", border_style="blue"))
     if use_link_retrieve:
         _validate_use_link_items(items)

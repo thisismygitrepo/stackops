@@ -63,8 +63,6 @@ These are the child commands exposed by the current live help.
 - `guard`
 - `viz`
 - `count-lines`
-- `config-linters`
-- `cleanup`
 
 `config`:
 

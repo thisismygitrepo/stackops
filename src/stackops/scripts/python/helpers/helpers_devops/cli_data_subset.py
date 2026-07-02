@@ -1,5 +1,4 @@
 from copy import deepcopy
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -14,6 +13,11 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     BackupItem,
     load_backup_config_file,
 )
+from stackops.scripts.python.helpers.helpers_cloud.backup_selection import (
+    BackupEntryKey,
+    parse_backup_entry_selectors,
+    resolve_backup_entry_keys,
+)
 from stackops.scripts.python.helpers.helpers_devops.cli_data_subset_io import load_existing_subset_output, write_subset_output
 from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import InteractivePickerOption, choose_interactive_options
 from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import (
@@ -26,14 +30,16 @@ from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import (
 DATA_SUBSET_HELP = "Create a backup configuration from selected data entries."
 
 
-@dataclass(frozen=True)
-class BackupEntryKey:
-    group_name: str
-    item_name: str
-
-
 def subset(
     output_path: Annotated[Path, typer.Argument(help="Output data YAML path. Default mode creates a new file and refuses existing paths.")],
+    which: Annotated[
+        str | None,
+        typer.Option(
+            "--which",
+            "-w",
+            help="Comma-separated group or group.item selectors, or 'all'. A group selects all its entries; omit to choose interactively.",
+        ),
+    ] = None,
     source: Annotated[
         CONFIG_FILE_SOURCE_LOOSE,
         typer.Option("--source", "-s", case_sensitive=False, help="Source backup configuration file to read: user/u or library/l."),
@@ -56,13 +62,21 @@ def subset(
         source_path=source_path,
         output_path=resolve_subset_output_path(output_path),
         on_conflict=SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict],
+        which=which,
     )
 
 
-def subset_data_file(source_path: Path, output_path: Path, *, on_conflict: SubsetOutputConflictAction) -> None:
+def subset_data_file(source_path: Path, output_path: Path, *, on_conflict: SubsetOutputConflictAction, which: str | None) -> None:
     source_config = _load_source_config(source_path)
     load_existing_subset_output(source_path=source_path, output_path=output_path, on_conflict=on_conflict)
-    selected_keys = _choose_subset_entry_keys(config=source_config, source_path=source_path)
+    if which is None:
+        selected_keys = _choose_subset_entry_keys(config=source_config, source_path=source_path)
+    else:
+        try:
+            selectors = parse_backup_entry_selectors(which)
+            selected_keys = resolve_backup_entry_keys(config=source_config, selectors=selectors)
+        except ValueError as exc:
+            _fail(str(exc))
     selected_config = _build_selected_config(source_config=source_config, selected_keys=selected_keys)
     existing_output_config = load_existing_subset_output(source_path=source_path, output_path=output_path, on_conflict=on_conflict)
     output_config = _merge_output_config(existing_output_config=existing_output_config, selected_config=selected_config)
@@ -141,7 +155,7 @@ def _build_selected_config(*, source_config: BackupConfig, selected_keys: list[B
             selected_config[group_name] = selected_group
     selected_count = sum(len(group) for group in selected_config.values())
     if selected_count != len(selected_key_set):
-        _fail("Interactive selection did not map to every selected backup configuration entry.")
+        _fail("Selection did not map to every selected backup configuration entry.")
     return selected_config
 
 

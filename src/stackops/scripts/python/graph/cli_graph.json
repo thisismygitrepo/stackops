@@ -850,7 +850,9 @@
                     "        case \"user\":",
                     "            source_path = USER_BACKUP_PATH",
                     "    subset_data_file(",
-                    "        source_path=source_path, output_path=resolve_subset_output_path(output_path), on_conflict=resolve_subset_output_conflict_action(on_conflict)",
+                    "        source_path=source_path,",
+                    "        output_path=resolve_subset_output_path(output_path),",
+                    "        on_conflict=SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict],",
                     "    )"
                   ],
                   "name": "subset",
@@ -2585,256 +2587,6 @@
                     "name": "c",
                     "hidden": true,
                     "help": "Count python lines of code in current repo + historical edits."
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "config-linters",
-                "fullPath": "devops repos config-linters",
-                "shortPath": "d r l",
-                "help": "🧰 <l> Add linter config files to a git repository",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
-                  "callable": "config_linters"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def config_linters(",
-                    "    directory: Annotated[str, typer.Argument(help=\"📁 Git repository directory to configure.\")] = \".\",",
-                    "    linter: Annotated[str | None, typer.Option(\"--linter\", \"-t\", help=\"Linter to configure: ruff, mypy, pylint, flake8, ty.\")] = None,",
-                    ") -> None:",
-                    "    \"\"\"🧰 Add linter config files to a git repository.\"\"\"",
-                    "    target_dir = Path(directory).expanduser().absolute().resolve()",
-                    "    if not target_dir.exists():",
-                    "        typer.echo(f\"❌ Path does not exist: {target_dir}\")",
-                    "        raise typer.Exit(code=1)",
-                    "    if not target_dir.is_dir():",
-                    "        typer.echo(f\"❌ Path is not a directory: {target_dir}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    from git import Repo, InvalidGitRepositoryError",
-                    "",
-                    "    try:",
-                    "        repo = Repo(str(target_dir), search_parent_directories=True)",
-                    "    except InvalidGitRepositoryError as exc:",
-                    "        typer.echo(f\"❌ {target_dir} is not within a git repository. Pass a path inside a git repo and retry.\")",
-                    "        raise typer.Exit(code=1) from exc",
-                    "",
-                    "    if repo.working_tree_dir is None:",
-                    "        typer.echo(f\"❌ {target_dir} is inside a bare git repository. Pass a working tree path and retry.\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    repo_root = Path(repo.working_tree_dir).resolve()",
-                    "    templates_dir = Path(__file__).resolve().parents[4].joinpath(\"settings\", \"linters\")",
-                    "    if not templates_dir.exists():",
-                    "        typer.echo(f\"❌ Linter template directory not found: {templates_dir}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    linter_to_file: dict[str, str] = {\"flake8\": \".flake8\", \"mypy\": \".mypy.ini\", \"pylint\": \".pylintrc\", \"ruff\": \".ruff.toml\", \"ty\": \"ty.toml\"}",
-                    "    available_linters: list[str] = sorted(linter_to_file.keys())",
-                    "",
-                    "    if linter is not None and linter not in linter_to_file:",
-                    "        typer.echo(f\"❌ Unsupported linter '{linter}'. Choose one of: {', '.join(available_linters)}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    selected_linters: list[str]",
-                    "    if linter is not None:",
-                    "        selected_linters = [linter]",
-                    "    else:",
-                    "        selected_linters = available_linters",
-                    "",
-                    "    for selected_linter in selected_linters:",
-                    "        file_name = linter_to_file[selected_linter]",
-                    "        source = templates_dir.joinpath(file_name)",
-                    "        if not source.exists():",
-                    "            typer.echo(f\"❌ Linter template not found: {source}\")",
-                    "            raise typer.Exit(code=1)",
-                    "        template_content = source.read_text(encoding=\"utf-8\")",
-                    "        destination = repo_root.joinpath(file_name)",
-                    "        if destination.exists():",
-                    "            if not destination.is_file():",
-                    "                typer.echo(f\"❌ Refusing to overwrite non-file path: {destination}\")",
-                    "                raise typer.Exit(code=1)",
-                    "            if destination.read_text(encoding=\"utf-8\") == template_content:",
-                    "                typer.echo(f\"ℹ️ {file_name} already matches the template in {repo_root}\")",
-                    "                continue",
-                    "            typer.echo(f\"❌ Refusing to overwrite existing {file_name} in {repo_root}. Remove it or update it manually.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        destination.write_text(template_content, encoding=\"utf-8\")",
-                    "        typer.echo(f\"✅ Added {file_name} to {repo_root}\")"
-                  ],
-                  "name": "config_linters",
-                  "parameters": [
-                    {
-                      "name": "directory",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": ".",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='📁 Git repository directory to configure.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "📁 Git repository directory to configure."
-                      }
-                    },
-                    {
-                      "name": "linter",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--linter', '-t', help='Linter to configure: ruff, mypy, pylint, flake8, ty.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--linter",
-                          "-t"
-                        ],
-                        "long_flags": [
-                          "--linter"
-                        ],
-                        "short_flags": [
-                          "-t"
-                        ],
-                        "help": "Linter to configure: ruff, mypy, pylint, flake8, ty."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "doc": "🧰 Add linter config files to a git repository.",
-                "aliases": [
-                  {
-                    "name": "l",
-                    "hidden": true,
-                    "help": "Add linter config files to a git repository"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "cleanup",
-                "fullPath": "devops repos cleanup",
-                "shortPath": "d r n",
-                "help": "🧹 <n> Clean repository directories from cache files",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
-                  "callable": "cleanup"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def cleanup(",
-                    "    repo: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
-                    "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"🔍 Recurse into nested repositories.\")] = False,",
-                    ") -> None:",
-                    "    \"\"\"🧹 Clean repository directories from cache files.\"\"\"",
-                    "    from shlex import quote",
-                    "",
-                    "    if repo is None:",
-                    "        repo = Path.cwd().as_posix()",
-                    "",
-                    "    arg_path = Path(repo).expanduser().absolute().resolve()",
-                    "    if not arg_path.exists():",
-                    "        typer.echo(f\"❌ Path does not exist: {arg_path}\")",
-                    "        raise typer.Exit(code=1)",
-                    "    if not arg_path.is_dir():",
-                    "        typer.echo(f\"❌ Path is not a directory: {arg_path}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    from git import InvalidGitRepositoryError, Repo",
-                    "",
-                    "    if not recursive:",
-                    "        # Check if the directory is a git repo",
-                    "        try:",
-                    "            repo_obj = Repo(str(arg_path), search_parent_directories=False)",
-                    "        except InvalidGitRepositoryError:",
-                    "            typer.echo(f\"❌ {arg_path} is not a git repository. Use -r flag for recursive cleanup.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        if repo_obj.working_tree_dir is None:",
-                    "            typer.echo(f\"❌ {arg_path} is inside a bare git repository. Pass a working tree root and retry.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        repo_root = Path(repo_obj.working_tree_dir).resolve()",
-                    "        if arg_path != repo_root:",
-                    "            typer.echo(f\"❌ {arg_path} is not a git working tree root. Pass the repository root or use -r for recursive cleanup.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        # Run cleanup on this repo",
-                    "        repos_to_clean = [repo_root]",
-                    "    else:",
-                    "        # Find all git repos recursively under the directory",
-                    "        git_dirs = list(arg_path.rglob(\".git\"))",
-                    "        repos_to_clean = [git_dir.parent for git_dir in git_dirs if git_dir.is_dir() or git_dir.is_file()]",
-                    "        if not repos_to_clean:",
-                    "            typer.echo(f\"❌ No git repositories found under {arg_path}\")",
-                    "            raise typer.Exit(code=1)",
-                    "",
-                    "    for repo_path in repos_to_clean:",
-                    "        typer.echo(f\"🧹 Cleaning {repo_path}\")",
-                    "        script = rf\"\"\"",
-                    "cd {quote(repo_path.as_posix())}",
-                    "uv run --no-project --with cleanpy cleanpy .",
-                    "# mcinit .",
-                    "# find \".\" -type f \\( -name \"*.py\" -o -name \"*.md\" -o -name \"*.json\" \\) -not -path \"*/\\.*\" -not -path \"*/__pycache__/*\" -print0 | xargs -0 sed -i 's/[[:space:]]*$//'",
-                    "\"\"\"",
-                    "        from stackops.utils.code import run_shell_script",
-                    "",
-                    "        result = run_shell_script(script, display_script=True, clean_env=False)",
-                    "        if result.returncode != 0:",
-                    "            raise typer.Exit(code=result.returncode)"
-                  ],
-                  "name": "cleanup",
-                  "parameters": [
-                    {
-                      "name": "repo",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='📁 Directory containing repo(s).')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "📁 Directory containing repo(s)."
-                      }
-                    },
-                    {
-                      "name": "recursive",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--recursive', '-r', help='🔍 Recurse into nested repositories.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--recursive",
-                          "-r"
-                        ],
-                        "long_flags": [
-                          "--recursive"
-                        ],
-                        "short_flags": [
-                          "-r"
-                        ],
-                        "help": "🔍 Recurse into nested repositories."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "doc": "🧹 Clean repository directories from cache files.",
-                "aliases": [
-                  {
-                    "name": "n",
-                    "hidden": true,
-                    "help": "Clean repository directories from cache files"
                   }
                 ]
               }
@@ -4698,7 +4450,7 @@
                         "    \"\"\"📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict.\"\"\"",
                         "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
                         "    resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)",
-                        "    resolved_on_conflict = cli_subset_support.resolve_subset_output_conflict_action(on_conflict=on_conflict)",
+                        "    resolved_on_conflict = cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]",
                         "    secret_actions.subset_secrets_file(",
                         "        source_path=secret_source.path,",
                         "        output_path=resolved_output_path,",
@@ -19236,6 +18988,244 @@
                 "aliases": [
                   {
                     "name": "d",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "config-linters",
+                "fullPath": "utils pyproject config-linters",
+                "shortPath": "u p l",
+                "help": "🧰 <l> Add linter config files to a git repository",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_maintenance",
+                  "callable": "config_linters"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def config_linters(",
+                    "    directory: Annotated[str, typer.Argument(help=\"📁 Git repository directory to configure.\")] = \".\",",
+                    "    linter: Annotated[str | None, typer.Option(\"--linter\", \"-t\", help=\"Linter to configure: ruff, mypy, pylint, flake8, ty.\")] = None,",
+                    ") -> None:",
+                    "    target_dir = Path(directory).expanduser().absolute().resolve()",
+                    "    if not target_dir.exists():",
+                    "        typer.echo(f\"❌ Path does not exist: {target_dir}\")",
+                    "        raise typer.Exit(code=1)",
+                    "    if not target_dir.is_dir():",
+                    "        typer.echo(f\"❌ Path is not a directory: {target_dir}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    from git import InvalidGitRepositoryError, Repo",
+                    "",
+                    "    try:",
+                    "        repo = Repo(str(target_dir), search_parent_directories=True)",
+                    "    except InvalidGitRepositoryError as exc:",
+                    "        typer.echo(f\"❌ {target_dir} is not within a git repository. Pass a path inside a git repo and retry.\")",
+                    "        raise typer.Exit(code=1) from exc",
+                    "",
+                    "    if repo.working_tree_dir is None:",
+                    "        typer.echo(f\"❌ {target_dir} is inside a bare git repository. Pass a working tree path and retry.\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    repo_root = Path(repo.working_tree_dir).resolve()",
+                    "    templates_dir = Path(__file__).resolve().parents[4].joinpath(\"settings\", \"linters\")",
+                    "    if not templates_dir.exists():",
+                    "        typer.echo(f\"❌ Linter template directory not found: {templates_dir}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    linter_to_file: dict[str, str] = {\"flake8\": \".flake8\", \"mypy\": \".mypy.ini\", \"pylint\": \".pylintrc\", \"ruff\": \".ruff.toml\", \"ty\": \"ty.toml\"}",
+                    "    available_linters: list[str] = sorted(linter_to_file.keys())",
+                    "",
+                    "    if linter is not None and linter not in linter_to_file:",
+                    "        typer.echo(f\"❌ Unsupported linter '{linter}'. Choose one of: {', '.join(available_linters)}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    selected_linters = available_linters if linter is None else [linter]",
+                    "    for selected_linter in selected_linters:",
+                    "        file_name = linter_to_file[selected_linter]",
+                    "        source = templates_dir.joinpath(file_name)",
+                    "        if not source.exists():",
+                    "            typer.echo(f\"❌ Linter template not found: {source}\")",
+                    "            raise typer.Exit(code=1)",
+                    "        template_content = source.read_text(encoding=\"utf-8\")",
+                    "        destination = repo_root.joinpath(file_name)",
+                    "        if destination.exists():",
+                    "            if not destination.is_file():",
+                    "                typer.echo(f\"❌ Refusing to overwrite non-file path: {destination}\")",
+                    "                raise typer.Exit(code=1)",
+                    "            if destination.read_text(encoding=\"utf-8\") == template_content:",
+                    "                typer.echo(f\"ℹ️ {file_name} already matches the template in {repo_root}\")",
+                    "                continue",
+                    "            typer.echo(f\"❌ Refusing to overwrite existing {file_name} in {repo_root}. Remove it or update it manually.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        destination.write_text(template_content, encoding=\"utf-8\")",
+                    "        typer.echo(f\"✅ Added {file_name} to {repo_root}\")"
+                  ],
+                  "name": "config_linters",
+                  "parameters": [
+                    {
+                      "name": "directory",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": ".",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='📁 Git repository directory to configure.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "📁 Git repository directory to configure."
+                      }
+                    },
+                    {
+                      "name": "linter",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--linter', '-t', help='Linter to configure: ruff, mypy, pylint, flake8, ty.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--linter",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--linter"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Linter to configure: ruff, mypy, pylint, flake8, ty."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "l",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "cleanup",
+                "fullPath": "utils pyproject cleanup",
+                "shortPath": "u p n",
+                "help": "🧹 <n> Clean repository directories from cache files",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_maintenance",
+                  "callable": "cleanup"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def cleanup(",
+                    "    repo: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
+                    "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"🔍 Recurse into nested repositories.\")] = False,",
+                    ") -> None:",
+                    "    if repo is None:",
+                    "        repo = Path.cwd().as_posix()",
+                    "",
+                    "    arg_path = Path(repo).expanduser().absolute().resolve()",
+                    "    if not arg_path.exists():",
+                    "        typer.echo(f\"❌ Path does not exist: {arg_path}\")",
+                    "        raise typer.Exit(code=1)",
+                    "    if not arg_path.is_dir():",
+                    "        typer.echo(f\"❌ Path is not a directory: {arg_path}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    from git import InvalidGitRepositoryError, Repo",
+                    "",
+                    "    if not recursive:",
+                    "        try:",
+                    "            repo_obj = Repo(str(arg_path), search_parent_directories=False)",
+                    "        except InvalidGitRepositoryError:",
+                    "            typer.echo(f\"❌ {arg_path} is not a git repository. Use -r flag for recursive cleanup.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        if repo_obj.working_tree_dir is None:",
+                    "            typer.echo(f\"❌ {arg_path} is inside a bare git repository. Pass a working tree root and retry.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        repo_root = Path(repo_obj.working_tree_dir).resolve()",
+                    "        if arg_path != repo_root:",
+                    "            typer.echo(f\"❌ {arg_path} is not a git working tree root. Pass the repository root or use -r for recursive cleanup.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        repos_to_clean = [repo_root]",
+                    "    else:",
+                    "        git_dirs = list(arg_path.rglob(\".git\"))",
+                    "        repos_to_clean = [git_dir.parent for git_dir in git_dirs if git_dir.is_dir() or git_dir.is_file()]",
+                    "        if not repos_to_clean:",
+                    "            typer.echo(f\"❌ No git repositories found under {arg_path}\")",
+                    "            raise typer.Exit(code=1)",
+                    "",
+                    "    for repo_path in repos_to_clean:",
+                    "        typer.echo(f\"🧹 Cleaning {repo_path}\")",
+                    "        script = rf\"\"\"",
+                    "cd {quote(repo_path.as_posix())}",
+                    "uv run --no-project --with cleanpy cleanpy .",
+                    "\"\"\"",
+                    "        from stackops.utils.code import run_shell_script",
+                    "",
+                    "        result = run_shell_script(script, display_script=True, clean_env=False)",
+                    "        if result.returncode != 0:",
+                    "            raise typer.Exit(code=result.returncode)"
+                  ],
+                  "name": "cleanup",
+                  "parameters": [
+                    {
+                      "name": "repo",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='📁 Directory containing repo(s).')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "📁 Directory containing repo(s)."
+                      }
+                    },
+                    {
+                      "name": "recursive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--recursive', '-r', help='🔍 Recurse into nested repositories.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--recursive",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--recursive"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "🔍 Recurse into nested repositories."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "n",
                     "hidden": true
                   }
                 ]

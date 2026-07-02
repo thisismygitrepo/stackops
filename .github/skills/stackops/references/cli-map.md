@@ -43,9 +43,7 @@ stackops
 │  │  ├─ analyze
 │  │  ├─ guard
 │  │  ├─ viz
-│  │  ├─ count-lines
-│  │  ├─ config-linters
-│  │  └─ cleanup
+│  │  └─ count-lines
 │  ├─ config
 │  │  ├─ sync
 │  │  ├─ register
@@ -181,6 +179,8 @@ stackops
 │  │  ├─ upgrade-packages
 │  │  ├─ type-hint
 │  │  ├─ type-check
+│  │  ├─ config-linters
+│  │  ├─ cleanup
 │  │  ├─ type-fix (callback group)
 │  │  ├─ test-runtime (callback group)
 │  │  └─ test-reference

@@ -83,26 +83,6 @@ StackOpsDevopsReposCountLinesCommand = TypedDict(
     },
 )
 
-StackOpsDevopsReposConfigLintersCommand = TypedDict(
-    "StackOpsDevopsReposConfigLintersCommand",
-    {
-        "command_name": Literal["config-linters"],
-        "short_name": Literal["l"],
-        "help": Literal["🧰 <l> Add linter config files to a git repository"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsReposCleanupCommand = TypedDict(
-    "StackOpsDevopsReposCleanupCommand",
-    {
-        "command_name": Literal["cleanup"],
-        "short_name": Literal["n"],
-        "help": Literal["🧹 <n> Clean repository directories from cache files"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
 StackOpsDevopsReposSubcommands = TypedDict(
     "StackOpsDevopsReposSubcommands",
     {
@@ -113,8 +93,6 @@ StackOpsDevopsReposSubcommands = TypedDict(
         "guard": StackOpsDevopsReposGuardCommand,
         "viz": StackOpsDevopsReposVizCommand,
         "count-lines": StackOpsDevopsReposCountLinesCommand,
-        "config-linters": StackOpsDevopsReposConfigLintersCommand,
-        "cleanup": StackOpsDevopsReposCleanupCommand,
     },
 )
 
@@ -1380,6 +1358,26 @@ StackOpsUtilsPyprojectTypeCheckCommand = TypedDict(
     },
 )
 
+StackOpsUtilsPyprojectConfigLintersCommand = TypedDict(
+    "StackOpsUtilsPyprojectConfigLintersCommand",
+    {
+        "command_name": Literal["config-linters"],
+        "short_name": Literal["l"],
+        "help": Literal["🧰 <l> Add linter config files to a git repository"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsUtilsPyprojectCleanupCommand = TypedDict(
+    "StackOpsUtilsPyprojectCleanupCommand",
+    {
+        "command_name": Literal["cleanup"],
+        "short_name": Literal["n"],
+        "help": Literal["🧹 <n> Clean repository directories from cache files"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
 StackOpsUtilsPyprojectTypeFixCommand = TypedDict(
     "StackOpsUtilsPyprojectTypeFixCommand",
     {
@@ -1417,6 +1415,8 @@ StackOpsUtilsPyprojectSubcommands = TypedDict(
         "upgrade-packages": StackOpsUtilsPyprojectUpgradePackagesCommand,
         "type-hint": StackOpsUtilsPyprojectTypeHintCommand,
         "type-check": StackOpsUtilsPyprojectTypeCheckCommand,
+        "config-linters": StackOpsUtilsPyprojectConfigLintersCommand,
+        "cleanup": StackOpsUtilsPyprojectCleanupCommand,
         "type-fix": StackOpsUtilsPyprojectTypeFixCommand,
         "test-runtime": StackOpsUtilsPyprojectTestRuntimeCommand,
         "test-reference": StackOpsUtilsPyprojectTestReferenceCommand,
