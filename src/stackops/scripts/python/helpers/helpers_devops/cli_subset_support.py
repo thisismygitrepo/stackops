@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
 
 
 type SubsetOutputConflictAction = Literal["throw-error", "overwrite", "append"]
-type SubsetOutputConflictOption = Literal["throw-error", "t", "overwrite", "o", "append", "a"]
+SubsetOutputConflictOption: TypeAlias = Literal["throw-error", "t", "overwrite", "o", "append", "a"]
 SUBSET_OUTPUT_CONFLICT_ACTIONS: dict[SubsetOutputConflictOption, SubsetOutputConflictAction] = {
     "throw-error": "throw-error",
     "t": "throw-error",
