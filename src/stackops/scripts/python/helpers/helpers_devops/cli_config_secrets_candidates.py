@@ -4,7 +4,7 @@ from typing import NoReturn
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interactive import (
+from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import (
     InteractivePickerOption,
     choose_interactive_option,
 )

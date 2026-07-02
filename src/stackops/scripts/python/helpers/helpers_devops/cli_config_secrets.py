@@ -4,6 +4,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretSelectors,
     resolve_candidate,
@@ -203,7 +204,7 @@ def subset(
         ),
     ] = "local",
     on_conflict: Annotated[
-        secret_actions.SubsetOutputConflictOption,
+        cli_subset_support.SubsetOutputConflictOption,
         typer.Option(
             "--on-conflict",
             "-o",
@@ -218,8 +219,8 @@ def subset(
 ) -> None:
     """📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict."""
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
-    resolved_output_path = _resolve_output_path(output_path)
-    resolved_on_conflict = secret_actions.resolve_subset_output_conflict_action(on_conflict=on_conflict)
+    resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)
+    resolved_on_conflict = cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]
     secret_actions.subset_secrets_file(
         source_path=secret_source.path,
         output_path=resolved_output_path,
@@ -305,10 +306,3 @@ def get_app() -> typer.Typer:
     app.command("e", no_args_is_help=False, help="Alias for edit.", hidden=True)(edit)
 
     return app
-
-
-def _resolve_output_path(output_path: Path) -> Path:
-    expanded_path = output_path.expanduser()
-    if expanded_path.is_absolute():
-        return expanded_path
-    return Path.cwd() / expanded_path

@@ -20,8 +20,8 @@ LIBRARY_BACKUP_PATH = get_path_reference_path(
     path_reference=mapper_assets.MAPPER_DATA_PATH_REFERENCE,
 )
 USER_BACKUP_PATH = DOTFILES_USER_BACKUP_PATH
-DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
-# Created by `devops data register`
+DEFAULT_BACKUP_HEADER = """# StackOps backup configuration
+# Managed by `devops data` commands
 #
 # File structure:
 # - Top-level mappings are groups (for example: dotfiles, history, secrets).
@@ -215,10 +215,13 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
     return config
 
 
-def _load_backup_config(path: Path, *, empty_as_config: bool = False) -> BackupConfig | None:
+def load_backup_config_file(path: Path, *, empty_as_config: bool) -> BackupConfig | None:
     if not path.exists() or not path.is_file():
         return None
-    raw_value = cast(object, yaml.safe_load(path.read_text(encoding="utf-8")))
+    try:
+        raw_value = cast(object, yaml.safe_load(path.read_text(encoding="utf-8")))
+    except (OSError, yaml.YAMLError) as exc:
+        raise ValueError(f"Could not load backup configuration file {path}: {exc}") from exc
     if raw_value is None:
         if empty_as_config:
             return {}
@@ -228,7 +231,7 @@ def _load_backup_config(path: Path, *, empty_as_config: bool = False) -> BackupC
     return _parse_backup_config({str(key): item for key, item in raw_value.items()})
 
 
-def _serialize_backup_config(config: BackupConfig) -> str:
+def serialize_backup_config(config: BackupConfig) -> str:
     if not config:
         return DEFAULT_BACKUP_HEADER
     document: BackupYamlDocument = {}
@@ -278,27 +281,27 @@ def describe_missing_backup_config(source: CONFIG_SOURCE_LOOSE) -> str:
 
 
 def write_backup_config(path: Path, config: BackupConfig) -> None:
-    path.write_text(_serialize_backup_config(config), encoding="utf-8")
+    path.write_text(serialize_backup_config(config), encoding="utf-8")
 
 
 def read_user_backup_config_for_update() -> BackupConfig | None:
-    return _load_backup_config(USER_BACKUP_PATH, empty_as_config=True)
+    return load_backup_config_file(USER_BACKUP_PATH, empty_as_config=True)
 
 
 def read_backup_config(source: CONFIG_SOURCE_LOOSE) -> BackupConfig | None:
     match source:
         case "library" | "l":
             path = LIBRARY_BACKUP_PATH
-            bu_file = _load_backup_config(path)
+            bu_file = load_backup_config_file(path, empty_as_config=False)
         case "user" | "u":
             path = USER_BACKUP_PATH
-            bu_file = _load_backup_config(path)
+            bu_file = load_backup_config_file(path, empty_as_config=False)
         case "all" | "a":
             console = Console()
             console.print(Panel(f"🧰 LOADING LIBRARY BACKUP CONFIGURATION\n📄 File: {LIBRARY_BACKUP_PATH}", title="[bold blue]Backup Configuration[/bold blue]", border_style="blue"))
-            bu_library = _load_backup_config(LIBRARY_BACKUP_PATH)
+            bu_library = load_backup_config_file(LIBRARY_BACKUP_PATH, empty_as_config=False)
             console.print(Panel(f"🧰 LOADING USER BACKUP CONFIGURATION\n📄 File: {USER_BACKUP_PATH}", title="[bold blue]Backup Configuration[/bold blue]", border_style="blue"))            
-            bu_user = _load_backup_config(USER_BACKUP_PATH)
+            bu_user = load_backup_config_file(USER_BACKUP_PATH, empty_as_config=False)
             if bu_user is not None and bu_library is not None:
                 bu_file = {**bu_library, **bu_user}
             elif bu_user is not None:

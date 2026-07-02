@@ -14,6 +14,7 @@ Current `devops data --help` exposes:
 |---------|-------------|
 | `sync` | Generate backup or retrieve commands through `cloud copy` |
 | `register` | Add or update a backup entry in the user data-mapping file |
+| `subset` | Interactively select entries and write a standalone data-mapping file |
 | `edit` | Open the user or library backup configuration file |
 
 ### sync
@@ -92,6 +93,37 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 
 If `--name` is omitted, the command generates one from the local path and OS filter.
 
+### subset
+
+Interactively choose backup entries and write them to a separate YAML configuration.
+
+```bash
+devops data subset OUTPUT_PATH [OPTIONS]
+```
+
+The command opens a multi-select `tv` picker and preserves each selected entry's group. It reads the user configuration by default; use `--source library` or `-s l` to select from the packaged library configuration.
+
+Output handling is strict:
+
+- `--on-conflict throw-error` (the default) creates a new file and refuses an existing path.
+- `--on-conflict overwrite` replaces the complete output configuration.
+- `--on-conflict append` merges selected entries into an existing configuration. It refuses an existing `group.item` key instead of replacing it.
+
+The one-letter conflict aliases are `t`, `o`, and `a`.
+
+Examples:
+
+```bash
+# Select entries from the user configuration into a new file
+devops data subset ./laptop-data.yaml
+
+# Select entries from the packaged library
+devops data subset ./linux-data.yaml --source library
+
+# Add newly selected entries to an existing output file
+devops data subset ./laptop-data.yaml --on-conflict append
+```
+
 ### edit
 
 Open the backup configuration file in `nano`, `hx`, or `code`.
@@ -128,6 +160,6 @@ Selection behavior for `devops data sync --which ...`:
 - `dotfiles.wezterm` selects one item
 - `all` selects every applicable item
 
-The nested help screens render `Usage: devops sync ...`, `devops register ...`, and `devops edit ...`, but the full entrypoints remain `devops data sync ...`, `devops data register ...`, and `devops data edit ...`.
+The nested help screens render `Usage: devops sync ...`, `devops register ...`, `devops subset ...`, and `devops edit ...`, but the full entrypoints remain under `devops data`.
 
 ---

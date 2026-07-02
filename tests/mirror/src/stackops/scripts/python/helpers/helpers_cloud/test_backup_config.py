@@ -24,7 +24,7 @@ def test_backup_config_parses_and_serializes_canonical_encryption(encryption: En
     raw: dict[str, object] = {"example_group": {"sample_item": entry}}
 
     parsed = backup_config._parse_backup_config(raw)
-    serialized = backup_config._serialize_backup_config(parsed)
+    serialized = backup_config.serialize_backup_config(parsed)
     serialized_raw = cast(object, yaml.safe_load(serialized))
 
     assert parsed["example_group"]["sample_item"]["encryption"] == encryption
@@ -59,7 +59,7 @@ def test_backup_config_rejects_encryption_alias() -> None:
 
 
 def test_packaged_library_backup_config_parses_without_user_config_access() -> None:
-    parsed = backup_config._load_backup_config(backup_config.LIBRARY_BACKUP_PATH, empty_as_config=False)
+    parsed = backup_config.load_backup_config_file(backup_config.LIBRARY_BACKUP_PATH, empty_as_config=False)
 
     assert parsed is not None
     assert parsed

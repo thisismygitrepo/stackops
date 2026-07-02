@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as actions
+from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
 from stackops.secrets.loader import load_secrets_file
 from stackops.secrets.models import Login, SecretRecord, SecretsFile
 
@@ -121,9 +122,9 @@ def test_subset_cli_accepts_one_letter_overwrite_conflict_alias(
 
 
 def test_subset_output_conflict_aliases_map_to_strict_actions() -> None:
-    assert actions.resolve_subset_output_conflict_action("t") == "throw-error"
-    assert actions.resolve_subset_output_conflict_action("o") == "overwrite"
-    assert actions.resolve_subset_output_conflict_action("a") == "append"
+    assert cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS["t"] == "throw-error"
+    assert cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS["o"] == "overwrite"
+    assert cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS["a"] == "append"
 
 
 def _choose_second_login(*, secrets_file: SecretsFile, source_path: Path, preview_secrets: bool) -> list[int]:

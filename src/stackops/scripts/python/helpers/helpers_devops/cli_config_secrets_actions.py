@@ -1,33 +1,18 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal, Mapping, NoReturn, TypeAlias
+from typing import Mapping, NoReturn
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_interactive import (
+from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import (
     InteractivePickerOption,
     choose_interactive_options,
 )
+from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import SubsetOutputConflictAction
 from stackops.secrets.models import Login, SecretsFile
 
 SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
 SECRETS_FILE_VERSION = "0.5"
-SubsetOutputConflictAction: TypeAlias = Literal["throw-error", "overwrite", "append"]
-SubsetOutputConflictOption: TypeAlias = Literal["throw-error", "t", "overwrite", "o", "append", "a"]
-_SUBSET_OUTPUT_CONFLICT_ACTIONS: dict[SubsetOutputConflictOption, SubsetOutputConflictAction] = {
-    "throw-error": "throw-error",
-    "t": "throw-error",
-    "overwrite": "overwrite",
-    "o": "overwrite",
-    "append": "append",
-    "a": "append",
-}
-
-
-def resolve_subset_output_conflict_action(on_conflict: SubsetOutputConflictOption) -> SubsetOutputConflictAction:
-    return _SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]
-
-
 def is_valid_env_name(name: str) -> bool:
     import re
     return re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is not None

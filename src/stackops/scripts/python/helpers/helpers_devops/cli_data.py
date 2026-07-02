@@ -283,6 +283,8 @@ def edit_data(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops import cli_data_subset
+
     app = typer.Typer(
         name="data",
         help="🗄 <d> Backup and retrieve configuration files and directories to/from cloud storage.",
@@ -300,6 +302,10 @@ def get_app() -> typer.Typer:
     app.command(name="register", no_args_is_help=True, hidden=False, help="📝 <r> Register a new backup entry in user mapper/data.yaml.")(register_data)
 
     app.command(name="r", no_args_is_help=True, hidden=True)(register_data)
+
+    app.command(name="subset", no_args_is_help=True, hidden=False, help=f"📦 <u> {cli_data_subset.DATA_SUBSET_HELP}")(cli_data_subset.subset)
+
+    app.command(name="u", no_args_is_help=True, hidden=True)(cli_data_subset.subset)
 
     app.command(name="edit", no_args_is_help=False, hidden=False, help="✏️ <e> Open backup configuration file in nano, hx, or code.")(edit_data)
 

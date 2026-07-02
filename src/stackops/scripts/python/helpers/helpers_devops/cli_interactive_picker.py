@@ -17,18 +17,10 @@ class InteractivePickerOption[T]:
 
 
 def choose_interactive_option[T](
-    options: list[InteractivePickerOption[T]],
-    *,
-    missing_tool_message: str,
-    cancelled_message: str,
-    missing_selection_message: str,
+    options: list[InteractivePickerOption[T]], *, missing_tool_message: str, cancelled_message: str, missing_selection_message: str
 ) -> T:
     option_to_value, option_to_preview = _picker_maps(options)
-    selected_label = _select_picker_labels(
-        option_to_preview=option_to_preview,
-        multi=False,
-        missing_tool_message=missing_tool_message,
-    )
+    selected_label = _select_picker_labels(option_to_preview=option_to_preview, multi=False, missing_tool_message=missing_tool_message)
     if selected_label is None:
         _fail(cancelled_message)
 
@@ -38,18 +30,9 @@ def choose_interactive_option[T](
     return selected_value
 
 
-def choose_interactive_options[T](
-    options: list[InteractivePickerOption[T]],
-    *,
-    missing_tool_message: str,
-    missing_selection_message: str,
-) -> list[T]:
+def choose_interactive_options[T](options: list[InteractivePickerOption[T]], *, missing_tool_message: str, missing_selection_message: str) -> list[T]:
     option_to_value, option_to_preview = _picker_maps(options)
-    selected_labels = _select_picker_labels(
-        option_to_preview=option_to_preview,
-        multi=True,
-        missing_tool_message=missing_tool_message,
-    )
+    selected_labels = _select_picker_labels(option_to_preview=option_to_preview, multi=True, missing_tool_message=missing_tool_message)
 
     selected_values: list[T] = []
     for selected_label in selected_labels:
@@ -74,29 +57,14 @@ def _picker_maps[T](options: list[InteractivePickerOption[T]]) -> tuple[dict[str
 
 
 @overload
-def _select_picker_labels(
-    *,
-    option_to_preview: dict[str, str],
-    multi: Literal[False],
-    missing_tool_message: str,
-) -> str | None: ...
+def _select_picker_labels(*, option_to_preview: dict[str, str], multi: Literal[False], missing_tool_message: str) -> str | None: ...
 
 
 @overload
-def _select_picker_labels(
-    *,
-    option_to_preview: dict[str, str],
-    multi: Literal[True],
-    missing_tool_message: str,
-) -> list[str]: ...
+def _select_picker_labels(*, option_to_preview: dict[str, str], multi: Literal[True], missing_tool_message: str) -> list[str]: ...
 
 
-def _select_picker_labels(
-    *,
-    option_to_preview: dict[str, str],
-    multi: bool,
-    missing_tool_message: str,
-) -> str | list[str] | None:
+def _select_picker_labels(*, option_to_preview: dict[str, str], multi: bool, missing_tool_message: str) -> str | list[str] | None:
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     try:

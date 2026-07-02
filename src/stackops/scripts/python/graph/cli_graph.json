@@ -818,6 +818,118 @@
               },
               {
                 "kind": "command",
+                "name": "subset",
+                "fullPath": "devops data subset",
+                "shortPath": "d d u",
+                "help": "f'📦 <u> {cli_data_subset.DATA_SUBSET_HELP}'",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_data_subset.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_data_subset",
+                  "callable": "subset"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def subset(",
+                    "    output_path: Annotated[Path, typer.Argument(help=\"Output data YAML path. Default mode creates a new file and refuses existing paths.\")],",
+                    "    source: Annotated[",
+                    "        CONFIG_FILE_SOURCE_LOOSE,",
+                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Source backup configuration file to read: user/u or library/l.\"),",
+                    "    ] = \"user\",",
+                    "    on_conflict: Annotated[",
+                    "        SubsetOutputConflictOption,",
+                    "        typer.Option(",
+                    "            \"--on-conflict\", \"-o\", case_sensitive=False, help=\"How to handle an existing output path: throw-error/t, overwrite/o, or append/a.\"",
+                    "        ),",
+                    "    ] = \"throw-error\",",
+                    ") -> None:",
+                    "    \"\"\"📦 <u> Create a backup configuration from selected data entries.\"\"\"",
+                    "    source_key = CONFIG_FILE_SOURCE_MAP[source]",
+                    "    match source_key:",
+                    "        case \"library\":",
+                    "            source_path = LIBRARY_BACKUP_PATH",
+                    "        case \"user\":",
+                    "            source_path = USER_BACKUP_PATH",
+                    "    subset_data_file(",
+                    "        source_path=source_path, output_path=resolve_subset_output_path(output_path), on_conflict=resolve_subset_output_conflict_action(on_conflict)",
+                    "    )"
+                  ],
+                  "name": "subset",
+                  "parameters": [
+                    {
+                      "name": "output_path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[Path, typer.Argument(help='Output data YAML path. Default mode creates a new file and refuses existing paths.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Output data YAML path. Default mode creates a new file and refuses existing paths."
+                      }
+                    },
+                    {
+                      "name": "source",
+                      "kind": "positional_or_keyword",
+                      "type": "CONFIG_FILE_SOURCE_LOOSE",
+                      "default": "user",
+                      "required": false,
+                      "annotation_raw": "Annotated[CONFIG_FILE_SOURCE_LOOSE, typer.Option('--source', '-s', case_sensitive=False, help='Source backup configuration file to read: user/u or library/l.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Source backup configuration file to read: user/u or library/l."
+                      }
+                    },
+                    {
+                      "name": "on_conflict",
+                      "kind": "positional_or_keyword",
+                      "type": "SubsetOutputConflictOption",
+                      "default": "throw-error",
+                      "required": false,
+                      "annotation_raw": "Annotated[SubsetOutputConflictOption, typer.Option('--on-conflict', '-o', case_sensitive=False, help='How to handle an existing output path: throw-error/t, overwrite/o, or append/a.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--on-conflict",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--on-conflict"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "How to handle an existing output path: throw-error/t, overwrite/o, or append/a."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "doc": "📦 <u> Create a backup configuration from selected data entries.",
+                "aliases": [
+                  {
+                    "name": "u",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "edit",
                 "fullPath": "devops data edit",
                 "shortPath": "d d e",
@@ -4570,7 +4682,7 @@
                         "        ),",
                         "    ] = \"local\",",
                         "    on_conflict: Annotated[",
-                        "        secret_actions.SubsetOutputConflictOption,",
+                        "        cli_subset_support.SubsetOutputConflictOption,",
                         "        typer.Option(",
                         "            \"--on-conflict\",",
                         "            \"-o\",",
@@ -4585,8 +4697,8 @@
                         ") -> None:",
                         "    \"\"\"📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict.\"\"\"",
                         "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
-                        "    resolved_output_path = _resolve_output_path(output_path)",
-                        "    resolved_on_conflict = secret_actions.resolve_subset_output_conflict_action(on_conflict=on_conflict)",
+                        "    resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)",
+                        "    resolved_on_conflict = cli_subset_support.resolve_subset_output_conflict_action(on_conflict=on_conflict)",
                         "    secret_actions.subset_secrets_file(",
                         "        source_path=secret_source.path,",
                         "        output_path=resolved_output_path,",
@@ -4658,10 +4770,10 @@
                         {
                           "name": "on_conflict",
                           "kind": "positional_or_keyword",
-                          "type": "secret_actions.SubsetOutputConflictOption",
+                          "type": "cli_subset_support.SubsetOutputConflictOption",
                           "default": "throw-error",
                           "required": false,
-                          "annotation_raw": "Annotated[secret_actions.SubsetOutputConflictOption, typer.Option('--on-conflict', '-o', case_sensitive=False, help='How to handle an existing output path: throw-error/t, overwrite/o, or append/a.')]",
+                          "annotation_raw": "Annotated[cli_subset_support.SubsetOutputConflictOption, typer.Option('--on-conflict', '-o', case_sensitive=False, help='How to handle an existing output path: throw-error/t, overwrite/o, or append/a.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
