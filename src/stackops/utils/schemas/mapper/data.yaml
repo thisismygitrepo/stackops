@@ -2,14 +2,13 @@
 
 # locations to be backed up to the cloud.
 # os must be a YAML list containing one or more of: linux, darwin, windows.
-# encryption is required when encrypt is true: symmetric or asymmetric.
+# encryption must be symmetric, asymmetric, or null for plaintext.
 
 thunderbird:
   windows_files:
     path_local: "~/AppData/Roaming/Thunderbird/Profiles"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: true
     rel2home: true
@@ -19,7 +18,7 @@ thunderbird:
     path_local: "~/AppData/Roaming/Thunderbird/profiles.ini"
     path_cloud: "^"
     share_url: null
-    encrypt: false
+    encryption: null
     zip: false
     rel2home: true
     os:
@@ -28,7 +27,6 @@ thunderbird:
     path_local: "~/.thunderbird"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: true
     rel2home: true
@@ -40,7 +38,7 @@ zoxide:
     path_local: "~/AppData/Local/zoxide/db.zo"
     path_cloud: "^"
     share_url: null
-    encrypt: false
+    encryption: null
     zip: false
     rel2home: true
     os:
@@ -49,7 +47,7 @@ zoxide:
     path_local: "~/.local/share/zoxide/db.zo"
     path_cloud: "^"
     share_url: null
-    encrypt: false
+    encryption: null
     zip: false
     rel2home: true
     os:
@@ -63,7 +61,6 @@ atuin:
     path_local: "~/.local/share/atuin/history.db"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: false
     rel2home: true
@@ -82,7 +79,6 @@ mcfly:
     path_local: "~/Library/Application Support/McFly/history.db"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: false
     rel2home: true
@@ -92,7 +88,6 @@ mcfly:
     path_local: "~/.local/share/mcfly/history.db"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: false
     rel2home: true
@@ -102,7 +97,6 @@ mcfly:
     path_local: "~/AppData/Local/McFly/data/history.db"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: false
     rel2home: true
@@ -114,7 +108,6 @@ shell_history:
     path_local: "~/.bash_history"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: false
     rel2home: true
@@ -124,7 +117,6 @@ shell_history:
     path_local: "~/.zsh_history"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: false
     rel2home: true
@@ -134,7 +126,6 @@ shell_history:
     path_local: "~/AppData/Roaming/Microsoft/Windows/PowerShell/PSReadLine/ConsoleHost_history.txt"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: false
     rel2home: true
@@ -146,7 +137,6 @@ shell_history:
 #     path_local: "~/.config/example"
 #     path_cloud: "^"
 #     share_url: null
-#     encrypt: true
 #     encryption: asymmetric
 #     zip: true
 #     rel2home: true
@@ -160,7 +150,6 @@ ipython:
     path_local: "~/.ipython"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: true
     rel2home: true

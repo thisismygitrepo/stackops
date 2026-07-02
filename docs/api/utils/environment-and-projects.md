@@ -13,7 +13,7 @@ The environment helpers in `stackops` now live across `stackops.utils.cloud.defa
 | --- | --- |
 | `find_virtualenv_root(init_path)` | Walks upward from a path and resolves the first project-local `.venv` |
 | `build_virtualenv_activation_line(virtualenv_root)` | Builds the platform-specific shell line that activates a virtualenv |
-| `CloudConfig` | Typed cloud metadata for keys such as `cloud`, `root`, `rel2home`, `pwd`, `encrypt`, `encryption`, `os_specific`, `zip`, `share`, and `overwrite` |
+| `CloudConfig` | Typed cloud metadata for keys such as `cloud`, `root`, `rel2home`, `pwd`, `encryption`, `os_specific`, `zip`, `share`, and `overwrite` |
 | `read_default_cloud_config()` | Returns the default `CloudConfig` payload used by callers as a baseline |
 
 ---
@@ -38,7 +38,7 @@ The function returns a `Path` when it finds a project-local virtualenv and `None
 
 - `cloud`: `mycloud101`
 - `root`: `myhome`
-- `rel2home`, `encrypt`, `os_specific`, `zip`, `share`, `overwrite`: `False`
+- `rel2home`, `os_specific`, `zip`, `share`, `overwrite`: `False`
 - `pwd`, `encryption`: `None`
 
 ---

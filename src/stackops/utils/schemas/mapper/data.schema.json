@@ -45,13 +45,16 @@
           "pattern": ".*\\S.*",
           "description": "Optional public/share URL for the cloud object. Use null when no share URL exists."
         },
-        "encrypt": {
-          "type": "boolean",
-          "description": "Encrypt the backup before upload."
-        },
         "encryption": {
-          "$ref": "#/$defs/encryption_mode",
-          "description": "Required when encrypt is true. Use symmetric for password-based GPG or asymmetric for GPG public/private keys."
+          "anyOf": [
+            {
+              "$ref": "#/$defs/encryption_mode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Use symmetric for password-based GPG, asymmetric for GPG public/private keys, or null for plaintext."
         },
         "zip": {
           "type": "boolean",
@@ -73,48 +76,10 @@
       },
       "required": [
         "path_local",
-        "encrypt",
+        "encryption",
         "zip",
         "rel2home",
         "os"
-      ],
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "encrypt": {
-                "const": true
-              }
-            },
-            "required": [
-              "encrypt"
-            ]
-          },
-          "then": {
-            "required": [
-              "encryption"
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "encrypt": {
-                "const": false
-              }
-            },
-            "required": [
-              "encrypt"
-            ]
-          },
-          "then": {
-            "not": {
-              "required": [
-                "encryption"
-              ]
-            }
-          }
-        }
       ],
       "additionalProperties": false
     },

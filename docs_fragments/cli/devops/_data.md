@@ -57,7 +57,7 @@ devops data sync up --cloud myremote --which dotfiles.bashrc,history.shell
 devops data sync down --use-link --which dotfiles.bashrc
 ```
 
-`devops data sync` filters entries by the current OS and then prints the generated `cloud copy` script based on each item's `path_cloud`, `os`, `zip`, `encrypt`, and `rel2home` fields. With `--use-link`, only `down` is allowed, every selected entry must define a non-null `share_url`, and the retrieve path uses direct HTTP downloads instead of rclone.
+`devops data sync` filters entries by the current OS and then prints the generated `cloud copy` script based on each item's `path_cloud`, `os`, `zip`, `encryption`, and `rel2home` fields. With `--use-link`, only `down` is allowed, every selected entry must define a non-null `share_url`, and the retrieve path uses direct HTTP downloads instead of rclone.
 
 ### register
 
@@ -75,7 +75,8 @@ Key options from current help:
 | `--name`, `-n` | Override the generated entry name |
 | `--path-cloud`, `-C` | Override the remote path; omit it to let stackops deduce one |
 | `--zip`, `-z` | Zip before upload |
-| `--encrypt`, `-e` | Encrypt before upload |
+| `--encryption`, `-e` | Enable encryption with `symmetric`/`s` or `asymmetric`/`a`; omit for plaintext |
+| `--password`, `-p` | Symmetric GPG password; requires `--encryption symmetric` and is not stored |
 | `--rel2home`, `-r` | Store the local path relative to your home directory |
 | `--os`, `-o` | Restrict the entry to `linux`, `darwin`, `windows`, or a comma-separated list |
 
@@ -83,7 +84,7 @@ Examples:
 
 ```bash
 # Register a config directory for encrypted, zipped backup
-devops data register ~/.config/wezterm --group dotfiles --zip --encrypt
+devops data register ~/.config/wezterm --group dotfiles --encryption asymmetric
 
 # Register a directory with an explicit cloud path
 devops data register ~/Documents/work --group documents --path-cloud backups/work --os linux,darwin
@@ -111,13 +112,15 @@ dotfiles:
     path_local: "~/.config/wezterm"
     path_cloud: "^"
     share_url: null
-    encrypt: true
+    encryption: asymmetric
     zip: true
     rel2home: true
     os:
       - linux
       - darwin
 ```
+
+Every persisted entry requires `encryption: symmetric`, `encryption: asymmetric`, or `encryption: null`; `null` means plaintext. `--encryption`, `-e` is the sole encryption switch. Passwords provide symmetric credentials but do not select the mode.
 
 Selection behavior for `devops data sync --which ...`:
 

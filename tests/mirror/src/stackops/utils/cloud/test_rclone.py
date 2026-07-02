@@ -106,6 +106,8 @@ def test_cloud_copy_help_uses_record_name_as_recording_trigger() -> None:
     result = CliRunner().invoke(cloud_cli.get_app(), ["copy", "--help"])
 
     assert result.exit_code == 0
+    assert re.search(r"--encryption\s+-e", result.output) is not None
+    assert re.search(r"(?<![\w-])--encrypt(?![\w-])", result.output) is None
     assert "--record-name" in result.output
     assert "--record-group" in result.output
     assert "--password-name" in result.output
@@ -113,7 +115,18 @@ def test_cloud_copy_help_uses_record_name_as_recording_trigger() -> None:
     assert re.search(r"(?<![\w-])--record(?![\w-])", result.output) is None
 
 
-def test_cloud_copy_password_name_implies_symmetric_encryption(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("command", ("copy", "sync"))
+def test_cloud_commands_reject_encrypt_option(command: str) -> None:
+    help_result = CliRunner().invoke(cloud_cli.get_app(), [command, "--help"])
+    result = CliRunner().invoke(cloud_cli.get_app(), [command, "--encrypt"])
+
+    assert help_result.exit_code == 0
+    assert re.search(r"--encryption\s+-e", help_result.output) is not None
+    assert result.exit_code == 2
+    assert "No such option: --encrypt" in result.output
+
+
+def test_cloud_copy_named_password_requires_explicit_symmetric_encryption(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_read_named_password(*, password_name: str) -> str:
         assert password_name == "bitsense"
         return "not-a-real-secret"
@@ -123,7 +136,19 @@ def test_cloud_copy_password_name_implies_symmetric_encryption(monkeypatch: pyte
     resolved_password = cloud_copy._resolve_password(pwd=None, password_name="bitsense")
 
     assert resolved_password == "not-a-real-secret"
-    assert cloud_copy._resolve_encryption_settings(encrypt_requested=False, encryption=None, pwd=resolved_password) == (True, "symmetric")
+    with pytest.raises(ValueError, match="requires --encryption symmetric"):
+        cloud_copy._resolve_encryption_mode(encryption=None, pwd=resolved_password)
+    assert cloud_copy._resolve_encryption_mode(encryption="s", pwd=resolved_password) == "symmetric"
+
+
+def test_cloud_copy_rejects_password_with_asymmetric_encryption() -> None:
+    with pytest.raises(ValueError, match="requires --encryption symmetric"):
+        cloud_copy._resolve_encryption_mode(encryption="asymmetric", pwd="not-a-real-secret")
+
+
+def test_cloud_copy_rejects_empty_password() -> None:
+    with pytest.raises(ValueError, match="must be non-empty"):
+        cloud_copy._resolve_encryption_mode(encryption="symmetric", pwd="")
 
 
 def test_cloud_copy_rejects_literal_and_named_password_together() -> None:
@@ -165,7 +190,6 @@ def test_cloud_copy_record_name_records_upload(monkeypatch: pytest.MonkeyPatch, 
         remote_path: Path,
         share_url: str | None,
         zip_requested: bool,
-        encrypt_requested: bool,
         encryption_mode: EncryptionMode | None,
         rel2home: bool,
         record_group: str,
@@ -179,7 +203,6 @@ def test_cloud_copy_record_name_records_upload(monkeypatch: pytest.MonkeyPatch, 
         assert remote_path == Path("reports/report.txt")
         assert share_url == "https://example.test/share"
         assert not zip_requested
-        assert not encrypt_requested
         assert encryption_mode is None
         assert not rel2home
         assert record_group == "shared"
@@ -205,7 +228,6 @@ def test_cloud_copy_record_name_records_upload(monkeypatch: pytest.MonkeyPatch, 
         root="myhome",
         pwd=None,
         password_name=None,
-        encrypt=False,
         encryption=None,
         zip_=False,
         os_specific=False,

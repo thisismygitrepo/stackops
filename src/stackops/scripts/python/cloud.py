@@ -18,8 +18,11 @@ def sync(
     target: Annotated[str, typer.Argument(help="target")],
     transfers: Annotated[int, typer.Option("--transfers", "-t", help="Number of threads in syncing.")] = 10,
     root: Annotated[str, typer.Option("--root", "-R", help="Remote root.")] = defaults["root"],
-    pwd: Annotated[str | None, typer.Option("--pwd", "-P", help="Symmetric GPG encryption password used when --encrypt is set.")] = defaults["pwd"],
-    encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="Decrypt after receiving.")] = defaults["encrypt"],
+    pwd: Annotated[str | None, typer.Option("--pwd", "-P", help="Symmetric GPG encryption password. Requires --encryption symmetric.")] = defaults["pwd"],
+    encryption: Annotated[
+        EncryptionModeChoice | None,
+        typer.Option("--encryption", "-e", help="Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
+    ] = defaults["encryption"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="unzip after receiving.")] = defaults["zip"],
     bisync: Annotated[bool, typer.Option("--bisync", "-b", help="Bidirectional sync.")] = False,
     delete: Annotated[bool, typer.Option("--delete", "-D", help="Delete files in remote that are not in local.")] = False,
@@ -27,7 +30,18 @@ def sync(
 ) -> None:
     """🔄 Synchronize files/folders between local and cloud storage."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main
-    sync_main(source=source, target=target, transfers=transfers, root=root, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)
+    sync_main(
+        source=source,
+        target=target,
+        transfers=transfers,
+        root=root,
+        pwd=pwd,
+        encryption=encryption,
+        zip_=zip_,
+        bisync=bisync,
+        delete=delete,
+        verbose=verbose,
+    )
 
 
 def copy(
@@ -41,10 +55,15 @@ def copy(
     record_os: Annotated[str, typer.Option("--record-os", "-F", help="💻 OS filter for recorded uploads. Comma-separated: linux,darwin,windows. Defaults to all.")] = "linux,darwin,windows",
     rel2home: Annotated[bool, typer.Option("--relative2home", "-r", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
-    pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.")] = defaults["pwd"],
-    password_name: Annotated[str | None, typer.Option("--password-name", "-P", help="🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encrypt --encryption symmetric.")] = None,
-    encrypt: Annotated[bool, typer.Option("--encrypt", "-e", help="🔐 Encrypt before sending.")] = defaults["encrypt"],
-    encryption: Annotated[EncryptionModeChoice | None, typer.Option("--encryption", "-E", help="🔐 Encryption mode when --encrypt is set: symmetric/s or asymmetric/a.")] = defaults["encryption"],
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Requires --encryption symmetric.")] = defaults["pwd"],
+    password_name: Annotated[
+        str | None,
+        typer.Option("--password-name", "-P", help="🔐 Exact StackOps secrets login name containing PASSWORD. Requires --encryption symmetric."),
+    ] = None,
+    encryption: Annotated[
+        EncryptionModeChoice | None,
+        typer.Option("--encryption", "-e", help="🔐 Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
+    ] = defaults["encryption"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
 ) -> None:
@@ -64,7 +83,6 @@ def copy(
         root=root,
         pwd=pwd,
         password_name=password_name,
-        encrypt=encrypt,
         encryption=encryption,
         zip_=zip_,
         os_specific=os_specific,

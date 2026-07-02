@@ -8,7 +8,6 @@ class CloudConfig(TypedDict, total=True):
     root: str
     rel2home: bool
     pwd: str | None
-    encrypt: bool
     encryption: EncryptionMode | None
     os_specific: bool
     zip: bool
@@ -22,7 +21,6 @@ def read_default_cloud_config() -> CloudConfig:
         "root": "myhome",
         "rel2home": False,
         "pwd": None,
-        "encrypt": False,
         "encryption": None,
         "os_specific": False,
         "zip": False,

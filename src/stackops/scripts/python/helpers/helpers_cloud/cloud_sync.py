@@ -1,4 +1,5 @@
 from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
+from stackops.utils.cloud.encryption import EncryptionModeChoice, parse_encryption_mode
 
 
 defaults = read_default_cloud_config()
@@ -9,7 +10,7 @@ def main(
     transfers: int,
     root: str,
     pwd: str | None,
-    encrypt: bool,
+    encryption: EncryptionModeChoice | None,
     zip_: bool,
     bisync: bool,
     delete: bool,
@@ -25,12 +26,18 @@ def main(
     title = "☁️  Cloud Sync Utility"
     console.print(Panel(title, title_align="left", border_style="blue"))
 
+    encryption_mode = None if encryption is None else parse_encryption_mode(encryption, label="--encryption")
+    if pwd is not None:
+        if pwd == "":
+            raise ValueError("--pwd must be non-empty.")
+        if encryption_mode != "symmetric":
+            raise ValueError("--pwd requires --encryption symmetric.")
+
     cloud_config_explicit = CloudConfig(
         cloud="",
         root=root,
         pwd=pwd,
-        encrypt=encrypt,
-        encryption=None,
+        encryption=encryption_mode,
         zip=zip_,
         rel2home=True,
         os_specific=False,

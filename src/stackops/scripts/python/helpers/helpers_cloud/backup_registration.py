@@ -11,7 +11,7 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     read_user_backup_config_for_update,
     write_backup_config,
 )
-from stackops.utils.cloud.encryption import EncryptionMode, parse_encryption_mode
+from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 
 
 def sanitize_entry_name(value: str) -> str:
@@ -40,8 +40,7 @@ def register_backup_entry(
     path_cloud: str | None,
     share_url: str | None,
     zip_: bool,
-    encrypt: bool,
-    encryption: str | None,
+    encryption: EncryptionModeChoice | None,
     password: str | None,
     rel2home: bool | None,
     os: str,
@@ -76,18 +75,12 @@ def register_backup_entry(
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
     share_url_value = share_url.strip() if share_url and share_url.strip() else None
 
-    encryption_mode: EncryptionMode | None = None
+    encryption_mode: EncryptionMode | None = None if encryption is None else parse_encryption_mode(encryption, label="Encryption mode")
     if password is not None:
         if password == "":
             raise ValueError("Password must be non-empty.")
-        if not encrypt:
-            raise ValueError("--password cannot be combined with --no-encrypt.")
-        if encryption is not None and parse_encryption_mode(encryption, label="Encryption mode") != "symmetric":
-            raise ValueError("--password can only be used with symmetric encryption.")
-        encryption_mode = "symmetric"
-        encrypt = True
-    elif encrypt:
-        encryption_mode = parse_encryption_mode(encryption or "asymmetric", label="Encryption mode")
+        if encryption_mode != "symmetric":
+            raise ValueError("Password requires encryption mode symmetric.")
 
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
     if USER_BACKUP_PATH.exists():
@@ -109,7 +102,6 @@ def register_backup_entry(
         "path_cloud": cloud_value,
         "share_url": share_url_value,
         "zip": zip_,
-        "encrypt": encrypt,
         "encryption": encryption_mode,
         "rel2home": resolved_rel2home,
         "os": set(os_tokens),

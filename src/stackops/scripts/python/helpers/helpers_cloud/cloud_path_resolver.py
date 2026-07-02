@@ -52,7 +52,7 @@ def parse_cloud_source_target(
             _ = my_abs(target)
         if cloud_config_explicit["zip"] and not source.endswith(".zip"):
             source += ".zip"
-        if cloud_config_explicit["encrypt"] and not source.endswith(".gpg"):
+        if cloud_config_explicit["encryption"] is not None and not source.endswith(".gpg"):
             source += ".gpg"
     elif ":" in target and (target[1] != ":" if len(target) > 1 else True):  # avoid the case of "C:/"
         target_parts: list[str] = target.split(":")
@@ -75,7 +75,7 @@ def parse_cloud_source_target(
             _ = my_abs(source)
         if cloud_config_explicit["zip"] and not target.endswith(".zip"):
             target += ".zip"
-        if cloud_config_explicit["encrypt"] and not target.endswith(".gpg"):
+        if cloud_config_explicit["encryption"] is not None and not target.endswith(".gpg"):
             target += ".gpg"
     else:
         console.print(

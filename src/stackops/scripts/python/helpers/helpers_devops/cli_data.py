@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
 from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_MAP, CONFIG_SOURCE_LOOSE
+from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 
 
 def sync(
@@ -75,12 +76,11 @@ def _prompt_register_data_options(
     path_cloud: str | None,
     share_url: str | None,
     zip_: bool,
-    encrypt: bool,
-    encryption: str | None,
+    encryption: EncryptionModeChoice | None,
     pwd: str | None,
     rel2home: bool | None,
     os: str,
-) -> tuple[str, str, str, str, str | None, bool, bool, str | None, bool, str]:
+) -> tuple[str, str, str, str, str | None, bool, EncryptionMode | None, bool, str]:
     from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
 
@@ -105,20 +105,23 @@ def _prompt_register_data_options(
         allow_empty=True,
     )
     prompted_zip = ask_bool("Zip before upload", help_text="Store this entry as a zip archive before upload.", default=zip_)
-    prompted_encrypt = ask_bool("Encrypt before upload", help_text="Encrypt this entry before upload.", default=encrypt)
-    if prompted_encrypt:
-        if pwd is not None:
-            prompted_encryption: str | None = "symmetric"
-        else:
-            encryption_default = encryption if encryption in ("asymmetric", "symmetric") else "asymmetric"
-            prompted_encryption = ask_choice(
-                "Encryption mode",
-                help_text="Asymmetric uses configured GPG recipients. Symmetric uses a password during sync.",
-                choices=("asymmetric", "symmetric"),
-                default=encryption_default,
-            )
-    else:
-        prompted_encryption = None
+    resolved_encryption = None if encryption is None else parse_encryption_mode(encryption, label="Encryption mode")
+    encryption_default = "symmetric" if pwd is not None else resolved_encryption or "none"
+    encryption_choice = ask_choice(
+        "Encryption mode",
+        help_text="Choose none for plaintext, asymmetric for configured GPG recipients, or symmetric for password-based GPG.",
+        choices=("none", "asymmetric", "symmetric"),
+        default=encryption_default,
+    )
+    match encryption_choice:
+        case "none":
+            prompted_encryption: EncryptionMode | None = None
+        case "asymmetric":
+            prompted_encryption = "asymmetric"
+        case "symmetric":
+            prompted_encryption = "symmetric"
+        case _:
+            raise RuntimeError(f"Unknown encryption choice: {encryption_choice}")
     rel2home_default = rel2home if rel2home is not None else _default_rel2home(prompted_path_local)
     prompted_rel2home = ask_bool(
         "Store relative to home",
@@ -136,7 +139,6 @@ def _prompt_register_data_options(
             f"path_cloud: {prompted_path_cloud}",
             f"share_url: {prompted_share_url or 'null'}",
             f"zip: {prompted_zip}",
-            f"encrypt: {prompted_encrypt}",
             f"encryption: {prompted_encryption or 'null'}",
             f"rel2home: {prompted_rel2home}",
             f"os: {prompted_os}",
@@ -149,7 +151,6 @@ def _prompt_register_data_options(
         prompted_path_cloud,
         prompted_share_url,
         prompted_zip,
-        prompted_encrypt,
         prompted_encryption,
         prompted_rel2home,
         prompted_os,
@@ -163,12 +164,12 @@ def register_data(
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
     share_url: Annotated[str | None, typer.Option("--share-url", "-u", help="Optional http(s) share URL for sync down --use-link.")] = None,
     zip_: Annotated[bool, typer.Option("--no-zip", "-z", help="Store the backup entry without zipping before upload.")] = True,
-    encrypt: Annotated[bool, typer.Option("--no-encrypt", "-e", help="Store the backup entry without encrypting before upload.")] = True,
     encryption: Annotated[
-        str | None, typer.Option("--encryption", "-E", help="Encryption mode when encryption is enabled: symmetric or asymmetric.")
+        EncryptionModeChoice | None,
+        typer.Option("--encryption", "-e", help="Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
     ] = None,
     pwd: Annotated[
-        str | None, typer.Option("--password", "-p", help="Symmetric GPG encryption password. Implies encrypted symmetric mode and is not stored.")
+        str | None, typer.Option("--password", "-p", help="Symmetric GPG encryption password. Requires --encryption symmetric and is not stored.")
     ] = None,
     rel2home: Annotated[bool | None, typer.Option("--no-rel2home", "-r", help="Store the local path as absolute even when it is under home.")] = None,
     os: Annotated[
@@ -179,14 +180,13 @@ def register_data(
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
 
     if interactive:
-        path_local, group, name, path_cloud, share_url, zip_, encrypt, encryption, rel2home, os = _prompt_register_data_options(
+        path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os = _prompt_register_data_options(
             path_local=path_local,
             group=group,
             name=name,
             path_cloud=path_cloud,
             share_url=share_url,
             zip_=zip_,
-            encrypt=encrypt,
             encryption=encryption,
             pwd=pwd,
             rel2home=rel2home,
@@ -203,7 +203,6 @@ def register_data(
             path_cloud=path_cloud,
             share_url=share_url,
             zip_=zip_,
-            encrypt=encrypt,
             encryption=encryption,
             password=pwd,
             rel2home=rel2home,

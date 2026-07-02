@@ -29,9 +29,9 @@ When a command does not override them, cloud defaults come from `stackops.utils.
 
 - remote root: `myhome`
 - cloud name: `mycloud101`
-- `encrypt`, `zip`, `share`, `overwrite`, `os_specific`, `rel2home`: `False`
+- `zip`, `share`, `overwrite`, `os_specific`, `rel2home`: `False`
 - `pwd`: unset
-- encryption mode: unset unless passed with `--encryption`
+- encryption mode: unset, so transfers are plaintext unless `--encryption` is passed
 - if a remote path starts with `:`, StackOps fills in the cloud name from the configured default rclone remote
 
 ---
@@ -48,8 +48,8 @@ Current options from live help:
 | --- | --- |
 | `--transfers`, `-t` | Number of sync threads |
 | `--root`, `-R` | Remote root |
-| `--pwd`, `-P` | Symmetric GPG encryption password used when `--encrypt` is set |
-| `--encrypt`, `-e` | Current help text: decrypt after receiving |
+| `--pwd`, `-P` | Symmetric GPG encryption password; requires `--encryption symmetric` |
+| `--encryption`, `-e` | Enable encryption with `symmetric`/`s` or `asymmetric`/`a`; omit for plaintext |
 | `--zip`, `-z` | Current help text: unzip after receiving |
 | `--bisync`, `-b` | Bidirectional sync |
 | `--delete`, `-D` | Delete remote files not present locally |
@@ -59,7 +59,11 @@ Example:
 
 ```bash
 cloud sync ~/documents remote:documents --bisync
+cloud sync ~/documents remote:documents --encryption a
+cloud sync ~/documents remote:documents --encryption symmetric --pwd "$STACKOPS_BACKUP_PASSWORD"
 ```
+
+`--encryption`, `-e` is the only encryption switch. A password supplies credentials but does not select a mode, so `--pwd` is invalid unless the mode is explicitly `symmetric`.
 
 ---
 
@@ -81,9 +85,9 @@ Current options from live help:
 | `--record-os`, `-F` | OS filter for recorded uploads; defaults to all supported OS values |
 | `--relative2home`, `-r` | Treat remote paths as relative to `myhome` |
 | `--root`, `-R` | Remote root |
-| `--password`, `-p` | Symmetric GPG encryption password; implies `--encrypt --encryption symmetric` |
-| `--encrypt`, `-e` | Encrypt before sending |
-| `--encryption`, `-E` | Encryption mode when `--encrypt` is set: `symmetric`/`s` or `asymmetric`/`a` |
+| `--password`, `-p` | Symmetric GPG encryption password; requires `--encryption symmetric` |
+| `--password-name`, `-P` | StackOps secret containing the symmetric password; requires `--encryption symmetric` |
+| `--encryption`, `-e` | Enable encryption with `symmetric`/`s` or `asymmetric`/`a`; omit for plaintext |
 | `--zip`, `-z` | Current help text: unzip after receiving |
 | `--os-specific`, `-O` | Choose a path specific to the current OS |
 
@@ -91,16 +95,16 @@ Example:
 
 ```bash
 cloud copy ./report.pdf remote:reports/report.pdf
-cloud copy ./report.pdf remote:reports/report.pdf --encrypt --encryption a
-cloud copy ./report.pdf remote:reports/report.pdf --password "$STACKOPS_BACKUP_PASSWORD"
+cloud copy ./report.pdf remote:reports/report.pdf --encryption a
+cloud copy ./report.pdf remote:reports/report.pdf --encryption symmetric --password "$STACKOPS_BACKUP_PASSWORD"
 cloud copy ./report.pdf remote:reports/report.pdf --record-name report --record-group shared
 cloud copy ./report.pdf remote:reports/report.pdf --share-type v --record-name report --record-group shared
 cloud copy ./report.pdf remote:reports/report.pdf -s o -t v
 ```
 
-`--record-name` saves the upload in `mapper/data.yaml`. When `--share-scope` or `--share-type` is present, the generated URL is stored in that entry instead of writing a `.share_url_*` sidecar file.
+`--record-name` saves the upload in `mapper/data.yaml`. Its required `encryption` field is persisted as `symmetric`, `asymmetric`, or `null` for plaintext. When `--share-scope` or `--share-type` is present, the generated URL is stored in that entry instead of writing a `.share_url_*` sidecar file.
 `--share-scope` and `--share-type` are generic StackOps options. StackOps resolves the rclone config name to its backend type and maps supported providers internally; for OneDrive this becomes `--onedrive-link-scope` and `--onedrive-link-type`. Backends without provider-specific scope/type controls use plain `rclone link` for `anonymous` + `view`, and reject unsupported stronger options.
-Use `--encryption symmetric`/`s` for password-based GPG and `--encryption asymmetric`/`a` for GPG public/private keys. Passing `--password` selects encrypted symmetric mode automatically.
+`--encryption`, `-e` is the only encryption switch: use `symmetric`/`s` for password-based GPG or `asymmetric`/`a` for GPG public/private keys, and omit it for plaintext. `--password` and `--password-name` only provide credentials and require an explicit symmetric mode.
 
 ---
 

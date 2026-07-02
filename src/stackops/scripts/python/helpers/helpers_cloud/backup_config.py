@@ -11,7 +11,7 @@ import yaml
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
-from stackops.utils.cloud.encryption import EncryptionMode, parse_encryption_mode
+from stackops.utils.cloud.encryption import EncryptionMode
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH
 
@@ -33,8 +33,7 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #     path_local: "~/path/to/local/file_or_directory"
 #     path_cloud: "^"          # "^" lets stackops deduce a remote path from path_local
 #     share_url: null          # optional public/share link for the cloud object
-#     encrypt: true            # true/false
-#     encryption: asymmetric   # symmetric | asymmetric; required when encrypt is true
+#     encryption: asymmetric   # symmetric | asymmetric | null; null disables encryption
 #     zip: false               # true/false
 #     rel2home: true           # true: path_local is interpreted relative to your home dir
 #     os:
@@ -53,7 +52,6 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #     path_local: "~/.config/example"
 #     path_cloud: "^"
 #     share_url: null
-#     encrypt: true
 #     encryption: asymmetric
 #     zip: true
 #     rel2home: true
@@ -62,7 +60,7 @@ DEFAULT_BACKUP_HEADER = """# User-defined backup configuration
 #       - darwin
 """
 VALID_OS = frozenset(ALL_OS_VALUES)
-EXPECTED_BACKUP_FIELDS = frozenset({"path_local", "path_cloud", "share_url", "zip", "encrypt", "encryption", "rel2home", "os"})
+EXPECTED_BACKUP_FIELDS = frozenset({"path_local", "path_cloud", "share_url", "zip", "encryption", "rel2home", "os"})
 OS_OUTPUT_ORDER: dict[OsName, int] = {value: index for index, value in enumerate(ALL_OS_VALUES)}
 
 
@@ -71,7 +69,6 @@ class BackupItem(TypedDict):
     path_cloud: str | None
     share_url: str | None
     zip: bool
-    encrypt: bool
     encryption: EncryptionMode | None
     rel2home: bool
     os: set[OsName]
@@ -173,17 +170,18 @@ def _require_bool_field(raw: Mapping[str, object], field: str, item_name: str) -
     return _parse_bool(raw[field], field=field, item_name=item_name)
 
 
-def _parse_encryption_field(raw: Mapping[str, object], *, encrypt: bool, item_name: str) -> EncryptionMode | None:
-    if not encrypt:
-        if "encryption" in raw:
-            raise ValueError(f"Backup entry '{item_name}' must omit 'encryption' when 'encrypt' is false.")
-        return None
+def _parse_encryption_field(raw: Mapping[str, object], *, item_name: str) -> EncryptionMode | None:
     if "encryption" not in raw:
-        raise ValueError(f"Backup entry '{item_name}' must define 'encryption' when 'encrypt' is true.")
-    try:
-        return parse_encryption_mode(raw["encryption"], label=f"Backup entry '{item_name}' encryption")
-    except ValueError as error:
-        raise ValueError(str(error)) from error
+        raise ValueError(f"Backup entry '{item_name}' must define 'encryption' as symmetric, asymmetric, or null.")
+    match raw["encryption"]:
+        case None:
+            return None
+        case "symmetric":
+            return "symmetric"
+        case "asymmetric":
+            return "asymmetric"
+        case _:
+            raise ValueError(f"Backup entry '{item_name}' encryption must be symmetric, asymmetric, or null.")
 
 
 def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
@@ -203,14 +201,12 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
             unknown_fields = sorted(set(item) - EXPECTED_BACKUP_FIELDS)
             if unknown_fields:
                 raise ValueError(f"Backup entry '{item_key}' has unsupported fields: {', '.join(unknown_fields)}.")
-            encrypt = _require_bool_field(item, "encrypt", item_key)
             group_items[item_name] = {
                 "path_local": _require_str_field(item, "path_local", item_key),
                 "path_cloud": _optional_str_field(item, "path_cloud", item_key),
                 "share_url": _nullable_str_field(item, "share_url", item_key),
                 "zip": _require_bool_field(item, "zip", item_key),
-                "encrypt": encrypt,
-                "encryption": _parse_encryption_field(item, encrypt=encrypt, item_name=item_key),
+                "encryption": _parse_encryption_field(item, item_name=item_key),
                 "rel2home": _require_bool_field(item, "rel2home", item_key),
                 "os": _parse_os_field(item.get("os"), item_key),
             }
@@ -244,14 +240,7 @@ def _serialize_backup_config(config: BackupConfig) -> str:
             if path_cloud is not None:
                 yaml_item["path_cloud"] = path_cloud
             yaml_item["share_url"] = item["share_url"]
-            yaml_item["encrypt"] = item["encrypt"]
-            if item["encrypt"]:
-                encryption = item["encryption"]
-                if encryption is None:
-                    raise ValueError(f"Backup entry '{group_name}.{item_name}' must define 'encryption' when 'encrypt' is true.")
-                yaml_item["encryption"] = encryption
-            elif item["encryption"] is not None:
-                raise ValueError(f"Backup entry '{group_name}.{item_name}' must omit 'encryption' when 'encrypt' is false.")
+            yaml_item["encryption"] = item["encryption"]
             yaml_item["zip"] = item["zip"]
             yaml_item["rel2home"] = item["rel2home"]
             yaml_item["os"] = _serialize_os_values(item["os"])

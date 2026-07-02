@@ -27,7 +27,7 @@ Add one file or directory to the user backup config:
 
 ```bash
 devops data register ~/.config/wezterm --group dotfiles --encryption asymmetric
-devops data register ~/.config/wezterm --group dotfiles --password "$STACKOPS_BACKUP_PASSWORD"
+devops data register ~/.config/wezterm --group dotfiles --encryption symmetric --password "$STACKOPS_BACKUP_PASSWORD"
 devops data register ~/Documents/work --group documents --path-cloud backups/work --os linux,darwin
 ```
 
@@ -36,7 +36,6 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 - `path_local`
 - `path_cloud`
 - `share_url`
-- `encrypt`
 - `encryption`
 - `zip`
 - `rel2home`
@@ -50,7 +49,6 @@ dotfiles:
     path_local: "~/.config/wezterm"
     path_cloud: "^"
     share_url: null
-    encrypt: true
     encryption: asymmetric
     zip: true
     rel2home: true
@@ -62,8 +60,8 @@ dotfiles:
 `^` means "derive the remote path from `path_local`".
 `path_cloud` can include a cloud prefix such as `od:/something`.
 `share_url` is `null` until a share link exists.
-`encryption` is required only when `encrypt` is `true`; use `symmetric` for password-based GPG and `asymmetric` for GPG public/private keys.
-Passing `--password` to `register` records `encryption: symmetric` but does not store the password in `mapper/data.yaml`.
+Every persisted entry requires `encryption: symmetric`, `encryption: asymmetric`, or `encryption: null`. `null` means plaintext. The short values `s` and `a` are CLI aliases only; YAML stores the full mode names.
+`--encryption`, `-e` is the sole encryption switch for registration. Omit it to record `encryption: null`. A password supplies credentials but does not select a mode, so `--password` requires explicit `--encryption symmetric` and is never stored in `mapper/data.yaml`.
 
 ### Generate backup or restore commands
 
@@ -84,7 +82,7 @@ devops data sync down -s user --which dotfiles
 # Restrict the generated commands to one item and one cloud profile
 devops data sync up --cloud myremote --which dotfiles.wezterm
 
-# Use one password for selected symmetric entries
+# Use one password for entries that explicitly store encryption: symmetric
 devops data sync up --which dotfiles.wezterm --password "$STACKOPS_BACKUP_PASSWORD"
 
 # Restore one item from its recorded share_url instead of rclone
@@ -164,11 +162,12 @@ cloud ftpx localmachine:/tmp/archive remotehost:/tmp/archive --recursive
 The `cloud` commands rely on explicit CLI flags for transfer behavior. The live help shows the current flags for ad hoc operations such as:
 
 - `--root`
-- `--encrypt`
 - `--encryption`
 - `--zip`
 - `--relative2home`
 
 If a remote path starts with `:`, StackOps fills in the cloud name from the configured default cloud.
+
+Both `cloud copy` and `cloud sync` use `--encryption`, `-e` as the sole encryption switch. Accepted CLI values are `symmetric`/`s` and `asymmetric`/`a`; omitting the option keeps the transfer plaintext. Password options require an explicit symmetric mode.
 
 Use `devops data` when you want durable named backup sets. Use `cloud copy` or `cloud sync` when you already know the exact source and destination you want to move.

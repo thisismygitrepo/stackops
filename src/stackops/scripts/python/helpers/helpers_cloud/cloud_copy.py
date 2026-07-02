@@ -12,7 +12,7 @@ from stackops.utils.io import (
     encrypt_file_asymmetric,
     encrypt_file_symmetric,
 )
-from stackops.utils.cloud.encryption import EncryptionMode, parse_encryption_mode
+from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 from stackops.utils.path_core import delete_path
 import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
 from stackops.utils.cloud.rclone import (
@@ -34,11 +34,11 @@ class ShareUrlDownloadError(RuntimeError):
     pass
 
 
-def _artifact_path(local_path: Path, zip_requested: bool, encrypt_requested: bool) -> Path:
+def _artifact_path(local_path: Path, zip_requested: bool, encryption_mode: EncryptionMode | None) -> Path:
     suffix = ""
     if zip_requested:
         suffix += ".zip"
-    if encrypt_requested:
+    if encryption_mode is not None:
         suffix += ".gpg"
     return Path(f"{local_path}{suffix}")
 
@@ -48,21 +48,14 @@ def _delete_temp_paths(paths: list[Path]) -> None:
         delete_path(temp_path, verbose=False)
 
 
-def _resolve_encryption_settings(*, encrypt_requested: bool, encryption: str | None, pwd: str | None) -> tuple[bool, EncryptionMode | None]:
+def _resolve_encryption_mode(*, encryption: EncryptionModeChoice | None, pwd: str | None) -> EncryptionMode | None:
     encryption_mode = None if encryption is None else parse_encryption_mode(encryption, label="--encryption")
     if pwd is not None:
         if pwd == "":
             raise ValueError("--password must be non-empty.")
-        if encryption_mode not in (None, "symmetric"):
-            raise ValueError("--password can only be used with --encryption symmetric.")
-        return True, "symmetric"
-    if not encrypt_requested:
-        if encryption_mode is not None:
-            raise ValueError("--encryption can only be used when --encrypt is set.")
-        return False, None
-    if encryption_mode is None:
-        raise ValueError("--encrypt requires --encryption symmetric or --encryption asymmetric.")
-    return True, encryption_mode
+        if encryption_mode != "symmetric":
+            raise ValueError("--password requires --encryption symmetric.")
+    return encryption_mode
 
 
 def _resolve_password(*, pwd: str | None, password_name: str | None) -> str | None:
@@ -96,7 +89,6 @@ def _prepare_upload_path(
     *,
     local_path: Path,
     zip_requested: bool,
-    encrypt_requested: bool,
     encryption_mode: EncryptionMode | None,
     pwd: str | None,
 ) -> tuple[Path, list[Path]]:
@@ -116,7 +108,7 @@ def _prepare_upload_path(
             mode="w",
         )
         temp_paths.append(upload_path)
-    if encrypt_requested:
+    if encryption_mode is not None:
         if encryption_mode == "asymmetric":
             upload_path = encrypt_file_asymmetric(file_path=upload_path)
         elif encryption_mode == "symmetric":
@@ -131,13 +123,12 @@ def _finalize_download_path(
     *,
     download_path: Path,
     zip_requested: bool,
-    encrypt_requested: bool,
     encryption_mode: EncryptionMode | None,
     pwd: str | None,
     overwrite: bool,
 ) -> Path:
     local_path = download_path
-    if encrypt_requested:
+    if encryption_mode is not None:
         from rich.console import Console
         from rich.panel import Panel
 
@@ -214,26 +205,22 @@ def download_from_share_url(
     share_url: str,
     target_path: Path,
     zip_requested: bool,
-    encrypt_requested: bool,
     encryption_mode: EncryptionMode | None,
     pwd: str | None,
     overwrite: bool,
 ) -> Path:
-    if encrypt_requested and encryption_mode is None:
-        raise ValueError("Encryption mode is required when encryption is enabled.")
     direct_download_url = rclone_wrapper.google_drive_direct_download_url(share_url=share_url)
     download_url = share_url if direct_download_url is None else direct_download_url
     target_path_resolved = target_path.expanduser().absolute()
     download_path = _artifact_path(
         local_path=target_path_resolved,
         zip_requested=zip_requested,
-        encrypt_requested=encrypt_requested,
+        encryption_mode=encryption_mode,
     )
     _download_url_to_path(url=download_url, destination=download_path)
     return _finalize_download_path(
         download_path=download_path,
         zip_requested=zip_requested,
-        encrypt_requested=encrypt_requested,
         encryption_mode=encryption_mode,
         pwd=pwd,
         overwrite=overwrite,
@@ -247,9 +234,9 @@ def _split_remote_spec(value: str) -> tuple[str, str] | None:
     return cloud_name, remote_value
 
 
-def _strip_artifact_suffixes(remote_path: Path, *, zip_requested: bool, encrypt_requested: bool) -> str:
+def _strip_artifact_suffixes(remote_path: Path, *, zip_requested: bool, encryption_mode: EncryptionMode | None) -> str:
     remote_value = remote_path.as_posix()
-    if encrypt_requested and remote_value.endswith(".gpg"):
+    if encryption_mode is not None and remote_value.endswith(".gpg"):
         remote_value = remote_value.removesuffix(".gpg")
     if zip_requested and remote_value.endswith(".zip"):
         remote_value = remote_value.removesuffix(".zip")
@@ -264,7 +251,6 @@ def _record_upload(
     remote_path: Path,
     share_url: str | None,
     zip_requested: bool,
-    encrypt_requested: bool,
     encryption_mode: EncryptionMode | None,
     rel2home: bool,
     record_group: str,
@@ -281,7 +267,7 @@ def _record_upload(
         remote_value = _strip_artifact_suffixes(
             remote_path,
             zip_requested=zip_requested,
-            encrypt_requested=encrypt_requested,
+            encryption_mode=encryption_mode,
         )
         path_cloud = f"{cloud}:{remote_value}"
     return register_backup_entry(
@@ -291,7 +277,6 @@ def _record_upload(
         path_cloud=path_cloud,
         share_url=share_url,
         zip_=zip_requested,
-        encrypt=encrypt_requested,
         encryption=encryption_mode,
         password=None,
         rel2home=rel2home,
@@ -321,8 +306,7 @@ def main(
     root: str,
     pwd: str | None,
     password_name: str | None,
-    encrypt: bool,
-    encryption: str | None,
+    encryption: EncryptionModeChoice | None,
     zip_: bool,
     os_specific: bool,
 ) -> None:
@@ -336,7 +320,7 @@ def main(
 
     try:
         resolved_pwd = _resolve_password(pwd=pwd, password_name=password_name)
-        encrypt_effective, encryption_mode = _resolve_encryption_settings(encrypt_requested=encrypt, encryption=encryption, pwd=resolved_pwd)
+        encryption_mode = _resolve_encryption_mode(encryption=encryption, pwd=resolved_pwd)
         share_options = _resolve_share_options(share_scope=share_scope, share_type=share_type)
         resolved_record_name = _resolve_record_name(record_name)
     except (TypeError, ValueError) as error:
@@ -350,7 +334,6 @@ def main(
         rel2home=rel2home,
         root=root,
         pwd=resolved_pwd,
-        encrypt=encrypt_effective,
         encryption=encryption_mode,
         zip=zip_,
         os_specific=os_specific,
@@ -372,7 +355,7 @@ def main(
         download_path = _artifact_path(
             local_path=target_path,
             zip_requested=cloud_config_explicit["zip"],
-            encrypt_requested=cloud_config_explicit["encrypt"],
+            encryption_mode=cloud_config_explicit["encryption"],
         )
         try:
             rclone_wrapper.from_cloud(
@@ -385,7 +368,6 @@ def main(
             _finalize_download_path(
                 download_path=download_path,
                 zip_requested=cloud_config_explicit["zip"],
-                encrypt_requested=cloud_config_explicit["encrypt"],
                 encryption_mode=cloud_config_explicit["encryption"],
                 pwd=cloud_config_explicit["pwd"],
                 overwrite=cloud_config_explicit["overwrite"],
@@ -422,7 +404,6 @@ def main(
             upload_path, temp_paths = _prepare_upload_path(
                 local_path=source_path,
                 zip_requested=cloud_config_explicit["zip"],
-                encrypt_requested=cloud_config_explicit["encrypt"],
                 encryption_mode=cloud_config_explicit["encryption"],
                 pwd=cloud_config_explicit["pwd"],
             )
@@ -479,7 +460,6 @@ def main(
                 remote_path=remote_path,
                 share_url=share_url,
                 zip_requested=cloud_config_explicit["zip"],
-                encrypt_requested=cloud_config_explicit["encrypt"],
                 encryption_mode=cloud_config_explicit["encryption"],
                 rel2home=cloud_config_explicit["rel2home"],
                 record_group=record_group,

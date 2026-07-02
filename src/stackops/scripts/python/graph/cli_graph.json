@@ -516,12 +516,12 @@
                     "    path_cloud: Annotated[str | None, typer.Option(\"--path-cloud\", \"-C\", help=\"Cloud path override (optional).\")] = None,",
                     "    share_url: Annotated[str | None, typer.Option(\"--share-url\", \"-u\", help=\"Optional http(s) share URL for sync down --use-link.\")] = None,",
                     "    zip_: Annotated[bool, typer.Option(\"--no-zip\", \"-z\", help=\"Store the backup entry without zipping before upload.\")] = True,",
-                    "    encrypt: Annotated[bool, typer.Option(\"--no-encrypt\", \"-e\", help=\"Store the backup entry without encrypting before upload.\")] = True,",
                     "    encryption: Annotated[",
-                    "        str | None, typer.Option(\"--encryption\", \"-E\", help=\"Encryption mode when encryption is enabled: symmetric or asymmetric.\")",
+                    "        EncryptionModeChoice | None,",
+                    "        typer.Option(\"--encryption\", \"-e\", help=\"Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext.\"),",
                     "    ] = None,",
                     "    pwd: Annotated[",
-                    "        str | None, typer.Option(\"--password\", \"-p\", help=\"Symmetric GPG encryption password. Implies encrypted symmetric mode and is not stored.\")",
+                    "        str | None, typer.Option(\"--password\", \"-p\", help=\"Symmetric GPG encryption password. Requires --encryption symmetric and is not stored.\")",
                     "    ] = None,",
                     "    rel2home: Annotated[bool | None, typer.Option(\"--no-rel2home\", \"-r\", help=\"Store the local path as absolute even when it is under home.\")] = None,",
                     "    os: Annotated[",
@@ -532,14 +532,13 @@
                     "    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry",
                     "",
                     "    if interactive:",
-                    "        path_local, group, name, path_cloud, share_url, zip_, encrypt, encryption, rel2home, os = _prompt_register_data_options(",
+                    "        path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os = _prompt_register_data_options(",
                     "            path_local=path_local,",
                     "            group=group,",
                     "            name=name,",
                     "            path_cloud=path_cloud,",
                     "            share_url=share_url,",
                     "            zip_=zip_,",
-                    "            encrypt=encrypt,",
                     "            encryption=encryption,",
                     "            pwd=pwd,",
                     "            rel2home=rel2home,",
@@ -556,7 +555,6 @@
                     "            path_cloud=path_cloud,",
                     "            share_url=share_url,",
                     "            zip_=zip_,",
-                    "            encrypt=encrypt,",
                     "            encryption=encryption,",
                     "            password=pwd,",
                     "            rel2home=rel2home,",
@@ -697,47 +695,25 @@
                       }
                     },
                     {
-                      "name": "encrypt",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": true,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--no-encrypt', '-e', help='Store the backup entry without encrypting before upload.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--no-encrypt",
-                          "-e"
-                        ],
-                        "long_flags": [
-                          "--no-encrypt"
-                        ],
-                        "short_flags": [
-                          "-e"
-                        ],
-                        "help": "Store the backup entry without encrypting before upload."
-                      }
-                    },
-                    {
                       "name": "encryption",
                       "kind": "positional_or_keyword",
-                      "type": "str | None",
+                      "type": "EncryptionModeChoice | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--encryption', '-E', help='Encryption mode when encryption is enabled: symmetric or asymmetric.')]",
+                      "annotation_raw": "Annotated[EncryptionModeChoice | None, typer.Option('--encryption', '-e', help='Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
                           "--encryption",
-                          "-E"
+                          "-e"
                         ],
                         "long_flags": [
                           "--encryption"
                         ],
                         "short_flags": [
-                          "-E"
+                          "-e"
                         ],
-                        "help": "Encryption mode when encryption is enabled: symmetric or asymmetric."
+                        "help": "Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."
                       }
                     },
                     {
@@ -746,7 +722,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='Symmetric GPG encryption password. Implies encrypted symmetric mode and is not stored.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='Symmetric GPG encryption password. Requires --encryption symmetric and is not stored.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -759,7 +735,7 @@
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Symmetric GPG encryption password. Implies encrypted symmetric mode and is not stored."
+                        "help": "Symmetric GPG encryption password. Requires --encryption symmetric and is not stored."
                       }
                     },
                     {
@@ -10546,8 +10522,11 @@
                 "    target: Annotated[str, typer.Argument(help=\"target\")],",
                 "    transfers: Annotated[int, typer.Option(\"--transfers\", \"-t\", help=\"Number of threads in syncing.\")] = 10,",
                 "    root: Annotated[str, typer.Option(\"--root\", \"-R\", help=\"Remote root.\")] = defaults[\"root\"],",
-                "    pwd: Annotated[str | None, typer.Option(\"--pwd\", \"-P\", help=\"Symmetric GPG encryption password used when --encrypt is set.\")] = defaults[\"pwd\"],",
-                "    encrypt: Annotated[bool, typer.Option(\"--encrypt\", \"-e\", help=\"Decrypt after receiving.\")] = defaults[\"encrypt\"],",
+                "    pwd: Annotated[str | None, typer.Option(\"--pwd\", \"-P\", help=\"Symmetric GPG encryption password. Requires --encryption symmetric.\")] = defaults[\"pwd\"],",
+                "    encryption: Annotated[",
+                "        EncryptionModeChoice | None,",
+                "        typer.Option(\"--encryption\", \"-e\", help=\"Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext.\"),",
+                "    ] = defaults[\"encryption\"],",
                 "    zip_: Annotated[bool, typer.Option(\"--zip\", \"-z\", help=\"unzip after receiving.\")] = defaults[\"zip\"],",
                 "    bisync: Annotated[bool, typer.Option(\"--bisync\", \"-b\", help=\"Bidirectional sync.\")] = False,",
                 "    delete: Annotated[bool, typer.Option(\"--delete\", \"-D\", help=\"Delete files in remote that are not in local.\")] = False,",
@@ -10555,7 +10534,18 @@
                 ") -> None:",
                 "    \"\"\"🔄 Synchronize files/folders between local and cloud storage.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main",
-                "    sync_main(source=source, target=target, transfers=transfers, root=root, pwd=pwd, encrypt=encrypt, zip_=zip_, bisync=bisync, delete=delete, verbose=verbose)"
+                "    sync_main(",
+                "        source=source,",
+                "        target=target,",
+                "        transfers=transfers,",
+                "        root=root,",
+                "        pwd=pwd,",
+                "        encryption=encryption,",
+                "        zip_=zip_,",
+                "        bisync=bisync,",
+                "        delete=delete,",
+                "        verbose=verbose,",
+                "    )"
               ],
               "name": "sync",
               "parameters": [
@@ -10639,7 +10629,7 @@
                   "type": "str | None",
                   "default": "defaults['pwd']",
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--pwd', '-P', help='Symmetric GPG encryption password used when --encrypt is set.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--pwd', '-P', help='Symmetric GPG encryption password. Requires --encryption symmetric.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -10652,29 +10642,29 @@
                     "short_flags": [
                       "-P"
                     ],
-                    "help": "Symmetric GPG encryption password used when --encrypt is set."
+                    "help": "Symmetric GPG encryption password. Requires --encryption symmetric."
                   }
                 },
                 {
-                  "name": "encrypt",
+                  "name": "encryption",
                   "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": "defaults['encrypt']",
+                  "type": "EncryptionModeChoice | None",
+                  "default": "defaults['encryption']",
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--encrypt', '-e', help='Decrypt after receiving.')]",
+                  "annotation_raw": "Annotated[EncryptionModeChoice | None, typer.Option('--encryption', '-e', help='Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--encrypt",
+                      "--encryption",
                       "-e"
                     ],
                     "long_flags": [
-                      "--encrypt"
+                      "--encryption"
                     ],
                     "short_flags": [
                       "-e"
                     ],
-                    "help": "Decrypt after receiving."
+                    "help": "Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."
                   }
                 },
                 {
@@ -10804,10 +10794,15 @@
                 "    record_os: Annotated[str, typer.Option(\"--record-os\", \"-F\", help=\"💻 OS filter for recorded uploads. Comma-separated: linux,darwin,windows. Defaults to all.\")] = \"linux,darwin,windows\",",
                 "    rel2home: Annotated[bool, typer.Option(\"--relative2home\", \"-r\", help=\"🏠 Relative to `myhome` folder\")] = defaults[\"rel2home\"],",
                 "    root: Annotated[str, typer.Option(\"--root\", \"-R\", help=\"🌳 Remote root.\")] = defaults[\"root\"],",
-                "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.\")] = defaults[\"pwd\"],",
-                "    password_name: Annotated[str | None, typer.Option(\"--password-name\", \"-P\", help=\"🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encrypt --encryption symmetric.\")] = None,",
-                "    encrypt: Annotated[bool, typer.Option(\"--encrypt\", \"-e\", help=\"🔐 Encrypt before sending.\")] = defaults[\"encrypt\"],",
-                "    encryption: Annotated[EncryptionModeChoice | None, typer.Option(\"--encryption\", \"-E\", help=\"🔐 Encryption mode when --encrypt is set: symmetric/s or asymmetric/a.\")] = defaults[\"encryption\"],",
+                "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"🔒 Symmetric GPG encryption password. Requires --encryption symmetric.\")] = defaults[\"pwd\"],",
+                "    password_name: Annotated[",
+                "        str | None,",
+                "        typer.Option(\"--password-name\", \"-P\", help=\"🔐 Exact StackOps secrets login name containing PASSWORD. Requires --encryption symmetric.\"),",
+                "    ] = None,",
+                "    encryption: Annotated[",
+                "        EncryptionModeChoice | None,",
+                "        typer.Option(\"--encryption\", \"-e\", help=\"🔐 Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext.\"),",
+                "    ] = defaults[\"encryption\"],",
                 "    zip_: Annotated[bool, typer.Option(\"--zip\", \"-z\", help=\"📦 unzip after receiving.\")] = defaults[\"zip\"],",
                 "    os_specific: Annotated[bool, typer.Option(\"--os-specific\", \"-O\", help=\"💻 choose path specific for this OS.\")] = defaults[\"os_specific\"],",
                 ") -> None:",
@@ -10827,7 +10822,6 @@
                 "        root=root,",
                 "        pwd=pwd,",
                 "        password_name=password_name,",
-                "        encrypt=encrypt,",
                 "        encryption=encryption,",
                 "        zip_=zip_,",
                 "        os_specific=os_specific,",
@@ -11047,7 +11041,7 @@
                   "type": "str | None",
                   "default": "defaults['pwd']",
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='🔒 Symmetric GPG encryption password. Requires --encryption symmetric.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -11060,7 +11054,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "🔒 Symmetric GPG encryption password. Implies --encrypt --encryption symmetric."
+                    "help": "🔒 Symmetric GPG encryption password. Requires --encryption symmetric."
                   }
                 },
                 {
@@ -11069,7 +11063,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--password-name', '-P', help='🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encrypt --encryption symmetric.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--password-name', '-P', help='🔐 Exact StackOps secrets login name containing PASSWORD. Requires --encryption symmetric.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -11082,29 +11076,7 @@
                     "short_flags": [
                       "-P"
                     ],
-                    "help": "🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encrypt --encryption symmetric."
-                  }
-                },
-                {
-                  "name": "encrypt",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": "defaults['encrypt']",
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--encrypt', '-e', help='🔐 Encrypt before sending.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--encrypt",
-                      "-e"
-                    ],
-                    "long_flags": [
-                      "--encrypt"
-                    ],
-                    "short_flags": [
-                      "-e"
-                    ],
-                    "help": "🔐 Encrypt before sending."
+                    "help": "🔐 Exact StackOps secrets login name containing PASSWORD. Requires --encryption symmetric."
                   }
                 },
                 {
@@ -11113,20 +11085,20 @@
                   "type": "EncryptionModeChoice | None",
                   "default": "defaults['encryption']",
                   "required": false,
-                  "annotation_raw": "Annotated[EncryptionModeChoice | None, typer.Option('--encryption', '-E', help='🔐 Encryption mode when --encrypt is set: symmetric/s or asymmetric/a.')]",
+                  "annotation_raw": "Annotated[EncryptionModeChoice | None, typer.Option('--encryption', '-e', help='🔐 Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
                       "--encryption",
-                      "-E"
+                      "-e"
                     ],
                     "long_flags": [
                       "--encryption"
                     ],
                     "short_flags": [
-                      "-E"
+                      "-e"
                     ],
-                    "help": "🔐 Encryption mode when --encrypt is set: symmetric/s or asymmetric/a."
+                    "help": "🔐 Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."
                   }
                 },
                 {

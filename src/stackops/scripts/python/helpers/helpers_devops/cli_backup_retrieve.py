@@ -103,7 +103,6 @@ def _retrieve_from_share_url(
             share_url=share_url,
             target_path=local_path,
             zip_requested=item["zip"],
-            encrypt_requested=item["encrypt"],
             encryption_mode=item["encryption"],
             pwd=pwd if item["encryption"] == "symmetric" else None,
             overwrite=overwrite,
@@ -244,13 +243,10 @@ def main_backup_retrieve(
             display_name = f"{group_name}.{item_name}"
             flags = ""
             flags += "z" if item["zip"] else ""
-            flags += "e" if item["encrypt"] else ""
             flags += "r" if item["rel2home"] else ""
             flags += "o" if not all_os_values(item["os"]) else ""
             encryption_mode = item["encryption"]
-            if item["encrypt"] and encryption_mode is None:
-                raise ValueError(f"Backup entry '{display_name}' must define 'encryption' when 'encrypt' is true.")
-            encryption_arg = f" --encryption {encryption_mode}" if item["encrypt"] else ""
+            encryption_arg = f" --encryption {encryption_mode}" if encryption_mode is not None else ""
             password_arg = f" --password {shlex.quote(pwd)}" if encryption_mode == "symmetric" and pwd is not None else ""
             local_path = Path(item["path_local"]).as_posix()
             path_cloud = item["path_cloud"]
@@ -259,7 +255,7 @@ def main_backup_retrieve(
                     f"📦 PROCESSING: {display_name}\n"
                     f"📂 Local path: {local_path}\n"
                     "🔗 Source: share_url\n"
-                    f"🔐 Encryption: {item['encryption'] if item['encrypt'] else 'None'}\n"
+                    f"🔐 Encryption: {item['encryption'] or 'None'}\n"
                     f"🏳️  Flags: {flags or 'None'}",
                     title=f"[bold blue]Processing Link Item: {display_name}[/bold blue]",
                     border_style="blue",
