@@ -20,11 +20,7 @@ def parse_backup_entry_selectors(which: str) -> tuple[str, ...]:
 
 def resolve_backup_entry_keys(*, config: BackupConfig, selectors: tuple[str, ...]) -> list[BackupEntryKey]:
     if selectors == ("all",):
-        return [
-            BackupEntryKey(group_name=group_name, item_name=item_name)
-            for group_name, group_items in config.items()
-            for item_name in group_items
-        ]
+        return [BackupEntryKey(group_name=group_name, item_name=item_name) for group_name, group_items in config.items() for item_name in group_items]
 
     selected_keys: list[BackupEntryKey] = []
     selected_key_set: set[BackupEntryKey] = set()
