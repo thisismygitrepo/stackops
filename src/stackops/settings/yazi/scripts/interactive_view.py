@@ -5,7 +5,8 @@ import sys
 from typing import Final, Literal, NoReturn, cast
 
 type Command = list[str]
-type ViewerMode = Literal["auto", "browser", "markdown", "database", "visidata"]
+type AutomaticViewerMode = Literal["browser", "markdown", "database", "visidata"]
+type ViewerMode = Literal["auto"] | AutomaticViewerMode
 
 HOVERED_MARKER = "__YAZI_HOVERED__"
 SELECTED_MARKER = "__YAZI_SELECTED__"
@@ -72,12 +73,44 @@ def build_visidata_command(target_path: Path) -> Command:
     return [(Path.home() / ".config/stackops/scripts/wrap_stackops").as_posix(), "preview", "-b", "v", str(target_path)]
 
 
-def build_command(target_path: Path, mode: ViewerMode = "auto", database_backend: str = "harlequin") -> Command:
+def resolve_automatic_viewer_mode(target_path: Path) -> AutomaticViewerMode | None:
     if target_path.is_dir():
-        return build_browser_command(target_path=target_path)
+        return "browser"
     if not target_path.is_file():
+        return None
+    suffix = target_path.suffix.lower()
+    match suffix:
+        case _ if suffix in BROWSER_FILE_SUFFIXES:
+            return "browser"
+        case _ if suffix in MARKDOWN_SUFFIXES:
+            return "markdown"
+        case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
+            return "database"
+        case _ if suffix in VISIDATA_SUFFIXES:
+            return "visidata"
+        case _:
+            return None
+
+
+def build_command(target_path: Path, mode: ViewerMode = "auto", database_backend: str = "harlequin") -> Command:
+    if not target_path.is_dir() and not target_path.is_file():
         raise ValueError(f"Interactive view requires a file or directory, got: {target_path}")
+    resolved_mode: AutomaticViewerMode
     match mode:
+        case "browser":
+            resolved_mode = "browser"
+        case "markdown":
+            resolved_mode = "markdown"
+        case "database":
+            resolved_mode = "database"
+        case "visidata":
+            resolved_mode = "visidata"
+        case "auto":
+            automatic_mode = resolve_automatic_viewer_mode(target_path=target_path)
+            if automatic_mode is None:
+                raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")
+            resolved_mode = automatic_mode
+    match resolved_mode:
         case "browser":
             return build_browser_command(target_path=target_path)
         case "markdown":
@@ -86,20 +119,6 @@ def build_command(target_path: Path, mode: ViewerMode = "auto", database_backend
             return build_database_command(target_path=target_path, database_backend=database_backend)
         case "visidata":
             return build_visidata_command(target_path=target_path)
-        case "auto":
-            pass
-    suffix = target_path.suffix.lower()
-    match suffix:
-        case _ if suffix in BROWSER_FILE_SUFFIXES:
-            return build_browser_command(target_path=target_path)
-        case _ if suffix in MARKDOWN_SUFFIXES:
-            return build_markdown_command(target_path=target_path)
-        case _ if suffix in DUCKDB_SUFFIXES or suffix in SQLITE_SUFFIXES:
-            return build_database_command(target_path=target_path, database_backend=database_backend)
-        case suffix if suffix in VISIDATA_SUFFIXES:
-            return build_visidata_command(target_path=target_path)
-        case _:
-            raise ValueError(f"No interactive view command is configured for {target_path.suffix or 'files without an extension'}.")
 
 
 def exec_command(command: Command) -> NoReturn:

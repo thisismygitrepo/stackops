@@ -1,9 +1,13 @@
-from stackops.utils.source_of_truth import EXCLUDE_DIRS
-from rich.console import Console
-from rich.panel import Panel
 import platform
 import subprocess
+import sys
+from collections.abc import Iterator
 from pathlib import Path
+
+from rich.console import Console
+from rich.panel import Panel
+
+from stackops.utils.source_of_truth import EXCLUDE_DIRS
 
 console = Console()
 
@@ -49,18 +53,32 @@ def sanitize_path(a_path: str) -> Path:
     return path.expanduser().absolute()
 
 
+def _warn_about_inaccessible_directory(error: OSError) -> None:
+    inaccessible_path = error.filename if error.filename is not None else "unknown path"
+    print(f"⚠️ WARNING | Skipping inaccessible directory `{inaccessible_path}`: {error}", file=sys.stderr)
+
+
+def _walk_accessible_files(root: Path, excluded_directory_names: set[str]) -> Iterator[Path]:
+    for current_directory, directory_names, file_names in root.walk(
+        top_down=True,
+        on_error=_warn_about_inaccessible_directory,
+        follow_symlinks=False,
+    ):
+        directory_names[:] = [directory_name for directory_name in directory_names if directory_name not in excluded_directory_names]
+        for file_name in file_names:
+            file_path = current_directory.joinpath(file_name)
+            try:
+                if file_path.is_file():
+                    yield file_path
+            except OSError as error:
+                print(f"⚠️ WARNING | Skipping inaccessible path `{file_path}`: {error}", file=sys.stderr)
+
+
 def find_scripts(root: Path, name_substring: str, suffixes: set[str]) -> tuple[list[Path], list[Path]]:
-    filename_matches = []
-    partial_path_matches = []
-    for entry in root.iterdir():
-        if entry.is_dir():
-            if entry.name in set(EXCLUDE_DIRS):
-                # prune this entire subtree
-                continue
-            tmp1, tmp2 = find_scripts(entry, name_substring, suffixes)
-            filename_matches.extend(tmp1)
-            partial_path_matches.extend(tmp2)
-        elif entry.is_file() and entry.suffix in suffixes:
+    filename_matches: list[Path] = []
+    partial_path_matches: list[Path] = []
+    for entry in _walk_accessible_files(root=root, excluded_directory_names=set(EXCLUDE_DIRS)):
+        if entry.suffix in suffixes:
             if name_substring.lower() in entry.name.lower():
                 filename_matches.append(entry)
             elif name_substring.lower() in entry.as_posix().lower():
@@ -163,20 +181,12 @@ def search_for_files_of_interest(path_obj: Path, suffixes: set[str]) -> list[Pat
     if path_obj.is_file():
         return [path_obj]
     files: list[Path] = []
-    directories_to_visit: list[Path] = [path_obj]
-    while directories_to_visit:
-        current_dir = directories_to_visit.pop()
-        for entry in current_dir.iterdir():
-            if entry.is_dir():
-                if entry.name == ".venv":
-                    continue
-                directories_to_visit.append(entry)
-                continue
-            if not include_all_suffixes and entry.suffix not in suffixes:
-                continue
-            if entry.suffix == ".py" and entry.name == "__init__.py":
-                continue
-            files.append(entry)
+    for entry in _walk_accessible_files(root=path_obj, excluded_directory_names={".venv"}):
+        if not include_all_suffixes and entry.suffix not in suffixes:
+            continue
+        if entry.suffix == ".py" and entry.name == "__init__.py":
+            continue
+        files.append(entry)
     return files
 
 

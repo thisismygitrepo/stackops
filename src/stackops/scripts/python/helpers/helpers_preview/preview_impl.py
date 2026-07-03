@@ -31,11 +31,13 @@ def preview(
     path: str,
     project_path: str | None,
     uv_with: str | None,
-    backend: BACKENDS,
+    backend: BACKENDS | None,
     profile: str | None,
     frozen: bool,
 ) -> None:
     """Preview files and launch reader backends."""
+    choice_file = _resolve_target_path(path=path)
+    backend = _resolve_preview_backend(target_path=choice_file, requested_backend=backend)
     uv_with_line_user: str = "INVALID_INIT_VALUE_FOR_UV_WITH"
     if frozen:
         uv_with_line_user += " --frozen"
@@ -65,19 +67,15 @@ def preview(
     console = Console()
 
     ipython_profile: str | None = profile
-    from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file
     if backend in PATH_BACKENDS:
-        choice_file = _resolve_path_backend_target(path=path)
         _run_path_backend(
             target_path=choice_file,
             backend=backend,
         )
         return
-    if Path(path).absolute().expanduser().is_dir():
+    if choice_file.is_dir():
         program = ""
-        choice_file = Path(path).absolute().expanduser()
     else:
-        choice_file = get_choice_file(path=path, suffixes={".*"}, search_root=None)
         if choice_file.suffix == ".py":
             program = choice_file.read_text(encoding="utf-8")
             text = f"📄 Selected file: {choice_file.name}"
@@ -168,12 +166,27 @@ except Exception as e:
     exit_then_run_shell_script(fire_line, strict=False)
 
 
-def _resolve_path_backend_target(path: str) -> Path:
+def _resolve_target_path(path: str) -> Path:
     from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file, sanitize_path
 
     if Path(path).expanduser().exists():
         return sanitize_path(path)
     return get_choice_file(path=path, suffixes={".*"}, search_root=None)
+
+
+def _resolve_preview_backend(target_path: Path, requested_backend: BACKENDS | None) -> BACKENDS:
+    if requested_backend is not None:
+        return requested_backend
+    from stackops.utils.files import read as read_module
+
+    suffix = target_path.suffix.removeprefix(".")
+    if target_path.is_dir() or target_path.suffix == ".py" or suffix in read_module.READERS:
+        return "ipython"
+    from stackops.settings.yazi.scripts.interactive_view import resolve_automatic_viewer_mode
+
+    if resolve_automatic_viewer_mode(target_path=target_path) is not None:
+        return "auto"
+    return "ipython"
 
 
 def _run_path_backend(

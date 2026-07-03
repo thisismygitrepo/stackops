@@ -1,6 +1,6 @@
 # preview
 
-`preview` builds a temporary `uv run` launch context, then opens a selected file or directory in a preview, viewer, or interactive backend such as IPython, Python, Marimo, Jupyter, Jupyter AI, VS Code, or VisiData.
+`preview` opens a selected file or directory in a capable viewer. Without `--backend`, it prefers the IPython reader and uses the file-aware viewer when no IPython reader exists.
 
 ---
 
@@ -24,7 +24,7 @@ preview [OPTIONS] [PATH]
 | --- | --- | --- |
 | `--project` | `-p` | Reuse a specific `uv` project directory |
 | `--uv-with` | `-w` | Add extra packages to the launch environment |
-| `--backend` | `-b` | Backend: `ipython`, `python`, `marimo`, `jupyter`, `jupyter-ai`, `vscode`, `visidata`, `auto`, `preview`, `browser`, `glow`, or a SQL client |
+| `--backend` | `-b` | Force a backend: `ipython`, `python`, `marimo`, `jupyter`, `jupyter-ai`, `vscode`, `visidata`, `auto`, `preview`, `browser`, `glow`, or a SQL client |
 | `--interactive` | `-i` | Select any available backend interactively |
 | `--profile` | `-r` | IPython profile name |
 | `--self` | `-s` | Point the project at `~/code/stackops` when that checkout exists |
@@ -83,7 +83,8 @@ Project resolution is currently:
 
 ## Backend-specific notes
 
-- `ipython` is the default backend.
+- Without `--backend`, files supported by StackOps readers use IPython. Files without a reader use the file-aware `auto` backend when it supports them; for example, HTML opens in the browser.
+- An explicit backend is always used as requested, including `--backend ipython` for a file without a registered reader.
 - `python` runs the generated script with plain Python instead of IPython.
 - `marimo` converts the generated script to `marimo_nb.py` in a temporary directory, then runs `marimo edit --host 0.0.0.0`.
 - `jupyter` emits a temporary `.ipynb` and opens it in JupyterLab.

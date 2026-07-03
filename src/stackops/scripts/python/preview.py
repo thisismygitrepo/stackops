@@ -66,7 +66,7 @@ def preview(
     path: Annotated[str, typer.Argument(help="path of file to read.")] = ".",
     project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
-    backend: Annotated[BACKENDS_LOOSE, typer.Option("--backend", "-b", help="specify the backend to use")] = "ipython",
+    backend: Annotated[BACKENDS_LOOSE | None, typer.Option("--backend", "-b", help="specify the backend to use")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="select the backend interactively")] = False,
     profile: Annotated[str | None, typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
     stackops_project: Annotated[bool, typer.Option("--self", "-s", help="specify stackops project to use.")] = False,
@@ -81,9 +81,11 @@ def preview(
                 uv_with = f""" --with "{STACKOPS_PLOT_REQUIREMENT}" """
             else:
                 uv_with += f""" --with "{STACKOPS_PLOT_REQUIREMENT}" """
-    resolved_backend: BACKENDS
+    resolved_backend: BACKENDS | None
     if interactive:
         resolved_backend = _choose_backend_interactively()
+    elif backend is None:
+        resolved_backend = None
     else:
         resolved_backend = _resolve_backend_choice(backend=backend)
 

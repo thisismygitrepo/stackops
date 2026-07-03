@@ -1,5 +1,6 @@
-from pathlib import Path
 import subprocess
+from collections.abc import Callable, Iterator
+from pathlib import Path
 
 import pytest
 
@@ -16,6 +17,42 @@ def test_search_for_files_of_interest_accepts_wildcard_suffix(tmp_path: Path) ->
     files = search_for_files_of_interest(path_obj=tmp_path, suffixes={".*"})
 
     assert set(files) == {python_file, data_file}
+
+
+def test_search_for_files_of_interest_warns_and_continues_after_inaccessible_directory(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root_script = tmp_path.joinpath("root.py")
+    nested_script = tmp_path.joinpath("accessible", "nested.py")
+    inaccessible_directory = tmp_path.joinpath("Templates")
+    nested_script.parent.mkdir()
+    root_script.write_text("", encoding="utf-8")
+    nested_script.write_text("", encoding="utf-8")
+
+    def fake_walk(
+        self: Path,
+        *,
+        top_down: bool,
+        on_error: Callable[[OSError], object],
+        follow_symlinks: bool,
+    ) -> Iterator[tuple[Path, list[str], list[str]]]:
+        assert top_down
+        assert not follow_symlinks
+        yield self, ["accessible", "Templates"], [root_script.name]
+        on_error(PermissionError(13, "Access is denied", str(inaccessible_directory)))
+        yield nested_script.parent, [], [nested_script.name]
+
+    monkeypatch.setattr(Path, "walk", fake_walk)
+
+    files = search_for_files_of_interest(path_obj=tmp_path, suffixes={".py"})
+
+    captured = capsys.readouterr()
+    assert set(files) == {root_script, nested_script}
+    assert "WARNING | Skipping inaccessible directory" in captured.err
+    assert str(inaccessible_directory) in captured.err
+    assert "Access is denied" in captured.err
 
 
 def test_match_file_name_strips_fzf_selected_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
