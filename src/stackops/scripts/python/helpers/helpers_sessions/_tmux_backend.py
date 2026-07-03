@@ -102,6 +102,7 @@ def choose_session(
     name: str | None,
     new_session: bool,
     kill_all: bool,
+    first: bool,
     window: bool = False,
 ) -> AttachSessionChoice:
     if name is not None:
@@ -113,6 +114,8 @@ def choose_session(
 
     if len(sessions) == 0:
         return ("handoff_script", new_session_script(kill_all=False))
+    if first:
+        return ("handoff_script", attach_script_from_name(name=sessions[0], quote_fn=quote))
     if window:
         option_to_script, options_to_preview_mapping = build_window_target_options(
             sessions=sessions,

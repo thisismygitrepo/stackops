@@ -132,6 +132,7 @@ def attach_to_session(
         name: Annotated[str | None, typer.Argument(help="Name of the session to attach to. If not provided, a list will be shown to choose from.")] = None,
         new_session: Annotated[bool, typer.Option("--new-session", "-n", help="Create a new session instead of attaching to an existing one.", show_default=True)] = False,
         kill_all: Annotated[bool, typer.Option("--kill-all", "-k", help="Kill all existing sessions before creating a new one.", show_default=True)] = False,
+        first: Annotated[bool, typer.Option("--first", "-f", help="Attach non-interactively to the first available tmux session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Choose a window/tab or pane target instead of only choosing from sessions.", show_default=True)] = False,
         backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
         ) -> None:
@@ -145,10 +146,25 @@ def attach_to_session(
     if name is not None and window:
         typer.echo("Error: NAME cannot be used together with --window.", err=True, color=True)
         raise typer.Exit(code=1)
+    if name is not None and first:
+        typer.echo("Error: NAME cannot be used together with --first.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if first and new_session:
+        typer.echo("Error: --first cannot be used together with --new-session.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if first and kill_all:
+        typer.echo("Error: --first cannot be used together with --kill-all.", err=True, color=True)
+        raise typer.Exit(code=1)
+    if first and window:
+        typer.echo("Error: --first cannot be used together with --window.", err=True, color=True)
+        raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import resolve_session_backend
     backend_resolved = resolve_session_backend(backend)
+    if first and backend_resolved != "tmux":
+        typer.echo("Error: --first is only supported by the tmux backend.", err=True, color=True)
+        raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl
-    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)
+    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, first=first, window=window)
     if action == "error":
         typer.echo(payload, err=True, color=True)
         raise typer.Exit(code=1)

@@ -124,12 +124,16 @@ terminal attach [OPTIONS] [NAME]
 | `NAME` | - | Session name to attach to; omit for interactive selection |
 | `--new-session` | `-n` | Create a new session instead of attaching |
 | `--kill-all` | `-k` | Kill all existing sessions before creating a new one |
+| `--first` | `-f` | Attach to the first available tmux session without prompting |
 | `--window` | `-w` | Choose a window/tab or pane target instead of only sessions |
 | `--backend` | `-b` | `tmux`, `herdr`, `aoe`, or `auto` |
 
 Example:
 
 ```bash
+# Attach to the first tmux session without opening the chooser
+terminal attach --first
+
 # Choose a pane or tab interactively
 terminal attach --window
 

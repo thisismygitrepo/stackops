@@ -102,13 +102,14 @@ def choose_session(
     name: str | None,
     new_session: bool,
     kill_all: bool,
+    first: bool,
     window: bool = False,
 ) -> AttachSessionChoice:
     match backend:
         case "tmux":
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_session as _tmux
 
-            return _tmux(name=name, new_session=new_session, kill_all=kill_all, window=window)
+            return _tmux(name=name, new_session=new_session, kill_all=kill_all, first=first, window=window)
         case "herdr":
             from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import choose_session as _herdr
 
