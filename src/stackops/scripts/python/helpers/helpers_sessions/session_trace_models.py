@@ -7,6 +7,13 @@ PaneCategory: TypeAlias = Literal["idle-shell", "running", "exited", "unknown"]
 
 
 @dataclass(frozen=True, slots=True)
+class TraceTarget:
+    label: str
+    session_name: str
+    match_names: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class TracePaneState:
     window_index: str
     window_name: str

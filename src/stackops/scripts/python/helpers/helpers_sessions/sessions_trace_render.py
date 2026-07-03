@@ -194,3 +194,29 @@ def build_trace_renderable(
     if warning_panel is not None:
         renderables.append(warning_panel)
     return Group(*renderables)
+
+def build_traces_renderable(
+    snapshots: tuple["TraceSnapshot", ...],
+    until: "TraceUntil",
+    exit_code: int | None,
+    attempt: int,
+    elapsed_seconds: float,
+    next_poll_seconds: float,
+    checked_at: str,
+) -> "RenderableType":
+    from rich.console import Group
+
+    return Group(
+        *(
+            build_trace_renderable(
+                snapshot=snapshot,
+                until=until,
+                exit_code=exit_code,
+                attempt=attempt,
+                elapsed_seconds=elapsed_seconds,
+                next_poll_seconds=next_poll_seconds,
+                checked_at=checked_at,
+            )
+            for snapshot in snapshots
+        )
+    )

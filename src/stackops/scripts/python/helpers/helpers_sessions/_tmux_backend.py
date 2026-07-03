@@ -1,3 +1,5 @@
+from typing import Literal
+
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_options import (
     attach_script_from_name,
     build_idle_kill_script_for_sessions,
@@ -26,6 +28,9 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     strip_ansi_codes,
 )
 from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+
+
+type TraceSessionChoice = tuple[Literal["error"], str] | tuple[Literal["session_names"], list[str]]
 
 
 def _strip_active_marker(label: str) -> str:
@@ -96,6 +101,26 @@ def choose_existing_session_name(
     if session_name is None:
         return ("error", "No tmux session selected.")
     return ("session_name", session_name)
+
+
+def choose_existing_session_names(
+    msg: str = "Choose tmux sessions to trace:",
+) -> TraceSessionChoice:
+    sessions = list_session_names()
+    if len(sessions) == 0:
+        return ("error", "No tmux sessions are available.")
+
+    session_names = interactive_choose_with_preview(
+        msg=msg,
+        options_to_preview_mapping={session_name: _build_preview(session_name) for session_name in sessions},
+        multi=True,
+    )
+    if len(session_names) == 0:
+        return ("error", "No tmux sessions selected.")
+    unknown_session_names = [session_name for session_name in session_names if session_name not in sessions]
+    if len(unknown_session_names) > 0:
+        return ("error", f"Unknown tmux session selected: {unknown_session_names[0]}")
+    return ("session_names", list(dict.fromkeys(session_names)))
 
 
 def choose_session(

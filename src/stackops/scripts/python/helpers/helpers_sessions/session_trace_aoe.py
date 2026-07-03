@@ -17,12 +17,13 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_models impor
     PaneCategory,
     TracePaneState,
     TraceSnapshot,
+    TraceTarget,
     TraceUntil,
     build_missing_snapshot,
 )
 
 
-SessionChoice = tuple[Literal["error", "session_name"], str]
+SessionChoice = tuple[Literal["error"], str] | tuple[Literal["session_names"], list[str]]
 
 _DONE_STATUSES = {
     "archived",
@@ -218,8 +219,53 @@ def _build_option_maps(sessions: list[JsonObject]) -> tuple[dict[str, str], dict
     return options_to_trace_target, options_to_preview_mapping
 
 
-def choose_existing_session_name(
-    msg: str = "Choose an AoE session to trace:",
+def list_trace_targets() -> tuple[list[TraceTarget] | None, str | None]:
+    sessions = _session_entries()
+    if sessions is None:
+        return (None, "Could not read AoE sessions. Is `aoe` installed?")
+
+    label_counts: dict[str, int] = {}
+    for session in sessions:
+        label = _session_display_name(session=session)
+        label_counts[label] = label_counts.get(label, 0) + 1
+
+    targets: list[TraceTarget] = []
+    for session in sessions:
+        identifier = _session_identifier(session=session)
+        if identifier is None:
+            continue
+        label = _session_display_name(session=session)
+        session_id = _session_id(session)
+        trace_name = session_id or identifier if label_counts[label] > 1 else identifier
+        selection_label = (
+            f"{label} ({session_id})"
+            if label_counts[label] > 1 and session_id is not None
+            else label
+        )
+        match_names = tuple(
+            dict.fromkeys(
+                value
+                for value in (
+                    _session_title(session),
+                    _entry_text(session, "name"),
+                    session_id,
+                )
+                if value is not None
+            )
+        )
+        targets.append(
+            TraceTarget(
+                label=selection_label,
+                session_name=trace_name,
+                match_names=match_names,
+            )
+        )
+    targets.sort(key=lambda target: natural_sort_key(target.label))
+    return (targets, None)
+
+
+def choose_existing_session_names(
+    msg: str = "Choose AoE sessions to trace:",
 ) -> SessionChoice:
     sessions = _session_entries()
     if sessions is None:
@@ -229,16 +275,20 @@ def choose_existing_session_name(
 
     sessions.sort(key=lambda session: natural_sort_key(_session_display_name(session=session)))
     option_to_trace_target, options_to_preview_mapping = _build_option_maps(sessions=sessions)
-    chosen_label = interactive_choose_with_preview(
+    chosen_labels = interactive_choose_with_preview(
         msg=msg,
         options_to_preview_mapping=options_to_preview_mapping,
+        multi=True,
     )
-    if chosen_label is None:
-        return ("error", "No AoE session selected.")
-    trace_target = option_to_trace_target.get(chosen_label)
-    if trace_target is None:
-        return ("error", f"Unknown AoE session selected: {chosen_label}")
-    return ("session_name", trace_target)
+    if len(chosen_labels) == 0:
+        return ("error", "No AoE sessions selected.")
+    unknown_labels = [chosen_label for chosen_label in chosen_labels if chosen_label not in option_to_trace_target]
+    if len(unknown_labels) > 0:
+        return ("error", f"Unknown AoE session selected: {unknown_labels[0]}")
+    return (
+        "session_names",
+        list(dict.fromkeys(option_to_trace_target[chosen_label] for chosen_label in chosen_labels)),
+    )
 
 
 def evaluate_trace_snapshot(

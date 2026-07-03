@@ -10,13 +10,14 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_models impor
     PaneCategory,
     TracePaneState,
     TraceSnapshot,
+    TraceTarget,
     TraceUntil,
     build_missing_snapshot,
 )
 
 
 JsonObject = dict[str, Any]
-WorkspaceChoice = tuple[Literal["error", "session_name"], str]
+WorkspaceChoice = tuple[Literal["error"], str] | tuple[Literal["session_names"], list[str]]
 
 _DONE_AGENT_STATUSES = {"done"}
 _IDLE_AGENT_STATUSES = {"idle"}
@@ -262,8 +263,40 @@ def _build_workspace_preview(workspace: JsonObject) -> str:
     return "\n".join(lines)
 
 
-def choose_existing_workspace_name(
-    msg: str = "Choose a Herdr workspace to trace:",
+def list_trace_targets() -> tuple[list[TraceTarget] | None, str | None]:
+    workspaces, error = _load_workspaces()
+    if workspaces is None:
+        return (None, error or "Unable to list Herdr workspaces.")
+
+    workspace_label_counts: dict[str, int] = {}
+    for workspace in workspaces:
+        workspace_label = _workspace_display_name(workspace)
+        workspace_label_counts[workspace_label] = workspace_label_counts.get(workspace_label, 0) + 1
+
+    targets: list[TraceTarget] = []
+    for workspace in workspaces:
+        workspace_label = _workspace_display_name(workspace)
+        workspace_id = _workspace_id(workspace)
+        duplicate_label = workspace_label_counts[workspace_label] > 1
+        targets.append(
+            TraceTarget(
+                label=f"{workspace_label} ({workspace_id})" if duplicate_label and workspace_id is not None else workspace_label,
+                session_name=workspace_id or workspace_label if duplicate_label else workspace_label,
+                match_names=tuple(
+                    dict.fromkeys(
+                        value
+                        for value in (workspace_label, workspace_id)
+                        if value is not None
+                    )
+                ),
+            )
+        )
+    targets.sort(key=lambda target: natural_sort_key(target.label))
+    return (targets, None)
+
+
+def choose_existing_workspace_names(
+    msg: str = "Choose Herdr workspaces to trace:",
 ) -> WorkspaceChoice:
     workspaces, error = _load_workspaces()
     if workspaces is None:
@@ -289,19 +322,23 @@ def choose_existing_workspace_name(
         labels_to_workspaces[label] = workspace
         labels_to_trace_target[label] = trace_target
 
-    chosen_label = interactive_choose_with_preview(
+    chosen_labels = interactive_choose_with_preview(
         msg=msg,
         options_to_preview_mapping={
             label: _build_workspace_preview(workspace)
             for label, workspace in labels_to_workspaces.items()
         },
+        multi=True,
     )
-    if chosen_label is None:
-        return ("error", "No Herdr workspace selected.")
-    chosen_workspace = labels_to_workspaces.get(chosen_label)
-    if chosen_workspace is None:
-        return ("error", f"Unknown Herdr workspace selected: {chosen_label}")
-    return ("session_name", labels_to_trace_target[chosen_label])
+    if len(chosen_labels) == 0:
+        return ("error", "No Herdr workspaces selected.")
+    unknown_labels = [chosen_label for chosen_label in chosen_labels if chosen_label not in labels_to_workspaces]
+    if len(unknown_labels) > 0:
+        return ("error", f"Unknown Herdr workspace selected: {unknown_labels[0]}")
+    return (
+        "session_names",
+        list(dict.fromkeys(labels_to_trace_target[chosen_label] for chosen_label in chosen_labels)),
+    )
 
 
 def load_trace_snapshot(
