@@ -962,6 +962,51 @@
       }
     },
     {
+      "appName": "tailscale",
+      "license": "BSD-3-Clause",
+      "repoURL": "CMD",
+      "doc": "🔒 WireGuard-based mesh VPN for secure remote access.",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "tunnels-remote-access",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -fsSL https://tailscale.com/install.sh | sh",
+          "windows": "winget install --no-upgrade --name \"Tailscale\" --Id \"Tailscale.Tailscale\" --source winget --scope machine --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew install tailscale"
+        },
+        "arm64": {
+          "linux": "curl -fsSL https://tailscale.com/install.sh | sh",
+          "windows": "winget install --no-upgrade --name \"Tailscale\" --Id \"Tailscale.Tailscale\" --source winget --scope machine --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew install tailscale"
+        }
+      }
+    },
+    {
+      "appName": "headscale",
+      "license": "BSD-3-Clause",
+      "repoURL": "https://github.com/juanfont/headscale",
+      "doc": "🏠 Self-hosted Tailscale control server.",
+      "categoryLabels": [
+        "tunnels-remote-access",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "headscale_{version}_linux_amd64",
+          "windows": null,
+          "darwin": "headscale_{version}_darwin_amd64"
+        },
+        "arm64": {
+          "linux": "headscale_{version}_linux_arm64",
+          "windows": null,
+          "darwin": "headscale_{version}_darwin_arm64"
+        }
+      }
+    },
+    {
       "appName": "cpufetch",
       "license": "GPL-2.0 license",
       "repoURL": "https://github.com/Dr-Noob/cpufetch",
