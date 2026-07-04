@@ -111,6 +111,7 @@ def test_cloud_copy_help_uses_record_name_as_recording_trigger() -> None:
     assert "--record-name" in result.output
     assert "--record-group" in result.output
     assert "--password-name" in result.output
+    assert re.search(r"--transfers\s+INTEGER.*default: 32", result.output, re.DOTALL) is not None
     assert re.search(r"--password-name\s+-P", result.output) is not None
     assert re.search(r"(?<![\w-])--record(?![\w-])", result.output) is None
 
@@ -178,7 +179,7 @@ def test_cloud_copy_record_name_records_upload(monkeypatch: pytest.MonkeyPatch, 
         assert share
         assert share_options == rclone.ShareLinkOptions(scope=None, link_type="view")
         assert verbose
-        assert transfers == 10
+        assert transfers == 32
         upload_calls.append(f"{cloud}:{remote_path.as_posix()}")
         return "https://example.test/share"
 
@@ -218,6 +219,7 @@ def test_cloud_copy_record_name_records_upload(monkeypatch: pytest.MonkeyPatch, 
     cloud_copy.main(
         source=source_file.as_posix(),
         target="docs:reports/report.txt",
+        transfers=32,
         overwrite=False,
         share_scope=None,
         share_type="v",

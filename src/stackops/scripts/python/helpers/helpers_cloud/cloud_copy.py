@@ -296,6 +296,7 @@ def _resolve_record_name(record_name: str | None) -> str | None:
 def main(
     source: str,
     target: str,
+    transfers: int,
     overwrite: bool,
     share_scope: ShareScopeChoice | None,
     share_type: ShareLinkTypeChoice | None,
@@ -362,7 +363,7 @@ def main(
                 local_path=download_path,
                 cloud=cloud,
                 remote_path=remote_path,
-                transfers=10,
+                transfers=transfers,
                 verbose=True,
             )
             _finalize_download_path(
@@ -414,7 +415,7 @@ def main(
                 share=cloud_config_explicit["share"],
                 share_options=share_options,
                 verbose=True,
-                transfers=10,
+                transfers=transfers,
             )
         except GpgCommandError as error:
             console.print(
