@@ -1,6 +1,6 @@
 from typing import Final
 
-from support.models import ManagedLoginAgentSupport
+from stackops.scripts.python.helpers.helpers_ai_account.models import ManagedLoginAgentSupport
 
 
 SUPPORT: Final[ManagedLoginAgentSupport] = ManagedLoginAgentSupport(

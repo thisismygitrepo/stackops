@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Final
 
-from support.models import FileAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.models import FileAgentSupport, RuntimeContext
 
 
 def _resolve_active_credential(context: RuntimeContext) -> Path:

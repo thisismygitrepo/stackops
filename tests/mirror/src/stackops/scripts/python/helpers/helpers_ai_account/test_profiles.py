@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from support.models import AutoRefreshUnavailableError, FileAgentSupport, RuntimeContext
-from support.profiles import (
+from stackops.scripts.python.helpers.helpers_ai_account.models import AutoRefreshUnavailableError, FileAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.profiles import (
     copy_private_credential,
     find_refresh_profile,
     list_profile_directories,
@@ -118,4 +118,3 @@ def test_find_refresh_profile_rejects_duplicate_identity_matches(tmp_path: Path)
             profile_directories=profile_directories,
             active_credential=active_credential,
         )
-

@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Final, cast
 
-from support.json_values import JsonObject, decode_jwt_payload, read_json_object, read_optional_json_string
-from support.models import CredentialIdentity, FileAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.json_values import JsonObject, decode_jwt_payload, read_json_object, read_optional_json_string
+from stackops.scripts.python.helpers.helpers_ai_account.models import CredentialIdentity, FileAgentSupport, RuntimeContext
 
 
 _AUTH_CLAIMS_KEY: Final[str] = "https://api.openai.com/auth"

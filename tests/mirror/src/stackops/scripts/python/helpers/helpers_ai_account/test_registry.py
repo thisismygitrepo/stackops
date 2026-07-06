@@ -1,8 +1,8 @@
 from typing import get_args
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
-from support.models import ManagedLoginAgentSupport
-from support.registry import ALL_AGENT_SUPPORT, CANONICAL_AGENT_NAMES, resolve_agent_support
+from stackops.scripts.python.helpers.helpers_ai_account.models import ManagedLoginAgentSupport
+from stackops.scripts.python.helpers.helpers_ai_account.registry import ALL_AGENT_SUPPORT, CANONICAL_AGENT_NAMES, resolve_agent_support
 
 
 def test_registry_covers_every_stackops_agent_once() -> None:
@@ -36,4 +36,3 @@ def test_secure_store_agents_have_explicit_managed_login_support() -> None:
     }
 
     assert managed_login_agents == {"agy", "copilot", "oz", "droid"}
-

@@ -49,4 +49,3 @@ class AutoRefreshUnavailableError(ValueError):
 
 class CredentialStorageUnavailableError(ValueError):
     pass
-

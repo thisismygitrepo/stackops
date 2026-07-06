@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from support.json_values import decode_jwt_payload, read_json_object, read_optional_json_string
+from stackops.scripts.python.helpers.helpers_ai_account.json_values import decode_jwt_payload, read_json_object, read_optional_json_string
 
 
 def _jwt(payload: dict[str, object]) -> str:
@@ -27,4 +27,3 @@ def test_decode_jwt_payload_rejects_malformed_token(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="three sections"):
         decode_jwt_payload(token="not-a-jwt", path=credential_path)
-

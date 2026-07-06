@@ -1,9 +1,3 @@
-# /// script
-# dependencies = [
-#   "stackops",
-# ]
-# ///
-
 import os
 import platform
 from pathlib import Path
@@ -12,8 +6,8 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
-from support.models import FileAgentSupport, ManagedLoginAgentSupport, RuntimeContext
-from support.profiles import (
+from stackops.scripts.python.helpers.helpers_ai_account.models import FileAgentSupport, ManagedLoginAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.profiles import (
     copy_private_credential,
     expand_path,
     find_refresh_profile,
@@ -22,7 +16,7 @@ from support.profiles import (
     profile_root,
     select_named_profile,
 )
-from support.registry import SUPPORTED_AGENT_HELP, resolve_agent_support
+from stackops.scripts.python.helpers.helpers_ai_account.registry import SUPPORTED_AGENT_HELP, resolve_agent_support
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=False)

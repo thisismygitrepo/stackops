@@ -386,6 +386,7 @@ def add_skill(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.ai_account import main as account
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
     from stackops.scripts.python.agents_iter import get_app as get_iter_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
@@ -410,6 +411,11 @@ def get_app() -> typer.Typer:
         "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<c> Initialize AI configurations in the current repository"
     )(init_config)
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
+
+    agents_app.command(
+        name="account", no_args_is_help=False, short_help="<A> Switch or refresh an AI agent account profile"
+    )(account)
+    agents_app.command(name="A", no_args_is_help=False, hidden=True)(account)
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)

@@ -2,23 +2,23 @@ from types import MappingProxyType
 from typing import Final, cast, get_args
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
-from support.agy import SUPPORT as AGY_SUPPORT
-from support.auggie import SUPPORT as AUGGIE_SUPPORT
-from support.claude import SUPPORT as CLAUDE_SUPPORT
-from support.cline import SUPPORT as CLINE_SUPPORT
-from support.codex import SUPPORT as CODEX_SUPPORT
-from support.copilot import SUPPORT as COPILOT_SUPPORT
-from support.crush import SUPPORT as CRUSH_SUPPORT
-from support.cursor_agent import SUPPORT as CURSOR_AGENT_SUPPORT
-from support.droid import SUPPORT as DROID_SUPPORT
-from support.forge import SUPPORT as FORGE_SUPPORT
-from support.kilocode import SUPPORT as KILOCODE_SUPPORT
-from support.models import AgentSupport
-from support.opencode import SUPPORT as OPENCODE_SUPPORT
-from support.oz import SUPPORT as OZ_SUPPORT
-from support.pi import SUPPORT as PI_SUPPORT
-from support.q import SUPPORT as Q_SUPPORT
-from support.qwen import SUPPORT as QWEN_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.agy import SUPPORT as AGY_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.auggie import SUPPORT as AUGGIE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.claude import SUPPORT as CLAUDE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.cline import SUPPORT as CLINE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.codex import SUPPORT as CODEX_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.copilot import SUPPORT as COPILOT_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.crush import SUPPORT as CRUSH_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.cursor_agent import SUPPORT as CURSOR_AGENT_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.droid import SUPPORT as DROID_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.forge import SUPPORT as FORGE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.kilocode import SUPPORT as KILOCODE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.models import AgentSupport
+from stackops.scripts.python.helpers.helpers_ai_account.opencode import SUPPORT as OPENCODE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.oz import SUPPORT as OZ_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.pi import SUPPORT as PI_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.q import SUPPORT as Q_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.qwen import SUPPORT as QWEN_SUPPORT
 
 
 CANONICAL_AGENT_NAMES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
@@ -72,4 +72,3 @@ def resolve_agent_support(selector: str) -> AgentSupport:
     if support is None:
         raise ValueError(f"Unsupported agent: {selector}. Supported agents: {SUPPORTED_AGENT_HELP}")
     return support
-

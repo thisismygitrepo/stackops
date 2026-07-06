@@ -2,8 +2,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from support.constants import DOTFILES_LLM_CREDENTIALS_RELATIVE_PATH, PRIVATE_CREDENTIAL_FILE_MODE
-from support.models import AutoRefreshUnavailableError, FileAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.constants import DOTFILES_LLM_CREDENTIALS_RELATIVE_PATH, PRIVATE_CREDENTIAL_FILE_MODE
+from stackops.scripts.python.helpers.helpers_ai_account.models import AutoRefreshUnavailableError, FileAgentSupport, RuntimeContext
 
 
 def expand_path(path: Path) -> Path:

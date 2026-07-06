@@ -120,6 +120,23 @@ def test_ask_defaults_to_shared_default_agent(monkeypatch: pytest.MonkeyPatch) -
     assert captured_agents == [DEFAULT_AGENT]
 
 
+def test_account_command_and_uppercase_alias_are_registered() -> None:
+    runner = CliRunner()
+
+    for command_name in ("account", "A"):
+        result = runner.invoke(agents.get_app(), [command_name, "--help"])
+
+        assert result.exit_code == 0, result.output
+        assert "Agent profile source" in result.output
+
+
+def test_ask_short_alias_is_lowercase_a() -> None:
+    result = CliRunner().invoke(agents.get_app(), ["a", "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "Ask a selected agent directly" in result.output
+
+
 def test_plan_defaults_to_codex(monkeypatch: pytest.MonkeyPatch) -> None:
     captured_calls: list[tuple[str, object]] = []
 

@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Final, cast
 
-from support.json_values import JsonObject, read_json_object, read_optional_json_string
-from support.models import CredentialIdentity, FileAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.json_values import JsonObject, read_json_object, read_optional_json_string
+from stackops.scripts.python.helpers.helpers_ai_account.models import CredentialIdentity, FileAgentSupport, RuntimeContext
 
 
 def _resolve_active_credential(context: RuntimeContext) -> Path:

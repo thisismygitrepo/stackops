@@ -4,19 +4,19 @@ from pathlib import Path
 
 import pytest
 
-from support.auggie import SUPPORT as AUGGIE_SUPPORT
-from support.claude import SUPPORT as CLAUDE_SUPPORT
-from support.cline import SUPPORT as CLINE_SUPPORT
-from support.codex import SUPPORT as CODEX_SUPPORT
-from support.crush import SUPPORT as CRUSH_SUPPORT
-from support.cursor_agent import SUPPORT as CURSOR_SUPPORT
-from support.forge import SUPPORT as FORGE_SUPPORT
-from support.kilocode import SUPPORT as KILOCODE_SUPPORT
-from support.models import CredentialStorageUnavailableError, FileAgentSupport, RuntimeContext
-from support.opencode import SUPPORT as OPENCODE_SUPPORT
-from support.pi import SUPPORT as PI_SUPPORT
-from support.q import SUPPORT as Q_SUPPORT
-from support.qwen import SUPPORT as QWEN_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.auggie import SUPPORT as AUGGIE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.claude import SUPPORT as CLAUDE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.cline import SUPPORT as CLINE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.codex import SUPPORT as CODEX_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.crush import SUPPORT as CRUSH_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.cursor_agent import SUPPORT as CURSOR_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.forge import SUPPORT as FORGE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.kilocode import SUPPORT as KILOCODE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.models import CredentialStorageUnavailableError, FileAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.opencode import SUPPORT as OPENCODE_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.pi import SUPPORT as PI_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.q import SUPPORT as Q_SUPPORT
+from stackops.scripts.python.helpers.helpers_ai_account.qwen import SUPPORT as QWEN_SUPPORT
 
 
 @pytest.mark.parametrize(
