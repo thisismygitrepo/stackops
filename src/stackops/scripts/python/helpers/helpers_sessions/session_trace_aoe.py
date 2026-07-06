@@ -301,6 +301,7 @@ def evaluate_trace_snapshot(
     status = _normalize_status(_session_status(session))
     exit_code = _session_exit_code(session=session)
     category = _session_category(status=status, exit_code=exit_code)
+    session_target = _session_id(session) or _session_title(session) or session_name
     matched = _session_matches_criterion(
         category=category,
         status=status,
@@ -311,7 +312,9 @@ def evaluate_trace_snapshot(
     pane_state = TracePaneState(
         window_index="1",
         window_name=_entry_text(session, "group", "group_path", "groupPath") or _session_display_name(session=session),
-        pane_index=_session_id(session) or _session_title(session) or "session",
+        window_target=session_target,
+        pane_index=session_target,
+        pane_target=session_target,
         process_name=_session_process_name(session=session),
         status_text=_session_status_text(status=status, category=category, exit_code=exit_code),
         cwd=_session_cwd(session=session),
@@ -322,6 +325,7 @@ def evaluate_trace_snapshot(
     )
     return TraceSnapshot(
         session_name=session_name,
+        session_target=session_target,
         session_exists=True,
         total_windows=1,
         panes=(pane_state,),

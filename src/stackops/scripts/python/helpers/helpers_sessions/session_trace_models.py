@@ -1,9 +1,11 @@
 from dataclasses import dataclass
-from typing import Literal, TypeAlias
+from typing import Literal
 
 
-TraceUntil: TypeAlias = Literal["idle-shell", "all-exited", "exit-code", "session-missing"]
-PaneCategory: TypeAlias = Literal["idle-shell", "running", "exited", "unknown"]
+type TraceBackend = Literal["tmux", "herdr", "aoe"]
+type TraceBackendOption = Literal["tmux", "t", "herdr", "h", "aoe", "a", "e"]
+type TraceUntil = Literal["idle-shell", "all-exited", "exit-code", "session-missing"]
+type PaneCategory = Literal["idle-shell", "running", "exited", "unknown"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,7 +19,9 @@ class TraceTarget:
 class TracePaneState:
     window_index: str
     window_name: str
+    window_target: str
     pane_index: str
+    pane_target: str
     process_name: str
     status_text: str
     cwd: str
@@ -30,6 +34,7 @@ class TracePaneState:
 @dataclass(frozen=True, slots=True)
 class TraceSnapshot:
     session_name: str
+    session_target: str
     session_exists: bool
     total_windows: int
     panes: tuple[TracePaneState, ...]
@@ -70,6 +75,7 @@ def build_missing_snapshot(
     total_targets = 1 if until == "session-missing" else 0
     return TraceSnapshot(
         session_name=session_name,
+        session_target=session_name,
         session_exists=False,
         total_windows=0,
         panes=(),

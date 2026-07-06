@@ -1,16 +1,15 @@
-from typing import Any, Callable, Literal
+from collections.abc import Callable
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
     PaneCategory,
+    TraceBackend,
+    TraceBackendOption,
     TracePaneState,
     TraceSnapshot,
     TraceUntil,
 )
-
-type TraceBackend = Literal["tmux", "herdr", "aoe"]
-type TraceBackendOption = Literal["tmux", "t", "herdr", "h", "aoe", "a", "e"]
 
 
 def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
@@ -68,6 +67,35 @@ def _validate_trace_options(
         raise typer.BadParameter("`--exit-code` can only be used together with `--until exit-code`.")
 
 
+def trace_sessions_for_backend(
+    backend: TraceBackend,
+    session_names: list[str],
+    until: TraceUntil,
+    every_seconds: float,
+    exit_code: int | None,
+    kill: bool,
+) -> None:
+    _validate_trace_options(until=until, every_seconds=every_seconds, exit_code=exit_code)
+    if len(session_names) == 0:
+        raise typer.BadParameter("At least one session must be selected.")
+    if len(session_names) != len(set(session_names)):
+        raise typer.BadParameter("Selected session names must be unique.")
+
+    from stackops.scripts.python.helpers.helpers_sessions.session_trace_runner import (
+        trace_sessions,
+    )
+
+    trace_sessions(
+        backend=backend,
+        session_names=session_names,
+        until=until,
+        every_seconds=every_seconds,
+        exit_code=exit_code,
+        kill=kill,
+        snapshot_loader=_get_trace_loader(backend=backend),
+    )
+
+
 def trace_session_for_backend(
     backend: TraceBackend,
     session_name: str,
@@ -75,92 +103,14 @@ def trace_session_for_backend(
     every_seconds: float,
     exit_code: int | None,
 ) -> None:
-    from time import monotonic, sleep
-
-    from rich.console import Console
-    from rich.live import Live
-    from rich.panel import Panel
-
-    from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
-        build_missing_snapshot,
+    trace_sessions_for_backend(
+        backend=backend,
+        session_names=[session_name],
+        until=until,
+        every_seconds=every_seconds,
+        exit_code=exit_code,
+        kill=False,
     )
-    from stackops.scripts.python.helpers.helpers_sessions.sessions_trace_render import (
-        build_trace_renderable,
-        checked_at_text,
-        criterion_label,
-        format_duration,
-    )
-
-    _validate_trace_options(until=until, every_seconds=every_seconds, exit_code=exit_code)
-    snapshot_loader = _get_trace_loader(backend=backend)
-    console = Console()
-    started_at = monotonic()
-    attempt = 0
-    try:
-        with Live(
-            build_trace_renderable(
-                snapshot=build_missing_snapshot(session_name=session_name, until=until, session_error=None),
-                until=until,
-                exit_code=exit_code,
-                attempt=attempt,
-                elapsed_seconds=0.0,
-                next_poll_seconds=0.0,
-                checked_at=checked_at_text(),
-            ),
-            console=console,
-            refresh_per_second=8,
-            transient=False,
-        ) as live:
-            while True:
-                attempt += 1
-                try:
-                    snapshot = snapshot_loader(session_name, until, exit_code)
-                except NotImplementedError as exc:
-                    raise typer.BadParameter(str(exc)) from exc
-                elapsed_seconds = monotonic() - started_at
-                current_checked_at = checked_at_text()
-                live.update(
-                    build_trace_renderable(
-                        snapshot=snapshot,
-                        until=until,
-                        exit_code=exit_code,
-                        attempt=attempt,
-                        elapsed_seconds=elapsed_seconds,
-                        next_poll_seconds=every_seconds,
-                        checked_at=current_checked_at,
-                    )
-                )
-                if snapshot.criterion_satisfied:
-                    break
-                remaining_seconds = every_seconds
-                while remaining_seconds > 0:
-                    sleep_step = min(1.0, remaining_seconds)
-                    sleep(sleep_step)
-                    remaining_seconds -= sleep_step
-                    live.update(
-                        build_trace_renderable(
-                            snapshot=snapshot,
-                            until=until,
-                            exit_code=exit_code,
-                            attempt=attempt,
-                            elapsed_seconds=monotonic() - started_at,
-                            next_poll_seconds=remaining_seconds,
-                            checked_at=current_checked_at,
-                        )
-                    )
-        console.print(
-            Panel(
-                (
-                    f"Session `{session_name}` satisfied `{criterion_label(until=until, exit_code=exit_code)}` "
-                    f"after {format_duration(monotonic() - started_at)} and {attempt} checks."
-                ),
-                title="Complete",
-                border_style="green",
-            )
-        )
-    except KeyboardInterrupt as exc:
-        console.print(Panel("Trace interrupted by user.", title="Interrupted", border_style="red"))
-        raise typer.Exit(code=130) from exc
 
 
 def trace_session(
@@ -178,12 +128,26 @@ def trace_session(
     )
 
 
-def evaluate_trace_snapshot(*args: Any, **kwargs: Any) -> TraceSnapshot:
+def evaluate_trace_snapshot(
+    session_name: str,
+    windows: list[dict[str, str]],
+    panes_by_window: dict[str, list[dict[str, str]]],
+    until: TraceUntil,
+    expected_exit_code: int | None,
+    pane_warning: str | None,
+) -> TraceSnapshot:
     from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
         evaluate_trace_snapshot as impl,
     )
 
-    return impl(*args, **kwargs)
+    return impl(
+        session_name=session_name,
+        windows=windows,
+        panes_by_window=panes_by_window,
+        until=until,
+        expected_exit_code=expected_exit_code,
+        pane_warning=pane_warning,
+    )
 
 
 __all__: list[str] = [
@@ -197,6 +161,7 @@ __all__: list[str] = [
     "resolve_trace_backend",
     "trace_session",
     "trace_session_for_backend",
+    "trace_sessions_for_backend",
 ]
 
 

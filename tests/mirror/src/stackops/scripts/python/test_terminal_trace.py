@@ -11,6 +11,7 @@ type TraceCall = tuple[
     sessions_trace.TraceUntil,
     float,
     int | None,
+    bool,
 ]
 
 
@@ -24,8 +25,9 @@ def _install_trace_recorder(monkeypatch: pytest.MonkeyPatch) -> list[TraceCall]:
         until: sessions_trace.TraceUntil,
         every_seconds: float,
         exit_code: int | None,
+        kill: bool,
     ) -> None:
-        observed.append((backend, session_names, until, every_seconds, exit_code))
+        observed.append((backend, session_names, until, every_seconds, exit_code, kill))
 
     monkeypatch.setattr(sessions_trace, "trace_sessions_for_backend", fake_trace_sessions_for_backend)
     return observed
@@ -40,7 +42,7 @@ def test_trace_forwards_herdr_backend_alias(monkeypatch: pytest.MonkeyPatch) -> 
     )
 
     assert result.exit_code == 0
-    assert observed == [("herdr", ["build"], "all-exited", 1.5, None)]
+    assert observed == [("herdr", ["build"], "all-exited", 1.5, None, False)]
 
 
 def test_trace_forwards_aoe_backend_alias(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -52,7 +54,7 @@ def test_trace_forwards_aoe_backend_alias(monkeypatch: pytest.MonkeyPatch) -> No
     )
 
     assert result.exit_code == 0
-    assert observed == [("aoe", ["build"], "all-exited", 1.5, None)]
+    assert observed == [("aoe", ["build"], "all-exited", 1.5, None, False)]
 
 
 def test_trace_forwards_comma_separated_session_names(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -61,7 +63,7 @@ def test_trace_forwards_comma_separated_session_names(monkeypatch: pytest.Monkey
     result = CliRunner().invoke(terminal.get_app(), ["trace", "build, test,build"])
 
     assert result.exit_code == 0
-    assert observed == [("tmux", ["build", "test"], "idle-shell", 10.0, None)]
+    assert observed == [("tmux", ["build", "test"], "idle-shell", 10.0, None, False)]
 
 
 def test_trace_expands_star_and_question_mark_patterns_without_duplicates(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -77,7 +79,7 @@ def test_trace_expands_star_and_question_mark_patterns_without_duplicates(monkey
     result = CliRunner().invoke(terminal.get_app(), ["trace", "build-*,build-?,qa-?"])
 
     assert result.exit_code == 0
-    assert observed == [("tmux", ["build-a", "build-b", "qa-1"], "idle-shell", 10.0, None)]
+    assert observed == [("tmux", ["build-a", "build-b", "qa-1"], "idle-shell", 10.0, None, False)]
 
 
 def test_trace_rejects_pattern_matching_no_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -131,7 +133,7 @@ def test_trace_interactive_tmux_uses_multi_select_picker(monkeypatch: pytest.Mon
             True,
         )
     ]
-    assert observed == [("tmux", ["build", "test"], "idle-shell", 10.0, None)]
+    assert observed == [("tmux", ["build", "test"], "idle-shell", 10.0, None, False)]
 
 
 def test_trace_interactive_herdr_uses_workspace_picker(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -151,7 +153,7 @@ def test_trace_interactive_herdr_uses_workspace_picker(monkeypatch: pytest.Monke
     )
 
     assert result.exit_code == 0
-    assert observed == [("herdr", ["workspace-a", "workspace-b"], "idle-shell", 10.0, None)]
+    assert observed == [("herdr", ["workspace-a", "workspace-b"], "idle-shell", 10.0, None, False)]
 
 
 def test_trace_interactive_aoe_uses_session_picker(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -171,4 +173,17 @@ def test_trace_interactive_aoe_uses_session_picker(monkeypatch: pytest.MonkeyPat
     )
 
     assert result.exit_code == 0
-    assert observed == [("aoe", ["session-a", "session-b"], "idle-shell", 10.0, None)]
+    assert observed == [("aoe", ["session-a", "session-b"], "idle-shell", 10.0, None, False)]
+
+
+@pytest.mark.parametrize("kill_flag", ["--kill", "-k"])
+def test_trace_forwards_kill_option(
+    monkeypatch: pytest.MonkeyPatch,
+    kill_flag: str,
+) -> None:
+    observed = _install_trace_recorder(monkeypatch=monkeypatch)
+
+    result = CliRunner().invoke(terminal.get_app(), ["trace", "build", kill_flag])
+
+    assert result.exit_code == 0
+    assert observed == [("tmux", ["build"], "idle-shell", 10.0, None, True)]

@@ -16,6 +16,7 @@ def test_resolve_trace_backend_accepts_herdr_alias() -> None:
 def test_evaluate_trace_snapshot_maps_herdr_agent_statuses() -> None:
     snapshot = session_trace_herdr.evaluate_trace_snapshot(
         session_name="build",
+        session_target="w1",
         tabs=[
             {"tab_id": "w1:t1", "label": "idle", "number": 1},
             {"tab_id": "w1:t2", "label": "done", "number": 2},
@@ -39,11 +40,14 @@ def test_evaluate_trace_snapshot_maps_herdr_agent_statuses() -> None:
     assert snapshot.idle_shell_panes == 1
     assert snapshot.exited_panes == 1
     assert snapshot.running_panes == 1
+    assert snapshot.panes[0].window_target == "w1:t1"
+    assert snapshot.panes[0].pane_target == "w1:p1"
 
 
 def test_evaluate_trace_snapshot_supports_herdr_exit_code_fields() -> None:
     snapshot = session_trace_herdr.evaluate_trace_snapshot(
         session_name="build",
+        session_target="w1",
         tabs=[{"tab_id": "w1:t1", "label": "done", "number": 1}],
         panes=[
             {
@@ -91,6 +95,7 @@ def test_load_trace_snapshot_uses_workspace_label(monkeypatch: pytest.MonkeyPatc
     )
 
     assert snapshot.session_exists is True
+    assert snapshot.session_target == "w1"
     assert snapshot.criterion_satisfied is True
     assert snapshot.total_windows == 1
 

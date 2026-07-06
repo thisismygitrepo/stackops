@@ -384,6 +384,7 @@ def load_trace_snapshot(
     pane_warning = "; ".join(warnings) if warnings else None
     return evaluate_trace_snapshot(
         session_name=session_name,
+        session_target=workspace_id,
         tabs=tabs,
         panes=panes,
         until=until,
@@ -394,6 +395,7 @@ def load_trace_snapshot(
 
 def evaluate_trace_snapshot(
     session_name: str,
+    session_target: str,
     tabs: list[JsonObject],
     panes: list[JsonObject],
     until: TraceUntil,
@@ -418,6 +420,7 @@ def evaluate_trace_snapshot(
         agent_status = _pane_agent_status(pane=pane, tab=tab)
         exit_code = _pane_exit_code(pane)
         category = _pane_category(agent_status=agent_status, exit_code=exit_code)
+        pane_id = _entry_text(pane, "pane_id")
         matched = _pane_matches_criterion(
             category=category,
             agent_status=agent_status,
@@ -438,7 +441,9 @@ def evaluate_trace_snapshot(
             TracePaneState(
                 window_index=_tab_index(tab) if tab is not None else tab_id or "?",
                 window_name=_tab_name(tab) if tab is not None else "tab",
-                pane_index=_entry_text(pane, "pane_id") or _entry_text(pane, "terminal_id") or "?",
+                window_target=tab_id or "?",
+                pane_index=pane_id or _entry_text(pane, "terminal_id") or "?",
+                pane_target=pane_id or "?",
                 process_name=_pane_process_name(pane),
                 status_text=_pane_status_text(
                     agent_status=agent_status,
@@ -457,6 +462,7 @@ def evaluate_trace_snapshot(
     matched_targets = sum(1 for pane in pane_states if pane.matched)
     return TraceSnapshot(
         session_name=session_name,
+        session_target=session_target,
         session_exists=True,
         total_windows=len(tabs),
         panes=tuple(pane_states),

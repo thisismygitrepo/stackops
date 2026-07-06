@@ -83,7 +83,9 @@ def evaluate_trace_snapshot(
                 TracePaneState(
                     window_index=window["window_index"],
                     window_name=window["window_name"],
+                    window_target=window["window_id"] or f"{session_name}:{window['window_index']}",
                     pane_index=pane["pane_index"],
+                    pane_target=pane["pane_id"] or f"{session_name}:{window['window_index']}.{pane['pane_index']}",
                     process_name=process_name,
                     status_text=status_text,
                     cwd=pane["pane_cwd"] or "—",
@@ -98,6 +100,7 @@ def evaluate_trace_snapshot(
     matched_targets = sum(1 for pane in pane_states if pane.matched)
     return TraceSnapshot(
         session_name=session_name,
+        session_target=session_name,
         session_exists=True,
         total_windows=len(windows),
         panes=tuple(pane_states),

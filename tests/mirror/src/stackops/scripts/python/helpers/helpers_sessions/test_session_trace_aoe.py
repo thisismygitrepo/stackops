@@ -76,6 +76,7 @@ def test_load_trace_snapshot_uses_session_title(monkeypatch: pytest.MonkeyPatch)
     )
 
     assert snapshot.session_exists is True
+    assert snapshot.session_target == "id-build"
     assert snapshot.criterion_satisfied is True
 
 

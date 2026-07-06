@@ -1,10 +1,12 @@
 import re
 from typing import Literal
 
-from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import TraceTarget
+from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
+    TraceBackend,
+    TraceTarget,
+)
 
 
-type TraceBackend = Literal["tmux", "herdr", "aoe"]
 type TraceSessionChoice = tuple[Literal["error"], str] | tuple[Literal["session_names"], list[str]]
 
 
