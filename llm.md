@@ -20,6 +20,21 @@
 * https://github.com/eth-sri/lmql `programming language for large language models (LLMs) based on a superset of Python`
 * https://github.com/embedchain/embedchain` Embedchain is an Open Source Framework for personalizing LLM responses`.
 * https://github.com/camel-ai/camel
+* https://github.com/microsoft/SkillOpt
+Repository	GitHub URL
+typeddjango/awesome-python-typing	https://github.com/typeddjango/awesome-python-typing
+billmei/every-chatgpt-gui	https://github.com/billmei/every-chatgpt-gui
+VectifyAI/PageIndex	https://github.com/VectifyAI/PageIndex
+GoogleCloudPlatform/generative-ai	https://github.com/GoogleCloudPlatform/generative-ai
+koala73/worldmonitor	https://github.com/koala73/worldmonitor
+HKUDS/CLI-Anything	https://github.com/HKUDS/CLI-Anything
+snarktank/ralph	https://github.com/snarktank/ralph
+mattpocock/skills	https://github.com/mattpocock/skills
+openai/symphony	https://github.com/openai/symphony
+OpenHands/OpenHands	https://github.com/OpenHands/OpenHands
+BuilderIO/agent-native	https://github.com/BuilderIO/agent-native
+screenpipe/screenpipe	https://github.com/screenpipe/screenpipe
+livekit/livekit-cli	https://github.com/livekit/livekit-cli
 
 
 # Apps
@@ -78,6 +93,11 @@
 * https://github.com/McGill-NLP/webllama `Browse internet with agents`
 * https://github.com/nilsherzig/LLocalSearch `locally running search aggregator using LLM Agents.`
 * https://github.com/LearningCircuit/local-deep-research
+* https://github.com/bytedance/deer-flow
+* https://github.com/DeusData/codebase-memory-mcp
+* https://github.com/baidu/Unlimited-OCR
+* https://github.com/jamiepine/voicebox
+
 
 # CLI
 
