@@ -79,6 +79,9 @@ devops data sync up --which all
 # Restore one group from the user backup config
 devops data sync down -s user --which dotfiles
 
+# Replace an existing restore target
+devops data sync down -s user --which dotfiles --on-conflict overwrite-target
+
 # Restrict the generated commands to one item and one cloud profile
 devops data sync up --cloud myremote --which dotfiles.wezterm
 
@@ -90,6 +93,14 @@ devops data sync down --use-link --which dotfiles.wezterm
 ```
 
 `--use-link` is only valid for `down`. Every selected entry must have a non-null `share_url`; otherwise StackOps exits with the affected entry names and tells you to either remove `--use-link` or add valid links.
+
+`--on-conflict` controls what happens when the direction's target already exists. The target is the cloud destination for `up` and the local destination for `down`. Accepted policies are:
+
+- `throw-error`: stop instead of changing an existing target; this is the default
+- `overwrite-target`: replace the existing target
+- `merge-target`: merge the source into the existing target
+
+Choose the policy explicitly when an existing target is expected. For example, use `--on-conflict merge-target` when restoring into a local directory whose target-only contents must remain.
 
 ### Inspect or edit the backup config
 

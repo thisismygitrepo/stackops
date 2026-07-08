@@ -4,16 +4,13 @@ CC
 
 from pathlib import Path
 
-import stackops.utils.files.compression as path_compression
-from stackops.utils.io import (
-    GpgCommandError,
-    decrypt_file_asymmetric,
-    decrypt_file_symmetric,
-    encrypt_file_asymmetric,
-    encrypt_file_symmetric,
+from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_artifacts import (
+    prepared_upload_path,
+    restore_staged_download,
+    staged_download,
 )
+from stackops.utils.io import GpgCommandError
 from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
-from stackops.utils.path_core import delete_path
 import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
 from stackops.utils.cloud.rclone import (
     RcloneCommandError,
@@ -25,6 +22,7 @@ from stackops.utils.cloud.rclone import (
     parse_share_scope,
 )
 from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
+from stackops.utils.cloud.target_conflict import TargetConflictAction, TargetConflictError, apply_target_conflict_action
 
 
 defaults = read_default_cloud_config()
@@ -32,20 +30,6 @@ defaults = read_default_cloud_config()
 
 class ShareUrlDownloadError(RuntimeError):
     pass
-
-
-def _artifact_path(local_path: Path, zip_requested: bool, encryption_mode: EncryptionMode | None) -> Path:
-    suffix = ""
-    if zip_requested:
-        suffix += ".zip"
-    if encryption_mode is not None:
-        suffix += ".gpg"
-    return Path(f"{local_path}{suffix}")
-
-
-def _delete_temp_paths(paths: list[Path]) -> None:
-    for temp_path in paths:
-        delete_path(temp_path, verbose=False)
 
 
 def _resolve_encryption_mode(*, encryption: EncryptionModeChoice | None, pwd: str | None) -> EncryptionMode | None:
@@ -75,101 +59,6 @@ def _resolve_share_options(*, share_scope: ShareScopeChoice | None, share_type: 
     scope = None if share_scope is None else parse_share_scope(share_scope, label="--share-scope")
     link_type = None if share_type is None else parse_share_link_type(share_type, label="--share-type")
     return ShareLinkOptions(scope=scope, link_type=link_type)
-
-
-def _require_symmetric_password(pwd: str | None) -> str:
-    if pwd is not None:
-        return pwd
-    import getpass
-
-    return getpass.getpass(prompt="🔑 Enter symmetric GPG encryption password: ")
-
-
-def _prepare_upload_path(
-    *,
-    local_path: Path,
-    zip_requested: bool,
-    encryption_mode: EncryptionMode | None,
-    pwd: str | None,
-) -> tuple[Path, list[Path]]:
-    upload_path = local_path.expanduser().absolute()
-    temp_paths: list[Path] = []
-    if zip_requested:
-        upload_path = path_compression.zip_path(
-            upload_path,
-            path=None,
-            folder=None,
-            name=None,
-            arcname=None,
-            inplace=False,
-            verbose=True,
-            content=False,
-            orig=False,
-            mode="w",
-        )
-        temp_paths.append(upload_path)
-    if encryption_mode is not None:
-        if encryption_mode == "asymmetric":
-            upload_path = encrypt_file_asymmetric(file_path=upload_path)
-        elif encryption_mode == "symmetric":
-            upload_path = encrypt_file_symmetric(file_path=upload_path, pwd=_require_symmetric_password(pwd))
-        else:
-            raise ValueError("Encryption mode is required when encryption is enabled.")
-        temp_paths.append(upload_path)
-    return upload_path, temp_paths
-
-
-def _finalize_download_path(
-    *,
-    download_path: Path,
-    zip_requested: bool,
-    encryption_mode: EncryptionMode | None,
-    pwd: str | None,
-    overwrite: bool,
-) -> Path:
-    local_path = download_path
-    if encryption_mode is not None:
-        from rich.console import Console
-        from rich.panel import Panel
-
-        encrypted_path = local_path
-        if encrypted_path.name.endswith(".gpg"):
-            output_path = encrypted_path.with_name(encrypted_path.name.removesuffix(".gpg"))
-        else:
-            output_path = encrypted_path.with_name(f"decrypted_{encrypted_path.name}")
-        decrypt_mode = "GPG password decryption" if encryption_mode == "symmetric" else "GPG private-key decryption"
-        console = Console()
-        console.print(
-            Panel(
-                f"🔓 DECRYPTING DOWNLOADED ARTIFACT\n📥 Encrypted file: {encrypted_path}\n📄 Output file: {output_path}\n🔐 Mode: {decrypt_mode}",
-                title="[bold blue]Decrypt[/bold blue]",
-                border_style="blue",
-            )
-        )
-        if encryption_mode == "asymmetric":
-            local_path = decrypt_file_asymmetric(file_path=encrypted_path)
-        elif encryption_mode == "symmetric":
-            local_path = decrypt_file_symmetric(file_path=encrypted_path, pwd=_require_symmetric_password(pwd))
-        else:
-            raise ValueError("Encryption mode is required when encryption is enabled.")
-        delete_path(encrypted_path, verbose=False)
-    if zip_requested:
-        local_path = path_compression.unzip_path(
-            local_path,
-            folder=None,
-            path=None,
-            name=None,
-            verbose=True,
-            content=True,
-            inplace=True,
-            overwrite=overwrite,
-            orig=False,
-            pwd=None,
-            tmp=False,
-            pattern=None,
-            merge=False,
-        )
-    return local_path
 
 
 def _download_url_to_path(*, url: str, destination: Path) -> Path:
@@ -207,24 +96,27 @@ def download_from_share_url(
     zip_requested: bool,
     encryption_mode: EncryptionMode | None,
     pwd: str | None,
-    overwrite: bool,
+    on_conflict: TargetConflictAction,
 ) -> Path:
     direct_download_url = rclone_wrapper.google_drive_direct_download_url(share_url=share_url)
     download_url = share_url if direct_download_url is None else direct_download_url
-    target_path_resolved = target_path.expanduser().absolute()
-    download_path = _artifact_path(
-        local_path=target_path_resolved,
+    with staged_download(
+        target_path=target_path,
         zip_requested=zip_requested,
         encryption_mode=encryption_mode,
-    )
-    _download_url_to_path(url=download_url, destination=download_path)
-    return _finalize_download_path(
-        download_path=download_path,
-        zip_requested=zip_requested,
-        encryption_mode=encryption_mode,
-        pwd=pwd,
-        overwrite=overwrite,
-    )
+    ) as staged:
+        _download_url_to_path(url=download_url, destination=staged.artifact_path)
+        restored_path = restore_staged_download(
+            staged=staged,
+            zip_requested=zip_requested,
+            encryption_mode=encryption_mode,
+            pwd=pwd,
+        )
+        return apply_target_conflict_action(
+            staged_path=restored_path,
+            target_path=staged.target_path,
+            on_conflict=on_conflict,
+        )
 
 
 def _split_remote_spec(value: str) -> tuple[str, str] | None:
