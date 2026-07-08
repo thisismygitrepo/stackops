@@ -310,6 +310,7 @@ def visualize(
                 print("     - Ubuntu/Debian: sudo apt-get install gource")
                 print("     - macOS: brew install gource")
                 print("     - Fedora/RHEL: sudo dnf install gource")
+                print("     - Arch Linux: sudo pacman -S --needed gource")
             raise typer.Exit(1) from e
 
     print("\n" + "=" * 80)
@@ -328,6 +329,7 @@ def install(version: Annotated[str | None, typer.Option(..., "--version", "-v", 
         print("  - Ubuntu/Debian: sudo apt-get install gource")
         print("  - macOS: brew install gource")
         print("  - Fedora/RHEL: sudo dnf install gource")
+        print("  - Arch Linux: sudo pacman -S --needed gource")
         raise typer.Exit(1)
 
 

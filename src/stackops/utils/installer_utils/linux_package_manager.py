@@ -6,6 +6,7 @@ from typing import Final, Literal, assert_never
 
 type LinuxDistributionId = Literal[
     "almalinux",
+    "arch",
     "centos",
     "debian",
     "deepin",
@@ -27,8 +28,8 @@ type LinuxDistributionId = Literal[
     "ubuntu",
     "zorin",
 ]
-type LinuxPackageManager = Literal["apt", "dnf"]
-LINUX_PACKAGE_MANAGERS: Final[tuple[LinuxPackageManager, ...]] = ("apt", "dnf")
+type LinuxPackageManager = Literal["apt", "dnf", "pacman"]
+LINUX_PACKAGE_MANAGERS: Final[tuple[LinuxPackageManager, ...]] = ("apt", "dnf", "pacman")
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +42,7 @@ class LinuxDistribution:
 
 
 _LINUX_DISTRIBUTION_PACKAGE_MANAGERS: Final[dict[LinuxDistributionId, LinuxPackageManager]] = {
+    "arch": "pacman",
     "debian": "apt",
     "deepin": "apt",
     "devuan": "apt",
@@ -94,7 +96,7 @@ class UnsupportedLinuxVariantError(ValueError):
     def __init__(self, *, distribution_id: str, variant_id: str) -> None:
         super().__init__(
             f"Linux distribution {distribution_id!r} variant {variant_id!r} uses an immutable "
-            "host package workflow; native APT/DNF installation is unsupported."
+            "host package workflow; native APT/DNF/pacman installation is unsupported."
         )
 
 
@@ -137,6 +139,8 @@ def build_metadata_refresh_command(package_manager: LinuxPackageManager) -> tupl
             return ("apt-get", "update")
         case "dnf":
             return ("dnf", "makecache", "--refresh")
+        case "pacman":
+            return ("pacman", "-Syu", "--noconfirm")
     assert_never(package_manager)
 
 
@@ -149,6 +153,26 @@ def build_package_install_command(package_manager: LinuxPackageManager, packages
             return ("apt-get", "install", "-y", *package_arguments)
         case "dnf":
             return ("dnf", "install", "-y", *package_arguments)
+        case "pacman":
+            return ("pacman", "-S", "--needed", "--noconfirm", *package_arguments)
+    assert_never(package_manager)
+
+
+def get_openssh_server_package(package_manager: LinuxPackageManager) -> str:
+    match package_manager:
+        case "apt" | "dnf":
+            return "openssh-server"
+        case "pacman":
+            return "openssh"
+    assert_never(package_manager)
+
+
+def get_openssh_service_name(package_manager: LinuxPackageManager) -> Literal["ssh", "sshd"]:
+    match package_manager:
+        case "apt":
+            return "ssh"
+        case "dnf" | "pacman":
+            return "sshd"
     assert_never(package_manager)
 
 

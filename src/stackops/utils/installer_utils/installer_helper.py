@@ -3,11 +3,12 @@ from stackops.utils.path_core import delete_path
 from stackops.utils.schemas.installer.installer_types import InstallerData
 from pathlib import Path
 from stackops.utils.files.compression import DECOMPRESS_SUPPORTED_FORMATS, decompress_path
+from stackops.utils.installer_utils.linux_package_file import is_linux_package_file
 from stackops.utils.source_of_truth import INSTALL_TMP_DIR
 
 
 def _is_supported_archive(path: Path) -> bool:
-    return str(path).endswith(DECOMPRESS_SUPPORTED_FORMATS)
+    return not is_linux_package_file(path) and str(path).endswith(DECOMPRESS_SUPPORTED_FORMATS)
 
 
 def get_group_name_to_repr() -> dict[str, str]:

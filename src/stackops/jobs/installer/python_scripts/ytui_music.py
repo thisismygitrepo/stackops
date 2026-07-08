@@ -155,6 +155,8 @@ def _install_linux_packages(console: Console) -> None:
             optional_packages = DEBIAN_OPTIONAL_PACKAGES
         case "dnf":
             raise NotImplementedError("ytui-music requires libmpv.so.1, which current Fedora and EPEL packages do not provide.")
+        case "pacman":
+            raise NotImplementedError("ytui-music requires libmpv.so.1, while Arch Linux provides libmpv.so.2.")
         case _:
             assert_never(package_manager)
     if package_manager == "apt":

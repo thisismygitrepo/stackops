@@ -8,26 +8,15 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
     ("distribution", "expected_repository", "expected_install_command", "forbidden_tokens"),
     [
         pytest.param(
-            LinuxDistribution(distribution_id="ubuntu"),
-            "/etc/apt/sources.list.d/vscode.sources",
-            "sudo apt-get install -y code",
-            ("dnf",),
-            id="apt",
+            LinuxDistribution(distribution_id="ubuntu"), "/etc/apt/sources.list.d/vscode.sources", "sudo apt-get install -y code", ("dnf",), id="apt"
         ),
         pytest.param(
-            LinuxDistribution(distribution_id="rhel"),
-            "/etc/yum.repos.d/vscode.repo",
-            "sudo dnf install -y code",
-            ("apt", "nala", "dpkg"),
-            id="dnf",
+            LinuxDistribution(distribution_id="rhel"), "/etc/yum.repos.d/vscode.repo", "sudo dnf install -y code", ("apt", "nala", "dpkg"), id="dnf"
         ),
     ],
 )
 def test_builds_official_microsoft_repository_script(
-    distribution: LinuxDistribution,
-    expected_repository: str,
-    expected_install_command: str,
-    forbidden_tokens: tuple[str, ...],
+    distribution: LinuxDistribution, expected_repository: str, expected_install_command: str, forbidden_tokens: tuple[str, ...]
 ) -> None:
     script = code._build_linux_install_script(distribution)
 
@@ -37,3 +26,10 @@ def test_builds_official_microsoft_repository_script(
     assert "https://packages.microsoft.com/keys/microsoft.asc" in script
     for forbidden_token in forbidden_tokens:
         assert forbidden_token not in script.lower()
+
+
+def test_rejects_arch_without_using_an_aur_helper() -> None:
+    distribution = LinuxDistribution(distribution_id="arch")
+
+    with pytest.raises(NotImplementedError, match="only available through the AUR"):
+        code._build_linux_install_script(distribution)

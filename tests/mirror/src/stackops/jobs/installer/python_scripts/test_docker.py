@@ -17,12 +17,7 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
             "${UBUNTU_CODENAME:-$VERSION_CODENAME}",
             id="ubuntu",
         ),
-        pytest.param(
-            LinuxDistribution(distribution_id="debian"),
-            "https://download.docker.com/linux/debian",
-            "$VERSION_CODENAME",
-            id="debian",
-        ),
+        pytest.param(LinuxDistribution(distribution_id="debian"), "https://download.docker.com/linux/debian", "$VERSION_CODENAME", id="debian"),
     ],
 )
 def test_apt_script_uses_exact_official_repository(distribution: LinuxDistribution, repository_url: str, suite_expression: str) -> None:
@@ -46,10 +41,7 @@ def test_apt_script_uses_exact_official_repository(distribution: LinuxDistributi
         pytest.param("ol", "https://download.docker.com/linux/rhel/docker-ce.repo", id="oracle-linux"),
     ],
 )
-def test_enterprise_linux_scripts_use_exact_compatible_repository(
-    distribution_id: LinuxDistributionId,
-    repository_url: str,
-) -> None:
+def test_enterprise_linux_scripts_use_exact_compatible_repository(distribution_id: LinuxDistributionId, repository_url: str) -> None:
     distribution = LinuxDistribution(distribution_id=distribution_id)
 
     script = docker._get_linux_install_script(distribution=distribution)
@@ -71,6 +63,21 @@ def test_fedora_script_uses_dnf5_repository_command() -> None:
     assert "sudo dnf install -y docker-ce docker-ce-cli containerd.io" in script
     for apt_only_token in ("apt", "nala", "dpkg", "sources.list"):
         assert apt_only_token not in script.lower()
+
+
+def test_arch_script_uses_official_repository_packages() -> None:
+    distribution = LinuxDistribution(distribution_id="arch")
+
+    script = docker._get_linux_install_script(distribution=distribution)
+
+    assert "Using Arch Linux's official repositories" in script
+    assert "sudo pacman -S --needed --noconfirm docker docker-buildx docker-compose" in script
+    assert "docker-ce" not in script
+    assert "containerd.io" not in script
+    assert "download.docker.com" not in script
+    assert "sudo systemctl enable --now docker" in script
+    assert 'sudo usermod -aG docker "$(id -un)"' in script
+    assert "sudo docker run hello-world" in script
 
 
 @pytest.mark.parametrize(

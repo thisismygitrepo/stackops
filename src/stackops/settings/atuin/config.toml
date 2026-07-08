@@ -194,6 +194,7 @@ enter_accept = true
 #   "cargo",
 #   "composer",
 #   "dnf",
+#   "pacman",
 #   "docker",
 #   "dotnet",
 #   "git",

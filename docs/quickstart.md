@@ -11,7 +11,7 @@ Behind the scense, its simply running the commands below, in case you want to sc
 
 ```bash
 
-devops install --group sysabc  # Install system essentials with apt, dnf, Homebrew, or winget
+devops install --group sysabc  # Install system essentials with apt, dnf, pacman, Homebrew, or winget
 devops config copy-assets all  # copy config files to machine
 devops config sync down --sensitivity public --method copy --on-conflict throw-error --which all  # link config files
 devops config terminal config-shell --which default  # add alias to shell (pwsh, zsh or bash)

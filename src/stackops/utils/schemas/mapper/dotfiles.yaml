@@ -358,17 +358,17 @@ tv:
     - windows
 lf:
   config_windows:
-    original: ~/AppData/Local/lf/lfrc
+    original: ~/AppData/Roaming/lf/lfrc
     self_managed: CONFIG_ROOT/settings/lf/windows/lfrc
     os:
     - windows
   colors_windows:
-    original: ~/AppData/Local/lf/colors
+    original: ~/AppData/Roaming/lf/colors
     self_managed: CONFIG_ROOT/settings/lf/windows/colors
     os:
     - windows
   icons_windows:
-    original: ~/AppData/Local/lf/icons
+    original: ~/AppData/Roaming/lf/icons
     self_managed: CONFIG_ROOT/settings/lf/windows/icons
     os:
     - windows

@@ -10,9 +10,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
     ("distribution", "expected_refresh_command", "expected_install_prefix", "expected_packages"),
     [
         (
-            LinuxDistribution(
-                distribution_id="ubuntu",
-            ),
+            LinuxDistribution(distribution_id="ubuntu"),
             ("sudo", "apt-get", "update"),
             ("sudo", "apt-get", "install", "-y"),
             (
@@ -36,9 +34,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
             ),
         ),
         (
-            LinuxDistribution(
-                distribution_id="rhel",
-            ),
+            LinuxDistribution(distribution_id="rhel"),
             ("sudo", "dnf", "makecache", "--refresh"),
             ("sudo", "dnf", "install", "-y"),
             (
@@ -60,6 +56,29 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
                 "openssl-devel",
             ),
         ),
+        (
+            LinuxDistribution(distribution_id="arch"),
+            ("sudo", "pacman", "-Syu", "--noconfirm"),
+            ("sudo", "pacman", "-S", "--needed", "--noconfirm"),
+            (
+                "curl",
+                "wget",
+                "gnupg",
+                "lsb-release",
+                "samba",
+                "fuse3",
+                "nfs-utils",
+                "git",
+                "net-tools",
+                "htop",
+                "nano",
+                "base-devel",
+                "python",
+                "unzip",
+                "pkgconf",
+                "openssl",
+            ),
+        ),
     ],
 )
 def test_builds_linux_install_script_for_package_manager(
@@ -73,7 +92,4 @@ def test_builds_linux_install_script_for_package_manager(
     assert script_lines[:2] == ["#!/usr/bin/env bash", "set -euo pipefail"]
     assert tuple(shlex.split(script_lines[2])) == expected_refresh_command
     assert tuple(shlex.split(script_lines[3])) == (*expected_install_prefix, *expected_packages)
-    assert script_lines[4:] == [
-        "curl -fsSL https://bun.com/install | bash",
-        'sudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node',
-    ]
+    assert script_lines[4:] == ["curl -fsSL https://bun.com/install | bash", 'sudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node']

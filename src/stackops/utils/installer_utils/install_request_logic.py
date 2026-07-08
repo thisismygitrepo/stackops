@@ -24,6 +24,7 @@ PACKAGE_MANAGERS: tuple[str, ...] = (
     "irm",
     "nala",
     "npm",
+    "pacman",
     "pip",
     "powershell",
     "sudo",
@@ -34,9 +35,11 @@ _SHELL_COMMAND_BOUNDARY = r"(?:^|[\s;&|()'\x22])"
 _SHELL_EXECUTABLE_PATH = r"(?:(?:/[A-Za-z0-9_.+-]+)+/)?"
 _APT_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}(?:apt(?:-get)?|nala)(?=\s|$)")
 _DNF_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}(?:dnf|yum)(?=\s|$)")
+_PACMAN_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}pacman(?=\s|$)")
 _YUM_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}yum(?=\s|$)")
 _DEB_ARTIFACT_PATTERN = re.compile(r"\.deb(?:$|[^A-Za-z0-9])", flags=re.IGNORECASE)
 _RPM_ARTIFACT_PATTERN = re.compile(r"\.rpm(?:$|[^A-Za-z0-9])", flags=re.IGNORECASE)
+_PACMAN_ARTIFACT_PATTERN = re.compile(r"\.pkg\.tar\.zst(?:$|[^A-Za-z0-9])", flags=re.IGNORECASE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,7 +73,7 @@ def resolve_installer_pattern(installer_data: InstallerData, operating_system: O
         if incompatible_reason is not None:
             raise ValueError(
                 f"Linux installer pattern for {installer_data['appName']} is package-manager-specific "
-                f"({incompatible_reason}); declare it in the required apt/dnf mapping."
+                f"({incompatible_reason}); declare it in the required {'/'.join(LINUX_PACKAGE_MANAGERS)} mapping."
             )
         return linux_pattern
 
@@ -82,6 +85,8 @@ def resolve_installer_pattern(installer_data: InstallerData, operating_system: O
             resolved_pattern = linux_pattern["apt"]
         case "dnf":
             resolved_pattern = linux_pattern["dnf"]
+        case "pacman":
+            resolved_pattern = linux_pattern["pacman"]
         case _:
             assert_never(package_manager)
 
@@ -100,7 +105,10 @@ def _validate_linux_package_manager_mapping(installer_pattern: LinuxPackageManag
     actual_keys = set(installer_pattern)
     required_keys = set(LINUX_PACKAGE_MANAGERS)
     if actual_keys != required_keys:
-        raise ValueError(f"Linux package-manager installer pattern for {app_name} must contain exactly apt and dnf; received {sorted(actual_keys)}.")
+        required_manager_names = ", ".join(LINUX_PACKAGE_MANAGERS)
+        raise ValueError(
+            f"Linux package-manager installer pattern for {app_name} must contain exactly {required_manager_names}; received {sorted(actual_keys)}."
+        )
     for package_manager, pattern in installer_pattern.items():
         if pattern is not None and not isinstance(pattern, str):
             raise TypeError(f"Linux {package_manager} installer pattern for {app_name} must be a string or null, received {type(pattern).__name__}.")
@@ -118,14 +126,16 @@ def _validate_linux_package_manager_mapping(installer_pattern: LinuxPackageManag
 def _get_incompatible_linux_pattern_reason(installer_pattern: str, package_manager: LinuxPackageManager | None) -> str | None:
     contains_apt_command = _APT_COMMAND_PATTERN.search(installer_pattern) is not None
     contains_dnf_command = _DNF_COMMAND_PATTERN.search(installer_pattern) is not None
+    contains_pacman_command = _PACMAN_COMMAND_PATTERN.search(installer_pattern) is not None
     contains_yum_command = _YUM_COMMAND_PATTERN.search(installer_pattern) is not None
     contains_deb_artifact = _DEB_ARTIFACT_PATTERN.search(installer_pattern) is not None
     contains_rpm_artifact = _RPM_ARTIFACT_PATTERN.search(installer_pattern) is not None
+    contains_pacman_artifact = _PACMAN_ARTIFACT_PATTERN.search(installer_pattern) is not None
 
     if package_manager is None:
-        if contains_apt_command or contains_dnf_command:
+        if contains_apt_command or contains_dnf_command or contains_pacman_command:
             return "native package-manager command"
-        if contains_deb_artifact or contains_rpm_artifact:
+        if contains_deb_artifact or contains_rpm_artifact or contains_pacman_artifact:
             return "native package artifact"
         return None
 
@@ -133,16 +143,34 @@ def _get_incompatible_linux_pattern_reason(installer_pattern: str, package_manag
         case "apt":
             if contains_dnf_command:
                 return "DNF/YUM command"
+            if contains_pacman_command:
+                return "pacman command"
             if contains_rpm_artifact:
                 return "RPM artifact"
+            if contains_pacman_artifact:
+                return "pacman package artifact"
             return None
         case "dnf":
             if contains_apt_command:
                 return "APT/Nala command"
+            if contains_pacman_command:
+                return "pacman command"
             if contains_yum_command:
                 return "legacy YUM command"
             if contains_deb_artifact:
                 return "DEB artifact"
+            if contains_pacman_artifact:
+                return "pacman package artifact"
+            return None
+        case "pacman":
+            if contains_apt_command:
+                return "APT/Nala command"
+            if contains_dnf_command:
+                return "DNF/YUM command"
+            if contains_deb_artifact:
+                return "DEB artifact"
+            if contains_rpm_artifact:
+                return "RPM artifact"
             return None
         case _:
             assert_never(package_manager)
@@ -166,7 +194,9 @@ def build_install_target(repo_url: str, installer_value: str) -> InstallTarget:
 
 def is_package_manager_command(installer_value: str) -> bool:
     contains_native_linux_manager = (
-        _APT_COMMAND_PATTERN.search(installer_value) is not None or _DNF_COMMAND_PATTERN.search(installer_value) is not None
+        _APT_COMMAND_PATTERN.search(installer_value) is not None
+        or _DNF_COMMAND_PATTERN.search(installer_value) is not None
+        or _PACMAN_COMMAND_PATTERN.search(installer_value) is not None
     )
     contains_other_manager = any(package_manager in installer_value.split() for package_manager in PACKAGE_MANAGERS)
     return contains_native_linux_manager or contains_other_manager

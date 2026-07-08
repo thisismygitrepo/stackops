@@ -55,6 +55,8 @@ EOF
 sudo dnf makecache --refresh
 """
             install_command = "sudo dnf install -y code"
+        case "pacman":
+            raise NotImplementedError("Microsoft Visual Studio Code is only available through the AUR on Arch Linux; pacman cannot install it.")
         case _:
             assert_never(distribution.package_manager)
 

@@ -11,7 +11,8 @@ from stackops.utils.schemas.installer.installer_types import LinuxPackageManager
 
 
 _NATIVE_LINUX_PATTERN = re.compile(
-    r"(^|[\s;&|()'\x22])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)(\s|$)|\.([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
+    r"(^|[\s;&|()'\x22])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum|pacman)(\s|$)"
+    r"|\.([dD][eE][bB]|[rR][pP][mM]|[pP][kK][gG]\.[tT][aA][rR]\.[zZ][sS][tT])($|[^A-Za-z0-9])"
 )
 
 
@@ -25,6 +26,7 @@ def test_installer_catalog_uses_explicit_native_package_mappings() -> None:
     Draft7Validator.check_schema(schema)
     Draft7Validator(schema).validate(catalog)
     installers = cast(list[dict[str, object]], catalog["installers"])
+    pacman_pattern_count = 0
     for installer in installers:
         file_name_patterns = cast(dict[str, dict[str, object]], installer["fileNamePattern"])
         assert set(file_name_patterns) == {"amd64", "arm64"}
@@ -32,12 +34,15 @@ def test_installer_catalog_uses_explicit_native_package_mappings() -> None:
             assert set(architecture_patterns) == {"windows", "linux", "darwin"}
             linux_pattern = architecture_patterns["linux"]
             if isinstance(linux_pattern, dict):
-                assert set(linux_pattern) == {"apt", "dnf"}
+                assert set(linux_pattern) == set(LINUX_PACKAGE_MANAGERS)
                 assert all(pattern is None or isinstance(pattern, str) for pattern in linux_pattern.values())
+                if linux_pattern["pacman"] is not None:
+                    pacman_pattern_count += 1
                 continue
             assert linux_pattern is None or isinstance(linux_pattern, str)
             if isinstance(linux_pattern, str):
                 assert _NATIVE_LINUX_PATTERN.search(linux_pattern) is None
+    assert pacman_pattern_count > 0
 
 
 def test_linux_manager_axes_stay_synchronized() -> None:

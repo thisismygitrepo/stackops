@@ -39,8 +39,10 @@ DEBIAN_REQUIRED_PACKAGES = (
     "libxcb-xfixes0-dev",
 )
 FEDORA_REQUIRED_PACKAGES = ("curl", "gcc", "gcc-c++", "make", "pkgconf-pkg-config", "openssl-devel", "mpv-devel", "libsixel-devel", "libxcb-devel")
+PACMAN_REQUIRED_PACKAGES = ("curl", "base-devel", "pkgconf", "openssl", "mpv", "libsixel", "libxcb")
 DEBIAN_OPTIONAL_PACKAGES = ("mpv", "yt-dlp")
 FEDORA_OPTIONAL_PACKAGES = ("mpv", "yt-dlp")
+PACMAN_OPTIONAL_PACKAGES = ("mpv", "yt-dlp")
 MACOS_REQUIRED_PACKAGES = ["pkg-config", "openssl", "mpv", "libsixel"]
 MACOS_OPTIONAL_PACKAGES = ["yt-dlp"]
 
@@ -103,6 +105,9 @@ def _install_linux_dependencies(console: Console) -> None:
                 )
             required_packages = FEDORA_REQUIRED_PACKAGES
             optional_packages = FEDORA_OPTIONAL_PACKAGES
+        case "pacman":
+            required_packages = PACMAN_REQUIRED_PACKAGES
+            optional_packages = PACMAN_OPTIONAL_PACKAGES
         case _:
             assert_never(distribution.package_manager)
     _install_package_set(

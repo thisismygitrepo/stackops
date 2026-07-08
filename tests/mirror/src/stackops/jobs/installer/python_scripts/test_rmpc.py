@@ -9,13 +9,28 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
 
 
 @pytest.mark.parametrize(
-    ("distribution", "expected_command", "required_packages", "optional_packages"),
-    [pytest.param(LinuxDistribution(distribution_id="debian"), "apt-get", rmpc.APT_REQUIRED_PACKAGES, rmpc.APT_OPTIONAL_PACKAGES, id="debian")],
+    ("distribution", "expected_install_prefix", "required_packages", "optional_packages"),
+    [
+        pytest.param(
+            LinuxDistribution(distribution_id="debian"),
+            ("apt-get", "install", "-y"),
+            rmpc.APT_REQUIRED_PACKAGES,
+            rmpc.APT_OPTIONAL_PACKAGES,
+            id="debian",
+        ),
+        pytest.param(
+            LinuxDistribution(distribution_id="arch"),
+            ("pacman", "-S", "--needed", "--noconfirm"),
+            rmpc.PACMAN_REQUIRED_PACKAGES,
+            rmpc.PACMAN_OPTIONAL_PACKAGES,
+            id="arch",
+        ),
+    ],
 )
 def test_linux_companions_use_distribution_package_manager(
     monkeypatch: pytest.MonkeyPatch,
     distribution: LinuxDistribution,
-    expected_command: str,
+    expected_install_prefix: tuple[str, ...],
     required_packages: tuple[str, ...],
     optional_packages: tuple[str, ...],
 ) -> None:
@@ -31,10 +46,10 @@ def test_linux_companions_use_distribution_package_manager(
 
     rmpc._install_linux_companions(console=Console(file=StringIO()), distribution=distribution)
 
-    assert executed_commands[0] == (("sudo", expected_command, "install", "-y", *required_packages), True)
-    assert executed_commands[1:] == [(("sudo", expected_command, "install", "-y", package), False) for package in optional_packages]
+    assert executed_commands[0] == (("sudo", *expected_install_prefix, *required_packages), True)
+    assert executed_commands[1:] == [(("sudo", *expected_install_prefix, package), False) for package in optional_packages]
     flattened_command = " ".join(part for command, _required in executed_commands for part in command)
-    excluded_commands = {"apt-get", "apt", "nala", "dnf"} - {expected_command}
+    excluded_commands = {"apt-get", "apt", "nala", "dnf", "pacman"} - {expected_install_prefix[0]}
     assert excluded_commands.isdisjoint(flattened_command.split())
 
 

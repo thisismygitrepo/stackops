@@ -51,6 +51,10 @@ sudo dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.co
                 "Brave's official RPM instructions do not support Linux distribution "
                 f"'{unsupported_distribution_id}'. Supported RPM distributions: fedora, rhel, rocky, centos."
             )
+        case ("arch", "pacman"):
+            raise NotImplementedError("Brave Browser is only available through the AUR on Arch Linux; pacman cannot install it.")
+        case (unsupported_distribution_id, "pacman"):
+            raise ValueError(f"Invalid package-manager metadata for Linux distribution '{unsupported_distribution_id}': manager=pacman")
 
     return f"""#!/usr/bin/env bash
 set -euo pipefail

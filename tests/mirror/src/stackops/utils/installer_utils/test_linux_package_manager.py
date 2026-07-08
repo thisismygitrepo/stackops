@@ -47,6 +47,13 @@ def test_classifies_oracle_linux_8_10_as_dnf() -> None:
     assert result.package_manager == "dnf"
 
 
+def test_classifies_arch_linux_as_pacman() -> None:
+    result = linux_package_manager.classify_linux_distribution({"ID": "arch", "ID_LIKE": "archlinux"})
+
+    assert result == LinuxDistribution(distribution_id="arch")
+    assert result.package_manager == "pacman"
+
+
 def test_missing_id_is_not_inferred_from_id_like() -> None:
     with pytest.raises(linux_package_manager.UnsupportedLinuxDistributionError, match="ID='<missing>'.*ID_LIKE='rhel fedora'"):
         linux_package_manager.classify_linux_distribution({"ID_LIKE": "rhel fedora", "VERSION_ID": "9"})
@@ -125,13 +132,21 @@ def test_current_distribution_reads_freedesktop_os_release(monkeypatch: pytest.M
     assert linux_package_manager.detect_current_linux_distribution() == LinuxDistribution(distribution_id="centos")
 
 
-@pytest.mark.parametrize(("package_manager", "expected_command"), [("apt", ("apt-get", "update")), ("dnf", ("dnf", "makecache", "--refresh"))])
+@pytest.mark.parametrize(
+    ("package_manager", "expected_command"),
+    [("apt", ("apt-get", "update")), ("dnf", ("dnf", "makecache", "--refresh")), ("pacman", ("pacman", "-Syu", "--noconfirm"))],
+)
 def test_builds_metadata_refresh_commands(package_manager: LinuxPackageManager, expected_command: tuple[str, ...]) -> None:
     assert linux_package_manager.build_metadata_refresh_command(package_manager) == expected_command
 
 
 @pytest.mark.parametrize(
-    ("package_manager", "expected_command"), [("apt", ("apt-get", "install", "-y", "curl", "git")), ("dnf", ("dnf", "install", "-y", "curl", "git"))]
+    ("package_manager", "expected_command"),
+    [
+        ("apt", ("apt-get", "install", "-y", "curl", "git")),
+        ("dnf", ("dnf", "install", "-y", "curl", "git")),
+        ("pacman", ("pacman", "-S", "--needed", "--noconfirm", "curl", "git")),
+    ],
 )
 def test_builds_package_install_commands(package_manager: LinuxPackageManager, expected_command: tuple[str, ...]) -> None:
     assert linux_package_manager.build_package_install_command(package_manager, ["curl", "git"]) == expected_command

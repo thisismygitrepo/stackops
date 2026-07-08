@@ -52,7 +52,11 @@ def _build_espanso_installer_data(
         case "linux":
             if xdg_session_type is None:
                 raise RuntimeError("XDG_SESSION_TYPE must be set for Linux Espanso installations.")
-            file_name_pattern[arch]["linux"] = {"apt": _resolve_linux_asset_name(current_arch=arch, xdg_session_type=xdg_session_type), "dnf": None}
+            file_name_pattern[arch]["linux"] = {
+                "apt": _resolve_linux_asset_name(current_arch=arch, xdg_session_type=xdg_session_type),
+                "dnf": None,
+                "pacman": None,
+            }
         case "darwin":
             file_name_pattern["amd64"]["darwin"] = ESPANSO_MACOS_UNIVERSAL_ASSET
             file_name_pattern["arm64"]["darwin"] = ESPANSO_MACOS_UNIVERSAL_ASSET

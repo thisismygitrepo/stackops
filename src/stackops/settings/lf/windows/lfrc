@@ -1,112 +1,100 @@
+set shell pwsh
+set shellflag '-cwa'
+set shellopts '-nop'
 
-set scrolloff 10      # space on top and bottom of screen
-set icons true          # show icons next to files
-set period 1          # interval to check for directory updates
-set hidden true         # show hidden files by default
-set incsearch o       # jump to first match after each keystroke in search
-set dircounts true      # show number of items in directory instead of sie
-set info "size"       # list directory information on the right
-set sortby "natural"  # don't sort files in any special way
-set preview true        # preview file on the right pane
-# set drawbox on        # draw a border around all panes
-set globsearch false
-set mouse true
-set number true
-set incsearch true
-set preview true
-set shell powershell
-# set colors on
-set ratios '1:2:3'  # ratio of pane widths
-set ifs "\n"
+set hidden
+set icons
+set preview
+set preload
+set watch
+set mouse
+set incsearch
+set incfilter
+set dirfirst
+set mergeindicators
+set drawbox
+set roundbox
+set scrolloff 10
+set info size
+set sortby natural
+set sizeunits binary
+set ratios 1:3:5
 
-# set hiddenfiles ".*:*.aux:*.log:*.bbl:*.bcf:*.blg:*.run.xml"
-# see more at https://git.lmburns.com/dotfiles-mac/file/.config/lf/lC:\Users\alex\AppData\Roaming\npmC:\Users\alex\AppData\Roaming\npmC:\Users\alex\AppData\Roaming\npmC:\Users\alex\AppData\Roaming\npmC:\Users\alex\AppData\Roaming\npmC:\Users\alex\AppData\Roaming\npmfrc.html
-# see this: https://github.com/ahrm/dotfiles/tree/main/lf-windows/lf_scripts
-# https://github.com/NikitaIvanovV/ctpv
+set previewer ~/.config/stackops/settings/lf/windows/previewer.cmd
 
-# also see pistol file previewer.
-# set shell pwsh  # too slow.
-# set ignorecase true
-# see:
-# https://github.com/gokcehan/lf/wiki/Integrations#ripgrep
-# https://github.com/gokcehan/lf/wiki/Integrations#fzf
-# https://github.com/junegunn/fzf/blob/master/ADVANCED.md#ripgrep-integration
+set borderfmt "\033[38;2;98;114;164m"
+set copyfmt "\033[38;2;241;250;140m"
+set cursoractivefmt "\033[38;2;248;248;242;48;2;68;71;90m"
+set cursorparentfmt "\033[38;2;248;248;242;48;2;68;71;90m"
+set cursorpreviewfmt "\033[38;2;189;147;249m"
+set cutfmt "\033[38;2;255;85;85m"
+set errorfmt "\033[38;2;248;248;242;48;2;255;85;85m"
+set promptfmt "\033[38;2;189;147;249m%u@%h\033[0m:\033[38;2;139;233;253m%d\033[0m\033[1m%f\033[0m"
+set selectfmt "\033[38;2;255;121;198m"
+set statfmt "\033[38;2;139;233;253m%p\033[0m| %c| \033[38;2;255;121;198m%u:%g\033[0m| %S| %t| -> %l"
+set tagfmt "\033[38;2;255;184;108m"
+set visualfmt "\033[38;2;139;233;253m"
 
+cmd open $& "$Env:USERPROFILE/.config/stackops/settings/lf/windows/autocall/open.ps1"
+cmd toggle-preview-max && "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" toggle-preview-max
+cmd repo-root && "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" repo-root
+cmd fullscreen-preview $& "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" fullscreen-preview
+cmd interactive-view $& "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" interactive-view
+cmd open-default $& "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" open-default
+cmd compress-selected $& "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" compress-selected
+cmd decrypt $& "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" decrypt
+cmd copy-paths && "$Env:USERPROFILE/.config/stackops/settings/lf/windows/action.ps1" copy-paths
 
-# windows defaults
-#           %OPENER%  start
-#           %EDITOR%  notepad
-#           %PAGER%   more
-#           %SHELL%   cmd
+cmd help !&$Env:lf -doc | &$Env:PAGER
+cmd maps !&$Env:lf -remote "query $Env:id maps" | &$Env:PAGER
+cmd nmaps !&$Env:lf -remote "query $Env:id nmaps" | &$Env:PAGER
+cmd vmaps !&$Env:lf -remote "query $Env:id vmaps" | &$Env:PAGER
+cmd cmaps !&$Env:lf -remote "query $Env:id cmaps" | &$Env:PAGER
+cmd cmds !&$Env:lf -remote "query $Env:id cmds" | &$Env:PAGER
 
-# ============================ KEY BINDINGS ============================================
-# avoid using confusing keys that are already bound to other functions by other programs, e.g. the console itself, like ctrl+c
-# default reference: https://pkg.go.dev/github.com/gokcehan/lf
+map <f-1> help
+map "!" $pwsh -NoLogo -NoProfile
+map w $pwsh -NoLogo -NoProfile
+map i !&$Env:PAGER "$Env:f"
+map T set preview!
+map M toggle-preview-max
 
-# key bindings
-map v  # default is invert
-map V invert
-map p $preview.ps1 $f
-map x
-map c
-map v
-map r
-map D $diskonaut $f
-map K $kondo $f
-map r reload
+map F $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire "$Env:f"
+map Pc $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek "$Env:f"
+map Pf $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek -f "$Env:f"
+map Pe $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek -e "$Env:f"
+map Ps $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek -s "$Env:f"
+map Pa $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek -a "$Env:f"
 
+map b $bat "$Env:f"
+map e $hx "$Env:f"
+map v fullscreen-preview
+map V interactive-view
+map n $nano "$Env:f"
+map gr repo-root
 
-# e edit
-map e  # edit modal key.
-map en $nano $f
-map el $pwsh -File $env:USERPROFILE/.local/bin/lvim.ps1 -- $f
-map ev $nvim $f
-map ec $code $f
-map ep $& 'C:\Program Files (x86)\JetBrains\PyCharm Community Edition 2022.2\bin\pycharm.exe' $f
-map o  $start $f
+map Rv &code "$Env:f"
+map Ro open-default
+map Rh $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" utils file edit "$Env:f"
+map Rp $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" preview "$Env:f"
+map Rf $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire "$Env:f"
+map RF $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire -i "$Env:f"
+map Rc $code "$Env:f"
+
+map oc compress-selected
+map od $ouch decompress "$Env:f"
+map os $gpg --output "$($Env:f).gpg" --symmetric "$Env:f"
+map oa $gpg --output "$($Env:f).gpg" --default-recipient-self --encrypt "$Env:f"
+map oS decrypt
+map oA decrypt
+
+map go $uv run --isolated --no-project --python 3.14 --with stackops "$Env:USERPROFILE/.config/stackops/settings/yazi/scripts/open_db_readonly.py" "$Env:f"
+map gu $uv run --isolated --no-project --python 3.14 --with stackops "$Env:USERPROFILE/.config/stackops/settings/yazi/scripts/open_db_readonly.py" --ui "$Env:f"
+
+map y :copy; copy-paths
+map ct $uv run --isolated --no-project --python 3.14 --with stackops "$Env:USERPROFILE/.config/stackops/settings/yazi/scripts/copy_file_content.py" "$Env:f"
+
+map x cut
+map o open
 map <enter> open
-
-
-# w shells
-map w
-map ww $powershell
-map wp $pwsh
-map wP $preview.ps1
-map wm $cmd
-map i $~/.config/stackops/settings/lf/windows/previewer.ps1 $f
-map P $powershell $env:USERPROFILE/scripts/preview.ps1 -r $f
-
-# o file/folder Operations
-map o
-map od cut
-map op paste
-map oy copy
-map oc $Set-Clipboard -Value $f
-map c clear
-map or rename
-map <delete> delete
-map <del> delete
-map of reload
-map os mark-save
-map ol mark-load
-map oR mark-remove
-map oD !ouch d $f
-map oC !ouch c $f '$f'.zip
-
-# j jump
-map j
-map jc cd ~/code
-map jd cd ~/data
-map jD cd ~/Downloads
-map jx cd ~/dotfiles
-map jh cd ~
-map ja cd $env:LOCALAPPDATA
-map jA cd $env:APPDATA
-map jj $pwsh -File $env:USERPROFILE/.local/bin/lvim.ps1 -- $HOME/.config/stackops/settings/lf/windows/lfrc
-
-
-
-# m make
-map m
-map md $~/.config/stackops/settings/lf/windows/mkdir.ps1
-map mf $~/.config/stackops/settings/lf/windows/mkfile.ps1
+map . set hidden!

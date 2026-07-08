@@ -40,6 +40,11 @@ echo "📝 Enabling WezTerm's official COPR project..."
 sudo dnf copr enable -y wezfurlong/wezterm-nightly
 """
             install_command = "sudo dnf install -y wezterm"
+        case "pacman":
+            repository_setup = """
+echo "📦 Using Arch Linux's official repositories..."
+""".strip()
+            install_command = "sudo pacman -S --needed --noconfirm wezterm"
         case _:
             assert_never(distribution.package_manager)
 

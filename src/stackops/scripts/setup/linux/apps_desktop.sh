@@ -29,12 +29,18 @@ flatpak install flathub com.github.hluk.copyq --noninteractive
 
 echo """🔗 REMOTE DESKTOP | Installing Remmina"""
 echo "📥 Installing Remmina and RDP plugin..."
-if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
-    sudo apt-get update
-    sudo apt-get install -y remmina remmina-plugin-rdp
-else
-    sudo dnf install -y remmina remmina-plugins-rdp
-fi
+case "$PACKAGE_MANAGER" in
+    apt)
+        sudo apt-get update
+        sudo apt-get install -y remmina remmina-plugin-rdp
+        ;;
+    dnf)
+        sudo dnf install -y remmina remmina-plugins-rdp
+        ;;
+    pacman)
+        sudo pacman -S --needed --noconfirm remmina
+        ;;
+esac
 
 # Alternative Remmina installation via flatpak (reference)
 # echo "📥 Setting up Flatpak repositories..."
@@ -47,11 +53,17 @@ fi
 echo """🚀 APPLICATION LAUNCHER | Installing Rofi
 """
 echo "📥 Installing Rofi application launcher..."
-if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
-    sudo apt-get install -y rofi
-else
-    sudo dnf install -y rofi
-fi
+case "$PACKAGE_MANAGER" in
+    apt)
+        sudo apt-get install -y rofi
+        ;;
+    dnf)
+        sudo dnf install -y rofi
+        ;;
+    pacman)
+        sudo pacman -S --needed --noconfirm rofi
+        ;;
+esac
 
 echo """📎 CLIPBOARD HISTORY | Installing Greenclip
 """
@@ -98,11 +110,17 @@ echo """📦 INSTALLING GUI COMPONENTS | Setting up desktop environment
 # sudo apt-get install -y x11-apps  # 🎨 few graphical test apps like xeyes
 
 echo "📥 Installing XRDP - Remote Desktop Protocol server..."
-if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
-    sudo apt-get install -y xrdp
-else
-    sudo dnf install -y xrdp
-fi
+case "$PACKAGE_MANAGER" in
+    apt)
+        sudo apt-get install -y xrdp
+        ;;
+    dnf)
+        sudo dnf install -y xrdp
+        ;;
+    pacman)
+        echo "Skipping XRDP: it is only available through the AUR on Arch Linux, and this setup uses pacman only."
+        ;;
+esac
 
 # echo "📥 Installing X.Org server and components..."
 # sudo apt-get install -y xorg  # 🎯 xorg server
@@ -110,11 +128,17 @@ fi
 # sudo apt-get install -y xserver-xorg  # 🖼️ xorg server
 
 echo "📥 Installing XFCE4 desktop environment..."
-if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
-    sudo apt-get install -y xfce4 xfce4-goodies
-else
-    sudo dnf install -y @xfce-desktop-environment
-fi
+case "$PACKAGE_MANAGER" in
+    apt)
+        sudo apt-get install -y xfce4 xfce4-goodies
+        ;;
+    dnf)
+        sudo dnf install -y @xfce-desktop-environment
+        ;;
+    pacman)
+        sudo pacman -S --needed --noconfirm xfce4 xfce4-goodies
+        ;;
+esac
 
 echo """🔧 CONFIGURING XRDP | Setting up Remote Desktop service
 """

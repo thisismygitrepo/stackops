@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, TypedDict
 
 from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_msi_package
-from stackops.utils.installer_utils.linux_package_file import install_linux_package_file
+from stackops.utils.installer_utils.linux_package_file import install_linux_package_file, is_linux_package_file
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
 from stackops.utils.installer_utils.github_release_bulk import get_repo_name_from_url, fetch_github_release_data, extract_release_info, AssetInfo
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
@@ -13,7 +13,21 @@ if TYPE_CHECKING:
     from rich.console import Console
 
 SUPPORTED_GITHUB_HOSTS = {"github.com", "www.github.com"}
-_ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (".tar.gz", ".tar.xz", ".tar.bz2", ".tgz", ".zip", ".gz", ".xz", ".bz2", ".deb", ".rpm", ".msi", ".exe")
+_ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
+    ".pkg.tar.zst",
+    ".tar.gz",
+    ".tar.xz",
+    ".tar.bz2",
+    ".tgz",
+    ".zip",
+    ".gz",
+    ".xz",
+    ".bz2",
+    ".deb",
+    ".rpm",
+    ".msi",
+    ".exe",
+)
 _ASSET_MARKER_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""(?ix)
     [._-]
@@ -97,7 +111,7 @@ def _finalize_install(repo_name: str, asset_name: str | None, version: str, extr
     from rich.panel import Panel
 
     extracted_suffix = extracted_path.suffix.lower()
-    if extracted_suffix in {".deb", ".rpm"}:
+    if is_linux_package_file(extracted_path):
         install_linux_package_file(extracted_path)
         tool_name_linux_package = _derive_tool_name(repo_name, asset_name)
         if tool_name_linux_package is not None:

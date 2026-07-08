@@ -23,6 +23,14 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
             ("apt", "nala", "dpkg"),
             id="dnf",
         ),
+        pytest.param(
+            LinuxDistribution(distribution_id="arch"),
+            None,
+            "sudo pacman -S --needed --noconfirm valkey",
+            "sudo systemctl enable --now redis",
+            ("apt", "nala", "dpkg", "dnf", "yum"),
+            id="pacman",
+        ),
     ],
 )
 def test_builds_native_redis_script(

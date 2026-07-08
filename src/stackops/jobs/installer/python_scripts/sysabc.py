@@ -56,6 +56,24 @@ DNF_PACKAGES: Final[tuple[str, ...]] = (
     "pkgconf-pkg-config",
     "openssl-devel",
 )
+PACMAN_PACKAGES: Final[tuple[str, ...]] = (
+    "curl",
+    "wget",
+    "gnupg",
+    "lsb-release",
+    "samba",
+    "fuse3",
+    "nfs-utils",
+    "git",
+    "net-tools",
+    "htop",
+    "nano",
+    "base-devel",
+    "python",
+    "unzip",
+    "pkgconf",
+    "openssl",
+)
 
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
@@ -64,6 +82,8 @@ def _build_linux_install_script(distribution: LinuxDistribution) -> str:
             packages = APT_PACKAGES
         case "dnf":
             packages = DNF_PACKAGES
+        case "pacman":
+            packages = PACMAN_PACKAGES
 
     refresh_command = build_metadata_refresh_command(distribution.package_manager)
     install_command = build_package_install_command(distribution.package_manager, packages)

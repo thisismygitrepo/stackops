@@ -1,6 +1,6 @@
 import stackops.utils.path_core as path_core
 from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_msi_package
-from stackops.utils.installer_utils.linux_package_file import install_linux_package_file
+from stackops.utils.installer_utils.linux_package_file import get_linux_package_file_suffix, install_linux_package_file, is_linux_package_file
 from stackops.utils.installer_utils.install_request_logic import (
     InstallTarget,
     build_install_target,
@@ -223,9 +223,10 @@ class Installer:
                         print(f"🔄 Renaming to correct name: {new_exe_name}")
                         path_core.with_name(exe, name=new_exe_name, inplace=True, overwrite=True)
                     version_to_be_installed = "downloaded_binary"
-                elif downloaded_suffix in {".deb", ".rpm"}:
+                elif is_linux_package_file(downloaded_object):
                     install_linux_package_file(downloaded_object)
-                    version_to_be_installed = f"downloaded_{downloaded_suffix.removeprefix('.')}"
+                    package_suffix = get_linux_package_file_suffix(downloaded_object).removeprefix(".").replace(".", "_")
+                    version_to_be_installed = f"downloaded_{package_suffix}"
                 elif downloaded_suffix == ".msi":
                     install_msi_package(downloaded_object)
                     version_to_be_installed = "downloaded_msi"
@@ -237,7 +238,7 @@ class Installer:
             assert repo_url.startswith("https://github.com/"), f"repoURL must be a GitHub URL, got {repo_url}"
             downloaded, version_to_be_installed = self.binary_download(version=version)
             downloaded_suffix = downloaded.suffix.lower()
-            if downloaded_suffix in {".deb", ".rpm"}:
+            if is_linux_package_file(downloaded):
                 install_linux_package_file(downloaded)
             elif downloaded_suffix == ".msi":
                 install_msi_package(downloaded)

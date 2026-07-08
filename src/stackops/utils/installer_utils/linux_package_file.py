@@ -2,9 +2,12 @@ from collections.abc import Sequence
 import os
 from pathlib import Path
 import subprocess
-from typing import assert_never
+from typing import Final, assert_never
 
 from stackops.utils.installer_utils.linux_package_manager import LinuxPackageManager, detect_current_linux_distribution
+
+
+LINUX_PACKAGE_FILE_SUFFIXES: Final[tuple[str, ...]] = (".deb", ".rpm", ".pkg.tar.zst")
 
 
 class IncompatibleLinuxPackageError(ValueError):
@@ -15,7 +18,7 @@ class IncompatibleLinuxPackageError(ValueError):
 def build_linux_package_file_install_command(
     package_manager: LinuxPackageManager, package_path: Path, privilege_prefix: Sequence[str]
 ) -> tuple[str, ...]:
-    package_suffix = package_path.suffix.lower()
+    package_suffix = get_linux_package_file_suffix(package_path)
     match package_manager:
         case "apt":
             if package_suffix != ".deb":
@@ -25,9 +28,25 @@ def build_linux_package_file_install_command(
             if package_suffix != ".rpm":
                 raise IncompatibleLinuxPackageError(package_manager=package_manager, package_suffix=package_suffix)
             package_command = ("dnf", "install", "-y", str(package_path))
+        case "pacman":
+            if package_suffix != ".pkg.tar.zst":
+                raise IncompatibleLinuxPackageError(package_manager=package_manager, package_suffix=package_suffix)
+            package_command = ("pacman", "-U", "--needed", "--noconfirm", str(package_path))
         case _:
             assert_never(package_manager)
     return (*privilege_prefix, *package_command)
+
+
+def get_linux_package_file_suffix(package_path: Path) -> str:
+    normalized_name = package_path.name.lower()
+    for package_suffix in LINUX_PACKAGE_FILE_SUFFIXES:
+        if normalized_name.endswith(package_suffix):
+            return package_suffix
+    return package_path.suffix.lower()
+
+
+def is_linux_package_file(package_path: Path) -> bool:
+    return get_linux_package_file_suffix(package_path) in LINUX_PACKAGE_FILE_SUFFIXES
 
 
 def install_linux_package_file(package_path: Path) -> None:

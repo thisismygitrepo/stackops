@@ -12,6 +12,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
     [
         ("apt", "tool.deb", ("sudo", "apt-get", "install", "-y", "/tmp/tool.deb")),
         ("dnf", "tool.rpm", ("sudo", "dnf", "install", "-y", "/tmp/tool.rpm")),
+        ("pacman", "tool.pkg.tar.zst", ("sudo", "pacman", "-U", "--needed", "--noconfirm", "/tmp/tool.pkg.tar.zst")),
     ],
 )
 def test_builds_native_package_file_command(package_manager: LinuxPackageManager, package_name: str, expected_command: tuple[str, ...]) -> None:
@@ -22,7 +23,17 @@ def test_builds_native_package_file_command(package_manager: LinuxPackageManager
     assert command == expected_command
 
 
-@pytest.mark.parametrize(("package_manager", "package_name"), [("apt", "tool.rpm"), ("dnf", "tool.deb")])
+@pytest.mark.parametrize(
+    ("package_manager", "package_name"),
+    [
+        ("apt", "tool.rpm"),
+        ("apt", "tool.pkg.tar.zst"),
+        ("dnf", "tool.deb"),
+        ("dnf", "tool.pkg.tar.zst"),
+        ("pacman", "tool.deb"),
+        ("pacman", "tool.rpm"),
+    ],
+)
 def test_rejects_package_from_another_ecosystem(package_manager: LinuxPackageManager, package_name: str) -> None:
     with pytest.raises(linux_package_file.IncompatibleLinuxPackageError):
         linux_package_file.build_linux_package_file_install_command(
@@ -30,11 +41,16 @@ def test_rejects_package_from_another_ecosystem(package_manager: LinuxPackageMan
         )
 
 
-def test_installs_matching_package_and_removes_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    package_path = tmp_path.joinpath("tool.rpm")
+@pytest.mark.parametrize(("package_name", "expected_is_package"), [("tool.pkg.tar.zst", True), ("tool.PKG.TAR.ZST", True), ("tool.tar.zst", False)])
+def test_recognizes_only_complete_linux_package_suffixes(package_name: str, expected_is_package: bool) -> None:
+    assert linux_package_file.is_linux_package_file(Path(package_name)) is expected_is_package
+
+
+def test_installs_matching_pacman_package_and_removes_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    package_path = tmp_path.joinpath("tool.pkg.tar.zst")
     package_path.touch()
     commands: list[tuple[str, ...]] = []
-    monkeypatch.setattr(linux_package_file, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="rhel"))
+    monkeypatch.setattr(linux_package_file, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="arch"))
     monkeypatch.setattr(linux_package_file.os, "geteuid", lambda: 0)
 
     def run_command(command: tuple[str, ...], *, capture_output: bool, text: bool, check: bool) -> subprocess.CompletedProcess[str]:
@@ -46,7 +62,7 @@ def test_installs_matching_package_and_removes_file(monkeypatch: pytest.MonkeyPa
 
     linux_package_file.install_linux_package_file(package_path)
 
-    assert commands == [("dnf", "install", "-y", str(package_path))]
+    assert commands == [("pacman", "-U", "--needed", "--noconfirm", str(package_path))]
     assert not package_path.exists()
 
 

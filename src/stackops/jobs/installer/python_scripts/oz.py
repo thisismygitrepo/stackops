@@ -41,6 +41,16 @@ gpgcheck=1
 gpgkey=https://releases.warp.dev/linux/keys/warp.asc
 EOF
 """.strip()
+        case "pacman":
+            dependency_packages = ("ca-certificates", "wget", "gnupg")
+            repository_setup = """
+if ! grep -qxF '[warpdotdev]' /etc/pacman.conf; then
+    printf '%s\n' '' '[warpdotdev]' 'Server = https://releases.warp.dev/linux/pacman/$repo/$arch' \
+        | sudo tee -a /etc/pacman.conf >/dev/null
+fi
+sudo pacman-key -r linux-maintainers@warp.dev
+sudo pacman-key --lsign-key linux-maintainers@warp.dev
+""".strip()
         case _:
             assert_never(distribution.package_manager)
     refresh = shlex.join(("sudo", *build_metadata_refresh_command(distribution.package_manager)))

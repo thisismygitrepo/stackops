@@ -38,6 +38,12 @@ sudo dnf makecache --refresh
 """
             install_command = "sudo dnf install -y redis"
             service_name = "redis"
+        case "pacman":
+            repository_setup = """
+echo "📦 Using Arch Linux's official repositories..."
+""".strip()
+            install_command = "sudo pacman -S --needed --noconfirm valkey"
+            service_name = "redis"
         case _:
             assert_never(distribution.package_manager)
 

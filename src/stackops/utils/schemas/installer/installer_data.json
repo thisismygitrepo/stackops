@@ -1,6 +1,6 @@
 {
   "$schema": "./installer_type.schema.json",
-  "version": "2",
+  "version": "3",
   "installers": [
     {
       "appName": "sysabc",
@@ -35,7 +35,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
-            "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
+            "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
+            "pacman": "sudo pacman -S --needed --noconfirm curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
           },
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\bunx.cmd' -Target (Get-Command bunx).Source\"",
           "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx"
@@ -43,7 +44,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
-            "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
+            "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
+            "pacman": "sudo pacman -S --needed --noconfirm curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
           },
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\bunx.cmd' -Target (Get-Command bunx).Source\"",
           "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx"
@@ -169,7 +171,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y git",
-            "dnf": "sudo dnf install -y git"
+            "dnf": "sudo dnf install -y git",
+            "pacman": "sudo pacman -S --needed --noconfirm git"
           },
           "windows": "winget install --no-upgrade --name \"Git\" --Id \"Git.Git\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install git"
@@ -177,7 +180,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y git",
-            "dnf": "sudo dnf install -y git"
+            "dnf": "sudo dnf install -y git",
+            "pacman": "sudo pacman -S --needed --noconfirm git"
           },
           "windows": "winget install --no-upgrade --name \"Git\" --Id \"Git.Git\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install git"
@@ -471,7 +475,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
-            "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
+            "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
+            "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
           },
           "windows": null,
           "darwin": "brew install tmux"
@@ -479,7 +484,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
-            "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
+            "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
+            "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
           },
           "windows": null,
           "darwin": "brew install tmux"
@@ -499,7 +505,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
-            "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
+            "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
+            "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
           },
           "windows": null,
           "darwin": "brew install tmux; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local ."
@@ -507,7 +514,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
-            "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
+            "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
+            "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
           },
           "windows": null,
           "darwin": "brew install tmux; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local ."
@@ -527,14 +535,16 @@
           "windows": "boxes.py",
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y boxes",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "darwin": "brew install boxes"
         },
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y boxes",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "darwin": "brew install boxes",
           "windows": "boxes.py"
@@ -980,12 +990,20 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "cloudflare_warp_cli.py",
+          "linux": {
+            "apt": "cloudflare_warp_cli.py",
+            "dnf": "cloudflare_warp_cli.py",
+            "pacman": null
+          },
           "windows": "cloudflare_warp_cli.py",
           "darwin": "cloudflare_warp_cli.py"
         },
         "arm64": {
-          "linux": "cloudflare_warp_cli.py",
+          "linux": {
+            "apt": "cloudflare_warp_cli.py",
+            "dnf": "cloudflare_warp_cli.py",
+            "pacman": null
+          },
           "windows": "cloudflare_warp_cli.py",
           "darwin": "cloudflare_warp_cli.py"
         }
@@ -1260,7 +1278,8 @@
         "amd64": {
           "linux": {
             "apt": "aptui_{version}_linux_amd64.tar.gz",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "darwin": null,
           "windows": null
@@ -1268,7 +1287,8 @@
         "arm64": {
           "linux": {
             "apt": "aptui_{version}_linux_arm64.tar.gz",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "darwin": null,
           "windows": null
@@ -1781,7 +1801,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y timg",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "windows": null,
           "darwin": "brew install timg"
@@ -1789,7 +1810,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y timg",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "windows": null,
           "darwin": "brew install timg"
@@ -1809,7 +1831,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y chafa",
-            "dnf": null
+            "dnf": null,
+            "pacman": "sudo pacman -S --needed --noconfirm chafa"
           },
           "windows": "winget install --no-upgrade --name \"Chafa\" --Id \"hpjansson.Chafa\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install chafa"
@@ -1817,7 +1840,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y chafa",
-            "dnf": null
+            "dnf": null,
+            "pacman": "sudo pacman -S --needed --noconfirm chafa"
           },
           "windows": "winget install --no-upgrade --name \"Chafa\" --Id \"hpjansson.Chafa\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install chafa"
@@ -1838,7 +1862,8 @@
           "windows": "poppler.py",
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y poppler-utils",
-            "dnf": "sudo dnf install -y poppler-utils"
+            "dnf": "sudo dnf install -y poppler-utils",
+            "pacman": "sudo pacman -S --needed --noconfirm poppler"
           },
           "darwin": "brew install poppler"
         },
@@ -1846,7 +1871,8 @@
           "windows": "poppler.py",
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y poppler-utils",
-            "dnf": "sudo dnf install -y poppler-utils"
+            "dnf": "sudo dnf install -y poppler-utils",
+            "pacman": "sudo pacman -S --needed --noconfirm poppler"
           },
           "darwin": "brew install poppler"
         }
@@ -1947,7 +1973,11 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "ytui_music.py",
+          "linux": {
+            "apt": "ytui_music.py",
+            "dnf": null,
+            "pacman": null
+          },
           "darwin": null,
           "windows": null
         },
@@ -2053,12 +2083,20 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "rmpc.py",
+          "linux": {
+            "apt": "rmpc.py",
+            "dnf": null,
+            "pacman": "rmpc.py"
+          },
           "darwin": "rmpc.py",
           "windows": null
         },
         "arm64": {
-          "linux": "rmpc.py",
+          "linux": {
+            "apt": "rmpc.py",
+            "dnf": null,
+            "pacman": "rmpc.py"
+          },
           "darwin": "rmpc.py",
           "windows": null
         }
@@ -2310,7 +2348,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y redis-tools",
-            "dnf": "sudo dnf install -y redis"
+            "dnf": "sudo dnf install -y redis",
+            "pacman": "sudo pacman -S --needed --noconfirm valkey"
           },
           "darwin": null,
           "windows": null
@@ -2318,7 +2357,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y redis-tools",
-            "dnf": "sudo dnf install -y redis"
+            "dnf": "sudo dnf install -y redis",
+            "pacman": "sudo pacman -S --needed --noconfirm valkey"
           },
           "darwin": null,
           "windows": null
@@ -2338,7 +2378,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y sqlite3",
-            "dnf": "sudo dnf install -y sqlite"
+            "dnf": "sudo dnf install -y sqlite",
+            "pacman": "sudo pacman -S --needed --noconfirm sqlite"
           },
           "darwin": null,
           "windows": null
@@ -2346,7 +2387,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y sqlite3",
-            "dnf": "sudo dnf install -y sqlite"
+            "dnf": "sudo dnf install -y sqlite",
+            "pacman": "sudo pacman -S --needed --noconfirm sqlite"
           },
           "darwin": null,
           "windows": null
@@ -2365,7 +2407,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y postgresql-client",
-            "dnf": "sudo dnf install -y postgresql"
+            "dnf": "sudo dnf install -y postgresql",
+            "pacman": "sudo pacman -S --needed --noconfirm postgresql-libs"
           },
           "darwin": null,
           "windows": null
@@ -2373,7 +2416,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y postgresql-client",
-            "dnf": "sudo dnf install -y postgresql"
+            "dnf": "sudo dnf install -y postgresql",
+            "pacman": "sudo pacman -S --needed --noconfirm postgresql-libs"
           },
           "darwin": null,
           "windows": null
@@ -2881,7 +2925,8 @@
         "amd64": {
           "linux": {
             "apt": "obs-backgroundremoval-{version}-x86_64-linux-gnu.deb",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "windows": "obs-backgroundremoval-{version}-windows-x64.zip",
           "darwin": "obs-backgroundremoval-{version}-macos-universal.pkg"
@@ -2910,7 +2955,8 @@
         "arm64": {
           "linux": {
             "apt": "rustdesk-{version}-aarch64.deb",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "windows": null,
           "darwin": "rustdesk-{version}-aarch64.dmg"
@@ -4040,7 +4086,8 @@
         "amd64": {
           "linux": {
             "apt": "ngrok.sh",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "windows": "winget install ngrok --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install ngrok"
@@ -4048,7 +4095,8 @@
         "arm64": {
           "linux": {
             "apt": "ngrok.sh",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "windows": "winget install ngrok --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install ngrok"
@@ -4065,12 +4113,20 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "code.py",
+          "linux": {
+            "apt": "code.py",
+            "dnf": "code.py",
+            "pacman": null
+          },
           "windows": "code.py",
           "darwin": "code.py"
         },
         "arm64": {
-          "linux": "code.py",
+          "linux": {
+            "apt": "code.py",
+            "dnf": "code.py",
+            "pacman": null
+          },
           "windows": "code.py",
           "darwin": "code.py"
         }
@@ -4534,7 +4590,8 @@
         "amd64": {
           "linux": {
             "apt": "orca-ide_{version}_amd64.deb",
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "darwin": "Orca-{version}-mac.zip",
           "windows": "orca.py"
@@ -4771,7 +4828,8 @@
         "amd64": {
           "linux": {
             "apt": "https://app.warp.dev/get_warp?package=deb",
-            "dnf": "https://app.warp.dev/get_warp?package=rpm"
+            "dnf": "https://app.warp.dev/get_warp?package=rpm",
+            "pacman": "https://app.warp.dev/download?package=pacman"
           },
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask warp"
@@ -4779,7 +4837,8 @@
         "arm64": {
           "linux": {
             "apt": "https://app.warp.dev/get_warp?package=deb_arm64",
-            "dnf": "https://app.warp.dev/get_warp?package=rpm_arm64"
+            "dnf": "https://app.warp.dev/get_warp?package=rpm_arm64",
+            "pacman": "https://app.warp.dev/download?package=pacman_arm64"
           },
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask warp"
@@ -4840,7 +4899,7 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "q.sh",
+          "linux": null,
           "windows": null,
           "darwin": null
         },
@@ -4926,12 +4985,20 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "brave.py",
+          "linux": {
+            "apt": "brave.py",
+            "dnf": "brave.py",
+            "pacman": null
+          },
           "windows": "brave.py",
           "darwin": "brave.py"
         },
         "arm64": {
-          "linux": "brave.py",
+          "linux": {
+            "apt": "brave.py",
+            "dnf": "brave.py",
+            "pacman": null
+          },
           "windows": "brave.py",
           "darwin": "brave.py"
         }
@@ -4990,12 +5057,20 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "espanso.py",
+          "linux": {
+            "apt": "espanso.py",
+            "dnf": null,
+            "pacman": null
+          },
           "windows": "espanso.py",
           "darwin": "espanso.py"
         },
         "arm64": {
-          "linux": "espanso.py",
+          "linux": {
+            "apt": "espanso.py",
+            "dnf": null,
+            "pacman": null
+          },
           "windows": "espanso.py",
           "darwin": "espanso.py"
         }
@@ -5117,12 +5192,12 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "winget.py",
+          "linux": null,
           "windows": "winget.py",
           "darwin": "winget.py"
         },
         "arm64": {
-          "linux": "winget.py",
+          "linux": null,
           "windows": "winget.py",
           "darwin": "winget.py"
         }
@@ -5203,7 +5278,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y file",
-            "dnf": "sudo dnf install -y file"
+            "dnf": "sudo dnf install -y file",
+            "pacman": "sudo pacman -S --needed --noconfirm file"
           },
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install file"
@@ -5211,7 +5287,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y file",
-            "dnf": "sudo dnf install -y file"
+            "dnf": "sudo dnf install -y file",
+            "pacman": "sudo pacman -S --needed --noconfirm file"
           },
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install file"
@@ -5337,7 +5414,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y gnupg",
-            "dnf": "sudo dnf install -y gnupg2"
+            "dnf": "sudo dnf install -y gnupg2",
+            "pacman": "sudo pacman -S --needed --noconfirm gnupg"
           },
           "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install gnupg"
@@ -5345,7 +5423,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y gnupg",
-            "dnf": "sudo dnf install -y gnupg2"
+            "dnf": "sudo dnf install -y gnupg2",
+            "pacman": "sudo pacman -S --needed --noconfirm gnupg"
           },
           "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install gnupg"
@@ -5365,7 +5444,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y graphviz",
-            "dnf": "sudo dnf install -y graphviz"
+            "dnf": "sudo dnf install -y graphviz",
+            "pacman": "sudo pacman -S --needed --noconfirm graphviz"
           },
           "windows": "winget install --no-upgrade --name \"graphviz\" --Id \"Graphviz.Graphviz\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install graphviz"
@@ -5373,7 +5453,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y graphviz",
-            "dnf": "sudo dnf install -y graphviz"
+            "dnf": "sudo dnf install -y graphviz",
+            "pacman": "sudo pacman -S --needed --noconfirm graphviz"
           },
           "windows": "winget install --no-upgrade --name \"graphviz\" --Id \"Graphviz.Graphviz\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install graphviz"
@@ -5414,7 +5495,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y sshfs",
-            "dnf": null
+            "dnf": null,
+            "pacman": "sudo pacman -S --needed --noconfirm sshfs"
           },
           "windows": "winget install --no-upgrade --name \"SSHFS-win\" --Id \"SSHFS-Win.SSHFS-Win\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install sshfs"
@@ -5422,7 +5504,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y sshfs",
-            "dnf": null
+            "dnf": null,
+            "pacman": "sudo pacman -S --needed --noconfirm sshfs"
           },
           "windows": "winget install --no-upgrade --name \"SSHFS-win\" --Id \"SSHFS-Win.SSHFS-Win\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install sshfs"
@@ -5527,7 +5610,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt-get install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
-            "dnf": "sudo dnf install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm && rm google-chrome-stable_current_x86_64.rpm"
+            "dnf": "sudo dnf install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm && rm google-chrome-stable_current_x86_64.rpm",
+            "pacman": null
           },
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask google-chrome"
@@ -5535,7 +5619,8 @@
         "arm64": {
           "linux": {
             "apt": null,
-            "dnf": null
+            "dnf": null,
+            "pacman": null
           },
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask google-chrome"
@@ -5598,7 +5683,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
-            "dnf": null
+            "dnf": null,
+            "pacman": "sudo pacman -S --needed --noconfirm 7zip"
           },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install p7zip"
@@ -5606,7 +5692,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
-            "dnf": null
+            "dnf": null,
+            "pacman": "sudo pacman -S --needed --noconfirm 7zip"
           },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install p7zip"
@@ -5732,7 +5819,8 @@
         "amd64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y texlive",
-            "dnf": "sudo dnf install -y texlive"
+            "dnf": "sudo dnf install -y texlive",
+            "pacman": "sudo pacman -S --needed --noconfirm texlive-meta"
           },
           "windows": "texlive.ps1",
           "darwin": "brew install texlive"
@@ -5740,7 +5828,8 @@
         "arm64": {
           "linux": {
             "apt": "sudo apt-get update && sudo apt-get install -y texlive",
-            "dnf": "sudo dnf install -y texlive"
+            "dnf": "sudo dnf install -y texlive",
+            "pacman": "sudo pacman -S --needed --noconfirm texlive-meta"
           },
           "windows": "texlive.ps1",
           "darwin": "brew install texlive"

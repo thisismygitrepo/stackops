@@ -8,6 +8,7 @@ from stackops.utils.installer_utils.linux_package_manager import (
     build_metadata_refresh_command,
     build_package_install_command,
     detect_current_linux_distribution,
+    get_openssh_server_package,
 )
 
 
@@ -32,11 +33,14 @@ def check_sshd_installed() -> tuple[bool, str]:
 
 def detect_package_manager() -> tuple[LinuxPackageManager, str]:
     package_manager = detect_current_linux_distribution().package_manager
-    install_command = shlex.join(("sudo", *build_package_install_command(package_manager, ("openssh-server",))))
+    openssh_package = get_openssh_server_package(package_manager)
+    install_command = shlex.join(("sudo", *build_package_install_command(package_manager, (openssh_package,))))
     match package_manager:
         case "apt":
             refresh_command = shlex.join(("sudo", *build_metadata_refresh_command(package_manager)))
             return package_manager, f"{refresh_command} && {install_command}"
         case "dnf":
+            return package_manager, install_command
+        case "pacman":
             return package_manager, install_command
     assert_never(package_manager)

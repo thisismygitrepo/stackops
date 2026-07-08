@@ -1,5 +1,3 @@
-
-
 from platform import system
 from pathlib import Path
 from rich.console import Console
@@ -10,6 +8,7 @@ import os
 import re
 
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux_utils import check_sshd_installed, detect_package_manager, run_cmd
+from stackops.utils.installer_utils.linux_package_manager import get_openssh_service_name
 
 
 console = Console()
@@ -19,6 +18,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
     current_os = system()
     if current_os == "Darwin":
         from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin import ssh_debug_darwin
+
         return ssh_debug_darwin()
     if current_os != "Linux":
         raise NotImplementedError(f"ssh_debug_linux is only supported on Linux and macOS, not {current_os}")
@@ -34,7 +34,8 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
 
     install_info: list[str] = []
     sshd_installed, sshd_path = check_sshd_installed()
-    _pkg_manager, install_cmd = detect_package_manager()
+    package_manager, install_cmd = detect_package_manager()
+    service_name = get_openssh_service_name(package_manager)
     if not sshd_installed:
         results["installation"] = {"status": "error", "message": "OpenSSH Server not installed"}
         issues.append(("sshd not installed", "Cannot accept incoming SSH connections", install_cmd))
@@ -75,7 +76,13 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
 
     if not authorized_keys.exists():
         results["authorized_keys"] = {"status": "error", "message": "authorized_keys missing"}
-        issues.append(("authorized_keys missing", "No keys = no login", "Add public key: cat id_rsa.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"))
+        issues.append(
+            (
+                "authorized_keys missing",
+                "No keys = no login",
+                "Add public key: cat id_rsa.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys",
+            )
+        )
         perm_info.append("❌ authorized_keys: [red]does not exist[/red]")
         perm_info.append("   [dim]No authorized keys = cannot login with SSH key[/dim]")
     else:
@@ -104,7 +111,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
         svc_info.append(f"✅ Service: [green]{svc_name} running[/green]")
     else:
         results["ssh_service"] = {"status": "error", "message": "sshd not running"}
-        issues.append(("sshd not running", "No SSH daemon = no connections", "sudo systemctl start ssh && sudo systemctl enable ssh"))
+        issues.append(("sshd not running", "No SSH daemon = no connections", f"sudo systemctl enable --now {service_name}"))
         svc_info.append("❌ Service: [red]not running[/red]")
 
     console.print(Panel("\n".join(svc_info), title="[bold]Service[/bold]", border_style="blue"))
@@ -112,7 +119,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
     net_info: list[str] = []
     ok, ip_out = run_cmd(["ip", "addr", "show"])
     if ok:
-        ip_addresses = re.findall(r'inet\s+(\d+\.\d+\.\d+\.\d+)/\d+.*scope\s+global', ip_out)
+        ip_addresses = re.findall(r"inet\s+(\d+\.\d+\.\d+\.\d+)/\d+.*scope\s+global", ip_out)
         if ip_addresses:
             net_info.append(f"🌐 IP: [cyan]{', '.join(ip_addresses)}[/cyan]")
 
@@ -164,7 +171,9 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
             if pubkey_override_file:
                 try:
                     override_text = pubkey_override_file.read_text(encoding="utf-8")
-                    override_pubkey_lines = [line for line in override_text.split("\n") if "PubkeyAuthentication" in line and not line.strip().startswith("#")]
+                    override_pubkey_lines = [
+                        line for line in override_text.split("\n") if "PubkeyAuthentication" in line and not line.strip().startswith("#")
+                    ]
                     if override_pubkey_lines:
                         pubkey_lines = override_pubkey_lines
                 except Exception:
@@ -172,7 +181,13 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
             if pubkey_lines and "no" in pubkey_lines[-1].lower():
                 results["pubkey_auth"] = {"status": "error", "message": "PubkeyAuthentication disabled"}
                 fix_target = pubkey_override_file if pubkey_override_file else sshd_config
-                issues.append(("PubkeyAuthentication disabled", "Key-based login won't work", f"Edit {fix_target}: set PubkeyAuthentication yes, then sudo systemctl restart ssh"))
+                issues.append(
+                    (
+                        "PubkeyAuthentication disabled",
+                        "Key-based login won't work",
+                        f"Edit {fix_target}: set PubkeyAuthentication yes, then sudo systemctl restart {service_name}",
+                    )
+                )
                 override_note = f" (overridden in {pubkey_override_file.name})" if pubkey_override_file else ""
                 net_info.append(f"❌ PubkeyAuthentication: [red]disabled[/red]{override_note}")
             else:
@@ -183,7 +198,9 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
             if password_override_file:
                 try:
                     override_text = password_override_file.read_text(encoding="utf-8")
-                    override_password_lines = [line for line in override_text.split("\n") if "PasswordAuthentication" in line and not line.strip().startswith("#")]
+                    override_password_lines = [
+                        line for line in override_text.split("\n") if "PasswordAuthentication" in line and not line.strip().startswith("#")
+                    ]
                     if override_password_lines:
                         password_lines = override_password_lines
                 except Exception:
@@ -198,7 +215,13 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
                     results["password_auth"] = {"status": "info", "message": "PasswordAuthentication disabled"}
                     net_info.append(f"ℹ️  PasswordAuthentication: [yellow]disabled[/yellow] (key-only){override_note}")
                     if password_override_file:
-                        issues.append((f"PasswordAuth disabled by {password_override_file.name}", "Password login blocked by cloud-init config", f"Edit {password_override_file}: set PasswordAuthentication yes, then sudo systemctl restart ssh"))
+                        issues.append(
+                            (
+                                f"PasswordAuth disabled by {password_override_file.name}",
+                                "Password login blocked by cloud-init config",
+                                f"Edit {password_override_file}: set PasswordAuthentication yes, then sudo systemctl restart {service_name}",
+                            )
+                        )
             else:
                 results["password_auth"] = {"status": "ok", "message": "PasswordAuthentication enabled (default)"}
                 net_info.append("✅ PasswordAuthentication: [green]enabled[/green] (default)")
@@ -215,7 +238,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
         listening = [line for line in ss_out.split("\n") if f":{ssh_port}" in line]
         if not listening:
             results["ssh_listening"] = {"status": "error", "message": f"Not listening on {ssh_port}"}
-            issues.append((f"Not listening on port {ssh_port}", "No connections possible", "sudo systemctl restart ssh"))
+            issues.append((f"Not listening on port {ssh_port}", "No connections possible", f"sudo systemctl restart {service_name}"))
             net_info.append(f"❌ Listening: [red]NOT on port {ssh_port}[/red]")
         elif all("127.0.0.1" in line or "[::1]" in line for line in listening):
             results["ssh_listening"] = {"status": "error", "message": "Localhost only"}
@@ -248,7 +271,13 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
                 net_info.append("✅ Firewall (firewalld): allows SSH")
             else:
                 results["firewall"] = {"status": "error", "message": "firewalld blocking SSH"}
-                issues.append(("firewalld blocking SSH", "Incoming connections dropped", "sudo firewall-cmd --permanent --add-service=ssh && sudo firewall-cmd --reload"))
+                issues.append(
+                    (
+                        "firewalld blocking SSH",
+                        "Incoming connections dropped",
+                        "sudo firewall-cmd --permanent --add-service=ssh && sudo firewall-cmd --reload",
+                    )
+                )
                 net_info.append("❌ Firewall (firewalld): [red]blocking SSH[/red]")
 
     if not fw_checked:
@@ -258,7 +287,9 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
             has_ssh_allow = f"dpt:{ssh_port}" in ipt_out or "dpt:ssh" in ipt_out
             if has_drop_policy and not has_ssh_allow:
                 results["firewall"] = {"status": "error", "message": "iptables blocking SSH"}
-                issues.append(("iptables blocking SSH", "DROP/REJECT policy without SSH allow", f"sudo iptables -I INPUT -p tcp --dport {ssh_port} -j ACCEPT"))
+                issues.append(
+                    ("iptables blocking SSH", "DROP/REJECT policy without SSH allow", f"sudo iptables -I INPUT -p tcp --dport {ssh_port} -j ACCEPT")
+                )
                 net_info.append("❌ Firewall (iptables): [red]DROP policy, no SSH rule[/red]")
                 fw_checked = True
             elif has_drop_policy and has_ssh_allow:
@@ -299,7 +330,11 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
         if lf.exists():
             ok, tail = run_cmd(["tail", "-n", "20", str(lf)])
             if ok:
-                errors = [line for line in tail.split("\n") if any(k in line.lower() for k in ["error", "failed", "refused", "denied"]) and "ssh" in line.lower()]
+                errors = [
+                    line
+                    for line in tail.split("\n")
+                    if any(k in line.lower() for k in ["error", "failed", "refused", "denied"]) and "ssh" in line.lower()
+                ]
                 if errors:
                     other_info.append(f"⚠️  Recent SSH errors in {lf.name}: {len(errors)}")
                 else:
@@ -328,7 +363,13 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
         fix_script_path.write_text("\n".join(script_lines), encoding="utf-8")
         fix_script_path.chmod(0o755)
 
-        console.print(Panel(f"[bold yellow]⚠️  {len(issues)} issue(s) found[/bold yellow]\n\nFix script generated: [cyan]{fix_script_path}[/cyan]\nRun: [green]sudo bash {fix_script_path}[/green]", title="[bold]Summary[/bold]", border_style="yellow"))
+        console.print(
+            Panel(
+                f"[bold yellow]⚠️  {len(issues)} issue(s) found[/bold yellow]\n\nFix script generated: [cyan]{fix_script_path}[/cyan]\nRun: [green]sudo bash {fix_script_path}[/green]",
+                title="[bold]Summary[/bold]",
+                border_style="yellow",
+            )
+        )
     else:
         conn_info = f"👤 {current_user}  🖥️  {hostname}  🔌 :{ssh_port}"
         if ip_addresses:

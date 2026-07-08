@@ -10,7 +10,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
 from stackops.utils.schemas.installer.installer_types import InstallRequest, InstallerData
 
 
-def _build_native_linux_installer_data(apt_command: str | None, dnf_command: str | None) -> InstallerData:
+def _build_native_linux_installer_data(apt_command: str | None, dnf_command: str | None, pacman_command: str | None) -> InstallerData:
     return cast(
         InstallerData,
         {
@@ -20,8 +20,8 @@ def _build_native_linux_installer_data(apt_command: str | None, dnf_command: str
             "repoURL": "CMD",
             "categoryLabels": [],
             "fileNamePattern": {
-                "amd64": {"linux": {"apt": apt_command, "dnf": dnf_command}, "darwin": None, "windows": None},
-                "arm64": {"linux": {"apt": apt_command, "dnf": dnf_command}, "darwin": None, "windows": None},
+                "amd64": {"linux": {"apt": apt_command, "dnf": dnf_command, "pacman": pacman_command}, "darwin": None, "windows": None},
+                "arm64": {"linux": {"apt": apt_command, "dnf": dnf_command, "pacman": pacman_command}, "darwin": None, "windows": None},
             },
         },
     )
@@ -68,7 +68,11 @@ def test_native_linux_installer_selects_dnf_on_fedora(monkeypatch: pytest.Monkey
     monkeypatch.setattr(installer_class.subprocess, "run", fake_run)
 
     result = installer_class.Installer(
-        _build_native_linux_installer_data(apt_command="sudo apt-get install -y native-tool", dnf_command="sudo dnf install -y native-tool")
+        _build_native_linux_installer_data(
+            apt_command="sudo apt-get install -y native-tool",
+            dnf_command="sudo dnf install -y native-tool",
+            pacman_command="sudo pacman -S --needed --noconfirm native-tool",
+        )
     ).install_robust(install_request=InstallRequest(version=None, update=False))
 
     assert result["kind"] == "same_version"
@@ -87,11 +91,38 @@ def test_native_linux_installer_selects_apt_on_ubuntu(monkeypatch: pytest.Monkey
     monkeypatch.setattr(installer_class.subprocess, "run", fake_run)
 
     result = installer_class.Installer(
-        _build_native_linux_installer_data(apt_command="sudo apt-get install -y native-tool", dnf_command="sudo dnf install -y native-tool")
+        _build_native_linux_installer_data(
+            apt_command="sudo apt-get install -y native-tool",
+            dnf_command="sudo dnf install -y native-tool",
+            pacman_command="sudo pacman -S --needed --noconfirm native-tool",
+        )
     ).install_robust(install_request=InstallRequest(version=None, update=False))
 
     assert result["kind"] == "same_version"
     assert commands_run == ["sudo apt-get install -y native-tool"]
+
+
+def test_native_linux_installer_selects_pacman_on_arch(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    _patch_linux_install_context(monkeypatch=monkeypatch, tmp_path=tmp_path)
+    monkeypatch.setattr(install_request_logic, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="arch"))
+    commands_run: list[str] = []
+
+    def fake_run(command: str, *_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        commands_run.append(command)
+        return subprocess.CompletedProcess(args=command, returncode=0)
+
+    monkeypatch.setattr(installer_class.subprocess, "run", fake_run)
+
+    result = installer_class.Installer(
+        _build_native_linux_installer_data(
+            apt_command="sudo apt-get install -y native-tool",
+            dnf_command="sudo dnf install -y native-tool",
+            pacman_command="sudo pacman -S --needed --noconfirm native-tool",
+        )
+    ).install_robust(install_request=InstallRequest(version=None, update=False))
+
+    assert result["kind"] == "same_version"
+    assert commands_run == ["sudo pacman -S --needed --noconfirm native-tool"]
 
 
 def test_null_native_linux_pattern_fails_clearly_when_invoked(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -99,11 +130,30 @@ def test_null_native_linux_pattern_fails_clearly_when_invoked(monkeypatch: pytes
     monkeypatch.setattr(install_request_logic, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="rhel"))
 
     result = installer_class.Installer(
-        _build_native_linux_installer_data(apt_command="sudo apt-get install -y native-tool", dnf_command=None)
+        _build_native_linux_installer_data(
+            apt_command="sudo apt-get install -y native-tool", dnf_command=None, pacman_command="sudo pacman -S --needed --noconfirm native-tool"
+        )
     ).install_robust(install_request=InstallRequest(version=None, update=False))
 
     assert result["kind"] == "failed"
     assert result["error"] == "No installation pattern for apttool on linux amd64"
+
+
+def test_direct_arch_package_url_dispatches_to_linux_package_installer(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    package_path = tmp_path.joinpath("native-tool.pkg.tar.zst")
+    package_path.touch()
+    version_root = tmp_path.joinpath("versions")
+    installed_packages: list[Path] = []
+    monkeypatch.setattr(installer_class, "download_and_prepare", lambda _url: package_path)
+    monkeypatch.setattr(installer_class, "install_linux_package_file", installed_packages.append)
+    monkeypatch.setattr(installer_class, "INSTALL_VERSION_ROOT", version_root)
+
+    installer_class.Installer(
+        _build_native_linux_installer_data(apt_command=None, dnf_command=None, pacman_command="https://example.com/native-tool.pkg.tar.zst")
+    )._install_from_value(installer_arch_os="https://example.com/native-tool.pkg.tar.zst", version=None, update=False)
+
+    assert installed_packages == [package_path]
+    assert version_root.joinpath("apttool").read_text(encoding="utf-8") == "downloaded_pkg_tar_zst"
 
 
 def test_github_release_matches_asset_name_and_returns_api_download_url(monkeypatch: pytest.MonkeyPatch) -> None:

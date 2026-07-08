@@ -74,6 +74,20 @@ DNF_OPTIONAL_PACKAGES = (
     "libsixel",
     "ueberzugpp",
 )
+PACMAN_REQUIRED_PACKAGE_GROUPS = (("alsa-lib",), ("dbus",), ("gcc-libs",), ("gstreamer",), ("mpv",))
+PACMAN_OPTIONAL_PACKAGES = (
+    "yt-dlp",
+    "ffmpeg",
+    "mpv",
+    "gst-plugins-base",
+    "gst-plugins-good",
+    "gst-plugins-bad",
+    "gst-plugins-ugly",
+    "gst-libav",
+    "opus",
+    "libsixel",
+    "ueberzugpp",
+)
 BREW_REQUIRED_PACKAGES = ("mpv", "gstreamer", "yt-dlp", "ffmpeg")
 BREW_OPTIONAL_PACKAGES = ("opus", "libsixel", "ueberzugpp")
 WINGET_OPTIONAL_PACKAGE_IDS = ("yt-dlp.yt-dlp", "Gyan.FFmpeg")
@@ -144,6 +158,9 @@ def _install_linux_dependencies(console: Console) -> None:
                 )
             required_package_groups = DNF_REQUIRED_PACKAGE_GROUPS
             optional_packages = DNF_OPTIONAL_PACKAGES
+        case "pacman":
+            required_package_groups = PACMAN_REQUIRED_PACKAGE_GROUPS
+            optional_packages = PACMAN_OPTIONAL_PACKAGES
         case _:
             assert_never(distribution.package_manager)
 

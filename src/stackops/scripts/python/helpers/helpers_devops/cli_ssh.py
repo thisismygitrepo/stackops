@@ -3,7 +3,12 @@ from typing import Annotated
 
 import typer
 
-from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution, build_package_install_command, detect_current_linux_distribution
+from stackops.utils.installer_utils.linux_package_manager import (
+    LinuxDistribution,
+    build_package_install_command,
+    detect_current_linux_distribution,
+    get_openssh_server_package,
+)
 
 
 def _run_add_ssh_key_with_paramiko(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str) -> None:
@@ -48,9 +53,10 @@ def change_ssh_port(port: Annotated[int, typer.Option("--port", "-p", help="SSH 
 
 
 def _get_linux_ssh_server_install_script(distribution: LinuxDistribution) -> str:
-    install_command = build_package_install_command(distribution.package_manager, ("openssh-server",))
+    openssh_package = get_openssh_server_package(distribution.package_manager)
+    install_command = build_package_install_command(distribution.package_manager, (openssh_package,))
     return "\n".join(
-        ("#!/usr/bin/env bash", "set -euo pipefail", shlex.join(("sudo", *install_command)), 'echo "✅ FINISHED installing openssh-server."', "")
+        ("#!/usr/bin/env bash", "set -euo pipefail", shlex.join(("sudo", *install_command)), f'echo "✅ FINISHED installing {openssh_package}."', "")
     )
 
 

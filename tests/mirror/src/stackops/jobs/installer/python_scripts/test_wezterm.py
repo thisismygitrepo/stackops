@@ -7,13 +7,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
 @pytest.mark.parametrize(
     ("distribution", "expected_repository_command", "expected_install_command", "forbidden_tokens"),
     [
-        pytest.param(
-            LinuxDistribution(distribution_id="ubuntu"),
-            "https://apt.fury.io/wez/",
-            "sudo apt-get install -y wezterm",
-            ("dnf",),
-            id="apt",
-        ),
+        pytest.param(LinuxDistribution(distribution_id="ubuntu"), "https://apt.fury.io/wez/", "sudo apt-get install -y wezterm", ("dnf",), id="apt"),
         pytest.param(
             LinuxDistribution(distribution_id="rhel"),
             "sudo dnf copr enable -y wezfurlong/wezterm-nightly",
@@ -21,13 +15,17 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
             ("apt", "nala", "dpkg"),
             id="dnf",
         ),
+        pytest.param(
+            LinuxDistribution(distribution_id="arch"),
+            "Using Arch Linux's official repositories",
+            "sudo pacman -S --needed --noconfirm wezterm",
+            ("apt", "nala", "dpkg", "dnf", "yum", "copr"),
+            id="pacman",
+        ),
     ],
 )
 def test_builds_official_wezterm_repository_script(
-    distribution: LinuxDistribution,
-    expected_repository_command: str,
-    expected_install_command: str,
-    forbidden_tokens: tuple[str, ...],
+    distribution: LinuxDistribution, expected_repository_command: str, expected_install_command: str, forbidden_tokens: tuple[str, ...]
 ) -> None:
     script = wezterm._build_linux_install_script(distribution)
 

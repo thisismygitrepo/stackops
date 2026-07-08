@@ -44,3 +44,10 @@ def test_rejects_rpm_distribution_without_official_brave_instructions() -> None:
 
     with pytest.raises(NotImplementedError, match="almalinux"):
         brave._build_linux_install_script(distribution)
+
+
+def test_rejects_arch_without_using_an_aur_helper() -> None:
+    distribution = LinuxDistribution(distribution_id="arch")
+
+    with pytest.raises(NotImplementedError, match="only available through the AUR"):
+        brave._build_linux_install_script(distribution)

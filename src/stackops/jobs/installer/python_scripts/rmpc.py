@@ -45,6 +45,8 @@ RMPC_INSTALLER_DATA: InstallerData = {
 
 APT_REQUIRED_PACKAGES = ("mpd", "mpc")
 APT_OPTIONAL_PACKAGES = ("ffmpeg", "cava", "python3", "python3-pip", "python3-mutagen", "yt-dlp", "ueberzugpp")
+PACMAN_REQUIRED_PACKAGES = ("mpd", "mpc")
+PACMAN_OPTIONAL_PACKAGES = ("ffmpeg", "cava", "python", "python-pip", "python-mutagen", "yt-dlp", "ueberzugpp")
 BREW_REQUIRED_PACKAGES = ("mpd", "mpc")
 BREW_OPTIONAL_PACKAGES = ("ffmpeg", "cava", "python-mutagen", "yt-dlp", "ueberzugpp")
 DEFAULT_MPD_ADDRESS = "127.0.0.1:6600"
@@ -96,6 +98,9 @@ def _install_linux_companions(console: Console, distribution: LinuxDistribution)
             raise NotImplementedError(
                 "rmpc's required MPD packages are not consistently available across supported Fedora and enterprise Linux releases."
             )
+        case "pacman":
+            required_packages = PACMAN_REQUIRED_PACKAGES
+            optional_packages = PACMAN_OPTIONAL_PACKAGES
         case _:
             assert_never(distribution.package_manager)
 

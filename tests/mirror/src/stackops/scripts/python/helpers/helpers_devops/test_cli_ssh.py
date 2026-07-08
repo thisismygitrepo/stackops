@@ -11,6 +11,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
     [
         (LinuxDistribution(distribution_id="debian"), ("sudo", "apt-get", "install", "-y", "openssh-server")),
         (LinuxDistribution(distribution_id="rocky"), ("sudo", "dnf", "install", "-y", "openssh-server")),
+        (LinuxDistribution(distribution_id="arch"), ("sudo", "pacman", "-S", "--needed", "--noconfirm", "openssh")),
     ],
 )
 def test_builds_linux_ssh_server_install_script_for_package_manager(
@@ -20,4 +21,4 @@ def test_builds_linux_ssh_server_install_script_for_package_manager(
 
     assert script_lines[:2] == ["#!/usr/bin/env bash", "set -euo pipefail"]
     assert tuple(shlex.split(script_lines[2])) == expected_install_command
-    assert script_lines[3] == 'echo "✅ FINISHED installing openssh-server."'
+    assert script_lines[3] == f'echo "✅ FINISHED installing {expected_install_command[-1]}."'

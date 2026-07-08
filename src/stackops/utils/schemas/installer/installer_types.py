@@ -44,6 +44,7 @@ InstallerCategoryLabel: TypeAlias = Literal[
 class LinuxPackageManagerInstallerPattern(TypedDict):
     apt: str | None
     dnf: str | None
+    pacman: str | None
 
 
 LinuxInstallerPattern: TypeAlias = str | None | LinuxPackageManagerInstallerPattern

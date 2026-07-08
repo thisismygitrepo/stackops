@@ -309,7 +309,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum|pacman)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM]|[pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
           }
         }
       ]
@@ -324,11 +324,15 @@
         },
         "dnf": {
           "$ref": "#/definitions/DnfInstallerPatternValue"
+        },
+        "pacman": {
+          "$ref": "#/definitions/PacmanInstallerPatternValue"
         }
       },
       "required": [
         "apt",
-        "dnf"
+        "dnf",
+        "pacman"
       ]
     },
     "AptInstallerPatternValue": {
@@ -339,7 +343,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(dnf|yum)([\\s]|$)|[.][rR][pP][mM]($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(dnf|yum|pacman)([\\s]|$)|([.][rR][pP][mM]|[.][pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
           }
         }
       ]
@@ -352,7 +356,20 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|yum)([\\s]|$)|[.][dD][eE][bB]($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|yum|pacman)([\\s]|$)|([.][dD][eE][bB]|[.][pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
+          }
+        }
+      ]
+    },
+    "PacmanInstallerPatternValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
           }
         }
       ]

@@ -3,6 +3,7 @@
 Linux requirements:
 - Debian/Ubuntu: sudo apt-get install network-manager
 - RHEL/Fedora: sudo dnf install NetworkManager
+- Arch Linux: sudo pacman -S --needed networkmanager
 
 Windows requirements:
 - Run as Administrator for netsh commands

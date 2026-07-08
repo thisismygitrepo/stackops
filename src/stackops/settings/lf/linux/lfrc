@@ -1,225 +1,154 @@
+set shell sh
+set shellopts '-eu'
+set ifs "\n"
 
-set scrolloff 10      # space on top and bottom of screen
-set icons true          # show icons next to files
-set period 1          # interval to check for directory updates
-set hidden true         # show hidden files by default
-set incsearch true       # jump to first match after each keystroke in search
-set dircounts true      # show number of items in directory instead of sie
-set info "size"       # list directory information on the right
-set sortby "natural"  # don't sort files in any special way
-# set drawbox true        # draw a border around all panes
-set globsearch false  # don't use glob patterns in search
-set mouse false  # enable mouse support
-set number true  # show line numbers
+set hidden
+set icons
+set preview
+set preload
+set watch
+set mouse
+set incsearch
+set incfilter
+set dirfirst
+set mergeindicators
+set drawbox
+set roundbox
+set scrolloff 10
+set info size
+set sortby natural
+set sizeunits binary
+set ratios 1:3:5
 
-set preview true        # preview file on the right pane
-# set previewer chafa --format sixel --work 9 --optimize 9 --stretch --zoom --size 140x80
 set previewer ~/.config/stackops/settings/lf/linux/exe/previewer.sh
-set cleaner ~/.config/stackops/settings/lf/linux/exe/cleaner.sh
-# set previewer pistol
 
-# set sixels true
-# set SHELL bash
-# set EDITOR code 
-# set colors true
-set ratios '1:2:3'  # ratio of pane widths
-# set hiddenfiles ".*:*.aux:*.log:*.bbl:*.bcf:*.blg:*.run.xml"
-# see more at https://git.lmburns.com/dotfiles-mac/file/.config/lf/lfrc.html
+set borderfmt "\033[38;2;98;114;164m"
+set copyfmt "\033[38;2;241;250;140m"
+set cursoractivefmt "\033[38;2;248;248;242;48;2;68;71;90m"
+set cursorparentfmt "\033[38;2;248;248;242;48;2;68;71;90m"
+set cursorpreviewfmt "\033[38;2;189;147;249m"
+set cutfmt "\033[38;2;255;85;85m"
+set errorfmt "\033[38;2;248;248;242;48;2;255;85;85m"
+set promptfmt "\033[38;2;189;147;249m%u@%h\033[0m:\033[38;2;139;233;253m%d\033[0m\033[1m%f\033[0m"
+set selectfmt "\033[38;2;255;121;198m"
+set statfmt "\033[38;2;139;233;253m%p\033[0m| %c| \033[38;2;255;121;198m%u:%g\033[0m| %S| %t| -> %l"
+set tagfmt "\033[38;2;255;184;108m"
+set visualfmt "\033[38;2;139;233;253m"
 
-
-# set ignorecase true
-# see:
-# https://github.com/gokcehan/lf/wiki/Integrations#ripgrep
-# https://github.com/gokcehan/lf/wiki/Integrations#fzf
-# https://github.com/junegunn/fzf/blob/master/ADVANCED.md#ripgrep-integration
-
-
-# Unix-like defaults1
-#           $OPENER  open      # macos
-#           $OPENER  xdg-open  # others
-          # $EDITOR  code  # not vi
-#           $PAGER   less
-#           $SHELL   sh
-
-
-# ============================ KEY BINDINGS ============================================
-# avoid using confusing keys that are already bound to other functions by other programs, e.g. the console itself, like ctrl+c
-# default reference: https://pkg.go.dev/github.com/gokcehan/lf
-
-
-# test image viewer
-map Q !~/.config/stackops/settings/lf/linux/exe/previewer.sh "$f"
-
-# key bindings
-map vmap v  # default is invert
-map V invert
-map p $preview $f
-map x
-map c
-map v
-# map D
-map D $diskonaut
-map K $kondo $f
-
-
-map q quit  # default
-# remove defaults
-map k  # default up
-map <c-u>  # half-up
-
-# e edit
-map e  # edit modal key.
-map eh $hx $f
-map en $nano $f
-map el $lvim $f
-map ev $nvim $f
-map ec $code $f
-# map ep $pycharm
-map o $start $f
-map <enter> open
-
-
-# w shells
-map w
-map ww bash
-# map wp $powershell
-map wp $preview
-# map wm $cmd
-map i !~/.config/stackops/settings/lf/linux/exe/previewer.sh $f
-map I !cat $f | gum pager
-map P $preview $f
-map O $preview -j $f
-
-
-# o file/folder Operations
-map c clear
-map <delete> delete
-
-map o
-map od cut
-map op paste
-map oy copy
-map oc $echo $f | xclip
-map or rename
-map of reload
-map os mark-save
-map ol mark-load
-map oR mark-remove
-map oD $ouch d $f
-map oC $ouch c $f "$f.zip"
-map oL $ln -s $f $HOME/tmp_results/tmp_links/$(basename "$f")
-
-# j jump
-map j
-map jc cd ~/code
-map jd cd ~/data
-map jD cd ~/Downloads
-map jx cd ~/dotfiles
-# map jm cd ~/code/stackops/src/stackops
-map jh cd ~
-map jj $preview -j --read $f
-# map jj $lvim ~/.config/stackops/settings/lf/linux/lfrc
-
-# from https://github.com/gokcehan/lf/wiki/Integrations#zoxide
-cmd zi ${{
-    result="$(zoxide query -i -- "$@")"
-    lf -remote "send ${id} cd '${result}'"
+cmd open &{{
+    set -f
+    case "$f" in
+        *.py|*.rs|*.toml|*.yaml|*.yml|*.json|*.js|*.ts|*.tsx|*.jsx|*.html|*.css|*.md|*.txt|*.sh|*.bash|*.zsh|*.ps1)
+            lf -remote "send $id \$hx \$fx"
+            ;;
+        *)
+            case "$(file --mime-type -Lb -- "$f")" in
+                text/*)
+                    lf -remote "send $id \$hx \$fx"
+                    ;;
+                *)
+                    for path in $fx; do
+                        "$OPENER" "$path" >/dev/null 2>&1 &
+                    done
+                    ;;
+            esac
+            ;;
+    esac
 }}
-map Z zi
 
-cmd ter ${{
-    result="$(tere query -i -- "$@")"
-    lf -remote "send ${id} cd '${result}'"
-}}
-map T ter #!tere
-
-# m make
-map m
-map md mkdir
-map mf mkfile
-map mF sudomkfile
-map mp chmod
-
-
-# =============== JUNK =================
-map <c-f> :fzf_jump
-map gs :fzf_search
-map J broot_jump
-map F fzf_jump
-
-
-# from https://github.com/gokcehan/lf/wiki/Integrations#fzf
-cmd fzf_jump ${{
-    res="$(find . -maxdepth 100 | fzf --reverse --header='Jump to location' | sed 's/\\/\\\\/g;s/"/\\"/g')"
-    if [ -d "$res" ] ; then
-        cmd="cd"
-    elif [ -f "$res" ] ; then
-        cmd="select"
+cmd toggle-preview-max &{{
+    if [ "$lf_ratios" = "1" ]; then
+        lf -remote "send $id set ratios 1:3:5"
     else
-        exit 0
+        lf -remote "send $id :set preview; set ratios 1"
     fi
-    lf -remote "send $id $cmd \"$res\""
 }}
 
-
-cmd fzf2g $(fzf2g.sh $args[1])
-# map F $nano fzf2g $args[1]
-
-
-cmd fzf_search ${{
-    res="$( \
-        RG_PREFIX="rg --column --line-number --no-heading --color=always \
-            --smart-case "
-        FZF_DEFAULT_COMMAND="$RG_PREFIX ''" \
-            fzf --bind "change:reload:$RG_PREFIX {q} || true" \
-            --ansi --layout=reverse --header 'Search in files' \
-            | cut -d':' -f1
-    )"
-    [ ! -z "$res" ] && lf -remote "send $id select \"$res\""
+cmd repo-root &{{
+    root="$(git rev-parse --show-toplevel)"
+    lf -remote "send $id cd \"$root\""
 }}
 
-
-cmd broot_jump ${{
-  f=$(mktemp)
-  res="$(broot --outcmd $f && cat $f | sed 's/cd //')"
-  rm -f "$f"
-  if [ -f "$res" ]; then
-    cmd="select"
-  elif [ -d "$res" ]; then
-    cmd="cd"
-  fi
-  lf -remote "send $id $cmd \"$res\""
+cmd fullscreen-preview ${{
+    set -f
+    uv run --isolated --no-project --python 3.14 --with stackops \
+        "$HOME/.config/stackops/settings/yazi/scripts/fullscreen_preview.py" \
+        __YAZI_HOVERED__ "$f" __YAZI_SELECTED__ $fs
 }}
 
-
-# cmd % echo "hi from bottom line of lf"  # this function acts in the bottom line, unlike this full-blown acting in its own screen:
-cmd mkdir ${{
-  printf "Directory Name: "
-  read ans
-  mkdir $ans
+cmd interactive-view ${{
+    set -f
+    uv run --isolated --no-project --python 3.14 --with stackops \
+        "$HOME/.config/stackops/settings/yazi/scripts/interactive_view.py" \
+        __YAZI_HOVERED__ "$f" __YAZI_SELECTED__ $fs
 }}
 
-cmd mkfile ${{
-  printf "File Name: "
-  read ans
-  $EDITOR $ans
+cmd open-default ${{
+    set -f
+    uv run --isolated --no-project --python 3.14 --with stackops \
+        "$HOME/.config/stackops/settings/yazi/scripts/open_default_app.py" \
+        __YAZI_HOVERED__ "$f" __YAZI_SELECTED__ $fs
 }}
 
-cmd sudomkfile ${{
-  printf "File Name: "
-  read ans
-  sudo $EDITOR $ans
+cmd compress-selected ${{
+    set -f
+    uv run --isolated --no-project --python 3.14 --with stackops \
+        "$HOME/.config/stackops/settings/yazi/scripts/compress_selected.py" \
+        __YAZI_HOVERED__ "$f" __YAZI_SELECTED__ $fs
 }}
 
-
-cmd chmod ${{
-  printf "Mode Bits: "
-  read ans
-
-  for file in "$fx"
-  do
-    chmod $ans $file
-  done
-
-  lf -remote 'send reload'
+cmd decrypt ${{
+    case "$f" in
+        *.gpg) gpg --output "${f%.gpg}" --decrypt "$f" ;;
+        *) printf 'Expected a .gpg file: %s\n' "$f" >&2; exit 1 ;;
+    esac
 }}
+
+cmd copy-paths &{{
+    set -f
+    printf '%s\n' $fx | cb cp0
+}}
+
+map "!" $$SHELL
+map T set preview!
+map M toggle-preview-max
+
+map F $~/.config/stackops/scripts/wrap_stackops fire "$f"
+map Pc $~/.config/stackops/scripts/wrap_stackops seek "$f"
+map Pf $~/.config/stackops/scripts/wrap_stackops seek -f "$f"
+map Pe $~/.config/stackops/scripts/wrap_stackops seek -e "$f"
+map Ps $~/.config/stackops/scripts/wrap_stackops seek -s "$f"
+map Pa $~/.config/stackops/scripts/wrap_stackops seek -a "$f"
+
+map b $bat "$f"
+map e $hx "$f"
+map v fullscreen-preview
+map V interactive-view
+map n $nano "$f"
+map gr repo-root
+
+map Rv &code "$f"
+map Ro open-default
+map Rh $~/.config/stackops/scripts/wrap_stackops utils file edit "$f"
+map Rp $~/.config/stackops/scripts/wrap_stackops preview "$f"
+map Rf $~/.config/stackops/scripts/wrap_stackops fire "$f"
+map RF $~/.config/stackops/scripts/wrap_stackops fire -i "$f"
+map Rc $code "$f"
+
+map oc compress-selected
+map od $ouch decompress "$f"
+map os $gpg --output "$f.gpg" --symmetric "$f"
+map oa $gpg --output "$f.gpg" --default-recipient-self --encrypt "$f"
+map oS decrypt
+map oA decrypt
+
+map go $uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/stackops/settings/yazi/scripts/open_db_readonly.py" "$f"
+map gu $uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/stackops/settings/yazi/scripts/open_db_readonly.py" --ui "$f"
+
+map y :copy; copy-paths
+map ct $uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/stackops/settings/yazi/scripts/copy_file_content.py" "$f"
+
+map x cut
+map o open
+map <enter> open
+map . set hidden!

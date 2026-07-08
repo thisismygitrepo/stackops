@@ -28,10 +28,7 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
     ],
 )
 def test_builds_native_repository_script(
-    distribution: LinuxDistribution,
-    expected_repository: str,
-    expected_install_command: str,
-    forbidden_tokens: tuple[str, ...],
+    distribution: LinuxDistribution, expected_repository: str, expected_install_command: str, forbidden_tokens: tuple[str, ...]
 ) -> None:
     script = cloudflare_warp_cli._build_linux_install_script(distribution)
 
@@ -54,11 +51,7 @@ def test_main_detects_distribution_once_before_execution(monkeypatch: pytest.Mon
         detection_count += 1
         return distribution
 
-    def fake_run(
-        command: list[str],
-        text: bool,
-        check: bool,
-    ) -> subprocess.CompletedProcess[str]:
+    def fake_run(command: list[str], text: bool, check: bool) -> subprocess.CompletedProcess[str]:
         assert command[:2] == ["bash", "-c"]
         assert text is True
         assert check is True
@@ -79,6 +72,9 @@ def test_main_detects_distribution_once_before_execution(monkeypatch: pytest.Mon
 @pytest.mark.parametrize("distribution_id", ["rhel", "centos"])
 def test_enterprise_linux_requires_explicit_epel_setup(distribution_id: str) -> None:
     with pytest.raises(NotImplementedError, match="version-specific EPEL"):
-        cloudflare_warp_cli._build_linux_install_script(
-            LinuxDistribution(distribution_id=distribution_id)
-        )
+        cloudflare_warp_cli._build_linux_install_script(LinuxDistribution(distribution_id=distribution_id))
+
+
+def test_arch_linux_is_rejected_without_an_official_cloudflare_repository() -> None:
+    with pytest.raises(NotImplementedError, match="does not support Linux distribution 'arch'"):
+        cloudflare_warp_cli._build_linux_install_script(LinuxDistribution(distribution_id="arch"))
