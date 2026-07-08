@@ -34,16 +34,16 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
-            "apt": "sudo apt-get update && sudo apt-get install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
-            "dnf": "sudo dnf install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
+            "apt": "sudo apt-get update && sudo apt-get install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
+            "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
           },
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\bunx.cmd' -Target (Get-Command bunx).Source\"",
           "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx"
         },
         "arm64": {
           "linux": {
-            "apt": "sudo apt-get update && sudo apt-get install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
-            "dnf": "sudo dnf install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
+            "apt": "sudo apt-get update && sudo apt-get install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
+            "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
           },
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\bunx.cmd' -Target (Get-Command bunx).Source\"",
           "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx"
@@ -470,16 +470,16 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
-            "apt": "sudo apt-get update && sudo apt-get install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
-            "dnf": "sudo dnf install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
+            "apt": "sudo apt-get update && sudo apt-get install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
+            "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
           },
           "windows": null,
           "darwin": "brew install tmux"
         },
         "arm64": {
           "linux": {
-            "apt": "sudo apt-get update && sudo apt-get install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
-            "dnf": "sudo dnf install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
+            "apt": "sudo apt-get update && sudo apt-get install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
+            "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
           },
           "windows": null,
           "darwin": "brew install tmux"
@@ -5526,8 +5526,8 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
-            "apt": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt-get install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
-            "dnf": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm && rm google-chrome-stable_current_x86_64.rpm"
+            "apt": "sudo apt-get update && sudo apt-get install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt-get install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
+            "dnf": "sudo dnf install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm && rm google-chrome-stable_current_x86_64.rpm"
           },
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask google-chrome"

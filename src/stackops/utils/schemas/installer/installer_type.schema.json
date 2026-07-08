@@ -309,7 +309,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
           }
         }
       ]
@@ -339,7 +339,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()])((/[A-Za-z0-9_.+-]+)+/)?(dnf|yum)([\\s]|$)|[.][rR][pP][mM]($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(dnf|yum)([\\s]|$)|[.][rR][pP][mM]($|[^A-Za-z0-9])"
           }
         }
       ]
@@ -352,7 +352,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|yum)([\\s]|$)|[.][dD][eE][bB]($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|yum)([\\s]|$)|[.][dD][eE][bB]($|[^A-Za-z0-9])"
           }
         }
       ]

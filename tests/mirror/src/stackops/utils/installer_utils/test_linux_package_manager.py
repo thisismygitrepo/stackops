@@ -28,7 +28,7 @@ def test_classifies_debian_ecosystem_distributions(distribution_id: LinuxDistrib
 
 @pytest.mark.parametrize("distribution_id", ["rhel", "fedora"])
 def test_classifies_red_hat_ecosystem_distributions(distribution_id: LinuxDistributionId) -> None:
-    result = linux_package_manager.classify_linux_distribution({"ID": distribution_id, "ID_LIKE": "rhel fedora"})
+    result = linux_package_manager.classify_linux_distribution({"ID": distribution_id, "ID_LIKE": "rhel fedora", "VERSION_ID": "9.4"})
 
     assert result == LinuxDistribution(distribution_id=distribution_id)
 
@@ -40,10 +40,16 @@ def test_classifies_registered_red_hat_derivatives(distribution_id: LinuxDistrib
     assert result == LinuxDistribution(distribution_id=distribution_id)
 
 
-def test_id_like_classifies_release_with_missing_id() -> None:
-    result = linux_package_manager.classify_linux_distribution({"ID_LIKE": "rhel fedora"})
+def test_classifies_oracle_linux_8_10_as_dnf() -> None:
+    result = linux_package_manager.classify_linux_distribution({"ID": "ol", "ID_LIKE": "fedora", "VERSION_ID": "8.10"})
 
-    assert result == LinuxDistribution(distribution_id="rhel")
+    assert result == LinuxDistribution(distribution_id="ol")
+    assert result.package_manager == "dnf"
+
+
+def test_missing_id_is_not_inferred_from_id_like() -> None:
+    with pytest.raises(linux_package_manager.UnsupportedLinuxDistributionError, match="ID='<missing>'.*ID_LIKE='rhel fedora'"):
+        linux_package_manager.classify_linux_distribution({"ID_LIKE": "rhel fedora", "VERSION_ID": "9"})
 
 
 def test_unregistered_derivative_must_be_added_explicitly() -> None:
@@ -58,13 +64,13 @@ def test_distribution_id_takes_priority_over_conflicting_id_like() -> None:
 
 
 def test_normalizes_red_hat_distribution_alias() -> None:
-    result = linux_package_manager.classify_linux_distribution({"ID": "redhat"})
+    result = linux_package_manager.classify_linux_distribution({"ID": "redhat", "VERSION_ID": "9"})
 
     assert result.distribution_id == "rhel"
     assert result.package_manager == "dnf"
 
 
-@pytest.mark.parametrize("distribution_id", ["amzn", "ol", "oracle"])
+@pytest.mark.parametrize("distribution_id", ["amzn", "oracle"])
 def test_version_ambiguous_distributions_are_not_inferred(distribution_id: str) -> None:
     with pytest.raises(linux_package_manager.UnsupportedLinuxDistributionError):
         linux_package_manager.classify_linux_distribution({"ID": distribution_id, "ID_LIKE": "rhel fedora"})
@@ -81,6 +87,13 @@ def test_version_ambiguous_distributions_are_not_inferred(distribution_id: str) 
 def test_immutable_linux_variants_are_rejected(os_release: dict[str, str]) -> None:
     with pytest.raises(linux_package_manager.UnsupportedLinuxVariantError, match="immutable host package workflow"):
         linux_package_manager.classify_linux_distribution(os_release)
+
+
+@pytest.mark.parametrize("distribution_id", ["rhel", "centos", "ol"])
+@pytest.mark.parametrize("version_id", ["", "7", "7.9", "rolling"])
+def test_pre_dnf_enterprise_releases_are_rejected(distribution_id: LinuxDistributionId, version_id: str) -> None:
+    with pytest.raises(linux_package_manager.UnsupportedLinuxDistributionVersionError, match="version 8 or newer"):
+        linux_package_manager.classify_linux_distribution({"ID": distribution_id, "VERSION_ID": version_id})
 
 
 def test_unknown_distribution_error_includes_os_release_details() -> None:
@@ -105,7 +118,9 @@ def test_current_distribution_rejects_non_linux_before_reading_os_release(monkey
 
 def test_current_distribution_reads_freedesktop_os_release(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(linux_package_manager.platform, "system", lambda: "Linux")
-    monkeypatch.setattr(linux_package_manager.platform, "freedesktop_os_release", lambda: {"ID": "centos", "ID_LIKE": "rhel fedora"})
+    monkeypatch.setattr(
+        linux_package_manager.platform, "freedesktop_os_release", lambda: {"ID": "centos", "ID_LIKE": "rhel fedora", "VERSION_ID": "9"}
+    )
 
     assert linux_package_manager.detect_current_linux_distribution() == LinuxDistribution(distribution_id="centos")
 

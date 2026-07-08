@@ -16,6 +16,7 @@ type LinuxDistributionId = Literal[
     "linuxmint",
     "mx",
     "neon",
+    "ol",
     "parrot",
     "peppermint",
     "pop",
@@ -58,6 +59,7 @@ _LINUX_DISTRIBUTION_PACKAGE_MANAGERS: Final[dict[LinuxDistributionId, LinuxPacka
     "almalinux": "dnf",
     "centos": "dnf",
     "fedora": "dnf",
+    "ol": "dnf",
     "rhel": "dnf",
     "rocky": "dnf",
 }
@@ -96,6 +98,15 @@ class UnsupportedLinuxVariantError(ValueError):
         )
 
 
+class UnsupportedLinuxDistributionVersionError(ValueError):
+    def __init__(self, *, distribution_id: LinuxDistributionId, version_id: str) -> None:
+        displayed_version = version_id if version_id != "" else "<missing>"
+        super().__init__(
+            f"Linux distribution {distribution_id!r} VERSION_ID={displayed_version!r} is unsupported; "
+            "RHEL, CentOS, and Oracle Linux require version 8 or newer for canonical DNF support."
+        )
+
+
 def classify_linux_distribution(os_release: Mapping[str, str]) -> LinuxDistribution:
     distribution_id = _normalize_distribution_id(os_release.get("ID", ""))
     id_like = _normalize_id_like(os_release.get("ID_LIKE", ""))
@@ -107,15 +118,8 @@ def classify_linux_distribution(os_release: Mapping[str, str]) -> LinuxDistribut
 
     registered_distribution_id = _get_registered_distribution_id(distribution_id)
     if registered_distribution_id is not None:
+        _validate_distribution_version(distribution_id=registered_distribution_id, version_id=os_release.get("VERSION_ID", ""))
         return LinuxDistribution(distribution_id=registered_distribution_id)
-
-    if distribution_id != "":
-        raise UnsupportedLinuxDistributionError(distribution_id=distribution_id, id_like=id_like)
-
-    for related_distribution_id in id_like:
-        registered_distribution_id = _get_registered_distribution_id(related_distribution_id)
-        if registered_distribution_id is not None:
-            return LinuxDistribution(distribution_id=registered_distribution_id)
 
     raise UnsupportedLinuxDistributionError(distribution_id=distribution_id, id_like=id_like)
 
@@ -159,6 +163,15 @@ def _get_registered_distribution_id(distribution_id: str) -> LinuxDistributionId
     if distribution_id in _LINUX_DISTRIBUTION_PACKAGE_MANAGERS:
         return distribution_id
     return None
+
+
+def _validate_distribution_version(distribution_id: LinuxDistributionId, version_id: str) -> None:
+    if distribution_id not in {"rhel", "centos", "ol"}:
+        return
+    normalized_version_id = version_id.strip().strip("\"'")
+    major_version_text = normalized_version_id.split(".", maxsplit=1)[0]
+    if not major_version_text.isdecimal() or int(major_version_text) < 8:
+        raise UnsupportedLinuxDistributionVersionError(distribution_id=distribution_id, version_id=normalized_version_id)
 
 
 def _normalize_id_like(raw_id_like: str) -> tuple[str, ...]:

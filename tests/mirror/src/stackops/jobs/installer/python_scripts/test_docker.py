@@ -43,9 +43,10 @@ def test_apt_script_uses_exact_official_repository(distribution: LinuxDistributi
     [
         pytest.param("rhel", "https://download.docker.com/linux/rhel/docker-ce.repo", id="rhel"),
         pytest.param("centos", "https://download.docker.com/linux/centos/docker-ce.repo", id="centos"),
+        pytest.param("ol", "https://download.docker.com/linux/rhel/docker-ce.repo", id="oracle-linux"),
     ],
 )
-def test_rhel_and_centos_scripts_use_exact_official_repository(
+def test_enterprise_linux_scripts_use_exact_compatible_repository(
     distribution_id: LinuxDistributionId,
     repository_url: str,
 ) -> None:
@@ -80,6 +81,7 @@ def test_fedora_script_uses_dnf5_repository_command() -> None:
         LinuxDistribution(distribution_id="rhel"),
         LinuxDistribution(distribution_id="fedora"),
         LinuxDistribution(distribution_id="centos"),
+        LinuxDistribution(distribution_id="ol"),
     ],
 )
 def test_linux_scripts_share_strict_installation_tail(distribution: LinuxDistribution) -> None:

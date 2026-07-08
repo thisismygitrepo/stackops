@@ -43,13 +43,14 @@ EOF
 sudo apt-get update
 """
             install_command = "sudo apt-get install -y"
-        case (("rhel" | "centos") as distribution_id, "dnf"):
-            repository_url = f"https://download.docker.com/linux/{distribution_id}/docker-ce.repo"
+        case (("rhel" | "centos" | "ol") as distribution_id, "dnf"):
+            repository_distribution_id = "rhel" if distribution_id == "ol" else distribution_id
+            repository_url = f"https://download.docker.com/linux/{repository_distribution_id}/docker-ce.repo"
             repository_setup = f"""
 echo "📥 Installing DNF repository prerequisites..."
 sudo dnf -y install dnf-plugins-core
 
-echo "📝 Adding Docker's official {distribution_id} repository..."
+echo "📝 Adding Docker's official {repository_distribution_id} repository for {distribution_id}..."
 sudo dnf config-manager --add-repo "{repository_url}"
 """
             install_command = "sudo dnf install -y"
@@ -59,14 +60,14 @@ echo "📝 Adding Docker's official fedora repository..."
 sudo dnf config-manager addrepo --from-repofile "https://download.docker.com/linux/fedora/docker-ce.repo"
 """
             install_command = "sudo dnf install -y"
-        case ("ubuntu" | "debian" | "rhel" | "fedora" | "centos", _):
+        case ("ubuntu" | "debian" | "rhel" | "fedora" | "centos" | "ol", _):
             raise ValueError(
                 f"Invalid package-manager metadata for Linux distribution '{distribution.distribution_id}': manager={distribution.package_manager}"
             )
         case (unsupported_distribution_id, _):
             raise NotImplementedError(
                 "Docker Engine's official repositories do not support Linux distribution "
-                f"'{unsupported_distribution_id}'. Supported distributions: ubuntu, debian, rhel, fedora, centos."
+                f"'{unsupported_distribution_id}'. Supported distributions: ubuntu, debian, rhel, fedora, centos, ol."
             )
 
     return f"""

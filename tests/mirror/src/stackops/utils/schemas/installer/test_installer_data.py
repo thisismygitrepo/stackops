@@ -7,25 +7,17 @@ from jsonschema.validators import Draft7Validator
 import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.utils.installer_utils.linux_package_manager import LINUX_PACKAGE_MANAGERS
 from stackops.utils.path_reference import get_path_reference_path
-from stackops.utils.schemas.installer.installer_types import (
-    LinuxPackageManagerInstallerPattern,
-)
+from stackops.utils.schemas.installer.installer_types import LinuxPackageManagerInstallerPattern
 
 
 _NATIVE_LINUX_PATTERN = re.compile(
-    r"(^|[\s;&|()])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)(\s|$)|\.([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])",
+    r"(^|[\s;&|()'\x22])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)(\s|$)|\.([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
 )
 
 
 def test_installer_catalog_uses_explicit_native_package_mappings() -> None:
-    catalog_path = get_path_reference_path(
-        module=installer_schema_assets,
-        path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE,
-    )
-    schema_path = get_path_reference_path(
-        module=installer_schema_assets,
-        path_reference=installer_schema_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE,
-    )
+    catalog_path = get_path_reference_path(module=installer_schema_assets, path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE)
+    schema_path = get_path_reference_path(module=installer_schema_assets, path_reference=installer_schema_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE)
     schema = cast(dict[str, object], json.loads(schema_path.read_text(encoding="utf-8")))
     catalog = cast(dict[str, object], json.loads(catalog_path.read_text(encoding="utf-8")))
 
@@ -41,10 +33,7 @@ def test_installer_catalog_uses_explicit_native_package_mappings() -> None:
             linux_pattern = architecture_patterns["linux"]
             if isinstance(linux_pattern, dict):
                 assert set(linux_pattern) == {"apt", "dnf"}
-                assert all(
-                    pattern is None or isinstance(pattern, str)
-                    for pattern in linux_pattern.values()
-                )
+                assert all(pattern is None or isinstance(pattern, str) for pattern in linux_pattern.values())
                 continue
             assert linux_pattern is None or isinstance(linux_pattern, str)
             if isinstance(linux_pattern, str):
@@ -52,16 +41,10 @@ def test_installer_catalog_uses_explicit_native_package_mappings() -> None:
 
 
 def test_linux_manager_axes_stay_synchronized() -> None:
-    schema_path = get_path_reference_path(
-        module=installer_schema_assets,
-        path_reference=installer_schema_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE,
-    )
+    schema_path = get_path_reference_path(module=installer_schema_assets, path_reference=installer_schema_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE)
     schema = cast(dict[str, object], json.loads(schema_path.read_text(encoding="utf-8")))
     definitions = cast(dict[str, object], schema["definitions"])
-    manager_mapping = cast(
-        dict[str, object],
-        definitions["LinuxPackageManagerInstallerPattern"],
-    )
+    manager_mapping = cast(dict[str, object], definitions["LinuxPackageManagerInstallerPattern"])
     schema_properties = cast(dict[str, object], manager_mapping["properties"])
     schema_required = cast(list[str], manager_mapping["required"])
     typed_keys = set(LinuxPackageManagerInstallerPattern.__annotations__)

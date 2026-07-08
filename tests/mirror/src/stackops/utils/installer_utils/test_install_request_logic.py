@@ -116,7 +116,9 @@ def test_legacy_yum_command_is_rejected_from_dnf_mapping() -> None:
         )
 
 
-@pytest.mark.parametrize("dnf_pattern", ["/usr/bin/yum install -y native-tool", "command nala install -y native-tool"])
+@pytest.mark.parametrize(
+    "dnf_pattern", ["/usr/bin/yum install -y native-tool", "command nala install -y native-tool", "sudo sh -c 'apt-get install -y native-tool'"]
+)
 def test_prefixed_incompatible_commands_are_rejected(dnf_pattern: str) -> None:
     with pytest.raises(ValueError):
         install_request_logic.resolve_installer_pattern(
